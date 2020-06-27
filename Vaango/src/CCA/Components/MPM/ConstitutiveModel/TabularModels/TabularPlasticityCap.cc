@@ -1677,9 +1677,8 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
   state_np1.stressTensor = sig_fixed;
   state_np1.updateStressInvariants();
 
-  Matrix3 M_n, M_np1;
-  d_yield->df_dsigma(Util::Identity, &state_n, M_n);
-  d_yield->df_dsigma(Util::Identity, &state_np1, M_np1);
+  Matrix3 M_n = d_yield->df_dsigma(Util::Identity, &state_n);
+  Matrix3 M_np1 = d_yield->df_dsigma(Util::Identity, &state_np1);
   M_n /= M_n.Norm();
   double norm_M_np1 = M_np1.Norm();
   M_np1 /= norm_M_np1;
@@ -1877,9 +1876,8 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   state_np1.updateStressInvariants();
 
   if (d_decrease_substep) {
-    Matrix3 M_n, M_np1;
-    d_yield->df_dsigma(Util::Identity, &state_n, M_n);
-    d_yield->df_dsigma(Util::Identity, &state_np1, M_np1);
+    Matrix3 M_n = d_yield->df_dsigma(Util::Identity, &state_n);
+    Matrix3 M_np1 = d_yield->df_dsigma(Util::Identity, &state_np1);
     M_n /= M_n.Norm();
     double norm_M_np1 = M_np1.Norm();
     M_np1 /= norm_M_np1;

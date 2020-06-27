@@ -60,31 +60,45 @@ class YieldCond_vonMises : public YieldCondition
 
 public:
   //! Constructor
-  YieldCond_vonMises(Uintah::ProblemSpecP& ps,
-                     InternalVariableModel* intvar);
+  YieldCond_vonMises(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
   YieldCond_vonMises(const YieldCond_vonMises* cm);
-  YieldCond_vonMises& operator=(const YieldCond_vonMises&) = delete;
+  YieldCond_vonMises&
+  operator=(const YieldCond_vonMises&) = delete;
 
   //! Destructor
   ~YieldCond_vonMises() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
     params["None"] = 0.0;
     return params;
   }
 
-  //! Evaluate the yield function.
-  double evalYieldCondition(const double equivStress, const double flowStress,
-                            const double traceOfCauchyStress,
-                            const double porosity, double& sig) override;
+  //--------------------------------------------------------------
+  // Compute value of yield function
+  //--------------------------------------------------------------
+  double
+  evalYieldCondition(const double equivStress,
+                     const double flowStress,
+                     const double traceOfCauchyStress,
+                     const double porosity,
+                     double& sig) override;
 
-  double evalYieldCondition(const Uintah::Matrix3& xi,
-                            const ModelStateBase* state) override;
+  double
+  evalYieldCondition(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state) override;
+
+  std::pair<double, Util::YieldStatus>
+  evalYieldCondition(const ModelStateBase* state) override;
+
+  double
+  evalYieldConditionMax(const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -94,9 +108,10 @@ public:
     This is for the associated flow rule.
   */
   /////////////////////////////////////////////////////////////////////////
-  void df_dsigma(const Uintah::Matrix3& stress,
-                                const double flowStress, const double porosity,
-                                Uintah::Matrix3& derivative) override;
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& stress,
+            const double flowStress,
+            const double porosity) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -107,51 +122,59 @@ public:
     the deviatoric stress.
   */
   /////////////////////////////////////////////////////////////////////////
-  void df_dsigmaDev(const Uintah::Matrix3& stress,
-                                   const double flowStress,
-                                   const double porosity,
-                                   Uintah::Matrix3& derivative) override;
+  Uintah::Matrix3
+  df_dsigmaDev(const Uintah::Matrix3& stress,
+               const double flowStress,
+               const double porosity) override;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-  void df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                      Uintah::Matrix3& df_dsigma) override;
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
       where \f$s\f$ is deviatoric part of Cauchy stress and
       \f$\beta\f$ is the backstress */
-  void df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                   Uintah::Matrix3& df_xi) override;
+  Uintah::Matrix3
+  df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-  void df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
-                           const ModelStateBase* state, Uintah::Matrix3& df_ds,
-                           Uintah::Matrix3& df_dbeta) override;
-
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double df_dplasticStrain(const Uintah::Matrix3& xi, const double& d_sigy_dep,
+  std::pair<Matrix3, Matrix3>
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
+  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
+  double
+  df_dplasticStrain(const Uintah::Matrix3& xi,
+                    const double& d_sigy_dep,
+                    const ModelStateBase* state) override;
+
   /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double df_dporosity(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double eval_h_alpha(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double eval_h_phi(const Uintah::Matrix3& xi, const double& factorA,
-                    const ModelStateBase* state) override;
+  double
+  eval_h_phi(const Uintah::Matrix3& xi,
+             const double& factorA,
+             const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the elastic-plastic tangent modulus.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeElasPlasTangentModulus(
-    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
-    double sigY, double dsigYdep, double porosity, double voidNuclFac,
-    Uintah::TangentModulusTensor& Cep) override;
+  void
+  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                                const Uintah::Matrix3& sigma,
+                                double sigY,
+                                double dsigYdep,
+                                double porosity,
+                                double voidNuclFac,
+                                Uintah::TangentModulusTensor& Cep) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -164,8 +187,8 @@ public:
     \return factor
   */
   /////////////////////////////////////////////////////////////////////////
-  inline double computePlasticStrainFactor(double sigma_f_sigma,
-                                           double sigma_Y);
+  inline double
+  computePlasticStrainFactor(double sigma_f_sigma, double sigma_Y);
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -180,28 +203,18 @@ public:
     \return TangentModulusTensor \f$ C_{ep} \f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                             const Uintah::Matrix3& f_sigma, double f_q1,
-                             double h_q1, Uintah::TangentModulusTensor& Cep);
-
-  //--------------------------------------------------------------
-  // Compute value of yield function
-  //--------------------------------------------------------------
-  std::pair<double, Util::YieldStatus>
-  evalYieldCondition(const ModelStateBase* state) override
-  {
-    return std::make_pair(0.0, Util::YieldStatus::IS_ELASTIC);
-  };
-  double evalYieldConditionMax(const ModelStateBase* state) override
-  {
-    return 0.0;
-  };
+  void
+  computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                        const Uintah::Matrix3& f_sigma,
+                        double f_q1,
+                        double h_q1,
+                        Uintah::TangentModulusTensor& Cep);
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
-  double df_dp(
-    const ModelStateBase* state) override
+  double
+  df_dp(const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -209,8 +222,8 @@ public:
   //--------------------------------------------------------------
   // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
   //--------------------------------------------------------------
-  double df_dq(
-    const ModelStateBase* state) override
+  double
+  df_dq(const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -218,10 +231,11 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  d2f_dp_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
@@ -229,10 +243,11 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  d2f_dp_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
@@ -240,10 +255,11 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  d2f_dq_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
@@ -251,10 +267,11 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  d2f_dq_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
@@ -262,10 +279,11 @@ public:
   //--------------------------------------------------------------
   // Compute df/depse_v
   //--------------------------------------------------------------
-  double df_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  df_depsVol(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
@@ -273,16 +291,18 @@ public:
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
-  double df_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override
+  double
+  df_depsDev(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override
   {
     return 0.0;
   };
 
-  double getInternalPoint(const ModelStateBase* state_old,
-                          const ModelStateBase* state_new) override
+  double
+  getInternalPoint(const ModelStateBase* state_old,
+                   const ModelStateBase* state_new) override
   {
     return 0.0;
   }

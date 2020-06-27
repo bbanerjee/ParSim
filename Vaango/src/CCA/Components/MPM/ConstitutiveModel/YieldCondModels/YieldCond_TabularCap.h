@@ -26,9 +26,9 @@
 #define __TABULAR_CAP_YIELD_CONDITION_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -37,7 +37,7 @@
 
 namespace Vaango {
 
-  using Polyline = std::vector<Uintah::Point>;
+using Polyline = std::vector<Uintah::Point>;
 
 /*!
   \class  YieldCond_TabularCap
@@ -46,27 +46,31 @@ namespace Vaango {
 
 class YieldCond_TabularCap : public YieldCondition
 {
-friend std::ostream& operator<<(std::ostream& out, const YieldCond_TabularCap& yc);
-public:
+  friend std::ostream&
+  operator<<(std::ostream& out, const YieldCond_TabularCap& yc);
 
-  YieldCond_TabularCap() = delete;
+public:
+  YieldCond_TabularCap()                            = delete;
   YieldCond_TabularCap(const YieldCond_TabularCap&) = delete;
-  ~YieldCond_TabularCap() = default;
-  YieldCond_TabularCap& operator=(const YieldCond_TabularCap&) = delete;
+  ~YieldCond_TabularCap()                           = default;
+  YieldCond_TabularCap&
+  operator=(const YieldCond_TabularCap&) = delete;
 
   YieldCond_TabularCap(Uintah::ProblemSpecP& ps);
   YieldCond_TabularCap(const YieldCond_TabularCap* yc);
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["I1_min"] = -d_I1bar_max;
-    params["I1_max"] = -d_I1bar_min;
+    params["I1_min"]     = -d_I1bar_max;
+    params["I1_max"]     = -d_I1bar_min;
     params["sqrtJ2_max"] = d_sqrtJ2_max;
-    params["R"] = d_yield.capEllipticityRatio;
+    params["R"]          = d_yield.capEllipticityRatio;
     return params;
   }
 
@@ -74,36 +78,74 @@ public:
   // Compute value of yield function
   //--------------------------------------------------------------
   std::pair<double, Util::YieldStatus>
-    evalYieldCondition(const ModelStateBase* state) override;
-  double evalYieldConditionMax(const ModelStateBase* state) override;
+  evalYieldCondition(const ModelStateBase* state) override;
+  double
+  evalYieldConditionMax(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Derivative with respect to the Cauchy stress (\f$\sigma \f$)
   //--------------------------------------------------------------
-  void df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                      Uintah::Matrix3& df_dsigma) override;
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& xi,
+            const ModelStateBase* state) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$\sigma_{ij}\f$.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& stress,
+            const double dummy1,
+            const double dummy2) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$s_{ij}\f$.
+
+    This is for the associated flow rule with \f$s_{ij}\f$ being
+    the deviatoric stress.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3
+  df_dsigmaDev(const Uintah::Matrix3& stress,
+               const double dummy1,
+               const double dummy2) override;
+
+  /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
+    where \f$s\f$ is deviatoric part of Cauchy stress and
+    \f$\beta\f$ is the backstress */
+  Uintah::Matrix3
+  df_dxi(const Uintah::Matrix3& xi,
+         const ModelStateBase* state) override;
+
+  /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
+  std::pair<Uintah::Matrix3, Uintah::Matrix3>
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
-  double df_dp(
-    const ModelStateBase* state) override;
+  double
+  df_dp(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
   //--------------------------------------------------------------
-  double df_dq(
-    const ModelStateBase* state) override;
+  double
+  df_dq(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
-  // Compute df/deps^p_v 
+  // Compute df/deps^p_v
   //--------------------------------------------------------------
-  double df_depsVol(
-    const ModelStateBase* state, 
-    const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
-
+  double
+  df_depsVol(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override;
 
   /**
    * Function: computeYieldSurfacePolylinePbarSqrtJ2
@@ -115,10 +157,10 @@ public:
    *  state_old = old state
    *
    * Returns:
-   *   std::vector<Point> 
+   *   std::vector<Point>
    */
   Polyline
-    computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state) override;
+  computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state) override;
 
   /**
    * Function: getUpdatedYieldConditionRange
@@ -126,13 +168,13 @@ public:
    * Purpose: Compute range of the yield surface in pbar-sqrtJ2 space
    *
    * Inputs:
-   *  std::vector<Point> 
+   *  std::vector<Point>
    *
    * Returns:
    *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
    */
   std::array<double, 3>
-    getYieldConditionRange(const Polyline& yield_surface) override;
+  getYieldConditionRange(const Polyline& yield_surface) override;
 
   /**
    * Function: getInternalPoint
@@ -145,8 +187,9 @@ public:
    * Returns:
    *   I1 = value of tr(stress) at a point inside the yield surface
    */
-  double getInternalPoint(const ModelStateBase* state_old,
-                          const ModelStateBase* state_trial) override
+  double
+  getInternalPoint(const ModelStateBase* state_old,
+                   const ModelStateBase* state_trial) override
   {
     return 0.0;
   }
@@ -173,12 +216,20 @@ public:
    *   true - if the closest point can be found
    *   false - otherwise
    */
-  bool getClosestPoint(const ModelStateBase* state, const double& px,
-                       const double& py, double& cpx, double& cpy) override;
-  bool getClosestPointAndTangent(const ModelStateBase* state, 
-                                 const double& px, const double& py, 
-                                 double& cpx, double& cpy,
-                                 double& tx, double& ty) override;
+  bool
+  getClosestPoint(const ModelStateBase* state,
+                  const double& px,
+                  const double& py,
+                  double& cpx,
+                  double& cpy) override;
+  bool
+  getClosestPointAndTangent(const ModelStateBase* state,
+                            const double& px,
+                            const double& py,
+                            double& cpx,
+                            double& cpy,
+                            double& tx,
+                            double& ty) override;
 
   //================================================================================
   // Other options below.
@@ -187,111 +238,95 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dp_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dp_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dq_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dq_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
-  double df_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  df_depsDev(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override;
   // Evaluate the yield function.
-  double evalYieldCondition(const double p, const double q, const double dummy0,
-                            const double dummy1, double& dummy2) override;
+  double
+  evalYieldCondition(const double p,
+                     const double q,
+                     const double dummy0,
+                     const double dummy1,
+                     double& dummy2) override;
 
   // Evaluate yield condition (s = deviatoric stress = sigDev
   //                           p = state->pressure
   //                           p_c = state->yieldStress)
-  double evalYieldCondition(const Uintah::Matrix3& sigDev,
-                            const ModelStateBase* state) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$\sigma_{ij}\f$.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  void df_dsigma(const Uintah::Matrix3& stress,
-                                const double dummy1, const double dummy2,
-                                Uintah::Matrix3& derivative) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$s_{ij}\f$.
-
-    This is for the associated flow rule with \f$s_{ij}\f$ being
-    the deviatoric stress.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  void df_dsigmaDev(const Uintah::Matrix3& stress,
-                                   const double dummy1, const double dummy2,
-                                   Uintah::Matrix3& derivative) override;
-
-  /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
-    where \f$s\f$ is deviatoric part of Cauchy stress and
-    \f$\beta\f$ is the backstress */
-  void df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                   Uintah::Matrix3& df_xi) override;
-
-  /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-  void df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
-                           const ModelStateBase* state, Uintah::Matrix3& df_ds,
-                           Uintah::Matrix3& df_dbeta) override;
-
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double df_dplasticStrain(const Uintah::Matrix3& xi, const double& d_sigy_dep,
+  double
+  evalYieldCondition(const Uintah::Matrix3& sigDev,
                      const ModelStateBase* state) override;
 
+  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
+  double
+  df_dplasticStrain(const Uintah::Matrix3& xi,
+                    const double& d_sigy_dep,
+                    const ModelStateBase* state) override;
+
   /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double df_dporosity(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double eval_h_alpha(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double eval_h_phi(const Uintah::Matrix3& xi, const double& factorA,
-                    const ModelStateBase* state) override;
+  double
+  eval_h_phi(const Uintah::Matrix3& xi,
+             const double& factorA,
+             const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the elastic-plastic tangent modulus.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeElasPlasTangentModulus(
-    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
-    double sigY, double dsigYdep, double porosity, double voidNuclFac,
-    Uintah::TangentModulusTensor& Cep) override;
+  void
+  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                                const Uintah::Matrix3& sigma,
+                                double sigY,
+                                double dsigYdep,
+                                double porosity,
+                                double voidNuclFac,
+                                Uintah::TangentModulusTensor& Cep) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -304,8 +339,8 @@ public:
     \return factor
   */
   /////////////////////////////////////////////////////////////////////////
-  inline double computePlasticStrainFactor(double sigma_f_sigma,
-                                           double sigma_Y);
+  inline double
+  computePlasticStrainFactor(double sigma_f_sigma, double sigma_Y);
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -320,13 +355,16 @@ public:
     \return TangentModulusTensor \f$ C_{ep} \f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                             const Uintah::Matrix3& f_sigma, double f_q1,
-                             double h_q1, Uintah::TangentModulusTensor& Cep);
-
+  void
+  computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                        const Uintah::Matrix3& f_sigma,
+                        double f_q1,
+                        double h_q1,
+                        Uintah::TangentModulusTensor& Cep);
 
   /* Compute points on the cap */
-  void computeCapPoints(double X_bar, Polyline& p_q_all);
+  void
+  computeCapPoints(double X_bar, Polyline& p_q_all);
 
 private:
   /**
@@ -345,13 +383,14 @@ private:
     }
     YieldFunctionParameters(const YieldFunctionParameters& yf)
     {
-      table = yf.table;
+      table               = yf.table;
       capEllipticityRatio = yf.capEllipticityRatio;
     }
-    YieldFunctionParameters& operator=(const YieldFunctionParameters& yf)
+    YieldFunctionParameters&
+    operator=(const YieldFunctionParameters& yf)
     {
       if (this != &yf) {
-        table = yf.table;
+        table               = yf.table;
         capEllipticityRatio = yf.capEllipticityRatio;
       }
       return *this;
@@ -362,35 +401,47 @@ private:
   double d_I1bar_min;
   double d_I1bar_max;
   double d_sqrtJ2_max;
-  Polyline  d_polyline;
+  Polyline d_polyline;
   std::vector<Uintah::Vector> d_normals;
 
   /* Some helpers and checks */
-  void checkInputParameters();
-  void setYieldConditionRange();
-  void saveAsPolyline();
-  void computeNormals();
+  void
+  checkInputParameters();
+  void
+  setYieldConditionRange();
+  void
+  saveAsPolyline();
+  void
+  computeNormals();
 
   /* Find the closest point */
-  Uintah::Point getClosestPoint(const Polyline& polyline,
-                                const double& p_bar, const double& sqrtJ2);
-  Uintah::Point getClosestPointTable(const ModelState_TabularCap* state,
-                                     const Uintah::Point& z_r_pt);
-  Uintah::Point getClosestPointSpline(const ModelState_TabularCap* state,
-                                      const Uintah::Point& z_r_pt);
+  Uintah::Point
+  getClosestPoint(const Polyline& polyline,
+                  const double& p_bar,
+                  const double& sqrtJ2);
+  Uintah::Point
+  getClosestPointTable(const ModelState_TabularCap* state,
+                       const Uintah::Point& z_r_pt);
+  Uintah::Point
+  getClosestPointSpline(const ModelState_TabularCap* state,
+                        const Uintah::Point& z_r_pt);
   std::tuple<Uintah::Point, Uintah::Vector>
-    getClosestPointSplineNewton(const ModelState_TabularCap* state, 
-                                const Uintah::Point& z_r_pt);
+  getClosestPointSplineNewton(const ModelState_TabularCap* state,
+                              const Uintah::Point& z_r_pt);
 
   /* Compute the height of the elliptical cap */
-  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
+  double
+  computeEllipseHeight(const Polyline& p_q_points, double p_cap);
 
   /* Convert yield function data to z_rprime coordinates */
-  void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
-                        Polyline& z_r_points) const;
+  void
+  convertToZRprime(const double& sqrtKG,
+                   const Polyline& p_q_points,
+                   Polyline& z_r_points) const;
 
   /* Check the location of the trial point by computing distances */
-  Util::YieldStatus checkClosestPointDistance(const ModelState_TabularCap* state);
+  Util::YieldStatus
+  checkClosestPointDistance(const ModelState_TabularCap* state);
 };
 
 } // End namespace Uintah

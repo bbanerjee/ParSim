@@ -41,25 +41,32 @@ YieldCondition::~YieldCondition() = default;
        inefficiencies) */
 void
 YieldCondition::computeElasPlasTangentModulus(
-  const Uintah::Matrix3& r, const Uintah::Matrix3& df_ds,
-  const Uintah::Matrix3& h_beta, const Uintah::Matrix3& df_dbeta,
-  const double& h_alpha, const double& df_dep, const double& h_phi,
-  const double& df_phi, const double& J, const double& dp_dJ,
-  const ModelStateBase* state, Uintah::TangentModulusTensor& C_ep)
+  const Uintah::Matrix3& r,
+  const Uintah::Matrix3& df_ds,
+  const Uintah::Matrix3& h_beta,
+  const Uintah::Matrix3& df_dbeta,
+  const double& h_alpha,
+  const double& df_dep,
+  const double& h_phi,
+  const double& df_phi,
+  const double& J,
+  const double& dp_dJ,
+  const ModelStateBase* state,
+  Uintah::TangentModulusTensor& C_ep)
 {
   Uintah::Matrix3 one;
   one.Identity();
 
   // Compute terms in the denominator of B_ep
-  double mu = state->shearModulus;
-  Uintah::Matrix3 dev_r = r - one * (r.Trace() / 3.0);
+  double mu                  = state->shearModulus;
+  Uintah::Matrix3 dev_r      = r - one * (r.Trace() / 3.0);
   Uintah::Matrix3 dev_h_beta = h_beta - one * (h_beta.Trace() / 3.0);
-  double term1 = (2.0 * mu) * df_ds.Contract(dev_r);
-  double term2 = df_dbeta.Contract(dev_h_beta);
-  double term3 = df_dep * h_alpha;
-  double term4 = df_phi * h_phi;
-  double denom = term1 - (term2 + term3 + term4);
-  double fac = (4.0 * mu * mu) / denom;
+  double term1               = (2.0 * mu) * df_ds.Contract(dev_r);
+  double term2               = df_dbeta.Contract(dev_h_beta);
+  double term3               = df_dep * h_alpha;
+  double term4               = df_phi * h_phi;
+  double denom               = term1 - (term2 + term3 + term4);
+  double fac                 = (4.0 * mu * mu) / denom;
 
   // Compute B_ep, i.e., Compute numerator/denom and subtract from 2*mu*I_4s
   Uintah::TangentModulusTensor B_ep;
@@ -90,7 +97,7 @@ YieldCondition::computeElasPlasTangentModulus(
       }
       for (int kk = 0; kk < 3; ++kk) {
         for (int ll = 0; ll < 3; ++ll) {
-          double p_term_1 = p_fac * (one(ii, jj) * one(kk, ll));
+          double p_term_1     = p_fac * (one(ii, jj) * one(kk, ll));
           double p_term_2_upd = p_term_2(ii, jj) * one(kk, ll) / 3.0;
           C_ep(ii, jj, kk, ll) = p_term_1 - p_term_2_upd + B_ep(ii, jj, kk, ll);
         }

@@ -27,8 +27,8 @@
 #ifndef __ROUSSELIER_YIELD_MODEL_H__
 #define __ROUSSELIER_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -80,7 +80,7 @@ public:
   YieldCond_Rousselier(const YieldCond_Rousselier* cm);
   YieldCond_Rousselier&
   operator=(const YieldCond_Rousselier&) = delete;
-  ~YieldCond_Rousselier() override = default;
+  ~YieldCond_Rousselier() override       = default;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -115,44 +115,38 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function (f) 
+    \brief Evaluate the derivative of the yield function (f)
     with respect to various quantities
 
     sigma = Cauchy stress
     sigmaDev = deviatoric stress
     xi = sigmaDev - beta
-    beta =  backstress 
+    beta =  backstress
     p = volumetric stress = 1/3 Tr(sigma)
     q = sqrt(3 J_2), J_2 = 2nd invariant of sigmaDev
   */
   /////////////////////////////////////////////////////////////////////////
-  void
+  Uintah::Matrix3
   df_dsigma(const Uintah::Matrix3& stress,
             const double flowStress,
-            const double porosity,
-            Uintah::Matrix3& derivative) override;
+            const double porosity) override;
 
-  void
+  Uintah::Matrix3
   df_dsigma(const Uintah::Matrix3& xi,
-            const ModelStateBase* state,
-            Uintah::Matrix3& df_dsigma) override;
+            const ModelStateBase* state) override;
 
-  void
+  Uintah::Matrix3
   df_dsigmaDev(const Uintah::Matrix3& stress,
                const double flowStress,
-               const double porosity,
-               Uintah::Matrix3& derivative) override;
+               const double porosity) override;
 
-  void
+  Uintah::Matrix3
   df_dxi(const Uintah::Matrix3& xi,
-         const ModelStateBase* state,
-         Uintah::Matrix3& df_xi) override;
+         const ModelStateBase* state) override;
 
-  void
+  std::pair<Uintah::Matrix3, Uintah::Matrix3>
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
-                     const ModelStateBase* state,
-                     Uintah::Matrix3& df_ds,
-                     Uintah::Matrix3& df_dbeta) override;
+                     const ModelStateBase* state) override;
 
   double
   df_dp(const ModelStateBase* state) override;
@@ -166,8 +160,7 @@ public:
                     const ModelStateBase* state) override;
 
   double
-  df_dporosity(const Uintah::Matrix3& xi, 
-               const ModelStateBase* state) override;
+  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   double
   d2f_dp_depsVol(const ModelStateBase* state,
@@ -203,7 +196,6 @@ public:
              const PressureModel* eos,
              const ShearModulusModel* shear,
              const InternalVariableModel* intvar) override;
-
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
   double
@@ -247,10 +239,8 @@ public:
 private:
   Params d_params;
 
-  Uintah::Matrix3 
-  df_dsigma(const Uintah::Matrix3& s_dev,
-            double p,
-            double phi) const;
+  Uintah::Matrix3
+  df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;
 
   void
   computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
@@ -260,7 +250,6 @@ private:
                         double h_q1,
                         double h_q2,
                         Uintah::TangentModulusTensor& Cep);
-
 };
 
 } // End namespace Vaango

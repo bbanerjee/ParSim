@@ -49,12 +49,14 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
   ProblemSpecP child = ps->findBlock("yield_condition");
   if (!child)
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:Cannot find yield condition.", __FILE__,
+      "MPM::ConstitutiveModel:Cannot find yield condition.",
+      __FILE__,
       __LINE__);
   string mat_type;
   if (!child->getAttribute("type", mat_type))
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:No type for yield condition.", __FILE__,
+      "MPM::ConstitutiveModel:No type for yield condition.",
+      __FILE__,
       __LINE__);
 
   if (mat_type == "arena")
@@ -68,7 +70,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",
-      __FILE__, __LINE__);
+      __FILE__,
+      __LINE__);
 }
 
 /// Create an instance of a Yield Condition.
@@ -79,12 +82,14 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
   ProblemSpecP child = ps->findBlock("yield_condition");
   if (!child)
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:Cannot find yield condition.", __FILE__,
+      "MPM::ConstitutiveModel:Cannot find yield condition.",
+      __FILE__,
       __LINE__);
   string mat_type;
   if (!child->getAttribute("type", mat_type))
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:No type for yield condition.", __FILE__,
+      "MPM::ConstitutiveModel:No type for yield condition.",
+      __FILE__,
       __LINE__);
 
   if (mat_type == "arenisca3")
@@ -98,7 +103,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",
-      __FILE__, __LINE__);
+      __FILE__,
+      __LINE__);
 }
 
 YieldCondition*
@@ -127,14 +133,14 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
       dynamic_cast<const YieldCond_ArenaMixture*>(yc)));
 
   else if (dynamic_cast<const YieldCond_Tabular*>(yc))
-    return (scinew YieldCond_Tabular(
-      dynamic_cast<const YieldCond_Tabular*>(yc)));
+    return (
+      scinew YieldCond_Tabular(dynamic_cast<const YieldCond_Tabular*>(yc)));
 
   else if (dynamic_cast<const YieldCond_TabularCap*>(yc))
     return (scinew YieldCond_TabularCap(
       dynamic_cast<const YieldCond_TabularCap*>(yc)));
 
   else
-    throw ProblemSetupException("Cannot create copy of unknown yield condition",
-                                __FILE__, __LINE__);
+    throw ProblemSetupException(
+      "Cannot create copy of unknown yield condition", __FILE__, __LINE__);
 }

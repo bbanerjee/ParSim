@@ -68,11 +68,17 @@ public:
   double p;   // I1/3
   double q;   // sqrt(3 J2)
 
-  Uintah::Matrix3 plasticStrain;
-  Uintah::Matrix3 stress;
+  Uintah::Matrix3 devStress;
   Uintah::Matrix3 backStress;
   Uintah::Matrix3 yieldSurfaceNormal;
   Uintah::Matrix3 plasticFlowDirection;
+
+private:
+
+  Uintah::Matrix3 d_plasticStrain;
+  Uintah::Matrix3 d_stress;
+
+public:
 
   ModelStateBase();
 
@@ -93,12 +99,26 @@ public:
     return numThis;
   }
 
-  /* Returns deviatoric stress */
-  virtual 
-  Uintah::Matrix3 updateStressInvariants(const Uintah::Matrix3& stress);
+  /* Set the stress and get deviatoric stress */
+  void setStress(const Uintah::Matrix3& stress);
+
+  /* Get the stress */
+  Uintah::Matrix3 getStress() const;
+
+  /* Set the plastic strain */
+  void setPlasticStrain(const Uintah::Matrix3& ep);
+
+  /* Get the plastic strain */
+  Uintah::Matrix3 getPlasticStrain() const;
 
   virtual 
   void updateStressInvariants() {}
+
+private:
+
+  /* Returns deviatoric stress */
+  virtual 
+  Uintah::Matrix3 updateStressInvariants(const Uintah::Matrix3& stress);
 
 };
 

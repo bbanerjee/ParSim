@@ -49,10 +49,10 @@ YieldCond_Gurson::YieldCond_Gurson(const YieldCond_Gurson* cm)
 {
   d_intvar = cm->d_intvar;
 
-  d_CM.q1 = cm->d_CM.q1;
-  d_CM.q2 = cm->d_CM.q2;
-  d_CM.q3 = cm->d_CM.q3;
-  d_CM.k = cm->d_CM.k;
+  d_CM.q1  = cm->d_CM.q1;
+  d_CM.q2  = cm->d_CM.q2;
+  d_CM.q3  = cm->d_CM.q3;
+  d_CM.k   = cm->d_CM.k;
   d_CM.f_c = cm->d_CM.f_c;
 }
 
@@ -71,14 +71,16 @@ YieldCond_Gurson::outputProblemSpec(Uintah::ProblemSpecP& ps)
 }
 
 double
-YieldCond_Gurson::evalYieldCondition(const double sigEqv, const double sigFlow,
+YieldCond_Gurson::evalYieldCondition(const double sigEqv,
+                                     const double sigFlow,
                                      const double traceSig,
-                                     const double porosity, double& sig)
+                                     const double porosity,
+                                     double& sig)
 {
-  double q1 = d_CM.q1;
-  double q2 = d_CM.q2;
-  double q3 = d_CM.q3;
-  double k = d_CM.k;
+  double q1  = d_CM.q1;
+  double q2  = d_CM.q2;
+  double q3  = d_CM.q3;
+  double k   = d_CM.k;
   double f_c = d_CM.f_c;
 
   double fStar = porosity;
@@ -86,15 +88,15 @@ YieldCond_Gurson::evalYieldCondition(const double sigEqv, const double sigFlow,
     fStar = f_c + k * (porosity - f_c);
 
   double maxincosh = 30.0;
-  double incosh = 0.5 * q2 * traceSig / sigFlow;
+  double incosh    = 0.5 * q2 * traceSig / sigFlow;
   if (fabs(incosh) > 30.0)
     incosh = copysign(maxincosh, incosh);
   ASSERT(sigFlow != 0);
-  double a = 1.0 + q3 * fStar * fStar;
-  double b = 2.0 * q1 * fStar * cosh(incosh);
+  double a       = 1.0 + q3 * fStar * fStar;
+  double b       = 2.0 * q1 * fStar * cosh(incosh);
   double aminusb = a - b;
-  double Phi = -1.0;
-  double sigYSq = sigFlow * sigFlow;
+  double Phi     = -1.0;
+  double sigYSq  = sigFlow * sigFlow;
   if (aminusb < 0.0) {
     Phi = sigEqv * sigEqv - sigYSq;
     sig = sigFlow;
@@ -106,14 +108,14 @@ YieldCond_Gurson::evalYieldCondition(const double sigEqv, const double sigFlow,
   return Phi;
 }
 
-void
+Uintah::Matrix3
 YieldCond_Gurson::df_dsigma(const Matrix3& sig,
-                                           const double sigY, const double f,
-                                           Matrix3& derivative)
+                            const double sigY,
+                            const double f)
 {
   Matrix3 I;
   I.Identity();
-  double trSig = sig.Trace();
+  double trSig   = sig.Trace();
   Matrix3 sigDev = sig - I * (trSig / 3.0);
   // double sigEqv = sqrt((sigDev.NormSquared())*1.5);
 
@@ -122,28 +124,32 @@ YieldCond_Gurson::df_dsigma(const Matrix3& sig,
     fStar = d_CM.f_c + d_CM.k * (f - d_CM.f_c);
 
   double maxinsinh = 30.0;
-  double insinh = 0.5 * d_CM.q2 * trSig / sigY;
+  double insinh    = 0.5 * d_CM.q2 * trSig / sigY;
   if (fabs(insinh) > 30.0)
     insinh = copysign(maxinsinh, insinh);
-  derivative =
+  Matrix3 derivative =
     sigDev * 3.0 + I * ((d_CM.q1 * d_CM.q2 * fStar * sigY) * sinh(insinh));
+  return derivative / derivative.Norm();
 }
 
-void
-YieldCond_Gurson::df_dsigmaDev(const Matrix3& sig, const double,
-                                              const double, Matrix3& derivative)
+Uintah::Matrix3
+YieldCond_Gurson::df_dsigmaDev(const Matrix3& sig,
+                               const double,
+                               const double)
 {
   Matrix3 I;
   I.Identity();
-  double trSig = sig.Trace();
+  double trSig   = sig.Trace();
   Matrix3 sigDev = sig - I * (trSig / 3.0);
-  derivative = sigDev * 3.0;
+  Matrix3 derivative     = sigDev * 3.0;
+  return derivative / derivative.Norm();
 }
 
 double
 YieldCond_Gurson::evalDerivativeWRTPlasticityScalar(double trSig,
                                                     double porosity,
-                                                    double sigY, double dsigYdV)
+                                                    double sigY,
+                                                    double dsigYdV)
 {
   // Calculate fStar
   double fStar = porosity;
@@ -156,9 +162,9 @@ YieldCond_Gurson::evalDerivativeWRTPlasticityScalar(double trSig,
   double C = 1.0 + d_CM.q3 * fStar * fStar;
 
   // Calculate terms
-  double ABdsigYdV = A * B * dsigYdV;
+  double ABdsigYdV   = A * B * dsigYdV;
   double sigYdsigYdV = sigY * dsigYdV;
-  double BsigY = B / sigY;
+  double BsigY       = B / sigY;
 
   // Calculate derivative
   double maxinsinh = 30.0;
@@ -170,23 +176,24 @@ YieldCond_Gurson::evalDerivativeWRTPlasticityScalar(double trSig,
 }
 
 double
-YieldCond_Gurson::evalDerivativeWRTPorosity(double trSig, double porosity,
+YieldCond_Gurson::evalDerivativeWRTPorosity(double trSig,
+                                            double porosity,
                                             double sigY)
 {
-  double fStar = porosity;
+  double fStar     = porosity;
   double dfStar_df = 1.0;
   if (porosity > d_CM.f_c) {
-    fStar = d_CM.f_c + d_CM.k * (porosity - d_CM.f_c);
+    fStar     = d_CM.f_c + d_CM.k * (porosity - d_CM.f_c);
     dfStar_df = d_CM.k;
   }
 
   ASSERT(sigY != 0);
   double maxincosh = 30.0;
-  double incosh = 0.5 * d_CM.q2 * trSig / sigY;
+  double incosh    = 0.5 * d_CM.q2 * trSig / sigY;
   if (fabs(incosh) > 30.0)
-    incosh = copysign(maxincosh, incosh);
-  double a = 2.0 * d_CM.q3 * fStar;
-  double b = 2.0 * d_CM.q1 * cosh(incosh);
+    incosh           = copysign(maxincosh, incosh);
+  double a           = 2.0 * d_CM.q3 * fStar;
+  double b           = 2.0 * d_CM.q1 * cosh(incosh);
   double dPhi_dfStar = (b - a) * sigY * sigY;
 
   return (dPhi_dfStar * dfStar_df);
@@ -194,8 +201,10 @@ YieldCond_Gurson::evalDerivativeWRTPorosity(double trSig, double porosity,
 
 inline double
 YieldCond_Gurson::computePorosityFactor_h1(double sigma_f_sigma,
-                                           double tr_f_sigma, double porosity,
-                                           double sigma_Y, double A)
+                                           double tr_f_sigma,
+                                           double porosity,
+                                           double sigma_Y,
+                                           double A)
 {
   return (1.0 - porosity) * tr_f_sigma +
          A * sigma_f_sigma / ((1.0 - porosity) * sigma_Y);
@@ -203,7 +212,8 @@ YieldCond_Gurson::computePorosityFactor_h1(double sigma_f_sigma,
 
 inline double
 YieldCond_Gurson::computePlasticStrainFactor_h2(double sigma_f_sigma,
-                                                double porosity, double sigma_Y)
+                                                double porosity,
+                                                double sigma_Y)
 {
   return sigma_f_sigma / ((1.0 - porosity) * sigma_Y);
 }
@@ -214,14 +224,14 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
 {
   // Get the state data
   double porosity = state->porosity;
-  double sigy = state->yieldStress;
-  double trSig = 3.0 * state->pressure;
+  double sigy     = state->yieldStress;
+  double trSig    = 3.0 * state->pressure;
   double xiNormSq = xi.NormSquared();
 
-  double q1 = d_CM.q1;
-  double q2 = d_CM.q2;
-  double q3 = d_CM.q3;
-  double k = d_CM.k;
+  double q1    = d_CM.q1;
+  double q2    = d_CM.q2;
+  double q3    = d_CM.q3;
+  double k     = d_CM.k;
   double phi_c = d_CM.f_c;
 
   double phiStar = porosity;
@@ -232,30 +242,29 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
   ASSERT(sigy != 0);
   double incosh = 0.5 * q2 * trSig / sigy;
   if (fabs(incosh) > 30.0)
-    incosh = copysign(maxincosh, incosh);
-  double a = 2.0 * q1 * phiStar * cosh(incosh);
-  double b = 1.0 + q3 * phiStar * phiStar;
+    incosh      = copysign(maxincosh, incosh);
+  double a      = 2.0 * q1 * phiStar * cosh(incosh);
+  double b      = 1.0 + q3 * phiStar * phiStar;
   double sigYSq = sigy * sigy;
-  double Phi = 1.5 * xiNormSq / sigYSq + a - b;
+  double Phi    = 1.5 * xiNormSq / sigYSq + a - b;
   return Phi;
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-void
+Uintah::Matrix3
 YieldCond_Gurson::df_dsigma(const Matrix3& xi,
-                                 const ModelStateBase* state,
-                                 Matrix3& df_dsigma)
+                            const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
-  double trSig = 3.0 * state->pressure;
+  double trSig    = 3.0 * state->pressure;
   double porosity = state->porosity;
 
   Matrix3 One;
   One.Identity();
-  double q1 = d_CM.q1;
-  double q2 = d_CM.q2;
-  double k = d_CM.k;
+  double q1    = d_CM.q1;
+  double q2    = d_CM.q2;
+  double k     = d_CM.k;
   double phi_c = d_CM.f_c;
 
   double phiStar = porosity;
@@ -263,55 +272,54 @@ YieldCond_Gurson::df_dsigma(const Matrix3& xi,
     phiStar = phi_c + k * (porosity - phi_c);
 
   double maxinsinh = 30.0;
-  double insinh = 0.5 * q2 * trSig / sigy;
+  double insinh    = 0.5 * q2 * trSig / sigy;
   if (fabs(insinh) > 30.0)
-    insinh = copysign(maxinsinh, insinh);
-  double a = 3.0 / (sigy * sigy);
-  double b = q1 * q2 * phiStar * sinh(insinh);
-  df_dsigma = xi * a + One * b;
-  return;
+    insinh  = copysign(maxinsinh, insinh);
+  double a  = 3.0 / (sigy * sigy);
+  double b  = q1 * q2 * phiStar * sinh(insinh);
+  Matrix3 df_dsigma = xi * a + One * b;
+  return df_dsigma;
 }
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
-void
+Uintah::Matrix3
 YieldCond_Gurson::df_dxi(const Matrix3& xi,
-                              const ModelStateBase* state,
-                              Matrix3& df_dxi)
+                         const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double a = 3.0 / (sigy * sigy);
-  df_dxi = xi * a;
-  return;
+  Matrix3 df_dxi   = xi * a;
+  return df_dxi;
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-void
+std::pair<Uintah::Matrix3, Uintah::Matrix3>
 YieldCond_Gurson::df_dsigmaDev_dbeta(const Matrix3& xi,
-                                      const ModelStateBase* state,
-                                      Matrix3& df_ds, Matrix3& df_dbeta)
+                                     const ModelStateBase* state)
 {
-  df_dxi(xi, state, df_ds);
-  df_dbeta = df_ds * (-1.0);
-  return;
+  Matrix3 df_ds = df_dxi(xi, state);
+  Matrix3 df_dbeta = df_ds * (-1.0);
+  return std::make_pair(df_ds, df_dbeta);
 }
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
 double
-YieldCond_Gurson::df_dplasticStrain(const Matrix3& xi, const double& dsigy_dep,
-                              const ModelStateBase* state)
+YieldCond_Gurson::df_dplasticStrain(const Matrix3& xi,
+                                    const double& dsigy_dep,
+                                    const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
-  double trSig = 3.0 * state->pressure;
+  double trSig    = 3.0 * state->pressure;
   double porosity = state->porosity;
   double xiNormSq = xi.NormSquared();
 
-  double q1 = d_CM.q1;
-  double q2 = d_CM.q2;
-  double k = d_CM.k;
+  double q1    = d_CM.q1;
+  double q2    = d_CM.q2;
+  double k     = d_CM.k;
   double phi_c = d_CM.f_c;
 
   double phiStar = porosity;
@@ -319,7 +327,7 @@ YieldCond_Gurson::df_dplasticStrain(const Matrix3& xi, const double& dsigy_dep,
     phiStar = phi_c + k * (porosity - phi_c);
 
   double maxinsinh = 30.0;
-  double insinh = 0.5 * q2 * trSig / sigy;
+  double insinh    = 0.5 * q2 * trSig / sigy;
   if (fabs(insinh) > 30.0)
     insinh = copysign(maxinsinh, insinh);
   double a = (3.0 * xiNormSq) / (sigy * sigy * sigy);
@@ -330,29 +338,28 @@ YieldCond_Gurson::df_dplasticStrain(const Matrix3& xi, const double& dsigy_dep,
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
 double
-YieldCond_Gurson::df_dporosity(const Matrix3& xi,
-                               const ModelStateBase* state)
+YieldCond_Gurson::df_dporosity(const Matrix3& xi, const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
-  double trSig = 3.0 * state->pressure;
+  double trSig    = 3.0 * state->pressure;
   double porosity = state->porosity;
 
-  double q1 = d_CM.q1;
-  double q2 = d_CM.q2;
-  double q3 = d_CM.q3;
-  double k = d_CM.k;
+  double q1    = d_CM.q1;
+  double q2    = d_CM.q2;
+  double q3    = d_CM.q3;
+  double k     = d_CM.k;
   double phi_c = d_CM.f_c;
 
-  double phiStar = porosity;
+  double phiStar       = porosity;
   double dphiStar_dphi = 1.0;
   if (porosity > phi_c) {
-    phiStar = phi_c + k * (porosity - phi_c);
+    phiStar       = phi_c + k * (porosity - phi_c);
     dphiStar_dphi = k;
   }
 
   double maxincosh = 30.0;
-  double incosh = 0.5 * q2 * trSig / sigy;
+  double incosh    = 0.5 * q2 * trSig / sigy;
   if (fabs(incosh) > maxincosh)
     incosh = copysign(maxincosh, incosh);
   double a = 2.0 * q1 * dphiStar_dphi * cosh(incosh);
@@ -363,22 +370,20 @@ YieldCond_Gurson::df_dporosity(const Matrix3& xi,
 
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double
-YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
-                               const ModelStateBase* state)
+YieldCond_Gurson::eval_h_alpha(const Matrix3& xi, const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double phi = state->porosity;
   ASSERT(phi != 1);
-  double p = state->pressure;
+  double p         = state->pressure;
   double trBetaHat = state->backStress.Trace();
 
   Matrix3 One;
   One.Identity();
   Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
 
-  Matrix3 dfdsigma(0.0);
-  df_dsigma(xi, state, dfdsigma);
+  Matrix3 dfdsigma = df_dsigma(xi, state);
 
   double numer = xi_hat.Contract(dfdsigma);
   double denom = (1.0 - phi) * sigy;
@@ -387,7 +392,8 @@ YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
 double
-YieldCond_Gurson::eval_h_phi(const Matrix3& xi, const double& factorA,
+YieldCond_Gurson::eval_h_phi(const Matrix3& xi,
+                             const double& factorA,
                              const ModelStateBase* state)
 {
   double sigy = state->yieldStress;
@@ -396,28 +402,30 @@ YieldCond_Gurson::eval_h_phi(const Matrix3& xi, const double& factorA,
   ASSERT(phi != 1);
   double p = state->pressure;
 
-  Matrix3 dfdsigma(0.0);
-  df_dsigma(xi, state, dfdsigma);
+  Matrix3 dfdsigma = df_dsigma(xi, state);
 
   double tr_df_dsigma = dfdsigma.Trace();
-  double a = (1.0 - phi) * tr_df_dsigma;
+  double a            = (1.0 - phi) * tr_df_dsigma;
 
   Matrix3 One;
   One.Identity();
   double trBetaHat = state->backStress.Trace();
-  Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
+  Matrix3 xi_hat   = xi + One * (p - 1.0 / 3.0 * trBetaHat);
 
   double numer = xi_hat.Contract(dfdsigma);
   double denom = (1.0 - phi) * sigy;
-  double b = factorA * numer / denom;
+  double b     = factorA * numer / denom;
 
   return (a + b);
 }
 
 void
 YieldCond_Gurson::computeTangentModulus(const TangentModulusTensor& Ce,
-                                        const Matrix3& f_sigma, double f_q1,
-                                        double f_q2, double h_q1, double h_q2,
+                                        const Matrix3& f_sigma,
+                                        double f_q1,
+                                        double f_q2,
+                                        double h_q1,
+                                        double h_q2,
                                         TangentModulusTensor& Cep)
 {
   // cerr << getpid() << " Ce = " << Ce;
@@ -436,7 +444,7 @@ YieldCond_Gurson::computeTangentModulus(const TangentModulusTensor& Ce,
         for (int ll = 0; ll < 3; ++ll) {
           double Ce1 = Ce(ii, jj, kk, ll);
           double Ce2 = Ce(kk, ll, ii, jj);
-          double fs = f_sigma(kk, ll);
+          double fs  = f_sigma(kk, ll);
           Cr(ii, jj) += Ce1 * fs;
           rC(ii, jj) += fs * Ce2;
         }
@@ -460,27 +468,27 @@ YieldCond_Gurson::computeTangentModulus(const TangentModulusTensor& Ce,
 void
 YieldCond_Gurson::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
                                                 const Matrix3& sigma,
-                                                double sigY, double dsigYdep,
+                                                double sigY,
+                                                double dsigYdep,
                                                 double porosity,
                                                 double voidNuclFac,
                                                 TangentModulusTensor& Cep)
 {
   // Calculate the derivative of the yield function wrt sigma
-  Matrix3 f_sigma(0.0);
-  df_dsigma(sigma, sigY, porosity, f_sigma);
+  Matrix3 f_sigma = df_dsigma(sigma, sigY, porosity);
 
   // Calculate derivative wrt porosity
   double trSig = sigma.Trace();
-  double f_q1 = evalDerivativeWRTPorosity(trSig, porosity, sigY);
+  double f_q1  = evalDerivativeWRTPorosity(trSig, porosity, sigY);
 
   // Calculate derivative wrt plastic strain
   double f_q2 =
     evalDerivativeWRTPlasticityScalar(trSig, porosity, sigY, dsigYdep);
   // Compute h_q1
   double sigma_f_sigma = sigma.Contract(f_sigma);
-  double tr_f_sigma = f_sigma.Trace();
-  double h_q1 = computePorosityFactor_h1(sigma_f_sigma, tr_f_sigma, porosity,
-                                         sigY, voidNuclFac);
+  double tr_f_sigma    = f_sigma.Trace();
+  double h_q1          = computePorosityFactor_h1(
+    sigma_f_sigma, tr_f_sigma, porosity, sigY, voidNuclFac);
 
   // Compute h_q2
   double h_q2 = computePlasticStrainFactor_h2(sigma_f_sigma, porosity, sigY);

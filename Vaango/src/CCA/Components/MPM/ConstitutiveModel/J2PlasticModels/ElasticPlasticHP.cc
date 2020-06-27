@@ -1461,14 +1461,13 @@ ElasticPlasticHP::computePlasticStateBiswajit(
 
   // Calculate the derivative of the yield function (using the
   // previous time step (n) values)
-  Matrix3 q(0.0);
   Matrix3 Stilde(0.0);
 
   double sqrtTwo      = sqrt(2.0);
   double sqrtThreeTwo = sqrt(1.5);
   double sqrtTwoThird = 1.0 / sqrtThreeTwo;
 
-  d_yield->df_dsigmaDev(sigma, flowStress, porosity, q);
+  Matrix3 q = d_yield->df_dsigmaDev(sigma, flowStress, porosity);
 
   // Calculate the tensor u (at start of time interval) This is the normal to
   // the yield surface.

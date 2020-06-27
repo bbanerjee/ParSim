@@ -937,8 +937,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
           // Compute r_k, h_k
           Matrix3 xi_k = xi_trial;
-          Matrix3 r_k(0.0);
-          d_yield->df_dsigma(xi_k, &state, r_k);
+          Matrix3 r_k = d_yield->df_dsigma(xi_k, &state);
           double h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
           double A_k       = voidNucleationFactor(state.eqPlasticStrain);
           double h_phi_k   = d_yield->eval_h_phi(xi_k, A_k, &state);
@@ -956,8 +955,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           while (f_k > d_tol) {
 
             // Get the derivatives of the yield function
-            Matrix3 df_dxi_k(0.0);
-            d_yield->df_dxi(xi_k, &state, df_dxi_k);
+            Matrix3 df_dxi_k = d_yield->df_dxi(xi_k, &state);
             double dsigy_dep_k =
               d_plastic->evalDerivativeWRTPlasticStrain(&state, idx);
             double df_dep_k =
@@ -1016,7 +1014,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             /* Updated algorithm - use value of xi_k */
             // Compute r_k, h_k
-            d_yield->df_dsigma(xi_k, &state, r_k);
+            r_k = d_yield->df_dsigma(xi_k, &state);
             h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
             A_k       = voidNucleationFactor(state.eqPlasticStrain);
             h_phi_k   = d_yield->eval_h_phi(xi_k, A_k, &state);
@@ -1058,8 +1056,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           }
 
           // Update the back stress and deviatoric stress
-          Matrix3 r_new(0.0);
-          d_yield->df_dsigma(xi_k, &state, r_new);
+          Matrix3 r_new = d_yield->df_dsigma(xi_k, &state);
           Matrix3 h_beta_new(0.0);
           d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
           backStress_new   = backStress_old + h_beta_new * Delta_gamma;
@@ -1195,10 +1192,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               // Get the derivatives of the yield function
               Matrix3 xi_hat = sigma_new - backStress_new;
               Matrix3 xi     = xi_hat - one * (xi_hat.Trace() / 3.0);
-              Matrix3 rr(0.0);
-              d_yield->df_dsigma(xi, &state, rr);
-              Matrix3 df_ds(0.0), df_dbeta(0.0);
-              d_yield->df_dsigmaDev_dbeta(xi, &state, df_ds, df_dbeta);
+              Matrix3 rr = d_yield->df_dsigma(xi, &state);
+              auto df = d_yield->df_dsigmaDev_dbeta(xi, &state);
+              Matrix3 df_ds = df.first;
+              Matrix3 df_dbeta = df.second;
               Matrix3 h_beta(0.0);
               d_kinematic->eval_h_beta(rr, &state, h_beta);
               Matrix3 r_dev      = rr - one * (rr.Trace() / 3.0);

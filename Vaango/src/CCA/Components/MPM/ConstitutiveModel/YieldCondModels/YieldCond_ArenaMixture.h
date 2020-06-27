@@ -28,8 +28,8 @@
 #define __ARENA_MIXTURE_YIELD_CONDITION_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -125,18 +125,23 @@ private:
   RateParameters d_rateParam[2];
   LocalParameters d_local;
 
-  void checkInputParameters();
-  void computeModelParameters(double fac) override;
-  void computeModelParameters(int phase);
-  std::vector<double> computeModelParameters(const double& PEAKI1,
-                                             const double& FSLOPE,
-                                             const double& STREN,
-                                             const double& YSLOPE);
+  void
+  checkInputParameters();
+  void
+  computeModelParameters(double fac) override;
+  void
+  computeModelParameters(int phase);
+  std::vector<double>
+  computeModelParameters(const double& PEAKI1,
+                         const double& FSLOPE,
+                         const double& STREN,
+                         const double& YSLOPE);
 
   // Prevent copying of this class
   // copy constructor
   // YieldCond_ArenaMixture(const YieldCond_ArenaMixture &);
-  YieldCond_ArenaMixture& operator=(const YieldCond_ArenaMixture&);
+  YieldCond_ArenaMixture&
+  operator=(const YieldCond_ArenaMixture&);
 
 public:
   //! Constructor
@@ -147,53 +152,55 @@ public:
   //! Destructor
   ~YieldCond_ArenaMixture() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["PEAKI1.phase1"] = d_yieldParam[0].PEAKI1;
-    params["FSLOPE.phase1"] = d_yieldParam[0].FSLOPE;
-    params["STREN.phase1"] = d_yieldParam[0].STREN;
-    params["YSLOPE.phase1"] = d_yieldParam[0].YSLOPE;
+    params["PEAKI1.phase1"]        = d_yieldParam[0].PEAKI1;
+    params["FSLOPE.phase1"]        = d_yieldParam[0].FSLOPE;
+    params["STREN.phase1"]         = d_yieldParam[0].STREN;
+    params["YSLOPE.phase1"]        = d_yieldParam[0].YSLOPE;
     params["PEAKI1_failed.phase1"] = d_yieldParam[0].PEAKI1_failed;
     params["FSLOPE_failed.phase1"] = d_yieldParam[0].FSLOPE_failed;
-    params["STREN_failed.phase1"] = d_yieldParam[0].STREN_failed;
+    params["STREN_failed.phase1"]  = d_yieldParam[0].STREN_failed;
     params["YSLOPE_failed.phase1"] = d_yieldParam[0].YSLOPE_failed;
-    params["BETA.phase1"] = d_nonAssocParam[0].BETA;
-    params["CR.phase1"] = d_capParam[0].CR;
-    params["T1.phase1"] = d_rateParam[0].T1;
-    params["T2.phase1"] = d_rateParam[0].T2;
-    params["a1.phase1"] = d_modelParam[0].a1;
-    params["a2.phase1"] = d_modelParam[0].a2;
-    params["a3.phase1"] = d_modelParam[0].a3;
-    params["a4.phase1"] = d_modelParam[0].a4;
-    params["a1_failed.phase1"] = d_modelParam[0].a1_failed;
-    params["a2_failed.phase1"] = d_modelParam[0].a2_failed;
-    params["a3_failed.phase1"] = d_modelParam[0].a3_failed;
-    params["a4_failed.phase1"] = d_modelParam[0].a4_failed;
+    params["BETA.phase1"]          = d_nonAssocParam[0].BETA;
+    params["CR.phase1"]            = d_capParam[0].CR;
+    params["T1.phase1"]            = d_rateParam[0].T1;
+    params["T2.phase1"]            = d_rateParam[0].T2;
+    params["a1.phase1"]            = d_modelParam[0].a1;
+    params["a2.phase1"]            = d_modelParam[0].a2;
+    params["a3.phase1"]            = d_modelParam[0].a3;
+    params["a4.phase1"]            = d_modelParam[0].a4;
+    params["a1_failed.phase1"]     = d_modelParam[0].a1_failed;
+    params["a2_failed.phase1"]     = d_modelParam[0].a2_failed;
+    params["a3_failed.phase1"]     = d_modelParam[0].a3_failed;
+    params["a4_failed.phase1"]     = d_modelParam[0].a4_failed;
 
-    params["PEAKI1.phase2"] = d_yieldParam[1].PEAKI1;
-    params["FSLOPE.phase2"] = d_yieldParam[1].FSLOPE;
-    params["STREN.phase2"] = d_yieldParam[1].STREN;
-    params["YSLOPE.phase2"] = d_yieldParam[1].YSLOPE;
+    params["PEAKI1.phase2"]        = d_yieldParam[1].PEAKI1;
+    params["FSLOPE.phase2"]        = d_yieldParam[1].FSLOPE;
+    params["STREN.phase2"]         = d_yieldParam[1].STREN;
+    params["YSLOPE.phase2"]        = d_yieldParam[1].YSLOPE;
     params["PEAKI1_failed.phase2"] = d_yieldParam[1].PEAKI1_failed;
     params["FSLOPE_failed.phase2"] = d_yieldParam[1].FSLOPE_failed;
-    params["STREN_failed.phase2"] = d_yieldParam[1].STREN_failed;
+    params["STREN_failed.phase2"]  = d_yieldParam[1].STREN_failed;
     params["YSLOPE_failed.phase2"] = d_yieldParam[1].YSLOPE_failed;
-    params["BETA.phase2"] = d_nonAssocParam[1].BETA;
-    params["CR.phase2"] = d_capParam[1].CR;
-    params["T1.phase2"] = d_rateParam[1].T1;
-    params["T2.phase2"] = d_rateParam[1].T2;
-    params["a1.phase2"] = d_modelParam[1].a1;
-    params["a2.phase2"] = d_modelParam[1].a2;
-    params["a3.phase2"] = d_modelParam[1].a3;
-    params["a4.phase2"] = d_modelParam[1].a4;
-    params["a1_failed.phase2"] = d_modelParam[1].a1_failed;
-    params["a2_failed.phase2"] = d_modelParam[1].a2_failed;
-    params["a3_failed.phase2"] = d_modelParam[1].a3_failed;
-    params["a4_failed.phase2"] = d_modelParam[1].a4_failed;
+    params["BETA.phase2"]          = d_nonAssocParam[1].BETA;
+    params["CR.phase2"]            = d_capParam[1].CR;
+    params["T1.phase2"]            = d_rateParam[1].T1;
+    params["T2.phase2"]            = d_rateParam[1].T2;
+    params["a1.phase2"]            = d_modelParam[1].a1;
+    params["a2.phase2"]            = d_modelParam[1].a2;
+    params["a3.phase2"]            = d_modelParam[1].a3;
+    params["a4.phase2"]            = d_modelParam[1].a4;
+    params["a1_failed.phase2"]     = d_modelParam[1].a1_failed;
+    params["a2_failed.phase2"]     = d_modelParam[1].a2_failed;
+    params["a3_failed.phase2"]     = d_modelParam[1].a3_failed;
+    params["a4_failed.phase2"]     = d_modelParam[1].a4_failed;
     // std::cout << "Yield condition parameters are: " << std::endl;
     // for (auto param : params) {
     //  std::cout << "\t \t" << param.first << " " << param.second << std::endl;
@@ -205,68 +212,75 @@ public:
   // Compute value of yield function
   //--------------------------------------------------------------
   std::pair<double, Util::YieldStatus>
-    evalYieldCondition(const ModelStateBase* state) override;
-  double evalYieldConditionMax(const ModelStateBase* state) override;
+  evalYieldCondition(const ModelStateBase* state) override;
+  double
+  evalYieldConditionMax(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
-  double df_dp(
-    const ModelStateBase* state) override;
+  double
+  df_dp(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
   //--------------------------------------------------------------
-  double df_dq(
-    const ModelStateBase* state) override;
+  double
+  df_dq(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dp_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
-  double d2f_dp_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dp_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dq_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
-  double d2f_dq_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  d2f_dq_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_v
   //--------------------------------------------------------------
-  double df_depsVol(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  df_depsVol(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
-  double df_depsDev(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
+  double
+  df_depsDev(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) override;
 
   /**
    * Function: getInternalPoint
@@ -279,8 +293,9 @@ public:
    * Returns:
    *   I1 = value of tr(stress) at a point inside the yield surface
    */
-  double getInternalPoint(const ModelStateBase* state_old,
-                          const ModelStateBase* state_trial) override;
+  double
+  getInternalPoint(const ModelStateBase* state_old,
+                   const ModelStateBase* state_trial) override;
 
   /**
    * Function: getClosestPoint
@@ -301,22 +316,31 @@ public:
    *   true - if the closest point can be found
    *   false - otherwise
    */
-  bool getClosestPoint(const ModelStateBase* state, const double& px,
-                       const double& py, double& cpx, double& cpy) override;
+  bool
+  getClosestPoint(const ModelStateBase* state,
+                  const double& px,
+                  const double& py,
+                  double& cpx,
+                  double& cpy) override;
 
   //================================================================================
   // Other options below.
   //================================================================================
 
   // Evaluate the yield function.
-  double evalYieldCondition(const double p, const double q, const double dummy0,
-                            const double dummy1, double& dummy2) override;
+  double
+  evalYieldCondition(const double p,
+                     const double q,
+                     const double dummy0,
+                     const double dummy1,
+                     double& dummy2) override;
 
   // Evaluate yield condition (s = deviatoric stress = sigDev
   //                           p = state->pressure
   //                           p_c = state->yieldStress)
-  double evalYieldCondition(const Uintah::Matrix3& sigDev,
-                            const ModelStateBase* state) override;
+  double
+  evalYieldCondition(const Uintah::Matrix3& sigDev,
+                     const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -324,9 +348,10 @@ public:
     with respect to \f$\sigma_{ij}\f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void df_dsigma(const Uintah::Matrix3& stress,
-                                const double dummy1, const double dummy2,
-                                Uintah::Matrix3& derivative) override;
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& stress,
+            const double dummy1,
+            const double dummy2) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -337,50 +362,61 @@ public:
     the deviatoric stress.
   */
   /////////////////////////////////////////////////////////////////////////
-  void df_dsigmaDev(const Uintah::Matrix3& stress,
-                                   const double dummy1, const double dummy2,
-                                   Uintah::Matrix3& derivative) override;
+  Uintah::Matrix3
+  df_dsigmaDev(const Uintah::Matrix3& stress,
+               const double dummy1,
+               const double dummy2) override;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-  void df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                      Uintah::Matrix3& df_dsigma) override;
+  Uintah::Matrix3
+  df_dsigma(const Uintah::Matrix3& xi,
+            const ModelStateBase* state) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
-  void df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                   Uintah::Matrix3& df_xi) override;
+  Uintah::Matrix3
+  df_dxi(const Uintah::Matrix3& xi,
+         const ModelStateBase* state) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-  void df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
-                           const ModelStateBase* state, Uintah::Matrix3& df_ds,
-                           Uintah::Matrix3& df_dbeta) override;
-
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double df_dplasticStrain(const Uintah::Matrix3& xi, const double& d_sigy_dep,
+  std::pair<Uintah::Matrix3, Uintah::Matrix3>
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
+  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
+  double
+  df_dplasticStrain(const Uintah::Matrix3& xi,
+                    const double& d_sigy_dep,
+                    const ModelStateBase* state) override;
+
   /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double df_dporosity(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double eval_h_alpha(const Uintah::Matrix3& xi,
-                      const ModelStateBase* state) override;
+  double
+  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
 
   /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double eval_h_phi(const Uintah::Matrix3& xi, const double& factorA,
-                    const ModelStateBase* state) override;
+  double
+  eval_h_phi(const Uintah::Matrix3& xi,
+             const double& factorA,
+             const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the elastic-plastic tangent modulus.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeElasPlasTangentModulus(
-    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
-    double sigY, double dsigYdep, double porosity, double voidNuclFac,
-    Uintah::TangentModulusTensor& Cep) override;
+  void
+  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                                const Uintah::Matrix3& sigma,
+                                double sigY,
+                                double dsigYdep,
+                                double porosity,
+                                double voidNuclFac,
+                                Uintah::TangentModulusTensor& Cep) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -393,8 +429,8 @@ public:
     \return factor
   */
   /////////////////////////////////////////////////////////////////////////
-  inline double computePlasticStrainFactor(double sigma_f_sigma,
-                                           double sigma_Y);
+  inline double
+  computePlasticStrainFactor(double sigma_f_sigma, double sigma_Y);
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -409,9 +445,12 @@ public:
     \return TangentModulusTensor \f$ C_{ep} \f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                             const Uintah::Matrix3& f_sigma, double f_q1,
-                             double h_q1, Uintah::TangentModulusTensor& Cep);
+  void
+  computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                        const Uintah::Matrix3& f_sigma,
+                        double f_q1,
+                        double h_q1,
+                        Uintah::TangentModulusTensor& Cep);
 
 public:
   // Parameter variability VarLabels
@@ -436,7 +475,8 @@ public:
   const Uintah::VarLabel* pT2Label_preReloc;
 
   // Return the yield condition parameter labels
-  std::vector<const Uintah::VarLabel*> getLabels() const
+  std::vector<const Uintah::VarLabel*>
+  getLabels() const
   {
     std::vector<const Uintah::VarLabel*> labels;
     labels.push_back(pPEAKI1Label);
@@ -464,8 +504,9 @@ public:
   }
 
   // Add particle state for these labels
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override
+  void
+  addParticleState(std::vector<const VarLabel*>& from,
+                   std::vector<const VarLabel*>& to) override
   {
     from.push_back(pPEAKI1Label);
     from.push_back(pFSLOPELabel);
@@ -490,7 +531,8 @@ public:
    * Initialize local VarLabels that are used for setting the parameter
    * variability
    */
-  void initializeLocalMPMLabels()
+  void
+  initializeLocalMPMLabels()
   {
     pPEAKI1Label = VarLabel::create(
       "p.ArenaPEAKI1", ParticleVariable<double>::getTypeDescription());
@@ -532,8 +574,10 @@ public:
   /**
    * Set up task graph for initialization
    */
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patch) const override
+  void
+  addInitialComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patch) const override
   {
     const MaterialSubset* matlset = matl->thisMaterial();
     task->computes(pPEAKI1Label, matlset);
@@ -549,9 +593,11 @@ public:
   /**
    *  Actually initialize the variability parameters
    */
-  void initializeLocalVariables(const Patch* patch, ParticleSubset* pset,
-                                DataWarehouse* new_dw,
-                                constParticleVariable<double>& pVolume) override
+  void
+  initializeLocalVariables(const Patch* patch,
+                           ParticleSubset* pset,
+                           DataWarehouse* new_dw,
+                           constParticleVariable<double>& pVolume) override
   {
     ParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE;
     ParticleVariable<double> pBETA, pCR, pT1, pT2;
@@ -581,12 +627,12 @@ public:
       }
       pPEAKI1[idx] = PEAKI1;
       pFSLOPE[idx] = FSLOPE;
-      pSTREN[idx] = STREN;
+      pSTREN[idx]  = STREN;
       pYSLOPE[idx] = YSLOPE;
-      pBETA[idx] = BETA;
-      pCR[idx] = CR;
-      pT1[idx] = T1;
-      pT2[idx] = T2;
+      pBETA[idx]   = BETA;
+      pCR[idx]     = CR;
+      pT1[idx]     = T1;
+      pT2[idx]     = T2;
     }
 
     // Weibull initialization if parameters are allowed to vary
@@ -603,8 +649,10 @@ public:
   /**
    * Set up task graph for parameter copying to new datawarehouse
    */
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override
+  void
+  addComputesAndRequires(Task* task,
+                         const MPMMaterial* matl,
+                         const PatchSet* patches) const override
   {
     const MaterialSubset* matlset = matl->thisMaterial();
     task->requires(Task::OldDW, pPEAKI1Label, matlset, Ghost::None);
@@ -629,8 +677,10 @@ public:
   /**
    *  Copy the variability parameters from old_dw to new_dw
    */
-  void copyLocalVariables(ParticleSubset* pset, DataWarehouse* old_dw,
-                          DataWarehouse* new_dw) override
+  void
+  copyLocalVariables(ParticleSubset* pset,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw) override
   {
     constParticleVariable<double> pPEAKI1_old, pFSLOPE_old, pSTREN_old,
       pYSLOPE_old;
@@ -658,16 +708,17 @@ public:
     for (int idx : *pset) {
       pPEAKI1_new[idx] = pPEAKI1_old[idx];
       pFSLOPE_new[idx] = pFSLOPE_old[idx];
-      pSTREN_new[idx] = pSTREN_old[idx];
+      pSTREN_new[idx]  = pSTREN_old[idx];
       pYSLOPE_new[idx] = pYSLOPE_old[idx];
-      pBETA_new[idx] = pBETA_old[idx];
-      pCR_new[idx] = pCR_old[idx];
-      pT1_new[idx] = pT1_old[idx];
-      pT2_new[idx] = pT2_old[idx];
+      pBETA_new[idx]   = pBETA_old[idx];
+      pCR_new[idx]     = pCR_old[idx];
+      pT1_new[idx]     = pT1_old[idx];
+      pT2_new[idx]     = pT2_old[idx];
     }
   }
 
-  std::vector<std::string> getLocalVariableLabels() const override
+  std::vector<std::string>
+  getLocalVariableLabels() const override
   {
     std::vector<std::string> pYieldParamLabels;
     pYieldParamLabels.emplace_back("PEAKI1");
@@ -682,8 +733,9 @@ public:
     return pYieldParamLabels;
   }
 
-  std::vector<constParticleVariable<double>> getLocalVariables(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw) override
+  std::vector<constParticleVariable<double>>
+  getLocalVariables(Uintah::ParticleSubset* pset,
+                    Uintah::DataWarehouse* old_dw) override
   {
     constParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE;
     constParticleVariable<double> pBETA, pCR, pT1, pT2;
@@ -713,10 +765,12 @@ public:
    *  This is used to scale the yield parameters
    */
 
-  void updateLocalVariables(
-    ParticleSubset* pset, DataWarehouse* old_dw, DataWarehouse* new_dw,
-    constParticleVariable<double>& pCoherence_old,
-    const ParticleVariable<double>& pCoherence_new) override;
+  void
+  updateLocalVariables(ParticleSubset* pset,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw,
+                       constParticleVariable<double>& pCoherence_old,
+                       const ParticleVariable<double>& pCoherence_new) override;
 
 private:
   Uintah::WeibParameters d_weibull_PEAKI1;
@@ -732,28 +786,42 @@ private:
   Uintah::WeibParameters d_weibull_T2;
 
   /* Find the closest point */
-  void getClosestPointAlgebraicBisect(const ModelState_Arena* state,
-                                      const Uintah::Point& z_r_pt,
-                                      Uintah::Point& z_r_closest);
-  void getClosestPointGeometricBisect(const ModelState_Arena* state,
-                                      const Uintah::Point& z_r_pt,
-                                      Uintah::Point& z_r_closest);
+  void
+  getClosestPointAlgebraicBisect(const ModelState_Arena* state,
+                                 const Uintah::Point& z_r_pt,
+                                 Uintah::Point& z_r_closest);
+  void
+  getClosestPointGeometricBisect(const ModelState_Arena* state,
+                                 const Uintah::Point& z_r_pt,
+                                 Uintah::Point& z_r_closest);
 
   /* Get the points on the yield surface */
-  void getYieldSurfacePointsAll_RprimeZ(
-    const double& X_eff, const double& kappa, const double& sqrtKG,
-    const double& I1eff_min, const double& I1eff_max, const int& num_points,
-    std::vector<Uintah::Point>& polyline);
-  void getYieldSurfacePointsSegment_RprimeZ(
-    const double& X_eff, const double& kappa, const double& sqrtKG,
-    const Uintah::Point& start_point, const Uintah::Point& end_point,
-    const int& num_points, std::vector<Uintah::Point>& polyline);
+  void
+  getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
+                                   const double& kappa,
+                                   const double& sqrtKG,
+                                   const double& I1eff_min,
+                                   const double& I1eff_max,
+                                   const int& num_points,
+                                   std::vector<Uintah::Point>& polyline);
+  void
+  getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
+                                       const double& kappa,
+                                       const double& sqrtKG,
+                                       const Uintah::Point& start_point,
+                                       const Uintah::Point& end_point,
+                                       const int& num_points,
+                                       std::vector<Uintah::Point>& polyline);
 
   /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-  void computeZeff_and_RPrime(const double& X_eff, const double& kappa,
-                              const double& sqrtKG, const double& I1eff_min,
-                              const double& I1eff_max, const int& num_points,
-                              std::vector<Uintah::Point>& z_r_vec);
+  void
+  computeZeff_and_RPrime(const double& X_eff,
+                         const double& kappa,
+                         const double& sqrtKG,
+                         const double& I1eff_min,
+                         const double& I1eff_max,
+                         const int& num_points,
+                         std::vector<Uintah::Point>& z_r_vec);
 };
 
 } // End namespace Uintah

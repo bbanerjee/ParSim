@@ -362,7 +362,6 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ModelState_TabularCap state;
   Matrix3 zero(0.0);
   Matrix3 one(0.0); one.Identity();
-  Matrix3 df_dsigma(0.0);
   //std::cout << model;
 
   state.bulkModulus = 1.0e5;
@@ -376,7 +375,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   state.yield_f_pts = p_q_2000_all;
 
   // Zero everything (elastic)
-  model.df_dsigma(zero, &state, df_dsigma);
+  Matrix3 df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   //ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
@@ -392,7 +391,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
   
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
@@ -407,7 +406,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   ASSERT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
@@ -422,7 +421,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   //ASSERT_NEAR(df_dsigma(0,0), 0.266676, 1.0e-5);
@@ -440,7 +439,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   //ASSERT_NEAR(df_dsigma(0,0), -0.0874635, 1.0e-5);
@@ -458,7 +457,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
@@ -473,7 +472,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  model.df_dsigma(zero, &state, df_dsigma);
+  df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   //ASSERT_NEAR(df_dsigma(0,0), -0.471837, 1.0e-5);

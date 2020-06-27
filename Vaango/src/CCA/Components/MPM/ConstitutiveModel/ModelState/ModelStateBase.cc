@@ -56,11 +56,12 @@ ModelStateBase::ModelStateBase()
   J2 = 0.0;
   p = 0.0;
   q = 0.0;
-  plasticStrain = Vaango::Util::Zero;
-  stress = Vaango::Util::Zero;
+  devStress = Vaango::Util::Zero;
   backStress = Vaango::Util::Zero;
   yieldSurfaceNormal = Vaango::Util::Zero;
   plasticFlowDirection = Vaango::Util::Zero;
+  d_plasticStrain = Vaango::Util::Zero;
+  d_stress = Vaango::Util::Zero;
 }
 
 ModelStateBase::ModelStateBase(const ModelStateBase& state)
@@ -116,23 +117,54 @@ ModelStateBase::operator=(const ModelStateBase* state)
   J2 = state->J2;
   p = state->p;
   q = state->q;
-  plasticStrain = state->plasticStrain;
-  stress = state->stress;
+  devStress = state->devStress;
   backStress = state->backStress;
   yieldSurfaceNormal = state->yieldSurfaceNormal;
   plasticFlowDirection = state->plasticFlowDirection;
+  d_plasticStrain = state->d_plasticStrain;
+  d_stress = state->d_stress;
   return this;
 }
 
-Uintah::Matrix3
-ModelStateBase::updateStressInvariants(const Uintah::Matrix3& stress_in)
+/* Set the stress and get deviatoric stress */
+void
+ModelStateBase::setStress(const Uintah::Matrix3& stress) 
 {
-  stress = stress_in;
+  d_stress = stress;
+  devStress = updateStressInvariants(stress); 
+}
+
+/* Get the stress */
+Uintah::Matrix3 
+ModelStateBase::getStress() const 
+{
+  return d_stress;
+}
+
+/* Set the plastic strain */
+void 
+ModelStateBase::setPlasticStrain(const Uintah::Matrix3& ep) 
+{
+  d_plasticStrain = ep;
+  eqPlasticStrain = ep.Norm() * Vaango::Util::sqrt_two_third;
+}
+
+/* Get the plastic strain */
+Uintah::Matrix3 
+ModelStateBase::getPlasticStrain() const 
+{
+  return d_plasticStrain;
+}
+
+Uintah::Matrix3
+ModelStateBase::updateStressInvariants(const Uintah::Matrix3& stress)
+{
   I1 = stress.Trace(); 
   p = I1 / 3.0;
   pressure = p;
-  Uintah::Matrix3 devStress = stress - Vaango::Util::Identity * p; 
-  J2 = 0.5 * devStress.Contract(devStress);
+
+  Uintah::Matrix3 s = stress - Vaango::Util::Identity * p; 
+  J2 = 0.5 * s.Contract(s);
   q = std::sqrt(3.0 * J2);
-  return devStress;
+  return s;
 }

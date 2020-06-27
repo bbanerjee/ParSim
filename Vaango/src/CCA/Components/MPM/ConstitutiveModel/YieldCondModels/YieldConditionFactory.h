@@ -49,10 +49,12 @@ class YieldConditionFactory
 
 public:
   //! Create a yield condition from the input file problem specification.
-  static YieldCondition* create(Uintah::ProblemSpecP& ps);
-  static YieldCondition* create(Uintah::ProblemSpecP& ps,
-                                InternalVariableModel* intvar);
-  static YieldCondition* createCopy(const YieldCondition* yc);
+  static YieldCondition*
+  create(Uintah::ProblemSpecP& ps);
+  static YieldCondition*
+  create(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  static YieldCondition*
+  createCopy(const YieldCondition* yc);
 };
 } // End namespace Uintah
 

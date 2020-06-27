@@ -40,7 +40,7 @@ YieldCond_Rousselier::YieldCond_Rousselier(Uintah::ProblemSpecP& ps)
 
 YieldCond_Rousselier::YieldCond_Rousselier(const YieldCond_Rousselier* cm)
 {
-  d_params.D     = cm->d_params.D;
+  d_params.D       = cm->d_params.D;
   d_params.sigma_1 = cm->d_params.sigma_1;
 }
 
@@ -60,17 +60,17 @@ YieldCond_Rousselier::evalYieldCondition(const double q,
                                          const double phi,
                                          double& sig)
 {
-  double D    = d_params.D;
-  double sig1 = d_params.sigma_1;
-  double p_phi = I1 / (3.0 * (1.0 - phi)) ;
+  double D     = d_params.D;
+  double sig1  = d_params.sigma_1;
+  double p_phi = I1 / (3.0 * (1.0 - phi));
   double q_phi = q / (1.0 - phi);
-  double f = q_phi + D * sig1 * phi * std::exp(p_phi / sig1) - sigma_f;
-  sig = f + sigma_f;
+  double f     = q_phi + D * sig1 * phi * std::exp(p_phi / sig1) - sigma_f;
+  sig          = f + sigma_f;
   return f;
 }
 
 /**
- *  Assumes: xi = dev(sigma) - beta, beta = kinematic hardening backstress 
+ *  Assumes: xi = dev(sigma) - beta, beta = kinematic hardening backstress
  *  sigma = dev(sigma) + Identity * state->pressure;
  */
 double
@@ -79,12 +79,12 @@ YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
 {
   Uintah::Matrix3 s_dev = xi + state->backStress;
 
-  double phi = state->porosity;
+  double phi     = state->porosity;
   double sigma_f = state->yieldStress;
-  double I1 = 3.0 * state->pressure; 
-  double J2 = 0.5 * s_dev.Contract(s_dev);
-  double q = std::sqrt(3.0 * J2);
-  double sig = 0.0;
+  double I1      = 3.0 * state->pressure;
+  double J2      = 0.5 * s_dev.Contract(s_dev);
+  double q       = std::sqrt(3.0 * J2);
+  double sig     = 0.0;
 
   return evalYieldCondition(q, sigma_f, I1, phi, sig);
 }
@@ -92,12 +92,12 @@ YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
 std::pair<double, Util::YieldStatus>
 YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 {
-  double phi = state->porosity;
+  double phi     = state->porosity;
   double sigma_f = state->yieldStress;
-  double I1 = state->I1;
-  double q = std::sqrt(3.0 * state->J2);
-  double sig = 0.0;
-  double f = evalYieldCondition(q, sigma_f, I1, phi, sig);
+  double I1      = state->I1;
+  double q       = std::sqrt(3.0 * state->J2);
+  double sig     = 0.0;
+  double f       = evalYieldCondition(q, sigma_f, I1, phi, sig);
   if (f > 0) {
     return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
   }
@@ -107,51 +107,52 @@ YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 double
 YieldCond_Rousselier::evalYieldConditionMax(const ModelStateBase* state)
 {
-  double phi = state->porosity;
+  double phi     = state->porosity;
   double sigma_f = state->yieldStress;
-  double p = state->I1 / 3.0;
+  double p       = state->I1 / 3.0;
 
   double D    = d_params.D;
   double sig1 = d_params.sigma_1;
 
-  double p_phi = p / (1.0 - phi) ;
-  double q_max =  (1.0 - phi) * (sigma_f - D * sig1 * phi * std::exp(p_phi / sig1));
+  double p_phi = p / (1.0 - phi);
+  double q_max =
+    (1.0 - phi) * (sigma_f - D * sig1 * phi * std::exp(p_phi / sig1));
   return std::abs(q_max);
 }
 
-void
+Uintah::Matrix3
 YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& sig,
                                 const double /*sigFlow*/,
-                                const double phi,
-                                Uintah::Matrix3& dfdsigma)
+                                const double phi)
 {
-  double p  = sig.Trace() / 3.0;
+  double p              = sig.Trace() / 3.0;
   Uintah::Matrix3 s_dev = sig - Vaango::Util::Identity * p;
-  dfdsigma = df_dsigma(s_dev, p, phi);
-}
-
-void
-YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& xi,
-                                const ModelStateBase* state,
-                                Uintah::Matrix3& dfdsigma)
-{
-  dfdsigma = df_dsigma(xi, state->pressure, state->porosity);
+  Uintah::Matrix3 dfdsigma = df_dsigma_actual(s_dev, p, phi);
+  return dfdsigma / dfdsigma.Norm();
 }
 
 Uintah::Matrix3
-YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& s_dev,
-                                double p,
-                                double phi) const
+YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& xi,
+                                const ModelStateBase* state)
 {
-  double ss = s_dev.NormSquared();
+  Uintah::Matrix3 dfdsigma = df_dsigma_actual(xi, state->pressure, state->porosity);
+  return dfdsigma / dfdsigma.Norm();
+}
+
+Uintah::Matrix3
+YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& s_dev,
+                                       double p,
+                                       double phi) const
+{
+  double ss                 = s_dev.NormSquared();
   Uintah::Matrix3 dp_dsigma = Vaango::Util::Identity * (1.0 / 3.0);
   Uintah::Matrix3 dq_dsigma = s_dev / std::sqrt(ss * 2.0 / 3.0);
 
-  double D    = d_params.D;
-  double sig1 = d_params.sigma_1;
-  double p_phi = p / (1.0 - phi) ;
-  double dfdp = (D * phi) / (1.0 - phi) * std::exp(p_phi / sig1);
-  double dfdq = 1.0 / (1.0 - phi);
+  double D     = d_params.D;
+  double sig1  = d_params.sigma_1;
+  double p_phi = p / (1.0 - phi);
+  double dfdp  = (D * phi) / (1.0 - phi) * std::exp(p_phi / sig1);
+  double dfdq  = 1.0 / (1.0 - phi);
 
   return (dp_dsigma * dfdp + dq_dsigma * dfdq);
 }
@@ -159,57 +160,56 @@ YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& s_dev,
 /*! \warning Derivative is taken assuming sig_eq^2 - sig_Y(p)^2 = 0 form.
   This is needed for the HypoElasticPlastic algorithm.  Needs
   to be more generalized if possible. */
-void
+Uintah::Matrix3
 YieldCond_Rousselier::df_dsigmaDev(const Uintah::Matrix3& sig,
                                    const double,
-                                   const double,
-                                   Matrix3& derivative)
+                                   const double)
 {
-  double p  = sig.Trace() / 3.0;
+  double p              = sig.Trace() / 3.0;
   Uintah::Matrix3 s_dev = sig - Vaango::Util::Identity * p;
-  derivative = s_dev * 3.0;
+  Uintah::Matrix3 derivative = s_dev * 3.0;
+  return derivative / derivative.Norm();
 }
 
 /**
- * Assumes that yield condition has q replaced with q_xi 
- * q_xi = sqrt(3/2 (sig_dev - beta) : (sig_dev - beta)) 
+ * Assumes that yield condition has q replaced with q_xi
+ * q_xi = sqrt(3/2 (sig_dev - beta) : (sig_dev - beta))
  */
-void
+Uintah::Matrix3
 YieldCond_Rousselier::df_dxi(const Uintah::Matrix3& xi,
-                             const ModelStateBase* state,
-                             Uintah::Matrix3& f_xi)
+                             const ModelStateBase* state)
 {
-  double phi = state->porosity;
-  double df_dq = 1.0 / (1 - phi);
-  Uintah::Matrix3 dq_dxi = xi * std::sqrt(1.5 / xi.NormSquared()); 
-  f_xi = dq_dxi * df_dq;
+  double phi             = state->porosity;
+  double df_dq           = 1.0 / (1 - phi);
+  Uintah::Matrix3 dq_dxi = xi * std::sqrt(1.5 / xi.NormSquared());
+  Matrix3 f_xi           = dq_dxi * df_dq;
+  return f_xi / f_xi.Norm();
 }
 
-void
+std::pair<Uintah::Matrix3, Uintah::Matrix3>
 YieldCond_Rousselier::df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
-                                         const ModelStateBase* state,
-                                         Uintah::Matrix3& df_ds,
-                                         Uintah::Matrix3& df_dbeta)
+                                         const ModelStateBase* state)
 {
-  df_dxi(xi, state, df_ds);
-  df_dbeta = df_ds * (-1.0); 
+  Uintah::Matrix3 df_ds = df_dxi(xi, state);
+  Uintah::Matrix3 df_dbeta = df_ds * (-1.0);
+  return std::make_pair(df_ds, df_dbeta);
 }
 
 double
 YieldCond_Rousselier::df_dp(const ModelStateBase* state)
 {
-  double D    = d_params.D;
-  double sig1 = d_params.sigma_1;
-  double phi = state->porosity;
-  double p_phi = state->pressure / (1.0 - phi) ;
-  double dfdp = (D * phi) / (1.0 - phi) * std::exp(p_phi / sig1);
+  double D     = d_params.D;
+  double sig1  = d_params.sigma_1;
+  double phi   = state->porosity;
+  double p_phi = state->pressure / (1.0 - phi);
+  double dfdp  = (D * phi) / (1.0 - phi) * std::exp(p_phi / sig1);
   return dfdp;
 }
 
 double
 YieldCond_Rousselier::df_dq(const ModelStateBase* state)
 {
-  double phi = state->porosity;
+  double phi  = state->porosity;
   double dfdq = 1.0 / (1.0 - phi);
   return dfdq;
 }
@@ -229,18 +229,17 @@ YieldCond_Rousselier::df_dporosity(const Uintah::Matrix3& xi,
   double D    = d_params.D;
   double sig1 = d_params.sigma_1;
 
-  double phi = state->porosity;
+  double phi     = state->porosity;
   double overphi = 1.0 / (1.0 - phi);
 
-  double p = state->pressure;
+  double p        = state->pressure;
   double exp_term = D * sig1 * std::exp(p * overphi / sig1);
 
   double ss = xi.NormSquared();
   double q  = std::sqrt(ss * 1.5);
 
-  double df_dphi = - q * overphi * overphi  
-                   + exp_term  
-                   - phi * exp_term * overphi * overphi;
+  double df_dphi =
+    -q * overphi * overphi + exp_term - phi * exp_term * overphi * overphi;
   return df_dphi;
 }
 
@@ -303,10 +302,9 @@ double
 YieldCond_Rousselier::eval_h_alpha(const Uintah::Matrix3& xi,
                                    const ModelStateBase* state)
 {
-  Uintah::Matrix3 dfdsigma;
-  df_dsigma(xi, state, dfdsigma);
+  Uintah::Matrix3 dfdsigma = df_dsigma(xi, state);
   double h_alpha = std::sqrt(2.0 / 3.0 * dfdsigma.Contract(dfdsigma));
-  return h_alpha; 
+  return h_alpha;
 }
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
@@ -318,24 +316,23 @@ YieldCond_Rousselier::eval_h_phi(const Uintah::Matrix3& xi,
   Uintah::Matrix3 s_dev = xi + state->backStress;
   Uintah::Matrix3 sigma = s_dev + Vaango::Util::Identity * state->pressure;
 
-  Uintah::Matrix3 dfdsigma;
-  df_dsigma(xi, state, dfdsigma);
+  Uintah::Matrix3 dfdsigma = df_dsigma(xi, state);
 
   double sigma_f_sigma = sigma.Contract(dfdsigma);
   return (1.0 - state->porosity) * dfdsigma.Trace() +
-         voidNucFac * sigma_f_sigma / 
-         ((1.0 - state->porosity) * state->yieldStress);
+         voidNucFac * sigma_f_sigma /
+           ((1.0 - state->porosity) * state->yieldStress);
 }
 
-
 void
-YieldCond_Rousselier::computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                                            const Uintah::Matrix3& f_sigma,
-                                            double f_q1,
-                                            double f_q2,
-                                            double h_q1,
-                                            double h_q2,
-                                            Uintah::TangentModulusTensor& Cep)
+YieldCond_Rousselier::computeTangentModulus(
+  const Uintah::TangentModulusTensor& Ce,
+  const Uintah::Matrix3& f_sigma,
+  double f_q1,
+  double f_q2,
+  double h_q1,
+  double h_q2,
+  Uintah::TangentModulusTensor& Cep)
 {
   double fqhq = f_q1 * h_q1 + f_q2 * h_q2;
   Uintah::Matrix3 Cr(0.0), rC(0.0);
@@ -376,12 +373,13 @@ YieldCond_Rousselier::computeElasPlasTangentModulus(
   Uintah::TangentModulusTensor& Cep)
 {
   double p = sigma.Trace() / 3.0;
-  Uintah::Matrix3 s_dev = sigma - Vaango::Util::Identity * (sigma.Trace() / 3.0);
+  Uintah::Matrix3 s_dev =
+    sigma - Vaango::Util::Identity * (sigma.Trace() / 3.0);
 
   ModelStateBase state;
   state.yieldStress = sigY;
-  state.porosity = porosity;
-  state.pressure = p;
+  state.porosity    = porosity;
+  state.pressure    = p;
 
   // Calculate the derivative of the yield function wrt sigma
   Uintah::Matrix3 f_sigma = df_dsigma(s_dev, p, porosity);
@@ -394,8 +392,8 @@ YieldCond_Rousselier::computeElasPlasTangentModulus(
 
   // Compute h_q1
   double sigma_f_sigma = sigma.Contract(f_sigma);
-  double h_q1 = (1.0 - porosity) * f_sigma.Trace() +
-         voidNuclFac * sigma_f_sigma / ((1.0 - porosity) * sigY);
+  double h_q1          = (1.0 - porosity) * f_sigma.Trace() +
+                voidNuclFac * sigma_f_sigma / ((1.0 - porosity) * sigY);
 
   // Compute h_q2
   double h_q2 = std::sqrt(2.0 / 3.0 * f_sigma.Contract(f_sigma));

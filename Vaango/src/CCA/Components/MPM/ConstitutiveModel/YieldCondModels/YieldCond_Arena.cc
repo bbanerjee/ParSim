@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -40,8 +40,8 @@
 
 using namespace Vaango;
 
-const double YieldCond_Arena::sqrt_two = std::sqrt(2.0);
-const double YieldCond_Arena::sqrt_three = std::sqrt(3.0);
+const double YieldCond_Arena::sqrt_two       = std::sqrt(2.0);
+const double YieldCond_Arena::sqrt_three     = std::sqrt(3.0);
 const double YieldCond_Arena::one_sqrt_three = 1.0 / sqrt_three;
 
 YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
@@ -52,10 +52,10 @@ YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
   ps->require("STREN", d_yieldParam.STREN);   // Shear Limit Surface Parameter
   ps->require("YSLOPE", d_yieldParam.YSLOPE); // Shear Limit Surface Parameter
   ps->getWithDefault("PEAKI1_failed", d_yieldParam.PEAKI1_failed, 1.0e-5);
-  ps->getWithDefault("FSLOPE_failed", d_yieldParam.FSLOPE_failed,
-                     0.5 * d_yieldParam.FSLOPE);
-  ps->getWithDefault("STREN_failed", d_yieldParam.STREN_failed,
-                     0.1 * d_yieldParam.STREN);
+  ps->getWithDefault(
+    "FSLOPE_failed", d_yieldParam.FSLOPE_failed, 0.5 * d_yieldParam.FSLOPE);
+  ps->getWithDefault(
+    "STREN_failed", d_yieldParam.STREN_failed, 0.1 * d_yieldParam.STREN);
   ps->getWithDefault("YSLOPE_failed", d_yieldParam.YSLOPE_failed, 1.0e-5);
 
   // Non-associativity parameters
@@ -76,43 +76,43 @@ YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
 
   // Now optionally get the variablity information for each parameter
   std::string weibullDist;
-  ps->getWithDefault("weibullDist_PEAKI1", weibullDist,
-                     std::to_string(d_yieldParam.PEAKI1));
+  ps->getWithDefault(
+    "weibullDist_PEAKI1", weibullDist, std::to_string(d_yieldParam.PEAKI1));
   d_weibull_PEAKI1.WeibullParser(weibullDist);
   proc0cout << d_weibull_PEAKI1 << std::endl;
 
-  ps->getWithDefault("weibullDist_FSLOPE", weibullDist,
-                     std::to_string(d_yieldParam.FSLOPE));
+  ps->getWithDefault(
+    "weibullDist_FSLOPE", weibullDist, std::to_string(d_yieldParam.FSLOPE));
   d_weibull_FSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_FSLOPE << std::endl;
 
-  ps->getWithDefault("weibullDist_STREN", weibullDist,
-                     std::to_string(d_yieldParam.STREN));
+  ps->getWithDefault(
+    "weibullDist_STREN", weibullDist, std::to_string(d_yieldParam.STREN));
   d_weibull_STREN.WeibullParser(weibullDist);
   proc0cout << d_weibull_STREN << std::endl;
 
-  ps->getWithDefault("weibullDist_YSLOPE", weibullDist,
-                     std::to_string(d_yieldParam.YSLOPE));
+  ps->getWithDefault(
+    "weibullDist_YSLOPE", weibullDist, std::to_string(d_yieldParam.YSLOPE));
   d_weibull_YSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_YSLOPE << std::endl;
 
-  ps->getWithDefault("weibullDist_BETA", weibullDist,
-                     std::to_string(d_nonAssocParam.BETA));
+  ps->getWithDefault(
+    "weibullDist_BETA", weibullDist, std::to_string(d_nonAssocParam.BETA));
   d_weibull_BETA.WeibullParser(weibullDist);
   proc0cout << d_weibull_BETA << std::endl;
 
-  ps->getWithDefault("weibullDist_CR", weibullDist,
-                     std::to_string(d_capParam.CR));
+  ps->getWithDefault(
+    "weibullDist_CR", weibullDist, std::to_string(d_capParam.CR));
   d_weibull_CR.WeibullParser(weibullDist);
   proc0cout << d_weibull_CR << std::endl;
 
-  ps->getWithDefault("weibullDist_T1", weibullDist,
-                     std::to_string(d_rateParam.T1));
+  ps->getWithDefault(
+    "weibullDist_T1", weibullDist, std::to_string(d_rateParam.T1));
   d_weibull_T1.WeibullParser(weibullDist);
   proc0cout << d_weibull_T1 << std::endl;
 
-  ps->getWithDefault("weibullDist_T2", weibullDist,
-                     std::to_string(d_rateParam.T2));
+  ps->getWithDefault(
+    "weibullDist_T2", weibullDist, std::to_string(d_rateParam.T2));
   d_weibull_T2.WeibullParser(weibullDist);
   proc0cout << d_weibull_T2 << std::endl;
 
@@ -122,21 +122,21 @@ YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
 
 YieldCond_Arena::YieldCond_Arena(const YieldCond_Arena* yc)
 {
-  d_modelParam = yc->d_modelParam;
-  d_yieldParam = yc->d_yieldParam;
+  d_modelParam    = yc->d_modelParam;
+  d_yieldParam    = yc->d_yieldParam;
   d_nonAssocParam = yc->d_nonAssocParam;
-  d_capParam = yc->d_capParam;
-  d_rateParam = yc->d_rateParam;
+  d_capParam      = yc->d_capParam;
+  d_rateParam     = yc->d_rateParam;
 
   // Copy parameter variability information
   d_weibull_PEAKI1 = yc->d_weibull_PEAKI1;
   d_weibull_FSLOPE = yc->d_weibull_FSLOPE;
-  d_weibull_STREN = yc->d_weibull_STREN;
+  d_weibull_STREN  = yc->d_weibull_STREN;
   d_weibull_YSLOPE = yc->d_weibull_YSLOPE;
-  d_weibull_BETA = yc->d_weibull_BETA;
-  d_weibull_CR = yc->d_weibull_CR;
-  d_weibull_T1 = yc->d_weibull_T1;
-  d_weibull_T2 = yc->d_weibull_T2;
+  d_weibull_BETA   = yc->d_weibull_BETA;
+  d_weibull_CR     = yc->d_weibull_CR;
+  d_weibull_T1     = yc->d_weibull_T1;
+  d_weibull_T2     = yc->d_weibull_T2;
 
   // Initialize local labels for parameter variability
   initializeLocalMPMLabels();
@@ -264,13 +264,13 @@ YieldCond_Arena::checkInputParameters()
 void
 YieldCond_Arena::computeModelParameters(double)
 {
-  double FSLOPE = d_yieldParam.FSLOPE, // Slope at I1=PEAKI1
-    STREN = d_yieldParam.STREN,        // Value of rootJ2 at I1=0
-    YSLOPE = d_yieldParam.YSLOPE,      // High pressure slope
-    PEAKI1 = d_yieldParam.PEAKI1;      // Value of I1 at strength=0
+  double FSLOPE        = d_yieldParam.FSLOPE, // Slope at I1=PEAKI1
+    STREN              = d_yieldParam.STREN,  // Value of rootJ2 at I1=0
+    YSLOPE             = d_yieldParam.YSLOPE, // High pressure slope
+    PEAKI1             = d_yieldParam.PEAKI1; // Value of I1 at strength=0
   double FSLOPE_failed = d_yieldParam.FSLOPE_failed, // Slope at I1=PEAKI1
-    STREN_failed = d_yieldParam.STREN_failed,        // Value of rootJ2 at I1=0
-    YSLOPE_failed = d_yieldParam.YSLOPE_failed,      // High pressure slope
+    STREN_failed       = d_yieldParam.STREN_failed,  // Value of rootJ2 at I1=0
+    YSLOPE_failed      = d_yieldParam.YSLOPE_failed, // High pressure slope
     PEAKI1_failed = d_yieldParam.PEAKI1_failed; // Value of I1 at strength=0
 
   std::vector<double> limitParameters =
@@ -278,10 +278,10 @@ YieldCond_Arena::computeModelParameters(double)
   std::vector<double> limitParameters_failed = computeModelParameters(
     PEAKI1_failed, FSLOPE_failed, STREN_failed, YSLOPE_failed);
 
-  d_modelParam.a1 = limitParameters[0];
-  d_modelParam.a2 = limitParameters[1];
-  d_modelParam.a3 = limitParameters[2];
-  d_modelParam.a4 = limitParameters[3];
+  d_modelParam.a1        = limitParameters[0];
+  d_modelParam.a2        = limitParameters[1];
+  d_modelParam.a3        = limitParameters[2];
+  d_modelParam.a4        = limitParameters[3];
   d_modelParam.a1_failed = limitParameters_failed[0];
   d_modelParam.a2_failed = limitParameters_failed[1];
   d_modelParam.a3_failed = limitParameters_failed[2];
@@ -372,9 +372,9 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   // Get the particle specific internal variables from the model state
   double PEAKI1 = state->yieldParams.at("PEAKI1");
   double FSLOPE = state->yieldParams.at("FSLOPE");
-  double STREN = state->yieldParams.at("STREN");
+  double STREN  = state->yieldParams.at("STREN");
   double YSLOPE = state->yieldParams.at("YSLOPE");
-  double CR = state->yieldParams.at("CR");
+  double CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters =
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
@@ -387,7 +387,7 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   double X_eff = state->capX + 3.0 * state->pbar_w;
 
   // Cauchy stress invariants: I1_eff = 3*(p + pbar_w), J2 = q^2/3
-  double I1_eff = state->I1_eff;
+  double I1_eff  = state->I1_eff;
   double sqrt_J2 = state->sqrt_J2;
 
   // --------------------------------------------------------------------
@@ -407,7 +407,7 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   // The elseif statements have nested if statements, which is not equivalent
   // to them having a single elseif(A&&B&&C)
   //---------------------------------------------------(I1<X)
-  if (I1_eff < X_eff) { 
+  if (I1_eff < X_eff) {
     // std::cout << " I1_eff < X_eff " << I1_eff << "," << X_eff << std::endl;
     return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
@@ -422,7 +422,7 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   if ((X_eff < I1_eff) && (I1_eff < kappa)) { // ---------------(X<I1<kappa)
 
     double kappaRatio = (kappa - I1_eff) / (kappa - X_eff);
-    double fc2 = 1.0 - kappaRatio * kappaRatio;
+    double fc2        = 1.0 - kappaRatio * kappaRatio;
     if (sqrt_J2 * sqrt_J2 > Ff * Ff * fc2) {
       // std::cout << " X_eff < I1_eff " << I1_eff << "," << X_eff << std::endl;
       // std::cout << " I1_eff < kappa " << I1_eff << "," << kappa << std::endl;
@@ -473,10 +473,10 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
   // Store in a local struct
   d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
   d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN = state->yieldParams.at("STREN");
+  d_local.STREN  = state->yieldParams.at("STREN");
   d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA = state->yieldParams.at("BETA");
-  d_local.CR = state->yieldParams.at("CR");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = computeModelParameters(
     d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
@@ -487,7 +487,7 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
 
   // Get the plastic internal variables from the model state
   double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0 * pbar_w;
+  double X_eff  = state->capX + 3.0 * pbar_w;
 
   // Compute kappa
   double kappa = d_local.PEAKI1 - d_local.CR * (d_local.PEAKI1 - X_eff);
@@ -500,8 +500,8 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
   // double I1eff_max = 0.99999*d_local.PEAKI1;
   // std::vector<double> I1_eff_vec;
   // Vaango::Util::linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
-  double rad = 0.5 * (d_local.PEAKI1 - X_eff);
-  double cen = 0.5 * (d_local.PEAKI1 + X_eff);
+  double rad       = 0.5 * (d_local.PEAKI1 - X_eff);
+  double cen       = 0.5 * (d_local.PEAKI1 + X_eff);
   double theta_min = 0.0;
   double theta_max = M_PI;
   std::vector<double> theta_vec;
@@ -521,7 +521,7 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
     double Fc_sq = 1.0;
     if ((I1_eff < kappa) && (X_eff < I1_eff)) {
       double ratio = (kappa - I1_eff) / (kappa - X_eff);
-      Fc_sq = 1.0 - ratio * ratio;
+      Fc_sq        = 1.0 - ratio * ratio;
     }
 
     // Compute J2
@@ -561,10 +561,9 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
  *      df/ds : ds/dsigma = df/dJ2 s : [I(4s) - 1/3 II]
  *                        = df/dJ2 s
 */
-void
+Matrix3
 YieldCond_Arena::df_dsigma(const Matrix3&,
-                                const ModelStateBase* state_input,
-                                Matrix3& df_dsigma)
+                           const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -577,7 +576,7 @@ YieldCond_Arena::df_dsigma(const Matrix3&,
   }
   */
 
-  double dfdp = df_dp(state_input);
+  double dfdp  = df_dp(state_input);
   double dfdJ2 = df_dq(state_input);
 
   Matrix3 One;
@@ -585,10 +584,10 @@ YieldCond_Arena::df_dsigma(const Matrix3&,
   Matrix3 p_term = One * (dfdp / 3.0);
   Matrix3 s_term = state->deviatoricStressTensor * (dfdJ2);
 
-  df_dsigma = p_term + s_term;
-  // df_dsigma /= df_dsigma.Norm();
+  Matrix3 df_dsigma = p_term + s_term;
+  df_dsigma /= df_dsigma.Norm();
 
-  return;
+  return df_dsigma;
 }
 
 //--------------------------------------------------------------
@@ -616,8 +615,7 @@ YieldCond_Arena::df_dsigma(const Matrix3&,
 //    dI1_eff/dp = 1/3
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_dp(
-  const ModelStateBase* state_input)
+YieldCond_Arena::df_dp(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -633,9 +631,9 @@ YieldCond_Arena::df_dp(
   // Get the particle specific internal variables from the model state
   double PEAKI1 = state->yieldParams.at("PEAKI1");
   double FSLOPE = state->yieldParams.at("FSLOPE");
-  double STREN = state->yieldParams.at("STREN");
+  double STREN  = state->yieldParams.at("STREN");
   double YSLOPE = state->yieldParams.at("YSLOPE");
-  double CR = state->yieldParams.at("CR");
+  double CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters =
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
@@ -665,9 +663,9 @@ YieldCond_Arena::df_dp(
   // **Elliptical Cap Function: (fc)**
   // --------------------------------------------------------------------
   double kappa_I1_eff = kappa - I1_eff;
-  double kappa_X_eff = kappa - X_eff;
-  double kappaRatio = kappa_I1_eff / kappa_X_eff;
-  double Fc_sq = 1.0 - kappaRatio * kappaRatio;
+  double kappa_X_eff  = kappa - X_eff;
+  double kappaRatio   = kappa_I1_eff / kappa_X_eff;
+  double Fc_sq        = 1.0 - kappaRatio * kappaRatio;
 
   // --------------------------------------------------------------------
   // Derivatives
@@ -710,8 +708,7 @@ YieldCond_Arena::df_dp(
 //     df/dJ2 = 1
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_dq(
-  const ModelStateBase* )
+YieldCond_Arena::df_dq(const ModelStateBase*)
 {
   /*
   const ModelState_Arena* state =
@@ -769,7 +766,7 @@ YieldCond_Arena::getInternalPoint(const ModelStateBase* state_old_input,
   // problematic when the user has specified some no porosity condition (e.g.
   // p0=-1e99)
   double I1_eff_interior = 0.0;
-  double upperI1 = PEAKI1;
+  double upperI1         = PEAKI1;
   if (I1_eff_trial < upperI1) {
     if (I1_eff_trial >
         state_old->capX +
@@ -809,19 +806,21 @@ YieldCond_Arena::getInternalPoint(const ModelStateBase* state_old_input,
  */
 bool
 YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
-                                 const double& px, const double& py,
-                                 double& cpx, double& cpy)
+                                 const double& px,
+                                 const double& py,
+                                 double& cpx,
+                                 double& cpy)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Arena.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
+/*
+if (!state) {
+  std::ostringstream out;
+  out << "**ERROR** The correct ModelState object has not been passed."
+      << " Need ModelState_Arena.";
+  throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+}
+*/
 
 #ifdef USE_GEOMETRIC_BISECTION
   // std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -859,10 +858,10 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
   // Store in a local struct
   d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
   d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN = state->yieldParams.at("STREN");
+  d_local.STREN  = state->yieldParams.at("STREN");
   d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA = state->yieldParams.at("BETA");
-  d_local.CR = state->yieldParams.at("CR");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = computeModelParameters(
     d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
@@ -873,11 +872,11 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
 
   // Get the plastic internal variables from the model state
   double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0 * pbar_w;
+  double X_eff  = state->capX + 3.0 * pbar_w;
 
   // Compute kappa
   double I1_diff = d_local.PEAKI1 - X_eff;
-  double kappa = d_local.PEAKI1 - d_local.CR * I1_diff;
+  double kappa   = d_local.PEAKI1 - d_local.CR * I1_diff;
 
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
@@ -901,10 +900,10 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
 
   // Set up mid point
   double I1eff_mid = 0.5 * (I1eff_min + I1eff_max);
-  double eta_mid = 0.5 * (eta_lo + eta_hi);
+  double eta_mid   = 0.5 * (eta_lo + eta_hi);
 
   // Do bisection
-  int iters = 1;
+  int iters        = 1;
   double TOLERANCE = 1.0e-10;
   std::vector<Uintah::Point> z_r_points;
   std::vector<Uintah::Point> z_r_segments;
@@ -917,8 +916,8 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
 
     // Get the yield surface points
     z_r_points.clear();
-    getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
-                                     num_points, z_r_points);
+    getYieldSurfacePointsAll_RprimeZ(
+      X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_points);
 
     // Find the closest point
     Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
@@ -976,31 +975,31 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     }
 #endif
 
-    #ifdef DEBUG_YIELD_BISECTION
-      //if (state->particleID == 3096267694276610) 
-      {
-        std::cout << "Iteration = " << iters << std::endl;
-        std::cout << "State = " << *state << std::endl;
-        std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
-        std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
-        std::cout << "z_r_yield_z = [";
-        for (auto& pt : z_r_points) {
-          std::cout << pt.x() << " ";
-        }
-        std::cout << "];" << std::endl;
-        std::cout << "z_r_yield_r = [";
-        for (auto& pt : z_r_points) {
-          std::cout << pt.y() << " ";
-        }
-        std::cout << "];" << std::endl;
-        std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
-        std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
-        std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
-        std::cout
-          << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
-          << std::endl;
+#ifdef DEBUG_YIELD_BISECTION
+    // if (state->particleID == 3096267694276610)
+    {
+      std::cout << "Iteration = " << iters << std::endl;
+      std::cout << "State = " << *state << std::endl;
+      std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
+      std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
+      std::cout << "z_r_yield_z = [";
+      for (auto& pt : z_r_points) {
+        std::cout << pt.x() << " ";
       }
-    #endif
+      std::cout << "];" << std::endl;
+      std::cout << "z_r_yield_r = [";
+      for (auto& pt : z_r_points) {
+        std::cout << pt.y() << " ";
+      }
+      std::cout << "];" << std::endl;
+      std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+      std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
+      std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+      std::cout
+        << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
+        << std::endl;
+    }
+#endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     // if (state->particleID == 3377699720593411) {
     double fac_z = std::sqrt(3.0);
@@ -1033,34 +1032,34 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     double I1eff_closest = sqrt_three * z_r_closest.x();
 
     if (I1eff_closest < I1eff_mid) {
-      #ifdef BISECT_LOW_ACCURACY
-        I1eff_max = I1eff_mid;
-      #else
-        I1eff_max = (1 - 0.51)*I1eff_min + 0.51*I1eff_max;
-      #endif
+#ifdef BISECT_LOW_ACCURACY
+      I1eff_max = I1eff_mid;
+#else
+      I1eff_max = (1 - 0.51) * I1eff_min + 0.51 * I1eff_max;
+#endif
       eta_hi = eta_mid;
     } else {
-      #ifdef BISECT_LOW_ACCURACY
-        I1eff_min = I1eff_mid;
-      #else
-        I1eff_min = (1 - 0.49)*I1eff_min + 0.49*I1eff_max;
-      #endif
+#ifdef BISECT_LOW_ACCURACY
+      I1eff_min = I1eff_mid;
+#else
+      I1eff_min = (1 - 0.49) * I1eff_min + 0.49 * I1eff_max;
+#endif
       eta_lo = eta_mid;
     }
 
     I1eff_mid = 0.5 * (I1eff_min + I1eff_max);
-    eta_mid = 0.5 * (eta_lo + eta_hi);
+    eta_mid   = 0.5 * (eta_lo + eta_hi);
 
-    // Distance to old closest point
-    #ifdef BISECT_LOW_ACCURACY
-      if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-4) {
-        break;
-      }
-    #else
-      if ((z_r_closest - z_r_closest_old).length2() < 1.0e-8) {
-        break;
-      }
-    #endif
+// Distance to old closest point
+#ifdef BISECT_LOW_ACCURACY
+    if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-4) {
+      break;
+    }
+#else
+    if ((z_r_closest - z_r_closest_old).length2() < 1.0e-8) {
+      break;
+    }
+#endif
     z_r_closest_old = z_r_closest;
 
     ++iters;
@@ -1078,10 +1077,10 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   // Store in a local struct
   d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
   d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN = state->yieldParams.at("STREN");
+  d_local.STREN  = state->yieldParams.at("STREN");
   d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA = state->yieldParams.at("BETA");
-  d_local.CR = state->yieldParams.at("CR");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = computeModelParameters(
     d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
@@ -1092,7 +1091,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
 
   // Get the plastic internal variables from the model state
   double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0 * pbar_w;
+  double X_eff  = state->capX + 3.0 * pbar_w;
 
   // Compute kappa
   double kappa = d_local.PEAKI1 - d_local.CR * (d_local.PEAKI1 - X_eff);
@@ -1106,7 +1105,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   double I1eff_max = d_local.PEAKI1;
 
   // Get the trial point
-  double zeff_trial = z_r_pt.x();
+  double zeff_trial   = z_r_pt.x();
   double rprime_trial = z_r_pt.y();
 
   // Set up lambda to calculate g(z_eff)
@@ -1114,18 +1113,18 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
 
     // Compute F_f
     double a3_exp_a2_I1 = d_local.a3 * std::exp(d_local.a2 * I1eff);
-    double Ff = d_local.a1 - a3_exp_a2_I1 - d_local.a4 * (I1eff);
+    double Ff           = d_local.a1 - a3_exp_a2_I1 - d_local.a4 * (I1eff);
 
     // Compute dFf_dzeff
     double dFf_dzeff = -sqrt_three * (d_local.a2 * a3_exp_a2_I1 + d_local.a4);
 
     // Compute Fc and dFc_dzeff
-    double Fc = 1.0;
+    double Fc        = 1.0;
     double dFc_dzeff = 0.0;
     if ((I1eff < kappa) && (X_eff < I1eff)) {
       double ratio = (kappa - I1eff) / (kappa - X_eff);
       // TODO: Add check for negative values of 1 - ratio^2
-      Fc = std::sqrt(1.0 - ratio * ratio);
+      Fc        = std::sqrt(1.0 - ratio * ratio);
       dFc_dzeff = sqrt_three * ratio / (Fc * (kappa - X_eff));
     }
 
@@ -1145,8 +1144,8 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   // First check the end points
   std::vector<double> gfun_min = gfun(I1eff_min);
   std::vector<double> gfun_max = gfun(I1eff_max);
-  double gmin = gfun_min[0];
-  double gmax = gfun_max[0];
+  double gmin                  = gfun_min[0];
+  double gmax                  = gfun_max[0];
 
   if (std::signbit(gmax) == std::signbit(gmin)) {
     std::cout << "gmin = " << gmin << " gmax = " << gmax << std::endl;
@@ -1174,7 +1173,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   double TOLERANCE =
     std::min(1.0e-10, 1.0e-16 * std::abs(I1eff_max - I1eff_min));
   int MAX_ITER = (int)std::ceil(std::log2((I1eff_max - I1eff_min) / TOLERANCE));
-  int iter = 0;
+  int iter     = 0;
   bool isSuccess = false;
 
   double I1eff_mid = 0.0, zeff_mid = 0.0, rprime_mid = 0.0;
@@ -1185,9 +1184,9 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
     I1eff_mid = 0.5 * (I1eff_min + I1eff_max);
 
     std::vector<double> gfun_mid = gfun(I1eff_mid);
-    double gmid = gfun_mid[0];
-    zeff_mid = gfun_mid[1];
-    rprime_mid = gfun_mid[2];
+    double gmid                  = gfun_mid[0];
+    zeff_mid                     = gfun_mid[1];
+    rprime_mid                   = gfun_mid[2];
 
     // Check g(zeff = 0) or (zeff_max - zeff_min)/2 < TOLERANCE
     if ((std::abs(gmid) < std::numeric_limits<double>::min()) ||
@@ -1197,7 +1196,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
     }
 
     std::vector<double> gfun_min = gfun(I1eff_min);
-    double gmin = gfun_min[0];
+    double gmin                  = gfun_min[0];
 
     if (std::signbit(gmid) == std::signbit(gmin)) {
       I1eff_min = I1eff_mid;
@@ -1216,8 +1215,8 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
 #ifdef DEBUG_YIELD_BISECTION
   // Compute g for several values of I
   int num_points = 20;
-  double rad = 0.5 * (d_local.PEAKI1 - X_eff);
-  double cen = 0.5 * (d_local.PEAKI1 + X_eff);
+  double rad     = 0.5 * (d_local.PEAKI1 - X_eff);
+  double cen     = 0.5 * (d_local.PEAKI1 + X_eff);
   std::vector<double> theta_vec;
   Vaango::Util::linspace(0.0, M_PI, num_points, theta_vec);
 
@@ -1243,10 +1242,10 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   // Get the yield surface points
   std::vector<Uintah::Point> z_r_points;
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
-  I1eff_min = 0.999999 * X_eff;
-  I1eff_max = 0.999999 * d_local.PEAKI1;
-  getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
-                                   num_points, z_r_points);
+  I1eff_min     = 0.999999 * X_eff;
+  I1eff_max     = 0.999999 * d_local.PEAKI1;
+  getYieldSurfacePointsAll_RprimeZ(
+    X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_points);
   // Compute distances
   std::vector<double> distSq;
   for (auto& pt : z_r_points) {
@@ -1286,13 +1285,17 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
 /* Get the points on the yield surface */
 void
 YieldCond_Arena::getYieldSurfacePointsAll_RprimeZ(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const double& I1eff_min, const double& I1eff_max, const int& num_points,
+  const double& X_eff,
+  const double& kappa,
+  const double& sqrtKG,
+  const double& I1eff_min,
+  const double& I1eff_max,
+  const int& num_points,
   std::vector<Uintah::Point>& z_r_vec)
 {
   // Compute z_eff and r'
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points,
-                         z_r_vec);
+  computeZeff_and_RPrime(
+    X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_vec);
 
   return;
 }
@@ -1300,35 +1303,42 @@ YieldCond_Arena::getYieldSurfacePointsAll_RprimeZ(
 /* Get the points on two segments the yield surface */
 void
 YieldCond_Arena::getYieldSurfacePointsSegment_RprimeZ(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const Uintah::Point& start_point, const Uintah::Point& end_point,
-  const int& num_points, std::vector<Uintah::Point>& z_r_poly)
+  const double& X_eff,
+  const double& kappa,
+  const double& sqrtKG,
+  const Uintah::Point& start_point,
+  const Uintah::Point& end_point,
+  const int& num_points,
+  std::vector<Uintah::Point>& z_r_poly)
 {
 
   // Find the start I1 and end I1 values of the segments
   // **TODO** make sure that the start and end points are differenet
-  double z_effStart = start_point.x();
-  double z_effEnd = end_point.x();
+  double z_effStart  = start_point.x();
+  double z_effEnd    = end_point.x();
   double I1_effStart = sqrt_three * z_effStart;
-  double I1_effEnd = sqrt_three * z_effEnd;
+  double I1_effEnd   = sqrt_three * z_effEnd;
 
   // Compute z_eff and r'
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd,
-                         num_points, z_r_poly);
+  computeZeff_and_RPrime(
+    X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd, num_points, z_r_poly);
 
   return;
 }
 
 /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
 void
-YieldCond_Arena::computeZeff_and_RPrime(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const double& I1eff_min, const double& I1eff_max, const int& num_points,
-  std::vector<Uintah::Point>& z_r_vec)
+YieldCond_Arena::computeZeff_and_RPrime(const double& X_eff,
+                                        const double& kappa,
+                                        const double& sqrtKG,
+                                        const double& I1eff_min,
+                                        const double& I1eff_max,
+                                        const int& num_points,
+                                        std::vector<Uintah::Point>& z_r_vec)
 {
   // Set up points
-  double rad = 0.5 * (d_local.PEAKI1 - X_eff);
-  double cen = 0.5 * (d_local.PEAKI1 + X_eff);
+  double rad       = 0.5 * (d_local.PEAKI1 - X_eff);
+  double cen       = 0.5 * (d_local.PEAKI1 + X_eff);
   double theta_max = std::acos(std::max((I1eff_min - cen) / rad, -1.0));
   double theta_min = std::acos(std::min((I1eff_max - cen) / rad, 1.0));
   std::vector<double> theta_vec;
@@ -1346,7 +1356,7 @@ YieldCond_Arena::computeZeff_and_RPrime(
     double Fc_sq = 1.0;
     if (I1_eff < kappa) {
       double ratio = (kappa - I1_eff) / (kappa - X_eff);
-      Fc_sq = std::max(1.0 - ratio * ratio, 0.0);
+      Fc_sq        = std::max(1.0 - ratio * ratio, 0.0);
     }
 
     // Compute J2
@@ -1387,9 +1397,9 @@ YieldCond_Arena::computeZeff_and_RPrime(
 //--------------------------------------------------------------
 double
 YieldCond_Arena::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                             const PressureModel* eos,
-                                             const ShearModulusModel*,
-                                             const InternalVariableModel*)
+                                const PressureModel* eos,
+                                const ShearModulusModel*,
+                                const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsVol should not be called by "
@@ -1408,9 +1418,9 @@ YieldCond_Arena::d2f_dp_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arena::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                             const PressureModel* eos,
-                                             const ShearModulusModel*,
-                                             const InternalVariableModel*)
+                                const PressureModel* eos,
+                                const ShearModulusModel*,
+                                const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsDev should not be called by "
@@ -1429,9 +1439,9 @@ YieldCond_Arena::d2f_dp_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arena::d2f_dq_depsVol(const ModelStateBase* state_input,
-                                             const PressureModel*,
-                                             const ShearModulusModel* shear,
-                                             const InternalVariableModel*)
+                                const PressureModel*,
+                                const ShearModulusModel* shear,
+                                const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsVol should not be called by "
@@ -1450,9 +1460,9 @@ YieldCond_Arena::d2f_dq_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arena::d2f_dq_depsDev(const ModelStateBase* state_input,
-                                             const PressureModel*,
-                                             const ShearModulusModel* shear,
-                                             const InternalVariableModel*)
+                                const PressureModel*,
+                                const ShearModulusModel* shear,
+                                const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsDev should not be called by "
@@ -1469,14 +1479,14 @@ YieldCond_Arena::d2f_dq_depsDev(const ModelStateBase* state_input,
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_depsVol(
-  const ModelStateBase* state_input, const PressureModel* eos,
-  const ShearModulusModel* shear, const InternalVariableModel*)
+YieldCond_Arena::df_depsVol(const ModelStateBase* state_input,
+                            const PressureModel* eos,
+                            const ShearModulusModel* shear,
+                            const InternalVariableModel*)
 {
   std::ostringstream out;
-  out
-    << "**ERROR** df_depsVol should not be called by "
-    << " models that use the Arena yield criterion.";
+  out << "**ERROR** df_depsVol should not be called by "
+      << " models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1489,14 +1499,14 @@ YieldCond_Arena::df_depsVol(
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_depsDev(
-  const ModelStateBase* state_input, const PressureModel* eos,
-  const ShearModulusModel* shear, const InternalVariableModel*)
+YieldCond_Arena::df_depsDev(const ModelStateBase* state_input,
+                            const PressureModel* eos,
+                            const ShearModulusModel* shear,
+                            const InternalVariableModel*)
 {
   std::ostringstream out;
-  out
-    << "**ERROR** df_depsVol should not be called by "
-    << " models that use the Arena yield criterion.";
+  out << "**ERROR** df_depsVol should not be called by "
+      << " models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1504,8 +1514,10 @@ YieldCond_Arena::df_depsDev(
 
 // Evaluate the yield function.
 double
-YieldCond_Arena::evalYieldCondition(const double p, const double q,
-                                    const double dummy0, const double dummy1,
+YieldCond_Arena::evalYieldCondition(const double p,
+                                    const double q,
+                                    const double dummy0,
+                                    const double dummy1,
                                     double& dummy2)
 {
   std::ostringstream out;
@@ -1538,10 +1550,10 @@ YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3&,
 //    df/dsigma =
 // where
 //    s = sigma - 1/3 tr(sigma) I
-void
+Matrix3
 YieldCond_Arena::df_dsigma(const Uintah::Matrix3& sig,
-                                          const double p_c, const double,
-                                          Uintah::Matrix3& derivative)
+                           const double p_c,
+                           const double)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
@@ -1549,15 +1561,15 @@ YieldCond_Arena::df_dsigma(const Uintah::Matrix3& sig,
       << "called by models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
-  return;
+  return Matrix3(Vaango::Util::Zero);
 }
 
 // Compute df/ds  where s = deviatoric stress
 //    df/ds =
-void
+Matrix3
 YieldCond_Arena::df_dsigmaDev(const Uintah::Matrix3& sigDev,
-                                             const double, const double,
-                                             Uintah::Matrix3& derivative)
+                              const double,
+                              const double)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
@@ -1565,40 +1577,42 @@ YieldCond_Arena::df_dsigmaDev(const Uintah::Matrix3& sigDev,
       << "called by models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
-  return;
+  return Matrix3(Vaango::Util::Zero);
 }
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
-void
-YieldCond_Arena::df_dxi(const Matrix3& sigDev, const ModelStateBase*,
-                             Matrix3& df_ds)
+Matrix3
+YieldCond_Arena::df_dxi(const Matrix3& sigDev,
+                        const ModelStateBase*)
 
 {
   std::ostringstream out;
   out << "**ERROR** df_dxi with a Matrix3 argument should not be "
       << "called by models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
-  return;
+
+  return Matrix3(Vaango::Util::Zero);
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-void
+std::pair<Matrix3, Matrix3>
 YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& sigDev,
-                                     const ModelStateBase*, Matrix3& df_ds,
-                                     Matrix3& df_dbeta)
+                                    const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** df_dsigmaDev_dbeta with a Matrix3 argument should not be "
       << "called by models that use the Arena yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
-  return;
+
+  return std::make_pair(Matrix3(Vaango::Util::Zero), Matrix3(Vaango::Util::Zero));
 }
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
 double
-YieldCond_Arena::df_dplasticStrain(const Matrix3&, const double& dsigy_dep,
-                             const ModelStateBase*)
+YieldCond_Arena::df_dplasticStrain(const Matrix3&,
+                                   const double& dsigy_dep,
+                                   const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** df_dplasticStrain with a Matrix3 argument should not be "
@@ -1631,7 +1645,8 @@ YieldCond_Arena::eval_h_alpha(const Matrix3&, const ModelStateBase*)
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
 double
-YieldCond_Arena::eval_h_phi(const Matrix3&, const double&,
+YieldCond_Arena::eval_h_phi(const Matrix3&,
+                            const double&,
                             const ModelStateBase*)
 {
   std::ostringstream out;
@@ -1646,8 +1661,10 @@ YieldCond_Arena::eval_h_phi(const Matrix3&, const double&,
 void
 YieldCond_Arena::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
                                                const Matrix3& sigma,
-                                               double sigY, double dsigYdep,
-                                               double porosity, double,
+                                               double sigY,
+                                               double dsigYdep,
+                                               double porosity,
+                                               double,
                                                TangentModulusTensor& Cep)
 {
   std::ostringstream out;
@@ -1660,8 +1677,10 @@ YieldCond_Arena::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 
 void
 YieldCond_Arena::computeTangentModulus(const TangentModulusTensor& Ce,
-                                       const Matrix3& f_sigma, double f_q1,
-                                       double h_q1, TangentModulusTensor& Cep)
+                                       const Matrix3& f_sigma,
+                                       double f_q1,
+                                       double h_q1,
+                                       TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** coputeTangentModulus with a Matrix3 argument should not be "
@@ -1675,7 +1694,9 @@ YieldCond_Arena::computeTangentModulus(const TangentModulusTensor& Ce,
  */
 void
 YieldCond_Arena::updateLocalVariables(
-  ParticleSubset* pset, DataWarehouse* old_dw, DataWarehouse* new_dw,
+  ParticleSubset* pset,
+  DataWarehouse* old_dw,
+  DataWarehouse* new_dw,
   constParticleVariable<double>& pCoherence_old,
   const ParticleVariable<double>& pCoherence_new)
 {
@@ -1704,7 +1725,7 @@ YieldCond_Arena::updateLocalVariables(
 
   double PEAKI1_failed = d_yieldParam.PEAKI1_failed;
   double FSLOPE_failed = d_yieldParam.FSLOPE_failed;
-  double STREN_failed = d_yieldParam.STREN_failed;
+  double STREN_failed  = d_yieldParam.STREN_failed;
   double YSLOPE_failed = d_yieldParam.YSLOPE_failed;
   for (int idx : *pset) {
     // Get the coherence values
@@ -1733,8 +1754,8 @@ YieldCond_Arena::updateLocalVariables(
 
     // Copy the other parameters
     pBETA_new[idx] = pBETA_old[idx];
-    pCR_new[idx] = pCR_old[idx];
-    pT1_new[idx] = pT1_old[idx];
-    pT2_new[idx] = pT2_old[idx];
+    pCR_new[idx]   = pCR_old[idx];
+    pT1_new[idx]   = pT1_old[idx];
+    pT2_new[idx]   = pT2_old[idx];
   }
 }
