@@ -42,3 +42,5 @@ _site
 gh-pages
 googletest
 octave-workspace
+_clang-format
+.clang-tidy

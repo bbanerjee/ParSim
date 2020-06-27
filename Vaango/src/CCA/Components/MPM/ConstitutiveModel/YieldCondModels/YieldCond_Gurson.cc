@@ -33,9 +33,10 @@
 using namespace Uintah;
 using namespace Vaango;
 
-YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps)
+YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps,
+                                   InternalVariableModel* intvar)
 {
-  d_intvar = nullptr;
+  d_intvar = intvar;
 
   ps->require("q1", d_CM.q1);
   ps->require("q2", d_CM.q2);

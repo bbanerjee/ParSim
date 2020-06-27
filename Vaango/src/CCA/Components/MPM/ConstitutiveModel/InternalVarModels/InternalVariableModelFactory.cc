@@ -27,6 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
@@ -57,7 +58,9 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
   if (!child->getAttribute("type", mat_type))
     throw ProblemSetupException("No type for internal_var_model", __FILE__,
                                 __LINE__);
-  if (mat_type == "soil_model_brannon_kappa") {
+  if (mat_type == "metal_internal_var") {
+    return scinew IntVar_Metal(child);
+  } else if (mat_type == "soil_model_brannon_kappa") {
     return (scinew IntVar_SoilBrannon(child));
   } else if (mat_type == "tabular_cap") {
     return (scinew IntVar_TabularCap(child));
@@ -109,24 +112,26 @@ InternalVariableModelFactory::create(ProblemSpecP& ps,
 InternalVariableModel*
 InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
 {
-  if (dynamic_cast<const IntVar_BorjaPressure*>(pm))
+  if (dynamic_cast<const IntVar_Arena*>(pm))
+    return scinew IntVar_Arena(dynamic_cast<const IntVar_Arena*>(pm));
+
+  else if (dynamic_cast<const IntVar_BorjaPressure*>(pm))
     return (scinew IntVar_BorjaPressure(
       dynamic_cast<const IntVar_BorjaPressure*>(pm)));
+
+  else if (dynamic_cast<const IntVar_Metal*>(pm))
+    return scinew IntVar_Metal(dynamic_cast<const IntVar_Metal*>(pm));
 
   else if (dynamic_cast<const IntVar_SoilBrannon*>(pm))
     return (scinew IntVar_SoilBrannon(
       dynamic_cast<const IntVar_SoilBrannon*>(pm)));
-
-  else if (dynamic_cast<const IntVar_Arena*>(pm))
-    return (
-      scinew IntVar_Arena(dynamic_cast<const IntVar_Arena*>(pm)));
 
   else if (dynamic_cast<const IntVar_TabularCap*>(pm))
     return (
       scinew IntVar_TabularCap(dynamic_cast<const IntVar_TabularCap*>(pm)));
 
   else {
-    throw Uintah::ProblemSetupException(
+    throw Uintah::InternalError(
       "Cannot create copy of unknown internal var model", __FILE__, __LINE__);
   }
 }

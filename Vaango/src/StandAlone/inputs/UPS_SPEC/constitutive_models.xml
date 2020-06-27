@@ -129,7 +129,6 @@
     <scaling                       spec="OPTIONAL STRING 'none, kayenta'" />
     <reference_volume              spec="OPTIONAL DOUBLE 'positive'" />
     <failure_by_pressure           spec="OPTIONAL BOOLEAN" />
-    <frac_nucleation               spec="OPTIONAL DOUBLE" />
     <fracture_toughness_curve      spec="OPTIONAL NO_DATA" 
                                    need_applies_to="type hypo_elastic_fracture">
       <crack_propagation_criterion spec="REQUIRED STRING 'max_hoop_stress, empirical_criterion, max_principal_stress, max_energy_release_rate, strain_energy_density'" />
@@ -170,7 +169,6 @@
     <Ks                            spec="OPTIONAL DOUBLE" />
     <Ku                            spec="OPTIONAL DOUBLE" />
     <n                             spec="OPTIONAL DOUBLE" />
-    <meanstrain_nucleation         spec="OPTIONAL DOUBLE" />
     <melting_temp_model            spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'constant_Tm, linear_Tm, scg_Tm, bps_Tm'" >
       <a                           spec="OPTIONAL DOUBLE" />
@@ -365,6 +363,8 @@
     </specific_heat_model>
     <stability_check               spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'acoustic, becker, drucker, drucker_becker, none'" />
+    <frac_nucleation               spec="OPTIONAL DOUBLE" />
+    <meanstrain_nucleation         spec="OPTIONAL DOUBLE" />
     <stddevstrain_nucleation       spec="OPTIONAL DOUBLE" />
     <strain_limit                  spec="OPTIONAL DOUBLE" />
     <StressIntensityF              spec="OPTIONAL DOUBLE" />
@@ -394,14 +394,6 @@
     <use_time_temperature_equation spec="OPTIONAL BOOLEAN" />   <!-- FIXME: What is the default -->
     <viscosity                     spec="OPTIONAL DOUBLE" />
     <volfracHE                     spec="OPTIONAL DOUBLE" />
-    <yield_condition               spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'gurson, rousselier, vonMises'" >
-      <f_c                         spec="OPTIONAL DOUBLE" />   <!-- FIXME: really optional? -->
-      <k                           spec="OPTIONAL DOUBLE" />   <!-- FIXME: really optional? -->
-      <q1                          spec="OPTIONAL DOUBLE" />   <!-- FIXME: really optional? -->
-      <q2                          spec="OPTIONAL DOUBLE" />   <!-- FIXME: really optional? -->
-      <q3                          spec="OPTIONAL DOUBLE" />   <!-- FIXME: really optional? -->
-    </yield_condition>
     <yield_stress                  spec="OPTIONAL DOUBLE" />
     <y1                            spec="OPTIONAL DOUBLE" />
     <y2                            spec="OPTIONAL DOUBLE" />
@@ -978,9 +970,10 @@
 
     </elastic_moduli_model>
 
-    <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'gurson rousselier camclay arena arena_mixture tabular tabular_cap von_mises'"
-                              need_applies_to="type camclay arena arena_mixture tabular_plasticity tabular_plasticity_cap">
+    <yield_condition  spec="REQUIRED NO_DATA"
+                      attribute1="type REQUIRED STRING 'gurson rousselier camclay arena arena_mixture tabular tabular_cap von_mises'"
+                      need_applies_to="type arena arena_mixture camclay elastic_plastic elastic_plastic_hp tabular_plasticity tabular_plasticity_cap">
+
       <!-- type = camclay -->
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
 
@@ -1051,12 +1044,28 @@
       <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
                              need_applies_to="type tabular tabular_cap"/>
       <cap_ellipticity_ratio spec="REQUIRED DOUBLE"  need_applies_to="type tabular_cap"/>
-    </plastic_yield_condition>
+    </yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'borja_consolidation_pressure,soil_model_brannon_kappa, arena, tabular_cap'"
-                              need_applies_to="type camclay soil_model_brannon tabular_plasticity_cap">
+                              attribute1="type REQUIRED STRING 'arena borja_consolidation_pressure metal_internal_var soil_model_brannon_kappa tabular_cap'"
+                              need_applies_to="type camclay elastic_plastic elastic_plastic_hp soil_model_brannon tabular_plasticity_cap">
+
+      <!-- type = arena -->
+      <p0 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
+      <p1 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
+      <p2 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
+      <p3 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
+      <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type arena" />
+
+      <!-- type = borja -->
       <pc0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_consolidation_pressure"/>
       <lambdatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_consolidation_pressure"/>
+
+      <!-- type = metal -->
+      <vol_frac_nucleation      spec="OPTIONAL DOUBLE" need_applies_to="type metal_internal_var" />
+      <mean_strain_nucleation   spec="OPTIONAL DOUBLE" need_applies_to="type metal_internal_var" />
+      <stddev_strain_nucleation spec="OPTIONAL DOUBLE" need_applies_to="type metal_internal_var" />
+
+      <!-- type = soil_brannon -->
       <soil_model_brannon_fSlope spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
       <soil_model_brannon_peakI1 spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
       <soil_model_brannon_Cr spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
@@ -1065,11 +1074,6 @@
       <soil_model_brannon_p1 spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
       <soil_model_brannon_p3 spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
       <soil_model_brannon_p4 spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
-      <p0 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
-      <p1 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
-      <p2 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
-      <p3 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
-      <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type arena" />
 
       <!-- type = tabular_cap -->
       <filename              spec="REQUIRED STRING" need_applies_to="type tabular_cap"/>

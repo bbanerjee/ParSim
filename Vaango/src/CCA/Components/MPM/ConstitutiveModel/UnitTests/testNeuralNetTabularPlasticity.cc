@@ -212,7 +212,7 @@ public:
     // Yield criterion
     std::string table_yield = 
       std::string(currPath) + "/" + "tabular_von_mises.json";
-    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "plastic_yield_condition", 
+    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "yield_condition", 
                              BAD_CAST "");
     xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular");
     xmlNewChild(yield, nullptr, BAD_CAST "filename", 

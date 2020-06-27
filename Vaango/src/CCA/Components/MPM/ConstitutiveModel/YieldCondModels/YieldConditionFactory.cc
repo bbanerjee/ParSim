@@ -46,7 +46,7 @@ using namespace Vaango;
 YieldCondition*
 YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP child = ps->findBlock("plastic_yield_condition");
+  ProblemSpecP child = ps->findBlock("yield_condition");
   if (!child)
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Cannot find yield condition.", __FILE__,
@@ -57,11 +57,7 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
       "MPM::ConstitutiveModel:No type for yield condition.", __FILE__,
       __LINE__);
 
-  if (mat_type == "vonMises")
-    return (scinew YieldCond_vonMises(child));
-  else if (mat_type == "gurson")
-    return (scinew YieldCond_Gurson(child));
-  else if (mat_type == "arena")
+  if (mat_type == "arena")
     return (scinew YieldCond_Arena(child));
   else if (mat_type == "arena_mixture")
     return (scinew YieldCond_ArenaMixture(child));
@@ -80,7 +76,7 @@ YieldCondition*
 YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
                               InternalVariableModel* intvar)
 {
-  ProblemSpecP child = ps->findBlock("plastic_yield_condition");
+  ProblemSpecP child = ps->findBlock("yield_condition");
   if (!child)
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Cannot find yield condition.", __FILE__,
@@ -91,10 +87,14 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
       "MPM::ConstitutiveModel:No type for yield condition.", __FILE__,
       __LINE__);
 
-  if (mat_type == "camclay")
-    return (scinew YieldCond_CamClay(child, intvar));
-  else if (mat_type == "arenisca3")
+  if (mat_type == "arenisca3")
     return (scinew YieldCond_Arenisca3(child, intvar));
+  else if (mat_type == "camclay")
+    return (scinew YieldCond_CamClay(child, intvar));
+  else if (mat_type == "gurson")
+    return (scinew YieldCond_Gurson(child, intvar));
+  else if (mat_type == "von_mises")
+    return (scinew YieldCond_vonMises(child, intvar));
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",

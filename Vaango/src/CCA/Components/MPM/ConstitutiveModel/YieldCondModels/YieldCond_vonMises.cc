@@ -32,14 +32,15 @@
 using namespace Uintah;
 using namespace Vaango;
 
-YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP&)
+YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP& ps,
+                                       InternalVariableModel* intvar)
 {
-  d_intvar = nullptr;
+  d_intvar = intvar;
 }
 
-YieldCond_vonMises::YieldCond_vonMises(const YieldCond_vonMises*)
+YieldCond_vonMises::YieldCond_vonMises(const YieldCond_vonMises* ym)
 {
-  d_intvar = nullptr;
+  d_intvar = ym->d_intvar;
 }
 
 YieldCond_vonMises::~YieldCond_vonMises() = default;

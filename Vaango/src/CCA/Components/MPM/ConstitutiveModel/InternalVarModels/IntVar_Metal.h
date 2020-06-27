@@ -169,9 +169,22 @@ public:
 
 private:
 
+  // Create datatype for storing porosity parameters
+  struct PoreNucleationModelParams
+  {
+    double phi_n;       /*< Volume fraction of void nucleating particles */
+    double eps_mean_n;  /*< Mean strain for nucleation */
+    double eps_std_n;   /*< Standard deviation of strain for nucleation */
+  };
+
+  PoreNucleationModelParams d_poreNucleation;
+
   /* Initialize local VarLabels */
   void
   initializeLocalMPMLabels();
+
+  void getPorosityModelParams(Uintah::ProblemSpecP& ps);
+  void copyPorosityModelParams(const IntVar_Metal* cm);
 
   double
   computeEqPlasticStrain(double eqPlasticStrain_old,
@@ -187,6 +200,14 @@ private:
   double
   plasticPorosityHardeningModulus(const ModelStateBase* state) const;
 
+  /* Calculate hardening modulus due to void growth */
+  double poreGrowthHardeningModulus(const ModelStateBase* state) const;
+
+  /* Calculate hardening modulus due to void nucleation */
+  double poreNucleationHardeningModulus(const ModelStateBase* state) const;
+
+  /* Calculate the void nucleation factor */
+  double voidNucleationFactor(double eqPlasticStrain) const;
 };
 
 } // End namespace Vaango

@@ -93,7 +93,8 @@ public:
 
   /*! Constructor
     Creates a Gurson Yield Function object */
-  YieldCond_Gurson(Uintah::ProblemSpecP& ps);
+  YieldCond_Gurson(Uintah::ProblemSpecP& ps,
+                   InternalVariableModel* intvar);
   YieldCond_Gurson(const YieldCond_Gurson* cm);
   YieldCond_Gurson& operator=(const YieldCond_Gurson&) = delete;
 

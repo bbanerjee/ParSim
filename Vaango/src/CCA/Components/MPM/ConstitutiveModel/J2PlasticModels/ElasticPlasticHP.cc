@@ -24,18 +24,19 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DevStressModels/DevStressModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <Core/Math/Short27.h> //for Fracture
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -126,7 +127,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   //__________________________________
   //
-  d_yield = YieldConditionFactory::create(ps, usingRR);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
   if (!d_yield) {
     ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
@@ -251,7 +253,8 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_Cp.n = cm->d_Cp.n;
   */
   d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp);
-  d_yield  = YieldConditionFactory::createCopy(cm->d_yield);
+  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
   d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
   d_damage = DamageModelFactory::createCopy(cm->d_damage);

@@ -37,7 +37,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -475,7 +475,8 @@ protected:
   bool d_allowNoTension;
   bool d_allowNoShear;
 
-  YieldCondition* d_yield;
+  Vaango::InternalVariableModel* d_intvar;
+  Vaango::YieldCondition* d_yield;
   StabilityCheck* d_stable;
   FlowModel* d_flow;
   DamageModel* d_damage;

@@ -48,6 +48,7 @@ IntVar_Metal::IntVar_Metal(ProblemSpecP& ps)
   d_shear = nullptr;
   d_eos = nullptr;
   initializeLocalMPMLabels();
+  getPorosityModelParams(ps);
 }
 
 IntVar_Metal::IntVar_Metal(const IntVar_Metal* cm)
@@ -56,6 +57,7 @@ IntVar_Metal::IntVar_Metal(const IntVar_Metal* cm)
   d_shear = cm->d_shear;
   d_eos = cm->d_eos;
   initializeLocalMPMLabels();
+  copyPorosityModelParams(cm);
 }
 
 void
@@ -66,6 +68,25 @@ IntVar_Metal::initializeLocalMPMLabels()
   pIntVarLabel = Uintah::VarLabel::create("p.intVarMetal", type_d);
   pIntVarLabel_preReloc =
     Uintah::VarLabel::create("p.intVarMetal+", type_d);
+}
+
+void
+IntVar_Metal::getPorosityModelParams(ProblemSpecP& ps)
+{
+  d_poreNucleation.phi_n      = 0.1; // Volume fraction of void nucleating particles
+  d_poreNucleation.eps_mean_n = 0.3; // Mean strain for nucleation
+  d_poreNucleation.eps_std_n  = 0.1; // Standard deviation strain for nucleation
+  ps->getWithDefault("vol_frac_nucleation", d_poreNucleation.phi_n, 0.1);
+  ps->getWithDefault("mean_strain_nucleation", d_poreNucleation.eps_mean_n, 0.3);
+  ps->getWithDefault("stddev_strain_nucleation", d_poreNucleation.eps_std_n, 0.1);
+}
+
+void
+IntVar_Metal::copyPorosityModelParams(const IntVar_Metal* cm)
+{
+  d_poreNucleation.phi_n      = cm->d_poreNucleation.phi_n;
+  d_poreNucleation.eps_mean_n = cm->d_poreNucleation.eps_mean_n;
+  d_poreNucleation.eps_std_n  = cm->d_poreNucleation.eps_std_n;
 }
 
 IntVar_Metal::~IntVar_Metal()
@@ -79,6 +100,9 @@ IntVar_Metal::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
   int_var_ps->setAttribute("type", "metal_plasticity");
+  int_var_ps->appendElement("vol_frac_nucleation", d_poreNucleation.phi_n);
+  int_var_ps->appendElement("mean_strain_nucleation", d_poreNucleation.eps_mean_n);
+  int_var_ps->appendElement("stddev_strain_nucleation", d_poreNucleation.eps_std_n);
 }
 
 /* get internal variable labels */
@@ -221,9 +245,38 @@ IntVar_Metal::eqPlasticStrainHardeningModulus(const ModelStateBase* state) const
 double
 IntVar_Metal::plasticPorosityHardeningModulus(const ModelStateBase* state) const
 {
-  return (1.0 - state->porosity) * state->plasticFlowDirection.Trace();
+  double h_grow = poreGrowthHardeningModulus(state);
+  double h_nucl = poreNucleationHardeningModulus(state);
+  return h_grow + h_nucl;
 }
  
+/* Calculate hardening modulus due to void growth */
+double
+IntVar_Metal::poreGrowthHardeningModulus(const ModelStateBase* state) const
+{
+  double h_grow = (1.0 - state->porosity) * state->plasticFlowDirection.Trace();
+  return h_grow;
+}
+
+/* Calculate hardening modulus due to void nucleation */
+double
+IntVar_Metal::poreNucleationHardeningModulus(const ModelStateBase* state) const
+{
+  double A = voidNucleationFactor(state->eqPlasticStrain);
+  double h_nucl = Vaango::Util::sqrt_two_third * A;
+  return h_nucl;
+}
+
+/* Calculate the void nucleation factor */
+double
+IntVar_Metal::voidNucleationFactor(double eqPlasticStrain) const
+{
+  double fac = (eqPlasticStrain - d_poreNucleation.eps_mean_n) / d_poreNucleation.eps_std_n;
+  double A   = d_poreNucleation.phi_n / (d_poreNucleation.eps_std_n * std::sqrt(2.0 * M_PI)) *
+               std::exp(-0.5 * fac * fac);
+  return A;
+}
+
 double
 IntVar_Metal::computeVolStrainDerivOfInternalVariable(
   const std::string& label,

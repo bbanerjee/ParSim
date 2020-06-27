@@ -58,17 +58,12 @@ namespace Vaango {
 class YieldCond_vonMises : public YieldCondition
 {
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // YieldCond_vonMises(const YieldCond_vonMises &);
-  YieldCond_vonMises& operator=(const YieldCond_vonMises&);
-
 public:
   //! Constructor
-  /*! Creates a YieldCond_vonMises function object */
-  YieldCond_vonMises(Uintah::ProblemSpecP& ps);
+  YieldCond_vonMises(Uintah::ProblemSpecP& ps,
+                     InternalVariableModel* intvar);
   YieldCond_vonMises(const YieldCond_vonMises* cm);
+  YieldCond_vonMises& operator=(const YieldCond_vonMises&) = delete;
 
   //! Destructor
   ~YieldCond_vonMises() override;

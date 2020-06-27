@@ -23,10 +23,6 @@
 # IN THE SOFTWARE.
 #
 SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
-  YieldCondition.cc 
-  YieldConditionFactory.cc 
-  GursonYield.cc 
-  VonMisesYield.cc 
   KinematicHardeningModel.cc 
   KinematicHardeningModelFactory.cc 
   NoKinematicHardening.cc 

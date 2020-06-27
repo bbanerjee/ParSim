@@ -211,7 +211,7 @@ public:
     // Yield criterion
     std::string table_yield = 
       std::string(currPath) + "/" + "tabular_drucker_prager.json";
-    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "plastic_yield_condition", 
+    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "yield_condition", 
                              BAD_CAST "");
     xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular_cap");
     xmlNewChild(yield, nullptr, BAD_CAST "filename", 

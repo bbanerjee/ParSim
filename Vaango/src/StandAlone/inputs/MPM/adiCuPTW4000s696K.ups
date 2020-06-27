@@ -142,7 +142,9 @@
             <Gamma_0> 1.99 </Gamma_0>
             <a> 1.5 </a>
           </melting_temp_model>
-          <yield_condition type="vonMises">
+          <internal_variable_model type="metal_internal_var">
+          </internal_variable_model>
+          <yield_condition type="von_mises">
           </yield_condition>
           <stability_check type="none">
           </stability_check>
