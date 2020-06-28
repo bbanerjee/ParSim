@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __FLOW_MODEL_H__
-#define __FLOW_MODEL_H__
+#ifndef __PLASTIC_FLOW_STRESS_MODEL_H__
+#define __PLASTIC_FLOW_STRESS_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -41,7 +41,7 @@ namespace Uintah {
 
 ///////////////////////////////////////////////////////////////////////////
 /*!
-  \class  FlowModel
+  \class  FlowStressModel
   \brief  Abstract Base class for flow models (calculate yield stress)
   \author Biswajit Banerjee, \n
           C-SAFE and Department of Mechanical Engineering, \n
@@ -53,13 +53,13 @@ namespace Uintah {
 
 using Vaango::ModelStateBase;
 
-class FlowModel
+class FlowStressModel
 {
 
 private:
 public:
-  FlowModel();
-  virtual ~FlowModel();
+  FlowStressModel();
+  virtual ~FlowStressModel();
 
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
@@ -188,4 +188,4 @@ public:
 };
 } // End namespace Uintah
 
-#endif // __FLOW_MODEL_H__
+#endif // __PLASTIC_FLOW_STRESS_MODEL_H__

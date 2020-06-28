@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DevStressModels/DevStressModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
@@ -482,7 +482,7 @@ protected:
   std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
 
   StabilityCheck* d_stable;
-  FlowModel* d_flow;
+  FlowStressModel* d_flow;
   DamageModel* d_damage;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;

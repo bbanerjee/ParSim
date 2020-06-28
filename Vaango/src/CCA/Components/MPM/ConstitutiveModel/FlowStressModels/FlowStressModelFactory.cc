@@ -44,7 +44,7 @@ using std::ofstream;
 
 using namespace Uintah;
 
-FlowModel*
+FlowStressModel*
 FlowStressModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("flow_model");
@@ -77,8 +77,8 @@ FlowStressModelFactory::create(ProblemSpecP& ps)
   }
 }
 
-FlowModel*
-FlowStressModelFactory::createCopy(const FlowModel* pm)
+FlowStressModel*
+FlowStressModelFactory::createCopy(const FlowStressModel* pm)
 {
   if (dynamic_cast<const IsoHardeningFlow*>(pm))
     return (scinew IsoHardeningFlow(dynamic_cast<const IsoHardeningFlow*>(pm)));

@@ -35,7 +35,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
@@ -156,7 +156,7 @@ protected:
   Vaango::YieldCondition* d_yield;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
-  FlowModel* d_plastic;
+  FlowStressModel* d_plastic;
   DamageModel* d_damage;
   StabilityCheck* d_stable;
 

@@ -27,7 +27,7 @@
 #ifndef __ZERILLI_ARMSTRONG_POLYMER_MODEL_H__
 #define __ZERILLI_ARMSTRONG_POLYMER_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -46,7 +46,7 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ZAPolymerFlow : public FlowModel
+class ZAPolymerFlow : public FlowStressModel
 {
 
 public:

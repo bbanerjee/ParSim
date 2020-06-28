@@ -24,7 +24,7 @@
 #
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/FlowModel.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/FlowStressModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/FlowStressModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/IsoHardeningFlow.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/JohnsonCookFlow.cc 

@@ -24,10 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-#include "FlowModel.h"
+#include "FlowStressModel.h"
 
 using namespace Uintah;
 
-FlowModel::FlowModel() = default;
+FlowStressModel::FlowStressModel() = default;
 
-FlowModel::~FlowModel() = default;
+FlowStressModel::~FlowStressModel() = default;

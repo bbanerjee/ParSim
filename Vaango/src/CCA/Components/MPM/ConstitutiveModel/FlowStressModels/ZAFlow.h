@@ -27,7 +27,7 @@
 #ifndef __ZERILLI_ARMSTRONG_MODEL_H__
 #define __ZERILLI_ARMSTRONG_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
@@ -101,7 +101,7 @@ density
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ZAFlow : public FlowModel
+class ZAFlow : public FlowStressModel
 {
 
 public:
