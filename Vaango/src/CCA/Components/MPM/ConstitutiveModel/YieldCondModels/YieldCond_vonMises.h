@@ -27,9 +27,10 @@
 #ifndef __BB_VONMISES_YIELD_MODEL_H__
 #define __BB_VONMISES_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -60,7 +61,9 @@ class YieldCond_vonMises : public YieldCondition
 {
 public:
   //! Constructor
-  YieldCond_vonMises(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar);
+  YieldCond_vonMises(Uintah::ProblemSpecP& ps, 
+                     IntVar_Metal* intvar,
+                     const FlowStressModel* flow);
   YieldCond_vonMises(const YieldCond_vonMises* cm);
   YieldCond_vonMises&
   operator=(const YieldCond_vonMises&) = delete;
@@ -303,6 +306,7 @@ public:
 
 private:
   IntVar_Metal* d_intvar;
+  const FlowStressModel* d_flow;
 
 };
 

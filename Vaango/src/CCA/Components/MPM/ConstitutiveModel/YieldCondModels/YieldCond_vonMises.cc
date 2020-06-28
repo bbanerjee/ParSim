@@ -33,14 +33,17 @@ using namespace Uintah;
 using namespace Vaango;
 
 YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP& ps,
-                                       IntVar_Metal* intvar)
+                                       IntVar_Metal* intvar,
+                                       const FlowStressModel* flow)
 {
   d_intvar = intvar;
+  d_flow = flow;
 }
 
 YieldCond_vonMises::YieldCond_vonMises(const YieldCond_vonMises* ym)
 {
   d_intvar = ym->d_intvar;
+  d_flow = ym->d_flow;
 }
 
 YieldCond_vonMises::~YieldCond_vonMises() = default;

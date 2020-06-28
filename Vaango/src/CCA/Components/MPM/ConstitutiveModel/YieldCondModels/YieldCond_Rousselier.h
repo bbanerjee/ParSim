@@ -27,9 +27,10 @@
 #ifndef __ROUSSELIER_YIELD_MODEL_H__
 #define __ROUSSELIER_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -78,7 +79,8 @@ public:
   };
 
   explicit YieldCond_Rousselier(ProblemSpecP& ps,
-                                IntVar_Metal* intvar);
+                                IntVar_Metal* intvar,
+                                const Uintah::FlowStressModel* flow);
   explicit YieldCond_Rousselier(const YieldCond_Rousselier* cm);
   YieldCond_Rousselier&
   operator=(const YieldCond_Rousselier&) = delete;
@@ -235,6 +237,7 @@ public:
 private:
   Params d_params;
   IntVar_Metal* d_intvar;
+  const Uintah::FlowStressModel* d_flow;
 
   Uintah::Matrix3
   df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;

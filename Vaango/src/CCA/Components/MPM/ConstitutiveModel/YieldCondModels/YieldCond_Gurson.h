@@ -27,9 +27,10 @@
 #ifndef __BB_GURSON_YIELD_MODEL_H__
 #define __BB_GURSON_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -94,7 +95,9 @@ public:
 
   /*! Constructor
     Creates a Gurson Yield Function object */
-  YieldCond_Gurson(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar);
+  YieldCond_Gurson(Uintah::ProblemSpecP& ps, 
+                   IntVar_Metal* intvar,
+                   const Uintah::FlowStressModel* flow);
   YieldCond_Gurson(const YieldCond_Gurson* cm);
   YieldCond_Gurson&
   operator=(const YieldCond_Gurson&) = delete;
@@ -415,6 +418,7 @@ public:
 private:
   CMData d_CM;
   IntVar_Metal* d_intvar;
+  const Uintah::FlowStressModel* d_flow;
 };
 
 } // End namespace Uintah

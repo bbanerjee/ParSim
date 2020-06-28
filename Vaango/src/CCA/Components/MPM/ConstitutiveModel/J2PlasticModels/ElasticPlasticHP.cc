@@ -128,31 +128,6 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   //__________________________________
   //
-  ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
-  if (!intvar_ps) {
-    ostringstream err;
-    err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
-        << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
-        << " default type is 'metal_internal_var'.\n";
-    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
-  }
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
-  if (!d_intvar) {
-    ostringstream err;
-    err << "**ERROR** An error occured while creating the internal variable \n"
-         << " model. Please file a bug report.\n";
-    throw InternalError(err.str(), __FILE__, __LINE__);
-  }
-
-  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get());
-  if (!d_yield) {
-    ostringstream desc;
-    desc << "An error occured in the YieldConditionFactory that has \n"
-         << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.\n";
-    throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
-  }
-
   d_stable = StabilityCheckFactory::create(ps);
   if (!d_stable)
     std::cerr << "Stability check disabled\n";
@@ -209,6 +184,32 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "ElasticPlasticHP::Error creating deviatoric stress model"
          << "\n";
+    throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
+  }
+
+  ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
+  if (!intvar_ps) {
+    ostringstream err;
+    err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
+        << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
+        << " default type is 'metal_internal_var'.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  if (!d_intvar) {
+    ostringstream err;
+    err << "**ERROR** An error occured while creating the internal variable \n"
+         << " model. Please file a bug report.\n";
+    throw InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
+                                                  const_cast<const FlowStressModel*>(d_flow));
+  if (!d_yield) {
+    ostringstream desc;
+    desc << "An error occured in the YieldConditionFactory that has \n"
+         << " slipped through the existing bullet proofing. Please tell \n"
+         << " Biswajit.\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 

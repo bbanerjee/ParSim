@@ -79,7 +79,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
 // variable model of type IntVar_Metal.
 YieldCondition*
 YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
-                              IntVar_Metal* intvar)
+                              IntVar_Metal* intvar,
+                              const Uintah::FlowStressModel* flow)
 {
   ProblemSpecP child = ps->findBlock("yield_condition");
   if (!child)
@@ -93,11 +94,11 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
       __FILE__, __LINE__);
 
   if (mat_type == "gurson")
-    return (scinew YieldCond_Gurson(child, intvar));
+    return (scinew YieldCond_Gurson(child, intvar, flow));
   else if (mat_type == "rousselier")
-    return (scinew YieldCond_Rousselier(child, intvar));
+    return (scinew YieldCond_Rousselier(child, intvar, flow));
   else if (mat_type == "von_mises")
-    return (scinew YieldCond_vonMises(child, intvar));
+    return (scinew YieldCond_vonMises(child, intvar, flow));
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",

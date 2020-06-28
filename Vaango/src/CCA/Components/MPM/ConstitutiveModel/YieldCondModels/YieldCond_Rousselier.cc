@@ -33,12 +33,14 @@
 using namespace Vaango;
 
 YieldCond_Rousselier::YieldCond_Rousselier(Uintah::ProblemSpecP& ps,
-                                           IntVar_Metal* intvar)
+                                           IntVar_Metal* intvar,
+                                           const Uintah::FlowStressModel* flow)
 {
   ps->require("D", d_params.D);
   ps->require("sigma_1", d_params.sigma_1);
 
   d_intvar = intvar;
+  d_flow = flow;
 }
 
 YieldCond_Rousselier::YieldCond_Rousselier(const YieldCond_Rousselier* cm)
@@ -47,6 +49,7 @@ YieldCond_Rousselier::YieldCond_Rousselier(const YieldCond_Rousselier* cm)
   d_params.sigma_1 = cm->d_params.sigma_1;
 
   d_intvar = cm->d_intvar;
+  d_flow = cm->d_flow;
 }
 
 void

@@ -29,6 +29,11 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+namespace Uintah {
+// Forward declarations
+class FlowStressModel;
+}
+
 namespace Vaango {
 
 // Forward declarations
@@ -54,7 +59,8 @@ public:
   static YieldCondition*
   create(Uintah::ProblemSpecP& ps);
   static YieldCondition* 
-  create(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar);
+  create(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar, 
+         const Uintah::FlowStressModel* flow);
   static YieldCondition*
   create(Uintah::ProblemSpecP& ps, IntVar_BorjaPressure* intvar);
   static YieldCondition*
