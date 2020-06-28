@@ -46,8 +46,8 @@ ShearModulus_SCG::ShearModulus_SCG(Uintah::ProblemSpecP& ps)
 ShearModulus_SCG::ShearModulus_SCG(const ShearModulus_SCG* smm)
 {
   d_mu0 = smm->d_mu0;
-  d_A = smm->d_A;
-  d_B = smm->d_B;
+  d_A   = smm->d_A;
+  d_B   = smm->d_B;
 }
 
 // Destructor of shear modulus model.
@@ -68,20 +68,21 @@ ShearModulus_SCG::outputProblemSpec(Uintah::ProblemSpecP& ps)
 double
 ShearModulus_SCG::computeShearModulus(const ModelStateBase* state)
 {
-  return evalShearModulus(state->temperature, state->density,
-                          state->initialDensity, state->pressure);
+  return evalShearModulus(
+    state->temperature, state->density, state->initialDensity, state->pressure);
 }
 
 double
 ShearModulus_SCG::computeShearModulus(const ModelStateBase* state) const
 {
-  return evalShearModulus(state->temperature, state->density,
-                          state->initialDensity, state->pressure);
+  return evalShearModulus(
+    state->temperature, state->density, state->initialDensity, state->pressure);
 }
 
 double
-ShearModulus_SCG::evalShearModulus(double temperature, 
-                                   double density, double initialDensity,
+ShearModulus_SCG::evalShearModulus(double temperature,
+                                   double density,
+                                   double initialDensity,
                                    double pressure) const
 {
   double eta = density / initialDensity;
@@ -89,9 +90,8 @@ ShearModulus_SCG::evalShearModulus(double temperature,
   eta = pow(eta, 1.0 / 3.0);
 
   // Pressure is +ve in this calcualtion
-  double P = -pressure;
-  double mu =
-    d_mu0 * (1.0 + d_A * P / eta - d_B * (temperature - 300.0));
-  mu = (mu > 0.0) ? mu : 1.0e-6;
+  double P  = -pressure;
+  double mu = d_mu0 * (1.0 + d_A * P / eta - d_B * (temperature - 300.0));
+  mu        = (mu > 0.0) ? mu : 1.0e-6;
   return mu;
 }

@@ -30,7 +30,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelStateBase;
+using namespace Vaango;
 
 DefaultHypoElasticEOS::DefaultHypoElasticEOS()
 {
@@ -57,8 +57,8 @@ DefaultHypoElasticEOS::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("bulk_modulus", d_bulkModulus);
 }
 
-std::map<std::string, double> 
-DefaultHypoElasticEOS::getParameters() const 
+std::map<std::string, double>
+DefaultHypoElasticEOS::getParameters() const
 {
   std::map<std::string, double> params;
   params["bulk_modulus"] = d_bulkModulus;
@@ -76,7 +76,7 @@ DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
 {
   // Get the state data
   double kappa = state->bulkModulus;
-  double p_n = state->pressure;
+  double p_n   = state->pressure;
 
   // Calculate pressure increment
   double delp = rateOfDeformation.Trace() * (kappa * delT);
@@ -88,7 +88,8 @@ DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
 
 /* **WARNING** Not hypoelastic.  Hypoelastic is history-dependent. */
 double
-DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
+DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl,
+                                  const double& detF,
                                   const ModelStateBase* state)
 {
   return (state->bulkModulus / detF);
@@ -105,7 +106,8 @@ DefaultHypoElasticEOS::computePressure(const double& rho_orig,
   if (d_bulkModulus < 0.0) {
     throw ParameterNotFound(
       "Please initialize bulk modulus in EOS before computing pressure",
-      __FILE__, __LINE__);
+      __FILE__,
+      __LINE__);
   }
 
   double J = rho_orig / rho_cur;
@@ -119,23 +121,26 @@ DefaultHypoElasticEOS::computePressure(const double& rho_orig,
 //   with deformation)
 void
 DefaultHypoElasticEOS::computePressure(const double& rho_orig,
-                                       const double& rho_cur, double& pressure,
-                                       double& dp_drho, double& csquared)
+                                       const double& rho_cur,
+                                       double& pressure,
+                                       double& dp_drho,
+                                       double& csquared)
 {
   if (d_bulkModulus < 0.0) {
     throw ParameterNotFound(
       "Please initialize bulk modulus in EOS before computing pressure",
-      __FILE__, __LINE__);
+      __FILE__,
+      __LINE__);
   }
 
   double J = rho_orig / rho_cur;
   pressure = d_bulkModulus * (1.0 - 1.0 / J);
-  dp_drho = -d_bulkModulus / rho_orig;
+  dp_drho  = -d_bulkModulus / rho_orig;
   csquared = d_bulkModulus / rho_cur;
 }
 
 // Compute bulk modulus
-double 
+double
 DefaultHypoElasticEOS::computeInitialBulkModulus() const
 {
   return d_bulkModulus;
@@ -148,14 +153,14 @@ DefaultHypoElasticEOS::computeBulkModulus(const double& rho_orig,
   return d_bulkModulus;
 }
 
-double 
+double
 DefaultHypoElasticEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return d_bulkModulus;
 }
 
 // Compute strain energy
-double 
+double
 DefaultHypoElasticEOS::computeStrainEnergy(const ModelStateBase* state)
 {
   return state->energy;
@@ -191,33 +196,33 @@ DefaultHypoElasticEOS::computeDensity(const double& rho_orig,
   return -1;
 }
 
-double 
+double
 DefaultHypoElasticEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_v of hypoelastic material"
-         " unless the incremental pressure and volume strains are provided." 
+         " unless the incremental pressure and volume strains are provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
 
   return -1;
 }
-double 
+double
 DefaultHypoElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_s of hypoelastic material"
-         " unless the incremental pressure and volume strains are provided."  
+         " unless the incremental pressure and volume strains are provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
 
   return -1;
 }
-double 
+double
 DefaultHypoElasticEOS::computeElasticVolumetricStrain(const double& pp,
-                                      const double& p0)
+                                                      const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of hypoelastic material."
@@ -229,9 +234,9 @@ DefaultHypoElasticEOS::computeElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 DefaultHypoElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0)
+                                                         const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of hypoelastic material."
@@ -242,10 +247,11 @@ DefaultHypoElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
 
   return -1;
 }
-double 
-DefaultHypoElasticEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                              const double& p0,
-                                              double& exp_eps_e_v)
+double
+DefaultHypoElasticEOS::computeDerivExpElasticVolumetricStrain(
+  const double& pp,
+  const double& p0,
+  double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

@@ -41,7 +41,7 @@ protected:
     xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 
     // Create root node
-    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "plastic_yield_condition");
+    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "yield_condition");
     xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular");
     xmlDocSetRootElement(doc, rootNode);
 

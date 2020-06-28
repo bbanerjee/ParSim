@@ -44,21 +44,24 @@ class ShearModulus_Constant : public ShearModulusModel
 {
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Constant(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
+  ShearModulus_Constant(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_Constant(const ShearModulus_Constant* smm);
 
   /* Do not allow assignement */
-  ShearModulus_Constant& operator=(const ShearModulus_Constant& smm) = delete;
+  ShearModulus_Constant&
+  operator=(const ShearModulus_Constant& smm) = delete;
 
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_Constant() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
     params["shear_modulus"] = d_shearModulus;
@@ -66,12 +69,16 @@ public:
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override;
-  double computeShearModulus(const ModelStateBase* state) override;
-  double computeShearModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialShearModulus() override;
+  double
+  computeShearModulus(const ModelStateBase* state) override;
+  double
+  computeShearModulus(const ModelStateBase* state) const override;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelStateBase* state) override
+  double
+  computeStrainEnergy(const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -86,14 +93,19 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override { return 0.0; };
+  double
+  computeQ(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  };
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelStateBase* state) const override
+  double
+  computeDqDepse_s(const ModelStateBase* state) const override
   {
     return 0.0;
   };
@@ -103,7 +115,8 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelStateBase* state) const override
+  double
+  computeDqDepse_v(const ModelStateBase* state) const override
   {
     return 0.0;
   };

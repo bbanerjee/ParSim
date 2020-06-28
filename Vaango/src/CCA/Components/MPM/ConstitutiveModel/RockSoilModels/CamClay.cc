@@ -57,8 +57,8 @@
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace std;
 using namespace Uintah;
+using namespace Vaango;
 
 //__________________________________
 //  To turn on debug flags use, e.g.,
@@ -93,18 +93,23 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  Vaango::InternalVariableModel* intvar = 
-    Vaango::InternalVariableModelFactory::create(ps, d_shear);
-  d_intvar = dynamic_cast<Vaango::IntVar_BorjaPressure*>(intvar);
-  if (!intvar || !d_intvar) {
-    ostringstream desc;
-    desc << "**ERROR** Internal error while creating "
-            "CamClay->InternalVariableModelFactory."
-         << endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
+  ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
+  if (!intvar_ps) {
+    ostringstream err;
+    err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
+        << " 'camclay' block in the input .ups file.  The\n"
+        << " default type is 'borja_consolidation_pressure'.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear);
+  if (!d_intvar) {
+    ostringstream err;
+    err << "**ERROR** An error occured while creating the internal variable \n"
+         << " model for CamClay. Please file a bug report.\n";
+    throw InternalError(err.str(), __FILE__, __LINE__);
   }
 
-  d_yield = Vaango::YieldConditionFactory::create(ps, intvar);
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get());
   if (!d_yield) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating "
@@ -122,9 +127,7 @@ CamClay::CamClay(const CamClay* cm)
   d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  Vaango::InternalVariableModel* intvar = 
-    Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
-  d_intvar = static_cast<Vaango::IntVar_BorjaPressure*>(intvar);
+  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(cm->d_intvar.get());
 
   initializeLocalMPMLabels();
 }
@@ -143,7 +146,6 @@ CamClay::~CamClay()
   delete d_eos;
   delete d_shear;
   delete d_yield;
-  delete d_intvar;
 }
 
 void
@@ -164,7 +166,7 @@ CamClay::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 CamClay*
 CamClay::clone()
 {
-  return scinew CamClay(*this);
+  return scinew CamClay(this);
 }
 
 void
@@ -633,9 +635,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           double dr1_dx3 = dfdp;
 
           double d2fdqdepsv = d_yield->d2f_dq_depsVol(
-            &state, d_eos, d_shear, d_intvar);
+            &state, d_eos, d_shear);
           double d2fdqdepss = d_yield->d2f_dq_depsDev(
-            &state, d_eos, d_shear, d_intvar);
+            &state, d_eos, d_shear);
           double dr2_dx1 = delgamma_k * d2fdqdepsv;
           double dr2_dx2 = 1.0 + delgamma_k * d2fdqdepss;
           double dr2_dx3 = dfdq;

@@ -32,16 +32,21 @@
 
 using namespace Vaango;
 
-YieldCond_Rousselier::YieldCond_Rousselier(Uintah::ProblemSpecP& ps)
+YieldCond_Rousselier::YieldCond_Rousselier(Uintah::ProblemSpecP& ps,
+                                           IntVar_Metal* intvar)
 {
   ps->require("D", d_params.D);
   ps->require("sigma_1", d_params.sigma_1);
+
+  d_intvar = intvar;
 }
 
 YieldCond_Rousselier::YieldCond_Rousselier(const YieldCond_Rousselier* cm)
 {
   d_params.D       = cm->d_params.D;
   d_params.sigma_1 = cm->d_params.sigma_1;
+
+  d_intvar = cm->d_intvar;
 }
 
 void
@@ -245,54 +250,48 @@ YieldCond_Rousselier::df_dporosity(const Uintah::Matrix3& xi,
 
 double
 YieldCond_Rousselier::d2f_dp_depsVol(const ModelStateBase* state,
-                                     const PressureModel* eos,
-                                     const ShearModulusModel* shear,
-                                     const InternalVariableModel* intvar)
+                                     const MPMEquationOfState* eos,
+                                     const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
 YieldCond_Rousselier::d2f_dp_depsDev(const ModelStateBase* state,
-                                     const PressureModel* eos,
-                                     const ShearModulusModel* shear,
-                                     const InternalVariableModel* intvar)
+                                     const MPMEquationOfState* eos,
+                                     const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
 YieldCond_Rousselier::d2f_dq_depsVol(const ModelStateBase* state,
-                                     const PressureModel* eos,
-                                     const ShearModulusModel* shear,
-                                     const InternalVariableModel* intvar)
+                                     const MPMEquationOfState* eos,
+                                     const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
 YieldCond_Rousselier::d2f_dq_depsDev(const ModelStateBase* state,
-                                     const PressureModel* eos,
-                                     const ShearModulusModel* shear,
-                                     const InternalVariableModel* intvar)
+                                     const MPMEquationOfState* eos,
+                                     const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
 YieldCond_Rousselier::df_depsVol(const ModelStateBase* state,
-                                 const PressureModel* eos,
-                                 const ShearModulusModel* shear,
-                                 const InternalVariableModel* intvar)
+                                 const MPMEquationOfState* eos,
+                                 const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
 YieldCond_Rousselier::df_depsDev(const ModelStateBase* state,
-                                 const PressureModel* eos,
-                                 const ShearModulusModel* shear,
-                                 const InternalVariableModel* intvar)
+                                 const MPMEquationOfState* eos,
+                                 const ShearModulusModel* shear)
 {
   return 0.0;
 }

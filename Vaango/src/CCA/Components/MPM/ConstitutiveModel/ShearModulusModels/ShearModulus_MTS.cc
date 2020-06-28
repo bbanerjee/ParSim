@@ -46,8 +46,8 @@ ShearModulus_MTS::ShearModulus_MTS(Uintah::ProblemSpecP& ps)
 ShearModulus_MTS::ShearModulus_MTS(const ShearModulus_MTS* smm)
 {
   d_mu0 = smm->d_mu0;
-  d_D = smm->d_D;
-  d_T0 = smm->d_T0;
+  d_D   = smm->d_D;
+  d_T0  = smm->d_T0;
 }
 
 // Destructor of shear modulus model.
@@ -88,12 +88,13 @@ ShearModulus_MTS::evalShearModulus(double T) const
   double expT0_T = std::exp(d_T0 / T) - 1.0;
   ASSERT(expT0_T != 0);
   double mu = d_mu0 - d_D / expT0_T;
-  mu = (mu > 0.0) ? mu : 1.0e-6;
+  mu        = (mu > 0.0) ? mu : 1.0e-6;
   /*
   if (!(mu > 0.0)) {
     std::ostringstream desc;
     desc << "**Compute MTS Shear Modulus ERROR** Shear modulus <= 0." << "\n";
-    desc << "mu = " << mu << " T = " << T << " mu0 = " << d_mu0 << " T0 = " << d_T0
+    desc << "mu = " << mu << " T = " << T << " mu0 = " << d_mu0 << " T0 = " <<
+  d_T0
          << " exp(To/T) = " << expT0_T << " D = " << d_D << "\n";
     throw Uintah::InvalidValue(desc.str(), __FILE__, __LINE__);
   }

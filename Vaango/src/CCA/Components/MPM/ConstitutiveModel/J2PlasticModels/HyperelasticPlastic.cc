@@ -50,8 +50,8 @@
 #include <fstream>
 #include <iostream>
 
-using namespace std;
 using namespace Uintah;
+using namespace Vaango;
 
 //#define Comer
 #undef Comer
@@ -122,7 +122,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
-         << endl;
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -201,7 +201,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag,
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
-         << endl;
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -429,7 +429,7 @@ HyperelasticPlastic::getBrittleDamageData(ProblemSpecP& ps)
   ps->get("brittle_damage_printDamage", d_brittle_damage.printDamage);
   if (d_brittle_damage.recoveryCoeff < 0.0 ||
       d_brittle_damage.recoveryCoeff > 1.0) {
-    cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << endl;
+    std::cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << "\n";
   }
 }
 
@@ -844,9 +844,9 @@ HyperelasticPlastic::initializeCMData(const Patch* patch,
     new_dw->allocateAndPut(pPlasticStrain, pPlasticStrain_label, pset);
     new_dw->allocateAndPut(pYieldStress, pYieldStress_label, pset);
 
-    // cerr << "d_usePlasticity = " << d_usePlasticity << " dist = " <<
+    // std::cerr << "d_usePlasticity = " << d_usePlasticity << " dist = " <<
     // d_yield.dist
-    //     << " range = " << d_yield.range << endl;
+    //     << " range = " << d_yield.range << "\n";
     if (d_yield.dist == "uniform") {
       // Initialize a random number generator
       // Make the seed differ for each patch, otherwise each patch gets the
@@ -856,8 +856,8 @@ HyperelasticPlastic::initializeCMData(const Patch* patch,
       patchID = patchID % 32;
       unsigned int unique_seed = ((d_yield.seed + patch_div_32 + 1) << patchID);
       auto randGen = scinew MusilRNG(unique_seed);
-      // cout << "   seed = " << unique_seed << " first rand = " << (*randGen)()
-      // << endl;
+      // std::cout << "   seed = " << unique_seed << " first rand = " << (*randGen)()
+      // << "\n";
       for (; iterPlas != pset->end(); iterPlas++) {
         pPlasticStrain[*iterPlas] = d_initialData.Alpha;
         double rand = (*randGen)();
@@ -1169,13 +1169,13 @@ HyperelasticPlastic::computeRhoMicroCM(double pressure, const double p_ref,
     try {
       rho_cur = d_eos->computeDensity(rho_orig, -p_gauge);
     } catch (ConvergenceFailure& e) {
-      cout << e.message() << endl;
+      std::cout << e.message() << "\n";
       error = true;
     }
     if (error || rho_cur < 0.0 || std::isnan(rho_cur)) {
       ostringstream desc;
       desc << "rho_cur = " << rho_cur << " pressure = " << -p_gauge
-           << " p_ref = " << p_ref << " 1/sp_vol_CC = " << rho_guess << endl;
+           << " p_ref = " << p_ref << " 1/sp_vol_CC = " << rho_guess << "\n";
       throw InvalidValue(desc.str(), __FILE__, __LINE__);
     }
 
@@ -1509,7 +1509,7 @@ HyperelasticPlastic::computeStressTensor(const PatchSubset* patches,
     };
 
     //delete interpolator;
-    // cout << "End compute stress." << endl;
+    // std::cout << "End compute stress." << "\n";
   }
 }
 
@@ -1822,8 +1822,8 @@ HyperelasticPlastic::updateDamageAndModifyStress(
         pDamage_new = -pDamage; // flag damage to be negative
 
         if (d_brittle_damage.printDamage)
-          cout << "Particle " << particleID
-               << " damage halted: damage=" << pDamage_new << endl;
+          std::cout << "Particle " << particleID
+               << " damage halted: damage=" << pDamage_new << "\n";
       } else
         pStress = pStress * (1.0 - pDamage); // no recovery (default)
     }
@@ -1868,9 +1868,9 @@ HyperelasticPlastic::updateDamageAndModifyStress(
       // Update stress
       pStress = pStress * (1.0 - damage);
       if (d_brittle_damage.printDamage) {
-        cout << "Particle " << particleID << " damaged: "
+        std::cout << "Particle " << particleID << " damaged: "
              << " damage=" << pDamage_new << " epsMax=" << epsMax
-             << " tau_b=" << tau_b << endl;
+             << " tau_b=" << tau_b << "\n";
       }
     } else {
       if (pDamage == 0.0)
@@ -1881,15 +1881,15 @@ HyperelasticPlastic::updateDamageAndModifyStress(
         pStress = pStress * d_brittle_damage.recoveryCoeff;
         pDamage_new = -pDamage; // flag it to be negative
         if (d_brittle_damage.printDamage) {
-          cout << "Particle " << particleID
-               << " damage halted: damage=" << pDamage_new << endl;
+          std::cout << "Particle " << particleID
+               << " damage halted: damage=" << pDamage_new << "\n";
         }
       } else { // no recovery (default)
         pStress = pStress * (1.0 - pDamage);
         if (d_brittle_damage.printDamage) {
-          cout << "Particle " << particleID << " damaged: "
+          std::cout << "Particle " << particleID << " damaged: "
                << " damage=" << pDamage_new << " epsMax=" << epsMax
-               << " tau_b=" << tau_b << endl;
+               << " tau_b=" << tau_b << "\n";
         }
       }
     } // end if tau_b > pFailureStrain
@@ -1919,9 +1919,9 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID
+        std::cout << "Particle " << particleID
              << " has failed : MaxPrinStress = " << maxEigen
-             << " eps_f = " << pFailureStr << endl;
+             << " eps_f = " << pFailureStr << "\n";
         pTimeOfLoc_new = time;
       }
     } else if (d_failure_criteria == "MaximumPrincipalStrain") {
@@ -1936,8 +1936,8 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID << " has failed : eps = " << maxEigen
-             << " eps_f = " << pFailureStr << endl;
+        std::cout << "Particle " << particleID << " has failed : eps = " << maxEigen
+             << " eps_f = " << pFailureStr << "\n";
         pTimeOfLoc_new = time;
       }
     } else if (d_failure_criteria == "MohrColoumb") {
@@ -1963,9 +1963,9 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
         epsMax = (maxEigen - minEigen) / 2.0;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID
+        std::cout << "Particle " << particleID
              << " has failed : maxPrinStress = " << epsMax
-             << " cohesion = " << cohesion << endl;
+             << " cohesion = " << cohesion << "\n";
         pTimeOfLoc_new = time;
       }
     } // Mohr-Coloumb
@@ -2134,8 +2134,8 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         }
 
         if (!(J > 0.0)) {
-          cerr << getpid() << " " << idx << " "
-               << "**ERROR** Negative Jacobian of deformation gradient" << endl;
+          std::cerr << getpid() << " " << idx << " "
+               << "**ERROR** Negative Jacobian of deformation gradient" << "\n";
           throw ParameterNotFound("**ERROR**:HyperelasticPlastic", __FILE__,
                                   __LINE__);
         }
@@ -2278,21 +2278,21 @@ HyperelasticPlastic::computeStiffnessMatrix(
   BnlTSigBnl(sig, Bnl, Kgeo);
 
   /*
-   cout.setf(ios::scientific,ios::floatfield);
-   cout.precision(10);
-   cout << "Kmat = " << endl;
+   std::cout.setf(ios::scientific,ios::floatfield);
+   std::cout.precision(10);
+   std::cout << "Kmat = " << "\n";
    for(int kk = 0; kk < 24; kk++) {
    for (int ll = 0; ll < 24; ++ll) {
-   cout << Kmat[ll][kk] << " " ;
+   std::cout << Kmat[ll][kk] << " " ;
    }
-   cout << endl;
+   std::cout << "\n";
    }
-   cout << "Kgeo = " << endl;
+   std::cout << "Kgeo = " << "\n";
    for(int kk = 0; kk < 24; kk++) {
    for (int ll = 0; ll < 24; ++ll) {
-   cout << Kgeo[ll][kk] << " " ;
+   std::cout << Kgeo[ll][kk] << " " ;
    }
-   cout << endl;
+   std::cout << "\n";
    }
    */
 

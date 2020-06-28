@@ -29,10 +29,6 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <memory>
 
-namespace Uintah {
-  class MPMEquationOfState;
-}
-
 namespace Vaango {
 
 /*! \class ElasticModuli_MetalIso
@@ -41,6 +37,7 @@ namespace Vaango {
  *
 */
 class ShearModulusModel;
+class MPMEquationOfState;
 
 class ElasticModuli_MetalIso : public ElasticModuliModel
 {
@@ -72,7 +69,7 @@ public:
 private:
 
   /* For tangent bulk modulus parameters */
-  Uintah::MPMEquationOfState* d_eos;
+  MPMEquationOfState* d_eos;
 
   /* For tangent shear modulus parameters */
   Vaango::ShearModulusModel* d_shear;

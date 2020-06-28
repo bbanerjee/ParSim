@@ -27,6 +27,7 @@
 #include "MPMEquationOfState.h"
 
 using namespace Uintah;
+using namespace Vaango;
 
 MPMEquationOfState::MPMEquationOfState() = default;
 

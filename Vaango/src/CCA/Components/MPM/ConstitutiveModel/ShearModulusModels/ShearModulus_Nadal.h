@@ -50,11 +50,12 @@ private:
   double d_C;                   // Material constant
   double d_m;                   // atomic mass
 
-  ShearModulus_Nadal& operator=(const ShearModulus_Nadal& smm);
+  ShearModulus_Nadal&
+  operator=(const ShearModulus_Nadal& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
+  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_Nadal(const ShearModulus_Nadal* smm);
@@ -62,27 +63,33 @@ public:
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_Nadal() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["mu_0"] = d_mu0;
-    params["zeta"] = d_zeta;
+    params["mu_0"]                = d_mu0;
+    params["zeta"]                = d_zeta;
     params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
-    params["C"] = d_C;
-    params["m"] = d_m;
+    params["C"]                   = d_C;
+    params["m"]                   = d_m;
     return params;
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override;
-  double computeShearModulus(const ModelStateBase* state) override;
-  double computeShearModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialShearModulus() override;
+  double
+  computeShearModulus(const ModelStateBase* state) override;
+  double
+  computeShearModulus(const ModelStateBase* state) const override;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelStateBase* state) override
+  double
+  computeStrainEnergy(const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -97,14 +104,19 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override { return 0.0; }
+  double
+  computeQ(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelStateBase* state) const override
+  double
+  computeDqDepse_s(const ModelStateBase* state) const override
   {
     return 0.0;
   }
@@ -114,16 +126,19 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelStateBase* state) const override
+  double
+  computeDqDepse_v(const ModelStateBase* state) const override
   {
     return 0.0;
   }
 
 private:
-
-  double evalShearModulus(double temperature, double meltingTemp,
-                          double density, double initialDensity,
-                          double pressure) const;
+  double
+  evalShearModulus(double temperature,
+                   double meltingTemp,
+                   double density,
+                   double initialDensity,
+                   double pressure) const;
 };
 } // End namespace Uintah
 

@@ -49,7 +49,8 @@ private:
   double d_alphap;              // Material constant
   double d_slope_mu_p_over_mu0; // Material constant (constant A in SCG model)
 
-  ShearModulus_PTW& operator=(const ShearModulus_PTW& smm);
+  ShearModulus_PTW&
+  operator=(const ShearModulus_PTW& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
@@ -61,29 +62,35 @@ public:
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_PTW() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["mu_0"] = d_mu0;
-    params["alpha"] = d_alpha;
-    params["alphap"] = d_alphap;
+    params["mu_0"]                = d_mu0;
+    params["alpha"]               = d_alpha;
+    params["alphap"]              = d_alphap;
     params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
     return params;
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override
+  double
+  computeInitialShearModulus() override
   {
     return d_mu0;
   }
-  double computeShearModulus(const ModelStateBase* state) override;
-  double computeShearModulus(const ModelStateBase* state) const override;
+  double
+  computeShearModulus(const ModelStateBase* state) override;
+  double
+  computeShearModulus(const ModelStateBase* state) const override;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelStateBase* state) override
+  double
+  computeStrainEnergy(const ModelStateBase* state) override
   {
     return 0.0;
   }
@@ -98,14 +105,19 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override { return 0.0; }
+  double
+  computeQ(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelStateBase* state) const override
+  double
+  computeDqDepse_s(const ModelStateBase* state) const override
   {
     return 0.0;
   }
@@ -115,16 +127,19 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelStateBase* state) const override
+  double
+  computeDqDepse_v(const ModelStateBase* state) const override
   {
     return 0.0;
   }
 
 private:
-
-  double evalShearModulus(double temperature, double meltingTemp,
-                          double density, double initialDensity,
-                          double pressure) const;
+  double
+  evalShearModulus(double temperature,
+                   double meltingTemp,
+                   double density,
+                   double initialDensity,
+                   double pressure) const;
 };
 } // End namespace Vaango
 

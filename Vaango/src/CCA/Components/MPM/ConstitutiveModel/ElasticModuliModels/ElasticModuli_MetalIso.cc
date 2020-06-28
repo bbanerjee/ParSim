@@ -36,10 +36,10 @@ using namespace Vaango;
 
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 {
-  d_eos = Uintah::MPMEquationOfStateFactory::create(ps);
+  d_eos = MPMEquationOfStateFactory::create(ps);
 
   // Don't allow unphysical EOS models for metals
-  if (d_eos->materialType() != Uintah::EOSMaterialType::ALL) {  
+  if (d_eos->materialType() != EOSMaterialType::ALL) {  
     std::ostringstream err;
     err << "**ERROR** Fluid/soil/rock equations of state cannot be used for metal elasticity."
            " Please correct the input file.\n";

@@ -93,7 +93,7 @@ protected:
 
   // Model factories
   // bool d_useEOSFactory;
-  MPMEquationOfState* d_eos;
+  Vaango::MPMEquationOfState* d_eos;
 
 public:
   UCNH(ProblemSpecP& ps, MPMFlags* flag);

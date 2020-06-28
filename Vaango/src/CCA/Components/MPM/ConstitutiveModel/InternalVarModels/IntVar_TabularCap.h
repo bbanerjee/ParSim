@@ -141,14 +141,14 @@ public:
                                           const ModelStateBase*) const override;
 
   /* Get one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
@@ -163,9 +163,10 @@ public:
   /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
   template <typename T>
   void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   // Return the internal variable labels
   std::vector<const Uintah::VarLabel*>

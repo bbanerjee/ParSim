@@ -29,6 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -61,20 +62,12 @@ namespace Vaango {
 class YieldCond_CamClay : public YieldCondition
 {
 
-private:
-  double d_M; // slope of critical state line
-
-  // Prevent copying of this class
-  // copy constructor
-  // YieldCond_CamClay(const YieldCond_CamClay &);
-  YieldCond_CamClay&
-  operator=(const YieldCond_CamClay&);
-
 public:
   //! Constructor
   /*! Creates a YieldCond_CamClay function object */
-  YieldCond_CamClay(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  YieldCond_CamClay(Uintah::ProblemSpecP& ps, IntVar_BorjaPressure* intvar);
   YieldCond_CamClay(const YieldCond_CamClay* cm);
+  YieldCond_CamClay& operator=(const YieldCond_CamClay&) = delete;
 
   //! Destructor
   ~YieldCond_CamClay() override;
@@ -116,54 +109,48 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
   double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_v
   //--------------------------------------------------------------
   double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
   double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   double
   getInternalPoint(const ModelStateBase* state_old,
@@ -300,6 +287,11 @@ public:
                         double f_q1,
                         double h_q1,
                         Uintah::TangentModulusTensor& Cep);
+
+private:
+  double d_M; // slope of critical state line
+  IntVar_BorjaPressure* d_intvar;
+
 };
 
 } // End namespace Uintah

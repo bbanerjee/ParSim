@@ -35,8 +35,8 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <string>
 #include <memory>
+#include <string>
 
 using namespace Uintah;
 using namespace Vaango;
@@ -46,15 +46,17 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("shear_modulus_model");
   if (!child) {
-    std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
-            "model"
-         << endl;
+    std::cerr
+      << "**WARNING** Attempting to create default (constant shear modulus) "
+         "model"
+      << endl;
     return (scinew ShearModulus_Constant(ps, nullptr));
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:No type for shear modulus model.", __FILE__,
+      "MPM::ConstitutiveModel:No type for shear modulus model.",
+      __FILE__,
       __LINE__);
 
   if (mat_type == "constant_shear")
@@ -68,26 +70,30 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
   else if (mat_type == "scg_shear")
     return (scinew ShearModulus_SCG(child));
   else {
-    std::cerr << "**WARNING** Shear modulus model type [" << mat_type << "] not found.\n"
+    std::cerr << "**WARNING** Shear modulus model type [" << mat_type
+              << "] not found.\n"
               << " Creating default (constant shear modulus) model."
               << " No EOS is required.\n";
     return (scinew ShearModulus_Constant(child, nullptr));
   }
 }
 ShearModulusModel*
-ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos)
+ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps,
+                                 MPMEquationOfState* eos)
 {
   ProblemSpecP child = ps->findBlock("shear_modulus_model");
   if (!child) {
-    std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
-            "model"
-         << endl;
+    std::cerr
+      << "**WARNING** Attempting to create default (constant shear modulus) "
+         "model"
+      << endl;
     return (scinew ShearModulus_Constant(ps, eos));
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
     throw ProblemSetupException(
-      "MPM::ConstitutiveModel:No type for shear modulus model.", __FILE__,
+      "MPM::ConstitutiveModel:No type for shear modulus model.",
+      __FILE__,
       __LINE__);
 
   if (mat_type == "constant_shear")
@@ -103,7 +109,8 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* e
   else if (mat_type == "scg_shear")
     return (scinew ShearModulus_SCG(child));
   else {
-    std::cerr << "**WARNING** Shear modulus model type [" << mat_type << "] not found.\n"
+    std::cerr << "**WARNING** Shear modulus model type [" << mat_type
+              << "] not found.\n"
               << " Creating default (constant shear modulus) model."
               << " EOS is required.\n";
     return (scinew ShearModulus_Constant(child, eos));

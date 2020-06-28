@@ -25,8 +25,8 @@
 #ifndef __MODELS_AIR_EOS_MODEL_H__
 #define __MODELS_AIR_EOS_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -50,7 +50,7 @@ namespace Vaango {
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class AirEOS : public Uintah::MPMEquationOfState
+class AirEOS : public MPMEquationOfState
 {
 
 private:
@@ -62,68 +62,84 @@ public:
   AirEOS();
   AirEOS(Uintah::ProblemSpecP& ps);
   AirEOS(const AirEOS* cm);
-  AirEOS& operator=(const AirEOS& cm) = delete;
+  AirEOS&
+  operator=(const AirEOS& cm) = delete;
 
   // destructor
   ~AirEOS() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-  Uintah::EOSMaterialType materialType() const override
+  EOSMaterialType
+  materialType() const override
   {
-    return Uintah::EOSMaterialType::FLUID;
+    return EOSMaterialType::FLUID;
   }
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["p0"] = d_p0;
+    params["p0"]    = d_p0;
     params["gamma"] = d_gamma;
-    params["Ka"] = d_bulkModulus;
+    params["Ka"]    = d_bulkModulus;
     return params;
   }
 
   //////////
   // Calculate the pressure using a equation of state
-  double computePressure(const Uintah::MPMMaterial* matl,
-                         const ModelStateBase* state,
-                         const Uintah::Matrix3& deformGrad,
-                         const Uintah::Matrix3& rateOfDeformation,
-                         const double& delT) override;
-  double computePressure(const double& rho_orig,
-                         const double& rho_cur) const override;
-  void computePressure(const double& rho_orig, const double& rho_cur,
-                       double& pressure, double& dp_drho,
-                       double& csquared) override;
+  double
+  computePressure(const Uintah::MPMMaterial* matl,
+                  const ModelStateBase* state,
+                  const Uintah::Matrix3& deformGrad,
+                  const Uintah::Matrix3& rateOfDeformation,
+                  const double& delT) override;
+  double
+  computePressure(const double& rho_orig, const double& rho_cur) const override;
+  void
+  computePressure(const double& rho_orig,
+                  const double& rho_cur,
+                  double& pressure,
+                  double& dp_drho,
+                  double& csquared) override;
 
   //////////
   // Calculate the derivative of the pressure
-  double eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
-                    const ModelStateBase* state) override;
+  double
+  eval_dp_dJ(const Uintah::MPMMaterial* matl,
+             const double& detF,
+             const ModelStateBase* state) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() const override;
-  double computeBulkModulus(const double& pressure) const;
-  double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) const override;
-  double computeBulkModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialBulkModulus() const override;
+  double
+  computeBulkModulus(const double& pressure) const;
+  double
+  computeBulkModulus(const double& rho_orig,
+                     const double& rho_cur) const override;
+  double
+  computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute strain energy
-  double computeStrainEnergy(const double& rho_orig,
-                             const double& rho_cur) override;
-  double computeStrainEnergy(const ModelStateBase* state) override;
+  double
+  computeStrainEnergy(const double& rho_orig, const double& rho_cur) override;
+  double
+  computeStrainEnergy(const ModelStateBase* state) override;
 
   // Compute density given pressure
-  double computeDensity(const double& rho_orig,
-                        const double& pressure) override;
+  double
+  computeDensity(const double& rho_orig, const double& pressure) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the derivative of p with respect to epse_v
       where epse_v = tr(epse)
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
-  double computeDpDepse_v(const ModelStateBase* state) const override;
+  double
+  computeDpDepse_v(const ModelStateBase* state) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the derivative of p with respect to epse_s
@@ -131,7 +147,8 @@ public:
             ee = epse - 1/3 tr(epse) I
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
-  double computeDpDepse_s(const ModelStateBase* state) const override
+  double
+  computeDpDepse_s(const ModelStateBase* state) const override
   {
     return 0.0;
   };
@@ -151,8 +168,8 @@ public:
    *   eps_e_v = current elastic volume strain
    */
   ////////////////////////////////////////////////////////////////////////
-  double computeElasticVolumetricStrain(const double& pp,
-                                        const double& p0) override;
+  double
+  computeElasticVolumetricStrain(const double& pp, const double& p0) override;
 
   ////////////////////////////////////////////////////////////////////////
   /**
@@ -169,8 +186,9 @@ public:
    *   exp(eps_e_v) = exponential of the current elastic volume strain
    */
   ////////////////////////////////////////////////////////////////////////
-  double computeExpElasticVolumetricStrain(const double& pp,
-                                           const double& p0) override;
+  double
+  computeExpElasticVolumetricStrain(const double& pp,
+                                    const double& p0) override;
 
   ////////////////////////////////////////////////////////////////////////
   /**
@@ -192,11 +210,12 @@ public:
    *                                current elastic volume strain
    */
   ////////////////////////////////////////////////////////////////////////
-  double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                const double& p0,
-                                                double& exp_eps_e_v) override;
+  double
+  computeDerivExpElasticVolumetricStrain(const double& pp,
+                                         const double& p0,
+                                         double& exp_eps_e_v) override;
 };
 
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __MODELS_AIR_EOS_MODEL_H__

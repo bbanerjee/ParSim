@@ -61,13 +61,14 @@
 #include <iostream>
 
 #include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 //#define SUB_CYCLE_F
 #undef SUB_CYCLE_F
 
 using namespace Uintah;
-using Vaango::ModelStateBase;
+using namespace Vaango;
 
 static DebugStream cout_EP("EP", false);
 static DebugStream cout_EP1("EP1", false);
@@ -127,14 +128,28 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   //__________________________________
   //
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
-  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
+  ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
+  if (!intvar_ps) {
+    ostringstream err;
+    err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
+        << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
+        << " default type is 'metal_internal_var'.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  if (!d_intvar) {
+    ostringstream err;
+    err << "**ERROR** An error occured while creating the internal variable \n"
+         << " model. Please file a bug report.\n";
+    throw InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get());
   if (!d_yield) {
     ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  "
-         << "\n";
+         << " Biswajit.\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -253,7 +268,7 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_Cp.n = cm->d_Cp.n;
   */
   d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp);
-  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_intvar = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
   d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
   d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
@@ -289,7 +304,6 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pEnergyLabel_preReloc);
 
   delete d_flow;
-  delete d_intvar;
   delete d_yield;
   delete d_stable;
   delete d_damage;
@@ -363,7 +377,7 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 ElasticPlasticHP*
 ElasticPlasticHP::clone()
 {
-  return scinew ElasticPlasticHP(*this);
+  return scinew ElasticPlasticHP(this);
 }
 
 //______________________________________________________________________

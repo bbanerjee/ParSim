@@ -33,7 +33,7 @@ using namespace Uintah;
 using namespace Vaango;
 
 YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP& ps,
-                                       InternalVariableModel* intvar)
+                                       IntVar_Metal* intvar)
 {
   d_intvar = intvar;
 }

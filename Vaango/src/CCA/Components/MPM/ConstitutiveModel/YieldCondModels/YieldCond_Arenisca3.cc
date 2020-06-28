@@ -35,11 +35,8 @@ using namespace Vaango;
 const double YieldCond_Arenisca3::sqrt_three     = std::sqrt(3.0);
 const double YieldCond_Arenisca3::one_sqrt_three = 1.0 / sqrt_three;
 
-YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps,
-                                         InternalVariableModel* intvar)
+YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps)
 {
-  d_intvar = intvar;
-
   // Nonlinear Drucker-Prager parameters
   ps->require("PEAKI1", d_inputParam.PEAKI1); // Shear Limit Surface Parameter
   ps->require("FSLOPE", d_inputParam.FSLOPE); // Shear Limit Surface Parameter
@@ -60,8 +57,6 @@ YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps,
 
 YieldCond_Arenisca3::YieldCond_Arenisca3(const YieldCond_Arenisca3* yc)
 {
-  d_intvar = yc->d_intvar;
-
   d_inputParam = yc->d_inputParam;
   d_modelParam = yc->d_modelParam;
 }
@@ -401,9 +396,8 @@ YieldCond_Arenisca3::df_dq(const ModelStateBase* state_input)
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                    const PressureModel* eos,
-                                    const ShearModulusModel*,
-                                    const InternalVariableModel* intvar)
+                                    const MPMEquationOfState* eos,
+                                    const ShearModulusModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsVol should not be called by "
@@ -422,9 +416,8 @@ YieldCond_Arenisca3::d2f_dp_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                    const PressureModel* eos,
-                                    const ShearModulusModel*,
-                                    const InternalVariableModel*)
+                                    const MPMEquationOfState* eos,
+                                    const ShearModulusModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsDev should not be called by "
@@ -443,9 +436,8 @@ YieldCond_Arenisca3::d2f_dp_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::d2f_dq_depsVol(const ModelStateBase* state_input,
-                                    const PressureModel*,
-                                    const ShearModulusModel* shear,
-                                    const InternalVariableModel*)
+                                    const MPMEquationOfState*,
+                                    const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsVol should not be called by "
@@ -464,9 +456,8 @@ YieldCond_Arenisca3::d2f_dq_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::d2f_dq_depsDev(const ModelStateBase* state_input,
-                                    const PressureModel*,
-                                    const ShearModulusModel* shear,
-                                    const InternalVariableModel*)
+                                    const MPMEquationOfState*,
+                                    const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsDev should not be called by "
@@ -484,9 +475,8 @@ YieldCond_Arenisca3::d2f_dq_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::df_depsVol(const ModelStateBase* state_input,
-                                const PressureModel* eos,
-                                const ShearModulusModel* shear,
-                                const InternalVariableModel* intvar)
+                                const MPMEquationOfState* eos,
+                                const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "
@@ -504,9 +494,8 @@ YieldCond_Arenisca3::df_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Arenisca3::df_depsDev(const ModelStateBase* state_input,
-                                const PressureModel* eos,
-                                const ShearModulusModel* shear,
-                                const InternalVariableModel*)
+                                const MPMEquationOfState* eos,
+                                const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "

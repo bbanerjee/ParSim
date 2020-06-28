@@ -33,7 +33,7 @@ using namespace Vaango;
 
 // Construct a shear modulus model.
 ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps,
-                                             Uintah::MPMEquationOfState* eos)
+                                             MPMEquationOfState* eos)
 {
   d_eos = eos;
 

@@ -31,8 +31,8 @@
 #include <cmath>
 
 using namespace Uintah;
+using namespace Vaango;
 using std::ostringstream;
-using Vaango::ModelStateBase;
 
 HyperElasticEOS::HyperElasticEOS()
 {
@@ -59,8 +59,8 @@ HyperElasticEOS::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("bulk_modulus", d_bulkModulus);
 }
 
-std::map<std::string, double> 
-HyperElasticEOS::getParameters() const 
+std::map<std::string, double>
+HyperElasticEOS::getParameters() const
 {
   std::map<std::string, double> params;
   params["bulk_modulus"] = d_bulkModulus;
@@ -71,13 +71,14 @@ HyperElasticEOS::getParameters() const
 // Calculate the pressure using the elastic constitutive equation
 double
 HyperElasticEOS::computePressure(const MPMMaterial* matl,
-                                 const ModelStateBase* state, const Matrix3&,
+                                 const ModelStateBase* state,
+                                 const Matrix3&,
                                  const Matrix3& rateOfDeformation,
                                  const double& delT)
 {
   double rho_0 = matl->getInitialDensity();
-  double rho = state->density;
-  double J = rho_0 / rho;
+  double rho   = state->density;
+  double J     = rho_0 / rho;
   double kappa = state->bulkModulus;
 
   double p = 0.5 * kappa * (J - 1.0 / J);
@@ -85,10 +86,11 @@ HyperElasticEOS::computePressure(const MPMMaterial* matl,
 }
 
 double
-HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
+HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl,
+                            const double& detF,
                             const ModelStateBase* state)
 {
-  double J = detF;
+  double J     = detF;
   double kappa = state->bulkModulus;
 
   double dpdJ = 0.5 * kappa * (1.0 + 1.0 / (J * J));
@@ -97,7 +99,8 @@ HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 
 // Compute pressure (option 1)
 double
-HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur) const
+HyperElasticEOS::computePressure(const double& rho_orig,
+                                 const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double p = 0.5 * d_bulkModulus * (J - 1.0 / J);
@@ -106,19 +109,21 @@ HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur) 
 
 // Compute pressure (option 2)
 void
-HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur,
-                                 double& pressure, double& dp_drho,
+HyperElasticEOS::computePressure(const double& rho_orig,
+                                 const double& rho_cur,
+                                 double& pressure,
+                                 double& dp_drho,
                                  double& csquared)
 {
-  double J = rho_orig / rho_cur;
-  pressure = 0.5 * d_bulkModulus * (J - 1.0 / J);
+  double J     = rho_orig / rho_cur;
+  pressure     = 0.5 * d_bulkModulus * (J - 1.0 / J);
   double dp_dJ = 0.5 * d_bulkModulus * (1.0 + 1.0 / (J * J));
-  dp_drho = -0.5 * d_bulkModulus * (1.0 + J * J) / rho_orig;
-  csquared = dp_dJ / rho_cur;
+  dp_drho      = -0.5 * d_bulkModulus * (1.0 + J * J) / rho_orig;
+  csquared     = dp_dJ / rho_cur;
 }
 
 // Compute bulk modulus
-double 
+double
 HyperElasticEOS::computeInitialBulkModulus() const
 {
   return computeBulkModulus(1.0, 1.0);
@@ -128,12 +133,12 @@ double
 HyperElasticEOS::computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur) const
 {
-  double J = rho_orig / rho_cur;
+  double J    = rho_orig / rho_cur;
   double bulk = 0.5 * d_bulkModulus * (1.0 + 1.0 / (J * J));
   return bulk;
 }
 
-double 
+double
 HyperElasticEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
@@ -159,25 +164,26 @@ HyperElasticEOS::computeStrainEnergy(const double& rho_orig,
 double
 HyperElasticEOS::computeDensity(const double& rho_orig, const double& pressure)
 {
-  double numer1 = d_bulkModulus * d_bulkModulus + pressure * pressure;
+  double numer1    = d_bulkModulus * d_bulkModulus + pressure * pressure;
   double sqrtNumer = sqrt(numer1);
-  double rho = rho_orig / d_bulkModulus * (-pressure + sqrtNumer);
+  double rho       = rho_orig / d_bulkModulus * (-pressure + sqrtNumer);
   if (rho < 0) {
     ostringstream desc;
     desc << "Value of pressure (" << pressure
-         << ") is beyond the range of validity of model" << "\n"
+         << ") is beyond the range of validity of model"
+         << "\n"
          << "  density = " << rho << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
   return rho;
 }
 
-double 
+double
 HyperElasticEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_e_v of hyperelastic material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
@@ -185,12 +191,12 @@ HyperElasticEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
   return -1;
 }
 
-double 
+double
 HyperElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_e_s of hyperelastic material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
@@ -198,9 +204,9 @@ HyperElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
   return -1;
 }
 
-double 
+double
 HyperElasticEOS::computeElasticVolumetricStrain(const double& pp,
-                                      const double& p0)
+                                                const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of hyperelastic material."
@@ -212,9 +218,9 @@ HyperElasticEOS::computeElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 HyperElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0)
+                                                   const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of hyperelastic material."
@@ -226,10 +232,10 @@ HyperElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 HyperElasticEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                              const double& p0,
-                                              double& exp_eps_e_v)
+                                                        const double& p0,
+                                                        double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

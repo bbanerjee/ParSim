@@ -25,9 +25,9 @@
 #ifndef __TEMPLATED_BORJA_SHEAR_MODEL_H__
 #define __TEMPLATED_BORJA_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -59,7 +59,8 @@ namespace Vaango {
   epse = elastic strain tensor
  *
 */
-class ShearModulus_BorjaT : public ShearModulusT<ShearModulus_BorjaT, ModelState_BorjaT, EOS_BorjaT>
+class ShearModulus_BorjaT
+  : public ShearModulusT<ShearModulus_BorjaT, ModelState_BorjaT, EOS_BorjaT>
 {
 
 private:
@@ -69,41 +70,47 @@ private:
   double d_kappatilde; // Reference compressibility
   double d_epse_v0;    // Reference volume strain
 
-
 public:
   /*! Construct a constant shear modulus model. */
   ShearModulus_BorjaT(Uintah::ProblemSpecP& ps, EOS_BorjaT* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_BorjaT(const ShearModulus_BorjaT* smm);
-  ShearModulus_BorjaT& operator=(const ShearModulus_BorjaT& smm) = delete;
+  ShearModulus_BorjaT&
+  operator=(const ShearModulus_BorjaT& smm) = delete;
 
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_BorjaT();
 
-  void l_outputProblemSpec(Uintah::ProblemSpecP& ps);
+  void
+  l_outputProblemSpec(Uintah::ProblemSpecP& ps);
 
   /*! Get parameters */
-  ParameterDict l_getParameters() const
+  ParameterDict
+  l_getParameters() const
   {
     ParameterDict params;
-    params["mu0"] = d_mu0;
-    params["alpha"] = d_alpha;
-    params["p0"] = d_p0;
+    params["mu0"]        = d_mu0;
+    params["alpha"]      = d_alpha;
+    params["p0"]         = d_p0;
     params["kappatilde"] = d_kappatilde;
-    params["epse_v0"] = d_epse_v0;
+    params["epse_v0"]    = d_epse_v0;
     return params;
   }
 
   /*! Compute the shear modulus */
-  double l_computeInitialShearModulus();
+  double
+  l_computeInitialShearModulus();
 
-  double l_computeShearModulus(const ModelState_BorjaT* state);
+  double
+  l_computeShearModulus(const ModelState_BorjaT* state);
 
-  double l_computeShearModulus(const ModelState_BorjaT* state) const;
+  double
+  l_computeShearModulus(const ModelState_BorjaT* state) const;
 
   /*! Compute the shear strain energy */
-  double l_computeStrainEnergy(const ModelState_BorjaT* state);
+  double
+  l_computeStrainEnergy(const ModelState_BorjaT* state);
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -115,34 +122,41 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeQ(const ModelState_BorjaT* state) const;
+  double
+  l_computeQ(const ModelState_BorjaT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeDqDepse_s(const ModelState_BorjaT* state) const;
+  double
+  l_computeDqDepse_s(const ModelState_BorjaT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeDqDepse_v(const ModelState_BorjaT* state) const;
+  double
+  l_computeDqDepse_v(const ModelState_BorjaT* state) const;
 
 private:
   //  Compute shear modulus (volume strain dependent)
-  double evalShearModulus(const double& epse_v) const;
+  double
+  evalShearModulus(const double& epse_v) const;
 
   //  Shear stress magnitude computation
-  double evalQ(const double& epse_v, const double& epse_s) const;
+  double
+  evalQ(const double& epse_v, const double& epse_s) const;
 
   //  Shear stress volume strain derivative computation
-  double evalDqDepse_v(const double& epse_v, const double& epse_s) const;
+  double
+  evalDqDepse_v(const double& epse_v, const double& epse_s) const;
 
   //  Shear stress shear strain derivative computation
-  double evalDqDepse_s(const double& epse_v, const double& epse_s) const;
+  double
+  evalDqDepse_s(const double& epse_v, const double& epse_s) const;
 };
 } // End namespace Uintah
 

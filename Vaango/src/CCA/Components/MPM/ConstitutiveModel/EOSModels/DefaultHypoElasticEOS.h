@@ -30,7 +30,7 @@
 #include "MPMEquationOfState.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Uintah {
+namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
@@ -60,68 +60,87 @@ public:
   DefaultHypoElasticEOS(); // This constructor is used when there is
                            // no equation_of_state tag in the input
                            // file  ** WARNING **
-  DefaultHypoElasticEOS(ProblemSpecP& ps);
+  DefaultHypoElasticEOS(Uintah::ProblemSpecP& ps);
   DefaultHypoElasticEOS(const DefaultHypoElasticEOS* cm);
-  DefaultHypoElasticEOS& operator=(const DefaultHypoElasticEOS& cm) = delete;
+  DefaultHypoElasticEOS&
+  operator=(const DefaultHypoElasticEOS& cm) = delete;
 
   // destructor
   ~DefaultHypoElasticEOS() override;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-  EOSMaterialType materialType() const override
+  EOSMaterialType
+  materialType() const override
   {
     return EOSMaterialType::ALL;
   }
 
-  std::map<std::string, double> getParameters() const override;
+  std::map<std::string, double>
+  getParameters() const override;
 
   //////////
   // Calculate the pressure using a equation of state
-  double computePressure(const MPMMaterial* matl, const ModelStateBase* state,
-                         const Matrix3& deformGrad,
-                         const Matrix3& rateOfDeformation,
-                         const double& delT) override;
+  double
+  computePressure(const Uintah::MPMMaterial* matl,
+                  const ModelStateBase* state,
+                  const Uintah::Matrix3& deformGrad,
+                  const Uintah::Matrix3& rateOfDeformation,
+                  const double& delT) override;
 
-  double eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                    const ModelStateBase* state) override;
+  double
+  eval_dp_dJ(const Uintah::MPMMaterial* matl,
+             const double& detF,
+             const ModelStateBase* state) override;
 
   // Compute pressure (option 1)
-  double computePressure(const double& rho_orig,
-                         const double& rho_cur) const override;
+  double
+  computePressure(const double& rho_orig, const double& rho_cur) const override;
 
   // Compute pressure (option 2)
-  void computePressure(const double& rho_orig, const double& rho_cur,
-                       double& pressure, double& dp_drho,
-                       double& csquared) override;
+  void
+  computePressure(const double& rho_orig,
+                  const double& rho_cur,
+                  double& pressure,
+                  double& dp_drho,
+                  double& csquared) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() const override;
-  double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) const override;
-  double computeBulkModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialBulkModulus() const override;
+  double
+  computeBulkModulus(const double& rho_orig,
+                     const double& rho_cur) const override;
+  double
+  computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute strain energy
-  double computeStrainEnergy(const ModelStateBase* state) override;
-  double computeStrainEnergy(const double& rho_orig,
-                             const double& rho_cur) override;
+  double
+  computeStrainEnergy(const ModelStateBase* state) override;
+  double
+  computeStrainEnergy(const double& rho_orig, const double& rho_cur) override;
 
   // Compute density given pressure
-  double computeDensity(const double& rho_orig,
-                        const double& pressure) override;
+  double
+  computeDensity(const double& rho_orig, const double& pressure) override;
 
-  double computeDpDepse_v(const Vaango::ModelStateBase*) const override;
-  double computeDpDepse_s(const Vaango::ModelStateBase*) const override;
-  double computeElasticVolumetricStrain(const double& pp,
-                                        const double& p0) override;
+  double
+  computeDpDepse_v(const Vaango::ModelStateBase*) const override;
+  double
+  computeDpDepse_s(const Vaango::ModelStateBase*) const override;
+  double
+  computeElasticVolumetricStrain(const double& pp, const double& p0) override;
 
-  double computeExpElasticVolumetricStrain(const double& pp,
-                                           const double& p0) override;
-  double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                const double& p0,
-                                                double& exp_eps_e_v) override;
+  double
+  computeExpElasticVolumetricStrain(const double& pp,
+                                    const double& p0) override;
+  double
+  computeDerivExpElasticVolumetricStrain(const double& pp,
+                                         const double& p0,
+                                         double& exp_eps_e_v) override;
 };
 
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __DEFAULT_HYPOELASTIC_EOS_MODEL_H__

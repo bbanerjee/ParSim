@@ -93,8 +93,8 @@ IntVar_TabularCap::outputProblemSpec(ProblemSpecP& ps)
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::addInitialComputesAndRequires(Task* task,
-                                                      const MPMMaterial* matl,
-                                                      const PatchSet*)
+                                                 const MPMMaterial* matl,
+                                                 const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pCapXLabel, matlset);
@@ -102,9 +102,8 @@ IntVar_TabularCap::addInitialComputesAndRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-IntVar_TabularCap::initializeInternalVariable(
-  Uintah::ParticleSubset* pset,
-  Uintah::DataWarehouse* new_dw)
+IntVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                              Uintah::DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
@@ -126,8 +125,8 @@ IntVar_TabularCap::initializeInternalVariable(
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::addComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet*)
+                                          const MPMMaterial* matl,
+                                          const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
@@ -137,7 +136,7 @@ IntVar_TabularCap::addComputesAndRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
-                                         std::vector<const VarLabel*>& to)
+                                    std::vector<const VarLabel*>& to)
 {
   from.push_back(pCapXLabel);
   to.push_back(pCapXLabel_preReloc);
@@ -146,9 +145,10 @@ IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
 /* Get one (possibly composite) internal variable */
 template <>
 void
-IntVar_TabularCap::getInternalVariable<double>(ParticleSubset* pset,
-                                               DataWarehouse* old_dw,
-                                               constParticleVariable<double>& pCapX)
+IntVar_TabularCap::getInternalVariable<double>(
+  ParticleSubset* pset,
+  DataWarehouse* old_dw,
+  constParticleVariable<double>& pCapX)
 {
   old_dw->get(pCapX, pCapXLabel, pset);
 }
@@ -157,19 +157,20 @@ IntVar_TabularCap::getInternalVariable<double>(ParticleSubset* pset,
 template <>
 void
 IntVar_TabularCap::allocateAndPutInternalVariable(
-    Uintah::ParticleSubset* pset,
-    Uintah::DataWarehouse* new_dw,
-    Uintah::ParticleVariable<double>& pCapX_new)
+  Uintah::ParticleSubset* pset,
+  Uintah::DataWarehouse* new_dw,
+  Uintah::ParticleVariable<double>& pCapX_new)
 {
   new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
 }
 
 template <>
 void
-IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(particleIndex pidx,
-                                                            const ModelStateBase* state,
-                                                            constParticleVariable<TabularCapIntVar>& var_old,
-                                                            ParticleVariable<TabularCapIntVar>& var)
+IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
+  particleIndex pidx,
+  const ModelStateBase* state,
+  constParticleVariable<TabularCapIntVar>& var_old,
+  ParticleVariable<TabularCapIntVar>& var)
 {
 }
 
@@ -270,9 +271,9 @@ IntVar_TabularCap::computeVolStrainDerivOfInternalVariable(
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::allocateCMDataAddRequires(Task* task,
-                                                  const MPMMaterial* matl,
-                                                  const PatchSet*,
-                                                  MPMLabel*)
+                                             const MPMMaterial* matl,
+                                             const PatchSet*,
+                                             MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
@@ -281,10 +282,10 @@ IntVar_TabularCap::allocateCMDataAddRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
-                                          ParticleSubset* addset,
-                                          ParticleLabelVariableMap* newState,
-                                          ParticleSubset* delset,
-                                          DataWarehouse* new_dw)
+                                     ParticleSubset* addset,
+                                     ParticleLabelVariableMap* newState,
+                                     ParticleSubset* delset,
+                                     DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pCapX;
   Uintah::constParticleVariable<double> o_capX;
@@ -305,8 +306,8 @@ IntVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
 /*!-----------------------------------------------------*/
 void
 IntVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
-                                            DataWarehouse* new_dw,
-                                            constParticleLabelVariableMap& var)
+                                       DataWarehouse* new_dw,
+                                       constParticleLabelVariableMap& var)
 {
   Uintah::ParticleVariable<double> pCapX_new;
   new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
@@ -318,13 +319,15 @@ IntVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
 
 namespace Vaango {
 
-template void 
-IntVar_TabularCap::getInternalVariable<double>(Uintah::ParticleSubset* pset,
-                                               Uintah::DataWarehouse* old_dw,
-                                               Uintah::constParticleVariable<double>& pCapX);
 template void
-IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(Uintah::particleIndex pidx,
-                                                            const ModelStateBase* state,
-                                                            Uintah::constParticleVariable<TabularCapIntVar>& var_old,
-                                                            Uintah::ParticleVariable<TabularCapIntVar>& var);
+IntVar_TabularCap::getInternalVariable<double>(
+  Uintah::ParticleSubset* pset,
+  Uintah::DataWarehouse* old_dw,
+  Uintah::constParticleVariable<double>& pCapX);
+template void
+IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
+  Uintah::particleIndex pidx,
+  const ModelStateBase* state,
+  Uintah::constParticleVariable<TabularCapIntVar>& var_old,
+  Uintah::ParticleVariable<TabularCapIntVar>& var);
 }

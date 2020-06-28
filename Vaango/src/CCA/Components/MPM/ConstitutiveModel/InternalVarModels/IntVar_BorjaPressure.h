@@ -130,40 +130,42 @@ public:
                              Uintah::ParticleSubset* pset,
                              Uintah::DataWarehouse* new_dw,
                              Uintah::MPMLabel* lb,
-                             ParamMap& params) override {}
+                             ParamMap& params) override
+  {
+  }
 
   void
   addComputesAndRequires(Uintah::Task* task,
                          const Uintah::MPMMaterial* matl,
                          const Uintah::PatchSet* patches) override;
 
-
   /* Get one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
   /* Allocate one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
                                  Uintah::ParticleVariable<T>& intvar);
 
   /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   /*! \brief Compute the internal variable */
   template <typename T>
@@ -204,7 +206,9 @@ public:
   void
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleLabelVariableMap& intvars) override {}
+                      Uintah::constParticleLabelVariableMap& intvars) override
+  {
+  }
 };
 
 } // End namespace Uintah

@@ -33,7 +33,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using Vaango::ModelStateBase;
+using namespace Vaango;
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
 {
@@ -43,21 +43,22 @@ MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
   ps->getWithDefault("S_2", d_const.S_2, 0.0);
   ps->getWithDefault("S_3", d_const.S_3, 0.0);
   ps->require("rho_0", d_const.rho_0);
-  d_J_min = 1.0 + (d_const.S_2 
-              + std::sqrt(d_const.S_2 * d_const.S_2 - 3.0 * d_const.S_1 * d_const.S_3))/
+  d_J_min = 1.0 +
+            (d_const.S_2 + std::sqrt(d_const.S_2 * d_const.S_2 -
+                                     3.0 * d_const.S_1 * d_const.S_3)) /
               (3.0 * d_const.S_3);
-  //std::cout << "J_min = " << d_J_min << "\n";
+  // std::cout << "J_min = " << d_J_min << "\n";
 }
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm)
 {
-  d_const.C_0 = cm->d_const.C_0;
+  d_const.C_0     = cm->d_const.C_0;
   d_const.Gamma_0 = cm->d_const.Gamma_0;
-  d_const.S_1 = cm->d_const.S_1;
-  d_const.S_2 = cm->d_const.S_2;
-  d_const.S_3 = cm->d_const.S_3;
-  d_const.rho_0 = cm->d_const.rho_0;
-  d_J_min = cm->d_J_min;
+  d_const.S_1     = cm->d_const.S_1;
+  d_const.S_2     = cm->d_const.S_2;
+  d_const.S_3     = cm->d_const.S_3;
+  d_const.rho_0   = cm->d_const.rho_0;
+  d_J_min         = cm->d_J_min;
 }
 
 MieGruneisenEOSEnergy::~MieGruneisenEOSEnergy() = default;
@@ -76,24 +77,26 @@ MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("rho_0", d_const.rho_0);
 }
 
-std::map<std::string, double> 
-MieGruneisenEOSEnergy::getParameters() const 
+std::map<std::string, double>
+MieGruneisenEOSEnergy::getParameters() const
 {
   std::map<std::string, double> params;
-  params["C_0"] = d_const.C_0;
+  params["C_0"]     = d_const.C_0;
   params["Gamma_0"] = d_const.Gamma_0;
   params["S_alpha"] = d_const.S_1;
-  params["S_2"] = d_const.S_2;
-  params["S_3"] = d_const.S_3;
-  params["rho_0"] = d_const.rho_0;
+  params["S_2"]     = d_const.S_2;
+  params["S_3"]     = d_const.S_3;
+  params["rho_0"]   = d_const.rho_0;
   return params;
 }
 //////////
-// Calculate the pressure (tension +ve) using the Mie-Gruneisen equation of state
+// Calculate the pressure (tension +ve) using the Mie-Gruneisen equation of
+// state
 double
 MieGruneisenEOSEnergy::computePressure(const MPMMaterial* matl,
                                        const ModelStateBase* state,
-                                       const Matrix3&, const Matrix3&,
+                                       const Matrix3&,
+                                       const Matrix3&,
                                        const double&)
 {
   // Get original density
@@ -107,21 +110,21 @@ MieGruneisenEOSEnergy::computePressure(const MPMMaterial* matl,
 
   // Constants
   double rho0_C0_sq = rho_0 * d_const.C_0 * d_const.C_0;
-  double S_1 = d_const.S_1;
-  double S_2 = d_const.S_2;
-  double S_3 = d_const.S_3;
-  double Gamma_0 = d_const.Gamma_0;
+  double S_1        = d_const.S_1;
+  double S_2        = d_const.S_2;
+  double S_3        = d_const.S_3;
+  double Gamma_0    = d_const.Gamma_0;
 
   // Calc. eta
-  double J = rho_0 / rho;
-  J = (J > d_J_min) ? J : d_J_min;
+  double J   = rho_0 / rho;
+  J          = (J > d_J_min) ? J : d_J_min;
   double eta = 1. - J;
 
   // Calculate the pressure
   double p = rho_0 * Gamma_0 * e;
   if (eta >= 0.0) {
-    double eta2 = eta * eta;
-    double eta3 = eta2 * eta;
+    double eta2  = eta * eta;
+    double eta3  = eta2 * eta;
     double alpha = (1. - S_1 * eta - S_2 * eta2 - S_3 * eta3);
     double denom = alpha * alpha;
     p += rho0_C0_sq * eta * (1. - .5 * Gamma_0 * eta) / denom;
@@ -144,10 +147,11 @@ MieGruneisenEOSEnergy::computeIsentropicTemperatureRate(const double T,
 }
 
 double
-MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
+MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl,
+                                  const double& detF,
                                   const ModelStateBase* state)
 {
-  double rho_0 = matl->getInitialDensity();
+  double rho_0   = matl->getInitialDensity();
   double rho_cur = rho_0 / detF;
   return eval_dp_dJ(rho_0, rho_cur);
 }
@@ -157,36 +161,36 @@ MieGruneisenEOSEnergy::eval_dp_dJ(double rho_0, double rho) const
 {
   // Constants
   double rho0_C0_sq = rho_0 * d_const.C_0 * d_const.C_0;
-  double S_1 = d_const.S_1;
-  double S_2 = d_const.S_2;
-  double S_3 = d_const.S_3;
-  double Gamma_0 = d_const.Gamma_0;
+  double S_1        = d_const.S_1;
+  double S_2        = d_const.S_2;
+  double S_3        = d_const.S_3;
+  double Gamma_0    = d_const.Gamma_0;
 
   // Calc. eta
-  double J = rho_0 / rho;
-  J = (J > d_J_min) ? J : d_J_min;
+  double J   = rho_0 / rho;
+  J          = (J > d_J_min) ? J : d_J_min;
   double eta = 1. - J;
 
   // Calculate the pressure
   double dp_dJ = 0.0;
   if (eta >= 0.0) {
-    double eta2 = eta * eta;
-    double eta3 = eta2 * eta;
-    double alpha = 1. - S_1 * eta - S_2 * eta2 - S_3 * eta3;
-    double dalpha_deta = - S_1 - 2.0 * S_2 * eta - 3.0 * S_3 * eta2;
-    double alpha2 = alpha * alpha;
-    dp_dJ = - (rho0_C0_sq / alpha2) * 
-              ( 1 - Gamma_0 * eta  - 
-                2.0 * eta * (1 - Gamma_0/2 * eta) / alpha * dalpha_deta);
+    double eta2        = eta * eta;
+    double eta3        = eta2 * eta;
+    double alpha       = 1. - S_1 * eta - S_2 * eta2 - S_3 * eta3;
+    double dalpha_deta = -S_1 - 2.0 * S_2 * eta - 3.0 * S_3 * eta2;
+    double alpha2      = alpha * alpha;
+    dp_dJ              = -(rho0_C0_sq / alpha2) *
+            (1 - Gamma_0 * eta -
+             2.0 * eta * (1 - Gamma_0 / 2 * eta) / alpha * dalpha_deta);
   } else {
-    dp_dJ = - rho0_C0_sq;
+    dp_dJ = -rho0_C0_sq;
   }
-  //std::cout << "J = " << 1 - eta << " dp_dJ = " << dp_dJ << "\n";
+  // std::cout << "J = " << 1 - eta << " dp_dJ = " << dp_dJ << "\n";
   return dp_dJ;
 }
 
 // Compute bulk modulus
-double 
+double
 MieGruneisenEOSEnergy::computeInitialBulkModulus() const
 {
   return computeBulkModulus(d_const.rho_0, d_const.rho_0);
@@ -199,12 +203,11 @@ MieGruneisenEOSEnergy::computeBulkModulus(const double& rho_orig,
   return -1.0 * eval_dp_dJ(rho_orig, rho_cur);
 }
 
-double 
+double
 MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
 }
-
 
 // Compute pressure (option 1) - no internal energy contribution
 // Compression part:
@@ -218,7 +221,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
 {
   // Calculate J
   double J = rho_orig / rho_cur;
-  J = (J > d_J_min) ? J : d_J_min;
+  J        = (J > d_J_min) ? J : d_J_min;
 
   // Calc. eta = 1 - J  (Note that J = 1 - eta)
   double eta = 1. - J;
@@ -229,7 +232,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
     double etaMax =
       1.0 - 1.0e-16; // Hardcoded to take care of machine precision issues
     eta = (eta > etaMax) ? etaMax : eta;
-    p = pCompression(rho_orig, eta);
+    p   = pCompression(rho_orig, eta);
   } else {
     p = pTension(rho_orig, eta);
   }
@@ -250,14 +253,16 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
 //  dp_dJ = (C0^2 rho0)/(1 - Eta)^2
 void
 MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
-                                       const double& rho_cur, double& pressure,
-                                       double& dp_drho, double& csquared)
+                                       const double& rho_cur,
+                                       double& pressure,
+                                       double& dp_drho,
+                                       double& csquared)
 {
   // Calculate J and dJ_drho
-  double J = rho_orig / rho_cur;
-  J = (J > d_J_min) ? J : d_J_min;
+  double J       = rho_orig / rho_cur;
+  J              = (J > d_J_min) ? J : d_J_min;
   double dJ_drho = -J / rho_cur;
-  double dp_dJ = 0.0;
+  double dp_dJ   = 0.0;
 
   // Calc. eta = 1 - J  (Note that J = 1 - eta)
   double eta = 1. - J;
@@ -266,14 +271,14 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
   if (eta >= 0.0) {
     double etaMax =
       1.0 - 1.0e-16; // Hardcoded to take care of machine precision issues
-    eta = (eta > etaMax) ? etaMax : eta;
+    eta      = (eta > etaMax) ? etaMax : eta;
     pressure = pCompression(rho_orig, eta);
-    dp_dJ = dpdJCompression(rho_orig, eta);
+    dp_dJ    = dpdJCompression(rho_orig, eta);
   } else {
     pressure = pTension(rho_orig, eta);
-    dp_dJ = dpdJTension(rho_orig, eta);
+    dp_dJ    = dpdJTension(rho_orig, eta);
   }
-  dp_drho = dp_dJ * dJ_drho;
+  dp_drho  = dp_dJ * dJ_drho;
   csquared = dp_dJ / rho_cur;
 
   if (std::isnan(pressure) || std::abs(dp_dJ) < 1.0e-30) {
@@ -290,7 +295,7 @@ double
 MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
                                       const double& pressure)
 {
-  double eta = 0.0;
+  double eta  = 0.0;
   double C0sq = d_const.C_0 * d_const.C_0;
   double bulk = C0sq * rho_orig;
   if (std::abs(pressure) < 0.1 * bulk) {
@@ -299,22 +304,22 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
 
     if (pressure < 0.0) {
       // Compressive deformations
-      const double J0 = 0.8;
+      const double J0        = 0.8;
       const double tolerance = 1.0e-3;
-      const int maxIter = 10;
-      auto pFunc = &MieGruneisenEOSEnergy::pCompression;
-      auto dpdJFunc = &MieGruneisenEOSEnergy::dpdJCompression;
-      eta = findEtaNewton(pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance,
-                          maxIter);
+      const int maxIter      = 10;
+      auto pFunc             = &MieGruneisenEOSEnergy::pCompression;
+      auto dpdJFunc          = &MieGruneisenEOSEnergy::dpdJCompression;
+      eta                    = findEtaNewton(
+        pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance, maxIter);
     } else {
       // Tensile deformations
-      const double J0 = 1.5;
+      const double J0        = 1.5;
       const double tolerance = 1.0e-3;
-      const int maxIter = 10;
-      auto pFunc = &MieGruneisenEOSEnergy::pTension;
-      auto dpdJFunc = &MieGruneisenEOSEnergy::dpdJTension;
-      eta = findEtaNewton(pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance,
-                          maxIter);
+      const int maxIter      = 10;
+      auto pFunc             = &MieGruneisenEOSEnergy::pTension;
+      auto dpdJFunc          = &MieGruneisenEOSEnergy::dpdJTension;
+      eta                    = findEtaNewton(
+        pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance, maxIter);
     }
   } else {
     // Use Ridder's method for other pressures
@@ -323,21 +328,21 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
       double etamax = 1.0 - 1.0e-16; // Hardcoded for machine precision issues
                                      // Needs to be resolved (TO DO)
       const double tolerance = 1.0e-3;
-      const int maxIter = 100;
-      auto pFunc = &MieGruneisenEOSEnergy::pCompression;
-      eta = findEtaRidder(pFunc, rho_orig, pressure, etamin, etamax, tolerance,
-                          maxIter);
+      const int maxIter      = 100;
+      auto pFunc             = &MieGruneisenEOSEnergy::pCompression;
+      eta                    = findEtaRidder(
+        pFunc, rho_orig, pressure, etamin, etamax, tolerance, maxIter);
     } else {
-      double etamin = -5.0; // Hardcoded: Needs to be resolved (TO DO)
-      double etamax = 0.0;
+      double etamin          = -5.0; // Hardcoded: Needs to be resolved (TO DO)
+      double etamax          = 0.0;
       const double tolerance = 1.0e-3;
-      const int maxIter = 100;
-      auto pFunc = &MieGruneisenEOSEnergy::pTension;
-      eta = findEtaRidder(pFunc, rho_orig, pressure, etamin, etamax, tolerance,
-                          maxIter);
+      const int maxIter      = 100;
+      auto pFunc             = &MieGruneisenEOSEnergy::pTension;
+      eta                    = findEtaRidder(
+        pFunc, rho_orig, pressure, etamin, etamax, tolerance, maxIter);
     }
   }
-  double J = 1.0 - eta;
+  double J   = 1.0 - eta;
   double rho = rho_orig / J; // **TO DO** Infinity check
 
   return rho;
@@ -345,9 +350,12 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
 
 // Private method: Find root of p(eta) - p0 = 0 using Ridder's method
 double
-MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
-                                     const double& p0, double& etamin,
-                                     double& etamax, const double& tolerance,
+MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc,
+                                     const double& rho_orig,
+                                     const double& p0,
+                                     double& etamin,
+                                     double& etamax,
+                                     const double& tolerance,
                                      const int& maxIter) const
 {
   double eta =
@@ -374,14 +382,14 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
     return etamax;
   }
 
-  int count = 1;
+  int count   = 1;
   double fnew = 0.0;
   while (count < maxIter) {
 
     // compute mid point
     double etamid = 0.5 * (etamin + etamax);
-    double pmid = (this->*pFunc)(rho_orig, etamid);
-    double fmid = pmid - pp;
+    double pmid   = (this->*pFunc)(rho_orig, etamid);
+    double fmid   = pmid - pp;
 
     double ss = sqrt(fmid * fmid - fmin * fmax);
     if (ss == 0.0) {
@@ -394,8 +402,8 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
       dx = -dx;
     }
     double etanew = etamid + dx;
-    double pnew = (this->*pFunc)(rho_orig, etanew);
-    fnew = pnew - pp;
+    double pnew   = (this->*pFunc)(rho_orig, etanew);
+    fnew          = pnew - pp;
 
     // Test for convergence
     if (count > 1) {
@@ -410,16 +418,16 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
     if (fmid * fnew > 0.0) {
       if (fmin * fnew < 0.0) {
         etamax = etanew;
-        fmax = fnew;
+        fmax   = fnew;
       } else {
         etamin = etanew;
-        fmin = fnew;
+        fmin   = fnew;
       }
     } else {
       etamin = etamid;
-      fmin = fmid;
+      fmin   = fmid;
       etamax = etanew;
-      fmax = fnew;
+      fmax   = fnew;
     }
 
     count++;
@@ -427,27 +435,34 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
   ostringstream desc;
   desc << "**ERROR** Ridder algorithm did not converge"
        << " pressure = " << p0 << " pp = " << pp << " eta = " << eta << "\n";
-  throw ConvergenceFailure(desc.str(), maxIter, std::abs(fnew),
-                           tolerance * std::abs(pp), __FILE__, __LINE__);
+  throw ConvergenceFailure(desc.str(),
+                           maxIter,
+                           std::abs(fnew),
+                           tolerance * std::abs(pp),
+                           __FILE__,
+                           __LINE__);
 
   return -1;
 }
 
 // Private method: Find root of p(eta) - p0 = 0 using Newton's method
 double
-MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
-                                     const double& rho_orig, const double& p0,
-                                     const double& J0, const double& tolerance,
+MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc,
+                                     dpdJFuncPtr dpdJFunc,
+                                     const double& rho_orig,
+                                     const double& p0,
+                                     const double& J0,
+                                     const double& tolerance,
                                      const int& maxIter) const
 {
-  double p = 0.0;
+  double p     = 0.0;
   double dp_dJ = 0.0;
-  double J = J0;
-  double eta = 1.0 - J;
+  double J     = J0;
+  double eta   = 1.0 - J;
 
-  double f = 0.0;
+  double f      = 0.0;
   double fPrime = 0.0;
-  int iter = 0;
+  int iter      = 0;
 
   do {
 
@@ -458,7 +473,7 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
     dp_dJ = (this->*dpdJFunc)(rho_orig, eta);
 
     // f(J) and f'(J) calc
-    f = p - p0;
+    f      = p - p0;
     fPrime = dp_dJ;
     J -= f / fPrime;
 
@@ -472,8 +487,8 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
     ostringstream desc;
     desc << "**ERROR** Newton algorithm did not converge"
          << " pressure = " << p0 << " eta = " << eta << "\n";
-    throw ConvergenceFailure(desc.str(), maxIter, std::abs(f), tolerance,
-                             __FILE__, __LINE__);
+    throw ConvergenceFailure(
+      desc.str(), maxIter, std::abs(f), tolerance, __FILE__, __LINE__);
   }
 
   return eta;
@@ -481,7 +496,8 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
 
 // Private method: Compute p for compressive volumetric deformations
 double
-MieGruneisenEOSEnergy::pCompression(const double& rho_orig, const double& eta) const
+MieGruneisenEOSEnergy::pCompression(const double& rho_orig,
+                                    const double& eta) const
 {
   // Calc eta^2 and eta^3
   double etaSq = eta * eta;
@@ -507,7 +523,7 @@ MieGruneisenEOSEnergy::dpdJCompression(const double& rho_orig,
   double etaCb = eta * eta * eta;
 
   // Calculate dp/dJ
-  double J = 1 - eta;
+  double J     = 1 - eta;
   double numer = 1.0 + eta * d_const.S_1 +
                  3.0 * (1.0 - 2.0 * J + J * J) * d_const.S_2 +
                  5.0 * etaCb * d_const.S_3 -
@@ -533,10 +549,11 @@ MieGruneisenEOSEnergy::pTension(const double& rho_orig, const double& eta) const
 
 // Private method: Compute dp/dJ for tensile volumetric deformations
 double
-MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig, const double& eta) const
+MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig,
+                                   const double& eta) const
 {
   // Calculate dp/dJ
-  double J = 1 - eta;
+  double J     = 1 - eta;
   double dp_dJ = (rho_orig * d_const.C_0 * d_const.C_0) / (J * J);
 
   return dp_dJ;
@@ -548,7 +565,7 @@ MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig, const double& eta) co
 //   (even though we use it only in a limited region)
 //   **WARNING** Requires well behaved EOS that does not blow up to
 //               infinity in the middle of the domain
-double 
+double
 MieGruneisenEOSEnergy::computeStrainEnergy(const ModelStateBase* state)
 {
   return computeStrainEnergy(state->initialDensity, state->density);
@@ -565,13 +582,13 @@ MieGruneisenEOSEnergy::computeStrainEnergy(const double& rho_orig,
   double eta = 1. - J;
 
   // Calculate the pressure
-  double U = 0.0;
+  double U    = 0.0;
   double C0sq = d_const.C_0 * d_const.C_0;
   if (eta >= 0.0) {
     int evals;
     double error;
-    U = DEIntegrator<MieGruneisenEOSEnergy>::Integrate(this, 0, eta, 1.0e-6,
-                                                       evals, error);
+    U = DEIntegrator<MieGruneisenEOSEnergy>::Integrate(
+      this, 0, eta, 1.0e-6, evals, error);
     U *= rho_orig * C0sq;
   } else {
     U = C0sq * rho_orig * (J - 1.0 - log(J));
@@ -593,11 +610,12 @@ MieGruneisenEOSEnergy::operator()(double eta) const
   return numer / (denom * denom);
 }
 
-double 
+double
 MieGruneisenEOSEnergy::computeDpDepse_v(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
-  err << "**ERROR** Cannot compute dp/deps_v of 5 parameter Mie-Gruneisen material"
+  err << "**ERROR** Cannot compute dp/deps_v of 5 parameter Mie-Gruneisen "
+         "material"
          " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -605,11 +623,12 @@ MieGruneisenEOSEnergy::computeDpDepse_v(const Vaango::ModelStateBase*) const
 
   return -1;
 }
-double 
+double
 MieGruneisenEOSEnergy::computeDpDepse_s(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
-  err << "**ERROR** Cannot compute dp/deps_s of 5 parameter Mie-Gruneisen material"
+  err << "**ERROR** Cannot compute dp/deps_s of 5 parameter Mie-Gruneisen "
+         "material"
          " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -617,12 +636,13 @@ MieGruneisenEOSEnergy::computeDpDepse_s(const Vaango::ModelStateBase*) const
 
   return -1;
 }
-double 
+double
 MieGruneisenEOSEnergy::computeElasticVolumetricStrain(const double& pp,
-                                      const double& p0)
+                                                      const double& p0)
 {
   std::ostringstream err;
-  err << "**ERROR** Cannot compute volume strain of 5 parameter Mie-Gruneisen material."
+  err << "**ERROR** Cannot compute volume strain of 5 parameter Mie-Gruneisen "
+         "material."
          " It should be provided as an input."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -631,12 +651,13 @@ MieGruneisenEOSEnergy::computeElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0)
+                                                         const double& p0)
 {
   std::ostringstream err;
-  err << "**ERROR** Cannot compute exp(volume strain) of 5 parameter Mie-Gruneisen material."
+  err << "**ERROR** Cannot compute exp(volume strain) of 5 parameter "
+         "Mie-Gruneisen material."
          " It should be provided as an input."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -644,16 +665,18 @@ MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain(const double& pp,
 
   return -1;
 }
-double 
-MieGruneisenEOSEnergy::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                              const double& p0,
-                                              double& exp_eps_e_v)
+double
+MieGruneisenEOSEnergy::computeDerivExpElasticVolumetricStrain(
+  const double& pp,
+  const double& p0,
+  double& exp_eps_e_v)
 {
   std::ostringstream err;
-  err << "**ERROR** Cannot compute derivative of exp(volume strain) of "
-         " 5 parameter Mie-Gruneisen material. It should be provided as an input."
-         " Please change the equation_of_state if you need this "
-         " functionality.\n";
+  err
+    << "**ERROR** Cannot compute derivative of exp(volume strain) of "
+       " 5 parameter Mie-Gruneisen material. It should be provided as an input."
+       " Please change the equation_of_state if you need this "
+       " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
 
   return -1;

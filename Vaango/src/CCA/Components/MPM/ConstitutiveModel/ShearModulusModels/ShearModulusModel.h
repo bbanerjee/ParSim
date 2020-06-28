@@ -31,16 +31,11 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Uintah {
-
-  class MPMEquationOfState;
-
-}
-
 namespace Vaango {
 
-using ParameterDict = std::map<std::string, double>;
+class MPMEquationOfState;
 
+using ParameterDict = std::map<std::string, double>;
 
 /*! \class ShearModulusModel
  *  \brief A generic wrapper for various shear modulus models
@@ -54,8 +49,8 @@ class ShearModulusModel
 {
 
 protected:
-  double d_shearModulus;       // the initial shear modulus
-  Uintah::MPMEquationOfState* d_eos; // the associated Pressure EOS model
+  double d_shearModulus;     // the initial shear modulus
+  MPMEquationOfState* d_eos; // the associated Pressure EOS model
 
 public:
   //! Construct a shear modulus model.
@@ -66,33 +61,43 @@ public:
   /*! Virtual to ensure correct behavior */
   virtual ~ShearModulusModel();
 
-  virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Get the pressure model
    */
   /////////////////////////////////////////////////////////////////////////
-  Uintah::MPMEquationOfState* getPressureModel() const { return d_eos; }
+  MPMEquationOfState*
+  getPressureModel() const
+  {
+    return d_eos;
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Get the model parameters
    */
   /////////////////////////////////////////////////////////////////////////
-  virtual std::map<std::string, double> getParameters() const = 0;
+  virtual std::map<std::string, double>
+  getParameters() const = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the shear modulus
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual double computeInitialShearModulus() = 0;
-  virtual double computeShearModulus(const ModelStateBase* state) = 0;
-  virtual double computeShearModulus(const ModelStateBase* state) const = 0;
+  virtual double
+  computeInitialShearModulus() = 0;
+  virtual double
+  computeShearModulus(const ModelStateBase* state) = 0;
+  virtual double
+  computeShearModulus(const ModelStateBase* state) const = 0;
 
   /*! Compute the shear strain energy */
-  virtual double computeStrainEnergy(const ModelStateBase* state) = 0;
+  virtual double
+  computeStrainEnergy(const ModelStateBase* state) = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -104,21 +109,24 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual double computeQ(const ModelStateBase* state) const = 0;
+  virtual double
+  computeQ(const ModelStateBase* state) const = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual double computeDqDepse_s(const ModelStateBase* state) const = 0;
+  virtual double
+  computeDqDepse_s(const ModelStateBase* state) const = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual double computeDqDepse_v(const ModelStateBase* state) const = 0;
+  virtual double
+  computeDqDepse_v(const ModelStateBase* state) const = 0;
 };
 } // End namespace Uintah
 

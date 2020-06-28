@@ -49,13 +49,14 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("equation_of_state");
   if (!child) {
-    proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
+    proc0cout
+      << "**WARNING** Creating default hyperelastic equation of state\n";
     return scinew HyperElasticEOS(ps);
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for equation_of_state", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "No type for equation_of_state", __FILE__, __LINE__);
 
   if (mat_type == "mie_gruneisen")
     return scinew MieGruneisenEOS(child);
@@ -74,7 +75,8 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
   else if (mat_type == "granite")
     return scinew GraniteEOS(child);
   else {
-    proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
+    proc0cout
+      << "**WARNING** Creating default hyperelastic equation of state\n";
     return scinew HyperElasticEOS(ps);
   }
 
@@ -85,8 +87,7 @@ MPMEquationOfState*
 MPMEquationOfStateFactory::createCopy(const MPMEquationOfState* eos)
 {
   if (dynamic_cast<const MieGruneisenEOS*>(eos))
-    return scinew MieGruneisenEOS(
-      dynamic_cast<const MieGruneisenEOS*>(eos));
+    return scinew MieGruneisenEOS(dynamic_cast<const MieGruneisenEOS*>(eos));
 
   else if (dynamic_cast<const MieGruneisenEOSEnergy*>(eos))
     return scinew MieGruneisenEOSEnergy(
@@ -97,8 +98,7 @@ MPMEquationOfStateFactory::createCopy(const MPMEquationOfState* eos)
       dynamic_cast<const DefaultHypoElasticEOS*>(eos));
 
   else if (dynamic_cast<const HyperElasticEOS*>(eos))
-    return scinew HyperElasticEOS(
-      dynamic_cast<const HyperElasticEOS*>(eos));
+    return scinew HyperElasticEOS(dynamic_cast<const HyperElasticEOS*>(eos));
 
   else if (dynamic_cast<const BorjaEOS*>(eos))
     return scinew BorjaEOS(dynamic_cast<const BorjaEOS*>(eos));
@@ -110,8 +110,7 @@ MPMEquationOfStateFactory::createCopy(const MPMEquationOfState* eos)
     return scinew WaterEOS(dynamic_cast<const WaterEOS*>(eos));
 
   else if (dynamic_cast<const GraniteEOS*>(eos))
-    return 
-      scinew GraniteEOS(dynamic_cast<const GraniteEOS*>(eos));
+    return scinew GraniteEOS(dynamic_cast<const GraniteEOS*>(eos));
 
   else {
     proc0cout << "**WARNING** Creating a copy of the default hyperelastic "

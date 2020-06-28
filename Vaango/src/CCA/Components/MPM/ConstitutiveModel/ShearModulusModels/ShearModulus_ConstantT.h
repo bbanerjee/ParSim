@@ -25,9 +25,9 @@
 #ifndef __TEMPLATED_CONSTANT_SHEAR_MODEL_H__
 #define __TEMPLATED_CONSTANT_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_MetalT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_NullT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_MetalT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -38,37 +38,43 @@ namespace Vaango {
   \brief The Constant model for calculating shear stress
  *
 */
-class ShearModulus_ConstantT : public ShearModulusT<ShearModulus_ConstantT, 
-                                                    ModelState_MetalT, 
-                                                    EOS_NullT>
+class ShearModulus_ConstantT
+  : public ShearModulusT<ShearModulus_ConstantT, ModelState_MetalT, EOS_NullT>
 {
 public:
   /*! Construct a constant shear modulus model. */
-  //ShearModulus_ConstantT(Uintah::ProblemSpecP& ps, EOS_NullT* eos);
+  // ShearModulus_ConstantT(Uintah::ProblemSpecP& ps, EOS_NullT* eos);
   ShearModulus_ConstantT(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_ConstantT(const ShearModulus_ConstantT* smm);
 
-  ShearModulus_ConstantT& operator=(const ShearModulus_ConstantT& smm) = delete;
+  ShearModulus_ConstantT&
+  operator=(const ShearModulus_ConstantT& smm) = delete;
 
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_ConstantT() = default;
 
-  void l_outputProblemSpec(Uintah::ProblemSpecP& ps);
+  void
+  l_outputProblemSpec(Uintah::ProblemSpecP& ps);
 
   /*! Get parameters */
-  ParameterDict l_getParameters() const;
+  ParameterDict
+  l_getParameters() const;
 
   /*! Compute the shear modulus */
-  double l_computeInitialShearModulus();
+  double
+  l_computeInitialShearModulus();
 
-  double l_computeShearModulus(const ModelState_MetalT* state);
+  double
+  l_computeShearModulus(const ModelState_MetalT* state);
 
-  double l_computeShearModulus(const ModelState_MetalT* state) const;
+  double
+  l_computeShearModulus(const ModelState_MetalT* state) const;
 
   /*! Compute the shear strain energy */
-  double l_computeStrainEnergy(const ModelState_MetalT* state);
+  double
+  l_computeStrainEnergy(const ModelState_MetalT* state);
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -80,21 +86,24 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeQ(const ModelState_MetalT* state) const;
+  double
+  l_computeQ(const ModelState_MetalT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeDqDepse_s(const ModelState_MetalT* state) const;
+  double
+  l_computeDqDepse_s(const ModelState_MetalT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double l_computeDqDepse_v(const ModelState_MetalT* state) const;
+  double
+  l_computeDqDepse_v(const ModelState_MetalT* state) const;
 };
 } // End namespace Vaango
 

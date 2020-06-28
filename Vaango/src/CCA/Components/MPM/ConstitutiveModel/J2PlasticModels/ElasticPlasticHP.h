@@ -37,6 +37,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
@@ -139,8 +140,8 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
-  ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* flag);
-  ElasticPlasticHP(const ElasticPlasticHP* cm);
+  explicit ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* flag);
+  explicit ElasticPlasticHP(const ElasticPlasticHP* cm);
   ElasticPlasticHP& operator=(const ElasticPlasticHP& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
@@ -475,13 +476,14 @@ protected:
   bool d_allowNoTension;
   bool d_allowNoShear;
 
-  Vaango::InternalVariableModel* d_intvar;
+  Vaango::MPMEquationOfState* d_eos;
+  Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
+  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
+
   StabilityCheck* d_stable;
   FlowModel* d_flow;
   DamageModel* d_damage;
-  MPMEquationOfState* d_eos;
-  Vaango::ShearModulusModel* d_shear;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
   DevStressModel* d_devStress;

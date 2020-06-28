@@ -33,7 +33,9 @@ namespace Vaango {
 
 // Forward declarations
 class YieldCondition;
-class InternalVariableModel;
+class IntVar_Metal;
+class IntVar_BorjaPressure;
+class IntVar_TabularCap;
 
 /*! \class YieldConditionFactory
  *  \brief Creates instances of Yield Conditions
@@ -51,8 +53,12 @@ public:
   //! Create a yield condition from the input file problem specification.
   static YieldCondition*
   create(Uintah::ProblemSpecP& ps);
+  static YieldCondition* 
+  create(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar);
   static YieldCondition*
-  create(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  create(Uintah::ProblemSpecP& ps, IntVar_BorjaPressure* intvar);
+  static YieldCondition*
+  create(Uintah::ProblemSpecP& ps, IntVar_TabularCap* intvar);
   static YieldCondition*
   createCopy(const YieldCondition* yc);
 };

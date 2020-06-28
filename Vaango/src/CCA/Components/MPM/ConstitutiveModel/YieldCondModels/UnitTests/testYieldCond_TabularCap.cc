@@ -1,4 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 
 #include <Core/Malloc/Allocator.h>
@@ -41,7 +42,7 @@ protected:
     xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 
     // Create root node
-    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "plastic_yield_condition");
+    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "yield_condition");
     xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular_cap");
     xmlDocSetRootElement(doc, rootNode);
 
@@ -68,19 +69,53 @@ protected:
       std::cout << __FILE__ << ":" << __LINE__ << std::endl;
       exit(-1);
     }
+
+    // For internal var
+    xmlDocPtr doc_intvar = xmlNewDoc(BAD_CAST "1.0");
+    xmlNodePtr rootNode_intvar = xmlNewNode(nullptr, BAD_CAST "internal_variable_model");
+    xmlNewProp(rootNode_intvar, BAD_CAST "type", BAD_CAST "tabular_cap");
+    xmlDocSetRootElement(doc_intvar, rootNode_intvar);
+    xmlNewChild(rootNode_intvar, nullptr, BAD_CAST "filename", 
+                BAD_CAST "DrySand_HydrostaticCapData.json");
+    xmlNewChild(rootNode_intvar, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "PlasticStrainVol");
+    xmlNewChild(rootNode_intvar, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "Pressure");
+    auto interp_intvar = xmlNewChild(rootNode_intvar, nullptr, BAD_CAST "interpolation",
+                              BAD_CAST "");
+    xmlNewProp(interp_intvar, BAD_CAST "type", BAD_CAST "linear");
+
+    // Print the document to stdout
+    xmlSaveFormatFileEnc("-", doc_intvar, "ISO-8859-1", 1);
+
+    // Create a ProblemSpec
+    ps_intvar = scinew ProblemSpec(xmlDocGetRootElement(doc_intvar), false);
+    if (!ps_intvar) {
+      std::cout << "**Error** Could not create ProblemSpec for internal var." << std::endl;
+      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+      exit(-1);
+    }
   }
 
   static void TearDownTestCase() {}
 
   static ProblemSpecP ps;
+  static ProblemSpecP ps_intvar;
 };
 
 ProblemSpecP YieldCondTabularCapTest::ps = nullptr;
+ProblemSpecP YieldCondTabularCapTest::ps_intvar = nullptr;
 
 TEST_F(YieldCondTabularCapTest, constructorTest)
 {
+  try {
+    IntVar_TabularCap intvar(ps_intvar);
+  } catch (Uintah::ProblemSetupException e) {
+    std::cout << e.message() << "\n";
+  }
   // Create a model
-  YieldCond_TabularCap model(ps);
+  IntVar_TabularCap intvar(ps_intvar);
+  YieldCond_TabularCap model(ps, &intvar);
   //std::cout << model;
 
   // Copy
@@ -96,7 +131,8 @@ TEST_F(YieldCondTabularCapTest, constructorTest)
 
 TEST_F(YieldCondTabularCapTest, computeCapPoints)
 {
-  YieldCond_TabularCap model(ps);
+  IntVar_TabularCap intvar(ps_intvar);
+  YieldCond_TabularCap model(ps, &intvar);
   ModelState_TabularCap state;
 
   Polyline p_q_2000 = {
@@ -255,7 +291,8 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 {
   Matrix3 one(0.0); one.Identity();
 
-  YieldCond_TabularCap model(ps);
+  IntVar_TabularCap intvar(ps_intvar);
+  YieldCond_TabularCap model(ps, &intvar);
   ModelState_TabularCap state;
 
   state.bulkModulus = 1.0e5;
@@ -358,7 +395,8 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 
 TEST_F(YieldCondTabularCapTest, df_dsigma)
 {
-  YieldCond_TabularCap model(ps);
+  IntVar_TabularCap intvar(ps_intvar);
+  YieldCond_TabularCap model(ps, &intvar);
   ModelState_TabularCap state;
   Matrix3 zero(0.0);
   Matrix3 one(0.0); one.Identity();
@@ -483,7 +521,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
 
 TEST_F(YieldCondTabularCapTest, getClosestPoint)
 {
-  YieldCond_TabularCap model(ps);
+  IntVar_TabularCap intvar(ps_intvar);
+  YieldCond_TabularCap model(ps, &intvar);
   ModelState_TabularCap state;
   Matrix3 zero(0.0);
   Matrix3 df_dsigma(0.0);

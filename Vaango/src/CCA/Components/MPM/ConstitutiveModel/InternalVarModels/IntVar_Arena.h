@@ -135,31 +135,32 @@ public:
                          const Uintah::PatchSet* patches) override;
 
   /* Get one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
   /* Allocate one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
                                  Uintah::ParticleVariable<T>& intvar);
 
   /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   /*! \brief Compute the internal variable */
   template <typename T>
@@ -171,7 +172,6 @@ public:
   double
   computeInternalVariable(const std::string& label,
                           const ModelStateBase* state) const override;
-
 
   // Compute derivative of internal variable with respect to volumetric
   // elastic strain
@@ -195,12 +195,13 @@ public:
                     Uintah::ParticleSubset* delset,
                     Uintah::DataWarehouse* old_dw) override;
 
-
   /* For RigidMPM */
   virtual void
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleVariableBase& intvar) override {}
+                      Uintah::constParticleVariableBase& intvar) override
+  {
+  }
   void
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
@@ -305,6 +306,7 @@ public:
                                     const double& phi,
                                     const double& Sw,
                                     const double& phi0) const;
+
 private:
   // Crush Curve Model parameters
   struct CrushParameters
@@ -318,10 +320,9 @@ private:
   CrushParameters d_crushParam;
   bool d_use_disaggregation_algorithm;
 
-
   // Initialize local VarLabels
-  void initializeLocalMPMLabels();
-
+  void
+  initializeLocalMPMLabels();
 };
 
 } // End namespace Uintah

@@ -33,7 +33,6 @@ namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
 
-
 /*! \class ShearModulusT
  *  \brief A generic wrapper for various shear modulus models
  *  \author Biswajit Banerjee,
@@ -42,16 +41,14 @@ using ParameterDict = std::map<std::string, double>;
  *
  * Provides an abstract base class for various shear modulus models
 */
-template <typename DerivedT, 
-          typename StateT, 
-          typename EquationOfStateT>
+template <typename DerivedT, typename StateT, typename EquationOfStateT>
 class ShearModulusT
 {
 public:
-
   ~ShearModulusT() = default;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps)
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps)
   {
     derived()->l_outputProblemSpec(ps);
   }
@@ -61,14 +58,19 @@ public:
     \brief Get the pressure model
    */
   /////////////////////////////////////////////////////////////////////////
-  EquationOfStateT* getPressureModel() const { return d_eos; }
+  EquationOfStateT*
+  getPressureModel() const
+  {
+    return d_eos;
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Get the model parameters
    */
   /////////////////////////////////////////////////////////////////////////
-  std::map<std::string, double> getParameters() const
+  std::map<std::string, double>
+  getParameters() const
   {
     return derived()->l_getParameters();
   }
@@ -78,23 +80,27 @@ public:
     \brief Compute the shear modulus
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeInitialShearModulus()
+  double
+  computeInitialShearModulus()
   {
     return derived()->l_computeInitialShearModulus();
   }
 
-  double computeShearModulus(const StateT* state)
+  double
+  computeShearModulus(const StateT* state)
   {
     return derived()->l_computeShearModulus(state);
   }
 
-  double computeShearModulus(const StateT* state) const
+  double
+  computeShearModulus(const StateT* state) const
   {
     return derived()->l_computeShearModulus(state);
   }
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const StateT* state)
+  double
+  computeStrainEnergy(const StateT* state)
   {
     return derived()->l_computeStrainEnergy(state);
   }
@@ -109,7 +115,8 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const StateT* state) const
+  double
+  computeQ(const StateT* state) const
   {
     return derived()->l_computeQ(state);
   }
@@ -119,7 +126,8 @@ public:
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const StateT* state) const
+  double
+  computeDqDepse_s(const StateT* state) const
   {
     return derived()->l_computeDqDepse_s(state);
   }
@@ -129,35 +137,32 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const StateT* state) const
+  double
+  computeDqDepse_v(const StateT* state) const
   {
     return derived()->l_computeDqDepse_v(state);
   }
 
 protected:
-
   double d_shearModulus;   // the initial shear modulus
   EquationOfStateT* d_eos; // the associated Pressure EOS model
 
 private:
+  ShearModulusT() { d_shearModulus = 0.0; }
 
-  ShearModulusT()
-  {
-    d_shearModulus = 0.0;
-  }
-
-  DerivedT* derived()
+  DerivedT*
+  derived()
   {
     return static_cast<DerivedT*>(this);
   }
 
-  const DerivedT* derived() const
+  const DerivedT*
+  derived() const
   {
     return static_cast<const DerivedT*>(this);
   }
 
   friend DerivedT;
-
 };
 } // End namespace Uintah
 

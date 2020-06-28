@@ -29,6 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -93,7 +94,7 @@ public:
 
   /*! Constructor
     Creates a Gurson Yield Function object */
-  YieldCond_Gurson(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  YieldCond_Gurson(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar);
   YieldCond_Gurson(const YieldCond_Gurson* cm);
   YieldCond_Gurson&
   operator=(const YieldCond_Gurson&) = delete;
@@ -343,9 +344,8 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -355,9 +355,8 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -367,9 +366,8 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -379,9 +377,8 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -391,9 +388,8 @@ public:
   //--------------------------------------------------------------
   double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -403,9 +399,8 @@ public:
   //--------------------------------------------------------------
   double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -419,6 +414,7 @@ public:
 
 private:
   CMData d_CM;
+  IntVar_Metal* d_intvar;
 };
 
 } // End namespace Uintah

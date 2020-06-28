@@ -30,7 +30,7 @@
 #include "MPMEquationOfState.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Uintah {
+namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
@@ -57,77 +57,100 @@ public:
   };
 
   // constructors
-  MieGruneisenEOSEnergy(ProblemSpecP& ps);
+  MieGruneisenEOSEnergy(Uintah::ProblemSpecP& ps);
   MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm);
-  MieGruneisenEOSEnergy& operator=(const MieGruneisenEOSEnergy& cm) = delete;
+  MieGruneisenEOSEnergy&
+  operator=(const MieGruneisenEOSEnergy& cm) = delete;
 
   // Special operator for computing internal energy
-  double operator()(double eta) const;
+  double
+  operator()(double eta) const;
 
   // destructor
   ~MieGruneisenEOSEnergy() override;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-  EOSMaterialType materialType() const override
+  EOSMaterialType
+  materialType() const override
   {
     return EOSMaterialType::ALL;
   }
 
-  std::map<std::string, double> getParameters() const override;
+  std::map<std::string, double>
+  getParameters() const override;
 
   /////////////////////////////////////////////////////////////////////////
   /*! Calculate the pressure using a equation of state */
   /////////////////////////////////////////////////////////////////////////
-  double computePressure(const MPMMaterial* matl, const ModelStateBase* state,
-                         const Matrix3& deformGrad,
-                         const Matrix3& rateOfDeformation,
-                         const double& delT) override;
+  double
+  computePressure(const Uintah::MPMMaterial* matl,
+                  const ModelStateBase* state,
+                  const Uintah::Matrix3& deformGrad,
+                  const Uintah::Matrix3& rateOfDeformation,
+                  const double& delT) override;
 
   // Calculate rate of temperature change due to compression/expansion
-  double computeIsentropicTemperatureRate(const double T, const double rho_0,
-                                          const double rho_cur,
-                                          const double Dtrace) override;
+  double
+  computeIsentropicTemperatureRate(const double T,
+                                   const double rho_0,
+                                   const double rho_cur,
+                                   const double Dtrace) override;
 
-  double eval_dp_dJ(const MPMMaterial* matl, const double& delF,
-                    const ModelStateBase* state) override;
+  double
+  eval_dp_dJ(const Uintah::MPMMaterial* matl,
+             const double& delF,
+             const ModelStateBase* state) override;
 
   // Compute pressure (option 1)
-  double computePressure(const double& rho_orig,
-                         const double& rho_cur) const override;
+  double
+  computePressure(const double& rho_orig, const double& rho_cur) const override;
 
   // Compute pressure (option 2)
-  void computePressure(const double& rho_orig, const double& rho_cur,
-                       double& pressure, double& dp_drho,
-                       double& csquared) override;
+  void
+  computePressure(const double& rho_orig,
+                  const double& rho_cur,
+                  double& pressure,
+                  double& dp_drho,
+                  double& csquared) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() const override;
-  double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) const override;
-  double computeBulkModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialBulkModulus() const override;
+  double
+  computeBulkModulus(const double& rho_orig,
+                     const double& rho_cur) const override;
+  double
+  computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute strain energy
-  double computeStrainEnergy(const ModelStateBase* state) override;
-  double computeStrainEnergy(const double& rho_orig,
-                             const double& rho_cur) override;
+  double
+  computeStrainEnergy(const ModelStateBase* state) override;
+  double
+  computeStrainEnergy(const double& rho_orig, const double& rho_cur) override;
 
   // Compute density given pressure
-  double computeDensity(const double& rho_orig,
-                        const double& pressure) override;
+  double
+  computeDensity(const double& rho_orig, const double& pressure) override;
 
-  double computeDpDepse_v(const Vaango::ModelStateBase*) const override;
-  double computeDpDepse_s(const Vaango::ModelStateBase*) const override;
-  double computeElasticVolumetricStrain(const double& pp,
-                                        const double& p0) override;
-  double computeExpElasticVolumetricStrain(const double& pp,
-                                           const double& p0) override;
-  double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                const double& p0,
-                                                double& exp_eps_e_v) override;
+  double
+  computeDpDepse_v(const Vaango::ModelStateBase*) const override;
+  double
+  computeDpDepse_s(const Vaango::ModelStateBase*) const override;
+  double
+  computeElasticVolumetricStrain(const double& pp, const double& p0) override;
+  double
+  computeExpElasticVolumetricStrain(const double& pp,
+                                    const double& p0) override;
+  double
+  computeDerivExpElasticVolumetricStrain(const double& pp,
+                                         const double& p0,
+                                         double& exp_eps_e_v) override;
 
 private:
-  double eval_dp_dJ(double rho_0, double rho) const;
+  double
+  eval_dp_dJ(double rho_0, double rho) const;
 
   typedef double (MieGruneisenEOSEnergy::*pFuncPtr)(const double&,
                                                     const double&) const;
@@ -135,34 +158,46 @@ private:
                                                        const double&) const;
 
   // Find root of p(eta) - p0 = 0 using Ridder's method
-  double findEtaRidder(pFuncPtr pFunc, const double& rho_orig, const double& p0,
-                       double& etamin, double& etamax, const double& tolerance,
-                       const int& maxIter) const;
+  double
+  findEtaRidder(pFuncPtr pFunc,
+                const double& rho_orig,
+                const double& p0,
+                double& etamin,
+                double& etamax,
+                const double& tolerance,
+                const int& maxIter) const;
 
   // Find root of p(eta) - p0 = 0 using Newton's method
-  double findEtaNewton(pFuncPtr pFunc, const dpdJFuncPtr dpdJFunc,
-                       const double& rho_orig, const double& p0,
-                       const double& J0, const double& tolerance,
-                       const int& maxIter) const;
+  double
+  findEtaNewton(pFuncPtr pFunc,
+                const dpdJFuncPtr dpdJFunc,
+                const double& rho_orig,
+                const double& p0,
+                const double& J0,
+                const double& tolerance,
+                const int& maxIter) const;
 
   // Compute p for compressive volumetric deformations
-  double pCompression(const double& rho_orig, const double& eta) const;
+  double
+  pCompression(const double& rho_orig, const double& eta) const;
 
   // Compute dp/dJ for compressive volumetric deformations
-  double dpdJCompression(const double& rho_orig, const double& eta) const;
+  double
+  dpdJCompression(const double& rho_orig, const double& eta) const;
 
   // Compute p for tensile volumetric deformations
-  double pTension(const double& rho_orig, const double& eta) const;
+  double
+  pTension(const double& rho_orig, const double& eta) const;
 
   // Compute dp/dJ for tensile volumetric deformations
-  double dpdJTension(const double& rho_orig, const double& eta) const;
+  double
+  dpdJTension(const double& rho_orig, const double& eta) const;
 
 private:
   CMData d_const;
   double d_J_min;
-
 };
 
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __MIE_GRUNEISEN_EOS_ENERGY_MODEL_H__

@@ -26,6 +26,7 @@
 #define __TABULAR_CAP_YIELD_CONDITION_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
@@ -52,12 +53,13 @@ class YieldCond_TabularCap : public YieldCondition
 public:
   YieldCond_TabularCap()                            = delete;
   YieldCond_TabularCap(const YieldCond_TabularCap&) = delete;
-  ~YieldCond_TabularCap()                           = default;
   YieldCond_TabularCap&
   operator=(const YieldCond_TabularCap&) = delete;
 
-  YieldCond_TabularCap(Uintah::ProblemSpecP& ps);
-  YieldCond_TabularCap(const YieldCond_TabularCap* yc);
+  explicit YieldCond_TabularCap(Uintah::ProblemSpecP& ps,
+                                IntVar_TabularCap* intvar);
+  explicit YieldCond_TabularCap(const YieldCond_TabularCap* yc);
+  ~YieldCond_TabularCap() = default;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -143,9 +145,8 @@ public:
   //--------------------------------------------------------------
   double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   /**
    * Function: computeYieldSurfacePolylinePbarSqrtJ2
@@ -240,45 +241,41 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
   double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
   double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
+
   // Evaluate the yield function.
   double
   evalYieldCondition(const double p,
@@ -403,6 +400,7 @@ private:
   double d_sqrtJ2_max;
   Polyline d_polyline;
   std::vector<Uintah::Vector> d_normals;
+  IntVar_TabularCap* d_intvar;
 
   /* Some helpers and checks */
   void

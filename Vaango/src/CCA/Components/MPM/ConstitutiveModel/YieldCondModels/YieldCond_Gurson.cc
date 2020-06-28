@@ -34,7 +34,7 @@ using namespace Uintah;
 using namespace Vaango;
 
 YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps,
-                                   InternalVariableModel* intvar)
+                                   IntVar_Metal* intvar)
 {
   d_intvar = intvar;
 

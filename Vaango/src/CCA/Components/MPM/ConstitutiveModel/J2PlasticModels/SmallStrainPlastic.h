@@ -150,7 +150,7 @@ protected:
   bool d_setStressToZero;
   bool d_allowNoTension;
 
-  MPMEquationOfState* d_eos;
+  Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::KinematicHardeningModel* d_kinematic;
   Vaango::YieldCondition* d_yield;

@@ -183,7 +183,7 @@ protected:
 
   // Model factories
   // bool d_useEOSFactory;
-  MPMEquationOfState* d_eos;
+  Vaango::MPMEquationOfState* d_eos;
 
   ///////////////
   // Functions //

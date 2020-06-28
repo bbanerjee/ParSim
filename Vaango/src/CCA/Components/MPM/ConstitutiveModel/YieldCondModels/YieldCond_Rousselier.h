@@ -29,6 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -76,8 +77,9 @@ public:
     double sigma_1;
   };
 
-  YieldCond_Rousselier(ProblemSpecP& ps);
-  YieldCond_Rousselier(const YieldCond_Rousselier* cm);
+  explicit YieldCond_Rousselier(ProblemSpecP& ps,
+                                IntVar_Metal* intvar);
+  explicit YieldCond_Rousselier(const YieldCond_Rousselier* cm);
   YieldCond_Rousselier&
   operator=(const YieldCond_Rousselier&) = delete;
   ~YieldCond_Rousselier() override       = default;
@@ -164,38 +166,32 @@ public:
 
   double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
   double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
   double
@@ -238,6 +234,7 @@ public:
 
 private:
   Params d_params;
+  IntVar_Metal* d_intvar;
 
   Uintah::Matrix3
   df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;

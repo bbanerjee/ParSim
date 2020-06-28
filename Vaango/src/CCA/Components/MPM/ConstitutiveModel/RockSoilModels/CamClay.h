@@ -63,8 +63,8 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
-  CamClay(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
-  CamClay(const CamClay* cm);
+  explicit CamClay(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
+  explicit CamClay(const CamClay* cm);
   CamClay& operator=(const CamClay& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
@@ -196,10 +196,10 @@ public:
 
 private:
 
-  MPMEquationOfState* d_eos;
+  Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
-  Vaango::IntVar_BorjaPressure* d_intvar;
+  std::unique_ptr<Vaango::IntVar_BorjaPressure> d_intvar;
 
   void initializeLocalMPMLabels();
 

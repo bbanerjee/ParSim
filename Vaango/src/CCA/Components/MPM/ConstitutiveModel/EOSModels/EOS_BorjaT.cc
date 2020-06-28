@@ -45,10 +45,10 @@ EOS_BorjaT::EOS_BorjaT(ProblemSpecP& ps)
 
 EOS_BorjaT::EOS_BorjaT(const EOS_BorjaT* cm)
 {
-  d_p0         = cm->d_p0;
-  d_alpha      = cm->d_alpha;
-  d_kappatilde = cm->d_kappatilde;
-  d_epse_v0    = cm->d_epse_v0;
+  d_p0          = cm->d_p0;
+  d_alpha       = cm->d_alpha;
+  d_kappatilde  = cm->d_kappatilde;
+  d_epse_v0     = cm->d_epse_v0;
   d_bulkModulus = cm->d_bulkModulus;
 }
 
@@ -71,10 +71,10 @@ EOS_BorjaT::l_outputProblemSpec(ProblemSpecP& ps)
 //  (look at the header file for the equation)
 double
 EOS_BorjaT::l_computePressure(const MPMMaterial*,
-                          const ModelState_BorjaT* state,
-                          const Matrix3&,
-                          const Matrix3&,
-                          const double&)
+                              const ModelState_BorjaT* state,
+                              const Matrix3&,
+                              const Matrix3&,
+                              const double&)
 {
   double p = evalPressure(state->epse_v, state->epse_s);
   return p;
@@ -110,8 +110,8 @@ EOS_BorjaT::l_computeDpDepse_s(const ModelState_BorjaT* state) const
 */
 double
 EOS_BorjaT::l_eval_dp_dJ(const MPMMaterial*,
-                     const double&,
-                     const ModelState_BorjaT* state)
+                         const double&,
+                         const ModelState_BorjaT* state)
 {
   return computeDpDepse_v(state);
 }
@@ -158,9 +158,9 @@ EOS_BorjaT::l_computeStrainEnergy(const ModelState_BorjaT* state)
 // No isentropic increase in temperature with increasing strain
 double
 EOS_BorjaT::l_computeIsentropicTemperatureRate(const double,
-                                           const double,
-                                           const double,
-                                           const double)
+                                               const double,
+                                               const double,
+                                               const double)
 {
   return 0.0;
 }
@@ -188,10 +188,10 @@ EOS_BorjaT::l_computePressure(const double& rho_orig, const double& rho_cur)
 //   dp/drho = -(J/rho) dp/depse_v = -(J/rho) K = -J c^2
 void
 EOS_BorjaT::l_computePressure(const double& rho_orig,
-                          const double& rho_cur,
-                          double& pressure,
-                          double& dp_drho,
-                          double& csquared)
+                              const double& rho_cur,
+                              double& pressure,
+                              double& dp_drho,
+                              double& csquared)
 {
   // Calculate J and epse_v
   double J      = rho_orig / rho_cur;
@@ -257,7 +257,8 @@ EOS_BorjaT::l_computeElasticVolumetricStrain(const double& pp, const double& p0)
 }
 
 double
-EOS_BorjaT::l_computeExpElasticVolumetricStrain(const double& pp, const double& p0)
+EOS_BorjaT::l_computeExpElasticVolumetricStrain(const double& pp,
+                                                const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of Borja material."
@@ -270,8 +271,8 @@ EOS_BorjaT::l_computeExpElasticVolumetricStrain(const double& pp, const double& 
 }
 double
 EOS_BorjaT::l_computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                 const double& p0,
-                                                 double& exp_eps_e_v)
+                                                     const double& p0,
+                                                     double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

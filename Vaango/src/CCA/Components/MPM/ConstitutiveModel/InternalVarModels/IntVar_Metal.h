@@ -97,31 +97,32 @@ public:
                          const Uintah::PatchSet* patches) override;
 
   /* Get one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
-  
+
   /* Allocate one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
                                  Uintah::ParticleVariable<T>& var);
 
   /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   // Actually compute
   template <typename T>
@@ -168,13 +169,12 @@ public:
                       Uintah::constParticleLabelVariableMap& intvar) override;
 
 private:
-
   // Create datatype for storing porosity parameters
   struct PoreNucleationModelParams
   {
-    double phi_n;       /*< Volume fraction of void nucleating particles */
-    double eps_mean_n;  /*< Mean strain for nucleation */
-    double eps_std_n;   /*< Standard deviation of strain for nucleation */
+    double phi_n;      /*< Volume fraction of void nucleating particles */
+    double eps_mean_n; /*< Mean strain for nucleation */
+    double eps_std_n;  /*< Standard deviation of strain for nucleation */
   };
 
   PoreNucleationModelParams d_poreNucleation;
@@ -183,8 +183,10 @@ private:
   void
   initializeLocalMPMLabels();
 
-  void getPorosityModelParams(Uintah::ProblemSpecP& ps);
-  void copyPorosityModelParams(const IntVar_Metal* cm);
+  void
+  getPorosityModelParams(Uintah::ProblemSpecP& ps);
+  void
+  copyPorosityModelParams(const IntVar_Metal* cm);
 
   double
   computeEqPlasticStrain(double eqPlasticStrain_old,
@@ -201,13 +203,16 @@ private:
   plasticPorosityHardeningModulus(const ModelStateBase* state) const;
 
   /* Calculate hardening modulus due to void growth */
-  double poreGrowthHardeningModulus(const ModelStateBase* state) const;
+  double
+  poreGrowthHardeningModulus(const ModelStateBase* state) const;
 
   /* Calculate hardening modulus due to void nucleation */
-  double poreNucleationHardeningModulus(const ModelStateBase* state) const;
+  double
+  poreNucleationHardeningModulus(const ModelStateBase* state) const;
 
   /* Calculate the void nucleation factor */
-  double voidNucleationFactor(double eqPlasticStrain) const;
+  double
+  voidNucleationFactor(double eqPlasticStrain) const;
 };
 
 } // End namespace Vaango

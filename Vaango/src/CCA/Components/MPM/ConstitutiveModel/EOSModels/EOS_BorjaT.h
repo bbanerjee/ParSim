@@ -97,15 +97,15 @@ public:
   /////////////////////////////////////////////////////////////////////////
   double
   l_computePressure(const Uintah::MPMMaterial* matl,
-                  const ModelState_BorjaT* state,
-                  const Uintah::Matrix3& deformGrad,
-                  const Uintah::Matrix3& rateOfDeformation,
-                  const double& delT);
+                    const ModelState_BorjaT* state,
+                    const Uintah::Matrix3& deformGrad,
+                    const Uintah::Matrix3& rateOfDeformation,
+                    const double& delT);
 
   double
   l_eval_dp_dJ(const Uintah::MPMMaterial* matl,
-             const double& delF,
-             const ModelState_BorjaT* state);
+               const double& delF,
+               const ModelState_BorjaT* state);
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the derivative of p with respect to epse_v
@@ -127,9 +127,9 @@ public:
   // Calculate rate of temperature change due to compression/expansion
   double
   l_computeIsentropicTemperatureRate(const double T,
-                                   const double rho_0,
-                                   const double rho_cur,
-                                   const double Dtrace);
+                                     const double rho_0,
+                                     const double rho_cur,
+                                     const double Dtrace);
 
   // Compute pressure (option 1)
   double
@@ -138,10 +138,10 @@ public:
   // Compute pressure (option 2)
   void
   l_computePressure(const double& rho_orig,
-                  const double& rho_cur,
-                  double& pressure,
-                  double& dp_drho,
-                  double& csquared);
+                    const double& rho_cur,
+                    double& pressure,
+                    double& dp_drho,
+                    double& csquared);
 
   // Compute bulk modulus
   void
@@ -166,12 +166,11 @@ public:
   double
   l_computeElasticVolumetricStrain(const double& pp, const double& p0);
   double
-  l_computeExpElasticVolumetricStrain(const double& pp,
-                                    const double& p0);
+  l_computeExpElasticVolumetricStrain(const double& pp, const double& p0);
   double
   l_computeDerivExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0,
-                                         double& exp_eps_e_v);
+                                           const double& p0,
+                                           double& exp_eps_e_v);
 
 private:
   double d_p0;         // Reference pressure
@@ -192,6 +191,6 @@ private:
   evalDpDepse_s(const double& epse_v, const double& epse_s) const;
 };
 
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __BORJA_PRESSURE_TEMPLATED_MODEL_H__

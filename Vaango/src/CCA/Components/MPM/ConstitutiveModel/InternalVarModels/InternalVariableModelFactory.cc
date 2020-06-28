@@ -52,12 +52,12 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("internal_variable_model");
   if (!child)
-    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Cannot find internal_var_model tag", __FILE__, __LINE__);
   std::string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for internal_var_model", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "metal_internal_var") {
     return scinew IntVar_Metal(child);
   } else if (mat_type == "soil_model_brannon_kappa") {
@@ -75,12 +75,12 @@ InternalVariableModelFactory::create(ProblemSpecP& ps, ShearModulusModel* shear)
 {
   ProblemSpecP child = ps->findBlock("internal_variable_model");
   if (!child)
-    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Cannot find internal_var_model tag", __FILE__, __LINE__);
   std::string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for internal_var_model", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "borja_consolidation_pressure")
     return (scinew IntVar_BorjaPressure(child, shear));
   else {
@@ -95,12 +95,12 @@ InternalVariableModelFactory::create(ProblemSpecP& ps,
 {
   ProblemSpecP child = ps->findBlock("internal_variable_model");
   if (!child)
-    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Cannot find internal_var_model tag", __FILE__, __LINE__);
   std::string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for internal_var_model", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "arena")
     return (scinew IntVar_Arena(child, elastic));
   else {
@@ -123,8 +123,8 @@ InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
     return scinew IntVar_Metal(dynamic_cast<const IntVar_Metal*>(pm));
 
   else if (dynamic_cast<const IntVar_SoilBrannon*>(pm))
-    return (scinew IntVar_SoilBrannon(
-      dynamic_cast<const IntVar_SoilBrannon*>(pm)));
+    return (
+      scinew IntVar_SoilBrannon(dynamic_cast<const IntVar_SoilBrannon*>(pm)));
 
   else if (dynamic_cast<const IntVar_TabularCap*>(pm))
     return (

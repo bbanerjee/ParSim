@@ -39,8 +39,7 @@ using namespace Vaango;
 using namespace Uintah;
 
 /*!-----------------------------------------------------*/
-IntVar_Arena::IntVar_Arena(ProblemSpecP& ps,
-                                     ElasticModuliModel* elastic)
+IntVar_Arena::IntVar_Arena(ProblemSpecP& ps, ElasticModuliModel* elastic)
 {
   d_elastic = elastic;
   d_shear   = nullptr;
@@ -70,7 +69,7 @@ IntVar_Arena::IntVar_Arena(const IntVar_Arena* cm)
   initializeLocalMPMLabels();
 }
 
-void 
+void
 IntVar_Arena::initializeLocalMPMLabels()
 {
   pKappaLabel = Uintah::VarLabel::create(
@@ -141,8 +140,8 @@ IntVar_Arena::outputProblemSpec(ProblemSpecP& ps)
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::addInitialComputesAndRequires(Task* task,
-                                                 const MPMMaterial* matl,
-                                                 const PatchSet*)
+                                            const MPMMaterial* matl,
+                                            const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pKappaLabel, matlset);
@@ -155,11 +154,11 @@ IntVar_Arena::addInitialComputesAndRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::initializeInternalVariable(const Patch* patch,
-                                              const MPMMaterial* matl,
-                                              ParticleSubset* pset,
-                                              DataWarehouse* new_dw,
-                                              MPMLabel* lb,
-                                              ParameterDict& params)
+                                         const MPMMaterial* matl,
+                                         ParticleSubset* pset,
+                                         DataWarehouse* new_dw,
+                                         MPMLabel* lb,
+                                         ParameterDict& params)
 {
   Uintah::constParticleVariable<double> pMass, pVolume;
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
@@ -175,10 +174,10 @@ IntVar_Arena::initializeInternalVariable(const Patch* patch,
   new_dw->allocateAndPut(pP3, pP3Label, pset);
 
   double PEAKI1 = 0.0;
-  double CR = 0.0;
-  double phi0 = 0.0;
-  double Sw0 = 0.0;
-  double pf0 = 0.0;
+  double CR     = 0.0;
+  double phi0   = 0.0;
+  double Sw0    = 0.0;
+  double pf0    = 0.0;
   try {
     PEAKI1 = params.at("PEAKI1");
     CR     = params.at("CR");
@@ -225,8 +224,8 @@ IntVar_Arena::initializeInternalVariable(const Patch* patch,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::addComputesAndRequires(Task* task,
-                                          const MPMMaterial* matl,
-                                          const PatchSet*)
+                                     const MPMMaterial* matl,
+                                     const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
@@ -244,7 +243,7 @@ IntVar_Arena::addComputesAndRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
-                                    std::vector<const VarLabel*>& to)
+                               std::vector<const VarLabel*>& to)
 {
   from.push_back(pKappaLabel);
   to.push_back(pKappaLabel_preReloc);
@@ -263,7 +262,7 @@ IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 /* Get one (possibly composite) internal variable */
-template<>
+template <>
 void
 IntVar_Arena::getInternalVariable(ParticleSubset* pset,
                                   DataWarehouse* old_dw,
@@ -277,8 +276,7 @@ IntVar_Arena::getInternalVariable(ParticleSubset* pset,
 /* Get multiple local <int/double/Vector/Matrix3> internal variables */
 template <>
 std::vector<Uintah::constParticleVariable<double>>
-IntVar_Arena::getInternalVariables(ParticleSubset* pset,
-                                   DataWarehouse* old_dw)
+IntVar_Arena::getInternalVariables(ParticleSubset* pset, DataWarehouse* old_dw)
 {
   constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
   old_dw->get(pKappa, pKappaLabel, pset);
@@ -297,8 +295,7 @@ IntVar_Arena::getInternalVariables(ParticleSubset* pset,
 
 template <>
 std::vector<Uintah::constParticleVariable<Matrix3>>
-IntVar_Arena::getInternalVariables(ParticleSubset* pset,
-                                   DataWarehouse* old_dw)
+IntVar_Arena::getInternalVariables(ParticleSubset* pset, DataWarehouse* old_dw)
 {
   constParticleVariable<Uintah::Matrix3> pPlasticStrain;
   old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
@@ -312,9 +309,10 @@ IntVar_Arena::getInternalVariables(ParticleSubset* pset,
 /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
 template <>
 void
-IntVar_Arena::allocateAndPutInternalVariable(ParticleSubset* pset,
-                                             DataWarehouse* new_dw,
-                                             std::vector<ParticleVariable<double>>& pVars)
+IntVar_Arena::allocateAndPutInternalVariable(
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  std::vector<ParticleVariable<double>>& pVars)
 {
   new_dw->allocateAndPut(pVars[0], pKappaLabel_preReloc, pset);
   new_dw->allocateAndPut(pVars[1], pCapXLabel_preReloc, pset);
@@ -324,19 +322,21 @@ IntVar_Arena::allocateAndPutInternalVariable(ParticleSubset* pset,
 
 template <>
 void
-IntVar_Arena::allocateAndPutInternalVariable(ParticleSubset* pset,
-                                             DataWarehouse* new_dw,
-                                             std::vector<::ParticleVariable<Matrix3>>& pVars)
+IntVar_Arena::allocateAndPutInternalVariable(
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  std::vector<::ParticleVariable<Matrix3>>& pVars)
 {
   new_dw->allocateAndPut(pVars[0], pPlasticStrainLabel_preReloc, pset);
 }
 
 template <>
 void
-IntVar_Arena::evolveInternalVariable(Uintah::particleIndex pidx,
-                                     const ModelStateBase* state,
-                                     Uintah::constParticleVariable<ArenaIntVar>& var_old,
-                                     Uintah::ParticleVariable<ArenaIntVar>& var)
+IntVar_Arena::evolveInternalVariable(
+  Uintah::particleIndex pidx,
+  const ModelStateBase* state,
+  Uintah::constParticleVariable<ArenaIntVar>& var_old,
+  Uintah::ParticleVariable<ArenaIntVar>& var)
 {
 }
 
@@ -344,9 +344,8 @@ IntVar_Arena::evolveInternalVariable(Uintah::particleIndex pidx,
 // Compute hydrostatic strength
 //--------------------------------------------------------------------------------------
 double
-IntVar_Arena::computeInternalVariable(
-  const std::string& label,
-  const ModelStateBase* state_input) const
+IntVar_Arena::computeInternalVariable(const std::string& label,
+                                      const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -399,7 +398,7 @@ IntVar_Arena::computeInternalVariable(
  */
 double
 IntVar_Arena::computeDrainedHydrostaticStrength(const double& ep_v_bar,
-                                                     const double& phi0) const
+                                                const double& phi0) const
 {
   double p0 = d_crushParam.p0;
   double p1 = d_crushParam.p1;
@@ -426,7 +425,7 @@ IntVar_Arena::computeDrainedHydrostaticStrength(const double& ep_v_bar,
  */
 double
 IntVar_Arena::computeElasticVolStrainAtYield(const double& ep_v_bar,
-                                                  const double& phi0) const
+                                             const double& phi0) const
 {
   // Compute X(ep_v) using crush curve model for dry sand
   double X_bar_ep_v = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
@@ -448,11 +447,11 @@ IntVar_Arena::computeElasticVolStrainAtYield(const double& ep_v_bar,
  */
 double
 IntVar_Arena::computePartSatHydrostaticStrength(const double& I1_eff_bar,
-                                                     const double& pw_bar,
-                                                     const double& ep_v_bar,
-                                                     const double& phi,
-                                                     const double& Sw,
-                                                     const double& phi0) const
+                                                const double& pw_bar,
+                                                const double& ep_v_bar,
+                                                const double& phi,
+                                                const double& Sw,
+                                                const double& phi0) const
 {
   //------------Plastic strain exceeds allowable limit--------------------------
   // The plastic strain for this iteration has exceed the allowable
@@ -488,9 +487,9 @@ IntVar_Arena::computePartSatHydrostaticStrength(const double& I1_eff_bar,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::allocateCMDataAddRequires(Task* task,
-                                             const MPMMaterial* matl,
-                                             const PatchSet*,
-                                             MPMLabel*)
+                                        const MPMMaterial* matl,
+                                        const PatchSet*,
+                                        MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
@@ -505,10 +504,10 @@ IntVar_Arena::allocateCMDataAddRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::allocateCMDataAdd(DataWarehouse* old_dw,
-                                     ParticleSubset* addset,
-                                     ParticleLabelVariableMap* newState,
-                                     ParticleSubset* delset,
-                                     DataWarehouse* new_dw)
+                                ParticleSubset* addset,
+                                ParticleLabelVariableMap* newState,
+                                ParticleSubset* delset,
+                                DataWarehouse* new_dw)
 {
   ParticleVariable<double> pKappa, pCapX, pEpv, pP3;
   ParticleVariable<Matrix3> pEp;
@@ -547,8 +546,8 @@ IntVar_Arena::allocateCMDataAdd(DataWarehouse* old_dw,
 /*!-----------------------------------------------------*/
 void
 IntVar_Arena::allocateAndPutRigid(ParticleSubset* pset,
-                                       DataWarehouse* new_dw,
-                                       constParticleLabelVariableMap& var)
+                                  DataWarehouse* new_dw,
+                                  constParticleLabelVariableMap& var)
 {
   ParticleVariable<double> pKappa_new, pCapX_new, pEpv_new, pP3_new;
   ParticleVariable<Matrix3> pEp_new;

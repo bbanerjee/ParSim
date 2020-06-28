@@ -37,7 +37,8 @@ using namespace Uintah;
 using namespace Vaango;
 
 // Construct a shear modulus model.
-ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps, Uintah::MPMEquationOfState* eos)
+ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps,
+                                       MPMEquationOfState* eos)
 {
   d_eos = eos;
 
@@ -53,11 +54,11 @@ ShearModulus_Nadal::ShearModulus_Nadal(const ShearModulus_Nadal* smm)
 {
   d_eos = smm->d_eos;
 
-  d_mu0 = smm->d_mu0;
-  d_zeta = smm->d_zeta;
+  d_mu0                 = smm->d_mu0;
+  d_zeta                = smm->d_zeta;
   d_slope_mu_p_over_mu0 = smm->d_slope_mu_p_over_mu0;
-  d_C = smm->d_C;
-  d_m = smm->d_m;
+  d_C                   = smm->d_C;
+  d_m                   = smm->d_m;
 }
 
 // Destructor of shear modulus model.
@@ -86,22 +87,28 @@ ShearModulus_Nadal::computeInitialShearModulus()
 double
 ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state)
 {
-  return evalShearModulus(state->temperature, state->meltingTemp,
-                          state->density, state->initialDensity,
+  return evalShearModulus(state->temperature,
+                          state->meltingTemp,
+                          state->density,
+                          state->initialDensity,
                           state->pressure);
 }
 
 double
 ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state) const
 {
-  return evalShearModulus(state->temperature, state->meltingTemp,
-                          state->density, state->initialDensity,
+  return evalShearModulus(state->temperature,
+                          state->meltingTemp,
+                          state->density,
+                          state->initialDensity,
                           state->pressure);
 }
 
-double 
-ShearModulus_Nadal::evalShearModulus(double temperature, double meltingTemp,
-                                     double density, double initialDensity,
+double
+ShearModulus_Nadal::evalShearModulus(double temperature,
+                                     double meltingTemp,
+                                     double density,
+                                     double initialDensity,
                                      double pressure) const
 {
   double That = temperature / meltingTemp;
@@ -113,7 +120,7 @@ ShearModulus_Nadal::evalShearModulus(double temperature, double meltingTemp,
     return mu;
 
   double j_denom = d_zeta * (1.0 - That / (1.0 + d_zeta));
-  double J = 1.0 + exp((That - 1.0) / j_denom);
+  double J       = 1.0 + exp((That - 1.0) / j_denom);
   if (!finite(J))
     return mu;
 
@@ -122,18 +129,18 @@ ShearModulus_Nadal::evalShearModulus(double temperature, double meltingTemp,
   eta = pow(eta, 1.0 / 3.0);
 
   // Pressure is +ve in this calculation
-  double P = -pressure;
-  double t1 = d_mu0 * (1.0 + d_slope_mu_p_over_mu0 * P / eta);
-  double t2 = 1.0 - That;
+  double P     = -pressure;
+  double t1    = d_mu0 * (1.0 + d_slope_mu_p_over_mu0 * P / eta);
+  double t2    = 1.0 - That;
   double k_amu = 1.3806503e4 / 1.6605402;
-  double t3 = density * k_amu * temperature / (d_C * d_m);
-  mu = 1.0 / J * (t1 * t2 + t3);
+  double t3    = density * k_amu * temperature / (d_C * d_m);
+  mu           = 1.0 / J * (t1 * t2 + t3);
 
   if (mu < 1.0e-8) {
     std::cout << "mu = " << mu << " T = " << temperature
-         << " Tm = " << meltingTemp << " T/Tm = " << That << " J = " << J
-         << " rho/rho_0 = " << eta << " p = " << P << " t1 = " << t1
-         << " t2 = " << t2 << " t3 = " << t3 << "\n";
+              << " Tm = " << meltingTemp << " T/Tm = " << That << " J = " << J
+              << " rho/rho_0 = " << eta << " p = " << P << " t1 = " << t1
+              << " t2 = " << t2 << " t3 = " << t3 << "\n";
     mu = 1.0e-8;
   }
   return mu;

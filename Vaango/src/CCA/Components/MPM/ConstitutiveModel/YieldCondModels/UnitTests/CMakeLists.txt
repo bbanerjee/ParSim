@@ -32,6 +32,7 @@
 #------------------------
 configure_file(table_yield.json table_yield.json COPYONLY)
 configure_file(table_yield_circle.json table_yield_circle.json COPYONLY)
+configure_file(DrySand_HydrostaticCapData.json DrySand_HydrostaticCapData.json COPYONLY)
 
 #------------------------
 # Vaango libs

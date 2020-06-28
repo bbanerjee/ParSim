@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -35,29 +35,29 @@ AirEOS::AirEOS()
 {
   d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
                    // ProblemSpec later.
-  d_gamma = 1.4;
+  d_gamma       = 1.4;
   d_bulkModulus = d_gamma * d_p0;
 }
 
-AirEOS::AirEOS(Uintah::ProblemSpecP&)
+AirEOS::AirEOS(ProblemSpecP&)
 {
   d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
                    // ProblemSpec later.
-  d_gamma = 1.4;
+  d_gamma       = 1.4;
   d_bulkModulus = d_gamma * d_p0;
 }
 
 AirEOS::AirEOS(const AirEOS* cm)
 {
-  d_p0 = cm->d_p0;
-  d_gamma = cm->d_gamma;
+  d_p0          = cm->d_p0;
+  d_gamma       = cm->d_gamma;
   d_bulkModulus = cm->d_bulkModulus;
 }
 
 AirEOS::~AirEOS() = default;
 
 void
-AirEOS::outputProblemSpec(Uintah::ProblemSpecP& ps)
+AirEOS::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("equation_of_state");
   eos_ps->setAttribute("type", "air");
@@ -66,11 +66,11 @@ AirEOS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 //////////
 // Calculate the pressure using the elastic constitutive equation
 double
-AirEOS::computePressure(const Uintah::MPMMaterial* matl,
-                              const ModelStateBase* state_input,
-                              const Uintah::Matrix3&,
-                              const Uintah::Matrix3& rateOfDeformation,
-                              const double& delT)
+AirEOS::computePressure(const MPMMaterial* matl,
+                        const ModelStateBase* state_input,
+                        const Matrix3&,
+                        const Matrix3& rateOfDeformation,
+                        const double& delT)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -79,13 +79,13 @@ AirEOS::computePressure(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
   double rho_0 = matl->getInitialDensity();
-  double rho = state->density;
-  double p = computePressure(rho_0, rho);
+  double rho   = state->density;
+  double p     = computePressure(rho_0, rho);
   return p;
 }
 
@@ -93,30 +93,33 @@ AirEOS::computePressure(const Uintah::MPMMaterial* matl,
 double
 AirEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
-  double J = rho_orig / rho_cur;
+  double J     = rho_orig / rho_cur;
   double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
-  double p = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
+  double p     = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
   return p;
 }
 
 // Compute pressure (option 2)
 void
-AirEOS::computePressure(const double& rho_orig, const double& rho_cur,
-                              double& pressure, double& dp_drho,
-                              double& csquared)
+AirEOS::computePressure(const double& rho_orig,
+                        const double& rho_cur,
+                        double& pressure,
+                        double& dp_drho,
+                        double& csquared)
 {
-  double J = rho_orig / rho_cur;
+  double J     = rho_orig / rho_cur;
   double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
-  pressure = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
+  pressure     = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
   double dp_dJ = -d_gamma * pressure / J;
-  dp_drho = -dp_dJ * rho_orig / (rho_cur * rho_cur);
-  csquared = dp_dJ / rho_cur;
+  dp_drho      = -dp_dJ * rho_orig / (rho_cur * rho_cur);
+  csquared     = dp_dJ / rho_cur;
 }
 
 // Compute derivative of pressure
 double
-AirEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
-                         const ModelStateBase* )
+AirEOS::eval_dp_dJ(const MPMMaterial* matl,
+                   const double& detF,
+                   const ModelStateBase*)
 {
   /*
   const ModelState_Arena* state =
@@ -125,14 +128,14 @@ AirEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
-  double J = detF;
+  double J     = detF;
   double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
-  double p = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
-  double dpdJ = -d_gamma * p / J;
+  double p     = d_p0 * (std::exp(d_gamma * eps_v) - 1.0);
+  double dpdJ  = -d_gamma * p / J;
   return dpdJ;
 }
 
@@ -155,7 +158,7 @@ AirEOS::computeBulkModulus(const double& pressure) const
 double
 AirEOS::computeBulkModulus(const double& rho_orig, const double& rho_cur) const
 {
-  double p = computePressure(rho_orig, rho_cur);
+  double p           = computePressure(rho_orig, rho_cur);
   double bulkModulus = computeBulkModulus(p);
   return bulkModulus;
 }
@@ -170,11 +173,11 @@ AirEOS::computeBulkModulus(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
-  double p = state->pbar_w;
+  double p           = state->pbar_w;
   double bulkModulus = computeBulkModulus(p);
   return bulkModulus;
 }
@@ -184,7 +187,8 @@ double
 AirEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 {
   throw InternalError(
-    "ComputeStrainEnergy has not been implemented yet for Air.", __FILE__,
+    "ComputeStrainEnergy has not been implemented yet for Air.",
+    __FILE__,
     __LINE__);
   return 0.0;
 }
@@ -193,7 +197,8 @@ double
 AirEOS::computeStrainEnergy(const ModelStateBase* state)
 {
   throw InternalError(
-    "ComputeStrainEnergy has not been implemented yet for Air.", __FILE__,
+    "ComputeStrainEnergy has not been implemented yet for Air.",
+    __FILE__,
     __LINE__);
   return 0.0;
 }
@@ -202,8 +207,8 @@ AirEOS::computeStrainEnergy(const ModelStateBase* state)
 double
 AirEOS::computeDensity(const double& rho_orig, const double& pressure)
 {
-  throw InternalError("ComputeDensity has not been implemented yet for Air.",
-                      __FILE__, __LINE__);
+  throw InternalError(
+    "ComputeDensity has not been implemented yet for Air.", __FILE__, __LINE__);
   return 0.0;
 }
 
@@ -218,11 +223,11 @@ AirEOS::computeDpDepse_v(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
-  double p = state->pbar_w;
+  double p          = state->pbar_w;
   double dp_depse_v = d_gamma * (p + d_p0);
   return dp_depse_v;
 }
@@ -238,8 +243,7 @@ AirEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
 
 // Compute the exponential of volumetric strain given a pressure (p)
 double
-AirEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                                const double& p0)
+AirEOS::computeExpElasticVolumetricStrain(const double& pp, const double& p0)
 {
   // ASSERT(!(pp < 0))
   double eps_e_v = (pp < 0.0) ? 0.0 : -1 / d_gamma * std::log(pp / d_p0 + 1.0);
@@ -250,11 +254,11 @@ AirEOS::computeExpElasticVolumetricStrain(const double& pp,
 //  the volumetric strain at a given pressure (p)
 double
 AirEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                     const double& p0,
-                                                     double& exp_eps_e_v)
+                                               const double& p0,
+                                               double& exp_eps_e_v)
 {
   ASSERT(!(pp < 0))
-  exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+  exp_eps_e_v              = computeExpElasticVolumetricStrain(pp, p0);
   double deriv_exp_eps_e_v = (pp < 0.0)
                                ? -exp_eps_e_v / (d_gamma * d_p0)
                                : -exp_eps_e_v / (d_gamma * (pp + d_p0));

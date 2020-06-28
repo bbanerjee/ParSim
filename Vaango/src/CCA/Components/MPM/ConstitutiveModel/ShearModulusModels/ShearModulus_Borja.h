@@ -70,11 +70,12 @@ private:
   double d_kappatilde; // Reference compressibility
   double d_epse_v0;    // Reference volume strain
 
-  ShearModulus_Borja& operator=(const ShearModulus_Borja& smm);
+  ShearModulus_Borja&
+  operator=(const ShearModulus_Borja& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Borja(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
+  ShearModulus_Borja(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_Borja(const ShearModulus_Borja* smm);
@@ -82,10 +83,12 @@ public:
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_Borja() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  ParameterDict getParameters() const override
+  ParameterDict
+  getParameters() const override
   {
     ParameterDict params;
     params["mu0"] = d_mu0;
@@ -93,12 +96,16 @@ public:
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override;
-  double computeShearModulus(const ModelStateBase* state) override;
-  double computeShearModulus(const ModelStateBase* state) const override;
+  double
+  computeInitialShearModulus() override;
+  double
+  computeShearModulus(const ModelStateBase* state) override;
+  double
+  computeShearModulus(const ModelStateBase* state) const override;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelStateBase* state) override;
+  double
+  computeStrainEnergy(const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -110,34 +117,41 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override;
+  double
+  computeQ(const ModelStateBase* state) const override;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelStateBase* state) const override;
+  double
+  computeDqDepse_s(const ModelStateBase* state) const override;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelStateBase* state) const override;
+  double
+  computeDqDepse_v(const ModelStateBase* state) const override;
 
 private:
   //  Compute shear modulus (volume strain dependent)
-  double evalShearModulus(const double& epse_v) const;
+  double
+  evalShearModulus(const double& epse_v) const;
 
   //  Shear stress magnitude computation
-  double evalQ(const double& epse_v, const double& epse_s) const;
+  double
+  evalQ(const double& epse_v, const double& epse_s) const;
 
   //  Shear stress volume strain derivative computation
-  double evalDqDepse_v(const double& epse_v, const double& epse_s) const;
+  double
+  evalDqDepse_v(const double& epse_v, const double& epse_s) const;
 
   //  Shear stress shear strain derivative computation
-  double evalDqDepse_s(const double& epse_v, const double& epse_s) const;
+  double
+  evalDqDepse_s(const double& epse_v, const double& epse_s) const;
 };
 } // End namespace Uintah
 

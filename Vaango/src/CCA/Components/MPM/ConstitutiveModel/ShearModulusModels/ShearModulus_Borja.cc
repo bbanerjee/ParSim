@@ -24,9 +24,9 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Borja.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -39,7 +39,8 @@ using namespace Uintah;
 using namespace Vaango;
 
 // Construct a shear modulus model.
-ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, MPMEquationOfState* eos)
+ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps,
+                                       MPMEquationOfState* eos)
 {
   BorjaEOS* eos_local = dynamic_cast<BorjaEOS*>(eos);
   if (!eos_local) {
@@ -54,10 +55,10 @@ ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, MPMEquationOfState* eos
   d_eos = eos;
 
   ParameterDict eosParams = d_eos->getParameters();
-  d_alpha = eosParams["alpha"];
-  d_p0 = eosParams["p0"];
-  d_kappatilde = eosParams["kappatilde"];
-  d_epse_v0 = eosParams["epse_v0"];
+  d_alpha                 = eosParams["alpha"];
+  d_p0                    = eosParams["p0"];
+  d_kappatilde            = eosParams["kappatilde"];
+  d_epse_v0               = eosParams["epse_v0"];
 
   ps->require("mu0", d_mu0);
   d_shearModulus = d_mu0;
@@ -68,11 +69,11 @@ ShearModulus_Borja::ShearModulus_Borja(const ShearModulus_Borja* smm)
 {
   d_eos = smm->d_eos;
 
-  d_mu0 = smm->d_mu0;
-  d_alpha = smm->d_alpha;
-  d_p0 = smm->d_p0;
-  d_epse_v0 = smm->d_epse_v0;
-  d_kappatilde = smm->d_kappatilde;
+  d_mu0          = smm->d_mu0;
+  d_alpha        = smm->d_alpha;
+  d_p0           = smm->d_p0;
+  d_epse_v0      = smm->d_epse_v0;
+  d_kappatilde   = smm->d_kappatilde;
   d_shearModulus = smm->d_shearModulus;
 }
 
@@ -149,7 +150,7 @@ ShearModulus_Borja::computeStrainEnergy(const ModelStateBase* state_input)
   */
 
   double mu_vol = evalShearModulus(state->epse_v);
-  double W = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
+  double W      = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
   return W;
 }
 
@@ -227,7 +228,7 @@ double
 ShearModulus_Borja::evalQ(const double& epse_v, const double& epse_s) const
 {
   double mu_vol = evalShearModulus(epse_v);
-  double q = 3.0 * (d_mu0 - mu_vol) * epse_s;
+  double q      = 3.0 * (d_mu0 - mu_vol) * epse_s;
 
   return q;
 }
@@ -237,9 +238,9 @@ double
 ShearModulus_Borja::evalDqDepse_v(const double& epse_v,
                                   const double& epse_s) const
 {
-  double mu_vol = evalShearModulus(epse_v);
+  double mu_vol      = evalShearModulus(epse_v);
   double dmu_depse_v = mu_vol / d_kappatilde;
-  double dq_depse_v = 3.0 * dmu_depse_v * epse_s;
+  double dq_depse_v  = 3.0 * dmu_depse_v * epse_s;
   return dq_depse_v;
 }
 
@@ -248,7 +249,7 @@ double
 ShearModulus_Borja::evalDqDepse_s(const double& epse_v,
                                   const double& epse_s) const
 {
-  double mu_vol = evalShearModulus(epse_v);
+  double mu_vol     = evalShearModulus(epse_v);
   double dq_depse_s = 3.0 * (d_mu0 - mu_vol);
   return dq_depse_s;
 }

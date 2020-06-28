@@ -43,17 +43,18 @@ ShearModulus_BorjaT::ShearModulus_BorjaT(ProblemSpecP& ps, EOS_BorjaT* eos)
 
   if (!eos) {
     std::ostringstream out;
-    out << "**ERROR**"
-        << " Cannot initialize shear modulus model unless pressure EOS model has"
-        << " been initialized properly";
+    out
+      << "**ERROR**"
+      << " Cannot initialize shear modulus model unless pressure EOS model has"
+      << " been initialized properly";
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   ParameterDict eosParams = d_eos->getParameters();
-  d_alpha = eosParams["alpha"];
-  d_p0 = eosParams["p0"];
-  d_kappatilde = eosParams["kappatilde"];
-  d_epse_v0 = eosParams["epse_v0"];
+  d_alpha                 = eosParams["alpha"];
+  d_p0                    = eosParams["p0"];
+  d_kappatilde            = eosParams["kappatilde"];
+  d_epse_v0               = eosParams["epse_v0"];
 
   ps->require("mu0", d_mu0);
   d_shearModulus = d_mu0;
@@ -64,10 +65,10 @@ ShearModulus_BorjaT::ShearModulus_BorjaT(const ShearModulus_BorjaT* smm)
 {
   d_eos = smm->d_eos;
 
-  d_mu0 = smm->d_mu0;
-  d_alpha = smm->d_alpha;
-  d_p0 = smm->d_p0;
-  d_epse_v0 = smm->d_epse_v0;
+  d_mu0        = smm->d_mu0;
+  d_alpha      = smm->d_alpha;
+  d_p0         = smm->d_p0;
+  d_epse_v0    = smm->d_epse_v0;
   d_kappatilde = smm->d_kappatilde;
 }
 
@@ -111,7 +112,7 @@ double
 ShearModulus_BorjaT::l_computeStrainEnergy(const ModelState_BorjaT* state)
 {
   double mu_vol = evalShearModulus(state->epse_v);
-  double W = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
+  double W      = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
   return W;
 }
 
@@ -156,7 +157,7 @@ double
 ShearModulus_BorjaT::evalQ(const double& epse_v, const double& epse_s) const
 {
   double mu_vol = evalShearModulus(epse_v);
-  double q = 3.0 * (d_mu0 - mu_vol) * epse_s;
+  double q      = 3.0 * (d_mu0 - mu_vol) * epse_s;
 
   return q;
 }
@@ -164,20 +165,20 @@ ShearModulus_BorjaT::evalQ(const double& epse_v, const double& epse_s) const
 //  volumetric derivative computation
 double
 ShearModulus_BorjaT::evalDqDepse_v(const double& epse_v,
-                                  const double& epse_s) const
+                                   const double& epse_s) const
 {
-  double mu_vol = evalShearModulus(epse_v);
+  double mu_vol      = evalShearModulus(epse_v);
   double dmu_depse_v = mu_vol / d_kappatilde;
-  double dq_depse_v = 3.0 * dmu_depse_v * epse_s;
+  double dq_depse_v  = 3.0 * dmu_depse_v * epse_s;
   return dq_depse_v;
 }
 
 //  deviatoric derivative computation
 double
 ShearModulus_BorjaT::evalDqDepse_s(const double& epse_v,
-                                  const double& epse_s) const
+                                   const double& epse_s) const
 {
-  double mu_vol = evalShearModulus(epse_v);
+  double mu_vol     = evalShearModulus(epse_v);
   double dq_depse_s = 3.0 * (d_mu0 - mu_vol);
   return dq_depse_s;
 }

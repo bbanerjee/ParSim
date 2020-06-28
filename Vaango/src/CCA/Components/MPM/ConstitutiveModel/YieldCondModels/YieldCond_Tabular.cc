@@ -706,9 +706,8 @@ YieldCond_Tabular::convertToZRprime(const double& sqrtKG,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                  const PressureModel* eos,
-                                  const ShearModulusModel*,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState* eos,
+                                  const ShearModulusModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsVol should not be called by "
@@ -727,9 +726,8 @@ YieldCond_Tabular::d2f_dp_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                  const PressureModel* eos,
-                                  const ShearModulusModel*,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState* eos,
+                                  const ShearModulusModel*)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dp_depsDev should not be called by "
@@ -748,9 +746,8 @@ YieldCond_Tabular::d2f_dp_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::d2f_dq_depsVol(const ModelStateBase* state_input,
-                                  const PressureModel*,
-                                  const ShearModulusModel* shear,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState*,
+                                  const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsVol should not be called by "
@@ -769,9 +766,8 @@ YieldCond_Tabular::d2f_dq_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::d2f_dq_depsDev(const ModelStateBase* state_input,
-                                  const PressureModel*,
-                                  const ShearModulusModel* shear,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState*,
+                                  const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsDev should not be called by "
@@ -789,9 +785,8 @@ YieldCond_Tabular::d2f_dq_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::df_depsVol(const ModelStateBase* state_input,
-                              const PressureModel* eos,
-                              const ShearModulusModel* shear,
-                              const InternalVariableModel*)
+                              const MPMEquationOfState* eos,
+                              const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "
@@ -809,9 +804,8 @@ YieldCond_Tabular::df_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::df_depsDev(const ModelStateBase* state_input,
-                              const PressureModel* eos,
-                              const ShearModulusModel* shear,
-                              const InternalVariableModel*)
+                              const MPMEquationOfState* eos,
+                              const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "

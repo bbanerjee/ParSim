@@ -1796,7 +1796,7 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
 
     // Compute unscaled hardening modulus
     double df_dep_v = d_yield->df_depsVol(&state_np1,
-      nullptr, nullptr, d_capX);
+      nullptr, nullptr);
     double H = -(df_dep_v * M_np1.Trace())/norm_M_np1;
 
     // Compute Gamma^H

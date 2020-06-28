@@ -45,10 +45,10 @@ BorjaEOS::BorjaEOS(ProblemSpecP& ps)
 
 BorjaEOS::BorjaEOS(const BorjaEOS* cm)
 {
-  d_p0 = cm->d_p0;
-  d_alpha = cm->d_alpha;
+  d_p0         = cm->d_p0;
+  d_alpha      = cm->d_alpha;
   d_kappatilde = cm->d_kappatilde;
-  d_epse_v0 = cm->d_epse_v0;
+  d_epse_v0    = cm->d_epse_v0;
 }
 
 BorjaEOS::~BorjaEOS() = default;
@@ -70,8 +70,10 @@ BorjaEOS::outputProblemSpec(ProblemSpecP& ps)
 //  (look at the header file for the equation)
 double
 BorjaEOS::computePressure(const MPMMaterial*,
-                                const ModelStateBase* state_input,
-                                const Matrix3&, const Matrix3&, const double&)
+                          const ModelStateBase* state_input,
+                          const Matrix3&,
+                          const Matrix3&,
+                          const double&)
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
@@ -80,7 +82,7 @@ BorjaEOS::computePressure(const MPMMaterial*,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
@@ -103,7 +105,7 @@ BorjaEOS::computeDpDepse_v(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
@@ -125,7 +127,7 @@ BorjaEOS::computeDpDepse_s(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
@@ -139,8 +141,9 @@ BorjaEOS::computeDpDepse_s(const ModelStateBase* state_input) const
          = p/kappatilde
 */
 double
-BorjaEOS::eval_dp_dJ(const MPMMaterial*, const double&,
-                           const ModelStateBase* state_input)
+BorjaEOS::eval_dp_dJ(const MPMMaterial*,
+                     const double&,
+                     const ModelStateBase* state_input)
 {
   return computeDpDepse_v(state_input);
 }
@@ -164,7 +167,7 @@ BorjaEOS::computeBulkModulus(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
@@ -185,7 +188,7 @@ BorjaEOS::computeStrainEnergy(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    throw InternalError(out.str(), __FILE__, __LINE__);
   }
   */
 
@@ -196,8 +199,10 @@ BorjaEOS::computeStrainEnergy(const ModelStateBase* state_input)
 
 // No isentropic increase in temperature with increasing strain
 double
-BorjaEOS::computeIsentropicTemperatureRate(const double, const double,
-                                                 const double, const double)
+BorjaEOS::computeIsentropicTemperatureRate(const double,
+                                           const double,
+                                           const double,
+                                           const double)
 {
   return 0.0;
 }
@@ -214,7 +219,7 @@ BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   // Calculate epse_v
   double epse_v = rho_orig / rho_cur - 1.0;
-  double p = evalPressure(epse_v, 0.0);
+  double p      = evalPressure(epse_v, 0.0);
   return p;
 }
 
@@ -224,12 +229,14 @@ BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 //   c^2 = K/rho
 //   dp/drho = -(J/rho) dp/depse_v = -(J/rho) K = -J c^2
 void
-BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur,
-                                double& pressure, double& dp_drho,
-                                double& csquared)
+BorjaEOS::computePressure(const double& rho_orig,
+                          const double& rho_cur,
+                          double& pressure,
+                          double& dp_drho,
+                          double& csquared)
 {
   // Calculate J and epse_v
-  double J = rho_orig / rho_cur;
+  double J      = rho_orig / rho_cur;
   double epse_v = J - 1.0;
 
   pressure = evalPressure(epse_v, 0.0);
@@ -237,7 +244,7 @@ BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur,
   // pressure << endl;
   double K = computeBulkModulus(rho_orig, rho_cur);
   csquared = K / rho_cur;
-  dp_drho = -J * csquared;
+  dp_drho  = -J * csquared;
   return;
 }
 
@@ -256,11 +263,11 @@ BorjaEOS::computeInitialBulkModulus() const
 
 double
 BorjaEOS::computeBulkModulus(const double& rho_orig,
-                                   const double& rho_cur) const
+                             const double& rho_cur) const
 {
   // Calculate epse_v
   double epse_v = rho_orig / rho_cur - 1.0;
-  double K = evalDpDepse_v(epse_v, 0.0);
+  double K      = evalDpDepse_v(epse_v, 0.0);
   return K;
 }
 
@@ -283,8 +290,7 @@ BorjaEOS::computeDensity(const double& rho_orig, const double& pressure)
 //   The strain energy function for the Borja model has the form
 //      U(epse_v) = p0 kappatilde exp[(epse_v - epse_v0)/kappatilde]
 double
-BorjaEOS::computeStrainEnergy(const double& rho_orig,
-                                    const double& rho_cur)
+BorjaEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 {
   // Calculate epse_v
   double epse_v = rho_orig / rho_cur - 1.0;
@@ -293,10 +299,8 @@ BorjaEOS::computeStrainEnergy(const double& rho_orig,
   return Wvol;
 }
 
-
-double 
-BorjaEOS::computeElasticVolumetricStrain(const double& pp,
-                                      const double& p0)
+double
+BorjaEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of Borja material."
@@ -308,9 +312,8 @@ BorjaEOS::computeElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
-BorjaEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0)
+double
+BorjaEOS::computeExpElasticVolumetricStrain(const double& pp, const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of Borja material."
@@ -321,10 +324,10 @@ BorjaEOS::computeExpElasticVolumetricStrain(const double& pp,
 
   return -1;
 }
-double 
+double
 BorjaEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                              const double& p0,
-                                              double& exp_eps_e_v)
+                                                 const double& p0,
+                                                 double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "
@@ -345,7 +348,7 @@ double
 BorjaEOS::evalPressure(const double& epse_v, const double& epse_s) const
 {
   double beta = 1.0 + 1.5 * (d_alpha / d_kappatilde) * (epse_s * epse_s);
-  double p = d_p0 * beta * exp(-(epse_v - d_epse_v0) / d_kappatilde);
+  double p    = d_p0 * beta * exp(-(epse_v - d_epse_v0) / d_kappatilde);
 
   return p;
 }

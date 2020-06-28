@@ -100,7 +100,8 @@ public:
                   double& dp_drho,
                   double& csquared)
   {
-    derived()->l_computePressure(rho_orig, rho_cur, pressure, dp_drho, csquared);
+    derived()->l_computePressure(
+      rho_orig, rho_cur, pressure, dp_drho, csquared);
   }
 
   /*! Calculate the derivative of \f$p(J)\f$ wrt \f$J\f$
@@ -143,7 +144,8 @@ public:
                                    const double rho_cur,
                                    const double Dtrace)
   {
-    return derived()->l_computeIsentropicTemperatureRate(T, rho_0, rho_cur, Dtrace);
+    return derived()->l_computeIsentropicTemperatureRate(
+      T, rho_0, rho_cur, Dtrace);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -207,7 +209,7 @@ public:
    */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeElasticVolumetricStrain(const double& pp, const double& p0) 
+  computeElasticVolumetricStrain(const double& pp, const double& p0)
   {
     return derived()->l_computeElasticVolumetricStrain(pp, p0);
   }
@@ -258,7 +260,8 @@ public:
                                          const double& p0,
                                          double& exp_eps_e_v)
   {
-    return derived()->l_computeDerivExpElasticVolumetricStrain(pp, p0, exp_eps_e_v);
+    return derived()->l_computeDerivExpElasticVolumetricStrain(
+      pp, p0, exp_eps_e_v);
   }
 
 protected:

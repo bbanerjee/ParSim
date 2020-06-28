@@ -65,8 +65,8 @@
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace std;
 using namespace Uintah;
+using namespace Vaango;
 
 static DebugStream cout_EP("SSEP", false);
 static DebugStream cout_EP1("SSEP1", false);
@@ -117,21 +117,21 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the MPMEOSFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << endl;
+         << " Biswajit.  " << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
     ostringstream desc;
-    desc << "SmallStrainPlastic::Error in shear modulus model factory" << endl;
+    desc << "SmallStrainPlastic::Error in shear modulus model factory" << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
     ostringstream desc;
-    desc << "SmallStrainPlastic::Error in melting temp model factory" << endl;
+    desc << "SmallStrainPlastic::Error in melting temp model factory" << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -144,7 +144,7 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << endl;
+         << " Biswajit.  " << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -153,7 +153,7 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the FlowStressModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << endl;
+         << " Biswajit.  " << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -162,7 +162,7 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the KinematicHardeningModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << endl;
+         << " Biswajit.  " << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -171,13 +171,13 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << endl;
+         << " Biswajit.  " << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_stable = StabilityCheckFactory::create(ps);
   if (!d_stable)
-    cerr << "Stability check disabled\n";
+    std::cerr << "Stability check disabled\n";
 
   setErosionAlgorithm();
   getInitialPorosityData(ps);
@@ -463,7 +463,7 @@ SmallStrainPlastic::initializeCMData(const Patch* patch,
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
-  // cout << "Initialize CM Data in SmallStrainPlastic" << endl;
+  // std::cout << "Initialize CM Data in SmallStrainPlastic" << "\n";
   Matrix3 one, zero(0.);
   one.Identity();
 
@@ -901,10 +901,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         // Check whether the step is elastic or plastic
         auto f_0 = d_yield->evalYieldCondition(xi_trial, &state);
         if (std::isnan(f_0)) {
-          cout << "idx = " << idx << " epdot = " << state.eqPlasticStrainRate
+          std::cout << "idx = " << idx << " epdot = " << state.eqPlasticStrainRate
                << " ep = " << state.eqPlasticStrain
                << " T = " << state.temperature << " p = " << state.pressure
-               << " sigy = " << state.yieldStress << endl;
+               << " sigy = " << state.yieldStress << "\n";
           throw InvalidValue(
             "**ERROR**:SmallStrainPlastic: f_0 = nan.", __FILE__, __LINE__);
         }
@@ -922,10 +922,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
           Matrix3 xi_n = sigma_dev_old - backStress_dev_old;
           if (!(xi_n.NormSquared() > 0.0)) {
-            cout
+            std::cout
               << "Particle idx = " << idx
               << " has zero deviatoric stress.  Reduce initial time step size"
-              << " and restart. " << endl;
+              << " and restart. " << "\n";
             throw InvalidValue("**ERROR**:SmallStrainPlastic: Lower time step",
                                __FILE__,
                                __LINE__);
@@ -967,18 +967,18 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
                            h_phi_k * df_dphi_k;
             double delta_gamma_k = f_k / denom;
             if (std::isnan(f_k) || std::isnan(delta_gamma_k)) {
-              cout << "idx = " << idx << " iter = " << count << " f_k = " << f_k
+              std::cout << "idx = " << idx << " iter = " << count << " f_k = " << f_k
                    << " delta_gamma_k = " << delta_gamma_k
                    << " sigy = " << state.yieldStress
                    << " dsigy_dep_k = " << dsigy_dep_k
                    << " df_dep_k = " << df_dep_k
                    << " epdot = " << state.eqPlasticStrainRate
-                   << " ep = " << state.eqPlasticStrain << endl;
-              cout << "df_dxi = \n"
+                   << " ep = " << state.eqPlasticStrain << "\n";
+              std::cout << "df_dxi = \n"
                    << df_dxi_k << "\n term1 = " << term1_k
                    << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
                    << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
-                   << " denom = " << denom << endl;
+                   << " denom = " << denom << "\n";
               throw InvalidValue(
                 "**ERROR**:SmallStrainPlastic: Found nan.", __FILE__, __LINE__);
             }
@@ -988,28 +988,28 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             Delta_gamma += delta_gamma_k;
 
             if (Delta_gamma < 0.0) {
-              cout << "Delta_gamma = " << Delta_gamma << endl;
-              cout << "h_alpha = " << h_alpha_k
+              std::cout << "Delta_gamma = " << Delta_gamma << "\n";
+              std::cout << "h_alpha = " << h_alpha_k
                    << " delta_gamma = " << delta_gamma_k
-                   << " ep = " << state.eqPlasticStrain << endl;
-              cout << "idx = " << idx << " iter = " << count << " f_k = " << f_k
+                   << " ep = " << state.eqPlasticStrain << "\n";
+              std::cout << "idx = " << idx << " iter = " << count << " f_k = " << f_k
                    << " delta_gamma_k = " << delta_gamma_k
                    << " sigy = " << state.yieldStress
                    << " dsigy_dep_k = " << dsigy_dep_k
                    << " df_dep_k = " << df_dep_k
                    << " epdot = " << state.eqPlasticStrainRate
-                   << " ep = " << state.eqPlasticStrain << endl;
-              cout << "xi = \n"
+                   << " ep = " << state.eqPlasticStrain << "\n";
+              std::cout << "xi = \n"
                    << xi_k << "\n df_dxi:term1 = " << df_dxi_k.Contract(term1_k)
                    << "\n df_dxi = \n"
                    << df_dxi_k << "\n term1 = " << term1_k
                    << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
                    << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
-                   << " denom = " << denom << endl;
-              cout << "r_n_dev = \n"
+                   << " denom = " << denom << "\n";
+              std::cout << "r_n_dev = \n"
                    << r_k_dev << "\n mu_cur = " << mu_cur
                    << "\n h_bet_n_dev = \n"
-                   << h_beta_k_dev << endl;
+                   << h_beta_k_dev << "\n";
             }
 
             /* Updated algorithm - use value of xi_k */
@@ -1340,7 +1340,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
   }
 
   if (cout_EP.active())
-    cout_EP << getpid() << "... End." << endl;
+    cout_EP << getpid() << "... End." << "\n";
 }
 
 void

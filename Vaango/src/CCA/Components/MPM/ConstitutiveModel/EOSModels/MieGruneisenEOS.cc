@@ -30,7 +30,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelStateBase;
+using namespace Vaango;
 
 MieGruneisenEOS::MieGruneisenEOS(ProblemSpecP& ps)
 {
@@ -42,10 +42,10 @@ MieGruneisenEOS::MieGruneisenEOS(ProblemSpecP& ps)
 
 MieGruneisenEOS::MieGruneisenEOS(const MieGruneisenEOS* cm)
 {
-  d_const.C_0 = cm->d_const.C_0;
+  d_const.C_0     = cm->d_const.C_0;
   d_const.Gamma_0 = cm->d_const.Gamma_0;
   d_const.S_alpha = cm->d_const.S_alpha;
-  d_const.rho_0 = cm->d_const.rho_0;
+  d_const.rho_0   = cm->d_const.rho_0;
 }
 
 MieGruneisenEOS::~MieGruneisenEOS() = default;
@@ -62,14 +62,14 @@ MieGruneisenEOS::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("rho_0", d_const.rho_0);
 }
 
-std::map<std::string, double> 
-MieGruneisenEOS::getParameters() const 
+std::map<std::string, double>
+MieGruneisenEOS::getParameters() const
 {
   std::map<std::string, double> params;
-  params["C_0"] = d_const.C_0;
+  params["C_0"]     = d_const.C_0;
   params["Gamma_0"] = d_const.Gamma_0;
   params["S_alpha"] = d_const.S_alpha;
-  params["rho_0"] = d_const.rho_0;
+  params["rho_0"]   = d_const.rho_0;
   return params;
 }
 
@@ -77,12 +77,14 @@ MieGruneisenEOS::getParameters() const
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOS::computePressure(const MPMMaterial* matl,
-                                 const ModelStateBase* state, const Matrix3&,
-                                 const Matrix3&, const double&)
+                                 const ModelStateBase* state,
+                                 const Matrix3&,
+                                 const Matrix3&,
+                                 const double&)
 {
   // Get the state data
   double rho = state->density;
-  double T = state->temperature;
+  double T   = state->temperature;
   double T_0 = state->initialTemperature;
 
   // Get original density
@@ -101,8 +103,8 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
                    (1.0 / zeta + (1.0 - 0.5 * d_const.Gamma_0));
     double denom = 1.0 / zeta - (d_const.S_alpha - 1.0);
     if (denom == 0.0) {
-      std::cout << "rh0_0 = " << rho_0 << " zeta = " << zeta << " numer = " << numer
-           << "\n";
+      std::cout << "rh0_0 = " << rho_0 << " zeta = " << zeta
+                << " numer = " << numer << "\n";
       denom = 1.0e-5;
     }
     p += numer / (denom * denom);
@@ -111,20 +113,22 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
 }
 
 double
-MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
+MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl,
+                            const double& detF,
                             const ModelStateBase* state)
 {
-  double rho_0 = matl->getInitialDensity();
-  double C_0 = d_const.C_0;
+  double rho_0   = matl->getInitialDensity();
+  double C_0     = d_const.C_0;
   double S_alpha = d_const.S_alpha;
   double Gamma_0 = d_const.Gamma_0;
 
-  double J = detF;
-  double numer = rho_0 * C_0 * C_0 * (1.0 + (S_alpha - Gamma_0) * (1.0 - J));
-  double denom = (1.0 - S_alpha * (1.0 - J));
+  double J      = detF;
+  double numer  = rho_0 * C_0 * C_0 * (1.0 + (S_alpha - Gamma_0) * (1.0 - J));
+  double denom  = (1.0 - S_alpha * (1.0 - J));
   double denom3 = (denom * denom * denom);
   if (denom3 == 0.0) {
-    std::cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << "\n";
+    std::cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer
+              << "\n";
     denom3 = 1.0e-5;
   }
 
@@ -142,12 +146,13 @@ MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 //    = dp/dJ  (based on Ogden) is more realistic
 //  c^2 = K/rho
 double
-MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur) const
+MieGruneisenEOS::computePressure(const double& rho_orig,
+                                 const double& rho_cur) const
 {
   // Calc. J
-  double J = rho_orig / rho_cur;
+  double J     = rho_orig / rho_cur;
   double J_min = 1.0 - 1.0 / d_const.S_alpha;
-  J = (J > J_min) ? J : J_min;
+  J            = (J > J_min) ? J : J_min;
 
   /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
@@ -161,8 +166,8 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur) 
   double numer = rho_orig * (d_const.C_0 * d_const.C_0) * J_one *
                  (2.0 + d_const.Gamma_0 * J_one);
   double denom = 1.0 + J_one * d_const.S_alpha;
-  denom = (denom == 0.0) ? 1.0e-3 : denom;
-  double p = numer / (2.0 * denom * denom);
+  denom        = (denom == 0.0) ? 1.0e-3 : denom;
+  double p     = numer / (2.0 * denom * denom);
   return p;
 }
 
@@ -179,14 +184,16 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur) 
 //    = dp/dJ  (based on Ogden) is more realistic
 //  c^2 = K/rho
 void
-MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur,
-                                 double& pressure, double& dp_drho,
+MieGruneisenEOS::computePressure(const double& rho_orig,
+                                 const double& rho_cur,
+                                 double& pressure,
+                                 double& dp_drho,
                                  double& csquared)
 {
   // Calc. J
-  double J = rho_orig / rho_cur;
+  double J     = rho_orig / rho_cur;
   double J_min = 1.0 - 1.0 / d_const.S_alpha;
-  J = (J > J_min) ? J : J_min;
+  J            = (J > J_min) ? J : J_min;
 
   /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
@@ -197,18 +204,18 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur,
 
   // Calculate the pressure
   double J_one = J - 1.0;
-  double c0sq = d_const.C_0 * d_const.C_0;
+  double c0sq  = d_const.C_0 * d_const.C_0;
   double numer = rho_orig * c0sq * J_one * (2.0 + d_const.Gamma_0 * J_one);
   double denom = 1.0 + J_one * d_const.S_alpha;
-  denom = (denom == 0.0) ? 1.0e-3 : denom;
-  pressure = numer / (2.0 * denom * denom);
+  denom        = (denom == 0.0) ? 1.0e-3 : denom;
+  pressure     = numer / (2.0 * denom * denom);
 
   // Calculate dp/dJ and csquared
   numer = c0sq * rho_orig * (1.0 + J_one * (d_const.Gamma_0 - d_const.S_alpha));
   double dp_dJ = numer / (denom * denom * denom);
   // double bulk = J*dp_dJ;
   double bulk = dp_dJ;
-  csquared = bulk / rho_cur;
+  csquared    = bulk / rho_cur;
 
   // Calculate dp/drho
   dp_drho = -J * J * dp_dJ / rho_orig;
@@ -217,7 +224,7 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur,
 }
 
 // Compute bulk modulus
-double 
+double
 MieGruneisenEOS::computeInitialBulkModulus() const
 {
   return computeBulkModulus(d_const.rho_0, d_const.rho_0);
@@ -228,10 +235,10 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur) const
 {
   // Calc. J
-  double J = rho_orig / rho_cur;
+  double J     = rho_orig / rho_cur;
   double J_min = 1.0 - 1.0 / d_const.S_alpha;
-  J = (J > J_min) ? J : J_min;
-  
+  J            = (J > J_min) ? J : J_min;
+
   /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
     std::ostringstream err;
@@ -244,11 +251,11 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
 
   // Calculate dp/dJ
   double J_one = J - 1.0;
-  double c0sq = d_const.C_0 * d_const.C_0;
+  double c0sq  = d_const.C_0 * d_const.C_0;
   double numer =
     c0sq * rho_orig * (1.0 + J_one * (d_const.Gamma_0 - d_const.S_alpha));
   double denom = 1.0 + J_one * d_const.S_alpha;
-  denom = (denom == 0.0) ? 1.0e-3 : denom;
+  denom        = (denom == 0.0) ? 1.0e-3 : denom;
   double dp_dJ = numer / (denom * denom * denom);
   // double bulk = J*dp_dJ;
   double bulk = dp_dJ;
@@ -256,7 +263,7 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
   return bulk;
 }
 
-double 
+double
 MieGruneisenEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
@@ -269,7 +276,7 @@ MieGruneisenEOS::computeBulkModulus(const ModelStateBase* state) const
 //       2 (-Gamma0 + S_alpha) Log[1 + (-1 + J) S_alpha])
 //  conditional upon: (1 - J) S_alpha <= 1
 // Compute strain energy
-double 
+double
 MieGruneisenEOS::computeStrainEnergy(const ModelStateBase* state)
 {
   return computeStrainEnergy(state->initialDensity, state->density);
@@ -280,14 +287,14 @@ MieGruneisenEOS::computeStrainEnergy(const double& rho_orig,
                                      const double& rho_cur)
 {
   // Calc. J
-  double J = rho_orig / rho_cur;
-  double Sa = d_const.S_alpha;
-  double G0 = d_const.Gamma_0;
+  double J    = rho_orig / rho_cur;
+  double Sa   = d_const.S_alpha;
+  double G0   = d_const.Gamma_0;
   double C0sq = d_const.C_0 * d_const.C_0;
 
   // Check validity condition
   double J_min = 1.0 - 1.0 / d_const.S_alpha;
-  J = (J > J_min) ? J : J_min;
+  J            = (J > J_min) ? J : J_min;
 
   /*
   if (J < 1.0 - 1.0 / Sa) {
@@ -299,7 +306,7 @@ MieGruneisenEOS::computeStrainEnergy(const double& rho_orig,
   double J_one = J - 1.0;
   double numer = J_one * Sa * (-2.0 * Sa + G0 * (2.0 + J_one * Sa));
   double denom = 1.0 + J_one * Sa;
-  double U = rho_orig * C0sq / (2.0 * Sa * Sa * Sa) *
+  double U     = rho_orig * C0sq / (2.0 * Sa * Sa * Sa) *
              (numer / denom + 2 * (Sa - G0) * log(1.0 + J_one * Sa));
 
   return U;
@@ -309,26 +316,26 @@ MieGruneisenEOS::computeStrainEnergy(const double& rho_orig,
 double
 MieGruneisenEOS::computeDensity(const double& rho_orig, const double& pressure)
 {
-  double J = 0.8;
+  double J     = 0.8;
   double J_one = J - 1.0;
   double numer = 0.0;
   double denom = 1.0;
-  double c0sq = d_const.C_0 * d_const.C_0;
-  double p = 0.0;
+  double c0sq  = d_const.C_0 * d_const.C_0;
+  double p     = 0.0;
   double dp_dJ = 0.0;
 
-  double f = 0.0;
+  double f      = 0.0;
   double fPrime = 0.0;
-  int iter = 0;
-  int max_iter = 100;
-  double tol = 1.0e-6 * pressure;
+  int iter      = 0;
+  int max_iter  = 100;
+  double tol    = 1.0e-6 * pressure;
   do {
 
     // Calculate p
     J_one = J - 1.0;
     numer = rho_orig * c0sq * J_one * (2.0 + d_const.Gamma_0 * J_one);
     denom = 1.0 + J_one * d_const.S_alpha;
-    p = numer / (2.0 * denom * denom);
+    p     = numer / (2.0 * denom * denom);
 
     // Calculate dp/dJ
     numer =
@@ -336,25 +343,25 @@ MieGruneisenEOS::computeDensity(const double& rho_orig, const double& pressure)
     dp_dJ = numer / (denom * denom * denom);
 
     // f(J) and f'(J) calc
-    f = p - pressure;
+    f      = p - pressure;
     fPrime = dp_dJ;
     J -= f / fPrime;
     ++iter;
   } while (fabs(f) > tol && iter < max_iter);
 
   double J_min = 1.0 - 1.0 / d_const.S_alpha;
-  J = (J > J_min) ? J : J_min;
-  double rho = rho_orig / J; 
+  J            = (J > J_min) ? J : J_min;
+  double rho   = rho_orig / J;
 
   return rho;
 }
 
-double 
+double
 MieGruneisenEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_v of Mie-Gruneisen material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
@@ -362,12 +369,12 @@ MieGruneisenEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
   return -1;
 }
 
-double 
+double
 MieGruneisenEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute dp/deps_s of Mie-Gruneisen material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
   throw InternalError(err.str(), __FILE__, __LINE__);
@@ -375,13 +382,13 @@ MieGruneisenEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
   return -1;
 }
 
-double 
+double
 MieGruneisenEOS::computeElasticVolumetricStrain(const double& pp,
-                                      const double& p0)
+                                                const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of Mie-Gruneisen material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " It should be provided as an input."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -390,13 +397,13 @@ MieGruneisenEOS::computeElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 MieGruneisenEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                         const double& p0)
+                                                   const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of Mie-Gruneisen material"
-         " unless the elastic part of J is provided." 
+         " unless the elastic part of J is provided."
          " It should be provided as an input."
          " Please change the equation_of_state if you need this "
          " functionality.\n";
@@ -405,14 +412,14 @@ MieGruneisenEOS::computeExpElasticVolumetricStrain(const double& pp,
   return -1;
 }
 
-double 
+double
 MieGruneisenEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                              const double& p0,
-                                              double& exp_eps_e_v)
+                                                        const double& p0,
+                                                        double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "
-         " Mie-Gruneisen material unless the elastic part of J is provided." 
+         " Mie-Gruneisen material unless the elastic part of J is provided."
          " It should be provided as an input."
          " Please change the equation_of_state if you need this "
          " functionality.\n";

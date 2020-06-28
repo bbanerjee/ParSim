@@ -46,9 +46,9 @@ ShearModulus_PTW::ShearModulus_PTW(Uintah::ProblemSpecP& ps)
 // Construct a copy of a shear modulus model.
 ShearModulus_PTW::ShearModulus_PTW(const ShearModulus_PTW* smm)
 {
-  d_mu0 = smm->d_mu0;
-  d_alpha = smm->d_alpha;
-  d_alphap = smm->d_alphap;
+  d_mu0                 = smm->d_mu0;
+  d_alpha               = smm->d_alpha;
+  d_alphap              = smm->d_alphap;
   d_slope_mu_p_over_mu0 = smm->d_slope_mu_p_over_mu0;
 }
 
@@ -71,30 +71,36 @@ ShearModulus_PTW::outputProblemSpec(Uintah::ProblemSpecP& ps)
 double
 ShearModulus_PTW::computeShearModulus(const ModelStateBase* state)
 {
-  return evalShearModulus(state->temperature, state->meltingTemp,
-                          state->density, state->initialDensity, 
+  return evalShearModulus(state->temperature,
+                          state->meltingTemp,
+                          state->density,
+                          state->initialDensity,
                           state->pressure);
 }
 
 double
 ShearModulus_PTW::computeShearModulus(const ModelStateBase* state) const
 {
-  return evalShearModulus(state->temperature, state->meltingTemp,
-                          state->density, state->initialDensity, 
+  return evalShearModulus(state->temperature,
+                          state->meltingTemp,
+                          state->density,
+                          state->initialDensity,
                           state->pressure);
 }
 
-double 
-ShearModulus_PTW::evalShearModulus(double temperature, double meltingTemp,
-                                   double density, double initialDensity,
+double
+ShearModulus_PTW::evalShearModulus(double temperature,
+                                   double meltingTemp,
+                                   double density,
+                                   double initialDensity,
                                    double pressure) const
 {
   double eta = density / initialDensity;
   ASSERT(eta > 0.0);
-  eta = pow(eta, 1.0 / 3.0);
+  eta         = pow(eta, 1.0 / 3.0);
   double That = temperature / meltingTemp;
-  double P = -pressure;
+  double P    = -pressure;
   double mu0P = d_mu0 * (1.0 + d_slope_mu_p_over_mu0 * P / eta);
-  double mu = mu0P * (1.0 - d_alphap * That);
+  double mu   = mu0P * (1.0 - d_alphap * That);
   return mu;
 }

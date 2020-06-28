@@ -51,6 +51,7 @@
 #include <iostream>
 
 using namespace Uintah;
+using namespace Vaango;
 
 //#define Comer
 #undef Comer

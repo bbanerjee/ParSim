@@ -28,24 +28,18 @@
 #define __BB_YIELD_CONDITION_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
+#include <Core/Grid/Task.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
-#include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
 using Polyline      = std::vector<Uintah::Point>;
-
-using PressureModel = Uintah::MPMEquationOfState;
-
-class InternalVariableModel;
 
 /*! \class YieldCondition
  *  \brief A generic wrapper for various yield conditions
@@ -161,44 +155,38 @@ public:
   /* Compute d/depse_v(df/dp) */
   virtual double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) = 0;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) = 0;
 
   /* Compute d/depse_s(df/dp) */
   virtual double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) = 0;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) = 0;
 
   /* Compute d/depse_v(df/dq) */
   virtual double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) = 0;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) = 0;
 
   /* Compute d/depse_s(df/dq) */
   virtual double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) = 0;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) = 0;
 
   /* Compute df/depse_v */
   virtual double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) = 0;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) = 0;
 
   /* Compute df/depse_s */
   virtual double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) = 0;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -393,8 +381,6 @@ public:
                        constParticleVariable<double>& pCoherence_old,
                        const ParticleVariable<double>& pCoherence_new){};
 
-protected:
-  InternalVariableModel* d_intvar;
 };
 
 } // End namespace Vaango

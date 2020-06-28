@@ -136,7 +136,7 @@ protected:
 
   StabilityCheck* d_stable;
   ViscoPlasticityModel* d_plastic;
-  MPMEquationOfState* d_eos;
+  Vaango::MPMEquationOfState* d_eos;
 
 private:
   void getFailureVariableData(ProblemSpecP& ps);

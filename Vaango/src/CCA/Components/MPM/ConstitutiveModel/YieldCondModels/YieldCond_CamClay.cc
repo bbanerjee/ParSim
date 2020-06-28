@@ -32,17 +32,15 @@ using namespace Uintah;
 using namespace Vaango;
 
 YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps,
-                                     InternalVariableModel* intvar)
+                                     IntVar_BorjaPressure* intvar)
 {
   d_intvar = intvar;
-
   ps->require("M", d_M);
 }
 
 YieldCond_CamClay::YieldCond_CamClay(const YieldCond_CamClay* yc)
 {
   d_intvar = yc->d_intvar;
-
   d_M = yc->d_M;
 }
 
@@ -166,13 +164,12 @@ YieldCond_CamClay::df_dq(const ModelStateBase* state_input)
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                  const PressureModel* eos,
-                                  const ShearModulusModel*,
-                                  const InternalVariableModel* intvar)
+                                  const MPMEquationOfState* eos,
+                                  const ShearModulusModel*)
 {
   double dpdepsev = eos->computeDpDepse_v(state_input);
   double dpcdepsev =
-    intvar->computeVolStrainDerivOfInternalVariable(nullptr, state_input);
+    d_intvar->computeVolStrainDerivOfInternalVariable("borja_pressure", state_input);
   return 2.0 * dpdepsev - dpcdepsev;
 }
 
@@ -185,9 +182,8 @@ YieldCond_CamClay::d2f_dp_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                  const PressureModel* eos,
-                                  const ShearModulusModel*,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState* eos,
+                                  const ShearModulusModel*)
 {
   double dpdepses = eos->computeDpDepse_s(state_input);
   return 2.0 * dpdepses;
@@ -202,9 +198,8 @@ YieldCond_CamClay::d2f_dp_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::d2f_dq_depsVol(const ModelStateBase* state_input,
-                                  const PressureModel*,
-                                  const ShearModulusModel* shear,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState*,
+                                  const ShearModulusModel* shear)
 {
   double dqdepsev = shear->computeDqDepse_v(state_input);
   return (2.0 * dqdepsev) / (d_M * d_M);
@@ -219,9 +214,8 @@ YieldCond_CamClay::d2f_dq_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::d2f_dq_depsDev(const ModelStateBase* state_input,
-                                  const PressureModel*,
-                                  const ShearModulusModel* shear,
-                                  const InternalVariableModel*)
+                                  const MPMEquationOfState*,
+                                  const ShearModulusModel* shear)
 {
   double dqdepses = shear->computeDqDepse_s(state_input);
   return (2.0 * dqdepses) / (d_M * d_M);
@@ -235,9 +229,8 @@ YieldCond_CamClay::d2f_dq_depsDev(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::df_depsVol(const ModelStateBase* state_input,
-                              const PressureModel* eos,
-                              const ShearModulusModel* shear,
-                              const InternalVariableModel* intvar)
+                              const MPMEquationOfState* eos,
+                              const ShearModulusModel* shear)
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
@@ -255,7 +248,7 @@ YieldCond_CamClay::df_depsVol(const ModelStateBase* state_input,
   double dqdepsev = shear->computeDqDepse_v(state_input);
   double dpdepsev = eos->computeDpDepse_v(state_input);
   double dpcdepsev =
-    intvar->computeVolStrainDerivOfInternalVariable(nullptr, state_input);
+    d_intvar->computeVolStrainDerivOfInternalVariable("borja_pressure", state_input);
   double dfdepsev = dfdq * dqdepsev + dfdp * dpdepsev - state->p * dpcdepsev;
 
   return dfdepsev;
@@ -269,9 +262,8 @@ YieldCond_CamClay::df_depsVol(const ModelStateBase* state_input,
 //--------------------------------------------------------------
 double
 YieldCond_CamClay::df_depsDev(const ModelStateBase* state_input,
-                              const PressureModel* eos,
-                              const ShearModulusModel* shear,
-                              const InternalVariableModel*)
+                              const MPMEquationOfState* eos,
+                              const ShearModulusModel* shear)
 {
   double dfdq     = df_dq(state_input);
   double dfdp     = df_dp(state_input);

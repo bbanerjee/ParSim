@@ -24,9 +24,9 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -37,7 +37,7 @@ using namespace Vaango;
 using namespace Uintah;
 
 IntVar_BorjaPressure::IntVar_BorjaPressure(ProblemSpecP& ps,
-                                                     ShearModulusModel* shear)
+                                           ShearModulusModel* shear)
 {
   d_elastic = nullptr;
   d_shear   = shear;
@@ -55,8 +55,7 @@ IntVar_BorjaPressure::IntVar_BorjaPressure(ProblemSpecP& ps,
     VarLabel::create("p.p_c+", ParticleVariable<double>::getTypeDescription());
 }
 
-IntVar_BorjaPressure::IntVar_BorjaPressure(
-  const IntVar_BorjaPressure* cm)
+IntVar_BorjaPressure::IntVar_BorjaPressure(const IntVar_BorjaPressure* cm)
 {
   d_elastic = cm->d_elastic;
   d_shear   = cm->d_shear;
@@ -90,17 +89,16 @@ IntVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 
 void
 IntVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
-                                            std::vector<const VarLabel*>& to)
+                                       std::vector<const VarLabel*>& to)
 {
   from.push_back(pPcLabel);
   to.push_back(pPcLabel_preReloc);
 }
 
 void
-IntVar_BorjaPressure::addInitialComputesAndRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet*)
+IntVar_BorjaPressure::addInitialComputesAndRequires(Task* task,
+                                                    const MPMMaterial* matl,
+                                                    const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pPcLabel, matlset);
@@ -108,7 +106,7 @@ IntVar_BorjaPressure::addInitialComputesAndRequires(
 
 void
 IntVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
-                                                      DataWarehouse* new_dw)
+                                                 DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
   new_dw->allocateAndPut(pPc, pPcLabel, pset);
@@ -164,10 +162,11 @@ IntVar_BorjaPressure::allocateAndPutInternalVariable(
 
 template <>
 void
-IntVar_BorjaPressure::evolveInternalVariable(Uintah::particleIndex pidx,
-                                             const ModelStateBase* state,
-                                             Uintah::constParticleVariable<BorjaIntVar>& var_old,
-                                             Uintah::ParticleVariable<BorjaIntVar>& var)
+IntVar_BorjaPressure::evolveInternalVariable(
+  Uintah::particleIndex pidx,
+  const ModelStateBase* state,
+  Uintah::constParticleVariable<BorjaIntVar>& var_old,
+  Uintah::ParticleVariable<BorjaIntVar>& var)
 {
 }
 
@@ -238,9 +237,9 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
 
 void
 IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
-                                                     const MPMMaterial* matl,
-                                                     const PatchSet*,
-                                                     MPMLabel*)
+                                                const MPMMaterial* matl,
+                                                const PatchSet*,
+                                                MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pPcLabel_preReloc, matlset, Ghost::None);
@@ -248,10 +247,10 @@ IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
 
 void
 IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
-                                             ParticleSubset* addset,
-                                             ParticleLabelVariableMap* newState,
-                                             ParticleSubset* delset,
-                                             DataWarehouse* new_dw)
+                                        ParticleSubset* addset,
+                                        ParticleLabelVariableMap* newState,
+                                        ParticleSubset* delset,
+                                        DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
   constParticleVariable<double> o_Pc;
@@ -270,8 +269,8 @@ IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
 
 void
 IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
-                                               DataWarehouse* new_dw,
-                                               constParticleVariableBase& pPc)
+                                          DataWarehouse* new_dw,
+                                          constParticleVariableBase& pPc)
 {
   ParticleVariable<double> pPc_new;
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
@@ -279,4 +278,3 @@ IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
     pPc_new[idx] = dynamic_cast<constParticleVariable<double>&>(pPc)[idx];
   }
 }
-

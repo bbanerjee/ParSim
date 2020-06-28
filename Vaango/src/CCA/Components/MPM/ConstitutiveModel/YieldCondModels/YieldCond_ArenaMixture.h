@@ -233,54 +233,48 @@ public:
   //--------------------------------------------------------------
   double
   d2f_dp_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
   double
   d2f_dp_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsVol(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
   double
   d2f_dq_depsDev(const ModelStateBase* state,
-                 const PressureModel* eos,
-                 const ShearModulusModel* shear,
-                 const InternalVariableModel* intvar) override;
+                 const MPMEquationOfState* eos,
+                 const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_v
   //--------------------------------------------------------------
   double
   df_depsVol(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
   double
   df_depsDev(const ModelStateBase* state,
-             const PressureModel* eos,
-             const ShearModulusModel* shear,
-             const InternalVariableModel* intvar) override;
+             const MPMEquationOfState* eos,
+             const ShearModulusModel* shear) override;
 
   /**
    * Function: getInternalPoint
