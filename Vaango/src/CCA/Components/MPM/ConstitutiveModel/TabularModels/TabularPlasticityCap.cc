@@ -26,7 +26,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularPlasticityCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 
 // Namespace Uintah::
@@ -120,15 +119,6 @@ using std::endl;
 TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
   : TabularPlasticity(ps, mpmFlags)
 {
-  InternalVariableModel* capX = Vaango::InternalVariableModelFactory::create(ps);
-  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
-  if (!d_capX) {
-    std::ostringstream desc;
-    desc << "**ERROR** Internal error while creating InternalVariableModel."
-         << std::endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-
   ps->getWithDefault("consistency_bisection_tolerance",
                      d_consistency_bisection_tolerance, 1.0e-4);
   d_max_bisection_iterations =
@@ -150,9 +140,6 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPM
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
   : TabularPlasticity(cm)
 {
-  auto capX = Vaango::InternalVariableModelFactory::createCopy(d_capX);
-  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
-
   // Consistency bisection
   d_consistency_bisection_tolerance = cm.d_consistency_bisection_tolerance;
   d_max_bisection_iterations = cm.d_max_bisection_iterations;
@@ -163,9 +150,6 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
   : TabularPlasticity(*cm)
 {
-  auto capX = Vaango::InternalVariableModelFactory::createCopy(cm->d_capX);
-  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
-
   // Consistency bisection
   d_consistency_bisection_tolerance = cm->d_consistency_bisection_tolerance;
   d_max_bisection_iterations = cm->d_max_bisection_iterations;
@@ -174,7 +158,6 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
 
 TabularPlasticityCap::~TabularPlasticityCap()
 {
-  delete d_capX;
 }
 
 // adds problem specification values to checkpoint data for restart

@@ -305,12 +305,15 @@ TEST(TabularEOSTest, singleParticleTest)
   } catch (ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
     thrownException = true;
+    throw;
   } catch (Exception& e) {
     std::cout << e.message() << std::endl;
     thrownException = true;
+    throw;
   } catch (...) {
     std::cout << "**ERROR** Unknown exception" << std::endl;
     thrownException = true;
+    throw;
   }
 
 }

@@ -29,7 +29,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -143,7 +142,6 @@ public:
 
 private:
 
-  IntVar_TabularCap* d_capX;
   double d_consistency_bisection_tolerance;
   double d_max_bisection_iterations;
   bool d_decrease_substep;

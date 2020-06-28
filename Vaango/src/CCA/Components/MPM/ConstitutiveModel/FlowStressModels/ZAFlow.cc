@@ -172,7 +172,7 @@ ZAFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
 
 void
 ZAFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
-                                    const particleIndex idx, Vector& derivs)
+                                    const particleIndex idx, Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -181,7 +181,7 @@ ZAFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                       const particleIndex)
+                                       const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -220,7 +220,7 @@ ZAFlow::computeMeltingTemp(const ModelStateBase* state)
 
 double
 ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                     const particleIndex)
+                                     const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -241,7 +241,7 @@ ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
 double
 ZAFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                    const particleIndex)
+                                    const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;

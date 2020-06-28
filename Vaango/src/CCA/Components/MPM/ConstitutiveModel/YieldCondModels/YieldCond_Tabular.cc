@@ -45,7 +45,8 @@ const double YieldCond_Tabular::one_sqrt_three = 1.0 / sqrt_three;
 const double YieldCond_Tabular::large_number   = 1.0e100;
 const Matrix3 YieldCond_Tabular::One(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
-YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
+YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps,
+                                     IntVar_TabularCap* intvar)
   : d_yield(ps)
 {
   // Check the input parameters

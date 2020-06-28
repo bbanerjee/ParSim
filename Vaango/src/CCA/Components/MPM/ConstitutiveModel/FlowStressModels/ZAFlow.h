@@ -177,7 +177,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   void evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                    const particleIndex idx,
-                                   Vector& derivs) override;
+                                   Vector& derivs) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -196,7 +196,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex idx) override;
+                                        const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -213,7 +213,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex idx) override;
+                                     const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -246,7 +246,7 @@ protected:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                      const particleIndex idx);
+                                      const particleIndex idx) const;
 };
 
 } // End namespace Uintah

@@ -209,6 +209,22 @@ public:
     xmlNewChild(elastic, nullptr, BAD_CAST "nu", 
                 BAD_CAST "0.2");
 
+    // Cap evolution
+    std::string table_cap = 
+      std::string(currPath) + "/" + "tabular_cap.json";
+    auto cap = xmlNewChild(cm, nullptr, BAD_CAST "internal_variable_model", 
+                           BAD_CAST "");
+    xmlNewProp(cap, BAD_CAST "type", BAD_CAST "tabular_cap");
+    xmlNewChild(cap, nullptr, BAD_CAST "filename", 
+                BAD_CAST table_cap.c_str());
+    xmlNewChild(cap, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "PlasticStrainVol");
+    xmlNewChild(cap, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "Pressure");
+    auto cap_interp = xmlNewChild(cap, nullptr, BAD_CAST "interpolation",
+                                  BAD_CAST "");
+    xmlNewProp(cap_interp, BAD_CAST "type", BAD_CAST "linear");
+
     // Yield criterion
     std::string table_yield = 
       std::string(currPath) + "/" + "tabular_von_mises.json";
@@ -358,12 +374,15 @@ TEST(NeuralNetTabularPlasticityTest, singleParticleTest)
   } catch (ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
     thrownException = true;
+    throw;
   } catch (Exception& e) {
     std::cout << e.message() << std::endl;
     thrownException = true;
+    throw;
   } catch (...) {
     std::cout << "**ERROR** Unknown exception" << std::endl;
     thrownException = true;
+    throw;
   }
 
 }

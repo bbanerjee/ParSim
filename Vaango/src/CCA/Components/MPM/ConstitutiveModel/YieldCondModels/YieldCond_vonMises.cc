@@ -153,6 +153,18 @@ YieldCond_vonMises::df_dsigmaDev_dbeta(const Matrix3& xi,
   return std::make_pair(df_ds, df_dbeta);
 }
 
+/*! Derivative with respect to internal variables 
+    Assume f = sqrt{3/2} ||xi|| - sigma_y */
+template <>
+MetalIntVar
+YieldCond_vonMises::df_dintvar(const ModelStateBase* state)
+{
+  double dsigy_dep = d_flow->evalDerivativeWRTPlasticStrain(state, 0);
+  double df_dplasticStrain = -dsigy_dep;
+  double df_dporosity = 0.0;
+  return MetalIntVar{df_dplasticStrain, df_dporosity};
+}
+
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
 double

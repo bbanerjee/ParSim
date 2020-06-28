@@ -147,7 +147,7 @@ ZAPolymerFlow::computeFlowStress(const ModelStateBase* state, const double&,
 //
 double
 ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                              const particleIndex)
+                                              const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -195,7 +195,7 @@ ZAPolymerFlow::computeShearModulus(const ModelStateBase* state)
 //
 double
 ZAPolymerFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                           const particleIndex)
+                                           const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;

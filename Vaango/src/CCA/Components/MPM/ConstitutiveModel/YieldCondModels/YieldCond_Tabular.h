@@ -31,6 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -66,7 +67,8 @@ public:
   YieldCond_Tabular&
   operator=(const YieldCond_Tabular&) = delete;
 
-  YieldCond_Tabular(Uintah::ProblemSpecP& ps);
+  YieldCond_Tabular(Uintah::ProblemSpecP& ps,
+                    IntVar_TabularCap* intvar);
   YieldCond_Tabular(const YieldCond_Tabular* yc);
 
   void

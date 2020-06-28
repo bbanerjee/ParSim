@@ -248,7 +248,7 @@ SCGFlow::computeFlowStress(const ModelStateBase* state, const double&,
 double
 SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
                                               const double& T,
-                                              const double& tolerance)
+                                              const double& tolerance) const
 {
   // If the strain rate is very small return 0.0
   if (epdot < tolerance)
@@ -418,7 +418,7 @@ SCGFlow::computeTangentModulus(const Matrix3& stress,
 
 void
 SCGFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
-                                     const particleIndex idx, Vector& derivs)
+                                     const particleIndex idx, Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTPressure(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -427,7 +427,7 @@ SCGFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex)
+                                        const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -480,7 +480,7 @@ SCGFlow::computeMeltingTemp(const ModelStateBase* state)
     of the model has not been included and should be for correctness.*/
 double
 SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                      const particleIndex)
+                                      const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -495,7 +495,7 @@ SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
 double
 SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state,
-                                   const particleIndex)
+                                   const particleIndex) const
 {
   // Get the state data
   double ep = state->eqPlasticStrain;
@@ -541,7 +541,7 @@ SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state,
 */
 double
 SCGFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex)
+                                     const particleIndex) const
 {
   // Get the current state data
   double epdot = state->eqPlasticStrain;

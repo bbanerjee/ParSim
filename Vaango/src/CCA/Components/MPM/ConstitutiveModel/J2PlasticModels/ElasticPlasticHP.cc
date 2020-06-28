@@ -204,7 +204,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   }
 
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
-                                                  const_cast<const FlowStressModel*>(d_flow));
+              const_cast<const FlowStressModel*>(d_flow));
   if (!d_yield) {
     ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"

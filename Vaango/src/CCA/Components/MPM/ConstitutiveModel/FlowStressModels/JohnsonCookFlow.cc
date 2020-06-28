@@ -224,7 +224,7 @@ JohnsonCookFlow::computeTangentModulus(const Matrix3& stress,
 void
 JohnsonCookFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                              const particleIndex idx,
-                                             Vector& derivs)
+                                             Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -233,7 +233,7 @@ JohnsonCookFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                                const particleIndex)
+                                                const particleIndex) const
 {
   // Get the state data
   // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
@@ -282,7 +282,7 @@ JohnsonCookFlow::computeMeltingTemp(const ModelStateBase* state)
 
 double
 JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                              const particleIndex)
+                                              const particleIndex) const
 {
   // Get the state data
   // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
@@ -318,7 +318,7 @@ JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
 double
 JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                             const particleIndex)
+                                             const particleIndex) const
 {
   // Get the state data
   // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;

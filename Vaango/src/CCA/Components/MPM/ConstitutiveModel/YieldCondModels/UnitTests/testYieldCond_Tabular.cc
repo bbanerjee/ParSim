@@ -99,14 +99,14 @@ ProblemSpecP YieldCondTabularTest::ps_circle = nullptr;
 TEST_F(YieldCondTabularTest, constructorTest)
 {
   // Create a model
-  YieldCond_Tabular model(ps);
+  YieldCond_Tabular model(ps, nullptr);
   //std::cout << model;
 
   // Copy
   YieldCond_Tabular modelCopy(&model);
   //std::cout << modelCopy;
 
-  YieldCond_Tabular model_circle(ps_circle);
+  YieldCond_Tabular model_circle(ps_circle, nullptr);
   //std::cout << model_circle;
 
   auto params = model.getParameters();
@@ -117,7 +117,7 @@ TEST_F(YieldCondTabularTest, constructorTest)
 
 TEST_F(YieldCondTabularTest, evalYieldCondition)
 {
-  YieldCond_Tabular model(ps);
+  YieldCond_Tabular model(ps, nullptr);
   ModelState_Tabular state;
 
   state.I1 = 300*3; // Tension
@@ -150,7 +150,7 @@ TEST_F(YieldCondTabularTest, evalYieldCondition)
 
 TEST_F(YieldCondTabularTest, df_dsigma)
 {
-  YieldCond_Tabular model(ps);
+  YieldCond_Tabular model(ps, nullptr);
   ModelState_Tabular state;
   Matrix3 zero(0.0);
   //std::cout << model;
@@ -166,7 +166,7 @@ TEST_F(YieldCondTabularTest, df_dsigma)
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Circular yield function
-  YieldCond_Tabular model_circle(ps_circle);
+  YieldCond_Tabular model_circle(ps_circle, nullptr);
   ModelState_Tabular state_circle;
 
   state_circle.stressTensor = Matrix3(2, 4, 0, 4, 2, 0, 0, 0, 2);
@@ -210,7 +210,7 @@ TEST_F(YieldCondTabularTest, df_dsigma)
 
 TEST_F(YieldCondTabularTest, getClosestPoint)
 {
-  YieldCond_Tabular model(ps);
+  YieldCond_Tabular model(ps, nullptr);
   ModelState_Tabular state;
   Matrix3 zero(0.0);
   Matrix3 df_dsigma(0.0);

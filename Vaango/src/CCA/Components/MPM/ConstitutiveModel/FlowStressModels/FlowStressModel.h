@@ -148,7 +148,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   virtual void evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                            const particleIndex idx,
-                                           Vector& derivs){};
+                                           Vector& derivs) const {};
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -159,7 +159,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   virtual double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                                const particleIndex idx) = 0;
+                                                const particleIndex idx) const = 0;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -170,7 +170,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   virtual double evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                             const particleIndex idx) = 0;
+                                             const particleIndex idx) const  = 0;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!

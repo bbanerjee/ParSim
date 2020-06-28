@@ -145,6 +145,10 @@ public:
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
+  /*! Derivatives with respect to internal variables */
+  template <typename IntVarType>
+  IntVarType df_dintvar(const ModelStateBase* state);
+
   /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
   double
   df_dplasticStrain(const Uintah::Matrix3& xi,

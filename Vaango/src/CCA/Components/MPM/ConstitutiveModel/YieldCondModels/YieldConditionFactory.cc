@@ -66,8 +66,6 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew YieldCond_ArenaMixture(child));
   else if (mat_type == "arenisca3")
     return (scinew YieldCond_Arenisca3(child));
-  else if (mat_type == "tabular")
-    return (scinew YieldCond_Tabular(child));
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",
@@ -147,6 +145,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
       "MPM::ConstitutiveModel:No type for yield condition.",
       __FILE__, __LINE__);
 
+  else if (mat_type == "tabular")
+    return (scinew YieldCond_Tabular(child, nullptr));
   else if (mat_type == "tabular_cap")
     return (scinew YieldCond_TabularCap(child, intvar));
   else

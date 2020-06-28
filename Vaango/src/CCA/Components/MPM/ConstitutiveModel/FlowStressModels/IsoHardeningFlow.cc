@@ -226,7 +226,7 @@ IsoHardeningFlow::computeTangentModulus(const Matrix3& stress,
 void
 IsoHardeningFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                               const particleIndex idx,
-                                              Vector& derivs)
+                                              Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -235,7 +235,7 @@ IsoHardeningFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 IsoHardeningFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase*,
-                                                 const particleIndex)
+                                                 const particleIndex) const
 {
   return d_CM.K;
 }
@@ -260,21 +260,21 @@ IsoHardeningFlow::computeMeltingTemp(const ModelStateBase* state)
 
 double
 IsoHardeningFlow::evalDerivativeWRTTemperature(const ModelStateBase*,
-                                               const particleIndex)
+                                               const particleIndex) const
 {
   return 0.0;
 }
 
 double
 IsoHardeningFlow::evalDerivativeWRTStrainRate(const ModelStateBase*,
-                                              const particleIndex)
+                                              const particleIndex) const
 {
   return 0.0;
 }
 
 double
 IsoHardeningFlow::evalDerivativeWRTAlpha(const ModelStateBase*,
-                                         const particleIndex)
+                                         const particleIndex) const
 {
   return d_CM.K;
 }

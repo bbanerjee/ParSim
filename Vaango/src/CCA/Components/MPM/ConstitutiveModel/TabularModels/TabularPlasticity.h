@@ -30,6 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -239,6 +240,10 @@ protected:
                          double p,
                          const Matrix3& s,
                          const Matrix3& M) const;
+
+protected:
+
+  IntVar_TabularCap* d_capX;
 
 private:
 

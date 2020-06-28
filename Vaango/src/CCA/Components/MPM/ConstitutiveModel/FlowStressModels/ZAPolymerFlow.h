@@ -100,7 +100,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex idx) override;
+                                        const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -108,7 +108,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex idx) override;
+                                     const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -134,7 +134,7 @@ public:
   };
 
   void evalDerivativeWRTScalarVars(const ModelStateBase*, const particleIndex,
-                                   Vector&) override
+                                   Vector&) const override
   {
     throw InternalError(
       "ZAPolymerFlow::evalDerivativeWRTScalarVars has not been implemented",
@@ -142,7 +142,7 @@ public:
   }
 
   double evalDerivativeWRTTemperature(const ModelStateBase*,
-                                      const particleIndex)
+                                      const particleIndex) const
   {
     throw InternalError(
       "ZAPolymerFlow::evalDerivativeWRTTemperature has not been implemented",

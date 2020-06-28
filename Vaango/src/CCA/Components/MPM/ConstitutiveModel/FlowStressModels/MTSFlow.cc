@@ -396,7 +396,7 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
 double
 MTSFlow::computeSigma_e(const double& theta_0, const double& sigma_es,
                         const double&, const double& ep,
-                        const int& numSubcycles)
+                        const int& numSubcycles) const
 {
   // Midpoint rule integration
   double sigma_e = 0.0;
@@ -513,7 +513,7 @@ MTSFlow::computeEpdot(const ModelStateBase* state, const double& delT,
 void
 MTSFlow::evalFAndFPrime(const double& tau, const double& epdot, const double& T,
                         const double& mu, const double& sigma_e, const double&,
-                        double& f, double& fPrime)
+                        double& f, double& fPrime) const
 {
   // If temperature is greater than phase transition temperature
   // then update the constants
@@ -580,7 +580,7 @@ MTSFlow::computeTangentModulus(const Matrix3&, const ModelStateBase*,
 
 void
 MTSFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
-                                     const particleIndex idx, Vector& derivs)
+                                     const particleIndex idx, Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -589,7 +589,7 @@ MTSFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 MTSFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex idx)
+                                        const particleIndex idx) const
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
@@ -680,7 +680,7 @@ MTSFlow::computeMeltingTemp(const ModelStateBase* state)
 
 double
 MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                      const particleIndex)
+                                      const particleIndex) const
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
@@ -807,7 +807,7 @@ MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
 double
 MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex)
+                                     const particleIndex) const
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
@@ -911,7 +911,7 @@ MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
 
 double
 MTSFlow::evalDerivativeWRTSigmaE(const ModelStateBase* state,
-                                 const particleIndex)
+                                 const particleIndex) const
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;

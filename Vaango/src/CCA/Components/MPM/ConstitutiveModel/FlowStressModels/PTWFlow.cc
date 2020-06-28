@@ -274,7 +274,7 @@ PTWFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
 
 void
 PTWFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
-                                     const particleIndex idx, Vector& derivs)
+                                     const particleIndex idx, Vector& derivs) const
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -283,7 +283,7 @@ PTWFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
 
 double
 PTWFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex)
+                                        const particleIndex) const
 {
   // Retrieve plastic strain and strain rate
   double epdot = state->eqPlasticStrainRate;
@@ -378,7 +378,7 @@ PTWFlow::computeMeltingTemp(const ModelStateBase* state)
 
 double
 PTWFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                      const particleIndex)
+                                      const particleIndex) const
 {
   // Get the state data
   double mu = state->shearModulus;
@@ -447,7 +447,7 @@ PTWFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
 double
 PTWFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex)
+                                     const particleIndex) const
 {
   // Get the state data
   double mu = state->shearModulus;

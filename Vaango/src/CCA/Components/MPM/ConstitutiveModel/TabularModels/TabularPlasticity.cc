@@ -25,6 +25,7 @@
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 
@@ -112,8 +113,19 @@ TabularPlasticity::TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags*
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
+  // The capX variable is only used in tabular plasticity with cap
+  // but needed here due to a design defect
+  InternalVariableModel* capX = Vaango::InternalVariableModelFactory::create(ps);
+  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
+  if (!d_capX) {
+    std::ostringstream desc;
+    desc << "**ERROR** Internal error while creating InternalVariableModel."
+         << std::endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+
   // Yield condition model
-  d_yield = Vaango::YieldConditionFactory::create(ps);
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_capX);
   if (!d_yield) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating YieldConditionModel."
@@ -162,6 +174,9 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
   d_yield = Vaango::YieldConditionFactory::createCopy(cm.d_yield);
   d_hydrostat = cm.d_hydrostat;
 
+  auto capX = Vaango::InternalVariableModelFactory::createCopy(d_capX);
+  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
+
   // Yield surface scaling
   d_cm.yield_scale_fac = cm.d_cm.yield_scale_fac;
 
@@ -169,26 +184,12 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
   d_cm.subcycling_characteristic_number =
     cm.d_cm.subcycling_characteristic_number;
 
-
   initializeLocalMPMLabels();
 }
 
 TabularPlasticity::TabularPlasticity(const TabularPlasticity* cm)
   : TabularPlasticity(*cm)
 {
-  /*
-  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
-  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-
-  // Yield surface scaling
-  d_cm.yield_scale_fac = cm->d_cm.yield_scale_fac;
-
-  // Subcycling
-  d_cm.subcycling_characteristic_number =
-    cm->d_cm.subcycling_characteristic_number;
-
-  initializeLocalMPMLabels();
-  */
 }
 
 // Initialize all labels of the particle variables associated with
@@ -256,6 +257,7 @@ TabularPlasticity::~TabularPlasticity()
 
   delete d_yield;
   delete d_elastic;
+  delete d_capX;
 }
 
 // adds problem specification values to checkpoint data for restart

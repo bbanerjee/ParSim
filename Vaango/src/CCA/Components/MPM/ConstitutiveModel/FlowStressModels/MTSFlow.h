@@ -246,7 +246,7 @@ public:
 
   void evalFAndFPrime(const double& tau, const double& epdot, const double& T,
                       const double& mu, const double& sigma_e,
-                      const double& delT, double& f, double& fPrime);
+                      const double& delT, double& f, double& fPrime) const;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -274,7 +274,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   void evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                    const particleIndex idx,
-                                   Vector& derivs) override;
+                                   Vector& derivs) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -294,7 +294,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
-                                        const particleIndex idx) override;
+                                        const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -354,7 +354,7 @@ public:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTStrainRate(const ModelStateBase* state,
-                                     const particleIndex idx) override;
+                                     const particleIndex idx) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -407,7 +407,7 @@ protected:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTTemperature(const ModelStateBase* state,
-                                      const particleIndex idx);
+                                      const particleIndex idx) const;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -427,7 +427,7 @@ protected:
   */
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTSigmaE(const ModelStateBase* state,
-                                 const particleIndex idx);
+                                 const particleIndex idx) const;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -436,7 +436,7 @@ protected:
   ///////////////////////////////////////////////////////////////////////////
   double computeSigma_e(const double& theta_0, const double& sigma_es,
                         const double& sigma_e_old, const double& deltaEps,
-                        const int& numSubcycles);
+                        const int& numSubcycles) const;
 };
 
 } // End namespace Uintah
