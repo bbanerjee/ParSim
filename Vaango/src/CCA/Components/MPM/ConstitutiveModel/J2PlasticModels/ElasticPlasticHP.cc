@@ -107,27 +107,6 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   d_checkStressTriax = true;
   ps->get("check_max_stress_failure", d_checkStressTriax);
 
-  // plasticity convergence Algorithm
-  d_plasticConvergenceAlgo = "radialReturn"; // default
-  bool usingRR             = true;
-  string tmp               = "empty";
-
-  ps->get("plastic_convergence_algo", tmp);
-
-  if (tmp == "biswajit") {
-    d_plasticConvergenceAlgo = "biswajit";
-    usingRR                  = false;
-  }
-  if (tmp != "radialReturn" && tmp != "biswajit" && tmp != "empty") {
-    ostringstream warn;
-    warn << "ElasticPlasticHP:: Invalid plastic_convergence_algo option ("
-         << tmp << ") Valid options are: biswajit, radialReturn"
-         << "\n";
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-
-  //__________________________________
-  //
   d_stable = StabilityCheckFactory::create(ps);
   if (!d_stable)
     std::cerr << "Stability check disabled\n";
@@ -339,7 +318,6 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_checkTeplaFailureCriterion);
   cm_ps->appendElement("do_melting", d_doMelting);
   cm_ps->appendElement("check_max_stress_failure", d_checkStressTriax);
-  cm_ps->appendElement("plastic_convergence_algo", d_plasticConvergenceAlgo);
   cm_ps->appendElement("compute_specific_heat", d_computeSpecificHeat);
 
   d_yield->outputProblemSpec(cm_ps);
@@ -1098,7 +1076,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
           plastic = true;
 
           double delGamma = 0.0;
-          double normS    = tensorS.Norm();
 
           // If the material goes plastic in the first step, or
           // gammadotplus < 0 or delGamma < 0 use the Simo algorithm
@@ -1106,42 +1083,18 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
           //  Here set to true, if all conditionals are met (immediately above)
           //  then set to false.
-          bool doRadialReturn         = true;
           Matrix3 tensorEtaPlasticInc = zero;
-          //__________________________________
-          //
-          if (normS > 0.0 && d_plasticConvergenceAlgo == "biswajit") {
-            doRadialReturn = computePlasticStateBiswajit(state,
-                                                         pPlasticStrain,
-                                                         pStrainRate,
-                                                         sigma,
-                                                         trialS,
-                                                         tensorEta,
-                                                         tensorS,
-                                                         delGamma,
-                                                         flowStress,
-                                                         porosity,
-                                                         mu_cur,
-                                                         delT,
-                                                         matl,
-                                                         idx);
-          }
 
-          //__________________________________
-          //
-          if (doRadialReturn) {
+          // Compute Stilde using Newton iterations a la Simo
+          state->eqPlasticStrainRate = pStrainRate_new[idx];
+          state->eqPlasticStrain     = pPlasticStrain[idx];
+          Matrix3 nn(0.0);
+          computePlasticStateViaRadialReturn(
+            trialS, delT, matl, idx, state, nn, delGamma);
 
-            // Compute Stilde using Newton iterations a la Simo
-            state->eqPlasticStrainRate = pStrainRate_new[idx];
-            state->eqPlasticStrain     = pPlasticStrain[idx];
-            Matrix3 nn(0.0);
-            computePlasticStateViaRadialReturn(
-              trialS, delT, matl, idx, state, nn, delGamma);
-
-            tensorEtaPlasticInc = nn * delGamma;
-            tensorS =
-              trialS - tensorEtaPlasticInc * (2.0 * state->shearModulus);
-          }
+          tensorEtaPlasticInc = nn * delGamma;
+          tensorS =
+            trialS - tensorEtaPlasticInc * (2.0 * state->shearModulus);
 
           // Update internal variables
           d_flow->updatePlastic(idx, delGamma);
@@ -1448,134 +1401,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
   if (cout_EP.active())
     cout_EP << getpid() << "... End."
             << "\n";
-}
-
-//______________________________________________________________________
-//
-bool
-ElasticPlasticHP::computePlasticStateBiswajit(
-  ModelStateBase* state,
-  constParticleVariable<double>& pPlasticStrain,
-  constParticleVariable<double>& pStrainRate,
-  const Matrix3& sigma,
-  const Matrix3& trialS,
-  const Matrix3& tensorEta,
-  Matrix3& tensorS,
-  double& delGamma,
-  double& flowStress,
-  double& porosity,
-  double& mu_cur,
-  const double delT,
-  const MPMMaterial* matl,
-  const int idx)
-{
-  // Using the algorithm from Zocher, Maudlin, Chen, Flower-Maudlin
-  // European Congress on Computational Methods in Applied Sciences
-  // and Engineering,  September 11-14, 2000.
-  // Basic assumption is that all strain rate is plastic strain rate
-
-  // Calculate the derivative of the yield function (using the
-  // previous time step (n) values)
-  Matrix3 Stilde(0.0);
-
-  double sqrtTwo      = sqrt(2.0);
-  double sqrtThreeTwo = sqrt(1.5);
-  double sqrtTwoThird = 1.0 / sqrtThreeTwo;
-
-  Matrix3 q = d_yield->df_dsigmaDev(sigma, flowStress, porosity);
-
-  // Calculate the tensor u (at start of time interval) This is the normal to
-  // the yield surface.
-  double sqrtqs = sqrt(q.Contract(tensorS));
-  Matrix3 u     = q / sqrtqs;
-
-  // Calculate u_q and u_eta
-  double etaeta = sqrt(tensorEta.NormSquared());
-  Matrix3 u_eta = tensorEta / etaeta;
-  double sqrtqq = sqrt(q.NormSquared());
-  Matrix3 u_q   = q / sqrtqq;
-
-  // Calculate c and d at the beginning of time step
-  double cplus        = u.NormSquared();
-  double dplus        = u.Contract(tensorEta);
-  double gammadotplus = dplus / cplus;
-
-  // Alternative calculation of gammadotplus
-  // double gammadotplus =
-  // sqrtThreeTwo*sqrtqs/sqrtqq*state->eqPlasticStrainRate;
-  // gammadotplus = (gammadotplus < 0.0) ? 0.0 : gammadotplus;
-
-  //__________________________________
-  //
-  bool doRadialReturn = true;
-  if (gammadotplus > 0.0) {
-
-    // Calculate dStar/cstar
-    double u_eta_eta = u_eta.Contract(tensorEta);
-    double u_q_eta   = u_q.Contract(tensorEta);
-    double AA        = 2.0 / sqrt(cplus);
-    double BB        = -(u_eta_eta + u_q_eta);
-    double CC        = -gammadotplus * cplus * (u_eta_eta - u_q_eta);
-    double term1     = BB * BB - 4.0 * AA * CC;
-    term1            = (term1 < 0.0) ? 0.0 : term1;
-
-    double dStar = (-BB + sqrt(term1)) / (2.0 * AA);
-
-    // Calculate delGammaEr
-    // state->eqPlasticStrainRate =
-    //  (sqrtTwoThird*sqrtqq*gammadotplus)/sqrtqs;
-    // state->yieldStress = d_flow->computeFlowStress(state, delT,
-    //                                                  d_tol, matl,
-    //                                                  idx);
-    double delGammaEr =
-      (sqrtTwo * state->yieldStress - sqrtqs) / (2.0 * mu_cur * cplus);
-
-    // Calculate delGamma
-    delGamma = dStar / cplus * delT - delGammaEr;
-    if (delGamma > 0.0) {
-
-      // Compute the actual epdot, ep, yieldStress
-      double epdot = (sqrtTwoThird * sqrtqq * delGamma) / (sqrtqs * delT);
-      if (epdot <= pStrainRate[idx]) {
-
-        state->eqPlasticStrainRate = epdot;
-        state->eqPlasticStrain =
-          pPlasticStrain[idx] + state->eqPlasticStrainRate * delT;
-
-        state->yieldStress =
-          d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
-
-        // Calculate Stilde
-        // The exact form of denom will be different for
-        // different yield conditions ** WARNING ***
-        ASSERT(state->yieldStress != 0.0);
-        double denom =
-          1.0 + (3.0 * sqrtTwo * mu_cur * delGamma) / state->yieldStress;
-        ASSERT(denom != 0.0);
-        Stilde = trialS / denom;
-
-        /*
-        double delLambda = sqrtqq*delGamma/sqrtqs;
-        std::cout << "idx = " << idx << " delGamma = " << delLambda
-             << " sigy = " << state->yieldStress
-             << " epdot = " << state->eqPlasticStrainRate
-             << " ep = " << state->eqPlasticStrain << "\n";
-        */
-
-        // We have found Stilde. Turn off Newton Iterations.
-        doRadialReturn = false;
-
-      } // end of epdot <= edot if
-    }   // end of delGamma > 0 if
-  }     // end of gammdotplus > 0 if
-
-  // Do radial return adjustment
-  double stst = sqrtThreeTwo * Stilde.Norm();
-
-  Stilde  = Stilde * (state->yieldStress / stst);
-  tensorS = Stilde;
-
-  return doRadialReturn;
 }
 
 ////////////////////////////////////////////////////////////////////////

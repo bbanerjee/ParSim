@@ -103,32 +103,9 @@ public:
   double
   evalYieldConditionMax(const ModelStateBase* state) override;
 
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$\sigma_{ij}\f$.
-
-    This is for the associated flow rule.
-  */
-  /////////////////////////////////////////////////////////////////////////
+  /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& stress,
-            const double flowStress,
-            const double porosity) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$s_{ij}\f$.
-
-    This is for the associated flow rule with \f$s_{ij}\f$ being
-    the deviatoric stress.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3
-  df_dsigmaDev(const Uintah::Matrix3& stress,
-               const double flowStress,
-               const double porosity) override;
+  df_dsigma(const ModelStateBase* state) override;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
   Uintah::Matrix3

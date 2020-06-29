@@ -312,42 +312,16 @@ YieldCond_CamClay::evalYieldCondition(const double p,
   return q * q / (d_M * d_M) + p * (p - p_c);
 }
 
-//--------------------------------------------------------------
-// Other derivatives
-
 // Compute df/dsigma
 //    df/dsigma = (2p - p_c)/3 I + sqrt(3/2) 2q/M^2 s/||s||
 //              = 1/3 df/dp I + sqrt(3/2) df/dq s/||s||
 //              = 1/3 df/dp I + df/ds
 // where
 //    s = sigma - 1/3 tr(sigma) I
-Uintah::Matrix3
-YieldCond_CamClay::df_dsigma(const Uintah::Matrix3& sig,
-                             const double p_c,
-                             const double)
+Matrix3
+YieldCond_CamClay::df_dsigma(const ModelStateBase* state) 
 {
-  Matrix3 One;
-  One.Identity();
-  double p       = sig.Trace() / 3.0;
-  Matrix3 sigDev = sig - One * p;
-  double df_dp   = 2.0 * p - p_c;
-  Matrix3 df_ds = df_dsigmaDev(sigDev, 0.0, 0.0);
-  Matrix3 derivative = One * (df_dp / 3.0) + df_ds;
-  return derivative/derivative.Norm();
-}
-
-// Compute df/ds  where s = deviatoric stress
-//    df/ds = sqrt(3/2) df/dq s/||s|| = sqrt(3/2) 2q/M^2 n
-Uintah::Matrix3
-YieldCond_CamClay::df_dsigmaDev(const Uintah::Matrix3& sigDev,
-                                const double,
-                                const double)
-{
-  double sigDevNorm = sigDev.Norm();
-  Matrix3 n         = sigDev / sigDevNorm;
-  double q_scaled   = 3.0 * sigDevNorm;
-  Matrix3 derivative        = n * (q_scaled / d_M * d_M);
-  return derivative/derivative.Norm();
+  return df_dsigma(Vaango::Util::Identity, state);
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
@@ -367,7 +341,12 @@ YieldCond_CamClay::df_dsigma(const Matrix3& sig,
   }
   */
 
-  return df_dsigma(sig, state->p_c, 0.0);
+  double p       = sig.Trace() / 3.0;
+  Matrix3 sigDev = sig.Deviator();
+  double df_dp   = 2.0 * p - state->p_c;
+  Matrix3 df_ds  = df_dxi(sigDev, nullptr);
+  Matrix3 df_dsigma = Vaango::Util::Identity * (df_dp / 3.0) + df_ds;
+  return df_dsigma/df_dsigma.Norm();
 }
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
@@ -376,17 +355,20 @@ Uintah::Matrix3
 YieldCond_CamClay::df_dxi(const Matrix3& sigDev,
                           const ModelStateBase*)
 {
-  return df_dsigmaDev(sigDev, 0.0, 0.0);
+  double sigDevNorm = sigDev.Norm();
+  Matrix3 n         = sigDev / sigDevNorm;
+  double q_scaled   = 3.0 * sigDevNorm;
+  Matrix3 df_ds     = n * (q_scaled / d_M * d_M);
+  return df_ds/df_ds.Norm();
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
 YieldCond_CamClay::df_dsigmaDev_dbeta(const Matrix3& sigDev,
-                                      const ModelStateBase*)
+                                      const ModelStateBase* state)
 {
-  Matrix3 df_ds = df_dsigmaDev(sigDev, 0.0, 0.0);
-  Matrix3 zero(0.0);
-  Matrix3 df_dbeta = zero;
+  Matrix3 df_ds = df_dxi(sigDev, state);
+  Matrix3 df_dbeta(0.0);
   return std::make_pair(df_ds, df_dbeta);
 }
 

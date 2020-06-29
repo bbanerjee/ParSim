@@ -137,6 +137,13 @@ YieldCond_Gurson::evalYieldConditionMax(const ModelStateBase* state)
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
+Matrix3
+YieldCond_Gurson::df_dsigma(const ModelStateBase* state) 
+{
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  return df_dsigma(xi, state);
+}
+
 Uintah::Matrix3
 YieldCond_Gurson::df_dsigma(const Matrix3& xi,
                             const ModelStateBase* state)
@@ -165,6 +172,7 @@ YieldCond_Gurson::df_dsigma(const Matrix3& xi,
   double a  = 3.0 / (sigy * sigy);
   double b  = q1 * q2 * phi_star * sinh(insinh);
   Matrix3 df_dsigma = xi * a + Vaango::Util::Identity * b;
+  df_dsigma /= df_dsigma.Norm();
   return df_dsigma;
 }
 
@@ -179,6 +187,7 @@ YieldCond_Gurson::df_dxi(const Matrix3& xi,
   ASSERT(sigy != 0);
   double a = 3.0 / (sigy * sigy);
   Matrix3 df_dxi   = xi * a;
+  df_dxi /= df_dxi.Norm();
   return df_dxi;
 }
 
@@ -272,97 +281,6 @@ YieldCond_Gurson::df_dporosity(const ModelStateBase* state) const
   double b = 2.0 * q3 * phi_star;
 
   return (a - b) * dphiStar_dphi;
-}
-
-Uintah::Matrix3
-YieldCond_Gurson::df_dsigma(const Matrix3& sig,
-                            const double sigY,
-                            const double f)
-{
-  Matrix3 I;
-  I.Identity();
-  double trSig   = sig.Trace();
-  Matrix3 sigDev = sig - I * (trSig / 3.0);
-  // double sigEqv = sqrt((sigDev.NormSquared())*1.5);
-
-  double fStar = f;
-  if (f > d_CM.f_c)
-    fStar = d_CM.f_c + d_CM.k * (f - d_CM.f_c);
-
-  double maxinsinh = 30.0;
-  double insinh    = 0.5 * d_CM.q2 * trSig / sigY;
-  if (fabs(insinh) > 30.0)
-    insinh = copysign(maxinsinh, insinh);
-  Matrix3 derivative =
-    sigDev * 3.0 + I * ((d_CM.q1 * d_CM.q2 * fStar * sigY) * sinh(insinh));
-  return derivative / derivative.Norm();
-}
-
-Uintah::Matrix3
-YieldCond_Gurson::df_dsigmaDev(const Matrix3& sig,
-                               const double,
-                               const double)
-{
-  Matrix3 I;
-  I.Identity();
-  double trSig   = sig.Trace();
-  Matrix3 sigDev = sig - I * (trSig / 3.0);
-  Matrix3 derivative     = sigDev * 3.0;
-  return derivative / derivative.Norm();
-}
-
-double
-YieldCond_Gurson::evalDerivativeWRTPlasticityScalar(double trSig,
-                                                    double porosity,
-                                                    double sigY,
-                                                    double dsigYdV)
-{
-  // Calculate fStar
-  double fStar = porosity;
-  if (porosity > d_CM.f_c)
-    fStar = d_CM.f_c + d_CM.k * (porosity - d_CM.f_c);
-
-  // Calculate A, B, C
-  double A = 2.0 * d_CM.q1 * fStar;
-  double B = 0.5 * d_CM.q2 * trSig;
-  double C = 1.0 + d_CM.q3 * fStar * fStar;
-
-  // Calculate terms
-  double ABdsigYdV   = A * B * dsigYdV;
-  double sigYdsigYdV = sigY * dsigYdV;
-  double BsigY       = B / sigY;
-
-  // Calculate derivative
-  double maxinsinh = 30.0;
-  if (fabs(BsigY) > 30.0)
-    BsigY = copysign(maxinsinh, BsigY);
-  double dPhidV =
-    -ABdsigYdV * sinh(BsigY) + 2.0 * sigYdsigYdV * (A * cosh(BsigY) - C);
-  return dPhidV;
-}
-
-double
-YieldCond_Gurson::evalDerivativeWRTPorosity(double trSig,
-                                            double porosity,
-                                            double sigY)
-{
-  double fStar     = porosity;
-  double dfStar_df = 1.0;
-  if (porosity > d_CM.f_c) {
-    fStar     = d_CM.f_c + d_CM.k * (porosity - d_CM.f_c);
-    dfStar_df = d_CM.k;
-  }
-
-  ASSERT(sigY != 0);
-  double maxincosh = 30.0;
-  double incosh    = 0.5 * d_CM.q2 * trSig / sigY;
-  if (fabs(incosh) > 30.0)
-    incosh           = copysign(maxincosh, incosh);
-  double a           = 2.0 * d_CM.q3 * fStar;
-  double b           = 2.0 * d_CM.q1 * cosh(incosh);
-  double dPhi_dfStar = (b - a) * sigY * sigY;
-
-  return (dPhi_dfStar * dfStar_df);
 }
 
 inline double

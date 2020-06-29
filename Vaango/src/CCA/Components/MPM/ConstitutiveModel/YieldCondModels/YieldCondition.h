@@ -119,17 +119,10 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   virtual Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& stress,
-            const double flowStress,
-            const double porosity) = 0;
+  df_dsigma(const ModelStateBase* state) = 0;
 
   virtual Uintah::Matrix3
   df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;
-
-  virtual Uintah::Matrix3
-  df_dsigmaDev(const Uintah::Matrix3& stress,
-               const double flowStress,
-               const double porosity) = 0;
 
   virtual Uintah::Matrix3
   df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;

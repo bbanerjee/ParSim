@@ -130,19 +130,13 @@ public:
     q = sqrt(3 J_2), J_2 = 2nd invariant of sigmaDev
   */
   /////////////////////////////////////////////////////////////////////////
+  /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& stress,
-            const double flowStress,
-            const double porosity) override;
+  df_dsigma(const ModelStateBase* state) override;
 
   Uintah::Matrix3
   df_dsigma(const Uintah::Matrix3& xi,
             const ModelStateBase* state) override;
-
-  Uintah::Matrix3
-  df_dsigmaDev(const Uintah::Matrix3& stress,
-               const double flowStress,
-               const double porosity) override;
 
   Uintah::Matrix3
   df_dxi(const Uintah::Matrix3& xi,

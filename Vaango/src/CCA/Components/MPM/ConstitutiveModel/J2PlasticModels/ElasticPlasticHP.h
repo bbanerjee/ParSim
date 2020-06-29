@@ -308,25 +308,6 @@ public:
 
 protected:
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Compute Plastic State using Biswajit's approach */
-  ////////////////////////////////////////////////////////////////////////
-  bool computePlasticStateBiswajit(
-    ModelStateBase* state,
-    constParticleVariable<double>& pPlasticStrain,
-    constParticleVariable<double>& pStrainRate,
-    const Matrix3& sigma,
-    const Matrix3& trialS,
-    const Matrix3& tensorEta,
-    Matrix3& tensorS,
-    double& delGamma,
-    double& flowStress,
-    double& porosity,
-    double& mu_cur,
-    const double delT,
-    const MPMMaterial* matl,
-    const int idx);
-
-  ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stilde, epdot, ep, and delGamma using
              Simo's approach */
   ////////////////////////////////////////////////////////////////////////
@@ -470,7 +451,6 @@ protected:
   bool d_doMelting;
   bool d_checkStressTriax;
 
-  std::string d_plasticConvergenceAlgo;
   // Erosion algorithms
   bool d_setStressToZero;
   bool d_allowNoTension;

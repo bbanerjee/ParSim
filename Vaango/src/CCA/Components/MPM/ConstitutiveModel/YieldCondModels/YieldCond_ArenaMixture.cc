@@ -691,6 +691,12 @@ YieldCond_ArenaMixture::evalYieldConditionMax(const ModelStateBase* state_input)
  *                        = df/dJ2 s
 */
 Matrix3
+YieldCond_ArenaMixture::df_dsigma(const ModelStateBase* state) 
+{
+  return df_dsigma(Vaango::Util::Identity, state);
+}
+
+Matrix3
 YieldCond_ArenaMixture::df_dsigma(const Matrix3&,
                                   const ModelStateBase* state_input)
 {
@@ -1659,40 +1665,6 @@ YieldCond_ArenaMixture::evalYieldCondition(const Uintah::Matrix3&,
 
 //--------------------------------------------------------------
 // Other derivatives
-
-// Compute df/dsigma
-//    df/dsigma =
-// where
-//    s = sigma - 1/3 tr(sigma) I
-Matrix3
-YieldCond_ArenaMixture::df_dsigma(const Uintah::Matrix3& sig,
-                                  const double p_c,
-                                  const double)
-{
-  std::ostringstream out;
-  out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
-         "not be "
-      << "called by models that use the SoilMix yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return Matrix3(0.0);
-}
-
-// Compute df/ds  where s = deviatoric stress
-//    df/ds =
-Matrix3
-YieldCond_ArenaMixture::df_dsigmaDev(const Uintah::Matrix3& sigDev,
-                                     const double,
-                                     const double)
-{
-  std::ostringstream out;
-  out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
-         "not be "
-      << "called by models that use the SoilMix yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return Matrix3(0.0);
-}
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */

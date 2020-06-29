@@ -122,16 +122,12 @@ YieldCond_Rousselier::evalYieldConditionMax(const ModelStateBase* state)
   return std::abs(q_max);
 }
 
-/* No backstress */
-Uintah::Matrix3
-YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& sig,
-                                const double /*sigFlow*/,
-                                const double phi)
+/*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
+Matrix3
+YieldCond_Rousselier::df_dsigma(const ModelStateBase* state) 
 {
-  double p              = sig.Trace() / 3.0;
-  Uintah::Matrix3 s_dev = sig - Vaango::Util::Identity * p;
-  Uintah::Matrix3 dfdsigma = df_dsigma_actual(s_dev, p, phi);
-  return dfdsigma / dfdsigma.Norm();
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  return df_dsigma(xi, state);
 }
 
 Uintah::Matrix3
@@ -158,20 +154,6 @@ YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& xi,
   double dfdq  = 1.0 / (1.0 - phi);
 
   return (dp_dsigma * dfdp + dq_dsigma * dfdq);
-}
-
-/*! \warning Derivative is taken assuming sig_eq^2 - sig_Y(p)^2 = 0 form.
-  This is needed for the HypoElasticPlastic algorithm.  Needs
-  to be more generalized if possible. */
-Uintah::Matrix3
-YieldCond_Rousselier::df_dsigmaDev(const Uintah::Matrix3& sig,
-                                   const double,
-                                   const double)
-{
-  double p              = sig.Trace() / 3.0;
-  Uintah::Matrix3 s_dev = sig - Vaango::Util::Identity * p;
-  Uintah::Matrix3 derivative = s_dev * 3.0;
-  return derivative / derivative.Norm();
 }
 
 /**

@@ -1509,8 +1509,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     ModelState_TabularCap state_plastic_rate(state_k_old);
     state_plastic_rate.stressTensor = sig_fixed;
     state_plastic_rate.updateStressInvariants();
-    Matrix3 df_dsigma;
-    d_yield->df_dsigma(Util::Identity, &state_plastic_rate, df_dsigma);
+    Matrix3 df_dsigma = d_yield->df_dsigma(Util::Identity, &state_plastic_rate);
     df_dsigma /= df_dsigma.Norm();
     double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
     double rhs = df_dsigma.Contract(df_dsigma);
@@ -1543,8 +1542,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     state_test.stressTensor = sig_fixed;
     state_test.updateStressInvariants();
 
-    Matrix3 df_dsigma;
-    d_yield->df_dsigma(Util::Identity, &state_test, df_dsigma);
+    Matrix3 df_dsigma = d_yield->df_dsigma(Util::Identity, &state_test);
     df_dsigma /= df_dsigma.Norm();
     std::cout << "df_dsigma = " << df_dsigma << std::endl;
     std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)

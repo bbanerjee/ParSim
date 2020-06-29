@@ -102,20 +102,12 @@ YieldCond_vonMises::evalYieldConditionMax(const ModelStateBase* state)
 // ||df/dsigma|| = ||df/ds|| = sqrt(3/2)
 // df/dsigma / ||df/dsigma|| = s // ||s||
 //--------------------------------------------------------------
+/*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
 Matrix3
-YieldCond_vonMises::df_dsigma(const Matrix3& sig,
-                              const double var1,
-                              const double var2)
+YieldCond_vonMises::df_dsigma(const ModelStateBase* state) 
 {
-  return df_dsigmaDev(sig, var1, var2);
-}
-
-Matrix3
-YieldCond_vonMises::df_dsigmaDev(const Matrix3& sig, const double, const double)
-{
-  Matrix3 s                = sig.Deviator();
-  Matrix3 df_ds_normalized = s / s.Norm();
-  return df_ds_normalized;
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  return df_dsigma(xi, state);
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)
@@ -189,8 +181,16 @@ YieldCond_vonMises::computeElasPlasTangentModulus(
   double,
   TangentModulusTensor& Cep)
 {
+  ModelStateBase state;
+  state.setStress(sigma);
+  state.yieldStress = sigY;
+  state.porosity    = 0.0;
+  state.backStress  = Matrix3(0.0);
+
+  Matrix3 xi = state.devStress - state.backStress.Deviator();
+
   // Calculate the derivative of the yield function wrt sigma
-  Matrix3 f_sigma = df_dsigma(sigma, sigY, porosity);
+  Matrix3 f_sigma = df_dsigma(xi, &state);
 
   // Calculate derivative wrt plastic strain
   double f_q1 = dsigYdep;

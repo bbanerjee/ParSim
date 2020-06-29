@@ -1994,8 +1994,7 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_test.stressTensor = sig_fixed;
   state_test.updateStressInvariants();
 
-  Matrix3 df_dsigma;
-  d_yield->df_dsigma(Identity, &state_test, df_dsigma);
+  Matrix3 df_dsigma = d_yield->df_dsigma(Identity, &state_test);
   std::cout << "df_dsigma = " << df_dsigma << std::endl;
   std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
             << "," << plasticStrain_inc_fixed(1, 1) / df_dsigma(1, 1) << ","

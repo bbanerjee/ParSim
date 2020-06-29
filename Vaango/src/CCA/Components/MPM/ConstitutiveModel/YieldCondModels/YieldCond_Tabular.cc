@@ -387,6 +387,13 @@ YieldCond_Tabular::evalYieldConditionMax(const ModelStateBase*)
  *      df/ds : ds/dsigma = df/dJ2 s : [I(4s) - 1/3 II]
  *                        = df/dJ2 s
 */
+/*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
+Matrix3
+YieldCond_Tabular::df_dsigma(const ModelStateBase* state) 
+{
+  return df_dsigma(Vaango::Util::Identity, state);
+}
+
 Uintah::Matrix3
 YieldCond_Tabular::df_dsigma(const Matrix3&,
                              const ModelStateBase* state_input)
@@ -850,40 +857,6 @@ YieldCond_Tabular::evalYieldCondition(const Matrix3&,
 
 //--------------------------------------------------------------
 // Other derivatives
-
-// Compute df/dsigma
-//    df/dsigma =
-// where
-//    s = sigma - 1/3 tr(sigma) I
-Uintah::Matrix3
-YieldCond_Tabular::df_dsigma(const Matrix3& sig,
-                             const double p_c,
-                             const double)
-{
-  std::ostringstream out;
-  out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
-         "not be "
-      << "called by models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return Uintah::Matrix3(0.0);
-}
-
-// Compute df/ds  where s = deviatoric stress
-//    df/ds =
-Uintah::Matrix3
-YieldCond_Tabular::df_dsigmaDev(const Matrix3& sigDev,
-                                const double,
-                                const double)
-{
-  std::ostringstream out;
-  out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
-         "not be "
-      << "called by models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return Uintah::Matrix3(0.0);
-}
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */

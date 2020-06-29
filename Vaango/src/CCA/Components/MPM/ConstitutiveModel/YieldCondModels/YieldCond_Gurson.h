@@ -122,12 +122,12 @@ public:
   }
 
   //! Evaluate the yield function.
+  std::pair<double, Util::YieldStatus>
+  evalYieldCondition(const ModelStateBase* state) override;
+
   double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
-
-  std::pair<double, Util::YieldStatus>
-  evalYieldCondition(const ModelStateBase* state) override;
 
   double
   evalYieldCondition(const double equivStress,
@@ -139,34 +139,10 @@ public:
   double
   evalYieldConditionMax(const ModelStateBase* state) override;
 
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(f)\f$
-    with respect to \f$\sigma_{ij}\f$.
-
-    This is for the associated flow rule.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& stress,
-            const double flowStress,
-            const double porosity) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(f)\f$
-    with respect to \f$s_{ij}\f$.
-
-    This is for the associated flow rule with \f$s_{ij}\f$ being
-    the deviatoric stress.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3
-  df_dsigmaDev(const Uintah::Matrix3& stress,
-               const double flowStress,
-               const double porosity) override;
-
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
+  Uintah::Matrix3
+  df_dsigma(const ModelStateBase* state) override;
+
   Uintah::Matrix3
   df_dsigma(const Uintah::Matrix3& xi,
             const ModelStateBase* state) override;
@@ -182,129 +158,6 @@ public:
   std::pair<Uintah::Matrix3, Uintah::Matrix3>
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$ f \f$
-    with respect to a scalar variable.
-
-    \f[
-    f := \sigma^2_{eq} -
-    (A \cosh(\frac{B}{\sigma_Y(v_i)}) - C) \sigma_Y^2(v_i)
-    \f]
-    Therefore,
-    \f[
-    \frac{df}{dv_i} := -A \sinh(\frac{B}{\sigma_Y}) B
-    \frac{d\sigma_Y}{dv_i} +
-    2 (A \cosh(\frac{B}{\sigma_Y}) - C) \sigma_Y
-    \frac{d\sigma_Y}{dv_i}
-    \f]
-
-    \return derivative
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  evalDerivativeWRTPlasticityScalar(double trSig,
-                                    double porosity,
-                                    double sigY,
-                                    double dsigYdV);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$ f \f$
-    with respect to the porosity
-
-    \f[
-    \frac{df}{dphi} := \left[ 2 q_1
-    cosh\left(\frac{q_2 Tr(\sigma)}{2 \sigma_Y}\right)
-    - 2 q_3 \phi^* \right] \sigma_Y^2
-    \f]
-
-    \return derivative
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  evalDerivativeWRTPorosity(double trSig, double porosity, double sigY);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_1\f$ for porosity
-
-    \f[
-    h_1 = (1-\phi) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  computePorosityFactor_h1(double sigma_f_sigma,
-                           double tr_f_sigma,
-                           double porosity,
-                           double sigma_Y,
-                           double A);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_2\f$ for plastic strain
-
-    \f[
-    h_2 = \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  computePlasticStrainFactor_h2(double sigma_f_sigma,
-                                double porosity,
-                                double sigma_Y);
-
-  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double
-  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
-
-  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double
-  eval_h_phi(const Uintah::Matrix3& xi,
-             const double& factorA,
-             const ModelStateBase* state) override;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Compute the continuum elasto-plastic tangent modulus
-    assuming associated flow rule.
-
-    \f[
-    C_{ep} = C_{e} - \frac{(C_e:f_{\sigma})\otimes(f_{\sigma}:C_e)}
-    {-f_q.h_q + f_{\sigma}:C_e:f_{\sigma}}
-    \f]
-
-    \return TangentModulusTensor \f$ C_{ep} \f$.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  void
-  computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                        const Uintah::Matrix3& f_sigma,
-                        double f_q1,
-                        double f_q2,
-                        double h_q1,
-                        double h_q2,
-                        Uintah::TangentModulusTensor& Cep);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Compute the elastic-plastic tangent modulus.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  void
-  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                                const Uintah::Matrix3& sigma,
-                                double sigY,
-                                double dsigYdV,
-                                double porosity,
-                                double voidNuclFac,
-                                Uintah::TangentModulusTensor& Cep) override;
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
@@ -401,6 +254,86 @@ public:
   {
     return 0.0;
   }
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the factor \f$h_1\f$ for porosity
+
+    \f[
+    h_1 = (1-\phi) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
+    \f]
+
+    \return factor
+  */
+  /////////////////////////////////////////////////////////////////////////
+  double
+  computePorosityFactor_h1(double sigma_f_sigma,
+                           double tr_f_sigma,
+                           double porosity,
+                           double sigma_Y,
+                           double A);
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the factor \f$h_2\f$ for plastic strain
+
+    \f[
+    h_2 = \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
+    \f]
+
+    \return factor
+  */
+  /////////////////////////////////////////////////////////////////////////
+  double
+  computePlasticStrainFactor_h2(double sigma_f_sigma,
+                                double porosity,
+                                double sigma_Y);
+
+  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
+  double
+  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+
+  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
+  double
+  eval_h_phi(const Uintah::Matrix3& xi,
+             const double& factorA,
+             const ModelStateBase* state) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the continuum elasto-plastic tangent modulus
+    assuming associated flow rule.
+
+    \f[
+    C_{ep} = C_{e} - \frac{(C_e:f_{\sigma})\otimes(f_{\sigma}:C_e)}
+    {-f_q.h_q + f_{\sigma}:C_e:f_{\sigma}}
+    \f]
+
+    \return TangentModulusTensor \f$ C_{ep} \f$.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void
+  computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                        const Uintah::Matrix3& f_sigma,
+                        double f_q1,
+                        double f_q2,
+                        double h_q1,
+                        double h_q2,
+                        Uintah::TangentModulusTensor& Cep);
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the elastic-plastic tangent modulus.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void
+  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                                const Uintah::Matrix3& sigma,
+                                double sigY,
+                                double dsigYdV,
+                                double porosity,
+                                double voidNuclFac,
+                                Uintah::TangentModulusTensor& Cep) override;
 
 private:
   CMData d_CM;
