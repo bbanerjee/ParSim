@@ -123,6 +123,13 @@ public:
 
   //! Evaluate the yield function.
   double
+  evalYieldCondition(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state) override;
+
+  std::pair<double, Util::YieldStatus>
+  evalYieldCondition(const ModelStateBase* state) override;
+
+  double
   evalYieldCondition(const double equivStress,
                      const double flowStress,
                      const double traceOfCauchyStress,
@@ -130,8 +137,7 @@ public:
                      double& sig) override;
 
   double
-  evalYieldCondition(const Uintah::Matrix3& xi,
-                     const ModelStateBase* state) override;
+  evalYieldConditionMax(const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -254,16 +260,6 @@ public:
                                 double porosity,
                                 double sigma_Y);
 
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double
-  df_dplasticStrain(const Uintah::Matrix3& xi,
-                    const double& d_sigy_dep,
-                    const ModelStateBase* state) override;
-
-  /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double
-  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
-
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
   double
   eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
@@ -311,20 +307,6 @@ public:
                                 Uintah::TangentModulusTensor& Cep) override;
 
   //--------------------------------------------------------------
-  // Compute value of yield function
-  //--------------------------------------------------------------
-  std::pair<double, Util::YieldStatus>
-  evalYieldCondition(const ModelStateBase* state) override
-  {
-    return std::make_pair(0.0, Util::YieldStatus::IS_ELASTIC);
-  };
-  double
-  evalYieldConditionMax(const ModelStateBase* state) override
-  {
-    return 0.0;
-  };
-
-  //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
   double
@@ -341,6 +323,11 @@ public:
   {
     return 0.0;
   };
+
+  /*! Derivative with respect to internal variables */
+  void
+  df_dintvar(const ModelStateBase* state,
+             MetalIntVar& df_dintvar) const override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dp)
@@ -419,6 +406,15 @@ private:
   CMData d_CM;
   IntVar_Metal* d_intvar;
   const Uintah::FlowStressModel* d_flow;
+
+  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
+  double
+  df_dplasticStrain(const ModelStateBase* state) const;
+
+  /*! Derivative with respect to the porosity (\f$\phi\f$)*/
+  double
+  df_dporosity(const ModelStateBase* state) const;
+
 };
 
 } // End namespace Uintah

@@ -61,7 +61,7 @@ YieldCond_vonMises::outputProblemSpec(Uintah::ProblemSpecP& ps)
 std::pair<double, Util::YieldStatus>
 YieldCond_vonMises::evalYieldCondition(const ModelStateBase* state)
 {
-  auto xi  = state->devStress - state->backStress;
+  auto xi  = state->devStress - state->backStress.Deviator();
   double f = evalYieldCondition(xi, state);
   if (f <= 0.0) {
     return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
@@ -113,7 +113,7 @@ YieldCond_vonMises::df_dsigma(const Matrix3& sig,
 Matrix3
 YieldCond_vonMises::df_dsigmaDev(const Matrix3& sig, const double, const double)
 {
-  Matrix3 s                = sig - Vaango::Util::Identity * (sig.Trace() / 3.0);
+  Matrix3 s                = sig.Deviator();
   Matrix3 df_ds_normalized = s / s.Norm();
   return df_ds_normalized;
 }
@@ -124,9 +124,7 @@ YieldCond_vonMises::df_dsigmaDev(const Matrix3& sig, const double, const double)
 Matrix3
 YieldCond_vonMises::df_dsigma(const Matrix3& xi, const ModelStateBase* state)
 {
-  Matrix3 df_dsigma_normalized =
-    (xi + Vaango::Util::Identity * (state->backStress.Trace() / 3.0)) *
-    (Vaango::Util::sqrt_three_half / xi.Norm());
+  Matrix3 df_dsigma_normalized = df_dxi(xi, state);
   df_dsigma_normalized /= df_dsigma_normalized.Norm();
   return df_dsigma_normalized;
 }
@@ -155,32 +153,14 @@ YieldCond_vonMises::df_dsigmaDev_dbeta(const Matrix3& xi,
 
 /*! Derivative with respect to internal variables 
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
-template <>
-MetalIntVar
-YieldCond_vonMises::df_dintvar(const ModelStateBase* state)
+void
+YieldCond_vonMises::df_dintvar(const ModelStateBase* state,
+                               MetalIntVar& df_dintvar) const
 {
   double dsigy_dep = d_flow->evalDerivativeWRTPlasticStrain(state, 0);
   double df_dplasticStrain = -dsigy_dep;
   double df_dporosity = 0.0;
-  return MetalIntVar{df_dplasticStrain, df_dporosity};
-}
-
-/*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)
-    Assume f = sqrt{3/2} ||xi|| - sigma_y */
-double
-YieldCond_vonMises::df_dplasticStrain(const Matrix3&,
-                                      const double& dsigy_dep,
-                                      const ModelStateBase*)
-{
-  return -dsigy_dep;
-}
-
-/*! Derivative with respect to the porosity (\f$\epsilon^p \f$)
-    Assume f = sqrt{3/2} ||xi|| - sigma_y */
-double
-YieldCond_vonMises::df_dporosity(const Matrix3&, const ModelStateBase*)
-{
-  return 0.0;
+  df_dintvar = {df_dplasticStrain, df_dporosity};
 }
 
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */

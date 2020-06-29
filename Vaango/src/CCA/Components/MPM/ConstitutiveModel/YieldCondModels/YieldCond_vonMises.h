@@ -145,19 +145,11 @@ public:
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
-  /*! Derivatives with respect to internal variables */
-  template <typename IntVarType>
-  IntVarType df_dintvar(const ModelStateBase* state);
-
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double
-  df_dplasticStrain(const Uintah::Matrix3& xi,
-                    const double& d_sigy_dep,
-                    const ModelStateBase* state) override;
-
-  /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double
-  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  /*! Derivative with respect to internal variables 
+      Assume f = sqrt{3/2} ||xi|| - sigma_y */
+  void
+  df_dintvar(const ModelStateBase* state,
+             MetalIntVar& df_dintvar) const override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
   double

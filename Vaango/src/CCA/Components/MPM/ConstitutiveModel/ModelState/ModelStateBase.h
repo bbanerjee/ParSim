@@ -117,7 +117,6 @@ public:
 private:
 
   /* Returns deviatoric stress */
-  virtual 
   Uintah::Matrix3 updateStressInvariants(const Uintah::Matrix3& stress);
 
 };

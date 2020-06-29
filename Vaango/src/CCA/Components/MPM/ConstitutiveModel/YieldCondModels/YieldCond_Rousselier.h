@@ -158,13 +158,10 @@ public:
   double
   df_dq(const ModelStateBase* state) override;
 
-  double
-  df_dplasticStrain(const Uintah::Matrix3& xi,
-                    const double& d_sigy_dep,
-                    const ModelStateBase* state) override;
-
-  double
-  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  /*! Derivative with respect to internal variables */
+  void
+  df_dintvar(const ModelStateBase* state,
+             MetalIntVar& df_dintvar) const override;
 
   double
   d2f_dp_depsVol(const ModelStateBase* state,
@@ -241,6 +238,12 @@ private:
 
   Uintah::Matrix3
   df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;
+
+  double
+  df_dplasticStrain(const ModelStateBase* state) const;
+
+  double
+  df_dporosity(const ModelStateBase* state) const;
 
   void
   computeTangentModulus(const Uintah::TangentModulusTensor& Ce,

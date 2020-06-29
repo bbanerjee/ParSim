@@ -85,12 +85,10 @@ double
 YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
                                          const ModelStateBase* state)
 {
-  Uintah::Matrix3 s_dev = xi + state->backStress;
-
   double phi     = state->porosity;
   double sigma_f = state->yieldStress;
-  double I1      = 3.0 * state->pressure;
-  double J2      = 0.5 * s_dev.Contract(s_dev);
+  double I1      = state->I1;
+  double J2      = 0.5 * xi.Contract(xi);
   double q       = std::sqrt(3.0 * J2);
   double sig     = 0.0;
 
@@ -100,12 +98,8 @@ YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
 std::pair<double, Util::YieldStatus>
 YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 {
-  double phi     = state->porosity;
-  double sigma_f = state->yieldStress;
-  double I1      = state->I1;
-  double q       = std::sqrt(3.0 * state->J2);
-  double sig     = 0.0;
-  double f       = evalYieldCondition(q, sigma_f, I1, phi, sig);
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  double f   = evalYieldCondition(xi, state);
   if (f > 0) {
     return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
   }
@@ -128,6 +122,7 @@ YieldCond_Rousselier::evalYieldConditionMax(const ModelStateBase* state)
   return std::abs(q_max);
 }
 
+/* No backstress */
 Uintah::Matrix3
 YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& sig,
                                 const double /*sigFlow*/,
@@ -143,18 +138,18 @@ Uintah::Matrix3
 YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& xi,
                                 const ModelStateBase* state)
 {
-  Uintah::Matrix3 dfdsigma = df_dsigma_actual(xi, state->pressure, state->porosity);
+  Uintah::Matrix3 dfdsigma = df_dsigma_actual(xi, state->p, state->porosity);
   return dfdsigma / dfdsigma.Norm();
 }
 
 Uintah::Matrix3
-YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& s_dev,
+YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& xi,
                                        double p,
                                        double phi) const
 {
-  double ss                 = s_dev.NormSquared();
+  double xi_xi              = xi.NormSquared();
   Uintah::Matrix3 dp_dsigma = Vaango::Util::Identity * (1.0 / 3.0);
-  Uintah::Matrix3 dq_dsigma = s_dev / std::sqrt(ss * 2.0 / 3.0);
+  Uintah::Matrix3 dq_dsigma = xi / std::sqrt(xi_xi * 2.0 / 3.0);
 
   double D     = d_params.D;
   double sig1  = d_params.sigma_1;
@@ -222,29 +217,35 @@ YieldCond_Rousselier::df_dq(const ModelStateBase* state)
   return dfdq;
 }
 
-double
-YieldCond_Rousselier::df_dplasticStrain(const Uintah::Matrix3& xi,
-                                        const double& d_sigy_dep,
-                                        const ModelStateBase* state)
+void
+YieldCond_Rousselier::df_dintvar(const ModelStateBase* state,
+                                 MetalIntVar& df_dintvar) const
 {
-  return -d_sigy_dep;
+  double df_dep  = df_dplasticStrain(state);
+  double df_dphi = df_dporosity(state);
+  df_dintvar = {df_dep, df_dphi};
 }
 
 double
-YieldCond_Rousselier::df_dporosity(const Uintah::Matrix3& xi,
-                                   const ModelStateBase* state)
+YieldCond_Rousselier::df_dplasticStrain(const ModelStateBase* state) const
 {
+  return -d_flow->evalDerivativeWRTPlasticStrain(state, 0);
+}
+
+double
+YieldCond_Rousselier::df_dporosity(const ModelStateBase* state) const
+{
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+
   double D    = d_params.D;
   double sig1 = d_params.sigma_1;
 
   double phi     = state->porosity;
   double overphi = 1.0 / (1.0 - phi);
 
-  double p        = state->pressure;
+  double p        = state->p;
+  double q        = std::sqrt(1.5 * xi.Contract(xi));
   double exp_term = D * sig1 * std::exp(p * overphi / sig1);
-
-  double ss = xi.NormSquared();
-  double q  = std::sqrt(ss * 1.5);
 
   double df_dphi =
     -q * overphi * overphi + exp_term - phi * exp_term * overphi * overphi;
@@ -366,31 +367,30 @@ YieldCond_Rousselier::computeTangentModulus(
 
 void
 YieldCond_Rousselier::computeElasPlasTangentModulus(
-  const Uintah::TangentModulusTensor& Ce,
-  const Uintah::Matrix3& sigma,
+  const TangentModulusTensor& Ce,
+  const Matrix3& sigma,
   double sigY,
   double dsigYdep,
   double porosity,
   double voidNuclFac,
   Uintah::TangentModulusTensor& Cep)
 {
-  double p = sigma.Trace() / 3.0;
-  Uintah::Matrix3 s_dev =
-    sigma - Vaango::Util::Identity * (sigma.Trace() / 3.0);
-
   ModelStateBase state;
+  state.setStress(sigma);
   state.yieldStress = sigY;
   state.porosity    = porosity;
-  state.pressure    = p;
+  state.backStress  = Matrix3(0.0);
+
+  Matrix3 xi = state.devStress - state.backStress.Deviator();
 
   // Calculate the derivative of the yield function wrt sigma
-  Uintah::Matrix3 f_sigma = df_dsigma(s_dev, p, porosity);
+  Matrix3 f_sigma = df_dsigma(xi, &state);
 
-  // Calculate derivative wrt porosity
-  double f_q1 = df_dporosity(s_dev, &state);
-
-  // Calculate derivative wrt plastic strain
-  double f_q2 = df_dplasticStrain(s_dev, dsigYdep, &state);
+  // Calculate derivative wrt internal variables
+  MetalIntVar f_intvar; 
+  df_dintvar(&state, f_intvar);
+  double f_q1 = f_intvar.plasticPorosity;
+  double f_q2 = f_intvar.eqPlasticStrain;
 
   // Compute h_q1
   double sigma_f_sigma = sigma.Contract(f_sigma);

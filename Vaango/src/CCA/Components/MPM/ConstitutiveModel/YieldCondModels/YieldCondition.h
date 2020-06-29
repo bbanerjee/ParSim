@@ -144,13 +144,56 @@ public:
   virtual double
   df_dq(const ModelStateBase* state) = 0;
 
-  virtual double
-  df_dplasticStrain(const Uintah::Matrix3& xi,
-                    const double& d_sigy_dep,
-                    const ModelStateBase* state) = 0;
+  /* Derivatives of the yield function wrt internal variables */
+  virtual void
+  df_dintvar(const ModelStateBase* state,
+             MetalIntVar& df_dintvar) const 
+  {
+    std::ostringstream out;
+    out << "**ERROR** df_dintvar MetalIntVar argument should not be "
+        << "called by the yield condition model currently in use.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
 
-  virtual double
-  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;
+  virtual void
+  df_dintvar(const ModelStateBase* state,
+             ArenaIntVar& df_dintvar) const
+  {
+    std::ostringstream out;
+    out << "**ERROR** df_dintvar ArenaIntVar argument should not be "
+        << "called by the yield condition model currently in use.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  virtual void
+  df_dintvar(const ModelStateBase* state,
+             BorjaIntVar& df_dintvar) const
+  {
+    std::ostringstream out;
+    out << "**ERROR** df_dintvar BorjaIntVar argument should not be "
+        << "called by the yield condition model currently in use.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  virtual void
+  df_dintvar(const ModelStateBase* state,
+             SoilBrannonIntVar& df_dintvar) const
+  {
+    std::ostringstream out;
+    out << "**ERROR** df_dintvar SoilBrannonIntVar argument should not be "
+        << "called by the yield condition model currently in use.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  virtual void
+  df_dintvar(const ModelStateBase* state,
+             TabularCapIntVar& df_dintvar) const
+  {
+    std::ostringstream out;
+    out << "**ERROR** df_dintvar TabularCapIntVar argument should not be "
+        << "called by the yield condition model currently in use.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
 
   /* Compute d/depse_v(df/dp) */
   virtual double

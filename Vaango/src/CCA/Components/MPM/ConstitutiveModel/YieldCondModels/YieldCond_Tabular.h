@@ -258,16 +258,6 @@ public:
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double
-  df_dplasticStrain(const Uintah::Matrix3& xi,
-                    const double& d_sigy_dep,
-                    const ModelStateBase* state) override;
-
-  /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double
-  df_dporosity(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
-
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
   double
   eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;

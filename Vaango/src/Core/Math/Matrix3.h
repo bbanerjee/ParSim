@@ -161,6 +161,9 @@ namespace Uintah {
     //Transpose
     inline Matrix3 Transpose() const;
 
+    // Deviatoric matrix
+    inline Matrix3 Deviator() const;
+
     // Exponential of a matrix
     Matrix3 Exponential(int num_terms) const;
     
@@ -635,6 +638,14 @@ namespace Uintah {
       if (RRT != I) return false;
       return true;
     }
+
+  inline Matrix3 Matrix3::Deviator() const
+  {
+    double mean = (mat3[0][0] + mat3[1][1] + mat3[2][2]) / 3.0;
+    return Matrix3(mat3[0][0] - mean , mat3[1][0], mat3[2][0],
+                   mat3[0][1], mat3[1][1] - mean, mat3[2][1],
+                   mat3[0][2], mat3[1][2], mat3[2][2] - mean);
+  }
 
   inline bool Matrix3::solveCramer(Vector& b, Vector& x) const
     {

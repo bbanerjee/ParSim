@@ -1602,30 +1602,6 @@ YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& sigDev,
   return std::make_pair(Matrix3(Vaango::Util::Zero), Matrix3(Vaango::Util::Zero));
 }
 
-/*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
-double
-YieldCond_Arena::df_dplasticStrain(const Matrix3&,
-                                   const double& dsigy_dep,
-                                   const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** df_dplasticStrain with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 0.0;
-}
-
-/*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
-double
-YieldCond_Arena::df_dporosity(const Matrix3&, const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** df_dporosity with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 0.0;
-}
-
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double
 YieldCond_Arena::eval_h_alpha(const Matrix3&, const ModelStateBase*)
