@@ -80,17 +80,6 @@ YieldCond_vonMises::evalYieldCondition(const Matrix3& xi,
 }
 
 double
-YieldCond_vonMises::evalYieldCondition(const double sigEqv,
-                                       const double sigFlow,
-                                       const double,
-                                       const double,
-                                       double& sig)
-{
-  sig = sigFlow;
-  return (sigEqv - sigFlow);
-}
-
-double
 YieldCond_vonMises::evalYieldConditionMax(const ModelStateBase* state)
 {
   return state->yieldStress;

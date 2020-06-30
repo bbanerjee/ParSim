@@ -823,23 +823,6 @@ YieldCond_Tabular::df_depsDev(const ModelStateBase* state_input,
   return 0.0;
 }
 
-// Evaluate the yield function.
-double
-YieldCond_Tabular::evalYieldCondition(const double p,
-                                      const double q,
-                                      const double dummy0,
-                                      const double dummy1,
-                                      double& dummy2)
-{
-  std::ostringstream out;
-  out
-    << "**ERROR** Deprecated evalYieldCondition with double arguments. "
-    << " Should not be called by models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return 0.0;
-}
-
 // Evaluate yield condition (s = deviatoric stress
 //                           p = state->p)
 double

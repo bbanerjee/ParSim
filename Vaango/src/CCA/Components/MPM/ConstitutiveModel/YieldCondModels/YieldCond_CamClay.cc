@@ -60,7 +60,21 @@ YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
 //                           p_c = state->p_c)
 //--------------------------------------------------------------
 std::pair<double, Util::YieldStatus>
-YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
+YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state)
+{
+  double f = evalYieldCondition(Vaango::Util::Identity, state);
+  if (f > 0.0) {
+    return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
+  }
+  return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
+}
+
+// Evaluate yield condition (s = deviatoric stress
+//                           p = state->p
+//                           p_c = state->p_c)
+double
+YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3&,
+                                      const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
@@ -77,10 +91,7 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
   double q   = state->q;
   double p_c = state->p_c;
   double f   = q * q / (d_M * d_M) + p * (p - p_c);
-  if (f > 0.0) {
-    return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
-  }
-  return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
+  return f;
 }
 
 //--------------------------------------------------------------
@@ -276,41 +287,6 @@ YieldCond_CamClay::df_depsDev(const ModelStateBase* state_input,
 
 //--------------------------------------------------------------
 // Other yield condition functions
-
-// Evaluate yield condition (s = deviatoric stress
-//                           p = state->p
-//                           p_c = state->p_c)
-double
-YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3&,
-                                      const ModelStateBase* state_input)
-{
-  const ModelState_CamClay* state =
-    static_cast<const ModelState_CamClay*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
-  double p     = state->p;
-  double q     = state->q;
-  double pc    = state->p_c;
-  double dummy = 0.0;
-  return evalYieldCondition(p, q, pc, 0.0, dummy);
-}
-
-double
-YieldCond_CamClay::evalYieldCondition(const double p,
-                                      const double q,
-                                      const double p_c,
-                                      const double,
-                                      double&)
-{
-  return q * q / (d_M * d_M) + p * (p - p_c);
-}
 
 // Compute df/dsigma
 //    df/dsigma = (2p - p_c)/3 I + sqrt(3/2) 2q/M^2 s/||s||

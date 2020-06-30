@@ -96,13 +96,6 @@ public:
                      const ModelStateBase* state) = 0;
 
   virtual double
-  evalYieldCondition(const double equivStress,
-                     const double flowStress,
-                     const double traceOfCauchyStress,
-                     const double porosity,
-                     double& sig) = 0;
-
-  virtual double
   evalYieldConditionMax(const ModelStateBase* state) = 0;
 
   /////////////////////////////////////////////////////////////////////////

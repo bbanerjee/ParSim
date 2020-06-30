@@ -130,13 +130,6 @@ public:
                      const ModelStateBase* state) override;
 
   double
-  evalYieldCondition(const double equivStress,
-                     const double flowStress,
-                     const double traceOfCauchyStress,
-                     const double porosity,
-                     double& sig) override;
-
-  double
   evalYieldConditionMax(const ModelStateBase* state) override;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/

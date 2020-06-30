@@ -61,20 +61,16 @@ YieldCond_Rousselier::outputProblemSpec(Uintah::ProblemSpecP& ps)
   yield_ps->appendElement("sigma_1", d_params.sigma_1);
 }
 
-double
-YieldCond_Rousselier::evalYieldCondition(const double q,
-                                         const double sigma_f,
-                                         const double I1,
-                                         const double phi,
-                                         double& sig)
+/* Check for plastic yield */
+std::pair<double, Util::YieldStatus>
+YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 {
-  double D     = d_params.D;
-  double sig1  = d_params.sigma_1;
-  double p_phi = I1 / (3.0 * (1.0 - phi));
-  double q_phi = q / (1.0 - phi);
-  double f     = q_phi + D * sig1 * phi * std::exp(p_phi / sig1) - sigma_f;
-  sig          = f + sigma_f;
-  return f;
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  double f   = evalYieldCondition(xi, state);
+  if (f > 0) {
+    return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
+  }
+  return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
 }
 
 /**
@@ -90,20 +86,13 @@ YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
   double I1      = state->I1;
   double J2      = 0.5 * xi.Contract(xi);
   double q       = std::sqrt(3.0 * J2);
-  double sig     = 0.0;
 
-  return evalYieldCondition(q, sigma_f, I1, phi, sig);
-}
-
-std::pair<double, Util::YieldStatus>
-YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
-{
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  double f   = evalYieldCondition(xi, state);
-  if (f > 0) {
-    return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
-  }
-  return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
+  double D     = d_params.D;
+  double sig1  = d_params.sigma_1;
+  double p_phi = I1 / (3.0 * (1.0 - phi));
+  double q_phi = q / (1.0 - phi);
+  double f     = q_phi + D * sig1 * phi * std::exp(p_phi / sig1) - sigma_f;
+  return f;
 }
 
 double

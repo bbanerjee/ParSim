@@ -94,18 +94,7 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
   double sig_m    = state->p;
   double xi_xi    = xi.NormSquared();
   double sig_eq   = std::sqrt(1.5 * xi_xi);
-  double sig      = 0.0;
 
-  return evalYieldCondition(sig_eq, sigy, 3.0*sig_m, porosity, sig);
-}
-
-double
-YieldCond_Gurson::evalYieldCondition(const double sig_eq,
-                                     const double sigy,
-                                     const double sig_tr,
-                                     const double porosity,
-                                     double& sig)
-{
   ASSERT(sigy != 0);
 
   double q1    = d_CM.q1;
@@ -120,7 +109,7 @@ YieldCond_Gurson::evalYieldCondition(const double sig_eq,
   }
 
   double maxincosh = 30.0;
-  double incosh = 0.5 * q2 * sig_tr / sigy;
+  double incosh = 1.5 * q2 * sig_m / sigy;
   if (std::abs(incosh) > 30.0) {
     incosh = copysign(maxincosh, incosh);
   }

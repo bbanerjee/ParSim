@@ -321,14 +321,6 @@ public:
   // Other options below.
   //================================================================================
 
-  // Evaluate the yield function.
-  double
-  evalYieldCondition(const double p,
-                     const double q,
-                     const double dummy0,
-                     const double dummy1,
-                     double& dummy2) override;
-
   // Evaluate yield condition (s = deviatoric stress = sigDev
   //                           p = state->pressure
   //                           p_c = state->yieldStress)

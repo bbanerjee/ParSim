@@ -774,8 +774,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
     // Get the deformation gradient (F)
     // Note : The deformation gradient from the old datawarehouse is no
     // longer used, but it is updated for possible use elsewhere
-    constParticleVariable<Matrix3> pDeformGrad;
-    old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
+    constParticleVariable<Matrix3> pDefGrad;
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
@@ -846,9 +846,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<Matrix3> tensorL;
     new_dw->getModifiable(tensorL, lb->pVelGradLabel_preReloc, pset);
 
-    ParticleVariable<Matrix3> pDeformGrad_new;
+    ParticleVariable<Matrix3> pDefGrad_new;
     ParticleVariable<double> pVolume_deformed;
-    new_dw->getModifiable(pDeformGrad_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->getModifiable(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
 
     ParticleVariable<Matrix3> pStress_new;
@@ -882,9 +882,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
     //______________________________________________________________________
     // Loop thru particles
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      particleIndex idx = *iter;
+    for (auto idx : *pset) {
 
       // Assign zero int. heating by default, modify with appropriate sources
       // This has units (in MKS) of K/s  (i.e. temperature/time)
@@ -898,15 +896,15 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       pLocalized_new[idx] = pLocalized[idx];
 
       // Update the deformation gradient tensor to its time n+1 value.
-      double J = pDeformGrad_new[idx].Determinant();
+      double J = pDefGrad_new[idx].Determinant();
       if (!(J > 0.) || J > 1.e5) {
         std::cerr
           << "**ERROR** Negative (or huge) Jacobian of deformation gradient."
           << "  Deleting particle " << pParticleID[idx] << "\n";
         std::cerr << "l = " << tensorL[idx] << "\n";
-        std::cerr << "F_old = " << pDeformGrad[idx] << "\n";
-        std::cerr << "J_old = " << pDeformGrad[idx].Determinant() << "\n";
-        std::cerr << "F_new = " << pDeformGrad_new[idx] << "\n";
+        std::cerr << "F_old = " << pDefGrad[idx] << "\n";
+        std::cerr << "J_old = " << pDefGrad[idx].Determinant() << "\n";
+        std::cerr << "F_new = " << pDefGrad_new[idx] << "\n";
         std::cerr << "J = " << J << "\n";
         std::cerr << "Temp = " << pTemperature[idx] << "\n";
         std::cerr << "Tm = " << Tm << "\n";
@@ -915,8 +913,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         std::cerr << "L.norm()*dt = " << tensorL[idx].Norm() * delT << "\n";
         pLocalized_new[idx] = -999;
 
-        tensorF_new          = pDeformGrad[idx];
-        pDeformGrad_new[idx] = pDeformGrad[idx];
+        tensorF_new          = pDefGrad[idx];
+        pDefGrad_new[idx] = pDefGrad[idx];
         tensorD              = zero;
         tensorL[idx]         = zero;
       }
@@ -932,7 +930,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       tensorD = (tensorL[idx] + tensorL[idx].Transpose()) * 0.5;
 
       // Compute polar decomposition of F (F = RU)
-      pDeformGrad[idx].polarDecompositionRMB(tensorU, tensorR);
+      pDefGrad[idx].polarDecompositionRMB(tensorU, tensorR);
 
       // Rotate the total rate of deformation tensor back to the
       // material configuration
@@ -958,44 +956,42 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       double temperature = pTemperature[idx];
 
-      // Set up the ModelStateBase (for t_n+1)
-      auto state = scinew ModelStateBase();
-      // state->eqPlasticStrainRate = pStrainRate_new[idx];
-      // state->eqPlasticStrain     = pPlasticStrain[idx];
-      // state->eqPlasticStrainRate = sqrtTwoThird*tensorEta.Norm();
-      state->strainRate          = pStrainRate_new[idx];
-      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
-      state->eqPlasticStrain =
-        pPlasticStrain[idx] + state->eqPlasticStrainRate * delT;
-      state->pressure            = pressure;
-      state->temperature         = temperature;
-      state->initialTemperature  = d_initialMaterialTemperature;
-      state->density             = rho_cur;
-      state->initialDensity      = rho_0;
-      state->volume              = pVolume_deformed[idx];
-      state->initialVolume       = pMass[idx] / rho_0;
-      state->bulkModulus         = bulk;
-      state->initialBulkModulus  = bulk;
-      state->shearModulus        = shear;
-      state->initialShearModulus = shear;
-      state->meltingTemp         = Tm;
-      state->initialMeltTemp     = Tm;
-      state->specificHeat        = matl->getSpecificHeat();
-      state->energy              = pEnergy[idx];
+      // Set up the ModelStateBase 
+      ModelStateBase state_old;
+      state_old.strainRate          = pStrainRate_new[idx];
+      state_old.eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state_old.eqPlasticStrain =
+        pPlasticStrain[idx] + state_old.eqPlasticStrainRate * delT;
+      state_old.pressure            = pressure;
+      state_old.temperature         = temperature;
+      state_old.initialTemperature  = d_initialMaterialTemperature;
+      state_old.density             = rho_cur;
+      state_old.initialDensity      = rho_0;
+      state_old.volume              = pVolume_deformed[idx];
+      state_old.initialVolume       = pMass[idx] / rho_0;
+      state_old.bulkModulus         = bulk;
+      state_old.initialBulkModulus  = bulk;
+      state_old.shearModulus        = shear;
+      state_old.initialShearModulus = shear;
+      state_old.meltingTemp         = Tm;
+      state_old.initialMeltTemp     = Tm;
+      state_old.specificHeat        = matl->getSpecificHeat();
+      state_old.energy              = pEnergy[idx];
+      state_old.setStress(sigma);
 
       // Get or compute the specific heat
       if (d_computeSpecificHeat) {
-        double C_p          = d_Cp->computeSpecificHeat(state);
-        state->specificHeat = C_p;
+        double C_p          = d_Cp->computeSpecificHeat(&state_old);
+        state_old.specificHeat = C_p;
       }
 
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step and update the plasticity state
-      double Tm_cur      = d_melt->computeMeltingTemp(state);
-      state->meltingTemp = Tm_cur;
+      double Tm_cur      = d_melt->computeMeltingTemp(&state_old);
+      state_old.meltingTemp = Tm_cur;
 
-      double mu_cur       = d_shear->computeShearModulus(state);
-      state->shearModulus = mu_cur;
+      double mu_cur       = d_shear->computeShearModulus(&state_old);
+      state_old.shearModulus = mu_cur;
 
       // compute the local sound wave speed
       double c_dil = sqrt((bulk + 4.0 * mu_cur / 3.0) / rho_cur);
@@ -1004,29 +1000,27 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // Stage 2:
       //-----------------------------------------------------------------------
       // Assume elastic deformation to get a trial deviatoric stress
+      double trialP = d_eos->computePressure(matl, &state_old, tensorF_new, tensorD, delT);
+
       // This is simply the previous timestep deviatoric stress plus a
       // deviatoric elastic increment based on the shear modulus supplied by
       // the strength routine in use.
-      auto defState                  = scinew DeformationState();
-      defState->D                    = tensorD;
-      defState->devD                 = tensorEta;
-      defState->viscoElasticWorkRate = 0.0;
+      DeformationState defState;
+      defState.D                    = tensorD;
+      defState.devD                 = tensorEta;
+      defState.viscoElasticWorkRate = 0.0;
+      d_devStress->computeDeviatoricStressInc(idx, &state_old, &defState, delT);
+      Matrix3 trialS = tensorS + defState.devStressInc;
 
-      d_devStress->computeDeviatoricStressInc(idx, state, defState, delT);
-
-      Matrix3 trialS = tensorS + defState->devStressInc;
-
-      // Calculate the equivalent stress
-      // this will be removed next, it should be computed in the flow stress
-      // routine
-      // the flow stress routines should be passed the entire stress (not just
-      // deviatoric)
-      double equivStress = sqrtThreeTwo * trialS.Norm();
+      // Create a trial state
+      ModelStateBase state_trial(state_old);
+      Matrix3 stress_trial = trialS + Vaango::Util::Identity * trialP;
+      state_trial.setStress(stress_trial);
 
       // Calculate flow stress
       double flowStress =
-        d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
-      state->yieldStress = flowStress;
+        d_flow->computeFlowStress(&state_trial, delT, d_tol, matl, idx);
+      state_trial.yieldStress = flowStress;
 
       // Material has melted if flowStress <= 0.0
       bool melted  = false;
@@ -1044,23 +1038,17 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
         // Get the current porosity
         double porosity = pPorosity[idx];
+        state_trial.porosity = porosity;
 
-        // Evaluate yield condition
-        double traceOfTrialStress =
-          3.0 * pressure + tensorD.Trace() * (2.0 * mu_cur * delT);
-
-        double flow_rule = d_yield->evalYieldCondition(equivStress,
-                                                       flowStress,
-                                                       traceOfTrialStress,
-                                                       porosity,
-                                                       state->yieldStress);
-        // Compute the deviatoric stress
+        // Evaluate yield condition (returns std::pair<double, Util::YieldStatus>)
+        auto result = d_yield->evalYieldCondition(&state_trial);
         /*
-        std::cout << "flow_rule = " << flow_rule << " s_eq = " << equivStress
+        double equivStress = state_trial.q;
+        std::cout << "yield = " << result.first << " s_eq = " << equivStress
              << " s_flow = " << flowStress << "\n";
         */
 
-        if (flow_rule < 0.0) {
+        if (result.second == Vaango::Util::YieldStatus::IS_ELASTIC) {
           // Set the deviatoric stress to the trial stress
           tensorS = trialS;
 
@@ -1069,7 +1057,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
           // Update internal Cauchy stresses (only for viscoelasticity)
           Matrix3 dp = zero;
-          d_devStress->updateInternalStresses(idx, dp, defState, delT);
+          d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         } else {
 
@@ -1086,30 +1074,29 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
           Matrix3 tensorEtaPlasticInc = zero;
 
           // Compute Stilde using Newton iterations a la Simo
-          state->eqPlasticStrainRate = pStrainRate_new[idx];
-          state->eqPlasticStrain     = pPlasticStrain[idx];
+          state_trial.eqPlasticStrainRate = pStrainRate_new[idx];
+          state_trial.eqPlasticStrain     = pPlasticStrain[idx];
           Matrix3 nn(0.0);
           computePlasticStateViaRadialReturn(
-            trialS, delT, matl, idx, state, nn, delGamma);
+            trialS, delT, matl, idx, &state_trial, nn, delGamma);
 
           tensorEtaPlasticInc = nn * delGamma;
           tensorS =
-            trialS - tensorEtaPlasticInc * (2.0 * state->shearModulus);
+            trialS - tensorEtaPlasticInc * (2.0 * state_trial.shearModulus);
 
           // Update internal variables
           d_flow->updatePlastic(idx, delGamma);
 
           // Update internal Cauchy stresses (only for viscoelasticity)
           Matrix3 dp = tensorEtaPlasticInc / delT;
-          d_devStress->updateInternalStresses(idx, dp, defState, delT);
+          d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         } // end of flow_rule if
       }   // end of temperature if
 
-      delete defState;
       // Calculate the updated hydrostatic stress
       double p =
-        d_eos->computePressure(matl, state, tensorF_new, tensorD, delT);
+        d_eos->computePressure(matl, &state_trial, tensorF_new, tensorD, delT);
 
       double Dkk = tensorD.Trace();
       /*
@@ -1121,8 +1108,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       // Calculate Tdot from viscoelasticity
       double taylorQuinney = d_initialData.Chi;
-      double fac           = taylorQuinney / (rho_cur * state->specificHeat);
-      double Tdot_VW       = defState->viscoElasticWorkRate * fac;
+      double fac           = taylorQuinney / (rho_cur * state_trial.specificHeat);
+      double Tdot_VW       = defState.viscoElasticWorkRate * fac;
 
       pdTdt[idx] += Tdot_VW;
 
@@ -1137,7 +1124,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       }
 
       // Calculate Tdot due to artificial viscosity
-      double Tdot_AV = de_s / state->specificHeat;
+      double Tdot_AV = de_s / state_trial.specificHeat;
       pdTdt[idx] += Tdot_AV * include_AV_heating;
 
       if (pdTdt[idx] < 0.0) {
@@ -1170,6 +1157,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         }
       }
 
+      ModelStateBase state_new = state_trial;
+      state_new.setStress(sigma);
+
       //-----------------------------------------------------------------------
       // Stage 3:
       //-----------------------------------------------------------------------
@@ -1185,8 +1175,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       } else {
 
         // Update the plastic strain
-        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
-        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
+        pPlasticStrain_new[idx]     = state_new.eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state_new.eqPlasticStrainRate;
 
         /*
         if (pPlasticStrainRate_new[idx] > pStrainRate_new[idx]) {
@@ -1199,7 +1189,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         // Update the porosity
         if (d_evolvePorosity) {
           pPorosity_new[idx] = updatePorosity(
-            tensorD, delT, pPorosity[idx], state->eqPlasticStrain);
+            tensorD, delT, pPorosity[idx], state_new.eqPlasticStrain);
         } else {
           pPorosity_new[idx] = pPorosity[idx];
         }
@@ -1207,7 +1197,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         // Calculate the updated scalar damage parameter
         if (d_evolveDamage) {
           pDamage_new[idx] =
-            d_damage->computeScalarDamage(state->eqPlasticStrainRate,
+            d_damage->computeScalarDamage(state_new.eqPlasticStrainRate,
                                           sigma,
                                           temperature,
                                           delT,
@@ -1219,10 +1209,10 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         }
         // Calculate rate of temperature increase due to plastic strain
         double taylorQuinney = d_initialData.Chi;
-        double fac           = taylorQuinney / (rho_cur * state->specificHeat);
+        double fac           = taylorQuinney / (rho_cur * state_new.specificHeat);
 
         // Calculate Tdot (internal plastic heating rate)
-        double Tdot_PW = state->yieldStress * state->eqPlasticStrainRate * fac;
+        double Tdot_PW = state_new.yieldStress * state_new.eqPlasticStrainRate * fac;
 
         pdTdt[idx] += Tdot_PW;
       }
@@ -1255,19 +1245,19 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
           if (d_stable->doIt() && !isLocalized) {
 
             // Calculate values needed for tangent modulus calculation
-            state->temperature  = temperature;
-            Tm_cur              = d_melt->computeMeltingTemp(state);
-            state->meltingTemp  = Tm_cur;
-            mu_cur              = d_shear->computeShearModulus(state);
-            state->shearModulus = mu_cur;
+            state_new.temperature  = temperature;
+            Tm_cur                   = d_melt->computeMeltingTemp(&state_new);
+            state_new.meltingTemp  = Tm_cur;
+            mu_cur                   = d_shear->computeShearModulus(&state_new);
+            state_new.shearModulus = mu_cur;
             double sigY =
-              d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
+              d_flow->computeFlowStress(&state_new, delT, d_tol, matl, idx);
             if (!(sigY > 0.0))
               isLocalized = true;
             else {
               double dsigYdep =
-                d_flow->evalDerivativeWRTPlasticStrain(state, idx);
-              double A = voidNucleationFactor(state->eqPlasticStrain);
+                d_flow->evalDerivativeWRTPlasticStrain(&state_new, idx);
+              double A = voidNucleationFactor(state_new.eqPlasticStrain);
 
               // Calculate the elastic tangent modulus
               TangentModulusTensor Ce;
@@ -1381,7 +1371,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
                          Max(c_dil + std::abs(pVel.y()), WaveSpeed.y()),
                          Max(c_dil + std::abs(pVel.z()), WaveSpeed.z()));
 
-      delete state;
     } // end particle loop
 
     //__________________________________
@@ -1552,11 +1541,11 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
   constParticleVariable<Point> px;
   constParticleVariable<Matrix3> psize;
-  constParticleVariable<Matrix3> pDeformGrad, pStress, pRotation;
+  constParticleVariable<Matrix3> pDefGrad, pStress, pRotation;
   constNCVariable<Vector> gDisp;
 
   ParticleVariable<int> pLocalized_new;
-  ParticleVariable<Matrix3> pDeformGrad_new, pStress_new, pRotation_new;
+  ParticleVariable<Matrix3> pDefGrad_new, pStress_new, pRotation_new;
   ParticleVariable<double> pVolume_deformed, pPlasticStrain_new, pDamage_new,
     pPorosity_new, pStrainRate_new, pPlasticStrainRate_new, pdTdt, pEnergy_new;
 
@@ -1584,10 +1573,6 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
-    // Get grid size
-    // Vector dx = patch->dCell();
-    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
-
     // Get the set of particles
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
@@ -1601,7 +1586,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pStress, lb->pStressLabel, pset);
 
     // GET LOCAL DATA
@@ -1614,7 +1599,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pLocalized, pLocalizedLabel, pset);
     old_dw->get(pEnergy, pEnergyLabel, pset);
 
-    new_dw->getModifiable(pDeformGrad_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->getModifiable(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
 
     // Create and allocate arrays for storing the updated information
@@ -1644,9 +1629,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     // Special case for rigid materials
     double totalStrainEnergy = 0.0;
     if (matl->getIsRigid()) {
-      ParticleSubset::iterator iter = pset->begin();
-      for (; iter != pset->end(); iter++) {
-        particleIndex idx           = *iter;
+      for (auto idx : *pset) {
         pRotation_new[idx]          = pRotation[idx];
         pStrainRate_new[idx]        = pStrainRate[idx];
         pPlasticStrain_new[idx]     = pPlasticStrain[idx];
@@ -1656,7 +1639,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         pLocalized_new[idx]         = pLocalized[idx];
 
         pStress_new[idx]      = Zero;
-        pDeformGrad_new[idx]  = One;
+        pDefGrad_new[idx]  = One;
         pVolume_deformed[idx] = pVolume[idx];
         pdTdt[idx]            = 0.0;
       }
@@ -1672,9 +1655,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     //__________________________________
     // Standard case for deformable materials
     // Loop thru particles
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      particleIndex idx = *iter;
+    for (auto idx : *pset) {
 
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[idx]       = 0.0;
@@ -1727,38 +1708,38 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       Matrix3 tensorS = sigma - One * pressure;
 
       // Set up the ModelStateBase
-      auto state                 = scinew ModelStateBase();
-      state->strainRate          = pStrainRate_new[idx];
-      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
-      state->eqPlasticStrain     = pPlasticStrain[idx];
-      state->pressure            = pressure;
-      state->temperature         = temperature;
-      state->initialTemperature  = d_initialMaterialTemperature;
-      state->density             = rho_cur;
-      state->initialDensity      = rho_0;
-      state->volume              = pVolume_deformed[idx];
-      state->initialVolume       = volold;
-      state->bulkModulus         = bulk;
-      state->initialBulkModulus  = bulk;
-      state->shearModulus        = shear;
-      state->initialShearModulus = shear;
-      state->meltingTemp         = Tm;
-      state->initialMeltTemp     = Tm;
-      state->specificHeat        = matl->getSpecificHeat();
-      state->energy              = pEnergy[idx];
+      ModelStateBase state_old;
+      state_old.strainRate          = pStrainRate_new[idx];
+      state_old.eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state_old.eqPlasticStrain     = pPlasticStrain[idx];
+      state_old.pressure            = pressure;
+      state_old.temperature         = temperature;
+      state_old.initialTemperature  = d_initialMaterialTemperature;
+      state_old.density             = rho_cur;
+      state_old.initialDensity      = rho_0;
+      state_old.volume              = pVolume_deformed[idx];
+      state_old.initialVolume       = volold;
+      state_old.bulkModulus         = bulk;
+      state_old.initialBulkModulus  = bulk;
+      state_old.shearModulus        = shear;
+      state_old.initialShearModulus = shear;
+      state_old.meltingTemp         = Tm;
+      state_old.initialMeltTemp     = Tm;
+      state_old.specificHeat        = matl->getSpecificHeat();
+      state_old.energy              = pEnergy[idx];
 
       // Get or compute the specific heat
       if (d_computeSpecificHeat) {
-        double C_p          = d_Cp->computeSpecificHeat(state);
-        state->specificHeat = C_p;
+        double C_p          = d_Cp->computeSpecificHeat(&state_old);
+        state_old.specificHeat = C_p;
       }
 
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step and update the plasticity state
-      double Tm_cur       = d_melt->computeMeltingTemp(state);
-      state->meltingTemp  = Tm_cur;
-      double mu_cur       = d_shear->computeShearModulus(state);
-      state->shearModulus = mu_cur;
+      double Tm_cur       = d_melt->computeMeltingTemp(&state_old);
+      state_old.meltingTemp  = Tm_cur;
+      double mu_cur       = d_shear->computeShearModulus(&state_old);
+      state_old.shearModulus = mu_cur;
 
       // The calculation of tensorD and tensorEta are so that the deviatoric
       // stress calculation will work.
@@ -1769,42 +1750,36 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // of the rate of deformation tensor
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
-      auto defState  = scinew DeformationState();
-      defState->D    = tensorD;
-      defState->devD = tensorEta;
+      DeformationState defState;
+      defState.D    = tensorD;
+      defState.devD = tensorEta;
 
-      // Assume elastic deformation to get a trial deviatoric stress
+      // Assume elastic deformation to get a trial stress
+      double trialP = d_eos->computePressure(matl, &state_old, pDefGrad_new[idx], tensorD, delT);
+
       // This is simply the previous timestep deviatoric stress plus a
       // deviatoric elastic increment based on the shear modulus supplied by
       // the strength routine in use.
-      d_devStress->computeDeviatoricStressInc(idx, state, defState, delT);
-      trialS      = tensorS + defState->devStressInc;
-      trialStress = trialS + One * (bulk * incStrain.Trace());
+      d_devStress->computeDeviatoricStressInc(idx, &state_old, &defState, delT);
+      trialS      = tensorS + defState.devStressInc;
+      trialStress = trialS + Vaango::Util::Identity * trialP;
 
-      delete defState;
+      // Create a trial state
+      ModelStateBase state_trial(state_old);
+      state_trial.setStress(trialStress);
 
-      // Calculate the equivalent stress
-      // this will be removed next, it should be computed in the flow stress
-      // routine
-      // the flow stress routines should be passed the entire stress (not just
-      // deviatoric)
-      double equivStress = sqrt((trialS.NormSquared()) * 1.5);
-
-      // Calculate flow stress (strain driven problem)
+      // Calculate flow stress
       double flowStress =
-        d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
+        d_flow->computeFlowStress(&state_trial, delT, d_tol, matl, idx);
+      state_trial.yieldStress = flowStress;
 
       // Get the current porosity
       double porosity = pPorosity[idx];
+      state_trial.porosity = porosity;
 
-      // Evaluate yield condition
-      double traceOfTrialStress = trialStress.Trace();
-      double sig                = flowStress;
-      double flow_rule          = d_yield->evalYieldCondition(
-        equivStress, flowStress, traceOfTrialStress, porosity, sig);
-
-      // Compute the deviatoric stress
-      if (flow_rule < 0.0) {
+      // Evaluate yield condition (returns std::pair<double, Util::YieldStatus>)
+      auto result = d_yield->evalYieldCondition(&state_trial);
+      if (result.second == Vaango::Util::YieldStatus::IS_ELASTIC) {
 
         // Save the updated data
         pStress_new[idx]            = trialStress;
@@ -1818,7 +1793,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = Zero;
-        d_devStress->updateInternalStresses(idx, dp, defState, delT);
+        d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         // Compute stability criterion
         pLocalized_new[idx] = pLocalized[idx];
@@ -1832,17 +1807,17 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         Matrix3 nn      = (0.);
 
         computePlasticStateViaRadialReturn(
-          trialS, delT, matl, idx, state, nn, delGamma);
+          trialS, delT, matl, idx, &state_trial, nn, delGamma);
 
         Matrix3 tensorEtaPlasticInc = nn * delGamma;
         pStress_new[idx] =
-          trialStress - tensorEtaPlasticInc * (2.0 * state->shearModulus);
-        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
-        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
+          trialStress - tensorEtaPlasticInc * (2.0 * state_trial.shearModulus);
+        pPlasticStrain_new[idx]     = state_trial.eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state_trial.eqPlasticStrainRate;
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = tensorEtaPlasticInc / delT;
-        d_devStress->updateInternalStresses(idx, dp, defState, delT);
+        d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         // Update the porosity
 
@@ -1850,14 +1825,14 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
         if (d_evolvePorosity) {
           Matrix3 tensorD    = incStrain / delT;
-          double ep          = state->eqPlasticStrain;
+          double ep          = state_trial.eqPlasticStrain;
           pPorosity_new[idx] = updatePorosity(tensorD, delT, porosity, ep);
         }
 
         // Calculate the updated scalar damage parameter
         if (d_evolveDamage)
           pDamage_new[idx] =
-            d_damage->computeScalarDamage(state->eqPlasticStrainRate,
+            d_damage->computeScalarDamage(state_trial.eqPlasticStrainRate,
                                           pStress_new[idx],
                                           temperature,
                                           delT,
@@ -1869,10 +1844,10 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
         // Calculate rate of temperature increase due to plastic strain
         double taylorQuinney = d_initialData.Chi;
-        double fac           = taylorQuinney / (rho_cur * state->specificHeat);
+        double fac           = taylorQuinney / (rho_cur * state_trial.specificHeat);
 
         // Calculate Tdot (internal plastic heating rate)
-        double Tdot = state->yieldStress * state->eqPlasticStrainRate * fac;
+        double Tdot = state_trial.yieldStress * state_trial.eqPlasticStrainRate * fac;
         pdTdt[idx]  = Tdot;
 
         // No failure implemented for implcit time integration
@@ -1894,7 +1869,6 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
                                pVolume_deformed[idx] * delT;
         totalStrainEnergy += pStrainEnergy;
       }
-      delete state;
     }
 
     if (flag->d_reductionVars->accStrainEnergy ||
@@ -1982,10 +1956,10 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
   constParticleVariable<Point> px;
   constParticleVariable<Matrix3> psize;
-  constParticleVariable<Matrix3> pDeformGrad, pStress;
+  constParticleVariable<Matrix3> pDefGrad, pStress;
   constNCVariable<Vector> gDisp;
 
-  ParticleVariable<Matrix3> pDeformGrad_new, pStress_new;
+  ParticleVariable<Matrix3> pDefGrad_new, pStress_new;
   ParticleVariable<double> pVolume_deformed, pPlasticStrain_new,
     pPlasticStrainRate_new;
 
@@ -2038,7 +2012,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(psize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
-    parent_old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
+    parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pStress, lb->pStressLabel, pset);
 
     // GET LOCAL DATA
@@ -2046,7 +2020,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pPlasticStrainRate, pPlasticStrainRateLabel, pset);
     parent_old_dw->get(pPorosity, pPorosityLabel, pset);
 
-    new_dw->getModifiable(pDeformGrad_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->getModifiable(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
 
     // Create and allocate arrays for storing the updated information
@@ -2061,14 +2035,12 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
     // Special case for rigid materials
     if (matl->getIsRigid()) {
-      ParticleSubset::iterator iter = pset->begin();
-      for (; iter != pset->end(); iter++) {
-        particleIndex idx           = *iter;
+      for (auto idx : *pset) {
         pPlasticStrain_new[idx]     = pPlasticStrain[idx];
         pPlasticStrainRate_new[idx] = 0.0;
 
         pStress_new[idx]      = Zero;
-        pDeformGrad_new[idx]  = One;
+        pDefGrad_new[idx]  = One;
         pVolume_deformed[idx] = pMass[idx] / rho_0;
       }
       // delete interpolator;
@@ -2077,21 +2049,19 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
     // Standard case for deformable materials
     // Loop thru particles
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      particleIndex idx = *iter;
+    for (auto idx : *pset) {
 
       // Calculate the displacement gradient
       interpolator->findCellAndShapeDerivatives(
-        px[idx], ni, d_S, psize[idx], pDeformGrad[idx]);
+        px[idx], ni, d_S, psize[idx], pDefGrad[idx]);
       computeGradAndBmats(DispGrad, ni, d_S, oodx, gDisp, l2g, B, Bnl, dof);
 
       // Compute the deformation gradient increment
       incDefGrad = DispGrad + One;
 
       // Update the deformation gradient
-      DefGrad              = incDefGrad * pDeformGrad[idx];
-      pDeformGrad_new[idx] = DefGrad;
+      DefGrad              = incDefGrad * pDefGrad[idx];
+      pDefGrad_new[idx]    = DefGrad;
       double J             = DefGrad.Determinant();
 
       // Check 1: Look at Jacobian
@@ -2127,83 +2097,76 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       Matrix3 tensorS = sigma - One * pressure;
 
       // Set up the ModelStateBase
-      auto state                 = scinew ModelStateBase();
-      state->strainRate          = pStrainRate_new;
-      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
-      state->eqPlasticStrain     = pPlasticStrain[idx];
-      state->pressure            = pressure;
-      state->temperature         = temperature;
-      state->initialTemperature  = d_initialMaterialTemperature;
-      state->density             = rho_cur;
-      state->initialDensity      = rho_0;
-      state->volume              = pVolume_deformed[idx];
-      state->initialVolume       = volold;
-      state->bulkModulus         = bulk;
-      state->initialBulkModulus  = bulk;
-      state->shearModulus        = shear;
-      state->initialShearModulus = shear;
-      state->meltingTemp         = Tm;
-      state->initialMeltTemp     = Tm;
-      state->specificHeat        = matl->getSpecificHeat();
+      ModelStateBase state_old;
+      state_old.strainRate          = pStrainRate_new;
+      state_old.eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state_old.eqPlasticStrain     = pPlasticStrain[idx];
+      state_old.pressure            = pressure;
+      state_old.temperature         = temperature;
+      state_old.initialTemperature  = d_initialMaterialTemperature;
+      state_old.density             = rho_cur;
+      state_old.initialDensity      = rho_0;
+      state_old.volume              = pVolume_deformed[idx];
+      state_old.initialVolume       = volold;
+      state_old.bulkModulus         = bulk;
+      state_old.initialBulkModulus  = bulk;
+      state_old.shearModulus        = shear;
+      state_old.initialShearModulus = shear;
+      state_old.meltingTemp         = Tm;
+      state_old.initialMeltTemp     = Tm;
+      state_old.specificHeat        = matl->getSpecificHeat();
 
       // Get or compute the specific heat
       if (d_computeSpecificHeat) {
-        double C_p          = d_Cp->computeSpecificHeat(state);
-        state->specificHeat = C_p;
+        double C_p          = d_Cp->computeSpecificHeat(&state_old);
+        state_old.specificHeat = C_p;
       }
 
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step and update the plasticity state
-      double Tm_cur       = d_melt->computeMeltingTemp(state);
-      state->meltingTemp  = Tm_cur;
-      double mu_cur       = d_shear->computeShearModulus(state);
-      state->shearModulus = mu_cur;
+      double Tm_cur       = d_melt->computeMeltingTemp(&state_old);
+      state_old.meltingTemp  = Tm_cur;
+      double mu_cur       = d_shear->computeShearModulus(&state_old);
+      state_old.shearModulus = mu_cur;
 
       // The calculation of tensorD and tensorEta are so that the deviatoric
       // stress calculation will work.
-
       Matrix3 tensorD = incStrain / delT;
 
       // Calculate the deviatoric part of the non-thermal part
       // of the rate of deformation tensor
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
-      auto defState  = scinew DeformationState();
-      defState->D    = tensorD;
-      defState->devD = tensorEta;
+      DeformationState defState;
+      defState.D    = tensorD;
+      defState.devD = tensorEta;
 
       // Assume elastic deformation to get a trial deviatoric stress
+      double trialP = d_eos->computePressure(matl, &state_old, pDefGrad_new[idx], tensorD, delT);
+
       // This is simply the previous timestep deviatoric stress plus a
       // deviatoric elastic increment based on the shear modulus supplied by
       // the strength routine in use.
-      d_devStress->computeDeviatoricStressInc(idx, state, defState, delT);
-      trialS      = tensorS + defState->devStressInc;
-      trialStress = trialS + One * (bulk * incStrain.Trace());
+      d_devStress->computeDeviatoricStressInc(idx, &state_old, &defState, delT);
+      trialS      = tensorS + defState.devStressInc;
+      trialStress = trialS + Vaango::Util::Identity * trialP;
 
-      delete defState;
+      // Create a trial state
+      ModelStateBase state_trial(state_old);
+      state_trial.setStress(trialStress);
 
-      // Calculate the equivalent stress
-      // this will be removed next, it should be computed in the flow stress
-      // routine
-      // the flow stress routines should be passed the entire stress (not just
-      // deviatoric)
-      double equivStress = sqrt((trialS.NormSquared()) * 1.5);
-
-      // Calculate flow stress (strain driven problem)
+      // Calculate flow stress
       double flowStress =
-        d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
+        d_flow->computeFlowStress(&state_trial, delT, d_tol, matl, idx);
+      state_trial.yieldStress = flowStress;
 
       // Get the current porosity
       double porosity = pPorosity[idx];
+      state_trial.porosity = porosity;
 
-      // Evaluate yield condition
-      double traceOfTrialStress = trialStress.Trace();
-      double sig                = flowStress;
-      double flow_rule          = d_yield->evalYieldCondition(
-        equivStress, flowStress, traceOfTrialStress, porosity, sig);
-
-      // Compute the deviatoric stress
-      if (flow_rule < 0.0) {
+      // Evaluate yield condition (returns std::pair<double, Util::YieldStatus>)
+      auto result = d_yield->evalYieldCondition(&state_trial);
+      if (result.second == Vaango::Util::YieldStatus::IS_ELASTIC) {
 
         // Save the updated data
         pStress_new[idx]            = trialStress;
@@ -2212,7 +2175,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = Zero;
-        d_devStress->updateInternalStresses(idx, dp, defState, delT);
+        d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         computeElasticTangentModulus(bulk, shear, D);
 
@@ -2227,20 +2190,20 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         Matrix3 nn      = (0.);
 
         computePlasticStateViaRadialReturn(
-          trialS, delT, matl, idx, state, nn, delGamma);
+          trialS, delT, matl, idx, &state_trial, nn, delGamma);
 
         Matrix3 tensorEtaPlasticInc = nn * delGamma;
         pStress_new[idx] =
-          trialStress - tensorEtaPlasticInc * (2.0 * state->shearModulus);
-        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
-        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
+          trialStress - tensorEtaPlasticInc * (2.0 * state_trial.shearModulus);
+        pPlasticStrain_new[idx]     = state_trial.eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state_trial.eqPlasticStrainRate;
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = tensorEtaPlasticInc / delT;
-        d_devStress->updateInternalStresses(idx, dp, defState, delT);
+        d_devStress->updateInternalStresses(idx, dp, &defState, delT);
 
         computeEPlasticTangentModulus(
-          bulk, shear, delGamma, trialS, idx, state, D, true);
+          bulk, shear, delGamma, trialS, idx, &state_trial, D, true);
       }
 
       // Compute K matrix = Kmat + Kgeo
@@ -2254,10 +2217,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         }
       }
       solver->fillMatrix(24, dof, 24, dof, v);
-
-      delete state;
     }
-    // delete interpolator;
   }
 }
 

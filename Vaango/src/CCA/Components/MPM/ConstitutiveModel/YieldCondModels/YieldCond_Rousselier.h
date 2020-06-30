@@ -100,19 +100,12 @@ public:
   }
 
   //! Evaluate the yield function.
-  double
-  evalYieldCondition(const double equivStress,
-                     const double flowStress,
-                     const double traceOfCauchyStress,
-                     const double porosity,
-                     double& sig) override;
+  std::pair<double, Util::YieldStatus>
+  evalYieldCondition(const ModelStateBase* state) override;
 
   double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
-
-  std::pair<double, Util::YieldStatus>
-  evalYieldCondition(const ModelStateBase* state) override;
 
   double
   evalYieldConditionMax(const ModelStateBase* state) override;
