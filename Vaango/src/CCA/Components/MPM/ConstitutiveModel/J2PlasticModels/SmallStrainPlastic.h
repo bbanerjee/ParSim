@@ -33,6 +33,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModel.h>
@@ -153,10 +154,11 @@ protected:
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::KinematicHardeningModel* d_kinematic;
+  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
   Vaango::YieldCondition* d_yield;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
-  FlowStressModel* d_plastic;
+  FlowStressModel* d_flow;
   DamageModel* d_damage;
   StabilityCheck* d_stable;
 
@@ -361,6 +363,8 @@ protected:
   inline double voidNucleationFactor(double plasticStrain);
 
 protected:
+
+
   void initializeLocalMPMLabels();
 
   void getInitialPorosityData(ProblemSpecP& ps);

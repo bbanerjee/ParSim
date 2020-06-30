@@ -139,17 +139,8 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->get("compute_specific_heat", d_computeSpecificHeat);
   d_Cp = SpecificHeatModelFactory::create(ps);
 
-  d_yield = Vaango::YieldConditionFactory::create(ps);
-  if (!d_yield) {
-    ostringstream desc;
-    desc << "An error occured in the YieldConditionFactory that has \n"
-         << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << "\n";
-    throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
-  }
-
-  d_plastic = FlowStressModelFactory::create(ps);
-  if (!d_plastic) {
+  d_flow = FlowStressModelFactory::create(ps);
+  if (!d_flow) {
     ostringstream desc;
     desc << "An error occured in the FlowStressModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
@@ -163,6 +154,32 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     desc << "An error occured in the KinematicHardeningModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  " << "\n";
+    throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
+  }
+
+  ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
+  if (!intvar_ps) {
+    ostringstream err;
+    err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
+        << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
+        << " default type is 'metal_internal_var'.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  if (!d_intvar) {
+    ostringstream err;
+    err << "**ERROR** An error occured while creating the internal variable \n"
+         << " model. Please file a bug report.\n";
+    throw InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
+              const_cast<const FlowStressModel*>(d_flow));
+  if (!d_yield) {
+    ostringstream desc;
+    desc << "An error occured in the YieldConditionFactory that has \n"
+         << " slipped through the existing bullet proofing. Please tell \n"
+         << " Biswajit.\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -229,8 +246,9 @@ SmallStrainPlastic::SmallStrainPlastic(const SmallStrainPlastic* cm)
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
   d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp);
 
+  d_intvar = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_plastic = FlowStressModelFactory::createCopy(cm->d_plastic);
+  d_flow = FlowStressModelFactory::createCopy(cm->d_flow);
   d_kinematic =
     Vaango::KinematicHardeningModelFactory::createCopy(cm->d_kinematic);
   d_damage = DamageModelFactory::createCopy(cm->d_damage);
@@ -261,7 +279,7 @@ SmallStrainPlastic::~SmallStrainPlastic()
   delete d_melt;
   delete d_Cp;
   delete d_yield;
-  delete d_plastic;
+  delete d_flow;
   delete d_kinematic;
   delete d_damage;
   delete d_stable;
@@ -297,7 +315,7 @@ SmallStrainPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_melt->outputProblemSpec(cm_ps);
   d_Cp->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
-  d_plastic->outputProblemSpec(cm_ps);
+  d_flow->outputProblemSpec(cm_ps);
   d_kinematic->outputProblemSpec(cm_ps);
   d_damage->outputProblemSpec(cm_ps);
   d_stable->outputProblemSpec(cm_ps);
@@ -322,7 +340,7 @@ SmallStrainPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 SmallStrainPlastic*
 SmallStrainPlastic::clone()
 {
-  return scinew SmallStrainPlastic(*this);
+  return scinew SmallStrainPlastic(this);
 }
 
 void
@@ -424,7 +442,7 @@ SmallStrainPlastic::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pLocalizedLabel_preReloc);
 
   // Add the particle state for the plasticity models
-  d_plastic->addParticleState(from, to);
+  d_flow->addParticleState(from, to);
   d_kinematic->addParticleState(from, to);
 }
 
@@ -443,7 +461,7 @@ SmallStrainPlastic::addInitialComputesAndRequires(Task* task,
   task->computes(pLocalizedLabel, matlset);
 
   // Add internal evolution variables computed by plasticity model
-  d_plastic->addInitialComputesAndRequires(task, matl, patch);
+  d_flow->addInitialComputesAndRequires(task, matl, patch);
   d_kinematic->addInitialComputesAndRequires(task, matl, patch);
 }
 
@@ -520,7 +538,7 @@ SmallStrainPlastic::initializeCMData(const Patch* patch,
   }
 
   // Initialize the data for the plasticity model
-  d_plastic->initializeInternalVars(pset, new_dw);
+  d_flow->initializeInternalVars(pset, new_dw);
 
   d_kinematic->initializeBackStress(pset, new_dw);
 }
@@ -607,7 +625,7 @@ SmallStrainPlastic::addComputesAndRequires(Task* task,
   task->computes(pLocalizedLabel_preReloc, matlset);
 
   // Add internal evolution variables computed by plasticity model
-  d_plastic->addComputesAndRequires(task, matl, patches);
+  d_flow->addComputesAndRequires(task, matl, patches);
   d_kinematic->addComputesAndRequires(task, matl, patches);
 }
 
@@ -756,8 +774,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
     // Get the plastic strain and back stress and allocate
     // space for the updated internal variables and back stress
-    d_plastic->getInternalVars(pset, old_dw);
-    d_plastic->allocateAndPutInternalVars(pset, new_dw);
+    d_flow->getInternalVars(pset, old_dw);
+    d_flow->allocateAndPutInternalVars(pset, new_dw);
 
     constParticleVariable<Matrix3> pBackStress_old;
     ParticleVariable<Matrix3> pBackStress_new;
@@ -870,7 +888,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
       // Calculate flow stress
       double flowStress =
-        d_plastic->computeFlowStress(&state, delT, d_tol, matl, idx);
+        d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
       state.yieldStress = flowStress;
 
       // Material has melted if flowStress <= 0.0
@@ -884,7 +902,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         if (d_doMelting)
           sigma_dev_old = 0.0;
 
-        d_plastic->updateElastic(idx);
+        d_flow->updateElastic(idx);
         pBackStress_new[idx].set(0.0);
 
       } else {
@@ -915,7 +933,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           sigma_dev_new = sigma_dev_trial;
 
           // Update the internal variables
-          d_plastic->updateElastic(idx);
+          d_flow->updateElastic(idx);
           pBackStress_new[idx] = backStress_old;
 
         } else {
@@ -938,9 +956,11 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           // Compute r_k, h_k
           Matrix3 xi_k = xi_trial;
           Matrix3 r_k = d_yield->df_dsigma(xi_k, &state);
-          double h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
-          double A_k       = voidNucleationFactor(state.eqPlasticStrain);
-          double h_phi_k   = d_yield->eval_h_phi(xi_k, A_k, &state);
+          
+          MetalIntVar h_eta;
+          d_intvar->computeHardeningModulus(&state, h_eta);
+          double h_alpha_k = h_eta.eqPlasticStrain;
+          double h_phi_k   = h_eta.plasticPorosity;
           Matrix3 h_beta_k(0.0);
           d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
           Matrix3 r_k_dev      = r_k - one * (r_k.Trace() / 3.0);
@@ -1012,9 +1032,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             /* Updated algorithm - use value of xi_k */
             // Compute r_k, h_k
             r_k = d_yield->df_dsigma(xi_k, &state);
-            h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
-            A_k       = voidNucleationFactor(state.eqPlasticStrain);
-            h_phi_k   = d_yield->eval_h_phi(xi_k, A_k, &state);
+            MetalIntVar h_eta;
+            d_intvar->computeHardeningModulus(&state, h_eta);
+            double h_alpha_k = h_eta.eqPlasticStrain;
+            double h_phi_k   = h_eta.plasticPorosity;
             d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
             r_k_dev      = r_k - one * (r_k.Trace() / 3.0);
             h_beta_k_dev = h_beta_k - one * (h_beta_k.Trace() / 3.0);
@@ -1043,7 +1064,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             // Update the flow stress
             state.yieldStress =
-              d_plastic->computeFlowStress(&state, delT, d_tol, matl, idx);
+              d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
 
             // Check yield condition.  The state variable contains
             // ep_k, phi_k, beta_k
@@ -1063,11 +1084,12 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           sigma_dev_new = xi_k + backStress_dev_new;
 
           // Update the plastic strain rate
-          double h_alpha_new        = d_yield->eval_h_alpha(xi_k, &state);
+          d_intvar->computeHardeningModulus(&state, h_eta);
+          double h_alpha_new = h_eta.eqPlasticStrain;
           state.eqPlasticStrainRate = Delta_gamma / delT * h_alpha_new;
 
           // Update internal variables
-          d_plastic->updatePlastic(idx, Delta_gamma);
+          d_flow->updatePlastic(idx, Delta_gamma);
 
           // Calculate rate of temperature increase due to plastic strain
           double taylorQuinney = d_initialData.Chi;
@@ -1181,7 +1203,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             state.shearModulus = mu_cur;
 
             state.yieldStress =
-              d_plastic->computeFlowStress(&state, delT, d_tol, matl, idx);
+              d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
             if (!(state.yieldStress > 0.0))
               isLocalized = true;
             else {
@@ -1203,9 +1225,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               double df_dep = df_dintvar.eqPlasticStrain;
               double df_dphi = df_dintvar.plasticPorosity;
 
-              double h_alpha = d_yield->eval_h_alpha(xi, &state);
-              double A       = voidNucleationFactor(state.eqPlasticStrain);
-              double h_phi   = d_yield->eval_h_phi(xi, A, &state);
+              MetalIntVar h_eta;
+              d_intvar->computeHardeningModulus(&state, h_eta);
+              double h_alpha = h_eta.eqPlasticStrain;
+              double h_phi   = h_eta.plasticPorosity;
               double dp_dJ   = d_eos->eval_dp_dJ(matl, J_new, &state);
 
               // Calculate the elastic-plastic tangent modulus
@@ -1381,7 +1404,7 @@ SmallStrainPlastic::addComputesAndRequires(Task* task,
   }
 
   // Add internal evolution variables computed by plasticity model
-  d_plastic->addComputesAndRequires(task, matl, patches, recurse, SchedParent);
+  d_flow->addComputesAndRequires(task, matl, patches, recurse, SchedParent);
   d_kinematic->addComputesAndRequires(task, matl, patches, recurse);
 }
 
@@ -1491,8 +1514,8 @@ SmallStrainPlastic::carryForward(const PatchSubset* patches,
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
 
     // Get the plastic strain
-    d_plastic->getInternalVars(pset, old_dw);
-    d_plastic->allocateAndPutRigid(pset, new_dw);
+    d_flow->getInternalVars(pset, old_dw);
+    d_flow->allocateAndPutRigid(pset, new_dw);
 
     constParticleVariable<Matrix3> pBackStress_old;
     ParticleVariable<Matrix3> pBackStress_new;
@@ -1537,7 +1560,7 @@ SmallStrainPlastic::allocateCMDataAddRequires(Task* task,
   task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
   task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
   task->requires(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
-  d_plastic->allocateCMDataAddRequires(task, matl, patch, lb);
+  d_flow->allocateCMDataAddRequires(task, matl, patch, lb);
   d_kinematic->allocateCMDataAddRequires(task, matl, patch, lb);
 }
 
@@ -1597,7 +1620,7 @@ SmallStrainPlastic::allocateCMDataAdd(DataWarehouse* new_dw,
   (*newState)[pPorosityLabel]          = pPorosity.clone();
 
   // Initialize the data for the plasticity model
-  d_plastic->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
+  d_flow->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
   d_kinematic->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
 }
 

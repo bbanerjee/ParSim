@@ -139,6 +139,8 @@ public:
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
+  double df_dbeta_p(const ModelStateBase* state) const;
+
   double
   df_dp(const ModelStateBase* state) override;
 
@@ -178,16 +180,6 @@ public:
   df_depsDev(const ModelStateBase* state,
              const MPMEquationOfState* eos,
              const ShearModulusModel* shear) override;
-
-  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double
-  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
-
-  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double
-  eval_h_phi(const Uintah::Matrix3& xi,
-             const double& factorA,
-             const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!

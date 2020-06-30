@@ -577,30 +577,6 @@ YieldCond_Arenisca3::df_dsigmaDev_dbeta(const Matrix3& sigDev,
   return std::make_pair(Uintah::Matrix3(0.0), Uintah::Matrix3(0.0));
 }
 
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double
-YieldCond_Arenisca3::eval_h_alpha(const Matrix3&, const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_h_alpha with a Matrix3 argument should not be "
-      << "called by models that use the Arenisca3 yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 1.0;
-}
-
-/*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double
-YieldCond_Arenisca3::eval_h_phi(const Matrix3&,
-                                const double&,
-                                const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_h_phi with a Matrix3 argument should not be "
-      << "called by models that use the Arenisca3 yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 0.0;
-}
-
 //--------------------------------------------------------------
 // Tangent moduli
 void

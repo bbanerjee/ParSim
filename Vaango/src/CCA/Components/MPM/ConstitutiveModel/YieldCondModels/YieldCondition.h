@@ -218,22 +218,6 @@ public:
              const ShearModulusModel* shear) = 0;
 
   /////////////////////////////////////////////////////////////////////////
-  /*
-   * Hardening moduli
-   */
-  /////////////////////////////////////////////////////////////////////////
-
-  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  virtual double
-  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;
-
-  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  virtual double
-  eval_h_phi(const Uintah::Matrix3& xi,
-             const double& factorA,
-             const ModelStateBase* state) = 0;
-
-  /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the elastic-plastic tangent modulus.
   */

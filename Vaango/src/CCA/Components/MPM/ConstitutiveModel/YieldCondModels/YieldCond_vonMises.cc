@@ -105,9 +105,8 @@ YieldCond_vonMises::df_dsigma(const ModelStateBase* state)
 Matrix3
 YieldCond_vonMises::df_dsigma(const Matrix3& xi, const ModelStateBase* state)
 {
-  Matrix3 df_dsigma_normalized = df_dxi(xi, state);
-  df_dsigma_normalized /= df_dsigma_normalized.Norm();
-  return df_dsigma_normalized;
+  Matrix3 df_dsigma = df_dxi(xi, state);
+  return df_dsigma;
 }
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
@@ -142,22 +141,6 @@ YieldCond_vonMises::df_dintvar(const ModelStateBase* state,
   double df_dplasticStrain = -dsigy_dep;
   double df_dporosity = 0.0;
   df_dintvar = {df_dplasticStrain, df_dporosity};
-}
-
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double
-YieldCond_vonMises::eval_h_alpha(const Matrix3&, const ModelStateBase*)
-{
-  return 1.0;
-}
-
-/*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double
-YieldCond_vonMises::eval_h_phi(const Matrix3&,
-                               const double&,
-                               const ModelStateBase*)
-{
-  return 0.0;
 }
 
 void

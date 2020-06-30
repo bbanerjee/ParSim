@@ -91,7 +91,7 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
   // Get the state data
   double sigy     = state->yieldStress;
   double porosity = state->porosity;
-  double sig_m    = state->p;
+  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double xi_xi    = xi.NormSquared();
   double sig_eq   = std::sqrt(1.5 * xi_xi);
 
@@ -140,7 +140,7 @@ YieldCond_Gurson::df_dsigma(const Matrix3& xi,
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
 
-  double sig_m    = state->p;
+  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double porosity = state->porosity;
 
   double q1    = d_CM.q1;
@@ -159,9 +159,8 @@ YieldCond_Gurson::df_dsigma(const Matrix3& xi,
     insinh  = copysign(maxinsinh, insinh);
   }
   double a  = 3.0 / (sigy * sigy);
-  double b  = q1 * q2 * phi_star * sinh(insinh);
+  double b  = (q1 * q2 * phi_star / sigy) * sinh(insinh);
   Matrix3 df_dsigma = xi * a + Vaango::Util::Identity * b;
-  df_dsigma /= df_dsigma.Norm();
   return df_dsigma;
 }
 
@@ -176,7 +175,6 @@ YieldCond_Gurson::df_dxi(const Matrix3& xi,
   ASSERT(sigy != 0);
   double a = 3.0 / (sigy * sigy);
   Matrix3 df_dxi   = xi * a;
-  df_dxi /= df_dxi.Norm();
   return df_dxi;
 }
 
@@ -186,8 +184,37 @@ YieldCond_Gurson::df_dsigmaDev_dbeta(const Matrix3& xi,
                                      const ModelStateBase* state)
 {
   Matrix3 df_ds = df_dxi(xi, state);
-  Matrix3 df_dbeta = df_ds * (-1.0);
+  double f_beta_p = df_dbeta_p(state);
+  Matrix3 df_dbeta = df_ds * (-1.0) + Vaango::Util::Identity * (-f_beta_p);
   return std::make_pair(df_ds, df_dbeta);
+}
+
+double
+YieldCond_Gurson::df_dbeta_p(const ModelStateBase* state) const
+{
+  double sigy = state->yieldStress;
+  ASSERT(sigy != 0);
+
+  double phi   = state->porosity;
+  double sig_m = state->p - state->backStress.Trace() / 3.0;
+
+  double q1    = d_CM.q1;
+  double q2    = d_CM.q2;
+  double k     = d_CM.k;
+  double phi_c = d_CM.f_c;
+
+  double phi_star = phi;
+  if (phi > phi_c) {
+    phi_star = phi_c + k * (phi - phi_c);
+  }
+
+  double maxinsinh = 30.0;
+  double insinh    = 1.5 * q2 * sig_m / sigy;
+  if (std::abs(insinh) > 30.0) {
+    insinh  = copysign(maxinsinh, insinh);
+  }
+  double f_beta_p = (q1 * q2 * phi_star / sigy) * sinh(insinh);
+  return f_beta_p;
 }
 
 /*! Derivative with respect to internal variables */
@@ -213,7 +240,7 @@ YieldCond_Gurson::df_dplasticStrain(const ModelStateBase* state) const
 
   Matrix3 xi = state->devStress - state->backStress.Deviator();
 
-  double sig_m    = state->p;
+  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double sig_eq   = std::sqrt(1.5 * xi.Contract(xi));
   double porosity = state->porosity;
 
@@ -245,7 +272,7 @@ YieldCond_Gurson::df_dporosity(const ModelStateBase* state) const
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
 
-  double sig_m    = state->p;
+  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double porosity = state->porosity;
 
   double q1    = d_CM.q1;
@@ -270,76 +297,6 @@ YieldCond_Gurson::df_dporosity(const ModelStateBase* state) const
   double b = 2.0 * q3 * phi_star;
 
   return (a - b) * dphiStar_dphi;
-}
-
-inline double
-YieldCond_Gurson::computePorosityFactor_h1(double sigma_f_sigma,
-                                           double tr_f_sigma,
-                                           double porosity,
-                                           double sigma_Y,
-                                           double A)
-{
-  return (1.0 - porosity) * tr_f_sigma +
-         A * sigma_f_sigma / ((1.0 - porosity) * sigma_Y);
-}
-
-inline double
-YieldCond_Gurson::computePlasticStrainFactor_h2(double sigma_f_sigma,
-                                                double porosity,
-                                                double sigma_Y)
-{
-  return sigma_f_sigma / ((1.0 - porosity) * sigma_Y);
-}
-
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double
-YieldCond_Gurson::eval_h_alpha(const Matrix3& xi, const ModelStateBase* state)
-{
-  double sigy = state->yieldStress;
-  ASSERT(sigy != 0);
-  double phi = state->porosity;
-  ASSERT(phi != 1);
-  double p         = state->pressure;
-  double trBetaHat = state->backStress.Trace();
-
-  Matrix3 One;
-  One.Identity();
-  Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
-
-  Matrix3 dfdsigma = df_dsigma(xi, state);
-
-  double numer = xi_hat.Contract(dfdsigma);
-  double denom = (1.0 - phi) * sigy;
-  return numer / denom;
-}
-
-/*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double
-YieldCond_Gurson::eval_h_phi(const Matrix3& xi,
-                             const double& factorA,
-                             const ModelStateBase* state)
-{
-  double sigy = state->yieldStress;
-  ASSERT(sigy != 0);
-  double phi = state->porosity;
-  ASSERT(phi != 1);
-  double p = state->pressure;
-
-  Matrix3 dfdsigma = df_dsigma(xi, state);
-
-  double tr_df_dsigma = dfdsigma.Trace();
-  double a            = (1.0 - phi) * tr_df_dsigma;
-
-  Matrix3 One;
-  One.Identity();
-  double trBetaHat = state->backStress.Trace();
-  Matrix3 xi_hat   = xi + One * (p - 1.0 / 3.0 * trBetaHat);
-
-  double numer = xi_hat.Contract(dfdsigma);
-  double denom = (1.0 - phi) * sigy;
-  double b     = factorA * numer / denom;
-
-  return (a + b);
 }
 
 void
@@ -414,15 +371,65 @@ YieldCond_Gurson::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
   double f_q1 = f_intvar.plasticPorosity;
   double f_q2 = f_intvar.eqPlasticStrain;
 
-  // Compute h_q1
-  double sigma_f_sigma = sigma.Contract(f_sigma);
-  double tr_f_sigma    = f_sigma.Trace();
-  double h_q1          = computePorosityFactor_h1(
-    sigma_f_sigma, tr_f_sigma, porosity, sigY, voidNuclFac);
-
-  // Compute h_q2
-  double h_q2 = computePlasticStrainFactor_h2(sigma_f_sigma, porosity, sigY);
+  // Compute hardening moduli
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(&state, h_eta);
+  double h_q1 = h_eta.eqPlasticStrain;
+  double h_q2 = h_eta.plasticPorosity;
 
   // Calculate elastic-plastic tangent modulus
   computeTangentModulus(Ce, f_sigma, f_q1, f_q2, h_q1, h_q2, Cep);
 }
+
+/*
+Vaango::Tensor::Matrix6Mandel& 
+YieldCond_Gurson::computeElasPlasTangentModulus(const IsoNonlinHypoelastic& elastic,
+                                                const ModelStateBase* state) const
+{
+  // Get elastic tangent modulus
+  Vaango::Tensor::Matrix6Mandel C_e = elastic->computeElasticTangentModulus(state);
+
+  // Calculate the derivative of elastic stress wrt internal var
+  std::vector<Matrix3> sigma_eta = elastic->computeDStressDintVar(delT, ...)
+  auto sigma_eta1_vec = Vaango::Tensor::constructVector6Mandel(sigma_eta[0]);
+  auto sigma_eta2_vec = Vaango::Tensor::constructVector6Mandel(sigma_eta[1]);
+
+  // Calculate the derivative of the yield function wrt sigma
+  Matrix3 N = df_dsigma(state);
+  double N_mag = N.Norm();
+  N /= N_mag;
+  auto N_vec = Vaango::Tensor::constructVector6Mandel(N);
+  auto M_vec = N_vec; // associated plasticity
+
+  // Calculate derivative wrt internal variables
+  MetalIntVar f_intvar; 
+  df_dintvar(state, f_intvar);
+  double f_eta1 = f_intvar.plasticPorosity;
+  double f_eta2 = f_intvar.eqPlasticStrain;
+
+  // Compute hardening moduli
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(state, h_eta);
+  double h_eta1 = h_eta.eqPlasticStrain;
+  double h_eta2 = h_eta.plasticPorosity;
+
+  // Compute P = C:M + Z
+  auto CM_vec = C_e * M_vec;
+  auto Z_vec = - (sigma_eta1_vec * h_eta1 + sigma_eta2_vec * h_eta2);
+  auto P_vec = CM_vec + Z_vec;
+
+  // Compute H
+  double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2) / N_mag;
+
+  // Compute P:N + H
+  double PN_H = P_vec.transpose() * N_vec + H;
+
+  // Compute P(C:N)
+  auto CN_vec = C_e * N_vec;
+  auto P_CN = P_vec * CN_vec.transpose();
+
+  // Compute C_ep
+  auto C_ep = C_e - P_CN / PN_H;
+  return C_ep;
+}
+*/

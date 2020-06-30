@@ -162,6 +162,12 @@ ElasticModuli_MetalIso::getCurrentElasticModuli(const ModelStateBase* state) con
 std::vector<ElasticModuli> 
 ElasticModuli_MetalIso::computeDModuliDIntVar(const ModelStateBase* state) const
 {
+  std::vector<ElasticModuli> derivs;
+
+  double dK_dep = 0.0;
+  double dG_dep = 0.0;
+  derivs.push_back(ElasticModuli(dK_dep, dG_dep));
+
   double Km = d_eos->computeBulkModulus(state);
   double Gm = d_shear->computeShearModulus(state);
 
@@ -175,8 +181,7 @@ ElasticModuli_MetalIso::computeDModuliDIntVar(const ModelStateBase* state) const
   double dK_dphi = - (Km * kappa_m)/(Kfac * Kfac);
   double dG_dphi = - (Gm * gamma_m)/(Gfac * Gfac);
 
-  std::vector<ElasticModuli> derivs;
-  derivs.push_back(ElasticModuli(dG_dphi, dK_dphi));
+  derivs.push_back(ElasticModuli(dK_dphi, dG_dphi));
   return derivs;
 }
 
@@ -184,6 +189,12 @@ ElasticModuli_MetalIso::computeDModuliDIntVar(const ModelStateBase* state) const
 std::pair<ElasticModuli, std::vector<ElasticModuli>>
 ElasticModuli_MetalIso::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
 {
+  std::vector<ElasticModuli> derivs;
+
+  double dK_dep = 0.0;
+  double dG_dep = 0.0;
+  derivs.push_back(ElasticModuli(dK_dep, dG_dep));
+
   double Km = d_eos->computeBulkModulus(state);
   double Gm = d_shear->computeShearModulus(state);
 
@@ -200,7 +211,6 @@ ElasticModuli_MetalIso::computeModuliAndDModuliDIntVar(const ModelStateBase* sta
   double dK_dphi = - (Km * kappa_m)/(Kfac * Kfac);
   double dG_dphi = - (Gm * gamma_m)/(Gfac * Gfac);
 
-  std::vector<ElasticModuli> derivs;
-  derivs.push_back(ElasticModuli(dG_dphi, dK_dphi));
+  derivs.push_back(ElasticModuli(dK_dphi, dG_dphi));
   return std::make_pair(ElasticModuli(K, G), derivs);
 }

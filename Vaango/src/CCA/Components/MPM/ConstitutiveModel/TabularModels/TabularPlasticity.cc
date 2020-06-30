@@ -1256,6 +1256,7 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_plastic_rate.stressTensor = sig_fixed;
   state_plastic_rate.updateStressInvariants();
   Matrix3 df_dsigma = d_yield->df_dsigma(Util::Identity, &state_plastic_rate);
+  df_dsigma /= df_dsigma.Norm();
   double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
   double rhs = df_dsigma.Contract(df_dsigma);
   double plastic_rate = lhs/rhs;
@@ -1288,6 +1289,7 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_test.updateStressInvariants();
 
   Matrix3 df_dsigma = d_yield->df_dsigma(Identity, &state_test);
+  df_dsigma /= df_dsigma.Norm();
   std::cout << "df_dsigma = " << df_dsigma << std::endl;
   std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
             << "," << plasticStrain_inc_fixed(1, 1) / df_dsigma(1, 1) << ","
@@ -1380,6 +1382,8 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 
   Matrix3 M_n = d_yield->df_dsigma(Util::Identity, &state_n);
   Matrix3 M_np1 = d_yield->df_dsigma(Util::Identity, &state_np1);
+  M_n /= M_n.Norm();
+  M_np1 /= M_np1.Norm();
 
   double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
   if (angle_M_n_np1 > 1.0e-6) {

@@ -422,8 +422,6 @@ YieldCond_Tabular::df_dsigma(const Matrix3&,
 
   Matrix3 df_dsigma = p_term + s_term;
 
-  df_dsigma /= df_dsigma.Norm();
-
   return df_dsigma;
 }
 
@@ -867,30 +865,6 @@ YieldCond_Tabular::df_dsigmaDev_dbeta(const Matrix3& sigDev,
   throw InternalError(out.str(), __FILE__, __LINE__);
   
   return std::make_pair(Uintah::Matrix3(0.0), Uintah::Matrix3(0.0));
-}
-
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double
-YieldCond_Tabular::eval_h_alpha(const Matrix3&, const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_h_alpha with a Matrix3 argument should not be "
-      << "called by models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 1.0;
-}
-
-/*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double
-YieldCond_Tabular::eval_h_phi(const Matrix3&,
-                              const double&,
-                              const ModelStateBase*)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_h_phi with a Matrix3 argument should not be "
-      << "called by models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-  return 0.0;
 }
 
 //--------------------------------------------------------------

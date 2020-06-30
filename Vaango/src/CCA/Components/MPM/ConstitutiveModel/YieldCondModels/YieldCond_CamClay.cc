@@ -322,7 +322,7 @@ YieldCond_CamClay::df_dsigma(const Matrix3& sig,
   double df_dp   = 2.0 * p - state->p_c;
   Matrix3 df_ds  = df_dxi(sigDev, nullptr);
   Matrix3 df_dsigma = Vaango::Util::Identity * (df_dp / 3.0) + df_ds;
-  return df_dsigma/df_dsigma.Norm();
+  return df_dsigma;
 }
 
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
@@ -335,7 +335,7 @@ YieldCond_CamClay::df_dxi(const Matrix3& sigDev,
   Matrix3 n         = sigDev / sigDevNorm;
   double q_scaled   = 3.0 * sigDevNorm;
   Matrix3 df_ds     = n * (q_scaled / d_M * d_M);
-  return df_ds/df_ds.Norm();
+  return df_ds;
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
@@ -346,26 +346,6 @@ YieldCond_CamClay::df_dsigmaDev_dbeta(const Matrix3& sigDev,
   Matrix3 df_ds = df_dxi(sigDev, state);
   Matrix3 df_dbeta(0.0);
   return std::make_pair(df_ds, df_dbeta);
-}
-
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double
-YieldCond_CamClay::eval_h_alpha(const Matrix3&, const ModelStateBase*)
-{
-  std::cout << "YieldCond_CamClay: eval_h_alpha not implemented yet "
-            << "\n";
-  return 1.0;
-}
-
-/*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double
-YieldCond_CamClay::eval_h_phi(const Matrix3&,
-                              const double&,
-                              const ModelStateBase*)
-{
-  std::cout << "YieldCond_CamClay: eval_h_phi not implemented yet "
-            << "\n";
-  return 0.0;
 }
 
 //--------------------------------------------------------------

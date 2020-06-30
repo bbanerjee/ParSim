@@ -151,6 +151,8 @@ public:
   std::pair<Uintah::Matrix3, Uintah::Matrix3>
   df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
+  double
+  df_dbeta_p(const ModelStateBase* state) const;
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
@@ -247,50 +249,6 @@ public:
   {
     return 0.0;
   }
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_1\f$ for porosity
-
-    \f[
-    h_1 = (1-\phi) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  computePorosityFactor_h1(double sigma_f_sigma,
-                           double tr_f_sigma,
-                           double porosity,
-                           double sigma_Y,
-                           double A);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_2\f$ for plastic strain
-
-    \f[
-    h_2 = \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double
-  computePlasticStrainFactor_h2(double sigma_f_sigma,
-                                double porosity,
-                                double sigma_Y);
-
-  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  double
-  eval_h_alpha(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
-
-  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  double
-  eval_h_phi(const Uintah::Matrix3& xi,
-             const double& factorA,
-             const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
