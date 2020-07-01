@@ -28,6 +28,7 @@
 #define __ELASTICITY_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -123,7 +124,34 @@ public:
   virtual void computePartialSaturatedModuli(
     const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
     const double& phi, const double& S_w, double& KK, double& GG) const {};
+
+  /*! Tangent modulus */
+  Tensor::Matrix6Mandel
+  computeElasticTangentModulus(const ModelStateBase* state) const
+  {
+    ElasticModuli moduli = getCurrentElasticModuli(state);
+    double K = moduli.bulkModulus;
+    double G = moduli.shearModulus;
+    double K43G = K + 4.0 * G / 3.0;
+    double K23G = K - 2.0 * G / 3.0;
+
+    Tensor::Matrix6Mandel C_e = Tensor::Matrix6Mandel::Zero();
+    C_e(0, 0) = K43G;
+    C_e(0, 1) = K23G;
+    C_e(0, 2) = K23G;
+    C_e(1, 0) = K23G;
+    C_e(1, 1) = K43G;
+    C_e(1, 2) = K23G;
+    C_e(2, 0) = K23G;
+    C_e(2, 1) = K23G;
+    C_e(2, 2) = K43G;
+    C_e(3, 3) = G;
+    C_e(4, 4) = G;
+    C_e(5, 5) = G;
+    return C_e;
+  }
+
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ELASTICITY_MODEL_H__

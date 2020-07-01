@@ -181,6 +181,6 @@ public:
   std::pair<ElasticModuli, std::vector<ElasticModuli>>
   computeModuliAndDModuliDIntVar(const ModelStateBase* state) const override;
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ELASTIC_MODULI_SOIL_MIXTURE_MODEL_H__

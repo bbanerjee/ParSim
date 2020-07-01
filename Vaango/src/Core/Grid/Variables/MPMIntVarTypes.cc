@@ -46,6 +46,25 @@ find_type_name(MetalIntVar* mp)
   return name;
 }
 
+void swapbytes(DStressDMetalIntVar& mp) 
+{
+  double *p = (double *)(&mp);
+  SWAP_8(*p); SWAP_8(*++p); SWAP_8(*++p);
+  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+}
+
+template <>
+const std::string 
+find_type_name(DStressDMetalIntVar* mp)
+{
+  static const std::string name="DStressDMetalIntVar";
+  return name;
+}
+
 void swapbytes(ArenaIntVar& mp) 
 {
   double *p = (double *)(&mp);
@@ -131,6 +150,29 @@ fun_getTypeDescription(MetalIntVar*)
     td = scinew TypeDescription(TypeDescription::Other,
                                 "MetalIntVar", true,
                                 &makeMPI_MetalIntVar);
+  }
+  return td;
+}
+
+static MPI_Datatype 
+makeMPI_DStressDMetalIntVar()
+{
+  int num_var = 18;
+  ASSERTEQ(sizeof(DStressDMetalIntVar), sizeof(double)*num_var);
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
+  MPI_Type_commit(&mpitype);
+  return mpitype;
+}
+
+const TypeDescription* 
+fun_getTypeDescription(DStressDMetalIntVar*)
+{
+  static TypeDescription* td;
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Other,
+                                "DStressDMetalIntVar", true,
+                                &makeMPI_DStressDMetalIntVar);
   }
   return td;
 }

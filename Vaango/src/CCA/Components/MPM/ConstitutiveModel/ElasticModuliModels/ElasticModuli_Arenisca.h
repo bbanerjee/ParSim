@@ -111,6 +111,6 @@ public:
   std::pair<ElasticModuli, std::vector<ElasticModuli>>
   computeModuliAndDModuliDIntVar(const ModelStateBase* state) const override;
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ARENISCA_POISSON_RATIO_MODEL_H__

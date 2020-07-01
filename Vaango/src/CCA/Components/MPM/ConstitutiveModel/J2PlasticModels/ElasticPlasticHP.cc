@@ -150,6 +150,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
+  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
     ostringstream desc;
@@ -256,6 +258,7 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
   d_shear     = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
+  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
   d_melt      = MeltingTempModelFactory::createCopy(cm->d_melt);
   d_devStress = nullptr;
 

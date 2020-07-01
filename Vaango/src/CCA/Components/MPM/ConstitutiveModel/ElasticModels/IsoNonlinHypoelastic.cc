@@ -122,3 +122,9 @@ IsoNonlinHypoelastic::computeStressAndDStressDIntVar(double delT,
   }
   return std::make_pair(stress_new, derivStress_new);
 }
+
+Tensor::Matrix6Mandel
+IsoNonlinHypoelastic::computeElasticTangentModulus(const ModelStateBase* state) const
+{
+  return d_elastic->computeElasticTangentModulus(state);
+}

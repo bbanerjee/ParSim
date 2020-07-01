@@ -266,7 +266,21 @@ TEST(ElasticModuliArenaTest, computeTests)
     //          << " G = " << moduli.shearModulus << std::endl;
     ASSERT_NEAR(Sw_KG[sw].first, moduli.bulkModulus, 1.0e-3);
     ASSERT_NEAR(Sw_KG[sw].second, moduli.shearModulus, 1.0e-3);
+
+    // Compute tangent modulus
+    auto tangent = model.computeElasticTangentModulus(&state);
+    double K = moduli.bulkModulus;
+    double G = moduli.shearModulus;
+    double K43G = K + 4.0 * G / 3.0;
+    double K23G = K - 2.0 * G / 3.0;
+    //std::cout << "K = " << K << " G = " << G
+    //          << "K43G = " << K43G << " K23G = " << K23G
+    //          << "\nTangent = \n" << tangent << "\n";
+    ASSERT_DOUBLE_EQ(tangent(1,1), K43G);
+    ASSERT_DOUBLE_EQ(tangent(1,2), K23G);
+    ASSERT_DOUBLE_EQ(tangent(4,4), G);
   }
+
 
   /*
   // Get initial parameters

@@ -40,6 +40,13 @@ public:
   double  plasticPorosity; 
 };
 
+class DStressDMetalIntVar
+{
+public:
+  Matrix3  eqPlasticStrain;
+  Matrix3  plasticPorosity; 
+};
+
 class ArenaIntVar
 {
 public:
@@ -76,6 +83,10 @@ namespace Uintah {
   void swapbytes(Uintah::MetalIntVar& mp); 
   template <> const std::string find_type_name(Uintah::MetalIntVar* mp);
   const TypeDescription* fun_getTypeDescription(Uintah::MetalIntVar*);
+
+  void swapbytes(Uintah::DStressDMetalIntVar& mp); 
+  template <> const std::string find_type_name(Uintah::DStressDMetalIntVar* mp);
+  const TypeDescription* fun_getTypeDescription(Uintah::DStressDMetalIntVar*);
 
   void swapbytes(Uintah::ArenaIntVar& mp); 
   template <> const std::string find_type_name(Uintah::ArenaIntVar* mp);

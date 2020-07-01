@@ -68,6 +68,38 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 
 }
 
+ElasticModuli_MetalIso::ElasticModuli_MetalIso(MPMEquationOfState* eos, 
+                                               ShearModulusModel* shear)
+{
+  d_eos = eos;
+  d_shear = shear;
+  if (d_eos == nullptr || d_shear == nullptr) {
+    std::ostringstream err;
+    err << "**ERROR** The model state in the elastic modulus model"
+           " for ElasticModuli_MetalIso has not been initialized correctly. "
+           " Please contact the developers.\n";
+    throw Uintah::InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  d_Km = d_eos->computeInitialBulkModulus();
+  d_Gm = d_shear->computeInitialShearModulus();
+
+  if (!(d_Km > 0.0 && d_Gm > 0.0)) {
+    std::ostringstream err;
+    err << "**ERROR** The model state in the elastic modulus model"
+           " has not been initialized correctly. Please contact the developers.\n";
+    throw Uintah::InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  double nu = (3.0 * d_Km - 2.0 * d_Gm)/(6.0 * d_Km + 2.0 * d_Gm);
+  if (nu < -1.0 || nu > 0.5) {
+    std::ostringstream err;
+    err << "**ERROR** The Poisson's ratio (" << nu << ") of the material is unphysical."
+           " K = " << d_Km << " and G = " << d_Gm << " Please correct input data.\n";
+    throw Uintah::ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+}
+
 // Construct a copy of a elasticity model.
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(
   const ElasticModuli_MetalIso* model)

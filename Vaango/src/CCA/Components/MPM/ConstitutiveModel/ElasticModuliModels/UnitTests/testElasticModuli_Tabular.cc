@@ -78,7 +78,7 @@ TEST(ElasticModuliTabularTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -129,8 +129,8 @@ TEST(ElasticModuliTabularTest, constructorTest)
     EXPECT_NEAR(moduli.bulkModulus, 11439.99999999994, 1.0e-3);
     EXPECT_NEAR(moduli.shearModulus, 8579.999999999955, 1.0e-3);
 
-    std::cout << "K,G = " << moduli.bulkModulus << "," 
-                << moduli.shearModulus << std::endl;
+    //std::cout << "K,G = " << moduli.bulkModulus << "," 
+    //            << moduli.shearModulus << std::endl;
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
@@ -138,6 +138,20 @@ TEST(ElasticModuliTabularTest, constructorTest)
     EXPECT_NEAR(KG.shearModulus, 8580, 1.0e-7);
     EXPECT_NEAR(dKdG.bulkModulus, -24000, 1.0);
     ASSERT_NEAR(dKdG.shearModulus, -18000, 1.0);
+
+    // Compute tangent modulus
+    auto tangent = model.computeElasticTangentModulus(&state);
+    double K = KG.bulkModulus;
+    double G = KG.shearModulus;
+    double K43G = K + 4.0 * G / 3.0;
+    double K23G = K - 2.0 * G / 3.0;
+    //std::cout << "K = " << K << " G = " << G
+    //          << "K43G = " << K43G << " K23G = " << K23G
+    //          << "\nTangent = \n" << tangent << "\n";
+    ASSERT_DOUBLE_EQ(tangent(1,1), K43G);
+    ASSERT_DOUBLE_EQ(tangent(1,2), K23G);
+    ASSERT_DOUBLE_EQ(tangent(4,4), G);
+
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }

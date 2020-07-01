@@ -81,6 +81,6 @@ public:
   std::pair<ElasticModuli, std::vector<ElasticModuli>>
   computeModuliAndDModuliDIntVar(const ModelStateBase* state) const override;
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __CONSTANT_ELASTICITY_MODEL_H__

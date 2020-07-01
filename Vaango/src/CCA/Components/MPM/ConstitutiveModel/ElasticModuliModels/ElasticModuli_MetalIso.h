@@ -44,6 +44,7 @@ class ElasticModuli_MetalIso : public ElasticModuliModel
 public:
 
   ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps);
+  ElasticModuli_MetalIso(MPMEquationOfState* eos, ShearModulusModel* shear);
   ElasticModuli_MetalIso(const ElasticModuli_MetalIso* emm);
   ~ElasticModuli_MetalIso() override = default;
   ElasticModuli_MetalIso& operator=(const ElasticModuli_MetalIso& emm) = delete;
@@ -72,11 +73,11 @@ private:
   MPMEquationOfState* d_eos;
 
   /* For tangent shear modulus parameters */
-  Vaango::ShearModulusModel* d_shear;
+  ShearModulusModel* d_shear;
 
   double d_Km, d_Gm, d_rho0;
 
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ELASTIC_MODULUS_ISOTROPIC_METAL_H__

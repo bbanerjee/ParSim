@@ -129,6 +129,6 @@ private:
   double computeShearModulus(const double& bulkModulus) const;
 
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ELASTIC_MODULI_TABULAR_MODEL_H__

@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 namespace Vaango {
@@ -71,6 +72,9 @@ public:
                                  const std::vector<Uintah::Matrix3>& derivStress_old,
                                  const Uintah::DeformationState* deformState,
                                  const ModelStateBase* modelState) const;
+
+  Tensor::Matrix6Mandel
+  computeElasticTangentModulus(const ModelStateBase* state) const;
 
 private:
 

@@ -33,6 +33,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
@@ -122,6 +123,8 @@ public:
   const VarLabel* pDamageLabel;
   const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
+  const VarLabel* pIntVarLabel;
+  const VarLabel* pDStressDIntVarLabel;
 
   const VarLabel* pStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
@@ -129,6 +132,8 @@ public:
   const VarLabel* pDamageLabel_preReloc;
   const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
+  const VarLabel* pIntVarLabel_preReloc;
+  const VarLabel* pDStressDIntVarLabel_preReloc;
 
 protected:
   CMData d_initialData;
@@ -154,6 +159,7 @@ protected:
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::KinematicHardeningModel* d_kinematic;
+  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
   std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
   Vaango::YieldCondition* d_yield;
   MeltingTempModel* d_melt;
@@ -313,6 +319,12 @@ public:
   double getCompressibility() override;
 
 protected:
+
+   Vaango::Tensor::Matrix6Mandel 
+   computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
+                                 std::vector<Matrix3>& dsigma_deta,
+                                 const ModelStateBase* state) const;
+
   ////////////////////////////////////////////////////////////////////////
   /*! Compute the elastic-plastic tangent modulus tensor for isotropic
       materials for use in the implicit stress update

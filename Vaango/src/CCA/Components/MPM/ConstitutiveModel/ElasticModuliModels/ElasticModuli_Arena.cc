@@ -337,3 +337,4 @@ ElasticModuli_Arena::computeModuliAndDModuliDIntVar(const ModelStateBase* state)
   std::vector<ElasticModuli> derivs;
   return std::make_pair(moduli, derivs);
 }
+

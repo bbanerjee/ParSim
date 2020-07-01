@@ -35,6 +35,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
@@ -458,6 +459,7 @@ protected:
 
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
+  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
   Vaango::YieldCondition* d_yield;
   std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
 

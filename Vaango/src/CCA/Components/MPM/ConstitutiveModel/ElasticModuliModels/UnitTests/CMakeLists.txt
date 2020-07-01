@@ -112,6 +112,7 @@ set(UNIT_TEST testElasticModuli_NeuralNet)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
-  COMMAND ${UNIT_TEST}
+  COMMAND ${UNIT_TEST} > ${UNIT_TEST}.out
+  VERBATIM
 )
 

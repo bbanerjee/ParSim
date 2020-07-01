@@ -1,4 +1,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/DefaultHypoElasticEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -57,9 +59,41 @@ TEST(ElasticModuliMetalIsoTest, constantBulkConstantShear)
     exit(-1);
   }
 
+  // Separate eos and shear documents
+  xmlDocPtr doc_eos = xmlNewDoc(BAD_CAST "1.0");
+  eosNode = xmlNewNode(nullptr, BAD_CAST "equation_of_state");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "default_hypo");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
+  xmlDocSetRootElement(doc_eos, eosNode);
+  //xmlSaveFormatFileEnc("-", doc_eos, "ISO-8859-1", 1);
+
+  xmlDocPtr doc_shear = xmlNewDoc(BAD_CAST "1.0");
+  shearNode = xmlNewNode(nullptr, BAD_CAST "shear_modulus_model");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "0.7e6");
+  xmlDocSetRootElement(doc_shear, shearNode);
+  //xmlSaveFormatFileEnc("-", doc_shear, "ISO-8859-1", 1);
+
+  ProblemSpecP ps_eos = scinew ProblemSpec(xmlDocGetRootElement(doc_eos), false);
+  if (!ps_eos) {
+    std::cout << "**Error** Could not create ProblemSpec for EOS." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+  ProblemSpecP ps_shear = scinew ProblemSpec(xmlDocGetRootElement(doc_shear), false);
+  if (!ps_shear) {
+    std::cout << "**Error** Could not create ProblemSpec for shear." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
   // Constructors
   ElasticModuli_MetalIso model(ps);
   ElasticModuli_MetalIso model_copy(model);
+
+  auto eos_model = scinew DefaultHypoElasticEOS(ps_eos);
+  auto shear_model = scinew ShearModulus_Constant(ps_shear, nullptr);
+  ElasticModuli_MetalIso model_alt(eos_model, shear_model);
 
   // Get initial parameters
   std::map<std::string, double> test_params;
@@ -77,7 +111,10 @@ TEST(ElasticModuliMetalIsoTest, constantBulkConstantShear)
   //std::cout << std::setprecision(16) 
   //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
   //          << std::endl;
+  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
+  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
 
+  moduli = model_alt.getInitialElasticModuli();
   ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
   ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
 
@@ -1404,6 +1441,19 @@ TEST(ElasticModuliMetalIsoTest, mieEnergyBulkShearSCG)
         //          << " G = " << moduli.shearModulus << "\n";
         ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].first, moduli.bulkModulus);
         ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].second, moduli.shearModulus);
+
+        // Compute tangent modulus
+        auto tangent = model.computeElasticTangentModulus(&state);
+        double K = moduli.bulkModulus;
+        double G = moduli.shearModulus;
+        double K43G = K + 4.0 * G / 3.0;
+        double K23G = K - 2.0 * G / 3.0;
+        //std::cout << "K = " << K << " G = " << G
+        //          << "K43G = " << K43G << " K23G = " << K23G
+        //          << "\nTangent = \n" << tangent << "\n";
+        ASSERT_DOUBLE_EQ(tangent(1,1), K43G);
+        ASSERT_DOUBLE_EQ(tangent(1,2), K23G);
+        ASSERT_DOUBLE_EQ(tangent(4,4), G);
       }
     }
   }
