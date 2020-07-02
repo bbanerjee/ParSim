@@ -128,6 +128,8 @@ public:
   const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
   const VarLabel* pEnergyLabel;
+  const VarLabel* pIntVarLabel;
+  const VarLabel* pDStressDIntVarLabel;
 
   const VarLabel* pRotationLabel_preReloc; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel_preReloc;
@@ -137,6 +139,8 @@ public:
   const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
   const VarLabel* pEnergyLabel_preReloc;
+  const VarLabel* pIntVarLabel_preReloc;
+  const VarLabel* pDStressDIntVarLabel_preReloc;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
@@ -459,9 +463,7 @@ protected:
 
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
-  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
   Vaango::YieldCondition* d_yield;
-  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
 
   StabilityCheck* d_stable;
   FlowStressModel* d_flow;
@@ -469,6 +471,9 @@ protected:
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
   DevStressModel* d_devStress;
+
+  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
+  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
 
   void initializeLocalMPMLabels();
 

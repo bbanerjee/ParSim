@@ -372,7 +372,7 @@ SmallStrainPlastic::initializeLocalMPMLabels()
   pIntVarLabel = VarLabel::create(
     "p.intvar_metal", ParticleVariable<MetalIntVar>::getTypeDescription());
   pDStressDIntVarLabel = VarLabel::create(
-    "p.dsigma_dintvar", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
+    "p.dsigma_dintvar_metal", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 
   pStrainRateLabel_preReloc = VarLabel::create(
     "p.strainRate+", ParticleVariable<double>::getTypeDescription());
@@ -389,7 +389,7 @@ SmallStrainPlastic::initializeLocalMPMLabels()
   pIntVarLabel_preReloc = VarLabel::create(
     "p.intvar_metal+", ParticleVariable<MetalIntVar>::getTypeDescription());
   pDStressDIntVarLabel_preReloc = VarLabel::create(
-    "p.dsigma_dintvar+", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
+    "p.dsigma_dintvar_metal+", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 }
 
 void
