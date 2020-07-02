@@ -63,7 +63,6 @@ add_subdirectory(YieldCondModels)
 add_subdirectory(ModelState)
 add_subdirectory(Utilities)
 
-add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)
 
 SET(LIBS
@@ -76,7 +75,6 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  MPM_ConstitutiveModel_PlasticityModels
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}

@@ -1566,29 +1566,6 @@ SmallStrainPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     __LINE__);
 }
 
-/*! Compute the elastic-plastic tangent modulus tensor for isotropic
-  materials for use in the implicit stress update
-  Assume: [stress] = [s11 s22 s33 s12 s23 s31]
-  [strain] = [e11 e22 e33 2e12 2e23 2e31]
-  Uses alogorithm for small strain plasticity (Simo 1998, p.124)
-*/
-void
-SmallStrainPlastic::computeEPlasticTangentModulus(const double& K,
-                                                  const double& mu,
-                                                  const double& delGamma,
-                                                  const double& normTrialS,
-                                                  const particleIndex idx,
-                                                  const Matrix3& n,
-                                                  Vaango::ModelStateBase* state,
-                                                  double Cep[6][6],
-                                                  bool consistent)
-{
-  throw InvalidValue("**ERROR**:SmallStrainPlastic: No elastic-plastic tangent "
-                     "modulus available",
-                     __FILE__,
-                     __LINE__);
-}
-
 /*! Compute K matrix */
 void
 SmallStrainPlastic::computeStiffnessMatrix(const double B[6][24],
@@ -1795,16 +1772,6 @@ SmallStrainPlastic::getDamageParameter(const Patch* patch,
       damage[particle] = pLocalized[particle];
     }
   }
-}
-
-// Calculate the void nucleation factor
-inline double
-SmallStrainPlastic::voidNucleationFactor(double ep)
-{
-  double temp = (ep - d_porosity.en) / d_porosity.sn;
-  double A    = d_porosity.fn / (d_porosity.sn * sqrt(2.0 * M_PI)) *
-             exp(-0.5 * temp * temp);
-  return A;
 }
 
 double

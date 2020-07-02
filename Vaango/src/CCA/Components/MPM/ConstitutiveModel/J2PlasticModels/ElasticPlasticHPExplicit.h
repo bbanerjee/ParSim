@@ -32,7 +32,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/DevStressModels/DevStressModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondition/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>

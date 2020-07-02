@@ -326,20 +326,6 @@ protected:
                                  const ModelStateBase* state) const;
 
   ////////////////////////////////////////////////////////////////////////
-  /*! Compute the elastic-plastic tangent modulus tensor for isotropic
-      materials for use in the implicit stress update
-      Assume: [stress] = [s11 s22 s33 s23 s31 s12]
-              [strain] = [e11 e22 e33 2e23 2e31 2e12]
-      Uses alogorithm for small strain plasticity (Simo 1998, p.124) */
-  ////////////////////////////////////////////////////////////////////////
-  void computeEPlasticTangentModulus(const double& K, const double& mu,
-                                     const double& delGamma,
-                                     const double& normTrialS,
-                                     const particleIndex idx, const Matrix3& n,
-                                     Vaango::ModelStateBase* state,
-                                     double Cep[6][6], bool consistent);
-
-  ////////////////////////////////////////////////////////////////////////
   /*! compute stress at each particle in the patch */
   ////////////////////////////////////////////////////////////////////////
   void computeStressTensorExplicit(const PatchSubset* patches,
@@ -369,13 +355,7 @@ protected:
   void BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
                   double Kgeo[24][24]) const;
 
-  ////////////////////////////////////////////////////////////////////////
-  /*! \brief Calculate void nucleation factor */
-  ////////////////////////////////////////////////////////////////////////
-  inline double voidNucleationFactor(double plasticStrain);
-
 protected:
-
 
   void initializeLocalMPMLabels();
 

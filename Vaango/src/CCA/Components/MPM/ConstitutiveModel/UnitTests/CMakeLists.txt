@@ -23,26 +23,14 @@
 #
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Models/UnitTests
 
-message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+#message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 #------------------------
 # Copy input files
 #------------------------
-configure_file(tabular_eos.json tabular_eos.json COPYONLY)
-configure_file(HydrostaticCompression_PrescribedDeformation.inp 
-               HydrostaticCompression_PrescribedDeformation.inp COPYONLY)
-
-configure_file(tabular_linear_elastic.json tabular_linear_elastic.json COPYONLY)
-configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
-configure_file(tabular_drucker_prager.json tabular_drucker_prager.json COPYONLY)
-configure_file(tabular_cap.json tabular_cap.json COPYONLY)
-configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
-configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
-               UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
-
-configure_file(mlp_regression_keras_total_scaled.h5 
-               mlp_regression_keras_total_scaled.h5 COPYONLY)
+#configure_file(mlp_regression_keras_total_scaled.h5 
+#               mlp_regression_keras_total_scaled.h5 COPYONLY)
 
 #------------------------
 # Libraries needed
@@ -76,52 +64,4 @@ SET(VAANGO_LIBS
 set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
 set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
-
-add_executable(testTabularEOS testTabularEOS.cc)
-target_link_libraries(testTabularEOS
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testTabularEOS)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-add_executable(testTabularPlasticity testTabularPlasticity.cc)
-target_link_libraries(testTabularPlasticity
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
-target_link_libraries(testNeuralNetTabularPlasticity
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testNeuralNetTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
-target_link_libraries(testTabularPlasticityCap
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testTabularPlasticityCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
 

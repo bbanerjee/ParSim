@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondition/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
