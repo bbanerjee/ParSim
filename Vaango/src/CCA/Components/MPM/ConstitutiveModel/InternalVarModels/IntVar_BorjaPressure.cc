@@ -175,10 +175,11 @@ IntVar_BorjaPressure::evolveInternalVariable(
 double
 IntVar_BorjaPressure::computeInternalVariable(
   const std::string& label,
-  const ModelStateBase* state_input) const
+  const ModelStateBase* state_old,
+  const ModelStateBase* state_cur) const
 {
   const ModelState_CamClay* state =
-    static_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_cur);
   /*
   if (!state) {
     std::ostringstream out;

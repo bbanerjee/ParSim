@@ -563,7 +563,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double c_dil = sqrt((bulk + 4.0 * mu / 3.0) / rho_cur);
 
       // Get internal state variable (p_c)
-      double pc_n = d_intvar->computeInternalVariable("dummy", &state);
+      double pc_n = d_intvar->computeInternalVariable("dummy", nullptr, &state);
       state.p_c = pc_n;
 
       //-----------------------------------------------------------------------
@@ -703,7 +703,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             mu = d_shear->computeShearModulus(&state);
             q = d_shear->computeQ(&state);
             p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
-            pc = d_intvar->computeInternalVariable("dummy", &state);
+            pc = d_intvar->computeInternalVariable("dummy", nullptr, &state);
 
             if (std::isnan(p)) {
               ostringstream desc;

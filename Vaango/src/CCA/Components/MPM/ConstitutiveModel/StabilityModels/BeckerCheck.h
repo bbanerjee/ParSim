@@ -122,6 +122,10 @@ public:
                       const TangentModulusTensor& tangentModulus,
                       Vector& direction) override;
 
+  bool checkStability(const Matrix3& cauchyStress,
+                      const Matrix3& deformRate,
+                      const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                      Vector& direction) override;
 private:
   // Prevent copying of this class and copy constructor
   // BeckerCheck(const BeckerCheck &);

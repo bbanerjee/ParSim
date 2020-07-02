@@ -345,10 +345,11 @@ IntVar_Arena::evolveInternalVariable(
 //--------------------------------------------------------------------------------------
 double
 IntVar_Arena::computeInternalVariable(const std::string& label,
-                                      const ModelStateBase* state_input) const
+                                      const ModelStateBase* state_old,
+                                      const ModelStateBase* state_cur) const
 {
   const ModelState_Arena* state =
-    static_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_cur);
   /*
   if (!state) {
     std::ostringstream out;

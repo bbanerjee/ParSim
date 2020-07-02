@@ -891,26 +891,30 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       defState_new.devD = rateOfDef_dev_new;
 
       // Set up the ModelState (for t_n)
-      Vaango::ModelStateBase state;
-      state.strainRate          = pStrainRate_new[idx];
-      state.eqPlasticStrainRate = pPlasticStrainRate_old[idx];
-      state.eqPlasticStrain     = pPlasticStrain_old[idx];
-      state.pressure            = pressure_old;
-      state.temperature         = pTemp_old[idx];
-      state.initialTemperature  = d_initialMaterialTemperature;
-      state.density             = rho_cur;
-      state.initialDensity      = rho_0;
+      Vaango::ModelStateBase state_old;
+      state_old.strainRate          = pStrainRate_old[idx];
+      state_old.eqPlasticStrainRate = pPlasticStrainRate_old[idx];
+      state_old.eqPlasticStrain     = pPlasticStrain_old[idx];
+      state_old.pressure            = pressure_old;
+      state_old.temperature         = pTemp_old[idx];
+      state_old.initialTemperature  = d_initialMaterialTemperature;
+      state_old.density             = rho_cur;
+      state_old.initialDensity      = rho_0;
+      state_old.volume              = pVol_old[idx];
+      state_old.initialVolume       = pMass[idx] / rho_0;
+      state_old.bulkModulus         = bulk;
+      state_old.initialBulkModulus  = bulk;
+      state_old.shearModulus        = shear;
+      state_old.initialShearModulus = shear;
+      state_old.meltingTemp         = Tm;
+      state_old.initialMeltTemp     = Tm;
+      state_old.specificHeat        = matl->getSpecificHeat();
+      state_old.porosity            = pPorosity_old[idx];
+      state_old.backStress          = backStress_old;
+
+      Vaango::ModelStateBase state(state_old);
+      state.strainRate          = pStrainRate_old[idx];
       state.volume              = pVol_new[idx];
-      state.initialVolume       = pMass[idx] / rho_0;
-      state.bulkModulus         = bulk;
-      state.initialBulkModulus  = bulk;
-      state.shearModulus        = shear;
-      state.initialShearModulus = shear;
-      state.meltingTemp         = Tm;
-      state.initialMeltTemp     = Tm;
-      state.specificHeat        = matl->getSpecificHeat();
-      state.porosity            = pPorosity_old[idx];
-      state.backStress          = backStress_old;
 
       // Set up the nonlinear elastic model
       IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
@@ -1008,8 +1012,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           }
 
           // Get ep_n, phi_n
-          double ep_n  = state.eqPlasticStrain;
-          double phi_n = state.porosity;
+          //double ep_n  = state.eqPlasticStrain;
+          //double phi_n = state.porosity;
 
           // Initialize dsigma_dintvar
           Matrix3 sigma_alpha_k = sigma_eta_old[0];
@@ -1101,32 +1105,22 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             /* Updated algorithm - use value of xi_k */
             // Compute r_k, h_k
             r_k = d_yield->df_dsigma(xi_k, &state);
-            MetalIntVar h_eta;
-            d_intvar->computeHardeningModulus(&state, h_eta);
-            double h_alpha_k = h_eta.eqPlasticStrain;
-            double h_phi_k   = h_eta.plasticPorosity;
+            //MetalIntVar h_eta;
+            //d_intvar->computeHardeningModulus(&state, h_eta);
+            //double h_alpha_k = h_eta.eqPlasticStrain;
+            //double h_phi_k   = h_eta.plasticPorosity;
             d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
             r_k_dev      = r_k - one * (r_k.Trace() / 3.0);
             h_beta_k_dev = h_beta_k - one * (h_beta_k.Trace() / 3.0);
             term1_k      = r_k_dev * (2.0 * mu_cur) + h_beta_k_dev;
 
+            // Update plastic consistency parameter increment
+            state.lambdaIncPlastic = Delta_gamma;
+
             // Update ep, phi, xi
-            state.eqPlasticStrain = ep_n + Delta_gamma * h_alpha_k;
-            state.porosity        = phi_n + Delta_gamma * h_phi_k;
+            state.eqPlasticStrain = d_intvar->computeInternalVariable("eqPlasticStrain", &state_old, &state);
+            state.porosity        = d_intvar->computeInternalVariable("porosity", &state_old, &state);
             xi_k                  = xi_trial - term1_k * Delta_gamma;
-
-            /*  Original Algorithm */
-            /*
-            // compute increments of xi, ep, phi
-            Matrix3 Delta_xi_k = term1*(-delta_gamma_k);
-            double Delta_ep_k = h_alpha_n*delta_gamma_k;
-            double Delta_phi_k = h_phi_n*delta_gamma_k;
-
-            // Update ep, phi, xi, Delta_gamma
-            state.eqPlasticStrain += Delta_ep_k;
-            state.porosity += Delta_phi_k;
-            xi_k += Delta_xi_k;
-            */
 
             if (fabs(Delta_gamma - Delta_gamma_old) < d_tol || count > 100)
               break;
@@ -1210,6 +1204,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       if (!plastic) {
 
         // Save the updated data
+        pIntVar_new[idx]            = pIntVar_old[idx];
         pPlasticStrain_new[idx]     = pPlasticStrain_old[idx];
         pPlasticStrainRate_new[idx] = 0.0;
         pPorosity_new[idx]          = pPorosity_old[idx];
@@ -1218,6 +1213,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       } else {
 
         // Update the plastic strain, plastic strain rate, porosity
+        pIntVar_new[idx]            = {state.eqPlasticStrain, state.porosity};
         pPlasticStrain_new[idx]     = state.eqPlasticStrain;
         pPlasticStrainRate_new[idx] = state.eqPlasticStrainRate;
         if (d_evolvePorosity) {
@@ -1287,6 +1283,17 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               state_new.setStress(sigma_new);
               state_new.backStress = backStress_new;
 
+              // Get elastic tangent modulus
+              auto C_e = elasticityModel.computeElasticTangentModulus(&state);
+
+              // Calculate the derivative of elastic stress wrt internal var
+              std::vector<Matrix3> sigma_eta = 
+                elasticityModel.computeDStressDIntVar(delT, sigma_eta_old, &defState_new, &state_new);
+
+              // Calculate the elastic-plastic tangent modulus
+              auto C_ep = computeElasPlasTangentModulus(C_e, sigma_eta, &state_new);
+
+              /*
               // Get the derivatives of the yield function
               Matrix3 xi_hat = sigma_new - backStress_new;
               Matrix3 xi     = xi_hat - one * (xi_hat.Trace() / 3.0);
@@ -1310,16 +1317,6 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               double h_phi   = h_eta.plasticPorosity;
               double dp_dJ   = d_eos->eval_dp_dJ(matl, J_new, &state_new);
 
-              // Get elastic tangent modulus
-              auto C_e = elasticityModel.computeElasticTangentModulus(&state);
-
-              // Calculate the derivative of elastic stress wrt internal var
-              std::vector<Matrix3> sigma_eta = 
-                elasticityModel.computeDStressDIntVar(delT, sigma_eta_old, &defState_new, &state_new);
-
-              // Calculate the elastic-plastic tangent modulus
-              auto C_ep = computeElasPlasTangentModulus(C_e, sigma_eta, &state_new);
-
               TangentModulusTensor Cep;
               d_yield->computeElasPlasTangentModulus(rr,
                                                      df_ds,
@@ -1333,11 +1330,12 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
                                                      dp_dJ,
                                                      &state,
                                                      Cep);
+              */
 
               // Initialize localization direction
               Vector direction(0.0, 0.0, 0.0);
               isLocalized = d_stable->checkStability(
-                sigma_new, rateOfDef_new, Cep, direction);
+                sigma_new, rateOfDef_new, C_ep, direction);
             }
           }
         }

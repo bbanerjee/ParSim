@@ -121,7 +121,8 @@ public:
   /* Compute the internal variable */
   virtual double
   computeInternalVariable(const std::string& label,
-                          const ModelStateBase* state) const = 0;
+                          const ModelStateBase* state_old,
+                          const ModelStateBase* state_cur) const = 0;
 
   /* Compute derivative of internal variable with respect to volumetric
      elastic strain */

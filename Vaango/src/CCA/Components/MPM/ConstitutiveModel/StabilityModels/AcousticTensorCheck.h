@@ -72,6 +72,10 @@ public:
                       const TangentModulusTensor& tangentModulus,
                       Vector& direction) override;
 
+  bool checkStability(const Matrix3& cauchyStress,
+                      const Matrix3& deformRate,
+                      const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                      Vector& direction) override;
 private:
   /*! Check for localization from
    *  the ellipticity of the tangent modulus

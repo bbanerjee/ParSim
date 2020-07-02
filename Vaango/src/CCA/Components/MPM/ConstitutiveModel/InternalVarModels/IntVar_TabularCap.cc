@@ -180,10 +180,11 @@ IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
 double
 IntVar_TabularCap::computeInternalVariable(
   const std::string& label,
-  const ModelStateBase* state_input) const
+  const ModelStateBase* state_old,
+  const ModelStateBase* state_cur) const
 {
   const ModelState_TabularCap* state =
-    static_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_cur);
   /*
   if (!state) {
     std::ostringstream out;

@@ -204,12 +204,13 @@ IntVar_Metal::evolveInternalVariable(
 
 double
 IntVar_Metal::computeInternalVariable(const std::string& label,
-                                      const ModelStateBase* state) const
+                                      const ModelStateBase* state_old,
+                                      const ModelStateBase* state_cur) const
 {
   if (label == "porosity") {
-    return computePlasticPorosity(state->porosity, state);
+    return computePlasticPorosity(state_old->porosity, state_cur);
   } else if (label == "eqPlasticStrain") {
-    return computeEqPlasticStrain(state->eqPlasticStrain, state);
+    return computeEqPlasticStrain(state_old->eqPlasticStrain, state_cur);
   }
   return 0.0;
 }

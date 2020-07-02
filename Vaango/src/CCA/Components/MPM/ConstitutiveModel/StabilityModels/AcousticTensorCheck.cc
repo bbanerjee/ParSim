@@ -100,6 +100,14 @@ AcousticTensorCheck::checkStability(const Matrix3&, const Matrix3&,
 {
   return isLocalized(tangentModulus, direction);
 }
+bool 
+AcousticTensorCheck::checkStability(const Matrix3& cauchyStress,
+                                    const Matrix3& deformRate,
+                                    const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                                    Vector& direction)
+{
+  return false;
+}
 
 /*! Check for localization */
 //  theta =  Horizontal plane angle

@@ -116,3 +116,12 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
   // Four real roots -  bifurcation
   return true;
 }
+
+bool 
+BeckerCheck::checkStability(const Matrix3& cauchyStress,
+                            const Matrix3& deformRate,
+                            const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                            Vector& direction)
+{
+  return false;
+}

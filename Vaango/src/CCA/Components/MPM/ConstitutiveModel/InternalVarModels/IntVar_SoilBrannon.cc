@@ -181,10 +181,11 @@ IntVar_SoilBrannon::evolveInternalVariable(
 double
 IntVar_SoilBrannon::computeInternalVariable(
   const std::string& label,
-  const ModelStateBase* state_input) const
+  const ModelStateBase* state_old,
+  const ModelStateBase* state_cur) const
 {
   const ModelState_SoilModelBrannon* state =
-    static_cast<const ModelState_SoilModelBrannon*>(state_input);
+    static_cast<const ModelState_SoilModelBrannon*>(state_cur);
   /*
   if (!state) {
     std::ostringstream out;

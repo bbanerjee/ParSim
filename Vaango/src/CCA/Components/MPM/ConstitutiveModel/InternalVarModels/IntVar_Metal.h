@@ -133,7 +133,8 @@ public:
                          Uintah::ParticleVariable<T>& var);
   double
   computeInternalVariable(const std::string& label,
-                          const ModelStateBase* state) const override;
+                          const ModelStateBase* state_old,
+                          const ModelStateBase* state_cur) const override;
 
   // Hardening moduli
   template <typename T>

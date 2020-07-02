@@ -131,7 +131,8 @@ public:
                          Uintah::ParticleVariable<T>& var);
   double
   computeInternalVariable(const std::string& label,
-                          const ModelStateBase* state) const override;
+                          const ModelStateBase* state_old,
+                          const ModelStateBase* state_cur) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   // Compute derivative of internal variable with respect to volumetric

@@ -27,6 +27,7 @@
 #ifndef __STABILITY_CHECK_H__
 #define __STABILITY_CHECK_H__
 
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -68,6 +69,11 @@ public:
   virtual bool checkStability(const Matrix3& cauchyStress,
                               const Matrix3& deformRate,
                               const TangentModulusTensor& tangentModulus,
+                              Vector& direction) = 0;
+
+  virtual bool checkStability(const Matrix3& cauchyStress,
+                              const Matrix3& deformRate,
+                              const Vaango::Tensor::Matrix6Mandel& tangentModulus,
                               Vector& direction) = 0;
 };
 } // End namespace Uintah
