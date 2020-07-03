@@ -314,15 +314,13 @@ public:
 protected:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stilde, epdot, ep, and delGamma using
-             Simo's approach */
+             radial return */
   ////////////////////////////////////////////////////////////////////////
-  void computePlasticStateViaRadialReturn(const Matrix3& trialS,
-                                          const double& delT,
-                                          const MPMMaterial* matl,
-                                          const particleIndex idx,
-                                          ModelStateBase* state,
-                                          Matrix3& nn,
-                                          double& delGamma);
+  double doRadialReturn(const double& delT,
+                        const MPMMaterial* matl,
+                        const particleIndex idx,
+                        const ModelStateBase* state_trial,
+                        ModelStateBase* state_new) const;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the quantity
@@ -331,11 +329,10 @@ protected:
       where \f$ d_p = \dot\gamma d(sigma_y)/d(sigma) \f$ */
   ////////////////////////////////////////////////////////////////////////
   double computeDeltaGamma(const double& delT,
-                           const double& tolerance,
-                           const double& normTrialS,
                            const MPMMaterial* matl,
                            const particleIndex idx,
-                           ModelStateBase* state);
+                           const ModelStateBase* state_trial,
+                           ModelStateBase* state_new) const;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute the elastic tangent modulus tensor for isotropic

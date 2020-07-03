@@ -61,8 +61,7 @@ YieldCond_vonMises::outputProblemSpec(Uintah::ProblemSpecP& ps)
 std::pair<double, Util::YieldStatus>
 YieldCond_vonMises::evalYieldCondition(const ModelStateBase* state)
 {
-  auto xi  = state->devStress - state->backStress.Deviator();
-  double f = evalYieldCondition(xi, state);
+  double f = computeYieldFunction(state);
   if (f <= 0.0) {
     return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
   }
@@ -70,8 +69,22 @@ YieldCond_vonMises::evalYieldCondition(const ModelStateBase* state)
 }
 
 double
+YieldCond_vonMises::computeYieldFunction(const ModelStateBase* state) const
+{
+  auto xi  = state->devStress - state->backStress.Deviator();
+  return computeYieldFunction(xi, state);
+}
+
+double
 YieldCond_vonMises::evalYieldCondition(const Matrix3& xi,
                                        const ModelStateBase* state)
+{
+  return computeYieldFunction(xi, state);
+}
+
+double
+YieldCond_vonMises::computeYieldFunction(const Matrix3& xi,
+                                         const ModelStateBase* state) const
 {
   double sigy   = state->yieldStress;
   double xiNorm = xi.Norm();

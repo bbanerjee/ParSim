@@ -349,8 +349,16 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
   return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
 
-//--------------------------------------------------------------
-// Derivatives needed by return algorithms and Newton iterations
+double
+YieldCond_Tabular::computeYieldFunction(const ModelStateBase* state) const
+{
+  std::ostringstream out;
+  out << "**ERROR** The yield function for the tabular plasticity models"
+      << " cannot be evaluated for a given stress state.\n";
+  throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+
+  return 0.0;
+}
 
 //--------------------------------------------------------------
 // Evaluate yield condition max value of sqrtJ2

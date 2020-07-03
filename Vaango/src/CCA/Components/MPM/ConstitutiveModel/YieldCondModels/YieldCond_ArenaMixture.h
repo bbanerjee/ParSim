@@ -135,7 +135,7 @@ private:
   computeModelParameters(const double& PEAKI1,
                          const double& FSLOPE,
                          const double& STREN,
-                         const double& YSLOPE);
+                         const double& YSLOPE) const;
 
   // Prevent copying of this class
   // copy constructor
@@ -213,6 +213,10 @@ public:
   //--------------------------------------------------------------
   std::pair<double, Util::YieldStatus>
   evalYieldCondition(const ModelStateBase* state) override;
+
+  double
+  computeYieldFunction(const ModelStateBase* state) const override;
+
   double
   evalYieldConditionMax(const ModelStateBase* state) override;
 

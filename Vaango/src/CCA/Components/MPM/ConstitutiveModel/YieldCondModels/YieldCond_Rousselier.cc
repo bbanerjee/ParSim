@@ -65,12 +65,18 @@ YieldCond_Rousselier::outputProblemSpec(Uintah::ProblemSpecP& ps)
 std::pair<double, Util::YieldStatus>
 YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  double f   = evalYieldCondition(xi, state);
+  double f = computeYieldFunction(state);
   if (f > 0) {
     return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
   }
   return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
+}
+
+double
+YieldCond_Rousselier::computeYieldFunction(const ModelStateBase* state) const
+{
+  Matrix3 xi = state->devStress - state->backStress.Deviator();
+  return computeYieldFunction(xi, state);
 }
 
 /**
@@ -80,6 +86,13 @@ YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 double
 YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
                                          const ModelStateBase* state)
+{
+  return computeYieldFunction(xi, state);
+}
+
+double
+YieldCond_Rousselier::computeYieldFunction(const Uintah::Matrix3& xi,
+                                           const ModelStateBase* state) const
 {
   double phi     = state->porosity;
   double sigma_f = state->yieldStress;

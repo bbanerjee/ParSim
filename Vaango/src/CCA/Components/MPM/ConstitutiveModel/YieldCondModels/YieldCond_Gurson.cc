@@ -76,8 +76,7 @@ YieldCond_Gurson::outputProblemSpec(Uintah::ProblemSpecP& ps)
 std::pair<double, Util::YieldStatus>
 YieldCond_Gurson::evalYieldCondition(const ModelStateBase* state)
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  double f = evalYieldCondition(xi, state);
+  double f = computeYieldFunction(state);
   if (f > 0) {
     return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
   }
@@ -85,8 +84,22 @@ YieldCond_Gurson::evalYieldCondition(const ModelStateBase* state)
 }
 
 double
+YieldCond_Gurson::computeYieldFunction(const ModelStateBase* state) const
+{
+  auto xi = state->devStress - state->backStress.Deviator();
+  return computeYieldFunction(xi, state);
+}
+
+double
 YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
                                      const ModelStateBase* state)
+{
+  return computeYieldFunction(xi, state);
+}
+
+double
+YieldCond_Gurson::computeYieldFunction(const Matrix3& xi,
+                                       const ModelStateBase* state) const
 {
   // Get the state data
   double sigy     = state->yieldStress;

@@ -62,11 +62,24 @@ YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
 std::pair<double, Util::YieldStatus>
 YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state)
 {
-  double f = evalYieldCondition(Vaango::Util::Identity, state);
+  double f = computeYieldFunction(state);
   if (f > 0.0) {
     return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
   }
   return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
+}
+
+double
+YieldCond_CamClay::computeYieldFunction(const ModelStateBase* state_input) const
+{
+  const ModelState_CamClay* state =
+    static_cast<const ModelState_CamClay*>(state_input);
+
+  double p   = state->p;
+  double q   = state->q;
+  double p_c = state->p_c;
+  double f   = q * q / (d_M * d_M) + p * (p - p_c);
+  return f;
 }
 
 // Evaluate yield condition (s = deviatoric stress
@@ -74,24 +87,9 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state)
 //                           p_c = state->p_c)
 double
 YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3&,
-                                      const ModelStateBase* state_input)
+                                      const ModelStateBase* state)
 {
-  const ModelState_CamClay* state =
-    static_cast<const ModelState_CamClay*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_CamClay.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
-  double p   = state->p;
-  double q   = state->q;
-  double p_c = state->p_c;
-  double f   = q * q / (d_M * d_M) + p * (p - p_c);
-  return f;
+  return computeYieldFunction(state);
 }
 
 //--------------------------------------------------------------

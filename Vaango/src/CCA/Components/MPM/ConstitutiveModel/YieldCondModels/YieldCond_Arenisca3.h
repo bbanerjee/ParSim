@@ -120,6 +120,10 @@ public:
   //--------------------------------------------------------------
   std::pair<double, Util::YieldStatus>
   evalYieldCondition(const ModelStateBase* state) override;
+
+  double
+  computeYieldFunction(const ModelStateBase* state) const override;
+
   double
   evalYieldConditionMax(const ModelStateBase* state) override;
 

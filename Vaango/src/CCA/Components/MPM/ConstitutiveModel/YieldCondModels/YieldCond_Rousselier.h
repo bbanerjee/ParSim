@@ -104,6 +104,9 @@ public:
   evalYieldCondition(const ModelStateBase* state) override;
 
   double
+  computeYieldFunction(const ModelStateBase* state) const override;
+
+  double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
@@ -214,6 +217,10 @@ private:
   Params d_params;
   IntVar_Metal* d_intvar;
   const Uintah::FlowStressModel* d_flow;
+
+  double
+  computeYieldFunction(const Matrix3& xi,
+                       const ModelStateBase* state) const;
 
   Uintah::Matrix3
   df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;

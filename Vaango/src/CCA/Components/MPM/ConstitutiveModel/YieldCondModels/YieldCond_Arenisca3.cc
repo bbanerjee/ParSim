@@ -271,6 +271,43 @@ YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
   return std::make_pair(hasYielded, Util::YieldStatus::IS_ELASTIC);
 }
 
+double
+YieldCond_Arenisca3::computeYieldFunction(const ModelStateBase* state_input) const
+{
+  const ModelState_Arenisca3* state =
+    static_cast<const ModelState_Arenisca3*>(state_input);
+
+  double zeta  = state->zeta;
+  double kappa = state->kappa;
+  double capX  = state->capX;
+
+  double I1_eff  = state->I1 - zeta;
+  double sqrt_J2 = state->sqrt_J2;
+
+  // --------------------------------------------------------------------
+  // *** SHEAR LIMIT FUNCTION (Ff) ***
+  // --------------------------------------------------------------------
+  double Ff = d_modelParam.a1 -
+              d_modelParam.a3 * exp(d_modelParam.a2 * I1_eff) -
+              d_modelParam.a4 * I1_eff;
+
+  // --------------------------------------------------------------------
+  // *** Branch Point (Kappa) ***
+  // --------------------------------------------------------------------
+  kappa = d_inputParam.PEAKI1 -
+          d_capParam.CR * (d_inputParam.PEAKI1 - capX); // Branch Point
+
+  // --------------------------------------------------------------------
+  // *** COMPOSITE YIELD FUNCTION ***
+  // --------------------------------------------------------------------
+  double epsilon = std::numeric_limits<double>::epsilon();
+  double kappaRatio = (kappa - I1_eff) / (kappa - capX + epsilon);
+  double Fc_sq      = 1.0 - kappaRatio * kappaRatio;
+  double f = sqrt_J2 * sqrt_J2 - Ff * Ff * Fc_sq;
+
+  return f;
+}
+
 //--------------------------------------------------------------
 // Evaluate yield condition max (q = state->q
 //                               p = state->p)

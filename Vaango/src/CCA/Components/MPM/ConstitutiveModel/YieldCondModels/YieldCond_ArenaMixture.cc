@@ -421,7 +421,7 @@ std::vector<double>
 YieldCond_ArenaMixture::computeModelParameters(const double& PEAKI1,
                                                const double& FSLOPE,
                                                const double& STREN,
-                                               const double& YSLOPE)
+                                               const double& YSLOPE) const
 {
   double a1, a2, a3, a4;
   if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 &&
@@ -578,8 +578,53 @@ YieldCond_ArenaMixture::evalYieldCondition(const ModelStateBase* state_input)
   return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
 
-//--------------------------------------------------------------
-// Derivatives needed by return algorithms and Newton iterations
+double
+YieldCond_ArenaMixture::computeYieldFunction(const ModelStateBase* state_input) const
+{
+  const ModelState_Arena* state =
+    static_cast<const ModelState_Arena*>(state_input);
+
+  // Get the particle specific internal variables from the model state
+  double PEAKI1 = state->yieldParams.at("PEAKI1");
+  double FSLOPE = state->yieldParams.at("FSLOPE");
+  double STREN  = state->yieldParams.at("STREN");
+  double YSLOPE = state->yieldParams.at("YSLOPE");
+  double CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters =
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
+
+  // Get the local vars from the model state
+  double X_eff = state->capX + 3.0 * state->pbar_w;
+
+  // Cauchy stress invariants: I1_eff = 3*(p + pbar_w), J2 = q^2/3
+  double I1_eff  = state->I1_eff;
+  double sqrt_J2 = state->sqrt_J2;
+
+  // --------------------------------------------------------------------
+  // *** SHEAR LIMIT FUNCTION (Ff) ***
+  // --------------------------------------------------------------------
+  double Ff = a1 - a3 * exp(a2 * I1_eff) - a4 * I1_eff;
+
+  // --------------------------------------------------------------------
+  // *** Branch Point (Kappa) ***
+  // --------------------------------------------------------------------
+  double epsilon    = std::numeric_limits<double>::epsilon();
+  double kappa      = PEAKI1 - CR * (PEAKI1 - X_eff); // Branch Point
+  double kappaRatio = (kappa - I1_eff) / (kappa - X_eff + epsilon);
+  double Fc_sq      = 1.0 - kappaRatio * kappaRatio;
+
+  // --------------------------------------------------------------------
+  // *** COMPOSITE YIELD FUNCTION ***
+  // --------------------------------------------------------------------
+  double f = sqrt_J2 * sqrt_J2 - Ff * Ff * Fc_sq;
+
+  return f;
+}
 
 //--------------------------------------------------------------
 // Evaluate yield condition max  value of sqrtJ2

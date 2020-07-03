@@ -126,6 +126,9 @@ public:
   evalYieldCondition(const ModelStateBase* state) override;
 
   double
+  computeYieldFunction(const ModelStateBase* state) const override;
+
+  double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
@@ -290,6 +293,11 @@ private:
   CMData d_CM;
   IntVar_Metal* d_intvar;
   const Uintah::FlowStressModel* d_flow;
+
+  /* Compute the yield function */
+  double
+  computeYieldFunction(const Matrix3& xi,
+                       const ModelStateBase* state) const;
 
   /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
   double

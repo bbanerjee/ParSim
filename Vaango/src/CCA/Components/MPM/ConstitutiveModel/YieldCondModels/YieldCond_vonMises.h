@@ -90,6 +90,9 @@ public:
   evalYieldCondition(const ModelStateBase* state) override;
 
   double
+  computeYieldFunction(const ModelStateBase* state) const override;
+
+  double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) override;
 
@@ -263,6 +266,10 @@ public:
 private:
   IntVar_Metal* d_intvar;
   const FlowStressModel* d_flow;
+
+  double
+  computeYieldFunction(const Matrix3& xi,
+                       const ModelStateBase* state) const;
 
 };
 

@@ -92,6 +92,9 @@ public:
   evalYieldCondition(const ModelStateBase* state) = 0;
 
   virtual double
+  computeYieldFunction(const ModelStateBase* state) const = 0;
+
+  virtual double
   evalYieldCondition(const Uintah::Matrix3& xi,
                      const ModelStateBase* state) = 0;
 
