@@ -272,7 +272,6 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pEnergyLabel);
   VarLabel::destroy(pIntVarLabel);
-  VarLabel::destroy(pDStressDIntVarLabel);
 
   VarLabel::destroy(pRotationLabel_preReloc);
   VarLabel::destroy(pStrainRateLabel_preReloc);
@@ -283,7 +282,6 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pEnergyLabel_preReloc);
   VarLabel::destroy(pIntVarLabel_preReloc);
-  VarLabel::destroy(pDStressDIntVarLabel_preReloc);
 
   delete d_flow;
   delete d_yield;
@@ -378,8 +376,6 @@ ElasticPlasticHP::initializeLocalMPMLabels()
     "p.energy", ParticleVariable<double>::getTypeDescription());
   pIntVarLabel = VarLabel::create(
     "p.intvar_metal", ParticleVariable<MetalIntVar>::getTypeDescription());
-  pDStressDIntVarLabel = VarLabel::create(
-    "p.dsigma_dintvar_metal", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 
   pRotationLabel_preReloc = VarLabel::create(
     "p.rotation+", ParticleVariable<Matrix3>::getTypeDescription());
@@ -399,8 +395,6 @@ ElasticPlasticHP::initializeLocalMPMLabels()
     "p.energy+", ParticleVariable<double>::getTypeDescription());
   pIntVarLabel_preReloc = VarLabel::create(
     "p.intvar_metal+", ParticleVariable<MetalIntVar>::getTypeDescription());
-  pDStressDIntVarLabel_preReloc = VarLabel::create(
-    "p.dsigma_dintvar_metal+", ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 }
 //______________________________________________________________________
 //
@@ -495,7 +489,6 @@ ElasticPlasticHP::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pLocalizedLabel);
   from.push_back(pEnergyLabel);
   from.push_back(pIntVarLabel);
-  from.push_back(pDStressDIntVarLabel);
 
   to.push_back(pRotationLabel_preReloc);
   to.push_back(pStrainRateLabel_preReloc);
@@ -506,7 +499,6 @@ ElasticPlasticHP::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pLocalizedLabel_preReloc);
   to.push_back(pEnergyLabel_preReloc);
   to.push_back(pIntVarLabel_preReloc);
-  to.push_back(pDStressDIntVarLabel_preReloc);
 
   // Add the particle state for the flow & deviatoric stress model
   d_flow->addParticleState(from, to);
@@ -530,7 +522,6 @@ ElasticPlasticHP::addInitialComputesAndRequires(Task* task,
   task->computes(pLocalizedLabel, matlset);
   task->computes(pEnergyLabel, matlset);
   task->computes(pIntVarLabel, matlset);
-  task->computes(pDStressDIntVarLabel, matlset);
 
   // Add internal evolution variables computed by flow & deviatoric stress model
   d_flow->addInitialComputesAndRequires(task, matl, patch);
@@ -562,7 +553,6 @@ ElasticPlasticHP::initializeCMData(const Patch* patch,
     pPlasticStrainRate, pStrainRate, pEnergy;
   ParticleVariable<int> pLocalized;
   ParticleVariable<MetalIntVar> pIntVar;
-  ParticleVariable<DStressDMetalIntVar> pDStressDIntVar;
 
   new_dw->allocateAndPut(pRotation, pRotationLabel, pset);
   new_dw->allocateAndPut(pStrainRate, pStrainRateLabel, pset);
@@ -573,7 +563,6 @@ ElasticPlasticHP::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pPorosity, pPorosityLabel, pset);
   new_dw->allocateAndPut(pEnergy, pEnergyLabel, pset);
   new_dw->allocateAndPut(pIntVar, pIntVarLabel, pset);
-  new_dw->allocateAndPut(pDStressDIntVar, pDStressDIntVarLabel, pset);
 
   for (auto idx : *pset) {
 
@@ -586,7 +575,6 @@ ElasticPlasticHP::initializeCMData(const Patch* patch,
     pLocalized[idx]         = 0;
     pEnergy[idx]            = 0.;
     pIntVar[idx]            = {0.0, 0.0};
-    pDStressDIntVar[idx]    = {Matrix3(0.0), Matrix3(0.0)};
   }
 
   // Do some extra things if the porosity or the damage distribution
@@ -706,7 +694,6 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
   task->requires(Task::OldDW, pEnergyLabel, matlset, gnone);
   task->requires(Task::OldDW, pIntVarLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDStressDIntVarLabel, matlset, gnone);
 
   task->computes(pRotationLabel_preReloc, matlset);
   task->computes(pStrainRateLabel_preReloc, matlset);
@@ -717,7 +704,6 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
   task->computes(pLocalizedLabel_preReloc, matlset);
   task->computes(pEnergyLabel_preReloc, matlset);
   task->computes(pIntVarLabel_preReloc, matlset);
-  task->computes(pDStressDIntVarLabel_preReloc, matlset);
 
   // Add internal evolution variables computed by flow model
   d_flow->addComputesAndRequires(task, matl, patches);
@@ -859,9 +845,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<MetalIntVar> pIntVar_old;
     old_dw->get(pIntVar_old, pIntVarLabel, pset);
 
-    constParticleVariable<DStressDMetalIntVar> pDStressDIntVar_old;
-    old_dw->get(pDStressDIntVar_old, pDStressDIntVarLabel, pset);
-
     // Create and allocate arrays for storing the updated information
     // GLOBAL
     ParticleVariable<Matrix3> tensorL;
@@ -897,9 +880,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
     ParticleVariable<MetalIntVar> pIntVar_new;
     new_dw->allocateAndPut(pIntVar_new, pIntVarLabel_preReloc, pset);
-
-    ParticleVariable<DStressDMetalIntVar> pDStressDIntVar_new;
-    new_dw->allocateAndPut(pDStressDIntVar_new, pDStressDIntVarLabel_preReloc, pset);
 
     d_flow->getInternalVars(pset, old_dw);
     d_devStress->getInternalVars(pset, old_dw);
@@ -977,13 +957,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // Rotate internal Cauchy stresses back to the
       // material configuration (only for viscoelasticity)
       d_devStress->rotateInternalStresses(idx, tensorR);
-
-      // Rotate the derivatives of the stress wrt internal variables
-      std::vector<Matrix3> sigma_eta_old;
-      sigma_eta_old.push_back(tensorR.Transpose() *
-                              (pDStressDIntVar_old[idx].eqPlasticStrain * tensorR));
-      sigma_eta_old.push_back(tensorR.Transpose() *
-                              (pDStressDIntVar_old[idx].plasticPorosity * tensorR));
 
       // Set up the DeformationState 
       DeformationState defState;
@@ -1094,17 +1067,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
           // Use radial return to compute a rough estimate of stress and
           // delta Gamma = dgamma/dt * Delta t = dlambda/dt * Delta t 
-          double delGamma = doRadialReturn(delT, matl, idx, &state_trial, &state_new);
-          Matrix3 nn = s_trial / s_trial.Norm();
-          state_trial.lambdaIncPlastic = delGamma;
-
-          state_new.eqPlasticStrain = 
-            d_intvar->computeInternalVariable("eqPlasticStrain", &state_old, &state_trial);
-          state_new.porosity        = 
-            d_intvar->computeInternalVariable("porosity", &state_old, &state_trial);
-
-          tensorEtaPlasticInc = nn * delGamma;
-          s_new = s_trial - tensorEtaPlasticInc * (2.0 * state_trial.shearModulus);
+          double delGamma = doApproxReturn(delT, matl, idx, &state_trial, &state_new);
+          s_new = state_new.getStress().Deviator();
 
           // Update internal variables
           d_flow->updatePlastic(idx, delGamma);
@@ -1123,8 +1087,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       // Get the elastic-plastic coupling derivatives
       IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
-      std::vector<Matrix3> sigma_eta_new =
-        elasticityModel.computeDStressDIntVar(delT, sigma_eta_old, &defState, &state_new);
 
       // Calculate the updated total stress
       double p_new =
@@ -1281,28 +1243,22 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
             state_new.meltingTemp  = Tm_cur;
             mu_cur                   = d_shear->computeShearModulus(&state_new);
             state_new.shearModulus = mu_cur;
-            double sigY =
+            state_new.yieldStress =
               d_flow->computeFlowStress(&state_new, delT, d_tol, matl, idx);
-            if (!(sigY > 0.0))
+            if (!(state_new.yieldStress > 0.0))
               isLocalized = true;
             else {
-              double dsigYdep =
-                d_flow->evalDerivativeWRTPlasticStrain(&state_new, idx);
-              double A = voidNucleationFactor(state_new.eqPlasticStrain);
-
-              // Calculate the elastic tangent modulus
-              TangentModulusTensor Ce;
-              computeElasticTangentModulus(bulk, mu_cur, Ce);
+  
+              // Get elastic tangent modulus
+              auto C_e = elasticityModel.computeElasticTangentModulus(&state_new);
 
               // Calculate the elastic-plastic tangent modulus
-              TangentModulusTensor Cep;
-              d_yield->computeElasPlasTangentModulus(
-                Ce, sigma_new, sigY, dsigYdep, pPorosity_new[idx], A, Cep);
+              auto C_ep = computeElasPlasTangentModulus(C_e, &state_new);
 
               // Initialize localization direction
               Vector direction(0.0, 0.0, 0.0);
               isLocalized =
-                d_stable->checkStability(sigma_new, tensorD, Cep, direction);
+                d_stable->checkStability(sigma_new, tensorD, C_ep, direction);
             }
           }
         }
@@ -1365,11 +1321,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // coordinates (only for viscoelasticity)
       d_devStress->rotateInternalStresses(idx, tensorR);
 
-      // Update derivatives of stress wrt internal variables
-      sigma_eta_new[0] = (tensorR * sigma_eta_new[0]) * (tensorR.Transpose());
-      sigma_eta_new[1] = (tensorR * sigma_eta_new[1]) * (tensorR.Transpose());
-      pDStressDIntVar_new[idx] = {sigma_eta_new[0], sigma_eta_new[1]};
-
       // Update the kinematic variables
       pRotation_new[idx] = tensorR;
 
@@ -1420,7 +1371,6 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    // delete interpolator;
   }
 
   if (cout_EP.active())
@@ -1430,10 +1380,10 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
 ////////////////////////////////////////////////////////////////////////
 /*! \brief Compute Stilde, epdot, ep, and delGamma using
-           radial return */
+           approximate return */
 ////////////////////////////////////////////////////////////////////////
 double
-ElasticPlasticHP::doRadialReturn(const double& delT,
+ElasticPlasticHP::doApproxReturn(const double& delT,
                                  const MPMMaterial* matl,
                                  const particleIndex idx,
                                  const ModelStateBase* state_trial,
@@ -1463,18 +1413,21 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   double twothird  = 2.0 / 3.0;
   double stwothird = sqrt(twothird);
   double sthreetwo = 1.0 / stwothird;
-  double twomu     = 2.0 * state_trial->shearModulus;
 
   // Initialize variables
-  double ep            = state_trial->eqPlasticStrain;
-  double sigma_y       = state_trial->yieldStress;
   double deltaGamma    = state_trial->eqPlasticStrainRate * delT * sthreetwo;
   double deltaGammaOld = deltaGamma;
   double g             = 0.0;
   double Dg            = 1.0;
 
-  auto normTrialS = state_trial->devStress.Norm();
-  
+  // Compute the projection tensor (P = C:M, C = elastic tangent, M = normal to yield surface)
+  auto C_e = d_elastic->computeElasticTangentModulus(state_trial);
+  auto M = d_yield->df_dsigma(state_trial);
+  M /= M.Norm(); 
+  auto M_vec = Vaango::Tensor::constructVector6Mandel(M);
+  auto P_vec = C_e * M_vec;
+  auto P = Vaango::Tensor::constructMatrix3(P_vec);
+
   //__________________________________
   // iterate
   ModelStateBase state_iter(state_trial);
@@ -1483,20 +1436,20 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
     ++count;
 
+    // Compute the projected stress
+    auto stress_iter = state_trial->getStress() - P * deltaGamma;
+    state_iter.setStress(stress_iter);
+
     // Compute the yield stress
-    sigma_y = d_flow->computeFlowStress(&state_iter, delT, tolerance, matl, idx);
+    state_iter.yieldStress = 
+      d_flow->computeFlowStress(&state_iter, delT, tolerance, matl, idx);
 
-    // Compute g
-    g = normTrialS - stwothird * sigma_y - twomu * deltaGamma;
+    // Compute the yield function
+    g = d_yield->evalYieldCondition(stress_iter, &state_iter);
 
-    // Compute d(sigma_y)/d(epdot)
-    double dsigy_depdot = d_flow->evalDerivativeWRTStrainRate(&state_iter, idx);
-
-    // Compute d(sigma_y)/d(ep)
-    double dsigy_dep = d_flow->evalDerivativeWRTPlasticStrain(&state_iter, idx);
-
-    // Compute d(g)/d(deltaGamma)
-    Dg = -twothird * (dsigy_depdot / delT + dsigy_dep) - twomu;
+    // Compute the derivative of the yield function wrt delGamma
+    auto df_dsigma = d_yield->df_dsigma(stress_iter, &state_iter);
+    Dg = - df_dsigma.Contract(P);
 
     // Update deltaGamma
     deltaGammaOld = deltaGamma;
@@ -1505,28 +1458,36 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     if (std::isnan(g) || std::isnan(deltaGamma)) {
       std::cout << "idx = " << idx << " iter = " << count << " g = " << g
                 << " Dg = " << Dg << " deltaGamma = " << deltaGamma
-                << " sigy = " << sigma_y << " dsigy/depdot = " << dsigy_depdot
-                << " dsigy/dep= " << dsigy_dep
+                << " sigy = " << state_iter.yieldStress 
                 << " epdot = " << state_iter.eqPlasticStrainRate
+                << " phi = " << state_iter.porosity
                 << " ep = " << state_iter.eqPlasticStrain << "\n";
       throw InternalError("nans in computation", __FILE__, __LINE__);
     }
+
+    // Update internal variables
+    state_iter.lambdaIncPlastic = deltaGamma;
+    state_iter.eqPlasticStrain = 
+      d_intvar->computeInternalVariable("eqPlasticStrain", state_trial, &state_iter);
+    state_iter.porosity = 
+      d_intvar->computeInternalVariable("porosity", state_trial, &state_iter);
 
     // Update local plastic strain rate
     double stt_deltaGamma      = std::max(stwothird * deltaGamma, 0.0);
     state_iter.eqPlasticStrainRate = stt_deltaGamma / delT;
 
-    // Update local plastic strain
-    state_iter.eqPlasticStrain = ep + stt_deltaGamma;
-
     if (std::abs(deltaGamma - deltaGammaOld) < tolerance || count > 100)
       break;
 
-  } while (std::abs(g) > sigma_y / 1000.);
+  } while (std::abs(g) > tolerance);
 
   // Update new state
   state_new->eqPlasticStrain     = state_iter.eqPlasticStrain;
   state_new->eqPlasticStrainRate = state_iter.eqPlasticStrainRate;
+  state_new->porosity            = state_iter.porosity;
+
+  auto stress_new = state_trial->getStress() - P * deltaGamma;
+  state_new->setStress(stress_new);
 
   // Compute the yield stress
   state_new->yieldStress =
@@ -1544,6 +1505,48 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
   return deltaGamma;
 }
+
+Vaango::Tensor::Matrix6Mandel
+ElasticPlasticHP::computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
+                                                const ModelStateBase* state) const
+{
+  // Calculate the derivative of the yield function wrt sigma
+  Matrix3 N = d_yield->df_dsigma(state);
+  double N_mag = N.Norm();
+  N /= N_mag;
+  auto N_vec = Vaango::Tensor::constructVector6Mandel(N);
+  auto M_vec = N_vec; // associated plasticity
+
+  // Calculate derivative wrt internal variables
+  MetalIntVar f_intvar;
+  d_yield->df_dintvar(state, f_intvar);
+  double f_eta1 = f_intvar.plasticPorosity;
+  double f_eta2 = f_intvar.eqPlasticStrain;
+
+  // Compute isotropic hardening moduli
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(state, h_eta);
+  double h_eta1 = h_eta.eqPlasticStrain;
+  double h_eta2 = h_eta.plasticPorosity;
+
+  // Compute P = C:M + Z
+  auto P_vec = C_e * M_vec;
+
+  // Compute H
+  double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2) / N_mag;
+
+  // Compute P:N + H
+  double PN_H = P_vec.transpose() * N_vec + H;
+
+  // Compute P(C:N)
+  auto CN_vec = C_e * N_vec;
+  auto P_CN = Vaango::Tensor::constructMatrix6Mandel(P_vec, CN_vec);
+
+  // Compute C_ep
+  auto C_ep = C_e - P_CN / PN_H;
+  return C_ep;
+}
+
 //______________________________________________________________________
 //
 void
@@ -1843,7 +1846,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         // Do Newton iteration to compute delGamma and updated
         // plastic strain, plastic strain rate, and yield stress
         ModelStateBase state_new(state_trial);
-        double delGamma = doRadialReturn(delT, matl, idx, &state_trial, &state_new);
+        double delGamma = doApproxReturn(delT, matl, idx, &state_trial, &state_new);
         Matrix3 nn = s_trial / s_trial.Norm();
 
         Matrix3 tensorEtaPlasticInc = nn * delGamma;
@@ -2223,7 +2226,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         // Do Newton iteration to compute delGamma and updated
         // plastic strain, plastic strain rate, and yield stress
         ModelStateBase state_new(state_trial);
-        double delGamma = doRadialReturn(delT, matl, idx, &state_trial, &state_new);
+        double delGamma = doApproxReturn(delT, matl, idx, &state_trial, &state_new);
         Matrix3 nn = s_trial / s_trial.Norm();
 
         Matrix3 tensorEtaPlasticInc = nn * delGamma;

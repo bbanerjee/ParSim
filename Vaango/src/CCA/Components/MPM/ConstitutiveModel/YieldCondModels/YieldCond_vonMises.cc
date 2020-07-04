@@ -71,21 +71,21 @@ YieldCond_vonMises::evalYieldCondition(const ModelStateBase* state)
 double
 YieldCond_vonMises::computeYieldFunction(const ModelStateBase* state) const
 {
-  auto xi  = state->devStress - state->backStress.Deviator();
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(state->getStress(), state);
 }
 
 double
-YieldCond_vonMises::evalYieldCondition(const Matrix3& xi,
+YieldCond_vonMises::evalYieldCondition(const Matrix3& stress,
                                        const ModelStateBase* state)
 {
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(stress, state);
 }
 
 double
-YieldCond_vonMises::computeYieldFunction(const Matrix3& xi,
+YieldCond_vonMises::computeYieldFunction(const Matrix3& stress,
                                          const ModelStateBase* state) const
 {
+  Matrix3 xi    = stress.Deviator() - state->backStress.Deviator();
   double sigy   = state->yieldStress;
   double xiNorm = xi.Norm();
   double f      = Vaango::Util::sqrt_three_half * xiNorm - sigy;
@@ -108,17 +108,16 @@ YieldCond_vonMises::evalYieldConditionMax(const ModelStateBase* state)
 Matrix3
 YieldCond_vonMises::df_dsigma(const ModelStateBase* state) 
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  return df_dsigma(xi, state);
+  return df_dsigma(state->getStress(), state);
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)
     Assume f = sqrt{3/2} ||xi|| - sigma_y , xi = s - beta
     df/dsigma = sqrt(3/2) (xi / ||xi|| + 1/3 tr(beta) / ||xi|| I) */
 Matrix3
-YieldCond_vonMises::df_dsigma(const Matrix3& xi, const ModelStateBase* state)
+YieldCond_vonMises::df_dsigma(const Matrix3& stress, const ModelStateBase* state)
 {
-  Matrix3 df_dsigma = df_dxi(xi, state);
+  Matrix3 df_dsigma = df_dxi(stress, state);
   return df_dsigma;
 }
 
@@ -128,18 +127,19 @@ YieldCond_vonMises::df_dsigma(const Matrix3& xi, const ModelStateBase* state)
     Assume f = sqrt{3/2} ||xi|| - sigma_y
     df/dxi = sqrt(3/2) xi / ||xi|| */
 Matrix3
-YieldCond_vonMises::df_dxi(const Matrix3& xi, const ModelStateBase*)
+YieldCond_vonMises::df_dxi(const Matrix3& stress, const ModelStateBase* state)
 {
+  Matrix3 xi     = stress.Deviator() - state->backStress.Deviator();
   Matrix3 df_dxi = xi * (Vaango::Util::sqrt_three_half / xi.Norm());
   return df_dxi;
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Matrix3, Matrix3>
-YieldCond_vonMises::df_dsigmaDev_dbeta(const Matrix3& xi,
+YieldCond_vonMises::df_dsigmaDev_dbeta(const Matrix3& stress,
                                        const ModelStateBase* state)
 {
-  Matrix3 df_ds    = df_dxi(xi, state);
+  Matrix3 df_ds    = df_dxi(stress, state);
   Matrix3 df_dbeta = df_ds * (-1.0);
   return std::make_pair(df_ds, df_dbeta);
 }

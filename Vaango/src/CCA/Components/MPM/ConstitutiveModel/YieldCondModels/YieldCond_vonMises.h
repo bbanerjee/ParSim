@@ -93,7 +93,7 @@ public:
   computeYieldFunction(const ModelStateBase* state) const override;
 
   double
-  evalYieldCondition(const Uintah::Matrix3& xi,
+  evalYieldCondition(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
   double
@@ -105,17 +105,17 @@ public:
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  df_dsigma(const Uintah::Matrix3& stress, const ModelStateBase* state) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
       where \f$s\f$ is deviatoric part of Cauchy stress and
       \f$\beta\f$ is the backstress */
   Uintah::Matrix3
-  df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  df_dxi(const Uintah::Matrix3& stress, const ModelStateBase* state) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
   std::pair<Matrix3, Matrix3>
-  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
   /*! Derivative with respect to internal variables 
@@ -268,7 +268,7 @@ private:
   const FlowStressModel* d_flow;
 
   double
-  computeYieldFunction(const Matrix3& xi,
+  computeYieldFunction(const Matrix3& stress,
                        const ModelStateBase* state) const;
 
 };

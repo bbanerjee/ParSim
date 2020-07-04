@@ -75,8 +75,7 @@ YieldCond_Rousselier::evalYieldCondition(const ModelStateBase* state)
 double
 YieldCond_Rousselier::computeYieldFunction(const ModelStateBase* state) const
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(state->getStress(), state);
 }
 
 /**
@@ -84,19 +83,21 @@ YieldCond_Rousselier::computeYieldFunction(const ModelStateBase* state) const
  *  sigma = dev(sigma) + Identity * state->pressure;
  */
 double
-YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
+YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& stress,
                                          const ModelStateBase* state)
 {
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(stress, state);
 }
 
 double
-YieldCond_Rousselier::computeYieldFunction(const Uintah::Matrix3& xi,
+YieldCond_Rousselier::computeYieldFunction(const Uintah::Matrix3& stress,
                                            const ModelStateBase* state) const
 {
+  Matrix3 xi = stress - state->backStress.Deviator();
+  double  p  = (stress.Trace() - state->backStress.Trace()) / 3.0;
+
   double phi     = state->porosity;
   double sigma_f = state->yieldStress;
-  double p       = (state->I1 - state->backStress.Trace()) / 3.0;
   double J2      = 0.5 * xi.Contract(xi);
   double q       = std::sqrt(3.0 * J2);
 
@@ -128,29 +129,21 @@ YieldCond_Rousselier::evalYieldConditionMax(const ModelStateBase* state)
 Matrix3
 YieldCond_Rousselier::df_dsigma(const ModelStateBase* state) 
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  return df_dsigma(xi, state);
+  return df_dsigma(state->getStress(), state);
 }
 
 Uintah::Matrix3
-YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& xi,
+YieldCond_Rousselier::df_dsigma(const Uintah::Matrix3& stress,
                                 const ModelStateBase* state)
 {
-  double p = state->p - state->backStress.Trace() / 3.0;
-  Uintah::Matrix3 dfdsigma = 
-    df_dsigma_actual(xi, p, state->porosity);
-  return dfdsigma;
-}
-
-Uintah::Matrix3
-YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& xi,
-                                       double p,
-                                       double phi) const
-{
+  double p = stress.Trace() - state->backStress.Trace() / 3.0;
+  Matrix3 xi = stress.Deviator() - state->backStress.Deviator();
   double xi_xi              = xi.NormSquared();
+
   Uintah::Matrix3 dp_dsigma = Vaango::Util::Identity * (1.0 / 3.0);
   Uintah::Matrix3 dq_dsigma = xi / std::sqrt(xi_xi * 2.0 / 3.0);
 
+  double phi   = state->porosity;
   double D     = d_params.D;
   double sig1  = d_params.sigma_1;
   double p_phi = p / (1.0 - phi);
@@ -165,31 +158,33 @@ YieldCond_Rousselier::df_dsigma_actual(const Uintah::Matrix3& xi,
  * q_xi = sqrt(3/2 (sig_dev - beta) : (sig_dev - beta))
  */
 Uintah::Matrix3
-YieldCond_Rousselier::df_dxi(const Uintah::Matrix3& xi,
+YieldCond_Rousselier::df_dxi(const Uintah::Matrix3& stress,
                              const ModelStateBase* state)
 {
-  double phi             = state->porosity;
-  double df_dq           = 1.0 / (1 - phi);
+  Matrix3 xi    = stress.Deviator() - state->backStress.Deviator();
+  double phi    = state->porosity;
+  double df_dq  = 1.0 / (1 - phi);
   Uintah::Matrix3 dq_dxi = xi * std::sqrt(1.5 / xi.NormSquared());
-  Matrix3 f_xi           = dq_dxi * df_dq;
+  Matrix3 f_xi  = dq_dxi * df_dq;
   return f_xi;
 }
 
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
-YieldCond_Rousselier::df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+YieldCond_Rousselier::df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                                          const ModelStateBase* state)
 {
-  auto df_ds = df_dxi(xi, state);
-  double f_beta_p = df_dbeta_p(state);
+  auto df_ds = df_dxi(stress, state);
+  double f_beta_p = df_dbeta_p(stress, state);
   auto df_dbeta = df_ds * (-1.0) + Vaango::Util::Identity * (-f_beta_p / 3.0);
   return std::make_pair(df_ds, df_dbeta);
 }
 
 double
-YieldCond_Rousselier::df_dbeta_p(const ModelStateBase* state) const
+YieldCond_Rousselier::df_dbeta_p(const Uintah::Matrix3& stress,
+                                 const ModelStateBase* state) const
 {
+  double p  = (stress.Trace() - state->backStress.Trace()) / 3.0;
   double phi   = state->porosity;
-  double p     = state->p - state->backStress.Trace() / 3.0;
   double D     = d_params.D;
   double sig1  = d_params.sigma_1;
   double p_phi = p / (1.0 - phi);

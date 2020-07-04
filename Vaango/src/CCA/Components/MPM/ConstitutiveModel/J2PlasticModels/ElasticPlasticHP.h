@@ -129,7 +129,6 @@ public:
   const VarLabel* pLocalizedLabel;
   const VarLabel* pEnergyLabel;
   const VarLabel* pIntVarLabel;
-  const VarLabel* pDStressDIntVarLabel;
 
   const VarLabel* pRotationLabel_preReloc; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel_preReloc;
@@ -140,7 +139,6 @@ public:
   const VarLabel* pLocalizedLabel_preReloc;
   const VarLabel* pEnergyLabel_preReloc;
   const VarLabel* pIntVarLabel_preReloc;
-  const VarLabel* pDStressDIntVarLabel_preReloc;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
@@ -314,9 +312,9 @@ public:
 protected:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stilde, epdot, ep, and delGamma using
-             radial return */
+             approximate return */
   ////////////////////////////////////////////////////////////////////////
-  double doRadialReturn(const double& delT,
+  double doApproxReturn(const double& delT,
                         const MPMMaterial* matl,
                         const particleIndex idx,
                         const ModelStateBase* state_trial,
@@ -480,6 +478,9 @@ protected:
 
   void setErosionAlgorithm();
 
+  Vaango::Tensor::Matrix6Mandel
+  computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
+                                const ModelStateBase* state) const;
 };
 
 } // End namespace Uintah

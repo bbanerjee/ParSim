@@ -129,7 +129,7 @@ public:
   computeYieldFunction(const ModelStateBase* state) const override;
 
   double
-  evalYieldCondition(const Uintah::Matrix3& xi,
+  evalYieldCondition(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
   double
@@ -140,22 +140,22 @@ public:
   df_dsigma(const ModelStateBase* state) override;
 
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& xi,
+  df_dsigma(const Uintah::Matrix3& stress,
             const ModelStateBase* state) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
       where \f$s\f$ is deviatoric part of Cauchy stress and
       \f$\beta\f$ is the backstress */
   Uintah::Matrix3
-  df_dxi(const Uintah::Matrix3& xi,
+  df_dxi(const Uintah::Matrix3& stress,
          const ModelStateBase* state) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
   std::pair<Uintah::Matrix3, Uintah::Matrix3>
-  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
   double
-  df_dbeta_p(const ModelStateBase* state) const;
+  df_dbeta_p(const Matrix3& stress, const ModelStateBase* state) const;
 
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
@@ -296,7 +296,7 @@ private:
 
   /* Compute the yield function */
   double
-  computeYieldFunction(const Matrix3& xi,
+  computeYieldFunction(const Matrix3& stress,
                        const ModelStateBase* state) const;
 
   /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/

@@ -613,7 +613,7 @@ YieldCond_Arena::df_dsigma(const ModelStateBase* state)
 }
 
 Matrix3
-YieldCond_Arena::df_dsigma(const Matrix3&,
+YieldCond_Arena::df_dsigma(const Matrix3& stress,
                            const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
@@ -1556,10 +1556,9 @@ YieldCond_Arena::df_depsDev(const ModelStateBase* state_input,
   return 0.0;
 }
 
-// Evaluate yield condition (s = deviatoric stress
-//                           p = state->p)
+// Evaluate yield condition 
 double
-YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3&,
+YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3& stress,
                                     const ModelStateBase* state_input)
 {
   std::ostringstream out;
@@ -1577,7 +1576,7 @@ YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3&,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Matrix3
-YieldCond_Arena::df_dxi(const Matrix3& sigDev,
+YieldCond_Arena::df_dxi(const Matrix3& stress,
                         const ModelStateBase*)
 
 {
@@ -1591,7 +1590,7 @@ YieldCond_Arena::df_dxi(const Matrix3& sigDev,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Matrix3, Matrix3>
-YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& sigDev,
+YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& stress,
                                     const ModelStateBase*)
 {
   std::ostringstream out;

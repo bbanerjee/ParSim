@@ -689,10 +689,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
   Matrix3 rateOfDef_new(0.0);
   Matrix3 rateOfDef_dev_new(0.0);
   Matrix3 sigma_old(0.0);
-  Matrix3 sigma_dev_old(0.0);
-  Matrix3 sigma_dev_new(0.0);
+  Matrix3 sigma_new(0.0);
   Matrix3 backStress_old(0.0);
-  Matrix3 backStress_dev_old(0.0);
   Matrix3 backStress_new(0.0);
   std::vector<Matrix3> sigma_eta_new;
 
@@ -869,7 +867,6 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       sigma_old           = pStress_old[idx];
       sigma_old           = (rotation.Transpose()) * (sigma_old * rotation);
       double pressure_old = sigma_old.Trace() / 3.0;
-      sigma_dev_old       = sigma_old - one * pressure_old;
 
       // Rotate the derivatives of the stress wrt internal variables
       std::vector<Matrix3> sigma_eta_old;
@@ -881,8 +878,6 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       // Get the back stress from the kinematic hardening model and rotate
       backStress_old =
         (rotation.Transpose()) * (pBackStress_old[idx] * rotation);
-      backStress_dev_old =
-        backStress_old - one * (backStress_old.Trace() / 3.0);
       backStress_new = backStress_old;
 
       // Set up the deformation state
@@ -959,8 +954,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         melted = true;
 
         // Set the deviatoric stress to zero
-        if (d_doMelting)
-          sigma_dev_old = 0.0;
+        if (d_doMelting) {
+          sigma_new = elasticityModel.computeStress(delT, sigma_old, &defState_new, &state);
+          sigma_new = Vaango::Util::Identity * sigma_new.Trace();
+        }
 
         d_flow->updateElastic(idx);
         pBackStress_new[idx].set(0.0);
@@ -973,13 +970,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         Matrix3 sigma_trial = 
           elasticityModel.computeStress(delT, sigma_old, &defState_new, &state);
         
-        Matrix3 sigma_dev_trial = sigma_trial.Deviator();
-
-        // Compute xi_trial = s_trial - beta_n
-        Matrix3 xi_trial = sigma_dev_trial - backStress_dev_old;
-
         // Check whether the step is elastic or plastic
-        auto f_0 = d_yield->evalYieldCondition(xi_trial, &state);
+        auto f_0 = d_yield->evalYieldCondition(sigma_trial, &state);
         if (std::isnan(f_0)) {
           std::cout << "idx = " << idx << " epdot = " << state.eqPlasticStrainRate
                << " ep = " << state.eqPlasticStrain
@@ -992,7 +984,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         if (f_0 < 0.0) {
 
           // Set the elastic stress to the trial stress
-          sigma_dev_new = sigma_dev_trial;
+          sigma_new = sigma_trial;
 
           // Update the internal variables
           d_flow->updateElastic(idx);
@@ -1000,29 +992,14 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
         } else {
 
-          Matrix3 xi_n = sigma_dev_old - backStress_dev_old;
-          if (!(xi_n.NormSquared() > 0.0)) {
-            std::cout
-              << "Particle idx = " << idx
-              << " has zero deviatoric stress.  Reduce initial time step size"
-              << " and restart. " << "\n";
-            throw InvalidValue("**ERROR**:SmallStrainPlastic: Lower time step",
-                               __FILE__,
-                               __LINE__);
-          }
-
-          // Get ep_n, phi_n
-          //double ep_n  = state.eqPlasticStrain;
-          //double phi_n = state.porosity;
-
           // Initialize dsigma_dintvar
           Matrix3 sigma_alpha_k = sigma_eta_old[0];
           Matrix3 sigma_phi_k   = sigma_eta_old[1];
           Matrix3 sigma_beta_k(0.0);
 
           // Compute r_k, h_k
-          Matrix3 xi_k = xi_trial;
-          Matrix3 r_k = d_yield->df_dsigma(xi_k, &state);
+          Matrix3 sigma_k = sigma_trial;
+          Matrix3 r_k = d_yield->df_dsigma(sigma_k, &state);
           
           MetalIntVar h_eta;
           d_intvar->computeHardeningModulus(&state, h_eta);
@@ -1048,7 +1025,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             sigma_phi_k   = sigma_eta_k[1];
 
             // Get the derivatives of the yield function
-            Matrix3 df_dxi_k = d_yield->df_dxi(xi_k, &state);
+            Matrix3 df_dxi_k = d_yield->df_dxi(sigma_k, &state);
             MetalIntVar f_eta_k; 
             d_yield->df_dintvar(&state, f_eta_k);
             double df_dep_k = f_eta_k.eqPlasticStrain;
@@ -1089,8 +1066,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
                    << " df_dep_k = " << df_dep_k
                    << " epdot = " << state.eqPlasticStrainRate
                    << " ep = " << state.eqPlasticStrain << "\n";
-              std::cout << "xi = \n"
-                   << xi_k << "\n df_dxi:term1 = " << df_dxi_k.Contract(term1_k)
+              std::cout << "sigma = \n"
+                   << sigma_k << "\n df_dxi:term1 = " << df_dxi_k.Contract(term1_k)
                    << "\n df_dxi = \n"
                    << df_dxi_k << "\n term1 = " << term1_k
                    << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
@@ -1102,9 +1079,9 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
                    << h_beta_k_dev << "\n";
             }
 
-            /* Updated algorithm - use value of xi_k */
+            /* Updated algorithm - use value of sigma_k */
             // Compute r_k, h_k
-            r_k = d_yield->df_dsigma(xi_k, &state);
+            r_k = d_yield->df_dsigma(sigma_k, &state);
             //MetalIntVar h_eta;
             //d_intvar->computeHardeningModulus(&state, h_eta);
             //double h_alpha_k = h_eta.eqPlasticStrain;
@@ -1117,10 +1094,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             // Update plastic consistency parameter increment
             state.lambdaIncPlastic = Delta_gamma;
 
-            // Update ep, phi, xi
+            // Update ep, phi, sigma
             state.eqPlasticStrain = d_intvar->computeInternalVariable("eqPlasticStrain", &state_old, &state);
             state.porosity        = d_intvar->computeInternalVariable("porosity", &state_old, &state);
-            xi_k                  = xi_trial - term1_k * Delta_gamma;
+            sigma_k               = sigma_trial - term1_k * Delta_gamma;
 
             if (fabs(Delta_gamma - Delta_gamma_old) < d_tol || count > 100)
               break;
@@ -1132,20 +1109,18 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             // Check yield condition.  The state variable contains
             // ep_k, phi_k, beta_k
-            f_k = d_yield->evalYieldCondition(xi_k, &state);
+            f_k = d_yield->evalYieldCondition(sigma_k, &state);
 
             ++count;
           }
 
           // Update the back stress and deviatoric stress
-          Matrix3 r_new = d_yield->df_dsigma(xi_k, &state);
+          Matrix3 r_new = d_yield->df_dsigma(sigma_k, &state);
           Matrix3 h_beta_new(0.0);
           d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
           backStress_new   = backStress_old + h_beta_new * Delta_gamma;
           state.backStress = backStress_new;
-          Matrix3 backStress_dev_new =
-            backStress_new - one * (backStress_new.Trace() / 3.0);
-          sigma_dev_new = xi_k + backStress_dev_new;
+          sigma_new = sigma_k + backStress_new;
 
           // Update the elastic-plastic coupling derivatives
           sigma_eta_new = 
@@ -1181,9 +1156,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       double T_0       = state.initialTemperature;
       double kappa_new = d_eos->eval_dp_dJ(matl, J_new, &state);
       kappa_new *= J_new;
-      Matrix3 sigma_new =
-        sigma_dev_new +
-        one * (pressure_new - 3.0 * kappa_new * CTE * (T_new - T_0));
+      //Matrix3 sigma_new =
+      //  sigma_dev_new +
+      //  one * (pressure_new - 3.0 * kappa_new * CTE * (T_new - T_0));
+      sigma_new -= one * (- 3.0 * kappa_new * CTE * (T_new - T_0));
 
       // If the particle has already failed, apply various erosion algorithms
       if (flag->d_doErosion) {

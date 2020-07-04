@@ -95,7 +95,7 @@ public:
   computeYieldFunction(const ModelStateBase* state) const = 0;
 
   virtual double
-  evalYieldCondition(const Uintah::Matrix3& xi,
+  evalYieldCondition(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) = 0;
 
   virtual double
@@ -118,13 +118,13 @@ public:
   df_dsigma(const ModelStateBase* state) = 0;
 
   virtual Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;
+  df_dsigma(const Uintah::Matrix3& stress, const ModelStateBase* state) = 0;
 
   virtual Uintah::Matrix3
-  df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state) = 0;
+  df_dxi(const Uintah::Matrix3& stress, const ModelStateBase* state) = 0;
 
   virtual std::pair<Uintah::Matrix3, Uintah::Matrix3>
-  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) = 0;
 
   virtual double

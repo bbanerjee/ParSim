@@ -309,17 +309,17 @@ public:
   df_dsigma(const ModelStateBase* state) override;
 
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  df_dsigma(const Uintah::Matrix3& stress, const ModelStateBase* state) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
   Uintah::Matrix3
-  df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state) override;
+  df_dxi(const Uintah::Matrix3& stress, const ModelStateBase* state) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
   std::pair<Uintah::Matrix3, Uintah::Matrix3>
-  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
   /////////////////////////////////////////////////////////////////////////

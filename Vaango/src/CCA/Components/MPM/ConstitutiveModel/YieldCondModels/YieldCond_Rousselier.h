@@ -107,7 +107,7 @@ public:
   computeYieldFunction(const ModelStateBase* state) const override;
 
   double
-  evalYieldCondition(const Uintah::Matrix3& xi,
+  evalYieldCondition(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
   double
@@ -131,18 +131,19 @@ public:
   df_dsigma(const ModelStateBase* state) override;
 
   Uintah::Matrix3
-  df_dsigma(const Uintah::Matrix3& xi,
+  df_dsigma(const Uintah::Matrix3& stress,
             const ModelStateBase* state) override;
 
   Uintah::Matrix3
-  df_dxi(const Uintah::Matrix3& xi,
+  df_dxi(const Uintah::Matrix3& stress,
          const ModelStateBase* state) override;
 
   std::pair<Uintah::Matrix3, Uintah::Matrix3>
-  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& stress,
                      const ModelStateBase* state) override;
 
-  double df_dbeta_p(const ModelStateBase* state) const;
+  double df_dbeta_p(const Uintah::Matrix3& stress,
+                    const ModelStateBase* state) const;
 
   double
   df_dp(const ModelStateBase* state) override;
@@ -219,11 +220,8 @@ private:
   const Uintah::FlowStressModel* d_flow;
 
   double
-  computeYieldFunction(const Matrix3& xi,
+  computeYieldFunction(const Matrix3& stress,
                        const ModelStateBase* state) const;
-
-  Uintah::Matrix3
-  df_dsigma_actual(const Uintah::Matrix3& s_dev, double p, double phi) const;
 
   double
   df_dplasticStrain(const ModelStateBase* state) const;

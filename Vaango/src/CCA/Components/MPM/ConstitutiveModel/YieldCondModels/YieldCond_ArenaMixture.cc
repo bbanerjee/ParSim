@@ -1696,7 +1696,7 @@ YieldCond_ArenaMixture::evalYieldCondition(const Uintah::Matrix3&,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Matrix3
-YieldCond_ArenaMixture::df_dxi(const Matrix3& sigDev,
+YieldCond_ArenaMixture::df_dxi(const Matrix3& stress,
                                const ModelStateBase*)
 
 {
@@ -1710,7 +1710,7 @@ YieldCond_ArenaMixture::df_dxi(const Matrix3& sigDev,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Matrix3, Matrix3>
-YieldCond_ArenaMixture::df_dsigmaDev_dbeta(const Matrix3& sigDev,
+YieldCond_ArenaMixture::df_dsigmaDev_dbeta(const Matrix3& stress,
                                            const ModelStateBase*)
 {
   std::ostringstream out;

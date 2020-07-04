@@ -56,14 +56,12 @@ class ParticleVariableBase;
 /*!
   \class ImplicitCM
 
-  \brief Base class for contitutive models.
+  \brief Base class for constitutive models.
 
   \author Steven G. Parker \n
   Department of Computer Science \n
   University of Utah \n
   Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n
-
-  Long description...
 */
 //////////////////////////////////////////////////////////////////////////
 

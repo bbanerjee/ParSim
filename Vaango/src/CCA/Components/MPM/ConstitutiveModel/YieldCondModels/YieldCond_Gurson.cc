@@ -86,25 +86,26 @@ YieldCond_Gurson::evalYieldCondition(const ModelStateBase* state)
 double
 YieldCond_Gurson::computeYieldFunction(const ModelStateBase* state) const
 {
-  auto xi = state->devStress - state->backStress.Deviator();
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(state->getStress(), state);
 }
 
 double
-YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
+YieldCond_Gurson::evalYieldCondition(const Matrix3& stress,
                                      const ModelStateBase* state)
 {
-  return computeYieldFunction(xi, state);
+  return computeYieldFunction(stress, state);
 }
 
 double
-YieldCond_Gurson::computeYieldFunction(const Matrix3& xi,
+YieldCond_Gurson::computeYieldFunction(const Matrix3& stress,
                                        const ModelStateBase* state) const
 {
+  Matrix3 xi   = stress.Deviator() - state->backStress.Deviator();
+  double sig_m = (stress.Trace() - state->backStress.Trace()) / 3.0;
+
   // Get the state data
   double sigy     = state->yieldStress;
   double porosity = state->porosity;
-  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double xi_xi    = xi.NormSquared();
   double sig_eq   = std::sqrt(1.5 * xi_xi);
 
@@ -142,18 +143,19 @@ YieldCond_Gurson::evalYieldConditionMax(const ModelStateBase* state)
 Matrix3
 YieldCond_Gurson::df_dsigma(const ModelStateBase* state) 
 {
-  Matrix3 xi = state->devStress - state->backStress.Deviator();
-  return df_dsigma(xi, state);
+  return df_dsigma(state->getStress(), state);
 }
 
 Uintah::Matrix3
-YieldCond_Gurson::df_dsigma(const Matrix3& xi,
+YieldCond_Gurson::df_dsigma(const Matrix3& stress,
                             const ModelStateBase* state)
 {
+  Matrix3 xi   = stress.Deviator() - state->backStress.Deviator();
+  double sig_m = (stress.Trace() - state->backStress.Trace()) / 3.0;
+
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
 
-  double sig_m    = state->p - state->backStress.Trace()/3.0;
   double porosity = state->porosity;
 
   double q1    = d_CM.q1;
@@ -181,9 +183,11 @@ YieldCond_Gurson::df_dsigma(const Matrix3& xi,
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
 Uintah::Matrix3
-YieldCond_Gurson::df_dxi(const Matrix3& xi,
+YieldCond_Gurson::df_dxi(const Matrix3& stress,
                          const ModelStateBase* state)
 {
+  auto xi = stress.Deviator() - state->backStress.Deviator();
+
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double a = 3.0 / (sigy * sigy);
@@ -193,23 +197,25 @@ YieldCond_Gurson::df_dxi(const Matrix3& xi,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
-YieldCond_Gurson::df_dsigmaDev_dbeta(const Matrix3& xi,
+YieldCond_Gurson::df_dsigmaDev_dbeta(const Matrix3& stress,
                                      const ModelStateBase* state)
 {
-  Matrix3 df_ds = df_dxi(xi, state);
-  double f_beta_p = df_dbeta_p(state);
+  Matrix3 df_ds = df_dxi(stress, state);
+  double f_beta_p = df_dbeta_p(stress, state);
   Matrix3 df_dbeta = df_ds * (-1.0) + Vaango::Util::Identity * (-f_beta_p);
   return std::make_pair(df_ds, df_dbeta);
 }
 
 double
-YieldCond_Gurson::df_dbeta_p(const ModelStateBase* state) const
+YieldCond_Gurson::df_dbeta_p(const Matrix3& stress,
+                             const ModelStateBase* state) const
 {
+  double sig_m = (stress.Trace() - state->backStress.Trace()) / 3.0;
+
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
 
   double phi   = state->porosity;
-  double sig_m = state->p - state->backStress.Trace() / 3.0;
 
   double q1    = d_CM.q1;
   double q2    = d_CM.q2;

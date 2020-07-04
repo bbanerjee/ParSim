@@ -1442,7 +1442,7 @@ YieldCond_TabularCap::evalYieldCondition(const Matrix3&,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Uintah::Matrix3
-YieldCond_TabularCap::df_dxi(const Matrix3& sigDev,
+YieldCond_TabularCap::df_dxi(const Matrix3& stress,
                              const ModelStateBase*)
 
 {
@@ -1456,7 +1456,7 @@ YieldCond_TabularCap::df_dxi(const Matrix3& sigDev,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
-YieldCond_TabularCap::df_dsigmaDev_dbeta(const Matrix3& sigDev,
+YieldCond_TabularCap::df_dsigmaDev_dbeta(const Matrix3& stress,
                                          const ModelStateBase*)
 {
   std::ostringstream out;

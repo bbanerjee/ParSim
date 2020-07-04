@@ -112,7 +112,7 @@ YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
   */
 
   double p_c  = state->p_c;
-  double qmax = fabs(0.5 * d_M * p_c);
+  double qmax = std::abs(0.5 * d_M * p_c);
   return qmax * qmax / (d_M * d_M);
 }
 
@@ -301,7 +301,7 @@ YieldCond_CamClay::df_dsigma(const ModelStateBase* state)
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
 //   p_c = state->p_c
 Uintah::Matrix3
-YieldCond_CamClay::df_dsigma(const Matrix3& sig,
+YieldCond_CamClay::df_dsigma(const Matrix3& stress,
                              const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
@@ -315,10 +315,9 @@ YieldCond_CamClay::df_dsigma(const Matrix3& sig,
   }
   */
 
-  double p       = sig.Trace() / 3.0;
-  Matrix3 sigDev = sig.Deviator();
+  double p       = stress.Trace() / 3.0;
   double df_dp   = 2.0 * p - state->p_c;
-  Matrix3 df_ds  = df_dxi(sigDev, nullptr);
+  Matrix3 df_ds  = df_dxi(stress, nullptr);
   Matrix3 df_dsigma = Vaango::Util::Identity * (df_dp / 3.0) + df_ds;
   return df_dsigma;
 }
@@ -326,9 +325,10 @@ YieldCond_CamClay::df_dsigma(const Matrix3& sig,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Uintah::Matrix3
-YieldCond_CamClay::df_dxi(const Matrix3& sigDev,
+YieldCond_CamClay::df_dxi(const Matrix3& stress,
                           const ModelStateBase*)
 {
+  Matrix3 sigDev = stress.Deviator();
   double sigDevNorm = sigDev.Norm();
   Matrix3 n         = sigDev / sigDevNorm;
   double q_scaled   = 3.0 * sigDevNorm;
@@ -338,10 +338,10 @@ YieldCond_CamClay::df_dxi(const Matrix3& sigDev,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
-YieldCond_CamClay::df_dsigmaDev_dbeta(const Matrix3& sigDev,
+YieldCond_CamClay::df_dsigmaDev_dbeta(const Matrix3& stress,
                                       const ModelStateBase* state)
 {
-  Matrix3 df_ds = df_dxi(sigDev, state);
+  Matrix3 df_ds = df_dxi(stress, state);
   Matrix3 df_dbeta(0.0);
   return std::make_pair(df_ds, df_dbeta);
 }
