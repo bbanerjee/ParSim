@@ -106,7 +106,10 @@ DruckerBeckerCheck::checkStability(const Matrix3& stress,
 bool 
 DruckerBeckerCheck::checkStability(const Matrix3& cauchyStress,
                                    const Matrix3& deformRate,
-                                   const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                                   const Vaango::Tensor::Matrix6Mandel& C_e,
+                                   const Vaango::Tensor::Vector6Mandel& P_vec,
+                                   const Vaango::Tensor::Vector6Mandel& N_vec,
+                                   double H,
                                    Vector& direction)
 {
   return false;

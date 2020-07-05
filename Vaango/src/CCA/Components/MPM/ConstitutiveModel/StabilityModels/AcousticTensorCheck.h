@@ -60,6 +60,7 @@ public:
   //! Construct an object that can be used to check stability
   AcousticTensorCheck(ProblemSpecP& ps);
   AcousticTensorCheck(const AcousticTensorCheck* atc);
+  AcousticTensorCheck& operator=(const AcousticTensorCheck&) = delete;
 
   //! Destructor of stability check
   virtual ~AcousticTensorCheck() override = default;
@@ -74,18 +75,40 @@ public:
 
   bool checkStability(const Matrix3& cauchyStress,
                       const Matrix3& deformRate,
-                      const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                      const Vaango::Tensor::Matrix6Mandel& C_e,
+                      const Vaango::Tensor::Vector6Mandel& P_vec,
+                      const Vaango::Tensor::Vector6Mandel& N_vec,
+                      double H,
                       Vector& direction) override;
+
 private:
+
+  int d_sweepInc; /** Incremental angle of sweep.
+                      Should be an integral divisor of 360 */
+  int d_numTheta; /** Number of checks in the theta direction.
+                      Should 360/sweepIncrement and should be even */
+  int d_numPhi;   /** Number of checks in the phi direction.
+                      Should 90/sweepIncrement+1*/
+
   /*! Check for localization from
    *  the ellipticity of the tangent modulus
    *  \return true if the acoustic tensor is not positive definite
    *  false otherwise.  Also return normal to surface of localization. */
   bool isLocalized(const TangentModulusTensor& tangentModulus, Vector& normal);
+  bool isLocalized(const Vaango::Tensor::Matrix6Mandel& C_e,
+                   const Vaango::Tensor::Vector6Mandel& P_vec,
+                   const Vaango::Tensor::Vector6Mandel& N_vec,
+                   double H,
+                   Vector& normal) const;
 
   /*! Find approximate local minima */
   void findApproxLocalMins(double** detA, int** localmin,
                            const TangentModulusTensor& C);
+  void findApproxLocalMins(double** detA, int** localMin,
+                           const Vaango::Tensor::Matrix6Mandel& C_e,
+                           const Vaango::Tensor::Vector6Mandel& P_vec,
+                           const Vaango::Tensor::Vector6Mandel& N_vec,
+                           double H) const;
 
   /*! Form the acoustic tensor
    *  The Acoustic tensor is given by
@@ -100,23 +123,16 @@ private:
                           Matrix3& A);
 
   /*! Choose new normal */
-  Vector chooseNewNormal(Vector& prevnormal, Matrix3& J);
+  Vector chooseNewNormal(Vector& prevnormal, Matrix3& J) const;
 
   /*! Choose normal from normal set */
   Vector chooseNormalFromNormalSet(vector<Vector>& normalSet,
                                    const TangentModulusTensor& C);
-
-  // Prevent copying of this class and copy constructor
-  // AcousticTensorCheck(const AcousticTensorCheck &);
-  AcousticTensorCheck& operator=(const AcousticTensorCheck&);
-
-private:
-  int d_sweepInc; /** Incremental angle of sweep.
-                      Should be an integral divisor of 360 */
-  int d_numTheta; /** Number of checks in the theta direction.
-                      Should 360/sweepIncrement and should be even */
-  int d_numPhi;   /** Number of checks in the phi direction.
-                      Should 90/sweepIncrement+1*/
+  Vector chooseNormalFromNormalSet(const std::vector<Vector>& normalSet,
+                                   const Vaango::Tensor::Matrix6Mandel& C_e,
+                                   const Vaango::Tensor::Vector6Mandel& P_vec,
+                                   const Vaango::Tensor::Vector6Mandel& N_vec,
+                                   double H) const;
 };
 } // End namespace Uintah
 

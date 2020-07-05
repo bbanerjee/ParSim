@@ -1253,12 +1253,18 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
               auto C_e = elasticityModel.computeElasticTangentModulus(&state_new);
 
               // Calculate the elastic-plastic tangent modulus
-              auto C_ep = computeElasPlasTangentModulus(C_e, &state_new);
+              Vaango::Tensor::Matrix6Mandel C_ep;
+              Vaango::Tensor::Vector6Mandel P_vec, N_vec;
+              double H;
+              std::tie(C_ep, P_vec, N_vec, H) = 
+                computeElasPlasTangentModulus(C_e, &state_new);
 
               // Initialize localization direction
               Vector direction(0.0, 0.0, 0.0);
               isLocalized =
-                d_stable->checkStability(sigma_new, tensorD, C_ep, direction);
+                d_stable->checkStability(sigma_new, tensorD, 
+                                         C_e, P_vec, N_vec, H,
+                                         direction);
             }
           }
         }
@@ -1506,7 +1512,9 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   return deltaGamma;
 }
 
-Vaango::Tensor::Matrix6Mandel
+std::tuple<Vaango::Tensor::Matrix6Mandel,
+           Vaango::Tensor::Vector6Mandel,
+           Vaango::Tensor::Vector6Mandel, double>
 ElasticPlasticHP::computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
                                                 const ModelStateBase* state) const
 {
@@ -1544,7 +1552,7 @@ ElasticPlasticHP::computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C
 
   // Compute C_ep
   auto C_ep = C_e - P_CN / PN_H;
-  return C_ep;
+  return std::make_tuple(C_ep, P_vec, N_vec, H);
 }
 
 //______________________________________________________________________

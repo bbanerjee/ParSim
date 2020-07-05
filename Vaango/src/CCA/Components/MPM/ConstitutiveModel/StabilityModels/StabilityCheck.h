@@ -52,10 +52,10 @@ class StabilityCheck
 
 public:
   //! Construct an object that can be used to check stability
-  StabilityCheck();
+  StabilityCheck() = default;
 
   //! Destructor of stability check
-  virtual ~StabilityCheck();
+  virtual ~StabilityCheck() = default;
 
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
@@ -73,8 +73,37 @@ public:
 
   virtual bool checkStability(const Matrix3& cauchyStress,
                               const Matrix3& deformRate,
-                              const Vaango::Tensor::Matrix6Mandel& tangentModulus,
+                              const Vaango::Tensor::Matrix6Mandel& C_e,
+                              const Vaango::Tensor::Vector6Mandel& P_vec,
+                              const Vaango::Tensor::Vector6Mandel& N_vec,
+                              double H,
                               Vector& direction) = 0;
+
+protected:
+
+  /* Compute A_e = n . C_e . n */
+  Matrix3 
+  elasticAcousticTensor(const Vaango::Tensor::Matrix6Mandel& C_e,
+                        const Vector& n) const;
+
+  /* Compute A = n . C_e . n - n . C_p . n
+     C_p = (P otimes (N:C_e))/ (N:P + H) */
+  Matrix3 
+  elasticPlasticAcousticTensor(const Vaango::Tensor::Matrix6Mandel& C_e,
+                               const Vaango::Tensor::Vector6Mandel& P_vec,
+                               const Vaango::Tensor::Vector6Mandel& N_vec,
+                               double H,
+                               const Vector& n) const;
+
+  /* Compute A = n . C_e . n - n . C_p . n, and
+             J = det(A) _{mkln} A^{-1}_{lk} */
+  std::tuple<Matrix3, double, Matrix3>
+  computeAandJ(const Vaango::Tensor::Matrix6Mandel& C_e,
+               const Vaango::Tensor::Vector6Mandel& P_vec,
+               const Vaango::Tensor::Vector6Mandel& N_vec,
+               double H,
+               const Vector& n) const;
+
 };
 } // End namespace Uintah
 

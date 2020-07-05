@@ -1267,7 +1267,11 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
                 elasticityModel.computeDStressDIntVar(delT, sigma_eta_old, &defState_new, &state_new);
 
               // Calculate the elastic-plastic tangent modulus
-              auto C_ep = computeElasPlasTangentModulus(C_e, sigma_eta, &state_new);
+              Vaango::Tensor::Matrix6Mandel C_ep;
+              Vaango::Tensor::Vector6Mandel P_vec, N_vec;
+              double H;
+              std::tie(C_ep, P_vec, N_vec, H) = 
+                computeElasPlasTangentModulus(C_e, sigma_eta, &state_new);
 
               /*
               // Get the derivatives of the yield function
@@ -1311,7 +1315,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               // Initialize localization direction
               Vector direction(0.0, 0.0, 0.0);
               isLocalized = d_stable->checkStability(
-                sigma_new, rateOfDef_new, C_ep, direction);
+                sigma_new, rateOfDef_new, C_e, P_vec, N_vec, H, direction);
             }
           }
         }
@@ -1430,7 +1434,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
     cout_EP << getpid() << "... End." << "\n";
 }
 
-Vaango::Tensor::Matrix6Mandel 
+std::tuple<Vaango::Tensor::Matrix6Mandel, Vaango::Tensor::Vector6Mandel, 
+           Vaango::Tensor::Vector6Mandel, double> 
 SmallStrainPlastic::computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
                                                   std::vector<Matrix3>& sigma_eta,
                                                   const ModelStateBase* state) const
@@ -1482,7 +1487,7 @@ SmallStrainPlastic::computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel&
 
   // Compute C_ep
   auto C_ep = C_e - P_CN / PN_H;
-  return C_ep;
+  return std::make_tuple(C_ep, P_vec, N_vec, H);
 }
 
 void

@@ -320,7 +320,9 @@ public:
 
 protected:
 
-   Vaango::Tensor::Matrix6Mandel 
+   std::tuple<Vaango::Tensor::Matrix6Mandel, 
+              Vaango::Tensor::Vector6Mandel, 
+              Vaango::Tensor::Vector6Mandel, double> 
    computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
                                  std::vector<Matrix3>& dsigma_deta,
                                  const ModelStateBase* state) const;

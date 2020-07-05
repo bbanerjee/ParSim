@@ -478,7 +478,9 @@ protected:
 
   void setErosionAlgorithm();
 
-  Vaango::Tensor::Matrix6Mandel
+  std::tuple<Vaango::Tensor::Matrix6Mandel,
+             Vaango::Tensor::Vector6Mandel,
+             Vaango::Tensor::Vector6Mandel, double>
   computeElasPlasTangentModulus(Vaango::Tensor::Matrix6Mandel& C_e,
                                 const ModelStateBase* state) const;
 };
