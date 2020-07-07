@@ -104,6 +104,11 @@ protected:
                double H,
                const Vector& n) const;
 
+  /* Compute 6x6 Q matrix for coordinate transformations of second- and fourth-order
+     tensors */
+  Vaango::Tensor::Matrix6Mandel
+  coordTransformMatrix(const Eigen::Matrix3d& eigenvecs) const;
+
 };
 } // End namespace Uintah
 

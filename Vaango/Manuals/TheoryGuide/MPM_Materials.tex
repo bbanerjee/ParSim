@@ -137,6 +137,91 @@ rate-of-deformation is
   \BdT = \Half(\BlT + \BlT^T) = \Half(\Grad{\Bv} + \Grad{\Bv}^T) \,.
 \Eeq
 
+\subsection{Eigenvectors and coordinate transformations}
+For most situations, tensor components in \Vaango are expressed in terms of the basis vectors
+$\Be_1 = (1,0,0)$, $\Be_2 = (0,1,0)$, and $\Be_3 = (0,0,1)$.  However, in some situations
+tensor components have to be expressed in the eigenbasis of a second-order tensor.
+Let these eigenvectors be $\Bv_1$, $\Bv_2$ and $\Bv_3$.  Then a vector $\Ba$
+with components $(a_1, a_2, a_2)$ in the original basis has components $(a_1', a_2', a_3')$ in
+the eigenbasis.  The two sets of components are related by
+\Beq
+  \begin{bmatrix} a_1' \\ a_2' \\a_3' \end{bmatrix} = 
+  \begin{bmatrix} 
+    \Be_1\cdot\Bv_1 & \Be_2\cdot\Bv_1 & \Be_3 \cdot \Bv_1 \\
+    \Be_1\cdot\Bv_2 & \Be_2\cdot\Bv_2 & \Be_3 \cdot \Bv_2 \\
+    \Be_1\cdot\Bv_3 & \Be_2\cdot\Bv_3 & \Be_3 \cdot \Bv_3 
+  \end{bmatrix}  
+  \begin{bmatrix} a_1 \\ a_2 \\a_3 \end{bmatrix} = 
+  \begin{bmatrix} 
+    v_{11} & v_{12} & v_{13} \\
+    v_{21} & v_{22} & v_{23} \\
+    v_{31} & v_{32} & v_{33} 
+  \end{bmatrix}  
+  \begin{bmatrix} a_1 \\ a_2 \\a_3 \end{bmatrix}  = 
+  \BQ \cdot \Ba \,.
+\Eeq
+The matrix that is used for this coordinate transformation, $\BQ$, is given by
+\Beq
+  \BQ^T := \begin{bmatrix} \Bv_1 & \Bv_2 & \Bv_3 \end{bmatrix}
+\Eeq
+where $\Bv_1$, $\Bv_2$, and $\Bv_3$ are \Textbfc{column vectors} representing the components
+of the eigenvectors in the reference basis.
+
+The above coordinate transformation for vectors can be written in index notation as
+\Beq
+  a'_i = Q_{ij} a_j \,.
+\Eeq
+For transformations of second-order tensors, we have
+\Beq
+  T'_{ij} = Q_{ip} Q_{jq} T_{pq} \,.
+\Eeq
+For fourth-order tensors, the transformation relation is
+\Beq
+  C'_{ijk\ell} = Q_{im} Q_{jn} Q_{kp} Q_{\ell q} C_{mnpq} \,.
+\Eeq
+
+If the second-order tensor $\BT$ is symmetric, we can express it in Mandel notation 
+as a six-dimensional vector $\hat{\Bt}$:
+\Beq
+  \hat{\Bt} = 
+    \begin{bmatrix} T_{11} & T_{22} & T_{33} & \sqrt{2} T_{23} & \sqrt{2} T_{31} & \sqrt{2} T_{12} \end{bmatrix}^T
+\Eeq
+Then the transformation matrix is a $6\times 6$ matrix, $\hat{\BQ}$, such that
+\Beq
+  \hat{t}'_{i} = \hat{Q}_{ij} \hat{t}_{j} \,.
+\Eeq
+The matrix $\hat{\BQ}$ has components~\cite{Mehrabadi1990},
+\Beq
+  \hat{\BQ} = 
+  \begin{bmatrix}
+    Q_{11}^2 & Q_{12}^2 & Q_{13}^2 & \sqrt{2} Q_{12}Q_{13} & \sqrt{2} Q_{11}Q_{13} & \sqrt{2} Q_{11}Q_{12} \\
+    Q_{21}^2 & Q_{22}^2 & Q_{23}^2 & \sqrt{2} Q_{22}Q_{23} & \sqrt{2} Q_{21}Q_{23} & \sqrt{2} Q_{21}Q_{22} \\
+    Q_{31}^2 & Q_{32}^2 & Q_{33}^2 & \sqrt{2} Q_{32}Q_{33} & \sqrt{2} Q_{31}Q_{33} & \sqrt{2} Q_{31}Q_{32} \\
+    \sqrt{2} Q_{21}Q_{31} & \sqrt{2} Q_{22}Q_{32} & \sqrt{2} Q_{23}Q_{33} & 
+    Q_{22}Q_{33} + Q_{23}Q_{32} & Q_{21}Q_{33} + Q_{31}Q_{23} & Q_{21}Q_{32} + Q_{31}Q_{22} \\
+    \sqrt{2} Q_{11}Q_{31} & \sqrt{2} Q_{12}Q_{32} & \sqrt{2} Q_{13}Q_{33} & 
+    Q_{12}Q_{33} + Q_{32}Q_{13} & Q_{11}Q_{33} + Q_{13}Q_{31} & Q_{11}Q_{32} + Q_{31}Q_{12} \\
+    \sqrt{2} Q_{11}Q_{31} & \sqrt{2} Q_{12}Q_{22} & \sqrt{2} Q_{13}Q_{23} & 
+    Q_{12}Q_{23} + Q_{22}Q_{13} & Q_{11}Q_{23} + Q_{21}Q_{13} & Q_{11}Q_{22} + Q_{21}Q_{12} 
+  \end{bmatrix}
+\Eeq
+Similarly, the transformation relation for fourth-order tensors simplifies to
+\Beq
+  \hat{C}'_{ij} = \hat{Q}_{ip} \hat{Q}_{jq} \hat{C}_{pq} 
+\Eeq
+where 
+\Beq
+  \hat{\BC} = \begin{bmatrix}
+         C_{1111} & C_{1122} & C_{1133} & \sqrt{2} C_{1123} & \sqrt{2} C_{1131} & \sqrt{2} C_{1112} \\
+         C_{2211} & C_{2222} & C_{2233} & \sqrt{2} C_{2223} & \sqrt{2} C_{2231} & \sqrt{2} C_{2212} \\
+         C_{3311} & C_{3322} & C_{3333} & \sqrt{2} C_{3323} & \sqrt{2} C_{3331} & \sqrt{2} C_{3312} \\
+         \sqrt{2} C_{2311} & \sqrt{2} C_{2322} & \sqrt{2} C_{2333} & 2 C_{2323} & 2 C_{2331} & 2 C_{2312} \\
+         \sqrt{2} C_{3111} & \sqrt{2} C_{3122} & \sqrt{2} C_{3133} & 2 C_{3123} & 2 C_{3131} & 2 C_{3112} \\
+         \sqrt{2} C_{1211} & \sqrt{2} C_{1222} & \sqrt{2} C_{1233} & 2 C_{1223} & 2 C_{1231} & 2 C_{1212} 
+         \end{bmatrix}
+\Eeq
+
+
 \section{Material models available in Vaango}
 The MPM material models implemented in \Vaango were originally
 chosen for the following purposes:

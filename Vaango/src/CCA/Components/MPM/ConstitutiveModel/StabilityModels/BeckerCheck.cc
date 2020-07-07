@@ -28,6 +28,9 @@
 #include <Core/Math/SymmMatrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
+#include <Eigen/Dense>
+
 #include <cmath>
 #include <vector>
 
@@ -55,7 +58,7 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
                             const TangentModulusTensor& M, Vector&)
 {
   // Find the magnitudes and directions of the principal stresses
-
+  // sorted in descending order of eigenvalues
   SymmMatrix3 sigma(stress);
   Vector sig(0.0, 0.0, 0.0);
   Matrix3 evec;
@@ -65,33 +68,33 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
   // std::cout << "Eigenvalues : " << sig << "\n";
   // std::cout << "Eigenvectors : " << evec << "\n";
 
-  /* OLD CALC USING MATRIX3 methods
-  // If all three principal stresses are equal, numEV = 1,
-  // If two principal stresses are equal, numEV = 2, and the largest
-  // is in sig[0].
-  // If no principal stresses are equal, numEV = 3, and the largest
-  // is in sig[0] and the smallest is in sig[2].
-  double sig[3];
-  int numEV = stress.getEigenValues(sig[0], sig[1], sig[2]);
+  // Get components of M in eigenbasis
+  Eigen::Matrix3d Q;
+  Q << evec(0,0), evec(0,1), evec(0,2),
+       evec(1,0), evec(1,1), evec(1,2),
+       evec(2,0), evec(2,1), evec(2,2);
+  Q = Q.transpose();
+  TangentModulusTensor M_prime;
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        for (int l = 0; l < 3; ++l) {
+          for (int m = 0; m < 3; ++m) {
+            for (int n = 0; n < 3; ++n) {
+              for (int p = 0; p < 3; ++p) {
+                for (int q = 0; q < 3; ++q) {
+                  M_prime(i, j, k, l) += Q(i, m) * Q(j, n) * Q(k, p) * Q(l, q) * M(m, n, p, q);
+                } } } } } } } }
 
-  // Get the eigenvectors of the stress tensor
-  vector<Vector> eigVec;
-  for (int ii = 0; ii < numEV; ii++)
-     eigVec = stress.getEigenVectors(sig[ii], sig[0]);
-
-  // Calculate the coefficients of the quadric
-  if (numEV == 1) sig[2] = sig[0];
-  else if (numEV == 2) sig[2] = sig[1];
-  */
-
-  double A = M(2, 0, 2, 0) * (-sig[2] + 2.0 * M(2, 2, 2, 2));
-  double C = M(2, 0, 2, 0) * (-sig[0] + 2.0 * M(0, 0, 0, 0));
+  // Compute quadratic terms
+  double A = M_prime(2, 0, 2, 0) * (-sig[2] + 2.0 * M_prime(2, 2, 2, 2));
+  double C = M_prime(2, 0, 2, 0) * (-sig[0] + 2.0 * M_prime(0, 0, 0, 0));
   double B =
-    M(2, 0, 2, 0) *
-      (sig[2] - 2.0 * M(0, 0, 2, 2) + sig[0] - 2.0 * M(2, 2, 0, 0)) +
-    sig[0] * (M(2, 2, 0, 0) - M(2, 2, 2, 2)) +
-    sig[2] * (M(0, 0, 2, 2) - M(0, 0, 0, 0)) +
-    2.0 * (-M(0, 0, 2, 2) * M(2, 2, 0, 0) + M(0, 0, 0, 0) * M(2, 2, 2, 2));
+    M_prime(2, 0, 2, 0) *
+      (sig[2] - 2.0 * M_prime(0, 0, 2, 2) + sig[0] - 2.0 * M_prime(2, 2, 0, 0)) +
+    sig[0] * (M_prime(2, 2, 0, 0) - M_prime(2, 2, 2, 2)) +
+    sig[2] * (M_prime(0, 0, 2, 2) - M_prime(0, 0, 0, 0)) +
+    2.0 * (-M_prime(0, 0, 2, 2) * M_prime(2, 2, 0, 0) + M_prime(0, 0, 0, 0) * M_prime(2, 2, 2, 2));
 
   // Solve the quadric
   // Substitute x^2 by y and solve the quadratic
@@ -118,13 +121,76 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
 }
 
 bool 
-BeckerCheck::checkStability(const Matrix3& cauchyStress,
-                            const Matrix3& deformRate,
+BeckerCheck::checkStability(const Matrix3& stress,
+                            const Matrix3& /*deformRate*/,
                             const Vaango::Tensor::Matrix6Mandel& C_e,
                             const Vaango::Tensor::Vector6Mandel& P_vec,
                             const Vaango::Tensor::Vector6Mandel& N_vec,
                             double H,
-                            Vector& direction)
+                            Vector& /*direction*/)
 {
-  return false;
+  // Find the magnitudes and directions of the principal stresses
+  // sorted in ascending order of eigenvalues
+  Eigen::Matrix3d sigma;
+  sigma << stress(0,0), stress(0,1), stress(0,2),
+           stress(1,0), stress(1,1), stress(1,2),
+           stress(2,0), stress(2,1), stress(2,2);
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen_solver(sigma);
+  Eigen::Vector3d eval = eigen_solver.eigenvalues();
+  Eigen::Matrix3d evec = eigen_solver.eigenvectors();
+  double sig_max = eval[2];
+  double sig_min = eval[0];
+  // std::cout << "stress = \n";
+  // std::cout << stress << "\n";
+  // std::cout << "Eigenvalues : " << eval << "\n";
+  // std::cout << "Eigenvectors : " << evec << "\n";
+
+  // Compute tangent modulus
+  auto CN_vec = C_e * N_vec;
+  double PN_H = P_vec.transpose() * N_vec + H;
+  auto P_CN = Vaango::Tensor::constructMatrix6Mandel(P_vec, CN_vec);
+  auto C_ep = C_e - P_CN / PN_H;
+
+  // Get components of C_ep in eigenbasis
+  auto Qhat = coordTransformMatrix(evec);
+  auto Chat_ep = Qhat * C_ep * Qhat.transpose();
+
+  // Convert components of C_ep to M_{ijkl} form
+  Vaango::Tensor::Matrix6Mandel M(Chat_ep);
+  M.block<3,3>(0,3) *= Vaango::Tensor::one_sqrt_two;
+  M.block<3,3>(3,0) *= Vaango::Tensor::one_sqrt_two;
+  M.block<3,3>(3,3) *= Vaango::Tensor::half;
+
+  // Set up quadric equation
+  double A = M(5, 5) * (-sig_min + 2.0 * M(2, 2));
+  double C = M(5, 5) * (-sig_max + 2.0 * M(0, 0));
+  double B =
+    M(5, 5) *
+      (sig_min - 2.0 * M(0, 2) + sig_max - 2.0 * M(2, 0)) +
+    sig_max * (M(2, 0) - M(2, 2)) +
+    sig_min * (M(0, 2) - M(0, 0)) +
+    2.0 * (-M(0, 2) * M(2, 0) + M(0, 0) * M(2, 2));
+
+  // Solve the quadric
+  // Substitute x^2 by y and solve the quadratic
+  double B2_4AC = B * B - 4.0 * A * C;
+  if (B2_4AC < 0.0) {
+    // No real roots - no bifurcation
+    return false;
+  } else {
+    ASSERT(!(A == 0));
+    double yplus = (-B + sqrt(B2_4AC)) / (2.0 * A);
+    double yminus = (-B - sqrt(B2_4AC)) / (2.0 * A);
+    if (yplus < 0.0 && yminus < 0.0) {
+      // No real roots - no bifurcation
+      return false;
+    } else {
+      if (yplus < 0.0 || yminus < 0.0) {
+        // Two real roots -  bifurcation ? (parabolic)
+        return false;
+      }
+    }
+  }
+  // Four real roots -  bifurcation
+  return true;
 }

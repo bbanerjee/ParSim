@@ -153,7 +153,13 @@ StabilityCheck::computeAandJ(const Vaango::Tensor::Matrix6Mandel& C_e,
 
   // Compute elastic-plastic tangent
   auto P_CN = Vaango::Tensor::constructMatrix6Mandel(P_vec, CN_vec);
-  auto C = C_e - P_CN / PN_H;
+  auto C_ep = C_e - P_CN / PN_H;
+
+  // Convert components of C_ep to C_{ijkl} form
+  Vaango::Tensor::Matrix6Mandel C(C_ep);
+  C.block<3,3>(0,3) *= Vaango::Tensor::one_sqrt_two;
+  C.block<3,3>(3,0) *= Vaango::Tensor::one_sqrt_two;
+  C.block<3,3>(3,3) *= Vaango::Tensor::half;
 
   // Compute J = det(A) * C_mkln A^{-1}_lk
   double J11 = B(0,0)*C(0,0) + B(0,1)*C(0,5) + B(0,2)*C(0,4) + 
@@ -188,3 +194,49 @@ StabilityCheck::computeAandJ(const Vaango::Tensor::Matrix6Mandel& C_e,
   
   return std::make_tuple(A, detA, J);
 }
+
+Vaango::Tensor::Matrix6Mandel
+StabilityCheck::coordTransformMatrix(const Eigen::Matrix3d& eigenvecs) const
+{
+  auto sqrt_two = Vaango::Tensor::sqrt_two;
+  auto Q = eigenvecs.transpose();
+  Vaango::Tensor::Matrix6Mandel Qhat;
+  Qhat << Q(0,0) * Q(0,0), 
+          Q(0,1) * Q(0,1), 
+          Q(0,2) * Q(0,2), 
+          sqrt_two * Q(0,1) * Q(0,2), 
+          sqrt_two * Q(0,0) * Q(0,2), 
+          sqrt_two * Q(0,0) * Q(0,1),
+          Q(1,0) * Q(1,0), 
+          Q(1,1) * Q(1,1), 
+          Q(1,2) * Q(1,2), 
+          sqrt_two * Q(1,1) * Q(1,2), 
+          sqrt_two * Q(1,0) * Q(1,2), 
+          sqrt_two * Q(1,0) * Q(1,1),
+          Q(2,0) * Q(2,0), 
+          Q(2,1) * Q(2,1), 
+          Q(2,2) * Q(2,2), 
+          sqrt_two * Q(2,1) * Q(2,2), 
+          sqrt_two * Q(2,0) * Q(2,2), 
+          sqrt_two * Q(2,0) * Q(2,1),
+          sqrt_two * Q(1,0) * Q(2,0), 
+          sqrt_two * Q(1,1) * Q(2,1), 
+          sqrt_two * Q(1,2) * Q(2,2), 
+          Q(1,1) * Q(2,2) + Q(1,2) * Q(2,1), 
+          Q(1,0) * Q(2,2) + Q(2,0) * Q(1,2), 
+          Q(1,0) * Q(2,1) + Q(2,0) * Q(1,1),
+          sqrt_two * Q(0,0) * Q(2,0), 
+          sqrt_two * Q(0,1) * Q(2,1), 
+          sqrt_two * Q(0,2) * Q(2,2), 
+          Q(0,1) * Q(2,2) + Q(2,1) * Q(0,2), 
+          Q(0,0) * Q(2,2) + Q(0,2) * Q(2,0), 
+          Q(0,0) * Q(2,1) + Q(2,0) * Q(0,1),
+          sqrt_two * Q(0,0) * Q(2,0), 
+          sqrt_two * Q(0,1) * Q(1,1), 
+          sqrt_two * Q(0,2) * Q(1,2), 
+          Q(0,1) * Q(1,2) + Q(1,1) * Q(0,2), 
+          Q(0,0) * Q(1,2) + Q(1,0) * Q(0,2), 
+          Q(0,0) * Q(1,1) + Q(1,0) * Q(0,1);
+  return Qhat;
+}
+                                 
