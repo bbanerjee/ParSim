@@ -1,0 +1,220 @@
+\chapter{Material failure}
+
+\section{Introduction}
+The primary technique used in \Vaango to simulate failure is damage evolution. An alternative
+approach that can be used is to used material stability conditions to determine and propagate 
+failure.
+
+\section{Material stability conditions}
+\subsection{Drucker's condition}
+The simplest criterion that can be used is the Drucker stability postulate 
+\cite{Drucker1959} which states that time rate of change of the rate of 
+work done by a material cannot be negative.  Therefore, the material is 
+assumed to become unstable (and a particle fails) when
+\begin{equation}
+  \dot\Bsig:\BD^p \le 0
+\end{equation}
+
+\subsection{Acoustic tensor criterion}
+Another stability criterion that is less restrictive is the acoustic
+tensor criterion which states that the material loses stability if the 
+determinant of the acoustic tensor changes sign~\cite{Rudnicki1975,Yamamoto1978,Perzyna1998}.  
+
+We assume that the strain is localized in a thin band with normal $\Bn$.  The band is 
+assumed be homogeneous
+but has slightly different material properties than the surrounding material.
+
+To develop the bifurcation relations~\cite{Yamamoto1978}, assume that $\Bv^b$ is the 
+velocity of a material point in the band ($\Omega_b$) and $\Bv^0$ is the velocity of the 
+material outside the band ($\Omega_0$).  The deformation of the material outside the band
+is assumed to be uniform.  The deformation within the band is also assumed to
+be homogeneous.
+
+We assume that stresses and rates of deformation have been rotated to the undeformed
+configuration using the polar decomposition of the deformation gradient.
+
+Consider the case where the local coordinates of points in the band are expessed in
+terms of an orthonormal basis $\Be_1, \Be_2, \Be_3$ where $\Be_2 = \Bn$.  Then
+a point $\Bx$ inside (or outside) the band can be expressed as $\Bx = x_i \Be_i$.
+
+Continuity and the homogeneity of deformation in the two regions requires that 
+only the velocity in the $\Bn$ direction can be different in the two regions.
+This implies
+\Beq
+  \Bv^b(\Bx) - \Bv^0(\Bx) = \Bf(\Bn \cdot \Bx) = \Bf(x_2) 
+\Eeq
+where $\Bf$ is an unknown function.
+The velocity gradient can be computed from the above relation as
+\Beq \label{eq:gradv_b}
+  \Grad{\Bv^b} = \Grad{\Bv^0} + \Deriv{\Bf}{x_2} \otimes \Bn = \Grad{\Bv^0} + \Bq \otimes \Bn
+\Eeq
+where
+\Beq
+  \Bq := \Deriv{\Bf}{x_2} = \begin{cases}
+                              \Bzero   & \quad\text{for}\quad \Bx \in \Omega_0 \\
+                              \Bq & \quad\text{for}\quad \Bx \in \Omega_b 
+                            \end{cases}
+\Eeq
+The rate of deformation in the band is
+\Beq \label{eq:d_b}
+  \BdT^b = \Half\left[\Grad{\Bv^b} + (\Grad{\Bv^b})^T\right]
+         = \Half\left[\Grad{\Bv^0} + (\Grad{\Bv^0})^T\right] + \Half(\Bq \otimes \Bn + \Bn \otimes \Bq)
+         = \BdT^0 + \Half(\Bq \otimes \Bn + \Bn \otimes \Bq) \,.
+\Eeq
+The stress rate is related to the rate of deformation by
+\Beq \label{eq:sigdot_1}
+  \dot{\Bsig}^0 = \SfC^0 : \BdT^0 ~,~~
+  \dot{\Bsig}^b = \SfC^b : \BdT^b = \SfC^b : \BdT^0 + \Half \SfC^b : (\Bq \otimes \Bn + \Bn \otimes \Bq) \,.
+\Eeq
+The minor symmetry of $\SfC$ implies that
+\Beq \label{eq:sigdot_2}
+  \dot{\Bsig}^b = \SfC^b : \BdT^0 +  \SfC^b : (\Bq \otimes \Bn) \,.
+\Eeq
+Homogeneity of the deformation also implies that
+\Beq
+  \Bn \cdot \Bsig^b = \Bn \cdot \Bsig^0 \,.
+\Eeq
+Taking the material time derivative of the above gives
+\Beq \label{eq:ndot_rel}
+  \dot{\Bn} \cdot \Bsig^b + \Bn \cdot \dot{\Bsig}^b = 
+    \dot{\Bn} \cdot \Bsig^0 + \Bn \cdot \dot{\Bsig}^0 \,.
+\Eeq
+We need an expression for $\dot{\Bn}$.  To find that, note that if $\Bn_0$ and $\Bn$ are the unit normals 
+to the band in the reference and current configurations, using Nanson's formula, we have
+\Beq \label{eq:nanson}
+  \Bn da = J (\BF^{-T} \cdot \Bn_0) dA ~,~~ J = \det\BF  \,.
+\Eeq
+Taking the time derivative of \eqref{eq:nanson},
+\Beq 
+  \dot{\Bn} da + \Bn \dot{da} = \Deriv{J}{t} (\BF^{-T} \cdot \Bn_0) dA + 
+                                J \left(\Deriv{\BF^{-1}}{t}\right)^T \cdot \Bn_0 dA 
+\Eeq
+For the derivative of $J$, we have
+\Beq
+  \Deriv{J}{t} = \Partial{J}{\BF} : \dot{\BF} = J\BF^{-T}:\dot{\BF} = J \Tr(\dot{\BF}\cdot\BF^{-1})
+    = J \Tr(\Grad{\Bv}) \,. 
+\Eeq
+We can also show that
+\Beq
+  \Deriv{\BF^{-1}}{t} = -\BF^{-1} \cdot \dot{\BF} \cdot \BF^{-1} 
+                      = -\BF^{-1} \cdot \Grad{\Bv}\,.
+\Eeq
+Therefore, using \eqref{eq:nanson},
+\Beq \label{eq:nanson_deriv}
+  \Bal
+  \dot{\Bn} da + \Bn \dot{da} &= J \Tr(\Grad{\Bv}) (\BF^{-T} \cdot \Bn_0) dA - 
+                                 J (\Grad{\Bv})^T \cdot \BF^{-T} \cdot \Bn_0 dA  \\
+    & = \Bn \cdot \left[\Tr(\Grad{\Bv}) \BI - \Grad{\Bv} \right] da \,.
+  \Eal
+\Eeq
+To find $\dot{da}$, we compute a dot product of both sides of \eqref{eq:nanson} to get
+\Beq 
+  da^2 = J^2 (\BF^{-T} \cdot \Bn_0)\cdot(\BF^{-T} \cdot \Bn_0) dA^2 
+       =  J^2 \Bn_0 \cdot (\BF^{-1}\cdot\BF^{-T}) \cdot \Bn_0 dA^2 \,.
+\Eeq
+The material time derivative of the above expression is
+\Beq\label{eq:da_sq}
+  2 da \dot{da} = 2 J \Deriv{J}{t} \Bn_0 \cdot (\BF^{-1}\cdot\BF^{-T}) \cdot \Bn_0 dA^2 + 
+                  J^2 \Bn_0 \cdot \Deriv{}{t}(\BF^{-1}\cdot\BF^{-T}) \cdot \Bn_0 dA^2
+\Eeq
+For the derivative of the $\BF^{-1}$ product, we have
+\Beq
+  \Bal
+  \Deriv{}{t}(\BF^{-1}\cdot\BF^{-T}) &= 
+    \Deriv{\BF^{-1}}{t}\cdot\BF^{-T} + \BF^{-1}\cdot\left(\Deriv{\BF^{-1}}{t}\right)^T = 
+    - \BF^{-1} \cdot \dot{\BF} \cdot \BF^{-1} \cdot \BF^{-T} 
+    - \BF^{-1} \cdot \BF^{-T} \cdot \dot{\BF}^{T} \cdot \BF^{-T} \\
+   & = - \BF^{-1} \cdot \Grad{\Bv} \cdot \BF^{-T} 
+       - \BF^{-1} \cdot (\Grad{\Bv})^T \cdot \BF^{-T} 
+     = - 2 \BF^{-1} \cdot \BdT \cdot \BF^{-T} \,.
+  \Eal
+\Eeq
+Substitution into \eqref{eq:da_sq} gives
+\Beq
+  \Bal
+  da \dot{da} &= J^2 \Tr(\Grad{\Bv}) \Bn_0 \cdot (\BF^{-1}\cdot\BF^{-T}) \cdot \Bn_0 dA^2 - 
+                J^2 \Bn_0 \cdot (\BF^{-1}\cdot\BdT\cdot\BF^{-T}) \cdot \Bn_0 dA^2 \\
+    &= \Tr(\Grad{\Bv}) (J \BF^{-T} \cdot \Bn_0 dA) \cdot (J \BF^{-T}\cdot \Bn_0 dA)  - 
+                (J \BF^{-T} \cdot \Bn_0 dA) \cdot \BdT \cdot (J \BF^{-T} \cdot \Bn_0 dA) \\
+    &= \Tr(\Grad{\Bv}) \Bn \cdot \Bn da^2  - \Bn \cdot \BdT \cdot \Bn da^2 
+     = \Tr(\Grad{\Bv}) da^2  - \Bn \cdot \BdT \cdot \Bn da^2 \,.
+  \Eal
+\Eeq
+Therefore,
+\Beq \label{eq:da_dot}
+  \dot{da} = \left[\Tr(\Grad{\Bv}) - \Bn \cdot \BdT \cdot \Bn \right] da 
+           = \left[\Tr(\Grad{\Bv}) - \Bn \cdot \Grad{\Bv} \cdot \Bn \right] da \,.
+\Eeq
+Plugging \eqref{eq:da_dot} into \eqref{eq:nanson_deriv}, we have
+\Beq 
+  \Bal
+  \dot{\Bn} da + 
+  \Bn \left[\Tr(\Grad{\Bv}) - \Bn \cdot \BdT \cdot \Bn \right] da 
+  = \Bn \cdot \left[\Tr(\Grad{\Bv}) \BI - \Grad{\Bv} \right] da \,.
+  \Eal
+\Eeq
+That gives us the expression for $\dot{\Bn}$ that we seek,
+\Beq \label{eq:ndot}
+  \dot{\Bn} = \Bn \cdot \left[\BdT \cdot (\Bn \otimes \Bn) - \Grad{\Bv}\right] 
+            = \Bn \cdot \Grad{\Bv} \cdot \left(\Bn \otimes \Bn - \BI\right)  \,.
+\Eeq
+Using \eqref{eq:ndot} in \eqref{eq:ndot_rel}, we have
+\Beq 
+  \Bn \cdot \left[(\dot{\Bsig}^b - \dot{\Bsig}^0) + 
+     \Grad{\Bv^b} \cdot (\Bn \otimes \Bn - \BI) \cdot (\Bsig^b - \Bsig^0)\right] = 0\,.
+\Eeq
+Substituting equations \eqref{eq:sigdot_1}, \eqref{eq:sigdot_2}, and \eqref{eq:gradv_b},
+\Beq 
+  \Bn \cdot \left[(\SfC^b : \BdT^0 +  \SfC^b : (\Bq \otimes \Bn) - \SfC^0 : \BdT^0 ) + 
+     \left(\Grad{\Bv^0} + \Bq \otimes\Bn\right) \cdot 
+     (\Bn \otimes \Bn - \BI) \cdot (\Bsig^b - \Bsig^0)\right] = 0\,.
+\Eeq
+Using the symmetry of stress and the projection $\Bn\otimes\Bn - \BI$, we can reorganize
+the above expression into 
+\Beq 
+  \Bn \cdot \left[
+    \left(\SfC^b + (\Bsig^b - \Bsig^0) \cdot (\Bn \otimes \Bn - \BI) \cdot \SfI\right) : (\Bq \otimes\Bn) + 
+    (\SfC^b - \SfC^0) : \BdT^0 +  
+      (\Bsig^b - \Bsig^0) \cdot (\Bn \otimes \Bn - \BI) \cdot \Grad{\Bv^0} 
+    \right] = 0\,.
+\Eeq
+Further rearrangement leads to
+\Beq
+  \left[\Bn \cdot \left(\SfC^b + (\Bsig^b - \Bsig^0) \cdot (\Bn \otimes \Bn - \BI) \cdot \SfI\right) \cdot \Bn\right] \cdot \Bq  =  -\Bn \cdot \left[ (\SfC^b - \SfC^0) : \BdT^0 +  
+      (\Bsig^b - \Bsig^0) \cdot (\Bn \otimes \Bn - \BI) \cdot \Grad{\Bv^0}\right] 
+\Eeq
+This equation has a solution ($\Bq$) only if 
+\Beq
+  \det\left[\Bn \cdot \left(\SfC^b + (\Bsig^b - \Bsig^0) \cdot (\Bn \otimes \Bn - \BI) \cdot \SfI\right) \cdot \Bn\right] \ne 0 \,.
+\Eeq
+The canonical bifurcation condition is obtained if $\Bsig^b = \Bsig^0$:
+\Beq \label{eq:acoustic_tensor}
+  \det(\BA) := \det(\Bn \cdot \SfC \cdot \Bn) = 0 
+\Eeq
+where $\BA$ is the \Textmag{acoustic tensor}.
+
+Evaluation of the acoustic tensor requires a search for a normal vector 
+around the material point and is therefore computationally expensive.  
+
+\subsection{Becker's simplification}
+A simplification of this criterion is a check which assumes that the direction 
+of instability lies in the plane of the maximum and minimum principal 
+stress~\cite{Becker2002}.  
+
+Let the principal stresses be $\sigma_1 > \sigma_2 > \sigma_3$, and the 
+corresponding principal directions (eigenvectors) are $\BE_1, \BE_2, \BE_3$.
+We can express the unit normal to the band in this basis as $\Bn = n_i \BE_i$.
+
+Then the bifurcation condition leads to the relation 
+\begin{equation} 
+  R_{ij} q_{j} = 0 ~;~~~
+  R_{ij} = C_{ikj\ell} n_k n_\ell 
+\end{equation} 
+where $C_{ijk\ell}$ are the components of the co-rotational tangent
+modulus tensor and $\sigma_{ij}$ are the components of the co-rotational 
+stress tensor.  If $\det(R_{ij}) \le 0 $, then $q_j$ can be arbitrary and 
+there is a possibility of strain localization.  If this condition for 
+loss of hyperbolicity is met,  then a particle deforms in an unstable 
+manner and failure can be assumed to have occurred at that particle.  
+We use a combination of these criteria to simulate failure.
+
