@@ -55,7 +55,7 @@ BeckerCheck::outputProblemSpec(ProblemSpecP& ps)
 
 bool
 BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
-                            const TangentModulusTensor& M, Vector&)
+                            const TangentModulusTensor& C_ep, Vector&)
 {
   // Find the magnitudes and directions of the principal stresses
   // sorted in descending order of eigenvalues
@@ -68,13 +68,13 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
   // std::cout << "Eigenvalues : " << sig << "\n";
   // std::cout << "Eigenvectors : " << evec << "\n";
 
-  // Get components of M in eigenbasis
+  // Get components of C in eigenbasis
   Eigen::Matrix3d Q;
   Q << evec(0,0), evec(0,1), evec(0,2),
        evec(1,0), evec(1,1), evec(1,2),
        evec(2,0), evec(2,1), evec(2,2);
   Q = Q.transpose();
-  TangentModulusTensor M_prime;
+  TangentModulusTensor C;
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
@@ -83,29 +83,27 @@ BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
             for (int n = 0; n < 3; ++n) {
               for (int p = 0; p < 3; ++p) {
                 for (int q = 0; q < 3; ++q) {
-                  M_prime(i, j, k, l) += Q(i, m) * Q(j, n) * Q(k, p) * Q(l, q) * M(m, n, p, q);
+                  C(i, j, k, l) += Q(i, m) * Q(j, n) * Q(k, p) * Q(l, q) * C_ep(m, n, p, q);
                 } } } } } } } }
 
   // Compute quadratic terms
-  double A = M_prime(2, 0, 2, 0) * (-sig[2] + 2.0 * M_prime(2, 2, 2, 2));
-  double C = M_prime(2, 0, 2, 0) * (-sig[0] + 2.0 * M_prime(0, 0, 0, 0));
-  double B =
-    M_prime(2, 0, 2, 0) *
-      (sig[2] - 2.0 * M_prime(0, 0, 2, 2) + sig[0] - 2.0 * M_prime(2, 2, 0, 0)) +
-    sig[0] * (M_prime(2, 2, 0, 0) - M_prime(2, 2, 2, 2)) +
-    sig[2] * (M_prime(0, 0, 2, 2) - M_prime(0, 0, 0, 0)) +
-    2.0 * (-M_prime(0, 0, 2, 2) * M_prime(2, 2, 0, 0) + M_prime(0, 0, 0, 0) * M_prime(2, 2, 2, 2));
+  double a1 = C(2,2,2,2) * C(0,2,2,0);
+  double a2 = C(0,0,0,0) * C(2,2,2,2) - C(0,0,2,2) * C(2,2,0,0) * C(2,1,1,2) -
+              (C(0,0,2,2) + C(2,2,0,0)) * C(2,1,1,2) * C(3,1,1,3) - 
+              (C(2,1,2,1) - 1.0) * C(3,1,1,3) * C(1,3,1,3);
+  double a3 = C(0,0,0,0) * C(3,1,1,3) - C(0,0,2,2) * C(2,2,0,0) * C(1,2,2,1) - 
+              (C(0,0,2,2) + C(2,2,0,0)) * C(3,1,1,3) * C(1,2,2,1);
 
   // Solve the quadric
   // Substitute x^2 by y and solve the quadratic
-  double B2_4AC = B * B - 4.0 * A * C;
+  double B2_4AC = a2 * a2 - 4.0 * a1 * a3;
   if (B2_4AC < 0.0) {
     // No real roots - no bifurcation
     return false;
   } else {
-    ASSERT(!(A == 0));
-    double yplus = (-B + sqrt(B2_4AC)) / (2.0 * A);
-    double yminus = (-B - sqrt(B2_4AC)) / (2.0 * A);
+    ASSERT(!(a1 == 0));
+    double yplus = (-a2 + sqrt(B2_4AC)) / (2.0 * a1);
+    double yminus = (-a2 - sqrt(B2_4AC)) / (2.0 * a1);
     if (yplus < 0.0 && yminus < 0.0) {
       // No real roots - no bifurcation
       return false;
@@ -136,13 +134,8 @@ BeckerCheck::checkStability(const Matrix3& stress,
            stress(1,0), stress(1,1), stress(1,2),
            stress(2,0), stress(2,1), stress(2,2);
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen_solver(sigma);
-  Eigen::Vector3d eval = eigen_solver.eigenvalues();
   Eigen::Matrix3d evec = eigen_solver.eigenvectors();
-  double sig_max = eval[2];
-  double sig_min = eval[0];
-  // std::cout << "stress = \n";
-  // std::cout << stress << "\n";
-  // std::cout << "Eigenvalues : " << eval << "\n";
+  // std::cout << "Stress = \n" << sigma << "\n";
   // std::cout << "Eigenvectors : " << evec << "\n";
 
   // Compute tangent modulus
@@ -155,32 +148,30 @@ BeckerCheck::checkStability(const Matrix3& stress,
   auto Qhat = coordTransformMatrix(evec);
   auto Chat_ep = Qhat * C_ep * Qhat.transpose();
 
-  // Convert components of C_ep to M_{ijkl} form
-  Vaango::Tensor::Matrix6Mandel M(Chat_ep);
-  M.block<3,3>(0,3) *= Vaango::Tensor::one_sqrt_two;
-  M.block<3,3>(3,0) *= Vaango::Tensor::one_sqrt_two;
-  M.block<3,3>(3,3) *= Vaango::Tensor::half;
+  // Convert components of C_ep to Voigt M_{ijkl} form
+  Vaango::Tensor::Matrix6Mandel C(Chat_ep);
+  C.block<3,3>(0,3) *= Vaango::Tensor::one_sqrt_two;
+  C.block<3,3>(3,0) *= Vaango::Tensor::one_sqrt_two;
+  C.block<3,3>(3,3) *= Vaango::Tensor::half;
 
   // Set up quadric equation
-  double A = M(5, 5) * (-sig_min + 2.0 * M(2, 2));
-  double C = M(5, 5) * (-sig_max + 2.0 * M(0, 0));
-  double B =
-    M(5, 5) *
-      (sig_min - 2.0 * M(0, 2) + sig_max - 2.0 * M(2, 0)) +
-    sig_max * (M(2, 0) - M(2, 2)) +
-    sig_min * (M(0, 2) - M(0, 0)) +
-    2.0 * (-M(0, 2) * M(2, 0) + M(0, 0) * M(2, 2));
+  double a1 = C(2,2) * C(4,4);
+  double a2 = C(0,0) * C(2,2) - C(0,2) * C(2,0) * C(3,3) -
+              (C(0,2) + C(2,0)) * C(3,3) * C(4,4) - 
+              (C(3,3) - 1.0) * C(4,4) * C(4,4);
+  double a3 = C(0,0) * C(4,4) - C(0,2) * C(2,0) * C(5,5) - 
+              (C(0,2) + C(2,0)) * C(4,4) * C(5,5);
 
   // Solve the quadric
   // Substitute x^2 by y and solve the quadratic
-  double B2_4AC = B * B - 4.0 * A * C;
+  double B2_4AC = a2 * a2 - 4.0 * a1 * a3;
   if (B2_4AC < 0.0) {
-    // No real roots - no bifurcation
+    // Some imaginary roots - no bifurcation
     return false;
   } else {
-    ASSERT(!(A == 0));
-    double yplus = (-B + sqrt(B2_4AC)) / (2.0 * A);
-    double yminus = (-B - sqrt(B2_4AC)) / (2.0 * A);
+    ASSERT(!(a1 == 0));
+    double yplus = (-a2 + sqrt(B2_4AC)) / (2.0 * a1);
+    double yminus = (-a2 - sqrt(B2_4AC)) / (2.0 * a1);
     if (yplus < 0.0 && yminus < 0.0) {
       // No real roots - no bifurcation
       return false;

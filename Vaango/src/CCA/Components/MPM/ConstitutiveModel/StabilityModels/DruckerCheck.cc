@@ -77,5 +77,23 @@ DruckerCheck::checkStability(const Matrix3& cauchyStress,
                              double H,
                              Vector& direction)
 {
-  return false;
+  // Compute elastic-plastic tangent modulus
+  auto CN_vec = C_e * N_vec;
+  double PN_H = P_vec.transpose() * N_vec + H;
+  auto P_CN = Vaango::Tensor::constructMatrix6Mandel(P_vec, CN_vec);
+  auto C_ep = C_e - P_CN / PN_H;
+
+  // Calculate the stress rate
+  auto d_vec = Vaango::Tensor::constructVector6Mandel(deformRate);
+  Vaango::Tensor::Vector6Mandel stressRate = C_ep * d_vec;
+
+  // cout << "Deform Rate = \n" << d_vec << endl;
+  // cout << "Cep = \n" << Cep ;
+  // cout << "Stress Rate = \n" << stressRate << endl;
+
+  double val = stressRate.transpose() * d_vec;
+  // cout << "val = " << val << endl << endl;
+  if (val > 0.0)
+    return false;
+  return true;
 }
