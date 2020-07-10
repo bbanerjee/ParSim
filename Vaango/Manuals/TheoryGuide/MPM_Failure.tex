@@ -12,7 +12,7 @@ The simplest criterion that can be used is the Drucker stability postulate
 work done by a material cannot be negative.  Therefore, the material is 
 assumed to become unstable (and a particle fails) when
 \begin{equation}
-  \dot\Bsig:\BD^p \le 0
+  \dot\Bsig:\BdT^p \le 0
 \end{equation}
 
 \subsection{Acoustic tensor criterion}
@@ -33,7 +33,7 @@ be homogeneous.
 We assume that stresses and rates of deformation have been rotated to the undeformed
 configuration using the polar decomposition of the deformation gradient.
 
-Consider the case where the local coordinates of points in the band are expessed in
+Consider the case where the local coordinates of points in the band are expressed in
 terms of an orthonormal basis $\Be_1, \Be_2, \Be_3$ where $\Be_2 = \Bn$.  Then
 a point $\Bx$ inside (or outside) the band can be expressed as $\Bx = x_i \Be_i$.
 
@@ -205,16 +205,91 @@ Let the principal stresses be $\sigma_1 > \sigma_2 > \sigma_3$, and the
 corresponding principal directions (eigenvectors) are $\BE_1, \BE_2, \BE_3$.
 We can express the unit normal to the band in this basis as $\Bn = n_i \BE_i$.
 
-Then the bifurcation condition leads to the relation 
+The components of the tangent modulus in this coordinate system are given by
+\Beq
+  C'_{ijk\ell} = Q_{im} Q_{jn} Q_{kp} Q_{\ell q} C_{mnpq} \,.
+\Eeq
+where the $3 \times 3$ matrix used for this coordinate transformation, $\BQ$, is given by
+\Beq
+  \BQ^T := \begin{bmatrix} \BE_1 & \BE_2 & \BE_3 \end{bmatrix}
+\Eeq
+Then the acoustic tensor in \eqref{eq:acoustic_tensor} has the components
 \begin{equation} 
-  R_{ij} q_{j} = 0 ~;~~~
-  R_{ij} = C_{ikj\ell} n_k n_\ell 
+  A_{jk} = C'_{ijk\ell} n_i n_\ell 
 \end{equation} 
-where $C_{ijk\ell}$ are the components of the co-rotational tangent
-modulus tensor and $\sigma_{ij}$ are the components of the co-rotational 
-stress tensor.  If $\det(R_{ij}) \le 0 $, then $q_j$ can be arbitrary and 
-there is a possibility of strain localization.  If this condition for 
-loss of hyperbolicity is met,  then a particle deforms in an unstable 
+If $\det(A_{jk}) = 0 $, then $q_j = df_j/dx_2$ can be arbitrary and 
+there is a possibility of strain localization.  Also, this condition indicates
+when a material transitions from stable behavior where $\det(A_{jk} > 0$.
+If this condition for loss of hyperbolicity is met,  then a particle deforms in an unstable 
 manner and failure can be assumed to have occurred at that particle.  
-We use a combination of these criteria to simulate failure.
 
+Becker's simplification is to consider only selected components of the acoustic tensor
+by assuming that the stress state in the band can be approximated as a planar
+tension problem.  Then the acoustic tensor takes the form
+\Beq
+  \BA = \begin{bmatrix}
+          C'_{1111} n_1^2 + C'_{3113} n_3^2 & 0 & (C'_{1133} + C'_{3131}) n_1 n_3 \\
+          0 & C'_{1221} n_1^2 + C'_{3223} n_3^2 & 0 \\
+          (C'_{3311} + C'_{1313}) n_1 n_3  & 0 & C'_{1331} n_1^2 + C'_{3333} n_3^2 
+        \end{bmatrix}
+\Eeq
+Without loss of generality, we can divide this matrix by $n_1^2$ to get
+\Beq
+  \tilde{\BA} = \begin{bmatrix}
+          C'_{1111} + C'_{3113} \frac{n_3^2}{n_1^2}  & 0 & (C'_{1133} + C'_{3131}) \frac{n_3}{n_1} \\
+          0 & C'_{1221} + C'_{3223} \frac{n_3^2}{n_1^2} & 0 \\
+          (C'_{3311} + C'_{1313}) \frac{n_3}{n_1}  & 0 & C'_{1331} + C'_{3333} \frac{n_3^2}{n_1^2} 
+        \end{bmatrix}
+\Eeq
+Let $\alpha := n_3/n_1$.  Then we can write
+\Beq
+  \tilde{\BA} = \begin{bmatrix}
+          C'_{1111} + C'_{3113} \alpha^2  & 0 & (C'_{1133} + C'_{3131}) \alpha \\
+          0 & C'_{1221} + C'_{3223} \alpha^2 & 0 \\
+          (C'_{3311} + C'_{1313}) \alpha  & 0 & C'_{1331} + C'_{3333} \alpha^2 
+        \end{bmatrix}
+\Eeq
+and we have
+\Beq
+  \det(\tilde{\BA}) = (C'_{1111} + C'_{3113} \alpha^2) \alpha^2 (C'_{1331} + C'_{3333} \alpha^2) - 
+                      (C'_{1133} + C'_{3131}) \alpha (C'_{1221} + C'_{3223} \alpha^2) (C'_{3311} + C'_{1313}) \alpha
+\Eeq
+Setting the determinant to zero allows us to get the following quadratic equation in $\beta := \alpha^2$:
+\Beq
+  (C'_{1111} + C'_{3113} \beta) (C'_{1331} + C'_{3333} \beta) - 
+  (C'_{1133} + C'_{3131}) (C'_{1221} + C'_{3223} \beta) (C'_{3311} + C'_{1313}) = 0 \,. 
+\Eeq
+We can express the above in Voigt notation (convention $11$, $22$, $33$, $23$, $31$, $12$) as
+\Beq
+  (\Chat_{11} + \Chat_{55} \beta) (\Chat_{55} + \Chat_{33} \beta) - 
+  (\Chat_{13} + \Chat_{55}) (\Chat_{66} + \Chat_{44} \beta) (\Chat_{31} + \Chat_{55}) = 0 \,. 
+\Eeq
+or
+\Beq
+  a_1 \beta^2 + a_2 \beta + a_3 = 0
+\Eeq
+where,
+\Beq
+  \Bal
+  a_1 &= \Chat_{33} \Chat_{55} \\
+  a_2 &= \Chat_{11} \Chat_{33} - \Chat_{13} \Chat_{31} \Chat_{44}
+        - \Chat_{13} \Chat_{44} \Chat_{55} - \Chat_{31} \Chat_{44} \Chat_{55}
+        - \Chat_{44} \Chat_{55}^2 + \Chat_{55}^2 \\
+  a_3 &= \Chat_{11} \Chat_{55} - \Chat_{13} \Chat_{31} \Chat_{66} 
+        - \Chat_{13} \Chat_{55} \Chat_{66} - \Chat_{31} \Chat_{55} \Chat_{66} \,.
+  \Eal
+\Eeq
+The four roots are
+\Beq
+  \frac{n_3}{n_1} = \pm\sqrt{\frac{-a_2 \pm \sqrt{a_2^2 - 4 a_1 a_3}}{2a_1}} \,.
+\Eeq
+If there are no real roots, a band cannot form and there is no bifurcation.  If there are four real roots then
+bifurcation is possible.  Two real roots indicate an intermediate condition that may not be realized in
+practice but is considered stable in \Vaango.
+
+More explicitly, for unstable deformation,
+\Beq
+  a_2^2 - 4 a_1 a_3 \ge 0 \quad \Tand \quad
+  \frac{-a_2 \pm \sqrt{a_2^2 - 4 a_1 a_3}}{2a_1} \ge 0 \,.
+\Eeq
+If these conditions are satisfied, the \MPM particle is assumed to have failed.
