@@ -100,7 +100,7 @@ void
 IntVar_Metal::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
-  int_var_ps->setAttribute("type", "metal_plasticity");
+  int_var_ps->setAttribute("type", "metal_internal_var");
   int_var_ps->appendElement("vol_frac_nucleation", d_poreNucleation.phi_n);
   int_var_ps->appendElement("mean_strain_nucleation",
                             d_poreNucleation.eps_mean_n);

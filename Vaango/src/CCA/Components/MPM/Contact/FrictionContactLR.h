@@ -86,7 +86,7 @@ public:
 
    virtual ~FrictionContactLR() = default;
 
-   virtual void outputProblemSpec(ProblemSpecP& ps);
+   virtual void outputProblemSpec(ProblemSpecP& ps) override;
 
    void addComputesAndRequires(SchedulerP& sched, 
                                const PatchSet* patches,

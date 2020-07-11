@@ -80,6 +80,10 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
   , ImplicitCM()
 {
+  if (cout_EP.active()) {
+    cout_EP << getpid() << "Constructing ElasticPlasticHP:\n";
+  }
+
   ps->require("bulk_modulus", d_initialData.Bulk);
   ps->require("shear_modulus", d_initialData.Shear);
 
@@ -202,7 +206,16 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   setErosionAlgorithm();
   getInitialPorosityData(ps);
   getInitialDamageData(ps);
+
+  if (cout_EP.active()) {
+    cout_EP << getpid() << "Got all input data from ps.\n";
+  }
+
   initializeLocalMPMLabels();
+
+  if (cout_EP.active()) {
+    cout_EP << getpid() << "Construction done\n";
+  }
 }
 
 ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
@@ -388,9 +401,9 @@ ElasticPlasticHP::initializeLocalMPMLabels()
   pPlasticStrainLabel_preReloc = VarLabel::create(
     "p.plasticStrain+", ParticleVariable<Matrix3>::getTypeDescription());
   pEqPlasticStrainLabel_preReloc = VarLabel::create(
-    "p.plasticStrain+", ParticleVariable<double>::getTypeDescription());
+    "p.eqPlasticStrain+", ParticleVariable<double>::getTypeDescription());
   pEqPlasticStrainRateLabel_preReloc = VarLabel::create(
-    "p.plasticStrainRate+", ParticleVariable<double>::getTypeDescription());
+    "p.eqPlasticStrainRate+", ParticleVariable<double>::getTypeDescription());
   pDamageLabel_preReloc = VarLabel::create(
     "p.damage+", ParticleVariable<double>::getTypeDescription());
   pPorosityLabel_preReloc = VarLabel::create(
@@ -1089,8 +1102,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
           d_flow->updatePlastic(idx, delGamma);
 
           // Update internal Cauchy stresses (only for viscoelasticity)
-          Matrix3 devDefRate_p = (state_new.getPlasticStrain().Deviator() - 
-                                  state_old.getPlasticStrain().Deviator()) / delT;
+          Matrix3 devDefRate_p = (state_new.getPlasticStrain() - 
+                                  state_old.getPlasticStrain()).Deviator() / delT;
           d_devStress->updateInternalStresses(idx, devDefRate_p, &defState, delT);
 
         } // end of flow_rule if
@@ -1439,10 +1452,9 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   double sthreetwo = 1.0 / stwothird;
 
   // Initialize variables
+  double g             = 1.0;
   double deltaGamma    = state_trial->eqPlasticStrainRate * delT * sthreetwo;
   double deltaGammaOld = deltaGamma;
-  double g             = 0.0;
-  double Dg            = 1.0;
 
   // Compute the projection tensor (P = C:M, C = elastic tangent, M = normal to yield surface)
   auto C_e = d_elastic->computeElasticTangentModulus(state_trial);
@@ -1453,7 +1465,7 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   auto P = Vaango::Tensor::constructMatrix3(P_vec);
 
   //__________________________________
-  // iterate
+  // iterate (without change in internal variables)
   ModelStateBase state_iter(state_trial);
   int count = 0;
   do {
@@ -1473,7 +1485,7 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
     // Compute the derivative of the yield function wrt delGamma
     auto df_dsigma = d_yield->df_dsigma(stress_iter, &state_iter);
-    Dg = - df_dsigma.Contract(P);
+    double Dg = - df_dsigma.Contract(P);
 
     // Update deltaGamma
     deltaGammaOld = deltaGamma;
@@ -1486,43 +1498,42 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
                 << " epdot = " << state_iter.eqPlasticStrainRate
                 << " phi = " << state_iter.porosity
                 << " ep = " << state_iter.eqPlasticStrain << "\n";
-      throw InternalError("nans in computation", __FILE__, __LINE__);
+      throw InternalError("Nans in computation or delta gamma < 0", __FILE__, __LINE__);
     }
 
-    // Update internal variables
     state_iter.lambdaIncPlastic = deltaGamma;
-    state_iter.eqPlasticStrain = 
-      d_intvar->computeInternalVariable("eqPlasticStrain", state_trial, &state_iter);
-    state_iter.porosity = 
-      d_intvar->computeInternalVariable("porosity", state_trial, &state_iter);
-
-    // Update local plastic strain rate
-    double stt_deltaGamma      = std::max(stwothird * deltaGamma, 0.0);
-    state_iter.eqPlasticStrainRate = stt_deltaGamma / delT;
 
     if (std::abs(deltaGamma - deltaGammaOld) < tolerance || count > 100)
       break;
 
+
   } while (std::abs(g) > tolerance);
 
-  // Update new state
-  state_new->eqPlasticStrain     = state_iter.eqPlasticStrain;
-  state_new->eqPlasticStrainRate = state_iter.eqPlasticStrainRate;
-  state_new->porosity            = state_iter.porosity;
-
+  // Update stress
   auto stress_new = state_trial->getStress() - P * deltaGamma;
   state_new->setStress(stress_new);
 
-  // Update the plastic strain tensor
+  // Update plastic strain tensor
   M = d_yield->df_dsigma(state_new);
   M /= M.Norm(); 
   state_new->setPlasticStrain(state_trial->getPlasticStrain() + deltaGamma * M);
+
+  // Update plastic strain rate
+  double stt_deltaGamma          = std::max(stwothird * deltaGamma, 0.0);
+  state_new->eqPlasticStrainRate = stt_deltaGamma / delT;
+
+  // Update internal variables
+  state_new->lambdaIncPlastic = deltaGamma;
+  state_new->eqPlasticStrain  = 
+    d_intvar->computeInternalVariable("eqPlasticStrain", state_trial, state_new);
+  state_new->porosity         = 
+    d_intvar->computeInternalVariable("porosity", state_trial, state_new);
 
   // Compute the yield stress
   state_new->yieldStress =
     d_flow->computeFlowStress(state_new, delT, tolerance, matl, idx);
 
-  if (std::isnan(state_new->yieldStress)) {
+  if (std::isnan(state_new->yieldStress) || deltaGamma < 0) {
     std::cout << "idx = " << idx << " iter = " << count
               << " sig_y = " << state_new->yieldStress
               << " epdot = " << state_new->eqPlasticStrainRate
