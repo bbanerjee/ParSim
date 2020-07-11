@@ -25,6 +25,7 @@
  */
 
 #include "HypoViscoElasticDevStress.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Util/DebugStream.h>
 
@@ -169,16 +170,10 @@ HypoViscoElasticDevStress::initializeInternalVars(ParticleSubset* pset,
                                                   DataWarehouse* new_dw)
 {
   dbg << " hypoViscoElastic:initializeInternalVars " << endl;
-
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
-
-    ParticleVariable<Matrix3> sigmaDev_new;
-    new_dw->allocateAndPut(sigmaDev_new, d_sigmaDevLabel[j], pset);
-    Matrix3 zero(0);
-
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      sigmaDev_new[*iter] = zero;
+    new_dw->allocateAndPut(*d_sigmaDev_new[j], d_sigmaDevLabel[j], pset);
+    for (auto idx : *pset) {
+      (*d_sigmaDev_new[j])[idx] = Vaango::Util::Zero;
     }
   }
 }
@@ -214,14 +209,9 @@ HypoViscoElasticDevStress::allocateAndPutRigid(ParticleSubset* pset,
 {
   dbg << " hypoViscoElastic:allocateAndPutRigid " << endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
-    ParticleVariable<Matrix3> sigmaDev_new;
-
-    new_dw->allocateAndPut(sigmaDev_new, d_sigmaDevLabel_preReloc[j], pset);
-
-    Matrix3 zero(0);
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      sigmaDev_new[*iter] = zero;
+    new_dw->allocateAndPut(*d_sigmaDev_new[j], d_sigmaDevLabel_preReloc[j], pset);
+    for (auto idx : *pset) {
+      (*d_sigmaDev_new[j])[idx] = Vaango::Util::Zero;
     }
   }
 }
@@ -285,22 +275,17 @@ HypoViscoElasticDevStress::updateInternalStresses(const particleIndex idx,
 {
   dbg << " hypoViscoElastic:updateInternalStresses " << endl;
   const Matrix3 devD = defState->devD;
+
+  int j = 0;
   double A = 0.0;
-
-  for (unsigned int j = 0; j < d_MaxwellElements; j++) {
-
-    (*d_sigmaDev_new[j])[idx] = (*d_sigmaDev[j])[idx] +
-                                (2.0 * d_mu_MW[j] * (devD - dp) -
-                                 (*d_sigmaDev[j])[idx] * d_inv_tau_MW[j]) *
-                                  delT;
-    //^^^^^^^^^^^^^^^^^^
-    //  I don't like this notation -Todd
-    // cout << "    d_sigmaDev_new " << ( *d_sigmaDev_new[j] )[idx] << "
-    // d_sigmaDev " << ( *d_sigmaDev[j] )[idx] << endl;
-
-    double B = (*d_sigmaDev_new[j])[idx].NormSquared();
+  for (auto& sigmaDev_new : d_sigmaDev_new) {
+    (*sigmaDev_new)[idx] += (2.0 * d_mu_MW[j] * (devD - dp) -
+                            (*sigmaDev_new)[idx] * d_inv_tau_MW[j]) * delT;
+    double B = (*sigmaDev_new)[idx].NormSquared();
     A += B * d_inv_tau_MW[j] / (2.0 * d_mu_MW[j]);
+    ++j;
   }
+
   defState->viscoElasticWorkRate = A;
 }
 
@@ -312,10 +297,12 @@ HypoViscoElasticDevStress::rotateInternalStresses(const particleIndex idx,
 {
   dbg << " hypoViscoElastic:rotateInternalStresses " << endl;
 
-  for (unsigned int j = 0; j < d_MaxwellElements; j++) {
-    (*d_sigmaDev_new[j])[idx] =
-      tensorR.Transpose() * ((*d_sigmaDev_new[j])[idx] * tensorR);
-    // cout << "    d_sigmaDev_new " << ( *d_sigmaDev_new[j] )[idx] << "
+  //int j = 0;
+  for (auto& sigmaDev_new : d_sigmaDev_new) {
+    (*sigmaDev_new)[idx] =
+      tensorR.Transpose() * ((*sigmaDev_new)[idx] * tensorR);
+    // cout << "    d_sigmaDev_new " << ( *sigmaDev_new )[idx] << "
     // d_sigmaDev " << ( *d_sigmaDev[j] )[idx] << endl;
+    //++j;
   }
 }

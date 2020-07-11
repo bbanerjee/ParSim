@@ -123,7 +123,8 @@ public:
   const VarLabel* pRotationLabel; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
-  const VarLabel* pPlasticStrainRateLabel;
+  const VarLabel* pEqPlasticStrainLabel;
+  const VarLabel* pEqPlasticStrainRateLabel;
   const VarLabel* pDamageLabel;
   const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
@@ -133,7 +134,8 @@ public:
   const VarLabel* pRotationLabel_preReloc; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
-  const VarLabel* pPlasticStrainRateLabel_preReloc;
+  const VarLabel* pEqPlasticStrainLabel_preReloc;
+  const VarLabel* pEqPlasticStrainRateLabel_preReloc;
   const VarLabel* pDamageLabel_preReloc;
   const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;

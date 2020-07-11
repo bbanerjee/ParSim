@@ -146,7 +146,7 @@ void
 ModelStateBase::setPlasticStrain(const Uintah::Matrix3& ep) 
 {
   d_plasticStrain = ep;
-  eqPlasticStrain = ep.Norm() * Vaango::Util::sqrt_two_third;
+  //eqPlasticStrain = ep.Norm() * Vaango::Util::sqrt_two_third;
 }
 
 /* Get the plastic strain */
