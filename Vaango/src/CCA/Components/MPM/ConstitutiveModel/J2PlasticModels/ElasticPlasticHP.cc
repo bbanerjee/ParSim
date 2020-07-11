@@ -1459,7 +1459,9 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   // Compute the projection tensor (P = C:M, C = elastic tangent, M = normal to yield surface)
   auto C_e = d_elastic->computeElasticTangentModulus(state_trial);
   auto M = d_yield->df_dsigma(state_trial);
-  M /= M.Norm(); 
+  //auto N = M;  // Associated plasticity
+  auto M_mag = M.Norm();
+  M /= M_mag; 
   auto M_vec = Vaango::Tensor::constructVector6Mandel(M);
   auto P_vec = C_e * M_vec;
   auto P = Vaango::Tensor::constructMatrix3(P_vec);
@@ -1467,6 +1469,11 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   //__________________________________
   // iterate (without change in internal variables)
   ModelStateBase state_iter(state_trial);
+
+  // Compute the yield stress
+  state_iter.yieldStress = 
+    d_flow->computeFlowStress(state_trial, delT, tolerance, matl, idx);
+
   int count = 0;
   do {
 
@@ -1475,10 +1482,6 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     // Compute the projected stress
     auto stress_iter = state_trial->getStress() - P * deltaGamma;
     state_iter.setStress(stress_iter);
-
-    // Compute the yield stress
-    state_iter.yieldStress = 
-      d_flow->computeFlowStress(&state_iter, delT, tolerance, matl, idx);
 
     // Compute the yield function
     g = d_yield->evalYieldCondition(stress_iter, &state_iter);
@@ -1490,6 +1493,8 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     // Update deltaGamma
     deltaGammaOld = deltaGamma;
     deltaGamma -= g / Dg;
+    //std::cout << "iter = " << count << " g = " << g << " dg = " << Dg
+    //          << "lambda_old = " << deltaGammaOld << " lambda = " << deltaGamma << "\n";
 
     if (std::isnan(g) || std::isnan(deltaGamma)) {
       std::cout << "idx = " << idx << " iter = " << count << " g = " << g
@@ -1503,11 +1508,35 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
     state_iter.lambdaIncPlastic = deltaGamma;
 
-    if (std::abs(deltaGamma - deltaGammaOld) < tolerance || count > 100)
-      break;
+    if (std::abs(deltaGamma/deltaGammaOld - 1.0) < 1.0e-3*tolerance) break;
+    if (count > 100) break;
 
 
   } while (std::abs(g) > tolerance);
+
+  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
+  // to allow for evolving internal variables
+  // Calculate derivative wrt internal variables
+  MetalIntVar f_intvar;
+  d_yield->df_dintvar(state_trial, f_intvar);
+  double f_eta1 = f_intvar.plasticPorosity;
+  double f_eta2 = f_intvar.eqPlasticStrain;
+
+  // Compute isotropic hardening moduli
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(state_trial, h_eta);
+  double h_eta1 = h_eta.eqPlasticStrain;
+  double h_eta2 = h_eta.plasticPorosity;
+
+  // Compute H
+  double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2) / M_mag;
+
+  // Compute P:N and P:N + H
+  double PN = P_vec.transpose() * M_vec;
+  double PN_H = PN + H;
+
+  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
+  deltaGamma *= (PN / PN_H);
 
   // Update stress
   auto stress_new = state_trial->getStress() - P * deltaGamma;
@@ -1541,6 +1570,15 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
               << " T = " << state_new->temperature 
               << " Tm = " << state_new->meltingTemp
               << "\n";
+  }
+
+  if (cout_EP.active()) {
+    double g_upd = d_yield->evalYieldCondition(stress_new, state_new);
+    if (std::abs(g_upd) > tolerance) {
+      std::cout << "Non-hardening return g = " << g << " tol = " << tolerance 
+                << " iters = " << count << " G_old = " << deltaGammaOld << " G = " << deltaGamma
+                << " error = " << g_upd << "\n";
+    }
   }
 
   return deltaGamma;
