@@ -1,0 +1,84 @@
+\chapter{Plasticity}
+
+Most plasticity models in \Vaango are implemented as stand-alone models with
+their own elasticity law, yield condition, flow rule, and internal variable
+evolution rules.  However, because of the large number of possible combinations
+of these, a few metal plasticity models are available that allow the user to
+swap out one set of rules for another.
+  
+\begin{NoteBox}
+  The list below is not comprehensive.  Please see the following chapters
+  for details of the models actually available in \Vaango.
+\end{NoteBox}
+
+The plasticity implementations typically contain the following:
+\begin{enumerate}
+    \item \Textmag{An elasticity model}:
+      \begin{itemize}
+        \item Isotropic linear elastic model. 
+        \item Anisotropic linear elastic models.
+        \item Isotropic nonlinear elastic models.
+        \item Anisotropic nonlinear elastic models.
+        \item \Textmag{Equation of state} to determine the pressure (or 
+              volumetric response), for example, 
+          \begin{itemize}
+            \item Mie-Gruneisen equation of state.
+          \end{itemize}
+        \item \Textmag{Deviatoric stress model} to determine the shear
+              response.
+          \begin{itemize}
+            \item Nadal-LePoac shear modulus model
+            \item Steinberg-Guinan shear modulus model
+          \end{itemize}
+      \end{itemize}
+    \item \Textmag{A yield condition}:
+      \begin{itemize} 
+        \item von Mises yield condition.
+        \item Drucker-Prager yield condition.
+        \item Mohr-Coulomb yield condition.
+        \item Gurson-Needleman-Tvergaard yield condition.
+      \end{itemize} 
+    \item \Textmag{A flow rule}:
+      \begin{itemize}
+        \item Associated flow.
+        \item Non-Associated flow using either a flow potential or
+              a material parameter.
+      \end{itemize}
+    \item \Textmag{Isotropic hardening}:
+      \begin{itemize}
+        \item Perfect plasticity (no hardening).
+        \item Johnson-Cook plasticity.
+        \item Mechanical Threshold Stress (MTS) plasticity.
+      \end{itemize}
+    \item \Textmag{Kinematic hardening}:
+      \begin{itemize}
+        \item Isotropic backstress.
+        \item Deviatoric backstress.
+      \end{itemize}
+    \item \Textmag{Isotropic hardening internal variable evolution rules}:
+      \begin{itemize}
+        \item Mechanical threshold stress evolution.
+        \item Gurson's porosity evolution law. 
+      \end{itemize}
+    \item \Textmag{Kinematic hardening internal variable evolution rules}:
+      \begin{itemize}
+        \item Ziegler-Prager evolution rule.
+        \item Armstrong-Frederick evolution rule
+      \end{itemize}
+    \item \Textmag{Damage evolution rules}:
+      \begin{itemize}
+        \item Johnson-Cook damage model.
+        \item Brittle damage model.
+      \end{itemize}
+    \item \Textmag{Melting temperature models}
+    \item \Textmag{Specific heat models}
+    \item \Textmag{Material stability-based localization models}:
+      \begin{itemize}
+        \item Acoustic tensor.
+        \item Drucker stability.
+      \end{itemize}
+\end{enumerate}
+  
+The models used by the main plasticity codes in the current implementation 
+of \Vaango are described in the following chapters, followed by 
+descriptions of the plasticity algorithms themselves.

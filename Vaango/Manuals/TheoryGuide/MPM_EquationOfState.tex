@@ -1,0 +1,137 @@
+\chapter{Equation of state models} \label{ch:EOS}
+In the isotropic metal plasticity models implemented in \Vaango, the volumetric 
+part of the Cauchy stress can be calculated using an equation of state.  The 
+equations of state that are implemented in \Vaango are described below.
+
+\section{Hypoelastic equation of state}
+In this case we assume that the stress rate is given by
+\Beq
+    \dot{\Bsig} = \lambda~\Tr(\BdT^e)~\BI + 2~\mu~\BdT^e
+\Eeq
+where $\Bsig$ is the Cauchy stress, $\BdT^e$ is the elastic part of
+the rate of deformation, and $\lambda, \mu$ are constants.
+
+If $\Dev(\BdT^e)$ is the deviatoric part of $\BdT^e$ then we can write
+\Beq \label{eq:sigdot_hypo}
+    \dot{\Bsig} = \left(\lambda + \frac{2}{3}~\mu\right)~\Tr(\BdT^e)~\BI + 
+        2~\mu~\Dev(\BdT^e) = \kappa~\Tr(\BdT^e)~\BI + 2~\mu~\Dev(\BdT^e) ~.
+\Eeq
+If we split $\Bsig$ into a volumetric and a deviatoric part, i.e.,
+$\Bsig = p~\BI + \Bs$, take the time derivative to get
+$\dot{\Bsig} = \dot{p}~\BI + \dot{\Bs}$, and compare the result with
+\eqref{eq:sigdot_hypo}, we see that
+\Beq
+    \dot{p} = \kappa~\Tr(\BdT^e) ~.
+\Eeq
+In addition we assume that $\BdT = \BdT^e + \BdT^p$.  If we also assume that 
+the plastic volume change is negligible ($\Tr(\BdT^p) \approx 0$), 
+which is reasonable for a void-free metal matrix, we have
+\Beq
+    \dot{p} = \kappa~\Tr(\BdT) ~.
+\Eeq
+This is the equation that is used to calculate the pressure $p$ in the 
+default hypoelastic equation of state.  For a forward Euler integration step,
+\Beq
+    \boxed{
+    p_{n+1} = p_n + \kappa~\Tr(\BdT_{n+1})~\Delta t ~.
+    }
+\Eeq
+To get the derivative of $p$ with respect to $J$, where $J = \det(\BF)$,
+we note that
+\Beq
+    \dot{p} = \Partial{p}{J}~\dot{J} = \Partial{p}{J}~J~\Tr(\BdT) ~.
+\Eeq
+Therefore,
+\Beq
+    \boxed{
+    \Partial{p}{J} = \cfrac{\kappa}{J} ~.
+    }
+\Eeq
+
+This model is invoked in \Vaango using
+\lstset{language=XML}
+\begin{lstlisting}
+  <equation_of_state type="default_hypo">
+  </equation_of_state>
+\end{lstlisting}
+
+\section{Default hyperelastic equation of state}
+In this model the pressure is computed using the relation
+\begin{equation}
+  p = \Half~\kappa~\left(J^e - \cfrac{1}{J^e}\right)
+\end{equation}
+where $\kappa$ is the bulk modulus and $J^e$ is determinant of the elastic 
+part of the deformation gradient.
+
+We can also compute
+\begin{equation}
+  \Deriv{p}{J} = \Half~\kappa~\left(1 + \cfrac{1}{(J^e)^2}\right) ~.
+\end{equation}
+
+The metal plasticity implementations in \Vaango assume that the volume
+change of the matrix during plastic deformation can be neglected, i.e., $J^e = J$.
+
+This model is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+  <equation_of_state type="default_hyper">
+  </equation_of_state>
+\end{lstlisting}
+
+\section{Mie-Gruneisen equation of state}
+The pressure ($p$) is calculated using a Mie-Gr{\"u}neisen equation of state 
+of the form (\cite{Wilkins1999,Zocher2000})
+\begin{equation} \label{eq:EOSMG_upd}
+  p_{n+1} =  - \frac{\rho_0~C_0^2~(1 - J^e_{n+1})
+           [1 - \Gamma_0 (1 - J^e_{n+1})/2]}
+           {[1 - S_{\alpha}(1 - J^e_{n+1})]^2} - \Gamma_0~e_{n+1} 
+  ~;~~~ J^e := \det{\BF^e} 
+\end{equation}
+where $C_0$ is the bulk speed of sound, $\rho_0$ is the initial mass density,
+$\Gamma_0$ is the Gr{\"u}neisen's gamma at the reference state,
+$S_{\alpha} = dU_s/dU_p$ is a linear Hugoniot slope coefficient,
+$U_s$ is the shock wave velocity, $U_p$ is the particle velocity, and
+$e$ is the internal energy density (per unit reference volume), $\BF^e$ is
+the elastic part of the deformation gradient.  For isochoric plasticity,
+\begin{equation*}
+  J^e = J = \det(\BF) = \cfrac{\rho_0}{\rho} ~.
+\end{equation*}
+  The internal energy is computed using
+  \begin{equation}
+    E = \frac{1}{V_0} \int C_v dT \approx \frac{C_v (T-T_0)}{V_0}
+  \end{equation}
+  where $V_0 = 1/\rho_0$ is the reference specific volume at temperature 
+  $T = T_0$, and $C_v$ is the specific heat at constant volume.
+
+Also,
+\Beq
+  \boxed{
+  \Partial{p}{J^e} = 
+  \cfrac{\rho_0~C_0^2~[1 + (S_{\alpha}-\Gamma_0)~(1-J^e)]}
+        {[1-S_{\alpha}~(1-J^e)]^3} - \Gamma_0~\Partial{e}{J^e}.
+  }
+\Eeq
+We neglect the $\Partial{e}{J^e}$ term in our calculations.
+
+This model is invoked in Vaango using
+\lstset{language=XML}
+\begin{lstlisting}
+  <equation_of_state type="mie_gruneisen">
+    <C_0>5386</C_0>
+    <Gamma_0>1.99</Gamma_0>
+    <S_alpha>1.339</S_alpha>
+    <rho_0> 7200 </rho_0>
+  </equation_of_state>
+\end{lstlisting}
+
+An alternative formulation is also available that can be used for models where a 
+linear Hugoniot is not accurate enough.  A cubic model can be used in that
+formulation.
+\Beq
+  p_{n+1} =  - \frac{\rho_0~C_0^2~(1 - J^e_{n+1})
+           [1 - \Gamma_0 (1 - J^e_{n+1})/2]}
+           {[1 - S_{\alpha}(1 - J^e_{n+1}) - S_2 (1 - J^e_{n+1})^2 - S_3 (1 - J^e_{n+1})^3]^2} - \Gamma_0~e_{n+1} 
+  ~;~~~ J^e := \det{\BF^e} 
+\Eeq
+This model is invoked using the label \Textbfc{mie\_gruneisen\_energy}.
+
