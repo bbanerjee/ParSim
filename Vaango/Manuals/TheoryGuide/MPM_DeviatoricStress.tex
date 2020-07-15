@@ -23,7 +23,7 @@ If a forward Euler stress update is used, we have
   \Bs_{n+1} = \Bs_{n} + 2\mu\Dev(\BdT^e_{n+1}) \Delta t \,.
 \Eeq
 
-For linear elastic materials, the shear modulus can vary with temprature
+For linear elastic materials, the shear modulus can vary with temperature
 and pressure.  Several shear modulus models area available in \Vaango
 for computing the value for a given state.  
 
@@ -126,5 +126,32 @@ Shear modulus models that are available in \Vaango are described below.
   \end{lstlisting}
   
   \subsection{Preston-Tonks-Wallace (PTW) shear modulus}
-  The PTW shear model is a simplified version of the SCG shear model.
+  The PTW shear model~\cite{Preston2003} is a simplified version of the SCG shear model.
+  This model suggests computing the shear modulus using
+  \Beq
+    \mu(p, T) = \mu_0 \left(1 + \beta \frac{\pbar}{\eta^{1/3}}\right) \left(1 - \alpha_p \frac{T}{T_m}\right)
+  \Eeq
+  where $\mu_0$ is the shear modulus at room temperature and pressure, $\pbar = -p$,
+  $\alpha_p$ is a material parameter, $T_m$ is the melting temperature, and
+  \Beq
+    \eta = \frac{\rho}{\rho_0} ~,~~ \beta = \frac{\Deriv{\mu}{p}}{\mu_0} \,.
+  \Eeq
+
+  \subsection{Borja's shear modulus model}
+  Borja's deviatoric stress model~\cite{borja1998} assumes that the deviatoric part of
+  the elastic strain energy density has the form
+  \Beq
+    W_\Tdev(\Ve^e_v,\Ve^e_s) =  \tfrac{3}{2}\,\mu\,(\Ve^e_s)^2
+  \Eeq
+  where $\Ve^e_v = \Tr(\Beps^e_v)$ is the volumetric part of the elastic strain, 
+  $\Ve^e_s = \sqrt{2/3 \Dev(\Beps^e_v):\Dev(\Beps^e_v)}$ is the 
+  deviatoric part of the elastic strain, and $\mu$ is the shear modulus.
+
+  The shear modulus in the Borja model is computed as
+  \Beq
+    \mu(p) = \mu_0 - \alpha p_0\,\exp\left(-\frac{\Ve^e_v - \Ve^e_{v0}}{\kappatilde}\right) 
+  \Eeq
+  where $\mu_0$ is a reference shear modulus, $\Ve^e_{v0}$ is the volumetric strain corresponding 
+  to a mean normal compressive stress $p_0$, and $\kappatilde$ is the elastic compressibility index.
+  
 

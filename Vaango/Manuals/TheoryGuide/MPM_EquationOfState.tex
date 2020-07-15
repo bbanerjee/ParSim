@@ -135,3 +135,55 @@ formulation.
 \Eeq
 This model is invoked using the label \Textbfc{mie\_gruneisen\_energy}.
 
+\section{Equations of state used in the ARENA model}
+In many models, a tangent bulk modulus is computed using the equation of state and
+the pressure is updated using an integration step.  While this approach less accurate 
+than directly evaluating the equation of state, it is useful when a composite 
+material is being simulated that does not have well-characterized equations of state 
+at all states.
+
+The equations of state used by the ARENA model for soils are described below.  The bars above
+quantities indicate negation.
+
+\subsection{Solid matrix material}
+The pressure in the solid matrix is expressed as
+\Beq \label{eq:eos_matrix}
+  \pbar_s = K_s \bar{\Veps_v^s} ~;~~ \bar{\Veps_v^s} := \ln\left(\frac{V_{s0}}{V_s}\right)
+\Eeq
+where $\pbar_s = -p_s$ is the solid matrix pressure, $K_s$ is the solid bulk modulus,
+$\bar{\Veps_v^s}$ is the volumetric strain, $V_{s0}$ is the
+initial volume of the solid, and $V_s$ is the current volume of the solid.  The solid
+bulk modulus is assumed to modeled by the Murnaghan equation:
+\Beq
+  K_s(\pbar_s) = K_{s0} + n_s\,(\pbar_s - \pbar_{s0})
+\Eeq
+where $K_{s0}$ and $n_s$ are material properties, and $\pbar_{s0}$ is a reference pressure.
+
+\subsection{Pore water}
+The equation of state of the pore water is
+\Beq \label{eq:eos_water}
+  \pbar_w = K_w \bar{\Veps_v^w} + \pbar_0 ~;~~ \bar{\Veps_v^w} := \ln\left(\frac{V_{w0}}{V_w}\right)
+\Eeq
+where $\pbar_w = -p_w$ is the water pressure, $K_w$ is the water bulk modulus, $V_{w0}$ is the
+initial volume of water, $V_w$ is the current volume of water, $\pbar_0$ is the
+initial water pressure, and $\bar{\Veps}_v^w$ is the volumetric strain in the water.  We use the
+isothermal Murnaghan bulk modulus model for water:
+\Beq
+  K_w(\pbar_w) = K_{w0} + n_w\,(\pbar_w - \pbar_{w0})
+\Eeq
+where $K_{w0}$ and $n_w$ are material properties, and $\pbar_{w0}$ is a reference pressure.
+
+\subsection{Pore air}
+The isentropic ideal gas equation of state for the pore air is
+\Beq\label{eq:eos_air}
+  \pbar_a = \pbar_r\left[\exp(\gamma\,\bar{\Veps_v^a}) - 1 \right]
+  ~;~~ \bar{\Veps_v^a} := \ln\left(\frac{V_{a0}}{V_a}\right)
+\Eeq
+where the quantities with subscript $a$ represent quantities for the air model analogous to those
+for the water model in~\eqref{eq:pw}, $\pbar_r$ is a reference pressure (101325 Pa) and $\gamma = 1.4$.
+The bulk modulus of air ($K_a$) varies with the volumetric strain in the air:
+\Beq
+  K_a = \Deriv{\pbar_a}{\bar{\Veps_v^a}} = \gamma\,\pbar_r\,\exp(\gamma\,\bar{\Veps_v^a})
+      = \gamma\,(\pbar_a + \pbar_r) \,.
+\Eeq
+

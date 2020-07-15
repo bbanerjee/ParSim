@@ -1,0 +1,186 @@
+\chapter{Yield condition}
+
+The yield condition models in \Vaango are of two types: yield conditions that are
+tightly tied to material models such as CamClay, Arenisca3, Arena, Mohr-Coulomb 
+etc. and those that can be switched in the input file.  This chapter discusses
+those yield conditions that can be easily substituted while simulating isotropic
+metal plasticity.  The other yield conditions are described in the chapters that
+deal with specific models.
+
+\section{von Mises yield}
+  The von Mises yield function implemented in \Vaango has the form
+  \Beq
+    f = \sigma^\xi_{\Teq} - \sigma_y(\Veps^p, \dot{\Veps^p}, \phi, T, \dots)
+  \Eeq 
+  where $\sigma_y$ is the flow stress, $\Veps^p$ is the equivalent plastic strain,
+  $\dot{\Veps^p}$ is the equivalent plastic strain rate, $\phi$ is the
+  porosity, and $T$ is the temperature.  The equivalent stress is defined as
+  \Beq \label{eq:equiv_stress}
+    \sigma^\xi_{\Teq} = \sqrt{3J^\xi_2} = \sqrt{\tfrac{3}{2} \Bxi:\Bxi} ~,\quad
+    \Bxi =  \BsT - \Dev(\Bbeta) ~,~~ \BsT = \Bsig - \Third \Tr(\Bsig)\BI
+  \Eeq
+  where $\Bsig$ is the Cauchy stress and $\Bbeta$ is the kinematic hardening backstress.
+
+  The normal to the yield surface is 
+  \Beq
+    \BN = \Partial{f}{\Bsig}
+        = \Partial{f}{\Bxi}:\Partial{\Bxi}{\Bsig}
+        = \Partial{f}{\Bxi}:\Partial{\Bxi}{\BsT}:\Partial{\BsT}{\Bsig}
+  \Eeq
+  Noting that
+  \Beq
+    \Partial{\BsT}{\Bsig} = \Tsym(\SfI) - \Third \BI\otimes\BI
+    \quad \Tand \quad
+    \Partial{\Bxi}{\BsT} = \Tsym(\SfI)
+  \Eeq
+  where $\SfI$ is the fourth-order identity tensor and $\BI$ is the second-order
+  identity tensor, we have
+  \Beq \label{eq:df_dxi}
+    \Bal
+      \BN & = \Partial{f}{\Bxi}:\Tsym(\SfI):(\Tsym(\SfI) - \Third \BI\otimes\BI)
+            = \Partial{f}{\Bxi}:(\Tsym(\SfI) - \Third \BI\otimes\BI) \\
+          & = \Partial{f}{\Bxi} - \Third \Tr\left(\Partial{f}{\Bxi}\right)\BI \,.
+    \Eal
+  \Eeq
+  Next we compute the derivative of $f$:
+  \Beq
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
+     = \sqrt{\tfrac{3}{2}} \frac{\Bxi}{\sqrt{\Bxi:\Bxi}} 
+    \quad \implies \quad
+    \Tr\left(\Partial{f}{\xi}\right) = 0 \,.
+  \Eeq
+  Therefore,
+  \Beq
+    \BN = \sqrt{\tfrac{3}{2}} \frac{\Bxi}{\Norm{\Bxi}{}}
+  \Eeq
+  The unit normal to the yield surface is
+  \Beq
+    \hat{\BN} = \frac{\Bxi}{\Norm{\Bxi}{}} \,.
+  \Eeq
+  
+  The von Mises yield condition is the default for metal plasticity and
+  can be invoked using the tag
+  \lstset{language=XML}
+  \begin{lstlisting}
+    <yield_condition type="von_mises"/>
+  \end{lstlisting}
+
+\section{The Gurson-Tvergaard-Needleman (GTN) yield condition}
+  The Gurson-Tvergaard-Needleman (GTN) yield 
+  condition~\cite{Gurson1977,Tver1984} depends on porosity.  
+  The GTN yield function can be written as
+  \begin{equation}
+    f = \left(\frac{\sigma^\xi_{\Teq}}{\sigma_y}\right)^2 +
+    2 q_1 \phi_\star \cosh \left(q_2 \frac{\Tr(\Bsig^\xi)}{2\sigma_y}\right) -
+    (1+q_3 \phi_\star^2) 
+  \end{equation}
+  where $\Bsig^\xi = \Bsig - \Bbeta$, $\Bsig$ is the Cauchy stress,
+  $\Bbeta$ is the backstress, 
+  $\sigma^\xi_\Teq$ is the equivalent stress defined in \eqref{eq:equiv_stress},
+  $\sigma_y$ is the flow stress of the void-free material, 
+  $q_1,q_2,q_3$ are material constants, and $\phi_\star$ is the porosity 
+  function defined as
+  \begin{equation}
+    \phi_\star = 
+    \begin{cases}
+      \phi & \text{for}~~ \phi \le \phi_c,\\ 
+      \phi_c + k (\phi - \phi_c) & \text{for}~~ \phi > \phi_c 
+    \end{cases}
+  \end{equation}
+  where $k$ is a constant and $\phi$ is the porosity (void volume fraction).  
+
+  The normal to the yield surface is
+  \Beq
+    \BN = \Partial{f}{\Bsig}
+        = \Partial{f}{\Bxi}:\Partial{\Bxi}{\Bsig} + \Partial{f}{I_1^\xi}\Partial{I_1^\xi}{\Bsig}
+        = \Partial{f}{\Bxi}:\Partial{\Bxi}{\BsT}:\Partial{\BsT}{\Bsig} + 
+          \Partial{f}{I_1^\xi}\Partial{I_1^\xi}{I_1}\Partial{I_1}{\Bsig}
+  \Eeq
+  where $I_1 = \Tr(\Bsig)$ and $I_1^\xi = \Tr(\Bsig^\xi) = \Tr(\Bsig - \Bbeta)$.  
+  Using \eqref{eq:df_dxi},
+  \Beq
+    \BN = \Partial{f}{\Bxi} - \Third \Tr\left(\Partial{f}{\Bxi}\right)\BI +
+          \Partial{f}{I_1^\xi}\Partial{I_1^\xi}{I_1}\Partial{I_1}{\Bsig} \,.
+  \Eeq
+  Noting that
+  \Beq
+    \Partial{I_1^\xi}{I_1} = 1 \quad \Tand \quad
+    \Partial{I_1}{\Bsig} = \BI
+  \Eeq
+  we have
+  \Beq
+    \BN = \Partial{f}{\Bxi} - \Third \Tr\left(\Partial{f}{\Bxi}\right)\BI +
+          \Partial{f}{I_1^\xi} \BI \,.
+  \Eeq
+  Computation of the derivatives of $f$ gives
+  \Beq
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
+      = \sqrt{\tfrac{3}{2}} \left(\frac{2\sigma^\xi_{\Teq}}{\sigma_y^2}\right) \frac{\Bxi}{\Norm{\Bxi}{}}
+      = \frac{3\Bxi}{\sigma_y^2} 
+    \quad \implies \quad
+    \Tr\left(\Partial{f}{\xi}\right) = 0 \,.
+  \Eeq
+  and
+  \Beq
+    \Partial{f}{I_1^\xi} = 
+    \frac{q_1 q_2 \phi_\star}{\sigma_y} \sinh \left(q_2 \frac{\Tr(\Bsig^\xi)}{2\sigma_y}\right)\,.
+  \Eeq
+  Therefore,
+  \Beq
+    \BN = \frac{3\Bxi}{\sigma_y^2}
+      + \frac{q_1 q_2 \phi_\star}{\sigma_y} \sinh \left(q_2 \frac{\Tr(\Bsig^\xi)}{2\sigma_y}\right) \BI\,.
+  \Eeq
+  The unit normal to the GTN yield surface is given by
+  \Beq
+    \hat{\BN} = \frac{\BN}{\Norm{\BN}{}} \,.
+  \Eeq
+  The GTN yield condition is invoked using
+  \lstset{language=XML}
+  \begin{lstlisting}
+    <yield_condition type="gurson">
+      <q1> 1.5 </q1>
+      <q2> 1.0 </q2>
+      <q3> 2.25 </q3>
+      <k> 4.0 </k>
+      <f_c> 0.05 </f_c>
+    </yield_condition>
+  \end{lstlisting}
+
+\section{The Rousselier yield condition}
+  The Rousselier yield condition~\cite{Bernauer2002} is another porosity-based yield
+  condition that has been used for ductile tearing simulations.
+
+  The yield function is
+  \Beq
+    f  = \frac{\sigma^\xi_{\Teq}}{1-\phi} +
+         D \sigma_1 \phi \exp \left(\frac{\Tr(\Bsig^\xi)}{3(1-\phi)\sigma_1}\right) -
+         \sigma_y 
+  \Eeq
+  where $D,\sigma_1$ are material constants, and the remaining quantities have been
+  defined in the previous section.
+
+  The normal to the yield surface is
+  \Beq
+    \BN = \Partial{f}{\Bxi} - \Third \Tr\left(\Partial{f}{\Bxi}\right)\BI +
+          \Partial{f}{I_1^\xi} \BI 
+  \Eeq
+  where
+  \Beq
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
+      = \sqrt{\tfrac{3}{2}} \frac{1}{1-\phi} \frac{\Bxi}{\Norm{\Bxi}{}}
+    \quad \implies \quad
+    \Tr\left(\Partial{f}{\xi}\right) = 0 
+  \Eeq
+  and
+  \Beq
+    \Partial{f}{I_1^\xi} = 
+      \frac{D\phi}{3(1-\phi)}\exp \left(\frac{\Tr(\Bsig^\xi)}{3(1-\phi)\sigma_1}\right) \,.
+  \Eeq
+  Therefore,
+  \Beq
+    \BN = \frac{1}{1-\phi}\left[
+       \sqrt{\tfrac{3}{2}} \frac{\Bxi}{\Norm{\Bxi}{}} + 
+       \frac{D\phi}{3}\exp \left(\frac{\Tr(\Bsig^\xi)}{3(1-\phi)\sigma_1}\right)\right] \,.
+  \Eeq
+
+
