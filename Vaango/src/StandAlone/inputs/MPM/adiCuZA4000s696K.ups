@@ -127,6 +127,7 @@
             <n>           0.0      </n>
           </flow_model>
           <shear_modulus_model type="constant_shear">
+            <shear_modulus> 46.0e9  </shear_modulus>
           </shear_modulus_model>
           <melting_temp_model type="constant_Tm">
           </melting_temp_model>

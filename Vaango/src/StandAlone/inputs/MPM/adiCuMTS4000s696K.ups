@@ -113,7 +113,7 @@
             <S_alpha> 1.489 </S_alpha>
             <rho_0>   8930.0 </rho_0>
           </equation_of_state>
-          <flow_model type="mts_model">
+          <flow_model type="mechanical_threshold_stress">
             <sigma_a>40.0e6</sigma_a>
             <mu_0>47.7e9</mu_0>
             <D>3.0e9</D>

@@ -1,0 +1,37 @@
+\chapter{Flow rule}
+Plastic flow rules in \Vaango have the form
+\Beq
+  \BdT^p = \dot{\BVeps}^p = \dot{\lambda}\BM
+\Eeq
+where $\BdT^p = \dot{\BVeps}^p$ is the plastic strain rate tensor, $\lambda$ is 
+the consistency parameter, and $\BM$ is a unit tensor in the direction of the
+plastic strain rate.
+
+\section{Associated plasticity}
+For associated plasticity, \Vaango uses the classical approach in plasticity theory
+and assumes that $\BM = \hat{\BN}$ is the unit normal to the yield surface:
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda}\hat{\BN} 
+  ~,~~ \hat{\BN} = \frac{\Partial{f}{\Bsig}}{\Norm{\Partial{f}{\Bsig}}{}}
+\Eeq
+where $f$ is the yield function.
+
+\section{Non-associated plasticity}
+\Vaango use two approaches for non-associated plasticity ($\BM \ne \hat{\BN}$).  
+The first approach, implemented in the Mohr-Coulomb model, is to use a separate
+plastic potential ($g$) to compute $\BM$:
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda} \hat{\BM} 
+  ~,~~ \hat{\BM} = \frac{\Partial{g}{\Bsig}}{\Norm{\Partial{g}{\Bsig}}{}}
+\Eeq
+The plastic potential is assumed to have the same form as the yield function,
+but different parameters to match experimental data on dilatation.
+
+An alternative approach, used in Arenisca3 and Arena, is to compute the
+direction of the plastic strain rate tensor using
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda} \hat{\BM} 
+  ~,~~ \hat{\BM} = \frac{\Dev(\BN) + \beta\, \Tr(\BN)}{\Norm{\Dev(\BN) + \beta\, \Tr(\BN)}{}}
+\Eeq
+where $\beta$ is an adjustable parameter.
+

@@ -135,7 +135,7 @@ void
 MTSFlow::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP flow_ps = ps->appendChild("flow_model");
-  flow_ps->setAttribute("type", "mts_model");
+  flow_ps->setAttribute("type", "mechanical_threshold_stress");
 
   flow_ps->appendElement("sigma_a", d_CM.sigma_a);
   flow_ps->appendElement("mu_0", d_CM.mu_0); // b1
