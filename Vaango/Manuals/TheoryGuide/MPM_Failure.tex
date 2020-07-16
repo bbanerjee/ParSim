@@ -1,9 +1,80 @@
 \chapter{Material failure}
 
 \section{Introduction}
-The primary technique used in \Vaango to simulate failure is damage evolution. An alternative
-approach that can be used is to used material stability conditions to determine and propagate 
-failure.
+The primary technique used in \Vaango to simulate failure is damage evolution.
+A particle is tagged as ``failed'' when its temperature is greater than the
+melting point of the material at the applied pressure.  Failure is also 
+flagged when the porosity of a particle is greater critical limit (typically 0.9)
+and the strain exceeds the fracture strain of the material.  
+
+An alternative approach that can be used in the metal plasticity models
+implemented in \Vaango is to test material stability conditions 
+to determine and propagate failure.  Upon failure detection,
+a particle is either removed from the computation by setting the stress to
+zero or is converted into a material with a different velocity field 
+which interacts with the remaining particles via contact.  Either approach
+leads to the simulation of a newly created surface.  More details of the
+approach can be found in ~\cite{Banerjee2004a,Banerjee2004c,Banerjee2005}.
+
+\section{Erosion algorithm}
+In metal plasticity simulations, the heat generated at a material point is conducted 
+away at the end of a time step using the heat equation.  If special adiabatic 
+conditions apply (such as in impact problems), the heat is accumulated at a 
+material point and is not conducted to the surrounding particles.  This 
+localized heating can be used to determine whether a material point has
+melted.
+
+The determination of whether a particle has failed can be made on the 
+basis of either or all of the following conditions:
+\begin{itemize}
+  \item The particle temperature exceeds the melting temperature.
+  \item The TEPLA-F fracture condition~\cite{Johnson1988} is satisfied.
+     This condition can be written as
+     \begin{equation}
+       \left(\frac{\phi}{\phi_c}\right)^2 + 
+       \left(\frac{\Veps_p}{\Veps_p^f}\right)^2 = 1
+     \end{equation}
+     where $\phi$ is the current porosity, $\phi_c$ is the maximum 
+     allowable porosity, $\Veps_p$ is the current plastic strain, and
+     $\Veps_p^f$ is the plastic strain at fracture.
+  \item An alternative to ad-hoc damage criteria is to use the concept of 
+     material stability bifurcation to determine whether a particle has 
+     failed or not.
+\end{itemize}
+
+Since the material unloads locally after fracture, the 
+hypoelastic-plastic stress update may not work accurately under certain 
+circumstances.  An improvement would be to use a hyperelastic-plastic stress 
+update algorithm.  Also, the plasticity models are temperature dependent.
+Hence there is the issue of severe mesh dependence due to change of the
+governing equations from hyperbolic to elliptic in the softening regime
+~\cite{Hill1975,Bazant1985,Tver1990}.  Viscoplastic stress update models or 
+nonlocal/gradient plasticity models~\cite{Ramaswamy1998,Hao2000} can be used 
+to eliminate some of these effects.  Such models that have been
+implemented in \Vaango are discussed later.
+
+The tags used to control the erosion algorithm are in two places.  
+In the \verb|<MPM> </MPM>| section the following flags can be set
+\lstset{language=XML}
+\begin{lstlisting}
+  <erosion algorithm = "ZeroStress"/>
+  <create_new_particles>           false      </create_new_particles>
+  <manual_new_material>            false      </manual_new_material>
+\end{lstlisting}
+If the erosion algorithm is \verb|"none"| then no particle failure is done.
+
+In the \verb|<constitutive_model type="elastic_plastic">| section, the 
+following flags can be set
+\lstset{language=XML}
+\begin{lstlisting}
+  <evolve_porosity>               true  </evolve_porosity>
+  <evolve_damage>                 true  </evolve_damage>
+  <do_melting>                    true  </do_melting>
+  <useModifiedEOS>                true  </useModifiedEOS>
+  <check_TEPLA_failure_criterion> true  </check_TEPLA_failure_criterion>
+  <check_max_stress_failure>      false </check_max_stress_failure>
+  <critical_stress>              12.0e9 </critical_stress>
+\end{lstlisting}
 
 \section{Material stability conditions}
 \subsection{Drucker's condition}

@@ -1,0 +1,77 @@
+\chapter{Damage models}
+The damage models implemented in \Vaango are described in this chapter.  The
+most common model evolves a scalar damage parameter that can either be
+used to flag failure when a critical value is reached or to modify the
+stress as in continuum damage mechanics.
+
+\section{Hancock-MacKenzie model}
+The Hancock-MacKenzie model~\cite{Hancock1976} evolves a scalar damage parameter ($D$)
+using the rule:
+\Beq
+  \dot{D} = (1/1.65)\dot{\Veps}_p \exp\left(\frac{\Tr(\Bsig)}{2\sigma_{\Teq}}\right)
+\Eeq
+where $ D = 0 $ for virgin material, $ \dot{\Veps}_p $ is the 
+equivalent plastic strain rate, $\Bsig$ is the Cauchy stress, and
+$\sigma_\Teq = \sqrt{3J_2}$ is the von Mises equivalent stress.
+
+The input tags for the damage model are :
+\lstset{language=XML}
+\begin{lstlisting}
+  <damage_model type="hancock_mackenzie">
+    <D0>0.05</D1>
+    <Dc>3.44</D2>
+  </damage_model>
+\end{lstlisting}
+
+\section{Johnson-Cook model}
+The Johnson-Cook damage model ~\cite{Johnson1985} depends on temperature, plastic
+strain, and strain rate.
+The damage evolution rule for the damage parameter ($D$) can be written as
+\Beq
+  \dot{D} = \frac{\dot{\Veps}_p}{\Veps_p^f}
+\Eeq
+where
+\Beq
+  \Veps_p^f = 
+    \left[D_1 + D_2 \exp \left(\frac{D_3}{3} \sigma^\star\right)\right]
+    \left[1+ D_4 \ln(\dot{\Veps}_p^\star)\right]
+    \left[1+D_5 T^\star\right]\,.
+\Eeq
+The damage parameter $D$ has a value of 0 for virgin material
+and a value of 1 at fracture, $\Veps_p^f$ is the fracture strain, 
+$D_1, D_2, D_3, D_4, D_5$ are constants.
+In the above equation,
+\Beq
+  \sigma^\star= \frac{\Tr(\Bsig)}{\sigma_{\Teq}}
+\Eeq
+where $\Bsig$ is the Cauchy stress and $\sigma_\Teq$ is the von Mises equivalent stress.
+The scaled plastic strain rate and temperature are defined as
+\Beq
+ \dot{\Veps}_p^\star = \frac{\dot{\Veps}_p}{\dot{\Veps}_{p0}} ~,~~
+ T^\star = \frac{T-T_0}{T_m-T_0}
+\Eeq
+where $\dot{\Veps}_{p0}$ is a reference strain rate and $T_0$ is a reference temperature,
+$T_m$ is the melting temperature, and $\dot{\Veps}_p$ is the equivalent plastic strain rate.
+
+The input tags for the damage model are :
+\lstset{language=XML}
+\begin{lstlisting}
+  <damage_model type="johnson_cook">
+    <D1>0.05</D1>
+    <D2>3.44</D2>
+    <D3>-2.12</D3>
+    <D4>0.002</D4>
+    <D5>0.61</D5>
+  </damage_model>
+\end{lstlisting}
+
+An initial damage distribution can be created using the following tags
+\lstset{language=XML}
+\begin{lstlisting}
+  <evolve_damage>                 true  </evolve_damage>
+  <initial_mean_scalar_damage>    0.005  </initial_mean_scalar_damage>
+  <initial_std_scalar_damage>     0.001 </initial_std_scalar_damage>
+  <critical_scalar_damage>        1.0   </critical_scalar_damage>
+  <initial_scalar_damage_distrib> gauss </initial_scalar_damage_distrib>
+\end{lstlisting}
+

@@ -1,0 +1,69 @@
+\chapter{Adiabatic heating and specific heat}
+A part of the plastic work done is converted into heat and used to update the 
+temperature of a particle.  The increase in temperature ($\Delta T$) due to 
+an increment in plastic strain ($\Delta\epsilon_p$) is given by the equation
+\begin{equation}
+  \Delta T = \cfrac{\chi\sigma_y}{\rho C_p} \Delta \epsilon_p
+\end{equation}
+where $\chi$ is the Taylor-Quinney coefficient, and $C_p$ is the specific
+heat.  The value of the Taylor-Quinney coefficient is taken to be 0.9
+in all our simulations (see \cite{Ravi2001} for more details on the 
+variation of $\chi$ with strain and strain rate).
+
+The Taylor-Quinney coefficient is taken as input 
+using the tags
+\lstset{language=XML}
+\begin{lstlisting}
+  <taylor_quinney_coeff> 0.9 </taylor_quinney_coeff>
+\end{lstlisting}
+
+The heat generated at a material point is conducted away at the end of a 
+time step using the transient heat equation.  The effect of conduction on
+material point temperature is negligible (but non-zero) for the high 
+strain-rate problems simulated using Vaango.
+
+\section{Constant specific heat model}
+The default model returns a constant specific heat and is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+  <specific_heat_model type="constant_Cp">
+  </specific_heat_model>
+\end{lstlisting}
+
+\section{Specific heat model for copper}
+The specific heat model for copper is of the form
+\Beq
+  Cp = 
+  \begin{cases}
+    A_0~T^3 - B_0~T^2 + C_0~T - D_0 & \text{if} ~~T < T_0 \\
+    A_1~T + B_1 & \text{if} ~~T \ge T_0 ~.
+  \end{cases}
+\Eeq
+The model is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+<specific_heat_model type = "copper_Cp"> </specific_heat_model>
+\end{lstlisting}
+
+\section{Specific heat model for steel}
+A relation for the dependence of $C_p$ upon temperature is
+used for the steel (\cite{Lederman1974}).
+\begin{align}
+  C_p & = \begin{cases}
+          A_1 + B_1~t + C_1~|t|^{-\alpha} & \text{if}~~ T < T_c \\
+          A_2 + B_2~t + C_2~t^{-\alpha^{'}} & \text{if}~~ T > T_c 
+        \end{cases} \label{eq:CpSteel}\\
+  t & = \cfrac{T}{T_c} - 1 
+\end{align}
+where $T_c$ is the critical temperature at which the phase transformation
+from the $\alpha$ to the $\gamma$ phase takes place, and $A_1, A_2, B_1, B_2,
+\alpha, \alpha^{'}$ are constants.
+
+The model is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+<specific_heat_model type = "steel_Cp"> </specific_heat_model>
+\end{lstlisting}
+
+
+
