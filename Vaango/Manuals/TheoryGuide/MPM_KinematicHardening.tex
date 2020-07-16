@@ -1,0 +1,44 @@
+\chapter{Kinematic hardening models}
+Kinematic hardening in \Vaango is modeled with a backstress ($\Bbeta$) that is
+subtracted from the stress while evaluating the yield condition.  In Arena, the
+pore water pressure ($\pbar_w = -p_w$) acts as a backstress, i.e.,
+\Beq
+  \Bbeta = \pbar_w \BI \,.
+\Eeq
+For metals, the backstress can either be ignored or modeled using the approaches described
+in this chapter.
+
+\section{Prager model}
+If the evolution of the backstress is given by the Prager kinematic hardening rule, we have
+\Beq
+  \dot{\Bbeta} = \frac{2}{3}~\beta H~\dot{\BVeps}^p 
+\Eeq
+where $\Bbeta$ is the backstress, $\beta H$ is a constant hardening modulus, and $\dot{\Bveps}^p$ is
+the plastic strain rate.
+
+The Prager model is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+<kinematic_hardening_model type="prager_hardening">
+  <beta> 1.0 </beta>
+  <hardening_modulus>1.5e6</hardening_modulus>
+</kinematic_hardening_model>
+\end{lstlisting}
+
+\section{Armstrong-Frederick model}
+The Armstrong-Frederick model evolves the backstress using
+\Beq
+  \dot{\Bbeta} = \frac{2}{3}~\beta H_1~\dot{\BVeps}^p - \beta H_2~\Bbeta~\Norm{\dot{\BVeps}^p}{} 
+\Eeq
+where $\beta$, $H_1$ and $H_2$ are material parameters.
+
+The Armstrong-Frederick model is invoked using
+\lstset{language=XML}
+\begin{lstlisting}
+<kinematic_hardening_model type="armstrong_frederick_hardening">
+  <beta> 1.0 </beta>
+  <hardening_modulus_1>1.5e6</hardening_modulus_1>
+  <hardening_modulus_2>1.5e4</hardening_modulus_2>
+</kinematic_hardening_model>
+\end{lstlisting}
+
