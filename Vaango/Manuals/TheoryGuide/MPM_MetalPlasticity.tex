@@ -1,157 +1,100 @@
-%\input{latexmacros.tex}
-%\title{Small strain elastic-plastic model}
-%\begin{document}
-%\DeclareGraphicsExtensions{.jpg,.pdf}
-%\maketitle
-%\tableofcontents
-
-\chapter{General small strain elastic-plastic model}
-\section{Preamble}
-Let $\boldsymbol{F}$ be the deformation gradient, $\boldsymbol{\sigma}$ be the 
-Cauchy stress, and $\boldsymbol{d}$ be the rate of deformation tensor.  We
-first decompose the deformation gradient into a stretch and a rotations using
-$\BF = \BR\cdot\BU$.  The rotation $\BR$ is then used to rotate the stress and
-the rate of deformation into the material configuration to give us
+\chapter{Isotropic metal plasticity}
+\begin{NoteBox}
+The deformation gradient ($\BF$) can be decomposed into a rotation tensor ($\BR$)
+and a stretch tensor ($\BU$) with th epolar decomposition $\BF = \BR\cdot\BU$.
+In the isotropic metal plasticity model implemented in \Vaango, $\BR$ is used 
+to rotate the stress ($\Bsig$) and the rate of deformation ($\BdT$) 
+into the unrotated configuration before the updated stress is computed:
 \Beq
   \widehat{\Bsig} = \BR^T\cdot\Bsig\cdot\BR ~;~~
-  \widehat{\Bd} = \BR^T\cdot\Bd\cdot\BR 
+  \widehat{\BdT} = \BR^T\cdot\BdT\cdot\BR 
 \Eeq
-This is equivalent to using a Green-Naghdi objective stress rate.  In the 
-following all equations are with respect to the hatted quantities and we 
-drop the hats for convenience.
+After the stress has been updated, it is rotated back using
+\Beq
+  \Bsig = \BR\cdot\widehat{\Bsig}\cdot\BR^T \,.
+\Eeq
+In the following discussion, all equations should be treated as referring
+to the hatted quantities even though we drop the hats for convenience.
+\end{NoteBox}
 
 \section{The model}
+The Cauchy stress ($\Bsig$) is decomposed into volumetric and deviatoric parts:
+\Beq \label{eq:stress_decomp}
+  \Bsig = p~\BI + \BsT \quad \text{where} \quad  
+  p = \Third~\Tr(\Bsig) \quad \Tand \quad
+  \BsT = \Dev(\Bsig) = \Bsig - \Third\Tr(\Bsig) \,.
+\Eeq
+In the above $p = \sigma_m$ is the mean stress and $\BsT$ is the deviatoric stress.
+The isotropy of the material allows us to compute the mean stress using an
+equation of state if desired. The deviatoric stress is computed using a rate-form
+stress-strain relation.
+We simplify the discussion by assuming that rate-form relations are used for
+both the mean stress and the deviatoric stress.  The time derivative of 
+\eqref{eq:stress_decomp} is
+\Beq
+  \dot{\Bsig} = \dot{p}~\BI + \dot{\BsT} \,.
+\Eeq
+These stress rates have to be computed when a rate of deformation $\BdT$ is given, which
+we assume can be additively decomposed into elastic ($\BdT^e$) and plastic ($\BdT^p$) parts:
+\Beq
+  \BdT = \BdT^e + \BdT^p \,.
+\Eeq
+The isotropic metal plasticity model in \Vaango solves the coupled equations
+\Beq
+  \dot{p} = g_1(\BdT^e, \BdT^p) ~,~~ \dot{\Bs} = g_2(\BdT^e, \BdT^p) \,.
+\Eeq
+
 \subsection{Elastic relation}
-Let us split the Cauchy stress into a volumetric and a deviatoric part
+The elastic constitutive relation is assumed to be of the form
 \Beq
-  \Bsig = p~\Bone + \Bs ~;~~ p = \Third~\Tr(\Bsig) ~.
+  \dot{\Bsig}^e = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\BdT^e) \BI + 2\mu\BdT^e 
+                - 3\kappa\alpha\Deriv{}{t}(T-T_0)\BI 
 \Eeq
-Taking the time derivative gives us
-\Beq
-  \dot{\Bsig} = \dot{p}~\Bone + \dot{\Bs} ~.
-\Eeq
-We assume that the elastic response of the material is isotropic.  The constitutive 
-relation for a hypoelastic material of grade 0 can be expressed as
-\Beq
-  \dot{\Bsig} = \left[\lambda~\Tr(\Bd^e) - 3~\kappa~\alpha~\Deriv{}{t}(T-T_0)\right]~\Bone 
-    + 2~\mu~\Bd^e  ~;~~ \Bd = \Bd^e + \Bd^p
-\Eeq
-where $\Bd^e, \Bd^p$ are the elastic and plastic parts of the rate of deformation 
-tensor, $\lambda,\mu$ are the Lame constants, $\kappa$ is the bulk modulus, $\alpha$
-is the coefficient of thermal expansion, $T_0$ is the reference temperature, and $T$ is the
-current temperature.  If we split $\Bd^e$ into volumetric and deviatoric parts as
-\Beq
-  \Bd^e = \Third~\Tr(\Bd^e)~\Bone + \Beta^e
-\Eeq
-we can write
-\Beq
-  \dot{\Bsig} = \left[\left(\lambda + \cfrac{2}{3}~\mu\right)~\Tr(\Bd^e) 
-     - 3~\kappa~\alpha~\Deriv{}{t}(T-T_0)\right]~\Bone + 2~\mu~\Beta^e  =
-  \kappa~\left[\Tr(\Bd^e) - 3~\alpha~\Deriv{}{t}(T-T_0)\right]~\Bone + 2~\mu~\Beta^e  
-\Eeq
-Therefore, we have
-\Beq
-  \dot{\Bs} = 2~\mu~\Beta^e ~.
-\Eeq
-and
-\Beq
-  \dot{p} = \kappa~\left[\Tr(\Bd^e) - 3~\alpha~\Deriv{}{t}(T-T_0)\right] ~.
-\Eeq
-We will use a standard elastic-plastic stress update algorithm to integrate the rate 
-equation for the deviatoric stress.  However, we will assume that the volumetric part 
-of the Cauchy stress can be computed using an equation of state.  Then the final
-Cauchy stress will be given by
-\Beq
-  \Bsig = \left[p(J) - 3~J~\Deriv{p(J)}{J}~\alpha~(T-T_0)\right]~\Bone + \Bs ~;~~ 
-  J = \det(\BF)~.
-\Eeq
-(Note that we assume that the plastic part of the deformation is volume preserving.
-This is not true for Gurson type models and will lead to a small error in the 
-computed value of $\Bsig$.)
+where $\mu(p, T, \phi)$ is the shear modulus, $\kappa(p,T, \phi)$ is the tangent 
+bulk modulus, $\alpha$ is the coefficient of thermal expansion, $T_0$ is a reference 
+temperature, $T$ is the current temperature, and $\phi$ is the current porosity.  
 
 \subsection{Flow rule}
-We assume that the flow rule is given by
+We assume that the plastic rate of deformation is given by the flow rule
 \Beq
-  \Bd^p = \dot{\gamma}~\Br
-\Eeq
-We can split $\Bd^p$ into a trace part and a trace free part, i.e.,
-\Beq
-  \Bd^p = \Third~\Tr(\Bd^p)~\Bone + \Beta^p 
-\Eeq
-Then, using the flow rule, we have
-\Beq
-  \Bd^p = \Third~\dot{\gamma}~\Tr(\Br)~\Bone + \Beta^p  ~.
-\Eeq
-Therefore we can write the flow rule as
-\Beq
-  \Beta^p = \dot{\gamma}~\left(-\Third~\Tr(\Br)~\Bone + \Br\right) ~.
-\Eeq
-Note that 
-\Beq
-  \Bd = \Bd^e + \Bd^p \quad \implies \quad
-  \Tr(\Bd) = \Tr(\Bd^e) + \Tr(\Bd^p) ~.
-\Eeq
-Also,
-\Beq
-  \Bd = \Bd^e + \Bd^p \quad \implies \quad
-  \Third~\Tr(\Bd)~\Bone + \Beta = 
-  \Third~\Tr(\Bd^e)~\Bone + \Beta^e  + 
-  \Third~\Tr(\Bd^p)~\Bone + \Beta^p ~.
-\Eeq
-Therefore,
-\Beq
-  \Beta = \Beta^e + \Beta^p ~.
+  \BdT^p = \dot{\lambda}~\BM
 \Eeq
 
-\subsection{Isotropic and Kinematic hardening and porosity evolution rules}
-We assume that the strain rate, temperature, and porosity can be fixed at the
-beginning of a timestep and consider only the evolution of plastic strain and
-the back stress while calculating the current stress.
-
-We assume that the plastic strain evolves according to the relation
+\subsection{Isotropic and kinematic hardening/softening rules}
+The equivalent plastic strain ($\Veps_p^\Teq$) evolves according to the relation
 \Beq
-  \dot{\Ve^p} = \dot{\gamma}~h^{\alpha}
+  \dot{\Veps}^\Teq_p = \dot{\lambda}~h_{\Veps_p} \,.
 \Eeq
-
-We also assume that the back stress evolves according to the relation
+The back stress ($\Bbeta$) evolves according to the relation
 \Beq
-  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta}
+  \dot{\Bbeta} = \dot{\lambda}~\Bh_{\beta} \,.
 \Eeq
-where $\hat{\Bbeta}$ is the back stress.  If $\Bbeta$ is the deviatoric part of
-$\widehat{\Bbeta}$, then we can write
+The porosity ($\phi$) is assumed to evolve according to the relation
 \Beq
-  \dot{\Bbeta} = \dot{\gamma}~\Dev(\Bh^{\beta}) ~.
+  \dot{\phi} = \dot{\lambda}~h_{\phi} ~.
 \Eeq
-
-The porosity $\phi$ is assumed to evolve according to the relation
+The damage parameter ($D$) evolves as
 \Beq
-  \dot{\phi} = \dot{\gamma}~h^{\phi} ~.
+  \dot{D} = \dot{\lambda}~h_D \,.
+\Eeq
+The temperature ($T$) due to plastic dissipation evolves as
+\Beq
+  \dot{T} = \dot{\lambda}~h_T \,.
 \Eeq
 
 \subsection{Yield condition}
-The yield condition is assumed to be of the form
+The yield condition is of the form
 \Beq
-  f(\Bs, \Bbeta, \Ve^p, \phi, \dot{\Ve}, T, \dots) 
-    = f(\Bxi, \Ve^p, \phi, \dot{\Ve}, T, \dots) = 0
+  f(\Bsig, \Bbeta, \Veps^\Teq_p, \phi, \dot{\Veps}^\Teq_p, D, T, \dots) =
+  f(\Bxi, p_\beta, \Veps^\Teq_p, \phi, \dot{\Veps}^\Teq_p, D, T, \dots) = 0
 \Eeq
-where $\Bxi = \Bs - \Bbeta$ and $\Bbeta$ is the deviatoric part of $\widehat{\Bbeta}$.  
+where $\Bxi = \Dev(\Bsig - \Bbeta)$ and $p_\beta = \Tr(\Bsig - \Bbeta)/3$. 
+
 The Kuhn-Tucker loading-unloading conditions are
 \Beq
-  \dot{\gamma} \ge 0 ~;~~  f \le 0 ~;~~ \dot{\gamma}~f = 0
+  \dot{\lambda} \ge 0 ~;~~  f \le 0 ~;~~ \dot{\lambda}~f = 0
 \Eeq
 and the consistency condition is $\dot{f} = 0$.
-
-\subsection{Temperature increase due to plastic dissipation}
-The temperature increase due to plastic dissipation is assume to be
-given by the rate equation
-\Beq
-  \dot{T} = \cfrac{\chi}{\rho~C_p}~\sigma_y~\dot{\Ve^p} ~.
-\Eeq
-The temperature is updated using
-\Beq
-  T_{n+1} = T_n + 
-   \cfrac{\chi_{n+1}~\Delta t}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~\dot{\Ve^p}_{n+1} ~.
-\Eeq
 
 \subsection{Continuum elastic-plastic tangent modulus}
 To determine whether the material has undergone a loss of stability we need to compute
@@ -160,7 +103,7 @@ modulus.
 
 To do that recall that
 \Beq
-  \Bsig = p~\Bone + \Bs \quad \implies \quad \dot{\Bsig} = \dot{p}~\Bone ~.
+  \Bsig = p~\BI + \Bs \quad \implies \quad \dot{\Bsig} = \dot{p}~\BI ~.
 \Eeq
 We assume that 
 \Beq
@@ -242,7 +185,7 @@ Hence we can write
 \Eeq
 or,
 \Beq
-  \dot{\Bs} = \SfB^{ep}:\Beta = \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\Bone\right]
+  \dot{\Bs} = \SfB^{ep}:\Beta = \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\BI\right]
 \Eeq
 where
 \Beq
@@ -255,19 +198,19 @@ where
 Adding in the volumetric component gives
 \Beq
   \Bal
-  \dot{\Bsig} & = \dot{p}~\Bone + \dot{\Bs} \\
-   & = J~\Partial{p}{J}~\Tr(\Bd)~\Bone +  
-       \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\Bone\right] \\
-   & = \left[3~J~\Partial{p}{J}~\Bone - \SfB^{ep}:\Bone\right]~\cfrac{\Bd:\Bone}{3}
+  \dot{\Bsig} & = \dot{p}~\BI + \dot{\Bs} \\
+   & = J~\Partial{p}{J}~\Tr(\Bd)~\BI +  
+       \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\BI\right] \\
+   & = \left[3~J~\Partial{p}{J}~\BI - \SfB^{ep}:\BI\right]~\cfrac{\Bd:\BI}{3}
        + \SfB^{ep}:\Bd \\
-   & = J~\Partial{p}{J}~(\Bone\otimes\Bone):\Bd - \Third~[\SfB^{ep}:(\Bone\otimes\Bone)]:\Bd
+   & = J~\Partial{p}{J}~(\BI\otimes\BI):\Bd - \Third~[\SfB^{ep}:(\BI\otimes\BI)]:\Bd
        + \SfB^{ep}:\Bd ~.
   \Eal
 \Eeq
 Therefore,
 \Beq
-  \dot{\Bsig} = \left[J~\Partial{p}{J}~(\Bone\otimes\Bone) - 
-      \Third~[\SfB^{ep}:(\Bone\otimes\Bone)] + \SfB^{ep}\right]:\Bd 
+  \dot{\Bsig} = \left[J~\Partial{p}{J}~(\BI\otimes\BI) - 
+      \Third~[\SfB^{ep}:(\BI\otimes\BI)] + \SfB^{ep}\right]:\Bd 
    = \SfC^{ep}:\Bd ~.
 \Eeq
 The quantity $\SfC^{ep}$ is the continuum elastic-plastic tangent modulus.  We also use the 
@@ -289,11 +232,11 @@ Integrating the rate equation using a Backward Euler scheme gives
 \Eeq
 Now, from the flow rule, we have
 \Beq
-  \Beta^p = \dot{\gamma}~\left(\Br -\Third~\Tr(\Br)~\Bone\right) ~.
+  \Beta^p = \dot{\gamma}~\left(\Br -\Third~\Tr(\Br)~\BI\right) ~.
 \Eeq
 Define the deviatoric part of $\Br$ as
 \Beq
-  \Dev(\Br) := \Br -\Third~\Tr(\Br)~\Bone ~.
+  \Dev(\Br) := \Br -\Third~\Tr(\Br)~\BI ~.
 \Eeq
 Therefore, 
 \Beq
@@ -548,7 +491,7 @@ The following stress update algorithm is used for each (plastic) time step:
   \Beq
     \Bal
     \widehat{\Bbeta}_{n+1} & = \widehat{\Bbeta}_n + \Delta\gamma_{n+1}~\Bh^{\beta}(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}) \\
-    \Bbeta_{n+1} & = \widehat{\Bbeta}_{n+1} - \Third~\Tr(\widehat{\Bbeta}_{n+1})~\Bone \\
+    \Bbeta_{n+1} & = \widehat{\Bbeta}_{n+1} - \Third~\Tr(\widehat{\Bbeta}_{n+1})~\BI \\
     \Bs_{n+1} & = \Bxi_{n+1} + \Bbeta_{n+1}
     \Eal
   \Eeq
@@ -561,7 +504,7 @@ The following stress update algorithm is used for each (plastic) time step:
      \cfrac{\chi_{n+1}~\Delta\gamma_{n+1}}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~h^{\alpha}_{n+1} \\
     p_{n+1} & = p(J_{n+1}) \\ 
     \kappa_{n+1} & = J_{n+1}~\left[\Deriv{p(J)}{J}\right]_{n+1} \\
-    \Bsig_{n+1} & = \left[p_{n+1} - 3~\kappa_{n+1}~\alpha~(T_{n+1}-T_0)\right]~\Bone + \Bs_{n+1}
+    \Bsig_{n+1} & = \left[p_{n+1} - 3~\kappa_{n+1}~\alpha~(T_{n+1}-T_0)\right]~\BI + \Bs_{n+1}
     \Eal
   \Eeq
 \end{enumerate}
@@ -688,7 +631,7 @@ Let us use an associated flow rule
 Then
 \Beq
   \Br = \Partial{f}{\Bsig} = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
-   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\Bone ~.
+   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\BI ~.
 \Eeq
 In this case
 \Beq
@@ -752,7 +695,7 @@ Therefore, for this model,
   \boxed{
   \Bal
   \Br & = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
-   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\Bone  \\
+   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\BI  \\
   h^{\alpha} &  
     = \cfrac{(\Bsig - \Bbeta):\Br}{(1 - \phi)~\sigma_y} \\
   h^{\phi} & = 
