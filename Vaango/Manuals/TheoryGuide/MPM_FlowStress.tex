@@ -22,17 +22,17 @@ The linear hardening model can be invoked using
 The Johnson-Cook (JC) model (\cite{Johnson1983}) has
 the following relation for the flow stress ($\sigma_y$) 
 \begin{equation}
-  \sigma_y(\Ep,\Epdot{},T) = 
-  \left[A + B (\Ep)^n\right]\left[1 + C \ln(\Epdot{}^{*})\right]
+  \sigma_y(\Ep,\Epdoteq,T) = 
+  \left[A + B (\Ep)^n\right]\left[1 + C \ln(\Epdot{}^\star)\right]
   \left[1 - (T^*)^m\right]
 \end{equation}
 where $\Ep$ is the equivalent plastic strain, 
 $A$, $B$, $C$, $n$, $m$ are material constants, and
 \begin{equation}
-  \Epdot{}^{*} = \cfrac{\Epdot{}}{\Epdot{0}}; \quad
+  \Epdot{}^\star = \cfrac{\dot{\Veps}_p^\Teq}{\Epdot{0}}; \quad
   T^* = \cfrac{(T-T_0)}{(T_m-T_0)}\,.
 \end{equation}
-In the above equations, $\Epdot{}$ is the 
+In the above equations, $\dot{\Veps}_p^\Teq$ is the 
 equivalent plastic strain rate, 
 $\Epdot{0}$ is a user defined plastic strain rate, 
 $T_0$ is a reference temperature, and $T_m$ is the melt temperature.  
@@ -59,8 +59,8 @@ that was developed by \cite{Steinberg1980} for high strain rate
 situations and extended to low strain rates and bcc materials by
 \cite{Steinberg1989}.  The flow stress in this model is given by
 \begin{equation}\label{eq:SCGL}
-  \sigma_y(\Ep,\Epdot{},T) = 
-   \left[\sigma_a f(\Ep) + \sigma_t (\Epdot{}, T)\right]
+  \sigma_y(\Ep,\Epdoteq,T) = 
+   \left[\sigma_a f(\Ep) + \sigma_t (\Epdoteq, T)\right]
    \frac{\mu(p,T)}{\mu_0} 
 \end{equation}
 where $\sigma_a$ is the athermal component of the flow stress,
@@ -78,7 +78,7 @@ initial equivalent plastic strain.  The thermal component $\sigma_t$
 is computed using a bisection algorithm from the following equation (based 
 on the work of \cite{Hoge1977})
 \begin{equation}
-  \Epdot{} = \left[\frac{1}{C_1}\exp\left[\frac{2U_k}{k_b~T}
+  \Epdoteq = \left[\frac{1}{C_1}\exp\left[\frac{2U_k}{k_b~T}
     \left(1 - \frac{\sigma_t}{\sigma_p}\right)^2\right] + 
     \frac{C_2}{\sigma_t}\right]^{-1}; \quad
   \sigma_t \le \sigma_p
@@ -118,13 +118,13 @@ The Zerilli-Armstrong (ZA) model (\cite{Zerilli1987,Zerilli1993,Zerilli2004})
 is based on simplified dislocation mechanics.  The general form of the
 equation for the flow stress is
 \begin{equation}
-  \sigma_y(\Ep,\Epdot{},T) = 
-    \sigma_a + B\exp(-\beta(\Epdot{}) T) + 
-                         B_0\sqrt{\Ep}\exp(-\alpha(\Epdot{}) T)
+  \sigma_y(\Ep,\Epdoteq,T) = 
+    \sigma_a + B\exp(-\beta(\Epdoteq) T) + 
+                         B_0\sqrt{\Ep}\exp(-\alpha(\Epdoteq) T)
 \end{equation}
 where $\sigma_a$ is the athermal component of the flow stress given by
 \begin{equation}
-  \sigma_a := \sigma_g + \frac{k_h}{\sqrt{l}} + K\Ep^n,
+  \sigma_a := \sigma_g + \frac{k_h}{\sqrt{l}} + K(\Ep)^n,
 \end{equation}
 $\sigma_g$ is the contribution due to solutes and initial dislocation
 density, $k_h$ is the microstructural stress intensity, $l$ is the 
@@ -132,8 +132,8 @@ average grain diameter, $K$ is zero for fcc materials,
 $B, B_0$ are material constants.  The functional forms of the exponents 
 $\alpha$ and $\beta$ are 
 \begin{equation}
-  \alpha = \alpha_0 - \alpha_1 \ln(\Epdot{}); \quad
-  \beta = \beta_0 - \beta_1 \ln(\Epdot{}); 
+  \alpha = \alpha_0 - \alpha_1 \ln(\Epdoteq); \quad
+  \beta = \beta_0 - \beta_1 \ln(\Epdoteq); 
 \end{equation}
 where $\alpha_0, \alpha_1, \beta_0, \beta_1$ are material parameters that
 depend on the type of material (fcc, bcc, hcp, alloys).  The Zerilli-Armstrong
@@ -162,19 +162,19 @@ The input for this model is of the form
 \section{Polymer Zerilli-Armstrong model}
 The Zerilli-Armstrong model for polymers has the form:
 \begin{equation}
-  \sigma_y(\Ep,\Epdot{},T) = \sigma_g + B\exp(-\beta T^\star) + 
+  \sigma_y(\Ep,\Epdoteq,T) = \sigma_g + B\exp(-\beta T^\star) + 
                              B_0\sqrt{\omega \Ep}\exp(-\alpha T^\star)
 \end{equation}
 where $\sigma_g$ is the athermal component of the flow stress and
 \Beq
-  \omega = \omega_a + \omega_b \ln(\Epdot{}) + \omega_p \sqrt{\pbar}
+  \omega = \omega_a + \omega_b \ln(\Epdoteq) + \omega_p \sqrt{\pbar}
 \Eeq
 where $\omega_a$, $\omega_b$, $\omega_p$ are material parameters
 and $\pbar = -p$ is the pressure (positive in compression).
 The functional forms of the exponents $\alpha$ and $\beta$ are 
 \begin{equation}
-  \alpha = \alpha_0 - \alpha_1 \ln(\Epdot{}); \quad
-  \beta = \beta_0 - \beta_1 \ln(\Epdot{}); 
+  \alpha = \alpha_0 - \alpha_1 \ln(\Epdoteq); \quad
+  \beta = \beta_0 - \beta_1 \ln(\Epdoteq); 
 \end{equation}
 where $\alpha_0, \alpha_1, \beta_0, \beta_1$ are material parameters.
 The factors $B$ and $B_0$ are defined as
@@ -214,7 +214,7 @@ The Mechanical Threshold Stress (MTS) model
 (\cite{Follans1988,Goto2000a,Kocks2001})  
 gives the following form for the flow stress
 \begin{equation}
-  \sigma_y(\Ep,\Epdot{},T) = 
+  \sigma_y(\Ep,\Epdoteq,T) = 
     \sigma_a + (S_i \sigma_i + S_e \sigma_e)\frac{\mu(p,T)}{\mu_0} 
 \end{equation}
 where $\sigma_a$ is the athermal component of mechanical threshold stress,
@@ -227,10 +227,10 @@ microstructural evolution with increasing deformation (strain hardening),
 scaling factors take the Arrhenius form
 \begin{align}
   S_i & = \left[1 - \left(\frac{k_b~T}{g_{0i}b^3\mu(p,T)}
-  \ln\frac{\Epdot{0i}}{\Epdot{}}\right)^{1/q_i}
+  \ln\frac{\Epdot{0i}}{\Epdoteq}\right)^{1/q_i}
   \right]^{1/p_i} \\
   S_e & = \left[1 - \left(\frac{k_b~T}{g_{0e}b^3\mu(p,T)}
-  \ln\frac{\Epdot{0e}}{\Epdot{}}\right)^{1/q_e}
+  \ln\frac{\Epdot{0e}}{\Epdoteq}\right)^{1/q_e}
   \right]^{1/p_e}
 \end{align}
 where $k_b$ is the Boltzmann constant, $b$ is the magnitude of the Burgers' 
@@ -246,13 +246,13 @@ where
 \begin{align}
   \theta(\sigma_e) & = 
      \theta_0 [ 1 - F(\sigma_e)] + \theta_{IV} F(\sigma_e) \\
-  \theta_0 & = a_0 + a_1 \ln \Epdot{} + a_2 \sqrt{\Epdot{}} - a_3 T \\
+  \theta_0 & = a_0 + a_1 \ln \Epdoteq + a_2 \sqrt{\Epdoteq} - a_3 T \\
   F(\sigma_e) & = 
     \cfrac{\tanh\left(\alpha \cfrac{\sigma_e}{\sigma_{es}}\right)}
     {\tanh(\alpha)}\\
   \ln(\cfrac{\sigma_{es}}{\sigma_{0es}}) & =
   \left(\frac{kT}{g_{0es} b^3 \mu(p,T)}\right)
-  \ln\left(\cfrac{\Epdot{}}{\Epdot{0es}}\right)
+  \ln\left(\cfrac{\Epdoteq}{\Epdot{0es}}\right)
 \end{align}
 and $\theta_0$ is the hardening due to dislocation accumulation, 
 $\theta_{IV}$ is the contribution due to stage-IV hardening,
@@ -298,7 +298,7 @@ provide a model for the flow stress for extreme strain rates
 (up to $10^{11}$/s) and temperatures up to melt.  The flow stress is
 given by
 \begin{equation}
-  \sigma_y(\Ep,\Epdot{},T) = 
+  \sigma_y(\Ep,\Epdoteq,T) = 
      \begin{cases}
        2\left[\tau_s + \alpha\ln\left[1 - \varphi
         \exp\left(-\beta-\cfrac{\theta\Ep}{\alpha\varphi}\right)\right]\right]
@@ -321,14 +321,14 @@ and the yield stress are given by
 \begin{align}
   \tau_s & = \max\left\{s_0 - (s_0 - s_{\infty})
      \erf\left[\kappa
-       \That\ln\left(\cfrac{\gamma\Xidot}{\Epdot{}}\right)\right],
-     s_0\left(\cfrac{\Epdot{}}{\gamma\Xidot}\right)^{s_1}\right\} \\
+       \That\ln\left(\cfrac{\gamma\Xidot}{\Epdoteq}\right)\right],
+     s_0\left(\cfrac{\Epdoteq}{\gamma\Xidot}\right)^{s_1}\right\} \\
   \tau_y & = \max\left\{y_0 - (y_0 - y_{\infty})
      \erf\left[\kappa
-       \That\ln\left(\cfrac{\gamma\Xidot}{\Epdot{}}\right)\right],
+       \That\ln\left(\cfrac{\gamma\Xidot}{\Epdoteq}\right)\right],
      \min\left\{
-       y_1\left(\cfrac{\Epdot{}}{\gamma\Xidot}\right)^{y_2}, 
-       s_0\left(\cfrac{\Epdot{}}{\gamma\Xidot}\right)^{s_1}\right\}\right\} 
+       y_1\left(\cfrac{\Epdoteq}{\gamma\Xidot}\right)^{y_2}, 
+       s_0\left(\cfrac{\Epdoteq}{\gamma\Xidot}\right)^{s_1}\right\}\right\} 
 \end{align}
 where $s_{\infty}$ is the value of $\tau_s$ close to the melt temperature,
 ($y_0, y_{\infty}$) are the values of $\tau_y$ at 0K and close to melt,

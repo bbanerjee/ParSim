@@ -1,4 +1,4 @@
-\chapter{Kinematic hardening models}
+\chapter{Kinematic hardening models} \label{ch:kin_hard}
 Kinematic hardening in \Vaango is modeled with a backstress ($\Bbeta$) that is
 subtracted from the stress while evaluating the yield condition.  In Arena, the
 pore water pressure ($\pbar_w = -p_w$) acts as a backstress, i.e.,
@@ -10,7 +10,7 @@ in this chapter.
 
 \section{Ziegler-Prager model}
 If the evolution of the backstress is given by the Ziegler-Prager kinematic hardening rule, we have
-\Beq
+\Beq \label{eq:kin_ZP}
   \dot{\Bbeta} = \frac{2}{3}~\beta H~\dot{\BVeps}^p 
 \Eeq
 where $\Bbeta$ is the backstress, $\beta H$ is a constant hardening modulus, and $\dot{\Bveps}^p$ is
@@ -27,7 +27,7 @@ The Prager model is invoked using
 
 \section{Armstrong-Frederick model}
 The Armstrong-Frederick model evolves the backstress using
-\Beq
+\Beq \label{eq:kin_AF}
   \dot{\Bbeta} = \frac{2}{3}~\beta H_1~\dot{\BVeps}^p - \beta H_2~\Bbeta~\Norm{\dot{\BVeps}^p}{} 
 \Eeq
 where $\beta$, $H_1$ and $H_2$ are material parameters.

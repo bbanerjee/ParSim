@@ -1,4 +1,4 @@
-\chapter{Damage models}
+\chapter{Damage models} \label{ch:damage}
 The damage models implemented in \Vaango are described in this chapter.  The
 most common model evolves a scalar damage parameter that can either be
 used to flag failure when a critical value is reached or to modify the
@@ -8,11 +8,18 @@ stress as in continuum damage mechanics.
 The Hancock-MacKenzie model~\cite{Hancock1976} evolves a scalar damage parameter ($D$)
 using the rule:
 \Beq
-  \dot{D} = (1/1.65)\dot{\Veps}_p \exp\left(\frac{\Tr(\Bsig)}{2\sigma_{\Teq}}\right)
+  \dot{D} = \frac{1}{1.65} \dot{\Veps}^\Teq_p \exp\left(\frac{\Tr(\Bsig)}{2\sigma_{\Teff}}\right)
 \Eeq
 where $ D = 0 $ for virgin material, $ \dot{\Veps}_p $ is the 
 equivalent plastic strain rate, $\Bsig$ is the Cauchy stress, and
 $\sigma_\Teq = \sqrt{3J_2}$ is the von Mises equivalent stress.
+
+Expressed as an evolution equation in terms of the plastic consistency parameter, the 
+above can be written as
+\Beq
+  \dot{D} = \dot{\lambda} h_D ~,~~
+  h_D = \frac{1}{1.65} \exp\left(\frac{\Tr(\Bsig)}{2\sigma_{\Teff}}\right) \,.
+\Eeq
 
 The input tags for the damage model are :
 \lstset{language=XML}
@@ -28,12 +35,9 @@ The Johnson-Cook damage model ~\cite{Johnson1985} depends on temperature, plasti
 strain, and strain rate.
 The damage evolution rule for the damage parameter ($D$) can be written as
 \Beq
-  \dot{D} = \frac{\dot{\Veps}_p}{\Veps_p^f}
-\Eeq
-where
-\Beq
+  \dot{D} = \frac{\dot{\Veps}^\Teq_p}{\Veps_p^f} ~,~~
   \Veps_p^f = 
-    \left[D_1 + D_2 \exp \left(\frac{D_3}{3} \sigma^\star\right)\right]
+    \left[D_1 + D_2 \exp \left(D_3 \sigma^\star\right)\right]
     \left[1+ D_4 \ln(\dot{\Veps}_p^\star)\right]
     \left[1+D_5 T^\star\right]\,.
 \Eeq
@@ -42,16 +46,25 @@ and a value of 1 at fracture, $\Veps_p^f$ is the fracture strain,
 $D_1, D_2, D_3, D_4, D_5$ are constants.
 In the above equation,
 \Beq
-  \sigma^\star= \frac{\Tr(\Bsig)}{\sigma_{\Teq}}
+  \sigma^\star= \frac{\Tr(\Bsig)}{3\sigma_{\Teff}}
 \Eeq
-where $\Bsig$ is the Cauchy stress and $\sigma_\Teq$ is the von Mises equivalent stress.
+where $\Bsig$ is the Cauchy stress and $\sigma_\Teff$ is the von Mises equivalent stress.
 The scaled plastic strain rate and temperature are defined as
 \Beq
- \dot{\Veps}_p^\star = \frac{\dot{\Veps}_p}{\dot{\Veps}_{p0}} ~,~~
+ \dot{\Veps}_p^\star = \frac{\dot{\Veps}^\Teq_p}{\dot{\Veps}_{p0}} ~,~~
  T^\star = \frac{T-T_0}{T_m-T_0}
 \Eeq
 where $\dot{\Veps}_{p0}$ is a reference strain rate and $T_0$ is a reference temperature,
-$T_m$ is the melting temperature, and $\dot{\Veps}_p$ is the equivalent plastic strain rate.
+$T_m$ is the melting temperature, and $\dot{\Veps}^\Teq_p$ is the equivalent plastic strain rate.
+
+When expressed in terms of the consistency parameter, the Johnson-Cook damage model
+has the form,
+\Beq
+  \dot{D} = \dot{\lambda} h_D ~,~~
+  h_D = \left[\left[D_1 + D_2 \exp \left(D_3 \sigma^\star\right)\right]
+        \left[1 + D_4 \ln(\dot{\Veps}_p^\star)\right] \left[1 + D_5 T^\star\right]
+        \right]^{-1} \,.
+\Eeq
 
 The input tags for the damage model are :
 \lstset{language=XML}

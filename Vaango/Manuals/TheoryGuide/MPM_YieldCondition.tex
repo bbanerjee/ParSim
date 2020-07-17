@@ -10,13 +10,13 @@ deal with specific models.
 \section{von Mises yield}
   The von Mises yield function implemented in \Vaango has the form
   \Beq
-    f = \sigma^\xi_{\Teq} - \sigma_y(\Veps^p, \dot{\Veps^p}, \phi, T, \dots)
+    f = \sigma^\xi_{\Teff} - \sigma_y(\Veps_p^\Teq, \dot{\Veps}^\Teq_p, \phi, T, \dots)
   \Eeq 
-  where $\sigma_y$ is the flow stress, $\Veps^p$ is the equivalent plastic strain,
-  $\dot{\Veps^p}$ is the equivalent plastic strain rate, $\phi$ is the
+  where $\sigma_y$ is the flow stress, $\Veps_p^\Teq$ is the equivalent plastic strain,
+  $\dot{\Veps}^\Teq_p$ is the equivalent plastic strain rate, $\phi$ is the
   porosity, and $T$ is the temperature.  The equivalent stress is defined as
   \Beq \label{eq:equiv_stress}
-    \sigma^\xi_{\Teq} = \sqrt{3J^\xi_2} = \sqrt{\tfrac{3}{2} \Bxi:\Bxi} ~,\quad
+    \sigma^\xi_{\Teff} = \sqrt{3J^\xi_2} = \sqrt{\tfrac{3}{2} \Bxi:\Bxi} ~,\quad
     \Bxi =  \BsT - \Dev(\Bbeta) ~,~~ \BsT = \Bsig - \Third \Tr(\Bsig)\BI
   \Eeq
   where $\Bsig$ is the Cauchy stress and $\Bbeta$ is the kinematic hardening backstress.
@@ -44,7 +44,7 @@ deal with specific models.
   \Eeq
   Next we compute the derivative of $f$:
   \Beq
-    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teff} \Partial{\sigma^\xi_\Teff}{\Bxi}
      = \sqrt{\tfrac{3}{2}} \frac{\Bxi}{\sqrt{\Bxi:\Bxi}} 
     \quad \implies \quad
     \Tr\left(\Partial{f}{\xi}\right) = 0 \,.
@@ -70,13 +70,13 @@ deal with specific models.
   condition~\cite{Gurson1977,Tver1984} depends on porosity.  
   The GTN yield function can be written as
   \begin{equation}
-    f = \left(\frac{\sigma^\xi_{\Teq}}{\sigma_y}\right)^2 +
+    f = \left(\frac{\sigma^\xi_{\Teff}}{\sigma_y}\right)^2 +
     2 q_1 \phi_\star \cosh \left(q_2 \frac{\Tr(\Bsig^\xi)}{2\sigma_y}\right) -
     (1+q_3 \phi_\star^2) 
   \end{equation}
   where $\Bsig^\xi = \Bsig - \Bbeta$, $\Bsig$ is the Cauchy stress,
   $\Bbeta$ is the backstress, 
-  $\sigma^\xi_\Teq$ is the equivalent stress defined in \eqref{eq:equiv_stress},
+  $\sigma^\xi_\Teff$ is the equivalent stress defined in \eqref{eq:equiv_stress},
   $\sigma_y$ is the flow stress of the void-free material, 
   $q_1,q_2,q_3$ are material constants, and $\phi_\star$ is the porosity 
   function defined as
@@ -114,8 +114,8 @@ deal with specific models.
   \Eeq
   Computation of the derivatives of $f$ gives
   \Beq
-    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
-      = \sqrt{\tfrac{3}{2}} \left(\frac{2\sigma^\xi_{\Teq}}{\sigma_y^2}\right) \frac{\Bxi}{\Norm{\Bxi}{}}
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teff} \Partial{\sigma^\xi_\Teff}{\Bxi}
+      = \sqrt{\tfrac{3}{2}} \left(\frac{2\sigma^\xi_{\Teff}}{\sigma_y^2}\right) \frac{\Bxi}{\Norm{\Bxi}{}}
       = \frac{3\Bxi}{\sigma_y^2} 
     \quad \implies \quad
     \Tr\left(\Partial{f}{\xi}\right) = 0 \,.
@@ -152,7 +152,7 @@ deal with specific models.
 
   The yield function is
   \Beq
-    f  = \frac{\sigma^\xi_{\Teq}}{1-\phi} +
+    f  = \frac{\sigma^\xi_{\Teff}}{1-\phi} +
          D \sigma_1 \phi \exp \left(\frac{\Tr(\Bsig^\xi)}{3(1-\phi)\sigma_1}\right) -
          \sigma_y 
   \Eeq
@@ -166,7 +166,7 @@ deal with specific models.
   \Eeq
   where
   \Beq
-    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teq} \Partial{\sigma^\xi_\Teq}{\Bxi}
+    \Partial{f}{\Bxi} = \Partial{f}{\sigma^\xi_\Teff} \Partial{\sigma^\xi_\Teff}{\Bxi}
       = \sqrt{\tfrac{3}{2}} \frac{1}{1-\phi} \frac{\Bxi}{\Norm{\Bxi}{}}
     \quad \implies \quad
     \Tr\left(\Partial{f}{\xi}\right) = 0 

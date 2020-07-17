@@ -11,13 +11,13 @@ stresses and (moderate) strains can be additively decomposed into volumetric and
 \subsection{Volumetric-deviatoric decomposition}
 The volumetric-deviatoric decomposition of stress ($\Bsig$) is expressed as
 \Beq
-  \Bsig = p\BI + \Bs
+  \Bsig = p\BI + \BsT
 \Eeq
-where the mean stress ($p$) and the deviatoric stress ($\Bs$) are given by
+where the mean stress ($p$) and the deviatoric stress ($\BsT$) are given by
 \Beq
   p = \Third\Tr(\Bsig) = \Third\Bsig:\BI = \tfrac{1}{3}(\sigma_{11} + \sigma_{22} + \sigma_{33})
   \quad \Tand \quad
-  \Bs = \Bsig - p\BI = 
+  \BsT = \Bsig - p\BI = 
     \begin{bmatrix} 
        \sigma_{11} - p & \sigma_{12} & \sigma_{13} \\
        \sigma_{12} & \sigma_{22} - p & \sigma_{23} \\
@@ -27,13 +27,13 @@ where the mean stress ($p$) and the deviatoric stress ($\Bs$) are given by
 
 Similarly, the volumeric-deviatoric split of the strain ($\BVeps$) is expressed as
 \Beq
-  \BVeps = \Third \Veps_v \BI + \Beta
+  \BVeps = \Third \Veps_v \BI + \BVeps_s
 \Eeq
-where the volumetric strain ($\Veps_v$) and the deviatoric strain ($\Beta$) are defined as
+where the volumetric strain ($\Veps_v$) and the deviatoric strain ($\BVeps_s$) are defined as
 \Beq
   \Veps_v = \Tr(\BVeps) = \BVeps:\BI = \Veps_{11} + \Veps_{22} + \Veps_{33}
   \quad \Tand \quad
-  \Beta = \BVeps - \Third \Veps_v\BI = 
+  \BVeps_s = \BVeps - \Third \Veps_v\BI = 
     \begin{bmatrix} 
        \Veps_{11} - \Third \Veps_v & \Veps_{12} & \Veps_{13} \\
        \Veps_{12} & \Veps_{22} - \Third \Veps_v & \Veps_{23} \\
@@ -54,11 +54,11 @@ several models.  Frequently used invariants are:
           = \sigma_{11}\sigma_{22}\sigma_{33} + 2\sigma_{12}\sigma_{23}\sigma_{13}
             - \sigma_{12}^2 \sigma_{33} - \sigma_{23}^2 \sigma_{11}
             - \sigma_{13}^2 \sigma_{22} \\
-    J_2 & = \Half \Bs:\Bs 
+    J_2 & = \Half \BsT:\BsT 
           = \tfrac{1}{6}\left[(\sigma_{11} - \sigma_{22})^2 + 
              (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] +
              (\sigma_{12}^2 + \sigma_{23}^2 + \sigma_{31}^2) \\
-    J_3 & = \det(\Bs) = \tfrac{2}{27} I_1^3 - \Third I_1 I_2 + I_3
+    J_3 & = \det(\BsT) = \tfrac{2}{27} I_1^3 - \Third I_1 I_2 + I_3
   \Eal
 \Eeq
 Alternatives to $I_1$, $J_2$ and $j_3$ are $p$, $q$, and $\theta$, defined as
@@ -82,7 +82,7 @@ measures are strictly applicable only to $J_2$ plasticity models but have also b
 
 The effective stress is defined as
 \Beq \label{eq:eff_stress}
-  \sigma_\Teff = q = \sqrt{3J_2} = \sqrt{\tfrac{3}{2} \Bs:\Bs}
+  \sigma_\Teff = q = \sqrt{3J_2} = \sqrt{\tfrac{3}{2} \BsT:\BsT}
     = \sqrt{\tfrac{1}{2}\left[(\sigma_{11} - \sigma_{22})^2 + 
              (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] +
              3 (\sigma_{12}^2 + \sigma_{23}^2 + \sigma_{31}^2) } \,.
@@ -90,16 +90,16 @@ The effective stress is defined as
 
 The effective strain is defined as
 \Beq \label{eq:eff_strain}
-  \Veps_\Teff = \sqrt{\tfrac{2}{3} \Beta:\Beta}
+  \Veps_\Teff = \sqrt{\tfrac{2}{3} \BVeps_s:\BVeps_s}
 \Eeq
 so that
 \Beq
-  \sigma_\Teff \Veps_\Teff = \sqrt{(\Bs:\Bs) (\Beta:\Beta)} \,.
+  \sigma_\Teff \Veps_\Teff = \sqrt{(\BsT:\BsT) (\BVeps_s:\BVeps_s)} \,.
 \Eeq
-From the definition of $\Beta$ we see that
+From the definition of $\BVeps_s$ we see that
 \Beq
   \Bal
-  \Beta:\Beta & = \BVeps:\BVeps - \tfrac{2}{3} \Tr(\BVeps)\BI:\BVeps + \tfrac{1}{9}\left[\Tr(\BVeps)\right]^2 \BI:\BI
+  \BVeps_s:\BVeps_s & = \BVeps:\BVeps - \tfrac{2}{3} \Tr(\BVeps)\BI:\BVeps + \tfrac{1}{9}\left[\Tr(\BVeps)\right]^2 \BI:\BI
      = \BVeps:\BVeps - \tfrac{2}{3} \left[\Tr(\BVeps)\right]^2 + \tfrac{1}{3}\left[\Tr(\BVeps)\right]^2
      = \BVeps:\BVeps - \Third \left[\Tr(\BVeps)\right]^2 \\
      &= \Veps_{11}^2 + \Veps_{22}^2 + \Veps_{33}^2 + 2\Veps_{12}^2 + 2\Veps_{23}^2 + 2\Veps_{13}^2
@@ -124,11 +124,17 @@ For volume preserving plastic deformations, $\Tr(\BVeps) = 0$, and we have
 \Eeq
 
 \subsection{Equivalent plastic strain}
-For models where an effective plastic strain is computed, the definition is
-\Beq
-  \Veps_p^\Teff(t) = \int_0^t \sqrt{\tfrac{2}{3} \dot{\BVeps}_p(\tau):\dot{\BVeps}_p(\tau)} d\tau
+For models where an equivalent plastic strain is computed, we define a scalar equivalent plastic
+strain rate as
+\Beq \label{eq:eq_plastic_strain_rate}
+  \dot{\Veps}_p^\Teq = \sqrt{\dot{\BVeps}^p:\dot{\BVeps}^p} 
 \Eeq
-where $\dot{\BVeps}_p(t)$ is the plastic strain rate.
+where $\dot{\BVeps}^p(t)$ is the plastic strain rate tensor.
+
+The definition of the scalar equivalent plastic strain is
+\Beq \label{eq:eq_plastic_strain}
+  \Veps_p^\Teq(t) = \int_0^t \dot{\Veps}_p^\Teq(\tau) d\tau \,.
+\Eeq
 
 \subsection{Velocity gradient, rate-of-deformation, deformation gradient}
 The velocity gradient is represented by $\BlT$ and the defromation gradient by $\BF$.  The

@@ -1,0 +1,120 @@
+\chapter{Internal variable evolution}
+Internal variables are used to model isotropic hardening/softening behavior in 
+\Vaango. The evolution of these internal variables is assumed to be 
+given by first-order differential equations of the form
+\Beq \label{eq:iv_evolution}
+  \dot{\Beta} = \dot{\lambda} \Bh_\eta
+\Eeq
+where $\Beta$ is the internal variable, $\lambda$ is the consistency parameter,
+and $\Bh_\eta$ is a hardening/softening modulus.  
+
+\begin{NoteBox}
+  The kinematic hardening backstress is also an internal variable.  Equations
+  for the evolution of backstress are given in Chapter~\ref{ch:kin_hard}.
+\end{NoteBox}
+
+\section{Equivalent plastic strain}
+Recall from the flow rule \eqref{eq:flow_rule} that
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda}\BM
+\Eeq
+where $\BM$ is a unit tensor ($\BM:\BM = 1$).  Therefore,
+using the definition of the equivalent plastic strain 
+rate from \eqref{eq:eq_plastic_strain_rate},
+\Beq \label{eq:consistency_rate}
+  \dot{\BVeps}^p:\dot{\BVeps}^p = \left(\dot{\lambda}\right)^2
+  \quad \implies \quad
+  \dot{\lambda} = \sqrt{\dot{\BVeps}^p:\dot{\BVeps}^p} = \dot{\Veps}_p^\Teq \,.
+\Eeq
+Therefore, from the definition of the equivalent plastic strain in
+\eqref{eq:eq_plastic_strain}, we see that the evolution rule for the 
+equivalent plastic strain can be expressed in the the form \eqref{eq:iv_evolution}
+as
+\Beq
+  \dot{\Veps}_p^\Teq = \dot{\lambda} h_{\Veps_p} ~,~~ h_{\Veps_p} = 1 \,.
+\Eeq
+
+\section{Porosity}
+The evolution of porosity is assumed to be given by the sum of the rate of 
+void growth and the rate of void nucleation~\cite{Ramaswamy1998a}.  In
+\Vaango these rates are computed as ~\cite{Chu1980}:
+\begin{align}
+  \dot{\phi} &= \dot{\phi}_{\text{nucl}} + \dot{\phi}_{\text{grow}} \\
+  \dot{\phi}_{\text{grow}} & = (1-\phi) \Tr(\dot{\BVeps}^p) \\
+  \dot{\phi}_{\text{nucl}} & = \frac{f_n}{(s_n \sqrt{2\pi})}
+          \exp\left[-\Half \frac{(\Veps^\Teq_p - \Veps_n)^2}{s_n^2}\right]
+          \dot{\Veps}_p^\Teq
+\end{align}
+where $\dot{\BVeps}_p$ is the plastic strain rate, $f_n$ is the volume 
+fraction of void nucleating particles , $\Veps_n$ is the mean of the 
+distribution of nucleation strains, and $s_n$ is the standard 
+deviation of the distribution.
+
+From the flow rule \eqref{eq:flow_rule},
+\Beq
+  \Tr(\dot{\BVeps}^p) = \dot{\lambda}\Tr(\BM)
+\Eeq
+Therefore, using \eqref{eq:consistency_rate},
+\Beq
+  \dot{\phi} = \dot{\lambda} h_\phi ~,~~
+    h_\phi = (1-\phi)\Tr(\BM) + \frac{f_n}{(s_n \sqrt{2\pi})}
+             \exp\left(-\Half \frac{(\Veps^\Teq_p - \Veps_n)^2}{s_n^2}\right)\,.
+\Eeq
+
+\Vaango allows for the possibly of porosity to be different in each MPM particle.
+The inputs tags for defining the porosity and its distribution are:
+\lstset{language=XML}
+\begin{lstlisting}
+  <evolve_porosity> true </evolve_porosity>
+  <initial_mean_porosity>         0.005 </initial_mean_porosity>
+  <initial_std_porosity>          0.001 </initial_std_porosity>
+  <critical_porosity>             0.3   </critical_porosity>
+  <frac_nucleation>               0.1   </frac_nucleation>
+  <meanstrain_nucleation>         0.3   </meanstrain_nucleation>
+  <stddevstrain_nucleation>       0.1   </stddevstrain_nucleation>
+  <initial_porosity_distrib>      gauss </initial_porosity_distrib>
+\end{lstlisting}
+
+\section{Backstress}
+The backstress evolution rule can also be expressed in terms of the consistency
+parameter in the form
+\Beq
+   \dot{\Bbeta} = \dot{\lambda} \Bh_\beta
+\Eeq
+For the Ziegler-Prager model in \eqref{eq:kin_ZP},
+\Beq
+  \Bh_\beta = \tfrac{2}{3} \beta H \BM
+\Eeq
+where $\BM$ is the unit tensor in the direction of th eplastic flow rate.
+
+For the Armstrong-Frederick model in \eqref{eq:kin_AF},
+\Beq
+  \Bh_\beta = \tfrac{2}{3} \beta H_1 \BM - \beta H_2 \Bbeta \,.
+\Eeq
+
+\section{Damage}
+The evolution of damage models in \Vaango is detailed in Chapter~\ref{ch:damage}.
+These models have the general form
+\Beq
+  \dot{D} = g(\Bsig, T)\,\dot{\Veps}_p^\Teq  = \dot{\lambda} h_D ~,~~ h_D = g(\Bsig,T)
+\Eeq
+where $D$ is the damage parameter and $g(\Bsig, T)$ is a damage function.
+
+\section{Temperature}
+The rise in temperature due to plastic dissipation can also be treated as an
+internal variable that causes softening.  This may be considered to
+be equivalent to treating the plastic work as an internal variable.
+
+The evolution of temperature ($T$) due to plastic work is given by the equation
+\begin{equation}
+  \dot{T} = \cfrac{\chi}{\rho C_p} \Bsig:\dot{\BVeps^p} 
+\end{equation}
+where $\chi$ is the Taylor-Quinney coefficient, $\rho$ is the density, and
+$C_p$ is the specific heat.
+
+Expressed in terms of the consistency parameter,
+\Beq
+  \dot{T} = \dot{\lambda} h_T ~,~~ h_T = \cfrac{\chi}{\rho C_p} \Bsig:\BM 
+\Eeq
+where $\BM$ is the plastic flow rate direction defined in the flow rule.
+
