@@ -7,8 +7,9 @@ to rotate the stress ($\Bsig$) and the rate of deformation ($\BdT$)
 into the unrotated configuration before the updated stress is computed:
 \Beq
   \widehat{\Bsig} = \BR^T\cdot\Bsig\cdot\BR ~;~~
-  \widehat{\BdT} = \BR^T\cdot\BdT\cdot\BR 
+  \dot{\BVeps} = \BR^T\cdot\BdT\cdot\BR 
 \Eeq
+where $\dot{\BVeps}$ is a ``natural'' strain rate.
 After the stress has been updated, it is rotated back using
 \Beq
   \Bsig = \BR\cdot\widehat{\Bsig}\cdot\BR^T \,.
@@ -34,59 +35,49 @@ both the mean stress and the deviatoric stress.  The time derivative of
 \Beq
   \dot{\Bsig} = \dot{p}~\BI + \dot{\BsT} \,.
 \Eeq
-These stress rates have to be computed when a rate of deformation $\BdT$ is given, which
-we assume can be additively decomposed into elastic ($\BdT^e$) and plastic ($\BdT^p$) parts:
+These stress rates have to be computed when a strain rate $\dot{\BVeps}$ is given, which
+we assume can be additively decomposed into elastic ($\dot{\BVeps}^e$) and 
+plastic ($\dot{\BVeps}^p$) parts:
 \Beq
-  \BdT = \BdT^e + \BdT^p \,.
+  \dot{\BVeps} = \dot{\BVeps}^e + \dot{\BVeps}^p \,.
 \Eeq
 The isotropic metal plasticity model in \Vaango solves the coupled equations
 \Beq
-  \dot{p} = g_1(\BdT^e, \BdT^p) ~,~~ \dot{\Bs} = g_2(\BdT^e, \BdT^p) \,.
+  \dot{p} = g_1(\dot{\BVeps}^e, \dot{\BVeps}^p) ~,~~ \dot{\Bs} = g_2(\dot{\BVeps}^e, \dot{\BVeps}^p) \,.
 \Eeq
 
 \subsection{Elastic relation}
 The elastic constitutive relation is assumed to be of the form
 \Beq
-  \dot{\Bsig}^e = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\BdT^e) \BI + 2\mu\BdT^e 
-                - 3\kappa\alpha\Deriv{}{t}(T-T_0)\BI 
+  \dot{\Bsig}^e = \Partial{\Bsig}{\BVeps^e} : \dot{\BVeps}^e
+                = \SfC^e : \dot{\BVeps}^e
 \Eeq
-where $\mu(p, T, \phi)$ is the shear modulus, $\kappa(p,T, \phi)$ is the tangent 
-bulk modulus, $\alpha$ is the coefficient of thermal expansion, $T_0$ is a reference 
-temperature, $T$ is the current temperature, and $\phi$ is the current porosity.  
+where
+\Beq
+  \SfC^e =  \left(\kappa - \tfrac{2}{3}\mu\right) \BI\otimes\BI + 2\mu\, \Tsym(\SfI)
+\Eeq
+where $\mu(p, T, \phi, D)$ is the shear modulus, $\kappa(p,T, \phi, D)$ is the tangent 
+bulk modulus, $\BI$ is the second-order identity tensor and $\SfI$ is the fourth-order
+identity tensor.  $T$ is the current temperature, $\phi$ is the current porosity and
+$D$ is a scalar damage parameter.  
 
-\subsection{Flow rule}
-We assume that the plastic rate of deformation is given by the flow rule
+If we consider thermal expansion,
 \Beq
-  \BdT^p = \dot{\lambda}~\BM
+  \dot{\Bsig}^e = \Partial{\Bsig}{\BVeps^e} : \left(\dot{\BVeps}^e - \alpha \dot{T}\BI\right)
+                = \SfC^e : \dot{\BVeps}^e - \alpha \dot{T}\, \SfC^e:\BI
 \Eeq
-
-\subsection{Isotropic and kinematic hardening/softening rules}
-The equivalent plastic strain ($\Veps_p^\Teq$) evolves according to the relation
-\Beq
-  \dot{\Veps}^\Teq_p = \dot{\lambda}~h_{\Veps_p} \,.
-\Eeq
-The back stress ($\Bbeta$) evolves according to the relation
-\Beq
-  \dot{\Bbeta} = \dot{\lambda}~\Bh_{\beta} \,.
-\Eeq
-The porosity ($\phi$) is assumed to evolve according to the relation
-\Beq
-  \dot{\phi} = \dot{\lambda}~h_{\phi} ~.
-\Eeq
-The damage parameter ($D$) evolves as
-\Beq
-  \dot{D} = \dot{\lambda}~h_D \,.
-\Eeq
-The temperature ($T$) due to plastic dissipation evolves as
-\Beq
-  \dot{T} = \dot{\lambda}~h_T \,.
+where $\alpha$ is the coefficient of thermal expansion.
+Expanded out, 
+\Beq \label{eq:sig_dot_e}
+  \dot{\Bsig}^e = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\dot{\BVeps}^e) \BI + 2\mu\dot{\BVeps}^e 
+                - 3\kappa\alpha\dot{T}\BI 
 \Eeq
 
 \subsection{Yield condition}
 The yield condition is of the form
 \Beq
-  f(\Bsig, \Bbeta, \Veps^\Teq_p, \phi, \dot{\Veps}^\Teq_p, D, T, \dots) =
-  f(\Bxi, p_\beta, \Veps^\Teq_p, \phi, \dot{\Veps}^\Teq_p, D, T, \dots) = 0
+  f(\Bsig, \Bbeta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \dots) =
+  f(\Bxi, p_\beta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \dots) = 0
 \Eeq
 where $\Bxi = \Dev(\Bsig - \Bbeta)$ and $p_\beta = \Tr(\Bsig - \Bbeta)/3$. 
 
@@ -96,225 +87,249 @@ The Kuhn-Tucker loading-unloading conditions are
 \Eeq
 and the consistency condition is $\dot{f} = 0$.
 
-\subsection{Continuum elastic-plastic tangent modulus}
-To determine whether the material has undergone a loss of stability we need to compute
-the acosutic tensor which needs the computation of the continuum elastic-plastic tangent
-modulus.
+\subsection{Flow rule}
+We assume that the plastic rate of deformation is given by the flow rule
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda}~\BM \,.
+\Eeq
 
-To do that recall that
+\subsection{Isotropic and kinematic hardening/softening rules}
+The equivalent plastic strain ($\Veps_p^\Teq$) evolves according to the relation
 \Beq
-  \Bsig = p~\BI + \Bs \quad \implies \quad \dot{\Bsig} = \dot{p}~\BI ~.
+  \dot{\Veps}^\Teq_p = \dot{\lambda}~h^{\Veps_p} \,.
 \Eeq
-We assume that 
+The back stress ($\Bbeta$) evolves according to the relation
 \Beq
-  \dot{p} = J~\Partial{p}{J}~\Tr(\Bd) \qquad \Tand \quad
-  \dot{\Bs} = 2~\mu~\Beta^e ~.
+  \dot{\Bbeta} = \dot{\lambda}~\Bh^{\beta} \,.
 \Eeq
-Now, the consistency condition requires that
+The porosity ($\phi$) is assumed to evolve according to the relation
 \Beq
-  \dot{f}(\Bs, \Bbeta, \Ve^p, \phi, \dot{\Ve}, T, \dots) = 0 ~.
+  \dot{\phi} = \dot{\lambda}~h^{\phi} ~.
 \Eeq
-Keeping $\dot{\Ve}$ and $T$ fixed over the time interval, we can use the chain rule
-to get
+The damage parameter ($D$) evolves as
 \Beq
-  \dot{f} = \Partial{f}{\Bs}:\dot{\Bs} + \Partial{f}{\Bbeta}:\dot{\Bbeta} + 
-    \Partial{f}{\Ve^p}~\dot{\Ve^p} + \Partial{f}{\phi}~\dot{\phi} = 0~.
+  \dot{D} = \dot{\lambda}~h^D \,.
 \Eeq
-The needed rate equations are
+The temperature ($T_p$) due to plastic dissipation evolves as
+\Beq
+  \dot{T}_p = \dot{\lambda}~h^T \,.
+\Eeq
+
+\subsection{Elastic loading/unloading}
+During purely elastic loading and unloading
+\Beq
+  \dot{\lambda} = 0 ~,~~ \dot{\BVeps}^p = \Bzero ~,~~ \dot{\BVeps} = \dot{\BVeps}^e \,.
+\Eeq
+In that situation, the stress is updated using \eqref{eq:sig_dot_e} with the no material
+disspiation contribution to $\dot{T}$.
+
+However, during elastic-plastic deformation, $\dot{\lambda} > 0$, and we have
 \Beq
   \Bal
-    \dot{\Bs} & = 2~\mu~\Beta^e = 2~\mu~(\Beta - \Beta^p) = 
-      2~\mu~[\Beta - \dot{\gamma}~\Dev(\Br)] \\
-    \dot{\Bbeta} & = \dot{\gamma}~\Dev(\Bh^{\beta}) \\
-    \dot{\Ve^p} & = \dot{\gamma}~h^{\alpha} \\
-    \dot{\phi} & = \dot{\gamma}~h^{\phi} 
+  \dot{\Bsig} & = \Partial{\Bsig}{\BVeps^e} : \left(\dot{\BVeps}^e -\alpha\dot{T}\BI\right) + 
+                  \Partial{\Bsig}{\Bbeta} : \dot{\Bbeta} + 
+                  \Partial{\Bsig}{\Veps^\Teq_p}  \dot{\Veps}^\Teq_p + 
+                  \Partial{\Bsig}{\phi}  \dot{\phi} + 
+                  \Partial{\Bsig}{D}  \dot{D} + 
+                  \Partial{\Bsig}{T_p}  \dot{T}_p \\
+   & = \SfC^e : \left(\dot{\BVeps}^e -\alpha\dot{T}\BI\right) + 
+       \dot{\lambda}\left[\Partial{\Bsig}{\Bbeta} : \Bh^\beta + 
+       \Partial{\Bsig}{\Veps^\Teq_p}  h^{\Veps_p} + 
+       \Partial{\Bsig}{\phi} h^\phi + 
+       \Partial{\Bsig}{D} h^D + 
+       \Partial{\Bsig}{T_p} h^T\right] \\
+   & = \SfC^e : (\dot{\BVeps} - \alpha\dot{T}\BI) -
+       \dot{\lambda}\left[\SfC^e : \BM - \Partial{\Bsig}{\Bbeta} : \Bh^\beta -   
+       \Partial{\Bsig}{\Veps^\Teq_p}  h^{\Veps_p} -         
+       \Partial{\Bsig}{\phi} h^\phi -       
+       \Partial{\Bsig}{D} h^D -        
+       \Partial{\Bsig}{T_p} h^T\right]
   \Eal
-\Eeq
-Plugging these into the expression for $\dot{f}$ gives
-\Beq
-  2~\mu~\Partial{f}{\Bs}:[\Beta - \dot{\gamma}~\Dev(\Br)] 
-    + \dot{\gamma}~\Partial{f}{\Bbeta}:\Dev(\Bh^{\beta}) 
-    + \dot{\gamma}~\Partial{f}{\Ve^p}~h^{\alpha} 
-    + \dot{\gamma}~\Partial{f}{\phi}~h^{\phi}  = 0
-\Eeq
-or,
-\Beq
-  \dot{\gamma} = \cfrac{2~\mu~\Partial{f}{\Bs}:\Beta}
-    {2~\mu~\Partial{f}{\Bs}:\Dev(\Br) - \Partial{f}{\Bbeta}:\Dev(\Bh^{\beta})
-     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}} ~.
-\Eeq
-Plugging this expression for $\dot{\gamma}$ into the equation for $\dot{\Bs}$,
-we get
-\Beq
-  \dot{\Bs} = 2~\mu~\left[\Beta - \left( 
-    \cfrac{2~\mu~\Partial{f}{\Bs}:\Beta}
-    {2~\mu~\Partial{f}{\Bs}:\Dev(\Br) - \Partial{f}{\Bbeta}:\Dev(\Bh^{\beta})
-     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}}\right)~\Dev(\Br)\right]~.
-\Eeq
-At this stage, note that a symmetric $\Bsig$ implies a symmetric $\Bs$ and hence a 
-symmetric $\Beta$.  Also we assume that $\Br$ is symmetric (and hence $\Dev(\Br)$), which
-is true if the flow rule is associated.  Then we can write
-\Beq
-  \Beta = \SfI^{4s}:\Beta \qquad \Tand \qquad \Dev(\Br) = \SfI^{4s}:\Dev(\Br)
-\Eeq
-where $\SfI^{4s}$ is the fourth-order symmetric identity tensor.  Also note that
-if $\BA$, $\BC$, $\BD$ are second order tensors and $\SfB$ is a fourth order tensor,
-then
-\Beq
-  (\BA:\SfB:\BC)~(\SfB:\BD) \equiv A_{ij}~B_{ijkl}~C_{kl}~B_{mnpq}~D_{pq}
-     = (B_{mnpq}~D_{pq})~(A_{ij}~B_{ijkl})~C_{kl} \equiv [(\SfB:\BD)\otimes(\BA:\SfB)]:\BC ~.
-\Eeq
-Therefore we have
-\Beq
-  \dot{\Bs} = 2~\mu~\left[\SfI^{4s}:\Beta - \left( 
-    \cfrac{2~\mu~[\SfI^{4s}:\Dev(\Br)]\otimes[\Partial{f}{\Bs}:\SfI^{4s}]}
-    {2~\mu~\Partial{f}{\Bs}:\Dev(\Br) - \Partial{f}{\Bbeta}:\Dev(\Bh^{\beta})
-     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}}\right):\Beta\right]~.
-\Eeq
-Also,
-\Beq
-  \SfI^{4s}:\Dev(\Br) = \Dev(\Br) \qquad \Tand \qquad
-  \Partial{f}{\Bs}:\SfI^{4s} = \Partial{f}{\Bs} ~.
-\Eeq
-Hence we can write
-\Beq
-  \dot{\Bs} = 2~\mu~\left[\SfI^{4s} - \left( 
-    \cfrac{2~\mu~\Dev(\Br)\otimes\Partial{f}{\Bs}}
-    {2~\mu~\Partial{f}{\Bs}:\Dev(\Br) - \Partial{f}{\Bbeta}:\Dev(\Bh^{\beta})
-     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}}\right)\right]:\Beta
-\Eeq
-or,
-\Beq
-  \dot{\Bs} = \SfB^{ep}:\Beta = \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\BI\right]
-\Eeq
-where
-\Beq
-  \SfB^{ep} := 
-    2~\mu~\left[\SfI^{4s} - \left( 
-    \cfrac{2~\mu~\Dev(\Br)\otimes\Partial{f}{\Bs}}
-    {2~\mu~\Partial{f}{\Bs}:\Dev(\Br) - \Partial{f}{\Bbeta}:\Dev(\Bh^{\beta})
-     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}}\right)\right] ~.
-\Eeq
-Adding in the volumetric component gives
-\Beq
-  \Bal
-  \dot{\Bsig} & = \dot{p}~\BI + \dot{\Bs} \\
-   & = J~\Partial{p}{J}~\Tr(\Bd)~\BI +  
-       \SfB^{ep}:\left[\Bd - \Third~\Tr(\Bd)~\BI\right] \\
-   & = \left[3~J~\Partial{p}{J}~\BI - \SfB^{ep}:\BI\right]~\cfrac{\Bd:\BI}{3}
-       + \SfB^{ep}:\Bd \\
-   & = J~\Partial{p}{J}~(\BI\otimes\BI):\Bd - \Third~[\SfB^{ep}:(\BI\otimes\BI)]:\Bd
-       + \SfB^{ep}:\Bd ~.
-  \Eal
-\Eeq
-Therefore,
-\Beq
-  \dot{\Bsig} = \left[J~\Partial{p}{J}~(\BI\otimes\BI) - 
-      \Third~[\SfB^{ep}:(\BI\otimes\BI)] + \SfB^{ep}\right]:\Bd 
-   = \SfC^{ep}:\Bd ~.
-\Eeq
-The quantity $\SfC^{ep}$ is the continuum elastic-plastic tangent modulus.  We also use the 
-continuum elastic-plastic tangent modulus in the implicit version of the code.  However,
-for improved accuracy and faster convergence, an algorithmically  consistent tangent modulus 
-should be used instead.  That tangent modulus can be calculated in the usual manner and 
-is left for development and implementation as an additional feature in the future.
-
-\section{Stress update}
-A standard return algorithm is used to compute the updated Cauchy stress.  Recall
-that the rate equation for the deviatoric stress is given by
-\Beq
-  \dot{\Bs} = 2~\mu~\Beta^e ~.
-\Eeq
-Integrating the rate equation using a Backward Euler scheme gives
-\Beq
-  \Bs_{n+1} - \Bs_n = 2~\mu~\Delta~t~\Beta^e_{n+1}
-    = 2~\mu~\Delta~t~(\Beta_{n+1} - \Beta^p_{n+1})
-\Eeq
-Now, from the flow rule, we have
-\Beq
-  \Beta^p = \dot{\gamma}~\left(\Br -\Third~\Tr(\Br)~\BI\right) ~.
-\Eeq
-Define the deviatoric part of $\Br$ as
-\Beq
-  \Dev(\Br) := \Br -\Third~\Tr(\Br)~\BI ~.
-\Eeq
-Therefore, 
-\Beq
-  \Bs_{n+1} - \Bs_n 
-    = 2~\mu~\Delta~t~\Beta_{n+1} - 2~\mu~\Delta\gamma_{n+1}~\Dev(\Br_{n+1}) ~.
-\Eeq
-where $\Delta\gamma := \dot{\gamma}~\Delta t$.  Define the trial stress
-\Beq
-  \Bs^{\Trial} := \Bs_n + 2~\mu~\Delta~t~\Beta_{n+1} ~.
-\Eeq
-Then
-\Beq
-  \Bs_{n+1} = \Bs^{\Trial} - 2~\mu~\Delta\gamma_{n+1}~\Dev(\Br_{n+1}) ~.
-\Eeq
-Also recall that the back stress is given by
-\Beq
-  \dot{\Bbeta} = \dot{\gamma}~\Dev{\Bh}^{\beta}
-\Eeq
-The evolution equation for the back stress can be integrated to get
-\Beq
-  \Bbeta_{n+1} - \Bbeta_n = \Delta\gamma_{n+1}~\Dev(\Bh)^{\beta}_{n+1} ~.
-\Eeq
-Now,
-\Beq
-  \Bxi_{n+1} = \Bs_{n+1} - \Bbeta_{n+1} ~.
-\Eeq
-Plugging in the expressions for $\Bs_{n+1}$ and $\Bbeta_{n+1}$, we get
-\Beq
-  \Bxi_{n+1} = \Bs^{\Trial} - 2~\mu~\Delta\gamma_{n+1}~\Dev(\Br_{n+1}) 
-     - \Bbeta_n - \Delta\gamma_{n+1}~\Dev(\Bh)^{\beta}_{n+1} ~.
 \Eeq
 Define
-\Beq
-  \Bxi^{\Trial} := \Bs^{\Trial} - \Bbeta_n ~.
+\Beq \label{eq:P_tensor}
+  \BP := \SfC^e : \BM - \Partial{\Bsig}{\Bbeta} : \Bh^\beta -   
+         \Partial{\Bsig}{\Veps^\Teq_p}  h^{\Veps_p} -         
+         \Partial{\Bsig}{\phi} h^\phi -       
+         \Partial{\Bsig}{D} h^D -        
+         \Partial{\Bsig}{T_p} h^T \,.
 \Eeq
-Then
-\Beq
-  \Bxi_{n+1} = \Bxi^{\Trial} - \Delta\gamma_{n+1}(2~\mu~\Dev(\Br_{n+1}) + \Dev(\Bh)^{\beta}_{n+1}) ~.
+Then, 
+\Beq \label{eq:sig_dot_elas}
+  \dot{\Bsig} = \SfC^e : (\dot{\BVeps} - \alpha\dot{T}\BI) - \dot{\lambda} \BP 
+              = \SfC^e : \dot{\BVeps}^\alpha - \dot{\lambda} \BP\,.
 \Eeq
-Similarly, the evolution of the plastic strain is given by
-\Beq
-  \Ve^p_{n+1} = \Ve^p_{n} + \Delta\gamma_{n+1}~h^{\alpha}_{n+1}
+We define
+\Beq 
+  \dot{\Bsig}^\Trial := \SfC^e : \dot{\BVeps}^\alpha
 \Eeq
-and the porosity evolves as
-\Beq
-  \phi_{n+1} = \phi_n + \Delta\gamma_{n+1}~h^{\phi}_{n+1} ~.
+to get 
+\Beq \label{eq:sig_trial}
+  \dot{\Bsig} = \dot{\Bsig}^\Trial - \dot{\lambda} \BP \,.
 \Eeq
-The yield condition is discretized as
-\Beq
-  f(\Bs_{n+1}, \Bbeta_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, \dot{\Ve}_{n+1}, T_{n+1}, \dots) = 
-  f(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, \dot{\Ve}_{n+1}, T_{n+1}, \dots) = 0 ~.
-\Eeq
-{\bf Important:} We assume that the derivatives with respect to $\dot{\Ve}$ and $T$ are
-small enough to be neglected.
 
-\subsection{Newton iterations}
-We now have the following equations that have to be solved for $\Delta\gamma_{n+1}$:
+\subsection{Plastic loading}
+The consistency condition requires that
+\Beq
+  \dot{f}(\Bsig, \Bbeta, \Veps_p^\Teq, \dot{\Veps}_p^\Teq, \phi, D, T, \dots) = 0 ~.
+\Eeq
+For rate-independent plasticity, from the chain rule,
+\Beq
+  \dot{f} = \Partial{f}{\Bsig}:\dot{\Bsig} + \Partial{f}{\Bbeta}:\dot{\Bbeta} + 
+    \Partial{f}{\Veps^\Teq_p}~\dot{\Veps}^\Teq_p + \Partial{f}{\phi}~\dot{\phi} +
+    \Partial{f}{D}~\dot{D} + \Partial{f}{T_p}~\dot{T}_p = 0~.
+\Eeq
+Using the hardening/softening rules, 
+\Beq
+  \Partial{f}{\Bsig}:\dot{\Bsig} + \dot{\lambda}\left[\Partial{f}{\Bbeta}:\Bh^\beta + 
+    \Partial{f}{\Veps^\Teq_p}~h^{\Veps_p} + \Partial{f}{\phi}~h^\phi +
+    \Partial{f}{D}~h^D + \Partial{f}{T_p}~h^T\right] = 0
+\Eeq
+or
+\Beq
+  \Partial{f}{\Bsig}:\dot{\Bsig} + \dot{\lambda} H = 0 \,.
+\Eeq
+Define,
+\Beq \label{eq:def_N_H}
+  \BN := \Partial{f}{\Bsig} ~,~~ \hat{\BN} := \frac{\BN}{\Norm{\BN}{}} ~,~~
+  \hat{H} := \frac{H}{\Norm{\BN}{}} \,.
+\Eeq
+Then,
+\Beq \label{eq:consistency}
+  \hat{\BN}:\dot{\Bsig} + \dot{\lambda} \hat{H} = 0 \,.
+\Eeq
+Combining the stress-rate equation \eqref{eq:sig_trial} with the consistency equation
+\eqref{eq:consistency}, we have
+\Beq
+  \hat{\BN}:\dot{\Bsig}^\Trial = \hat{\BN} : \SfC^e : \dot{\BVeps}^\alpha = 
+    \dot{\lambda} (\hat{\BN}:\BP - \hat{H})  \,.
+\Eeq
+Therefore, 
+\Beq \label{eq:dot_lambda}
+  \dot{\lambda} = \frac{\hat{\BN}:\dot{\Bsig}^\Trial}{\hat{\BN}:\BP - \hat{H}} 
+                = \frac{\hat{\BN} : \SfC^e : \dot{\BVeps}^\alpha}{\hat{\BN}:\BP - \hat{H}} 
+\Eeq
+Substituting this expression to \eqref{eq:sig_trial}, we have
+\Beq 
+  \dot{\Bsig} = \dot{\Bsig}^\Trial - \frac{\hat{\BN}:\dot{\Bsig}^\Trial}{\hat{\BN}:\BP - \hat{H}} \BP 
+     = \dot{\Bsig}^\Trial - \frac{\BP\otimes\hat{\BN}}{\hat{\BN}:\BP - \hat{H}}:\dot{\Bsig}^\Trial 
+\Eeq
+or,
+\Beq
+  \dot{\Bsig} = \SfC^e : \dot{\BVeps}^\alpha  
+      - \frac{(\BP\otimes\hat{\BN}):\SfC^e}{\hat{\BN}:\BP - \hat{H}} : \dot{\BVeps}^\alpha  
+     = \SfC^{ep} : \dot{\BVeps}^\alpha \,.
+\Eeq
+The quantity $\SfC^{ep}$ is the continuum elastic-plastic tangent modulus. 
+
+\section{Stress update}
+The first step in the stress update procedure is to compute a trial stress state from
+\Beq 
+  \dot{\Bsig}^\Trial = \SfC^e : \dot{\BVeps}^\alpha \,.
+\Eeq
+We assume that
+\Beq
+  \Bsig^\Trial = \Bsig_n + \Delta t (\SfC^e_n : \dot{\BVeps}^\alpha_{n+1/2}) 
+\Eeq
+where $\Bsig_n$ is the stress at the end of time $t_n$, $\SfC^e_n$ is the elastic modulus
+at that time, $\dot{\BVeps}^\alpha_{n+1/2}$ is the strain rate computed from the symmetric
+part of the unrotated veocity gradient, and $\Delta t = t_{n+1} - t_n$ is the timestep size.
+
+The trial state contains the vector
+\Beq
+  \Beta^\Trial = 
+    \left[\Bsig^\Trial, \Bbeta_n, (\Veps^\Teq_p)_n, (\dot{\Veps}^\Teq_p)_n,
+           \phi_n, D_n, T_n, \kappa_n, \mu_n, \dots\right].
+\Eeq
+where the subscript ($n$) indicates the state at the end of time $t_n$.
+
+The trial state is used to compute the yield function
+\Beq
+  f_y = f[\Bsig^\Trial, \Bbeta_n, (\Veps^\Teq_p)_n, 
+          (\dot{\Veps}^\Teq_p)_n, \phi_n, D_n, T_n, \kappa_n, \mu_n, \dots]
+\Eeq
+If $f_y \le 0$, the trial state is in the elastic regime and we update the stress using
 \Beq
   \Bal
-  \Bxi_{n+1} & = \Bxi^{\Trial} - \Delta\gamma_{n+1}(2~\mu~\Dev(\Br_{n+1}) + \Dev(\Bh)^{\beta}_{n+1})\\
-  \Ve^p_{n+1} & = \Ve^p_{n} + \Delta\gamma_{n+1}~h^{\alpha}_{n+1} \\
-  \phi_{n+1} & = \phi_n + \Delta\gamma_{n+1}~h^{\phi}_{n+1}  \\
-  f(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, \dot{\Ve}_{n+1}, T_{n+1}, \dots) & = 0 ~.
+  &\Bsig_{n+1} = \Bsig^\Trial~,~~\Bbeta_{n+1} = \Bbeta_n ~,~~(\Veps^\Teq_p)_{n+1} = (\Veps^\Teq_p)_n
+  ~,~~ (\dot{\Veps}^\Teq_p)_{n+1} = (\dot{\Veps}^\Teq_p)_n \\
+  &\phi_{n+1} = \phi_n
+  ~,~~ D_{n+1} = D_n ~,~~ T_{n+1} = T_n \\
+  &\kappa_{n+1} = \kappa(p_{n+1}, T_n) ~,~~
+  \mu_{n+1} = \mu(p_{n+1}, T_n) \,.
   \Eal
 \Eeq
+If $f_y > 0$, the trial state is outside the yield surface in the elastic-plastic regime.  We
+can used a backward Euler algorithm to compute the updated stress state:
+\Beq
+  \frac{\Bsig_{n+1} - \Bsig_{n}}{\Delta t} = \frac{\Bsig^\Trial - \Bsig_n}{\Delta t} - \frac{\lambda_{n+1} - \lambda_n}{\Delta t} \BP_{n+1} 
+\Eeq
+or
+\Beq
+  \Bsig_{n+1} = \Bsig^\Trial - \Delta\lambda_{n+1} \BP_{n+1} \,.
+\Eeq
+The plastic strain and the internal variables can similarly be updated using
+\Beq
+  \Bal
+    \BVeps^p_{n+1} &= \BVeps^p_n &+& \Delta\lambda_{n+1}~\BM_{n+1} \\
+    (\Veps^\Teq_p)_{n+1} &= (\Veps^\Teq_p)_n &+& \Delta\lambda_{n+1}~h^{\Veps_p}_{n+1} \\
+    \Bbeta_{n+1} & = \Bbeta_n &+& \Delta\lambda_{n+1}~\Bh^{\beta}_{n+1} \\
+    \phi_{n+1} & = \phi_n &+& \Delta\lambda_{n+1}~h^{\phi}_{n+1} \\
+    D_{n+1} & = D_n &+& \Delta\lambda_{n+1}~h^D_{n+1} \\
+    (T_p)_{n+1} & = (T_p)_n &+& \Delta\lambda_{n+1}~h^T_{n+1} \,.
+  \Eal
+\Eeq
+In addition, the stress state has to lie on the yield surface:
+\Beq
+  f(\Bsig^\Trial - \Delta\lambda_{n+1} \BP_{n+1}) = 0 \,.
+\Eeq
+Finally, the consistency condition needs to be satisfied:
+\Beq
+  \hat{\BN}_{n+1} : (\Bsig_{n+1} - \Bsig_n) + \Delta \lambda_{n+1} \hat{H}_{n+1}  = 0
+\Eeq
+or,
+\Beq
+  \hat{\BN}_{n+1} : (\Bsig^\Trial - \Bsig_n) = \Delta \lambda_{n+1} (\hat{\BN}_{n+1}:\BP_{n+1} - \hat{H}_{n+1})\,.
+\Eeq
 
-Recall that if $g(\Delta\gamma) = 0$ is a nonlinear equation that we have to solve
-for $\Delta\gamma$, an iterative Newton method can be expressed as
+\subsection{Newton solve}
+\Vaango assumes associated plasticity for isotropic metals.  Then the following coupled equations have to be 
+solved for $\Gamma := \Delta\lambda_{n+1}$ and the updated state:
 \Beq
-  \Delta\gamma^{(k+1)} = \Delta\gamma^{(k)} - \left[\Deriv{g}{\Delta\gamma}\right]^{-1}_{(k)}~g^{(k)} ~.
+  \Bal
+  \Bsig_{n+1} & = \Bsig^\Trial - \Gamma \BP_{n+1} \\
+  \BVeps^p_{n+1} &= \BVeps^p_n + \Gamma \hat{\BN}_{n+1} \\
+  \Bbeta_{n+1} & = \Bbeta_n + \Gamma \Bh^{\beta}_{n+1} \\
+  (\Veps^\Teq_p)_{n+1} &= (\Veps^\Teq_p)_n + \Gamma h^{\Veps_p}_{n+1} \\
+  \phi_{n+1} & = \phi_n + \Gamma h^{\phi}_{n+1} \\
+  D_{n+1} & = D_n + \Gamma h^D_{n+1} \\
+  (T_p)_{n+1} & = (T_p)_n + \Gamma h^T_{n+1} \\
+  \hat{\BN}_{n+1} &: (\Bsig^\Trial - \Bsig_n) - \Gamma (\hat{\BN}_{n+1}:\BP_{n+1} - \hat{H}_{n+1})  = 0\\
+  f(\Bsig^\Trial &- \Gamma \BP_{n+1}) = 0 \\
+  \BP_{n+1}   & = \SfC^e_{n+1} : \hat{\BN}_{n+1} - 
+                  \left.\Partial{\Bsig}{\Bbeta}\right|_{n+1} : \Bh^\beta_{n+1} -   
+                  \left.\Partial{\Bsig}{\Veps^\Teq_p}\right|_{n+1}  h^{\Veps_p}_{n+1} -         
+                  \left.\Partial{\Bsig}{\phi}\right|_{n+1} h^\phi_{n+1} -       
+                  \left.\Partial{\Bsig}{D}\right|_{n+1} h^D_{n+1} -        
+                  \left.\Partial{\Bsig}{T_p}\right|_{n+1} h^T_{n+1} \\
+  \hat{\BN}_{n+1} & = \left.\Partial{f}{\Bsig}\right|_{n+1} \\
+  \hat{H}_{n+1} & = \left.\Partial{f}{\Bbeta}\right|_{n+1}:\Bh^\beta_{n+1} + 
+                    \left.\Partial{f}{\Veps^\Teq_p}\right|_{n+1}~h^{\Veps_p}_{n+1} + 
+                    \left.\Partial{f}{\phi}\right|_{n+1}~h^\phi_{n+1} +
+                    \left.\Partial{f}{D}\right|_{n+1}~h^D_{n+1} + 
+                    \left.\Partial{f}{T_p}\right|_{n+1}~h^T_{n+1} \,.
+  \Eal
 \Eeq
-Define 
+If $\Bg(\Gamma) = \Bzero$ is a system of nonlinear equations and we seek an admissible root $\Gamma$,
+an iterative Newton method can used to solve the problem:
 \Beq
-  \delta\gamma := \Delta\gamma^{(k+1)} - \Delta\gamma^{(k)} ~.
+  \Gamma^{(k+1)} = \Gamma^{(k)} - \left[\Deriv{\Bg}{\Gamma}\right]^{-1}_{(k)}~\Bg^{(k)} ~.
 \Eeq
-Then, the iterative scheme can be written as
+The iterative scheme can also be expressed as
 \Beq
-  g^{(k)} + \left[\Deriv{g}{\Delta\gamma}\right]^{(k)}~\delta\gamma  = 0~.
+  \Bg^{(k)} + \left[\Deriv{\Bg}{\Gamma}\right]^{(k)}\Delta\Gamma  = 0
+  \quad \text{where} \quad
+  \Delta\Gamma := \Gamma^{(k+1)} - \Gamma^{(k)} ~.
 \Eeq
 In our case we have
 \Beq
