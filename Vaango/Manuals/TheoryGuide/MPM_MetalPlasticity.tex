@@ -293,9 +293,12 @@ or,
 \Eeq
 
 \subsection{Newton solve}
-\Vaango assumes associated plasticity for isotropic metals.  Then the following coupled equations have to be 
-solved for $\Gamma := \Delta\lambda_{n+1}$ and the updated state:
-\Beq
+\Vaango assumes associated plasticity for isotropic metals, i.e., $\BM = \hat{\BN}$.  Therefore,
+the following coupled equations, not all of which are independent, have to be solved for 
+$\Gamma := \Delta\lambda_{n+1}$ and the updated state
+$\left[\Bsig_{n+1}, \kappa_{n+1}, \mu_{n+1}, \BVeps^p_{n+1}, (\Veps^\Teq_p)_{n+1}, \Bbeta_{n+1}, 
+       \phi_{n+1}, D_{n+1}, (T_p)_{n+1}\right]$:
+\Beq \label{eq:coupled_metal}
   \Bal
   \Bsig_{n+1} & = \Bsig^\Trial - \Gamma \BP_{n+1} \\
   \BVeps^p_{n+1} &= \BVeps^p_n + \Gamma \hat{\BN}_{n+1} \\
@@ -305,153 +308,257 @@ solved for $\Gamma := \Delta\lambda_{n+1}$ and the updated state:
   D_{n+1} & = D_n + \Gamma h^D_{n+1} \\
   (T_p)_{n+1} & = (T_p)_n + \Gamma h^T_{n+1} \\
   \hat{\BN}_{n+1} &: (\Bsig^\Trial - \Bsig_n) - \Gamma (\hat{\BN}_{n+1}:\BP_{n+1} - \hat{H}_{n+1})  = 0\\
-  f(\Bsig^\Trial &- \Gamma \BP_{n+1}) = 0 \\
+  f_{n+1} &= f(\Bsig^\Trial - \Gamma \BP_{n+1}) = 0 \\
   \BP_{n+1}   & = \SfC^e_{n+1} : \hat{\BN}_{n+1} - 
                   \left.\Partial{\Bsig}{\Bbeta}\right|_{n+1} : \Bh^\beta_{n+1} -   
                   \left.\Partial{\Bsig}{\Veps^\Teq_p}\right|_{n+1}  h^{\Veps_p}_{n+1} -         
                   \left.\Partial{\Bsig}{\phi}\right|_{n+1} h^\phi_{n+1} -       
                   \left.\Partial{\Bsig}{D}\right|_{n+1} h^D_{n+1} -        
                   \left.\Partial{\Bsig}{T_p}\right|_{n+1} h^T_{n+1} \\
-  \hat{\BN}_{n+1} & = \left.\Partial{f}{\Bsig}\right|_{n+1} \\
-  \hat{H}_{n+1} & = \left.\Partial{f}{\Bbeta}\right|_{n+1}:\Bh^\beta_{n+1} + 
+  \hat{\BN}_{n+1} &= \frac{\BN_{n+1}}{\Norm{\BN_{n+1}}{}} ~,~~
+  \BN_{n+1}  = \left.\Partial{f}{\Bsig}\right|_{n+1} \\
+  \hat{H}_{n+1} &= \frac{H_{n+1}}{\Norm{\BN_{n+1}}{}} ~,~~
+  H_{n+1}  = \left.\Partial{f}{\Bbeta}\right|_{n+1}:\Bh^\beta_{n+1} + 
                     \left.\Partial{f}{\Veps^\Teq_p}\right|_{n+1}~h^{\Veps_p}_{n+1} + 
                     \left.\Partial{f}{\phi}\right|_{n+1}~h^\phi_{n+1} +
                     \left.\Partial{f}{D}\right|_{n+1}~h^D_{n+1} + 
                     \left.\Partial{f}{T_p}\right|_{n+1}~h^T_{n+1} \,.
   \Eal
 \Eeq
-If $\Bg(\Gamma) = \Bzero$ is a system of nonlinear equations and we seek an admissible root $\Gamma$,
-an iterative Newton method can used to solve the problem:
+Let us express the stresses and strains as vectors:
 \Beq
-  \Gamma^{(k+1)} = \Gamma^{(k)} - \left[\Deriv{\Bg}{\Gamma}\right]^{-1}_{(k)}~\Bg^{(k)} ~.
+  \BSv := \left[\sigma_{11}, \sigma_{22}, \sigma_{33}, \sqrt{2}\sigma_{23}, \sqrt{2}\sigma_{31}, 
+               \sqrt{2}\sigma_{12}\right] \\
+  \BEv^p := \left[\Veps^p_{11}, \Veps^p_{22}, \Veps^p_{33}, \sqrt{2}\Veps^p_{23}, \sqrt{2}\Veps^p_{31}, 
+               \sqrt{2}\Veps^p_{12}\right] \,.
 \Eeq
-The iterative scheme can also be expressed as
+We can also write
 \Beq
-  \Bg^{(k)} + \left[\Deriv{\Bg}{\Gamma}\right]^{(k)}\Delta\Gamma  = 0
-  \quad \text{where} \quad
-  \Delta\Gamma := \Gamma^{(k+1)} - \Gamma^{(k)} ~.
+  \BNv :=  \left[\Partial{f}{\sigma_{11}}, \Partial{f}{\sigma_{22}}, \Partial{f}{\sigma_{33}}, 
+                 \sqrt{2}\Partial{f}{\sigma_{23}}, \sqrt{2}\Partial{f}{\sigma_{31}}, 
+                 \sqrt{2}\Partial{f}{\sigma_{12}}\right] ~,~~ \hat{\BNv} = \frac{\BNv}{\Norm{\BNv}{}} \,.
 \Eeq
-In our case we have
+Because of the isotropy of the elasticity tensor, we have
 \Beq
   \Bal
-  \Ba(\Delta\gamma) = 0 &= -\Bxi + \Bxi^{\Trial} - \Delta\gamma(2~\mu~\Dev(\Br) + \Dev(\Bh)^{\beta})\\
-  b(\Delta\gamma) = 0 &= -\Ve^p + \Ve^p_{n} + \Delta\gamma~h^{\alpha} \\
-  c(\Delta\gamma) = 0 & = -\phi + \phi_n + \Delta\gamma~h^{\phi}  \\
-  f(\Delta\gamma) = 0 &= f(\Bxi, \Ve^p, \phi, \dot{\Ve}, T, \dots) 
+  \SfC^e : \hat{\BN} = \BCv &= 
+    \left[2\mu N_1 + (\kappa -\tfrac{2}{3}\mu) (N_1+N_2+N_3), 
+          2\mu N_2 + (\kappa -\tfrac{2}{3}\mu) (N_1+N_2+N_3), \right.\\
+    &\left. \quad      2\mu N_3 + (\kappa -\tfrac{2}{3}\mu) (N_1+N_2+N_3), 
+          2\sqrt{2} \mu N_{4}, 2\sqrt{2} \mu N_{5}, 2\sqrt{2} \mu N_{6}\right] 
+  \Eal
+\Eeq
+where $N_i$ are the components of the vector $\hat{\BNv}$.
+If we ignore the elastic-plastic coupling term $\partial \Bsig/\partial \Bbeta$, and define
+\Beq
+  \Bal
+  \BZv^{\Veps_p} &:= 
+    \left[\Partial{\sigma_{11}}{\Veps_p^\Teq} h^{\Veps_p}, \Partial{\sigma_{22}}{\Veps_p^\Teq} h^{\Veps_p}, 
+          \Partial{\sigma_{33}}{\Veps_p^\Teq} h^{\Veps_p}, \sqrt{2}\Partial{\sigma_{23}}{\Veps_p^\Teq} h^{\Veps_p}, 
+          \sqrt{2}\Partial{\sigma_{31}}{\Veps_p^\Teq} h^{\Veps_p}, \sqrt{2}\Partial{\sigma_{12}}{\Veps_p^\Teq} h^{\Veps_p}\right] \\
+  \BZv^{\phi} &:= 
+    \left[\Partial{\sigma_{11}}{\phi} h^{\phi}, \Partial{\sigma_{22}}{\phi} h^{\phi}, 
+          \Partial{\sigma_{33}}{\phi} h^{\phi}, \sqrt{2}\Partial{\sigma_{23}}{\phi} h^{\phi}, 
+          \sqrt{2}\Partial{\sigma_{31}}{\phi} h^{\phi}, \sqrt{2}\Partial{\sigma_{12}}{\phi} h^{\phi}\right] \\
+  \BZv^{D} &:= 
+    \left[\Partial{\sigma_{11}}{D} h^D, \Partial{\sigma_{22}}{D} h^D, 
+          \Partial{\sigma_{33}}{D} h^D, \sqrt{2}\Partial{\sigma_{23}}{D} h^D, 
+          \sqrt{2}\Partial{\sigma_{31}}{D} h^D, \sqrt{2}\Partial{\sigma_{12}}{D} h^D\right] \\
+  \BZv^{T_p} &:= 
+    \left[\Partial{\sigma_{11}}{T_p} h^T, \Partial{\sigma_{22}}{T_p} h^T, 
+          \Partial{\sigma_{33}}{T_p} h^T, \sqrt{2}\Partial{\sigma_{23}}{T_p} h^T, 
+          \sqrt{2}\Partial{\sigma_{31}}{T_p} h^T, \sqrt{2}\Partial{\sigma_{12}}{T_p} h^T\right] 
+  \Eal
+\Eeq
+we have
+\Beq
+  \BPv = \BCv - \BZv^{\Veps_p} - \BZv^{\phi} - \BZv^D - \BZv^{T_p} \,.
+\Eeq
+Noting that $\Bbeta$ is required to be symmetric for the conservation of angular momentum, we
+can express the internal variables as a vector such that
+\Beq
+  \Bal
+  \BQv &:= \left[\beta_{11}, \beta_{22}, \beta_{33}, \sqrt{2}\beta_{23}, \sqrt{2}\beta_{31}, \sqrt{2}\beta_{12},
+                \Veps^\Teq_p, \phi, D, T_p\right] \\
+  \BHv &:= \left[h^\beta_{11}, h^\beta_{22}, h^\beta_{33}, \sqrt{2}h^\beta_{23}, \sqrt{2}h^\beta_{31}, 
+                    \sqrt{2}h^\beta_{12}, h^{\Veps_p}, h^\phi, h^D, h^T\right] \\
+  \Partial{f}{\BQv} &:= \left[\Partial{f}{\beta_{11}}, \Partial{f}{\beta_{22}}, \Partial{f}{\beta_{33}}, 
+                    \sqrt{2}\Partial{f}{\beta_{23}}, \sqrt{2}\Partial{f}{\beta_{31}}, 
+                    \sqrt{2}\Partial{f}{\beta_{12}}, \Partial{f}{\Veps_p^\Teq}, \Partial{f}{\phi}, 
+                    \Partial{f}{D}, \Partial{f}{T_p}\right] \\
   \Eal
 \Eeq
 Therefore,
 \Beq
-  \Bal
-  \Deriv{\Ba}{\Delta\gamma} & = 
-   -\Partial{\Bxi}{\Delta\gamma}  - (2~\mu~\Dev(\Br) + \Dev(\Bh)^{\beta})
-   - \Delta\gamma~\left(2~\mu~\Partial{\Dev(\Br)}{\Delta\gamma} + 
-        \Partial{\Dev(\Bh)^{\beta}}{\Delta\gamma}\right) \\
-   & =
-   -\Partial{\Bxi}{\Delta\gamma}  - (2~\mu~\Dev(\Br) + \Dev(\Bh)^{\beta})
-   - \Delta\gamma~\left(
-      2~\mu~\Partial{\Dev(\Br)}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-      2~\mu~\Partial{\Dev(\Br)}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-      2~\mu~\Partial{\Dev(\Br)}{\phi}~\Partial{\phi}{\Delta\gamma} + 
-      \right. \\
-   & \qquad \qquad
-      \left.
-      \Partial{\Dev(\Bh)^{\beta}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-      \Partial{\Dev(\Bh)^{\beta}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} +
-      \Partial{\Dev(\Bh)^{\beta}}{\phi}~\Partial{\phi}{\Delta\gamma} 
-      \right) \\
-  \Deriv{b}{\Delta\gamma} & = -\Partial{\Ve^p}{\Delta\gamma} +  h^{\alpha} 
-    + \Delta\gamma~\left(\Partial{h^{\alpha}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-                        \Partial{h^{\alpha}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-                        \Partial{h^{\alpha}}{\phi}~\Partial{\phi}{\Delta\gamma}\right) \\
-  \Deriv{c}{\Delta\gamma} & = -\Partial{\phi}{\Delta\gamma} +  h^{\phi} 
-    + \Delta\gamma~\left(\Partial{h^{\phi}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-                        \Partial{h^{\phi}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-                        \Partial{h^{\phi}}{\phi}~\Partial{\phi}{\Delta\gamma}\right) \\
-  \Deriv{f}{\Delta\gamma} & 
-     = \Partial{f}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-          \Partial{f}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} +
-          \Partial{f}{\phi}~\Partial{\phi}{\Delta\gamma} ~.
-  \Eal
+  H = \Partial{f}{\BQv} \cdot \BHv ~,~~ \hat{H} = \frac{H}{\Norm{\BNv}{}}\,.
 \Eeq
-Now, define
-\Beq
-   \Delta\Bxi := \Partial{\Bxi}{\Delta\gamma}~\delta\gamma ~;~~
-   \Delta\Ve^p := \Partial{\Ve^p}{\Delta\gamma}~\delta\gamma ~;~~
-   \Delta\phi := \Partial{\phi}{\Delta\gamma}~\delta\gamma ~.
-\Eeq
-Then
+Then \eqref{eq:coupled_metal}, can be written in vector form as
 \Beq
   \Bal
-  \Ba^{(k)} & - \Delta\Bxi - [2~\mu~\Dev(\Br^{(k)}) + \Dev(\Bh)^{\beta (k)}]~\delta\gamma \\
-   & \qquad \qquad
-    - 2~\mu~\Delta\gamma~\left(
-      \Partial{\Dev(\Br^{(k)})}{\Bxi}:\Delta\Bxi + 
-      \Partial{\Dev(\Br^{(k)})}{\Ve^p}~\Delta\Ve^p + 
-      \Partial{\Dev(\Br^{(k)})}{\phi}~\Delta\phi 
-      \right) \\
-   & \qquad \qquad
-    - \Delta\gamma~\left(
-      \Partial{\Dev(\Bh)^{\beta (k)}}{\Bxi}:\Delta\Bxi + 
-      \Partial{\Dev(\Bh)^{\beta (k)}}{\Ve^p}~\Delta\Ve^p +
-      \Partial{\Dev(\Bh)^{\beta (k)}}{\phi}~\Delta\phi
-      \right)  = 0\\
-  b^{(k)} & - \Delta\Ve^p + h^{\alpha}~\delta\gamma 
-    + \Delta\gamma~\left(\Partial{h^{\alpha (k)}}{\Bxi}:\Delta\Bxi + 
-                        \Partial{h^{\alpha (k)}}{\Ve^p}~\Delta\Ve^p +
-                        \Partial{h^{\alpha (k)}}{\phi}~\Delta\phi\right)
-     = 0 \\
-  c^{(k)} & - \Delta\phi + h^{\phi}~\delta\gamma 
-    + \Delta\gamma~\left(\Partial{h^{\phi (k)}}{\Bxi}:\Delta\Bxi + 
-                        \Partial{h^{\phi (k)}}{\Ve^p}~\Delta\Ve^p +
-                        \Partial{h^{\phi (k)}}{\phi}~\Delta\phi\right)
-     = 0 \\
-  f^{(k)} & + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi 
-      = 0
+  \BSv_{n+1} & = \BSv^\Trial - \Gamma \BPv_{n+1} \\
+  \BEv^p_{n+1} &= \BEv^p_n + \Gamma \hat{\BNv}_{n+1} \\
+  \BQv_{n+1} & = \BQv_n + \Gamma \BHv_{n+1} \\
+  \hat{\BNv}_{n+1} \cdot & (\BSv^\Trial - \BSv_n) - \Gamma (\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1})  = 0\\
+  f_{n+1} &= f(\BSv^\Trial - \Gamma \BPv_{n+1}) = 0 \,.
   \Eal
 \Eeq
-Because the derivatives of $\Br^{(k)}, \Bh^{\alpha (k)}, \Bh^{\beta (k)}, \Bh^{\phi (k)}$ with respect 
-to $\Bxi, \Ve^p, \phi$ may be difficult to calculate, we instead use a semi-implicit scheme in our 
-implementation where the quantities $\Br$, $h^{\alpha}$, $\Bh^{\beta}$, and $h^{\phi}$ are evaluated 
-at $t_n$.  Then the problematic derivatives disappear and we are left with
+Since $\BPv = \BPv(\BSv, \BEv^p, \BQv)$, $\BNv = \BNv(\BSv, \BEv^p, \BQv)$, $\BHv = \BHv(\BSv, \BEv^p, \BQv)$, 
+and $H = H(\BSv, \BEv^p, \BQv)$, we can write the equations above as residuals:
 \Beq
   \Bal
-  \Ba^{(k)} - \Delta\Bxi - [2~\mu~\Dev(\Br_n) + \Dev(\Bh)^{\beta}_n]~\delta\gamma & = 0\\
-  b^{(k)} - \Delta\Ve^p + h^{\alpha}_n~\delta\gamma & = 0 \\
-  c^{(k)} - \Delta\phi + h^{\phi}_n~\delta\gamma & = 0 \\
-  f^{(k)} + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi & = 0
+  \Brv_S(\Gamma,\BSv,\BEv^p,\BQv) & := -\BSv_{n+1} + \BSv^\Trial - \Gamma \BPv_{n+1}(\BSv,\BEv^p, \BQv) = \Bzero  \\
+  \Brv_E(\Gamma,\BSv,\BEv^p,\BQv) & := -\BEv^p_{n+1} + \BEv^p_n + \Gamma \hat{\BNv}_{n+1}(\BSv,\BEv^p, \BQv) = \Bzero \\
+  \Brv_q(\Gamma,\BSv,\BEv^p,\BQv) & := -\BQv_{n+1} + \BQv_n + \Gamma \BHv_{n+1} (\BSv,\BEv^p, \BQv) = \Bzero \\
+  r_f(\Gamma,\BSv,\BEv^p,\BQv) &:= f[\BSv^\Trial - \Gamma \BPv_{n+1}(\BSv,\BEv^p, \BQv)] = 0 \quad \text{where} \quad
+  \Gamma = \frac{\hat{\BNv}_{n+1}\cdot (\BSv^\Trial - \BSv_n)}  
+                 {\left(\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1}\right)}\,.
   \Eal
 \Eeq
-We now force $\Ba^{(k)}$, $b^{(k)}$, and $c^{(k)}$ to be zero at all times, leading
+First-order Taylor series expansions of these functions at $(\Gamma,\BSv_n,\BEv^p_n,\BQv_n)$, give
+\Beq
+  \Bal
+  \Brv_S(\Gamma,\BSv,\BEv^p,\BQv) & \approx \Brv_S(\Gamma,\BSv_n,\BEv^p_n,\BQv_n) + \\
+                        &\quad       \left.\Partial{\Brv_S}{\Gamma}\right|_n (\Gamma - \Gamma_n) + 
+                                     \left.\Partial{\Brv_S}{\BSv}\right|_n\cdot(\BSv - \BSv_n) + 
+                                     \left.\Partial{\Brv_S}{\BEv^p}\right|_n\cdot(\BEv^p - \BEv^p_n) + 
+                                     \left.\Partial{\Brv_S}{\BQv}\right|_n\cdot(\BQv - \BQv_n) \\
+  \Brv_E(\Gamma,\BSv,\BEv^p,\BQv) & \approx \Brv_E(\Gamma,\BSv_n,\BEv^p_n,\BQv_n) + \\
+                        &\quad       \left.\Partial{\Brv_Q}{\Gamma}\right|_n (\Gamma - \Gamma_n) + 
+                                     \left.\Partial{\Brv_Q}{\BSv}\right|_n\cdot(\BSv - \BSv_n) + 
+                                     \left.\Partial{\Brv_Q}{\BEv^p}\right|_n\cdot(\BEv^p - \BEv^p_n) + 
+                                     \left.\Partial{\Brv_Q}{\BQv}\right|_n\cdot(\BQv - \BQv_n) \\
+  \Brv_Q(\Gamma,\BSv,\BEv^p,\BQv) & \approx \Brv_Q(\Gamma,\BSv_n,\BEv^p_n,\BQv_n) + \\
+                        &\quad       \left.\Partial{\Brv_E}{\Gamma}\right|_n (\Gamma - \Gamma_n) + 
+                                     \left.\Partial{\Brv_E}{\BSv}\right|_n\cdot(\BSv - \BSv_n) + 
+                                     \left.\Partial{\Brv_E}{\BEv^p}\right|_n\cdot(\BEv^p - \BEv^p_n) + 
+                                     \left.\Partial{\Brv_E}{\BQv}\right|_n\cdot(\BQv - \BQv_n) \\
+  r_f(\Gamma,\BSv,\BEv^p,\BQv)    & \approx r_f(\Gamma,\BSv_n,\BEv^p_n,\BQv_n) + \\
+                        &\quad       \left.\Partial{r_f}{\Gamma}\right|_n (\Gamma - \Gamma_n) + 
+                                     \left.\Partial{r_f}{\BSv}\right|_n\cdot(\BSv - \BSv_n) + 
+                                     \left.\Partial{r_f}{\BEv^p}\right|_n\cdot(\BEv^p - \BEv^p_n) + 
+                                     \left.\Partial{r_f}{\BQv}\right|_n\cdot(\BQv - \BQv_n) 
+  \Eal
+\Eeq
+Since the residuals are required to be zero at the end of the timestep, we get the following 
+rule for the $k$-th iteration, 
+\Beq
+  \Bal
+    &\left.\Partial{\Brv_S}{\Gamma}\right|_k \Delta\Gamma + 
+    \left.\Partial{\Brv_S}{\BSv}\right|_{k}\cdot \Delta\BSv + 
+    \left.\Partial{\Brv_S}{\BEv^p}\right|_{k}\cdot \Delta\BEv^p + 
+    \left.\Partial{\Brv_S}{\BQv}\right|_{k}\cdot \Delta\BQv = -\Brv_S(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    &\left.\Partial{\Brv_E}{\Gamma}\right|_k \Delta\Gamma + 
+    \left.\Partial{\Brv_E}{\BSv}\right|_{k}\cdot \Delta\BSv + 
+    \left.\Partial{\Brv_E}{\BEv^p}\right|_{k}\cdot \Delta\BEv^p + 
+    \left.\Partial{\Brv_E}{\BQv}\right|_{k}\cdot \Delta\BQv = -\Brv_E(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    &\left.\Partial{\Brv_Q}{\Gamma}\right|_k  \Delta\Gamma + 
+    \left.\Partial{\Brv_Q}{\BSv}\right|_{k}\cdot \Delta\BSv + 
+    \left.\Partial{\Brv_Q}{\BEv^p}\right|_{k}\cdot \Delta\BEv^p + 
+    \left.\Partial{\Brv_Q}{\BQv}\right|_{k}\cdot \Delta\BQv = -\Brv_Q(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    &\left.\Partial{r_f}{\Gamma}\right|_k  \Delta\Gamma +
+    \left.\Partial{r_f}{\BSv}\right|_{k}\cdot \Delta\BSv +
+    \left.\Partial{r_f}{\BEv^p}\right|_{k}\cdot \Delta\BEv^p +
+    \left.\Partial{r_f}{\BQv}\right|_{k}\cdot \Delta\BQv = -r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) 
+  \Eal
+\Eeq
+where
+\Beq
+  \Delta\Gamma = \Gamma_{k+1} - \Gamma_k~,~~
+  \Delta\BSv = \BSv_{k+1} - \BSv_k~,~~
+  \Delta\BEv^p = \BEv^p_{k+1} - \BEv^p_k~,~~
+  \Delta\BQv = \BQv_{k+1} - \BQv_k \,.
+\Eeq
+The derivatives of the residuals are (dropping subscripts $n+1$ for convenience), 
+\Beq
+  \Bal
+  &\Partial{\Brv_S}{\Gamma} = -\BPv ~,~~
+  \Partial{\Brv_E}{\Gamma} = \hat{\BNv} ~,~~
+  \Partial{\Brv_Q}{\Gamma} = \BHv ~,~~
+  \Partial{r_f}{\Gamma} = -\Partial{f}{\BSv} \cdot \BPv  \\
+  &\Partial{\Brv_S}{\BSv} = -\MI - \Gamma \Partial{\BPv}{\BSv} ~,~~
+  \Partial{\Brv_E}{\BSv} = \Gamma \Partial{\hat{\BNv}}{\BSv} ~,~~
+  \Partial{\Brv_Q}{\BSv} = \Gamma \Partial{\BHv}{\BSv} ~,~~
+  \Partial{r_f}{\BSv} = \Partial{f}{\BSv}  \\
+  &\Partial{\Brv_S}{\BEv^p} = - \Gamma \Partial{\BPv}{\BEv^p} ~,~~
+  \Partial{\Brv_E}{\BEv^p} = -\MI + \Gamma \Partial{\hat{\BNv}}{\BEv^p} ~,~~
+  \Partial{\Brv_Q}{\BEv^p} = \Gamma \Partial{\BHv}{\BEv^p} ~,~~
+  \Partial{r_f}{\BEv^p} = \Partial{f}{\BEv^p}  \\
+  &\Partial{\Brv_S}{\BQv} = - \Gamma \Partial{\BPv}{\BQv} ~,~~
+  \Partial{\Brv_E}{\BQv} = \Gamma \Partial{\hat{\BNv}}{\BQv} ~,~~
+  \Partial{\Brv_Q}{\BQv} = -\MI + \Gamma \Partial{\BHv}{\BQv} ~,~~
+  \Partial{r_f}{\BQv} = \Partial{f}{\BQv} 
+  \Eal
+\Eeq
+Therefore, using $\BNv = \partial f/\partial \BSv$, 
+\Beq
+  \Bal
+    &-\BPv_k \Delta\Gamma  
+     -\left(\MI + \Gamma_k \left.\Partial{\BPv}{\BSv}\right|_k\right)\cdot \Delta\BSv 
+     -\Gamma_k \left.\Partial{\BPv}{\BEv^p}\right|_k \cdot \Delta\BEv^p  
+     -\Gamma_k \left.\Partial{\BPv}{\BQv}\right|_k\cdot \Delta\BQv = -\Brv_S(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    & \hat{\BNv}_k \Delta\Gamma  
+     +\Gamma_k \left.\Partial{\hat{\BNv}}{\BSv}\right|_k\cdot \Delta\BSv  
+     -\left(\MI - \Gamma_k \left.\Partial{\hat{\BNv}}{\BEv^p}\right|_k\right)\cdot \Delta\BEv^p 
+     +\Gamma_k \left.\Partial{\hat{\BNv}}{\BQv}\right|_k\cdot \Delta\BQv = -\Brv_E(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    & \BHv_k  \Delta\Gamma  
+     +\Gamma_k \left.\Partial{\BHv}{\BSv}\right|_{k}\cdot \Delta\BSv  
+     +\Gamma_k \left.\Partial{\BHv}{\BEv^p}\right|_k\cdot \Delta\BEv^p  
+     -\left(\MI - \Gamma_k \left.\Partial{\BHv}{\BQv}\right|_k\right)\cdot \Delta\BQv = -\Brv_Q(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    &-\BNv_k \cdot \BPv_k  \Delta\Gamma
+     +\BNv_k \cdot \Delta\BSv 
+     +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
+     +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = -r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
+  \Eal
+\Eeq
+Because the derivatives of $\hat{\BNv}$, $\BPv$, $\BHv$ with respect 
+to $\BSv$, $\BEv^p$, $\BQv$ may be difficult to calculate, it is more convenient
+to use a semi-implicit scheme where the quantities $\hat{\BNv}$, $\BPv$, $\BHv$ are evaluated 
+at $t_n$.  In that case we have
+\Beq
+  \Bal
+    &-\BPv_k \Delta\Gamma  
+     -\Delta\BSv 
+     = -\Brv_S(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    & \hat{\BNv}_k \Delta\Gamma  
+     -\Delta\BEv^p 
+     = -\Brv_E(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    & \BHv_k  \Delta\Gamma  
+     -\Delta\BQv 
+     = -\Brv_Q(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
+    &-\BNv_k \cdot \BPv_k  \Delta\Gamma
+     +\BNv_k \cdot \Delta\BSv 
+     +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
+     +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = -r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
+  \Eal
+\Eeq
+We now force $\Brv_S$, $\Brv_E$, and $\Brv_Q$ to be zero at all times, leading
 to the expressions
 \Beq
   \Bal
-  \Delta\Bxi & = - [2~\mu~\Dev(\Br_n) + \Dev(\Bh)^{\beta}_n]~\delta\gamma \\
-  \Delta\Ve^p & =  h^{\alpha}_n~\delta\gamma \\
-  \Delta\phi & =  h^{\phi}_n~\delta\gamma \\
-  f^{(k)} + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi & = 0
+    &\Delta\BSv = -\BPv_k \Delta\Gamma  \\
+    &\Delta\BEv^p = \hat{\BNv}_k \Delta\Gamma  \\
+    &\Delta\BQv = \BHv_k  \Delta\Gamma  \\
+    &r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
+     -\BNv_k \cdot \BPv_k  \Delta\Gamma
+     +\BNv_k \cdot \Delta\BSv 
+     +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
+     +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = 0
   \Eal
 \Eeq
-Plugging the expressions for $\Delta\Bxi$, $\Delta\Ve^p$, $\Delta\phi$ from the 
+Plugging the expressions for $\Delta\BSv$, $\Delta\BEv^p$, $\Delta\BQv$ from the 
 first three equations into the fourth gives us
 \Beq
-  f^{(k)} -\Partial{f^{(k)}}{\Bxi}:[2~\mu~\Dev(\Br_n) + \Dev(\Bh)^{\beta}_n]~\delta\gamma +
-          h^{\alpha}_n~\Partial{f^{(k)}}{\Ve^p}~\delta\gamma  + 
-          h^{\phi}_n~\Partial{f^{(k)}}{\phi}~\delta\gamma  = 0 
+  r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
+     -2 \BNv_k \cdot \BPv_k  \Delta\Gamma
+     +\left.\Partial{f}{\BEv^p}\right|_k\cdot \hat{\BNv}_k\Delta\Gamma
+     +\left.\Partial{f}{\BQv}\right|_k\cdot \BHv_k\Delta\Gamma = 0
 \Eeq
 or
 \Beq
-  \Delta\gamma^{(k+1)} - \Delta\gamma^{(k)} = \delta\gamma = 
-   \cfrac{f^{(k)}}
-   {\Partial{f^{(k)}}{\Bxi}:[2~\mu~\Dev(\Br_n) + \Dev(\Bh^{\beta}_n)] - 
-   h^{\alpha}_n~\Partial{f^{(k)}}{\Ve^p} -
-   h^{\phi}_n~\Partial{f^{(k)}}{\phi} } ~.
+  \Delta\Gamma = \frac{r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)}
+                      {2 \BNv_k \cdot \BPv_k
+                       +\left.\Partial{f}{\BEv^p}\right|_k\cdot \hat{\BNv}_k
+                       +\left.\Partial{f}{\BQv}\right|_k\cdot \BHv_k}
 \Eeq
 
 \subsection{Algorithm}
