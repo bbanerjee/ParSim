@@ -22,21 +22,21 @@ The linear hardening model can be invoked using
 The Johnson-Cook (JC) model (\cite{Johnson1983}) has
 the following relation for the flow stress ($\sigma_y$) 
 \begin{equation}
-  \sigma_y(\Ep,\Epdoteq,T) = 
-  \left[A + B (\Ep)^n\right]\left[1 + C \ln(\Epdot{}^\star)\right]
+  \sigma_y(\Ep,\Edot{\Teq},T) = 
+  \left[A + B (\Ep)^n\right]\left[1 + C \ln(\Edot{\star})\right]
   \left[1 - (T^*)^m\right]
 \end{equation}
 where $\Ep$ is the equivalent plastic strain, 
 $A$, $B$, $C$, $n$, $m$ are material constants, and
 \begin{equation}
-  \Epdot{}^\star = \cfrac{\dot{\Veps}_p^\Teq}{\Epdot{0}}; \quad
+  \Edot{^\star} = \cfrac{\Edot{\Teq}}{\Edot{0}}; \quad
   T^* = \cfrac{(T-T_0)}{(T_m-T_0)}\,.
 \end{equation}
-In the above equations, $\dot{\Veps}_p^\Teq$ is the 
-equivalent plastic strain rate, 
-$\Epdot{0}$ is a user defined plastic strain rate, 
+In the above equations, $\Edot{\Teq}$ is the 
+equivalent strain rate, 
+$\Edot{0}$ is a reference strain rate, 
 $T_0$ is a reference temperature, and $T_m$ is the melt temperature.  
-For conditions where $T^* < 0$, we assume that $m = 1$.
+For conditions where $T^\star < 0$, we assume that $m = 1$.
 
 The inputs for this model have the form
 \lstset{language=XML}

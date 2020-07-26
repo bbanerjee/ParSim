@@ -76,8 +76,8 @@ Expanded out,
 \subsection{Yield condition}
 The yield condition is of the form
 \Beq
-  f(\Bsig, \Bbeta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \dots) =
-  f(\Bxi, p_\beta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \dots) = 0
+  f(\Bsig, \Bbeta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \Edot{\Teq}, \dots) =
+  f(\Bxi, p_\beta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \Edot{\Teq}, \dots) = 0
 \Eeq
 where $\Bxi = \Dev(\Bsig - \Bbeta)$ and $p_\beta = \Tr(\Bsig - \Bbeta)/3$. 
 
@@ -171,7 +171,7 @@ to get
 \subsection{Plastic loading}
 The consistency condition requires that
 \Beq
-  \dot{f}(\Bsig, \Bbeta, \Veps_p^\Teq, \dot{\Veps}_p^\Teq, \phi, D, T, \dots) = 0 ~.
+  \dot{f}(\Bsig, \Bbeta, \Veps_p^\Teq, \dot{\Veps}_p^\Teq, \phi, D, T, \Edot{\Teq}, \dots) = 0 ~.
 \Eeq
 For rate-independent plasticity, from the chain rule,
 \Beq
@@ -229,24 +229,24 @@ The first step in the stress update procedure is to compute a trial stress state
 \Eeq
 We assume that
 \Beq
-  \Bsig^\Trial = \Bsig_n + \Delta t (\SfC^e_n : \dot{\BVeps}^\alpha_{n+1/2}) 
+  \Bsig^\Trial = \Bsig_n + \Delta t (\SfC^e_n : \dot{\BVeps}^\alpha_{n+1}) 
 \Eeq
 where $\Bsig_n$ is the stress at the end of time $t_n$, $\SfC^e_n$ is the elastic modulus
-at that time, $\dot{\BVeps}^\alpha_{n+1/2}$ is the strain rate computed from the symmetric
+at that time, $\dot{\BVeps}^\alpha_{n+1}$ is the strain rate computed from the symmetric
 part of the unrotated veocity gradient, and $\Delta t = t_{n+1} - t_n$ is the timestep size.
 
 The trial state contains the vector
 \Beq
   \Beta^\Trial = 
     \left[\Bsig^\Trial, \Bbeta_n, (\Veps^\Teq_p)_n, (\dot{\Veps}^\Teq_p)_n,
-           \phi_n, D_n, T_n, \kappa_n, \mu_n, \dots\right].
+           \phi_n, D_n, T_n, \Edot{\Teq}_n, \kappa_n, \mu_n, \dots\right].
 \Eeq
 where the subscript ($n$) indicates the state at the end of time $t_n$.
 
 The trial state is used to compute the yield function
 \Beq
   f_y = f[\Bsig^\Trial, \Bbeta_n, (\Veps^\Teq_p)_n, 
-          (\dot{\Veps}^\Teq_p)_n, \phi_n, D_n, T_n, \kappa_n, \mu_n, \dots]
+          (\dot{\Veps}^\Teq_p)_n, \phi_n, D_n, T_n, \Edot{\Teq}_n, \kappa_n, \mu_n, \dots]
 \Eeq
 If $f_y \le 0$, the trial state is in the elastic regime and we update the stress using
 \Beq
@@ -389,17 +389,19 @@ can express the internal variables as a vector such that
   \Eal
 \Eeq
 Therefore,
-\Beq
+\Beq \label{eq:H_def_vec}
   H = \Partial{f}{\BQv} \cdot \BHv ~,~~ \hat{H} = \frac{H}{\Norm{\BNv}{}}\,.
 \Eeq
 Then \eqref{eq:coupled_metal}, can be written in vector form as
-\Beq
+\Beq \label{eq:Gamma_direct}
   \Bal
   \BSv_{n+1} & = \BSv^\Trial - \Gamma \BPv_{n+1} \\
   \BEv^p_{n+1} &= \BEv^p_n + \Gamma \hat{\BNv}_{n+1} \\
   \BQv_{n+1} & = \BQv_n + \Gamma \BHv_{n+1} \\
-  \hat{\BNv}_{n+1} \cdot & (\BSv^\Trial - \BSv_n) - \Gamma (\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1})  = 0\\
-  f_{n+1} &= f(\BSv^\Trial - \Gamma \BPv_{n+1}) = 0 \,.
+  \hat{\BNv}_{n+1} \cdot & (\BSv^\Trial - \BSv_n) - \Gamma (\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1})  = 0 \quad \implies \quad
+  \Gamma = \frac{\hat{\BNv}_{n+1}\cdot (\BSv^\Trial - \BSv_n)}  
+                 {\left(\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1}\right)} \\
+  f_{n+1} &= f(\BSv^\Trial - \Gamma \BPv_{n+1}) = 0 
   \Eal
 \Eeq
 Since $\BPv = \BPv(\BSv, \BEv^p, \BQv)$, $\BNv = \BNv(\BSv, \BEv^p, \BQv)$, $\BHv = \BHv(\BSv, \BEv^p, \BQv)$, 
@@ -409,9 +411,7 @@ and $H = H(\BSv, \BEv^p, \BQv)$, we can write the equations above as residuals:
   \Brv_S(\Gamma,\BSv,\BEv^p,\BQv) & := -\BSv_{n+1} + \BSv^\Trial - \Gamma \BPv_{n+1}(\BSv,\BEv^p, \BQv) = \Bzero  \\
   \Brv_E(\Gamma,\BSv,\BEv^p,\BQv) & := -\BEv^p_{n+1} + \BEv^p_n + \Gamma \hat{\BNv}_{n+1}(\BSv,\BEv^p, \BQv) = \Bzero \\
   \Brv_q(\Gamma,\BSv,\BEv^p,\BQv) & := -\BQv_{n+1} + \BQv_n + \Gamma \BHv_{n+1} (\BSv,\BEv^p, \BQv) = \Bzero \\
-  r_f(\Gamma,\BSv,\BEv^p,\BQv) &:= f[\BSv^\Trial - \Gamma \BPv_{n+1}(\BSv,\BEv^p, \BQv)] = 0 \quad \text{where} \quad
-  \Gamma = \frac{\hat{\BNv}_{n+1}\cdot (\BSv^\Trial - \BSv_n)}  
-                 {\left(\hat{\BNv}_{n+1}\cdot\BPv_{n+1} - \hat{H}_{n+1}\right)}\,.
+  r_f(\Gamma,\BSv,\BEv^p,\BQv) &:= f(\BSv_{n+1},\BEv^p_{n+1},\BQv_{n+1}) = 0 
   \Eal
 \Eeq
 First-order Taylor series expansions of these functions at $(\Gamma,\BSv_n,\BEv^p_n,\BQv_n)$, give
@@ -474,7 +474,7 @@ The derivatives of the residuals are (dropping subscripts $n+1$ for convenience)
   &\Partial{\Brv_S}{\Gamma} = -\BPv ~,~~
   \Partial{\Brv_E}{\Gamma} = \hat{\BNv} ~,~~
   \Partial{\Brv_Q}{\Gamma} = \BHv ~,~~
-  \Partial{r_f}{\Gamma} = -\Partial{f}{\BSv} \cdot \BPv  \\
+  \Partial{r_f}{\Gamma} = 0  \\
   &\Partial{\Brv_S}{\BSv} = -\MI - \Gamma \Partial{\BPv}{\BSv} ~,~~
   \Partial{\Brv_E}{\BSv} = \Gamma \Partial{\hat{\BNv}}{\BSv} ~,~~
   \Partial{\Brv_Q}{\BSv} = \Gamma \Partial{\BHv}{\BSv} ~,~~
@@ -504,8 +504,7 @@ Therefore, using $\BNv = \partial f/\partial \BSv$,
      +\Gamma_k \left.\Partial{\BHv}{\BSv}\right|_{k}\cdot \Delta\BSv  
      +\Gamma_k \left.\Partial{\BHv}{\BEv^p}\right|_k\cdot \Delta\BEv^p  
      -\left(\MI - \Gamma_k \left.\Partial{\BHv}{\BQv}\right|_k\right)\cdot \Delta\BQv = -\Brv_Q(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
-    &-\BNv_k \cdot \BPv_k  \Delta\Gamma
-     +\BNv_k \cdot \Delta\BSv 
+    & \BNv_k \cdot \Delta\BSv 
      +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
      +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = -r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
   \Eal
@@ -525,8 +524,7 @@ at $t_n$.  In that case we have
     & \BHv_k  \Delta\Gamma  
      -\Delta\BQv 
      = -\Brv_Q(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k) \\
-    &-\BNv_k \cdot \BPv_k  \Delta\Gamma
-     +\BNv_k \cdot \Delta\BSv 
+    &\BNv_k \cdot \Delta\BSv 
      +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
      +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = -r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
   \Eal
@@ -539,7 +537,6 @@ to the expressions
     &\Delta\BEv^p = \hat{\BNv}_k \Delta\Gamma  \\
     &\Delta\BQv = \BHv_k  \Delta\Gamma  \\
     &r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
-     -\BNv_k \cdot \BPv_k  \Delta\Gamma
      +\BNv_k \cdot \Delta\BSv 
      +\left.\Partial{f}{\BEv^p}\right|_k\cdot \Delta\BEv^p 
      +\left.\Partial{f}{\BQv}\right|_k\cdot \Delta\BQv = 0
@@ -549,26 +546,45 @@ Plugging the expressions for $\Delta\BSv$, $\Delta\BEv^p$, $\Delta\BQv$ from the
 first three equations into the fourth gives us
 \Beq
   r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)
-     -2 \BNv_k \cdot \BPv_k  \Delta\Gamma
+     -\BNv_k \cdot \BPv_k  \Delta\Gamma
      +\left.\Partial{f}{\BEv^p}\right|_k\cdot \hat{\BNv}_k\Delta\Gamma
      +\left.\Partial{f}{\BQv}\right|_k\cdot \BHv_k\Delta\Gamma = 0
 \Eeq
 or
 \Beq
-  \Delta\Gamma = \frac{r_f(\Gamma_k,\BSv_k,\BEv^p_k,\BQv_k)}
-                      {2 \BNv_k \cdot \BPv_k
-                       +\left.\Partial{f}{\BEv^p}\right|_k\cdot \hat{\BNv}_k
-                       +\left.\Partial{f}{\BQv}\right|_k\cdot \BHv_k}
+  \Delta\Gamma = \frac{f(\BSv_k,\BEv^p_k,\BQv_k)}
+                      {\BNv_k \cdot \BPv_k
+                       -\left.\Partial{f}{\BEv^p}\right|_k\cdot \hat{\BNv}_k
+                       -\left.\Partial{f}{\BQv}\right|_k\cdot \BHv_k}
 \Eeq
+In the metal plasticity models implemented in \Vaango, there is no direct
+dependence of $f$ on $\BEv^p$. Therefore, using \eqref{eq:H_def_vec}, 
+\Beq
+  \Gamma_{k+1} = \Gamma_k + \frac{f(\BSv_k,\BQv_k)}
+                                 {\BNv_k \cdot \BPv_k - H_k} \,.
+\Eeq
+All quantities on the right hand side of te above equation are known, and we can
+compute $\Gamma_{k+1}$.  The other variables can now be updated using
+\Beq
+  \BSv_{k+1} = \BSv_k -\BPv_k \Delta\Gamma ~,~~
+  \BEv^p_{k+1} = \BEv^p_k + \hat{\BNv}_k \Delta\Gamma ~,~~
+  \BQv_{k+1} = \BQv_k + \BHv_k \Delta\Gamma 
+\Eeq
+The iterative process can be stopped when $r_f$ is close to 0 and $\Gamma_{k+1}$ is
+close to the value required to satisfy consistency given in \eqref{eq:Gamma_direct}.
 
 \subsection{Algorithm}
 The following stress update algorithm is used for each (plastic) time step:
 \begin{enumerate}
   \item Initialize:
   \Beq
-    k = 0 ~;~~ (\Ve^p)^{(k)} = \Ve^p_n ~;~~ \phi^{(k)} = \phi_n ~;~~
-    \Bbeta^{(k)} = \Bbeta_n ~;~~ \Delta\gamma^{(k)} = 0 ~;~~
-    \Bxi^{(k)} = \Bxi^{\Trial}~.
+    \Bal
+    k &= 0 \\
+    \Bsig_k &= \Bsig_n,~~ \kappa_k = \kappa_n,~~ \mu_k = \mu_n,~~ \BVeps^p_k = \BVeps^p_n\\ 
+    (\Veps^\Teq_p)_k &= (\Veps^\Teq_p)_n,~~ \Bbeta_k = \Bbeta_n~.~~
+    \phi_k = \phi_n,~~ D_k = D_n,~~ (T_p)_k = (T_p)_n\\
+    (\Epdoteq)_k &= (\Epdoteq)_n,~~ \Edot{\Teq} = \Edot{\Teq}_{n+1}
+    \Eal
   \Eeq
   \item Check yield condition:
   \Beq

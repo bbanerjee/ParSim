@@ -123,17 +123,34 @@ For volume preserving plastic deformations, $\Tr(\BVeps) = 0$, and we have
      \tfrac{1}{3}\left(\gamma_{12}^2 + \gamma_{23}^2 + \gamma_{13}^2\right)} \,.
 \Eeq
 
-\subsection{Equivalent plastic strain}
+\subsection{Equivalent strain rate and plastic strain}
+The equivalent strain rate is defined as
+\Beq \label{eq:eq_strain_rate}
+  \dot{\Veps}^\Teq = \sqrt{\dot{\BVeps}:\dot{\BVeps}} 
+\Eeq
+where $\dot{\BVeps}(t)$ is the strain rate tensor.  The distortional equivalent strain rate is
+\Beq \label{eq:eq_shear_strain_rate}
+  \dot{\gamma}^\Teq = \sqrt{\tfrac{2}{3}\dot{\BVeps}_s:\dot{\BVeps}_s} 
+\Eeq
+where $\dot{\BVeps}_s(t)$ is the deviatoric strain rate tensor.
+
 For models where an equivalent plastic strain is computed, we define a scalar equivalent plastic
 strain rate as
 \Beq \label{eq:eq_plastic_strain_rate}
   \dot{\Veps}_p^\Teq = \sqrt{\dot{\BVeps}^p:\dot{\BVeps}^p} 
 \Eeq
 where $\dot{\BVeps}^p(t)$ is the plastic strain rate tensor.
-
 The definition of the scalar equivalent plastic strain is
 \Beq \label{eq:eq_plastic_strain}
   \Veps_p^\Teq(t) = \int_0^t \dot{\Veps}_p^\Teq(\tau) d\tau \,.
+\Eeq
+The corresponding distortional equivalent plastic strain rate and strain are defined as
+\Beq \label{eq:eq_plastic_shear_strain_rate}
+  \dot{\gamma}_p^\Teq = \sqrt{\tfrac{2}{3}\dot{\BVeps}_s^p:\dot{\BVeps}_s^p} 
+\Eeq
+and
+\Beq \label{eq:eq_plastic_shear_strain}
+  \gamma_p^\Teq(t) = \int_0^t \dot{\gamma}_p^\Teq(\tau) d\tau \,.
 \Eeq
 
 \subsection{Velocity gradient, rate-of-deformation, deformation gradient}
