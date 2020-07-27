@@ -19,6 +19,28 @@ to the hatted quantities even though we drop the hats for convenience.
 \end{NoteBox}
 
 \section{The model}
+The metal plasticity model assumes that we know the total strain rate ($\dot{\BVeps}^t$) and
+that this strain rate can be decomposed into a mechanical component ($\dot{\BVeps}$) and a 
+thermal expansion component ($\dot{\BVeps}^\alpha$): 
+\Beq
+  \dot{\BVeps}^t = \dot{\BVeps} + \dot{\BVeps}^\alpha \,.
+\Eeq
+The thermal expansion component is assumed to be of the rate form
+\Beq
+  \dot{\BVeps}^\alpha  = \Partial{\BVeps^\alpha}{T} \dot{T} = \alpha \dot{T}
+\Eeq
+where $T$ is the temperature and $\alpha$ is a coefficient of thermal expansion.
+Then the mechanical strain rate can be expressed as
+\Beq
+  \dot{\BVeps} = \dot{\BVeps}^t - \alpha\dot{T} \,.
+\Eeq
+The primary function of the metal plasticity model is to compute the stress when 
+a mechanical strain rate 
+$\dot{\BVeps}$ is given, which we assume can be additively decomposed into 
+elastic ($\dot{\BVeps}^e$) and plastic ($\dot{\BVeps}^p$) parts:
+\Beq
+  \dot{\BVeps} = \dot{\BVeps}^e + \dot{\BVeps}^p \,.
+\Eeq
 The Cauchy stress ($\Bsig$) is decomposed into volumetric and deviatoric parts:
 \Beq \label{eq:stress_decomp}
   \Bsig = p~\BI + \BsT \quad \text{where} \quad  
@@ -26,29 +48,26 @@ The Cauchy stress ($\Bsig$) is decomposed into volumetric and deviatoric parts:
   \BsT = \Dev(\Bsig) = \Bsig - \Third\Tr(\Bsig) \,.
 \Eeq
 In the above $p = \sigma_m$ is the mean stress and $\BsT$ is the deviatoric stress.
+An alternative decomposition that can be used for the isotropic metal plasticity models
+implemenetd in \Vaango is
+\Beq
+  \Bsig = \sigma_p \hat{\BI} + \sigma_s \hat{\BsT}~,~~\hat{\BI} = \frac{1}{\sqrt{3}}\BI ~,~~
+  \hat{\BsT} = \frac{\BsT}{\Norm{\BsT}{}}~,~~\sigma_p = \sqrt{3} p ~,~~\sigma_s = \Norm{\BsT}{} \,.
+\Eeq
+This decomposition is useful because $\hat{\BI}$ and $\hat{\BsT}$ for a basis that can be
+used to express several other quantities in the metal plasticity models implemented
+in \Vaango.  The time derivative of stress can then be expressed as
+\Beq
+  \dot{\Bsig} = \dot{p}~\BI + \dot{\BsT} = \dot{\sigma}_p~\hat{\BI} + \dot{\sigma}_s~\hat{\BsT} \,.
+\Eeq
 The isotropy of the material allows us to compute the mean stress using an
 equation of state if desired. The deviatoric stress is computed using a rate-form
-stress-strain relation.
-We simplify the discussion by assuming that rate-form relations are used for
-both the mean stress and the deviatoric stress.  The time derivative of 
-\eqref{eq:stress_decomp} is
-\Beq
-  \dot{\Bsig} = \dot{p}~\BI + \dot{\BsT} \,.
-\Eeq
-These stress rates have to be computed when a strain rate $\dot{\BVeps}$ is given, which
-we assume can be additively decomposed into elastic ($\dot{\BVeps}^e$) and 
-plastic ($\dot{\BVeps}^p$) parts:
-\Beq
-  \dot{\BVeps} = \dot{\BVeps}^e + \dot{\BVeps}^p \,.
-\Eeq
-The isotropic metal plasticity model in \Vaango solves the coupled equations
-\Beq
-  \dot{p} = g_1(\dot{\BVeps}^e, \dot{\BVeps}^p) ~,~~ \dot{\Bs} = g_2(\dot{\BVeps}^e, \dot{\BVeps}^p) \,.
-\Eeq
+stress-strain relation.  For convenience, we assume that rate-form relations are used for
+both the mean stress and the deviatoric stress.  
 
 \subsection{Elastic relation}
 The elastic constitutive relation is assumed to be of the form
-\Beq
+\Beq \label{eq:sig_dot_e}
   \dot{\Bsig}^e = \Partial{\Bsig}{\BVeps^e} : \dot{\BVeps}^e
                 = \SfC^e : \dot{\BVeps}^e
 \Eeq
@@ -60,18 +79,6 @@ where $\mu(p, T, \phi, D)$ is the shear modulus, $\kappa(p,T, \phi, D)$ is the t
 bulk modulus, $\BI$ is the second-order identity tensor and $\SfI$ is the fourth-order
 identity tensor.  $T$ is the current temperature, $\phi$ is the current porosity and
 $D$ is a scalar damage parameter.  
-
-If we consider thermal expansion,
-\Beq
-  \dot{\Bsig}^e = \Partial{\Bsig}{\BVeps^e} : \left(\dot{\BVeps}^e - \alpha \dot{T}\BI\right)
-                = \SfC^e : \dot{\BVeps}^e - \alpha \dot{T}\, \SfC^e:\BI
-\Eeq
-where $\alpha$ is the coefficient of thermal expansion.
-Expanded out, 
-\Beq \label{eq:sig_dot_e}
-  \dot{\Bsig}^e = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\dot{\BVeps}^e) \BI + 2\mu\dot{\BVeps}^e 
-                - 3\kappa\alpha\dot{T}\BI 
-\Eeq
 
 \subsection{Yield condition}
 The yield condition is of the form
@@ -126,19 +133,19 @@ disspiation contribution to $\dot{T}$.
 However, during elastic-plastic deformation, $\dot{\lambda} > 0$, and we have
 \Beq
   \Bal
-  \dot{\Bsig} & = \Partial{\Bsig}{\BVeps^e} : \left(\dot{\BVeps}^e -\alpha\dot{T}\BI\right) + 
+  \dot{\Bsig} & = \Partial{\Bsig}{\BVeps^e} : \dot{\BVeps}^e + 
                   \Partial{\Bsig}{\Bbeta} : \dot{\Bbeta} + 
                   \Partial{\Bsig}{\Veps^\Teq_p}  \dot{\Veps}^\Teq_p + 
                   \Partial{\Bsig}{\phi}  \dot{\phi} + 
                   \Partial{\Bsig}{D}  \dot{D} + 
                   \Partial{\Bsig}{T_p}  \dot{T}_p \\
-   & = \SfC^e : \left(\dot{\BVeps}^e -\alpha\dot{T}\BI\right) + 
+   & = \SfC^e : \dot{\BVeps}^e + 
        \dot{\lambda}\left[\Partial{\Bsig}{\Bbeta} : \Bh^\beta + 
        \Partial{\Bsig}{\Veps^\Teq_p}  h^{\Veps_p} + 
        \Partial{\Bsig}{\phi} h^\phi + 
        \Partial{\Bsig}{D} h^D + 
        \Partial{\Bsig}{T_p} h^T\right] \\
-   & = \SfC^e : (\dot{\BVeps} - \alpha\dot{T}\BI) -
+   & = \SfC^e : \dot{\BVeps} -
        \dot{\lambda}\left[\SfC^e : \BM - \Partial{\Bsig}{\Bbeta} : \Bh^\beta -   
        \Partial{\Bsig}{\Veps^\Teq_p}  h^{\Veps_p} -         
        \Partial{\Bsig}{\phi} h^\phi -       
@@ -156,12 +163,11 @@ Define
 \Eeq
 Then, 
 \Beq \label{eq:sig_dot_elas}
-  \dot{\Bsig} = \SfC^e : (\dot{\BVeps} - \alpha\dot{T}\BI) - \dot{\lambda} \BP 
-              = \SfC^e : \dot{\BVeps}^\alpha - \dot{\lambda} \BP\,.
+  \dot{\Bsig} = \SfC^e : \dot{\BVeps} - \dot{\lambda} \BP 
 \Eeq
 We define
 \Beq 
-  \dot{\Bsig}^\Trial := \SfC^e : \dot{\BVeps}^\alpha
+  \dot{\Bsig}^\Trial := \SfC^e : \dot{\BVeps}
 \Eeq
 to get 
 \Beq \label{eq:sig_trial}
@@ -169,7 +175,7 @@ to get
 \Eeq
 
 \subsection{Plastic loading}
-The consistency condition requires that
+The consistency condition requires that, when $\dot{\lambda} > 0$,
 \Beq
   \dot{f}(\Bsig, \Bbeta, \Veps_p^\Teq, \dot{\Veps}_p^\Teq, \phi, D, T, \Edot{\Teq}, \dots) = 0 ~.
 \Eeq
@@ -201,13 +207,13 @@ Then,
 Combining the stress-rate equation \eqref{eq:sig_trial} with the consistency equation
 \eqref{eq:consistency}, we have
 \Beq
-  \hat{\BN}:\dot{\Bsig}^\Trial = \hat{\BN} : \SfC^e : \dot{\BVeps}^\alpha = 
+  \hat{\BN}:\dot{\Bsig}^\Trial = \hat{\BN} : \SfC^e : \dot{\BVeps} = 
     \dot{\lambda} (\hat{\BN}:\BP - \hat{H})  \,.
 \Eeq
 Therefore, 
 \Beq \label{eq:dot_lambda}
   \dot{\lambda} = \frac{\hat{\BN}:\dot{\Bsig}^\Trial}{\hat{\BN}:\BP - \hat{H}} 
-                = \frac{\hat{\BN} : \SfC^e : \dot{\BVeps}^\alpha}{\hat{\BN}:\BP - \hat{H}} 
+                = \frac{\hat{\BN} : \SfC^e : \dot{\BVeps}}{\hat{\BN}:\BP - \hat{H}} 
 \Eeq
 Substituting this expression to \eqref{eq:sig_trial}, we have
 \Beq 
@@ -216,23 +222,23 @@ Substituting this expression to \eqref{eq:sig_trial}, we have
 \Eeq
 or,
 \Beq
-  \dot{\Bsig} = \SfC^e : \dot{\BVeps}^\alpha  
-      - \frac{(\BP\otimes\hat{\BN}):\SfC^e}{\hat{\BN}:\BP - \hat{H}} : \dot{\BVeps}^\alpha  
-     = \SfC^{ep} : \dot{\BVeps}^\alpha \,.
+  \dot{\Bsig} = \SfC^e : \dot{\BVeps}  
+      - \frac{(\BP\otimes\hat{\BN}):\SfC^e}{\hat{\BN}:\BP - \hat{H}} : \dot{\BVeps}  
+     = \SfC^{ep} : \dot{\BVeps} \,.
 \Eeq
 The quantity $\SfC^{ep}$ is the continuum elastic-plastic tangent modulus. 
 
 \section{Stress update}
 The first step in the stress update procedure is to compute a trial stress state from
 \Beq 
-  \dot{\Bsig}^\Trial = \SfC^e : \dot{\BVeps}^\alpha \,.
+  \dot{\Bsig}^\Trial = \SfC^e : \dot{\BVeps} \,.
 \Eeq
 We assume that
 \Beq
-  \Bsig^\Trial = \Bsig_n + \Delta t (\SfC^e_n : \dot{\BVeps}^\alpha_{n+1}) 
+  \Bsig^\Trial = \Bsig_n + \Delta t (\SfC^e_n : \dot{\BVeps}_{n+1}) 
 \Eeq
 where $\Bsig_n$ is the stress at the end of time $t_n$, $\SfC^e_n$ is the elastic modulus
-at that time, $\dot{\BVeps}^\alpha_{n+1}$ is the strain rate computed from the symmetric
+at that time, $\dot{\BVeps}_{n+1}$ is the strain rate computed from the symmetric
 part of the unrotated veocity gradient, and $\Delta t = t_{n+1} - t_n$ is the timestep size.
 
 The trial state contains the vector
