@@ -50,7 +50,7 @@ The Cauchy stress ($\Bsig$) is decomposed into volumetric and deviatoric parts:
 In the above $p = \sigma_m$ is the mean stress and $\BsT$ is the deviatoric stress.
 An alternative decomposition that can be used for the isotropic metal plasticity models
 implemenetd in \Vaango is
-\Beq
+\Beq \label{eq:stress_decomp_iso}
   \Bsig = \sigma_p \hat{\BI} + \sigma_s \hat{\BsT}~,~~\hat{\BI} = \frac{1}{\sqrt{3}}\BI ~,~~
   \hat{\BsT} = \frac{\BsT}{\Norm{\BsT}{}}~,~~\sigma_p = \sqrt{3} p ~,~~\sigma_s = \Norm{\BsT}{} \,.
 \Eeq
@@ -65,39 +65,86 @@ equation of state if desired. The deviatoric stress is computed using a rate-for
 stress-strain relation.  For convenience, we assume that rate-form relations are used for
 both the mean stress and the deviatoric stress.  
 
-\subsection{Elastic relation}
+\subsection{Purely elastic loading/unloading}
 The elastic constitutive relation is assumed to be of the form
 \Beq \label{eq:sig_dot_e}
   \dot{\Bsig}^e = \Partial{\Bsig}{\BVeps^e} : \dot{\BVeps}^e
-                = \SfC^e : \dot{\BVeps}^e
-\Eeq
-where
-\Beq
+                = \SfC^e : \dot{\BVeps}^e ~,~~
   \SfC^e =  \left(\kappa - \tfrac{2}{3}\mu\right) \BI\otimes\BI + 2\mu\, \Tsym(\SfI)
 \Eeq
-where $\mu(p, T, \phi, D)$ is the shear modulus, $\kappa(p,T, \phi, D)$ is the tangent 
+In the above, $\mu(\rho, p, T, \phi, D)$ is the shear modulus, $\kappa(\rho, p,T, \phi, D)$ is the tangent 
 bulk modulus, $\BI$ is the second-order identity tensor and $\SfI$ is the fourth-order
-identity tensor.  $T$ is the current temperature, $\phi$ is the current porosity and
-$D$ is a scalar damage parameter.  
+identity tensor.  Also, $\rho$ is the mass density, $p$ is the pressure, $T$ is the current 
+temperature, $\phi$ is the current porosity and $D$ is a scalar damage parameter.  
+
+The inverse relationship is
+\Beq
+  \dot{\BVeps}^e = \SfS^e : \dot{\Bsig}^e ~,~~
+  \SfS^e = \frac{1}{3}\left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right)\BI\otimes\BI + \frac{1}{2\mu} \Tsym(\SfI)
+\Eeq
+Using the decomposition~\eqref{eq:stress_decomp_iso}, we can write
+\Beq \label{eq:elastic_strain_rate}
+  \dot{\BVeps}^e = \SfS^e : \left(\dot{\sigma}_p^e~\hat{\BI} + \dot{\sigma}_s^e~\hat{\BsT}^e \right)
+    = \dot{\sigma}_p^e \left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right)\hat{\BI} + 
+      \frac{\dot{\sigma}_s^e}{2\mu} \hat{\BsT}^e \,.
+\Eeq
 
 \subsection{Yield condition}
-The yield condition is of the form
+The isotropic metal plasticity yield conditions implemented in \Vaango have the form
 \Beq
-  f(\Bsig, \Bbeta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \Edot{\Teq}, \dots) =
-  f(\Bxi, p_\beta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \Edot{\Teq}, \dots) = 0
+  f(\Bsig_\beta, \Veps^\Teq_p, \dot{\Veps}^\Teq_p, \phi, D, T, \Edot{\Teq}, \dots) = 0 ~,~~
+  \Bsig_\beta := \Bsig-\Bbeta \,.
 \Eeq
-where $\Bxi = \Dev(\Bsig - \Bbeta)$ and $p_\beta = \Tr(\Bsig - \Bbeta)/3$. 
-
+The quantity $\Bsig_\beta$ is further decomposed into isotropic and deviatoric parts:
+\Beq
+  \Bsig_\beta = p_\beta \BI + \Bxi
+\Eeq
+where $\Bxi = \Dev(\Bsig_\beta)$ and $p_\beta = \Tr(\Bsig_\beta)/3$.  Most of the metal yield
+conditions in \Vaango use this notation.
+Derivatives of $f$ with respect to the stress ($\Bsig$) can therefore be expressed as
+\Beq
+  \Partial{f}{\Bsig} = \Partial{f}{\Bsig_\beta}:\Partial{\Bsig_\beta}{\Bsig} = \Partial{f}{\Bsig_\beta}
+    = \Partial{f}{p_\beta}\Partial{p_\beta}{\Bsig_\beta} + \Partial{f}{\Bxi}:\Partial{\Bxi}{\Bsig_\beta} 
+    = \tfrac{1}{3} \Partial{f}{p_\beta} \BI + \Partial{f}{\Bxi}\,.
+\Eeq
+The isotropic metal yield conditions in \Vaango are expressed in terms of
+$\sigma_\Teff^\xi = \sqrt{3 J_2^\xi} = \sqrt{\tfrac{3}{2} \Bxi:\Bxi}$.
+Therefore,
+\Beq
+  \Partial{f}{\Bsig} = 
+    \tfrac{1}{3} \Partial{f}{p_\beta} \BI + \Partial{f}{\sigma_\Teff^\xi} \Partial{\sigma_\Teff^\xi}{\Bxi}
+   = \tfrac{1}{3} \Partial{f}{p_\beta} \BI + 
+     \sqrt{\tfrac{3}{2}} \Partial{f}{\sigma_\Teff^\xi} \frac{\Bxi}{\Norm{\Bxi}{}}\,.
+\Eeq
+If we express both $\BI$ and $\Bxi$ in terms of the basis $\hat{\BI}$ and $\hat{\BsT}$, we have
+\Beq
+  \BI = \sqrt{3} \hat{\BI} ~,~~ \Bxi = \xi_s \hat{\BsT}~,~~\xi_s = \Bxi:\hat{\BsT}
+  \quad \Tand \quad \Norm{\Bxi}{} = \xi_s
+  \quad \implies \quad \frac{\Bxi}{\Norm{\Bxi}{}} = \hat{\BsT} \,.
+\Eeq
+Therefore,
+\Beq
+  \Partial{f}{\Bsig} = 
+    \sqrt{3} \Partial{f}{p_\beta} \hat{\BI} + 
+    \sqrt{\tfrac{3}{2}} \Partial{f}{\sigma_\Teff^\xi} \hat{\BsT}\,.
+\Eeq
 The Kuhn-Tucker loading-unloading conditions are
 \Beq
   \dot{\lambda} \ge 0 ~;~~  f \le 0 ~;~~ \dot{\lambda}~f = 0
 \Eeq
-and the consistency condition is $\dot{f} = 0$.
+and the consistency condition is $\dot{\lambda}\dot{f} = 0$.
 
 \subsection{Flow rule}
 We assume that the plastic rate of deformation is given by the flow rule
 \Beq
   \dot{\BVeps}^p = \dot{\lambda}~\BM \,.
+\Eeq
+For the isotropic metal plasticity models in \Vaango, we assume associate plasticity:
+\Beq
+  \dot{\BVeps}^p = \dot{\lambda}~\Partial{f}{\Bsig} 
+    = \dot{\lambda}\left[
+    \sqrt{3} \Partial{f}{p_\beta} \hat{\BI} + 
+    \sqrt{\tfrac{3}{2}} \Partial{f}{\sigma_\Teff^\xi} \hat{\BsT}\right]\,.
 \Eeq
 
 \subsection{Isotropic and kinematic hardening/softening rules}
@@ -122,13 +169,12 @@ The temperature ($T_p$) due to plastic dissipation evolves as
   \dot{T}_p = \dot{\lambda}~h^T \,.
 \Eeq
 
-\subsection{Elastic loading/unloading}
+\subsection{Elastic-plastic loading/unloading}
 During purely elastic loading and unloading
 \Beq
   \dot{\lambda} = 0 ~,~~ \dot{\BVeps}^p = \Bzero ~,~~ \dot{\BVeps} = \dot{\BVeps}^e \,.
 \Eeq
-In that situation, the stress is updated using \eqref{eq:sig_dot_e} with the no material
-disspiation contribution to $\dot{T}$.
+In that situation, the stress is updated using \eqref{eq:sig_dot_e}.
 
 However, during elastic-plastic deformation, $\dot{\lambda} > 0$, and we have
 \Beq
@@ -162,16 +208,65 @@ Define
          \Partial{\Bsig}{T_p} h^T \,.
 \Eeq
 Then, 
-\Beq \label{eq:sig_dot_elas}
-  \dot{\Bsig} = \SfC^e : \dot{\BVeps} - \dot{\lambda} \BP 
-\Eeq
-We define
-\Beq 
-  \dot{\Bsig}^\Trial := \SfC^e : \dot{\BVeps}
-\Eeq
-to get 
 \Beq \label{eq:sig_trial}
-  \dot{\Bsig} = \dot{\Bsig}^\Trial - \dot{\lambda} \BP \,.
+  \dot{\Bsig} = \SfC^e : \dot{\BVeps} - \dot{\lambda} \BP 
+              = \dot{\Bsig}^\Trial - \dot{\lambda} \BP 
+  \quad \text{where} \quad
+  \dot{\Bsig}^\Trial := \SfC^e : \dot{\BVeps} \,.
+\Eeq
+In \Vaango, we assume that the coupling terms $\partial\Bsig/\partial\Bbeta$ are zero
+and $T = T_p$ for elastic-plastic coupling.  From~\eqref{eq:sig_dot_e} we have
+\Beq
+  \dot{\Bsig}^e = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\dot{\BVeps}^e) \BI + 
+                  2\mu\, \dot{\BVeps}^e
+\Eeq
+We can use this relation to estimate the coupling terms 
+\Beq \label{eq:dsig_deta}
+  \dot{\lambda} \Partial{\Bsig}{\eta} h^{\eta} =          
+     \left(\Partial{\kappa}{\eta} - \tfrac{2}{3}\Partial{\mu}{\eta}\right) 
+     \Tr(\dot{\BVeps}^e) \BI + 2\Partial{\mu}{\eta}\, \dot{\BVeps}^e 
+\Eeq
+where $\eta \in \{\Veps^\Teq_p, \phi, D, T\}$. 
+From \eqref{eq:elastic_strain_rate}, choosing the basis to be $\hat{\BI}$ and 
+$\hat{\BsT}^\Trial = \Dev(\Bsig^\Trial)/\Norm{\Dev(\Bsig^\Trial)}{}$, 
+\Beq 
+  \dot{\BVeps}^e 
+    = \dot{\sigma}_p^e \left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right)\hat{\BI} + 
+      \frac{\dot{\sigma}_s^e \sigma_{ss}}{2\mu} \hat{\BsT}^\Trial \quad \Tand \quad
+  \Tr(\dot{\BVeps}^e) =  
+    \sqrt{3} \dot{\sigma}_p^e \left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right)
+\Eeq
+where $\sigma_{ss} = \hat{\BsT}^e:\hat{\BsT}^\Trial$.
+Substitution into \eqref{eq:dsig_deta} leads to
+\Beq
+  \dot{\lambda} \Partial{\Bsig}{\eta} h^{\eta} =          
+     3\left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right) \Partial{\kappa}{\eta} \dot{\sigma}_p^e \hat{\BI} + 
+     \frac{1}{\mu} \Partial{\mu}{\eta} \dot{\sigma}_s^e \sigma_{ss} \hat{\BsT}^\Trial \,.
+\Eeq
+Also,
+\Beq
+  \SfC^e : \BM = \sqrt{3}\kappa \Partial{f}{p_\beta}\hat{\BI} + 2\sqrt{\tfrac{3}{2}}\mu\Partial{f}{\sigma_\Teff^\xi}\hat{\BsT} = 
+  \sqrt{3}\kappa \Partial{f}{p_\beta}\hat{\BI} + 2\sqrt{\tfrac{3}{2}}\mu\Partial{f}{\sigma_\Teff^\xi}\sigma_{ss}\hat{\BsT}^\Trial
+\Eeq
+Therefore,
+\Beq
+  \BP = \left[
+          \sqrt{3}\kappa \Partial{f}{p_\beta} 
+          - \frac{3}{\dot{\lambda}}
+          \left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right) \sum_\eta \Partial{\kappa}{\eta} \dot{\sigma}_p 
+        \right] \hat{\BI} + 
+        \left[
+          2\sqrt{\tfrac{3}{2}}\mu\Partial{f}{\sigma_\Teff^\xi}
+          - \frac{1}{\dot{\lambda}\mu}
+          \sum_\eta \Partial{\mu}{\eta} \dot{\sigma}_s
+        \right] \sigma_{ss} \hat{\BsT}^\Trial
+\Eeq
+For an elastic-plastic load step, we can compute the plastic strain rate  
+using \eqref{eq:elastic_strain_rate}:
+\Beq
+  \dot{\BVeps}^p = \dot{\BVeps} - 
+    \dot{\sigma}_p \left(\frac{1}{3\kappa}-\frac{1}{2\mu}\right)\hat{\BI} - 
+    \frac{\dot{\sigma}_s}{2\mu} \hat{\BsT}^\Trial \,.
 \Eeq
 
 \subsection{Plastic loading}
@@ -298,7 +393,7 @@ or,
   \hat{\BN}_{n+1} : (\Bsig^\Trial - \Bsig_n) = \Delta \lambda_{n+1} (\hat{\BN}_{n+1}:\BP_{n+1} - \hat{H}_{n+1})\,.
 \Eeq
 
-\subsection{Newton solve}
+\subsection{Iterative solution}
 \Vaango assumes associated plasticity for isotropic metals, i.e., $\BM = \hat{\BN}$.  Therefore,
 the following coupled equations, not all of which are independent, have to be solved for 
 $\Gamma := \Delta\lambda_{n+1}$ and the updated state
@@ -314,7 +409,12 @@ $\left[\Bsig_{n+1}, \kappa_{n+1}, \mu_{n+1}, \BVeps^p_{n+1}, (\Veps^\Teq_p)_{n+1
   D_{n+1} & = D_n + \Gamma h^D_{n+1} \\
   (T_p)_{n+1} & = (T_p)_n + \Gamma h^T_{n+1} \\
   \hat{\BN}_{n+1} &: (\Bsig^\Trial - \Bsig_n) - \Gamma (\hat{\BN}_{n+1}:\BP_{n+1} - \hat{H}_{n+1})  = 0\\
-  f_{n+1} &= f(\Bsig^\Trial - \Gamma \BP_{n+1}) = 0 \\
+  f_{n+1} &= f(\Bsig^\Trial - \Gamma \BP_{n+1}) = 0 
+  \Eal
+\Eeq
+where
+\Beq 
+  \Bal
   \BP_{n+1}   & = \SfC^e_{n+1} : \hat{\BN}_{n+1} - 
                   \left.\Partial{\Bsig}{\Bbeta}\right|_{n+1} : \Bh^\beta_{n+1} -   
                   \left.\Partial{\Bsig}{\Veps^\Teq_p}\right|_{n+1}  h^{\Veps_p}_{n+1} -         
