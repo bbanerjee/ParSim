@@ -809,7 +809,27 @@ Reverting back to tensor notation,
 \Eeq
 Using \eqref{eq:N_iso_upd} and \eqref{eq:P_iso_upd}, we have
 \Beq
-  \BN
+  \Bal
+  \Norm{\BN_k}{}(\BN_{k}:\BP_{k}) &= 
+    \tfrac{1}{\sqrt{3}}\Partial{f_k}{p_\beta} 
+     \left[\sqrt{3}\kappa_k \Partial{f_k}{p_\beta} 
+          - \frac{\Norm{\BN_k}{}}{\kappa_k}
+            \sum_\eta \Partial{\kappa_k}{\eta} 
+            (\sigma_p)_k \right]  + \\
+    & \quad \sqrt{\tfrac{3}{2}}\Partial{f_k}{\sigma_\Teff^\xi}
+     \left[\sqrt{6}\mu_k\Partial{f_k}{\sigma_\Teff^\xi}
+          - \frac{\Norm{\BN_k}{}}{\mu_k}
+            \sum_\eta \Partial{\mu_k}{\eta} (\sigma_s)_k\right] 
+            (\sigma_{ss})_k
+  \Eal
+\Eeq
+Also,
+\Beq
+  \Norm{\BN_k}{} \hat{H}_k = \Partial{f_k}{\Bbeta}:(\Bh^\beta)_k + 
+        \Partial{f_k}{\Veps_p^\Teq} (h^{\Veps_p})_k + 
+        \Partial{f_k}{\phi} (h^{\phi})_k + 
+        \Partial{f_k}{D} (h^D)_k + 
+        \Partial{f_k}{T_p} (h^T)_k \,.
 \Eeq
 
 \subsection{Algorithm}
