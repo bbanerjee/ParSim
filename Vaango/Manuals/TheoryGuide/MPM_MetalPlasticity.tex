@@ -877,7 +877,7 @@ The following stress update algorithm is used for each (plastic) time step:
     (\Epdoteq)_k &= (\Epdoteq)_n,~~ \Edot{\Teq} = \Edot{\Teq}_{n+1}
     \Eal
   \Eeq
-  \item Compute shifted stress using backstress:
+  \item \label{step:start} Compute shifted stress using backstress:
   \Beq
     (\Bsig_\beta)_k = \Bsig_k - \Bbeta_k ~,~~ (p_\beta)_k = \tfrac{1}{3}\Tr(\Bsig_\beta)_k ~,~~
     \Bxi_k = (\Bsig_\beta)_k - (p_\beta)_k \BI ~,~~
@@ -970,14 +970,23 @@ The following stress update algorithm is used for each (plastic) time step:
     \phi_{k+1} &= \phi_k + h^{\phi} \Delta\Gamma ~,~~
     D_{k+1} = D_k + h^{D} \Delta\Gamma ~,~~
     (T_p)_{k+1} = (T_p)_k + h^{T} \Delta\Gamma \\
-    \BVeps^p_{k+1} &= \BVeps^p_k + \hat{\BN}_k \Delta\Gamma ~,~~
-    (\dot{\Veps}^\Teq_p)_{k+1} = \Norm{\BVeps^p_{k+1}}{}
     \Eal
+  \Eeq
+  \item Compute updated elastic strain:
+  \Beq
+    \BVeps^e_{k+1} = \BVeps^e_{n} + 
+    \left(\frac{(\sigma_p)_{k+1}-(\sigma_p)_n}{3\kappa_{k}}\right)\hat{\BI} - 
+    \left(\frac{(\sigma_s)_{k+1}-(\sigma_s)_n}{2\mu_{k}}\right) \hat{\BsT}^\Trial \,.
+  \Eeq
+  \item Compute the updated plastic strain:
+  \Beq
+    \BVeps^p_{k+1} = \BVeps^e_{n} + \BVeps^p_n + \Delta t \dot{\BVeps}_{n+1} - \BVeps^e_{k+1} ~,~~
+    (\dot{\Veps}^\Teq_p)_{k+1} = \Norm{\BVeps^p_{k+1}}{}
   \Eeq
   \item Compute updated elastic moduli
   \Beq 
-    \kappa_{k+1} = \kappa\left((\sigma_p)_{k+1}, (T_p)_{k+1}\right) ~,~~
-    \mu_{k+1} = \mu\left((\sigma_p)_{k+1}, (T_p)_{k+1}\right) 
+    \kappa_{k+1} = \kappa\left((\sigma_p)_{k+1}, \BVeps^e_{k+1}, (T_p)_{k+1}\right) ~,~~
+    \mu_{k+1} = \mu\left((\sigma_p)_{k+1}, \BVeps^e_{k+1}, (T_p)_{k+1}\right) 
   \Eeq
   \item Compute $f_{k+1}$
   \Beq
@@ -986,9 +995,9 @@ The following stress update algorithm is used for each (plastic) time step:
                      \dot{\Veps}^\Teq_{n+1}, \dots\right) 
   \Eeq
   \item If $|f_{k+1}| < f_\text{tolerance}$ and $|\Gamma_{k+1}-\Gamma_k| < \Gamma_\text{tolerance}$
-        go to step 21.
-  \item Set $k \leftarrow k+1$ and go to step 4.
-  \item Update the state:
+        go to step \ref{step:final}.
+  \item Set $k \leftarrow k+1$ and go to step \ref{step:start}.
+  \item \label{step:final}Update the state:
   \Beq
     \Bal
     \Bsig_{n+1} &= (\sigma_p)_{k+1} \hat{\BI} + (\sigma_s)_{k+1} \hat{\BsT}^\Trial ~,~~
@@ -999,9 +1008,10 @@ The following stress update algorithm is used for each (plastic) time step:
     (T_p)_{n+1} = (T_p)_{k+1} ~,~~
     (\dot{\Veps}^\Teq_p)_{n+1} = (\dot{\Veps}^\Teq_p)_{k+1} \\
     \kappa_{n+1} &= \kappa_k ~,~~ \mu_{n+1} = \mu_k \\
-    \BVeps^p_{n+1} &= \BVeps^p_{n} + \Delta t \dot{\BVeps}_{n+1} - 
-    \left(\frac{(\sigma_p)_{k+1}-(\sigma_p)_n}{3\kappa_{n+1}}\right)\hat{\BI} - 
-    \left(\frac{(\sigma_s)_{k+1}-(\sigma_s)_n}{2\mu_{n+1}}\right) \hat{\BsT}^\Trial \,.
+    \BVeps^e_{n+1} &= \BVeps^p_{n} + 
+     \left(\frac{(\sigma_p)_{k+1}-(\sigma_p)_n}{3\kappa_{n+1}}\right)\hat{\BI} - 
+     \left(\frac{(\sigma_s)_{k+1}-(\sigma_s)_n}{2\mu_{n+1}}\right) \hat{\BsT}^\Trial \\
+    \BVeps^p_{n+1} &=  \BVeps^e_n + \BVeps^p_n + \Delta t \dot{\BVeps}_{n+1} - \BVeps^e_{n+1}
     \Eal
   \Eeq
 \end{enumerate}
@@ -1056,118 +1066,143 @@ where $H'$ is a hardening modulus.  For the Armstrong-Frederick kinematic harden
 \Eeq
 
 \section{Example 2: Gurson-type model}
-Let us now consider a Gurson type yield condition with kinematic hardening.  In this
+Consider a Gurson-type yield condition with kinematic hardening.  In this
 case the yield condition can be written as
 \Beq
-  f := \cfrac{3~\Bxi:\Bxi}{2~\sigma_y^2} + 
-     2~q_1~\phi^{*}~\cosh\left(\cfrac{3q_2~p_\beta}{2~\sigma_y}\right)
+  f := \tfrac{3}{2} \frac{(\sigma_\Teff^\xi)^2}{\sigma_y^2} + 
+     2~q_1~\phi^{\star}~\cosh\left(\tfrac{3}{2} \frac{q_2~p_\beta}{\sigma_y}\right)
      - [1 + q_3~(\phi^*)^2]
 \Eeq
-where $\phi$ is the porosity and
+where $\sigma_y$ is the yield stress of the matrix material (zero-porosity), 
 \Beq
-  \phi^* = \begin{cases}
+ \Bal
+   \sigma_\Teff^\xi &= \Bxi:\Bxi ~,~~ 
+     \Bxi = \Dev(\Bsig-\Bbeta) ~,~~ p_\beta = \tfrac{1}{3} \Tr(\Bsig-\Bbeta) \\
+   \phi^\star & = \begin{cases}
              \phi & \text{for}~ \phi \le \phi_c \\
-             \phi_c - \cfrac{\phi_u^* - \phi_c}{\phi_f - \phi_c}~(\phi - \phi_c) & 
+             \phi_c - \frac{\phi_u^\star - \phi_c}{\phi_f - \phi_c}~(\phi - \phi_c) & 
               \text{for}~ \phi > \phi_c
            \end{cases}
+  \Eal
 \Eeq
-Final fracture occurs for $\phi = \phi_f$ or when $\phi_u^* = 1/q_1$.  
-
-Let us use an associated flow rule
+and $\phi$ is the porosity. 
+Final fracture occurs for $\phi = \phi_f$ or when $\phi_u^\star = 1/q_1$.  
+In this case, the derivatives of $f$ are
 \Beq
-  \Bd^p = \dot{\gamma}~\Br = \dot{\gamma}~\Partial{f}{\Bsig} ~.
+  \Partial{f}{\sigma_\Teff^\xi} = \frac{3\sigma_\Teff^\xi}{\sigma_y^2} ~,~~
+  \Partial{f}{p_\beta} = \frac{3 q_1 q_2 \phi^\star}{\sigma_y} \sinh\left(\tfrac{3}{2} \frac{q_2~p_\beta}{\sigma_y}\right) ~,~~
+  \Partial{f}{\sigma_y} = -\left[\frac{3(\sigma_\Teff^\xi)^2}{\sigma_y^3} +
+      \frac{3 q_1 q_2 p_\beta \phi^\star}{\sigma_y^2} \sinh\left(\tfrac{3}{2} \frac{q_2~p_\beta}{\sigma_y}\right)\right]
 \Eeq
-Then
+and
 \Beq
-  \Br = \Partial{f}{\Bsig} = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
-   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\BI ~.
+  \Partial{f}{\Bbeta} = -\left[2\Partial{f}{\sigma_\Teff^\xi} \Bxi + \Partial{f}{p_\beta} \BI\right]~,~~
+  \Partial{f}{\Veps^\Teq_p}  = \Partial{f}{\sigma_y}\Partial{\sigma_y}{\Veps^\Teq_p} ~,~~
+  \Partial{f}{D}  = \Partial{f}{\sigma_y} \Partial{\sigma_y}{D} ~,~~
+  \Partial{f}{T_p}  = \Partial{f}{\sigma_y} \Partial{\sigma_y}{T_p} 
 \Eeq
-In this case
+For the derivative with respect to $\phi$, 
 \Beq
-  \Tr(\Br) = \cfrac{3~q_1~q_2~\phi^{*}}{\sigma_y}~\sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)
-  \ne 0 
-\Eeq
-Therefore,
-\Beq
-  \Bd^p \ne \Beta^p ~.
-\Eeq
-
-For the evolution equation for the plastic strain we use
-\Beq
-  (\Bsig-\widehat{\Bbeta}):\Bd^p = (1 - \phi)~\sigma_y~\dot{\Ve}^p
-\Eeq
-where $\dot{\Ve}^p$ is the effective plastic strain rate in the matrix material.  Hence,
-\Beq
-  \dot{\Ve}^p = \dot{\gamma}~h^{\alpha}
-    = \dot{\gamma}~\cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y} ~.
-\Eeq
-
-The evolution equation for the porosity is given by
-\Beq
-  \dot{\phi} = (1 - \phi)~\Tr(\Bd^p) + A~\dot{\Ve^p}
+  \Partial{f}{\phi} = \Partial{f}{\phi^\star}\Partial{\phi^\star}{\phi} +
+                      \Partial{f}{\sigma_y}\Partial{\sigma_y}{\phi} 
+                    = \Partial{f}{\phi^\star}\Partial{\phi^\star}{\phi}
 \Eeq
 where
 \Beq
-A = \cfrac{f_n}{s_n \sqrt{2\pi}} \exp [-1/2 (\Ve^p - \Ve_n)^2/s_n^2]
+  \Partial{f}{\phi^\star} = 2q_1\cosh\left(\tfrac{3}{2} \frac{q_2~p_\beta}{\sigma_y}\right)
+                            -2q_3\phi^\star \quad \Tand \quad
+  \Partial{\phi^\star}{\phi}  = \begin{cases}
+             1 & \text{for}~ \phi \le \phi_c \\
+             - \frac{\phi_u^\star - \phi_c}{\phi_f - \phi_c} & 
+              \text{for}~ \phi > \phi_c
+           \end{cases}
+\Eeq
+Using an associated flow rule, we have
+\Beq
+  \BdT^p = \dot{\lambda}~\hat{\BN} = \dot{\lambda} \frac{\BN}{\Norm{\BN}{}} ~,~~
+  \BN = \Partial{f}{\Bsig} = 2 \Partial{f}{\sigma_\Teff^\xi}\Bxi + \Partial{f}{p_\beta} \BI ~,~~
+  \Norm{\BN}{} = \sqrt{4\left(\Partial{f}{\sigma_\Teff^\xi}\Norm{\Bxi}{}\right)^2 + 
+                       3\left(\Partial{f}{p_\beta}\right)^2}
+\Eeq
+For the evolution equation for the plastic strain we use
+\Beq
+  (\Bsig-\Bbeta):\BdT^p = (1 - \phi)\sigma_y\dot{\Veps}^\Teq_p
+\Eeq
+where $\dot{\Veps}^\Teq_p$ is the equivalent plastic strain rate in the matrix material.  Hence,
+\Beq
+  \dot{\Veps}^\Teq_p = \dot{\lambda}~h^{\Veps_p}
+    = \dot{\lambda}~\frac{(p_\beta\BI + \Bxi):\hat{\BN}}{(1 - \phi)~\sigma_y} 
+  \quad \implies \quad
+  h^{\Veps_p} = 
+      \frac{3p_\beta\Partial{f}{p_\beta} + 2\Partial{f}{\sigma_\Teff^\xi}\Bxi:\Bxi}{(1 - \phi)~\sigma_y\Norm{\BN}{}} 
+\Eeq
+The evolution equation for the porosity is assumed to be given by
+\Beq
+  \dot{\phi} = (1 - \phi)~\Tr(\BdT^p) + A~\dot{\Veps}^\Teq_p
+\Eeq
+where
+\Beq
+A = \cfrac{f_n}{\Veps_s \sqrt{2\pi}} \exp\left[-\tfrac{1}{2} \frac{(\Veps^\Teq_p - \Veps_m)^2}{\Veps_s^2}\right]
 \Eeq
 and $ f_n $ is the volume fraction of void nucleating particles, 
-$ \Ve_n $ is the mean of the normal distribution of nucleation strains, and 
-$ s_n $ is the standard deviation of the distribution.
-
+$ \Veps_m $ is the mean of the normal distribution of nucleation strains, and 
+$ \Veps_s $ is the standard deviation of the distribution.
 Therefore,
 \Beq
-  \dot{\phi} = \dot{\gamma}~h^{\phi} =
-    \dot{\gamma}~\left[(1 - \phi)~\Tr(\Br) + A~
-    \cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y}\right] ~.
+  \dot{\phi} = \dot{\lambda}~h^{\phi} =
+    \dot{\lambda}~\left[(1 - \phi)~\Tr(\hat{\BN}) + A~
+    \frac{(p_\beta\BI+\Bxi):\hat{\BN}}{(1 - \phi)~\sigma_y}\right] 
+  \implies 
+  h^\phi = \frac{1}{\Norm{\BN}{}}
+    \left[3(1-\phi)\Partial{f}{p_\beta} + A\frac{3p_\beta\Partial{f}{p_\beta} + 2\Partial{f}{\sigma_\Teff^\xi}\Bxi:\Bxi}{(1 - \phi)~\sigma_y}\right]
+\Eeq
+If the evolution of the backstress is given by the Prager kinematic hardening rule
+\Beq
+  \dot{\Bbeta} = \dot{\lambda}~\Bh^{\beta} = H'~\BdT^p 
+  \quad \implies \Bh^\beta = \frac{H'}{\Norm{\BN}{}} 
+    \left[2 \Partial{f}{\sigma_\Teff^\xi}\Bxi + \Partial{f}{p_\beta} \BI\right]
+\Eeq
+For the Armstrong-Frederick model, 
+\Beq
+  \dot{\Bbeta} = \dot{\lambda}~\Bh^{\beta} = H_1~\BdT^p - H_2~\Bbeta~\Norm{\BdT^p}{} 
+  \quad \implies \Bh^\beta = \frac{H_1}{\Norm{\BN}{}} 
+    \left(2 \Partial{f}{\sigma_\Teff^\xi}\Bxi + \Partial{f}{p_\beta} \BI\right) -
+    H_2\Bbeta \,.
 \Eeq
 
-If the evolution of the back stress is given by the Prager kinematic hardening rule
+\section{Example 3: Nonlinear elasticity and isotropic hardening}
+Let the flow stress be given by the Johnson-Cook model:
 \Beq
-  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta} = \frac{2}{3}~H'~\Bd^p 
+  \sigma_y(\Ep,\Edot{\Teq},T) = 
+  \left[A + B (\Ep)^n\right]\left[1 + C \ln(\Edot{\star})\right]
+  \left[1 - (T^\star)^m\right]
 \Eeq
-where $\widehat{\Bbeta}$ is the back stress, then
+The volumetric part of the stress in the intact metal is given by a Mie-Gr{\"u}neisen equation of state: 
 \Beq
-  \dot{\widehat{\Bbeta}} = \frac{2}{3}~H'~\dot{\gamma}~\Br ~.
+  p(J^e,T) = -\left[\frac{\rho_0~C_0^2~(1 - J^e)[1 - \Gamma_0 (1 - J^e)/2]}
+                     {[1 - S_{\alpha}(1 - J^e)]^2} + \Gamma_0~E\right] ~,~~
+  J^e = \det{\BF^e} ~,~~ E \approx \frac{\rho C_v (T-T_0)}{V}
 \Eeq
-Alternatively, if we use the Armstrong-Frederick model, then
+The tangent bulk modulus of the intact metal is defined as
 \Beq
-  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta} = 
-   \frac{2}{3}~H_1~\Bd^p - H_2~\widehat{\Bbeta}~\Norm{\Bd^p}{} ~.
+  \kappa_m(p,J^e,T) = V^e\Partial{p}{V^e} = V^e\Partial{p}{J^e}\Partial{J^e}{V^e} = \frac{V^e}{V_0}\Partial{p}{J^e}
+         = J^e\Partial{p}{J^e}
+         \approx \cfrac{\rho_0 J^e C_0^2~[1 + (S_{\alpha}-\Gamma_0)(1 - J^e)]}
+                 {[1 - S_{\alpha} (1-J^e)]^3}\,.
 \Eeq
-Plugging in the expression for $\Bd^p$, we have
+Since the rate of deformation is unrotated in the \Vaango metal plasticity implementation,
+we can identify $\Tr(\BVeps^e)$ with $\ln(J^e)$~\cite{Neff2016} and use that quantity in the 
+calculation.  
+The deviatoric part of the stress in the intact metal is given by the 
+Steinberg-Cochran-Guinan (SCG) shear modulus model:
 \Beq
-  \dot{\widehat{\Bbeta}} = \dot{\gamma}~
-  \left[\frac{2}{3}~H_1~\Br - H_2~\widehat{\Bbeta}~\Norm{\Br}{}\right] ~.
+  \mu_m(p,J^e,T) = \mu_0 + p \Partial{\mu_m}{p} (J^e)^{1/3} + \Partial{\mu_m}{T}(T - T_0)
 \Eeq
-Therefore, for this model,
+When we include porosity-dependence for the bulk and shear moduli, we have
 \Beq
-  \boxed{
   \Bal
-  \Br & = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
-   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\BI  \\
-  h^{\alpha} &  
-    = \cfrac{(\Bsig - \Bbeta):\Br}{(1 - \phi)~\sigma_y} \\
-  h^{\phi} & = 
-    (1 - \phi)~\Tr(\Br) + A~
-    \cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y}  \\
-  \Bh^{\beta} & = 
-   \frac{2}{3}~H_1~\Br - H_2~\widehat{\Bbeta}~\Norm{\Br}{}
-  \Eal
-  }
-\Eeq
-The other derivatives of the yield function that we need are
-\Beq
-  \Bal
-  \Partial{f}{\Bxi} & = \cfrac{3~\Bxi}{\sigma_y^2} \\
-  \Partial{f}{\Ve^p} & = \Partial{f}{\sigma_y}~\Partial{\sigma_y}{\Ve^p} 
-   = -\left[\cfrac{3~\Bxi:\Bxi}{\sigma_y^3} +
-     \cfrac{q_1~q_2~\phi^*~\Tr(\Bsig)}{\sigma_y^2}~
-     \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)\right]~
-     \Partial{\sigma_y}{\Ve^p}\\
-  \Partial{f}{\phi} & = 2~q_1~\Deriv{\phi^*}{\phi}~
-    \cosh\left(\cfrac{q_2~\Tr(\sigma)}{2~\sigma_y}\right) 
-    - 2~q_3~\phi^*~\Deriv{\phi^*}{\phi} ~.
+  \kappa(p, J^e, \phi, T) &= \frac{(1-\phi)\kappa_m }{1 - (1-K)\phi} ~,~~ K = \frac{3\kappa_m+4\mu_m}{4\mu_m} \\
+  \mu(p, J^e, \phi, T) &= \frac{(1-\phi)\mu_m }{1 - (1-G)\phi} ~,~~ G = \frac{5(3\kappa_m+4\mu_m)}{9\kappa_m+8\mu_m}
   \Eal
 \Eeq
-
-
+The derivatives of $\sigma_y$, $\kappa$, and $\mu$ required for the algorithm can be calculated from these expressions.

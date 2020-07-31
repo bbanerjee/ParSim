@@ -82,16 +82,16 @@ This model is invoked using
 The pressure ($p$) is calculated using a Mie-Gr{\"u}neisen equation of state 
 of the form (\cite{Wilkins1999,Zocher2000})
 \begin{equation} \label{eq:EOSMG_upd}
-  p_{n+1} =  - \frac{\rho_0~C_0^2~(1 - J^e_{n+1})
-           [1 - \Gamma_0 (1 - J^e_{n+1})/2]}
-           {[1 - S_{\alpha}(1 - J^e_{n+1})]^2} - \Gamma_0~e_{n+1} 
+  p =  - \frac{\rho_0~C_0^2~(1 - J^e)
+           [1 - \Gamma_0 (1 - J^e)/2]}
+           {[1 - S_{\alpha}(1 - J^e)]^2} - \Gamma_0~E 
   ~;~~~ J^e := \det{\BF^e} 
 \end{equation}
 where $C_0$ is the bulk speed of sound, $\rho_0$ is the initial mass density,
 $\Gamma_0$ is the Gr{\"u}neisen's gamma at the reference state,
 $S_{\alpha} = dU_s/dU_p$ is a linear Hugoniot slope coefficient,
 $U_s$ is the shock wave velocity, $U_p$ is the particle velocity, and
-$e$ is the internal energy density (per unit reference volume), $\BF^e$ is
+$E$ is the internal energy density (per unit reference volume), $\BF^e$ is
 the elastic part of the deformation gradient.  For isochoric plasticity,
 \begin{equation*}
   J^e = J = \det(\BF) = \cfrac{\rho_0}{\rho} ~.
@@ -108,10 +108,10 @@ Also,
   \boxed{
   \Partial{p}{J^e} = 
   \cfrac{\rho_0~C_0^2~[1 + (S_{\alpha}-\Gamma_0)~(1-J^e)]}
-        {[1-S_{\alpha}~(1-J^e)]^3} - \Gamma_0~\Partial{e}{J^e}.
+        {[1-S_{\alpha}~(1-J^e)]^3} - \Gamma_0~\Partial{E}{J^e}.
   }
 \Eeq
-We neglect the $\Partial{e}{J^e}$ term in our calculations.
+We neglect the $\Partial{E}{J^e}$ term in our calculations.
 
 This model is invoked in Vaango using
 \lstset{language=XML}
