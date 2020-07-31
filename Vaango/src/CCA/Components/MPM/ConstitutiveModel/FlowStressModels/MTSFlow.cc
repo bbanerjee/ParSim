@@ -284,7 +284,7 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
 {
   // Calculate strain rate and incremental strain
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
 
@@ -481,7 +481,7 @@ MTSFlow::computeEpdot(const ModelStateBase* state, const double& delT,
 
   // Calculate theta_0
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
   double theta_0 = a_0 + d_CM.a_1 * log(edot) + d_CM.a_2 * sqrt(edot) - a_3 * T;
@@ -593,7 +593,7 @@ MTSFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
   double mu = state->shearModulus;
@@ -684,7 +684,7 @@ MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
   double T = state->temperature;
@@ -811,7 +811,7 @@ MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
   double T = state->temperature;
@@ -915,7 +915,7 @@ MTSFlow::evalDerivativeWRTSigmaE(const ModelStateBase* state,
 {
   // Get the state data
   // double edot = state->eqPlasticStrainRate;
-  double edot = state->strainRate;
+  double edot = state->eqStrainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
   double T = state->temperature;

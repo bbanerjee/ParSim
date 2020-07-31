@@ -257,8 +257,8 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
   double denom = 1.0 + J_one * d_const.S_alpha;
   denom        = (denom == 0.0) ? 1.0e-3 : denom;
   double dp_dJ = numer / (denom * denom * denom);
-  // double bulk = J*dp_dJ;
-  double bulk = dp_dJ;
+  double bulk = J*dp_dJ;
+  //double bulk = dp_dJ;
 
   return bulk;
 }

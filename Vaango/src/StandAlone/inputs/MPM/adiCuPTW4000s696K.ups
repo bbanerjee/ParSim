@@ -36,7 +36,7 @@
     <save label="g.stressFS"/>
     <save label="p.eqPlasticStrain"/>
     <save label="p.eqPlasticStrainRate"/>
-    <save label="p.strainRate"/>
+    <save label="p.eqStrainRate"/>
     <save label="p.displacement"/>
     <save label="p.deformationGradient"/>
     <save label="p.damage"/>

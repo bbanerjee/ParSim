@@ -808,7 +808,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
       // Set up the PlasticityState
       auto state        = scinew ModelStateBase();
-      state->strainRate = pStrainRate_new[idx];
+      state->eqStrainRate = pStrainRate_new[idx];
       //       state->eqPlasticStrainRate = epdot;
       //       state->eqPlasticStrain = ep;
       state->pressure            = pressure;
@@ -1257,7 +1257,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
       //       Set up the PlasticityState
       auto state                 = scinew ModelStateBase();
-      state->strainRate          = pStrainRate_new[idx];
+      state->eqStrainRate        = pStrainRate_new[idx];
       state->eqPlasticStrainRate = 0.0;
       state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;
@@ -1640,7 +1640,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
       // Set up the PlasticityState
       auto state                 = scinew ModelStateBase();
-      state->strainRate          = pStrainRate_new;
+      state->eqStrainRate        = pStrainRate_new;
       state->eqPlasticStrainRate = 0.0;
       state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;

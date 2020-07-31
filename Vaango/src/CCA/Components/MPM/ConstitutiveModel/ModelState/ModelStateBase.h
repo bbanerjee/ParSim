@@ -42,7 +42,7 @@ namespace Vaango {
 class ModelStateBase
 {
 public:
-  double strainRate;
+  double eqStrainRate;
   double pressure;
   double temperature;
   double initialTemperature;
@@ -70,7 +70,7 @@ public:
 
   Uintah::Matrix3 devStress;
   Uintah::Matrix3 backStress;
-  Uintah::Matrix3 yieldSurfaceNormal;
+  Uintah::Matrix3 strainRate;
   Uintah::Matrix3 plasticFlowDirection;
 
 private:

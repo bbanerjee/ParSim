@@ -31,7 +31,7 @@ using namespace Vaango;
 
 ModelStateBase::ModelStateBase()
 {
-  strainRate = 0.0;
+  eqStrainRate = 0.0;
   pressure = 0.0;
   temperature = 0.0;
   initialTemperature = 0.0;
@@ -58,7 +58,7 @@ ModelStateBase::ModelStateBase()
   q = 0.0;
   devStress = Vaango::Util::Zero;
   backStress = Vaango::Util::Zero;
-  yieldSurfaceNormal = Vaango::Util::Zero;
+  strainRate = Vaango::Util::Zero;
   plasticFlowDirection = Vaango::Util::Zero;
   d_plasticStrain = Vaango::Util::Zero;
   d_stress = Vaango::Util::Zero;
@@ -92,7 +92,7 @@ ModelStateBase::operator=(const ModelStateBase* state)
 {
   if (this == state)
     return this;
-  strainRate = state->strainRate;
+  eqStrainRate = state->eqStrainRate;
   pressure = state->pressure;
   temperature = state->temperature;
   initialTemperature = state->initialTemperature;
@@ -119,7 +119,7 @@ ModelStateBase::operator=(const ModelStateBase* state)
   q = state->q;
   devStress = state->devStress;
   backStress = state->backStress;
-  yieldSurfaceNormal = state->yieldSurfaceNormal;
+  strainRate = state->strainRate;
   plasticFlowDirection = state->plasticFlowDirection;
   d_plasticStrain = state->d_plasticStrain;
   d_stress = state->d_stress;
@@ -146,7 +146,7 @@ void
 ModelStateBase::setPlasticStrain(const Uintah::Matrix3& ep) 
 {
   d_plasticStrain = ep;
-  //eqPlasticStrain = ep.Norm() * Vaango::Util::sqrt_two_third;
+  //eqPlasticStrain = ep.Norm();
 }
 
 /* Get the plastic strain */

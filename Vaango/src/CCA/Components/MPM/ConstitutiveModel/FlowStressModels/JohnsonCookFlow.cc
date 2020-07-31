@@ -149,8 +149,8 @@ JohnsonCookFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                    const double&, const MPMMaterial* matl,
                                    const particleIndex idx)
 {
-  double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
-  //double epdot = state->strainRate / d_CM.epdot_0;
+  //double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
+  double epdot = state->eqStrainRate / d_CM.epdot_0;
   double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tr = matl->getRoomTemperature();
@@ -236,8 +236,8 @@ JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                                 const particleIndex) const
 {
   // Get the state data
-  double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
-  //double epdot = state->strainRate / d_CM.epdot_0;
+  //double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
+  double epdot = state->eqStrainRate / d_CM.epdot_0;
   double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;
@@ -285,8 +285,8 @@ JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                               const particleIndex) const
 {
   // Get the state data
-  double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
-  //double epdot = state->strainRate / d_CM.epdot_0;
+  //double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
+  double epdot = state->eqStrainRate / d_CM.epdot_0;
   double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;
@@ -321,8 +321,8 @@ JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                              const particleIndex) const
 {
   // Get the state data
-  double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
-  //double epdot = state->strainRate / d_CM.epdot_0;
+  //double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
+  double epdot = state->eqStrainRate / d_CM.epdot_0;
   double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;

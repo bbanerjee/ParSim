@@ -121,7 +121,7 @@ public:
   };
 
   const VarLabel* pRotationLabel; // For Hypoelastic-plasticity
-  const VarLabel* pStrainRateLabel;
+  const VarLabel* pEqStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
   const VarLabel* pEqPlasticStrainLabel;
   const VarLabel* pEqPlasticStrainRateLabel;
@@ -132,7 +132,7 @@ public:
   const VarLabel* pIntVarLabel;
 
   const VarLabel* pRotationLabel_preReloc; // For Hypoelastic-plasticity
-  const VarLabel* pStrainRateLabel_preReloc;
+  const VarLabel* pEqStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
   const VarLabel* pEqPlasticStrainLabel_preReloc;
   const VarLabel* pEqPlasticStrainRateLabel_preReloc;
@@ -319,6 +319,7 @@ protected:
   double doApproxReturn(const double& delT,
                         const MPMMaterial* matl,
                         const particleIndex idx,
+                        const ModelStateBase* state_old,
                         const ModelStateBase* state_trial,
                         ModelStateBase* state_new) const;
 
@@ -331,6 +332,7 @@ protected:
   double computeDeltaGamma(const double& delT,
                            const MPMMaterial* matl,
                            const particleIndex idx,
+                           const ModelStateBase* state_old,
                            const ModelStateBase* state_trial,
                            ModelStateBase* state_new) const;
 

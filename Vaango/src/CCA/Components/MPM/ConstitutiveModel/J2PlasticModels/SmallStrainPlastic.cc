@@ -887,7 +887,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
       // Set up the ModelState (for t_n)
       Vaango::ModelStateBase state_old;
-      state_old.strainRate          = pStrainRate_old[idx];
+      state_old.eqStrainRate        = pStrainRate_old[idx];
       state_old.eqPlasticStrainRate = pPlasticStrainRate_old[idx];
       state_old.eqPlasticStrain     = pPlasticStrain_old[idx];
       state_old.pressure            = pressure_old;
@@ -908,7 +908,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       state_old.backStress          = backStress_old;
 
       Vaango::ModelStateBase state(state_old);
-      state.strainRate          = pStrainRate_old[idx];
+      state.eqStrainRate        = pStrainRate_old[idx];
       state.volume              = pVol_new[idx];
 
       // Set up the nonlinear elastic model
