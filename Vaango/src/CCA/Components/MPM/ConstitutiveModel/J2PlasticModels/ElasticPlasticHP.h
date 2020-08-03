@@ -329,12 +329,13 @@ protected:
              using Newton iterative root finder
       where \f$ d_p = \dot\gamma d(sigma_y)/d(sigma) \f$ */
   ////////////////////////////////////////////////////////////////////////
-  double computeDeltaGamma(const double& delT,
-                           const MPMMaterial* matl,
-                           const particleIndex idx,
-                           const ModelStateBase* state_old,
-                           const ModelStateBase* state_trial,
-                           ModelStateBase* state_new) const;
+  double approxHardeningReturn(double delT,
+                               double tolerance,
+                               const MPMMaterial* matl,
+                               const particleIndex idx,
+                               const ModelStateBase* state_old,
+                               const ModelStateBase* state_trial,
+                               ModelStateBase* state_new) const;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute the elastic tangent modulus tensor for isotropic
@@ -481,6 +482,12 @@ protected:
   void getInitialDamageData(ProblemSpecP& ps);
 
   void setErosionAlgorithm();
+
+  std::tuple<double, double, double, 
+             Vaango::Tensor::Vector6Mandel, Vaango::Tensor::Vector6Mandel,
+             Vaango::Tensor::Matrix6Mandel>
+  nonHardeningReturn(const ModelStateBase* state_trial,
+                     double tolerance) const;
 
   std::tuple<Vaango::Tensor::Matrix6Mandel,
              Vaango::Tensor::Vector6Mandel,

@@ -67,6 +67,7 @@
 
 //#define SUB_CYCLE_F
 #undef SUB_CYCLE_F
+//#define DEBUG_RETURN
 
 using namespace Uintah;
 using namespace Vaango;
@@ -1428,32 +1429,55 @@ ElasticPlasticHP::doApproxReturn(const double& delT,
                                  const ModelStateBase* state_trial,
                                  ModelStateBase* state_new) const
 {
-  int numSubstep = 10;
+  // Tolerance
+  double tolerance = std::min(delT, 1.0e-6);
+
+  int numSubstep = ((int) (state_trial->q / state_trial->yieldStress) + 1) * 5;
   double substep_delT = delT / (double)numSubstep;
-  double deltaGamma = 0.0;
-  ModelStateBase state_old_substep(state_old);
+
   ModelStateBase state_trial_substep(state_trial);
+  ModelStateBase state_old_substep(state_old);
+
+  auto strain_inc = state_old->strainRate * substep_delT;
+  auto strain_inc_tr = strain_inc.Trace();
+  auto strain_inc_dev = strain_inc.Deviator();
+
+  double deltaGamma = 0.0;
   for (int ii = 0; ii < numSubstep; ++ii) {
-   
-    double deltaGammaInc = computeDeltaGamma(substep_delT, matl, idx, 
-                                             &state_old_substep, &state_trial_substep, state_new);
-    
-    state_trial_substep = state_new;
-    double kappa = d_eos->computeBulkModulus(state_new);
-    double mu = d_shear->computeShearModulus(state_new);
+ 
+    double kappa = d_eos->computeBulkModulus(&state_old_substep);
+    double mu = d_shear->computeShearModulus(&state_old_substep);
     state_trial_substep.bulkModulus = kappa;
     state_trial_substep.shearModulus = mu;
 
-    auto strain_inc = state_old->strainRate * substep_delT;
-    auto p_trial_inc = strain_inc.Trace() * kappa * Vaango::Util::Identity;
-    auto s_trial_inc = strain_inc.Deviator() * (2.0 * mu);
-    Matrix3 stress_trial_substep = state_new->getStress() + p_trial_inc + s_trial_inc;
+    auto p_trial_inc = Vaango::Util::Identity * (strain_inc_tr * kappa);
+    auto s_trial_inc = strain_inc_dev * (2.0 * mu);
+    auto stress_trial_substep = state_old_substep.getStress() + p_trial_inc + s_trial_inc;
     state_trial_substep.setStress(stress_trial_substep);
 
+    #ifdef DEBUG_RETURN
+      std::cout << "\n\nSubstep = " << ii << "\n";
+    #endif
+
+    double deltaGammaInc = 
+     approxHardeningReturn(substep_delT, tolerance, matl, idx, 
+                           &state_old_substep, &state_trial_substep, state_new);
+    
+    state_trial_substep = state_new;
     state_old_substep = state_new;
 
     deltaGamma += deltaGammaInc;
   }
+
+  // Force the stress on to the yield surface
+  double g, deltaGammaTmp, M_mag;
+  Vaango::Tensor::Vector6Mandel M_vec, P_vec;
+  Vaango::Tensor::Matrix6Mandel C_e;
+  std::tie(g, deltaGammaTmp, M_mag, M_vec, P_vec, C_e) = 
+    nonHardeningReturn(state_new, tolerance);
+  auto stress_new = state_new->getStress() - 
+                    Vaango::Tensor::constructMatrix3(P_vec) * deltaGamma;
+  state_new->setStress(stress_new);
   
   return deltaGamma;
 }
@@ -1464,21 +1488,150 @@ ElasticPlasticHP::doApproxReturn(const double& delT,
 //             using Newton iterative root finder */
 ////////////////////////////////////////////////////////////////////////
 double
-ElasticPlasticHP::computeDeltaGamma(const double& delT,
-                                    const MPMMaterial* matl,
-                                    const particleIndex idx,
-                                    const ModelStateBase* state_old,
-                                    const ModelStateBase* state_trial,
-                                    ModelStateBase* state_new) const
+ElasticPlasticHP::approxHardeningReturn(double delT,
+                                        double tolerance,
+                                        const MPMMaterial* matl,
+                                        const particleIndex idx,
+                                        const ModelStateBase* state_old,
+                                        const ModelStateBase* state_trial,
+                                        ModelStateBase* state_new) const
 {
-  // Tolerance
-  double tolerance = std::min(delT, 1.0e-6);
+  // Compute the yield stress
+  ModelStateBase state_iter(state_trial);
+  state_iter.yieldStress = 
+    d_flow->computeFlowStress(state_trial, delT, tolerance, matl, idx);
 
-  // Initialize variables
-  double g             = 1.0;
-  double deltaGamma    = state_trial->eqPlasticStrainRate * delT;
-  double deltaGammaOld = deltaGamma;
+  // Compute the yield function to check if substep is elastic
+  double f = d_yield->evalYieldCondition(state_iter.getStress(), &state_iter);
 
+  if (f < 0.0) {
+
+    double deltaGamma = 0.0;
+
+    // Update stress
+    state_new->setStress(state_iter.getStress());
+
+    // Update plastic strain tensor
+    state_new->setPlasticStrain(state_iter.getPlasticStrain());
+
+    // Update plastic strain rate
+    state_new->eqPlasticStrainRate = 0.0;
+
+    // Update internal variables
+    state_new->lambdaIncPlastic = deltaGamma;
+    state_new->eqPlasticStrain  = state_iter.eqPlasticStrain;
+    state_new->porosity         = state_iter.porosity;
+
+    // Compute the yield stress
+    state_new->yieldStress = state_iter.yieldStress;
+
+    #ifdef DEBUG_RETURN
+      std::cout << "Approx return: Elastic: f = " << f 
+                << " q = " << state_iter.q << " sig_y = " << state_iter.yieldStress << "\n";
+    #endif
+
+    return deltaGamma;
+  }
+
+  // Do plastic non-hardening return
+  double g, deltaGamma, M_mag;
+  Vaango::Tensor::Vector6Mandel M_vec, P_vec;
+  Vaango::Tensor::Matrix6Mandel C_e;
+  std::tie(g, deltaGamma, M_mag, M_vec, P_vec, C_e) = 
+    nonHardeningReturn(state_trial, tolerance);
+
+  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
+  // to allow for evolving internal variables
+  // Calculate derivative wrt internal variables
+  MetalIntVar f_intvar;
+  d_yield->df_dintvar(state_trial, f_intvar);
+  double f_eta1 = f_intvar.plasticPorosity;
+  double f_eta2 = f_intvar.eqPlasticStrain;
+
+  // Compute isotropic hardening moduli
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(state_trial, h_eta);
+  double h_eta1 = h_eta.eqPlasticStrain;
+  double h_eta2 = h_eta.plasticPorosity;
+
+  // Calculate derivative wrt plastic strain rate
+  //double f_epdot = -d_flow->evalDerivativeWRTStrainRate(state_trial, idx);
+  //double h_epdot = 1.0;
+
+  // Compute H
+  //double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2 + f_epdot * h_epdot) / M_mag;
+  double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2) / M_mag;
+
+  // Compute P:N and P:N + H
+  double PN = P_vec.transpose() * M_vec;
+  double PN_H = PN + H;
+
+  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
+  deltaGamma *= (PN / PN_H);
+
+  // Update stress
+  auto stress_new = state_trial->getStress() - 
+                    Vaango::Tensor::constructMatrix3(P_vec) * deltaGamma;
+  state_new->setStress(stress_new);
+
+  // Elastic strain inc
+  auto kappa = state_trial->bulkModulus;
+  auto mu = state_trial->shearModulus;
+  auto strain_inc = state_old->strainRate * delT;
+  auto stress_inc = stress_new - state_old->getStress();
+  auto strain_inc_elastic = 
+    Vaango::Util::Identity * (1.0 / (9.0 * kappa) - 1.0 / (6.0 * mu)) * stress_inc.Trace() +
+    (1.0 / (2.0 * mu)) * stress_inc;
+  auto strain_inc_plastic = strain_inc - strain_inc_elastic;
+
+  // Update plastic strain tensor
+  state_new->setPlasticStrain(state_trial->getPlasticStrain() + strain_inc_plastic);
+
+  // Update plastic strain rate
+  deltaGamma                     = std::max(deltaGamma, 0.0);
+  state_new->eqPlasticStrainRate = (strain_inc_plastic / delT).Norm();
+
+  // Update internal variables
+  state_new->lambdaIncPlastic = deltaGamma;
+  state_new->eqPlasticStrain  = 
+    d_intvar->computeInternalVariable("eqPlasticStrain", state_trial, state_new);
+  state_new->porosity         = 
+    d_intvar->computeInternalVariable("porosity", state_trial, state_new);
+
+  // Compute the yield stress
+  state_new->yieldStress =
+    d_flow->computeFlowStress(state_new, delT, tolerance, matl, idx);
+
+  #ifdef DEBUG_RETURN
+    // Compute new g
+    double g_upd = d_yield->evalYieldCondition(stress_new, state_new);
+
+    // Compute N:delta_sigma - deltaGamma * H
+    Matrix3 M = d_yield->df_dsigma(state_new);
+    M /= M.Norm(); 
+    double consistency = M.Contract(stress_new - state_old->getStress()) - deltaGamma * H;
+
+    if (std::abs(g_upd) > tolerance) {
+      std::cout << "Approx return: Plastic: g_old = " << f
+                << " q = " << state_trial->q << " sig_y = " << state_trial->yieldStress
+                << " \ng_new = " << g_upd 
+                << " q = " << state_new->q << " sig_y = " << state_new->yieldStress << "\n";
+      std::cout << "g_nonhard = " << g << " consistency = " << consistency 
+                << " delGamma = " << deltaGamma << "\n";
+      std::cout << "ep_inc = " << strain_inc_plastic << "\n deltaGamma * M = " << deltaGamma * M << "\n";
+    }
+  #endif
+
+  return deltaGamma;
+}
+
+std::tuple<double, double, double, 
+           Vaango::Tensor::Vector6Mandel, 
+           Vaango::Tensor::Vector6Mandel, 
+           Vaango::Tensor::Matrix6Mandel>
+ElasticPlasticHP::nonHardeningReturn(const ModelStateBase* state_trial,
+                                     double tolerance) const
+{
   // Compute the projection tensor (P = C:M, C = elastic tangent, M = normal to yield surface)
   auto C_e = d_elastic->computeElasticTangentModulus(state_trial);
   auto M = d_yield->df_dsigma(state_trial);
@@ -1489,14 +1642,11 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   auto P_vec = C_e * M_vec;
   auto P = Vaango::Tensor::constructMatrix3(P_vec);
 
-  //__________________________________
-  // iterate (without change in internal variables)
+  // Initialize variables
   ModelStateBase state_iter(state_trial);
-
-  // Compute the yield stress
-  state_iter.yieldStress = 
-    d_flow->computeFlowStress(state_trial, delT, tolerance, matl, idx);
-
+  double g             = 1.0;
+  double deltaGamma    = 0.0;
+  double deltaGammaOld = deltaGamma;
   int count = 0;
   do {
 
@@ -1520,7 +1670,7 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     //          << "lambda_old = " << deltaGammaOld << " lambda = " << deltaGamma << "\n";
 
     if (std::isnan(g) || std::isnan(deltaGamma)) {
-      std::cout << "idx = " << idx << " iter = " << count << " g = " << g
+      std::cout << "iter = " << count << " g = " << g
                 << " Dg = " << Dg << " deltaGamma = " << deltaGamma
                 << " sigy = " << state_iter.yieldStress 
                 << " epdot = " << state_iter.eqPlasticStrainRate
@@ -1537,85 +1687,19 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
   } while (std::abs(g) > tolerance);
 
-  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
-  // to allow for evolving internal variables
-  // Calculate derivative wrt internal variables
-  MetalIntVar f_intvar;
-  d_yield->df_dintvar(state_trial, f_intvar);
-  double f_eta1 = f_intvar.plasticPorosity;
-  double f_eta2 = f_intvar.eqPlasticStrain;
-
-  // Compute isotropic hardening moduli
-  MetalIntVar h_eta;
-  d_intvar->computeHardeningModulus(state_trial, h_eta);
-  double h_eta1 = h_eta.eqPlasticStrain;
-  double h_eta2 = h_eta.plasticPorosity;
-
-  // Calculate derivative wrt plastic strain rate
-  double f_epdot = -d_flow->evalDerivativeWRTStrainRate(state_trial, idx);
-  double h_epdot = 1.0;
-
-  // Compute H
-  double H = - (f_eta1 * h_eta1 + f_eta2 * h_eta2 + f_epdot * h_epdot) / M_mag;
-
-  // Compute P:N and P:N + H
-  double PN = P_vec.transpose() * M_vec;
-  double PN_H = PN + H;
-
-  // Apply first order correction of deltaGamma (Brannon  + Leelavanichkul, 2010)
-  deltaGamma *= (PN / PN_H);
-
-  // Update stress
-  auto stress_new = state_trial->getStress() - P * deltaGamma;
-  state_new->setStress(stress_new);
-
-  // Update plastic strain tensor
-  M = d_yield->df_dsigma(state_new);
-  M /= M.Norm(); 
-  state_new->setPlasticStrain(state_trial->getPlasticStrain() + deltaGamma * M);
-
-  // Update plastic strain rate
-  deltaGamma                     = std::max(deltaGamma, 0.0);
-  state_new->eqPlasticStrainRate = deltaGamma / delT;
-
-  // Update internal variables
-  state_new->lambdaIncPlastic = deltaGamma;
-  state_new->eqPlasticStrain  = 
-    d_intvar->computeInternalVariable("eqPlasticStrain", state_trial, state_new);
-  state_new->porosity         = 
-    d_intvar->computeInternalVariable("porosity", state_trial, state_new);
-
-  // Compute the yield stress
-  state_new->yieldStress =
-    d_flow->computeFlowStress(state_new, delT, tolerance, matl, idx);
-
-  if (std::isnan(state_new->yieldStress) || deltaGamma < 0) {
-    std::cout << "idx = " << idx << " iter = " << count
-              << " sig_y = " << state_new->yieldStress
-              << " epdot = " << state_new->eqPlasticStrainRate
-              << " ep = " << state_new->eqPlasticStrain
-              << " T = " << state_new->temperature 
-              << " Tm = " << state_new->meltingTemp
+  #ifdef DEBUG_RETURN
+  if (deltaGamma < 0) {
+    std::cout << "deltaGamma = " << deltaGamma << " iter = " << count
+              << " sig_y = " << state_iter.yieldStress
+              << " epdot = " << state_iter.eqPlasticStrainRate
+              << " ep = " << state_iter.eqPlasticStrain
+              << " T = " << state_iter.temperature 
+              << " Tm = " << state_iter.meltingTemp
               << "\n";
   }
+  #endif
 
-  if (cout_EP_return.active()) {
-    // Compute new g
-    double g_upd = d_yield->evalYieldCondition(stress_new, state_new);
-
-    // Compute N:delta_sigma - deltaGamma * H
-    double consistency = M.Contract(stress_new - state_old->getStress()) - deltaGamma * H;
-
-    if (std::abs(g_upd) > tolerance) {
-      std::cout << "Non-hardening return g = " << g << " g_new = " << g_upd 
-                << " consistency = " << consistency 
-                << "\n tol = " << tolerance << " iters = " << count 
-                << " G_old = " << deltaGammaOld << " G = " << deltaGamma << "\n";
-    }
-
-  }
-
-  return deltaGamma;
+  return std::make_tuple(g, deltaGamma, M_mag, M_vec, P_vec, C_e);
 }
 
 std::tuple<Vaango::Tensor::Matrix6Mandel,

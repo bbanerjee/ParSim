@@ -243,7 +243,7 @@ IntVar_Metal::computeHardeningModulus(const ModelStateBase* state,
 double
 IntVar_Metal::eqPlasticStrainHardeningModulus(const ModelStateBase* state) const
 {
-  return Vaango::Util::sqrt_two_third;
+  return 1.0;
 }
 
 double
