@@ -812,7 +812,7 @@ Reverting back to tensor notation,
 Using \eqref{eq:N_iso_upd} and \eqref{eq:P_iso_upd}, we have
 \Beq
   \Bal
-  \Norm{\BN_k}{}(\BN_{k}:\BP_{k}) &= 
+  \Norm{\BN_k}{}(\hat{\BN}_{k}:\BP_{k}) &= 
     \tfrac{1}{\sqrt{3}}\Partial{f_k}{p_\beta} 
      \left[\sqrt{3}\kappa_k \Partial{f_k}{p_\beta} 
           - \frac{\Norm{\BN_k}{}}{\kappa_k}
@@ -837,8 +837,164 @@ At the end of the iterative process, the plastic strain tensor may also be updat
 using \eqref{eq:plastic_strain_update} and a non-hardening return used to force
 the computed stress state on the final yield surface.
 
-\subsection{Algorithm}
-The following stress update algorithm is used for each (plastic) time step:
+\subsection{Algorithm 1}
+Two implementations of the model described in this chapter have been implemented in
+\Vaango.  The algorithm described in this section is used when the \Textbfc{elastic\_plastic\_hp}
+algorithm is invoked in an input file.  This plastic return algorithm is more robust but does not
+include kinematic hardening or softening due to damage and temperature changes.  Softening and
+damage are treated in an uncoupled manner after the stress has been updated. Also,
+elastic-plastic coupling is ignored.  For this algorithm, the timestep is divided into substeps and
+the following algorithm is applied at each substep.  At the end of the last substep, the stress
+state is projected back to the updated yield surface without any changes to the internal variables.
+\begin{enumerate}
+  \item Inputs:
+  \Beq
+    \Bal
+    \text{Timestep size:} &\quad \Delta t \\
+    \text{New strain rate:}   &\quad \dot{\BVeps}_{n+1}, \dot{\Veps}^\Teq_{n+1} \\
+    \text{Old stress:}    &\quad \Bsig_n \\
+    \text{Old moduli:}    &\quad \kappa_n, \mu_n \\
+    \text{Old plastic strain:} & \quad \BVeps^p_n \\
+    \text{Old equivalent plastic rate:} & \quad (\dot{\Veps}^\Teq_p)_n \\
+    \text{Old internal variables:} & \quad (\Veps^\Teq_p)_n, \phi_n, T_n \\
+    \text{Trial stress:}  &\quad  
+      \Bsig^\Trial = \Bsig_n + 
+           \Delta t \left[\left(\kappa_n - \tfrac{2}{3}\mu_n\right) \Tr(\dot{\BVeps}_{n+1})\BI +
+           2\mu_n\dot{\BVeps}_{n+1}\right] 
+    \Eal
+  \Eeq
+  \item Decompose trial stress
+  \Beq
+    \Bal
+      p^\Trial & = \tfrac{1}{3} \Tr(\Bsig^\Trial) ~,~~
+      \BsT^\Trial = \Bsig^\Trial - \tfrac{1}{3} \Tr(\Bsig^\Trial) \BI~,~~
+      \hat{\BsT}^\Trial = \frac{\BsT^\Trial}{\Norm{\BsT^\Trial}{}}\\
+      \Bsig^\Trial & = \sigma_p^\Trial \hat{\BI} + \sigma_s^\Trial \hat{\BsT}^\Trial ~,~~
+      \sigma_p^\Trial = \sqrt{3} p^\Trial ~,~~
+      \sigma_s^\Trial = \Norm{\BsT^\Trial}{} 
+    \Eal
+  \Eeq
+  \item Decompose start-of-timestep stress
+  \Beq
+    \Bal
+    \Bsig_n &= p_n\BI + \BsT_n = (\sigma_p)_n \hat{\BI} + (\sigma_s)_n \hat{\BsT}^\Trial ~,~~
+    (\sigma_\Teff)_n = \sqrt{\tfrac{3}{2} \BsT_n:\BsT_n} \\
+    (\sigma_p)_n &= \Bsig_n : \hat{\BI} ~,~~
+    (\sigma_s)_n = \Bsig_n : \hat{\BsT}^\Trial = \BsT_n : \hat{\BsT}^\Trial
+    \Eal
+  \Eeq
+  \item Compute $f_n$ and derivatives
+  \Beq
+    f_n = f\left(\BsT_n, p_n, (\Veps^\Teq_p)_n, (\dot{\Veps}^\Teq_p)_n, \phi_n, T_n, 
+            \kappa_n, \mu_n, \dot{\Veps}^\Teq_{n+1}, \dots\right) ~,~~
+    \Partial{f_n}{p}~,~~\Partial{f_n}{\sigma_\Teff}
+  \Eeq
+  \item Compute components of $\BN_n$ and $\Norm{\BN_n}{}$
+  \Beq
+    \Bal
+    \BN_n &= (N_p)_n \hat{\BI} + (N_s)_n \hat{\BsT}^\Trial ~,~~
+    \Norm{\BN_n}{} = \sqrt{(N_p)_n^2 + (N_s)_n^2} \\
+    (N_p)_n &= \tfrac{1}{\sqrt{3}} \Partial{f_n}{p} ~,~~
+    (N_s)_n = \sqrt{\tfrac{3}{2}} \Partial{f_n}{\sigma_\Teff}
+    \Eal
+  \Eeq
+  \item Compute components of $\BP_n$
+  \Beq
+    \Bal
+    \BP_n &= (P_p)_n \hat{\BI} + (P_s)_n \hat{\BsT}^\Trial \\
+    (P_p)_n &= \frac{\sqrt{3}\kappa_n}{\Norm{\BN_n}{}} \Partial{f_n}{p} ~,~~
+    (P_s)_n  = \frac{\sqrt{6}\mu_n}{\Norm{\BN_n}{}} \Partial{f_n}{\sigma_\Teff}
+    \Eal
+  \Eeq
+  \item Initialize:
+  \Beq
+    \Bal
+    k &= 0 ~,~~ \Gamma = 0\\
+    \Bsig_k &= \Bsig^\Trial
+    \Eal
+  \Eeq
+  \item \label{step:start_loop} Decompose current stress
+  \Beq
+    \Bal
+    \Bsig_k &= p_k\BI + \BsT_k = (\sigma_p)_k \hat{\BI} + (\sigma_s)_k \hat{\BsT}^\Trial ~,~~
+    (\sigma_\Teff)_k = \sqrt{\tfrac{3}{2} \BsT_k:\BsT_k} \\
+    (\sigma_p)_k &= \Bsig_k : \hat{\BI} ~,~~
+    (\sigma_s)_k = \Bsig_k : \hat{\BsT}^\Trial = \BsT_k : \hat{\BsT}^\Trial ~,~~ 
+    (\sigma_{ss})_k = \frac{\BsT_k}{\Norm{\BsT_k}{}} : \hat{\BsT}^\Trial = 1
+    \Eal
+  \Eeq
+  \item Compute $f_k$ and derivatives
+  \Beq
+    f_k = f\left(\BsT_k, p_k, (\Veps^\Teq_p)_k, (\dot{\Veps}^\Teq_p)_k, \phi_k, T_n, 
+            \kappa_n, \mu_n, \dot{\Veps}^\Teq_{n+1}, \dots\right) ~,~~
+    \Partial{f_k}{p}~,~~\Partial{f_k}{\sigma_\Teff}
+  \Eeq
+  \item Compute components of $\BN_k$ and $\Norm{\BN_k}{}$
+  \Beq
+    \Bal
+    \BN_k &= (N_p)_k \hat{\BI} + (N_s)_k \hat{\BsT}^\Trial ~,~~
+    \Norm{\BN_k}{} = \sqrt{(N_p)_k^2 + (N_s)_k^2} \\
+    (N_p)_k &= \tfrac{1}{\sqrt{3}} \Partial{f_k}{p} ~,~~
+    (N_s)_k = \sqrt{\tfrac{3}{2}} \Partial{f_k}{\sigma_\Teff} ~.~~
+    \Eal
+  \Eeq
+  \item Compute $\BN_{k}:\BP_{n}$
+  \Beq
+    \BN_{k}:\BP_{n} = (N_p)_k (P_p)_n + (N_s)_k (P_s)_n
+  \Eeq
+  \item Compute updated $\Delta\Gamma$
+  \Beq 
+    \Gamma_{k+1} = \Gamma_k + \frac{f_k}{\BN_k : \BP_n} ~,~~
+    \Delta\Gamma = \Gamma_{k+1} - \Gamma_k
+  \Eeq
+  \item Compute updated stress components:
+  \Beq
+    (\sigma_p)_{k+1} = (\sigma_p)_{k} - (P_p)_n \Delta\Gamma ~,~~
+    (\sigma_s)_{k+1} = (\sigma_s)_{k} - (P_s)_n \Delta\Gamma 
+  \Eeq
+  \item Compute $f_{k+1}$
+  \Beq
+    f_{k+1} = f\left(\BsT_{k+1}, p_{k+1}, (\Veps^\Teq_p)_{k}, (\dot{\Veps}^\Teq_p)_{k+1}, 
+                     \phi_{k+1}, D_{k+1}, T_{k+1}, \kappa_{k+1}, \mu_{k+1}, 
+                     \dot{\Veps}^\Teq_{n+1}, \dots\right) 
+  \Eeq
+  \item If $|f_{k+1}| < f_\text{tolerance}$ and $|\Gamma_{k+1}-\Gamma_k| < \Gamma_\text{tolerance}$
+        go to step \ref{step:update}.
+  \item Set $k \leftarrow k+1$ and go to step \ref{step:start_loop}.
+  \item Update the stress:
+  \Beq
+    \Bsig_{n+1} = (\sigma_p)_{k+1} \hat{\BI} + (\sigma_s)_{k+1} \hat{\BsT}^\Trial
+  \Eeq
+  \item \label{step:update} Compute internal variable hardening/softening moduli
+  \Beq
+    (h^{\Veps_p})_{k+1} ~,~~ (h^{\phi})_{k+1}
+  \Eeq
+  \item Compute updated internal variables
+  \Beq
+    (\Veps^\Teq_p)_{n+1} = (\Veps^\Teq_p)_n + (h^{\Veps_p})_{k+1} \Delta\Gamma ~,~~
+    \phi_{n+1} = \phi_n + (h^{\phi})_{k+1} \Delta\Gamma ~,~~
+  \Eeq
+  \item Compute updated elastic strain
+  \Beq
+    \BVeps^e_{n+1} = \BVeps^e_{n} + 
+    \left(\frac{(\sigma_p)_{k+1}-(\sigma_p)_n}{3\kappa_{n}}\right)\hat{\BI} - 
+    \left(\frac{(\sigma_s)_{k+1}-(\sigma_s)_n}{2\mu_{n}}\right) \hat{\BsT}^\Trial \,.
+  \Eeq
+  \item Compute the updated plastic strain
+  \Beq
+    \BVeps^p_{n+1} = \BVeps^e_{n} + \BVeps^p_n + \Delta t \dot{\BVeps}_{n+1} - \BVeps^e_{n+1} ~,~~
+    (\dot{\Veps}^\Teq_p)_{n+1} = \Norm{\BVeps^p_{n+1}}{}
+  \Eeq
+  \item Compute updated elastic moduli
+  \Beq 
+    \kappa_{n+1} = \kappa\left((\sigma_p)_{k+1}, \BVeps^e_{n+1}, (T_p)_{n}\right) ~,~~
+    \mu_{n+1} = \mu\left((\sigma_p)_{k+1}, \BVeps^e_{n+1}, (T_p)_{n}\right) 
+  \Eeq
+\end{enumerate}
+
+\subsection{Algorithm 2}
+The following stress update algorithm is used for each (plastic) time step for models
+that require kinematic hardening.
 \begin{enumerate}
   \item Inputs:
   \Beq
@@ -930,9 +1086,9 @@ The following stress update algorithm is used for each (plastic) time step:
               (\sigma_{ss})_k
     \Eal
   \Eeq
-  \item Compute $\Norm{\BN_k}{}(\BN_{k}:\BP_{k})$
+  \item Compute $\Norm{\BN_k}{}(\hat{\BN}_{k}:\BP_{k})$
   \Beq
-    \Norm{\BN_k}{}(\BN_{k}:\BP_{k}) = \Norm{\BN_k}{} \left((N_p)_k (P_p)_k + (N_s)_k (P_s)_k\right)
+    \Norm{\BN_k}{}(\hat{\BN}_{k}:\BP_{k}) = (N_p)_k (P_p)_k + (N_s)_k (P_s)_k
   \Eeq
   \item Compute derivatives of $f_k$ with respect to internal variables
   \Beq
