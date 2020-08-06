@@ -376,8 +376,8 @@
                need_applies_to="type zerilli_armstrong_polymer"/>
 
     </flow_model>
-    <visco_flow_model        spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'suvic_i'" >
+    <viscoplastic_flow_model spec="OPTIONAL NO_DATA"
+                             attribute1="type REQUIRED STRING 'suvic_i'" >
       <coeff_backstress_evol       spec="OPTIONAL DOUBLE" />
       <exponent_backstress_evol    spec="OPTIONAL DOUBLE" />
       <normalizing_backstress      spec="OPTIONAL DOUBLE" />
@@ -398,7 +398,7 @@
       <intial_drag                 spec="OPTIONAL DOUBLE" />
       <initial_yield               spec="OPTIONAL DOUBLE" />
       <integration_parameter_theta spec="OPTIONAL DOUBLE" />
-    </visco_flow_model>
+    </viscoplastic_flow_model>
     <pressure                      spec="OPTIONAL DOUBLE" />
     <PR                            spec="OPTIONAL DOUBLE" />
     <remove_particles              spec="OPTIONAL BOOLEAN" />

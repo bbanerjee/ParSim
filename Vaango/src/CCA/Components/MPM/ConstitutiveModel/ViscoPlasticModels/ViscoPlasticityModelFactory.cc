@@ -41,13 +41,13 @@ using namespace Uintah;
 ViscoPlasticityModel*
 ViscoPlasticityModelFactory::create(ProblemSpecP& ps)
 {
-  ProblemSpecP child = ps->findBlock("visco_plasticity_model");
+  ProblemSpecP child = ps->findBlock("viscoplastic_flow_model");
   if (!child)
-    throw ProblemSetupException("Cannot find visco plasticity_model tag",
+    throw ProblemSetupException("Cannot find viscoplastic_flow_model tag",
                                 __FILE__, __LINE__);
   string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for visco_plasticity_model", __FILE__,
+    throw ProblemSetupException("No type for viscoplastic_flow_model", __FILE__,
                                 __LINE__);
 
   if (mat_type == "suvic_i")
