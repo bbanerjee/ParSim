@@ -363,3 +363,116 @@ The inputs for this model are of the form
   </flow_model>
 \end{lstlisting}
 
+\section{SUVIC-I model}
+\Textmag{SUVIC-I} is a viscoplastic model for ice that has been used for modeling
+the interaction of tires with ice~\cite{Dasari2006,Lee2008}.  The model is an extension of 
+the SUVIC model (Strain-rate history dependent Unified Viscoplastic model with
+Internal Variables for Crystalline materials).  The model is applicable for strain
+rates in the range of $10^{-8}$ to $10^{-2}$ s$^{-1}$.  Further details on the range
+of applicability of the model can be found in~\cite{Dasari2006}.
+
+This model is driven by a specialized viscoplastic constitutive model for which
+the yield criterion is given by
+\Beq
+  \left<\frac{X_{ae}-R}{K}\right> ~,~~ \quad 
+  \left<x\right> = \begin{cases}
+                   x & \quad \text{for} \quad x > 0 \\
+                   0 & \quad \text{for} \quad x \le 0 
+                   \end{cases}
+\Eeq
+where the effective reduced stress is defined as
+\Beq
+  X_{ae} := \sqrt{ \tfrac{3}{2} (\BsT-\Bbeta):(\BsT-\Bbeta)} 
+\Eeq
+and $R$ is the yield stress, $K$ is the drag stress, $\BsT = \Dev(\Bsig)$ is the deviatoric
+stress, $\Bbeta$ is the deviatoric backstress.
+
+The inelastic strain rate is given by
+\Beq
+  \dot{\BVeps}^i = \left[A\left<\frac{X_{ae}-R}{K}\right>^N \exp\left(-\frac{Q}{RT}\right)\right] \BnT
+  ~,~~ \BnT = \tfrac{3}{2} \left(\frac{\BsT-\Bbeta}{X_{ae}}\right)
+\Eeq
+where $A$ is a kinetic-law material constants, 
+and $Q, R, T$ are the activation energy, Universal gas constant and the absolute
+temperature, respectively.
+
+The equivalent inelastic strain rate for the model is defined as
+\Beq
+  \dot{\Veps}^\Teq_i = \sqrt{\tfrac{2}{3} \dot{\BVeps}^i:\dot{\BVeps}^i}
+    = A\left<\frac{X_{ae}-R}{K}\right>^N \exp\left(-\frac{Q}{RT}\right) \,.
+\Eeq
+The evolution of the deviatoric backstress is given by
+\Beq
+  \dot{\Bbeta} = \tfrac{2}{3} A_1 \dot{\BVeps}^i - A_1 (\beta_\Tsat)^{-1} \dot{\Veps}^\Teq_i \Bbeta
+                 - A_2 (\beta^\Teff_\Tsat)^{q-1} C^{-q} \Bbeta
+\Eeq
+where $A_1$ is a constant that is fitted to the kinematic hardening and dynanamic recovery curves,
+$\beta_\Tsat$ is a saturation value of the backstress, and $A_2$, $q$, $C$ are constants fitted
+to static recovery curves.
+The isotropic hardening yield stress evolves as
+\Beq
+  \dot{R} = \frac{A_3}{d_g} \dot{\Veps}^\Teq_i \left(1 - \frac{R}{R_\Tsat}\right) - 
+            \frac{A_4}{d_g} \frac{(R - R_\Tsat)^p}{C}
+\Eeq
+where $A_3$ is a constant, $d_g$ is the grain size, $R_\Tsat$ is the saturation value
+of $R$, and $A_4$, $p$, $C$ are constants associated with static recovery.
+The drag stress evolves as
+\Beq
+  \dot{K} = \frac{A_5}{d_g} \dot{\Veps}^\Teq_i \left(1 - \frac{K}{K_\Tsat}\right) -
+            \frac{A_6}{d_g} \frac{(K - K_\Tsat)^q}{C}
+\Eeq
+and has the same form as the yield stress evolution rule.  The static recovery terms are
+ignored in the \Vaango implementation.
+The saturation value for the effective stress is given by
+\Beq
+  \sigma^\Teff_\Tsat = \sigma_0\left(\frac{\dot{\Veps}^\Teq_i}{\dot{\Veps}_0}\right)^{1/n}
+\Eeq
+where $\sigma_0$ and $\dot{\Veps}_0$ are reference values and $n$ is a constant.
+Similar relations are assumed for the reference values of the other quantities:
+\Beq
+  \beta^\Teff_\Tsat = \beta_0\left(\frac{\dot{\Veps}^\Teq_i}{\dot{\Veps}_0}\right)^{1/n} ~;~~
+  R_\Tsat = R_0\left(\frac{\dot{\Veps}^\Teq_i}{\dot{\Veps}_0}\right)^{1/n} 
+\Eeq
+The drag stress saturation value is given by
+\Beq
+  K_\Tsat = \left[\frac{\dot{\Veps}^\Teq_i}{A\exp\left(\frac{-Q}{RT}\right)}\right](X_\Tsat - R_\Tsat)
+\Eeq
+where $X_\Tsat$ is the saturation value of $X_{ae}$.
+
+A typical input deck for the \Textmag{SUVIC-I} model is shown below.
+\lstset{language=XML}
+\begin{lstlisting}
+  <constitutive_model type="visco_plastic">
+    <shear_modulus>3.52e9</shear_modulus>
+    <bulk_modulus>8.9e9</bulk_modulus>
+    <remove_particles> false </remove_particles>
+    <zero_stress_upon_failure> false </zero_stress_upon_failure>
+    <stability_check type="none">  </stability_check>
+    <equation_of_state type="default_hypo">
+      <bulk_modulus>8.9e9</bulk_modulus>
+    </equation_of_state>
+    <viscoplastic_flow_model type="suvic_i">
+      <coeff_backstress_evol>75e6</coeff_backstress_evol>
+      <exponent_backstress_evol> 1</exponent_backstress_evol>
+      <normalizing_backstress> 1e6</normalizing_backstress>
+      <coeff_saturation_backstress> 0.1e6</coeff_saturation_backstress>
+      <exponent_backstress> 4</exponent_backstress>
+      <ref_strainrate>7.794e-08</ref_strainrate>
+      <normalizing_inelastic_strainrate>5.0e9 </normalizing_inelastic_strainrate>
+      <activation_energy> 67500.0</activation_energy>
+      <universal_gas_constant>8.3144 </universal_gas_constant>
+      <temperature>269.15</temperature>
+      <exponent_inelastic_strainrate>4.0 </exponent_inelastic_strainrate>
+      <coeff_yieldstress_saturation>0.8e6 </coeff_yieldstress_saturation>
+      <exponent_yieldstress>4.0 </exponent_yieldstress>
+      <coeff_yieldstress_evol> 1600.0e6</coeff_yieldstress_evol>
+      <exponent_dragstress> 4.0</exponent_dragstress>
+      <coeff_dragstress_evol>95e6 </coeff_dragstress_evol>
+      <coeff_stress_saturation>1.0e6</coeff_stress_saturation>
+      <intial_drag>0.05e6</intial_drag>
+      <initial_yield> 0.0</initial_yield>
+      <integration_parameter_theta> 0.5</integration_parameter_theta>
+    </viscoplastic_flow_model>
+  </constitutive_model>
+\end{lstlisting}
+
