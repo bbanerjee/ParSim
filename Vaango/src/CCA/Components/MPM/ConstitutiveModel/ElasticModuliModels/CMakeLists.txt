@@ -35,6 +35,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_MetalIso.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_NeuralNet.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_SupportVector.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
   PARENT_SCOPE

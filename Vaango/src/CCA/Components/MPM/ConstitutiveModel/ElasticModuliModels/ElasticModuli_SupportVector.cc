@@ -28,6 +28,11 @@
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 #define DEBUG_SVR
 
 using namespace Vaango;
@@ -124,18 +129,19 @@ ElasticModuli_SupportVector::computeBulkModulus(const double& elasticVolStrain,
                                                 const double& plasticVolStrain) const
 {
   Eigen::Vector2d strain;
-  strain << elasticVolSrain+plasticVolStrain, plasticVolStrain;
-  strain *= d_bulk.strain_conversion_factor;
+  strain << elasticVolStrain + plasticVolStrain, plasticVolStrain;
+  strain = strain.array() * d_bulk.strain_conversion_factor.array();
 
-  auto strain_scaled = (strain - d_bulk.strain_min) * d_bulk.strain_scale_factor;
-  auto strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled;
-  auto strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-rbf_kernel_gamma);
-  auto svr_kernel = strain_svr_diff_normSq.array().exp();
-  auto strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * rbf_kernel_gamma);
-  auto svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
-  svr_kernel_deriv_totalstrain /= d_bulk.pressure_scale_factor;
+  auto num_support_vec = d_bulk.svr_support_vectors.rows();
+  Eigen::Vector2d strain_scaled = (strain - d_bulk.strain_min).array() * d_bulk.strain_scale_factor.array();
+  Eigen::Matrix<double, Eigen::Dynamic, 2> strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled.replicate(num_support_vec, 1);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel = strain_svr_diff_normSq.array().exp();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
-  double K = d_bulk.svr_dual_coeffs * svr_kernel_deriv_totalstrain.transpose();
+  double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
+  K /= d_bulk.pressure_scale_factor;
 
   #ifdef DEBUG_SVR
     if (K < 0 || !std::isfinite(K)) {
@@ -173,25 +179,34 @@ ElasticModuli_SupportVector::getElasticModuliAndDerivatives(const ModelStateBase
   //  throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   //}
 
+  // Make sure the quantities are positive in compression
+  double ev_e_bar = -(state->elasticStrainTensor).Trace();
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();
+  ev_p_bar = (ev_p_bar < 0) ? 0 : ev_p_bar;
+  ev_e_bar = (ev_p_bar < 0) ? ev_e_bar + ev_p_bar : ev_e_bar;
+
   Eigen::Vector2d strain;
-  strain << elasticVolSrain+plasticVolStrain, plasticVolStrain;
-  strain *= d_bulk.strain_conversion_factor;
+  strain << ev_e_bar+ev_p_bar, ev_p_bar;
+  strain = strain.array() * d_bulk.strain_conversion_factor.array();
 
-  auto strain_scaled = (strain - d_bulk.strain_min) * d_bulk.strain_scale_factor;
-  auto strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled;
-  auto strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
-  auto svr_kernel = strain_svr_diff_normSq.array().exp();
-  auto strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
-  auto svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
-  svr_kernel_deriv_totalstrain /= d_bulk.pressure_scale_factor;
+  auto num_support_vec = d_bulk.svr_support_vectors.rows();
+  Eigen::Vector2d strain_scaled = (strain - d_bulk.strain_min).array() * d_bulk.strain_scale_factor.array();
+  Eigen::Matrix<double, Eigen::Dynamic, 2> strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled.replicate(num_support_vec, 1);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel = strain_svr_diff_normSq.array().exp();
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
-  auto strain_svr_diffsq = strain_svr_diff.col(1).array() * strain_svr_diff.col(1).array();
-  auto strain_svr_diffsq_gamma = (strain_svr_diffsq * (2.0 * d_bulk.rbf_kernel_gamma) - 1) * (2.0 * d_bulk.rbf_kernel_gamma);
-  auto svr_kernel_dderiv_plasticstrain = svr_kernel.array() * strain_svr_diffsq_gamma.array();
-  svr_kernel_dderiv_plasticstrain /= d_bulk.pressure_scale_factor;
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diffsq = strain_svr_diff.col(1).array() * strain_svr_diff.col(1).array();
+  strain_svr_diffsq *= (2.0 * d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> One = Eigen::Matrix<double, Eigen::Dynamic, 1>::Ones(num_support_vec, 1);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diffsq_gamma = (strain_svr_diffsq - One) * (2.0 * d_bulk.rbf_kernel_gamma);
+  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_dderiv_plasticstrain = svr_kernel.array() * strain_svr_diffsq_gamma.array();
 
-  double K = d_bulk.svr_dual_coeffs * svr_kernel_deriv_totalstrain.transpose();
-  double dK_deps_p = d_bulk.svr_dual_coeffs * svr_kernel_deriv_plasticstrain.transpose();
+  double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
+  double dK_deps_p = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_dderiv_plasticstrain;
+  K /= d_bulk.pressure_scale_factor;
+  dK_deps_p /= d_bulk.pressure_scale_factor;
 
   double nu = d_shear.nu;
   double G = (nu > -1.0 && nu < 0.5) 
@@ -210,9 +225,7 @@ std::vector<ElasticModuli>
 ElasticModuli_SupportVector::computeDModuliDIntVar(const ModelStateBase* state) const
 {
   auto data = computeModuliAndDModuliDIntVar(state);
-  std::vector<ElasticModuli> derivs;
-  derivs.push_back(data.second);
-  return derivs;
+  return data.second;
 }
 
 /*! Compute moduli and derivatives of moduli with respect to internal variables */
@@ -220,7 +233,9 @@ std::pair<ElasticModuli, std::vector<ElasticModuli>>
 ElasticModuli_SupportVector::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
 {
   auto data = getElasticModuliAndDerivatives(state);
-  return data;
+  std::vector<ElasticModuli> derivs;
+  derivs.push_back(data.second);
+  return std::make_pair(data.first, derivs);
 }
 
 void
@@ -424,7 +439,8 @@ ElasticModuli_SupportVector::getMatrixN1dJSON(const nlohmann::json& object,
         << " Data expected to be of the form 'key : [x1, x2, ..., x_n]^T'.";
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
-  return Eigen::Matrix<double, Eigen::Dynamic, 1>(vec.data());
+  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 1>> mapped_vec(vec.data(), vec.size(), 1);
+  return mapped_vec;
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, 2>
@@ -463,5 +479,6 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
         << " Data expected to be of the form 'key : [[x1, x2], [x3, x4], ..., [x_p, x_q]]^T'.";
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
-  return Eigen::Matrix<double, Eigen::Dynamic, 2>(vec.data());
+  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 2>> mapped_vec(vec.data(), vec.size()/2, 2);
+  return mapped_vec;
 }
