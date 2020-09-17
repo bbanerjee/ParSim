@@ -35,6 +35,9 @@
 
 namespace Vaango {
 
+using MatrixN1d = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using MatrixN2d = Eigen::Matrix<double, Eigen::Dynamic, 2>;
+
 /** 
  * ElasticModuli from a model fitted using support vector regression
  */
@@ -103,8 +106,10 @@ private:
     double pressure_min;
     double pressure_max;
     double rbf_kernel_gamma;
-    Eigen::Matrix<double, Eigen::Dynamic, 2> svr_support_vectors;
-    Eigen::Matrix<double, Eigen::Dynamic, 1> svr_dual_coeffs;
+    MatrixN2d svr_support_vectors;
+    MatrixN1d svr_dual_coeffs;
+    //Eigen::Matrix<double, Eigen::Dynamic, 2> svr_support_vectors;
+    //Eigen::Matrix<double, Eigen::Dynamic, 1> svr_dual_coeffs;
     double svr_intercept;
   };
 
@@ -149,12 +154,14 @@ private:
                   const std::string key,
                   const std::string& filename) const;
 
-  Eigen::Matrix<double, Eigen::Dynamic, 1>
+  //Eigen::Matrix<double, Eigen::Dynamic, 1>
+  MatrixN1d
   getMatrixN1dJSON(const nlohmann::json& object,
                    const std::string key,
                    const std::string& filename) const;
 
-  Eigen::Matrix<double, Eigen::Dynamic, 2>
+  //Eigen::Matrix<double, Eigen::Dynamic, 2>
+  MatrixN2d
   getMatrixN2dJSON(const nlohmann::json& object,
                    const std::string key,
                    const std::string& filename) const;

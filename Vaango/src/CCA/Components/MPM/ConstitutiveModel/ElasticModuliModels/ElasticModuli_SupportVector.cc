@@ -133,15 +133,18 @@ ElasticModuli_SupportVector::computeBulkModulus(const double& elasticVolStrain,
   strain = strain.array() * d_bulk.strain_conversion_factor.array();
 
   auto num_support_vec = d_bulk.svr_support_vectors.rows();
+
   Eigen::Vector2d strain_scaled = (strain - d_bulk.strain_min).array() * d_bulk.strain_scale_factor.array();
-  Eigen::Matrix<double, Eigen::Dynamic, 2> strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled.replicate(num_support_vec, 1);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel = strain_svr_diff_normSq.array().exp();
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
+  auto strain_scaled_mat = (strain_scaled.transpose()).replicate(num_support_vec, 1);
+  MatrixN2d strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled_mat;
+  MatrixN1d strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
+  MatrixN1d svr_kernel = strain_svr_diff_normSq.array().exp();
+  MatrixN1d strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
+  MatrixN1d svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
   double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
   K /= d_bulk.pressure_scale_factor;
+  K *= d_bulk.pressure_conversion_factor;
 
   #ifdef DEBUG_SVR
     if (K < 0 || !std::isfinite(K)) {
@@ -191,22 +194,43 @@ ElasticModuli_SupportVector::getElasticModuliAndDerivatives(const ModelStateBase
 
   auto num_support_vec = d_bulk.svr_support_vectors.rows();
   Eigen::Vector2d strain_scaled = (strain - d_bulk.strain_min).array() * d_bulk.strain_scale_factor.array();
-  Eigen::Matrix<double, Eigen::Dynamic, 2> strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled.replicate(num_support_vec, 1);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel = strain_svr_diff_normSq.array().exp();
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
+  auto strain_scaled_mat = (strain_scaled.transpose()).replicate(num_support_vec, 1);
+  MatrixN2d strain_svr_diff = d_bulk.svr_support_vectors - strain_scaled_mat;
+  MatrixN1d strain_svr_diff_normSq = strain_svr_diff.rowwise().squaredNorm() * (-d_bulk.rbf_kernel_gamma);
+  MatrixN1d svr_kernel = strain_svr_diff_normSq.array().exp();
+  MatrixN1d strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
+  MatrixN1d svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diffsq = strain_svr_diff.col(1).array() * strain_svr_diff.col(1).array();
+  MatrixN1d strain_svr_diffsq = strain_svr_diff.col(1).array() * strain_svr_diff.col(1).array();
   strain_svr_diffsq *= (2.0 * d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> One = Eigen::Matrix<double, Eigen::Dynamic, 1>::Ones(num_support_vec, 1);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> strain_svr_diffsq_gamma = (strain_svr_diffsq - One) * (2.0 * d_bulk.rbf_kernel_gamma);
-  Eigen::Matrix<double, Eigen::Dynamic, 1> svr_kernel_dderiv_plasticstrain = svr_kernel.array() * strain_svr_diffsq_gamma.array();
+  MatrixN1d One = Eigen::Matrix<double, Eigen::Dynamic, 1>::Ones(num_support_vec, 1);
+  MatrixN1d strain_svr_diffsq_gamma = (strain_svr_diffsq - One) * (2.0 * d_bulk.rbf_kernel_gamma);
+  MatrixN1d svr_kernel_dderiv_plasticstrain = svr_kernel.array() * strain_svr_diffsq_gamma.array();
 
   double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
   double dK_deps_p = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_dderiv_plasticstrain;
   K /= d_bulk.pressure_scale_factor;
   dK_deps_p /= d_bulk.pressure_scale_factor;
+  K *= d_bulk.pressure_conversion_factor;
+  dK_deps_p *= d_bulk.pressure_conversion_factor;
+
+  /*
+  std::cout << "num_support_vec = " << num_support_vec << "\n";
+  std::cout << "strain_scaled = " << strain_scaled.transpose() << "\n";
+  std::cout << "strain_scaled_mat = " << strain_scaled_mat << "\n";
+  std::cout << "strain_svr_diff = " << strain_svr_diff << "\n";
+  std::cout << "strain_svr_diff_normsq = " << strain_svr_diff_normSq.transpose() << "\n";
+  std::cout << "svr_kernel = " << svr_kernel.transpose() << "\n";
+  std::cout << "strain_svr_diff_gamma = " << strain_svr_diff_gamma.transpose() << "\n";
+  std::cout << "svr_kernel_deriv_totalstrain = " << svr_kernel_deriv_totalstrain.transpose() << "\n";
+  std::cout << "svr_support_vectors = " << d_bulk.svr_support_vectors << "\n";
+  std::cout << "svr_dual_coeffs = " << d_bulk.svr_dual_coeffs.transpose() << "\n";
+
+  std::cout << "strain_svr_diffsq = " << strain_svr_diffsq << "\n";
+  std::cout << "strain_svr_diffsq_gamma = " << strain_svr_diffsq_gamma << "\n";
+  std::cout << "svr_kernel_dderiv_plasticstrain = " << svr_kernel_dderiv_plasticstrain.transpose() << "\n";
+  std::cout << "K = " << K << " dK_eps_p = " << dK_deps_p << "\n";
+  */
 
   double nu = d_shear.nu;
   double G = (nu > -1.0 && nu < 0.5) 
@@ -259,7 +283,7 @@ ElasticModuli_SupportVector::readJSONFile(const std::string& filename)
   d_bulk.strain_scale_factor = getVector2dJSON(doc, "X_scale", filename); 
   d_bulk.strain_min = getVector2dJSON(doc, "X_min", filename); 
   d_bulk.strain_max = getVector2dJSON(doc, "X_max", filename); 
-  d_bulk.pressure_conversion_factor = getVector1dJSON(doc, "y_conversion_factor", filename); 
+  d_bulk.pressure_conversion_factor = getDoubleJSON(doc, "y_conversion_factor", filename); 
   d_bulk.pressure_scale_factor = getVector1dJSON(doc, "y_scale", filename); 
   d_bulk.pressure_min = getVector1dJSON(doc, "y_min", filename); 
   d_bulk.pressure_max = getVector1dJSON(doc, "y_max", filename); 
@@ -295,7 +319,7 @@ ElasticModuli_SupportVector::getDoubleJSON(const nlohmann::json& object,
   nlohmann::json data;
   try {
     data = object.at(key);
-    // std::cout << "Data = " << data << std::endl;
+    //std::cout << "Data = " << data << std::endl;
   } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -307,13 +331,8 @@ ElasticModuli_SupportVector::getDoubleJSON(const nlohmann::json& object,
   double val;
   try {
     val = data.get<double>();
-    /*
-    std::cout << key << ":";
-    for (const auto& val : vec) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    */
+    //std::cout << key << ":";
+    //std::cout << val << " " << "\n";
   } catch (std::exception err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -334,7 +353,7 @@ ElasticModuli_SupportVector::getVector1dJSON(const nlohmann::json& object,
   nlohmann::json data;
   try {
     data = object.at(key);
-    // std::cout << "Data = " << data << std::endl;
+    //std::cout << "Data = " << data << std::endl;
   } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -346,13 +365,11 @@ ElasticModuli_SupportVector::getVector1dJSON(const nlohmann::json& object,
   std::vector<double> vec;
   try {
     vec = data.get<std::vector<double>>();
-    /*
-    std::cout << key << ":";
-    for (const auto& val : vec) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    */
+    //std::cout << key << ":";
+    //for (const auto& val : vec) {
+    //  std::cout << val << " ";
+    //}
+    //std::cout << std::endl;
   } catch (std::exception err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -373,7 +390,7 @@ ElasticModuli_SupportVector::getVector2dJSON(const nlohmann::json& object,
   nlohmann::json data;
   try {
     data = object.at(key);
-    // std::cout << "Data = " << data << std::endl;
+    //std::cout << "Data = " << data << std::endl;
   } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -385,13 +402,11 @@ ElasticModuli_SupportVector::getVector2dJSON(const nlohmann::json& object,
   std::vector<double> vec;
   try {
     vec = data.get<std::vector<double>>();
-    /*
-    std::cout << key << ":";
-    for (const auto& val : vec) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    */
+    //std::cout << key << ":";
+    //for (const auto& val : vec) {
+    //  std::cout << val << " ";
+    //}
+    //std::cout << std::endl;
   } catch (std::exception err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -409,21 +424,20 @@ ElasticModuli_SupportVector::getMatrixN1dJSON(const nlohmann::json& object,
                                               const std::string& filename) const
 {
   // First check if the key exists
-  nlohmann::json data;
-  try {
-    data = object.at(key);
-    // std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  const auto matrix = object.find(key);
+  if (matrix == object.end()) {
     std::ostringstream out;
     out << "**ERROR**"
-        << " Variable \"" << key << "\" not found in support vector regression JSON file "
+        << " Matrix \"" << key << "\" not found in support vector regression JSON file "
         << filename;
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   std::vector<double> vec;
   try {
-    vec = data.get<std::vector<double>>();
+    for (const auto& val : *matrix) {
+      vec = val.get<std::vector<double>>();
+    }
     /*
     std::cout << key << ":";
     for (const auto& val : vec) {
@@ -449,24 +463,29 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
                                               const std::string& filename) const
 {
   // First check if the key exists
-  nlohmann::json data;
-  try {
-    data = object.at(key);
-    // std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  const auto matrix = object.find(key);
+  if (matrix == object.end()) {
     std::ostringstream out;
     out << "**ERROR**"
-        << " Variable \"" << key << "\" not found in support vector regression JSON file "
+        << " Matrix \"" << key << "\" not found in support vector regression JSON file "
         << filename;
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
-  std::vector<double> vec;
+  std::vector<double> col1, col2;
   try {
-    vec = data.get<std::vector<double>>();
+    //std::cout << key << ":";
+    for (const auto& val : *matrix) {
+      auto vec = val.get<std::vector<double>>();
+      col1.push_back(vec[0]);
+      col2.push_back(vec[1]);
+    }
     /*
-    std::cout << key << ":";
-    for (const auto& val : vec) {
+    for (const auto& val : col1) {
+      std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    for (const auto& val : col2) {
       std::cout << val << " ";
     }
     std::cout << std::endl;
@@ -474,11 +493,14 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
   } catch (std::exception err) {
     std::ostringstream out;
     out << "**ERROR**"
-        << " Variable \"" << key << "\" contains data in the wrong format in JSON file " 
+        << " Variable \"" << key << "\" contains data in the wrong format in JSON file "
         << filename << "\n"
         << " Data expected to be of the form 'key : [[x1, x2], [x3, x4], ..., [x_p, x_q]]^T'.";
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 2>> mapped_vec(vec.data(), vec.size()/2, 2);
+
+  std::move(col2.begin(), col2.end(), std::back_inserter(col1));
+
+  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 2>> mapped_vec(col1.data(), col2.size(), 2);
   return mapped_vec;
 }
