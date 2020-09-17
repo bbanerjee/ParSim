@@ -49,7 +49,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -79,8 +79,8 @@ TEST(ElasticModuliSVRTest, constructorTest)
   ElasticModuli_SupportVector model(ps);
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
-    std::cout << "Initial moduli = " << moduli.bulkModulus << ", " << moduli.shearModulus << "\n";
-    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 336515295.5149824);
+    //std::cout << "Initial moduli = " << moduli.bulkModulus << ", " << moduli.shearModulus << "\n";
+    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 609627624.19871962);
 
     ModelState_Tabular state_init;
     state_init.elasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -88,10 +88,10 @@ TEST(ElasticModuliSVRTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state_init);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_DOUBLE_EQ(KG.bulkModulus, 336515295.59960222);
-    EXPECT_DOUBLE_EQ(KG.shearModulus, 252386471.69970167);
-    EXPECT_DOUBLE_EQ(dKdG.bulkModulus, 25346817562.290344);
-    ASSERT_DOUBLE_EQ(dKdG.shearModulus, 19010113171.717758);
+    EXPECT_DOUBLE_EQ(KG.bulkModulus, 609629158.69493151);
+    EXPECT_DOUBLE_EQ(KG.shearModulus, 457221869.02119869);
+    EXPECT_DOUBLE_EQ(dKdG.bulkModulus, -8507910775.3945036);
+    ASSERT_DOUBLE_EQ(dKdG.shearModulus, -6380933081.5458775);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -100,8 +100,8 @@ TEST(ElasticModuliSVRTest, constructorTest)
   ElasticModuli_SupportVector modelCopy(&model);
   try {
     ElasticModuli moduli = modelCopy.getInitialElasticModuli();
-    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 336515295.5149824);
-    EXPECT_DOUBLE_EQ(moduli.shearModulus, 252386471.63623676);
+    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 609627624.19871962);
+    EXPECT_DOUBLE_EQ(moduli.shearModulus, 457220718.14903975);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
   } catch (Uintah::InvalidValue e) {
@@ -110,22 +110,22 @@ TEST(ElasticModuliSVRTest, constructorTest)
 
   // Modelstate test
   ModelState_Tabular state;
-  state.elasticStrainTensor = Uintah::Matrix3(-0.03, 0, 0, 0, -0.03, 0, 0, 0, -0.03);
-  state.plasticStrainTensor = Uintah::Matrix3(-0.02, 0, 0, 0, -0.02, 0, 0, 0, -0.02);
+  state.elasticStrainTensor = Uintah::Matrix3(-0.12, 0, 0, 0, -0.12, 0, 0, 0, -0.12);
+  state.plasticStrainTensor = Uintah::Matrix3(-0.07, 0, 0, 0, -0.07, 0, 0, 0, -0.07);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    EXPECT_NEAR(moduli.bulkModulus, 336474416.11733419, 1.0e-3);
-    EXPECT_NEAR(moduli.shearModulus, 252355812.08800063, 1.0e-3);
+    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 50657418680.589439);
+    EXPECT_DOUBLE_EQ(moduli.shearModulus, 37993064010.442078);
 
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_NEAR(KG.bulkModulus, 11440, 1.0e-7);
-    EXPECT_NEAR(KG.shearModulus, 8580, 1.0e-7);
-    EXPECT_NEAR(dKdG.bulkModulus, -24000, 1.0);
-    ASSERT_NEAR(dKdG.shearModulus, -18000, 1.0);
+    EXPECT_DOUBLE_EQ(KG.bulkModulus, 50657418680.589439);
+    EXPECT_DOUBLE_EQ(KG.shearModulus, 37993064010.442078);
+    EXPECT_DOUBLE_EQ(dKdG.bulkModulus, 601744043190.3291);
+    ASSERT_DOUBLE_EQ(dKdG.shearModulus, 451308032392.74683);
 
     // Compute tangent modulus
     auto tangent = model.computeElasticTangentModulus(&state);

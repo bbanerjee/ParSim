@@ -130,7 +130,7 @@ ElasticModuli_SupportVector::computeBulkModulus(const double& elasticVolStrain,
 {
   Eigen::Vector2d strain;
   strain << elasticVolStrain + plasticVolStrain, plasticVolStrain;
-  strain = strain.array() * d_bulk.strain_conversion_factor.array();
+  strain = strain.array() / d_bulk.strain_conversion_factor.array();
 
   auto num_support_vec = d_bulk.svr_support_vectors.rows();
 
@@ -143,8 +143,11 @@ ElasticModuli_SupportVector::computeBulkModulus(const double& elasticVolStrain,
   MatrixN1d svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
   double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
+  //std::cout << "strain = " << strain.transpose() 
+  //          << " strain_scaled = " << strain_scaled.transpose() 
+  //          << " K_scaled = " << K << "\n";
   K /= d_bulk.pressure_scale_factor;
-  K *= d_bulk.pressure_conversion_factor;
+  K *= (d_bulk.strain_scale_factor[0] * d_bulk.pressure_conversion_factor / d_bulk.strain_conversion_factor[0]);
 
   #ifdef DEBUG_SVR
     if (K < 0 || !std::isfinite(K)) {
@@ -190,7 +193,7 @@ ElasticModuli_SupportVector::getElasticModuliAndDerivatives(const ModelStateBase
 
   Eigen::Vector2d strain;
   strain << ev_e_bar+ev_p_bar, ev_p_bar;
-  strain = strain.array() * d_bulk.strain_conversion_factor.array();
+  strain = strain.array() / d_bulk.strain_conversion_factor.array();
 
   auto num_support_vec = d_bulk.svr_support_vectors.rows();
   Eigen::Vector2d strain_scaled = (strain - d_bulk.strain_min).array() * d_bulk.strain_scale_factor.array();
@@ -201,18 +204,19 @@ ElasticModuli_SupportVector::getElasticModuliAndDerivatives(const ModelStateBase
   MatrixN1d strain_svr_diff_gamma = strain_svr_diff.col(0) * (2.0 * d_bulk.rbf_kernel_gamma);
   MatrixN1d svr_kernel_deriv_totalstrain = svr_kernel.array() * strain_svr_diff_gamma.array();
 
-  MatrixN1d strain_svr_diffsq = strain_svr_diff.col(1).array() * strain_svr_diff.col(1).array();
-  strain_svr_diffsq *= (2.0 * d_bulk.rbf_kernel_gamma);
-  MatrixN1d One = Eigen::Matrix<double, Eigen::Dynamic, 1>::Ones(num_support_vec, 1);
-  MatrixN1d strain_svr_diffsq_gamma = (strain_svr_diffsq - One) * (2.0 * d_bulk.rbf_kernel_gamma);
+  MatrixN1d strain_svr_diffsq = strain_svr_diff.col(0).array() * strain_svr_diff.col(1).array();
+  MatrixN1d strain_svr_diffsq_gamma = strain_svr_diffsq * (4.0 * d_bulk.rbf_kernel_gamma * d_bulk.rbf_kernel_gamma);
   MatrixN1d svr_kernel_dderiv_plasticstrain = svr_kernel.array() * strain_svr_diffsq_gamma.array();
 
   double K = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_deriv_totalstrain;
   double dK_deps_p = d_bulk.svr_dual_coeffs.transpose() * svr_kernel_dderiv_plasticstrain;
   K /= d_bulk.pressure_scale_factor;
   dK_deps_p /= d_bulk.pressure_scale_factor;
-  K *= d_bulk.pressure_conversion_factor;
-  dK_deps_p *= d_bulk.pressure_conversion_factor;
+  K *= (d_bulk.strain_scale_factor[0] * d_bulk.pressure_conversion_factor / 
+        d_bulk.strain_conversion_factor[0]);
+  dK_deps_p *= (d_bulk.strain_scale_factor[0] * d_bulk.strain_scale_factor[1] * 
+    d_bulk.pressure_conversion_factor / 
+    (d_bulk.strain_conversion_factor[0] * d_bulk.strain_conversion_factor[1]));
 
   /*
   std::cout << "num_support_vec = " << num_support_vec << "\n";
