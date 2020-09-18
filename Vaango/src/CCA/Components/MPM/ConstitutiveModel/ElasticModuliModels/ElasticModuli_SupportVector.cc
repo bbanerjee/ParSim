@@ -40,7 +40,7 @@ using namespace Vaango;
 /** Read inputs and JSON */
 ElasticModuli_SupportVector::ElasticModuli_SupportVector(Uintah::ProblemSpecP& ps)
 {
-  ps->require("svr_filename", d_bulk.filename);
+  ps->require("filename", d_bulk.filename);
   ps->require("G0", d_shear.G0);
   ps->require("nu", d_shear.nu);
 
@@ -73,7 +73,7 @@ ElasticModuli_SupportVector::outputProblemSpec(Uintah::ProblemSpecP& ps)
   Uintah::ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
   elasticModuli_ps->setAttribute("type", "support_vector");
 
-  elasticModuli_ps->appendElement("svr_filename", d_bulk.filename);
+  elasticModuli_ps->appendElement("filename", d_bulk.filename);
   elasticModuli_ps->appendElement("G0", d_shear.G0);
   elasticModuli_ps->appendElement("nu", d_shear.nu);
 }

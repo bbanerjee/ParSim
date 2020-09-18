@@ -1023,7 +1023,7 @@
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant  arenisca3  arena  arena_mixture  metal_iso neural_net soil_model_brannon tabular'"
+                     attribute1="type REQUIRED STRING 'constant  arenisca3  arena  arena_mixture  metal_iso neural_net support_vector soil_model_brannon tabular'"
                      need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity tabular_plasticity_cap">
       
       <!-- type = constant -->
@@ -1036,7 +1036,7 @@
       <B2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <B3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <B4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
-      <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon arena tabular neural_net" />
+      <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon arena tabular neural_net support_vector" />
       <G1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <G2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <G3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
@@ -1071,12 +1071,12 @@
       <nu2.phase2       spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
 
       <!-- type = tabular -->
-      <filename              spec="REQUIRED STRING" need_applies_to="type tabular neural_net"/>
+      <filename              spec="REQUIRED STRING" need_applies_to="type tabular neural_net support_vector"/>
       <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular"/>
       <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular"/>
       <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
                              need_applies_to="type tabular"/>
-      <nu                    spec="REQUIRED DOUBLE" need_applies_to="type tabular neural_net" />
+      <nu                    spec="REQUIRED DOUBLE" need_applies_to="type tabular neural_net support_vector" />
 
       <!-- type = neural_net -->
       <min_strain            spec="REQUIRED DOUBLE" need_applies_to="type neural_net" />

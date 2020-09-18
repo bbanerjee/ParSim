@@ -160,3 +160,112 @@ shear strain, defined as the difference between the maximum and mimum eigenvalue
 of $\BC$, exceeds a critical shear strain value.  Also, a fiber stretch
 failure criterion can be used that compares $\sqrt{I_4}$ with a critical stretch value
 and sets $\Bsig_f = 0$ is this value is exceeded.
+
+\section{Elastic modulus models}
+\Textmag{Applicable to:} \Textsfc{Hypoelastic} \Textsfc{Tabular} material models
+
+For selected material models that use isotropic hypoelasticity models and require bulk 
+and shear moduli, specialized elastic moduli models can be used.  Some of these
+models are discussed in this section.
+
+\subsection{Support vector regression model}
+The support vector regression (SVR) approach~\cite{Scholkopf2000,Smola2004} can be used to fit 
+bulk modulus models to data without the need for closed form expressions.  The advantage of this approach is
+that the resulting model requires few function evaluations and can, in principle,
+be computed as fast as a closed-form model.
+
+For the purpose of fitting a bulk modulus model we assume that the input (training) data are of the form
+$\{(\BVeps_1, p_1), (\BVeps_2, p_2), \dots, (\BVeps_m, p_m)\} \subset \mathbb{R}^2 \times \mathbb{R}$.
+Here $\BVeps_i = (\Veps_i, \Veps^p_i)$ where $\Veps$ is the total volumetric strain and
+$\Veps^p$ is the plastic volumetric strain and $p_i$ is the mean stress (assumed positive in 
+compression).
+The aim of SVR is to find a function $p = f(\BVeps)$ that fits the data such that the function is 
+as flat as possible (in $d+1$-dimensional space), and deviates from $p_i$ by at most $\epsilon$
+(a small quantity).
+
+In nonlinear support vector regression we fit functions of the form
+\Beq
+  p = f(\BVeps) =  \Bw \cdot \Bphi(\BVeps) + b
+\Eeq
+where $\Bw$ is a vector of parameters, $\Bphi(\BVeps)$ are vector-valued basis functions, $(\cdot)$ is an
+inner product, and $b$ is a scalar offset.  The fitting process can be posed as
+the following primal convex optimization problem~\cite{Vapnik1998}:
+\Beq
+  \begin{aligned}
+    \underset{\Bw, b, \Bxi, \Bxi^\star}{\text{minimize}}\quad &
+  \tfrac{1}{2} \Bw \cdot \Bw + C \sum_{i=1}^m (\xi_i + \xi^\star_i) \\
+  \text{subject to}\quad &
+     \begin{cases}
+       -(\xi_i + \epsilon) \le p_i -  \Bw \cdot \Bphi(\BVeps_i) - b \le \xi_i^\star + \epsilon \\
+       \xi_i, \xi_i^\star \ge 0 ~,~~ i = 1 \dots m
+     \end{cases}
+  \end{aligned}
+\Eeq
+where $C$ is a constraint multiplier, $m$ is the number of data points,
+and $\xi_i, \xi_i^\star$ are constraints.
+
+In practice, it is easier to solve the dual problem for which the expansion for 
+\(f(\BVeps)\) becomes
+\Beq \label{eq:svr}
+  p = f(\BVeps) = \sum_{i=1}^m (\lambda_i^\star - \lambda_i) K(\BVeps_i, \BVeps) + b ~,~~
+  K(\BVeps_i,\BVeps) = \Bphi(\BVeps_i) \cdot \Bphi(\BVeps)
+\Eeq
+where $\BVeps_i$ are the sample vectors, $\lambda_i$ and $\lambda_i^\star$ are dual coefficients, and
+$K(\BVeps_i,\BVeps)$ is a kernel function.
+The dual convex optimization problem has the form
+\Beq
+  \begin{aligned}
+    \underset{\Blambda,\Blambda^\star}{\text{minimize}}\quad &
+    \tfrac{1}{2}
+    \sum_{i,j=1}^m (\lambda_i - \lambda_i^\star) K(\BVeps_i, \BVeps_j) (\lambda_j - \lambda_j^\star)
+     + \epsilon \sum_{i=1}^m (\lambda_i + \lambda_i^\star)
+     + \sum_{i=1}^m p_i(\lambda_i - \lambda_i^\star) \\
+    \text{subject to}\quad &
+       \begin{cases}
+         \sum_{i=1}^m (\lambda_i - \lambda_i^\star) = 0 \\
+         \lambda_i, \lambda_i^\star \in [0, C] ~,~~ i = 1 \dots m \,.
+       \end{cases}
+  \end{aligned}
+\Eeq
+The free parameters for the fitting process are the quantities $\epsilon$ and $C$.
+SVR accuracy also depends strongly on the choice of kernel function.  In this paper,
+we use the Gaussian radial basis function:
+\Beq \label{eq:svr_rbf}
+  K(\BVeps_i, \BVeps_j) = \exp\left[-\frac{(\BVeps_i-\BVeps_j)\cdot(\BVeps_i-\BVeps_j)}{\sigma^2\,d}\right]
+   = \exp\left[-\gamma \Norm{\BVeps_i-\BVeps_j}{}^2\right] ~,~~ \gamma := \frac{1}{\sigma^2\,d}
+\Eeq
+where $d$ is the dimension of $\BVeps$ and $\sigma^2$ is the width of the support of the 
+kernel (assumed to be equal to the norm of the covariance matrix of the training data in this paper).  
+
+The minimization problem solves for the difference in the dual coefficients ($\Blambda - \Blambda^\star$) 
+and the intercept ($b$), and outputs a reduced set ($m_{\text{SV}} < m$) of values of $\BVeps_i$ 
+called ``support vectors''.  Given these quantities, the function~\eqref{eq:svr} can be evaluated
+quite efficiently, particularly if the number of support vectors is small.  SVR fits to data can be 
+computed using software such as the \Textsfc{LIBSVM} library~\cite{Chang2011}.  A variation
+of the above approach, called $\nu$-SVR~\cite{Scholkopf2000} can also be used if sufficient
+computational resources are available.
+
+The bulk modulus can be computed from \eqref{eq:svr} using
+\Beq
+  \kappa(\BVeps) = \Partial{p}{\Veps^e} = \Partial{p}{\Veps}
+   = \sum_{i=1}^{m_\text{SV}} (\lambda_i^\star - \lambda_i) \Partial{K_i}{\Veps} ~,~~ K_i := K(\BVeps_i, \BVeps) 
+\Eeq
+From \eqref{eq:svr_rbf},
+\Beq
+  \Partial{K_i}{\Veps} = 2\gamma (\Veps_i - \Veps) \exp\left[-\gamma \Norm{\BVeps_i-\BVeps}{}^2\right]
+\Eeq
+Therefore, the bulk modulus is given by,
+\Beq
+  \kappa(\BVeps)  
+   = \sum_{i=1}^{m_\text{SV}} 2\gamma (\lambda_i^\star - \lambda_i) (\Veps_i - \Veps) \exp\left[-\gamma \Norm{\BVeps_i-\BVeps}{}^2\right]
+\Eeq
+If we need to account for elastic-plastic coupling, we may also need the derivative
+\Beq
+  \Partial{\kappa}{\Veps^p} 
+   = \sum_{i=1}^{m_\text{SV}} 4\gamma^2 (\lambda_i^\star - \lambda_i) (\Veps_i - \Veps) (\Veps^p_i - \Veps^p) \exp\left[-\gamma \Norm{\BVeps_i-\BVeps}{}^2\right]
+\Eeq
+The bulk modulus model is also associated with a shear modulus model that computes the value of $\mu$ using
+a Poisson's ratio ($\nu$) based on the value of $\kappa$.  The \Vaango implementation can be accessed
+in the tabular plasticity models, using the tag \Textsfc{\textless elastic\_moduli\_model type="support\_vector"\textgreater}.
+
+

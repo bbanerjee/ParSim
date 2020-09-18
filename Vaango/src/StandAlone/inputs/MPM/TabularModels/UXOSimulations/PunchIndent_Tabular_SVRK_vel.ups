@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<Uintah_specification>
+
+  <Meta>
+      <title>Punch indentation for SVR model of variable bulk modulus</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+      <maxTime>0.007</maxTime>
+      <initTime>0.0</initTime>
+      <delt_min>1.0e-9</delt_min>
+      <delt_max>0.01</delt_max>
+      <timestep_multiplier>0.1</timestep_multiplier>
+  </Time>
+
+  <DataArchiver>
+      <filebase>PunchIndent_Tabular_SVRK_vel.uda</filebase>
+      <outputInterval>0.0001</outputInterval>
+      <save label = "p.x"/>
+      <save label = "p.color"/>
+      <save label = "p.temperature"/>
+      <save label = "p.velocity"/>
+      <save label = "p.particleID"/>
+      <save label = "p.stress"/>
+      <save label = "g.mass"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "g.acceleration"/>
+      <save label = "p.capX"/>
+      <save label = "p.elasticVolStrain"/>
+      <save label = "p.plasticVolStrain"/>
+      <checkpoint cycle = "2" timestepInterval = "200"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>               explicit  </time_integrator>
+    <interpolator>                  gimp    </interpolator>
+    <use_load_curves>               false     </use_load_curves>
+    <minimum_particle_mass>         1.0e-15   </minimum_particle_mass>
+    <minimum_mass_for_acc>          1.0e-15   </minimum_mass_for_acc>
+    <maximum_particle_velocity>     1.0e5     </maximum_particle_velocity>
+    <artificial_damping_coeff>      0.0       </artificial_damping_coeff>
+    <artificial_viscosity>          true      </artificial_viscosity>
+    <artificial_viscosity_heating>  false     </artificial_viscosity_heating>
+    <do_contact_friction_heating>   false     </do_contact_friction_heating>
+    <create_new_particles>          false     </create_new_particles>
+    <use_momentum_form>             false     </use_momentum_form>
+    <with_color>                    true      </with_color>
+    <erosion algorithm = "none"/>
+  </MPM>
+
+  <PhysicalConstants>
+      <gravity>[0,-9.81,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material name="steel">
+        <density> 8000.0 </density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <constitutive_model type="hypo_elastic">
+          <G>7.2e9</G>
+          <K>10.2e9</K>
+        </constitutive_model>
+        <geom_object>
+          <box label = "punch">
+            <min>[0.35, 0.50, 0.35]</min>
+            <max>[0.65, 0.70, 0.65]</max>
+          </box>
+          <res>[2,2,2]</res>
+          <velocity>[0.0, -200.0, 0.0]</velocity>
+          <temperature>298</temperature>
+          <color> 0 </color>
+        </geom_object>
+      </material>
+      <material name="soil">
+        <density>1050</density>
+        <melt_temp>3695.0</melt_temp>
+        <room_temp>294.0</room_temp>
+        <thermal_conductivity>174.0e-7</thermal_conductivity>
+        <specific_heat>134.0e-8</specific_heat>
+
+        <constitutive_model type="tabular_plasticity_cap">
+          <elastic_moduli_model type="support_vector">
+            <filename>ARL_Sand_SVR_fit_10_001.json</filename>
+            <min_strain>0.0</min_strain>
+            <max_strain>0.5</max_strain>
+            <min_pressure>0.0</min_pressure>
+            <max_pressure>1.0e6</max_pressure>
+            <G0>3500</G0>
+            <nu>0.189</nu>
+          </elastic_moduli_model>
+
+          <yield_condition type="tabular_cap">
+            <filename>DrySand_YieldData.json</filename>
+            <independent_variables>Pressure</independent_variables>
+            <dependent_variables>SqrtJ2</dependent_variables>
+            <interpolation type="linear"/>
+            <cap_ellipticity_ratio> 0.7 </cap_ellipticity_ratio>
+          </yield_condition>
+
+          <internal_variable_model type="tabular_cap">
+            <filename>DrySand_HydrostaticCapData.json</filename>
+            <independent_variables>PlasticStrainVol</independent_variables>
+            <dependent_variables>Pressure</dependent_variables>
+            <interpolation type="linear"/>
+          </internal_variable_model>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
+
+          <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
+          <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
+          <subcycling_characteristic_number>256</subcycling_characteristic_number>
+        </constitutive_model>
+        <geom_object>
+          <box label = "container">
+            <min>[0.0, 0.0, 0.0]</min>
+            <max>[1.0, 0.5, 1.0]</max>
+          </box>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>298</temperature>
+          <color>1</color>
+        </geom_object>
+      </material>
+      <contact>
+        <type>friction_bard</type>
+        <mu> 0.1 </mu>
+        <materials> [0,1] </materials>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+  <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "z+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+    </BoundaryConditions>
+    <Level>
+      <Box label = "1">
+        <lower>[0.0, 0.0, 0.49]</lower>
+        <upper>[1.0, 0.8, 0.51]</upper>
+        <resolution>[50, 40, 1]</resolution>
+        <extraCells>[1,1,1]</extraCells>
+        <patches>[4,1,1]</patches>
+      </Box>
+    </Level>
+  </Grid>
+
+</Uintah_specification>

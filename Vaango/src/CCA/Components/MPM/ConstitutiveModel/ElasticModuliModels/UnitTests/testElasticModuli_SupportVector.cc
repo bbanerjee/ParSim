@@ -41,7 +41,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
   xmlDocSetRootElement(doc, rootNode);
 
   // Create a child node
-  xmlNewChild(rootNode, nullptr, BAD_CAST "svr_filename", 
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", 
               BAD_CAST "ARL_Sand_SVR_fit_10_001.json");
   xmlNewChild(rootNode, nullptr, BAD_CAST "G0", 
               BAD_CAST "1.0e4");
