@@ -20,6 +20,48 @@ material are known, the bulk and shear modulus can be computed using
   G = \frac{E}{2(1+\nu)} \,.
 \Eeq
 
+\subsection{Elastic modulus models}
+For selected hypoelasticity-based material models, the model used to compute the bulk and shear modulus 
+can be chosen separately.  Some of these elastic moduli models are discussed below.
+
+\subsubsection{Support vector model}
+The support vector based elastic modulus model is specified using an input
+description of the following form.
+\begin{lstlisting}[language=XML]
+  <constitutive_model type=".....">
+    <elastic_moduli_model type="support_vector">
+      <filename>SVR_fit.json</filename>
+      <G0>3500</G0>
+      <nu>0.189</nu>
+    </elastic_moduli_model>
+    ......
+  </constitutive_model>
+\end{lstlisting}
+
+The JSON input file is required to contain a support vector regression fit to pressure data
+as a function of the total volumetric strain and the plastic volumetric strain.  The format 
+of the JSON file should be of the following form:
+\begin{lstlisting}[language=JSON]
+{
+  "X_var": ["Total volumetric strain (\%)", "Plastic volumetric strain (\%)"],
+  "y_var": "Pressure (MPa)",
+  "X_conversion_factor": [0.01, 0.01],
+  "y_conversion_factor": 1000000.0,
+  "X_scale": [0.018115942028985508, 0.031249261081060988],
+  "X_min": [-10.0, 0.0],
+  "X_max": [45.2, 32.00075667088534],
+  "y_scale": [0.00016356411948678396],
+  "y_min": [-1112.690309606444],
+  "y_max": [5001.12],
+  "gamma": 4.7474110414223025,
+  "support_vectors": [[0.9998641304347827, 1.0], [0.8832644927536233, 1.0],
+    [0.9954365942028985, 1.0], [0.6534438405797102, 0.7060732743351001],
+    [0.8108822463768116, 1.0], [0.7982101449275363, 0.943522446672424], ...],
+  "dual_coeffs": [[10.0, 10.0, 10.0, -10.0, 10.0, 10.0, 2.5932059232147773, 10.0, ...],
+  "intercept": [0.8428855972115061]
+}
+\end{lstlisting}
+
 \subsection{Compressible Mooney-Rivlin Model} This model is generally parameterized
 for rubber type materials.  Usage is as follows:
 \begin{lstlisting}[language=XML]

@@ -39,7 +39,7 @@ and the equivalent plastic strain is defined as
     \Ep = \int_0^t\sqrt{\tfrac{2}{3}\Bd^p:\Bd^p}dt = \int_0^t\sqrt{\tfrac{2}{3}\Beta^p:\Beta^p}dt
   \end{equation}
 Assuming a state at the end of the previous time step, time $t^n$,
-satisfying $f(\Bs^n,\Ep^n,\Epdot{}^n)\le0$, a new state satisfying
+satisfying $f(\Bs^n,(\Ep)^n,\Epdot{}^n)\le0$, a new state satisfying
 Eqn. \ref{eq:yield_condition} at time $t^{n+1}=t^n+\Delta t$, where
 $\Delta t$ is the time step size, is sought.
 
@@ -70,10 +70,10 @@ A trial stress is calculated assuming no plastic deformation, i.e.
   \begin{equation}\label{eq:strial}
     {\Bs^{\text{trial}}} = \Bs^n + 2\mu\Beta\Delta t
   \end{equation}
-If $f(\Bs^{\text{trial}},\Ep^n,0)\le0$, the deformation is purely
+If $f(\Bs^{\text{trial}},(\Ep)^n,0)\le0$, the deformation is purely
 elastic and the solution at time $t^{n+1}$ is
-$\Bs^{n+1}=\Bs^{\text{trial}}$, $\Ep^{n+1}=\Ep^n$.  If
-$f(\Bs^{\text{trial}},\Ep^n,0)>0$, the deformation is at least
+$\Bs^{n+1}=\Bs^{\text{trial}}$, $(\Ep)^{n+1}=(\Ep)^n$.  If
+$f(\Bs^{\text{trial}},(\Ep)^n,0)>0$, the deformation is at least
 partially plastic.  In this case
   \begin{equation}\label{eq:stress_update_0}
     \Bs^{n+1} = \Bs^n + \dot{\Bs}\Delta t
@@ -105,14 +105,14 @@ or, contracting both sides with $\Bn$, and using Eqn. \ref{eq:flow_direction},
   \end{equation}
 which is a scalar equation for the proportionality constant
 $\lambdadot$.  Using the yield condition
-$f(\Bs^{n+1},\Ep^{n+1},\Epdot{}^{n+1})=0$
+$f(\Bs^{n+1},(\Ep)^{n+1},\Epdot{}^{n+1})=0$
 (Eqn. \ref{eq:yield_condition}), this equation may be written in terms
 of $\lambdadot$
   \begin{equation}\label{eq:stress_update_3}
-     \sqrt{\tfrac{2}{3}}\sigma_y(\Ep^{n+1},\Epdot{}^{n+1}) = \norm{\Bs^{\text{trial}}} - 2\mu\lambdadot\Delta t
+     \sqrt{\tfrac{2}{3}}\sigma_y((\Ep)^{n+1},\Epdot{}^{n+1}) = \norm{\Bs^{\text{trial}}} - 2\mu\lambdadot\Delta t
   \end{equation}
 where from Eqn.s \ref{eq:ep} and \ref{eq:associated_flow},
-$\Ep^{n+1}=\Ep^n+\sqrt{\frac{2}{3}}\lambdadot\Delta t$ and $\dot{\Ep}^{n+1}=\sqrt{\tfrac{2}{3}}\lambdadot$.
+$(\Ep)^{n+1}=(\Ep)^n+\sqrt{\frac{2}{3}}\lambdadot\Delta t$ and $\dot{\Ep}^{n+1}=\sqrt{\tfrac{2}{3}}\lambdadot$.
 
 For the special case of linear isotropic hardening,
 $\sigma_y(\Ep,\Epdot{})=\sigma_{y0}+k\Ep$, where $\sigma_{y0}$ is the
@@ -132,12 +132,12 @@ Then until $|g(\Delta\lambda_{j+1})| < \text{TOL}$, calculate
   \begin{equation}
      \Delta\lambda_{j+1}=\Delta\lambda_j-\frac{g(\Delta\lambda_j)}{\frac{dg}{d\Delta\lambda}(\Delta\lambda_j)}
   \end{equation}
-where $\Delta\lambda_0=0$, $\Epo^{n+1}=\Ep^n$,
+where $\Delta\lambda_0=0$, $\Epo^{n+1}=(\Ep)^n$,
 $\dot{\epsilon}_{p,0}^{n+1}=0$, and, once $\Delta\lambda$ has been
 determined to a specified accuracy, the final values of plastic strain
 and strain rate are given by
   \begin{equation}
-    \Ep^{n+1}=\Ep^n+\sqrt{\tfrac{2}{3}}\Delta\lambda_{j+1}
+    (\Ep)^{n+1}=(\Ep)^n+\sqrt{\tfrac{2}{3}}\Delta\lambda_{j+1}
   \end{equation}
   \begin{equation}
     \dot{\Ep}^{n+1}=\sqrt{\tfrac{2}{3}}\frac{\Delta\lambda_{j+1}}{\Delta t}
@@ -157,7 +157,7 @@ i.e. Eqn. \ref{eq:associated_flow} no longer holds).  This non
 associated flow rule results in zero plastic dilation (actually
 dilitation).  The end result is convergence to the flow stress with
 temperature and pressure held constant, i.e. to
-$\sigma_y(\Ep^{n+1},\dot{\Ep}^{n+1},p^n,T^n)$ with $\mu(p^n,T^n)$ and
+$\sigma_y((\Ep)^{n+1},\dot{\Ep}^{n+1},p^n,T^n)$ with $\mu(p^n,T^n)$ and
 no plastic dilitation.  While holding pressure and temperature fixed
 over a time step is probably a good approximation for most explicit
 calculations, non-associated flow may not be.
