@@ -34,6 +34,7 @@ configure_file(table_elastic.json table_elastic.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 configure_file(ARL_Sand_SVR_fit_10_001.json ARL_Sand_SVR_fit_10_001.json COPYONLY)
+configure_file(mlp_regression_keras_bulk_elastic_ten_com_scaled_relu_32_400.h5 mlp_regression_keras_bulk_elastic_ten_com_scaled_relu_32_400.h5 COPYONLY)
 
 #------------------------
 # Vaango libs
@@ -115,6 +116,18 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST} > ${UNIT_TEST}.out
   VERBATIM
+)
+
+set(UNIT_TEST testElasticModuli_NeuralNet_Bulk)
+add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
+target_link_libraries(${UNIT_TEST}
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
 )
 
 set(UNIT_TEST testElasticModuli_SupportVector)
