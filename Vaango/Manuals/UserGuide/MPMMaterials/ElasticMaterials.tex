@@ -20,48 +20,6 @@ material are known, the bulk and shear modulus can be computed using
   G = \frac{E}{2(1+\nu)} \,.
 \Eeq
 
-\subsection{Elastic modulus models}
-For selected hypoelasticity-based material models, the model used to compute the bulk and shear modulus 
-can be chosen separately.  Some of these elastic moduli models are discussed below.
-
-\subsubsection{Support vector model}
-The support vector based elastic modulus model is specified using an input
-description of the following form.
-\begin{lstlisting}[language=XML]
-  <constitutive_model type=".....">
-    <elastic_moduli_model type="support_vector">
-      <filename>SVR_fit.json</filename>
-      <G0>3500</G0>
-      <nu>0.189</nu>
-    </elastic_moduli_model>
-    ......
-  </constitutive_model>
-\end{lstlisting}
-
-The JSON input file is required to contain a support vector regression fit to pressure data
-as a function of the total volumetric strain and the plastic volumetric strain.  The format 
-of the JSON file should be of the following form:
-\begin{lstlisting}[language=JSON]
-{
-  "X_var": ["Total volumetric strain (\%)", "Plastic volumetric strain (\%)"],
-  "y_var": "Pressure (MPa)",
-  "X_conversion_factor": [0.01, 0.01],
-  "y_conversion_factor": 1000000.0,
-  "X_scale": [0.018115942028985508, 0.031249261081060988],
-  "X_min": [-10.0, 0.0],
-  "X_max": [45.2, 32.00075667088534],
-  "y_scale": [0.00016356411948678396],
-  "y_min": [-1112.690309606444],
-  "y_max": [5001.12],
-  "gamma": 4.7474110414223025,
-  "support_vectors": [[0.9998641304347827, 1.0], [0.8832644927536233, 1.0],
-    [0.9954365942028985, 1.0], [0.6534438405797102, 0.7060732743351001],
-    [0.8108822463768116, 1.0], [0.7982101449275363, 0.943522446672424], ...],
-  "dual_coeffs": [[10.0, 10.0, 10.0, -10.0, 10.0, 10.0, 2.5932059232147773, 10.0, ...],
-  "intercept": [0.8428855972115061]
-}
-\end{lstlisting}
-
 \subsection{Compressible Mooney-Rivlin Model} This model is generally parameterized
 for rubber type materials.  Usage is as follows:
 \begin{lstlisting}[language=XML]
@@ -73,7 +31,7 @@ for rubber type materials.  Usage is as follows:
 \end{lstlisting}
 where \Textsfc{\textless he\_constant\_(1,2)\textgreater} are usually referred to
 as $C1$ and $C2$ in the literature, and \Textsfc{he\_PR} is the Poisson's ratio ($\nu$).
-The initial shear modlus, $G$, is related to the two Mooney-Rivlin constants and the 
+The initial shear modulus, $G$, is related to the two Mooney-Rivlin constants and the 
 initial bulk modulus can be computed from $G$ and $\nu$ using
 \Beq
   G = 2 (C_1 + C_2) \quad \Tand \quad K = \frac{2G(1+\nu)}{3(1-2\nu)} \,.
@@ -81,9 +39,9 @@ initial bulk modulus can be computed from $G$ and $\nu$ using
 
 \subsection{Compressible Neo-Hookean Model} There are implementations of several
 hyperelastic-plastic model described by Simo and Hughes\cite{Simo1998} (pp. 307 -- 321). 
- The model is dubbed "Unified Compressible Neo-Nookean Model" or UCNH for short.  Models can 
+ The model is dubbed "Unified Compressible Neo-Hookean Model" or UCNH for short.  Models can 
 still be specified with old input file specifications, (i.e. comp\_neo\_hook, comp\_neo\_hook\_plastic,
-cnh\_damage, cnhp\_damage) however these are merely wrappers for the underyling UCNH model.
+cnh\_damage, cnhp\_damage) however these are merely wrappers for the underlying UCNH model.
  Plastic flow and failure can be modelled in addition to elasticity by  specifying 
 several additional options with input flags. This models is very robust, and relatively 
 straightforward because hyperelastic models don't require rotation back and forth 
@@ -160,7 +118,7 @@ and can be alternatively invoked using the \Textsfc{comp\_neo\_hook\_plastic} ta
 \end{lstlisting}
 
 \subsubsection{Elastic-Plastic with damage}
-The \Textsfc{UCNH} model with damage can alteratively be invoked with the \Textsfc{cnhp\_damage}
+The \Textsfc{UCNH} model with damage can alternatively be invoked with the \Textsfc{cnhp\_damage}
 tag. This constitutive model is an extension of the hyperelastic-plastic neo-Hookean model
 to failure based on a stress or strain, thus yielding an elastic-plastic model with failure.  
 Note that the post-failure behaviour of simulations is not always robust.  
@@ -272,7 +230,7 @@ To use these features the following four steps are required:
     <exponent> n </exponent>
   \end{lstlisting}
   The exponent defaults to the Weibull modulus if the Weibull distribution is used.  This physically
-  motivated scaling provides for an increase in mean cohesion with decreasing particle size, generallly
+  motivated scaling provides for an increase in mean cohesion with decreasing particle size, generally
   consistent with the observation that smaller quantities of material contain fewer critical flaws.
 \end{enumerate}
 
@@ -366,129 +324,449 @@ brittle\_damage\_printDamage & & print the state of damage \\
 When a particle is damaged, the value of the particle variable \Textsfc{p.damage}
 can be output in the \Textsfc{DataArchiver} section of the input file.
 
-\subsection{Support-vector model for the bulk modulus}
+\section{Elastic modulus models}
+For selected hypoelasticity-based material models, the model used to compute the bulk and shear modulus 
+can be chosen separately.  Some of these elastic moduli models are discussed below.
+
+\subsection{Support vector model}
 The \Textsfc{tabular plasticity} model discussed later in this manual can be
-combined with a support vector model for the bulk modulus.  The model
-is invoked as follows:
+combined with a support vector model for the bulk modulus.  
+The support vector based elastic modulus model is specified using an input
+description of the following form.
 \begin{lstlisting}[language=XML]
-<constitutive_model type="tabular_plasticity_cap">
-  <elastic_moduli_model type="support_vector">
-    <filename>ARL_Sand_SVR_fit_10_001.json</filename>
-    <min_strain>0.0</min_strain>
-    <max_strain>0.5</max_strain>
-    <min_pressure>0.0</min_pressure>
-    <max_pressure>1.0e6</max_pressure>
-    <G0>3500</G0>
-    <nu>0.189</nu>
-  </elastic_moduli_model>
-  ...
-</constitutive_model>
+  <constitutive_model type=".....">
+    <elastic_moduli_model type="support_vector">
+      <filename>SVR_fit.json</filename>
+      <G0>3500</G0>
+      <nu>0.189</nu>
+    </elastic_moduli_model>
+    ......
+  </constitutive_model>
 \end{lstlisting}
-The input JSON file contains the support vector model in the formatL
+The JSON input file is required to contain a support vector regression fit to pressure data
+as a function of the total volumetric strain and the plastic volumetric strain.  The format 
+of the JSON file should be of the following form:
 \begin{lstlisting}[language=JSON]
 {
-  "X_var": [ "Total volumetric strain (%)", "Plastic volumetric strain (%)" ],
+  "X_var": ["Total volumetric strain (\%)", "Plastic volumetric strain (\%)"],
   "y_var": "Pressure (MPa)",
-  "X_conversion_factor": [ 0.01, 0.01 ],
+  "X_conversion_factor": [0.01, 0.01],
   "y_conversion_factor": 1000000.0,
-  "X_scale": [ 0.018115942028985508, 0.031249261081060988 ],
-  "X_min": [ -10.0, 0.0 ],
-  "X_max": [ 45.2, 32.00075667088534 ],
-  "y_scale": [ 0.00016356411948678396 ],
-  "y_min": [ -1112.690309606444 ],
-  "y_max": [ 5001.12 ],
+  "X_scale": [0.018115942028985508, 0.031249261081060988],
+  "X_min": [-10.0, 0.0],
+  "X_max": [45.2, 32.00075667088534],
+  "y_scale": [0.00016356411948678396],
+  "y_min": [-1112.690309606444],
+  "y_max": [5001.12],
   "gamma": 4.7474110414223025,
-  "support_vectors": [
-    [ 0.9998641304347827, 1.0 ], ..., [ 0.836215579710145, 1.0 ] ],
-  "dual_coeffs": [
-    [ 10.0, 10.0, 10.0, -10.0, 10.0, ...,  10.0, -10.0, 10.0 ] ],
-  "intercept": [ 0.8428855972115061 ]
+  "support_vectors": [[0.9998641304347827, 1.0], [0.8832644927536233, 1.0],
+    [0.9954365942028985, 1.0], [0.6534438405797102, 0.7060732743351001],
+    [0.8108822463768116, 1.0], [0.7982101449275363, 0.943522446672424], ...],
+  "dual_coeffs": [[10.0, 10.0, 10.0, -10.0, 10.0, 10.0, 2.5932059232147773, 10.0, ...],
+  "intercept": [0.8428855972115061]
 }
 \end{lstlisting}
-The \Textsfc{min\_strain} and \Textsfc{max\_strain} tags indicate the range of data
-that was used for scaling the input strains.  The \Textsfc{min\_pressure} and \Textsfc{max\_pressure}
-tags are the coreesponding limits used for scaling the pressures.  An initial value of \Textsfc{G0}
+An initial value of \Textsfc{G0}
 is used if \Textsfc{nu} is less than -1.0 or greater than 0.5.  Otherwise the shear modulus is 
-compueted from the bulk modulus model using the value of \Textsfc{nu} at the Poisson's ratio.
+computed from the bulk modulus model using the value of \Textsfc{nu} at the Poisson's ratio.
 
 An example of fitting a support vector regression model in \Textsfc{Python} is shown below.
 \begin{lstlisting}[language=Python]
-# Load numpy, scikit-learn, pandas, and matplotlib
+#!/usr/bin/env python
+# coding: utf-8
+#
+# Load packages
+#
 import numpy as np
-from sklearn.svm import SVR
+from sklearn.svm import SVR, NuSVR
 from sklearn import preprocessing
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 import pandas as pd
 import matplotlib.pyplot as plt
-
-# Read the unloading curves
+import json
+from json import JSONEncoder
+import sys
+#
+# Load input data from CSV files
+#
 unload_09 = pd.read_csv("./Sand_unload_09.csv", header=0, skiprows=1)
 unload_18 = pd.read_csv("./Sand_unload_18.csv", header=0, skiprows=1)
 unload_27 = pd.read_csv("./Sand_unload_27.csv", header=0, skiprows=1)
 unload_36 = pd.read_csv("./Sand_unload_36.csv", header=0, skiprows=1)
 unload_45 = pd.read_csv("./Sand_unload_45.csv", header=0, skiprows=1)
-
-# Compute the plastic and elastic strains
-eps_p_09 = unload_09.iloc[-1,0]
-eps_e_09 = unload_09.iloc[:,0] - eps_p_09
-eps_p_18 = unload_18.iloc[-1,0]
-eps_e_18 = unload_18.iloc[:,0] - eps_p_18
-eps_p_27 = unload_27.iloc[-1,0]
-eps_e_27 = unload_27.iloc[:,0] - eps_p_27
-eps_p_36 = unload_36.iloc[-1,0]
-eps_e_36 = unload_36.iloc[:,0] - eps_p_36
-eps_p_45 = unload_45.iloc[-1,0]
-eps_e_45 = unload_45.iloc[:,0] - eps_p_45
+#
+# Compute plastic strains from intersection with strain axis
+#
+t_09 = -unload_09.iloc[-1,1]/(unload_09.iloc[-4,1] - unload_09.iloc[-1,1])
+t_18 = -unload_18.iloc[-1,1]/(unload_18.iloc[-4,1] - unload_18.iloc[-1,1])
+t_27 = -unload_27.iloc[-1,1]/(unload_27.iloc[-4,1] - unload_27.iloc[-1,1])
+t_36 = -unload_36.iloc[-1,1]/(unload_36.iloc[-4,1] - unload_36.iloc[-1,1])
+t_45 = -unload_45.iloc[-1,1]/(unload_45.iloc[-4,1] - unload_45.iloc[-1,1])
+eps_p_09 = (1 - t_09) * unload_09.iloc[-1,0] + t_09 * unload_09.iloc[-4,0]
+eps_p_18 = (1 - t_18) * unload_18.iloc[-1,0] + t_18 * unload_18.iloc[-4,0]
+eps_p_27 = (1 - t_27) * unload_27.iloc[-1,0] + t_27 * unload_27.iloc[-4,0]
+eps_p_36 = (1 - t_36) * unload_36.iloc[-1,0] + t_36 * unload_36.iloc[-4,0]
+eps_p_45 = (1 - t_45) * unload_45.iloc[-1,0] + t_45 * unload_45.iloc[-4,0]
+#
+# Add intersection point to data
+#
+unload_09.loc[unload_09.index.max()+1] = (eps_p_09, 0.0)
+unload_18.loc[unload_18.index.max()+1] = (eps_p_18, 0.0)
+unload_27.loc[unload_27.index.max()+1] = (eps_p_27, 0.0)
+unload_36.loc[unload_36.index.max()+1] = (eps_p_36, 0.0)
+unload_45.loc[unload_45.index.max()+1] = (eps_p_45, 0.0)
+#
+# Separate out strain and pressure data
+#
+eps_09 = unload_09.iloc[:,0]
+eps_18 = unload_18.iloc[:,0]
+eps_27 = unload_27.iloc[:,0]
+eps_36 = unload_36.iloc[:,0]
+eps_45 = unload_45.iloc[:,0]
 p_09 = unload_09.iloc[:,1]
 p_18 = unload_18.iloc[:,1]
 p_27 = unload_27.iloc[:,1]
 p_36 = unload_36.iloc[:,1]
 p_45 = unload_45.iloc[:,1]
-
-# Create data frames for regression
-strains_09 = np.column_stack((eps_e_09, np.repeat(eps_p_09, eps_e_09.shape[0])))
-strains_18 = np.column_stack((eps_e_18, np.repeat(eps_p_18, eps_e_18.shape[0])))
-strains_27 = np.column_stack((eps_e_27, np.repeat(eps_p_27, eps_e_27.shape[0])))
-strains_36 = np.column_stack((eps_e_36, np.repeat(eps_p_36, eps_e_36.shape[0])))
-strains_45 = np.column_stack((eps_e_45, np.repeat(eps_p_45, eps_e_45.shape[0])))
-
-# Stack and merge the data
-data_09 = np.column_stack((strains_09, p_09))
-data_18 = np.column_stack((strains_18, p_18))
-data_27 = np.column_stack((strains_27, p_27))
-data_36 = np.column_stack((strains_36, p_36))
-data_45 = np.column_stack((strains_45, p_45))
-data_all =  np.concatenate((data_09, data_18, data_27, data_36, data_45), axis=0)
-
+eps_p = (eps_p_09, eps_p_18, eps_p_27, eps_p_36, eps_p_45, 0.0)
+#
+# Create data for 0% plastic strain
+#
+eps_p_00_data = pd.DataFrame({'TotalStrainVol' : eps_09 - eps_p_09, 'Pressure' : p_09})
+eps_00 = eps_p_00_data.iloc[:,0]
+p_00 = eps_p_00_data.iloc[:,1]
+print(eps_00)
+#
+# Define functions for creating extended data in compression and tension
+#
+def create_extra_compression_data(eps, p, eps_max):
+    x0_com = eps.values[1]
+    x1_com = eps.values[0]
+    y0_com = p.values[1]
+    y1_com = p.values[0]
+    com_strain = eps_max
+    t_com_strain = (com_strain - x0_com)/(x1_com - x0_com)
+    dx_com = (x1_com - x0_com)*10
+    nx_com = ((com_strain - x1_com)/dx_com).astype(int)
+    t_com = np.linspace(1.001, t_com_strain, nx_com)
+    x_com = list(map(lambda t : (1 - t)*x0_com + t*x1_com, t_com))
+    y_com = list(map(lambda t : (1 - t)*y0_com + t*y1_com, t_com))
+    com_data = pd.DataFrame({'TotalStrainVol' : x_com, 'Pressure' : y_com})
+    return com_data
+#
+def create_extra_tension_data(eps, p, eps_min):
+    x0_ten = eps.values[-2]
+    x1_ten = eps.values[-1]
+    y0_ten = p.values[-2]
+    y1_ten = p.values[-1]
+    ten_strain = eps_min
+    t_ten_strain = (ten_strain - x0_ten)/(x1_ten - x0_ten)
+    dx_ten = (x0_ten - x1_ten)*10
+    nx_ten = ((x1_ten - ten_strain)/dx_ten).astype(int)
+    t_ten = np.linspace(1.001, t_ten_strain, nx_ten)
+    x_ten = list(map(lambda t : (1 - t)*x0_ten + t*x1_ten, t_ten))
+    y_ten = list(map(lambda t : (1 - t)*y0_ten + t*y1_ten, t_ten))
+    ten_data = pd.DataFrame({'TotalStrainVol' : x_ten, 'Pressure' : y_ten})
+    return ten_data
+#
+# Create extra data in compression and tension
+#
+data_00_com_extra = create_extra_compression_data(eps_00, p_00, 15)
+data_09_com_extra = create_extra_compression_data(eps_09, p_09, 25)
+data_18_com_extra = create_extra_compression_data(eps_18, p_18, 30)
+data_27_com_extra = create_extra_compression_data(eps_27, p_27, 35)
+#
+data_00_ten_extra = create_extra_tension_data(eps_00, p_00, -10)
+data_09_ten_extra = create_extra_tension_data(eps_09, p_09, -5)
+data_18_ten_extra = create_extra_tension_data(eps_18, p_18, 0)
+data_27_ten_extra = create_extra_tension_data(eps_27, p_27, 5)
+data_36_ten_extra = create_extra_tension_data(eps_36, p_36, 20)
+data_45_ten_extra = create_extra_tension_data(eps_45, p_45, 30)
+#
+# Save the input unloading data in a data frame
+#
+data_00_orig = pd.DataFrame({'TotalStrainVol' : eps_00, 'Pressure' : p_00})
+data_09_orig = pd.DataFrame({'TotalStrainVol' : eps_09, 'Pressure' : p_09})
+data_18_orig = pd.DataFrame({'TotalStrainVol' : eps_18, 'Pressure' : p_18})
+data_27_orig = pd.DataFrame({'TotalStrainVol' : eps_27, 'Pressure' : p_27})
+data_36_orig = pd.DataFrame({'TotalStrainVol' : eps_36, 'Pressure' : p_36})
+data_45_orig = pd.DataFrame({'TotalStrainVol' : eps_45, 'Pressure' : p_45})
+#
+# Convert into loading form (increasing compressive strains)
+#
+data_00_asc = data_00_orig.sort_index(ascending=False)
+data_09_asc = data_09_orig.sort_index(ascending=False)
+data_18_asc = data_18_orig.sort_index(ascending=False)
+data_27_asc = data_27_orig.sort_index(ascending=False)
+data_36_asc = data_36_orig.sort_index(ascending=False)
+data_45_asc = data_45_orig.sort_index(ascending=False)
+#
+# Convert the extra tensile data into compressive loading form
+#
+data_00_ten_asc = data_00_ten_extra.sort_index(ascending=False)
+data_09_ten_asc = data_09_ten_extra.sort_index(ascending=False)
+data_18_ten_asc = data_18_ten_extra.sort_index(ascending=False)
+data_27_ten_asc = data_27_ten_extra.sort_index(ascending=False)
+data_36_ten_asc = data_36_ten_extra.sort_index(ascending=False)
+data_45_ten_asc = data_45_ten_extra.sort_index(ascending=False)
+#
+# Merge the data frames together
+#
+data_00 = data_00_ten_asc.append(data_00_asc, ignore_index = True)
+data_00 = data_00.append(data_00_com_extra, ignore_index = True)
+data_09 = data_09_ten_asc.append(data_09_asc, ignore_index = True)
+data_09 = data_09.append(data_09_com_extra, ignore_index = True)
+data_18 = data_18_ten_asc.append(data_18_asc, ignore_index = True)
+data_18 = data_18.append(data_18_com_extra, ignore_index = True)
+data_27 = data_27_ten_asc.append(data_27_asc, ignore_index = True)
+data_27 = data_27.append(data_27_com_extra, ignore_index = True)
+data_36 = data_36_ten_asc.append(data_36_asc, ignore_index = True)
+data_45 = data_45_ten_asc.append(data_45_asc, ignore_index = True)
+#
+# Extract back into separate strain and pressure variables
+#
+eps_00_extra = data_00.iloc[:,0]
+eps_09_extra = data_09.iloc[:,0]
+eps_18_extra = data_18.iloc[:,0]
+eps_27_extra = data_27.iloc[:,0]
+eps_36_extra = data_36.iloc[:,0]
+eps_45_extra = data_45.iloc[:,0]
+p_00_extra = data_00.iloc[:,1]
+p_09_extra = data_09.iloc[:,1]
+p_18_extra = data_18.iloc[:,1]
+p_27_extra = data_27.iloc[:,1]
+p_36_extra = data_36.iloc[:,1]
+p_45_extra = data_45.iloc[:,1]
+#
+# Set up strains for training 
+#
+eps_p_00 = 0
+strains_00 = np.column_stack((eps_00_extra, np.repeat(eps_p_00, eps_00_extra.shape[0])))
+strains_09 = np.column_stack((eps_09_extra, np.repeat(eps_p_09, eps_09_extra.shape[0])))
+strains_18 = np.column_stack((eps_18_extra, np.repeat(eps_p_18, eps_18_extra.shape[0])))
+strains_27 = np.column_stack((eps_27_extra, np.repeat(eps_p_27, eps_27_extra.shape[0])))
+strains_36 = np.column_stack((eps_36_extra, np.repeat(eps_p_36, eps_36_extra.shape[0])))
+strains_45 = np.column_stack((eps_45_extra, np.repeat(eps_p_45, eps_45_extra.shape[0])))
+# 
+# Collect strains and pressures together
+#
+strains = np.concatenate((strains_00, strains_09, strains_18, strains_27, strains_36, strains_45), axis=0)
+pressures = np.concatenate((p_00_extra, p_09_extra, p_18_extra, p_27_extra, p_36_extra, p_45_extra), axis=0)
+#
+# Do bootstrapped data generation
+#
+data_00_3d = np.column_stack((strains_00, p_00_extra))
+data_09_3d = np.column_stack((strains_09, p_09_extra))
+data_18_3d = np.column_stack((strains_18, p_18_extra))
+data_27_3d = np.column_stack((strains_27, p_27_extra))
+data_36_3d = np.column_stack((strains_36, p_36_extra))
+data_45_3d = np.column_stack((strains_45, p_45_extra))
+data_all =  np.concatenate((data_00_3d, data_00_3d, data_00_3d, data_00_3d, 
+                             data_09_3d, data_09_3d, data_09_3d, 
+                             data_18_3d, data_18_3d, data_18_3d, 
+                             data_27_3d, data_27_3d, 
+                             data_36_3d, data_36_3d, 
+                             data_45_3d), axis=0)          
+#
 # Shuffle the data
+#
 np.random.shuffle(data_all)
 strains_shuffle = data_all[:,(0,1)]
 pressures_shuffle = data_all[:,2]
-
-# Create a support vector regression engine and scale the data
-fitter_shuffle = SVR(kernel='rbf', C=100000, epsilon=0.2)
-fitter_shuffle.fit(scaler.fit_transform(strains_shuffle), pressures_shuffle)
-strains_scaled = scaler.fit_transform(strains)
-
-# Reorganize the data as sequences for prediction
-start_09 = 0
-end_09 = strains_09.shape[0]
-start_18 = end_09
-end_18 = start_18 + strains_18.shape[0]
-start_27 = end_18
-end_27 = start_27 + strains_27.shape[0]
-start_36 = end_27
-end_36 = start_36 + strains_36.shape[0]
-start_45 = end_36
-end_45 = start_45 + strains_45.shape[0]
-
-# Compute predicted pressures
-pressures_pred_09 = fitter_shuffle.predict(strains_scaled[start_09:end_09,:])
-pressures_pred_18 = fitter_shuffle.predict(strains_scaled[start_18:end_18,:])
-pressures_pred_27 = fitter_shuffle.predict(strains_scaled[start_27:end_27,:])
-pressures_pred_36 = fitter_shuffle.predict(strains_scaled[start_36:end_36,:])
-pressures_pred_45 = fitter_shuffle.predict(strains_scaled[start_45:end_45,:])
+#
+# Separate into train and test sets
+#
+eps_train, eps_test, p_train, p_test = train_test_split(strains, pressures, 
+                                                        test_size=0.4, random_state=0)
+#
+# Set up data scaling functions
+#
+strain_scaler = preprocessing.MinMaxScaler()
+strain_scaler_min_max = strain_scaler.fit(strains)
+scaled_strains_train = strain_scaler_min_max.transform(eps_train)
+scaled_strains_test = strain_scaler_min_max.transform(eps_test)
+scaled_strains = strain_scaler_min_max.transform(strains_shuffle)
+#
+pressure_scaler = preprocessing.MinMaxScaler()
+pressure_scaler_min_max = pressure_scaler.fit(pressures.reshape(-1, 1))
+scaled_pressures_train = pressure_scaler_min_max.transform(p_train.reshape(-1, 1))
+scaled_pressures_test = pressure_scaler_min_max.transform(p_test.reshape(-1, 1))
+scaled_pressures = pressure_scaler_min_max.transform(pressures_shuffle.reshape(-1, 1))
+#
+# Do SVR fit
+#
+curve_fitter_1_01 = SVR(kernel='rbf', C=1.0, epsilon=0.01)
+fit1_01 = curve_fitter_1_01.fit(scaled_strains_train, np.ravel(scaled_pressures_train))
+#
+# Compute error norm
+#
+score1_01 = fit1_01.score(scaled_strains_test, scaled_pressures_test)
+#
+# Compute cross validation scores to search the parameter space
+#
+cv = ShuffleSplit(n_splits=10, test_size=0.5, random_state=0)
+scores_1_01 = cross_val_score(curve_fitter_1_01, scaled_strains, np.ravel(scaled_pressures), cv=cv)
+#
+# Define function for computing predicted bulk modulus adn plotting
+#
+def computeAndPlotBulkElastic(svgfile, curve_fitter, C, epsilon):
+    s_pressures_pred_00 = curve_fitter.predict(strain_scaler_min_max.transform(strains_00))
+    s_pressures_pred_09 = curve_fitter.predict(strain_scaler_min_max.transform(strains_09))
+    s_pressures_pred_18 = curve_fitter.predict(strain_scaler_min_max.transform(strains_18))
+    s_pressures_pred_27 = curve_fitter.predict(strain_scaler_min_max.transform(strains_27))
+    s_pressures_pred_36 = curve_fitter.predict(strain_scaler_min_max.transform(strains_36))
+    s_pressures_pred_45 = curve_fitter.predict(strain_scaler_min_max.transform(strains_45)) 
+    
+    pressures_pred_00 = pressure_scaler.inverse_transform(s_pressures_pred_00.reshape(-1,1))
+    pressures_pred_09 = pressure_scaler.inverse_transform(s_pressures_pred_09.reshape(-1,1))
+    pressures_pred_18 = pressure_scaler.inverse_transform(s_pressures_pred_18.reshape(-1,1))
+    pressures_pred_27 = pressure_scaler.inverse_transform(s_pressures_pred_27.reshape(-1,1))
+    pressures_pred_36 = pressure_scaler.inverse_transform(s_pressures_pred_36.reshape(-1,1))
+    pressures_pred_45 = pressure_scaler.inverse_transform(s_pressures_pred_45.reshape(-1,1))
+    
+    # Compute tangent moduli for input data
+    K_00 = np.gradient(p_00_extra*1.0e6, eps_00_extra*0.01)
+    K_09 = np.gradient(p_09_extra*1.0e6, eps_09_extra*0.01)
+    K_18 = np.gradient(p_18_extra*1.0e6, eps_18_extra*0.01)
+    K_27 = np.gradient(p_27_extra*1.0e6, eps_27_extra*0.01)
+    K_36 = np.gradient(p_36_extra*1.0e6, eps_36_extra*0.01)
+    K_45 = np.gradient(p_45_extra*1.0e6, eps_45_extra*0.01)
+    
+    # Compute tangent moduli for predicted data
+    #print(pressures_pred_09.shape, strains_09.shape)
+    K_pred_00 = np.gradient(np.ravel(pressures_pred_00)*1.0e6, strains_00[:,0]*0.01)
+    K_pred_09 = np.gradient(np.ravel(pressures_pred_09)*1.0e6, strains_09[:,0]*0.01)
+    K_pred_18 = np.gradient(np.ravel(pressures_pred_18)*1.0e6, strains_18[:,0]*0.01)
+    K_pred_27 = np.gradient(np.ravel(pressures_pred_27)*1.0e6, strains_27[:,0]*0.01)
+    K_pred_36 = np.gradient(np.ravel(pressures_pred_36)*1.0e6, strains_36[:,0]*0.01)
+    K_pred_45 = np.gradient(np.ravel(pressures_pred_45)*1.0e6, strains_45[:,0]*0.01)
+    
+    # Compute error
+    K_error_00 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_00, K_pred_00))
+    K_error_09 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_09, K_pred_09))
+    K_error_18 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_18, K_pred_18))
+    K_error_27 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_27, K_pred_27))
+    K_error_36 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_36, K_pred_36))
+    K_error_45 = list(map(lambda x, y: 1 if x == 0 else (x - y)/x * 100, K_45, K_pred_45))
+    
+    plot_label = "SVR (C=" + str(C) + ", $\epsilon$=" + str(epsilon) + ")"
+    fig = plt.figure(figsize=(14,6))
+    ax = fig.add_subplot(121)
+    plt.plot(eps_00_extra - eps_p_00, K_00*1.0e-9, 'C5', label=labels[5])
+    plt.plot(eps_09_extra - eps_p_09, K_09*1.0e-9, 'k-', label=labels[0])
+    plt.plot(eps_18_extra - eps_p_18, K_18*1.0e-9, 'C0', label=labels[1])
+    plt.plot(eps_27_extra - eps_p_27, K_27*1.0e-9, 'C3', label=labels[2])
+    plt.plot(eps_36_extra - eps_p_36, K_36*1.0e-9, 'C1', label=labels[3])
+    plt.plot(eps_45_extra - eps_p_45, K_45*1.0e-9, 'C4', label=labels[4])
+    plt.plot(strains_00[:,0] - eps_p_00, K_pred_00*1.0e-9, 'C5--', label=plot_label, linewidth=2)
+    plt.plot(strains_09[:,0] - eps_p_09, K_pred_09*1.0e-9, 'k--', linewidth=2)
+    plt.plot(strains_18[:,0] - eps_p_18, K_pred_18*1.0e-9, 'C0--', linewidth=2)
+    plt.plot(strains_27[:,0] - eps_p_27, K_pred_27*1.0e-9, 'C3--', linewidth=2)
+    plt.plot(strains_36[:,0] - eps_p_36, K_pred_36*1.0e-9, 'C1--', linewidth=2)
+    plt.plot(strains_45[:,0] - eps_p_45, K_pred_45*1.0e-9, 'C4--', linewidth=2)
+    
+    #plt.axis([-10, 45, -10, 50])
+    plt.axis([0, 10, 0, 50])
+    plt.xlabel('Elastic volumetric strain (%)', fontsize=16)
+    plt.ylabel('Tangent buk modulus (GPa)', fontsize=16)
+    ax.legend(loc='best', fontsize=10)  
+    
+    ax = fig.add_subplot(122)
+    plt.plot(eps_00_extra - eps_p_00, K_error_00, 'C5', label=labels[5])
+    plt.plot(eps_09_extra - eps_p_09, K_error_09, 'k', label=labels[0])
+    plt.plot(eps_18_extra - eps_p_18, K_error_18, 'C0', label=labels[1])
+    plt.plot(eps_27_extra - eps_p_27, K_error_27, 'C3', label=labels[2])
+    plt.plot(eps_36_extra - eps_p_36, K_error_36, 'C1', label=labels[3])
+    plt.plot(eps_45_extra - eps_p_45, K_error_45, 'C4', label=labels[4])
+    #plt.axis([0, 14, -3, 4])
+    plt.xlabel('Elastic volumetric strain (%)', fontsize=16)
+    plt.ylabel('Error in predicted modulus (%)', fontsize=16)
+    ax.legend(loc='best', fontsize=10) 
+    
+    #fig.savefig(svgfile)
+#
+# Create plot of the fit
+#
+computeAndPlotBulkElastic('Fox_DrySand_BulkModulus_TotalElasticStrain_Tension_SVR_1_01_scaled_cv.svg', curve_fitter_1_01, 1, 0.01)
+#
+# Extract the SVR parameters for the fit
+#
+print(curve_fitter_1_01.support_.shape, curve_fitter_1_01.support_vectors_.shape,
+      curve_fitter_1_01.dual_coef_.shape, curve_fitter_1_01.fit_status_,
+      curve_fitter_1_01.intercept_)
+#
+# Compute gamma
+#
+gamma = 1/(2*scaled_strains_train.var())
+#
+# Get the scaling parameters
+#
+eps_scale = strain_scaler.scale_
+eps_min = strain_scaler.data_min_
+eps_max = strain_scaler.data_max_
+p_scale = pressure_scaler.scale_
+p_min = pressure_scaler.data_min_
+p_max = pressure_scaler.data_max_
+#
+# Save as JSON
+#
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NumpyArrayEncoder, self).default(obj)
+        
+# Save the scaling parameters, kernel parameters, support vectors, duals, and intercept
+def save_svr_json(json_file, X_var, y_var, X_conv, y_conv, X_scaler, y_scaler, X_train_scaled, fitter):
+    X_scale = X_scaler.scale_
+    X_min = X_scaler.data_min_
+    X_max = X_scaler.data_max_
+    y_scale = y_scaler.scale_
+    y_min = y_scaler.data_min_
+    y_max = y_scaler.data_max_
+    d = X_train_scaled.shape[1]
+    sigma_sq = X_train_scaled.var()
+    gamma = 1/(d*sigma_sq)
+    X_sup_vec = fitter.support_vectors_
+    X_dual = fitter.dual_coef_
+    X_intercept = fitter.intercept_
+    json_data = {}
+    json_data['X_var'] = X_var
+    json_data['y_var'] = y_var
+    json_data['X_conversion_factor'] = X_conv
+    json_data['y_conversion_factor'] = y_conv
+    json_data['X_scale'] = X_scale
+    json_data['X_min'] = X_min
+    json_data['X_max'] = X_max
+    json_data['y_scale'] = y_scale
+    json_data['y_min'] = y_min
+    json_data['y_max'] = y_max
+    json_data['gamma'] = gamma
+    json_data['support_vectors'] = X_sup_vec
+    json_data['dual_coeffs'] = X_dual
+    json_data['intercept'] = X_intercept
+    # Set numpy's printoptions to display all the data with max precision
+    np.set_printoptions(threshold=np.inf,
+                        linewidth=sys.maxsize,
+                        suppress=True,
+                        nanstr='0.0',
+                        infstr='0.0', 
+                        precision=np.finfo(np.longdouble).precision)     
+    with open(json_file, 'w') as outfile:
+        json.dump(json_data, outfile, cls=NumpyEncoder, indent=2)
+#
+save_svr_json('ARL_Sand_SVR_fit_10_001.json', 
+              ['Total volumetric strain (%)', 'Plastic volumetric strain (%)'], 
+              pressure_scaler, scaled_strains_train, curve_fitter_10_001)
 \end{lstlisting}
 
 
