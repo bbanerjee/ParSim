@@ -35,6 +35,7 @@ configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 configure_file(ARL_Sand_SVR_fit_10_001.json ARL_Sand_SVR_fit_10_001.json COPYONLY)
 configure_file(mlp_regression_keras_bulk_elastic_ten_com_scaled_relu_32_400.h5 mlp_regression_keras_bulk_elastic_ten_com_scaled_relu_32_400.h5 COPYONLY)
+configure_file(DrySand_ElasticData_Ten_Com.json DrySand_ElasticData_Ten_Com.json COPYONLY)
 
 #------------------------
 # Vaango libs
