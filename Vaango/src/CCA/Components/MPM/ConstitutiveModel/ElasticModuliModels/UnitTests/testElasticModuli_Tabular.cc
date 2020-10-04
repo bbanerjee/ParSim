@@ -1,4 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_Bulk.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 
@@ -213,7 +214,190 @@ TEST(ElasticModuliTabularTest, predictorTest)
 
     // Create an array of plastic strains
     std::vector<double> eps_v_p  = {0.0, 0.05, 0.0628, 0.10, 0.1451, 0.20, 0.25, 
-                                    0.3019, 0.32, 0.35};
+                                    0.3019, 0.32, 0.35, 0.225};
+
+    /*
+    std::cout << "eps_v_p:\n";
+    std::copy(eps_v_p.begin(), eps_v_p.end(), 
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << "\n";
+    */
+
+    // Create a key-value map to store elastic strains and bulk moduli
+    std::map<double, std::vector<double>> elasticStrains, bulkModuli;
+    std::map<double, std::vector<double>> totalStrains, pressures;
+
+    // Loop thru plastic strains
+    for (auto eps_p : eps_v_p) {
+
+      // Compute elastic strains
+      std::vector<double> eps_v_e;
+      std::transform(eps_v.begin(), eps_v.end(), std::back_inserter(eps_v_e), 
+                     [eps_p](double strain) -> double 
+                     {
+                       return (strain - eps_p);
+                     });
+      /*
+      std::cout << "eps_v_e:\n";
+      std::copy(eps_v_e.begin(), eps_v_e.end(), 
+                std::ostream_iterator<double>(std::cout, " "));
+      std::cout << "\n";
+      */
+
+      // Save the elastic strains
+      elasticStrains[eps_p] = eps_v_e; 
+
+      // Save the total strains
+      totalStrains[eps_p] = eps_v; 
+
+      // Create vectors to store bulk moduli and pressures
+      std::vector<double> K_vals, p_vals;
+
+      // Loop thru elastic strains
+      for (auto eps_e : eps_v_e) {
+
+        // Create a state
+        ModelState_Tabular state;
+        state.elasticStrainTensor = Uintah::Matrix3(-eps_e, 0, 0, 0, 0, 0, 0, 0, 0);
+        state.plasticStrainTensor = Uintah::Matrix3(-eps_p, 0, 0, 0, 0, 0, 0, 0, 0);
+
+        // Compute moduli
+        auto moduli = model.getCurrentElasticModuli(&state);
+
+        // Save bulk modulus
+        K_vals.push_back(moduli.bulkModulus);
+
+        // Compute and save pressures
+        auto pressure = model.getPressure(eps_e, eps_p);
+        p_vals.push_back(pressure);
+      }
+
+      // Add element to the maps
+      bulkModuli[eps_p] = K_vals;
+      pressures[eps_p] = p_vals;
+
+    }
+
+    // Print the moduli
+    /*
+    for (auto K = bulkModuli.begin(); K != bulkModuli.end(); ++K) {
+      std::cout << "eps_v_p = " << K->first << "\n"; 
+      std::cout << "K:\n";
+      std::copy(K->second.begin(), K->second.end(), 
+                std::ostream_iterator<double>(std::cout, " "));
+      std::cout << "\n";
+    }
+    */
+
+    // Print the moduli to a file
+    std::ofstream outfile;
+    outfile.open("Fox_DrySand_BulkModulus_Pred_tabular.csv");
+    for (auto& eps_p : eps_v_p) {
+      outfile << "Elastic Strain, Bulk modulus\n";
+      outfile << eps_p << ", " << eps_p << "\n";
+      auto eps_e = elasticStrains[eps_p];
+      auto K = bulkModuli[eps_p];
+
+      auto eps_iter = eps_e.begin();
+      auto K_iter = K.begin(); 
+      for (; K_iter != K.end(); ++eps_iter, ++K_iter) {
+        outfile << *eps_iter << ", " << *K_iter << "\n";
+      }
+    }
+    outfile.close();
+
+    // Print the pressures to a file
+    outfile.open("Fox_DrySand_Pressure_Pred_tabular.csv");
+    for (auto& eps_p : eps_v_p) {
+      outfile << "Total Strain, Pressure\n";
+      outfile << eps_p << ", " << eps_p << "\n";
+      auto eps = totalStrains[eps_p];
+      auto p = pressures[eps_p];
+
+      auto eps_iter = eps.begin();
+      auto p_iter = p.begin(); 
+      for (; p_iter != p.end(); ++eps_iter, ++p_iter) {
+        outfile << *eps_iter << ", " << *p_iter << "\n";
+      }
+    }
+    outfile.close();
+
+  } catch (...) {
+    throw;
+  }
+}
+
+TEST(ElasticModuliTabularTest, bulkPredictorTest)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular_bulk");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", 
+              BAD_CAST "DrySand_BulkModulusData_Ten_Com.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "PlasticStrainVol, ElasticStrainVol");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "BulkModulus");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "G0", 
+              BAD_CAST "1.0e4");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "nu", 
+              BAD_CAST "0.2");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    throw;
+  }
+
+  // Test model creation
+  try {
+    ElasticModuli_Tabular_Bulk model(ps);
+  } catch (Uintah::ProblemSetupException& e) {
+    std::cout << e.message() << "\n";
+    throw;
+  } catch (Uintah::InvalidValue& e) {
+    std::cout << e.message() << "\n";
+    throw;
+  } catch (Uintah::Exception& e) {
+    std::cout << e.message() << "\n";
+    throw;
+  } catch (...) {
+    std::cout << "**ERROR** Unknown exception during model creation\n";
+    throw;
+  }
+
+  try {
+
+    // Create a model
+    ElasticModuli_Tabular_Bulk model(ps);
+
+    // Create an array of total strains
+    auto eps_v = Vaango::Util::linspace(0, 0.5, 100);
+
+    /*
+    std::cout << "eps_v:\n";
+    std::copy(eps_v.begin(), eps_v.end(), 
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << "\n";
+    */
+
+    // Create an array of plastic strains
+    std::vector<double> eps_v_p  = {0.0, 0.05, 0.0628, 0.10, 0.1451, 0.20, 0.25, 
+                                    0.3019, 0.32, 0.35, 0.225};
 
     /*
     std::cout << "eps_v_p:\n";
@@ -245,7 +429,7 @@ TEST(ElasticModuliTabularTest, predictorTest)
       // Save the elastic strains
       elasticStrains[eps_p] = eps_v_e; 
 
-      // Create a std::vector to store bulk moduli
+      // Create vectors to store bulk moduli and pressures
       std::vector<double> K_vals;
 
       // Loop thru elastic strains
@@ -263,7 +447,7 @@ TEST(ElasticModuliTabularTest, predictorTest)
         K_vals.push_back(moduli.bulkModulus);
       }
 
-      // Add element to the map
+      // Add element to the maps
       bulkModuli[eps_p] = K_vals;
     }
 
@@ -280,7 +464,7 @@ TEST(ElasticModuliTabularTest, predictorTest)
 
     // Print the moduli to a file
     std::ofstream outfile;
-    outfile.open("Fox_DrySand_BulkModulus_Pred_tabular.csv");
+    outfile.open("Fox_DrySand_BulkModulus_Pred_tabular_bulk.csv");
     for (auto& eps_p : eps_v_p) {
       outfile << "Elastic Strain, Bulk modulus\n";
       outfile << eps_p << ", " << eps_p << "\n";
@@ -288,7 +472,7 @@ TEST(ElasticModuliTabularTest, predictorTest)
       auto K = bulkModuli[eps_p];
 
       auto eps_iter = eps_e.begin();
-       auto K_iter = K.begin(); 
+      auto K_iter = K.begin(); 
       for (; K_iter != K.end(); ++eps_iter, ++K_iter) {
         outfile << *eps_iter << ", " << *K_iter << "\n";
       }

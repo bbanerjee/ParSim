@@ -22,19 +22,18 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_Bulk.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-//#define COMPUTE_BULK_MODULUS_FROM_PRESSURE
 //#define DEBUG_INTERPOLATION
 
 using namespace Vaango;
 
 // Construct a default elasticity model.
-ElasticModuli_Tabular::ElasticModuli_Tabular(Uintah::ProblemSpecP& ps)
+ElasticModuli_Tabular_Bulk::ElasticModuli_Tabular_Bulk(Uintah::ProblemSpecP& ps)
   : d_bulk(ps)
 {
   ps->require("G0", d_shear.G0);
@@ -47,7 +46,7 @@ ElasticModuli_Tabular::ElasticModuli_Tabular(Uintah::ProblemSpecP& ps)
 // Check that the input parameters are reasonable
 //--------------------------------------------------------------
 void
-ElasticModuli_Tabular::checkInputParameters()
+ElasticModuli_Tabular_Bulk::checkInputParameters()
 {
   std::ostringstream warn;
 
@@ -59,17 +58,17 @@ ElasticModuli_Tabular::checkInputParameters()
 }
 
 // Construct a copy of a elasticity model.
-ElasticModuli_Tabular::ElasticModuli_Tabular(const ElasticModuli_Tabular* model)
+ElasticModuli_Tabular_Bulk::ElasticModuli_Tabular_Bulk(const ElasticModuli_Tabular_Bulk* model)
 {
   d_bulk = model->d_bulk;
   d_shear = model->d_shear;
 }
 
 void
-ElasticModuli_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
+ElasticModuli_Tabular_Bulk::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   Uintah::ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
-  elasticModuli_ps->setAttribute("type", "tabular");
+  elasticModuli_ps->setAttribute("type", "tabular_bulk");
 
   d_bulk.table.outputProblemSpec(elasticModuli_ps);
 
@@ -79,7 +78,7 @@ ElasticModuli_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
 
 // Compute the elastic moduli
 ElasticModuli
-ElasticModuli_Tabular::getInitialElasticModuli() const
+ElasticModuli_Tabular_Bulk::getInitialElasticModuli() const
 {
   double K = computeBulkModulus(1.0e-6, 0);
   double G = computeShearModulus(K);
@@ -87,7 +86,7 @@ ElasticModuli_Tabular::getInitialElasticModuli() const
 }
 
 ElasticModuli
-ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input) const
+ElasticModuli_Tabular_Bulk::getCurrentElasticModuli(const ModelStateBase* state_input) const
 {
   const ModelState_Tabular* state =
     static_cast<const ModelState_Tabular*>(state_input);
@@ -100,21 +99,14 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
   }
   */
 
+  // Make sure the quantities are positive in compression
+  double ev_e_bar = -(state->elasticStrainTensor).Trace();
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();
+  ev_p_bar = (ev_p_bar < 0) ? 0 : ev_p_bar;
+  ev_e_bar = (ev_p_bar < 0) ? ev_e_bar + ev_p_bar : ev_e_bar;
+
   // Compute the elastic moduli
-  #ifdef COMPUTE_BULK_MODULUS_FROM_PRESSURE
-    double p_bar = -state->I1/3.0;
-    double ev_p_bar = -(state->plasticStrainTensor).Trace();
-    ev_p_bar = (ev_p_bar < 0) ? 0 : ev_p_bar;
-    ev_e_bar = (ev_p_bar < 0) ? ev_e_bar + ev_p_bar : ev_e_bar;
-    double K = computeBulkModulusPressure(p_bar, ev_p_bar);
-  #else
-    // Make sure the quantities are positive in compression
-    double ev_e_bar = -(state->elasticStrainTensor).Trace();
-    double ev_p_bar = -(state->plasticStrainTensor).Trace();
-    ev_p_bar = (ev_p_bar < 0) ? 0 : ev_p_bar;
-    ev_e_bar = (ev_p_bar < 0) ? ev_e_bar + ev_p_bar : ev_e_bar;
-    double K = computeBulkModulus(ev_e_bar, ev_p_bar);
-  #endif
+  double K = computeBulkModulus(ev_e_bar, ev_p_bar);
   double G = computeShearModulus(K);
 
   #ifdef DEBUG_INTERPOLATION
@@ -127,15 +119,14 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
   return ElasticModuli(K, G);
 }
 
-/*! Get pressure from table */
 double 
-ElasticModuli_Tabular::getPressure(const double& elasticVolStrain,
-                                   const double& plasticVolStrain) const
+ElasticModuli_Tabular_Bulk::computeBulkModulus(const double& elasticVolStrain,
+                                               const double& plasticVolStrain) const
 {
-  DoubleVec1D pressure;
+  DoubleVec1D K;
   try {
-    pressure = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, plasticVolStrain+elasticVolStrain}});
+    K = 
+      d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain}});
   } catch (Uintah::InvalidValue& e) {
     std::ostringstream out;
     out << "**WARNING** In computeBulkModulus (Low):"
@@ -144,81 +135,21 @@ ElasticModuli_Tabular::getPressure(const double& elasticVolStrain,
         << e.message();
     throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
   }
-  return pressure[0];
-}
-
-double 
-ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
-                                          const double& plasticVolStrain) const
-{
-  double epsilon = 1.0e-3;
-  DoubleVec1D pressure_lo;
-  try {
-    pressure_lo = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, plasticVolStrain+elasticVolStrain-epsilon}});
-  } catch (Uintah::InvalidValue& e) {
-    std::ostringstream out;
-    out << "**WARNING** In computeBulkModulus (Low):"
-        << " elasticVolStrain = " << elasticVolStrain-epsilon
-        << " plasticVolStrain = " << plasticVolStrain << "\n"
-        << e.message();
-    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
-  }
-
-  DoubleVec1D pressure_hi;
-  try {
-    pressure_hi = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, plasticVolStrain+elasticVolStrain+epsilon}});
-  } catch (Uintah::InvalidValue& e) {
-    std::ostringstream out;
-    out << "**WARNING** In computeBulkModulus (High):"
-        << " elasticVolStrain = " << elasticVolStrain+epsilon
-        << " plasticVolStrain = " << plasticVolStrain << "\n"
-        << e.message();
-    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
-  }
-
-  double K = (pressure_hi[0] - pressure_lo[0])/(2*epsilon);
 
   #ifdef DEBUG_INTERPOLATION
     if (K < 0 || !std::isfinite(K)) {
       std::cout <<std::setprecision(16) 
-                << "ee_v_lo = " << elasticVolStrain-epsilon
-                << " ep_v_lo = " << plasticVolStrain
-                << " p_lo = " << pressure_lo[0] << "\n";
-      std::cout << std::setprecision(16) 
-                << "ee_v_hi = " << elasticVolStrain+epsilon
-                << " ep_v_hi = " << plasticVolStrain
-                << " p_hi = " << pressure_hi[0] << "\n";
-      std::cout << std::setprecision(16) 
-                << " p_hi - p_lo = " << (pressure_hi[0] - pressure_lo[0])
-                << " K = " << (pressure_hi[0] - pressure_lo[0])/(2*epsilon) << "\n";
+                << "ee_v = " << elasticVolStrai
+                << " ep_v = " << plasticVolStrain
+                << " K = " << K[0] << "\n";
     }
   #endif
 
-  return K;
+  return K[0];
 }
 
 double 
-ElasticModuli_Tabular::computeBulkModulusPressure(double pressure,
-                                                  double plasticVolStrain) const
-{
-  double K;
-  try {
-    K = d_bulk.table.computeDerivative(plasticVolStrain, pressure);
-  } catch (Uintah::InvalidValue& e) {
-    std::ostringstream out;
-    out << "**WARNING** In computeBulkModulusPressure :"
-        << " pressure = " << pressure
-        << " plasticVolStrain = " << plasticVolStrain << "\n"
-        << e.message();
-    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
-  }
-  return K;
-}
-
-double 
-ElasticModuli_Tabular::computeShearModulus(const double& K) const
+ElasticModuli_Tabular_Bulk::computeShearModulus(const double& K) const
 {
   double nu = d_shear.nu;
   double G = (nu > -1.0 && nu < 0.5) 
@@ -230,7 +161,7 @@ ElasticModuli_Tabular::computeShearModulus(const double& K) const
 /* Get the elastic moduli and their derivatives with respect to a single
    plastic internal variable */
 std::pair<ElasticModuli, ElasticModuli>
-ElasticModuli_Tabular::getElasticModuliAndDerivatives(const ModelStateBase* state_input) const
+ElasticModuli_Tabular_Bulk::getElasticModuliAndDerivatives(const ModelStateBase* state_input) const
 {
   const ModelState_Tabular* state =
     dynamic_cast<const ModelState_Tabular*>(state_input);
@@ -264,17 +195,21 @@ ElasticModuli_Tabular::getElasticModuliAndDerivatives(const ModelStateBase* stat
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_Tabular::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_Tabular_Bulk::computeDModuliDIntVar(const ModelStateBase* state) const
 {
+  auto K_dK = getElasticModuliAndDerivatives(state);
   std::vector<ElasticModuli> derivs;
+  derivs.push_back(K_dK.second);
   return derivs;
 }
 
 /*! Compute moduli and derivatives of moduli with respect to internal variables */
 std::pair<ElasticModuli, std::vector<ElasticModuli>>
-ElasticModuli_Tabular::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_Tabular_Bulk::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
 {
-  ElasticModuli moduli = getCurrentElasticModuli(state);
+  auto K_dK = getElasticModuliAndDerivatives(state);
+  auto moduli = K_dK.first;
   std::vector<ElasticModuli> derivs;
+  derivs.push_back(K_dK.second);
   return std::make_pair(moduli, derivs);
 }

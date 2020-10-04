@@ -33,6 +33,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arena.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_ArenaMixture.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular_Bulk.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_MetalIso.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_NeuralNet.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_NeuralNet_Bulk.cc

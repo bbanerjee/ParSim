@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ___ELASTIC_MODULI_TABULAR_MODEL_H__
-#define ___ELASTIC_MODULI_TABULAR_MODEL_H__
+#ifndef __ELASTIC_MODULI_TABULAR_BULK_MODEL_H__
+#define __ELASTIC_MODULI_TABULAR_BULK_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
@@ -34,22 +34,22 @@
 
 namespace Vaango {
 
-/*! \class ElasticModuli_Tabular
- *  \brief A tabular elasticity model
+/*! \class ElasticModuli_Tabular_Bulk
+ *  \brief A tabular elasticity model that reads in bulk modulus vs. elastic strain data
  *  \author Biswajit Banerjee,
  */
-class ElasticModuli_Tabular : public ElasticModuliModel
+class ElasticModuli_Tabular_Bulk : public ElasticModuliModel
 {
 
 public:
 
-  ElasticModuli_Tabular() = delete;
-  ElasticModuli_Tabular(const ElasticModuli_Tabular& smm) = delete;
-  ~ElasticModuli_Tabular() = default;
+  ElasticModuli_Tabular_Bulk() = delete;
+  ElasticModuli_Tabular_Bulk(const ElasticModuli_Tabular_Bulk& smm) = delete;
+  ~ElasticModuli_Tabular_Bulk() = default;
 
-  ElasticModuli_Tabular(Uintah::ProblemSpecP& ps);
-  ElasticModuli_Tabular(const ElasticModuli_Tabular* smm);
-  ElasticModuli_Tabular& operator=(const ElasticModuli_Tabular& smm) = delete;
+  ElasticModuli_Tabular_Bulk(Uintah::ProblemSpecP& ps);
+  ElasticModuli_Tabular_Bulk(const ElasticModuli_Tabular_Bulk* smm);
+  ElasticModuli_Tabular_Bulk& operator=(const ElasticModuli_Tabular_Bulk& smm) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -88,10 +88,6 @@ public:
   std::pair<ElasticModuli, std::vector<ElasticModuli>>
   computeModuliAndDModuliDIntVar(const ModelStateBase* state) const override;
 
-  /*! Get pressure from table */
-  double getPressure(const double& elasticVolStrain,
-                     const double& plasticVolStrain) const;
-
 private:
 
   /* Tangent bulk modulus parameters */
@@ -128,11 +124,9 @@ private:
 
   double computeBulkModulus(const double& elasticVolStrain,
                             const double& plasticVolStrain) const;
-  double computeBulkModulusPressure(double pressure,
-                                    double plasticVolStrain) const;
   double computeShearModulus(const double& bulkModulus) const;
 
 };
 } // End namespace Vaango
 
-#endif // __ELASTIC_MODULI_TABULAR_MODEL_H__
+#endif // __ELASTIC_MODULI_TABULAR_BULK_MODEL_H__
