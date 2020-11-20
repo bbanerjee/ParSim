@@ -105,6 +105,9 @@ getClosestSegmentsBinarySearch(const Uintah::Point& pt,
                                std::vector<Uintah::Point>& segments);
 std::tuple<Uintah::Point, std::size_t, double>
 closestPointBinarySearch(const Uintah::Point P0,
+                         const std::vector<Uintah::Point>& polyline);
+std::tuple<Uintah::Point, std::size_t, double>
+closestPointBinarySearch(const Uintah::Point P0,
                          std::vector<Uintah::Point>::const_iterator poly_begin,
                          std::vector<Uintah::Point>::const_iterator poly_end,
                          const std::vector<Uintah::Point>& poly_orig);

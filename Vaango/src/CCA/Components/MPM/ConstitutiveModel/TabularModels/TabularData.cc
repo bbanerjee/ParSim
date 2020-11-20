@@ -623,6 +623,26 @@ TabularData::interpolateLinearSpline<1>(
   return depVals;
 }
 
+/*!
+ * Assumes that data are in ascending order of the first independent variable
+ * followed by ascending order of the second independent variable.
+ * y1 = y(x11, x21)
+ * y2 = y(x12, x22) 
+ * ...
+ * yp = y(x1p, x2p)
+ *
+ * x11 < x12 < ... < x1p, 
+ *
+ * x21 = {a1, a2, .., an}, a1 < a2 < ... < an
+ * x22 = {b1, b2, .., bm}, b1 < b2 < ... < bm
+ * ...
+ * x2p = {q1, q2, .., qr}, q1 < q2 < ... < qr
+ *
+ * y1 = {y1_1, y1_2, ..., y1_n}
+ * y2 = {y2_1, y2_2, ..., y2_m}
+ * ...
+ * yp = {yp_1, yp_2, ..., yp_r}
+ */
 template <>
 DoubleVec1D
 TabularData::interpolateLinearSpline<2>(
@@ -704,6 +724,7 @@ TabularData::interpolateLinearSpline<2>(
 
   return depVals;
 }
+
 
 template <>
 DoubleVec1D

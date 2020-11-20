@@ -94,7 +94,7 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
   */
 }
 
-/* Checks whethere three points are in counter-clockwise order */
+/* Checks whether three points are in counter-clockwise order */
 double
 checkOrder(const Uintah::Point& p1, const Uintah::Point& p2,
            const Uintah::Point& p3)
@@ -293,6 +293,50 @@ getClosestSegmentsBinarySearch(const Uintah::Point& pt,
   }
 
   return closest_index;
+}
+
+/*!
+ *  Use angles to do binary search for the nearest point of the polyline
+ */
+std::tuple<Uintah::Point, std::size_t, double>
+closestPointBinarySearch(const Uintah::Point P0,
+                         const std::vector<Uintah::Point>& polyline)
+{
+
+  /* Locate mid point */
+  auto P_start = polyline.front();
+  auto P_end = polyline.back();
+  auto P_mid = (P_start + P_end) * 0.5;
+
+  /* Compute the basis */
+  Uintah::Vector e1 = (P_end - P_mid).asVector();
+  e1 /= e1.length2();
+  auto e2 = Cross(e1, Uintah::Vector(0, 0, 1));
+
+  /* Compute angle to P0 */
+  auto v0 = P0 - P_mid;
+  double v_x = Dot(v0, e1);
+  double v_y = Dot(v0, e2);
+  double angle0 = std::atan2(v_y, v_x);
+
+  /* Compute angles for polyline points */
+  std::vector<double> angles(polyline.size());
+  for (auto ii = 0u; ii < polyline.size(); ++ii) {
+    auto vv = polyline[ii] - P_mid;
+    v_x = Dot(vv, e1);
+    v_y = Dot(vv, e2);
+    angles[ii]= std::atan2(v_y, v_x);
+  }
+
+  // Do binary search to find first angle greater than angle0
+  auto low_iter = std::lower_bound(angles.begin(), angles.end(), angle0);
+
+  // Extract the point, index, and distance
+  auto index_near = low_iter - angles.begin();
+  auto P_near = polyline[index_near];
+  auto dist_near = (P0 - P_near).length2();
+
+  return std::make_tuple(P_near, index_near, dist_near);
 }
 
 std::tuple<Uintah::Point, std::size_t, double>
