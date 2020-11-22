@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/nanoflann.hpp>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>
 #include <iostream>
@@ -247,6 +248,85 @@ getClosestSegments(const Uintah::Point& pt,
   return close_index;
 }
 
+/*!
+ * PointCloud template class for nanoflann kd-tree indexing
+ */
+struct PointCloud
+{
+  std::vector<Uintah::Point> pts;
+
+  PointCloud(const std::vector<Uintah::Point>& polyline)
+  {
+    pts = polyline;
+  }
+  
+  inline size_t kdtree_get_point_count() const { return pts.size(); }
+
+  inline double kdtree_get_pt(const size_t idx, const size_t dim) const
+  {
+    if (dim == 0) return pts[idx].x();
+    else if (dim == 1) return pts[idx].y();
+    else return pts[idx].z();
+  }
+
+  template <class BBOX>
+  bool kdtree_get_bbox(BBOX& bb) const { return false; }
+};
+
+/*!
+ * Use KD-Tree to find nearest segments (three nearest points) of the polyline
+ */
+std::size_t
+getClosestSegmentsKDTree(const Uintah::Point& pt,
+                         const std::vector<Uintah::Point>& polyline,
+                         std::vector<Uintah::Point>& segments)
+{
+  // Set up the query point
+  double query_pt[2] = { pt.x(), pt.y() };
+
+  // Construct kd-tree index
+  PointCloud cloud(polyline);
+  using KDTree_t =  nanoflann::KDTreeSingleIndexAdaptor<
+                               nanoflann::L2_Simple_Adaptor<double, PointCloud>,
+                               PointCloud, 2 /* dim */>;
+  KDTree_t index(2 /*dim*/, cloud, 
+                 nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
+  index.buildIndex();
+
+  // Search for the nearest point
+  const size_t num_results = 1;
+  size_t min_index;
+  double out_dist_sqr;
+  nanoflann::KNNResultSet<double> resultSet(num_results);
+  resultSet.init(&min_index, &out_dist_sqr);
+  index.findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+
+  //std::cout << "knnSearch(nn=" << num_results << "): \n";
+  //std::cout << "index: " << min_index << ",\t"
+  //          << "dist: " << out_dist_sqr << ",\t"
+  //          << "point: (" << cloud.pts[min_index].x()
+  //          << ", " << cloud.pts[min_index].y() << ")\n";
+
+  // Set up the segments
+  auto close_index = min_index;
+  if (min_index == 0) {
+    segments.push_back(polyline[min_index]);
+    segments.push_back(polyline[min_index+1]);
+    segments.push_back(polyline[min_index+2]);
+    close_index = min_index+1;
+  } else if (min_index == polyline.size()-1) {
+    segments.push_back(polyline[min_index-2]);
+    segments.push_back(polyline[min_index-1]);
+    segments.push_back(polyline[min_index]);
+  } else {
+    segments.push_back(polyline[min_index-1]);
+    segments.push_back(polyline[min_index]);
+    segments.push_back(polyline[min_index+1]);
+  }
+
+  return close_index;
+}
+
 /**
  *  Find three sequential points (two sequential yield surface segments) 
  *  that are closest to an input point (using a binary search)
@@ -309,24 +389,29 @@ closestPointBinarySearch(const Uintah::Point P0,
   auto P_mid = (P_start + P_end) * 0.5;
 
   /* Compute the basis */
-  Uintah::Vector e1 = (P_end - P_mid).asVector();
-  e1 /= e1.length2();
-  auto e2 = Cross(e1, Uintah::Vector(0, 0, 1));
+  auto e1 = (P_start - P_mid).asVector();
+  e1 /= e1.length();
+  auto e2 = Cross(Uintah::Vector(0, 0, 1), e1);
+  e2 /= e2.length();
+  //std::cout << "e1 = " << e1 << " e2 = " << e2 << "\n";
 
   /* Compute angle to P0 */
-  auto v0 = P0 - P_mid;
+  auto v0 = (P0 - P_mid).asVector();
   double v_x = Dot(v0, e1);
   double v_y = Dot(v0, e2);
   double angle0 = std::atan2(v_y, v_x);
+  //std::cout << "Center = " << P_mid << " Angles: " << angle0 << ", ";
 
   /* Compute angles for polyline points */
   std::vector<double> angles(polyline.size());
   for (auto ii = 0u; ii < polyline.size(); ++ii) {
-    auto vv = polyline[ii] - P_mid;
+    auto vv = (polyline[ii] - P_mid).asVector();
     v_x = Dot(vv, e1);
     v_y = Dot(vv, e2);
     angles[ii]= std::atan2(v_y, v_x);
+    //std::cout << angles[ii] << ", ";
   }
+  //std::cout << "\n";
 
   // Do binary search to find first angle greater than angle0
   auto low_iter = std::lower_bound(angles.begin(), angles.end(), angle0);
@@ -335,6 +420,8 @@ closestPointBinarySearch(const Uintah::Point P0,
   auto index_near = low_iter - angles.begin();
   auto P_near = polyline[index_near];
   auto dist_near = (P0 - P_near).length2();
+
+  //std::cout << "Near = " << P_near << " ind = " << index_near << " dist = " << dist_near << "\n";
 
   return std::make_tuple(P_near, index_near, dist_near);
 }

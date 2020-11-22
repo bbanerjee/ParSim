@@ -139,6 +139,68 @@ TEST(YieldCondUtilsTest, findClosestPoint)
   }
 }
 
+TEST(YieldCondUtilsTest, closestPointBinarySearch)
+{
+  std::vector<Point> poly = {{
+    Point(-692.82, -866.025, 0), Point(-17.3205, -173.205, 0), 
+    Point(17.3205, 0, 0),        Point(-17.3205, 173.205, 0), 
+    Point(-692.82, 866.025, 0),  Point(-1385.64, 1039.23, 0), 
+    Point(-2771.28, 1212.44, 0), Point(-5542.56, 1385.64, 0), 
+    Point(-11085.1, 1558.85, 0), Point(-11639.4, 1576.17, 0), 
+    Point(-11694.8, 1577.9, 0) 
+  }};
+  {
+    Point pt(3464.1, 6928.2, 0);
+    Point min_pt(0, 0, 0);
+    size_t min_index = 0;
+    double min_dist = 0.0;
+    std::tie(min_pt, min_index, min_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, poly);
+    //EXPECT_NEAR(min_pt.x(), -6.9282e+02, 1.0e-10);
+    //EXPECT_NEAR(min_pt.y(), 8.66025e+02, 1.0e-10);
+  }
+  {
+    Point pt(-3464.1, 6928.2, 0);
+    Point min_pt(0, 0, 0);
+    size_t min_index = 0;
+    double min_dist = 0.0;
+    std::tie(min_pt, min_index, min_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, poly);
+    //EXPECT_NEAR(min_pt.x(), -3.8172391454861686e+03, 1.0e-10);
+    //EXPECT_NEAR(min_pt.y(), 1.2778105594520239e+03, 1.0e-10);
+  }
+  {
+    Point pt(5196.15, 0, 0);
+    Point min_pt(0, 0, 0);
+    size_t min_index = 0;
+    double min_dist = 0.0;
+    std::tie(min_pt, min_index, min_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, poly);
+    //EXPECT_NEAR(min_pt.x(), 1.73205e+01, 1.0e-10);
+    //EXPECT_NEAR(min_pt.y(), 0, 1.0e-10);
+  }
+  {
+    Point pt(5196.15, 1732.05, 0);
+    Point min_pt(0, 0, 0);
+    size_t min_index = 0;
+    double min_dist = 0.0;
+    std::tie(min_pt, min_index, min_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, poly);
+    //EXPECT_NEAR(min_pt.x(), -1.73205e+01, 1.0e-10);
+    //EXPECT_NEAR(min_pt.y(), 1.73205e+02, 1.0e-10);
+  }
+  {
+    Point pt(-5196.15, 1732.05, 0);
+    Point min_pt(0, 0, 0);
+    size_t min_index = 0;
+    double min_dist = 0.0;
+    std::tie(min_pt, min_index, min_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, poly);
+    //EXPECT_NEAR(min_pt.x(), -5.2190635849151222e+03, 1.0e-10);
+    //EXPECT_NEAR(min_pt.y(), 1.3654220577160372e+03, 1.0e-10);
+  }
+}
+
 TEST(YieldCondUtilsTest, findClosestSegments)
 {
   std::vector<Point> poly = {{
@@ -175,6 +237,50 @@ TEST(YieldCondUtilsTest, findClosestSegments)
     std::vector<Point> min_seg;
     Point pt(-5196.15, 1732.05, 0);
     auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 5);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+  }
+}
+
+TEST(YieldCondUtilsTest, findClosestSegmentsKDTree)
+{
+  std::vector<Point> poly = {{
+    Point(17.3205, 0, 0),        Point(-17.3205, 173.205, 0), 
+    Point(-692.82, 866.025, 0),  Point(-1385.64, 1039.23, 0), 
+    Point(-2771.28, 1212.44, 0), Point(-5542.56, 1385.64, 0), 
+    Point(-11085.1, 1558.85, 0)
+  }};
+  {
+    std::vector<Point> min_seg;
+    Point pt(3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegmentsKDTree(pt, poly, min_seg);
+    EXPECT_EQ(index, 2);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegmentsKDTree(pt, poly, min_seg);
+    EXPECT_EQ(index, 4);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 0, 0);
+    auto index = Vaango::Util::getClosestSegmentsKDTree(pt, poly, min_seg);
+    EXPECT_EQ(index, 1);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegmentsKDTree(pt, poly, min_seg);
+    EXPECT_EQ(index, 1);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegmentsKDTree(pt, poly, min_seg);
     EXPECT_EQ(index, 5);
     //std::cout << "index = " << index;
     //std::copy(min_seg.begin(), min_seg.end(),

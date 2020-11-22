@@ -86,6 +86,14 @@ getClosestSegments(const Uintah::Point& pt,
                    const std::vector<Uintah::Point>& poly,
                    std::vector<Uintah::Point>& segments);
 
+/*!
+ * Use KD-Tree to find nearest segments (three nearest points) of the polyline
+ */
+std::size_t
+getClosestSegmentsKDTree(const Uintah::Point& pt,
+                         const std::vector<Uintah::Point>& polyline,
+                         std::vector<Uintah::Point>& segments);
+
 /**
  *  Find three sequential points (two sequential yield surface segments) 
  *  that are closest to an input point (using a binary search)
