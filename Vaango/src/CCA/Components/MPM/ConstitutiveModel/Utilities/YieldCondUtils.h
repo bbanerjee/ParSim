@@ -22,6 +22,17 @@ enum class YieldStatus
   HAS_YIELDED
 };
 
+/* Various algorithm flags */
+enum class YieldAlgorithm
+{
+  TABULAR_LINEAR_SEARCH,
+  TABULAR_KDTREE_SEARCH,
+  TABULAR_BINARY_SEARCH
+};
+
+/* Constant expressions */
+constexpr int NUM_PTS_KDTREE_SWITCH = 30; /* Number of points above which kd-tree is used */
+
 /* Type trait for static asserts in class methods that should not be called */
 template <typename T>
 struct DoNotUse : std::false_type

@@ -279,10 +279,10 @@ YieldCond_TabularCap::saveAsPolyline()
     d_polyline.push_back(Point(extra1));
     d_polyline.push_back(Point(extra2));
   }
-  std::copy(d_polyline.begin(),
-            d_polyline.end(),
-            std::ostream_iterator<Point>(std::cout, " "));
-  std::cout << std::endl;
+  //std::copy(d_polyline.begin(),
+  //          d_polyline.end(),
+  //          std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
 }
 
 /* Compute normal at each point on the yield surface */
@@ -550,12 +550,18 @@ YieldCond_TabularCap::checkClosestPointDistance(
 
   // Find the closest segments
   Polyline p_J2_segments;
+  std::size_t closest_index = 0;
 #ifdef DO_BINARY_CLOSEST_SEGMENT
-  std::size_t closest_index = Vaango::Util::getClosestSegmentsBinarySearch(
-    trial_pt, yield_f_pts, p_J2_segments);
+  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(trial_pt, yield_f_pts, 
+                                                               p_J2_segments);
 #else
-  std::size_t closest_index =
-    Vaango::Util::getClosestSegments(trial_pt, yield_f_pts, p_J2_segments);
+  if (yield_f_pts.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
+    closest_index = Vaango::Util::getClosestSegments(trial_pt, yield_f_pts, 
+                                                     p_J2_segments);
+  } else {
+    closest_index = Vaango::Util::getClosestSegmentsKDTree(trial_pt, yield_f_pts, 
+                                                           p_J2_segments);
+  }
 #endif
 
   // Get the yield surface points for the closest segments
@@ -671,15 +677,8 @@ YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
  *                        = df/dJ2 s
 */
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-Matrix3
-YieldCond_TabularCap::df_dsigma(const ModelStateBase* state) 
-{
-  return df_dsigma(Vaango::Util::Identity, state);
-}
-
 Uintah::Matrix3
-YieldCond_TabularCap::df_dsigma(const Matrix3&,
-                                const ModelStateBase* state_input)
+YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input) 
 {
   const ModelState_TabularCap* state =
     static_cast<const ModelState_TabularCap*>(state_input);
@@ -699,22 +698,73 @@ YieldCond_TabularCap::df_dsigma(const Matrix3&,
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 <<
-  // "\n";
+  std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 << "\n";
 
-  double dfdp  = df_dp(state);
-  double dfdJ2 = df_dq(state);
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
-  // std::cout << "df_dp = " << df_dp << " df_dJ2 = " << df_dJ2 << "\n";
+  // Find the closest point in the transformed 2D stress space
+  double p_bar   = -state->I1 / 3;
+  double sqrt_J2 = state->sqrt_J2;
+  double z = 0.0, rprime = 0.0;
+  Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
+
+  double closest_z = 0.0, closest_rprime = 0.0;
+  double tangent_z = 0.0, tangent_rprime = 0.0;
+  getClosestPointAndTangent(
+    state, z, rprime, closest_z, closest_rprime, tangent_z, tangent_rprime);
+
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
+  Vaango::Util::revertFromZRprime(
+    sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
+  Vaango::Util::revertFromZRprime(
+    sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
+
+  #ifdef DEBUG_CLOSEST_POINT
+  std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
+            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
+            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
+            "\n";
+  #endif
+
+  // Check that the closest point is not at the vertex
+  double p_bar_min = d_I1bar_min / 3.0;
+  double epsilon = 1.0e-6;
+  if (closest_p_bar - epsilon < p_bar_min) {
+    return Util::large_number;
+  }
+
+  // Compute df_dp
+  double dfdp =
+    (tangent_p_bar == 0) ? Util::large_number : tangent_sqrt_J2 / tangent_p_bar;
+
+  // Compute df_dsqrt(J2)
+  double dfdJ2 =
+    (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
+
+  std::cout << "df_dp = " << dfdp << " df_dJ2 = " << dfdJ2 << "\n";
+
+  // Compute stress tensor at closest point
+  double s_factor = (state->sqrt_J2 == 0) ? 
+                    Util::large_number : closest_sqrt_J2 / state->sqrt_J2;
+  Matrix3 s_closest = state->deviatoricStressTensor * s_factor;
 
   Matrix3 p_term = Util::Identity * (dfdp / 3.0);
-  Matrix3 s_term = state->deviatoricStressTensor * (dfdJ2);
+  Matrix3 s_term = s_closest * (dfdJ2);
 
   Matrix3 df_dsigma = p_term + s_term;
 
-  // std::cout << "df_dsigma = " << df_dsigma << "\n";
+  std::cout << "df_dsigma = " << df_dsigma << "\n";
 
   return df_dsigma;
+}
+
+Uintah::Matrix3
+YieldCond_TabularCap::df_dsigma(const Matrix3&,
+                                const ModelStateBase* state)
+{
+  return df_dsigma(state);
 }
 
 //--------------------------------------------------------------
@@ -740,19 +790,14 @@ YieldCond_TabularCap::df_dp(const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
     static_cast<const ModelState_TabularCap*>(state_input);
-/*
-if (!state) {
-  std::ostringstream out;
-  out << "**ERROR** The correct ModelState object has not been passed."
-      << " Need ModelState_TabularCap.";
-  throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-}
-*/
-
-#ifdef USE_NEWTON_CLOSEST_POINT
-
-  // Set up limits
-  double p_bar_min = d_I1bar_min / 3.0;
+  /*
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+  */
 
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
@@ -774,12 +819,16 @@ if (!state) {
     sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
   Vaango::Util::revertFromZRprime(
     sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
-  // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
-  //          << " closest = " << closest_p_bar << "," << closest_sqrt_J2
-  //          << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
-  //          "\n";
+
+  #ifdef DEBUG_CLOSEST_POINT
+  std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
+            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
+            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
+            "\n";
+  #endif
 
   // Check that the closest point is not at the vertex
+  double p_bar_min = d_I1bar_min / 3.0;
   double epsilon = 1.0e-6;
   if (closest_p_bar - epsilon < p_bar_min) {
     return Util::large_number;
@@ -789,59 +838,6 @@ if (!state) {
   double dg_dpbar =
     (tangent_p_bar == 0) ? Util::large_number : tangent_sqrt_J2 / tangent_p_bar;
   double df_dp = dg_dpbar;
-
-#else
-
-  // Set up limits
-  double p_bar_min = d_I1bar_min / 3.0;
-  double p_bar_max = -state->capX / 3.0;
-
-  // Find location of the center of the cap ellipse
-  double kappa_bar =
-    p_bar_min + d_yield.capEllipticityRatio * (p_bar_max - p_bar_min);
-
-  // Check that the closest point is not at the vertex
-  double p_bar   = -state->I1 / 3;
-  double epsilon = 1.0e-6;
-  Point closest  = getClosestPoint(state->yield_f_pts, p_bar, state->sqrt_J2);
-  if (closest.x() - epsilon < p_bar_min) {
-    return Util::large_number;
-  }
-  // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
-  //           << " closest = " << closest << "\n";
-
-  // Compute dg/dp
-  DoubleVec1D gg, g_lo, g_hi;
-  try {
-    gg   = d_yield.table.interpolate<1>({ { closest.x() } });
-    g_lo = d_yield.table.interpolate<1>({ { closest.x() - epsilon } });
-    g_hi = d_yield.table.interpolate<1>({ { closest.x() + epsilon } });
-  } catch (Uintah::InvalidValue& e) {
-    std::ostringstream out;
-    out << "**ERROR** In compute df/dp:"
-        << " p_bar = " << closest.x() << "\n"
-        << e.message();
-    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
-  }
-  double dg_dpbar = (g_hi[0] - g_lo[0]) / (2 * epsilon);
-
-  // Compute dFc/dp and df_dp
-  double dFc_dp = 0.0;
-  double Fc     = 1.0;
-  double df_dp  = dg_dpbar;
-  if (p_bar > kappa_bar) {
-    double ratio = (closest.x() - kappa_bar) / (p_bar_max - kappa_bar);
-    if (ratio < 1.0) {
-      Fc     = std::sqrt(1.0 - ratio * ratio);
-      dFc_dp = ratio / (Fc * (p_bar_max - kappa_bar));
-      df_dp  = dg_dpbar * Fc - gg[0] * dFc_dp;
-    } else {
-      // Fc = std::numeric_limits<double>::min();
-      // dFc_dp = std::numeric_limits<double>::max();
-      df_dp = Util::large_number;
-    }
-  }
-#endif
 
   return df_dp;
 }
@@ -876,8 +872,33 @@ YieldCond_TabularCap::df_dq(const ModelStateBase* state_input)
   }
   */
 
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
+
+  // Compute closest point on yield surface
+  double p_bar   = -state->I1 / 3;
+  double sqrt_J2 = state->sqrt_J2;
+  double z = 0.0, rprime = 0.0;
+  Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
+
+  double closest_z = 0.0, closest_rprime = 0.0;
+  double tangent_z = 0.0, tangent_rprime = 0.0;
+  getClosestPointAndTangent(
+    state, z, rprime, closest_z, closest_rprime, tangent_z, tangent_rprime);
+
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  Vaango::Util::revertFromZRprime(
+    sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
+
+  #ifdef DEBUG_CLOSEST_POINT
+  std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
+            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
+            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
+            "\n";
+  #endif
+
   double df_dJ2 =
-    (state->sqrt_J2 == 0) ? Util::large_number : 1 / (2 * state->sqrt_J2);
+    (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
 
   return df_dJ2;
 }
@@ -1165,14 +1186,33 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
   Polyline z_r_table;
   convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
 
+#ifdef DEBUG_CLOSEST_POINT
+  std::cout << "z_r_x = (";
+  for (auto pt : z_r_table) {
+    std::cout << pt.x() << ",";
+  }
+  std::cout << ")\n";
+  std::cout << "z_r_y = (";
+  for (auto pt : z_r_table) {
+    std::cout << pt.y() << ",";
+  }
+  std::cout << ")\n";
+#endif
+
   // Find the closest segments
   Polyline z_r_segments;
+  std::size_t closest_index = 0;
 #ifdef DO_BINARY_CLOSEST_SEGMENT
-  std::size_t closest_index = Vaango::Util::getClosestSegmentsBinarySearch(
-    z_r_pt, z_r_table, z_r_segments);
+  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, z_r_table, 
+                                                               z_r_segments);
 #else
-  std::size_t closest_index =
-    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  if (z_r_table.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
+    closest_index = Vaango::Util::getClosestSegments(z_r_pt, z_r_table, 
+                                                     z_r_segments);
+  } else {
+    closest_index = Vaango::Util::getClosestSegmentsKDTree(z_r_pt, z_r_table, 
+                                                           z_r_segments);
+  }
 #endif
 
   // Get the yield surface points for the closest segments
@@ -1251,14 +1291,33 @@ YieldCond_TabularCap::getClosestPointSplineNewton(
   Polyline z_r_table;
   convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
 
+#ifdef DEBUG_CLOSEST_POINT
+  std::cout << "z_r_x = (";
+  for (auto pt : z_r_table) {
+    std::cout << pt.x() << ",";
+  }
+  std::cout << ")\n";
+  std::cout << "z_r_y = (";
+  for (auto pt : z_r_table) {
+    std::cout << pt.y() << ",";
+  }
+  std::cout << ")\n";
+#endif
+
   // Find the closest segments
   Polyline z_r_segments;
+  std::size_t closest_index = 0;
 #ifdef DO_BINARY_CLOSEST_SEGMENT
-  std::size_t closest_index = Vaango::Util::getClosestSegmentsBinarySearch(
-    z_r_pt, z_r_table, z_r_segments);
+  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, z_r_table, 
+                                                               z_r_segments);
 #else
-  std::size_t closest_index =
-    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  if (z_r_table.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
+    closest_index = Vaango::Util::getClosestSegments(z_r_pt, z_r_table, 
+                                                     z_r_segments);
+  } else {
+    closest_index = Vaango::Util::getClosestSegmentsKDTree(z_r_pt, z_r_table, 
+                                                           z_r_segments);
+  }
 #endif
 
   // Get the yield surface points for the closest segments

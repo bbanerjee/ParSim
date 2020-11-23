@@ -303,6 +303,19 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   model.computeCapPoints(-state.capX, p_q_2000_all);
   state.yield_f_pts = p_q_2000_all;
 
+  /*
+  std::cout << "p_q_2000_x = (";
+  for (auto pt : state.yield_f_pts) {
+    std::cout << pt.x() << ",";
+  }
+  std::cout << ")\n";
+  std::cout << "p_q_2000_y = (";
+  for (auto pt : state.yield_f_pts) {
+    std::cout << pt.y() << ",";
+  }
+  std::cout << ")\n";
+  */
+
   double p = 300; // Tension
   double sqrt_J2 = 1000;
   Matrix3 s(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
@@ -416,8 +429,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   Matrix3 df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  //ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  //ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
 
   // Tension (p = 2000, J2 = 0)
   double p = 2000; 

@@ -249,7 +249,8 @@ getClosestSegments(const Uintah::Point& pt,
 }
 
 /*!
- * PointCloud template class for nanoflann kd-tree indexing
+ * Use KD-Tree to find nearest segments (three nearest points) of the polyline
+ * PointCloud class is needed for nanoflann kd-tree indexing
  */
 struct PointCloud
 {
@@ -273,9 +274,6 @@ struct PointCloud
   bool kdtree_get_bbox(BBOX& bb) const { return false; }
 };
 
-/*!
- * Use KD-Tree to find nearest segments (three nearest points) of the polyline
- */
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
