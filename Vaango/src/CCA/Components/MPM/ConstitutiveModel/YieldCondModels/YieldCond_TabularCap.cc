@@ -37,6 +37,7 @@
 #define USE_NEWTON_CLOSEST_POINT
 //#define DEBUG_CLOSEST_POINT
 //#define DEBUG_EVAL_YIELD
+//#define DEBUG_DF_DSIGMA
 
 using namespace Vaango;
 using Point   = Uintah::Point;
@@ -698,7 +699,10 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 << "\n";
+  #ifdef DEBUG_DF_DSIGMA
+  std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2
+            << " s = " << state->deviatoricStressTensor << "\n";
+  #endif
 
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
@@ -721,7 +725,7 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   Vaango::Util::revertFromZRprime(
     sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
 
-  #ifdef DEBUG_CLOSEST_POINT
+  #ifdef DEBUG_DF_DSIGMA
   std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
             << " closest = " << closest_p_bar << "," << closest_sqrt_J2
             << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
@@ -736,26 +740,39 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   }
 
   // Compute df_dp
-  double dfdp =
-    (tangent_p_bar == 0) ? Util::large_number : tangent_sqrt_J2 / tangent_p_bar;
+  double dfdp_bar = Util::large_number;
+  if (tangent_p_bar == 0) {
+    if (p_bar > closest_p_bar)  {
+      dfdp_bar = -dfdp_bar;
+    }
+  } else {
+    dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
+  }
+  double dfdp = -dfdp_bar;
 
   // Compute df_dsqrt(J2)
   double dfdJ2 =
     (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
 
-  std::cout << "df_dp = " << dfdp << " df_dJ2 = " << dfdJ2 << "\n";
+  #ifdef DEBUG_DF_DSIGMA
+  std::cout << "df_dp = " << dfdp_bar << " df_dJ2 = " << dfdJ2 << "\n";
+  #endif
 
-  // Compute stress tensor at closest point
-  double s_factor = (state->sqrt_J2 == 0) ? 
-                    Util::large_number : closest_sqrt_J2 / state->sqrt_J2;
-  Matrix3 s_closest = state->deviatoricStressTensor * s_factor;
-
+  // Compute df_dsigma
   Matrix3 p_term = Util::Identity * (dfdp / 3.0);
-  Matrix3 s_term = s_closest * (dfdJ2);
+  Matrix3 df_dsigma = p_term;
 
-  Matrix3 df_dsigma = p_term + s_term;
+  if (state->sqrt_J2 > 0) {
+     // Compute stress tensor at closest point
+     double s_factor = closest_sqrt_J2 / state->sqrt_J2;
+     Matrix3 s_closest = state->deviatoricStressTensor * s_factor;
+     Matrix3 s_term = s_closest * (dfdJ2);
+     df_dsigma += s_term;
+  } 
 
+  #ifdef DEBUG_DF_DSIGMA
   std::cout << "df_dsigma = " << df_dsigma << "\n";
+  #endif
 
   return df_dsigma;
 }
