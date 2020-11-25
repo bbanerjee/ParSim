@@ -740,22 +740,21 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   }
 
   // Compute df_dp
-  double dfdp_bar = Util::large_number;
+  double dfdp = Util::large_number;
   if (tangent_p_bar == 0) {
     if (p_bar > closest_p_bar)  {
-      dfdp_bar = -dfdp_bar;
+      dfdp = -dfdp;
     }
   } else {
-    dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
+    dfdp = tangent_sqrt_J2 / tangent_p_bar;
   }
-  double dfdp = -dfdp_bar;
 
   // Compute df_dsqrt(J2)
   double dfdJ2 =
     (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
 
   #ifdef DEBUG_DF_DSIGMA
-  std::cout << "df_dp = " << dfdp_bar << " df_dJ2 = " << dfdJ2 << "\n";
+  std::cout << "df_dp = " << dfdp << " df_dJ2 = " << dfdJ2 << "\n";
   #endif
 
   // Compute df_dsigma
@@ -771,6 +770,7 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   } 
 
   #ifdef DEBUG_DF_DSIGMA
+  std::cout << "s = " << state->deviatoricStressTensor << "\n";
   std::cout << "df_dsigma = " << df_dsigma << "\n";
   #endif
 

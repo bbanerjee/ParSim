@@ -429,8 +429,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   Matrix3 df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  //ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 2000, J2 = 0)
   double p = 2000; 
@@ -445,7 +444,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 300, J2 = 1000)
   p = 300; 
@@ -459,7 +458,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
 
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
-  ASSERT_NEAR(df_dsigma(0,0), -0.37068, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
 
   // Tension (p = 2000, J2 = 4000)
@@ -475,9 +474,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  //ASSERT_NEAR(df_dsigma(0,0), 0.266676, 1.0e-5);
-  //ASSERT_NEAR(df_dsigma(0,1), 0.627157, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,0), -0.276741, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.276741, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1), 0.620581, 1.0e-5);
 
   // Compression (p = -2000, J2 = 4000)
@@ -493,9 +490,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  //ASSERT_NEAR(df_dsigma(0,0), -0.0874635, 1.0e-5);
-  //ASSERT_NEAR(df_dsigma(0,1), 0.698946, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,0), 0.065979, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), -0.065979, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1),  0.702474, 1.0e-5);
 
   // Compression (p = -3000, J2 = 0)
@@ -511,7 +506,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
 
   // Compression (p = -3000, J2 = 1000)
   p = -3000; 
@@ -528,7 +523,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
   //ASSERT_NEAR(df_dsigma(0,0), -0.471837, 1.0e-5);
   //ASSERT_NEAR(df_dsigma(0,1), 0.407499, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,0), 0.477547, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), -0.477547, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1),  0.397394, 1.0e-5);
 }
 
