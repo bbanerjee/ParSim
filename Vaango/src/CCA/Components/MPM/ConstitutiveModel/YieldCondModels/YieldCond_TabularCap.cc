@@ -543,7 +543,7 @@ YieldCond_TabularCap::checkClosestPointDistance(
   double sqrt_J2 = state->sqrt_J2;
   Point trial_pt(p, sqrt_J2, 0.0);
 
-  // Convert the yield surface points into p-sqrtJ2 form
+  // Convert the yield surface points (p, sqrtJ2) into tension +ve form
   Polyline yield_f_pts = state->yield_f_pts;
   for (auto& pt : yield_f_pts) {
     pt.x(-pt.x());
@@ -565,8 +565,7 @@ YieldCond_TabularCap::checkClosestPointDistance(
   }
 #endif
 
-  // Get the yield surface points for the closest segments
-  // (Fit quadratic B_spline)
+  // Find the closest point on the quadratic B-spline through closest segments
   std::size_t numPts = yield_f_pts.size();
   auto seg_start     = closest_index - 1;
   auto seg_end       = closest_index + 1;
@@ -585,6 +584,26 @@ YieldCond_TabularCap::checkClosestPointDistance(
     Vaango::Util::computeClosestPointQuadraticBSpline(
       trial_pt, yield_f_pts, seg_start, seg_end);
 
+  // Compute orientation of polyline
+  Polyline poly(5);
+  poly[0] = yield_f_pts[seg_start];
+  poly[1] = closest_to_spline;
+  poly[2] = yield_f_pts[seg_end];
+  poly[3] = trial_pt;
+  poly[4] = poly[0];
+  
+  double orientation = (poly[1].x() - poly[0].x()) * (poly[1].y() + poly[0].y()) + 
+                       (poly[2].x() - poly[1].x()) * (poly[2].y() + poly[1].y()) + 
+                       (poly[3].x() - poly[2].x()) * (poly[3].y() + poly[2].y()) + 
+                       (poly[4].x() - poly[3].x()) * (poly[4].y() + poly[3].y());
+  #ifdef DEBUG_CLOSEST_POINT_ELASTIC
+    std::cout << "orientation (> 0 = plastic, < 0 = elastic): " << orientation << "\n";
+  #endif
+  if (orientation > 0.0) {
+    return Util::YieldStatus::HAS_YIELDED;
+  }
+
+  /*
   Polyline line;
   line.emplace_back(yield_f_pts[seg_start]);
   line.emplace_back(yield_f_pts[seg_end]);
@@ -604,7 +623,7 @@ YieldCond_TabularCap::checkClosestPointDistance(
       double ty = (dy != 0) ? (trial_pt.y() - closest_to_line.y()) / dy : 0.0;
       if (!(Util::isInBounds<double>(tx, 0, 1) &&
             Util::isInBounds<double>(ty, 0, 1))) {
-#ifdef DEBUG_CLOSEST_POINT_ELASTIC
+        #ifdef DEBUG_CLOSEST_POINT_ELASTIC
         std::cout << "tx = " << tx << " ty = " << ty << "\n";
         std::cout << "closest_index = " << closest_index << "\n";
         std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
@@ -618,11 +637,16 @@ YieldCond_TabularCap::checkClosestPointDistance(
                   << " cline = " << closest_to_line << ";\n";
         std::cout << std::setprecision(10) << "p-spline = " << distSq_spline
                   << " p-line = " << distSq << " diff = " << diff_dist << "\n";
-#endif
+        std::cout << "orientation distance = plastic\n";
+        #endif
         return Util::YieldStatus::HAS_YIELDED;
       }
     }
   }
+  #ifdef DEBUG_CLOSEST_POINT_ELASTIC
+    std::cout << "orientation distance = elastic\n";
+  #endif
+  */
 
   return Util::YieldStatus::IS_ELASTIC;
 }
@@ -909,8 +933,7 @@ YieldCond_TabularCap::df_dq(const ModelStateBase* state_input)
 
   #ifdef DEBUG_CLOSEST_POINT
   std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
-            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
-            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
+            << " closest = " << closest_p_bar << "," << closest_sqrt_J2 << 
             "\n";
   #endif
 

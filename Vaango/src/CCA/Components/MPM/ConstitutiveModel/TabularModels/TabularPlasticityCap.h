@@ -322,6 +322,119 @@ private:
                                       const Matrix3& deltaEps_p_nonhardening,
                                       ModelState_TabularCap& state_new);
 
+  
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeSigmaFixed
+   * Purpose:
+   *   Compute sigma_F (stress state on the yield surface with updated normal)
+   * Inputs:
+   *   state_old      = state at start of substep
+   *   state_trial    = trial state at start of substep
+   * Outputs:
+   *   Tuple containing the sequence
+   *     sig_F   = projected stress on fixed field surface
+   *     P_F     = projection direction
+   *     M_F     = unit normal to th eyield surface
+   *     H_F     = hardening modulus
+   *     Gamma_F = plastic parameter increment
+   */
+  //////////////////////////////////////////////////////////////////////////
+  std::tuple<Matrix3, Matrix3, Matrix3, double, double>
+  computeSigmaFixed(const ModelState_TabularCap& state_old, 
+                    const ModelState_TabularCap& state_trial) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeSigmaHardening
+   * Purpose:
+   *   Make correction to sigma_F by accounting for hardening
+   * Inputs:
+   *   state_trial    = trial state at start of substep
+   *   Gamma_F = plastic parameter increment
+   *   P_F     = projection direction
+   *   N_F_norm = unit normal to th eyield surface
+   * Outputs:
+   *   sig_H = projected stress on hardeneing field surface
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3 
+  computeSigmaHardening(const ModelState_TabularCap& state_trial, 
+                        const Matrix3& Gamma_F, 
+                        const Matrix3& P_F, 
+                        const Matrix3& N_F_norm, 
+                        double H_F) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: closestPointInZRSpace
+   * Purpose:
+   *   Find closest point from the trial stress to the fixed yield surface in z-r space
+   * Inputs:
+   *   state_old      = state at start of substep
+   *   state_trial    = trial state at start of substep
+   * Outputs:
+   *   sig_closest    = stress at closest point
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3 
+  closestPointInZRSpace(const ModelState_TabularCap& state_old,
+                        const ModelState_TabularCap& state_trial) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeYieldSurfaceNormal
+   * Purpose:
+   *   Find yield surface normal at the closest point
+   * Inputs:
+   *   state_old      = state at start of substep
+   *   sig_closest    = stress at closest point
+   * Outputs:
+   *   df_dsigma      = normal to yield surface
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3 
+  computeYieldSurfaceNormal(const ModelState_TabularCap& state_old,
+                            const Matrix3& sig_closest) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeProjectionTensor
+   * Purpose:
+   *   Compute projection tensor (P = C:M + Z) at the closest point
+   * Inputs:
+   *   state_old       = state at start of substep
+   *   sig_closest     = stress at closest point
+   *   df_dsig_closest = unit normal to yield surface at closest point
+   * Outputs:
+   *   P               = projection tensor
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3 
+  computeProjectionTensor(const ModelState_TabularCap& state_old, 
+                          const Matrix3& sig_closest,
+                          const Matrix3& df_dsig_closest) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeGammaClosest
+   * Purpose:
+   *   Compute plastic strain increment (Gamma = lambda_{n+1} - \lambda_n)
+   * Inputs:
+   *   sig_closest     = stress at closest point
+   *   sig_trial       = trial stress
+   *   df_dsig_closest = unit normal to yield surface at closest point
+   *   P_closest       = projection tensor
+   * Outputs:
+   *   Gamma_F         = value of gamma at the closest point
+   */
+  //////////////////////////////////////////////////////////////////////////
+  double 
+  computeGammaClosest(const Matrix3& sig_closest, 
+                      const Matrix3& sig_trial, 
+                      const Matrix3& df_dsig_closest, 
+                      const Matrix3& P_closest) const;
+
   //////////////////////////////////////////////////////////////////////////
   /**
    * Method: nonHardeningReturn
