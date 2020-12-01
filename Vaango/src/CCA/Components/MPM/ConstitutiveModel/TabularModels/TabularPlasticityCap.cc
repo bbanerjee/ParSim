@@ -79,23 +79,29 @@ constexpr double X_scale_factor = 0.1;
 constexpr double X_trans_factor = 0.05;
 #endif
 
+#define CHECK_FOR_NAN
+//#define CHECK_FOR_NAN_EXTRA
+#define DO_COMPUTE_SIGMA_FIXED
+//#define DO_CONSISTENCY_BISECTION_ELASTIC
+//#define DO_CONSISTENCY_BISECTION_SIMPLIFIED
+//#define DO_FIRST_ORDER_HARDENING
+
 //#define DEBUG_WITH_PARTICLE_ID
 #ifdef DEBUG_WITH_PARTICLE_ID
 constexpr long64 testParticleID = 158913855488;
 #endif
+
 //#define DEBUG_STEP_DIVISIONS
-//#define DO_COMPUTE_SIGMA_FIXED
-//#define DO_CONSISTENCY_BISECTION_ELASTIC
-#define DO_CONSISTENCY_BISECTION_SIMPLIFIED
-//#define DO_FIRST_ORDER_HARDENING
+#define DEBUG_SUBSTEP
+//#define DEBUG_SIGMA_FIXED
+//#define DEBUG_SIGMA_HARDENING
+
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 //#define CHECK_CONSISTENCY_BISECTION_K
 //#define CHECK_CONSISTENCY_BISECTION_FIXED
 //#define CHECK_MODULUS_EVOLUTION
 //#ifdef DEBUG_FIRST_ORDER_HARDENING
-#define CHECK_FOR_NAN
 //#define CHECK_PLASTIC_RATE
-//#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
 //#define DEBUG_INTERNAL_VAR_EVOLUTION
@@ -104,7 +110,6 @@ constexpr long64 testParticleID = 158913855488;
 //#define CHECK_TENSION_STATES
 //#define CHECK_TENSION_STATES_1
 //#define CHECK_DAMAGE_ALGORITHM
-//#define CHECK_SUBSTEP
 //#define CHECK_TRIAL_STRESS
 //#define CHECK_YIELD_SURFACE_NORMAL
 //#define CHECK_FLOATING_POINT_OVERFLOW
@@ -644,7 +649,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(
                 << "\n";
 #endif
 
-#ifdef CHECK_SUBSTEP
+#ifdef DEBUG_SUBSTEP
       std::cout << "tlocal = " << tlocal << " delT = " << delT
                 << " nsub = " << nsub << "\n";
 #endif
@@ -795,7 +800,7 @@ TabularPlasticityCap::computeStepDivisions(
   double bulk_old = state_old.bulkModulus;
   double bulk_trial = state_trial.bulkModulus;
   double d_bulk = std::abs(bulk_old - bulk_trial) / std::min(bulk_old, bulk_trial);
-  int n_bulk = std::max(std::ceil(d_bulk * d_cm.yield_scale_fac * 10), 1.0);
+  int n_bulk = std::max(std::ceil(d_bulk * d_cm.yield_scale_fac * 100), 1.0);
   #ifdef DEBUG_STEP_DIVISIONS
     #ifdef DEBUG_WITH_PARTICLE_ID
     if (state_old.particleID == testParticleID) {
@@ -848,6 +853,14 @@ TabularPlasticityCap::computeStepDivisions(
   // throw warning and delete particle.
   int nsub = std::max(std::max(n_bulk, n_yield), 1);
   int nmax = d_cm.subcycling_characteristic_number;
+
+  #ifdef DEBUG_STEP_DIVISIONS
+  std::cout << "I1_old = " << I1_old << " I1_trial = " << I1_trial
+            << " ref_I1 = " << ref_I1 << " d_I1 = " << d_I1 << "\n";
+  std::cout << "n_bulk = " << n_bulk 
+            << " n_yield = " << n_yield_I1 << ", " << n_yield_J2
+            << " nsub = " << nsub << " nmax = " << nmax << "\n";
+  #endif
 
   #ifdef DEBUG_STEP_DIVISIONS
   if (nsub > nmax) {
@@ -948,6 +961,11 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
               << " X = " << state_k_trial.capX << " ep_v = " << state_k_trial.ep_v
               << " ee_v = " << state_k_trial.elasticStrainTensor.Trace()
               << "\n";
+  #endif
+
+  #ifdef DEBUG_SUBSTEP
+  std::cout << "p_trial = " << state_k_trial.I1/3.0 
+            << " p_yield = " << state_k_trial.capX/3.0 << "\n";
   #endif
 
   // Evaluate the yield function at the trial stress:
@@ -1143,6 +1161,244 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   return status;
 
 } //===================================================================
+
+/**
+ * Compute sigma_F (stress state on the yield surface with updated normal)
+ */
+std::tuple<Matrix3, Matrix3, Matrix3, double, double>
+TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old, 
+                                        const ModelState_TabularCap& state_trial) const
+{
+  Matrix3 sig_trial = state_trial.stressTensor;
+  ModelState_TabularCap state_iter(state_trial);
+
+  double Gamma_F_old = 0.0, Gamma_F = 0.0;
+  Matrix3 sig_F;
+  int iter = 0;
+
+  do {
+
+    Matrix3 sig_c = closestPointInZRSpace(state_old, state_iter);
+    Matrix3 N_c = computeYieldSurfaceNormal(state_old, sig_c);
+    double N_c_mag = N_c.Norm();
+    Matrix3 N_c_norm = N_c / N_c_mag;
+    Matrix3 M_c = N_c_norm;
+    Matrix3 P_c = computeProjectionTensor(state_old, sig_c, M_c);
+    
+    Gamma_F_old = Gamma_F;
+    Gamma_F = computeGammaClosest(sig_c, sig_trial, N_c_norm, P_c);
+    sig_F = sig_trial - P_c * Gamma_F;
+
+    state_iter.stressTensor = sig_F;
+    state_iter.updateStressInvariants();
+
+    ++iter;
+    if (iter > 20) {
+      std::cout << "Iter: " << iter << " Gamma_F_old = " << Gamma_F_old << " Gamma_F = " << Gamma_F << "\n";
+      break;
+    }
+
+  } while (std::abs(Gamma_F_old - Gamma_F) > 1.0e-10);
+
+  #ifdef DEBUG_SIGMA_FIXED
+  std::cout << "computing sig_F: Gamma_F = " << Gamma_F << "\n";
+  #endif
+
+  sig_F = closestPointInZRSpace(state_old, state_iter);
+
+  //#ifdef DEBUG_SIGMA_FIXED
+  std::cout << "sig_F = " << sig_F << "\n";
+  //#endif
+
+  state_iter.stressTensor = sig_F;
+  state_iter.updateStressInvariants();
+  Matrix3 N_F = computeYieldSurfaceNormal(state_old, sig_F);
+  double N_F_mag = N_F.Norm();
+  Matrix3 M_F = N_F / N_F_mag;
+
+  #ifdef DEBUG_SIGMA_FIXED
+  std::cout << "N_F = " << M_F << "\n";
+  #endif
+
+  Matrix3 P_F = computeProjectionTensor(state_old, sig_F, M_F);
+
+  #ifdef DEBUG_SIGMA_FIXED
+  std::cout << "P_F = " << P_F << "\n";
+  #endif
+
+  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
+
+  #ifdef DEBUG_SIGMA_FIXED
+  std::cout << "df/deps_v = " << df_deps_v << "\n";
+  #endif
+
+  double H_F = - df_deps_v * M_F.Trace() / N_F_mag; 
+
+  #ifdef DEBUG_SIGMA_FIXED
+  std::cout << "H_F = " << H_F << "\n";
+  #endif
+
+  return std::make_tuple(sig_F, P_F, M_F, H_F, Gamma_F);
+}
+
+/**
+ *  Make correction to sigma_F by accounting for hardening
+ */
+Uintah::Matrix3 
+TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_trial, 
+                                            double Gamma_F, 
+                                            const Matrix3& P_F, 
+                                            const Matrix3& N_F_norm, 
+                                            double H_F) const
+{
+  // Compute Gamma_H
+  double PN = P_F.Contract(N_F_norm);
+  double Gamma_H = Gamma_F * PN / (PN + H_F);
+
+  #ifdef DEBUG_SIGMA_HARDENING
+  std::cout << "PN = " << PN << " Gamma_H = " << Gamma_H << "\n";
+  #endif
+
+  // Compute sig_H
+  Matrix3 sig_H = state_trial.stressTensor - P_F * Gamma_H;
+
+  #ifdef DEBUG_SIGMA_HARDENING
+  std::cout << "sig_H = " << sig_H << "\n";
+  #endif
+
+  return sig_H;
+}
+
+/**
+ * Find closest point from the trial stress to the fixed yield surface in z-r space
+ */
+Uintah::Matrix3 
+TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k_old,
+                                            const ModelState_TabularCap& state_k_trial) const
+{
+  // Compute ratio of bulk and shear moduli
+  double K_old = state_k_old.bulkModulus;
+  double G_old = state_k_old.shearModulus;
+
+  const double sqrt_K_over_G_old = std::sqrt(1.5 * K_old / G_old);
+
+  // Save the r and z Lode coordinates for the trial stress state
+  double r_trial = state_k_trial.rr;
+  double z_trial = state_k_trial.zz;
+
+  // Compute transformed r coordinates
+  double rprime_trial = r_trial * sqrt_K_over_G_old;
+
+  // Find closest point
+  double z_closest = 0.0, rprime_closest = 0.0;
+  d_yield->getClosestPoint(
+    &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest);
+
+  // Compute updated invariants of total stress
+  double I1_closest = std::sqrt(3.0) * z_closest;
+  double sqrtJ2_closest =
+    1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
+
+  #ifdef CHECK_FOR_NAN_EXTRA
+    #ifdef DEBUG_WITH_PARTICLE_ID
+      if (state_k_trial.particleID == testParticleID) {
+    #endif
+        std::cout << " K_old = " << K_old << " G_old = " << G_old << "\n";
+        std::cout << " state_k_old " << state_k_old << "\n";
+        std::cout << " z_trial = " << z_trial
+                  << " r_trial = " << rprime_trial / sqrt_K_over_G_old << "\n";
+        std::cout << " z_closest = " << z_closest
+                  << " r_closest = " << rprime_closest / sqrt_K_over_G_old
+                  << "\n";
+        std::cout << "I1_closest = " << I1_closest
+                  << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
+        std::cout << "Trial state = " << state_k_trial << "\n";
+    #ifdef DEBUG_WITH_PARTICLE_ID
+      }
+    #endif
+  #endif
+
+  #ifdef CHECK_HYDROSTATIC_TENSION
+    if (I1_closest < 0) {
+      std::cout << "I1_closest = " << I1_closest
+                << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
+      std::cout << "Trial state = " << state_k_trial << "\n";
+    }
+  #endif
+
+  // Compute closest point stress
+  Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
+  Matrix3 sig_closest = Util::one_third * I1_closest * Util::Identity;
+  if (state_k_trial.sqrt_J2 > 0.0) {
+    sig_closest += (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
+  } 
+
+  return sig_closest;
+}
+
+/**
+ * Find yield surface normal at the closest point
+ */
+Uintah::Matrix3 
+TabularPlasticityCap::computeYieldSurfaceNormal(const ModelState_TabularCap& state_k_old,
+                                                const Matrix3& sig_closest) const
+{
+  ModelState_TabularCap state(state_k_old);
+  state.stressTensor = sig_closest;
+  state.updateStressInvariants();
+
+  Matrix3 df_dsigma = d_yield->df_dsigma(&state);
+
+  return df_dsigma;
+}
+
+/**
+ * Compute projection tensor at the closest point
+ */
+Uintah::Matrix3 
+TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state_k_old, 
+                                              const Matrix3& sig_closest,
+                                              const Matrix3& df_dsig_closest) const
+{
+  ModelState_TabularCap state(state_k_old);
+  state.stressTensor = sig_closest;
+  state.updateStressInvariants();
+
+  // Compute C:M
+  double lambda = state.bulkModulus - 2.0 / 3.0 * state.shearModulus;
+  double mu     = state.shearModulus;
+  double trM    = df_dsig_closest.Trace();
+  Matrix3 CM    = Util::Identity * (trM * lambda) + 
+                  df_dsig_closest * (2.0 * mu);
+
+  // Compute Z (elastic-plastic coupling term)
+  auto K_dK = d_elastic->getElasticModuliAndDerivatives(&state);
+  auto dK_deps_v = K_dK.second.bulkModulus;
+  auto dG_deps_v = K_dK.second.shearModulus;
+  Matrix3 Z = Util::Identity * (state.I1 / 3.0) * (- dK_deps_v / state.bulkModulus * trM) + 
+              state.deviatoricStressTensor * (- dG_deps_v / state.shearModulus * trM);
+
+  // Compute P = C:M + Z
+  Matrix3 P = CM + Z;
+ 
+  return P; 
+}
+
+/**
+ * Compute plastic strain increment (Gamma = lambda_{n+1} - \lambda_n)
+ */
+double 
+TabularPlasticityCap::computeGammaClosest(const Matrix3& sig_c, 
+                                          const Matrix3& sig_trial, 
+                                          const Matrix3& N_c, 
+                                          const Matrix3& P_c) const
+{
+  auto sig_diff = sig_trial - sig_c;
+  auto numerator = sig_diff.Contract(N_c);
+  auto denominator = P_c.Contract(N_c);
+  auto GammaF = numerator / denominator;
+  return GammaF;
+}
 
 /**
    * Method: Compute the stress state at the end of a purely elastic
@@ -1463,210 +1719,6 @@ TabularPlasticityCap::consistencyBisectionHardeningSoftening(
   state_new = state_k_updated;
 
   return Status::SUCCESS;
-}
-
-/**
- * Compute sigma_F (stress state on the yield surface with updated normal)
- */
-std::tuple<Matrix3, Matrix3, Matrix3, double, double>
-TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old, 
-                                        const ModelState_TabularCap& state_trial) const
-{
-  Matrix3 sig_trial = state_trial.stressTensor;
-  ModelState_TabularCap state_iter(state_trial);
-
-  double Gamma_F_old = 0.0, Gamma_F = 0.0;
-  Matrix3 sig_F;
-  int iter = 0;
-
-  do {
-
-    Matrix3 sig_c = closestPointInZRSpace(state_old, state_iter);
-    Matrix3 N_c = computeYieldSurfaceNormal(state_old, sig_c);
-    double N_c_mag = N_c.Norm();
-    Matrix3 N_c_norm = N_c / N_c_mag;
-    Matrix3 M_c = N_c_norm;
-    Matrix3 P_c = computeProjectionTensor(state_old, sig_c, M_c);
-    
-    Gamma_F_old = Gamma_F;
-    Gamma_F = computeGammaClosest(sig_c, sig_trial, N_c_norm, P_c);
-    sig_F = sig_trial - P_c * Gamma_F;
-
-    state_iter.stressTensor = sig_F;
-    state_iter.updateStressInvariants();
-
-    ++iter;
-    if (iter > 20) {
-      std::cout << "Iter: " << iter << " Gamma_F_old = " << Gamma_F_old << " Gamma_F = " << Gamma_F << "\n";
-      break;
-    }
-
-  } while (std::abs(Gamma_F_old - Gamma_F) > 1.0e-10);
-
-  std::cout << "computing sig_F\n";
-  sig_F = closestPointInZRSpace(state_old, state_iter);
-  std::cout << "sig_F = " << sig_F << "\n";
-  state_iter.stressTensor = sig_F;
-  state_iter.updateStressInvariants();
-  Matrix3 N_F = computeYieldSurfaceNormal(state_old, sig_F);
-  double N_F_mag = N_F.Norm();
-  Matrix3 M_F = N_F / N_F_mag;
-  Matrix3 P_F = computeProjectionTensor(state_old, sig_F, M_F);
-  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
-  double H_F = - df_deps_v * M_F.Trace() / N_F_mag; 
-
-  return std::make_tuple(sig_F, P_F, M_F, H_F, Gamma_F);
-}
-
-/**
- *  Make correction to sigma_F by accounting for hardening
- */
-Uintah::Matrix3 
-TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_trial, 
-                                            const Matrix3& Gamma_F, 
-                                            const Matrix3& P_F, 
-                                            const Matrix3& N_F_norm, 
-                                            double H_F) const
-{
-  // Compute Gamma_H
-  double PN = P_F.Contract(N_F_norm);
-  double Gamma_H = PN / (PN + H_F);
-
-  // Compute sig_H
-  Matrix3 sig_H = state_trial.stressTensor - P_F * Gamma_H;
-
-  return sig_H;
-}
-
-/**
- * Find closest point from the trial stress to the fixed yield surface in z-r space
- */
-Uintah::Matrix3 
-TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k_old,
-                                            const ModelState_TabularCap& state_k_trial) const
-{
-  // Compute ratio of bulk and shear moduli
-  double K_old = state_k_old.bulkModulus;
-  double G_old = state_k_old.shearModulus;
-
-  const double sqrt_K_over_G_old = std::sqrt(1.5 * K_old / G_old);
-
-  // Save the r and z Lode coordinates for the trial stress state
-  double r_trial = state_k_trial.rr;
-  double z_trial = state_k_trial.zz;
-
-  // Compute transformed r coordinates
-  double rprime_trial = r_trial * sqrt_K_over_G_old;
-
-  // Find closest point
-  double z_closest = 0.0, rprime_closest = 0.0;
-  d_yield->getClosestPoint(
-    &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest);
-
-  // Compute updated invariants of total stress
-  double I1_closest = std::sqrt(3.0) * z_closest;
-  double sqrtJ2_closest =
-    1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
-
-  #ifdef CHECK_FOR_NAN_EXTRA
-    #ifdef DEBUG_WITH_PARTICLE_ID
-      if (state_k_trial.particleID == testParticleID) {
-    #endif
-        std::cout << " K_old = " << K_old << " G_old = " << G_old << "\n";
-        std::cout << " state_k_old " << state_k_old << "\n";
-        std::cout << " z_trial = " << z_trial
-                  << " r_trial = " << rprime_trial / sqrt_K_over_G_old << "\n";
-        std::cout << " z_closest = " << z_closest
-                  << " r_closest = " << rprime_closest / sqrt_K_over_G_old
-                  << "\n";
-        std::cout << "I1_closest = " << I1_closest
-                  << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
-        std::cout << "Trial state = " << state_k_trial << "\n";
-    #ifdef DEBUG_WITH_PARTICLE_ID
-      }
-    #endif
-  #endif
-
-  #ifdef CHECK_HYDROSTATIC_TENSION
-    if (I1_closest < 0) {
-      std::cout << "I1_closest = " << I1_closest
-                << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
-      std::cout << "Trial state = " << state_k_trial << "\n";
-    }
-  #endif
-
-  // Compute closest point stress
-  Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
-  Matrix3 sig_closest = Util::one_third * I1_closest * Util::Identity;
-  if (state_k_trial.sqrt_J2 > 0.0) {
-    sig_closest += (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
-  } 
-
-  return sig_closest;
-}
-
-/**
- * Find yield surface normal at the closest point
- */
-Uintah::Matrix3 
-TabularPlasticityCap::computeYieldSurfaceNormal(const ModelState_TabularCap& state_k_old,
-                                                const Matrix3& sig_closest) const
-{
-  ModelState_TabularCap state(state_k_old);
-  state.stressTensor = sig_closest;
-  state.updateStressInvariants();
-
-  Matrix3 df_dsigma = d_yield->df_dsigma(&state);
-
-  return df_dsigma;
-}
-
-/**
- * Compute projection tensor at the closest point
- */
-Uintah::Matrix3 
-TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state_k_old, 
-                                              const Matrix3& sig_closest,
-                                              const Matrix3& df_dsig_closest) const
-{
-  ModelState_TabularCap state(state_k_old);
-  state.stressTensor = sig_closest;
-  state.updateStressInvariants();
-
-  // Compute C:M
-  double lambda = state.bulkModulus - 2.0 / 3.0 * state.shearModulus;
-  double mu     = state.shearModulus;
-  double trM    = df_dsig_closest.Trace();
-  Matrix3 CM    = Util::Identity * (trM * lambda) + 
-                  df_dsig_closest * (2.0 * mu);
-
-  // Compute Z (elastic-plastic coupling term)
-  auto K_dK = d_elastic->getElasticModuliAndDerivatives(&state);
-  auto dK_deps_v = K_dK.second.bulkModulus;
-  auto dG_deps_v = K_dK.second.shearModulus;
-  Matrix3 Z = Util::Identity * (state.I1 / 3.0) * (- dK_deps_v / state.bulkModulus * trM) + 
-              state.deviatoricStressTensor * (- dG_deps_v / state.shearModulus * trM);
-
-  // Compute P = C:M + Z
-  Matrix3 P = CM + Z;
- 
-  return P; 
-}
-
-/**
- * Compute plastic strain increment (Gamma = lambda_{n+1} - \lambda_n)
- */
-double 
-TabularPlasticityCap::computeGammaClosest(const Matrix3& sig_c, 
-                                          const Matrix3& sig_trial, 
-                                          const Matrix3& N_c, 
-                                          const Matrix3& P_c) const
-{
-  auto sig_diff = sig_trial - sig_c;
-  auto numerator = sig_diff.Contract(N_c);
-  auto denominator = P_c.Contract(N_c);
-  auto GammaF = numerator / denominator;
-  return GammaF;
 }
 
 /**

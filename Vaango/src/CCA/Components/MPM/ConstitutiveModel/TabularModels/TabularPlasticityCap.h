@@ -360,7 +360,7 @@ private:
   //////////////////////////////////////////////////////////////////////////
   Uintah::Matrix3 
   computeSigmaHardening(const ModelState_TabularCap& state_trial, 
-                        const Matrix3& Gamma_F, 
+                        double Gamma_F, 
                         const Matrix3& P_F, 
                         const Matrix3& N_F_norm, 
                         double H_F) const;

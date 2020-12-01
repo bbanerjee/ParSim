@@ -483,15 +483,39 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   //            std::ostream_iterator<Point>(std::cout, " "));
   // std::cout << std::endl;
 
-  // Set up theta vector
-  std::vector<double> theta_vec;
-  Vaango::Util::linspace(0, M_PI / 2, 18, theta_vec);
-  std::reverse(std::begin(theta_vec), std::end(theta_vec));
-  theta_vec.emplace_back(-5 * M_PI / 180.0);
-  theta_vec.emplace_back(-10 * M_PI / 180.0);
+  // Compute distance incremenet of polyline
+  auto last = p_q_all.rbegin();
+  auto last_but_one = last - 1;
+  auto dist_inc_poly = (*last - *last_but_one).length();
+
+  // Set up default theta incremenets
+  int num_theta = 36;
+  double theta_inc = M_PI / (2 * num_theta);
 
   // Set up ellipse axes
   double a = p_bar_max - kappa_bar;
+
+  // Compute length of theta_inc arc
+  auto x_inc = kappa_bar + a * cos(theta_inc);
+  auto b_inc = computeEllipseHeight(d_polyline, x_inc);
+  auto y_inc = b_inc * sin(theta_inc);
+
+  auto dist_inc_theta = std::sqrt((x_inc - kappa_bar)*(x_inc - kappa_bar) + y_inc * y_inc);
+  //std::cout << "dist_inc polyline = " << dist_inc_poly << " dist_inc theta = " << dist_inc_theta << "\n";
+
+  // Adjust theta increments
+  if (dist_inc_theta > dist_inc_poly) {
+    num_theta = std::max(num_theta, static_cast<int>(std::ceil(dist_inc_theta/dist_inc_poly)));
+  }
+  theta_inc = M_PI / (2 * num_theta);
+  std::cout << "num_theta = " << num_theta << " theta_inc = " << theta_inc << "\n";
+
+  // Set up theta vector
+  std::vector<double> theta_vec;
+  Vaango::Util::linspace(0, M_PI / 2, num_theta, theta_vec);
+  std::reverse(std::begin(theta_vec), std::end(theta_vec));
+  theta_vec.emplace_back(-theta_inc);
+  theta_vec.emplace_back(-2.0*theta_inc);
 
   // Compute ellipse points
   Polyline p_q_cap;
