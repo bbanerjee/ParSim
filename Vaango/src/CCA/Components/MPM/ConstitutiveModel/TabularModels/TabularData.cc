@@ -42,6 +42,8 @@ using InvalidValue = Uintah::InvalidValue;
 using Vector = Uintah::Vector;
 using json = nlohmann::json;
 
+//#define DEBUG_TABLE_INTERPOLATION
+
 TabularData::TabularData(ProblemSpecP& ps)
 {
   ps->require("independent_variables", d_indepVarNames);
@@ -656,19 +658,26 @@ TabularData::interpolateLinearSpline<2>(
   // and the value of parameter s
   auto indepVarData0 =
     getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
-  //std::cout << "Read " << indepVars[0]->name << " ";
+
+  #ifdef DEBUG_TABLE_INTERPOLATION
+  std::cout << "Read " << indepVars[0]->name << " ";
   //std::copy(indepVarData0.begin(), indepVarData0.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
-  //std::cout << std::endl;
+  std::cout << std::endl;
+  #endif
+
   auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
-  //std::cout << "t = " << sval << "\n";
-  // if (sval < 0 || sval > 1) {
-  //   std::cout << "Lo Index 0 = [" << segLowIndex0 << "," << (segLowIndex0+1) << "]"
-  //             << " s = " << sval << " value = " << indepValues[0] 
-  //             << " data = [" << indepVarData0[segLowIndex0]
-  //             << "," << indepVarData0[segLowIndex0+1] << "]" << std::endl;
-  // }
+
+  #ifdef DEBUG_TABLE_INTERPOLATION
+  std::cout << "t = " << sval << "\n";
+  if (sval < 0 || sval > 1) {
+    std::cout << "Lo Index 0 = [" << segLowIndex0 << "," << (segLowIndex0+1) << "]"
+              << " s = " << sval << " value = " << indepValues[0] 
+              << " data = [" << indepVarData0[segLowIndex0]
+              << "," << indepVarData0[segLowIndex0+1] << "]" << std::endl;
+  }
+  #endif
 
   // Choose the two vectors containing the relevant independent variable data
   // and find the segments containing the data
@@ -676,36 +685,46 @@ TabularData::interpolateLinearSpline<2>(
   for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
     auto indepVarData1 =
       getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
-    //std::cout << "Read " << indepVars[1]->name << " ";
+
+    #ifdef DEBUG_TABLE_INTERPOLATION
+    std::cout << "Read " << indepVars[1]->name << " ";
     //std::copy(indepVarData1.begin(), indepVarData1.end(),
     //          std::ostream_iterator<double>(std::cout, " "));
-    //std::cout << std::endl;
+    std::cout << std::endl;
+    #endif
+
     auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
     auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
-    //std::cout << "s [" << ii << "]= " << tval << " start = " << segLowIndex1
-    //          << " end = " << segLowIndex1 + 1 << "\n";
-    // if (sval < 0 || sval > 1) {
-    //   if (tval < 0 || tval > 1) {
-    //     std::cout << "Lo Index 1 = [" << segLowIndex1 << "," << (segLowIndex1+1) << "]"
-    //               << " t = " << tval << " value = " << indepValues[1] 
-    //               << " data = [" << indepVarData1[segLowIndex1]
-    //               << "," << indepVarData1[segLowIndex1+1] << "]" << std::endl;
-    //   }
-    // }
+
+    #ifdef DEBUG_TABLE_INTERPOLATION
+    std::cout << "s [" << ii << "]= " << tval << " start = " << segLowIndex1
+              << " end = " << segLowIndex1 + 1 << "\n";
+    if (sval < 0 || sval > 1) {
+      if (tval < 0 || tval > 1) {
+        std::cout << "Lo Index 1 = [" << segLowIndex1 << "," << (segLowIndex1+1) << "]"
+                  << " t = " << tval << " value = " << indepValues[1] 
+                  << " data = [" << indepVarData1[segLowIndex1]
+                  << "," << indepVarData1[segLowIndex1+1] << "]" << std::endl;
+      }
+    }
+    #endif
 
     for (const auto& depVar : depVars) {
       auto depVarData =
         getDependentVarData(depVar->name, IndexKey(ii, 0, 0, 0));
       auto depvalT = computeInterpolated(tval, segLowIndex1, depVarData);
       depValsT.push_back(depvalT);
-      //std::cout << "p = " << depvalT << "\n";
-      // if (sval < 0 || sval > 1) {
-      //   if (tval < 0 || tval > 1) {
-      //     std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT 
-      //               << " data = [" << depVarData[segLowIndex1]
-      //               << "," << depVarData[segLowIndex1+1] << "]" << std::endl;
-      //   }
-      // }
+
+      #ifdef DEBUG_TABLE_INTERPOLATION
+      std::cout << "p = " << depvalT << "\n";
+      if (sval < 0 || sval > 1) {
+        if (tval < 0 || tval > 1) {
+          std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT 
+                    << " data = [" << depVarData[segLowIndex1]
+                    << "," << depVarData[segLowIndex1+1] << "]" << std::endl;
+        }
+      }
+      #endif
     }
   }
 
@@ -715,11 +734,15 @@ TabularData::interpolateLinearSpline<2>(
     auto depval =
       (1 - sval) * depValsT[index] + sval * depValsT[index + numDepVars];
     depVals.push_back(depval);
-    // if (sval < 0 || sval > 1) {
-    //   std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval 
-    //             << " data = [" << depValsT[index]
-    //             << "," << depValsT[index+numDepVars] << "]" << std::endl;
-    // }
+
+    #ifdef DEBUG_TABLE_INTERPOLATION
+    if (sval < 0 || sval > 1) {
+      std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval 
+                << " data = [" << depValsT[index]
+                << "," << depValsT[index+numDepVars] << "]" << std::endl;
+    }
+    #endif
+
   }
 
   return depVals;

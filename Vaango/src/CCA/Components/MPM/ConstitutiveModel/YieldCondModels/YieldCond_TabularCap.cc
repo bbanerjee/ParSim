@@ -485,12 +485,13 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 
   // Compute distance incremenet of polyline
   auto last = p_q_all.rbegin();
+  //auto last = d_polyline.rbegin();
   auto last_but_one = last - 1;
   auto dist_inc_poly = (*last - *last_but_one).length();
 
   // Set up default theta incremenets
   int num_theta = 36;
-  double theta_inc = M_PI / (2 * num_theta);
+  double theta_inc = M_PI / (2.0 * num_theta);
 
   // Set up ellipse axes
   double a = p_bar_max - kappa_bar;
@@ -505,10 +506,14 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 
   // Adjust theta increments
   if (dist_inc_theta > dist_inc_poly) {
-    num_theta = std::max(num_theta, static_cast<int>(std::ceil(dist_inc_theta/dist_inc_poly)));
+    num_theta = std::max(num_theta, num_theta*static_cast<int>(std::ceil(dist_inc_theta/dist_inc_poly)));
   }
-  theta_inc = M_PI / (2 * num_theta);
-  std::cout << "num_theta = " << num_theta << " theta_inc = " << theta_inc << "\n";
+  theta_inc = M_PI / (2.0 * num_theta);
+
+  /*
+  std::cout << "dist_inc_theta = " << dist_inc_theta << " dist_inc_poly = " << dist_inc_poly
+            << " num_theta = " << num_theta << " theta_inc = " << theta_inc << "\n";
+  */
 
   // Set up theta vector
   std::vector<double> theta_vec;

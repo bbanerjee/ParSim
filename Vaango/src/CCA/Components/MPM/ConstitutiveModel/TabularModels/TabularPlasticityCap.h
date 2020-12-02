@@ -355,10 +355,11 @@ private:
    *   P_F     = projection direction
    *   N_F_norm = unit normal to th eyield surface
    * Outputs:
-   *   sig_H = projected stress on hardeneing field surface
+   *   sig_H = projected stress on hardening yield surface
+   *   Gamma_H = corrected plastic parameter increment
    */
   //////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3 
+  std::tuple<Uintah::Matrix3 , double>
   computeSigmaHardening(const ModelState_TabularCap& state_trial, 
                         double Gamma_F, 
                         const Matrix3& P_F, 

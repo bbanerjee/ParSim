@@ -92,7 +92,7 @@ constexpr long64 testParticleID = 158913855488;
 #endif
 
 //#define DEBUG_STEP_DIVISIONS
-#define DEBUG_SUBSTEP
+//#define DEBUG_SUBSTEP
 //#define DEBUG_SIGMA_FIXED
 //#define DEBUG_SIGMA_HARDENING
 
@@ -800,7 +800,7 @@ TabularPlasticityCap::computeStepDivisions(
   double bulk_old = state_old.bulkModulus;
   double bulk_trial = state_trial.bulkModulus;
   double d_bulk = std::abs(bulk_old - bulk_trial) / std::min(bulk_old, bulk_trial);
-  int n_bulk = std::max(std::ceil(d_bulk * d_cm.yield_scale_fac * 100), 1.0);
+  int n_bulk = std::max(std::ceil(d_bulk * d_cm.yield_scale_fac * 1000), 1.0);
   #ifdef DEBUG_STEP_DIVISIONS
     #ifdef DEBUG_WITH_PARTICLE_ID
     if (state_old.particleID == testParticleID) {
@@ -1001,17 +1001,31 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
     computeSigmaFixed(state_k_old, state_k_trial);
 
   // Compute hardening correction
-  Matrix3 stress_H = 
+  double Gamma_H;
+  Matrix3 stress_H;
+  std::tie(stress_H, Gamma_H) = 
     computeSigmaHardening(state_k_trial, Gamma_F, P_F, N_F_norm, H_F);
 
-  // Compute elastic and plastic strain increments 
+  // Compute elastic strain increment and then plastic strain increment 
+  /*
   Matrix3 stress_inc     = stress_H - state_k_old.stressTensor;
   Matrix3 stress_inc_iso = Util::Identity * (Util::one_third * stress_inc.Trace());
   Matrix3 stress_inc_dev = stress_inc - stress_inc_iso;
   Matrix3 eps_e_inc      = stress_inc_iso * (1.0 / (3.0 * state_k_old.bulkModulus)) +
                            stress_inc_dev * (1.0 / (2.0 * state_k_old.shearModulus));
   Matrix3 eps_p_inc      = deltaEps - eps_e_inc;
+  std::cout << "eps_e_inc = " << eps_e_inc << "\n"
+            << "eps_p_inc = " << eps_p_inc << "\n";
+  */
 
+  // Compute plastic strain increment and then elastic strain increment 
+  auto eps_p_inc = N_F_norm * Gamma_H;
+  auto eps_e_inc = deltaEps - eps_p_inc;
+  /*
+  std::cout << "eps_p_inc = " << eps_p_inc << "\n"
+            << "eps_e_inc = " << eps_e_inc << "\n";
+  */
+  
   // Update the state
   state_k_new = state_k_trial;
   state_k_new.stressTensor = stress_H;
@@ -1027,11 +1041,26 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
     d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
   state_k_new.yield_f_pts = yield_pts_updated;
 
+  // Update elastic properties
+  computeElasticProperties(state_k_new);
+
   // Do closest point projection to bring back stress_H to the updated yield surface
   Matrix3 stress_new = closestPointInZRSpace(state_k_new, state_k_new);
 
+  std::cout << "eps_e = " << state_k_new.elasticStrainTensor << "\n"
+            << "eps_p = " << state_k_new.plasticStrainTensor << "\n";
+  std::cout << "sig_F = " << stress_F << "\n"
+            << "sig_H = " << stress_H << "\n"
+            << "sig_new = " << stress_new << "\n";
+
   state_k_new.stressTensor = stress_new;
   state_k_new.updateStressInvariants();
+
+  std::cout << "capX = " << state_k_new.capX << " K = " << state_k_new.bulkModulus << "\n"
+            << "eps_e = " << state_k_new.elasticStrainTensor << "\n"
+            << "eps_p = " << state_k_new.plasticStrainTensor << "\n"
+            << "sig_new = " << stress_H << "\n";
+  
   Status status = Status::SUCCESS;
 
   return status;
@@ -1172,18 +1201,18 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
   Matrix3 sig_trial = state_trial.stressTensor;
   ModelState_TabularCap state_iter(state_trial);
 
-  double Gamma_F_old = 0.0, Gamma_F = 0.0;
-  Matrix3 sig_F;
+  double Gamma_F_old = 0.0, Gamma_F = 0.0, N_c_mag;
+  Matrix3 sig_F, P_c, M_c;
   int iter = 0;
 
   do {
 
     Matrix3 sig_c = closestPointInZRSpace(state_old, state_iter);
     Matrix3 N_c = computeYieldSurfaceNormal(state_old, sig_c);
-    double N_c_mag = N_c.Norm();
+    N_c_mag = N_c.Norm();
     Matrix3 N_c_norm = N_c / N_c_mag;
-    Matrix3 M_c = N_c_norm;
-    Matrix3 P_c = computeProjectionTensor(state_old, sig_c, M_c);
+    M_c = N_c_norm;
+    P_c = computeProjectionTensor(state_old, sig_c, M_c);
     
     Gamma_F_old = Gamma_F;
     Gamma_F = computeGammaClosest(sig_c, sig_trial, N_c_norm, P_c);
@@ -1204,11 +1233,12 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
   std::cout << "computing sig_F: Gamma_F = " << Gamma_F << "\n";
   #endif
 
+  /*
   sig_F = closestPointInZRSpace(state_old, state_iter);
 
-  //#ifdef DEBUG_SIGMA_FIXED
+  #ifdef DEBUG_SIGMA_FIXED
   std::cout << "sig_F = " << sig_F << "\n";
-  //#endif
+  #endif
 
   state_iter.stressTensor = sig_F;
   state_iter.updateStressInvariants();
@@ -1239,12 +1269,18 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
   #endif
 
   return std::make_tuple(sig_F, P_F, M_F, H_F, Gamma_F);
+  */
+
+  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
+  double H_F = - df_deps_v * M_c.Trace() / N_c_mag; 
+
+  return std::make_tuple(sig_F, P_c, M_c, H_F, Gamma_F);
 }
 
 /**
  *  Make correction to sigma_F by accounting for hardening
  */
-Uintah::Matrix3 
+std::tuple<Uintah::Matrix3 , double>
 TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_trial, 
                                             double Gamma_F, 
                                             const Matrix3& P_F, 
@@ -1266,7 +1302,7 @@ TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_t
   std::cout << "sig_H = " << sig_H << "\n";
   #endif
 
-  return sig_H;
+  return std::make_tuple(sig_H, Gamma_H);
 }
 
 /**
