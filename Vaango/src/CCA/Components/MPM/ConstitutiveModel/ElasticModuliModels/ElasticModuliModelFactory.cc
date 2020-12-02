@@ -31,6 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_Bulk.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_BulkPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_NeuralNet.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_SupportVector.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -72,6 +73,8 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew ElasticModuli_Tabular(child));
   else if (mat_type == "tabular_bulk")
     return (scinew ElasticModuli_Tabular_Bulk(child));
+  else if (mat_type == "tabular_bulk_pressure")
+    return (scinew ElasticModuli_Tabular_BulkPressure(child));
   else if (mat_type == "neural_net")
     return (scinew ElasticModuli_NeuralNet(child));
   else if (mat_type == "support_vector")
@@ -104,6 +107,9 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* model)
   else if (dynamic_cast<const ElasticModuli_Tabular_Bulk*>(model))
     return (scinew ElasticModuli_Tabular_Bulk(
       dynamic_cast<const ElasticModuli_Tabular_Bulk*>(model)));
+  else if (dynamic_cast<const ElasticModuli_Tabular_BulkPressure*>(model))
+    return (scinew ElasticModuli_Tabular_BulkPressure(
+      dynamic_cast<const ElasticModuli_Tabular_BulkPressure*>(model)));
   else if (dynamic_cast<const ElasticModuli_NeuralNet*>(model))
     return (scinew ElasticModuli_NeuralNet(
       dynamic_cast<const ElasticModuli_NeuralNet*>(model)));

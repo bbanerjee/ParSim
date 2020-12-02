@@ -1023,7 +1023,7 @@
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant  arenisca3  arena  arena_mixture  metal_iso neural_net support_vector soil_model_brannon tabular tabular_bulk'"
+                     attribute1="type REQUIRED STRING 'constant  arenisca3  arena  arena_mixture  metal_iso neural_net support_vector soil_model_brannon tabular tabular_bulk tabular_bulk_pressure'"
                      need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity tabular_plasticity_cap">
       
       <!-- type = constant -->
