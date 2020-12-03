@@ -180,7 +180,7 @@ IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
 double
 IntVar_TabularCap::computeInternalVariable(
   const std::string& label,
-  const ModelStateBase* state_old,
+  const ModelStateBase* /*state_old*/,
   const ModelStateBase* state_cur) const
 {
   const ModelState_TabularCap* state =
@@ -194,18 +194,17 @@ IntVar_TabularCap::computeInternalVariable(
   }
   */
 
-  double ep_v      = state->ep_v;
+  double ep_v_bar  = -state->ep_v;
   double X_bar_new = -state->capX;
-  if (ep_v > 0.0) { // tension
+  if (ep_v_bar < 0.0) { // tension
     X_bar_new = computeDrainedHydrostaticStrength(0.0);
   } else {
 #ifdef USE_TOTAL_STRAIN
     // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
-    double ev_bar = -ep_v - state->elasticStrainTensor.Trace();
+    double ev_bar = ep_v_bar - state->elasticStrainTensor.Trace();
     X_bar_new     = computeDrainedHydrostaticStrength(ev_bar);
 #else
     // The table is of the form x -> ep_v_bar, y -> X_p_bar = X_bar/3
-    double ep_v_bar = -ep_v;
     X_bar_new       = computeDrainedHydrostaticStrength(ep_v_bar);
 #endif
   }

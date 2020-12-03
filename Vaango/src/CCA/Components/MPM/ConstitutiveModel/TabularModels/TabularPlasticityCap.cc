@@ -64,14 +64,20 @@
 #include <iostream>
 #include <limits>
 
+//#define TEST_GAMMA_H_SCALING
+#ifdef TEST_GAMMA_H_SCALING
+constexpr double gamma_H_factor = 1.5;
+#endif
+
 //#define TEST_K_VARIATION
 #ifdef TEST_K_VARIATION
-constexpr double K_scale_factor = 5;
+//constexpr double K_scale_factor = 2;
+constexpr double K_scale_factor = 1.5;
 #endif
 
 //#define TEST_CAP_VARIATION
 #ifdef TEST_CAP_VARIATION
-constexpr double X_scale_factor = 0.1;
+constexpr double X_scale_factor = 0.95;
 #endif
 
 //#define TEST_CAP_TRANSLATION
@@ -1030,6 +1036,9 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   state_k_new.updatePlasticStrainInvariants();
 
   // Update yield surface
+  //ModelState_TabularCap state_dummy(state_k_new);
+  //state_dummy.plasticStrainTensor *= 1.1;
+  //state_k_new.capX = computeInternalVariable(state_dummy);
   state_k_new.capX = computeInternalVariable(state_k_new);
   auto yield_pts_updated =
     d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
@@ -1038,13 +1047,13 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   // Update elastic properties
   computeElasticProperties(state_k_new);
 
+  /*
   std::cout << "K_old = " << state_k_old.bulkModulus << " K_new = " << state_k_new.bulkModulus << "\n"
             << "X_old = " << state_k_old.capX << " X_new = " << state_k_new.capX << "\n"
             << "p_old = " << state_k_old.stressTensor.Trace()/3.0 
             << " p_new = " << state_k_new.stressTensor.Trace()/3.0 << "\n"
             << "eps_v_p_old = " << state_k_old.plasticStrainTensor.Trace() 
             << " eps_v_p_new = " << state_k_new.plasticStrainTensor.Trace() << "\n\n";
-  /*
   std::cout << "gamma_F = " << Gamma_F << " gamma_H = " << Gamma_H << " N_F_norm = " << N_F_norm << "\n";
   std::cout << "stress_inc = " << stress_inc << "\n";
   std::cout << "deltaEps = " << deltaEps << "\n"
@@ -1277,6 +1286,10 @@ TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_t
 
   #ifdef DEBUG_SIGMA_HARDENING
   std::cout << "PN = " << PN << " Gamma_H = " << Gamma_H << "\n";
+  #endif
+
+  #ifdef TEST_GAMMA_H_SCALING
+  Gamma_H *= gamma_H_factor;
   #endif
 
   // Compute sig_H
@@ -2659,13 +2672,21 @@ TabularPlasticityCap::computeInternalVariable(
   const Matrix3& elasticStrain,
   const Matrix3& plasticStrain) const
 {
-  ModelState_TabularCap temp = state;
-  temp.elasticStrainTensor   = elasticStrain;
-  temp.plasticStrainTensor   = plasticStrain;
-  temp.updatePlasticStrainInvariants();
+  ModelState_TabularCap tempState = state;
+  tempState.elasticStrainTensor   = elasticStrain;
+  tempState.plasticStrainTensor   = plasticStrain;
+  tempState.updatePlasticStrainInvariants();
+
+#ifdef TEST_CAP_TRANSLATION
+  tempState.ep_v -= X_trans_factor;
+#endif
 
   // Update the hydrostatic compressive strength
-  double X_new = d_capX->computeInternalVariable("capX", nullptr, &temp);
+  double X_new = d_capX->computeInternalVariable("capX", nullptr, &tempState);
+
+#ifdef TEST_CAP_VARIATION
+  X_new *= X_scale_factor;
+#endif
 
   return X_new;
 }
@@ -2674,8 +2695,19 @@ double
 TabularPlasticityCap::computeInternalVariable(
   const ModelState_TabularCap& state) const
 {
+  ModelState_TabularCap tempState = state;
+
+#ifdef TEST_CAP_TRANSLATION
+  tempState.ep_v -= X_trans_factor;
+#endif
+
   // Update the hydrostatic compressive strength
-  double X_new = d_capX->computeInternalVariable("capX", nullptr, &state);
+  double X_new = d_capX->computeInternalVariable("capX", nullptr, &tempState);
+
+#ifdef TEST_CAP_VARIATION
+  X_new *= X_scale_factor;
+#endif
+
   return X_new;
 }
 
