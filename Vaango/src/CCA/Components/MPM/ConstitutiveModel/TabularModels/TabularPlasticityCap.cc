@@ -80,6 +80,7 @@ constexpr double X_trans_factor = 0.05;
 #endif
 
 #define CHECK_FOR_NAN
+#define COMPUTE_PLASTIC_STRAIN_FROM_ELASTIC
 //#define CHECK_FOR_NAN_EXTRA
 #define DO_COMPUTE_SIGMA_FIXED
 //#define DO_CONSISTENCY_BISECTION_ELASTIC
@@ -292,13 +293,13 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Set up local particle variables to be read and written
-    constParticleVariable<double> pEev, pEpv, pEpeq_old;
+    constParticleVariable<double> pEev_old, pEpv_old, pEpeq_old;
     constParticleVariable<double> pBulkModulus_old;
-    constParticleVariable<Matrix3> pEe, pEp;
-    old_dw->get(pEe, pElasticStrainLabel, pset);
-    old_dw->get(pEev, pElasticVolStrainLabel, pset);
-    old_dw->get(pEp, pPlasticStrainLabel, pset);
-    old_dw->get(pEpv, pPlasticVolStrainLabel, pset);
+    constParticleVariable<Matrix3> pEe_old, pEp_old;
+    old_dw->get(pEe_old, pElasticStrainLabel, pset);
+    old_dw->get(pEp_old, pPlasticStrainLabel, pset);
+    old_dw->get(pEev_old, pElasticVolStrainLabel, pset);
+    old_dw->get(pEpv_old, pPlasticVolStrainLabel, pset);
     old_dw->get(pEpeq_old, pPlasticCumEqStrainLabel, pset);
     old_dw->get(pBulkModulus_old, pBulkModulusLabel, pset);
 
@@ -360,8 +361,8 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
       state_old.particleID   = pParticleID[idx];
       state_old.stressTensor = sigma_old;
       state_old.updateStressInvariants();
-      state_old.elasticStrainTensor = pEe[idx];
-      state_old.plasticStrainTensor = pEp[idx];
+      state_old.elasticStrainTensor = pEe_old[idx];
+      state_old.plasticStrainTensor = pEp_old[idx];
       state_old.updatePlasticStrainInvariants();
       state_old.ep_cum_eq = pEpeq_old[idx];
       state_old.capX      = pCapX[idx];
@@ -425,13 +426,14 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
           state_new.elasticStrainTensor; // elastic strain at end of step
         pEp_new[idx] =
           state_new.plasticStrainTensor; // plastic strain at end of step
-        pEpv_new[idx] =
-          pEp_new[idx].Trace(); // Plastic volumetric strain at end of step
+        pEev_new[idx] = pEe_new[idx].Trace();
+        pEpv_new[idx] = pEp_new[idx].Trace();
         pEpeq_new[idx] =
           state_new.ep_cum_eq; // Equivalent plastic strain at end of step
         pCapX_new[idx]        = state_new.capX;
         pBulkModulus_new[idx] = state_new.bulkModulus;
 
+        /*
         // Elastic volumetric strain at end of step, compute from updated
         // deformation gradient.
         // H = ln(U) => tr(H) = tr(ln(U)) = ln(det(U)) = ln(sqrt(det(FT)
@@ -445,6 +447,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
                   << " Integrated = " << pEev_integrated
                   << " Defgrad-based = " << pEev_new[idx] << "\n";
         #endif
+        */
 
       } else {
 
@@ -636,23 +639,23 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(
       state_k_old = state_k_new;
       tlocal += dt;
 
-#ifdef WRITE_YIELD_SURF
-      std::cout << "K = " << state_k_new.bulkModulus << "\n";
-      std::cout << "G = " << state_k_new.shearModulus << "\n";
-      std::cout << "capX = " << state_k_new.capX << "\n";
-      Matrix3 sig = state_k_new.stressTensor;
-      std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
-                << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
-                << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
-                << "," << sig(2, 2) << "]])" << "\n";
-      std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
-                << "\n";
-#endif
+      #ifdef WRITE_YIELD_SURF
+        std::cout << "K = " << state_k_new.bulkModulus << "\n";
+        std::cout << "G = " << state_k_new.shearModulus << "\n";
+        std::cout << "capX = " << state_k_new.capX << "\n";
+        Matrix3 sig = state_k_new.stressTensor;
+        std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
+                  << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
+                  << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
+                  << "," << sig(2, 2) << "]])" << "\n";
+        std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
+                  << "\n";
+      #endif
 
-#ifdef DEBUG_SUBSTEP
-      std::cout << "tlocal = " << tlocal << " delT = " << delT
-                << " nsub = " << nsub << "\n";
-#endif
+      #ifdef DEBUG_SUBSTEP
+        std::cout << "tlocal = " << tlocal << " delT = " << delT
+                  << " nsub = " << nsub << "\n";
+      #endif
     } // End substep range for loop
 
   } while (status != Status::SUCCESS && chi < CHI_MAX);
@@ -660,15 +663,13 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(
   if (status == Status::SUCCESS) {
     state_new = state_k_new;
 
-#ifdef CHECK_INTERNAL_VAR_EVOLUTION
-    // if (state_old.particleID == 3377699720593411) {
-    std::cout << "rateIndependentPlasticUpdate: "
-              << " ep_v_old = " << state_old.ep_v
-              << " ep_v_new = " << state_new.ep_v
-              << " Xbar_old = " << -state_old.capX
-              << " Xbar_new = " << -state_new.capX << "\n";
-//}
-#endif
+    #ifdef CHECK_INTERNAL_VAR_EVOLUTION
+      std::cout << "rateIndependentPlasticUpdate: "
+                << " ep_v_old = " << state_old.ep_v
+                << " ep_v_new = " << state_new.ep_v
+                << " Xbar_old = " << -state_old.capX
+                << " Xbar_new = " << -state_new.capX << "\n";
+    #endif
   } else {
     if (status == Status::TOO_LARGE_YIELD_NORMAL_CHANGE) {
       state_new = state_k_new;
@@ -699,29 +700,23 @@ TabularPlasticityCap::computeElasticProperties(
   ModelState_TabularCap& state) const
 {
   #ifdef TIME_TABLE_LOOKUP
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-  start = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
   #endif
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
   state.bulkModulus    = moduli.bulkModulus;
   state.shearModulus   = moduli.shearModulus;
   #ifdef TIME_TABLE_LOOKUP
-  end = std::chrono::system_clock::now();
-  std::cout << "Compute elastic properties : Time taken = "
-            << std::chrono::duration<double>(end - start).count() << "\n";
+    end = std::chrono::system_clock::now();
+    std::cout << "Compute elastic properties : Time taken = "
+              << std::chrono::duration<double>(end - start).count() << "\n";
   #endif
   #ifdef TEST_K_VARIATION
-  state.bulkModulus *= K_scale_factor;
-  state.shearModulus *= K_scale_factor;
+    state.bulkModulus *= K_scale_factor;
+    state.shearModulus *= K_scale_factor;
   #endif
 }
 
-/**
- * Method: computeElasticProperties
- *
- * Purpose:
- *   Compute the bulk and shear modulus at a given state
- */
 void
 TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state,
                                                double elasticVolStrainInc,
@@ -748,8 +743,8 @@ TabularPlasticityCap::computeElasticProperties(
   temp.updatePlasticStrainInvariants();
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&temp);
   #ifdef TEST_K_VARIATION
-  moduli.bulkModulus *= K_scale_factor;
-  moduli.shearModulus *= K_scale_factor;
+    moduli.bulkModulus *= K_scale_factor;
+    moduli.shearModulus *= K_scale_factor;
   #endif
   return std::make_tuple(moduli.bulkModulus, moduli.shearModulus);
 }
@@ -760,8 +755,8 @@ TabularPlasticityCap::computeElasticProperties(
 {
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
   #ifdef TEST_K_VARIATION
-  moduli.bulkModulus *= K_scale_factor;
-  moduli.shearModulus *= K_scale_factor;
+    moduli.bulkModulus *= K_scale_factor;
+    moduli.shearModulus *= K_scale_factor;
   #endif
   return std::make_tuple(moduli.bulkModulus, moduli.shearModulus);
 }
@@ -919,6 +914,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   state_k_trial.stressTensor = stress_k_trial;
   state_k_trial.updateStressInvariants();
   state_k_trial.updatePlasticStrainInvariants();
+  //computeElasticProperties(state_k_trial);
 
   // std::cout << "\t D = " << D << "\n";
   // std::cout << "\t dt:" << dt << "\n";
@@ -1001,30 +997,29 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
     computeSigmaFixed(state_k_old, state_k_trial);
 
   // Compute hardening correction
+  #ifdef NO_SIGMA_HARDENING
+  double Gamma_H = Gamma_F;
+  Matrix3 stress_H = stress_F;
+  #else
   double Gamma_H;
   Matrix3 stress_H;
   std::tie(stress_H, Gamma_H) = 
     computeSigmaHardening(state_k_trial, Gamma_F, P_F, N_F_norm, H_F);
+  #endif
 
+  #ifdef COMPUTE_PLASTIC_STRAIN_FROM_ELASTIC
   // Compute elastic strain increment and then plastic strain increment 
-  /*
   Matrix3 stress_inc     = stress_H - state_k_old.stressTensor;
   Matrix3 stress_inc_iso = Util::Identity * (Util::one_third * stress_inc.Trace());
   Matrix3 stress_inc_dev = stress_inc - stress_inc_iso;
   Matrix3 eps_e_inc      = stress_inc_iso * (1.0 / (3.0 * state_k_old.bulkModulus)) +
                            stress_inc_dev * (1.0 / (2.0 * state_k_old.shearModulus));
   Matrix3 eps_p_inc      = deltaEps - eps_e_inc;
-  std::cout << "eps_e_inc = " << eps_e_inc << "\n"
-            << "eps_p_inc = " << eps_p_inc << "\n";
-  */
-
+  #else
   // Compute plastic strain increment and then elastic strain increment 
   auto eps_p_inc = N_F_norm * Gamma_H;
   auto eps_e_inc = deltaEps - eps_p_inc;
-  /*
-  std::cout << "eps_p_inc = " << eps_p_inc << "\n"
-            << "eps_e_inc = " << eps_e_inc << "\n";
-  */
+  #endif
   
   // Update the state
   state_k_new = state_k_trial;
@@ -1035,8 +1030,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   state_k_new.updatePlasticStrainInvariants();
 
   // Update yield surface
-  double X_fixed = computeInternalVariable(state_k_new);
-  state_k_new.capX = X_fixed;
+  state_k_new.capX = computeInternalVariable(state_k_new);
   auto yield_pts_updated =
     d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
   state_k_new.yield_f_pts = yield_pts_updated;
@@ -1044,22 +1038,25 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   // Update elastic properties
   computeElasticProperties(state_k_new);
 
-  // Do closest point projection to bring back stress_H to the updated yield surface
-  Matrix3 stress_new = closestPointInZRSpace(state_k_new, state_k_new);
-
+  std::cout << "K_old = " << state_k_old.bulkModulus << " K_new = " << state_k_new.bulkModulus << "\n"
+            << "X_old = " << state_k_old.capX << " X_new = " << state_k_new.capX << "\n"
+            << "p_old = " << state_k_old.stressTensor.Trace()/3.0 
+            << " p_new = " << state_k_new.stressTensor.Trace()/3.0 << "\n"
+            << "eps_v_p_old = " << state_k_old.plasticStrainTensor.Trace() 
+            << " eps_v_p_new = " << state_k_new.plasticStrainTensor.Trace() << "\n\n";
+  /*
+  std::cout << "gamma_F = " << Gamma_F << " gamma_H = " << Gamma_H << " N_F_norm = " << N_F_norm << "\n";
+  std::cout << "stress_inc = " << stress_inc << "\n";
+  std::cout << "deltaEps = " << deltaEps << "\n"
+            << "eps_p_inc = " << eps_p_inc << "\n"
+            << "eps_e_inc = " << eps_e_inc << "\n";
   std::cout << "eps_e = " << state_k_new.elasticStrainTensor << "\n"
             << "eps_p = " << state_k_new.plasticStrainTensor << "\n";
-  std::cout << "sig_F = " << stress_F << "\n"
-            << "sig_H = " << stress_H << "\n"
-            << "sig_new = " << stress_new << "\n";
-
-  state_k_new.stressTensor = stress_new;
-  state_k_new.updateStressInvariants();
-
   std::cout << "capX = " << state_k_new.capX << " K = " << state_k_new.bulkModulus << "\n"
-            << "eps_e = " << state_k_new.elasticStrainTensor << "\n"
-            << "eps_p = " << state_k_new.plasticStrainTensor << "\n"
-            << "sig_new = " << stress_H << "\n";
+            << "sig_F = " << stress_F << "\n"
+            << "sig_H = " << stress_H << "\n";
+            << "sig_new = " << state_k_new.stressTensor << "\n";
+  */
   
   Status status = Status::SUCCESS;
 
@@ -1233,48 +1230,35 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
   std::cout << "computing sig_F: Gamma_F = " << Gamma_F << "\n";
   #endif
 
-  /*
+  #ifdef NO_RETURN_TO_YIELD_SURFACE
+
+  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
+  double H_F = - df_deps_v * M_c.Trace() / N_c_mag; 
+  return std::make_tuple(sig_F, P_c, M_c, H_F, Gamma_F);
+
+  #else
+
   sig_F = closestPointInZRSpace(state_old, state_iter);
-
-  #ifdef DEBUG_SIGMA_FIXED
-  std::cout << "sig_F = " << sig_F << "\n";
-  #endif
-
   state_iter.stressTensor = sig_F;
   state_iter.updateStressInvariants();
   Matrix3 N_F = computeYieldSurfaceNormal(state_old, sig_F);
   double N_F_mag = N_F.Norm();
   Matrix3 M_F = N_F / N_F_mag;
-
-  #ifdef DEBUG_SIGMA_FIXED
-  std::cout << "N_F = " << M_F << "\n";
-  #endif
-
   Matrix3 P_F = computeProjectionTensor(state_old, sig_F, M_F);
-
-  #ifdef DEBUG_SIGMA_FIXED
-  std::cout << "P_F = " << P_F << "\n";
-  #endif
-
   double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
-
-  #ifdef DEBUG_SIGMA_FIXED
-  std::cout << "df/deps_v = " << df_deps_v << "\n";
-  #endif
-
   double H_F = - df_deps_v * M_F.Trace() / N_F_mag; 
 
-  #ifdef DEBUG_SIGMA_FIXED
-  std::cout << "H_F = " << H_F << "\n";
-  #endif
+    #ifdef DEBUG_SIGMA_FIXED
+    std::cout << "sig_F = " << sig_F << "\n";
+    std::cout << "N_F = " << M_F << "\n";
+    std::cout << "P_F = " << P_F << "\n";
+    std::cout << "df/deps_v = " << df_deps_v << "\n";
+    std::cout << "H_F = " << H_F << "\n";
+    #endif
 
   return std::make_tuple(sig_F, P_F, M_F, H_F, Gamma_F);
-  */
 
-  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
-  double H_F = - df_deps_v * M_c.Trace() / N_c_mag; 
-
-  return std::make_tuple(sig_F, P_c, M_c, H_F, Gamma_F);
+  #endif
 }
 
 /**
@@ -1407,6 +1391,9 @@ TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state
   Matrix3 CM    = Util::Identity * (trM * lambda) + 
                   df_dsig_closest * (2.0 * mu);
 
+  // Compute P = C:M (without elasticplastic coupling)
+  Matrix3 P = CM;
+
   // Compute Z (elastic-plastic coupling term)
   auto K_dK = d_elastic->getElasticModuliAndDerivatives(&state);
   auto dK_deps_v = K_dK.second.bulkModulus;
@@ -1414,9 +1401,9 @@ TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state
   Matrix3 Z = Util::Identity * (state.I1 / 3.0) * (- dK_deps_v / state.bulkModulus * trM) + 
               state.deviatoricStressTensor * (- dG_deps_v / state.shearModulus * trM);
 
-  // Compute P = C:M + Z
-  Matrix3 P = CM + Z;
- 
+  // Compute P = C:M + Z (with elasticplastic coupling)
+  P += Z;
+
   return P; 
 }
 
@@ -1432,8 +1419,20 @@ TabularPlasticityCap::computeGammaClosest(const Matrix3& sig_c,
   auto sig_diff = sig_trial - sig_c;
   auto numerator = sig_diff.Contract(N_c);
   auto denominator = P_c.Contract(N_c);
-  auto GammaF = numerator / denominator;
-  return GammaF;
+  auto Gamma_F = numerator / denominator;
+
+  #ifdef CHECK_GAMMA_F_POSITIVE
+  if (Gamma_F < 0) {
+    std::cout << "Gamma_F = " << Gamma_F << " numer = " << numerator << " denom = " << denominator << "\n";
+    std::cout << "sig_diff = " << sig_diff << "\n"
+              << " sig_trial = " << sig_trial << "\n"
+              << " sig_c = " << sig_c << "\n"
+              << " P_c = " << P_c << "\n"
+              << " N_c = " << N_c << "\n";
+  }
+  #endif
+
+  return Gamma_F;
 }
 
 /**
@@ -1834,7 +1833,7 @@ TabularPlasticityCap::nonHardeningReturn(
     sig_fixed = Util::one_third * I1_closest * Util::Identity +
                 (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } else {
-    sig_fixed = Util::one_third * I1_closest * Util::Identity + sig_dev;
+    sig_fixed = Util::one_third * I1_closest * Util::Identity;
   }
 
   // Compute new plastic strain increment
@@ -2354,7 +2353,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(
   Matrix3 eps_p_old = state_k_old.plasticStrainTensor;
 
   // Get the fixed non-hardening return state and compute invariants
-  double deltaEps_e_v_fixed = deltaEps_e_fixed.Trace();
+  //double deltaEps_e_v_fixed = deltaEps_e_fixed.Trace();
   double deltaEps_p_v_fixed = deltaEps_p_fixed.Trace();
 
   // Create a state for the fixed non-hardening yield surface state
@@ -2365,8 +2364,9 @@ TabularPlasticityCap::consistencyBisectionSimplified(
   state_k_fixed.elasticStrainTensor = eps_e_old + deltaEps_e_fixed;
   state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
   state_k_fixed.updatePlasticStrainInvariants();
-  computeElasticProperties(
-    state_k_fixed, deltaEps_e_v_fixed, deltaEps_p_v_fixed);
+  computeElasticProperties(state_k_fixed);
+  //computeElasticProperties(
+  //  state_k_fixed, deltaEps_e_v_fixed, deltaEps_p_v_fixed);
 
   // Initialize the new consistently updated state
   ModelState_TabularCap state_trial_mid(state_k_old);
@@ -2418,13 +2418,16 @@ TabularPlasticityCap::consistencyBisectionSimplified(
 #endif
 
     // Update the elastic moduli
-    computeElasticProperties(
-      state_trial_mid, deltaEps_e_v_mid, deltaEps_p_v_mid);
-    state_trial_mid.bulkModulus =
-      0.5 * (state_trial_mid.bulkModulus + state_k_old.bulkModulus);
-    state_trial_mid.shearModulus =
-      0.5 * (state_trial_mid.shearModulus + state_k_old.shearModulus);
-
+    ModelState_TabularCap state_temp(state_trial_mid);
+    state_temp.stressTensor = sig_fixed_mid;
+    state_temp.plasticStrainTensor += deltaEps_p_v_mid;
+    state_temp.elasticStrainTensor += deltaEps_p_v_mid;
+    state_temp.updateStressInvariants();
+    state_temp.updatePlasticStrainInvariants();
+    computeElasticProperties(state_temp);
+    state_trial_mid.bulkModulus  = state_temp.bulkModulus;
+    state_trial_mid.shearModulus = state_temp.shearModulus;
+    
     // Update the internal variables at eta = eta_mid in the local trial state
     status = computeInternalVariables(
       state_trial_mid, deltaEps_e_v_mid, deltaEps_p_v_mid);

@@ -224,6 +224,7 @@ IntVar_TabularCap::computeDrainedHydrostaticStrength(
 {
   DoubleVec1D gg       = d_capX_fn.table.interpolate<1>({ { ep_v_bar } });
   double X_bar_drained = gg[0] * 3.0;
+  //std::cout << "CapX : ep_v = " << ep_v_bar << " p = " << gg[0] << "\n";
 
   return X_bar_drained;
 }

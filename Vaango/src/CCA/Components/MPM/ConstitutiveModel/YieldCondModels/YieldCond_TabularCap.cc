@@ -483,18 +483,19 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   //            std::ostream_iterator<Point>(std::cout, " "));
   // std::cout << std::endl;
 
+  // Set up default theta incremenets
+  int num_theta = 180;
+  double theta_inc = M_PI / (2.0 * num_theta);
+
+  // Set up ellipse axes
+  double a = p_bar_max - kappa_bar;
+
+  /*
   // Compute distance incremenet of polyline
   auto last = p_q_all.rbegin();
   //auto last = d_polyline.rbegin();
   auto last_but_one = last - 1;
   auto dist_inc_poly = (*last - *last_but_one).length();
-
-  // Set up default theta incremenets
-  int num_theta = 36;
-  double theta_inc = M_PI / (2.0 * num_theta);
-
-  // Set up ellipse axes
-  double a = p_bar_max - kappa_bar;
 
   // Compute length of theta_inc arc
   auto x_inc = kappa_bar + a * cos(theta_inc);
@@ -509,6 +510,7 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
     num_theta = std::max(num_theta, num_theta*static_cast<int>(std::ceil(dist_inc_theta/dist_inc_poly)));
   }
   theta_inc = M_PI / (2.0 * num_theta);
+  */
 
   /*
   std::cout << "dist_inc_theta = " << dist_inc_theta << " dist_inc_poly = " << dist_inc_poly
@@ -789,7 +791,17 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   double p_bar_min = d_I1bar_min / 3.0;
   double epsilon = 1.0e-6;
   if (closest_p_bar - epsilon < p_bar_min) {
-    return Util::large_number;
+    return Util::Identity * Util::large_number;
+  }
+
+  // Handle vertex (minimum p_bar)
+  if (p_bar < closest_p_bar && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    return Util::Identity * (-Util::large_number);
+  }
+
+  // Handle cap (maximum p_bar)
+  if (p_bar > closest_p_bar && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    return Util::Identity * Util::large_number;
   }
 
   // Compute df_dp
