@@ -60,7 +60,7 @@ protected:
                 BAD_CAST "0.7");
 
     // Print the document to stdout
-    xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+    //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
     // Create a ProblemSpec
     ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -86,7 +86,7 @@ protected:
     xmlNewProp(interp_intvar, BAD_CAST "type", BAD_CAST "linear");
 
     // Print the document to stdout
-    xmlSaveFormatFileEnc("-", doc_intvar, "ISO-8859-1", 1);
+    //xmlSaveFormatFileEnc("-", doc_intvar, "ISO-8859-1", 1);
 
     // Create a ProblemSpec
     ps_intvar = scinew ProblemSpec(xmlDocGetRootElement(doc_intvar), false);
@@ -965,7 +965,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   Matrix3 df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 2000, J2 = 0)
   double p = 2000; 
@@ -980,7 +980,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 300, J2 = 1000)
   p = 300; 
@@ -994,7 +994,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
 
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
-  ASSERT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
+  //std::cout << "df_dsigma = " << df_dsigma << "\n";
+  EXPECT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
   ASSERT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
 
   // Tension (p = 2000, J2 = 4000)
@@ -1010,8 +1011,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), 0.276741, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,1), 0.620581, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), 0.276741, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1), 0.620581, 1.0e-5);
 
   // Compression (p = -2000, J2 = 4000)
   p = -2000; 
@@ -1026,8 +1027,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), -0.064404186516701101, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,1),  0.70269349729358022, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), -0.064404186516701101, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1),  0.70269349729358022, 1.0e-5);
 
   // Compression (p = -3000, J2 = 0)
   p = -3000; 
@@ -1042,7 +1043,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), -0.57735, 1.0e-5);
 
   // Compression (p = -3000, J2 = 1000)
   p = -3000; 
@@ -1057,8 +1058,8 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
-  ASSERT_NEAR(df_dsigma(0,0), -0.47597677375342551, 1.0e-5);
-  ASSERT_NEAR(df_dsigma(0,1),  0.40021140197515703, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), -0.47597677375342551, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1),  0.40021140197515703, 1.0e-5);
 }
 
 TEST_F(YieldCondTabularCapTest, getClosestPoint)

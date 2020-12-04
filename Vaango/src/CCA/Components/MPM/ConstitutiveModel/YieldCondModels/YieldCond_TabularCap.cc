@@ -38,6 +38,7 @@
 //#define DEBUG_CLOSEST_POINT
 //#define DEBUG_EVAL_YIELD
 //#define DEBUG_DF_DSIGMA
+//#define DEBUG_POINT_ON_TANGENT
 
 using namespace Vaango;
 using Point   = Uintah::Point;
@@ -780,13 +781,6 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   Vaango::Util::revertFromZRprime(
     sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
 
-  #ifdef DEBUG_DF_DSIGMA
-  std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
-            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
-            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
-            "\n";
-  #endif
-
   // Check that the closest point is not at the vertex
   double p_bar_min = d_I1bar_min / 3.0;
   double epsilon = 1.0e-6;
@@ -808,26 +802,79 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
     return Util::Identity * (-Util::large_number);
   }
 
-  // Compute df_dp
-  double dfdp = Util::large_number;
-  if (tangent_p_bar == 0) {
-    if (p_bar > closest_p_bar)  {
-      dfdp = -dfdp;
-    }
-  } else {
-    dfdp = tangent_sqrt_J2 / tangent_p_bar;
-  }
+  #ifdef DEBUG_POINT_ON_TANGENT
+    Point closest_zr(closest_z, closest_rprime, 0.0);
+    Vector tangent_zr(tangent_z, tangent_rprime, 0.0);
+    tangent_zr.normalize();
+
+    Point pt_on_tangent_zr = closest_zr + tangent_zr * 1000;
+
+    double pt_on_tangent_p_bar = 0.0, pt_on_tangent_sqrt_J2 = 0.0;
+    Vaango::Util::revertFromZRprime(
+      sqrtKG, pt_on_tangent_zr.x(), pt_on_tangent_zr.y(), pt_on_tangent_p_bar, pt_on_tangent_sqrt_J2);
+
+    Point pt_on_tangent(-pt_on_tangent_p_bar, pt_on_tangent_sqrt_J2, 0);
+    Point closest(-closest_p_bar, closest_sqrt_J2, 0);
+    Vector tangent = pt_on_tangent - closest;
+    tangent.normalize();
+    Vector normal(-tangent[1], tangent[0], 0.0);
+    //std::cout << " pt_tangent = " << tangent.x() << ", " << tangent.y() 
+    //          << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 
+    //          << " normal = " << normal.x() << "," << normal.y() << "\n";
+
+    Point pt_on_normal = closest - normal * 1000;
+    //std::cout << "pt_on_tangent = " << pt_on_tangent
+    //          << " pt_on_normal = " << pt_on_normal << " closest = " << closest << "\n";
+
+    Matrix3 pt_on_normal_9D = Util::Identity * pt_on_normal.x() +
+                              state->deviatoricStressTensor * pt_on_normal.y() / state->sqrt_J2;
+    Matrix3 closest_9D = Util::Identity * closest.x() +
+                              state->deviatoricStressTensor * closest.y() / state->sqrt_J2;
+
+    //std::cout << "pt_on_normal_9D = " << pt_on_normal_9D << "\nclosest_9D = " << closest_9D << "\n";
+
+    double pt_on_normal_9D_2D_p = pt_on_normal_9D.Trace() / 3.0;
+    Matrix3 s_normal = pt_on_normal_9D - Util::Identity * pt_on_normal_9D_2D_p;
+    double pt_on_normal_9D_2D_sqrt_J2 = std::sqrt(0.5 * s_normal.Contract(s_normal));
+    //std::cout << "pt_on_normal_9D_2D = " << pt_on_normal_9D_2D_p << ", " << pt_on_normal_9D_2D_sqrt_J2 << "\n";
+
+    double closest_9D_2D_p = closest_9D.Trace() / 3.0;
+    Matrix3 s = closest_9D - Util::Identity * closest_9D_2D_p;
+    double closest_9D_2D_sqrt_J2 = std::sqrt(0.5 * s.Contract(s));
+    //std::cout << "closest_9D_2D = " << closest_9D_2D_p << ", " << closest_9D_2D_sqrt_J2 << "\n";
+
+    Matrix3 normal_9D = pt_on_normal_9D - closest_9D;
+    normal_9D /= normal_9D.Norm();
+    //std::cout << "sqrtJ2 = " << state->sqrt_J2 << " normal_9D = " << normal_9D << "\n";
+
+    Matrix3 pt_on_normal_back = closest_9D + normal_9D * 1000;
+    //std::cout << "pt_on_normal_back_9D = " << pt_on_normal_back << "\n";
+    double pt_on_normal_back_p = pt_on_normal_back.Trace() / 3.0;
+    Matrix3 s_normal_back = pt_on_normal_back - Util::Identity * pt_on_normal_back_p;
+    double pt_on_normal_back_sqrt_J2 = std::sqrt(0.5 * s_normal_back.Contract(s_normal_back));
+    //std::cout << "pt_on_normal_back = " << pt_on_normal_back_p << ", " << pt_on_normal_back_sqrt_J2 << "\n";
+  #endif
+
+  #ifdef DEBUG_DF_DSIGMA
+  std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2
+            << " closest = " << closest_p_bar << "," << closest_sqrt_J2
+            << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 <<
+            "\n";
+  #endif
+
+  // Compute df_dp (cases where tangent_p_bar == 0, at the vertex and cap, have been handled before)
+  double dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
 
   // Compute df_dsqrt(J2)
   double dfdJ2 =
     (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
 
   #ifdef DEBUG_DF_DSIGMA
-  std::cout << "df_dp = " << dfdp << " df_dJ2 = " << dfdJ2 << "\n";
+  std::cout << "df_dp_bar = " << dfdp_bar << " df_dJ2 = " << dfdJ2 << "\n";
   #endif
 
-  // Compute df_dsigma
-  Matrix3 p_term = Util::Identity * (dfdp / 3.0);
+  // Compute df_dsigma (dfdp = dfdp_bar for outward normal, -dfdp_bar for inward normal)
+  Matrix3 p_term = Util::Identity * (dfdp_bar / 3.0);
   Matrix3 df_dsigma = p_term;
 
   if (state->sqrt_J2 > 0) {
@@ -842,6 +889,8 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   std::cout << "s = " << state->deviatoricStressTensor << "\n";
   std::cout << "df_dsigma = " << df_dsigma << "\n";
   #endif
+
+  // ALternative computation based on normal to yield surface in (p-sqrtJ2)-space
 
   return df_dsigma;
 }

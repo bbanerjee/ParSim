@@ -1410,9 +1410,10 @@ TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state
 
   // Compute P = C:M (without elasticplastic coupling)
   Matrix3 P = CM;
-  std::cout << "P = CM = " << P << "\n ";
 
   #ifdef DO_ELASTIC_PLASTIC_COUPLING
+  std::cout << "P = CM = " << P << "\n ";
+
   // Compute Z (elastic-plastic coupling term)
   auto K_dK = d_elastic->getElasticModuliAndDerivatives(&state);
   auto dK_deps_v_p = K_dK.second.bulkModulus;
