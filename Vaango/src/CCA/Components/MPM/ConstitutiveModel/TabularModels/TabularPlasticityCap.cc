@@ -85,10 +85,10 @@ constexpr double X_scale_factor = 0.95;
 constexpr double X_trans_factor = 0.05;
 #endif
 
-#define CHECK_FOR_NAN
-#define COMPUTE_PLASTIC_STRAIN_FROM_ELASTIC
-//#define CHECK_FOR_NAN_EXTRA
 #define DO_COMPUTE_SIGMA_FIXED
+#define COMPUTE_PLASTIC_STRAIN_FROM_ELASTIC
+//#define DO_ELASTIC_PLASTIC_COUPLING
+
 //#define DO_CONSISTENCY_BISECTION_ELASTIC
 //#define DO_CONSISTENCY_BISECTION_SIMPLIFIED
 //#define DO_FIRST_ORDER_HARDENING
@@ -98,16 +98,20 @@ constexpr double X_trans_factor = 0.05;
 constexpr long64 testParticleID = 158913855488;
 #endif
 
+#define CHECK_FOR_NAN
+//#define CHECK_FOR_NAN_EXTRA
+
 //#define DEBUG_STEP_DIVISIONS
 //#define DEBUG_SUBSTEP
 //#define DEBUG_SIGMA_FIXED
 //#define DEBUG_SIGMA_HARDENING
+//#define CHECK_GAMMA_F_POSITIVE
 
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 //#define CHECK_CONSISTENCY_BISECTION_K
 //#define CHECK_CONSISTENCY_BISECTION_FIXED
 //#define CHECK_MODULUS_EVOLUTION
-//#ifdef DEBUG_FIRST_ORDER_HARDENING
+//#define DEBUG_FIRST_ORDER_HARDENING
 //#define CHECK_PLASTIC_RATE
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -1406,16 +1410,25 @@ TabularPlasticityCap::computeProjectionTensor(const ModelState_TabularCap& state
 
   // Compute P = C:M (without elasticplastic coupling)
   Matrix3 P = CM;
+  std::cout << "P = CM = " << P << "\n ";
 
+  #ifdef DO_ELASTIC_PLASTIC_COUPLING
   // Compute Z (elastic-plastic coupling term)
   auto K_dK = d_elastic->getElasticModuliAndDerivatives(&state);
-  auto dK_deps_v = K_dK.second.bulkModulus;
-  auto dG_deps_v = K_dK.second.shearModulus;
-  Matrix3 Z = Util::Identity * (state.I1 / 3.0) * (- dK_deps_v / state.bulkModulus * trM) + 
-              state.deviatoricStressTensor * (- dG_deps_v / state.shearModulus * trM);
+  auto dK_deps_v_p = K_dK.second.bulkModulus;
+  auto dG_deps_v_p = K_dK.second.shearModulus;
+  Matrix3 Z = Util::Identity * (state.I1 / 3.0) * (dK_deps_v_p / state.bulkModulus * trM) + 
+              state.deviatoricStressTensor * (dG_deps_v_p / state.shearModulus * trM);
+  Z *= (-1.0);
+  std::cout << "Z = " << Z << "\n"
+            << "  p = " << state.I1/3.0 
+            << "  dK_eps_v_p = " << dK_deps_v_p 
+            << "  K = " << state.bulkModulus << "\n";
 
   // Compute P = C:M + Z (with elasticplastic coupling)
   P += Z;
+  std::cout << "P = CM + Z = " << P << "\n ";
+  #endif
 
   return P; 
 }

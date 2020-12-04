@@ -794,14 +794,18 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
     return Util::Identity * Util::large_number;
   }
 
-  // Handle vertex (minimum p_bar)
-  if (p_bar < closest_p_bar && std::abs(closest_sqrt_J2) < 1.0e-8) {
-    return Util::Identity * (-Util::large_number);
+  // Handle vertex (minimum p_bar : assume vertex is in tension)
+  if (closest_p_bar < 0 && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    //std::cout << std::setprecision(16) << 
+    //          "df_dsigma = positive, p_bar = " << p_bar << " closest_p_bar = " << closest_p_bar << "\n";
+    return Util::Identity * (Util::large_number);
   }
 
-  // Handle cap (maximum p_bar)
-  if (p_bar > closest_p_bar && std::abs(closest_sqrt_J2) < 1.0e-8) {
-    return Util::Identity * Util::large_number;
+  // Handle cap (maximum p_bar : assume cap is in compression)
+  if (closest_p_bar > 0 && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    //std::cout << std::setprecision(16) << 
+    //          "df_dsigma = negative, p_bar = " << p_bar << " closest_p_bar = " << closest_p_bar << "\n";
+    return Util::Identity * (-Util::large_number);
   }
 
   // Compute df_dp

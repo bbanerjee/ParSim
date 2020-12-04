@@ -189,7 +189,7 @@ ElasticModuli_Tabular_BulkPressure::getElasticModuliAndDerivatives(const ModelSt
   double G_min = computeShearModulus(K_min);
   double G_max = computeShearModulus(K_max);
 
-  // Compute derivatives
+  // Compute derivatives (negative sign to convert to compression -ve convention)
   double dK_deps_p = -(K_max - K_min)/(2*epsilon);
   double dG_deps_p = -(G_max - G_min)/(2*epsilon);
 
