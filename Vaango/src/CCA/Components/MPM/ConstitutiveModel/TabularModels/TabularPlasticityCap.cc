@@ -72,12 +72,13 @@ constexpr double gamma_H_factor = 1.5;
 //#define TEST_K_VARIATION
 #ifdef TEST_K_VARIATION
 //constexpr double K_scale_factor = 2;
-constexpr double K_scale_factor = 1.5;
+constexpr double K_scale_factor = 1.7;
 #endif
 
 //#define TEST_CAP_VARIATION
 #ifdef TEST_CAP_VARIATION
-constexpr double X_scale_factor = 0.95;
+constexpr double X_scale_factor = 1.2;
+//constexpr double X_scale_factor = 0.7;
 #endif
 
 //#define TEST_CAP_TRANSLATION
