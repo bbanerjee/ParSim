@@ -33,6 +33,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_Bulk.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular_BulkPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_NeuralNet.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_NeuralNet_Bulk.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_SupportVector.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
@@ -77,6 +78,8 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew ElasticModuli_Tabular_BulkPressure(child));
   else if (mat_type == "neural_net")
     return (scinew ElasticModuli_NeuralNet(child));
+  else if (mat_type == "neural_net_bulk")
+    return (scinew ElasticModuli_NeuralNet_Bulk(child));
   else if (mat_type == "support_vector")
     return (scinew ElasticModuli_SupportVector(child));
   else {
@@ -113,6 +116,9 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* model)
   else if (dynamic_cast<const ElasticModuli_NeuralNet*>(model))
     return (scinew ElasticModuli_NeuralNet(
       dynamic_cast<const ElasticModuli_NeuralNet*>(model)));
+  else if (dynamic_cast<const ElasticModuli_NeuralNet_Bulk*>(model))
+    return (scinew ElasticModuli_NeuralNet_Bulk(
+      dynamic_cast<const ElasticModuli_NeuralNet_Bulk*>(model)));
   else if (dynamic_cast<const ElasticModuli_SupportVector*>(model))
     return (scinew ElasticModuli_SupportVector(
       dynamic_cast<const ElasticModuli_SupportVector*>(model)));
