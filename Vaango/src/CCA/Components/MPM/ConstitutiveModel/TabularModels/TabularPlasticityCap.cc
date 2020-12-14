@@ -1232,6 +1232,15 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
     state_iter.stressTensor = sig_F;
     state_iter.updateStressInvariants();
 
+    #ifdef DEBUG_SIGMA_FIXED
+    std::cout << "sig_c = " << sig_c << "\n"
+              << " N_c = " << N_c << "\n"
+              << " P_c = " << P_c << "\n"
+              << " sig_trial = " << sig_trial << "\n"
+              << " sig_F = " << sig_F << "\n"
+              << " Gamma_F = " << Gamma_F << "\n";
+    #endif
+
     ++iter;
     if (iter > 20) {
       std::cout << "Iter: " << iter << " Gamma_F_old = " << Gamma_F_old << " Gamma_F = " << Gamma_F << "\n";

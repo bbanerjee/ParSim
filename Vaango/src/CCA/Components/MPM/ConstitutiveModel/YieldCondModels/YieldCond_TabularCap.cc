@@ -863,8 +863,11 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   #endif
 
   // Compute df_dp (cases where tangent_p_bar == 0, at the vertex and cap, have been handled before)
-  double dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
-
+  double dfdp_bar = std::copysign(Util::large_number, tangent_sqrt_J2);
+  if (std::abs(tangent_p_bar) > 1.0e-16) {
+    dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
+  }
+  
   // Compute df_dsqrt(J2)
   double dfdJ2 =
     (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
@@ -877,20 +880,30 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   Matrix3 p_term = Util::Identity * (dfdp_bar / 3.0);
   Matrix3 df_dsigma = p_term;
 
+  #ifdef DEBUG_DF_DSIGMA
+  std::cout << "p_term = " << p_term << "\n";
+  std::cout << "df_dsigma = " << df_dsigma << "\n";
+  #endif
+
   if (state->sqrt_J2 > 0) {
      // Compute stress tensor at closest point
      double s_factor = closest_sqrt_J2 / state->sqrt_J2;
      Matrix3 s_closest = state->deviatoricStressTensor * s_factor;
      Matrix3 s_term = s_closest * (dfdJ2);
      df_dsigma += s_term;
+
+     #ifdef DEBUG_DF_DSIGMA
+     std::cout << "s_factor = " << s_factor << "\n";
+     std::cout << "s_closest = " << s_closest << "\n";
+     std::cout << "s_term = " << s_term << "\n";
+     std::cout << "df_dsigma = " << df_dsigma << "\n";
+     #endif
   } 
 
   #ifdef DEBUG_DF_DSIGMA
   std::cout << "s = " << state->deviatoricStressTensor << "\n";
   std::cout << "df_dsigma = " << df_dsigma << "\n";
   #endif
-
-  // ALternative computation based on normal to yield surface in (p-sqrtJ2)-space
 
   return df_dsigma;
 }
