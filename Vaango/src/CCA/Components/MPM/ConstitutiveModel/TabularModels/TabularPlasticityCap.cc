@@ -1243,7 +1243,9 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
 
     ++iter;
     if (iter > 20) {
+      #ifdef DEBUG_SIGMA_FIXED
       std::cout << "Iter: " << iter << " Gamma_F_old = " << Gamma_F_old << " Gamma_F = " << Gamma_F << "\n";
+      #endif
       break;
     }
 
