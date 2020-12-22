@@ -252,11 +252,11 @@ getClosestSegments(const Uintah::Point& pt,
  * Use KD-Tree to find nearest segments (three nearest points) of the polyline
  * PointCloud class is needed for nanoflann kd-tree indexing
  */
-struct PointCloud
+struct PolylinePointCloud
 {
   std::vector<Uintah::Point> pts;
 
-  PointCloud(const std::vector<Uintah::Point>& polyline)
+  PolylinePointCloud(const std::vector<Uintah::Point>& polyline)
   {
     pts = polyline;
   }
@@ -274,6 +274,30 @@ struct PointCloud
   bool kdtree_get_bbox(BBOX& bb) const { return false; }
 };
 
+/*
+struct PolylinePointCloud
+{
+  const std::vector<Uintah::Point>* pts;
+
+  PolylinePointCloud(const std::vector<Uintah::Point>* polyline)
+  {
+    pts = polyline;
+  }
+  
+  inline size_t kdtree_get_point_count() const { return pts->size(); }
+
+  inline double kdtree_get_pt(const size_t idx, const size_t dim) const
+  {
+    if (dim == 0) return (*pts)[idx].x();
+    else if (dim == 1) return (*pts)[idx].y();
+    else return (*pts)[idx].z();
+  }
+
+  template <class BBOX>
+  bool kdtree_get_bbox(BBOX& bb) const { return false; }
+};
+*/
+
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
@@ -283,10 +307,11 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   double query_pt[2] = { pt.x(), pt.y() };
 
   // Construct kd-tree index
-  PointCloud cloud(polyline);
+  PolylinePointCloud cloud(polyline);
+  //PolylinePointCloud cloud(&polyline);
   using KDTree_t =  nanoflann::KDTreeSingleIndexAdaptor<
-                               nanoflann::L2_Simple_Adaptor<double, PointCloud>,
-                               PointCloud, 2 /* dim */>;
+                               nanoflann::L2_Simple_Adaptor<double, PolylinePointCloud>,
+                               PolylinePointCloud, 2 /* dim */>;
   KDTree_t index(2 /*dim*/, cloud, 
                  nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
   index.buildIndex();

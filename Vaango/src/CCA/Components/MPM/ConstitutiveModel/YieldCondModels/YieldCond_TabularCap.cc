@@ -908,11 +908,64 @@ YieldCond_TabularCap::df_dsigma(const ModelStateBase* state_input)
   return df_dsigma;
 }
 
+/* Assumes closest point and tangent have already been computed
+   elsewhere and the state variables have been updated */
 Uintah::Matrix3
 YieldCond_TabularCap::df_dsigma(const Matrix3&,
-                                const ModelStateBase* state)
+                                const ModelStateBase* state_input)
 {
-  return df_dsigma(state);
+  const ModelState_TabularCap* state =
+    static_cast<const ModelState_TabularCap*>(state_input);
+
+  double closest_p_bar = state->closest.x();
+  double closest_sqrt_J2 = state->closest.y();
+  double tangent_p_bar = state->tangent.x();
+  double tangent_sqrt_J2 = state->tangent.y();
+
+  // Check that the closest point is not at the vertex
+  double p_bar_min = d_I1bar_min / 3.0;
+  double epsilon = 1.0e-6;
+  if (closest_p_bar - epsilon < p_bar_min) {
+    return Util::Identity * Util::large_number;
+  }
+
+  // Handle vertex (minimum p_bar : assume vertex is in tension)
+  if (closest_p_bar < 0 && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    //std::cout << std::setprecision(16) << 
+    //          "df_dsigma = positive, p_bar = " << p_bar << " closest_p_bar = " << closest_p_bar << "\n";
+    return Util::Identity * (Util::large_number);
+  }
+
+  // Handle cap (maximum p_bar : assume cap is in compression)
+  if (closest_p_bar > 0 && std::abs(closest_sqrt_J2) < 1.0e-8) {
+    //std::cout << std::setprecision(16) << 
+    //          "df_dsigma = negative, p_bar = " << p_bar << " closest_p_bar = " << closest_p_bar << "\n";
+    return Util::Identity * (-Util::large_number);
+  }
+
+  // Compute df_dp (cases where tangent_p_bar == 0, at the vertex and cap, have been handled before)
+  double dfdp_bar = std::copysign(Util::large_number, tangent_sqrt_J2);
+  if (std::abs(tangent_p_bar) > 1.0e-16) {
+    dfdp_bar = tangent_sqrt_J2 / tangent_p_bar;
+  }
+  
+  // Compute df_dsqrt(J2)
+  double dfdJ2 =
+    (closest_sqrt_J2 == 0) ? Util::large_number : 1 / (2 * closest_sqrt_J2);
+
+  // Compute df_dsigma (dfdp = dfdp_bar for outward normal, -dfdp_bar for inward normal)
+  Matrix3 p_term = Util::Identity * (dfdp_bar / 3.0);
+  Matrix3 df_dsigma = p_term;
+
+  if (state->sqrt_J2 > 0) {
+     // Compute stress tensor at closest point
+     double s_factor = closest_sqrt_J2 / state->sqrt_J2;
+     Matrix3 s_closest = state->deviatoricStressTensor * s_factor;
+     Matrix3 s_term = s_closest * (dfdJ2);
+     df_dsigma += s_term;
+  } 
+
+  return df_dsigma;
 }
 
 //--------------------------------------------------------------

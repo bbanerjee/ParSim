@@ -331,7 +331,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                       };
   Polyline p_q_2000_all;
   model.computeCapPoints(3.0*2000, p_q_2000_all);
-  state.yield_f_pts = p_q_2000_all;
+  //state.yield_f_pts = p_q_2000_all;
+  state.updateYieldSurface(p_q_2000_all);
 
   int index = 0;
   for (const auto& p_q : p_q_2000_all) {
@@ -558,7 +559,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 
   Polyline p_q_6400_all;
   model.computeCapPoints(3.0*6400, p_q_6400_all);
-  state.yield_f_pts = p_q_6400_all;
+  //state.yield_f_pts = p_q_6400_all;
+  state.updateYieldSurface(p_q_6400_all);
 
   index = 0;
   for (const auto& p_q : p_q_6400_all) {
@@ -795,7 +797,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 
   Polyline p_q_10000_all;
   model.computeCapPoints(3.0*10000, p_q_10000_all);
-  state.yield_f_pts = p_q_10000_all;
+  //state.yield_f_pts = p_q_10000_all;
+  state.updateYieldSurface(p_q_10000_all);
 
   index = 0;
   for (const auto& p_q : p_q_10000_all) {
@@ -837,7 +840,8 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   state.capX = -2000*3;
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  state.yield_f_pts = p_q_2000_all;
+  //state.yield_f_pts = p_q_2000_all;
+  state.updateYieldSurface(p_q_2000_all);
 
   /*
   std::cout << "p_q_2000_x = (";
@@ -922,7 +926,8 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   state.capX = -10000*3;
   Polyline p_q_10000_all;
   model.computeCapPoints(-state.capX, p_q_10000_all);
-  state.yield_f_pts = p_q_10000_all;
+  //state.yield_f_pts = p_q_10000_all;
+  state.updateYieldSurface(p_q_10000_all);
 
   p = -9700;  // Compression
   sqrt_J2 = 4.37045077325265e+02;
@@ -942,6 +947,31 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 
 }
 
+void
+updateClosestAndTangent(YieldCond_TabularCap& model,
+                        ModelState_TabularCap& state)
+{
+  double sqrtKG = std::sqrt(1.5 * state.bulkModulus / state.shearModulus);
+
+  double z = 0.0, rprime = 0.0;
+  Vaango::Util::convertToZRprime(sqrtKG, -state.I1/3.0, state.sqrt_J2, z, rprime);
+
+  double closest_z = 0.0, closest_rprime = 0.0;
+  double tangent_z = 0.0, tangent_rprime = 0.0;
+  model.getClosestPointAndTangent(
+    &state, z, rprime, closest_z, closest_rprime, tangent_z, tangent_rprime);
+
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
+  Vaango::Util::revertFromZRprime(
+    sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
+  Vaango::Util::revertFromZRprime(
+    sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
+
+  state.closest = Uintah::Point(closest_p_bar, closest_sqrt_J2, 0.0);
+  state.tangent = Uintah::Point(tangent_p_bar, tangent_sqrt_J2, 0.0);
+}
+
 TEST_F(YieldCondTabularCapTest, df_dsigma)
 {
   IntVar_TabularCap intvar(ps_intvar);
@@ -957,11 +987,14 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   state.updateStressInvariants();
 
   state.capX = -2000*3;
+
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  state.yield_f_pts = p_q_2000_all;
+  //state.yield_f_pts = p_q_2000_all;
+  state.updateYieldSurface(p_q_2000_all);
 
   // Zero everything (elastic)
+  updateClosestAndTangent(model, state);
   Matrix3 df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -992,6 +1025,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
+  updateClosestAndTangent(model, state);
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -1008,6 +1042,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
+  updateClosestAndTangent(model, state);
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -1024,6 +1059,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
+  updateClosestAndTangent(model, state);
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -1040,6 +1076,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
+  updateClosestAndTangent(model, state);
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -1055,6 +1092,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
   ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
   ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
+  updateClosestAndTangent(model, state);
   df_dsigma = model.df_dsigma(zero, &state);
   df_dsigma /= df_dsigma.Norm();
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
@@ -1077,7 +1115,8 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
 
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  state.yield_f_pts = p_q_2000_all;
+  //state.yield_f_pts = p_q_2000_all;
+  state.updateYieldSurface(p_q_2000_all);
 
   state.stressTensor = Matrix3(2000, 4000, 0, 4000, 2000, 0, 0, 0, 2000);
   state.updateStressInvariants();

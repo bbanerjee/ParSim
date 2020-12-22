@@ -391,7 +391,8 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
       #endif
       std::array<double, 3> range =
         d_yield->getYieldConditionRange(yield_f_pts);
-      state_old.yield_f_pts = yield_f_pts;
+      //state_old.yield_f_pts = yield_f_pts;
+      state_old.updateYieldSurface(yield_f_pts);
       state_old.I1_max      = -range[0] * 3.0;
       state_old.I1_min      = -range[1] * 3.0;
       state_old.sqrtJ2_max  = range[2];
@@ -628,9 +629,10 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(
     // Compute the substep time increment list
     std::vector<double> substeps(nsub, delT / static_cast<double>(nsub));
 
-    // Loop through the substeps
     state_k_old   = state_old;
     state_k_new   = state_old;
+
+    // Loop through the substeps
     double tlocal = 0.0;
     for (const auto dt : substeps) {
 
@@ -1047,7 +1049,8 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   state_k_new.capX = computeInternalVariable(state_k_new);
   auto yield_pts_updated =
     d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
-  state_k_new.yield_f_pts = yield_pts_updated;
+  //state_k_new.yield_f_pts = yield_pts_updated;
+  state_k_new.updateYieldSurface(yield_pts_updated);
 
   // Update elastic properties
   computeElasticProperties(state_k_new);
@@ -1743,7 +1746,8 @@ TabularPlasticityCap::consistencyBisectionHardeningSoftening(
     // Update yield surface
     auto yield_pts_updated =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_updated);
-    state_k_updated.yield_f_pts = yield_pts_updated;
+    //state_k_updated.yield_f_pts = yield_pts_updated;
+    state_k_updated.updateYieldSurface(yield_pts_updated);
 
     // Eval the yield condition with the updated yield surface and the stress at
     // the end of the non-hardening update
@@ -1779,7 +1783,8 @@ TabularPlasticityCap::consistencyBisectionHardeningSoftening(
     // Update yield surface
     auto yield_pts_mid =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_trial_mid);
-    state_trial_mid.yield_f_pts = yield_pts_mid;
+    //state_trial_mid.yield_f_pts = yield_pts_mid;
+    state_trial_mid.updateYieldSurface(yield_pts_mid);
 
     // Do a non-hardening return to the updated yield surface
     Matrix3 deltaEps_p_mid;
@@ -2485,7 +2490,8 @@ TabularPlasticityCap::consistencyBisectionSimplified(
     // Update yield surface
     Polyline yield_f_pts =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_trial_mid);
-    state_trial_mid.yield_f_pts = yield_f_pts;
+    //state_trial_mid.yield_f_pts = yield_f_pts;
+    state_trial_mid.updateYieldSurface(yield_f_pts);
 
     // Update the trial stress
     auto stress_trial = computeTrialStress(state_trial_mid, deltaEps_new);
