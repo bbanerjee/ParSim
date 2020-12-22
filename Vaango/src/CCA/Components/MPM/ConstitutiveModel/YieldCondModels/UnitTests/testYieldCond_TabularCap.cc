@@ -969,7 +969,7 @@ updateClosestAndTangent(YieldCond_TabularCap& model,
     sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
 
   state.closest = Uintah::Point(closest_p_bar, closest_sqrt_J2, 0.0);
-  state.tangent = Uintah::Point(tangent_p_bar, tangent_sqrt_J2, 0.0);
+  state.tangent = Uintah::Vector(tangent_p_bar, tangent_sqrt_J2, 0.0);
 }
 
 TEST_F(YieldCondTabularCapTest, df_dsigma)

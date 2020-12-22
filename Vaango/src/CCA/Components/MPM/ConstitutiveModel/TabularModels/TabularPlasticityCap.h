@@ -378,7 +378,7 @@ private:
    *   sig_closest    = stress at closest point
    */
   //////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3 
+  std::tuple<Uintah::Matrix3, Uintah::Point, Uintah::Vector> 
   closestPointInZRSpace(const ModelState_TabularCap& state_old,
                         const ModelState_TabularCap& state_trial) const;
 

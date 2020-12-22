@@ -26,69 +26,14 @@
 #define __MODEL_STATE_TABULAR_CAP_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Utilities/nanoflann.hpp>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/SearchUtils.h>
 #include <vector>
 #include <memory>
 #include <iterator>
 
-//#define TABULARCAP_USE_POLYLINE_POINTERS
-
 namespace Vaango {
 
 using Polyline = std::vector<Uintah::Point>;
-
-/**
- * A point cloud for kd-tree seraches
- */
-#ifdef TABULARCAP_USE_POLYLINE_POINTERS
-  struct PolylinePointCloud
-  {
-    const std::vector<Uintah::Point>* pts;
-
-    PolylinePointCloud(const std::vector<Uintah::Point>* polyline)
-    {
-      pts = polyline;
-    }
-    
-    inline size_t kdtree_get_point_count() const { return pts->size(); }
-
-    inline double kdtree_get_pt(const size_t idx, const size_t dim) const
-    {
-      if (dim == 0) return (*pts)[idx].x();
-      else if (dim == 1) return (*pts)[idx].y();
-      else return (*pts)[idx].z();
-    }
-
-    template <class BBOX>
-    bool kdtree_get_bbox(BBOX& bb) const { return false; }
-  };
-#else
-  struct PolylinePointCloud
-  {
-    std::vector<Uintah::Point> pts;
-
-    PolylinePointCloud(const std::vector<Uintah::Point>& polyline)
-    { 
-      pts = polyline;
-    }
-
-    inline size_t kdtree_get_point_count() const { return pts.size(); }
-
-    inline double kdtree_get_pt(const size_t idx, const size_t dim) const
-    {
-      if (dim == 0) return pts[idx].x();
-      else if (dim == 1) return pts[idx].y();
-      else return pts[idx].z();
-    }
-
-    template <class BBOX>
-    bool kdtree_get_bbox(BBOX& bb) const { return false; }
-  };
-#endif
-
-using PolylineKDTree = nanoflann::KDTreeSingleIndexAdaptor<
-                         nanoflann::L2_Simple_Adaptor<double, PolylinePointCloud>,
-                         PolylinePointCloud, 2 /* dim */>;
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
@@ -109,15 +54,15 @@ public:
   double I1_max;
   double sqrtJ2_max;
 
-  Uintah::Point closest; // Closest point to the yield surface in pbar-sqrtJ2 space
-  Uintah::Point tangent; // Tangent at closest point to the yield surface in pbar-sqrtJ2 space
+  Uintah::Point closest;  // Closest point to the yield surface in pbar-sqrtJ2 space
+  Uintah::Vector tangent; // Tangent at closest point to the yield surface in pbar-sqrtJ2 space
 
   Polyline            yield_f_pts; // Polyline representing yield function with cap
                                    // in pbar-sqrtJ2 space
   Polyline            z_r_table;   // Yield function in z-r' space
 
-  std::shared_ptr<PolylinePointCloud> z_r_cloud;   // A point cloud for use by the KD-tree algorithm
-  std::shared_ptr<PolylineKDTree>     z_r_index;   // KDtree index for the polyline point cloud
+  std::shared_ptr<Util::PolylinePointCloud> z_r_cloud;   // A point cloud for use by the KD-tree algorithm
+  std::shared_ptr<Util::PolylineKDTree>     z_r_index;   // KDtree index for the polyline point cloud
 
   ModelState_TabularCap();
 

@@ -1212,28 +1212,35 @@ std::tuple<Matrix3, Matrix3, Matrix3, double, double>
 TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old, 
                                         const ModelState_TabularCap& state_trial) const
 {
+  // A copy of the trial state that can be updated per iteration
+  ModelState_TabularCap state_trial_iter(state_trial);
   Matrix3 sig_trial = state_trial.stressTensor;
-  ModelState_TabularCap state_iter(state_trial);
+
+  // A copy of the old state that can be updated for normal computation
+  ModelState_TabularCap state_old_for_normal(state_old);
 
   double Gamma_F_old = 0.0, Gamma_F = 0.0, N_c_mag;
-  Matrix3 sig_F, P_c, M_c;
+  Matrix3 sig_c, sig_F, P_c, M_c;
+  Point closest;
+  Vector tangent;
   int iter = 0;
 
   do {
-
-    Matrix3 sig_c = closestPointInZRSpace(state_old, state_iter);
-    Matrix3 N_c = computeYieldSurfaceNormal(state_old, sig_c);
+    std::tie(sig_c, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter);
+    state_old_for_normal.closest = closest;
+    state_old_for_normal.tangent = tangent;
+    Matrix3 N_c = computeYieldSurfaceNormal(state_old_for_normal, sig_c);
     N_c_mag = N_c.Norm();
     Matrix3 N_c_norm = N_c / N_c_mag;
     M_c = N_c_norm;
-    P_c = computeProjectionTensor(state_old, sig_c, M_c);
+    P_c = computeProjectionTensor(state_old_for_normal, sig_c, M_c);
     
     Gamma_F_old = Gamma_F;
     Gamma_F = computeGammaClosest(sig_c, sig_trial, N_c_norm, P_c);
     sig_F = sig_trial - P_c * Gamma_F;
 
-    state_iter.stressTensor = sig_F;
-    state_iter.updateStressInvariants();
+    state_trial_iter.stressTensor = sig_F;
+    state_trial_iter.updateStressInvariants();
 
     #ifdef DEBUG_SIGMA_FIXED
     std::cout << "sig_c = " << sig_c << "\n"
@@ -1260,20 +1267,22 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
 
   #ifdef NO_RETURN_TO_YIELD_SURFACE
 
-  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
+  double df_deps_v = d_yield->df_depsVol(&state_trial_iter, nullptr, nullptr);
   double H_F = - df_deps_v * M_c.Trace() / N_c_mag; 
   return std::make_tuple(sig_F, P_c, M_c, H_F, Gamma_F);
 
   #else
 
-  sig_F = closestPointInZRSpace(state_old, state_iter);
-  state_iter.stressTensor = sig_F;
-  state_iter.updateStressInvariants();
-  Matrix3 N_F = computeYieldSurfaceNormal(state_old, sig_F);
+  std::tie(sig_F, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter);
+  state_trial_iter.stressTensor = sig_F;
+  state_trial_iter.updateStressInvariants();
+  state_old_for_normal.closest = closest;
+  state_old_for_normal.tangent = tangent;
+  Matrix3 N_F = computeYieldSurfaceNormal(state_old_for_normal, sig_F);
   double N_F_mag = N_F.Norm();
   Matrix3 M_F = N_F / N_F_mag;
-  Matrix3 P_F = computeProjectionTensor(state_old, sig_F, M_F);
-  double df_deps_v = d_yield->df_depsVol(&state_iter, nullptr, nullptr);
+  Matrix3 P_F = computeProjectionTensor(state_old_for_normal, sig_F, M_F);
+  double df_deps_v = d_yield->df_depsVol(&state_trial_iter, nullptr, nullptr);
   double H_F = - df_deps_v * M_F.Trace() / N_F_mag; 
 
     #ifdef DEBUG_SIGMA_FIXED
@@ -1324,7 +1333,7 @@ TabularPlasticityCap::computeSigmaHardening(const ModelState_TabularCap& state_t
 /**
  * Find closest point from the trial stress to the fixed yield surface in z-r space
  */
-Uintah::Matrix3 
+std::tuple<Uintah::Matrix3, Uintah::Point, Uintah::Vector>
 TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k_old,
                                             const ModelState_TabularCap& state_k_trial) const
 {
@@ -1341,10 +1350,14 @@ TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k
   // Compute transformed r coordinates
   double rprime_trial = r_trial * sqrt_K_over_G_old;
 
-  // Find closest point
+  // Find closest point and tangent at closest point
   double z_closest = 0.0, rprime_closest = 0.0;
-  d_yield->getClosestPoint(
-    &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest);
+  double z_tangent = 0.0, rprime_tangent = 0.0;
+  //d_yield->getClosestPoint(
+  //  &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest);
+  d_yield->getClosestPointAndTangent(
+    &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest,
+    z_tangent, rprime_tangent);
 
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0) * z_closest;
@@ -1385,7 +1398,17 @@ TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k
     sig_closest += (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } 
 
-  return sig_closest;
+  // Save the closest point and tangent in pbar-sqrtJ2 space
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
+  Vaango::Util::revertFromZRprime(sqrt_K_over_G_old,
+    z_closest, rprime_closest, closest_p_bar, closest_sqrt_J2);
+  Vaango::Util::revertFromZRprime(sqrt_K_over_G_old,
+    z_tangent, rprime_tangent, tangent_p_bar, tangent_sqrt_J2);
+  Uintah::Point closest(closest_p_bar, closest_sqrt_J2, 0.0);
+  Uintah::Vector tangent(tangent_p_bar, tangent_sqrt_J2, 0.0);
+
+  return std::make_tuple(sig_closest, closest, tangent);
 }
 
 /**
@@ -1399,7 +1422,10 @@ TabularPlasticityCap::computeYieldSurfaceNormal(const ModelState_TabularCap& sta
   state.stressTensor = sig_closest;
   state.updateStressInvariants();
 
-  Matrix3 df_dsigma = d_yield->df_dsigma(&state);
+  // This version of df_dsigma assumes that the closest point and tangent
+  // have already been computed and stored in the state.  The first argument
+  // is a dummy that tells the code that this special version is being used.
+  Matrix3 df_dsigma = d_yield->df_dsigma(Vaango::Util::Identity, &state);
 
   return df_dsigma;
 }

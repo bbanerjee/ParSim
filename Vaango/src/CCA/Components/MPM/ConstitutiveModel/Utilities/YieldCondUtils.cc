@@ -26,7 +26,6 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Utilities/nanoflann.hpp>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>
 #include <iostream>
@@ -252,52 +251,6 @@ getClosestSegments(const Uintah::Point& pt,
  * Use KD-Tree to find nearest segments (three nearest points) of the polyline
  * PointCloud class is needed for nanoflann kd-tree indexing
  */
-struct PolylinePointCloud
-{
-  std::vector<Uintah::Point> pts;
-
-  PolylinePointCloud(const std::vector<Uintah::Point>& polyline)
-  {
-    pts = polyline;
-  }
-  
-  inline size_t kdtree_get_point_count() const { return pts.size(); }
-
-  inline double kdtree_get_pt(const size_t idx, const size_t dim) const
-  {
-    if (dim == 0) return pts[idx].x();
-    else if (dim == 1) return pts[idx].y();
-    else return pts[idx].z();
-  }
-
-  template <class BBOX>
-  bool kdtree_get_bbox(BBOX& bb) const { return false; }
-};
-
-/*
-struct PolylinePointCloud
-{
-  const std::vector<Uintah::Point>* pts;
-
-  PolylinePointCloud(const std::vector<Uintah::Point>* polyline)
-  {
-    pts = polyline;
-  }
-  
-  inline size_t kdtree_get_point_count() const { return pts->size(); }
-
-  inline double kdtree_get_pt(const size_t idx, const size_t dim) const
-  {
-    if (dim == 0) return (*pts)[idx].x();
-    else if (dim == 1) return (*pts)[idx].y();
-    else return (*pts)[idx].z();
-  }
-
-  template <class BBOX>
-  bool kdtree_get_bbox(BBOX& bb) const { return false; }
-};
-*/
-
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
@@ -329,6 +282,43 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   //          << "dist: " << out_dist_sqr << ",\t"
   //          << "point: (" << cloud.pts[min_index].x()
   //          << ", " << cloud.pts[min_index].y() << ")\n";
+
+  // Set up the segments
+  auto close_index = min_index;
+  if (min_index == 0) {
+    segments.push_back(polyline[min_index]);
+    segments.push_back(polyline[min_index+1]);
+    segments.push_back(polyline[min_index+2]);
+    close_index = min_index+1;
+  } else if (min_index == polyline.size()-1) {
+    segments.push_back(polyline[min_index-2]);
+    segments.push_back(polyline[min_index-1]);
+    segments.push_back(polyline[min_index]);
+  } else {
+    segments.push_back(polyline[min_index-1]);
+    segments.push_back(polyline[min_index]);
+    segments.push_back(polyline[min_index+1]);
+  }
+
+  return close_index;
+}
+
+std::size_t
+getClosestSegmentsKDTree(const Uintah::Point& pt,
+                         const std::vector<Uintah::Point>& polyline,
+                         const PolylineKDTreeP& kdtree_index,  
+                         std::vector<Uintah::Point>& segments)
+{
+  // Set up the query point
+  double query_pt[2] = { pt.x(), pt.y() };
+
+  // Search for the nearest point
+  const size_t num_results = 1;
+  size_t min_index;
+  double out_dist_sqr;
+  nanoflann::KNNResultSet<double> resultSet(num_results);
+  resultSet.init(&min_index, &out_dist_sqr);
+  kdtree_index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
 
   // Set up the segments
   auto close_index = min_index;

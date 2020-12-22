@@ -65,10 +65,10 @@ ModelState_TabularCap::updateYieldSurface(const Polyline& yield_poly)
   convertToZRprime();
 
   // Save as a point cloud
-  z_r_cloud = std::make_shared<PolylinePointCloud>(z_r_table);
+  z_r_cloud = std::make_shared<Util::PolylinePointCloud>(z_r_table);
 
   // Build index
-  z_r_index = std::make_shared<PolylineKDTree>(2 /*dim*/, *z_r_cloud,
+  z_r_index = std::make_shared<Util::PolylineKDTree>(2 /*dim*/, *z_r_cloud,
                 nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
   z_r_index->buildIndex();
 }

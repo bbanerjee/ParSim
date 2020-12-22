@@ -381,6 +381,14 @@ private:
   getClosestPointSplineNewton(const ModelState_TabularCap* state,
                               const Uintah::Point& z_r_pt);
 
+  /**
+   * The closest point for the situation where the yield function polyline
+   * has already been converted to z-rprime coordinates in the ModelState 
+   */
+  std::tuple<Point, Vector>
+  getClosestPointSplineNewtonZR(const ModelState_TabularCap* state,
+                                const Uintah::Point& z_r_pt);
+
   /* Compute the height of the elliptical cap */
   double
   computeEllipseHeight(const Polyline& p_q_points, double p_cap);

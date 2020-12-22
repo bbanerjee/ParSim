@@ -5,6 +5,7 @@
 #include <Core/Math/Matrix3.h>
 #include <vector>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/SearchUtils.h>
 
 namespace Vaango {
 
@@ -103,6 +104,11 @@ getClosestSegments(const Uintah::Point& pt,
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
+                         std::vector<Uintah::Point>& segments);
+std::size_t
+getClosestSegmentsKDTree(const Uintah::Point& pt,
+                         const std::vector<Uintah::Point>& polyline,
+                         const PolylineKDTreeP& kdtree_index,  
                          std::vector<Uintah::Point>& segments);
 
 /**

@@ -1346,7 +1346,8 @@ YieldCond_TabularCap::getClosestPointAndTangent(
   Point closest(0.0, 0.0, 0.0);
   Vector tangent(0.0, 0.0, 0.0);
 
-  std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
+  //std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
+  std::tie(closest, tangent) = getClosestPointSplineNewtonZR(state, pt);
 
   cz      = closest.x();
   crprime = closest.y();
@@ -1575,6 +1576,70 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
     Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
     z_r_points.push_back(Point(z, rprime, 0));
   }
+}
+
+/* The closest point for the situation where the yield function polyline
+   has already been converetd to z-rprime coordinates in the ModelState */
+std::tuple<Point, Vector>
+YieldCond_TabularCap::getClosestPointSplineNewtonZR(
+  const ModelState_TabularCap* state,
+  const Point& z_r_pt)
+{
+  // Find the closest segments
+  Polyline z_r_segments;
+  std::size_t closest_index = 0;
+#ifdef DO_BINARY_CLOSEST_SEGMENT
+  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, state->z_r_table, 
+                                                               z_r_segments);
+#else
+  if (state->z_r_table.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
+    closest_index = Vaango::Util::getClosestSegments(z_r_pt, state->z_r_table, 
+                                                     z_r_segments);
+  } else {
+    closest_index = Vaango::Util::getClosestSegmentsKDTree(z_r_pt, state->z_r_table, 
+                                                           state->z_r_index, z_r_segments);
+  }
+#endif
+
+  // Get the yield surface points for the closest segments
+  // (Fit quadratic B_spline)
+  std::size_t numPts = state->z_r_table.size();
+  auto seg_start     = closest_index - 1;
+  auto seg_end       = closest_index + 1;
+  if (closest_index < 2) {
+    seg_start = 0;
+    seg_end   = 2;
+  } else if (closest_index > numPts - 3) {
+    seg_start = numPts - 3;
+    seg_end   = numPts - 1;
+  }
+
+#ifdef DEBUG_CLOSEST_POINT
+  std::cout << "closest_index = " << closest_index << "\n";
+  std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+            << "(0," << numPts - 1 << ")\n";
+#endif
+
+  Point z_r_closest(0, 0, 0);
+  Vector z_r_tangent(0, 0, 0);
+  Vector z_r_dtangent(0, 0, 0);
+  std::tie(z_r_closest, z_r_tangent, z_r_dtangent) =
+    Vaango::Util::computeClosestPointQuadraticBSpline(
+      z_r_pt, state->z_r_table, seg_start, seg_end);
+
+#ifdef DEBUG_CLOSEST_POINT
+  std::cout << "ZRSeg0 = " << std::setprecision(16) << state->z_r_table[seg_start]
+            << "\n";
+  std::cout << "ZRSeg1 = " << std::setprecision(16) << state->z_r_table[seg_start + 1]
+            << "\n";
+  std::cout << "ZRSeg2 = " << std::setprecision(16) << state->z_r_table[seg_start + 2]
+            << "\n";
+  std::cout << "ZRPoint = " << std::setprecision(16) << z_r_pt << "\n";
+  std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
+  std::cout << "ZRTangent = " << std::setprecision(16) << z_r_tangent << "\n";
+#endif
+
+  return std::make_tuple(z_r_closest, z_r_tangent);
 }
 
 //--------------------------------------------------------------
