@@ -39,6 +39,7 @@
 //#define DEBUG_EVAL_YIELD
 //#define DEBUG_DF_DSIGMA
 //#define DEBUG_POINT_ON_TANGENT
+//#define TIME_POLY_SEARCH
 
 using namespace Vaango;
 using Point   = Uintah::Point;
@@ -1488,22 +1489,33 @@ YieldCond_TabularCap::getClosestPointSplineNewton(
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
+  #ifdef TIME_POLY_SEARCH
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+  #endif
+
   // Convert tabular data to z-rprime coordinates
-  Polyline z_r_table;
+  Polyline z_r_table(state->yield_f_pts.size());
   convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
 
-#ifdef DEBUG_CLOSEST_POINT
-  std::cout << "z_r_x = (";
-  for (auto pt : z_r_table) {
-    std::cout << pt.x() << ",";
-  }
-  std::cout << ")\n";
-  std::cout << "z_r_y = (";
-  for (auto pt : z_r_table) {
-    std::cout << pt.y() << ",";
-  }
-  std::cout << ")\n";
-#endif
+  #ifdef TIME_POLY_SEARCH
+    end = std::chrono::system_clock::now();
+    std::cout << "ZR poly creation : Time taken = " 
+              << std::chrono::duration<double>(end-start).count() << std::endl;
+  #endif
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "z_r_x = (";
+    for (auto pt : z_r_table) {
+      std::cout << pt.x() << ",";
+    }
+    std::cout << ")\n";
+    std::cout << "z_r_y = (";
+    for (auto pt : z_r_table) {
+      std::cout << pt.y() << ",";
+    }
+    std::cout << ")\n";
+  #endif
 
   // Find the closest segments
   Polyline z_r_segments;
@@ -1534,11 +1546,11 @@ YieldCond_TabularCap::getClosestPointSplineNewton(
     seg_end   = numPts - 1;
   }
 
-#ifdef DEBUG_CLOSEST_POINT
-  std::cout << "closest_index = " << closest_index << "\n";
-  std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
-            << "(0," << numPts - 1 << ")\n";
-#endif
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts - 1 << ")\n";
+  #endif
 
   Point z_r_closest(0, 0, 0);
   Vector z_r_tangent(0, 0, 0);
@@ -1547,17 +1559,17 @@ YieldCond_TabularCap::getClosestPointSplineNewton(
     Vaango::Util::computeClosestPointQuadraticBSpline(
       z_r_pt, z_r_table, seg_start, seg_end);
 
-#ifdef DEBUG_CLOSEST_POINT
-  std::cout << "ZRSeg0 = " << std::setprecision(16) << z_r_table[seg_start]
-            << "\n";
-  std::cout << "ZRSeg1 = " << std::setprecision(16) << z_r_table[seg_start + 1]
-            << "\n";
-  std::cout << "ZRSeg2 = " << std::setprecision(16) << z_r_table[seg_start + 2]
-            << "\n";
-  std::cout << "ZRPoint = " << std::setprecision(16) << z_r_pt << "\n";
-  std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
-  std::cout << "ZRTangent = " << std::setprecision(16) << z_r_tangent << "\n";
-#endif
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRSeg0 = " << std::setprecision(16) << z_r_table[seg_start]
+              << "\n";
+    std::cout << "ZRSeg1 = " << std::setprecision(16) << z_r_table[seg_start + 1]
+              << "\n";
+    std::cout << "ZRSeg2 = " << std::setprecision(16) << z_r_table[seg_start + 2]
+              << "\n";
+    std::cout << "ZRPoint = " << std::setprecision(16) << z_r_pt << "\n";
+    std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
+    std::cout << "ZRTangent = " << std::setprecision(16) << z_r_tangent << "\n";
+  #endif
 
   return std::make_tuple(z_r_closest, z_r_tangent);
 }
@@ -1569,12 +1581,13 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
                                        Polyline& z_r_points) const
 {
   // Compute z and r' for the yield surface points
+  size_t ii = 0;
   for (const auto& pt : p_q_points) {
     double p_bar   = pt.x();
     double sqrt_J2 = pt.y();
     double z = 0.0, rprime = 0.0;
     Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
-    z_r_points.push_back(Point(z, rprime, 0));
+    z_r_points[ii++] = Point(z, rprime, 0);
   }
 }
 

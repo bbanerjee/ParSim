@@ -31,10 +31,12 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <chrono>
 
 #include <Eigen/Dense>
 
 //#define DEBUG_INTERSECTION
+//#define TIME_KDTREE_INDEX
 
 namespace Vaango {
 
@@ -259,6 +261,11 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   // Set up the query point
   double query_pt[2] = { pt.x(), pt.y() };
 
+  #ifdef TIME_KDTREE_INDEX
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+  #endif
+
   // Construct kd-tree index
   PolylinePointCloud cloud(polyline);
   //PolylinePointCloud cloud(&polyline);
@@ -269,6 +276,14 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
                  nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
   index.buildIndex();
 
+  #ifdef TIME_KDTREE_INDEX
+    end = std::chrono::system_clock::now();
+    std::cout << " Index build: Time taken = " 
+              << std::chrono::duration<double>(end-start).count() << std::endl;
+
+    start = std::chrono::system_clock::now();
+  #endif
+
   // Search for the nearest point
   const size_t num_results = 1;
   size_t min_index;
@@ -276,6 +291,12 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   nanoflann::KNNResultSet<double> resultSet(num_results);
   resultSet.init(&min_index, &out_dist_sqr);
   index.findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+
+  #ifdef TIME_KDTREE_INDEX
+    end = std::chrono::system_clock::now();
+    std::cout << " Find: Time taken = " 
+              << std::chrono::duration<double>(end-start).count() << std::endl;
+  #endif
 
   //std::cout << "knnSearch(nn=" << num_results << "): \n";
   //std::cout << "index: " << min_index << ",\t"
