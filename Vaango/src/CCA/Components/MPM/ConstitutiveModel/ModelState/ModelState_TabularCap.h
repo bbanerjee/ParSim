@@ -61,8 +61,8 @@ public:
                                    // in pbar-sqrtJ2 space
   Polyline            z_r_table;   // Yield function in z-r' space
 
-  std::shared_ptr<Util::PolylinePointCloud> z_r_cloud;   // A point cloud for use by the KD-tree algorithm
-  std::shared_ptr<Util::PolylineKDTree>     z_r_index;   // KDtree index for the polyline point cloud
+  std::shared_ptr<Util::PolylinePointCloud> z_r_cloud; // A point cloud for use by the KD-tree algorithm
+  std::shared_ptr<Util::PolylineKDTree>     z_r_index; // KDtree index for the polyline point cloud
 
   ModelState_TabularCap();
 

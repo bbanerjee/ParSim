@@ -1346,8 +1346,8 @@ YieldCond_TabularCap::getClosestPointAndTangent(
   Point closest(0.0, 0.0, 0.0);
   Vector tangent(0.0, 0.0, 0.0);
 
-  //std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
-  std::tie(closest, tangent) = getClosestPointSplineNewtonZR(state, pt);
+  std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
+  //std::tie(closest, tangent) = getClosestPointSplineNewtonZR(state, pt);
 
   cz      = closest.x();
   crprime = closest.y();
@@ -1579,7 +1579,7 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
 }
 
 /* The closest point for the situation where the yield function polyline
-   has already been converetd to z-rprime coordinates in the ModelState */
+   has already been converted to z-rprime coordinates in the ModelState */
 std::tuple<Point, Vector>
 YieldCond_TabularCap::getClosestPointSplineNewtonZR(
   const ModelState_TabularCap* state,

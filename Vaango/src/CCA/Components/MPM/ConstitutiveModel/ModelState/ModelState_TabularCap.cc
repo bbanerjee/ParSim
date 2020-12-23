@@ -36,6 +36,8 @@ ModelState_TabularCap::ModelState_TabularCap()
  , I1_max(0)
  , sqrtJ2_max(0)
 {
+  z_r_cloud = nullptr;
+  z_r_index = nullptr;
 }
 
 ModelState_TabularCap::ModelState_TabularCap(const ModelState_TabularCap* state)
@@ -57,7 +59,6 @@ ModelState_TabularCap::operator=(const ModelState_TabularCap* state)
 void 
 ModelState_TabularCap::updateYieldSurface(const Polyline& yield_poly)
 {
-
   // Copy the polyline
   yield_f_pts = yield_poly;
 

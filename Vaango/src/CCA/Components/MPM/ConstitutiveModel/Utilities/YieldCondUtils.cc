@@ -303,6 +303,9 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   return close_index;
 }
 
+/**
+ *  Closest segments for the case where index has been saved before
+ */
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
