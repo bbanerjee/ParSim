@@ -108,7 +108,7 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
-                         const PolylineKDTreeP& kdtree_index,  
+                         const PolylineKDTree& kdtree_index,  
                          std::vector<Uintah::Point>& segments);
 
 /**

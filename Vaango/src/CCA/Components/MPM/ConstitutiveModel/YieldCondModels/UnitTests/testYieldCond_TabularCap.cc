@@ -331,8 +331,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                       };
   Polyline p_q_2000_all;
   model.computeCapPoints(3.0*2000, p_q_2000_all);
-  //state.yield_f_pts = p_q_2000_all;
-  state.updateYieldSurface(p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   int index = 0;
   for (const auto& p_q : p_q_2000_all) {
@@ -559,8 +558,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 
   Polyline p_q_6400_all;
   model.computeCapPoints(3.0*6400, p_q_6400_all);
-  //state.yield_f_pts = p_q_6400_all;
-  state.updateYieldSurface(p_q_6400_all);
+  state.yield_f_pts = p_q_6400_all;
 
   index = 0;
   for (const auto& p_q : p_q_6400_all) {
@@ -797,8 +795,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 
   Polyline p_q_10000_all;
   model.computeCapPoints(3.0*10000, p_q_10000_all);
-  //state.yield_f_pts = p_q_10000_all;
-  state.updateYieldSurface(p_q_10000_all);
+  state.yield_f_pts = p_q_10000_all;
 
   index = 0;
   for (const auto& p_q : p_q_10000_all) {
@@ -840,8 +837,7 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   state.capX = -2000*3;
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  //state.yield_f_pts = p_q_2000_all;
-  state.updateYieldSurface(p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   /*
   std::cout << "p_q_2000_x = (";
@@ -926,8 +922,7 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   state.capX = -10000*3;
   Polyline p_q_10000_all;
   model.computeCapPoints(-state.capX, p_q_10000_all);
-  //state.yield_f_pts = p_q_10000_all;
-  state.updateYieldSurface(p_q_10000_all);
+  state.yield_f_pts = p_q_10000_all;
 
   p = -9700;  // Compression
   sqrt_J2 = 4.37045077325265e+02;
@@ -990,8 +985,7 @@ TEST_F(YieldCondTabularCapTest, df_dsigma)
 
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  //state.yield_f_pts = p_q_2000_all;
-  state.updateYieldSurface(p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   // Zero everything (elastic)
   updateClosestAndTangent(model, state);
@@ -1115,8 +1109,7 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
 
   Polyline p_q_2000_all;
   model.computeCapPoints(-state.capX, p_q_2000_all);
-  //state.yield_f_pts = p_q_2000_all;
-  state.updateYieldSurface(p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   state.stressTensor = Matrix3(2000, 4000, 0, 4000, 2000, 0, 0, 0, 2000);
   state.updateStressInvariants();

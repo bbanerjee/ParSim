@@ -36,8 +36,6 @@ ModelState_TabularCap::ModelState_TabularCap()
  , I1_max(0)
  , sqrtJ2_max(0)
 {
-  z_r_cloud = nullptr;
-  z_r_index = nullptr;
 }
 
 ModelState_TabularCap::ModelState_TabularCap(const ModelState_TabularCap* state)
@@ -54,40 +52,5 @@ ModelState_TabularCap::operator=(const ModelState_TabularCap* state)
   *this = *state;
 
   return this;
-}
-
-void 
-ModelState_TabularCap::updateYieldSurface(const Polyline& yield_poly)
-{
-  // Copy the polyline
-  yield_f_pts = yield_poly;
-
-  // Convert tabular data to z-rprime coordinates
-  convertToZRprime();
-
-  // Save as a point cloud
-  z_r_cloud = std::make_shared<Util::PolylinePointCloud>(z_r_table);
-
-  // Build index
-  z_r_index = std::make_shared<Util::PolylineKDTree>(2 /*dim*/, *z_r_cloud,
-                nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
-  z_r_index->buildIndex();
-}
-
-/* Convert yield function data to z_rprime coordinates */
-void
-ModelState_TabularCap::convertToZRprime()
-{
-  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
-  double sqrtKG = std::sqrt(1.5 * bulkModulus / shearModulus);
-
-  // Compute z and r' for the yield surface points
-  for (const auto& pt : yield_f_pts) {
-    double p_bar   = pt.x();
-    double sqrt_J2 = pt.y();
-    double z = -Util::sqrt_three * p_bar;
-    double r_prime = Util::sqrt_two * sqrt_J2 * sqrtKG;
-    z_r_table.emplace_back(Uintah::Point(z, r_prime, 0));
-  }
 }
 

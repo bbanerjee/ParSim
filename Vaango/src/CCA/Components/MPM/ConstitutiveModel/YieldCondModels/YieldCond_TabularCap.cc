@@ -1348,7 +1348,51 @@ YieldCond_TabularCap::getClosestPointAndTangent(
   Vector tangent(0.0, 0.0, 0.0);
 
   std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
-  //std::tie(closest, tangent) = getClosestPointSplineNewtonZR(state, pt);
+
+  cz      = closest.x();
+  crprime = closest.y();
+
+  tz      = tangent.x();
+  trprime = tangent.y();
+
+  return true;
+}
+
+bool
+YieldCond_TabularCap::getClosestPointAndTangent(
+  const ModelStateBase* state_input,
+  const Polyline& z_r_table, 
+  const Util::PolylineKDTree& z_r_index, 
+  const double& z,
+  const double& rprime,
+  double& cz,
+  double& crprime,
+  double& tz,
+  double& trprime)
+{
+  const ModelState_TabularCap* state =
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+  */
+
+  if (state->yield_f_pts.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been "
+           "initialized.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  Point pt(z, rprime, 0.0);
+  Point closest(0.0, 0.0, 0.0);
+  Vector tangent(0.0, 0.0, 0.0);
+
+  std::tie(closest, tangent) = getClosestPointSplineNewtonZR(state, z_r_table, z_r_index, pt);
 
   cz      = closest.x();
   crprime = closest.y();
@@ -1596,27 +1640,29 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
 std::tuple<Point, Vector>
 YieldCond_TabularCap::getClosestPointSplineNewtonZR(
   const ModelState_TabularCap* state,
+  const Polyline& z_r_table, 
+  const Util::PolylineKDTree& z_r_index, 
   const Point& z_r_pt)
 {
   // Find the closest segments
   Polyline z_r_segments;
   std::size_t closest_index = 0;
 #ifdef DO_BINARY_CLOSEST_SEGMENT
-  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, state->z_r_table, 
+  closest_index = Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, z_r_table, 
                                                                z_r_segments);
 #else
-  if (state->z_r_table.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
-    closest_index = Vaango::Util::getClosestSegments(z_r_pt, state->z_r_table, 
+  if (z_r_table.size() < Vaango::Util::NUM_PTS_KDTREE_SWITCH) {
+    closest_index = Vaango::Util::getClosestSegments(z_r_pt, z_r_table, 
                                                      z_r_segments);
   } else {
-    closest_index = Vaango::Util::getClosestSegmentsKDTree(z_r_pt, state->z_r_table, 
-                                                           state->z_r_index, z_r_segments);
+    closest_index = Vaango::Util::getClosestSegmentsKDTree(z_r_pt, z_r_table, 
+                                                           z_r_index, z_r_segments);
   }
 #endif
 
   // Get the yield surface points for the closest segments
   // (Fit quadratic B_spline)
-  std::size_t numPts = state->z_r_table.size();
+  std::size_t numPts = z_r_table.size();
   auto seg_start     = closest_index - 1;
   auto seg_end       = closest_index + 1;
   if (closest_index < 2) {
@@ -1638,14 +1684,14 @@ YieldCond_TabularCap::getClosestPointSplineNewtonZR(
   Vector z_r_dtangent(0, 0, 0);
   std::tie(z_r_closest, z_r_tangent, z_r_dtangent) =
     Vaango::Util::computeClosestPointQuadraticBSpline(
-      z_r_pt, state->z_r_table, seg_start, seg_end);
+      z_r_pt, z_r_table, seg_start, seg_end);
 
 #ifdef DEBUG_CLOSEST_POINT
-  std::cout << "ZRSeg0 = " << std::setprecision(16) << state->z_r_table[seg_start]
+  std::cout << "ZRSeg0 = " << std::setprecision(16) << z_r_table[seg_start]
             << "\n";
-  std::cout << "ZRSeg1 = " << std::setprecision(16) << state->z_r_table[seg_start + 1]
+  std::cout << "ZRSeg1 = " << std::setprecision(16) << z_r_table[seg_start + 1]
             << "\n";
-  std::cout << "ZRSeg2 = " << std::setprecision(16) << state->z_r_table[seg_start + 2]
+  std::cout << "ZRSeg2 = " << std::setprecision(16) << z_r_table[seg_start + 2]
             << "\n";
   std::cout << "ZRPoint = " << std::setprecision(16) << z_r_pt << "\n";
   std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";

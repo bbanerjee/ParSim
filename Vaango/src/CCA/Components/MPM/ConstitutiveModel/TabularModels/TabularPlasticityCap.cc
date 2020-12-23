@@ -398,7 +398,6 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
       std::array<double, 3> range =
         d_yield->getYieldConditionRange(yield_f_pts);
       state_old.yield_f_pts = yield_f_pts;
-      //state_old.updateYieldSurface(yield_f_pts);
       state_old.I1_max      = -range[0] * 3.0;
       state_old.I1_min      = -range[1] * 3.0;
       state_old.sqrtJ2_max  = range[2];
@@ -1044,18 +1043,16 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D,
   state_k_new.plasticStrainTensor = state_k_old.plasticStrainTensor + eps_p_inc;
   state_k_new.updatePlasticStrainInvariants();
 
-  // Update yield surface
-  //ModelState_TabularCap state_dummy(state_k_new);
-  //state_dummy.plasticStrainTensor *= 1.1;
-  //state_k_new.capX = computeInternalVariable(state_dummy);
+  // Update internal variable
   state_k_new.capX = computeInternalVariable(state_k_new);
-  auto yield_pts_updated =
-    d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
-  state_k_new.yield_f_pts = yield_pts_updated;
-  //state_k_new.updateYieldSurface(yield_pts_updated);
 
   // Update elastic properties
   computeElasticProperties(state_k_new);
+
+  // Update yield surface
+  auto yield_pts_updated =
+    d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_new);
+  state_k_new.yield_f_pts = yield_pts_updated;
 
   /*
   std::cout << "K_old = " << state_k_old.bulkModulus << " K_new = " << state_k_new.bulkModulus << "\n"
@@ -1214,11 +1211,29 @@ std::tuple<Matrix3, Matrix3, Matrix3, double, double>
 TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old, 
                                         const ModelState_TabularCap& state_trial) const
 {
-  // A copy of the trial state that can be updated per iteration
+  // Convert the yield function points to z-rprime coordinates
+  std::vector<Uintah::Point> z_r_table(state_old.yield_f_pts.size());
+  double sqrtKG = std::sqrt(1.5 * state_old.bulkModulus / state_old.shearModulus);
+  size_t ii = 0;
+  for (const auto& pt : state_old.yield_f_pts) {
+    double z = -Util::sqrt_three * pt.x();
+    double r_prime = Util::sqrt_two * pt.y() * sqrtKG;
+    z_r_table[ii++] = Uintah::Point(z, r_prime, 0);
+  }
+
+  // Create a KD-tree index for the yield surface polyline
+  Util::PolylinePointCloud z_r_cloud(z_r_table);
+  Util::PolylineKDTree z_r_index(2 /*dim*/, z_r_cloud,
+                                 nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
+  z_r_index.buildIndex();
+  
+  // Make a copy of the trial state that can be updated per iteration
   ModelState_TabularCap state_trial_iter(state_trial);
   Matrix3 sig_trial = state_trial.stressTensor;
 
-  // A copy of the old state that can be updated for normal computation
+  // Make a copy of the old state that can be updated
+  // This is needed for normal computation (df_dsigma)
+  // The updated state contains the closest point and tangent after closest point computation
   ModelState_TabularCap state_old_for_normal = state_old;
 
   double Gamma_F_old = 0.0, Gamma_F = 0.0, N_c_mag;
@@ -1228,7 +1243,8 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
   int iter = 0;
 
   do {
-    std::tie(sig_c, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter);
+    std::tie(sig_c, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter,
+                                                              z_r_table, z_r_index);
     state_old_for_normal.closest = closest;
     state_old_for_normal.tangent = tangent;
     Matrix3 N_c = computeYieldSurfaceNormal(state_old_for_normal, sig_c);
@@ -1275,7 +1291,8 @@ TabularPlasticityCap::computeSigmaFixed(const ModelState_TabularCap& state_old,
 
   #else
 
-  std::tie(sig_F, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter);
+  std::tie(sig_F, closest, tangent) = closestPointInZRSpace(state_old_for_normal, state_trial_iter,
+                                                            z_r_table, z_r_index);
   state_trial_iter.stressTensor = sig_F;
   state_trial_iter.updateStressInvariants();
   state_old_for_normal.closest = closest;
@@ -1359,6 +1376,84 @@ TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k
   //  &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest);
   d_yield->getClosestPointAndTangent(
     &state_k_old, z_trial, rprime_trial, z_closest, rprime_closest,
+    z_tangent, rprime_tangent);
+
+  // Compute updated invariants of total stress
+  double I1_closest = std::sqrt(3.0) * z_closest;
+  double sqrtJ2_closest =
+    1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
+
+  #ifdef CHECK_FOR_NAN_EXTRA
+    #ifdef DEBUG_WITH_PARTICLE_ID
+      if (state_k_trial.particleID == testParticleID) {
+    #endif
+        std::cout << " K_old = " << K_old << " G_old = " << G_old << "\n";
+        std::cout << " state_k_old " << state_k_old << "\n";
+        std::cout << " z_trial = " << z_trial
+                  << " r_trial = " << rprime_trial / sqrt_K_over_G_old << "\n";
+        std::cout << " z_closest = " << z_closest
+                  << " r_closest = " << rprime_closest / sqrt_K_over_G_old
+                  << "\n";
+        std::cout << "I1_closest = " << I1_closest
+                  << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
+        std::cout << "Trial state = " << state_k_trial << "\n";
+    #ifdef DEBUG_WITH_PARTICLE_ID
+      }
+    #endif
+  #endif
+
+  #ifdef CHECK_HYDROSTATIC_TENSION
+    if (I1_closest < 0) {
+      std::cout << "I1_closest = " << I1_closest
+                << " sqrtJ2_closest = " << sqrtJ2_closest << "\n";
+      std::cout << "Trial state = " << state_k_trial << "\n";
+    }
+  #endif
+
+  // Compute closest point stress
+  Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
+  Matrix3 sig_closest = Util::one_third * I1_closest * Util::Identity;
+  if (state_k_trial.sqrt_J2 > 0.0) {
+    sig_closest += (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
+  } 
+
+  // Save the closest point and tangent in pbar-sqrtJ2 space
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
+  Vaango::Util::revertFromZRprime(sqrt_K_over_G_old,
+    z_closest, rprime_closest, closest_p_bar, closest_sqrt_J2);
+  Vaango::Util::revertFromZRprime(sqrt_K_over_G_old,
+    z_tangent, rprime_tangent, tangent_p_bar, tangent_sqrt_J2);
+  Uintah::Point closest(closest_p_bar, closest_sqrt_J2, 0.0);
+  Uintah::Vector tangent(tangent_p_bar, tangent_sqrt_J2, 0.0);
+
+  return std::make_tuple(sig_closest, closest, tangent);
+}
+
+/**
+ * Find closest point from the trial stress to the fixed yield surface in z-r space
+ * given a precomputed KD-tree index
+ */
+std::tuple<Uintah::Matrix3, Uintah::Point, Uintah::Vector>
+TabularPlasticityCap::closestPointInZRSpace(const ModelState_TabularCap& state_k_old,
+                                            const ModelState_TabularCap& state_k_trial,
+                                            const Polyline& z_r_table, 
+                                            const Util::PolylineKDTree& z_r_index) const
+{
+  // Conver trial stress to z-rprime coordinates
+  double K_old = state_k_old.bulkModulus;
+  double G_old = state_k_old.shearModulus;
+  const double sqrt_K_over_G_old = std::sqrt(1.5 * K_old / G_old);
+
+  double z_trial = state_k_trial.zz;
+  double r_trial = state_k_trial.rr;
+  double rprime_trial = r_trial * sqrt_K_over_G_old;
+
+  // Find closest point and tangent at closest point
+  double z_closest = 0.0, rprime_closest = 0.0;
+  double z_tangent = 0.0, rprime_tangent = 0.0;
+  d_yield->getClosestPointAndTangent(
+    &state_k_old, z_r_table, z_r_index, z_trial, rprime_trial, z_closest, rprime_closest,
     z_tangent, rprime_tangent);
 
   // Compute updated invariants of total stress
@@ -1775,7 +1870,6 @@ TabularPlasticityCap::consistencyBisectionHardeningSoftening(
     auto yield_pts_updated =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_k_updated);
     state_k_updated.yield_f_pts = yield_pts_updated;
-    //state_k_updated.updateYieldSurface(yield_pts_updated);
 
     // Eval the yield condition with the updated yield surface and the stress at
     // the end of the non-hardening update
@@ -1812,7 +1906,6 @@ TabularPlasticityCap::consistencyBisectionHardeningSoftening(
     auto yield_pts_mid =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_trial_mid);
     state_trial_mid.yield_f_pts = yield_pts_mid;
-    //state_trial_mid.updateYieldSurface(yield_pts_mid);
 
     // Do a non-hardening return to the updated yield surface
     Matrix3 deltaEps_p_mid;
@@ -2519,7 +2612,6 @@ TabularPlasticityCap::consistencyBisectionSimplified(
     Polyline yield_f_pts =
       d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_trial_mid);
     state_trial_mid.yield_f_pts = yield_f_pts;
-    //state_trial_mid.updateYieldSurface(yield_f_pts);
 
     // Update the trial stress
     auto stress_trial = computeTrialStress(state_trial_mid, deltaEps_new);

@@ -330,7 +330,7 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
 std::size_t
 getClosestSegmentsKDTree(const Uintah::Point& pt,
                          const std::vector<Uintah::Point>& polyline,
-                         const PolylineKDTreeP& kdtree_index,  
+                         const PolylineKDTree& kdtree_index,  
                          std::vector<Uintah::Point>& segments)
 {
   // Set up the query point
@@ -342,7 +342,7 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
   double out_dist_sqr;
   nanoflann::KNNResultSet<double> resultSet(num_results);
   resultSet.init(&min_index, &out_dist_sqr);
-  kdtree_index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+  kdtree_index.findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
 
   // Set up the segments
   auto close_index = min_index;

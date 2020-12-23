@@ -345,6 +345,19 @@ public:
   {
     return false;
   }
+  virtual bool
+  getClosestPointAndTangent(const ModelStateBase* state,
+                            const Polyline& z_r_table,
+                            const Util::PolylineKDTree& z_r_index, 
+                            const double& px,
+                            const double& py,
+                            double& cpx,
+                            double& cpy,
+                            double& tx,
+                            double& ty)
+  {
+    return false;
+  }
 
   /**
    * These are needed for keeping track of point-to-point material variability

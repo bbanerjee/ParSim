@@ -26,7 +26,6 @@
 #define __MODEL_STATE_TABULAR_CAP_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Utilities/SearchUtils.h>
 #include <vector>
 #include <memory>
 #include <iterator>
@@ -59,10 +58,6 @@ public:
 
   Polyline            yield_f_pts; // Polyline representing yield function with cap
                                    // in pbar-sqrtJ2 space
-  Polyline            z_r_table;   // Yield function in z-r' space
-
-  std::shared_ptr<Util::PolylinePointCloud> z_r_cloud; // A point cloud for use by the KD-tree algorithm
-  std::shared_ptr<Util::PolylineKDTree>     z_r_index; // KDtree index for the polyline point cloud
 
   ModelState_TabularCap();
 
@@ -81,8 +76,6 @@ public:
     auto numThis = 5u;
     return numBase + numThis;
   }
-
-  void updateYieldSurface(const Polyline& yield_poly);
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const ModelState_TabularCap& state)
@@ -107,11 +100,6 @@ public:
        << " sqrtJ2_max = " << state.sqrtJ2_max << "\n";
     return os;
   }
-
-private:
-
-  /* Convert yield function pbar-sqrtJ2 data to z_rprime coordinates */
-  void convertToZRprime();
 };
 
 } // End namespace Vaango

@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/SearchUtils.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -372,15 +373,24 @@ private:
    * Purpose:
    *   Find closest point from the trial stress to the fixed yield surface in z-r space
    * Inputs:
-   *   state_old      = state at start of substep
-   *   state_trial    = trial state at start of substep
+   *   state_old             = state at start of substep
+   *   state_trial           = trial state at start of substep
+   *   z_r_index (optional)  = precompute KDtree index for yield surface polyline
    * Outputs:
-   *   sig_closest    = stress at closest point
+   *   sig_closest           = stress at closest point
+   *   closest               = closest point in pbar-sqrtJ2 coordinates
+   *   tangent               = tangent vector in pbar-sqrtJ2 coordinates
    */
   //////////////////////////////////////////////////////////////////////////
   std::tuple<Uintah::Matrix3, Uintah::Point, Uintah::Vector> 
   closestPointInZRSpace(const ModelState_TabularCap& state_old,
                         const ModelState_TabularCap& state_trial) const;
+
+  std::tuple<Uintah::Matrix3, Uintah::Point, Uintah::Vector> 
+  closestPointInZRSpace(const ModelState_TabularCap& state_old,
+                        const ModelState_TabularCap& state_trial,
+                        const Polyline& z_r_table, 
+                        const Util::PolylineKDTree& z_r_index) const;
 
   //////////////////////////////////////////////////////////////////////////
   /**

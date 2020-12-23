@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/SearchUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
@@ -213,6 +214,16 @@ public:
                             double& cpy,
                             double& tx,
                             double& ty) override;
+  bool
+  getClosestPointAndTangent(const ModelStateBase* state,
+                            const Polyline& z_r_table, 
+                            const Util::PolylineKDTree& z_r_index, 
+                            const double& z,
+                            const double& rprime,
+                            double& cz,
+                            double& crprime,
+                            double& tz,
+                            double& trprime) override;
 
   //================================================================================
   // Other options below.
@@ -387,6 +398,8 @@ private:
    */
   std::tuple<Point, Vector>
   getClosestPointSplineNewtonZR(const ModelState_TabularCap* state,
+                                const Polyline& z_r_table, 
+                                const Util::PolylineKDTree& z_r_index, 
                                 const Uintah::Point& z_r_pt);
 
   /* Compute the height of the elliptical cap */
