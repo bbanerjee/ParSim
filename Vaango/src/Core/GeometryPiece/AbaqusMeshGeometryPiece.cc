@@ -59,6 +59,14 @@ AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP & ps,
   ps->getWithDefault("translation_vector", d_translate, Vector(0.0, 0.0, 0.0));
   ps->getWithDefault("reflection_vector",  d_reflect,   Vector(1.0, 1.0, 1.0));
   ps->getWithDefault("axis_sequence",      d_axis,      IntVector(1, 2, 3));
+
+  Vector rotate_row0, rotate_row1, rotate_row2;
+  ps->getWithDefault("rotation_matrix_row0", rotate_row0, Vector(1, 0, 0));
+  ps->getWithDefault("rotation_matrix_row1", rotate_row1, Vector(0, 1, 0));
+  ps->getWithDefault("rotation_matrix_row2", rotate_row2, Vector(0, 0, 1));
+  d_rotate = Matrix3(rotate_row0.x(), rotate_row0.y(), rotate_row0.z(),
+                     rotate_row1.x(), rotate_row1.y(), rotate_row1.z(),
+                     rotate_row2.x(), rotate_row2.y(), rotate_row2.z());
   
   proc0cout << "AbaqusMesh Geometry Piece: reading file " << d_fileName << std::endl;
   
@@ -84,11 +92,14 @@ AbaqusMeshGeometryPiece::~AbaqusMeshGeometryPiece()
 void
 AbaqusMeshGeometryPiece::outputHelper( ProblemSpecP & ps ) const
 {
-  ps->appendElement("file_name",                 d_fileName);
-  ps->appendElement("scaling_factor",            d_scalefac);
-  ps->appendElement("translation_vector",        d_translate);
-  ps->appendElement("reflection_vector",         d_reflect);
-  ps->appendElement("axis_sequence",             d_axis);
+  ps->appendElement("file_name",            d_fileName);
+  ps->appendElement("scaling_factor",       d_scalefac);
+  ps->appendElement("translation_vector",   d_translate);
+  ps->appendElement("reflection_vector",    d_reflect);
+  ps->appendElement("axis_sequence",        d_axis);
+  ps->appendElement("rotation_matrix_row0", Vector(d_rotate(0,0), d_rotate(0,1), d_rotate(0,2)));
+  ps->appendElement("rotation_matrix_row1", Vector(d_rotate(1,0), d_rotate(1,1), d_rotate(1,2)));
+  ps->appendElement("rotation_matrix_row2", Vector(d_rotate(2,0), d_rotate(2,1), d_rotate(2,2)));
 }
 
 //---------------------------------------------------------------------------
@@ -319,6 +330,20 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   max = max + fudge;
   d_box = Box(min,max);  
 
+  // Compute centroid (approx)
+  Vector centroid(0.5*(xmin+xmax), 0.5*(ymin+ymax), 0.5*(zmin+zmax));
+
+  // Rotate points
+  for (auto& node : nodeArray) {
+    Vector point(node.x_, node.y_, node.z_);
+    point -= centroid;
+    point = d_rotate * point;
+    point += centroid;
+    node.x_ = point.x();
+    node.y_ = point.y();
+    node.z_ = point.z();
+  }
+
   // Timing
   endTime = std::chrono::system_clock::now(); 
   time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
@@ -368,11 +393,13 @@ AbaqusMeshGeometryPiece::readMeshNode(const std::string& inputLine,
   coords[second] = ycoord;
   coords[third] = zcoord;
 
+  // Apply coordinate traanformations
+  Vector point(d_translate.x()+(coords[0]*d_scalefac)*d_reflect.x(), 
+               d_translate.y()+(coords[1]*d_scalefac)*d_reflect.y(), 
+               d_translate.z()+(coords[2]*d_scalefac)*d_reflect.z());
+
   // Save the nodal coordinates
-  nodes.emplace_back(MeshNode(node_id, 
-                              d_translate.x()+(coords[0]*d_scalefac)*d_reflect.x(), 
-                              d_translate.y()+(coords[1]*d_scalefac)*d_reflect.y(), 
-                              d_translate.z()+(coords[2]*d_scalefac)*d_reflect.z()));
+  nodes.emplace_back(MeshNode(node_id, point.x(), point.y(), point.z()));
 }
 
 void

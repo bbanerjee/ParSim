@@ -241,6 +241,9 @@
       <translation_vector     spec="OPTIONAL VECTOR" />
       <reflection_vector      spec="OPTIONAL VECTOR" />
       <axis_sequence          spec="OPTIONAL VECTOR" />
+      <rotation_matrix_row0   spec="OPTIONAL VECTOR" />
+      <rotation_matrix_row1   spec="OPTIONAL VECTOR" />
+      <rotation_matrix_row2   spec="OPTIONAL VECTOR" />
     </abaqus_mesh>
 
     <difference               spec="FORWARD_DECLARATION" />

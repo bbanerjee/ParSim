@@ -167,6 +167,7 @@ namespace Uintah {
     Uintah::Vector      d_translate;
     Uintah::Vector      d_reflect;
     Uintah::IntVector   d_axis;
+    Uintah::Matrix3     d_rotate;
     
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
     void read_bbox(std::istream & source, Point & lowpt, Point & highpt) const;
