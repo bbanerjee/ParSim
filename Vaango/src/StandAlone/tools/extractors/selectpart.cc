@@ -560,7 +560,8 @@ void printParticleID(DataArchive* da, int mat,
                                 std::max(std::max(pt4.z(), pt5.z()),
                                          std::max(pt6.z(), pt7.z())));
          Point low(minx, miny, minz), high(maxx, maxy, maxz);
-         Box coarseBox(low - 0.25*cellSize, high + 0.251*cellSize);
+         //Box coarseBox(low - 0.25*cellSize, high + 0.251*cellSize);
+         Box coarseBox(low, high);
          selectionBox = coarseBox;
        } 
        cerr << "Selection box = " << selectionBox << endl;
