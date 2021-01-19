@@ -2,6 +2,7 @@
 title: Download
 permalink: /docs/home/
 redirect_from: /docs/index.html
+layout: single
 ---
 
 * Contents

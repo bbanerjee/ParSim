@@ -1,23 +1,19 @@
-<footer>
-  <div class="grid">
-    <div class="unit one-third center">
-      <p>&copy;&nbsp;{{ site.time | date: '%Y' }} under the terms of the <a href="{{ site.repository }}/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
-    </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Built with
-        <a href="https://jekyllrb.com">
-          <img src="{{ site.url }}/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
-        </a>
-      </p>
-    </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Hosted by
-        <a href="https://github.com">
-          <img src="{{ site.url }}/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
-        </a>
-      </p>
-    </div>
-  </div>
-</footer>
+<div class="page__footer-follow">
+  <ul class="social-icons">
+    {% if site.data.ui-text[site.locale].follow_label %}
+      <li><strong>{{ site.data.ui-text[site.locale].follow_label }}</strong></li>
+    {% endif %}
+
+    {% if site.footer.links %}
+      {% for link in site.footer.links %}
+        {% if link.label and link.url %}
+          <li><a href="{{ link.url }}" rel="nofollow noopener noreferrer"><i class="{{ link.icon | default: 'fas fa-link' }}" aria-hidden="true"></i> {{ link.label }}</a></li>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    <li><a href="{% if site.atom_feed.path %}{{ site.atom_feed.path }}{% else %}{{ '/feed.xml' | relative_url }}{% endif %}"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> {{ site.data.ui-text[site.locale].feed_label | default: "Feed" }}</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; {{ site.time | date: '%Y' }} {{ site.name | default: site.title }}. {{ site.data.ui-text[site.locale].powered_by | default: "Powered by" }} <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
