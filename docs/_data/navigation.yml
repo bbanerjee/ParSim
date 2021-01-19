@@ -1,0 +1,8 @@
+# main links
+main:
+  - title: "Blog articles"
+    url: /docs/articles/
+  - title: "ParSim software"
+    url: /docs/home/
+  - title: "Material data"
+    url: /docs/material-data/

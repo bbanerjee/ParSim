@@ -1,0 +1,54 @@
+figure.blogimage {
+  display: table;
+  float: right;
+  width: 10%;
+  text-align: center;
+  font-style: italic;
+  font-size: smaller;
+  text-indent: 0;
+  border: thin silver solid;
+  margin: 0.5em;
+  padding: 0.5em;
+}
+figcaption.blogimage {
+  display: table-caption;
+  caption-side: bottom;
+}
+img.blogimage {
+  float: right;
+  width: 10%;
+  text-align: center;
+  font-style: italic;
+  font-size: smaller;
+  text-indent: 0;
+  margin: 0.5em;
+  padding: 0.5em;
+}
+
+figure.blogimageleft {
+  display: table;
+  float: left;
+  width: 10%;
+  text-align: center;
+  font-style: italic;
+  font-size: smaller;
+  text-indent: 0;
+  border: thin silver solid;
+  margin: 0.5em;
+  padding: 0.5em;
+}
+figcaption.blogimageleft {
+  display: table-caption;
+  caption-side: bottom;
+}
+img.blogimageleft {
+  float: left;
+  width: 50%;
+  text-align: center;
+  font-style: italic;
+  font-size: smaller;
+  text-indent: 0;
+  margin: 0.5em;
+  padding: 0.5em;
+}
+
