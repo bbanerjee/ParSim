@@ -1,0 +1,2189 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Command pattern for regression testing - Parresia Simulations</title>
+<meta name="description" content="Using the command pattern in C++">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Command pattern for regression testing">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/c++/command-pattern/">
+
+
+  <meta property="og:description" content="Using the command pattern in C++">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-02-12T22:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/c++/command-pattern/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Command pattern for regression testing</h1>
+    
+    <p>A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for <a href="https://en.wikipedia.org/wiki/Discrete_element_method">discrete element</a>
+and <a href="https://en.wikipedia.org/wiki/Peridynamics">peridynamics</a> simulations.  After some thought, I 
+realized that the easiest way to achieve what I wanted was by using the <a href="https://en.wikipedia.org/wiki/Command_pattern">Command 
+design pattern</a> (minus the undo option).
+My approach was to keep the implementation simple enough that a typical student of
+mechanics would be able to follow the details, i.e., no <a href="https://en.wikipedia.org/wiki/Template_metaprogramming">template metaprogramming</a> a la <a href="http://loki-lib.sourceforge.net/index.php?n=Main.HomePage">Loki</a>.</p>
+
+<h4 id="the-original-code">The original code</h4>
+<p>The regression tester in the original code looked something like this:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp">    <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+      <span class="n">RegressionTester</span> <span class="n">tester</span><span class="p">;</span>
+      <span class="k">switch</span><span class="p">(</span><span class="n">testType</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="n">TEST1</span><span class="p">:</span>
+        <span class="n">tester</span><span class="p">.</span><span class="n">doTest1</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="n">TEST2</span><span class="p">:</span>
+        <span class="n">tester</span><span class="p">.</span><span class="n">doTest2</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="p">...</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span></code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">RegressionTester</code> class was huge and contained the code for a large number of tests,
+each of which was quite involved.</p>
+
+<p>I wanted to separate out each test into its own self-contained class.</p>
+
+<h4 id="the-command-pattern-approach">The Command pattern approach</h4>
+<p>There are several variations on the command pattern, but the basic idea is to 
+use object polymorphism to provide a clean interface for function calls.</p>
+
+<h5 id="step-1-create-a-command-interface">Step 1: Create a Command interface</h5>
+<p>I created a directory called <code class="language-plaintext highlighter-rouge">TestSimulations</code> and in that directory created the Command interface
+file <code class="language-plaintext highlighter-rouge">Command.h</code>.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;RegressionTester.h&gt;
+</span><span class="k">class</span> <span class="nc">Command</span>
+<span class="p">{</span>
+<span class="nl">public:</span>
+  <span class="k">virtual</span> <span class="o">~</span><span class="n">Command</span><span class="p">(){};</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">};</span></code></pre></figure>
+
+<h5 id="step-2-create-a-command-handler">Step 2: Create a Command handler</h5>
+<p>The command handler class returns a pointer to the chosen command that is polymorphic
+and will return the pointer to the correct test. The header first</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;memory&gt;
+</span><span class="k">class</span> <span class="nc">Command</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">CommandP</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Command</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">CommandHandler</span>
+<span class="p">{</span>
+<span class="nl">public:</span>
+  <span class="n">CommandP</span> <span class="n">handleCommand</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">testType</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>and then the implementation (<code class="language-plaintext highlighter-rouge">getEnum</code> translates the string to an enum)</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;TestSimulations/Command.h&gt;
+#include &lt;TestSimulations/CommandHandler.h&gt;
+#include &lt;TestSimulations/Test1.h&gt;
+#include &lt;TestSimulations/Test2.h&gt;
+</span><span class="n">CommandP</span>
+<span class="n">CommandHandler</span><span class="o">::</span><span class="n">handleCommand</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">testType</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">getEnum</span><span class="p">(</span><span class="n">testType</span><span class="p">))</span> <span class="p">{</span>
+  <span class="k">case</span> <span class="n">TEST1</span><span class="p">:</span> 
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Test1</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="k">case</span> <span class="n">TEST2</span><span class="p">:</span> 
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Test2</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-3-create-the-test-classes">Step 3: Create the test classes</h5>
+<p>Next we add the actual test classes.  The headers have the form</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;TestSimulations/Command.h&gt;
+</span><span class="k">class</span> <span class="nc">Test1</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Command</span>
+<span class="p">{</span>
+<span class="nl">public:</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>while the code contains the detailed algorithm for each test:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;TestSimulations/Test1.h&gt;
+</span><span class="kt">void</span>
+<span class="n">Test1</span><span class="o">::</span><span class="n">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Complex test algorithm</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-4-call-the-regression-tester">Step 4: Call the regression tester</h5>
+<p>This is the entry point.  Even though we have used the <code class="language-plaintext highlighter-rouge">RegressionTester</code>
+class, we haven’t explained what it does.  You can use it for generic 
+algorithms that some or all tests use, or for anything else that each
+test may need.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;RegressionTester.h&gt;
+#include &lt;TestSimulations/Command.h&gt;
+#include &lt;TestSimulations/CommandHandler.h&gt;
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">testTypes</span> <span class="o">=</span> <span class="n">getTestTypesFromInput</span><span class="p">();</span>
+  <span class="n">RegressionTester</span> <span class="n">tester</span><span class="p">;</span>
+  <span class="n">CommandHandler</span> <span class="n">handler</span><span class="p">;</span>
+  <span class="c1">// Loop through the tests </span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">testType</span> <span class="o">:</span> <span class="n">testTypes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// The command hadler returns the right type of test object</span>
+    <span class="n">CommandP</span> <span class="n">command</span> <span class="o">=</span> <span class="n">handler</span><span class="p">.</span><span class="n">handleCommand</span><span class="p">(</span><span class="n">testType</span><span class="p">);</span>
+    <span class="c1">// Run the test</span>
+    <span class="n">command</span><span class="o">-&gt;</span><span class="n">execute</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tester</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-5-run-you-regression-tests">Step 5: Run you regression tests</h5>
+<p>Make sure you save a set of “gold-standard” outputs to compare with the
+results from your regression tester.  Typically a Python script or a shell
+script is used to do the runs, comparisons, and output to a webdocs.</p>
+
+<h4 id="conclusion">Conclusion</h4>
+<p>So, at the expense of an increase in the number of classes and the need for
+some look-ups of the virtual table, we have a much cleaner implementation
+of the tests and we can add more tests quite easily.</p>
+
+<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<!-- <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=cpp&amp;skin=sunburst"></script> -->
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

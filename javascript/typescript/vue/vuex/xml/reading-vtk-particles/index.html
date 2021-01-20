@@ -1,0 +1,2266 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Reading VTK particles in Javascript - Parresia Simulations</title>
+<meta name="description" content="Parsing simulation output data">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Reading VTK particles in Javascript">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">
+
+
+  <meta property="og:description" content="Parsing simulation output data">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-02-21T22:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Reading VTK particles in Javascript</h1>
+    
+    <p>In our <a href="http://www.parresianz.com/c++/xml/vtk/vtk-particle-output/">previous article</a>
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These output files can then
+be viewed in powerful tools such as VisIt or Paraview.</p>
+
+<p>Modern browsers have become powerful in recent years and can now render
+3D graphics quite efficiently.  The next few blog posts will discuss our
+experience in developing a basic user interface with standard web tools
+to visualize simulation output data.  In this article, I will explain
+how the input process would work in such a tool.</p>
+
+<h5 id="the-vtk-xml-particle-data-format">The VTK XML particle data format</h5>
+<p>Output data from our simulations are written to disk every few timesteps.  At
+each timestep, we get a data file like the one listed below.</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;VTKFile</span> <span class="na">type=</span><span class="s">"UnstructuredGrid"</span> <span class="na">version=</span><span class="s">"0.1"</span> <span class="na">byte_order=</span><span class="s">"LittleEndian"</span> <span class="na">compressor=</span><span class="s">"vtkZLibDataCompressor"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;UnstructuredGrid&gt;</span>
+    <span class="nt">&lt;FieldData&gt;</span>
+      <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float64"</span> <span class="na">Name=</span><span class="s">"TIME"</span> <span class="na">NumberOfTuples=</span><span class="s">"1"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"0"</span> <span class="na">RangeMax=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+        0.001
+      <span class="nt">&lt;/DataArray&gt;</span>
+    <span class="nt">&lt;/FieldData&gt;</span>
+    <span class="nt">&lt;Piece</span> <span class="na">NumberOfPoints=</span><span class="s">"412"</span> <span class="na">NumberOfCells=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;PointData&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float64"</span> <span class="na">Name=</span><span class="s">"Radius"</span> <span class="na">NumberOfComponents=</span><span class="s">"3"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"0.83645083538"</span> <span class="na">RangeMax=</span><span class="s">"1.7075128111"</span><span class="nt">&gt;</span>
+          1.15 0.5 0.69 1.15 0.5 0.69
+          1.15 0.5 0.69 0.575 0.5 0.345
+          1.15 0.5 0.69 0.575 0.5 0.345
+          0.575 0.5 0.345 1.15 0.5 0.69
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float64"</span> <span class="na">Name=</span><span class="s">"Axis a"</span> <span class="na">NumberOfComponents=</span><span class="s">"3"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"1.923869419"</span> <span class="na">RangeMax=</span><span class="s">"3.8462926819"</span><span class="nt">&gt;</span>
+          2.250054 1.570796 0.6792575 2.536687 1.570796 0.9658907
+          0.8923825 1.570796 0.6784139 1.576513 1.570796 0.005716666
+          1.523425 1.570796 0.0473713 2.090659 1.570796 2.62173
+          2.128077 1.570796 0.5572808 0.0678937 1.570796 1.502903        
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+        ................................................
+      <span class="nt">&lt;/PointData&gt;</span>
+      <span class="nt">&lt;CellData&gt;</span>
+      <span class="nt">&lt;/CellData&gt;</span>
+      <span class="nt">&lt;Points&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float32"</span> <span class="na">Name=</span><span class="s">"Points"</span> <span class="na">NumberOfComponents=</span><span class="s">"3"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"29.109286806"</span> <span class="na">RangeMax=</span><span class="s">"99.675090711"</span><span class="nt">&gt;</span>
+          49.731739044 0 0.99367249012 50.900959015 0 5.3205289841
+          30.811420441 0 3.8980329037 54.012958527 0 5.2524261475
+          71.06136322 0 7.7233600616 65.397392273 0 6.3970627785
+          42.516990662 0 11.963620186 48.560340881 0 2.5312030315
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Points&gt;</span>
+      <span class="nt">&lt;Cells&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Int64"</span> <span class="na">Name=</span><span class="s">"connectivity"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"1e+299"</span> <span class="na">RangeMax=</span><span class="s">"-1e+299"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Int64"</span> <span class="na">Name=</span><span class="s">"offsets"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"1e+299"</span> <span class="na">RangeMax=</span><span class="s">"-1e+299"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"UInt8"</span> <span class="na">Name=</span><span class="s">"types"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"1e+299"</span> <span class="na">RangeMax=</span><span class="s">"-1e+299"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Cells&gt;</span>
+    <span class="nt">&lt;/Piece&gt;</span>
+  <span class="nt">&lt;/UnstructuredGrid&gt;</span>
+<span class="nt">&lt;/VTKFile&gt;</span></code></pre></figure>
+
+<p>For now, let us consider only data that have been written in ASCII format.</p>
+
+<h5 id="reading-the-particle-xml-data">Reading the particle XML data</h5>
+<p>We will read in this data into a code that provides a user interface to visualize
+the particle data.</p>
+
+<p>For now, the details of the user interface are not important,
+but it is worth noting the following : <br /></p>
+<ul class="notice">
+  <li>it is written in <a href="https://www.typescriptlang.org/">Typescript</a> <br /></li>
+  <li>it uses the <a href="https://vuejs.org/">Vue</a> framework for user interactions and <a href="https://vuex.vuejs.org/en/">Vuex</a> for data management <br /></li>
+  <li>Typescript type definitions are from <a href="https://www.npmjs.com/">npm</a> and <a href="https://github.com/HerringtonDarkholme/av-ts">av-ts</a> <br /></li>
+  <li>the code is transpiled to <a href="http://es6-features.org/#Constants">ES6</a>
+using <code class="language-plaintext highlighter-rouge">tsc</code> and <a href="https://babeljs.io/">babel</a>, and <br /></li>
+  <li>packaged using <a href="https://webpack.github.io/">webpack</a> before it is run on a browser</li>
+</ul>
+
+<p>First let us examine the actual reader code:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">// Function: parseAndSaveVTKXML</span>
+<span class="c1">// Input:   xmlDoc : XMLDocument (The current version of jquery.d.ts declares the return type of parseXML as "any")</span>
+<span class="c1">// Store:   pointData : any {} (A key-value object containing arrays of particle data)</span>
+<span class="kr">public</span> <span class="nx">parseAndSaveVTKXML</span><span class="p">(</span><span class="nx">xmlDoc</span> <span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Use jquery to read the xmlDoc</span>
+    <span class="kd">let</span> <span class="nx">$xml</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xmlDoc</span><span class="p">);</span>
+    <span class="c1">// Check that the file is actual a VTK XML file</span>
+    <span class="kd">let</span> <span class="nx">fileType</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">VTKFile</span><span class="dl">"</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="dl">'</span><span class="s1">type</span><span class="dl">'</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">fileType</span> <span class="o">!=</span> <span class="dl">"</span><span class="s2">UnstructuredGrid</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Invalid file type</span><span class="dl">"</span> <span class="o">+</span> <span class="nx">fileType</span><span class="p">);</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// Read time stamp after trimming the string</span>
+    <span class="kd">let</span> <span class="nx">timeStr</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">FieldData</span><span class="dl">"</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">DataArray</span><span class="dl">"</span><span class="p">).</span><span class="nx">text</span><span class="p">().</span><span class="nx">trim</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">time</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">time</span><span class="p">);</span>
+    <span class="c1">// Read the number of points in the data set</span>
+    <span class="kd">let</span> <span class="nx">numPtsStr</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">Piece</span><span class="dl">"</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="dl">'</span><span class="s1">NumberOfPoints</span><span class="dl">'</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">numPts</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numPtsStr</span><span class="p">);</span>
+    <span class="c1">// Read the state data one by one</span>
+    <span class="kd">var</span> <span class="nx">pointData</span><span class="p">:</span><span class="nx">any</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="nx">$</span><span class="p">(</span><span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">PointData</span><span class="dl">"</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">DataArray</span><span class="dl">"</span><span class="p">)).</span><span class="nx">each</span><span class="p">(</span>
+      <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="kd">let</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>  <span class="c1">// "this" is now pointing to the data XMLDocument</span>
+        <span class="kd">let</span> <span class="nx">key</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="dl">"</span><span class="s2">Name</span><span class="dl">"</span><span class="p">);</span>  <span class="c1">// Use the name of the variable as the key</span>
+        <span class="kd">let</span> <span class="nx">type</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">);</span>
+        <span class="kd">let</span> <span class="nx">numComponents</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="dl">"</span><span class="s2">NumberOfComponents</span><span class="dl">"</span><span class="p">);</span> 
+        <span class="k">if</span> <span class="p">(</span><span class="nx">numComponents</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// More than one component</span>
+          <span class="kd">let</span> <span class="nx">numComp</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numComponents</span><span class="p">);</span>
+          <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+          <span class="kd">let</span> <span class="nx">arrayOfVec</span> <span class="p">:</span> <span class="nx">any</span> <span class="o">=</span> <span class="p">[];</span>
+          <span class="k">while</span> <span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">arrayOfVec</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nx">numComp</span><span class="p">));</span>  <span class="c1">// Convert into 2D array        </span>
+          <span class="p">}</span>
+          <span class="nx">pointData</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">arrayOfVec</span><span class="p">;</span> <span class="c1">// Save the data                      </span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// Only one component</span>
+          <span class="nx">pointData</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">);</span>
+
+    <span class="c1">// Read the position data</span>
+    <span class="kd">let</span> <span class="nx">points</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">Points</span><span class="dl">"</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="dl">"</span><span class="s2">DataArray</span><span class="dl">"</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">numComponents</span> <span class="o">=</span> <span class="nx">points</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="dl">"</span><span class="s2">NumberOfComponents</span><span class="dl">"</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">points</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">numComp</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numComponents</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">arrayOfVec</span> <span class="p">:</span> <span class="nx">any</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">arrayOfVec</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nx">numComp</span><span class="p">));</span>                   
+    <span class="p">}</span>
+    <span class="nx">pointData</span><span class="p">[</span><span class="dl">"</span><span class="s2">Position</span><span class="dl">"</span><span class="p">]</span> <span class="o">=</span> <span class="nx">arrayOfVec</span><span class="p">;</span>
+    <span class="c1">// Save the data</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">SET_VTK_PARTICLE_DATA</span><span class="dl">'</span><span class="p">,</span> <span class="nx">pointData</span><span class="p">);</span> <span class="c1">// Save to a Vuex store</span>
+  <span class="p">}</span></code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">convertTo1DArray</code> method has the form</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="kr">private</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span> <span class="p">:</span> <span class="nx">string</span><span class="p">)</span> <span class="p">:</span> <span class="nx">number</span><span class="p">[]</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span>
+    <span class="nx">data</span><span class="p">.</span><span class="nx">text</span><span class="p">().</span><span class="nx">trim</span><span class="p">()</span>                 <span class="c1">// Remove leading/trailing white spaces</span>
+        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span> <span class="sr">/</span><span class="se">\s\s</span><span class="sr">+/g</span><span class="p">,</span> <span class="dl">'</span><span class="s1"> </span><span class="dl">'</span> <span class="p">)</span>      <span class="c1">// Replace multiple spaces with one space</span>
+        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">(\r\n</span><span class="sr">|</span><span class="se">\n</span><span class="sr">|</span><span class="se">\r)</span><span class="sr">/gm</span><span class="p">,</span><span class="dl">"</span><span class="s2"> </span><span class="dl">"</span><span class="p">)</span> <span class="c1">// Replace newline characters with space</span>
+        <span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="dl">"</span><span class="s2"> </span><span class="dl">"</span><span class="p">)</span>                    <span class="c1">// Convert into 1D array</span>
+        <span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nb">parseFloat</span><span class="p">);</span>              <span class="c1">// Convert into floats</span>
+  <span class="k">return</span> <span class="nx">dataArray</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Note that we have not saved the time in this simplified version. The JSON representation
+of the saved data is of the form</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"Position"</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span><span class="err">....</span><span class="p">],</span><span class="w">
+  </span><span class="nl">"Radius"</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">0.3</span><span class="p">],[</span><span class="mf">0.4</span><span class="p">,</span><span class="mf">0.5</span><span class="p">,</span><span class="mf">0.6</span><span class="p">],</span><span class="err">....</span><span class="p">],</span><span class="w">
+  </span><span class="err">....</span><span class="w">
+</span><span class="p">}</span></code></pre></figure>
+
+<h5 id="asynchronous-io-and-reading-the-file">Asynchronous IO and reading the file</h5>
+<p>The previous section assumes that a file has been read in and parsed using <code class="language-plaintext highlighter-rouge">parseXML</code>.
+Let us now see how the file is actually read from disk.  We will assume that a
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/File">File object</a> is available and
+has been obtained using the <code class="language-plaintext highlighter-rouge">&lt;input&gt;</code> tag in the HTML docsument. The <code class="language-plaintext highlighter-rouge">FileReader</code> feature
+of HTML5 makes it possible to read files easily from disk without using the <code class="language-plaintext highlighter-rouge">fs</code> library from
+<code class="language-plaintext highlighter-rouge">node.js</code>.</p>
+
+<p>The HTML input tag inside the appropriate <code class="language-plaintext highlighter-rouge">Vue</code> template has the form</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html">  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">v-on:change=</span><span class="s">"readVTKXMLParticleFile"</span><span class="nt">&gt;</span></code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">readVTKXMLParticleFile</code> function is called after a file has been selected from the
+list of files.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="kr">public</span> <span class="nx">readVTKXMLParticleFile</span><span class="p">(</span><span class="nx">event</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Choose first file in selected list</span>
+  <span class="kd">let</span> <span class="nx">file</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="c1">// Read the file as text and store data</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">readXMLFile</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="dl">"</span><span class="s2">vtk-xml</span><span class="dl">"</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The actual asynchronous read is defined in <code class="language-plaintext highlighter-rouge">readXMLFile</code>:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="dl">"</span><span class="s2">jquery</span><span class="dl">"</span><span class="p">);</span> <span class="c1">// Use jQuery for the parsing</span>
+<span class="p">.....</span>
+  <span class="kr">public</span> <span class="nx">readXMLFile</span><span class="p">(</span><span class="nx">file</span><span class="p">:</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">type</span><span class="p">:</span> <span class="nx">string</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">file</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="nx">file</span><span class="p">);</span>
+      <span class="c1">// Use a closure to pass on the actual parser function</span>
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kd">function</span><span class="p">(</span><span class="nx">parserFunction</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">let</span> <span class="nx">xmlData</span> <span class="o">=</span> <span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>      <span class="c1">// The text that has been read in</span>
+            <span class="kd">let</span> <span class="nx">xmlDoc</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">parseXML</span><span class="p">(</span><span class="nx">xmlData</span><span class="p">);</span> <span class="c1">// Use jQuery to do the parsing</span>
+            <span class="nx">parserFunction</span><span class="p">(</span><span class="nx">xmlDoc</span><span class="p">);</span>
+          <span class="p">};</span>
+        <span class="p">}</span>
+      <span class="p">)(</span><span class="k">this</span><span class="p">.</span><span class="nx">parseAndSaveVTKXML</span><span class="p">);</span> <span class="c1">// This is where the actual parsing is done</span>
+
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Unable to load file </span><span class="dl">"</span><span class="p">,</span> <span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span></code></pre></figure>
+
+<h4 id="remarks">Remarks</h4>
+<p>Once the data have been stored, we can start the process of visualization.  Future articles will
+discuss our experience with <a href="https://kitware.github.io/vtk-js/">vtk.js</a> and <a href="https://threejs.org/">three.js</a>.  We will also discuss the potential and pitfalls of Typescript and Vue.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

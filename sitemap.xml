@@ -1,0 +1,1142 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Parresia Simulations</title>
+<meta name="description" content="Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Parresia Simulations">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/sitemap.xml">
+
+
+  <meta property="og:description" content="Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.">
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/sitemap.xml">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    
+    
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/</loc>
+      
+        <lastmod>2017-12-16T13:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/</loc>
+      
+        <lastmod>2017-08-11T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-4/</loc>
+      
+        <lastmod>2017-07-27T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/</loc>
+      
+        <lastmod>2017-07-23T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/</loc>
+      
+        <lastmod>2017-07-22T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/</loc>
+      
+        <lastmod>2017-07-20T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics/</loc>
+      
+        <lastmod>2017-07-09T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/</loc>
+      
+        <lastmod>2017-06-20T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/Arena-model-paper/</loc>
+      
+        <lastmod>2017-06-15T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/incremental-objectivity/</loc>
+      
+        <lastmod>2017-05-31T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/fem/rigid-body-rotation-small-strain/</loc>
+      
+        <lastmod>2017-04-25T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/dem/CFL-condition-discrete-elements-part-4/</loc>
+      
+        <lastmod>2017-04-18T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/dem/CFL-condition-discrete-elements-part-3/</loc>
+      
+        <lastmod>2017-04-16T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/dem/CFL-condition-discrete-elements-part-2/</loc>
+      
+        <lastmod>2017-04-14T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/dem/CFL-condition-discrete-elements/</loc>
+      
+        <lastmod>2017-04-11T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/xml/gzip/reading-xml-with-gzipped-data/</loc>
+      
+        <lastmod>2017-04-04T22:30:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/d3js/d3-animation-closest-point-return/</loc>
+      
+        <lastmod>2017-04-01T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/geometric-closest-point-return/</loc>
+      
+        <lastmod>2017-03-31T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/closest-point-return/</loc>
+      
+        <lastmod>2017-03-28T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/primal-dual-closest-point-return/</loc>
+      
+        <lastmod>2017-03-27T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/</loc>
+      
+        <lastmod>2017-03-25T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/</loc>
+      
+        <lastmod>2017-03-24T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/</loc>
+      
+        <lastmod>2017-03-23T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/</loc>
+      
+        <lastmod>2017-03-05T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager/</loc>
+      
+        <lastmod>2017-03-04T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/r/xml/xml-particle-input-file/</loc>
+      
+        <lastmod>2017-03-03T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/</loc>
+      
+        <lastmod>2017-03-02T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/</loc>
+      
+        <lastmod>2017-03-01T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-camera/</loc>
+      
+        <lastmod>2017-02-28T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/</loc>
+      
+        <lastmod>2017-02-27T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs/</loc>
+      
+        <lastmod>2017-02-26T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/vuex-store/</loc>
+      
+        <lastmod>2017-02-25T23:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/</loc>
+      
+        <lastmod>2017-02-21T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/xml/vtk/vtk-particle-output/</loc>
+      
+        <lastmod>2017-02-18T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/xml/vtk/vtk-output/</loc>
+      
+        <lastmod>2017-02-17T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/json/json-input/</loc>
+      
+        <lastmod>2017-02-15T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/xml/xml-input/</loc>
+      
+        <lastmod>2017-02-14T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/command-pattern/</loc>
+      
+        <lastmod>2017-02-12T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/clang-tidy/</loc>
+      
+        <lastmod>2017-02-11T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/c++/clang-format/</loc>
+      
+        <lastmod>2017-02-10T22:30:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/sampling/hungarian_algorithm/</loc>
+      
+        <lastmod>2014-12-09T13:00:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/sampling/latin_hypercube_sampling/</loc>
+      
+        <lastmod>2014-12-01T13:00:00+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/docs/articles</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/build-check/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/build-instructions/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/getting-started/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/js/lunr/lunr-en.js</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/js/lunr/lunr-gr.js</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/js/lunr/lunr-store.js</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/css/main.css</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/manuals/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/material-data/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/_docs/parsim/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/css/screen.css</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/sitemap.xml</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/feed.xml</loc>
+      
+        <lastmod>2021-01-20T17:09:50+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+</urlset>
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+
+      </footer>
+
+      
+
+      
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

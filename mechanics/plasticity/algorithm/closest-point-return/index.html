@@ -1,0 +1,2336 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Exploring closest point return plasticity - Parresia Simulations</title>
+<meta name="description" content="Part 7 of the series on plasticity return algorithms">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Exploring closest point return plasticity">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/closest-point-return/">
+
+
+  <meta property="og:description" content="Part 7 of the series on plasticity return algorithms">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-03-28T23:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/closest-point-return/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Exploring closest point return plasticity</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#eigendecompositions-in-linear-elasticity" id="markdown-toc-eigendecompositions-in-linear-elasticity">Eigendecompositions in linear elasticity</a></li>
+  <li><a href="#the-transformed-space-for-isotropic-linear-elasticity" id="markdown-toc-the-transformed-space-for-isotropic-linear-elasticity">The transformed space for isotropic linear elasticity</a>    <ul>
+      <li><a href="#the-lode-invariants-and-the-lode-basis" id="markdown-toc-the-lode-invariants-and-the-lode-basis">The Lode invariants and the Lode basis</a></li>
+      <li><a href="#the-transformed-stress-tensor" id="markdown-toc-the-transformed-stress-tensor">The transformed stress tensor</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/primal-dual-closest-point-return/">Part 6</a>, I
+explained why a backward Euler stress update and a closest point return from the trial stress
+to the yield surface are closely related.  More specifically, the correct updated stress
+is at the shortest distance from the trial stress to the yield surface
+in a 9-dimensional space that has the Euclidean distance measure</p>
+<div>
+$$
+  \lVert \boldsymbol{\sigma} \rVert_{\mathsf{C}^{-1}} = \sqrt{\boldsymbol{\sigma}:\mathsf{C}^{-1}:\boldsymbol{\sigma}}
+$$
+</div>
+<p>where \(\mathsf{C}\) is the stiffness tensor.  We will explore some of the implications of this idea
+in this article.</p>
+
+<p class="notice--warning">Note that this particular closest-point interpretation applies only for <em>perfect plasticity</em> and
+only <em>associative</em> flow rules.  For hardening plasticity, the space in which the actual stress is
+closest to the trial stress is different.  For non-associative plasticity, it is unclear whether any
+closest-point approach can be rigorously justified.</p>
+
+<h5 id="eigendecompositions-in-linear-elasticity">Eigendecompositions in linear elasticity</h5>
+<p>The stiffness tensor for an isotropic elastic material is</p>
+<div>
+$$
+  \mathsf{C} = \lambda\,\mathbf{I}\otimes\mathbf{I} + 2\mu\,\mathsf{I}^s
+$$
+</div>
+<p>where \(\lambda,\mu\) are the Lamé elastic constants, \(\mathbf{I}\) is the rank-2 identity tensor, and
+\(\mathsf{I}^s\) is the symmetric rank-4 identity tensor.  The inverse of \(\mathsf{C}\) is the
+compliance tensor</p>
+<div>
+$$
+  \mathsf{C}^{-1} = \mathsf{S}  =
+   -\frac{\lambda}{2\mu(3\lambda+2\mu)}\,\mathbf{I}\otimes\mathbf{I} + \frac{1}{2\mu}\,\mathsf{I}^s 
+$$
+</div>
+
+<p>Eigendecompositions of the stiffness and compliance tensors are defined via</p>
+<div>
+$$
+  \mathsf{C}:\mathbf{V} = \lambda \mathbf{V} ~,~~
+  \mathsf{S}:\mathbf{V} = \frac{1}{\lambda} \mathbf{V} 
+$$
+</div>
+<p>where \(\lambda\) are the eigenvalues (not to be confused with the Lamé modulus)
+and \(\mathbf{V}\) are rank-2 tensors that form the eigenbasis.  Because of the symmetries
+of the stiffness matrix, there are six or less unique eigenvalues and the corresponding
+eigentensors are orthogonal, i.e.,</p>
+<div>
+$$
+  \mathbf{V}_i : \mathbf{V}_i = 1 \quad \text{and} \quad
+  \mathbf{V}_i : \mathbf{V}_j = 0  \,.
+$$
+</div>
+<p>The stiffness and compliance tensors may then be represented as:</p>
+<div>
+$$
+  \mathsf{C} = \sum_{i=1}^m \lambda_i \mathbf{V}_i\otimes\mathbf{V}_i ~,~~
+  \mathsf{S} = \sum_{i=1}^m \frac{1}{\lambda_i} \mathbf{V}_i\otimes\mathbf{V}_i
+$$
+</div>
+<p>where \(m\) is the number of non-zero and distinct eigenvalues.  Note also that, in this
+eigenbasis, the symmetric rank-4 identity tensor is</p>
+<div>
+$$
+  \mathsf{I}^s = \sum_{i=1}^m \mathbf{V}_i\otimes\mathbf{V}_i \,.
+$$
+</div>
+<p>Eigenprojectors are defined as rank-4 tensors that have the property (for \(i \ne j\))</p>
+<div>
+$$
+  \mathsf{P}_i:\mathbf{V}_i = \mathbf{V}_i  ~,~~
+  \mathsf{P}_i:\mathbf{V}_j = \mathbf{0} 
+$$
+</div>
+<p>If we apply the eigenprojector to the rank-4 identity tensor, we get</p>
+<div>
+$$
+  \mathsf{P}_k = \mathsf{P}_k : \mathsf{I}^s = 
+     \sum_{i=1}^m \mathsf{P}_k: (\mathbf{V}_i\otimes\mathbf{V}_i) 
+   = \sum_{i=1}^m (\mathsf{P}_k: \mathbf{V}_i)\otimes\mathbf{V}_i 
+   = (\mathsf{P}_k : \mathbf{V}_k)\otimes\mathbf{V}_k
+   = \mathbf{V}_k\otimes\mathbf{V}_k
+$$
+</div>
+<p>Therefore we may also write the eigendecomposition in terms of the eigenprojectors</p>
+<div>
+$$
+  \mathsf{C} = \sum_{i=1}^m \lambda_i \mathsf{P}_i ~,~~
+  \mathsf{S} = \sum_{i=1}^m \frac{1}{\lambda_i} \mathsf{P}_i ~,~~
+  \mathsf{I}^s = \sum_{i=1}^m \mathsf{P}_i \,.
+$$
+</div>
+<p>For isotropic materials, a small amount of algebra shows that there are two unique eigenvectors
+which lead to the decomposition</p>
+<div>
+$$
+  \mathsf{C} = \lambda_1 \mathsf{P}_1 + \lambda_2 \mathsf{P}_2
+  \quad \text{where} \quad
+  \mathsf{S} = \frac{1}{\lambda_1} \mathsf{P}_1 + \frac{1}{\lambda_2} \mathsf{P}_2
+$$
+</div>
+<p>and</p>
+<div>
+$$
+  \mathsf{P}_1 = \tfrac{1}{3} \mathbf{I}\otimes\mathbf{I} ~,~~
+  \mathsf{P}_2 = \mathsf{I}^s - \mathsf{P}_1 \,.
+$$
+</div>
+<p>We can now express the stiffness and compliance tensors in terms of these eigenprojections:</p>
+<div>
+$$
+  \begin{align}
+  \mathsf{C} &amp; = \left(\kappa-\tfrac{2}{3}\mu\right)\,\mathbf{I}\otimes\mathbf{I} +
+               2\mu\,\mathsf{I}^s \\
+    &amp; = 3\kappa\left(\tfrac{1}{3}\mathbf{I}\otimes\mathbf{I}\right) +
+      2\mu\,\left(\mathsf{I}^s - \tfrac{1}{3}\mathbf{I}\otimes\mathbf{I}\right)
+  \end{align}
+$$
+</div>
+<p>where \(\kappa\) is the bulk modulus and \(\mu\) is the shear modulus. Also,</p>
+<div>
+$$
+  \begin{align}
+  \mathsf{S} 
+   &amp; = \frac{1}{3}\left(\frac{1}{3\kappa} - \frac{1}{2\mu}\right)\,\mathbf{I}\otimes\mathbf{I} + \frac{1}{2\mu}\,\mathsf{I}^s \\
+   &amp; = \frac{1}{3\kappa}\left(\tfrac{1}{3}\mathbf{I}\otimes\mathbf{I}\right) +
+       \frac{1}{2\mu}\left(\mathsf{I}^s - \tfrac{1}{3}\mathbf{I}\otimes\mathbf{I}\right)  
+  \end{align}
+$$
+</div>
+<p>Therefore, we can write</p>
+<div class="notice">
+$$
+  \mathsf{C} = 3\kappa\,\mathsf{P}^{\text{iso}} + 2\mu\,\mathsf{P}^{\text{symdev}}
+  \quad \text{and} \quad
+  \mathsf{S} =  \frac{1}{3\kappa}\,\mathsf{P}^{\text{iso}} +
+       \frac{1}{2\mu}\,\mathsf{P}^{\text{symdev}} 
+$$
+</div>
+<p>where \(\mathsf{P}^{\text{iso}} = \mathsf{P}_1\) and
+\(\mathsf{P}^{\text{symdev}} = \mathsf{P}_2\).</p>
+
+<p>It is also worth noting that if</p>
+<div>
+$$
+  \mathsf{C}^{1/2} : \mathsf{C}^{1/2} := \mathsf{C} \quad \text{and} \quad
+  \mathsf{S}^{1/2} : \mathsf{S}^{1/2} := \mathsf{S} \\
+$$
+</div>
+<p>then, using the property that \(\mathsf{P}_1 : \mathsf{P}_2 = \mathsf{0}\),</p>
+<div>
+$$
+  \mathsf{C}^{1/2} = \sqrt{\lambda_1} \mathsf{P}_1 + \sqrt{\lambda_2} \mathsf{P}_2
+  \quad \text{where} \quad
+  \mathsf{S}^{1/2} = \frac{1}{\sqrt{\lambda_1}} \mathsf{P}_1 + \frac{1}{\sqrt{\lambda_2}} \mathsf{P}_2
+$$
+</div>
+<p>In that case, we have</p>
+<div class="notice">
+$$
+  \mathsf{C}^{1/2} = \sqrt{3\kappa}\,\mathsf{P}^{\text{iso}} + \sqrt{2\mu}\,\mathsf{P}^{\text{symdev}}
+  \quad \text{and} \quad
+  \mathsf{S}^{1/2} =  \frac{1}{\sqrt{3\kappa}}\,\mathsf{P}^{\text{iso}} +
+       \frac{1}{\sqrt{2\mu}}\,\mathsf{P}^{\text{symdev}} 
+$$
+</div>
+
+<h5 id="the-transformed-space-for-isotropic-linear-elasticity">The transformed space for isotropic linear elasticity</h5>
+<p>Details of the transformed space for isotropic linear elasticity were worked out by M. Homel in
+his 2014 PhD dissertation.  We will follow his approach in this section.</p>
+
+<p>The distance measure</p>
+<div>
+$$
+  \lVert \boldsymbol{\sigma} \rVert_{\mathsf{S}} = \sqrt{\boldsymbol{\sigma}:\mathsf{S}:\boldsymbol{\sigma}}
+$$
+</div>
+<p>can be interpreted as a standard Euclidean distance measure in a transformed stress space by
+observing that</p>
+<div>
+$$
+  \begin{align}
+  \lVert \boldsymbol{\sigma} \rVert_{\mathsf{S}} &amp; =
+    \sqrt{(\boldsymbol{\sigma}:\mathsf{S}^{1/2}):(\mathsf{S}^{1/2}:\boldsymbol{\sigma})}
+  \quad \text{where} \quad
+  \mathsf{S}^{1/2} : \mathsf{S}^{1/2} := \mathsf{S} \\
+  &amp; = \sqrt{(\mathsf{S}^{1/2}:\boldsymbol{\sigma}):(\mathsf{S}^{1/2}:\boldsymbol{\sigma})}
+  \quad \text{using the major symmetry of} \quad \mathsf{S} \\
+  &amp; = \sqrt{\boldsymbol{\sigma}^\star:\boldsymbol{\sigma}^\star}
+    = \lVert \boldsymbol{\sigma}^\star \rVert
+  \end{align}
+$$
+</div>
+
+<p>We would like to calculate the transformed stress tensor.</p>
+
+<h6 id="the-lode-invariants-and-the-lode-basis">The Lode invariants and the Lode basis</h6>
+<p>The Lode basis (described by R. M. Brannon in 2009) is an alternative basis that can
+be used to decompose the stress tensor.  Let us define the following deviatoric quantities:</p>
+<div>
+$$
+  \boldsymbol{s} = \text{dev}(\boldsymbol{\sigma})
+    = \boldsymbol{\sigma} - \tfrac{1}{3}\text{tr}(\boldsymbol{\sigma})\mathbf{I}
+  \quad \text{and} \quad
+  \boldsymbol{t} = \text{dev}(\boldsymbol{s}\cdot\boldsymbol{s})
+    = \boldsymbol{s}\cdot\boldsymbol{s} - \tfrac{1}{3}\text{tr}(\boldsymbol{s}\cdot\boldsymbol{s})\mathbf{I}
+$$
+</div>
+<p>The quantity \(\boldsymbol{t}\) is also called the <em>Hill tensor</em>.</p>
+
+<p>The Lode invariants of a stress tensor are</p>
+<div>
+$$
+  z = \tfrac{1}{\sqrt{3}}\,\text{tr}(\boldsymbol{\sigma}) ~,~~
+  r = \lVert \boldsymbol{s} \rVert ~,~~
+  \sin 3\theta = 3\sqrt{6}\det\left(\frac{\boldsymbol{s}}{\lVert\boldsymbol{s}\rVert}\right)
+$$
+</div>
+<p>These invariants are associated with an orthonormal set of unit tensors</p>
+<div>
+$$
+  \mathbf{E}_z = \tfrac{1}{\sqrt{3}}\,\mathbf{I} ~,~~
+  \mathbf{E}_r = \frac{\boldsymbol{s}}{\lVert\boldsymbol{s}\rVert} ~,~~
+  \mathbf{E}_\theta =
+    \frac{\frac{\boldsymbol{t}}{\lVert\boldsymbol{t}\rVert} -
+    \sin 3\theta\frac{\boldsymbol{s}}{\lVert\boldsymbol{s}\rVert}}{\cos 3\theta}
+$$
+</div>
+<p>The stress can be expressed in terms of the Lode basis as</p>
+<div class="notice">
+$$
+  \boldsymbol{\sigma} = z\,\mathbf{E}_z + r\,\mathbf{E}_r \,.
+$$
+</div>
+
+<h6 id="the-transformed-stress-tensor">The transformed stress tensor</h6>
+<p>We can now compute the transformed stress tensor:</p>
+<div>
+$$
+  \boldsymbol{\sigma}^\star = \mathsf{S}^{1/2}:\boldsymbol{\sigma}
+  = \left[\frac{1}{\sqrt{3\kappa}}\,\mathsf{P}^{\text{iso}} +
+       \frac{1}{\sqrt{2\mu}}\,\mathsf{P}^{\text{symdev}} \right]:
+      ( z\,\mathbf{E}_z + r\,\mathbf{E}_r) \,.
+$$
+</div>
+<p>We can show that</p>
+<div>
+$$
+  \mathsf{P}^{\text{iso}}:\mathbf{E}_z = \mathbf{E}_z ~,~~
+  \mathsf{P}^{\text{iso}}:\mathbf{E}_r = \mathbf{0} ~,~~
+  \mathsf{P}^{\text{symdev}}:\mathbf{E}_z = \mathbf{0} ~,~~
+  \mathsf{P}^{\text{symdev}}:\mathbf{E}_r = \mathbf{E}_r 
+$$
+</div>
+<p>Therefore,</p>
+<div class="notice--info">
+$$
+  \boldsymbol{\sigma}^\star 
+  = \frac{z}{\sqrt{3\kappa}}\,\mathbf{E}_z +
+    \frac{r}{\sqrt{2\mu}}\,\mathbf{E}_r
+$$
+</div>
+
+<h4 id="remarks">Remarks</h4>
+<p>So we have a straightforward way of computing stresses in the transformed space
+and will use this idea in the geometrical closest point return algorithm that we
+will discuss in the next part of this series.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

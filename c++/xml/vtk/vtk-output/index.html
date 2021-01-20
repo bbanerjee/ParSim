@@ -1,0 +1,2250 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Writing VTK XML files in C++ - Parresia Simulations</title>
+<meta name="description" content="Outputting simulation data">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Writing VTK XML files in C++">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/c++/xml/vtk/vtk-output/">
+
+
+  <meta property="og:description" content="Outputting simulation data">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-02-17T22:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/c++/xml/vtk/vtk-output/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Writing VTK XML files in C++</h1>
+    
+    <p>I visualize the output of my simulations using either LLNL’s <a href="https://wci.llnl.gov/simulation/computer-codes/visit">Visit</a> or Kitware’s <a href="http://www.paraview.org/">ParaView</a>.  These tools are wonderful for dealing with large datasets and can read a huge variety of file formats.  In particular, they are good for remote and visualization.</p>
+
+<p>One of the formats that both these tools can understand is the <a href="http://www.vtk.org/">VTK</a> XML format.  The advantage of this format is its simplicity and that makes it suitable for small research codes.</p>
+
+<p class="notice">Note:  If your code is running on large modern HPC machines, you should consider formats that are more efficient for I/O and remote visualization.</p>
+
+<p>In this blog post I’ll describe how I write data from my particle-based simulations into VTK format output files.  If the files are small, I use ASCII for readability but for large simulations I write out VTK XML files containing binary data.</p>
+
+<h5 id="the-data">The data</h5>
+<p>The data produced by the particle simulation codes typically has two components:</p>
+
+<ul>
+  <li>A grid that describes the boundary of the computational domain and the partitioning
+of the domain into pieces that are sent to various processors during the computation
+process, and</li>
+  <li>A set of particles that contain position, geometry, and physical state data.</li>
+</ul>
+
+<p>Each of these datasets changes with time; so they also contain a timestamp.  A set of
+files is produced at each timestep in the simulation where the user feels that there is
+a need to output results.  The process of creating appropriately named files is routine and
+won’t be described in this post.</p>
+
+<h5 id="installing-vtk-and-setting-up-cmake">Installing VTK and setting up Cmake</h5>
+<p>In Ubuntu 16.04, installing VTK (a slightly older version, 5.10), is straightforward.  I haven’t tried more recent versions, but the API hasn’t changed much. Most HPC systems also have VTK installed by default because of its wide use.  Installation just needs</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nb">sudo </span>apt-get <span class="nb">install </span>libvtk5-dev
+</code></pre></div></div>
+
+<p>To be able to build your code with VTK support, edit the root <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> file and add</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  find_package<span class="o">(</span>VTK 5.10 REQUIRED<span class="o">)</span>
+  include_directories<span class="o">(</span><span class="k">${</span><span class="nv">VTK_INCLUDE_DIRS</span><span class="k">}</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>and for linking the executable, add</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  target_link_libraries<span class="o">(</span>your_executable
+    YOUR_LIB
+    <span class="k">${</span><span class="nv">VTK_LIBRARIES</span><span class="k">}</span>
+  <span class="o">)</span>
+</code></pre></div></div>
+
+<h5 id="writing-grid-data">Writing grid data</h5>
+<p>We write the grid using an unstructured grid writer (because the grid may not be
+regular) but stick to hexahedral elements in this example.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="cp">#include &lt;vtkXMLUnstructuredGrid.h&gt;
+#include &lt;vtkXMLUnstructuredGridWriter.h&gt;
+#include &lt;vtkSmartPointer.h&gt;
+#include &lt;vtkPoints.h&gt;
+</span><span class="k">using</span> <span class="n">vtkPointsP</span>                    <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkPoints</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">vtkUnstructuredGridP</span>          <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkUnstructuredGrid</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">vtkHexahedronP</span>                <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkHexahedron</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">vtkXMLUnstructuredGridWriterP</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkXMLUnstructuredGridWriter</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">Node</span>    <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">Element</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">;</span>                           
+<span class="kt">void</span>
+<span class="n">OutputVTK</span><span class="o">::</span><span class="n">writeGrid</span><span class="p">(</span><span class="kt">double</span> <span class="n">time</span><span class="p">,</span>
+                     <span class="k">const</span> <span class="n">BoxArray</span><span class="o">&amp;</span> <span class="n">grid</span><span class="p">,</span>
+                     <span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span><span class="o">&amp;</span> <span class="n">fileName</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Create a writer</span>
+  <span class="k">auto</span> <span class="n">writer</span> <span class="o">=</span> <span class="n">vtkXMLUnstructuredGridWriterP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Append the default extension to the file name</span>
+  <span class="n">fileName</span> <span class="o">&lt;&lt;</span> <span class="s">"."</span> <span class="o">&lt;&lt;</span> <span class="n">writer</span><span class="o">-&gt;</span><span class="n">GetDefaultFileExtension</span><span class="p">();</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetFileName</span><span class="p">((</span><span class="n">fileName</span><span class="p">.</span><span class="n">str</span><span class="p">()).</span><span class="n">c_str</span><span class="p">());</span>
+  <span class="c1">// Create a pointer to a VTK Unstructured Grid data set</span>
+  <span class="k">auto</span> <span class="n">dataSet</span> <span class="o">=</span> <span class="n">vtkUnstructuredGridP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Set up pointer to point data</span>
+  <span class="k">auto</span> <span class="n">pts</span> <span class="o">=</span> <span class="n">vtkPointsP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Count the total number of points to be saved</span>
+  <span class="kt">int</span> <span class="n">num_pts</span> <span class="o">=</span> <span class="n">grid</span><span class="p">.</span><span class="n">getNumberOfPoints</span><span class="p">();</span> <span class="c1">// Implementation is user-dependent</span>
+  <span class="n">pts</span><span class="o">-&gt;</span><span class="n">SetNumberOfPoints</span><span class="p">(</span><span class="n">num_pts</span><span class="p">);</span>
+  <span class="c1">// Add the time</span>
+  <span class="n">addTimeToVTKDataSet</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">);</span>
+  <span class="c1">// Get the nodes and elements that are used to describe the grid</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span>    <span class="n">nodes</span> <span class="o">=</span> <span class="n">grid</span><span class="p">.</span><span class="n">getNodes</span><span class="p">();</span>       <span class="c1">// Implementation is user-dependent</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Element</span><span class="o">&gt;</span> <span class="n">elements</span> <span class="o">=</span> <span class="n">grid</span><span class="p">.</span><span class="n">getElements</span><span class="p">();</span> <span class="c1">// Implementation is user-dependent</span>
+  <span class="c1">// Add the processor boundaries to the unstructured grid cell data</span>
+  <span class="n">addElementsToVTKDataSet</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">elements</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">);</span>
+  <span class="c1">// Set the points</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">SetPoints</span><span class="p">(</span><span class="n">pts</span><span class="p">);</span>
+  <span class="c1">// Remove unused memory</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">Squeeze</span><span class="p">();</span>
+  <span class="c1">// Write the data</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetInput</span><span class="p">(</span><span class="n">dataSet</span><span class="p">);</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetDataModeToAscii</span><span class="p">();</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">();</span>
+<span class="p">}</span>
+       </code></pre></figure>
+
+<p>We will discuss the implementation of <code class="language-plaintext highlighter-rouge">addTimeToVTKDataSet</code> and <code class="language-plaintext highlighter-rouge">addElementsToVTKDataSet</code> next.  Note the <code class="language-plaintext highlighter-rouge">SetDataModeToAscii()</code> function near the end.  We can switch to binary output by just changing this call to <code class="language-plaintext highlighter-rouge">SetDataModeToBinary()</code>.</p>
+
+<h5 id="adding-time-to-the-data-set">Adding time to the data set</h5>
+<p>To add a time stamp to each data set, we use the following</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span>
+<span class="n">OutputVTK</span><span class="o">::</span><span class="n">addTimeToVTKDataSet</span><span class="p">(</span><span class="kt">double</span> <span class="n">time</span><span class="p">,</span>
+                               <span class="n">vtkUnstructuredGridP</span><span class="o">&amp;</span> <span class="n">dataSet</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">auto</span> <span class="n">array</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">array</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">"TIME"</span><span class="p">);</span>
+  <span class="n">array</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">array</span><span class="o">-&gt;</span><span class="n">SetTuple1</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">time</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetFieldData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">array</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="adding-elements-to-the-data-set">Adding elements to the data set</h5>
+<p>Finally, we will add the grid elements to the dataset using the <code class="language-plaintext highlighter-rouge">addElementsToVTKDataSet</code> function below.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span>
+<span class="n">OutputVTK</span><span class="o">::</span><span class="n">addElementsToVTKDataSet</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;&amp;</span> <span class="n">nodes</span><span class="p">,</span>
+                                   <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Element</span><span class="o">&gt;&amp;</span> <span class="n">elements</span><span class="p">,</span>
+                                   <span class="n">vtkPointsP</span><span class="o">&amp;</span> <span class="n">pts</span><span class="p">,</span>
+                                   <span class="n">vtkUnstructuredGridP</span><span class="o">&amp;</span> <span class="n">dataSet</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Set the coordinates of the nodes</span>
+  <span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">node</span> <span class="o">:</span> <span class="n">nodes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">pts</span><span class="o">-&gt;</span><span class="n">SetPoint</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">node</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+    <span class="o">++</span><span class="n">id</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Set the element connectivities</span>
+  <span class="k">auto</span> <span class="n">hex</span> <span class="o">=</span> <span class="n">vtkHexahedronP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>  <span class="c1">// Assuming hex elements</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">element</span> <span class="o">:</span> <span class="n">elements</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Get node ids and assign them to a hex element (ids start from 1)</span>
+    <span class="kt">int</span> <span class="n">nodeNum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">id</span> <span class="o">:</span> <span class="n">element</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">hex</span><span class="o">-&gt;</span><span class="n">GetPointIds</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetId</span><span class="p">(</span><span class="n">nodeNum</span><span class="p">,</span> <span class="n">id</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+      <span class="o">++</span><span class="n">nodeNum</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">InsertNextCell</span><span class="p">(</span><span class="n">hex</span><span class="o">-&gt;</span><span class="n">GetCellType</span><span class="p">(),</span> <span class="n">hex</span><span class="o">-&gt;</span><span class="n">GetPointIds</span><span class="p">());</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="the-output-file">The output file</h5>
+<p>The output file produced by this approach has the extension <code class="language-plaintext highlighter-rouge">.vtu</code> and the format below.</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;VTKFile</span> <span class="na">type=</span><span class="s">"UnstructuredGrid"</span> <span class="na">version=</span><span class="s">"0.1"</span> <span class="na">byte_order=</span><span class="s">"LittleEndian"</span> <span class="na">compressor=</span><span class="s">"vtkZLibDataCompressor"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;UnstructuredGrid&gt;</span>
+    <span class="nt">&lt;FieldData&gt;</span>
+      <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float64"</span> <span class="na">Name=</span><span class="s">"TIME"</span> <span class="na">NumberOfTuples=</span><span class="s">"1"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"0"</span> <span class="na">RangeMax=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+        0
+      <span class="nt">&lt;/DataArray&gt;</span>
+    <span class="nt">&lt;/FieldData&gt;</span>
+    <span class="nt">&lt;Piece</span> <span class="na">NumberOfPoints=</span><span class="s">"18"</span> <span class="na">NumberOfCells=</span><span class="s">"4"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;PointData&gt;</span>
+      <span class="nt">&lt;/PointData&gt;</span>
+      <span class="nt">&lt;CellData&gt;</span>
+      <span class="nt">&lt;/CellData&gt;</span>
+      <span class="nt">&lt;Points&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Float32"</span> <span class="na">Name=</span><span class="s">"Points"</span> <span class="na">NumberOfComponents=</span><span class="s">"3"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"0"</span> <span class="na">RangeMax=</span><span class="s">"101.56425869"</span><span class="nt">&gt;</span>
+          0 -1 0 0 -1 17.728469849
+          0 0 0 0 0 17.728469849
+          0 1 0 0 1 17.728469849
+          50 -1 0 50 -1 17.728469849
+          50 0 0 50 0 17.728469849
+          50 1 0 50 1 17.728469849
+          100 -1 0 100 -1 17.728469849
+          100 0 0 100 0 17.728469849
+          100 1 0 100 1 17.728469849
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Points&gt;</span>
+      <span class="nt">&lt;Cells&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Int64"</span> <span class="na">Name=</span><span class="s">"connectivity"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"0"</span> <span class="na">RangeMax=</span><span class="s">"17"</span><span class="nt">&gt;</span>
+          6 8 2 0 7 9
+          3 1 8 10 4 2
+          9 11 5 3 12 14
+          8 6 13 15 9 7
+          14 16 10 8 15 17
+          11 9
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"Int64"</span> <span class="na">Name=</span><span class="s">"offsets"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"8"</span> <span class="na">RangeMax=</span><span class="s">"32"</span><span class="nt">&gt;</span>
+          8 16 24 32
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">"UInt8"</span> <span class="na">Name=</span><span class="s">"types"</span> <span class="na">format=</span><span class="s">"ascii"</span> <span class="na">RangeMin=</span><span class="s">"12"</span> <span class="na">RangeMax=</span><span class="s">"12"</span><span class="nt">&gt;</span>
+          12 12 12 12
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Cells&gt;</span>
+    <span class="nt">&lt;/Piece&gt;</span>
+  <span class="nt">&lt;/UnstructuredGrid&gt;</span>
+<span class="nt">&lt;/VTKFile&gt;</span></code></pre></figure>
+
+<p>The data can be easily read into Visit and the resulting plot can be seen below.</p>
+
+<p><img src="https://bbanerjee.github.io/ParSim/assets/blogimg/deposit_gridplot.jpg" alt="Plot produced by Visit" class="img-responsive" height="250px" border="5px double red" /></p>
+
+<h4 id="remarks">Remarks</h4>
+<p>Writing your data to files in VTK format is straightforward and reading them in
+Visit or ParaView is also quite simple.  I prefer these tools to TecPlot, mainly
+because I can write plugins quite easily.</p>
+
+<p>In the next post, I will discuss how you can save your particle data in VTK binary format.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US </script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

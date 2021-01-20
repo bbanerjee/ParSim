@@ -1,0 +1,2380 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Plotting particles with vtk.js - Parresia Simulations</title>
+<meta name="description" content="Javascript scientific visualization - Part 7">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Plotting particles with vtk.js">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
+
+
+  <meta property="og:description" content="Javascript scientific visualization - Part 7">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-03-02T23:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Plotting particles with vtk.js</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#registering-vtk-components" id="markdown-toc-registering-vtk-components">Registering VTK components</a></li>
+  <li><a href="#creating-vuex-stores-for-vtk-data" id="markdown-toc-creating-vuex-stores-for-vtk-data">Creating Vuex stores for VTK data</a></li>
+  <li><a href="#the-vtk-graphics-panel" id="markdown-toc-the-vtk-graphics-panel">The VTK graphics panel</a></li>
+  <li><a href="#the-vtk-renderer" id="markdown-toc-the-vtk-renderer">The VTK renderer</a></li>
+  <li><a href="#the-vtk-particles-component" id="markdown-toc-the-vtk-particles-component">The VTK particles component</a></li>
+  <li><a href="#creating-the-particles" id="markdown-toc-creating-the-particles">Creating the particles</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In the previous articles in this series we talked about:</p>
+
+<ol>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a>.</li>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/">Part 4: Setting up the Three.js renderer</a></li>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-camera/">Part 5: Setting up the Three.js scene and camera</a></li>
+  <li><a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">Part 6: Creating and plotting Three.js ellipsoids</a></li>
+</ol>
+
+<p>Let us now explore the <a href="https://kitware.github.io/vtk-js/">vtk.js</a> library to see if the process
+of displaying particles can be simplified given that we are using VTK format input files.</p>
+
+<h5 id="registering-vtk-components">Registering VTK components</h5>
+<p>As discussed in <a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>, we first
+need to register components that are specific to VTK.  In our case, we need</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">VtkRenderer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="dl">"</span><span class="s2">./graphics/VtkRenderer.vue</span><span class="dl">"</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">VtkEllipsoidParticles</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="dl">"</span><span class="s2">./graphics/VtkEllipsoidParticles.vue</span><span class="dl">"</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="dl">'</span><span class="s1">vtk-renderer</span><span class="dl">'</span><span class="p">,</span> <span class="nx">VtkRenderer</span><span class="p">);</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="dl">'</span><span class="s1">vtk-ellipsoid-particles</span><span class="dl">'</span><span class="p">,</span> <span class="nx">VtkEllipsoidParticles</span><span class="p">);</span></code></pre></figure>
+
+<h5 id="creating-vuex-stores-for-vtk-data">Creating Vuex stores for VTK data</h5>
+<p>Once again, we repeat the process discussed in
+<a href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>.  We have discussed
+the <code class="language-plaintext highlighter-rouge">Store</code> in Part3, and in this case we create the files</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">VTKGraphicsModule.ts</code> - similar to <code class="language-plaintext highlighter-rouge">ThreeGraphicsModule.ts</code></li>
+  <li><code class="language-plaintext highlighter-rouge">VTKGraphicsState.ts</code> - see below</li>
+  <li><code class="language-plaintext highlighter-rouge">VTKGraphicsGetters.ts</code> - similar to the getters for the three.js Vuex store</li>
+  <li><code class="language-plaintext highlighter-rouge">VTKGraphicsMutations.ts</code> - see below</li>
+  <li><code class="language-plaintext highlighter-rouge">VTKGraphicsActions.ts</code> - similar to what we have seen before</li>
+</ul>
+
+<p>The <code class="language-plaintext highlighter-rouge">VTKGraphicsState.ts</code> file now contains a list of actors, sources, and mappers.  There is also
+a flag indicating that VTK actors have been created:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">export</span> <span class="kd">class</span> <span class="nx">VTKGraphicsState</span> <span class="p">{</span>
+  <span class="nl">actors</span>     <span class="p">:</span> <span class="nx">any</span> <span class="p">[];</span>
+  <span class="nl">sources</span>    <span class="p">:</span> <span class="nx">any</span> <span class="p">[];</span>
+  <span class="nl">mappers</span>    <span class="p">:</span> <span class="nx">any</span> <span class="p">[];</span>
+  <span class="nl">areVTKActorsCreated</span>  <span class="p">:</span> <span class="nx">boolean</span><span class="p">;</span>
+  <span class="kd">constructor</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">actors</span>  <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">sources</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">mappers</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">areVTKActorsCreated</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">VTKGraphicsMutations.ts</code> file contains the following:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="p">{</span><span class="nx">Mutation</span><span class="p">,</span> <span class="nx">MutationTree</span><span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">vuex</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span><span class="nx">VTKGraphicsState</span><span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./VTKGraphicsState</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nx">ADD_VTK_ACTOR</span><span class="p">(</span><span class="nx">state</span><span class="p">:</span> <span class="nx">VTKGraphicsState</span><span class="p">,</span> <span class="nx">actor</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">actors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">actor</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nx">ADD_VTK_SOURCE</span><span class="p">(</span><span class="nx">state</span><span class="p">:</span> <span class="nx">VTKGraphicsState</span><span class="p">,</span> <span class="nx">source</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">sources</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">source</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nx">ADD_VTK_MAPPER</span><span class="p">(</span><span class="nx">state</span><span class="p">:</span> <span class="nx">VTKGraphicsState</span><span class="p">,</span> <span class="nx">mapper</span><span class="p">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">mappers</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">mapper</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nx">VTK_ACTORS_CREATED</span><span class="p">(</span><span class="nx">state</span><span class="p">:</span> <span class="nx">VTKGraphicsState</span><span class="p">,</span> <span class="nx">value</span><span class="p">:</span> <span class="nx">boolean</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">areVTKActorsCreated</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">export</span> <span class="k">default</span> <span class="o">&lt;</span><span class="nx">MutationTree</span><span class="o">&lt;</span><span class="nx">VTKGraphicsState</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="nx">ADD_VTK_ACTOR</span><span class="p">,</span>
+  <span class="nx">ADD_VTK_SOURCE</span><span class="p">,</span>
+  <span class="nx">ADD_VTK_MAPPER</span><span class="p">,</span>
+  <span class="nx">VTK_ACTORS_CREATED</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="the-vtk-graphics-panel">The VTK graphics panel</h5>
+<p>The VTK graphics panel is simpler in this case.</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'vtk-graphics-container'</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"uk-card uk-card-default uk-card-large"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"uk-card-body"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;vtk-renderer</span> <span class="na">v-bind:size=</span><span class="s">"size"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;vtk-ellipsoid-particles&gt;</span> <span class="nt">&lt;/vtk-ellipsoid-particles&gt;</span>
+        <span class="nt">&lt;/vtk-renderer&gt;</span>
+      <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"./VtkGraphicsPanel.ts"</span><span class="nt">&gt;</span> <span class="nt">&lt;/script&gt;</span></code></pre></figure>
+
+<p class="notice-warning">The graphics panel template is simpler mainly because each actor is associated with a single
+mapper and a single source in our implementation.  Better options will, one hopes,
+become available after vtk.js reaches version 1.</p>
+
+<h5 id="the-vtk-renderer">The VTK renderer</h5>
+<p>We use a named slot for the template in the file <code class="language-plaintext highlighter-rouge">VtkRenderer.vue</code>:</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div&gt;</span>
+    <span class="nt">&lt;slot</span> <span class="na">name=</span><span class="s">"vtk"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">ref=</span><span class="s">"vtk-graphics-container"</span><span class="nt">&gt;&lt;/div&gt;</span>
+    <span class="nt">&lt;slot&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"./VtkRenderer.ts"</span><span class="nt">&gt;</span> <span class="nt">&lt;/script&gt;</span></code></pre></figure>
+
+<p>The code for the renderer is slight more complicated in this case and we add
+an interactor to interact with the plot.  The <code class="language-plaintext highlighter-rouge">VtkRenderer.ts</code> code is listed below.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">Vue</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">vue</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">Component</span><span class="p">,</span> <span class="nx">Lifecycle</span><span class="p">,</span> <span class="nx">Watch</span><span class="p">,</span> <span class="nx">Prop</span><span class="p">,</span> <span class="nx">p</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">av-ts</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">Store</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./Store</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkRenderWindow</span>           <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/RenderWindow</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkRenderer</span>               <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/Renderer</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkOpenGLRenderWindow</span>     <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/OpenGL/RenderWindow</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkRenderWindowInteractor</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/RenderWindowInteractor</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkTexture</span>                <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/Texture</span><span class="dl">'</span><span class="p">;</span>
+<span class="p">@</span><span class="nd">Component</span><span class="p">({</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">VtkRenderer</span><span class="dl">'</span>
+<span class="p">})</span>
+<span class="k">export</span> <span class="k">default</span> <span class="kd">class</span> <span class="nx">VtkRenderer</span> <span class="kd">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">size</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nb">Object</span><span class="p">,</span> <span class="c1">// { w, h }</span>
+    <span class="na">required</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">});</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">renderWindow</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nx">vtkRenderWindow</span>
+  <span class="p">});</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">renderer</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nx">vtkRenderer</span>
+  <span class="p">});</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">openGLRenderWindow</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nx">vtkOpenGLRenderWindow</span>
+  <span class="p">});</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">interactor</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nx">vtkRenderWindowInteractor</span>
+  <span class="p">});</span>
+  <span class="kr">private</span> <span class="nx">_renderWindow</span><span class="p">:</span> <span class="nx">any</span><span class="p">;</span>
+  <span class="kr">private</span> <span class="nx">_renderer</span><span class="p">:</span> <span class="nx">any</span><span class="p">;</span>
+  <span class="kr">private</span> <span class="nx">_openGLRenderWindow</span><span class="p">:</span> <span class="nx">any</span><span class="p">;</span>
+  <span class="kr">private</span> <span class="nx">_interactor</span><span class="p">:</span> <span class="nx">any</span><span class="p">;</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="nx">created</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderWindow</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderWindow</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderer</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderer</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">openGLRenderWindow</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_interactor</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">interactor</span><span class="p">;</span>
+    <span class="c1">// Create VTK render window and renderer</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderWindow</span> <span class="o">=</span> <span class="nx">vtkRenderWindow</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderer</span> <span class="o">=</span> <span class="nx">vtkRenderer</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderWindow</span><span class="p">.</span><span class="nx">addRenderer</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_renderer</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderer</span><span class="p">.</span><span class="nx">setBackground</span><span class="p">(</span><span class="mf">0.32</span><span class="p">,</span> <span class="mf">0.34</span><span class="p">,</span> <span class="mf">0.43</span><span class="p">);</span>
+    <span class="c1">// Create OpenGL renderwindow</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span> <span class="o">=</span> <span class="nx">vtkOpenGLRenderWindow</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_renderWindow</span><span class="p">.</span><span class="nx">addView</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span><span class="p">);</span>
+    <span class="c1">// Create interactor</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_interactor</span> <span class="o">=</span> <span class="nx">vtkRenderWindowInteractor</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+    <span class="c1">// Add watch to check for data updates</span>
+    <span class="kd">var</span> <span class="nb">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">watch</span><span class="p">(</span>
+      <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">areVTKActorsCreated</span><span class="p">;</span> <span class="p">},</span>
+      <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">areVTKActorsCreated</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nb">self</span><span class="p">.</span><span class="nx">addActors</span><span class="p">();</span>
+          <span class="nb">self</span><span class="p">.</span><span class="nx">_renderer</span><span class="p">.</span><span class="nx">resetCamera</span><span class="p">();</span>
+          <span class="nb">self</span><span class="p">.</span><span class="nx">_renderWindow</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="nx">mounted</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="dl">"</span><span class="s2">vtk-graphics-container</span><span class="dl">"</span><span class="p">])</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">el</span>  <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="dl">"</span><span class="s2">vtk-graphics-container</span><span class="dl">"</span><span class="p">];</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span><span class="p">.</span><span class="nx">setContainer</span><span class="p">(</span><span class="nx">el</span><span class="p">);</span>
+      <span class="c1">// Set the size of the window</span>
+      <span class="kd">let</span> <span class="nx">w</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">w</span><span class="p">;</span>
+      <span class="kd">let</span> <span class="nx">h</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">h</span><span class="p">;</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span><span class="p">.</span><span class="nx">setSize</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+      <span class="c1">// Add the actors from the store</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">addActors</span><span class="p">();</span>
+      <span class="c1">// Interactor</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_interactor</span><span class="p">.</span><span class="nx">setView</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_openGLRenderWindow</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_interactor</span><span class="p">.</span><span class="nx">initialize</span><span class="p">();</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_interactor</span><span class="p">.</span><span class="nx">bindEvents</span><span class="p">(</span><span class="nx">el</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">_renderWindow</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="c1">// Get actors from the store and add to the scene</span>
+  <span class="kr">private</span> <span class="nx">addActors</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nb">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">actors</span>  <span class="o">=</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">actors</span><span class="p">;</span>
+    <span class="nx">actors</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">actor</span> <span class="p">:</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">index</span> <span class="p">:</span> <span class="nx">number</span><span class="p">){</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nx">_renderer</span><span class="p">.</span><span class="nx">addActor</span><span class="p">(</span><span class="nx">actor</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p class="notice--info">The procedure used in this code is identical to that explained in the standard book on VTK.
+You will be able to access that book <a href="http://www.vtk.org/vtk-textbook/">here</a>.</p>
+
+<p class="notice--warning">The interactor allows only rotation and pan.  For zoom capabilities, you will need to you
+a more capable interactor from the vtk.js library.</p>
+
+<h5 id="the-vtk-particles-component">The VTK particles component</h5>
+<p>To draw the particles, we use the following code</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">Vue</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">vue</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span><span class="nx">Data</span><span class="p">,</span> <span class="nx">Component</span><span class="p">,</span> <span class="nx">Lifecycle</span><span class="p">,</span> <span class="nx">Watch</span><span class="p">,</span> <span class="nx">Prop</span><span class="p">,</span> <span class="nx">p</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">av-ts</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkActor</span>        <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/Actor</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkSphereSource</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Filters/Sources/SphereSource</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">vtkMapper</span>       <span class="k">from</span> <span class="dl">'</span><span class="s1">vtk.js/Sources/Rendering/Core/Mapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">Store</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./Store</span><span class="dl">"</span><span class="p">;</span>
+<span class="p">@</span><span class="nd">Component</span><span class="p">({</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">VtkEllipsoidParticles</span><span class="dl">'</span>
+<span class="p">})</span>
+<span class="k">export</span> <span class="k">default</span> <span class="kd">class</span> <span class="nx">VtkEllipsoidParticles</span> <span class="kd">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="kr">public</span> <span class="nx">created</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nb">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">watch</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                  <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">isParticleReadComplete</span><span class="p">;</span>
+                <span class="p">},</span>
+                <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                  <span class="k">if</span> <span class="p">(</span><span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">isParticleReadComplete</span><span class="p">)</span>
+                    <span class="nb">self</span><span class="p">.</span><span class="nx">createVTKParticles</span><span class="p">();</span>
+                <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="kr">private</span> <span class="nx">createVTKParticles</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// See below</span>
+  <span class="p">}</span> </code></pre></figure>
+
+<p>This part of the code is identical to that used for the three.js particles.</p>
+
+<h5 id="creating-the-particles">Creating the particles</h5>
+<p>The particle axis data are in the form of angles between the ellipsoid axes and the world coordinate axes.
+These are converted directly into the appropriate rotation matrix.  Sphere objects are then created at
+the origin, rotated, scaled, and translated to their actual positions.  The sphere objects are then
+transformed into <code class="language-plaintext highlighter-rouge">SphereBufferGeometry</code> objects to make their manipulation slightly more efficient.
+Finally, a “material” shading model is added to make sure that the image displayed isn’t flat and
+a triangulated mesh is generated for each object.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">  <span class="kr">private</span> <span class="nx">createVTKParticles</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// Get the particle data</span>
+    <span class="kd">let</span> <span class="nx">particles</span> <span class="o">=</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">particleData</span><span class="p">;</span>
+    <span class="c1">// Extract the radius and center</span>
+    <span class="kd">let</span> <span class="nx">radii</span> <span class="o">=</span> <span class="nx">particles</span><span class="p">[</span><span class="dl">"</span><span class="s2">Radius</span><span class="dl">"</span><span class="p">];</span>
+    <span class="kd">let</span> <span class="nx">centers</span> <span class="o">=</span> <span class="nx">particles</span><span class="p">[</span><span class="dl">"</span><span class="s2">Position</span><span class="dl">"</span><span class="p">];</span>
+    <span class="c1">// Loop through particles</span>
+    <span class="nx">radii</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">radius</span> <span class="p">:</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">index</span> <span class="p">:</span> <span class="nx">number</span><span class="p">){</span>
+      <span class="c1">// Create the _mapper</span>
+      <span class="kd">const</span> <span class="nx">mapper</span> <span class="o">=</span> <span class="nx">vtkMapper</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+      <span class="c1">// Create the actor</span>
+      <span class="kd">const</span> <span class="nx">actor</span> <span class="o">=</span> <span class="nx">vtkActor</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+      <span class="nx">actor</span><span class="p">.</span><span class="nx">getProperty</span><span class="p">().</span><span class="nx">setEdgeVisibility</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+      <span class="nx">actor</span><span class="p">.</span><span class="nx">getProperty</span><span class="p">().</span><span class="nx">setEdgeColor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">);</span>
+      <span class="c1">// Create the source</span>
+      <span class="kd">const</span> <span class="nx">sphere</span> <span class="o">=</span> <span class="nx">vtkSphereSource</span><span class="p">.</span><span class="nx">newInstance</span><span class="p">();</span>
+      <span class="nx">sphere</span><span class="p">.</span><span class="nx">setPhiResolution</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+      <span class="nx">sphere</span><span class="p">.</span><span class="nx">setThetaResolution</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+      <span class="c1">// Get the radius ratios</span>
+      <span class="kd">let</span> <span class="nx">ratio</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="nx">radius</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="nx">radius</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">radius</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="nx">radius</span><span class="p">[</span><span class="mi">0</span><span class="p">]];</span>
+      <span class="nx">sphere</span><span class="p">.</span><span class="nx">setRadius</span><span class="p">(</span><span class="nx">radius</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+      <span class="kd">let</span> <span class="nx">center</span> <span class="o">=</span> <span class="nx">centers</span><span class="p">[</span><span class="nx">index</span><span class="p">];</span>
+      <span class="nx">sphere</span><span class="p">.</span><span class="nx">setCenter</span><span class="p">(</span><span class="nx">center</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">center</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nx">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+      <span class="c1">// Set up the connections</span>
+      <span class="nx">mapper</span><span class="p">.</span><span class="nx">setInputConnection</span><span class="p">(</span><span class="nx">sphere</span><span class="p">.</span><span class="nx">getOutputPort</span><span class="p">());</span>
+      <span class="nx">actor</span><span class="p">.</span><span class="nx">setMapper</span><span class="p">(</span><span class="nx">mapper</span><span class="p">);</span>
+      <span class="c1">// Save the data</span>
+      <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">ADD_VTK_ACTOR</span><span class="dl">'</span><span class="p">,</span>  <span class="nx">actor</span><span class="p">);</span>
+      <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">ADD_VTK_SOURCE</span><span class="dl">'</span><span class="p">,</span> <span class="nx">sphere</span><span class="p">);</span>
+      <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">ADD_VTK_MAPPER</span><span class="dl">'</span><span class="p">,</span> <span class="nx">mapper</span><span class="p">);</span>
+    <span class="p">});</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">VTK_ACTORS_CREATED</span><span class="dl">'</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+  <span class="p">}</span></code></pre></figure>
+
+<p class="notice--warning">Note that we did not rotate or scale the particles.  To do that you will have to write
+your own code or wait until a more full-featured version of VTK is implemented by vtk.js.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>I ran into several issues while trying to use <code class="language-plaintext highlighter-rouge">vtk.js</code>.  The main ones were:</p>
+
+<ul class="notice">
+  <li>The <code class="language-plaintext highlighter-rouge">vtk.js</code> library needs to be transpiled using <code class="language-plaintext highlighter-rouge">babel</code> to avoid complaints about <code class="language-plaintext highlighter-rouge">import</code> statements
+in the <code class="language-plaintext highlighter-rouge">webpack</code> bundle.</li>
+  <li>All events are captured by the interactors used by <code class="language-plaintext highlighter-rouge">vtk.js</code> and it is difficult to use Vue’s
+event handling capabilities with this library.</li>
+  <li>Geometry transformations have not been implemented in <code class="language-plaintext highlighter-rouge">vtk.js</code> yet.</li>
+  <li>Unstructured grid VTK XML files cannot yet be read in by <code class="language-plaintext highlighter-rouge">vtk.js</code> readers.</li>
+  <li>The rendering process was much slower than that of <code class="language-plaintext highlighter-rouge">three.js</code>.</li>
+</ul>
+
+<p>The main advantages of <code class="language-plaintext highlighter-rouge">vtk.js</code> were:</p>
+
+<ul class="notice">
+  <li>The familiar architecture and API which is similar to what we have done in scientific visualization
+for more than 20 years.</li>
+  <li>The easy application of interactors (which was not the case with Typescript, Vue, and three.js, and
+an interactor had to be written).  We will discuss the three.js interactor in a future article.</li>
+</ul>
+
+<p>A plot of the spheres produced by our code can be seen below.</p>
+
+<p><img src="https://bbanerjee.github.io/ParSim/assets/blogimg/VTKGraphicsPanel.jpg" alt="Plot produced by Three.js" class="img-responsive center-image" height="450px" border="5px double red" /></p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

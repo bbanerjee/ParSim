@@ -1,0 +1,2335 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Are stresses tensile or compressive during rigid body rotation? - Parresia Simulations</title>
+<meta name="description" content="Small strain finite elements">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Are stresses tensile or compressive during rigid body rotation?">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/fem/rigid-body-rotation-small-strain/">
+
+
+  <meta property="og:description" content="Small strain finite elements">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-04-25T22:30:00+12:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/fem/rigid-body-rotation-small-strain/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Are stresses tensile or compressive during rigid body rotation?</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-question" id="markdown-toc-the-question">The question</a></li>
+  <li><a href="#the-finite-element-solution" id="markdown-toc-the-finite-element-solution">The finite element solution</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>Recently, I came across a question in StackExchange that pointed out that some
+books on continuum mechanics suggest that an element will <em>increase in size</em>
+when rotated if a small strain approximation is used in a finite element simulation.
+This issue may be a source of confusion for students of mechanics.  Let us
+explore some aspects of the problem and try to answer the StackExchange question.</p>
+
+<h4 id="the-question">The question</h4>
+<p>The animation below shows the motion of a two-dimensional square in the \(x\)-\(y\)-plane.
+We rotate the square clockwise around one of its corners and the angle of rotation is \(\beta\).
+If the position of a point in the reference configuration of the square is \((X,Y)\),
+the rotated position \((x,y)\) is</p>
+<div>
+$$
+  \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} \cos\beta &amp; \sin\beta \\ -\sin\beta &amp; \cos\beta \end{bmatrix} \begin{bmatrix} X \\ Y \end{bmatrix}
+$$
+</div>
+<p>Using the definition of engineering strains:</p>
+<div>
+$$
+  \varepsilon_{ij} = \tfrac{1}{2}\left(\frac{\partial u_i}{\partial X_j} + \frac{\partial u_j}{\partial X_i}\right)
+$$
+</div>
+<p>and the displacements</p>
+<div>
+$$
+  \begin{bmatrix} u_x \\ u_y \end{bmatrix} = \begin{bmatrix} x - X \\ y - Y \end{bmatrix}
+    = \begin{bmatrix} X\cos\beta + Y\sin\beta - X \\ -X\sin\beta + Y\cos\beta - Y\end{bmatrix}
+$$
+</div>
+<p>we have</p>
+<div>
+$$
+  \begin{bmatrix} \varepsilon_{xx} \\ \varepsilon_{yy} \\ 2\varepsilon_{xy} \end{bmatrix} =
+  \begin{bmatrix} \cos\beta - 1 \\ \cos\beta - 1 \\ 0 \end{bmatrix} 
+$$
+</div>
+<p>The animation below shows the implications of the above.  The blue square is the
+reference configuration.  Pure rotation of the square leads to the configuration in green.
+The pink square shows the implication of the strains calculated above on the shape of
+the square.</p>
+<div>
+  <input name="restartButton" type="button" value="Restart animation" onclick="restartSimulation()" />
+</div>
+<div>
+  <canvas id="rot-elem" height="450" width="450"></canvas>
+</div>
+
+<div class="notice--info">
+To depict the deformed shape with the apparent strains we have used the transformations
+$$
+  \begin{bmatrix} \varepsilon_{xx}^{\text{rot}} \\ \varepsilon_{yy}^{\text{rot}} \\ 2\varepsilon_{xy}^{\text{rot}} \end{bmatrix} =
+  \begin{bmatrix} \cos^2\beta &amp; \sin^2\beta &amp; \sin\beta\cos\beta \\
+                  \sin^2\beta &amp; \cos^2\beta &amp; -\sin\beta\cos\beta \\
+                  -2\sin\beta\cos\beta &amp; 2\sin\beta\cos\beta &amp; \cos^2\beta-\sin^2\beta
+  \end{bmatrix} 
+  \begin{bmatrix} \varepsilon_{xx} \\ \varepsilon_{yy} \\ 2\varepsilon_{xy} \end{bmatrix} 
+$$
+to compute the strains in a coordinate system aligned with the sides of the rotated square.
+You can easily check that these strains are identical to those in the unrotated coordinate
+system.
+</div>
+
+<p class="notice--warning">The animation clearly shows, if we consider the strained square, that the square appears
+to <strong>decrease</strong> in size (compressive stresses), invert, and then increase in size as the
+rotation proceeds.  Some textbooks depict an <strong>increase</strong> (tensile stresses) in the size of
+the square to illustrate the same issue, apparently the result of finite element
+computations.  The StackExchange question wanted to find out
+which was correct, an increase or a decrease.</p>
+
+<h4 id="the-finite-element-solution">The finite element solution</h4>
+<p>The question seems to be “why does FEA seemingly produce results that are contradictory 
+to theory?”  Let us do the FE calculation for a rotating square and see what the results are.</p>
+
+<p>Consider a square element with nodes</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">id  </span>x    y
+1 <span class="nt">-1</span>.0 <span class="nt">-1</span>.0
+2  1.0 <span class="nt">-1</span>.0
+3  1.0  1.0
+4 <span class="nt">-1</span>.0  1.0
+</code></pre></div></div>
+
+<p>The displacement field in the element is</p>
+<div>
+$$
+  u_x(x,y) = \sum_{j=1}^4 u_x^j N_j(x,y) ~,~~
+  u_y(x,y) = \sum_{j=1}^4 u_y^j N_j(x,y)
+$$
+</div>
+<p>and the corresponding (small) strain field is</p>
+<div>
+$$
+  \begin{align}
+  \varepsilon_{xx}(x,y) &amp; = \sum_{j=1}^4 u_x^j \frac{\partial N_j(x,y)}{\partial x} ~,~~
+  \varepsilon_{yy}(x,y) = \sum_{j=1}^4 u_y^j \frac{\partial N_j(x,y)}{\partial y} \\
+  \varepsilon_{xy}(x,y) &amp; = \tfrac{1}{2}\sum_{j=1}^4 \left[u_x^j \frac{\partial N_j(x,y)}{\partial y} + u_y^j \frac{\partial N_j(x,y)}{\partial x}\right]
+  \end{align}
+$$
+</div>
+<p>The nodal shape functions are</p>
+<div>
+$$
+  \begin{align}
+  N_1(x,y) &amp; = \frac{(1-x)(1-y)}{4} ~,~~
+  N_2(x,y) = \frac{(1+x)(1-y)}{4} \\
+  N_3(x,y) &amp; = \frac{(1+x)(1+y)}{4} ~,~~
+  N_4(x,y) = \frac{(1-x)(1+y)}{4}
+  \end{align}
+$$
+</div>
+<p>The gradients of the shape functions are</p>
+<div>
+$$
+  \begin{align}
+   G_{1x} := \frac{\partial N_1(x,y)}{\partial x} &amp; = -\frac{(1-y)}{4} ~,~~
+   G_{1y} := \frac{\partial N_1(x,y)}{\partial y} = -\frac{(1-x)}{4} \\
+   G_{2x} := \frac{\partial N_2(x,y)}{\partial x} &amp; = \frac{(1-y)}{4} ~,~~
+   G_{2y} := \frac{\partial N_2(x,y)}{\partial y} = -\frac{(1+x)}{4} \\
+   G_{3x} := \frac{\partial N_3(x,y)}{\partial x} &amp; = \frac{(1+y)}{4} ~,~~
+   G_{3y} := \frac{\partial N_3(x,y)}{\partial y} = \frac{(1+x)}{4} \\
+   G_{4x} := \frac{\partial N_4(x,y)}{\partial x} &amp; = -\frac{(1+y)}{4} ~,~~
+   G_{4y} := \frac{\partial N_4(x,y)}{\partial y} = \frac{(1-x)}{4}
+  \end{align}
+$$
+</div>
+<p>Therefore the strain field can be expressed as</p>
+<div>
+$$
+  \begin{bmatrix}  
+   \varepsilon_{xx}(x,y) \\ \varepsilon_{yy}(x,y) \\ 2\varepsilon_{xy}(x,y) 
+  \end{bmatrix}
+ = \begin{bmatrix} 
+     G_{1x} &amp; G_{2x} &amp; G_{3x} &amp; G_{4x} &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; G_{1y} &amp; G_{2y} &amp; G_{3y} &amp; G_{4y} \\
+     G_{1y} &amp; G_{2y} &amp; G_{3y} &amp; G_{4y} &amp; G_{1x} &amp; G_{2x} &amp; G_{3x} &amp; G_{4x}
+   \end{bmatrix} \mathbf{u}
+ $$
+</div>
+<p>where</p>
+<div>
+ $$
+   \mathbf{u} = \begin{bmatrix}
+     u_x^1 &amp; u_x^2 &amp; u_x^3 &amp; u_x^4 &amp; u_y^1 &amp; u_y^2 &amp; u_y^3 &amp; u_y^4
+   \end{bmatrix}^T
+ $$
+</div>
+<p>Now consider the situation where the square is rotated by 90 degrees clockwise around
+node 1 so that the new positions of the nodes are</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">id  </span>x    y
+1 <span class="nt">-1</span>.0 <span class="nt">-1</span>.0
+2 <span class="nt">-1</span>.0 <span class="nt">-3</span>.0
+3  1.0 <span class="nt">-3</span>.0
+4  1.0 <span class="nt">-1</span>.0
+</code></pre></div></div>
+
+<p><em>Note that we are not assuming any deformation of the square.</em>
+Then the nodal displacements are</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">id  </span>u_x  u_y
+1   0.0  0.0
+2  <span class="nt">-2</span>.0 <span class="nt">-2</span>.0
+3   0.0 <span class="nt">-4</span>.0
+4   2.0 <span class="nt">-2</span>.0
+</code></pre></div></div>
+
+<p>Let us do the calculation using Matlab/Octave.</p>
+
+<figure class="highlight"><pre><code class="language-matlab" data-lang="matlab"><span class="o">&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">G1x</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G1x</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G1y</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G1y</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G2x</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G2x</span> <span class="o">=</span> <span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G2y</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">x</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G2y</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G3x</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">y</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G3x</span> <span class="o">=</span> <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>   <span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G3y</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">x</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G3y</span> <span class="o">=</span> <span class="mf">0.00000</span>   <span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G4x</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">y</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G4x</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G4y</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)/</span><span class="mi">4</span>
+<span class="n">G4y</span> <span class="o">=</span> <span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="o">-</span><span class="mi">2</span> <span class="mi">0</span> <span class="mi">2</span> <span class="mi">0</span> <span class="o">-</span><span class="mi">2</span> <span class="o">-</span><span class="mi">4</span> <span class="o">-</span><span class="mi">2</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">B1</span> <span class="o">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="k">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">1</span><span class="p">)];</span><span class="k">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">1</span><span class="p">)]]</span>
+<span class="n">B1</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="k">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">2</span><span class="p">)];</span><span class="k">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">2</span><span class="p">)]]</span>
+<span class="n">B2</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B3</span> <span class="o">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="k">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">3</span><span class="p">)];</span><span class="k">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">3</span><span class="p">)]]</span>
+<span class="n">B3</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B4</span> <span class="o">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="k">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">4</span><span class="p">)];</span><span class="k">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">4</span><span class="p">)]]</span>
+<span class="n">B4</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps1</span> <span class="o">=</span> <span class="n">B1</span><span class="o">*</span><span class="n">u</span><span class="o">'</span>
+<span class="n">eps1</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps2</span> <span class="o">=</span> <span class="n">B2</span><span class="o">*</span><span class="n">u</span><span class="o">'</span>
+<span class="n">eps2</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps3</span> <span class="o">=</span> <span class="n">B3</span><span class="o">*</span><span class="n">u</span><span class="o">'</span>
+<span class="n">eps3</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps4</span> <span class="o">=</span> <span class="n">B4</span><span class="o">*</span><span class="n">u</span><span class="o">'</span>
+<span class="n">eps4</span> <span class="o">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span></code></pre></figure>
+
+<p>In the above script, we compute the strains at the four nodes of the square
+using the nodal displacement vector</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>u <span class="o">=</span> <span class="o">[</span>0 <span class="nt">-2</span> 0 2 0 <span class="nt">-2</span> <span class="nt">-4</span> <span class="nt">-2</span><span class="o">]</span>
+</code></pre></div></div>
+
+<p>and find that the strain at each of the nodes is</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>eps <span class="o">=</span> B<span class="k">*</span>u<span class="s1">' = [-1 -1 0]'</span>
+</code></pre></div></div>
+
+<p class="notice--info">You can easily show that <strong>the finite element solution is identical to the analytical
+solution</strong>.   The solution implies that <strong>stresses will develop in the element due to
+pure rigid body rotation even if the element does not deform</strong> if we use small strain theory.</p>
+
+<p class="notice--warning">This result also implies that the element cannot grow in size with rigid body rotation,
+and that the illustrations shown in some textbooks are wrong even though the stress may
+transition from more compressive to less compressive during the rotation process.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>The finite element method is typically implemented in displacement form. So one specifies
+the displacements and then find the stresses in the element.  An alternative would be to
+specify moments that would rotate the element based on forces computed using a displacement
+based solution.</p>
+
+<p>Of course one should not miss the point of the exercise which is to show that the
+correct strain measures have to be used for large deformation problems.  Even if a small
+strain measure is used, rotations have to be removed from the deformation before any
+stress computations are done.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/elemRotate.js"></script>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          56 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          24 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

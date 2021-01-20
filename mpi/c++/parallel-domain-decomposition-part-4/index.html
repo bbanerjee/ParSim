@@ -1,0 +1,2266 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Parallel domain decomposition for particle methods: Part 4 - Parresia Simulations</title>
+<meta name="description" content="Applying the Plimpton method for migrating particles">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Parallel domain decomposition for particle methods: Part 4">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
+
+
+  <meta property="og:description" content="Applying the Plimpton method for migrating particles">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-07-27T22:30:00+12:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Parallel domain decomposition for particle methods: Part 4</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#plimptons-scheme-for-migrating-particles" id="markdown-toc-plimptons-scheme-for-migrating-particles">Plimpton’s scheme for migrating particles</a></li>
+  <li><a href="#mpi-implementation" id="markdown-toc-mpi-implementation">MPI implementation</a>    <ul>
+      <li><a href="#patch-struct" id="markdown-toc-patch-struct">Patch struct</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>The Plimpton scheme of communicating ghost information between patches was described
+in <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a> of this series.
+Let us now see how a similar approach can be used to migrate particles that have
+moved across patches.</p>
+
+<p>In the animation below we just move the particles within each patch randomly.  To make
+the identity of the particles clear, we have used solid circles for the patch particles and
+three-quarter circle for the particles in the ghost regions. As you can see, some of the
+particles have moved outside the patches and need either to be deleted (if they have
+left the computational domain - assuming that the domain size remains unchanged) or they
+need to be moved to adjacent patches.</p>
+
+<div align="center" style="border:1px solid black">
+<div>
+  <input name="restartMotion" type="button" value="Repeat particle motion" onclick="particleMotion.restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-motion" height="500" width="500"></canvas>
+</div>
+</div>
+<p />
+
+<h4 id="plimptons-scheme-for-migrating-particles">Plimpton’s scheme for migrating particles</h4>
+<p>If we run Plimpton’s scheme in reverse order, we can move the particles to the appropriate
+patches with only four communication steps in 2D and six in 3D.  Notice in the animation
+below that we start with a search region in the x-direction that contains the top and bottom
+patches along with the right (or left) patch.  We relocate particles in this region first and
+then need to move particles only in the top and bottom patches.  Note also that the ghost particles
+have been moved back to their original locations, indicating that we can ignore these during the
+migration process.  Depending on the requirements of the problem, we may either delete particles
+that have left the domain, introduce them back in a periodic manner, or extend the domain itself.</p>
+
+<div align="center" style="border:1px solid black">
+<div>
+  <input name="restartMigrate" type="button" value="Migrate particles across patches" onclick="particleMigrate.restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-migrate" height="500" width="500"></canvas>
+</div>
+</div>
+<p />
+
+<h4 id="mpi-implementation">MPI implementation</h4>
+<p>The implementation of the migration process is similar to that for ghost exchange. A typical
+<code class="language-plaintext highlighter-rouge">migrateParticles</code> function can have the following form:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="k">using</span> <span class="n">ParticleIDHashMap</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unordered_set</span><span class="o">&lt;</span><span class="n">ParticleID</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kt">void</span> <span class="nf">migrateParticle</span><span class="p">(....,</span> <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">ParticleIDHashMap</span> <span class="n">sentParticles</span><span class="p">;</span>  <span class="c1">// sent particles per process</span>
+  <span class="n">ParticlePArray</span>    <span class="n">recvParticles</span><span class="p">;</span>  <span class="c1">// received particles per process</span>
+  <span class="c1">// First migrate in the x-direction</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateXMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateXPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishX</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesX</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Next migrate in the y-direction</span>
+  <span class="n">sentParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">recvParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateYMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateYPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishY</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesY</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesY</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Next migrate in the z-direction</span>
+  <span class="n">sentParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">recvParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateZMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateZPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishZ</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesZ</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesZ</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// delete outgoing particles (if needed by the problem)</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">removeParticlesOutsidePatch</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
+a <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code> struct and a <code class="language-plaintext highlighter-rouge">Patch</code> struct.  We can keep the <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code>
+struct in the same form, with the possible addition of a method of two.  However, the <code class="language-plaintext highlighter-rouge">Patch</code>
+struct becomes considerably simplified as show below.</p>
+
+<h5 id="patch-struct">Patch struct</h5>
+<p>The <code class="language-plaintext highlighter-rouge">Patch</code> struct described in <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a>
+now has a few more methods.  Let us see how some of these new functions may be implemented.</p>
+
+<p>The first new function is <code class="language-plaintext highlighter-rouge">sendRecvMigrateXMinus</code> which is the equivalent of <code class="language-plaintext highlighter-rouge">sendRecvGhostXMinus</code>
+for th emigration process.  Note that the only difference between these two function is the
+definition of the search box.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvMigrateXMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> 
+                             <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">neighborWidth</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_xMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Vec</span> <span class="n">neighborLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">neighborWidth</span><span class="p">;</span>
+    <span class="n">Vec</span> <span class="n">neighborUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">neighborWidth</span><span class="p">;</span>
+    <span class="n">neighborUpper</span><span class="p">.</span><span class="n">setX</span><span class="p">(</span><span class="n">d_lower</span><span class="p">.</span><span class="n">x</span><span class="p">());</span>
+    <span class="n">Box</span> <span class="n">neighborBox</span><span class="p">(</span><span class="n">neighborLower</span><span class="p">,</span> <span class="n">neighborUpper</span><span class="p">);</span>
+    <span class="n">d_xMinus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> 
+                           <span class="n">neighborBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span>
+                           <span class="n">particles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The next new method is <code class="language-plaintext highlighter-rouge">combineSentParticlesX</code> which is defined as:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">combineSentParticlesX</span><span class="p">(</span><span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="n">d_xMinus</span><span class="p">.</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">sent</span><span class="p">);</span>
+  <span class="n">d_xPlus</span><span class="p">.</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">sent</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">combineSentParticles</code> method in <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code> is defined as</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> 
+<span class="n">PatchNeighborComm</span><span class="o">::</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">d_sentParticles</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">particle</span> <span class="o">:</span> <span class="n">d_sentParticles</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">sent</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">getId</span><span class="p">());</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>One also needs to delete the sent particles from the patch, using the method
+<code class="language-plaintext highlighter-rouge">deleteSentParticles</code>;  this is where the use of a hashmap becomes handy.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span>
+<span class="n">Patch</span><span class="o">::</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="k">const</span> <span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">,</span>
+                           <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">sent</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">particles</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">remove_if</span><span class="p">(</span>
+        <span class="n">particles</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+        <span class="p">[</span><span class="o">&amp;</span><span class="n">sent</span><span class="p">](</span><span class="k">const</span> <span class="n">ParticleP</span><span class="o">&amp;</span> <span class="n">particle</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="p">(</span><span class="n">sent</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">getId</span><span class="p">())</span> <span class="o">!=</span> <span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">sent</span><span class="p">));</span>
+        <span class="p">}),</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">particles</span><span class="p">));</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Finally, we add the received particles to the list of particles in the patch using
+<code class="language-plaintext highlighter-rouge">addReceivedParticles</code>:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span>
+<span class="n">Patch</span><span class="o">::</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">received</span><span class="p">,</span>
+                            <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">particles</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">received</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">received</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In some special cases, we will also need to remove particles outside the domain.  One
+approach is to use <code class="language-plaintext highlighter-rouge">removeParticlesOutsidePatch</code>, but this step is typically not recommended
+in general as it is costly and often not necessary.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">removeParticlesOutsidePatch</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">Box</span> <span class="n">box</span><span class="p">(</span><span class="n">d_lower</span><span class="p">,</span> <span class="n">d_upper</span><span class="p">);</span>
+  <span class="kt">double</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="n">d_tolerance</span><span class="p">;</span>
+  <span class="n">particles</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">remove_if</span><span class="p">(</span>
+      <span class="n">particles</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+      <span class="p">[</span><span class="o">&amp;</span><span class="n">box</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epsilon</span><span class="p">](</span><span class="n">ParticleP</span> <span class="n">particle</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">box</span><span class="p">.</span><span class="n">inside</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">currentPos</span><span class="p">(),</span> <span class="n">epsilon</span><span class="p">))</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+      <span class="p">}),</span>
+    <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<span class="p">}</span></code></pre></figure>
+
+<p />
+
+<h4 id="remarks">Remarks</h4>
+<p>In the next part of this series we will explore how information about forces can be communicated
+across patches.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/seedrandom.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/particleMigrate.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/particleMotion.js"></script>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          56 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          24 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

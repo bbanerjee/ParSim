@@ -1,0 +1,2280 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Compiling and running the MPM code Vaango on a Cray - Parresia Simulations</title>
+<meta name="description" content="Copper and Excalibur">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Compiling and running the MPM code Vaango on a Cray">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/">
+
+
+  <meta property="og:description" content="Copper and Excalibur">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-12-16T13:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Compiling and running the MPM code Vaango on a Cray</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#authentication" id="markdown-toc-authentication">Authentication</a></li>
+  <li><a href="#building-the-vaango-code-on-copper-cray-xe6m" id="markdown-toc-building-the-vaango-code-on-copper-cray-xe6m">Building the <code class="language-plaintext highlighter-rouge">Vaango</code> code on <code class="language-plaintext highlighter-rouge">Copper</code> (Cray XE6m)</a>    <ul>
+      <li><a href="#downloading-the-code" id="markdown-toc-downloading-the-code">Downloading the code</a></li>
+      <li><a href="#checking-needed-third-party-packages" id="markdown-toc-checking-needed-third-party-packages">Checking needed third party packages</a></li>
+      <li><a href="#loading-modules" id="markdown-toc-loading-modules">Loading modules</a></li>
+      <li><a href="#installing-boost-and-eigen3" id="markdown-toc-installing-boost-and-eigen3">Installing Boost and Eigen3</a></li>
+      <li><a href="#compiling-vaango" id="markdown-toc-compiling-vaango">Compiling Vaango</a></li>
+    </ul>
+  </li>
+  <li><a href="#running-the-vaango-code--on-copper" id="markdown-toc-running-the-vaango-code--on-copper">Running the <code class="language-plaintext highlighter-rouge">Vaango</code> code  on <code class="language-plaintext highlighter-rouge">Copper</code></a></li>
+  <li><a href="#building-the-vaango-code-on-excalibur-cray-xc40" id="markdown-toc-building-the-vaango-code-on-excalibur-cray-xc40">Building the <code class="language-plaintext highlighter-rouge">Vaango</code> code on <code class="language-plaintext highlighter-rouge">Excalibur</code> (Cray XC40)</a>    <ul>
+      <li><a href="#downloading-the-code-1" id="markdown-toc-downloading-the-code-1">Downloading the code</a></li>
+      <li><a href="#installing-cmake" id="markdown-toc-installing-cmake">Installing cmake</a></li>
+      <li><a href="#installing-boost-and-eigen3-1" id="markdown-toc-installing-boost-and-eigen3-1">Installing boost and eigen3</a></li>
+      <li><a href="#compiling-vaango-1" id="markdown-toc-compiling-vaango-1">Compiling Vaango</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+
+<p>One of the reasons I switched to <code class="language-plaintext highlighter-rouge">cmake</code> for my builds was the need to compile my
+<code class="language-plaintext highlighter-rouge">Vaango</code> code on a BlueGene/Q system.  The code was previously configured using <code class="language-plaintext highlighter-rouge">autoconf</code> and
+<code class="language-plaintext highlighter-rouge">m4</code>,  and because I hadn’t done that implementation myself it was nightmare to change things
+when I wanted to add some new feature or library.  After moving to <code class="language-plaintext highlighter-rouge">cmake</code> things have
+become decidedly easier.  In this article I will discuss how I ported my code to a couple of
+Cray XE6m machines and how I run the code on that machine. You can download the latest version of the code
+from <a href="https://github.com/bbanerjee/ParSim/tree/master/Vaango">GitHub</a>.</p>
+
+<h4 id="authentication">Authentication</h4>
+
+<p>The authentication system for the Cray machine uses <a href="https://web.mit.edu/kerberos/">Kerberos</a>
+and requires a <a href="https://www.yubico.com/">Yubikey</a>.  The typical process for authentication
+is as follows:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">1<span class="o">)</span> kshell
+2<span class="o">)</span> kinit &lt;username&gt;@&lt;domain.name&gt;
+2a<span class="o">)</span> &lt;password&gt;
+2b<span class="o">)</span> authenticate with Yubikey
+3<span class="o">)</span> klist
+4<span class="o">)</span> kssh &lt;username&gt;@&lt;machine-name&gt;.&lt;domain-name&gt;</code></pre></figure>
+
+<p>Here <code class="language-plaintext highlighter-rouge">kssh</code> is a Kerberized version of <code class="language-plaintext highlighter-rouge">ssh</code>.</p>
+
+<h4 id="building-the-vaango-code-on-copper-cray-xe6m">Building the <code class="language-plaintext highlighter-rouge">Vaango</code> code on <code class="language-plaintext highlighter-rouge">Copper</code> (Cray XE6m)</h4>
+
+<p>The <code class="language-plaintext highlighter-rouge">Vaango</code> code is written in C++ and has over the past two years slowly added
+several C++11 and more recently C++14 features.  I first had to make sure that
+<code class="language-plaintext highlighter-rouge">wget</code> and <code class="language-plaintext highlighter-rouge">git</code> were available on the Cray machines.</p>
+
+<h5 id="downloading-the-code">Downloading the code</h5>
+
+<p>To download the code I used the standard procedure</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">git clone <span class="nt">--recursive</span> https://github.com/bbanerjee/ParSim.git</code></pre></figure>
+
+<p>I then made sure that my <code class="language-plaintext highlighter-rouge">googletest</code> and <code class="language-plaintext highlighter-rouge">json</code> submodules had been downloaded
+correctly:</p>
+
+<p>To start the process is usually look at my <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> file to figure out what I need.
+In this case:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">cd  </span>ParSim/Vaango/src/submodules
+<span class="nb">ls </span>goolestest
+<span class="nb">ls </span>json</code></pre></figure>
+
+<p>The <code class="language-plaintext highlighter-rouge">json</code> submodule downloads a lot of unnecessary data and will be removed at a future date.</p>
+
+<h5 id="checking-needed-third-party-packages">Checking needed third party packages</h5>
+
+<p>Looking at the root-level <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> file tells us that the following external packages are
+needed to build <code class="language-plaintext highlighter-rouge">Vaango</code>:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">boost</code> : for some MPI and serialization code</li>
+  <li><code class="language-plaintext highlighter-rouge">cmake</code> : to build the makefiles</li>
+  <li><code class="language-plaintext highlighter-rouge">eigen3</code> : for some matrix operations</li>
+  <li><code class="language-plaintext highlighter-rouge">gcc</code> : to build the C++ code</li>
+  <li><code class="language-plaintext highlighter-rouge">gfortran</code> : to build the Fortran code</li>
+  <li><code class="language-plaintext highlighter-rouge">libxml2</code> : for XML input/output of <code class="language-plaintext highlighter-rouge">Vaango</code> format data</li>
+  <li><code class="language-plaintext highlighter-rouge">openmpi</code> : for MPI code</li>
+  <li><code class="language-plaintext highlighter-rouge">perl</code> : for Perl scripts</li>
+  <li><code class="language-plaintext highlighter-rouge">zlib</code> : for compression code</li>
+</ul>
+
+<p>We avoid continuous integration and testing in the build; so <code class="language-plaintext highlighter-rouge">googletests</code> is not
+used even though it is downloaded.</p>
+
+<h5 id="loading-modules">Loading modules</h5>
+
+<p>A <code class="language-plaintext highlighter-rouge">module avail</code> command typically lists a large number of potential packages that can
+be used.  In our case, we loaded the following modules and environments:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">module load cmake/2.8.10.2
+module load gcc/4.9.2
+module swap PrgEnv-pgi PrgEnv-gnu</code></pre></figure>
+
+<h5 id="installing-boost-and-eigen3">Installing Boost and Eigen3</h5>
+
+<p>I couldn’t locate <code class="language-plaintext highlighter-rouge">boost</code> or <code class="language-plaintext highlighter-rouge">eigen3</code> on the machine and decided to download and build them:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">wget https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2
+wget http://bitbucket.org/eigen/eigen/get/3.3.4.tar.bz2</code></pre></figure>
+
+<p>To build <code class="language-plaintext highlighter-rouge">boost</code> I did the following:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">tar </span>xvfj boost_1_58_0.tar.bz2
+<span class="nb">cd </span>boost_1_58_0/
+./bootstrap.sh <span class="nt">--with-libraries</span><span class="o">=</span>regex <span class="nt">--prefix</span><span class="o">=</span>&lt;home_directory&gt;/boost-gcc
+./b2 <span class="nb">install
+cd</span> ..</code></pre></figure>
+
+<p>For <code class="language-plaintext highlighter-rouge">eigen3</code>, the process was</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">tar </span>xvfj 3.3.4.tar.bz2
+<span class="nb">mkdir </span>eigen3-build
+<span class="nb">cd </span>eigen3-build
+cmake ../eigen-eigen-5a0156e40feb/ <span class="nt">-DCMAKE_INSTALL_PREFIX</span><span class="o">=</span>&lt;home_directory&gt;</code></pre></figure>
+
+<h5 id="compiling-vaango">Compiling Vaango</h5>
+
+<p>I had to modify <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> to automatically detect the MPI compilers and settings.
+After that, to compile the <code class="language-plaintext highlighter-rouge">Vaango</code> code, all I needed was</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">export </span><span class="nv">CRAYPE_LINK_TYPE</span><span class="o">=</span>dynamic
+<span class="nb">mkdir </span>ParSim/Vaango/dbg-gcc
+<span class="nb">cd </span>ParSim/Vaango/dbg-gcc
+cmake ../src <span class="nt">-DCMAKE_BUILD_TYPE</span><span class="o">=</span>Debug <span class="se">\</span>
+             <span class="nt">-DEIGEN3_INCLUDE_DIR</span><span class="o">=</span>&lt;home_directory&gt;/include/eigen3 <span class="se">\</span>
+             <span class="nt">-DBOOST_ROOT</span><span class="o">=</span>&lt;home_directory&gt;/boost-gcc
+make <span class="nt">-j4</span>
+<span class="nb">cd</span> ..
+<span class="nb">mkdir </span>opt-gcc
+cmake ../src <span class="nt">-DCMAKE_BUILD_TYPE</span><span class="o">=</span>Release <span class="se">\</span>
+             <span class="nt">-DEIGEN3_INCLUDE_DIR</span><span class="o">=</span>&lt;home_directory&gt;/include/eigen3 <span class="se">\</span>
+             <span class="nt">-DBOOST_ROOT</span><span class="o">=</span>&lt;home_directory&gt;/boost-gcc
+make <span class="nt">-j4</span></code></pre></figure>
+
+<h4 id="running-the-vaango-code--on-copper">Running the <code class="language-plaintext highlighter-rouge">Vaango</code> code  on <code class="language-plaintext highlighter-rouge">Copper</code></h4>
+
+<p>To check whether the build produced a working executable, I had to start an interactive 
+session with</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">qsub <span class="nt">-l</span> <span class="k">select</span><span class="o">=</span>1:ncpus<span class="o">=</span>32:mpiprocs<span class="o">=</span>32 <span class="nt">-A</span> &lt;PROJECT_ID&gt; <span class="nt">-l</span> <span class="nv">walltime</span><span class="o">=</span>00:30:00 <span class="nt">-q</span> debug <span class="nt">-X</span> <span class="nt">-I</span></code></pre></figure>
+
+<p>and then</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">module switch PrgEnv-pgi PrgEnv-gnu
+<span class="nb">cd </span>ParSim/Vaango
+<span class="nb">mkdir </span>tests
+<span class="nb">cd </span>tests
+<span class="nb">ln</span> <span class="nt">-s</span> ../dbg-gcc/StandAlone/vaango vaango_dbg
+<span class="nb">ln</span> <span class="nt">-s</span> ../opt-gcc/StandAlone/vaango vaango_opt
+<span class="nb">ln</span> <span class="nt">-s</span> ../src/StandAlone/inputs/MPM/const_test_hypo.ups <span class="nb">.</span>
+aprun <span class="nt">-n</span> 1 vaango_dbg <span class="nt">-mpi</span> ./const_test_hypo.ups</code></pre></figure>
+
+<p>Larger jobs require the <code class="language-plaintext highlighter-rouge">qsub</code> queue system and <code class="language-plaintext highlighter-rouge">PBS</code> scripts.</p>
+
+<h4 id="building-the-vaango-code-on-excalibur-cray-xc40">Building the <code class="language-plaintext highlighter-rouge">Vaango</code> code on <code class="language-plaintext highlighter-rouge">Excalibur</code> (Cray XC40)</h4>
+
+<p>Another Cray system called <code class="language-plaintext highlighter-rouge">Excalibur</code> is also used to run <code class="language-plaintext highlighter-rouge">Vaango</code> once in a while.  The
+pre-installed packages on this machine vary with time and the following is what had
+to be done to get <code class="language-plaintext highlighter-rouge">Vaango</code> to run on that machine around a year ago.</p>
+
+<h5 id="downloading-the-code-1">Downloading the code</h5>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">module load module-git
+git clone <span class="nt">--recursive</span> https://github.com/bbanerjee/ParSim</code></pre></figure>
+
+<h5 id="installing-cmake">Installing cmake</h5>
+
+<p>We should use at least version 3.2.2 but earlier versions may may with the latest
+<code class="language-plaintext highlighter-rouge">Vaango</code> code. If the build fails, one may need to load some missing modules.</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">wget https://cmake.org/files/v3.2/cmake-3.2.2.tar.gz
+<span class="nb">mkdir </span>localpackages
+<span class="nb">tar</span> <span class="nt">-xvfz</span> cmake-3.2.2.tar.gz
+<span class="nb">cd </span>cmake-3.2.2
+./boostrap <span class="nt">--prefix</span><span class="o">=</span>&lt;home_directory&gt;/localpackages/cmake <span class="o">&amp;&amp;</span> make <span class="o">&amp;&amp;</span> make <span class="nb">install</span></code></pre></figure>
+
+<h5 id="installing-boost-and-eigen3-1">Installing boost and eigen3</h5>
+
+<p>These can be installed in a manner similar to that for Copper.  The
+installation directory was chosen to be <code class="language-plaintext highlighter-rouge">localpackages</code>.</p>
+
+<h5 id="compiling-vaango-1">Compiling Vaango</h5>
+<p>The cmake script may need the full set of options but typically works with
+just the locations of boost and eigen3 provided in the command line, if
+the correct environment is chosen  (in our case, gnu).  The process
+should be identical to that used in Copper.</p>
+
+<p>The full set of path and library options to cmake when using a local <code class="language-plaintext highlighter-rouge">mpich</code> installation is given below.</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">mkdir </span>opt
+<span class="nb">cd </span>opt
+cmake ../src <span class="se">\</span>
+  <span class="nt">-DMPI_DIR</span><span class="o">=</span>/home/banerjee/localpackages/mpich-install <span class="se">\</span>
+  <span class="nt">-DMPI_C_NO_INTERROGATE</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/bin/mpicc"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_CXX_NO_INTERROGATE</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/bin/mpicxx"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_Fortran_NO_INTERROGATE</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/bin/mpifort"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_C_COMPILER</span><span class="o">=</span>/home/banerjee/localpackages/mpich-install/bin/mpicc <span class="se">\</span>
+  <span class="nt">-DMPI_CXX_COMPILER</span><span class="o">=</span>/home/banerjee/localpackages/mpich-install/bin/mpicxx <span class="se">\</span>
+  <span class="nt">-DMPI_Fortran_COMPILER</span><span class="o">=</span>/home/banerjee/localpackages/mpich-install/bin/mpifort <span class="se">\</span>
+  <span class="nt">-DMPI_C_LIBRARIES</span>:STRING<span class="o">=</span><span class="s2">"-lmpi -lmpicxx -L/home/banerjee/localpackages/mpich-install/lib"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_CXX_LIBRARIES</span>:STRING<span class="o">=</span><span class="s2">"-lmpi -lmpicxx -L/home/banerjee/localpackages/mpich-install/lib"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_Fortran_LIBRARIES</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/lib/libmpifort.so"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_C_INCLUDE_PATH</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/include"</span><span class="se">\</span>
+  <span class="nt">-DMPI_CXX_INCLUDE_PATH</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/include"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_Fortran_INCLUDE_PATH</span>:STRING<span class="o">=</span><span class="s2">"/home/banerjee/localpackages/mpich-install/include"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_C_LINK_FLAGS</span>:STRING<span class="o">=</span><span class="s2">"-L/home/banerjee/localpackages/mpich-install/lib"</span> <span class="se">\</span>
+  <span class="nt">-DMPI_CXX_LINK_FLAGS</span>:STRING<span class="o">=</span><span class="s2">"-L/home/banerjee/localpackages/mpich-install/lib"</span> <span class="se">\</span>
+  <span class="nt">-DEIGEN3_INCLUDE_DIR</span><span class="o">=</span>/home/banerjee/localpackages/eigen3-install/include <span class="se">\</span>
+  <span class="nt">-DBOOST_ROOT</span><span class="o">=</span>/home/banerjee/localpackages/boost-install
+make</code></pre></figure>
+
+<h4 id="remarks">Remarks</h4>
+
+<p>The process of building Vaango on Cray machines has become considerably simpler over time if
+implicit codes are not needed.  That is still not true for IBM machines such as BlueGene/Q.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          56 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          24 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

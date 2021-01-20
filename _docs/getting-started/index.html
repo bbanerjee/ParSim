@@ -1,0 +1,562 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Downloading ParSim - Parresia Simulations</title>
+<meta name="description" content="Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Downloading ParSim">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/_docs/getting-started/">
+
+
+  <meta property="og:description" content="Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.">
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/_docs/getting-started/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+    
+      
+      
+      
+      
+    
+    
+      
+
+<nav class="nav__list">
+  
+  <input id="ac-toc" name="accordion-toc" type="checkbox" />
+  <label for="ac-toc">Toggle menu</label>
+  <ul class="nav__items">
+    
+      <li>
+        
+          <span class="nav__sub-title">Getting Started</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/getting-started/">Downloading ParSim</a></li>
+          
+            <li><a href="/docs/build-instructions/">Building Vaango</a></li>
+          
+            <li><a href="/docs/build-check/">Testing Vaango</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango manuals</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/manuals/">PDF Manuals</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango tutorials</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2 plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">MPM material models</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/mpm-materials/tabular-plasticity/">Tabular plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+  </ul>
+</nav>
+
+    
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Downloading ParSim">
+    
+    
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Downloading ParSim
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <ul id="markdown-toc">
+  <li><a href="#user-version" id="markdown-toc-user-version">User version</a></li>
+  <li><a href="#developer-version-for-ubuntu" id="markdown-toc-developer-version-for-ubuntu">Developer version (for Ubuntu)</a>    <ul>
+      <li><a href="#getting-the-latest-version-adding-files-etc" id="markdown-toc-getting-the-latest-version-adding-files-etc">Getting the latest version, adding files etc.</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="user-version">User version</h3>
+
+<ul>
+  <li>Create a clone of the ParSim repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   git clone https://github.com/bbanerjee/ParSim</code></pre></figure>
+
+<ul>
+  <li>Check status</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git status
+  git diff origin/master</code></pre></figure>
+
+<ul>
+  <li>Just in case the master has changed, update your copy</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git pull</code></pre></figure>
+
+<h3 id="developer-version-for-ubuntu">Developer version (for Ubuntu)</h3>
+
+<p>If you are a developer, we will suggest the following longer version.</p>
+
+<ul>
+  <li>Create a <code class="language-plaintext highlighter-rouge">GitHub</code> account</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   https://github.com/signup/free</code></pre></figure>
+
+<ul>
+  <li>Install <code class="language-plaintext highlighter-rouge">git</code> on your machine</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   <span class="nb">sudo </span>apt-get <span class="nb">install </span>git-core</code></pre></figure>
+
+<ul>
+  <li>Setup git configuration</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   git config <span class="nt">--global</span> user.email <span class="s2">"your_email@your_address.com"</span>
+   git config <span class="nt">--global</span> user.name <span class="s2">"your_github_username"</span></code></pre></figure>
+
+<ul>
+  <li>Email your <code class="language-plaintext highlighter-rouge">github</code> username to Biswajit @ gmail.com</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   b.banerjee.nz</code></pre></figure>
+
+<ul>
+  <li>Create a clone of the ParSim repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">   git clone https://github.com/bbanerjee/ParSim</code></pre></figure>
+
+<ul>
+  <li>Check branches/master</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git branch <span class="nt">-a</span></code></pre></figure>
+
+<ul>
+  <li>Configure <code class="language-plaintext highlighter-rouge">ssh</code> for secure access (if needed)</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  <span class="nb">cd</span> ~/.ssh
+  <span class="nb">mkdir </span>backup
+  <span class="nb">cp</span> <span class="k">*</span> backup/
+  <span class="nb">rm </span>id_rsa<span class="k">*</span>
+  ssh-keygen <span class="nt">-t</span> rsa <span class="nt">-C</span> <span class="s2">"your_email@your_address.com"</span>
+  <span class="nb">sudo </span>apt-get <span class="nb">install </span>xclip
+  <span class="nb">cd</span> ~/ParSim/
+  xclip <span class="nt">-sel</span> clip &lt; ~/.ssh/id_rsa.pub
+  ssh <span class="nt">-T</span> git@github.com
+  ssh-add
+  ssh <span class="nt">-T</span> git@github.com</code></pre></figure>
+
+<ul>
+  <li>For password-less access with <code class="language-plaintext highlighter-rouge">ssh</code>, use</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git remote set-url origin git@github.com:bbanerjee/ParSim.git</code></pre></figure>
+
+<ul>
+  <li>To change the default message editor, do</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git config <span class="nt">--global</span> core.editor <span class="s2">"vim"</span></code></pre></figure>
+
+<h4 id="getting-the-latest-version-adding-files-etc">Getting the latest version, adding files etc.</h4>
+<ul>
+  <li>Check status</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git status
+  git diff origin/master</code></pre></figure>
+
+<ul>
+  <li>Update local repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git pull</code></pre></figure>
+
+<ul>
+  <li>Add file to your local repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git add README
+  git commit <span class="nt">-m</span> <span class="s1">'Added README file for git'</span></code></pre></figure>
+
+<ul>
+  <li>Update main repository with your changes</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">  git push origin master</code></pre></figure>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+
+      </footer>
+
+      
+
+      
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

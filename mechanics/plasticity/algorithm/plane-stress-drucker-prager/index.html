@@ -1,0 +1,2388 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Plane stress Drucker-Prager return algorithm - Parresia Simulations</title>
+<meta name="description" content="">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Plane stress Drucker-Prager return algorithm">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager/">
+
+
+  <meta property="og:description" content="">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-03-04T23:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Plane stress Drucker-Prager return algorithm</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#plane-stress-elasticity" id="markdown-toc-plane-stress-elasticity">Plane stress elasticity</a></li>
+  <li><a href="#drucker-prager-plasticity" id="markdown-toc-drucker-prager-plasticity">Drucker-Prager plasticity</a></li>
+  <li><a href="#plane-stress-drucker-prager-yield-function" id="markdown-toc-plane-stress-drucker-prager-yield-function">Plane stress Drucker-Prager yield function</a></li>
+  <li><a href="#plane-stress-drucker-prager-flow-rule" id="markdown-toc-plane-stress-drucker-prager-flow-rule">Plane stress Drucker-Prager flow rule</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>Recently I’ve encountered questions on how the radial return algorithm works when applied
+to plane stress plasticity.  There seems to be some confusion about the application of the
+plane strain constraint.  Here’s the first part of my take on the issue based on Simo’s work from the mid-1980s.</p>
+
+<p class="notice--warning">Warning: I have used the same symbols for tensors, matrices, and vectors (Voigt notation).  The meaning depends on the context.</p>
+
+<h5 id="plane-stress-elasticity">Plane stress elasticity</h5>
+<p>In plane stress we assume that one of the eigenvalues of the stress tensor is zero.<br />
+The standard engineering convention is to assume that the plane defined by the basis vectors
+\(\mathbf{e}_1\) and \(\mathbf{e}_2\) contains the non-zero eigenvalues while the \(\mathbf{e}_3\)
+vector indicates the direction in which the eigenvalue is zero.  Therefore,</p>
+
+<div>
+$$
+  \boldsymbol{\sigma} =
+  \begin{bmatrix} \sigma_{11} &amp; \sigma_{12} &amp; 0 \\ \sigma_{12} &amp; \sigma_{22} &amp; 0 \\ 0 &amp; 0 &amp; 0 \end{bmatrix}
+  \equiv \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+$$
+</div>
+
+<p>Similarly, the engineering convention for the plane stress strain tensor leads to</p>
+
+<div>
+$$
+  \boldsymbol{\varepsilon} =
+  \begin{bmatrix} \varepsilon_{11} &amp; \varepsilon_{12} &amp; 0 \\ \varepsilon_{12} &amp; \varepsilon_{22} &amp; 0 \\ 0 &amp; 0 &amp; \varepsilon_{33} \end{bmatrix}
+  \equiv \begin{bmatrix} \varepsilon_{11} \\ \varepsilon_{22} \\ 2\varepsilon_{12} \end{bmatrix}
+$$
+</div>
+
+<p>where we have ignored \(\varepsilon_{33}\) because it can be expressed as a function of \(\varepsilon_{11}\) and
+\(\varepsilon_{22}\).</p>
+
+<p>For an isotropic material that is linear in its elastic range,</p>
+
+<div>
+$$
+  \boldsymbol{\sigma} = \lambda\, \text{tr}(\boldsymbol{\varepsilon})\, \mathbf{I} + 2 \mu\, \boldsymbol{\varepsilon}
+$$
+</div>
+
+<p>and we can write</p>
+
+<div>
+$$
+  \begin{bmatrix} \sigma_{11} &amp; \sigma_{12} &amp; 0 \\ \sigma_{12} &amp; \sigma_{22} &amp; 0 \\ 0 &amp; 0 &amp; 0 \end{bmatrix}
+  = \lambda ( \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33})
+    \begin{bmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{bmatrix}
+    + 2\mu \begin{bmatrix} \varepsilon_{11} &amp; \varepsilon_{12} &amp; 0 \\ \varepsilon_{12} &amp; \varepsilon_{22} &amp; 0 \\ 0 &amp; 0 &amp; \varepsilon_{33} \end{bmatrix}
+$$
+</div>
+
+<p>From the last row we can see that</p>
+<div>
+$$
+  \lambda ( \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33} ) = -2\mu\varepsilon_{33}
+  \quad \implies \quad
+  \varepsilon_{33} = -\frac{\lambda}{\lambda + 2\mu}( \varepsilon_{11} + \varepsilon_{22} )
+$$
+</div>
+
+<p>Therefore,</p>
+
+<div>
+$$
+\begin{align}
+  \begin{bmatrix} \sigma_{11} &amp; \sigma_{12} &amp; 0 \\ \sigma_{12} &amp; \sigma_{22} &amp; 0 \\ 0 &amp; 0 &amp; 0 \end{bmatrix}
+  &amp; = 2\mu \begin{bmatrix} \varepsilon_{11} - \varepsilon_{33} &amp; \varepsilon_{12} &amp; 0 \\ \varepsilon_{12} &amp; \varepsilon_{22} - \varepsilon_{33} &amp; 0 \\ 0 &amp; 0 &amp; 0 \end{bmatrix} \\
+  &amp; = \frac{2\mu}{\lambda+2\mu} \begin{bmatrix} 2(\lambda+\mu)\varepsilon_{11} + \lambda\varepsilon_{22} &amp; (\lambda+2\mu)\varepsilon_{12} &amp; 0 \\ (\lambda+2\mu)\varepsilon_{12} &amp; \lambda\varepsilon_{11}+2(\lambda+\mu)\varepsilon_{22} &amp; 0 \\ 0 &amp; 0 &amp; 0 \end{bmatrix}
+\end{align}
+$$
+</div>
+
+<p>In engineering notation</p>
+<div class="notice">
+$$
+  \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix} =
+  \begin{bmatrix} \frac{4\mu(\lambda+\mu)}{\lambda+2\mu} &amp; \frac{2\mu\lambda}{\lambda+2\mu} &amp; 0 \\
+                  \frac{2\mu\lambda}{\lambda+2\mu} &amp; \frac{4\mu(\lambda+\mu)}{\lambda+2\mu} &amp; 0 \\
+                  0 &amp; 0 &amp; \mu
+  \end{bmatrix}
+  \begin{bmatrix} \varepsilon_{11} \\ \varepsilon_{22} \\ 2\varepsilon_{12} \end{bmatrix}
+  \quad \equiv \quad
+  \boldsymbol{\sigma} = \mathbf{C}\, \boldsymbol{\varepsilon}
+$$
+</div>
+
+<p class="notice--warning">Note carefully that the stiffness matrix \(\mathbf{C}\) is not the same as the three-dimensional
+stiffness matrix for
+an isotropic linear elastic material with the zero stress rows and columns removed.</p>
+
+<h5 id="drucker-prager-plasticity">Drucker-Prager plasticity</h5>
+<p>The Drucker-Prager yield condition can be expressed as</p>
+
+<div>
+$$
+  f(\boldsymbol{\sigma}) = \sqrt{J_2} - q(p) = 0 \quad \text{where} \quad
+  J_2 = \tfrac{1}{2} \boldsymbol{s}:\boldsymbol{s} ~,~~ p = \tfrac{I_1}{3} = \tfrac{1}{3} \text{tr}(\boldsymbol{\sigma})
+$$
+</div>
+<p>and \(q(p)\) is a scalar-valued function of the mean stress \((p)\) with
+\(\boldsymbol{s} = \boldsymbol{\sigma} - p\, \mathbf{I} \,.\)
+The associated flow rule for the yield function \(f(\boldsymbol{\sigma})\) is</p>
+<div>
+$$
+  \dot{\boldsymbol{\varepsilon}}^p = \dot{\lambda}\,\frac{\partial f}{\partial \boldsymbol{\sigma}}
+$$
+</div>
+<p>The derivative of \(f\) is</p>
+<div>
+$$
+  \frac{\partial f}{\partial \boldsymbol{\sigma}} =
+    \tfrac{1}{\sqrt{2}} \frac{\partial}{\partial \boldsymbol{\sigma}}\left[\sqrt{\boldsymbol{s}:\boldsymbol{s}}\right] - \frac{dq}{dp}\,\frac{\partial p}{\partial \boldsymbol{\sigma}}
+   = \tfrac{1}{2\sqrt{2}} \frac{1}{\sqrt{\boldsymbol{s}:\boldsymbol{s}}}
+     \frac{\partial}{\partial \boldsymbol{\sigma}}(\boldsymbol{s}:\boldsymbol{s}) -
+     \tfrac{1}{3} \frac{dq}{dp}\,\frac{\partial \text{tr}(\boldsymbol{\sigma})}{\partial \boldsymbol{\sigma}}
+$$
+</div>
+<p>Now</p>
+<div>
+$$
+   \frac{\partial}{\partial \boldsymbol{\sigma}}(\boldsymbol{s}:\boldsymbol{s}) \equiv
+   \frac{\partial}{\partial \sigma_{mn}}(s_{ij} s_{ij}) = 2 s_{ij} \frac{\partial s_{ij}}{\partial \sigma_{mn}} =
+   2 s_{ij} \left[\frac{\partial \sigma_{ij}}{\partial \sigma_{mn}} - \tfrac{1}{3} \frac{\partial \sigma_{kk}}{\partial \sigma_{mn}}\,\delta_{ij}\right]
+$$
+</div>
+<p>or,</p>
+<div>
+$$
+   \frac{\partial}{\partial \boldsymbol{\sigma}}(\boldsymbol{s}:\boldsymbol{s}) \equiv
+   2 s_{ij} \left[\tfrac{1}{2}(\delta_{im}\delta_{jn}+\delta_{in}\delta_{jm}) - \tfrac{1}{3} \delta_{mn}\delta_{ij}\right]
+   = 2 s_{mn} - \tfrac{2}{3} s_{kk} \delta_{mn} = 2 s_{mn} \equiv 2 \boldsymbol{s}
+$$
+</div>
+<p>where we have used the observation that \(s_{kk} \equiv \text{tr}(\boldsymbol{s}) = 0\). We also have</p>
+<div>
+$$
+  \frac{\partial \text{tr}(\boldsymbol{\sigma})}{\partial \boldsymbol{\sigma}} \equiv
+  \frac{\partial \sigma_{kk}}{\partial \sigma_{mn}} = \delta_{mn} \equiv \mathbf{I}
+$$
+</div>
+
+<p>Therefore,</p>
+<div class="notice">
+$$
+  \frac{\partial f}{\partial \boldsymbol{\sigma}} =
+    \tfrac{1}{\sqrt{2}} \frac{\boldsymbol{s}}{\sqrt{\boldsymbol{s}:\boldsymbol{s}}} -
+    \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{I}
+  \quad \implies \quad
+  \dot{\boldsymbol{\varepsilon}}^p = \dot{\lambda}\,\left[
+  \tfrac{1}{\sqrt{2}} \frac{\boldsymbol{s}}{\sqrt{\boldsymbol{s}:\boldsymbol{s}}} -
+    \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{I}
+  \right]
+$$
+</div>
+
+<p class="notice--info">Note that if \(q(p) = 1/\sqrt{3} \sigma_y\) where \(\sigma_y\) is the uniaxial stress yield stress, and
+there is no hardening, the Drucker-Prager yield condition reduces to the von Mises yield condition.</p>
+
+<h5 id="plane-stress-drucker-prager-yield-function">Plane stress Drucker-Prager yield function</h5>
+<p>Recall that in plane stress, the stress tensor can be simplified to the vector
+\(\boldsymbol{\sigma} = [\sigma_{11} \, \sigma_{22} \, \sigma_{12}]^T\).
+The mean stress in plane stress can be written as</p>
+<div>
+$$
+  p = \tfrac{1}{3} (\sigma_{11} + \sigma_{22})
+$$
+</div>
+<p>For the deviatoric stress,</p>
+<div>
+$$
+  \boldsymbol{s} =
+    \begin{bmatrix}
+      \sigma_{11} &amp; \sigma_{12} &amp; 0 \\ \sigma_{12} &amp; \sigma_{22} &amp; 0 \\ 0 &amp; 0 &amp; 0 
+    \end{bmatrix}
+    - \tfrac{1}{3} (\sigma_{11}+\sigma_{22})
+        \begin{bmatrix}
+          1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1
+        \end{bmatrix}
+$$
+</div>
+<p>or,</p>
+<div>
+$$
+    \begin{bmatrix}
+      s_{11} &amp; s_{12} &amp; 0 \\ s_{12} &amp; s_{22} &amp; 0 \\ 0 &amp; 0 &amp; s_{33} 
+    \end{bmatrix} = 
+    \tfrac{1}{3}\begin{bmatrix}
+       2\sigma_{11} - \sigma_{22} &amp; \sigma_{12} &amp; 0 \\
+       \sigma_{12} &amp; -\sigma_{11} + 2\sigma_{22} &amp; 0 \\
+       0 &amp; 0 &amp; -\sigma_{11} - \sigma_{22} 
+    \end{bmatrix}
+$$
+</div>
+<p>We can write the above in vector notation as</p>
+<div>
+$$
+  \begin{bmatrix}
+    s_{11} \\ s_{22} \\ s_{12}
+  \end{bmatrix} = \tfrac{1}{3}
+  \begin{bmatrix}
+    2 &amp; -1 &amp; 0 \\ -1 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 3
+  \end{bmatrix}
+  \begin{bmatrix}
+    \sigma_{11} \\ \sigma_{22} \\ \sigma_{12}
+  \end{bmatrix}
+  \quad \leftrightarrow \quad
+  \boldsymbol{s} = \mathbf{T}\,\boldsymbol{\sigma} \,.
+$$
+</div>
+<p>To express the Drucker-Prager yield function in terms of these vectors, 
+using the matrix form of \(\boldsymbol{s}\), we have</p>
+<div>
+$$
+  J_2 = \tfrac{1}{2} \boldsymbol{s}:\boldsymbol{s} \equiv
+      \tfrac{1}{2} \text{tr}(\boldsymbol{s}^T \boldsymbol{s})
+    = \tfrac{1}{2} [
+          (s_{11}^2 + s_{12}^2) +
+          (s_{12}^2 + s_{22}^2) +
+          (s_{11} + s_{22})^2 ]
+$$
+</div>
+<p>We can write this in matrix form as</p>
+<div>
+$$
+  \begin{align}
+  J_2 &amp; = \tfrac{1}{2}\begin{bmatrix} s_{11} &amp; s_{22} &amp; s_{12} \end{bmatrix}
+    \begin{bmatrix} 2 &amp; 1 &amp; 0 \\ 1 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 2 \end{bmatrix}
+    \begin{bmatrix} s_{11} \\ s_{22} \\ s_{12} \end{bmatrix} \\
+   &amp; = \tfrac{1}{6}\begin{bmatrix} \sigma_{11} &amp; \sigma_{22} &amp; \sigma_{12} \end{bmatrix}
+     \begin{bmatrix} 2 &amp; -1 &amp; 0 \\ -1 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 6 \end{bmatrix}
+    \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+    =: \tfrac{1}{2} \boldsymbol{\sigma}^T \,\mathbf{P} \,\boldsymbol{\sigma}
+  \end{align}
+$$
+</div>
+
+<p>Therefore, the plane stress Drucker-Prager yield function can be written as</p>
+<div class="notice">
+$$
+  f(\boldsymbol{\sigma}) = \sqrt{\tfrac{1}{2} \boldsymbol{\sigma}^T \,\mathbf{P} \,\boldsymbol{\sigma}} - q(p) = 0 
+$$
+</div>
+
+<p>This form of the flow yield function is commonly seen in the plasticity literature.</p>
+
+<h5 id="plane-stress-drucker-prager-flow-rule">Plane stress Drucker-Prager flow rule</h5>
+
+<p>Recall that the Drucker-Prager flow rule is</p>
+<div>
+$$
+  \dot{\boldsymbol{\varepsilon}}^p = \dot{\lambda}\,\left[
+  \tfrac{1}{\sqrt{2}} \frac{\boldsymbol{s}}{\sqrt{\boldsymbol{s}:\boldsymbol{s}}} -
+    \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{I}
+  \right]
+$$
+</div>
+<p>In matrix form,</p>
+<div>
+$$
+ \begin{bmatrix}
+   \dot{\varepsilon}^p_{11} &amp; \dot{\varepsilon}^p_{12} &amp; 0 \\
+   \dot{\varepsilon}^p_{12} &amp; \dot{\varepsilon}^p_{22} &amp; 0 \\
+   0 &amp; 0 &amp; \dot{\varepsilon}^p_{33} 
+ \end{bmatrix} =
+ \dot{\lambda} \left(
+  \frac{1}{\sqrt{2 \text{tr}(\boldsymbol{s}^T\boldsymbol{s})}}
+    \begin{bmatrix}
+      s_{11} &amp; s_{12} &amp; 0 \\ s_{12} &amp; s_{22} &amp; 0 \\ 0 &amp; 0 &amp; s_{33}
+    \end{bmatrix} - 
+    \tfrac{1}{3} \frac{dq}{dp}\,\begin{bmatrix} 1 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{bmatrix}
+   \right)
+$$
+</div>
+<p>We have already seen that</p>
+<div>
+$$
+  \boldsymbol{s}:\boldsymbol{s} =  \text{tr}(\boldsymbol{s}^T\boldsymbol{s})
+    = \boldsymbol{\sigma}^T \,\mathbf{P} \,\boldsymbol{\sigma}
+$$
+</div>
+<p>Therefore, in vector form,</p>
+<div>
+$$
+ \begin{bmatrix} \dot{\varepsilon_{11}}^p \\ \dot{\varepsilon_{22}}^p \\ \dot{\varepsilon_{12}}^p \end{bmatrix}
+ = \dot{\lambda} \left(
+     \frac{1}{\sqrt{2 \boldsymbol{\sigma}^T\,\mathbf{P}\,\boldsymbol{\sigma}}}
+     \mathbf{T}\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+     - \tfrac{1}{3} \frac{dq}{dp}\,\begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix}
+   \right)
+$$
+</div>
+<p>If we use the standard engineering notation for strain, the flow rule becomes</p>
+<div>
+$$
+ \begin{bmatrix} \dot{\varepsilon_{11}}^p \\ \dot{\varepsilon_{22}}^p \\ 2\dot{\varepsilon_{12}}^p \end{bmatrix}
+ = \dot{\lambda} \left(
+     \frac{\mathbf{P}\,\boldsymbol{\sigma}}{\sqrt{2 \boldsymbol{\sigma}^T\,\mathbf{P}\,\boldsymbol{\sigma}}}
+     - \tfrac{1}{3} \frac{dq}{dp}\,\begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix}
+   \right)
+$$
+</div>
+
+<p>Therefore, the plane stress Drucker-Prager flow rule in vector form is</p>
+<div class="notice">
+$$
+  \dot{\boldsymbol{\varepsilon}}^p = 
+    \dot{\lambda} \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\,\boldsymbol{\sigma}}{
+         \sqrt{\boldsymbol{\sigma}^T\,\mathbf{P}\,\boldsymbol{\sigma}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{I}
+   \right)
+$$
+</div>
+
+<h4 id="remarks">Remarks</h4>
+<p>We will explore the return algorithm for the plane stress Drucker-Prager plasticity model in the next
+article in this series.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

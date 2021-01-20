@@ -1,0 +1,2253 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Setting up the Three.js renderer - Parresia Simulations</title>
+<meta name="description" content="Javascript scientific visualization - Part 4">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Setting up the Three.js renderer">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/">
+
+
+  <meta property="og:description" content="Javascript scientific visualization - Part 4">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-02-27T23:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">Setting up the Three.js renderer</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-graphics-panel" id="markdown-toc-the-graphics-panel">The graphics panel</a></li>
+  <li><a href="#the-renderer-template" id="markdown-toc-the-renderer-template">The renderer template</a></li>
+  <li><a href="#the-renderer-implementation" id="markdown-toc-the-renderer-implementation">The renderer implementation</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>The previous articles in this series were about:</p>
+
+<ol>
+  <li><a href="http://www.parresianz.com/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
+  <li><a href="http://www.parresianz.com/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
+  <li><a href="http://www.parresianz.com/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a> before plotting the particles with Three.js.</li>
+</ol>
+
+<p>In this article we will discuss the actual process of visualization of the particles.<br />
+The particles we are interested in are <a href="https://en.wikipedia.org/wiki/Ellipsoid">oriented ellipsoids</a>.</p>
+
+<h5 id="the-graphics-panel">The graphics panel</h5>
+<p>In the <code class="language-plaintext highlighter-rouge">main-panel</code> Vue component introduced in Part 3, we had declared a graphics panel
+component called <code class="language-plaintext highlighter-rouge">three-graphics-panel</code>.  A simple Vue template for this component can be
+written as:</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">'three-graphics-container'</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"uk-card uk-card-default uk-card-large"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"uk-card-body"</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!-- The renderer Vue component --&gt;</span>
+        <span class="nt">&lt;three-renderer</span> <span class="na">v-bind:size=</span><span class="s">"{w:500, h:500}"</span><span class="nt">&gt;</span>
+          <span class="c">&lt;!-- The scene Vue component --&gt;</span>
+          <span class="nt">&lt;three-scene</span> <span class="na">v-bind:size=</span><span class="s">"size"</span><span class="nt">&gt;</span> 
+            <span class="c">&lt;!-- The camera Vue component --&gt;</span>
+            <span class="nt">&lt;three-camera</span>  <span class="na">v-bind:size=</span><span class="s">"size"</span>
+                           <span class="na">v-bind:position=</span><span class="s">"{x: 100,  z: 15 }"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/three-camera&gt;</span>
+            <span class="c">&lt;!-- The particles Vue component --&gt;</span>
+            <span class="nt">&lt;three-ellipsoid-particles&gt;</span> <span class="nt">&lt;/three-ellipsoid-particles&gt;</span>
+          <span class="nt">&lt;/three-scene&gt;</span>
+        <span class="nt">&lt;/three-renderer&gt;</span>
+      <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"./ThreeGraphicsPanel.ts"</span><span class="nt">&gt;</span> <span class="nt">&lt;/script&gt;</span></code></pre></figure>
+
+<p>As before, the CSS classes used in this example are from Uikit3.  The graphics panel uses
+four child Vue components, <code class="language-plaintext highlighter-rouge">three-renderer</code>, <code class="language-plaintext highlighter-rouge">three-scene</code>, <code class="language-plaintext highlighter-rouge">three-camera</code>, and
+<code class="language-plaintext highlighter-rouge">three-ellipsoid-particles</code>.  The implementation of <code class="language-plaintext highlighter-rouge">ThreeGraphicsPanel.ts</code> is also
+straightforward in this case:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">Vue</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">vue</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span><span class="nx">Component</span><span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">av-ts</span><span class="dl">"</span><span class="p">;</span>
+<span class="p">@</span><span class="nd">Component</span><span class="p">({</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">three-graphics-panel</span><span class="dl">'</span>
+<span class="p">})</span>
+<span class="k">export</span> <span class="k">default</span> <span class="kd">class</span> <span class="nx">ThreeGraphicsPanel</span> <span class="kd">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="nl">name</span><span class="p">:</span> <span class="nx">string</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">ThreeGraphicsPanel</span><span class="dl">"</span><span class="p">;</span>
+  <span class="nl">size</span><span class="p">:</span> <span class="nb">Object</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">w</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="na">h</span><span class="p">:</span> <span class="mi">200</span>
+  <span class="p">};</span>
+<span class="p">}</span></code></pre></figure>
+
+<p class="notice">The <code class="language-plaintext highlighter-rouge">size</code> property is passed on to the children of three-graphics-panel and determines the
+default size of the window in which the particles will be displayed.  This property can be
+accessed by the children by using the
+<a href="https://vuejs.org/v2/guide/components.html#Passing-Data-with-Props">“passing data with props approach.”</a></p>
+
+<h5 id="the-renderer-template">The renderer template</h5>
+<p>The first component instantiated in <code class="language-plaintext highlighter-rouge">three-graphics-panel</code> is the <code class="language-plaintext highlighter-rouge">three-renderer</code> component which
+is passed the <code class="language-plaintext highlighter-rouge">size</code> argument using the <code class="language-plaintext highlighter-rouge">v-bind</code> directive.  Let use first examine
+the <code class="language-plaintext highlighter-rouge">ThreeRenderer.vue</code> code:</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"three-renderer-div"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;slot&gt;&lt;/slot&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">ref=</span><span class="s">"three-graphics-container"</span>
+         <span class="na">id=</span><span class="s">"three-renderer-graphics-div"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"./ThreeRenderer.ts"</span><span class="nt">&gt;</span> <span class="nt">&lt;/script&gt;</span></code></pre></figure>
+
+<p class="notice">The first new aspect to notice is the use of the
+<a href="https://vuejs.org/v2/guide/components.html#Content-Distribution-with-Slots"><code class="language-plaintext highlighter-rouge">slot</code> tag</a>.  This
+is needed to make sure that the <code class="language-plaintext highlighter-rouge">three-scene</code>, <code class="language-plaintext highlighter-rouge">three-camera</code>, and <code class="language-plaintext highlighter-rouge">three-ellipsoid-particles</code>
+from the <code class="language-plaintext highlighter-rouge">three-graphics-panel</code> parent components are correctly instantiated and interpolated
+into the DOM.</p>
+
+<p class="notice">The second new aspect is the use of the <a href="https://vuejs.org/v2/api/#ref"><code class="language-plaintext highlighter-rouge">ref</code> attribute</a>
+in the <code class="language-plaintext highlighter-rouge">div</code> element after the <code class="language-plaintext highlighter-rouge">slot</code>.  This element is used to create the HTML canvas as
+a child of the renderer component.</p>
+
+<p class="notice--info">We could add event handlers to this template to handle interactions with the camera.  That
+aspect of the user interface will be discussed in a future article.</p>
+
+<h5 id="the-renderer-implementation">The renderer implementation</h5>
+<p>The renderer component is implemented in <code class="language-plaintext highlighter-rouge">ThreeRenderer.ts</code> which contains the following
+code:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">Vue</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">vue</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">THREE</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="dl">'</span><span class="s1">three</span><span class="dl">'</span><span class="p">);</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">Component</span><span class="p">,</span> <span class="nx">Lifecycle</span><span class="p">,</span> <span class="nx">Prop</span><span class="p">,</span> <span class="nx">p</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">av-ts</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">Store</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">../vuex/Store</span><span class="dl">'</span><span class="p">;</span>
+<span class="kr">interface</span> <span class="nx">ScreenSize</span> <span class="p">{</span>
+  <span class="nl">left</span> <span class="p">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">top</span> <span class="p">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">width</span> <span class="p">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">height</span> <span class="p">:</span> <span class="nx">number</span>
+<span class="p">}</span>
+<span class="p">@</span><span class="nd">Component</span><span class="p">({</span>
+  <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">ThreeRenderer</span><span class="dl">'</span>
+<span class="p">})</span>
+<span class="k">export</span> <span class="k">default</span> <span class="kd">class</span> <span class="nx">ThreeRenderer</span> <span class="kd">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="c1">// These are the "prop" variables used by Vue</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">size</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nb">Object</span><span class="p">,</span> <span class="c1">// { w, h }</span>
+    <span class="na">required</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">});</span>
+  <span class="p">@</span><span class="nd">Prop</span>
+  <span class="nx">renderer</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span>
+  <span class="p">});</span>
+  <span class="c1">// These are the "data" variables used by Vue</span>
+  <span class="kr">public</span>  <span class="nx">d_renderer</span><span class="p">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">;</span>
+  <span class="kr">private</span> <span class="nx">d_size</span><span class="p">:</span> <span class="nx">ScreenSize</span><span class="p">;</span>
+  <span class="c1">// These are the computed properties</span>
+  <span class="kd">get</span> <span class="nx">getScene</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">scene</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kd">get</span> <span class="nx">getCamera</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// These are the lifecycle hooks</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="nx">created</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderer</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="k">instanceof</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">({</span> <span class="na">antialias</span><span class="p">:</span> <span class="kc">true</span> <span class="p">});</span>
+    <span class="p">}</span>
+    <span class="kd">let</span> <span class="nx">w</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">w</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">h</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">h</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span> <span class="o">=</span> <span class="p">{</span><span class="na">left</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="na">top</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="na">width</span><span class="p">:</span> <span class="nx">w</span><span class="p">,</span> <span class="na">height</span><span class="p">:</span> <span class="nx">w</span><span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setSize</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setClearColor</span><span class="p">(</span><span class="mh">0x52576e</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="nx">mounted</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="dl">"</span><span class="s2">id</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">three-graphics-canvas</span><span class="dl">"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">((</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="dl">"</span><span class="s2">three-graphics-container</span><span class="dl">"</span><span class="p">])</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">el</span>  <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="dl">"</span><span class="s2">three-graphics-container</span><span class="dl">"</span><span class="p">];</span>
+      <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="nx">el</span><span class="p">).</span><span class="nx">appendChild</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">);</span>
+
+      <span class="c1">// Update based on actual screen size</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">setActualScreenSize</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setSize</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span><span class="p">);</span>
+      <span class="kd">let</span> <span class="nx">camera</span> <span class="o">=</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">;</span>
+      <span class="nx">camera</span><span class="p">.</span><span class="nx">aspect</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span> <span class="o">/</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span><span class="p">;</span>
+      <span class="nx">camera</span><span class="p">.</span><span class="nx">updateProjectionMatrix</span><span class="p">();</span>
+      <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">SET_CAMERA</span><span class="dl">'</span><span class="p">,</span> <span class="nx">camera</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">animate</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="p">@</span><span class="nd">Lifecycle</span>
+  <span class="nx">beforeDestroy</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">DELETE_SCENE</span><span class="dl">'</span><span class="p">);</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="dl">'</span><span class="s1">DELETE_CAMERA</span><span class="dl">'</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// If there is a resize, compute the new screen size</span>
+  <span class="kr">private</span> <span class="nx">setActualScreenSize</span><span class="p">(</span><span class="nx">domElement</span><span class="p">:</span> <span class="nx">HTMLCanvasElement</span><span class="p">)</span> <span class="p">:</span> <span class="k">void</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">box</span> <span class="o">=</span> <span class="nx">domElement</span><span class="p">.</span><span class="nx">getBoundingClientRect</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">d</span> <span class="o">=</span> <span class="nx">domElement</span><span class="p">.</span><span class="nx">ownerDocument</span><span class="p">.</span><span class="nx">docsumentElement</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">left</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">docsXOffset</span> <span class="o">-</span> <span class="nx">d</span><span class="p">.</span><span class="nx">clientLeft</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">top</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">docsYOffset</span> <span class="o">-</span> <span class="nx">d</span><span class="p">.</span><span class="nx">clientTop</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">width</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">height</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Start the animation loop</span>
+  <span class="kr">private</span> <span class="nx">animate</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">requestAnimationFrame</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">animate</span> <span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="c1">// Do the actual rendering using the THREE.js render method</span>
+  <span class="kr">private</span> <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">scene</span><span class="p">,</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p class="notice">The main thing to note here is that we are using the THREE.WebGLRenderer, and 
+the creation of the <code class="language-plaintext highlighter-rouge">canvas</code> element as a child of the renderer div element.<br />
+The canvas element is created in the <code class="language-plaintext highlighter-rouge">mount</code> stage of the instance lifecycle and
+all the plotting is done on that element.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In the next part of this article we’ll discuss more details of setting up the scene and camera.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

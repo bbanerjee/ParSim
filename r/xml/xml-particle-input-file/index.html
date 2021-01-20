@@ -1,0 +1,2452 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>XML format for particle input files - Parresia Simulations</title>
+<meta name="description" content="">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="XML format for particle input files">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/r/xml/xml-particle-input-file/">
+
+
+  <meta property="og:description" content="">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2017-03-03T23:30:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/r/xml/xml-particle-input-file/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--posts">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <div class="archive">
+    
+      <h1 id="page-title" class="page__title">XML format for particle input files</h1>
+    
+    <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#r-script-converter-from-csv-to-xml" id="markdown-toc-r-script-converter-from-csv-to-xml">R script converter from CSV to XML</a></li>
+  <li><a href="#the-output-ascii-xml-file" id="markdown-toc-the-output-ascii-xml-file">The output ASCII XML file</a></li>
+  <li><a href="#the-output-compressed-base64-xml-file" id="markdown-toc-the-output-compressed-base64-xml-file">The output compressed base64 XML file</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>Let us now change tack slightly and return to an issue I had talked about earlier in <a href="https://bbanerjee.github.io/ParSim/c++/xml/xml-input/">Input files: reading XML</a>.  Typical input files in research simulation codes cannot be easily deciphered.  But in some cases headers are included to make the reading process easier.</p>
+
+<p>An example is a particle input file for a DEM code, called <code class="language-plaintext highlighter-rouge">particle_distribution.csv</code>, that looks
+like the following:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 12
+             id           type       radius_a       radius_b       radius_c     position_x     position_y     position_z       axle_a_x       axle_a_y       axle_a_z       axle_b_x       axle_b_y       axle_b_z       axle_c_x       axle_c_y       axle_c_z     velocity_x     velocity_y     velocity_z         omga_x         omga_y         omga_z        force_x        force_y        force_z       moment_x       moment_y       moment_z
+              1              0   1.150000e+00   5.000000e-01   6.900000e-01   4.973174e+01   0.000000e+00   9.936725e-01   2.250054e+00   1.570796e+00   6.792575e-01   1.570796e+00   4.619360e-07   1.570796e+00   2.462335e+00   1.570796e+00   2.250054e+00   2.008031e-02   0.000000e+00   5.505538e-02   0.000000e+00   2.781917e-02   0.000000e+00  -4.916840e+05   0.000000e+00  -1.269380e+05   1.688596e-01  -1.187120e+05  -3.092984e-01
+            187              0   1.150000e+00   5.000000e-01   6.900000e-01   5.090096e+01   0.000000e+00   5.320529e+00   2.536687e+00   1.570796e+00   9.658907e-01   1.570797e+00   1.803533e-06   1.570798e+00   2.175704e+00   1.570796e+00   2.536685e+00  -3.014865e-01   0.000000e+00  -1.031938e-01   0.000000e+00  -7.066198e-02   0.000000e+00  -4.413702e+03   0.000000e+00  -1.080548e+04  -1.174683e-01  -3.673358e+04  -5.749536e-02
+            ........................
+              5
+   1.000000e+00   1.400000e+00
+   8.000000e-01   1.300000e+00
+   6.000000e-01   1.200000e+00
+   3.000000e-01   1.150000e+00
+   1.000000e-01   1.000000e+00
+
+   8.000000e-01   6.000000e-01
+</code></pre></div></div>
+
+<p>There are 12 particles in this file and at the end there are some sieve sizes and passing
+percentages, and also a radius ratio.  We would like to automatically convert this file into
+a form that’s more easily read and which also contains information about units. <code class="language-plaintext highlighter-rouge">R</code> provides
+an excellent set of tools for that type of automation.</p>
+
+<p>We would like to convert this data into a form that’s easier to understand, e.g.,</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml">  <span class="cp">&lt;?xml version='1.0'?&gt;</span>
+  <span class="nt">&lt;Ellip3D_input&gt;</span>
+    <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">"100"</span> <span class="na">type=</span><span class="s">"ellipsoid"</span> <span class="na">compression=</span><span class="s">"gzip"</span> <span class="na">encoding=</span><span class="s">"base64"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">"none"</span> <span class="na">numComponents=</span><span class="s">"1"</span><span class="nt">&gt;</span> 1 2 3 ... 100 <span class="nt">&lt;/id&gt;</span>
+      <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span> <span class="nt">&gt;</span> a1 b1 c1 a2 b2 c2 ... <span class="nt">&lt;/radii&gt;</span>
+      <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span> <span class="nt">&gt;</span> x1 y1 z1 x2 y2 z2 ... <span class="nt">&lt;/position&gt;</span>
+      <span class="nt">&lt;axle_a_angle</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span> <span class="nt">&gt;</span> theta_x1 theta_y1 theta_z1 ... <span class="nt">&lt;/axle_a_angle&gt;</span>
+      <span class="nt">&lt;axle_b_angle</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span> <span class="nt">&gt;</span> theta_x1 theta_y1 theta_z1 ... <span class="nt">&lt;/axle_b_angle&gt;</span>
+      <span class="nt">&lt;axle_c_angle</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span> theta_x1 theta_y1 theta_z1 ... <span class="nt">&lt;/axle_c_angle&gt;</span>
+      <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">"m/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span> x1 y1 z1 x2 y2 z2 ... <span class="nt">&lt;/velocity&gt;</span>
+      <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">"rad/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span> x1 y1 z1 x2 y2 z2 ... <span class="nt">&lt;/omega&gt;</span>
+      <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">"N"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span> x1 y1 z1 x2 y2 z2 ... <span class="nt">&lt;/force&gt;</span>
+      <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">"Nm"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span> x1 y1 z1 x2 y2 z2 ... <span class="nt">&lt;/moment&gt;</span>
+    <span class="nt">&lt;/Particles&gt;</span>
+    <span class="nt">&lt;Sieves</span> <span class="na">number=</span><span class="s">"5"</span> <span class="na">compression=</span><span class="s">"none"</span> <span class="na">encoding=</span><span class="s">"ascii"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;percent_passing&gt;</span> 0.1 0.2 0.3 ... <span class="nt">&lt;percent_passing&gt;</span>
+      <span class="nt">&lt;size</span> <span class="na">unit=</span><span class="s">"mm"</span><span class="nt">&gt;</span> 0.1 0.2 0.3 ... <span class="nt">&lt;size&gt;</span>
+      <span class="nt">&lt;sieve_ratio&gt;</span>
+        <span class="nt">&lt;ratio_ba&gt;</span>0.8<span class="nt">&lt;/ratio_ba&gt;</span>
+        <span class="nt">&lt;ratio_ca&gt;</span>0.6<span class="nt">&lt;/ratio_ca&gt;</span>
+      <span class="nt">&lt;/sieve_ratio&gt;</span>
+    <span class="nt">&lt;/Sieves&gt;</span>
+  <span class="nt">&lt;/Ellip3D_input&gt;</span></code></pre></figure>
+
+<h5 id="r-script-converter-from-csv-to-xml">R script converter from CSV to XML</h5>
+<p>Here’s a script called <code class="language-plaintext highlighter-rouge">convertParDistToBinXML.R</code> that does the conversion:</p>
+
+<figure class="highlight"><pre><code class="language-r" data-lang="r"><span class="c1">#--------------------------------------------------------------------------</span><span class="w">
+</span><span class="c1"># Name: convertPartDistToBinXML</span><span class="w">
+</span><span class="c1">#</span><span class="w">
+</span><span class="c1"># Purpose: Read the particle distribution csv file, and write out xml with </span><span class="w">
+</span><span class="c1">#          ascii or base64 encoded data</span><span class="w">
+</span><span class="c1">#</span><span class="w">
+</span><span class="c1"># Usage:</span><span class="w">
+</span><span class="c1">#  source("convertPartDistToBinXML.R")</span><span class="w">
+</span><span class="c1">#  doConversion("ascii")</span><span class="w">
+</span><span class="c1">#  doConversion("base64")</span><span class="w">
+</span><span class="c1">#  doConversion("raw")</span><span class="w">
+</span><span class="c1">#--------------------------------------------------------------------------</span><span class="w">
+</span><span class="c1"># Set the working directory</span><span class="w">
+</span><span class="n">setwd</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span><span class="w">
+</span><span class="c1"># Clear existing variables</span><span class="w">
+</span><span class="n">rm</span><span class="p">(</span><span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ls</span><span class="p">())</span><span class="w">
+</span><span class="c1"># Install XML</span><span class="w">
+</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">require</span><span class="p">(</span><span class="n">XML</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">install.packages</span><span class="p">(</span><span class="s2">"XML"</span><span class="p">)</span><span class="w">
+  </span><span class="n">library</span><span class="p">(</span><span class="n">XML</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># Install gsubfn</span><span class="w">
+</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">require</span><span class="p">(</span><span class="n">gsubfn</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">install.packages</span><span class="p">(</span><span class="s2">"gsubfn"</span><span class="p">)</span><span class="w">
+  </span><span class="n">library</span><span class="p">(</span><span class="n">gsubfn</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># Install RCurl</span><span class="w">
+</span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">require</span><span class="p">(</span><span class="n">RCurl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">install.packages</span><span class="p">(</span><span class="s2">"RCurl"</span><span class="p">)</span><span class="w">
+  </span><span class="n">library</span><span class="p">(</span><span class="n">RCurl</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># Function to increase indent size</span><span class="w">
+</span><span class="n">xmlFormat</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">xml</span><span class="p">,</span><span class="w"> </span><span class="n">indent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="n">s</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">strsplit</span><span class="p">(</span><span class="n">saveXML</span><span class="p">(</span><span class="n">xml</span><span class="p">),</span><span class="w"> </span><span class="s2">"\n"</span><span class="p">)[[</span><span class="m">1</span><span class="p">]]</span><span class="w">
+  </span><span class="n">g</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">gsubfn</span><span class="p">(</span><span class="s2">"^( +)"</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">sprintf</span><span class="p">(</span><span class="s2">"%*s"</span><span class="p">,</span><span class="w"> </span><span class="n">indent</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">nchar</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="s2">" "</span><span class="p">),</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w">
+  </span><span class="n">paste</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="n">collapse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"\n"</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># Function to do the encoding</span><span class="w">
+</span><span class="n">doEncoding</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"base64"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">memCompress</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="s2">"gzip"</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base64</span><span class="p">(</span><span class="n">partVec</span><span class="p">)</span><span class="w">
+  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"raw"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">memCompress</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="s2">"gzip"</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base64</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s2">"raw"</span><span class="p">)</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="nf">return</span><span class="p">(</span><span class="n">partVec</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="c1"># Function to do the conversion</span><span class="w">
+</span><span class="n">doConversion</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ascii"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+
+  </span><span class="c1"># Input particle distribution csv file</span><span class="w">
+  </span><span class="c1">#partDistCSV = "particle_distribution.csv"</span><span class="w">
+
+  </span><span class="c1"># Set up compression algorithm (only gzip for now)</span><span class="w">
+  </span><span class="n">compression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"base64"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">compression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gzip"</span><span class="w">
+  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"raw"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">compression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gzip"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># Create XML</span><span class="w">
+  </span><span class="c1"># &lt;?xml version='1.0' encoding='ISO-8859-1' ?&gt;</span><span class="w">
+  </span><span class="c1">#&lt;Ellip3D_input&gt;</span><span class="w">
+  </span><span class="c1">#  &lt;Particles number="100" type="ellipsoid" compression="gzip" encoding="base64"&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;id unit="none" numComponents="1"&gt; 1 2 3 ... 100 &lt;/id&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;radii unit="m" numComponents="3" &gt; a1 b1 c1 a2 b2 c2 ... &lt;/radii&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;position unit="m" numComponents="3" &gt; x1 y1 z1 x2 y2 z2 ... &lt;/position&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;axle_a_angle unit="rad" numComponents="3" &gt; theta_x1 theta_y1 theta_z1 ... &lt;/axle_a_angle&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;axle_b_angle unit="rad" numComponents="3" &gt; theta_x1 theta_y1 theta_z1 ... &lt;/axle_b_angle&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;axle_c_angle unit="rad" numComponents="3"&gt; theta_x1 theta_y1 theta_z1 ... &lt;/axle_c_angle&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;velocity unit="m/s" numComponents="3"&gt; x1 y1 z1 x2 y2 z2 ... &lt;/velocity&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;omega unit="rad/s" numComponents="3"&gt; x1 y1 z1 x2 y2 z2 ... &lt;/omega&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;force unit="N" numComponents="3"&gt; x1 y1 z1 x2 y2 z2 ... &lt;/force&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;moment unit="Nm" numComponents="3"&gt; x1 y1 z1 x2 y2 z2 ... &lt;/moment&gt;</span><span class="w">
+  </span><span class="c1">#  &lt;/Particles&gt;</span><span class="w">
+  </span><span class="c1">#  &lt;Sieves number="5" compression="none" encoding="ascii"&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;percent_passing&gt; 0.1 0.2 0.3 ... &lt;percent_passing&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;size unit="mm"&gt; 0.1 0.2 0.3 ... &lt;size&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;sieve_ratio&gt;</span><span class="w">
+  </span><span class="c1">#      &lt;ratio_ba&gt;0.8&lt;/ratio_ba&gt;</span><span class="w">
+  </span><span class="c1">#      &lt;ratio_ca&gt;0.6&lt;/ratio_ca&gt;</span><span class="w">
+  </span><span class="c1">#    &lt;/sieve_ratio&gt;</span><span class="w">
+  </span><span class="c1">#  &lt;/Sieves&gt;</span><span class="w">
+  </span><span class="c1">#&lt;/Ellip3D_input&gt;</span><span class="w">
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># First handle the particle data</span><span class="w">
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># Read the first line (contains the number of particles)</span><span class="w">
+  </span><span class="n">df_numPart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read.csv</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">nrows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">sep</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span><span class="w"> 
+                   </span><span class="n">blank.lines.skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">)</span><span class="w">
+  </span><span class="n">numPart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">df_numPart</span><span class="o">$</span><span class="n">V1</span><span class="w">
+
+  </span><span class="c1"># Read the particle data into a data frame</span><span class="w">
+  </span><span class="c1"># Data should contain the following header:</span><span class="w">
+  </span><span class="c1"># &gt; names(df)</span><span class="w">
+  </span><span class="c1"># [1] "id"         "type"       "radius_a"   "radius_b"   "radius_c"  </span><span class="w">
+  </span><span class="c1"># [6] "position_x" "position_y" "position_z" "axle_a_x"   "axle_a_y"  </span><span class="w">
+  </span><span class="c1">#[11] "axle_a_z"   "axle_b_x"   "axle_b_y"   "axle_b_z"   "axle_c_x"  </span><span class="w">
+  </span><span class="c1">#[16] "axle_c_y"   "axle_c_z"   "velocity_x" "velocity_y" "velocity_z"</span><span class="w">
+  </span><span class="c1">#[21] "omga_x"     "omga_y"     "omga_z"     "force_x"    "force_y"   </span><span class="w">
+  </span><span class="c1">#[26] "force_z"    "moment_x"   "moment_y"   "moment_z"  </span><span class="w">
+  </span><span class="n">df_part</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read.csv</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">sep</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span><span class="w"> 
+                   </span><span class="n">blank.lines.skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">nrows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numPart</span><span class="p">)</span><span class="w">
+
+  </span><span class="n">xml</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">xmlOutputDOM</span><span class="p">(</span><span class="n">tag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Ellip3D_input"</span><span class="p">)</span><span class="w">
+
+  </span><span class="n">partTypes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unique</span><span class="p">(</span><span class="n">df_part</span><span class="o">$</span><span class="n">type</span><span class="p">)</span><span class="w">
+  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">partType</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">partTypes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partTypeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ellipsoid"</span><span class="w">
+    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">partType</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">partTypeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"sphere"</span><span class="w">
+    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">partType</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">partTypeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"cube"</span><span class="w">
+    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">partType</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="m">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">partTypeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"polyellipsoid"</span><span class="w">
+    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="n">partTypeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ellipsoid"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="n">df</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">df_part</span><span class="p">[</span><span class="n">which</span><span class="p">(</span><span class="n">df_part</span><span class="o">$</span><span class="n">type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">partType</span><span class="p">),]</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"Particles"</span><span class="p">,</span><span class="w"> 
+               </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nrow</span><span class="p">(</span><span class="n">df</span><span class="p">),</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">partTypeName</span><span class="p">,</span><span class="w"> 
+                         </span><span class="n">compression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compression</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoding</span><span class="p">),</span><span class="w"> 
+               </span><span class="n">close</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span><span class="w">
+
+    </span><span class="c1"># Add Id</span><span class="w">
+    </span><span class="n">partID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partID</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span><span class="w"> </span><span class="n">partID</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add radius</span><span class="w">
+    </span><span class="n">radius</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">radius_a</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">radius_b</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">radius_c</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">radius</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"radii"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"m"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add axle_a</span><span class="w">
+    </span><span class="n">axle_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">axle_a_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_a_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_a_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">axle_a</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"axle_a"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"rad"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add axle_b</span><span class="w">
+    </span><span class="n">axle_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">axle_b_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_b_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_b_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">axle_b</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"axle_b"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"rad"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add axle_c</span><span class="w">
+    </span><span class="n">axle_c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">axle_c_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_c_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">axle_c_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">axle_c</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"axle_c"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"rad"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add position</span><span class="w">
+    </span><span class="n">position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">position_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">position_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">position_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">position</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"position"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"m"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add velocity</span><span class="w">
+    </span><span class="n">velocity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">velocity_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">velocity_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">velocity_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">velocity</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"velocity"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"m/s"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add omega</span><span class="w">
+    </span><span class="n">omega</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">omga_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">omga_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">omga_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">omega</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"omega"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"rad/s"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add force</span><span class="w">
+    </span><span class="n">force</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">force_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">force_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">force_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">force</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"force"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"N"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="c1"># Add moment</span><span class="w">
+    </span><span class="n">moment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbind</span><span class="p">(</span><span class="n">df</span><span class="o">$</span><span class="n">moment_x</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">moment_y</span><span class="p">,</span><span class="w"> </span><span class="n">df</span><span class="o">$</span><span class="n">moment_z</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">t</span><span class="p">(</span><span class="n">moment</span><span class="p">),</span><span class="w"> </span><span class="n">collapse</span><span class="o">=</span><span class="s2">" "</span><span class="p">)</span><span class="w">
+    </span><span class="n">partVec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">doEncoding</span><span class="p">(</span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w">
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"moment"</span><span class="p">,</span><span class="w"> </span><span class="n">partVec</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Nm"</span><span class="p">,</span><span class="w"> </span><span class="n">numComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"3"</span><span class="p">))</span><span class="w">
+
+    </span><span class="n">xml</span><span class="o">$</span><span class="n">closeTag</span><span class="p">()</span><span class="w"> </span><span class="c1"># Close the Particles tage</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># Next handle the sieve data</span><span class="w">
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># Read the number of sieves</span><span class="w">
+  </span><span class="n">df_numSieve</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read.csv</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numPart</span><span class="m">+2</span><span class="p">,</span><span class="w"> </span><span class="n">sep</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span><span class="w"> 
+                       </span><span class="n">blank.lines.skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">nrows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w">
+  </span><span class="n">numSieve</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">df_numSieve</span><span class="o">$</span><span class="n">V1</span><span class="w">
+  </span><span class="c1"># Read the sieves</span><span class="w">
+  </span><span class="n">df_sieve</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read.csv</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">numPart</span><span class="m">+4</span><span class="p">),</span><span class="w"> </span><span class="n">sep</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span><span class="w"> 
+                    </span><span class="n">blank.lines.skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">nrows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numSieve</span><span class="p">)</span><span class="w">
+  </span><span class="c1"># Read the sieve ratios</span><span class="w">
+  </span><span class="n">df_sieve_ratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read.csv</span><span class="p">(</span><span class="n">partDistCSV</span><span class="p">,</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span><span class="w"> </span><span class="n">skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numPart</span><span class="o">+</span><span class="n">numSieve</span><span class="m">+4</span><span class="p">,</span><span class="w"> </span><span class="n">sep</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span><span class="w"> 
+                          </span><span class="n">blank.lines.skip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span><span class="w"> </span><span class="n">nrows</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w">
+
+  </span><span class="c1"># Create sieve xml</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"Sieves"</span><span class="p">,</span><span class="w"> 
+             </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">numSieve</span><span class="p">,</span><span class="w"> </span><span class="n">compression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w"> 
+                       </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ascii"</span><span class="p">),</span><span class="w"> 
+             </span><span class="n">close</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span><span class="w">
+  </span><span class="n">percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">df_sieve</span><span class="o">$</span><span class="n">V1</span><span class="p">,</span><span class="w"> </span><span class="n">collapse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">" "</span><span class="p">)</span><span class="w">
+  </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste</span><span class="p">(</span><span class="n">df_sieve</span><span class="o">$</span><span class="n">V2</span><span class="p">,</span><span class="w"> </span><span class="n">collapse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">" "</span><span class="p">)</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"percent_passing"</span><span class="p">,</span><span class="w"> </span><span class="n">percent</span><span class="p">)</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"size"</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">attrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"mm"</span><span class="p">))</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"sieve_ratio"</span><span class="p">,</span><span class="w"> </span><span class="n">close</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"ratio_ba"</span><span class="p">,</span><span class="w"> </span><span class="n">df_sieve_ratio</span><span class="p">[</span><span class="m">1</span><span class="p">])</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">addTag</span><span class="p">(</span><span class="s2">"ratio_ca"</span><span class="p">,</span><span class="w"> </span><span class="n">df_sieve_ratio</span><span class="p">[</span><span class="m">2</span><span class="p">])</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">closeTag</span><span class="p">()</span><span class="w"> </span><span class="c1"># sieve_ratio</span><span class="w">
+  </span><span class="n">xml</span><span class="o">$</span><span class="n">closeTag</span><span class="p">()</span><span class="w"> </span><span class="c1"># Sieves</span><span class="w">
+
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="c1"># Save the XML file</span><span class="w">
+  </span><span class="c1">#------------------------------------------------------------------</span><span class="w">
+  </span><span class="n">partDistXML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">""</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"ascii"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partDistXML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste0</span><span class="p">(</span><span class="n">sub</span><span class="p">(</span><span class="s2">".csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="n">partDistCSV</span><span class="p">),</span><span class="w"> </span><span class="s2">".ascii.xml"</span><span class="p">)</span><span class="w">
+  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"base64"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partDistXML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste0</span><span class="p">(</span><span class="n">sub</span><span class="p">(</span><span class="s2">".csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="n">partDistCSV</span><span class="p">),</span><span class="w"> </span><span class="s2">".base64.xml"</span><span class="p">)</span><span class="w">
+  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="n">partDistXML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">paste0</span><span class="p">(</span><span class="n">sub</span><span class="p">(</span><span class="s2">".csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="n">partDistCSV</span><span class="p">),</span><span class="w"> </span><span class="s2">".raw.xml"</span><span class="p">)</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="n">cat</span><span class="p">(</span><span class="n">xmlFormat</span><span class="p">(</span><span class="n">xml</span><span class="p">),</span><span class="w"> </span><span class="n">sep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"\n"</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">partDistXML</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.short.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ascii"</span><span class="p">)</span><span class="w">
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.short.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"base64"</span><span class="p">)</span><span class="w">
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.short.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"raw"</span><span class="p">)</span><span class="w">
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ascii"</span><span class="p">)</span><span class="w">
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"base64"</span><span class="p">)</span><span class="w">
+</span><span class="n">doConversion</span><span class="p">(</span><span class="s2">"particle_distribution.csv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"raw"</span><span class="p">)</span></code></pre></figure>
+
+<p class="notice--info">You can run this script in <code class="language-plaintext highlighter-rouge">R</code> by first loading it using <code class="language-plaintext highlighter-rouge">source("convertPartDistToBinXML.R")</code>
+and then running  <code class="language-plaintext highlighter-rouge">doConversion("file_name.csv", "ascii")</code> or <code class="language-plaintext highlighter-rouge">doConversion("file_name.csv", "base64")</code>.</p>
+
+<h5 id="the-output-ascii-xml-file">The output ASCII XML file</h5>
+<p>The ASCII XML file produced by this script is <code class="language-plaintext highlighter-rouge">particle_distribution.ascii.xml</code> and contains</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;Ellip3D_input&gt;</span>
+  <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">"3"</span> <span class="na">type=</span><span class="s">"ellipsoid"</span> <span class="na">compression=</span><span class="s">"none"</span> <span class="na">encoding=</span><span class="s">"ascii"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">"none"</span> <span class="na">numComponents=</span><span class="s">"1"</span><span class="nt">&gt;</span>1 187 373<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>1.15 0.5 0.69 1.15 0.5 0.69 1.15 0.5 0.69<span class="nt">&lt;/radii&gt;</span>
+    <span class="nt">&lt;axle_a</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>2.250054 1.570796 0.6792575 2.536687 1.570796 0.9658907 0.8923825 1.570796 0.6784139<span class="nt">&lt;/axle_a&gt;</span>
+    <span class="nt">&lt;axle_b</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>1.570796 4.61936e-07 1.570796 1.570797 1.803533e-06 1.570798 1.570799 2.865908e-06 1.570795<span class="nt">&lt;/axle_b&gt;</span>
+    <span class="nt">&lt;axle_c</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>2.462335 1.570796 2.250054 2.175704 1.570796 2.536685 2.463179 1.570796 0.8923828<span class="nt">&lt;/axle_c&gt;</span>
+    <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>49.73174 0 0.9936725 50.90096 0 5.320529 30.81142 0 3.898033<span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">"m/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>0.02008031 0 0.05505538 -0.3014865 0 -0.1031938 -0.1538927 0 0.04640176<span class="nt">&lt;/velocity&gt;</span>
+    <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">"rad/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>0 0.02781917 0 0 -0.07066198 0 0 -0.2856931 0<span class="nt">&lt;/omega&gt;</span>
+    <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">"N"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>-491684 0 -126938 -4413.702 0 -10805.48 22966.5 0 6613.044<span class="nt">&lt;/force&gt;</span>
+    <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">"Nm"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>0.1688596 -118712 -0.3092984 -0.1174683 -36733.58 -0.05749536 0.0414009 -5030.464 -0.0190764<span class="nt">&lt;/moment&gt;</span>
+  <span class="nt">&lt;/Particles&gt;</span>
+  <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">"3"</span> <span class="na">type=</span><span class="s">"sphere"</span> <span class="na">compression=</span><span class="s">"none"</span> <span class="na">encoding=</span><span class="s">"ascii"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">"none"</span> <span class="na">numComponents=</span><span class="s">"1"</span><span class="nt">&gt;</span>373 373 559<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>0.575 0.5 0.345 1.15 0.5 0.69 0.575 0.5 0.345<span class="nt">&lt;/radii&gt;</span>
+    <span class="nt">&lt;axle_a</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>1.576513 1.570796 0.005716666 1.523425 1.570796 0.0473713 2.090659 1.570796 2.62173<span class="nt">&lt;/axle_a&gt;</span>
+    <span class="nt">&lt;axle_b</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>1.570798 1.803533e-06 1.570798 1.570798 2.756634e-06 1.570799 1.570794 2.349616e-06 1.570795<span class="nt">&lt;/axle_b&gt;</span>
+    <span class="nt">&lt;axle_c</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>3.135876 1.570796 1.576513 3.094221 1.570796 1.523425 0.519865 1.570796 2.090661<span class="nt">&lt;/axle_c&gt;</span>
+    <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>54.01296 0 5.252426 71.06136 0 7.72336 65.39739 0 6.397063<span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">"m/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>-0.3850849 0 -0.1090706 -0.173833 0 -0.03869174 -0.08703834 0 -0.02640878<span class="nt">&lt;/velocity&gt;</span>
+    <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">"rad/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>0 0.1298346 0 0 0.06904687 0 0 0.271116 0<span class="nt">&lt;/omega&gt;</span>
+    <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">"N"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>120004 0 -76384.24 192576.1 0 108463.9 83898.65 0 115703.8<span class="nt">&lt;/force&gt;</span>
+    <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">"Nm"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>-0.01118079 -6253.187 0.1382343 -0.2065214 6178.625 0.2630611 0.1774521 2937.92 -0.3412123<span class="nt">&lt;/moment&gt;</span>
+  <span class="nt">&lt;/Particles&gt;</span>
+  .....
+  <span class="nt">&lt;Sieves</span> <span class="na">number=</span><span class="s">"5"</span> <span class="na">compression=</span><span class="s">"none"</span> <span class="na">encoding=</span><span class="s">"ascii"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;percent_passing&gt;</span>1 0.8 0.6 0.3 0.1<span class="nt">&lt;/percent_passing&gt;</span>
+    <span class="nt">&lt;size</span> <span class="na">unit=</span><span class="s">"mm"</span><span class="nt">&gt;</span>1.4 1.3 1.2 1.15 1<span class="nt">&lt;/size&gt;</span>
+    <span class="nt">&lt;sieve_ratio&gt;</span>
+      <span class="nt">&lt;ratio_ba&gt;</span>0.8<span class="nt">&lt;/ratio_ba&gt;</span>
+      <span class="nt">&lt;ratio_ca&gt;</span>0.6<span class="nt">&lt;/ratio_ca&gt;</span>
+    <span class="nt">&lt;/sieve_ratio&gt;</span>
+  <span class="nt">&lt;/Sieves&gt;</span>
+<span class="nt">&lt;/Ellip3D_input&gt;</span></code></pre></figure>
+
+<h5 id="the-output-compressed-base64-xml-file">The output compressed base64 XML file</h5>
+<p>The compressed base64 XML file produced by this script is <code class="language-plaintext highlighter-rouge">particle_distribution.base64.xml</code> and contains</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;Ellip3D_input&gt;</span>
+  <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">"3"</span> <span class="na">type=</span><span class="s">"ellipsoid"</span> <span class="na">compression=</span><span class="s">"gzip"</span> <span class="na">encoding=</span><span class="s">"base64"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">"none"</span> <span class="na">numComponents=</span><span class="s">"1"</span><span class="nt">&gt;</span>eJwzVDC0MFcwNjcGAAg2Aa8=<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwz1DM0VTDQA2EzSwVD3DwAm34HcA==<span class="nt">&lt;/radii&gt;</span>
+    <span class="nt">&lt;axle_a</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJxVy8ENwEAIA8FWqABx5oxx/40lz+S30miRYBVvnKRKnqgcGRQDyZ5Zfc3DdemtNXrB/7j3tB+22RBv<span class="nt">&lt;/axle_a&gt;</span>
+    <span class="nt">&lt;axle_b</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJxNyckNACAIAMFWaEACIldB9t+Cmojxt5llVCdPg4HGKTYbOXDhjSNBoiJ7P42KhI5hmhT/1gVJPxJZ<span class="nt">&lt;/axle_b&gt;</span>
+    <span class="nt">&lt;axle_c</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJxNyckNADAIxMBWUgGCheXov7HwS34jGxIJdx4TltbkgYCqjIXVtvgXPbO5iHSreUulB97oC4BQD7g=<span class="nt">&lt;/axle_c&gt;</span>
+    <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwNyMERAEAEA8BWVGBCONJ/Y+e3syUfxpTB4BLfZFsfAb3LdiY6ZYRvROUdfbUgP13AC20=<span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">"m/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwlitsNACAIxFZhAUmRh7j/YpKY3M+1RdnQuAmCkjnzloU6Fl05fI5NcT+38Xef30cFduoB3dgNXA==<span class="nt">&lt;/velocity&gt;</span>
+    <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">"rad/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwzUDDQMzAytzC0NDRXMABCXSDf3MDMzNDSAsY3sjA1szQ2VDAAAL6CCE8=<span class="nt">&lt;/omega&gt;</span>
+    <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">"N"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwdycERACAIA7BVWACuYK2w/2J6fhPnpJoG8yzNanMyVxzUNzR2sK1qpNjPpNcgL0K4Cu8=<span class="nt">&lt;/force&gt;</span>
+    <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">"Nm"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwdy8kNwDAMA8FW1IAE0rr7byyxf4MFFsaayS1RcppHFObYsxOXZEeNi3q1u+XciOzY9JKfwQBWNOGwqDeBi674ADeiEak=<span class="nt">&lt;/moment&gt;</span>
+  <span class="nt">&lt;/Particles&gt;</span>
+  <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">"3"</span> <span class="na">type=</span><span class="s">"sphere"</span> <span class="na">compression=</span><span class="s">"gzip"</span> <span class="na">encoding=</span><span class="s">"base64"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">"none"</span> <span class="na">numComponents=</span><span class="s">"1"</span><span class="nt">&gt;</span>eJwzNjdWMAZiU1NLAAydAh4=<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwz0DM1N1Uw0ANhYxNTBUM9QxjXzBLEQJYFAL1ICD4=<span class="nt">&lt;/radii&gt;</span>
+    <span class="nt">&lt;axle_a</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJxVi8ENwEAMwla5CSJCjqDsv1jTV1Veli0y5FbWyQV4+iAAOXv3StalfvW6vAcGBq35GqOZrgeh0xAM<span class="nt">&lt;/axle_a&gt;</span>
+    <span class="nt">&lt;axle_b</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwz1DM1NzC3tFAw1LMwMDY1Nk7VNTADcuCiUIaRnrmpmZmxCbK0JYxhApQ2NrE0MzRDljYFAFruEoY=<span class="nt">&lt;/axle_b&gt;</span>
+    <span class="nt">&lt;axle_c</span> <span class="na">unit=</span><span class="s">"rad"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJxVysENADEIA8FWqABhiE3ov7GcdI8ov5Vmy1HcLYOzo+cPEWXlMSsTD2WtpIUTs8VL+c0h4QByxA96<span class="nt">&lt;/axle_c&gt;</span>
+    <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">"m"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwVyEENADAIA0ArKGigHSX4N7btd7k+yOI6MhpsHjqmkC79Gwz15IZ2tK/8ldYFQ+cLCg==<span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">"m/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwtickRACAIA1uxAZ1oEEL/jemgvz06BrUhy4bWMSYSAS8MinwZlOcMK1Zcpf2z3G7RAfzcDdI=<span class="nt">&lt;/velocity&gt;</span>
+    <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">"rad/s"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwzUDDQMzSytDA2MVMwAEE9AzNLAxMzC3Mo18jc0NAQKAcAnmMHhg==<span class="nt">&lt;/omega&gt;</span>
+    <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">"N"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwVyEkRwAAIA0ArGCiTcAb/xtrucxkAymDPTqo8ynjRO84vCdWknyl18un/2It0vUKNCwM=<span class="nt">&lt;/force&gt;</span>
+    <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">"Nm"</span> <span class="na">numComponents=</span><span class="s">"3"</span><span class="nt">&gt;</span>eJwVysERACAIA7BVWECOtgi4/2LqO1nhAWCij63ilmPawqGhUrbCGbWJtEKPv/KUpSjgv+58ajxqP/xfCYK6DRMRKw==<span class="nt">&lt;/moment&gt;</span>
+  <span class="nt">&lt;/Particles&gt;</span>
+  .....
+  <span class="nt">&lt;Sieves</span> <span class="na">number=</span><span class="s">"5"</span> <span class="na">compression=</span><span class="s">"none"</span> <span class="na">encoding=</span><span class="s">"ascii"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;percent_passing&gt;</span>1 0.8 0.6 0.3 0.1<span class="nt">&lt;/percent_passing&gt;</span>
+    <span class="nt">&lt;size</span> <span class="na">unit=</span><span class="s">"mm"</span><span class="nt">&gt;</span>1.4 1.3 1.2 1.15 1<span class="nt">&lt;/size&gt;</span>
+    <span class="nt">&lt;sieve_ratio&gt;</span>
+      <span class="nt">&lt;ratio_ba&gt;</span>0.8<span class="nt">&lt;/ratio_ba&gt;</span>
+      <span class="nt">&lt;ratio_ca&gt;</span>0.6<span class="nt">&lt;/ratio_ca&gt;</span>
+    <span class="nt">&lt;/sieve_ratio&gt;</span>
+  <span class="nt">&lt;/Sieves&gt;</span>
+<span class="nt">&lt;/Ellip3D_input&gt;</span></code></pre></figure>
+
+<p class="notice--info">For a file containing 412 particles, the original CSV file was of size 177K, the ASCII XML version was 85K, and
+the compressed base64 XML file was 39.  The compressed ASCII XML file was also smaller than the compressed base64 XML file.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In general it is better to use structured files for input data, provided the size of the data
+is not too large.  If the input files are large, a compressed binary format
+is better and should be used if possible.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+
+<ul class="taxonomy__index">
+  
+  
+    <li>
+      <a href="#2017">
+        <strong>2017</strong> <span class="taxonomy__count">40</span>
+      </a>
+    </li>
+  
+    <li>
+      <a href="#2014">
+        <strong>2014</strong> <span class="taxonomy__count">2</span>
+      </a>
+    </li>
+  
+</ul>
+
+
+
+
+  <section id="2017" class="taxonomy__section">
+    <h2 class="archive__subtitle">2017</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-2/" rel="permalink">Parallel domain decomposition for particle methods: Part 2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mpi/c++/parallel-domain-decomposition-part-1/" rel="permalink">Parallel domain decomposition for particle methods: Part 1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fracture/Larsen-B-and-peridynamics/" rel="permalink">Can the Larsen-C ice shelf failure be predicted with Peridynamics?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="permalink">The difference between the spin and angular velocity tensors
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/Arena-model-paper/" rel="permalink">The ARENA model for partially saturated soils
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/incremental-objectivity/" rel="permalink">Material and spatial incremental constitutive equations
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/fem/rigid-body-rotation-small-strain/" rel="permalink">Are stresses tensile or compressive during rigid body rotation?
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-4/" rel="permalink">The CFL condition for explicit discrete element methods:4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-3/" rel="permalink">The CFL condition for explicit discrete element methods:3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements-part-2/" rel="permalink">The CFL condition for explicit discrete element methods:2
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dem/CFL-condition-discrete-elements/" rel="permalink">The CFL condition for explicit discrete element methods:1
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          10 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/gzip/reading-xml-with-gzipped-data/" rel="permalink">Reading XML files containing gzipped data in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/d3js/d3-animation-closest-point-return/" rel="permalink">Creating an animation with d3.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/geometric-closest-point-return/" rel="permalink">Geometric closest point return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/closest-point-return/" rel="permalink">Exploring closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/primal-dual-closest-point-return/" rel="permalink">Nonlinear programming and closest point return plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/" rel="permalink">Forward vs. Backward Euler: Plane stress plasticity
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/" rel="permalink">Plane stress forward Euler Drucker-Prager
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/" rel="permalink">Plane stress return: Spectral decomposition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/" rel="permalink">The plane stress return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/mechanics/plasticity/algorithm/plane-stress-drucker-prager/" rel="permalink">Plane stress Drucker-Prager return algorithm
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/r/xml/xml-particle-input-file/" rel="permalink">XML format for particle input files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          32 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/" rel="permalink">Plotting particles with vtk.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/" rel="permalink">Setting up the Three.js ellipsoids
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-camera/" rel="permalink">Setting up the Three.js scene and camera
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs-renderer/" rel="permalink">Setting up the Three.js renderer
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/threejs/vue/vtk-threejs/" rel="permalink">Plotting VTK particles with Three.js
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/vuex-store/" rel="permalink">Saving particle data in a Vuex store
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/javascript/typescript/vue/vuex/xml/reading-vtk-particles/" rel="permalink">Reading VTK particles in Javascript
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In our previous article
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These o...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-particle-output/" rel="permalink">Particle data in VTK XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on writing VTK output files I described how mesh data can be output in VTK XML format. In this article I will talk about how I output par...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/vtk/vtk-output/" rel="permalink">Writing VTK XML files in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">I visualize the output of my simulations using either LLNL’s Visit or Kitware’s ParaView.  These tools are wonderful for dealing with large datasets and can ...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/json/json-input/" rel="permalink">Reading JSON in C++
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In my previous post on reading XML input files, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be p...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/xml/xml-input/" rel="permalink">Input files: Reading XML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Mechanics research codes are typically written by graduate students who aim
+to get their work done as quickly as possible.  These codes are not meant 
+to las...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/command-pattern/" rel="permalink">Command pattern for regression testing
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for discrete element
+and peridynamics simulations.  After som...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-tidy/" rel="permalink">Auto-modernizing C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Clang static analyzer tools come with a handy interface called clang-tidy.
+
+</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/c++/clang-format/" rel="permalink">Formatting C++ code
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+  <section id="2014" class="taxonomy__section">
+    <h2 class="archive__subtitle">2014</h2>
+    <div class="entries-list">
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/hungarian_algorithm/" rel="permalink">Sampling large data sets (Part 2)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+Recall that we had found a set of points that samples a cylindrical domain uniformly.
+However, these points do not match the locations of our sensors and we...</p>
+  </article>
+</div>
+
+      
+        
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/sampling/latin_hypercube_sampling/" rel="permalink">Sampling large data sets (Part 1)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">
+
+</p>
+  </article>
+</div>
+
+      
+    </div>
+    <a href="#page-title" class="back-to-top">Back to top &uarr;</a>
+  </section>
+
+
+  </div>
+</div>
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
