@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Forward vs. Backward Euler: Plane stress plasticity">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">
+<meta property="og:url" content="https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">
 
 
   <meta property="og:description" content="Part 5 of the series on plane stress Drucker-Prager plasticity">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">
+<link rel="canonical" href="https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "https://bbanerjee.github.io/"
     
   }
 </script>
@@ -108,7 +108,7 @@
   </head>
 
   <script type="text/javascript"
-    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
   <body class="layout--posts">
@@ -293,7 +293,7 @@
 return algorithms is the choice of the algorithm used for numerical integration.
 Typically, this choice is limited to <a href="https://en.wikipedia.org/wiki/Euler_method">forward Euler vs. backward Euler</a> for simplicity.</p>
 
-<p>Recall from <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/">Part 2</a> that the rate equations that we need to integrate are:</p>
+<p>Recall from <a href="https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/">Part 2</a> that the rate equations that we need to integrate are:</p>
 <div>
 $$
   \dot{\boldsymbol{\sigma}} = \mathbf{C}\dot{\boldsymbol{\varepsilon}}^e
@@ -427,7 +427,7 @@ $$
   \Delta\lambda\mathbf{C}_n \boldsymbol{n}_n
 $$
 </div>
-<p>where \(\Delta \lambda\) can be solved using (see <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/">Part 4</a>)</p>
+<p>where \(\Delta \lambda\) can be solved using (see <a href="https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/">Part 4</a>)</p>
 <div>
 $$
   (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1}

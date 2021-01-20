@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Sampling large data sets (Part 2)">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/sampling/hungarian_algorithm/">
+<meta property="og:url" content="https://bbanerjee.github.io/sampling/hungarian_algorithm/">
 
 
   <meta property="og:description" content="In the previous post, we discussed a technique for choosing a Latin Hybercube sample within a cylindrical domain. We now need to match the sample to sensors arranged in a cylindrical array. One way of approaching this problem is to use the Hungarian algorithm.">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/sampling/hungarian_algorithm/">
+<link rel="canonical" href="https://bbanerjee.github.io/sampling/hungarian_algorithm/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "https://bbanerjee.github.io/"
     
   }
 </script>
@@ -108,7 +108,7 @@
   </head>
 
   <script type="text/javascript"
-    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
   <body class="layout--posts">
@@ -273,7 +273,7 @@
     
       <h1 id="page-title" class="page__title">Sampling large data sets (Part 2)</h1>
     
-    <p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SensorsAndSamples.png" /><br />
+    <p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/assets/blogimg/SensorsAndSamples.png" /><br />
 Recall that we had found a set of points that samples a cylindrical domain uniformly.<br />
 However, these points do not match the locations of our sensors and we will have to
 find the nearest sensor to each sample point.</p>
@@ -302,7 +302,7 @@ first find the pairwise distances between the sensors and the samples</p>
 
 </span></code></pre></div></div>
 
-<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SparseSensorsAndSamples.png" /><br />
+<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/assets/blogimg/SparseSensorsAndSamples.png" /><br />
 Next we define a radius of support around each sample location and find the sensors 
 in that region.</p>
 
@@ -318,7 +318,7 @@ This procedure gives us the sensor locations (in red) that we care about.  Now w
 recompute a much smaller distance matrix and apply the Hungarian algorithm to find
 which sensors are closest to our sample points.</p>
 
-<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SampleSensors.png" /><br />
+<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/assets/blogimg/SampleSensors.png" /><br />
 The <code class="language-plaintext highlighter-rouge">clue</code> package in R provides us with the required tools to solve the
 <em>Linear Sum Assignment Problem</em> and the computation is 
 direct:</p>

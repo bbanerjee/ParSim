@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Parallel domain decomposition for particle methods: Part 3">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">
+<meta property="og:url" content="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/">
 
 
   <meta property="og:description" content="The Plimpton method of communicating ghost regions">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">
+<link rel="canonical" href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "https://bbanerjee.github.io/"
     
   }
 </script>
@@ -108,7 +108,7 @@
   </head>
 
   <script type="text/javascript"
-    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
   <body class="layout--posts">
@@ -285,7 +285,7 @@
 </ul>
 
 <h4 id="introduction">Introduction</h4>
-<p>In <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> of this series
+<p>In <a href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> of this series
 we showed the direct way of communicating ghost particles between patches.  That approach
 requires 26 communication steps per patch in three-dimensions.  In this article we discuss
 the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular 
@@ -313,7 +313,7 @@ The same process can be used in three-dimensions, leading to only six communicat
 <p />
 
 <h4 id="mpi-implementation">MPI implementation</h4>
-<p>In <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
+<p>In <a href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
 a <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code> struct and a <code class="language-plaintext highlighter-rouge">Patch</code> struct.  We can keep the <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code>
 struct in the same form, with the possible addition of a method of two.  However, the <code class="language-plaintext highlighter-rouge">Patch</code>
 struct becomes considerably simplified as show below.</p>
@@ -517,11 +517,11 @@ part of this series, we will discuss the migration of particles when we use the 
 </script>
 <script type="IN/Share" data-counter="right"></script></p>
 
-<script src="https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js"></script>
+<script src="https://bbanerjee.github.io/assets/js/d3.v4.min.js"></script>
 
-<script src="https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js"></script>
+<script src="https://bbanerjee.github.io/assets/js/colorbrewer.min.js"></script>
 
-<script src="https://bbanerjee.github.io/ParSim/assets/js/particlePlimpton.js"></script>
+<script src="https://bbanerjee.github.io/assets/js/particlePlimpton.js"></script>
 
 
 

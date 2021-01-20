@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Sampling large data sets (Part 1)">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/sampling/latin_hypercube_sampling/">
+<meta property="og:url" content="https://bbanerjee.github.io/sampling/latin_hypercube_sampling/">
 
 
   <meta property="og:description" content="Recently, we ran into a data set that contained the positions and time-series data for a set of 50,000 sensors arranged in a cylindrical array.">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/sampling/latin_hypercube_sampling/">
+<link rel="canonical" href="https://bbanerjee.github.io/sampling/latin_hypercube_sampling/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "https://bbanerjee.github.io/"
     
   }
 </script>
@@ -108,7 +108,7 @@
   </head>
 
   <script type="text/javascript"
-    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
   <body class="layout--posts">
@@ -273,7 +273,7 @@
     
       <h1 id="page-title" class="page__title">Sampling large data sets (Part 1)</h1>
     
-    <p><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SensorArray.png" /></p>
+    <p><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/assets/blogimg/SensorArray.png" /></p>
 
 <p>The amount of data is large.  Before we analyze the whole set of data, we can find trends<br />
 by examining a smaller set of sensors.  A smaller set is also useful if we want to
@@ -291,7 +291,7 @@ The R package <code class="language-plaintext highlighter-rouge">lhs</code> can 
   </span><span class="n">sampleCoords</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">randomLHS</span><span class="p">(</span><span class="m">100</span><span class="p">,</span><span class="w"> </span><span class="m">3</span><span class="p">)</span><span class="w">
 </span></code></pre></div></div>
 
-<p><img style="float:right;width:300px" alt="LHS samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SampleCoords.png" /><br />
+<p><img style="float:right;width:300px" alt="LHS samples" src="https://bbanerjee.github.io/assets/blogimg/SampleCoords.png" /><br />
 The sampling algorithm produces a set of points whose coordinates are in \([0,1]\).  The 
 adjacent figure shows some of the points.  Blue circles indicate the distance of the point
 from the plane of the screen.</p>
@@ -311,13 +311,13 @@ Polar plots of the mapped LHS points show how the two maps operate.</p>
 <table>
   <tbody>
     <tr>
-      <td><img style="float:right;width:300px" alt="PolarPlots" src="https://bbanerjee.github.io/ParSim/assets/blogimg/PolarPrime.png" /></td>
-      <td><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/ParSim/assets/blogimg/PolarShirleyChew.png" /></td>
+      <td><img style="float:right;width:300px" alt="PolarPlots" src="https://bbanerjee.github.io/assets/blogimg/PolarPrime.png" /></td>
+      <td><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/assets/blogimg/PolarShirleyChew.png" /></td>
     </tr>
   </tbody>
 </table>
 
-<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SensorsAndSamples.png" /><br />
+<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/assets/blogimg/SensorsAndSamples.png" /><br />
 The sample coordinates generated in the unit disk can then be transformed so that 
 they lie in the first quadrant.</p>
 
