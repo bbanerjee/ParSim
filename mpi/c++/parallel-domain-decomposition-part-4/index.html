@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Parallel domain decomposition for particle methods: Part 4">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
+<meta property="og:url" content="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
 
 
   <meta property="og:description" content="Applying the Plimpton method for migrating particles">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
+<link rel="canonical" href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "http://localhost:4000/ParSim/"
     
   }
 </script>
@@ -285,7 +285,7 @@
 
 <h4 id="introduction">Introduction</h4>
 <p>The Plimpton scheme of communicating ghost information between patches was described
-in <a href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a> of this series.
+in <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a> of this series.
 Let us now see how a similar approach can be used to migrate particles that have
 moved across patches.</p>
 
@@ -367,13 +367,13 @@ that have left the domain, introduce them back in a periodic manner, or extend t
   <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">removeParticlesOutsidePatch</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
 <span class="p">}</span></code></pre></figure>
 
-<p>In <a href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
+<p>In <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
 a <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code> struct and a <code class="language-plaintext highlighter-rouge">Patch</code> struct.  We can keep the <code class="language-plaintext highlighter-rouge">PatchNeighborComm</code>
 struct in the same form, with the possible addition of a method of two.  However, the <code class="language-plaintext highlighter-rouge">Patch</code>
 struct becomes considerably simplified as show below.</p>
 
 <h5 id="patch-struct">Patch struct</h5>
-<p>The <code class="language-plaintext highlighter-rouge">Patch</code> struct described in <a href="https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a>
+<p>The <code class="language-plaintext highlighter-rouge">Patch</code> struct described in <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a>
 now has a few more methods.  Let us see how some of these new functions may be implemented.</p>
 
 <p>The first new function is <code class="language-plaintext highlighter-rouge">sendRecvMigrateXMinus</code> which is the equivalent of <code class="language-plaintext highlighter-rouge">sendRecvGhostXMinus</code>
@@ -480,15 +480,15 @@ across patches.</p>
 </script>
 <script type="IN/Share" data-counter="right"></script></p>
 
-<script src="https://bbanerjee.github.io/assets/js/d3.v4.min.js"></script>
+<script src="/ParSim/assets/js/d3.v4.min.js"></script>
 
-<script src="https://bbanerjee.github.io/assets/js/colorbrewer.min.js"></script>
+<script src="/ParSim/assets/js/colorbrewer.min.js"></script>
 
-<script src="https://bbanerjee.github.io/assets/js/seedrandom.min.js"></script>
+<script src="/ParSim/assets/js/seedrandom.min.js"></script>
 
-<script src="https://bbanerjee.github.io/assets/js/particleMigrate.js"></script>
+<script src="/ParSim/assets/js/particleMigrate.js"></script>
 
-<script src="https://bbanerjee.github.io/assets/js/particleMotion.js"></script>
+<script src="/ParSim/assets/js/particleMotion.js"></script>
 
 
 

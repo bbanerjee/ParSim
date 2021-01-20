@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Setting up the Three.js ellipsoids">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">
+<meta property="og:url" content="http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">
 
 
   <meta property="og:description" content="Javascript scientific visualization - Part 6">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">
+<link rel="canonical" href="http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "http://localhost:4000/ParSim/"
     
   }
 </script>
@@ -284,11 +284,11 @@
 <p>In the previous articles in this series we talked about:</p>
 
 <ol>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a>.</li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-renderer/">Part 4: Setting up the Three.js renderer</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-camera/">Part 5: Setting up the Three.js scene and camera</a></li>
+  <li><a href="/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
+  <li><a href="/ParSim/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a>.</li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/">Part 4: Setting up the Three.js renderer</a></li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs-camera/">Part 5: Setting up the Three.js scene and camera</a></li>
 </ol>
 
 <p>We are now ready to discuss the <code class="language-plaintext highlighter-rouge">three-ellipsoid-particles</code> component that we introduced in 
@@ -353,7 +353,7 @@
 the particles are added to the scene only after the particle file has been read.</p>
 
 <p class="notice--warning">In this example
-we do not stop watching the variable <code class="language-plaintext highlighter-rouge">particleReadComplete</code> (see <a href="https://bbanerjee.github.io/javascript/typescript/vue/vuex/vuex-store/">Part 2</a> for details) after the particle data has been converted and saved.  However, that step is highly recommended.</p>
+we do not stop watching the variable <code class="language-plaintext highlighter-rouge">particleReadComplete</code> (see <a href="/ParSim/javascript/typescript/vue/vuex/vuex-store/">Part 2</a> for details) after the particle data has been converted and saved.  However, that step is highly recommended.</p>
 
 <h5 id="creating-the-ellipsoid-particles">Creating the ellipsoid particles</h5>
 <p>The particle axis data are in the form of angles between the ellipsoid axes and the world coordinate axes.
@@ -452,7 +452,7 @@ the code sample.</p>
 <h4 id="remarks">Remarks</h4>
 <p>A plot of the ellipsoids produced by our code can be seen below.</p>
 
-<p><img src="https://bbanerjee.github.io/assets/blogimg/ThreeGraphicsPanel.jpg" alt="Plot produced by Three.js" class="img-responsive center-image" height="450px" border="5px double red" /></p>
+<p><img src="/ParSim/assets/blogimg/ThreeGraphicsPanel.jpg" alt="Plot produced by Three.js" class="img-responsive center-image" height="450px" border="5px double red" /></p>
 
 <p>In the next part of this series we will explore how <code class="language-plaintext highlighter-rouge">vtk.js</code> can be used to do the same plot.</p>
 

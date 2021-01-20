@@ -23,7 +23,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Plotting particles with vtk.js">
-<meta property="og:url" content="https://bbanerjee.github.io/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
+<meta property="og:url" content="http://localhost:4000/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
 
 
   <meta property="og:description" content="Javascript scientific visualization - Part 7">
@@ -45,7 +45,7 @@
   
 
 
-<link rel="canonical" href="https://bbanerjee.github.io/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
+<link rel="canonical" href="http://localhost:4000/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/">
 
 
 
@@ -56,7 +56,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "https://bbanerjee.github.io/ParSim/"
+      "url": "http://localhost:4000/ParSim/"
     
   }
 </script>
@@ -288,19 +288,19 @@
 <p>In the previous articles in this series we talked about:</p>
 
 <ol>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a>.</li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-renderer/">Part 4: Setting up the Three.js renderer</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-camera/">Part 5: Setting up the Three.js scene and camera</a></li>
-  <li><a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">Part 6: Creating and plotting Three.js ellipsoids</a></li>
+  <li><a href="/ParSim/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
+  <li><a href="/ParSim/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a>.</li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/">Part 4: Setting up the Three.js renderer</a></li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs-camera/">Part 5: Setting up the Three.js scene and camera</a></li>
+  <li><a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/">Part 6: Creating and plotting Three.js ellipsoids</a></li>
 </ol>
 
 <p>Let us now explore the <a href="https://kitware.github.io/vtk-js/">vtk.js</a> library to see if the process
 of displaying particles can be simplified given that we are using VTK format input files.</p>
 
 <h5 id="registering-vtk-components">Registering VTK components</h5>
-<p>As discussed in <a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>, we first
+<p>As discussed in <a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>, we first
 need to register components that are specific to VTK.  In our case, we need</p>
 
 <figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">var</span> <span class="nx">VtkRenderer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="dl">"</span><span class="s2">./graphics/VtkRenderer.vue</span><span class="dl">"</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
@@ -310,7 +310,7 @@ need to register components that are specific to VTK.  In our case, we need</p>
 
 <h5 id="creating-vuex-stores-for-vtk-data">Creating Vuex stores for VTK data</h5>
 <p>Once again, we repeat the process discussed in
-<a href="https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>.  We have discussed
+<a href="/ParSim/javascript/typescript/threejs/vue/vtk-threejs/">Part 3</a>.  We have discussed
 the <code class="language-plaintext highlighter-rouge">Store</code> in Part3, and in this case we create the files</p>
 
 <ul>
@@ -594,7 +594,7 @@ an interactor had to be written).  We will discuss the three.js interactor in a 
 
 <p>A plot of the spheres produced by our code can be seen below.</p>
 
-<p><img src="https://bbanerjee.github.io/assets/blogimg/VTKGraphicsPanel.jpg" alt="Plot produced by Three.js" class="img-responsive center-image" height="450px" border="5px double red" /></p>
+<p><img src="/ParSim/assets/blogimg/VTKGraphicsPanel.jpg" alt="Plot produced by Three.js" class="img-responsive center-image" height="450px" border="5px double red" /></p>
 
 <p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
 
