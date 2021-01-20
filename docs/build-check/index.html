@@ -1,237 +1,488 @@
-<!DOCTYPE HTML>
-<html class="no-js" lang="en-US">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checking the build</title>
-  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
-  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
-</head>
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Checking the build - Parresia Simulations</title>
+<meta name="description" content="">
 
 
-<body class="wrap">
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Checking the build">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/docs/build-check/">
+
+
+  <meta property="og:description" content="">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2021-01-20T17:09:50+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/docs/build-check/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
 
   <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
-  <header>
-  <div class="grid">
-    <div class="unit one-third center-on-mobiles">
-      <h1>
-        <a href="/">
-          <span class="sr-only">ParSim</span>
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoSep2017_plain.png" 
-               width="249" height="115" alt="ParSim">
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
         </a>
-      </h1>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
     </div>
-    <nav class="main-nav unit two-thirds hide-on-mobiles">
-      <ul>
-  <li class="">
-    <a href="https://bbanerjee.github.io/ParSim">Home</a>
-  </li>
-  <li class="current">
-    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
-  </li>
-  <li>
-    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
-  </li>
-</ul>
-
-    </nav>
   </div>
-</header>
+</div>
+
+
+    <div class="initial-content">
+      
 
 
 
-    <section class="docs">
-    <div class="grid">
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
 
-      <div class="unit four-fifths">
-        <article>
-          <h1>Checking the build</h1>
-          <p>To check the build, you should run a few example problems.</p>
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+    
+      
+      
+      
+      
+    
+    
+      
+
+<nav class="nav__list">
+  
+  <input id="ac-toc" name="accordion-toc" type="checkbox" />
+  <label for="ac-toc">Toggle menu</label>
+  <ul class="nav__items">
+    
+      <li>
+        
+          <span class="nav__sub-title">Getting Started</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/getting-started/">Downloading ParSim</a></li>
+          
+            <li><a href="/docs/build-instructions/">Building Vaango</a></li>
+          
+            <li><a href="/docs/build-check/">Testing Vaango</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango manuals</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/manuals/">PDF Manuals</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango tutorials</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2 plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">MPM material models</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/mpm-materials/tabular-plasticity/">Tabular plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+  </ul>
+</nav>
+
+    
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Checking the build">
+    <meta itemprop="description" content="">
+    
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Checking the build
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <hr />
+
+<p>To check the build, you should run a few example problems.</p>
 
 <ul>
-  <li>Create a directory called <code>runs</code> under <code>Vaango</code></li>
+  <li>Create a directory called <code class="language-plaintext highlighter-rouge">runs</code> under <code class="language-plaintext highlighter-rouge">Vaango</code></li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     mkdir runs</code></pre></figure>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">     <span class="nb">mkdir </span>runs</code></pre></figure>
 
 <ul>
   <li>Create links to the optimized and debug executables:</li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     <span class="nb">cd</span> runs
-     ln -s ../dbg/StandAlone/vaango vaango_dbg
-     ln -s ../opt/StandAlone/vaango vaango_dbg</code></pre></figure>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">     <span class="nb">cd </span>runs
+     <span class="nb">ln</span> <span class="nt">-s</span> ../dbg/StandAlone/vaango vaango_dbg
+     <span class="nb">ln</span> <span class="nt">-s</span> ../opt/StandAlone/vaango vaango_dbg</code></pre></figure>
 
 <ul>
-  <li>Create links to the <code>inputs</code> directory:</li>
+  <li>Create links to the <code class="language-plaintext highlighter-rouge">inputs</code> directory:</li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ln -s ../src/StandAlone/inputs/MPM MPM_inputs</code></pre></figure>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">     <span class="nb">ln</span> <span class="nt">-s</span> ../src/StandAlone/inputs/MPM MPM_inputs</code></pre></figure>
 
 <ul>
   <li>Do a serial test run</li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">     ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
 
 <ul>
   <li>Do a parallel test run</li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>    mpirun  -np <span class="m">1</span> ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">    mpirun  <span class="nt">-np</span> 1 ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
 
 
-          
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
 
 
+        
 
+      </footer>
 
+      
 
-  
-  
+      
+  <nav class="pagination">
+    
+      <a href="/docs/articles" class="pagination--pager" title="Blog articles
+">Previous</a>
+    
+    
+      <a href="/docs/build-instructions/" class="pagination--pager" title="Building Vaango
+">Next</a>
+    
+  </nav>
 
-  
-  
-
-  
-  
-    <div class="section-nav">
-      <div class="left align-right">
-          
-            
-            
-            <a href="https://bbanerjee.github.io/ParSim/docs/build-instructions/" class="prev">Back</a>
-          
-      </div>
-      <div class="right align-left">
-          
-            
-            
-            <a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/" class="next">Next</a>
-          
-      </div>
     </div>
-    <div class="clear"></div>
-    
-
-        </article>
-      </div>
-
-      <div class="unit one-fifth hide-on-mobiles">
-  <aside>
-    
-    <h4>Getting Started</h4>
-    <ul>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Download</a></li>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-instructions/">Building Vaango</a></li>
-
-  
-  
-  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
-
-</ul>
 
     
-    <h4>Vaango tutorials</h4>
-    <ul>
+  </article>
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2-plasticity with linear elasticity</a></li>
-
-</ul>
-
-    
-    <h4>MPM material models</h4>
-    <ul>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/">Tabular plasticity</a></li>
-
-</ul>
-
-    
-  </aside>
 </div>
 
-
-      <div class="clear"></div>
-
     </div>
-  </section>
 
+    
 
-  <footer>
-  <div class="grid">
-    <div class="unit one-third center">
-      <p>&copy;&nbsp;2018 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
     </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Built with
-        <a href="https://jekyllrb.com">
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
-        </a>
-      </p>
-    </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Hosted by
-        <a href="https://github.com">
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
-        </a>
-      </p>
-    </div>
-  </div>
-</footer>
 
-  <script>
-  var anchorForId = function (id) {
-    var anchor = document.createElement("a");
-    anchor.className = "header-link";
-    anchor.href      = "#" + id;
-    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
-    anchor.title = "Permalink";
-    return anchor;
-  };
+    
+  <script src="/assets/js/main.min.js"></script>
 
-  var linkifyAnchors = function (level, containingElement) {
-    var headers = containingElement.getElementsByTagName("h" + level);
-    for (var h = 0; h < headers.length; h++) {
-      var header = headers[h];
 
-      if (typeof header.id !== "undefined" && header.id !== "") {
-        header.appendChild(anchorForId(header.id));
-      }
-    }
-  };
 
-  document.onreadystatechange = function () {
-    if (this.readyState === "complete") {
-      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
-      if (!contentBlock) {
-        return;
-      }
-      for (var level = 1; level <= 6; level++) {
-        linkifyAnchors(level, contentBlock);
-      }
-    }
-  };
-</script>
 
-  
-</body>
+
+
+
+
+
+
+  </body>
 </html>

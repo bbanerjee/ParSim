@@ -1,58 +1,374 @@
-<!DOCTYPE HTML>
-<html class="no-js" lang="en-US">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tabular plasticity</title>
-  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
-  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
-</head>
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Tabular plasticity - Parresia Simulations</title>
+<meta name="description" content="">
 
 
-<body class="wrap">
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Tabular plasticity">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/">
+
+
+  <meta property="og:description" content="">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2021-01-20T17:09:50+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
 
   <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
   </script>
 
-  <header>
-  <div class="grid">
-    <div class="unit one-third center-on-mobiles">
-      <h1>
-        <a href="/">
-          <span class="sr-only">ParSim</span>
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoSep2017_plain.png" 
-               width="249" height="115" alt="ParSim">
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
         </a>
-      </h1>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
     </div>
-    <nav class="main-nav unit two-thirds hide-on-mobiles">
-      <ul>
-  <li class="">
-    <a href="https://bbanerjee.github.io/ParSim">Home</a>
-  </li>
-  <li class="current">
-    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
-  </li>
-  <li>
-    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
-  </li>
-</ul>
-
-    </nav>
   </div>
-</header>
+</div>
+
+
+    <div class="initial-content">
+      
 
 
 
-    <section class="docs">
-    <div class="grid">
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
 
-      <div class="unit four-fifths">
-        <article>
-          <h1>Tabular plasticity</h1>
-          <ul id="markdown-toc">
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+    
+      
+      
+      
+      
+    
+    
+      
+
+<nav class="nav__list">
+  
+  <input id="ac-toc" name="accordion-toc" type="checkbox" />
+  <label for="ac-toc">Toggle menu</label>
+  <ul class="nav__items">
+    
+      <li>
+        
+          <span class="nav__sub-title">Getting Started</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/getting-started/">Downloading ParSim</a></li>
+          
+            <li><a href="/docs/build-instructions/">Building Vaango</a></li>
+          
+            <li><a href="/docs/build-check/">Testing Vaango</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango manuals</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/manuals/">PDF Manuals</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">Vaango tutorials</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2 plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+      <li>
+        
+          <span class="nav__sub-title">MPM material models</span>
+        
+
+        
+        <ul>
+          
+            <li><a href="/docs/vaango/mpm-materials/tabular-plasticity/">Tabular plasticity</a></li>
+          
+        </ul>
+        
+      </li>
+    
+  </ul>
+</nav>
+
+    
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Tabular plasticity">
+    <meta itemprop="description" content="">
+    
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Tabular plasticity
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <ul id="markdown-toc">
   <li><a href="#shear-modulus-model" id="markdown-toc-shear-modulus-model">Shear modulus model</a></li>
   <li><a href="#bulk-modulus-model" id="markdown-toc-bulk-modulus-model">Bulk modulus model</a></li>
   <li><a href="#yield-function" id="markdown-toc-yield-function">Yield function</a></li>
@@ -65,7 +381,7 @@
 </ul>
 
 <p>The tabular plasticity model is designed to simulate hypoelastic-plasticity using 
-tabulated data for elastic moduli and the yield function for <script type="math/tex">J_2</script> and <script type="math/tex">J_2-I_1</script> models
+tabulated data for elastic moduli and the yield function for \(J_2\) and \(J_2-I_1\) models
 of perfect plasticity.</p>
 
 <p>The model has been designed with the high-rate deformation of soils in mind but can 
@@ -73,32 +389,32 @@ also be used for non-hardening metals. Sample input files for linear elastic mat
 and von Mises plasticity can be found in the <a href="https://github.com/bbanerjee/ParSim/tree/master/Vaango/src/StandAlone/inputs/MPM/TabularModels/TabularPlasticity">repository</a>.</p>
 
 <p>Since the tabular plasticity model was designed for materials that have almost no tensile strength,
-the inputs are expected in the <code>compression positive</code>  convention.  Note that the general
-convention used in the Vaango code is that <code>tension is positive and compression is negative</code> .
+the inputs are expected in the <code class="language-plaintext highlighter-rouge">compression positive</code>  convention.  Note that the general
+convention used in the Vaango code is that <code class="language-plaintext highlighter-rouge">tension is positive and compression is negative</code> .
 Conversions are done internally in the code to make sure that signs are consistent.</p>
 
 <h3 id="shear-modulus-model">Shear modulus model</h3>
-<p>The shear modulus is either a constant (<script type="math/tex">G_0</script>) or determined using a Poisson’s ratio (<script type="math/tex">\nu</script>)
-  from the tabular bulk modulus, <script type="math/tex">K(p)</script>, assuming a linear elastic model:</p>
+<p>The shear modulus is either a constant (\(G_0\)) or determined using a Poisson’s ratio (\(\nu\))
+  from the tabular bulk modulus, \(K(p)\), assuming a linear elastic model:</p>
 <div>
   $$
     G = \frac{3K(1-2\nu)}{2(1+\nu)}
   $$
   </div>
-<p>This relation is activated if <script type="math/tex">\nu \in [-1.0, 0.5)</script>, otherwise the constant shear modulus
+<p>This relation is activated if \(\nu \in [-1.0, 0.5)\), otherwise the constant shear modulus
   is used.</p>
 
 <h3 id="bulk-modulus-model">Bulk modulus model</h3>
 <p><img src="https://bbanerjee.github.io/ParSim/assets/img/mpm/material-models/TabularHydrostat.png" alt="Bulk modulus model" class="img-responsive" height="250px" border="5px double red" background-color="white" /></p>
 
 <p>The bulk modulus is determined from a table of unloading curves.  Each unloading 
-  curve is associated with a Hencky plastic volumetric strain (<script type="math/tex">\bar{\varepsilon_v^p}</script>).
-  These strains are associated in the JSON file with the key <code>PlasticStrainVol</code>
-  and added as the first independent variable in the Vaango <code>ups</code> input file.</p>
+  curve is associated with a Hencky plastic volumetric strain (\(\bar{\varepsilon_v^p}\)).
+  These strains are associated in the JSON file with the key <code class="language-plaintext highlighter-rouge">PlasticStrainVol</code>
+  and added as the first independent variable in the Vaango <code class="language-plaintext highlighter-rouge">ups</code> input file.</p>
 
 <p>For each plastic strain value, the JSON file has to contain an associated data
-  set of <code>TotalStrainVol</code> (the total Hencky volumetric strain, <script type="math/tex">\bar{\varepsilon_v}</script>)
-  and the <code>Pressure</code> (the mean stress, <script type="math/tex">\bar{p}</script>).</p>
+  set of <code class="language-plaintext highlighter-rouge">TotalStrainVol</code> (the total Hencky volumetric strain, \(\bar{\varepsilon_v}\))
+  and the <code class="language-plaintext highlighter-rouge">Pressure</code> (the mean stress, \(\bar{p}\)).</p>
 
 <h3 id="yield-function">Yield function</h3>
 <p><img src="https://bbanerjee.github.io/ParSim/assets/img/mpm/material-models/TabularYieldFn.png" alt="Yield function" class="img-responsive" height="250px" border="5px double red" background-color="white" /></p>
@@ -109,18 +425,18 @@ Conversions are done internally in the code to make sure that signs are consiste
      f = \sqrt{J_2} - g(\bar{p}) = 0
   $$
   </div>
-<p>The function <script type="math/tex">g(\bar{p})</script> is provided in tabular form.  Only one such function is
+<p>The function \(g(\bar{p})\) is provided in tabular form.  Only one such function is
   allowed.  The independent variable in the associated JSON file will have the name
-  <code>Pressure</code> while the dependent variable will have the name <code>SqrtJ2</code>.</p>
+  <code class="language-plaintext highlighter-rouge">Pressure</code> while the dependent variable will have the name <code class="language-plaintext highlighter-rouge">SqrtJ2</code>.</p>
 <h3 id="input-file-formats">Input file formats</h3>
 <p>The inputs for the tabular plasticity model are typically specified as follows.</p>
 
-<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span><span class="cp">&lt;?xml version=&#39;1.0&#39; encoding=&#39;ISO-8859-1&#39; ?&gt;</span>
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="cp">&lt;?xml version='1.0' encoding='ISO-8859-1' ?&gt;</span>
 <span class="nt">&lt;Uintah_specification&gt;</span>
   <span class="nt">&lt;Meta&gt;</span>
       <span class="nt">&lt;title&gt;</span>Tabular_Verification_Test_05_Uniaxial_Strain_Compression_DP_with_LoadUnload<span class="nt">&lt;/title&gt;</span>
   <span class="nt">&lt;/Meta&gt;</span>
-  <span class="nt">&lt;SimulationComponent</span> <span class="na">type=</span><span class="s">&quot;mpm&quot;</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;SimulationComponent</span> <span class="na">type=</span><span class="s">"mpm"</span> <span class="nt">/&gt;</span>
   <span class="nt">&lt;Time&gt;</span>
       <span class="nt">&lt;maxTime&gt;</span> 8.0 <span class="nt">&lt;/maxTime&gt;</span>
       <span class="nt">&lt;initTime&gt;</span> 0.0 <span class="nt">&lt;/initTime&gt;</span>
@@ -132,18 +448,18 @@ Conversions are done internally in the code to make sure that signs are consiste
       <span class="nt">&lt;filebase&gt;</span>TabularTest_05_UniaxialStrainLoadUnloadNonLinDPNonLin.uda<span class="nt">&lt;/filebase&gt;</span>
       <span class="nt">&lt;outputInterval&gt;</span>1.0e-3<span class="nt">&lt;/outputInterval&gt;</span>
       <span class="nt">&lt;outputInitTimestep/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.x&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.color&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.temperature&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.velocity&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.particleID&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.stress&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;g.mass&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.deformationGradient&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;g.acceleration&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.plasticVolStrain&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">&quot;p.elasticVolStrain&quot;</span><span class="nt">/&gt;</span>
-      <span class="nt">&lt;checkpoint</span> <span class="na">cycle =</span> <span class="s">&quot;2&quot;</span> <span class="na">timestepInterval =</span> <span class="s">&quot;2000&quot;</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.x"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.color"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.temperature"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.velocity"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.particleID"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.stress"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"g.mass"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.deformationGradient"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"g.acceleration"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.plasticVolStrain"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;save</span> <span class="na">label =</span> <span class="s">"p.elasticVolStrain"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;checkpoint</span> <span class="na">cycle =</span> <span class="s">"2"</span> <span class="na">timestepInterval =</span> <span class="s">"2000"</span><span class="nt">/&gt;</span>
   <span class="nt">&lt;/DataArchiver&gt;</span>
   <span class="nt">&lt;MPM&gt;</span>
     <span class="nt">&lt;time_integrator&gt;</span>              explicit   <span class="nt">&lt;/time_integrator&gt;</span>
@@ -161,37 +477,37 @@ Conversions are done internally in the code to make sure that signs are consiste
     <span class="nt">&lt;with_color&gt;</span>                   true       <span class="nt">&lt;/with_color&gt;</span>
     <span class="nt">&lt;use_prescribed_deformation&gt;</span>   true       <span class="nt">&lt;/use_prescribed_deformation&gt;</span>
     <span class="nt">&lt;prescribed_deformation_file&gt;</span>  TabularTest_05_PrescribedDeformation.inp   <span class="nt">&lt;/prescribed_deformation_file&gt;</span>
-    <span class="nt">&lt;erosion</span> <span class="na">algorithm =</span> <span class="s">&quot;none&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;erosion</span> <span class="na">algorithm =</span> <span class="s">"none"</span><span class="nt">/&gt;</span>
   <span class="nt">&lt;/MPM&gt;</span>
   <span class="nt">&lt;PhysicalConstants&gt;</span>
       <span class="nt">&lt;gravity&gt;</span>[0,0,0]<span class="nt">&lt;/gravity&gt;</span>
   <span class="nt">&lt;/PhysicalConstants&gt;</span>
   <span class="nt">&lt;MaterialProperties&gt;</span>
     <span class="nt">&lt;MPM&gt;</span>
-      <span class="nt">&lt;material</span> <span class="na">name=</span><span class="s">&quot;TabularPlastic&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;material</span> <span class="na">name=</span><span class="s">"TabularPlastic"</span><span class="nt">&gt;</span>
         <span class="nt">&lt;density&gt;</span>1050<span class="nt">&lt;/density&gt;</span>
         <span class="nt">&lt;melt_temp&gt;</span>3695.0<span class="nt">&lt;/melt_temp&gt;</span>
         <span class="nt">&lt;room_temp&gt;</span>294.0<span class="nt">&lt;/room_temp&gt;</span>
         <span class="nt">&lt;thermal_conductivity&gt;</span>174.0e-7<span class="nt">&lt;/thermal_conductivity&gt;</span>
         <span class="nt">&lt;specific_heat&gt;</span>134.0e-8<span class="nt">&lt;/specific_heat&gt;</span>
-        <span class="nt">&lt;constitutive_model</span> <span class="na">type=</span><span class="s">&quot;tabular_plasticity&quot;</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;elastic_moduli_model</span> <span class="na">type=</span><span class="s">&quot;tabular&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;constitutive_model</span> <span class="na">type=</span><span class="s">"tabular_plasticity"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;elastic_moduli_model</span> <span class="na">type=</span><span class="s">"tabular"</span><span class="nt">&gt;</span>
             <span class="nt">&lt;filename&gt;</span>TabularTest_05_Elastic.json<span class="nt">&lt;/filename&gt;</span>
             <span class="nt">&lt;independent_variables&gt;</span>PlasticStrainVol, TotalStrainVol<span class="nt">&lt;/independent_variables&gt;</span>
             <span class="nt">&lt;dependent_variables&gt;</span>Pressure<span class="nt">&lt;/dependent_variables&gt;</span>
-            <span class="nt">&lt;interpolation</span> <span class="na">type=</span><span class="s">&quot;linear&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;interpolation</span> <span class="na">type=</span><span class="s">"linear"</span><span class="nt">/&gt;</span>
             <span class="nt">&lt;G0&gt;</span>3500<span class="nt">&lt;/G0&gt;</span>
             <span class="nt">&lt;nu&gt;</span>0.35<span class="nt">&lt;/nu&gt;</span>
           <span class="nt">&lt;/elastic_moduli_model&gt;</span>
-          <span class="nt">&lt;plastic_yield_condition</span> <span class="na">type=</span><span class="s">&quot;tabular&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;plastic_yield_condition</span> <span class="na">type=</span><span class="s">"tabular"</span><span class="nt">&gt;</span>
             <span class="nt">&lt;filename&gt;</span>TabularTest_05_Yield.json<span class="nt">&lt;/filename&gt;</span>
             <span class="nt">&lt;independent_variables&gt;</span>Pressure<span class="nt">&lt;/independent_variables&gt;</span>
             <span class="nt">&lt;dependent_variables&gt;</span>SqrtJ2<span class="nt">&lt;/dependent_variables&gt;</span>
-            <span class="nt">&lt;interpolation</span> <span class="na">type=</span><span class="s">&quot;linear&quot;</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;interpolation</span> <span class="na">type=</span><span class="s">"linear"</span><span class="nt">/&gt;</span>
           <span class="nt">&lt;/plastic_yield_condition&gt;</span>
         <span class="nt">&lt;/constitutive_model&gt;</span> 
         <span class="nt">&lt;geom_object&gt;</span>
-          <span class="nt">&lt;box</span> <span class="na">label =</span> <span class="s">&quot;Plate1&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;box</span> <span class="na">label =</span> <span class="s">"Plate1"</span><span class="nt">&gt;</span>
             <span class="nt">&lt;min&gt;</span>[0.0,0.0,0.0]<span class="nt">&lt;/min&gt;</span>
             <span class="nt">&lt;max&gt;</span>[1.0,1.0,1.0]<span class="nt">&lt;/max&gt;</span>
           <span class="nt">&lt;/box&gt;</span>
@@ -212,7 +528,7 @@ Conversions are done internally in the code to make sure that signs are consiste
       <span class="nt">&lt;BoundaryConditions&gt;</span>                      
       <span class="nt">&lt;/BoundaryConditions&gt;</span>
       <span class="nt">&lt;Level&gt;</span>
-        <span class="nt">&lt;Box</span> <span class="na">label =</span> <span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Box</span> <span class="na">label =</span> <span class="s">"1"</span><span class="nt">&gt;</span>
             <span class="nt">&lt;lower&gt;</span>[-2.0, -2.0, -2.0]<span class="nt">&lt;/lower&gt;</span>
             <span class="nt">&lt;upper&gt;</span>[3.0, 3.0, 3.0]<span class="nt">&lt;/upper&gt;</span>
             <span class="nt">&lt;resolution&gt;</span>[5,5,5]<span class="nt">&lt;/resolution&gt;</span>
@@ -225,203 +541,132 @@ Conversions are done internally in the code to make sure that signs are consiste
 
 <h4 id="the-prescribed-deformation-file">The prescribed deformation file</h4>
 <p>The input file listed above is for a single particle driven by a prescribed deformation gradient.  The
-deformation file is <code>TabularTest_05_PrescribedDeformation.inp</code> which contains the following:</p>
+deformation file is <code class="language-plaintext highlighter-rouge">TabularTest_05_PrescribedDeformation.inp</code> which contains the following:</p>
 
-<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span>0  1.0  0  0  0  1  0  0  0  1  0  0  0  0
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml">0  1.0  0  0  0  1  0  0  0  1  0  0  0  0
 1  3.0  0  0  0  1  0  0  0  1  0  0  0  0  
 3  1.0  0  0  0  1  0  0  0  1  0  0  0  0
 5  0.5  0  0  0  1  0  0  0  1  0  0  0  0
 7  1.0  0  0  0  1  0  0  0  1  0  0  0  0
 8  1.02 0  0  0  1  0  0  0  1  0  0  0  0 </code></pre></figure>
 
-<p>The first column is the time (seconds), the second column is deformation gradient <script type="math/tex">F_{xx}</script>.  This
-deformation represents uniaxial strain in the <script type="math/tex">x</script>-direction.</p>
+<p>The first column is the time (seconds), the second column is deformation gradient \(F_{xx}\).  This
+deformation represents uniaxial strain in the \(x\)-direction.</p>
 
 <h4 id="the-bulk-modulus-model">The bulk-modulus model</h4>
-<p>The bulk modulus model is non-linear (<script type="math/tex">\tanh</script>-form) and is input as a JSON file containing data
+<p>The bulk modulus model is non-linear (\(\tanh\)-form) and is input as a JSON file containing data
 that covers the range expected during a simulation.  A sample file<br />
-(<code>TabularTest_05_Elastic.json</code>) is shown below:</p>
+(<code class="language-plaintext highlighter-rouge">TabularTest_05_Elastic.json</code>) is shown below:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span><span class="nt">&quot;Vaango_tabular_data&quot;</span><span class="p">:</span> <span class="p">{</span>
-  <span class="nt">&quot;Meta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;title&quot;</span> <span class="p">:</span> <span class="s2">&quot;Nonlinear elastic data&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;Data&quot;</span> <span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;PlasticStrainVol&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-2.5</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">],</span>
-    <span class="nt">&quot;Data&quot;</span> <span class="p">:</span> <span class="p">[{</span>
-      <span class="nt">&quot;TotalStrainVol&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-15.000000</span><span class="p">,</span> <span class="mf">-14.310345</span><span class="p">,</span> <span class="mf">-13.620690</span><span class="p">,</span> <span class="mf">-12.931034</span><span class="p">,</span> <span class="mf">-12.241379</span><span class="p">,</span> <span class="mf">-11.551724</span><span class="p">,</span> <span class="mf">-10.862069</span><span class="p">,</span> <span class="mf">-10.172414</span><span class="p">,</span> <span class="mf">-9.482759</span><span class="p">,</span> <span class="mf">-8.793103</span><span class="p">,</span> <span class="mf">-8.103448</span><span class="p">,</span> <span class="mf">-7.413793</span><span class="p">,</span> <span class="mf">-6.724138</span><span class="p">,</span> <span class="mf">-6.034483</span><span class="p">,</span> <span class="mf">-5.344828</span><span class="p">,</span> <span class="mf">-4.655172</span><span class="p">,</span> <span class="mf">-3.965517</span><span class="p">,</span> <span class="mf">-3.275862</span><span class="p">,</span> <span class="mf">-2.586207</span><span class="p">,</span> <span class="mf">-1.896552</span><span class="p">,</span> <span class="mf">-1.206897</span><span class="p">,</span> <span class="mf">-0.517241</span><span class="p">,</span> <span class="mf">0.172414</span><span class="p">,</span> <span class="mf">0.862069</span><span class="p">,</span> <span class="mf">1.551724</span><span class="p">,</span> <span class="mf">2.241379</span><span class="p">,</span> <span class="mf">2.931034</span><span class="p">,</span> <span class="mf">3.620690</span><span class="p">,</span> <span class="mf">4.310345</span><span class="p">,</span> <span class="mf">5.000000</span><span class="p">],</span>
-      <span class="nt">&quot;Pressure&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-2959.842894</span><span class="p">,</span> <span class="mf">-2943.464146</span><span class="p">,</span> <span class="mf">-2920.494168</span><span class="p">,</span> <span class="mf">-2888.366995</span><span class="p">,</span> <span class="mf">-2843.600634</span><span class="p">,</span> <span class="mf">-2781.548344</span><span class="p">,</span> <span class="mf">-2696.156593</span><span class="p">,</span> <span class="mf">-2579.811517</span><span class="p">,</span> <span class="mf">-2423.426002</span><span class="p">,</span> <span class="mf">-2217.004505</span><span class="p">,</span> <span class="mf">-1950.975669</span><span class="p">,</span> <span class="mf">-1618.496214</span><span class="p">,</span> <span class="mf">-1218.556435</span><span class="p">,</span> <span class="mf">-759.014896</span><span class="p">,</span> <span class="mf">-257.981931</span><span class="p">,</span> <span class="mf">257.981931</span><span class="p">,</span> <span class="mf">759.014896</span><span class="p">,</span> <span class="mf">1218.556435</span><span class="p">,</span> <span class="mf">1618.496214</span><span class="p">,</span> <span class="mf">1950.975669</span><span class="p">,</span> <span class="mf">2217.004505</span><span class="p">,</span> <span class="mf">2423.426002</span><span class="p">,</span> <span class="mf">2579.811517</span><span class="p">,</span> <span class="mf">2696.156593</span><span class="p">,</span> <span class="mf">2781.548344</span><span class="p">,</span> <span class="mf">2843.600634</span><span class="p">,</span> <span class="mf">2888.366995</span><span class="p">,</span> <span class="mf">2920.494168</span><span class="p">,</span> <span class="mf">2943.464146</span><span class="p">,</span> <span class="mf">2959.842894</span><span class="p">]</span>
-    <span class="p">},</span> <span class="p">{</span>
-      <span class="nt">&quot;TotalStrainVol&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-5.000000</span><span class="p">,</span> <span class="mf">-4.310345</span><span class="p">,</span> <span class="mf">-3.620690</span><span class="p">,</span> <span class="mf">-2.931034</span><span class="p">,</span> <span class="mf">-2.241379</span><span class="p">,</span> <span class="mf">-1.551724</span><span class="p">,</span> <span class="mf">-0.862069</span><span class="p">,</span> <span class="mf">-0.172414</span><span class="p">,</span> <span class="mf">0.517241</span><span class="p">,</span> <span class="mf">1.206897</span><span class="p">,</span> <span class="mf">1.896552</span><span class="p">,</span> <span class="mf">2.586207</span><span class="p">,</span> <span class="mf">3.275862</span><span class="p">,</span> <span class="mf">3.965517</span><span class="p">,</span> <span class="mf">4.655172</span><span class="p">,</span> <span class="mf">5.344828</span><span class="p">,</span> <span class="mf">6.034483</span><span class="p">,</span> <span class="mf">6.724138</span><span class="p">,</span> <span class="mf">7.413793</span><span class="p">,</span> <span class="mf">8.103448</span><span class="p">,</span> <span class="mf">8.793103</span><span class="p">,</span> <span class="mf">9.482759</span><span class="p">,</span> <span class="mf">10.172414</span><span class="p">,</span> <span class="mf">10.862069</span><span class="p">,</span> <span class="mf">11.551724</span><span class="p">,</span> <span class="mf">12.241379</span><span class="p">,</span> <span class="mf">12.931034</span><span class="p">,</span> <span class="mf">13.620690</span><span class="p">,</span> <span class="mf">14.310345</span><span class="p">,</span> <span class="mf">15.000000</span><span class="p">],</span>
-      <span class="nt">&quot;Pressure&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-2959.842894</span><span class="p">,</span> <span class="mf">-2943.464146</span><span class="p">,</span> <span class="mf">-2920.494168</span><span class="p">,</span> <span class="mf">-2888.366995</span><span class="p">,</span> <span class="mf">-2843.600634</span><span class="p">,</span> <span class="mf">-2781.548344</span><span class="p">,</span> <span class="mf">-2696.156593</span><span class="p">,</span> <span class="mf">-2579.811517</span><span class="p">,</span> <span class="mf">-2423.426002</span><span class="p">,</span> <span class="mf">-2217.004505</span><span class="p">,</span> <span class="mf">-1950.975669</span><span class="p">,</span> <span class="mf">-1618.496214</span><span class="p">,</span> <span class="mf">-1218.556435</span><span class="p">,</span> <span class="mf">-759.014896</span><span class="p">,</span> <span class="mf">-257.981931</span><span class="p">,</span> <span class="mf">257.981931</span><span class="p">,</span> <span class="mf">759.014896</span><span class="p">,</span> <span class="mf">1218.556435</span><span class="p">,</span> <span class="mf">1618.496214</span><span class="p">,</span> <span class="mf">1950.975669</span><span class="p">,</span> <span class="mf">2217.004505</span><span class="p">,</span> <span class="mf">2423.426002</span><span class="p">,</span> <span class="mf">2579.811517</span><span class="p">,</span> <span class="mf">2696.156593</span><span class="p">,</span> <span class="mf">2781.548344</span><span class="p">,</span> <span class="mf">2843.600634</span><span class="p">,</span> <span class="mf">2888.366995</span><span class="p">,</span> <span class="mf">2920.494168</span><span class="p">,</span> <span class="mf">2943.464146</span><span class="p">,</span> <span class="mf">2959.842894</span><span class="p">]</span>
-    <span class="p">}]</span>
-  <span class="p">}</span>
-<span class="p">}}</span></code></pre></figure>
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="nl">"Vaango_tabular_data"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nl">"Meta"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"title"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Nonlinear elastic data"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"Data"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"PlasticStrainVol"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-2.5</span><span class="p">,</span><span class="w"> </span><span class="mf">2.5</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"Data"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w">
+      </span><span class="nl">"TotalStrainVol"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-15.000000</span><span class="p">,</span><span class="w"> </span><span class="mf">-14.310345</span><span class="p">,</span><span class="w"> </span><span class="mf">-13.620690</span><span class="p">,</span><span class="w"> </span><span class="mf">-12.931034</span><span class="p">,</span><span class="w"> </span><span class="mf">-12.241379</span><span class="p">,</span><span class="w"> </span><span class="mf">-11.551724</span><span class="p">,</span><span class="w"> </span><span class="mf">-10.862069</span><span class="p">,</span><span class="w"> </span><span class="mf">-10.172414</span><span class="p">,</span><span class="w"> </span><span class="mf">-9.482759</span><span class="p">,</span><span class="w"> </span><span class="mf">-8.793103</span><span class="p">,</span><span class="w"> </span><span class="mf">-8.103448</span><span class="p">,</span><span class="w"> </span><span class="mf">-7.413793</span><span class="p">,</span><span class="w"> </span><span class="mf">-6.724138</span><span class="p">,</span><span class="w"> </span><span class="mf">-6.034483</span><span class="p">,</span><span class="w"> </span><span class="mf">-5.344828</span><span class="p">,</span><span class="w"> </span><span class="mf">-4.655172</span><span class="p">,</span><span class="w"> </span><span class="mf">-3.965517</span><span class="p">,</span><span class="w"> </span><span class="mf">-3.275862</span><span class="p">,</span><span class="w"> </span><span class="mf">-2.586207</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.896552</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.206897</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.517241</span><span class="p">,</span><span class="w"> </span><span class="mf">0.172414</span><span class="p">,</span><span class="w"> </span><span class="mf">0.862069</span><span class="p">,</span><span class="w"> </span><span class="mf">1.551724</span><span class="p">,</span><span class="w"> </span><span class="mf">2.241379</span><span class="p">,</span><span class="w"> </span><span class="mf">2.931034</span><span class="p">,</span><span class="w"> </span><span class="mf">3.620690</span><span class="p">,</span><span class="w"> </span><span class="mf">4.310345</span><span class="p">,</span><span class="w"> </span><span class="mf">5.000000</span><span class="p">],</span><span class="w">
+      </span><span class="nl">"Pressure"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-2959.842894</span><span class="p">,</span><span class="w"> </span><span class="mf">-2943.464146</span><span class="p">,</span><span class="w"> </span><span class="mf">-2920.494168</span><span class="p">,</span><span class="w"> </span><span class="mf">-2888.366995</span><span class="p">,</span><span class="w"> </span><span class="mf">-2843.600634</span><span class="p">,</span><span class="w"> </span><span class="mf">-2781.548344</span><span class="p">,</span><span class="w"> </span><span class="mf">-2696.156593</span><span class="p">,</span><span class="w"> </span><span class="mf">-2579.811517</span><span class="p">,</span><span class="w"> </span><span class="mf">-2423.426002</span><span class="p">,</span><span class="w"> </span><span class="mf">-2217.004505</span><span class="p">,</span><span class="w"> </span><span class="mf">-1950.975669</span><span class="p">,</span><span class="w"> </span><span class="mf">-1618.496214</span><span class="p">,</span><span class="w"> </span><span class="mf">-1218.556435</span><span class="p">,</span><span class="w"> </span><span class="mf">-759.014896</span><span class="p">,</span><span class="w"> </span><span class="mf">-257.981931</span><span class="p">,</span><span class="w"> </span><span class="mf">257.981931</span><span class="p">,</span><span class="w"> </span><span class="mf">759.014896</span><span class="p">,</span><span class="w"> </span><span class="mf">1218.556435</span><span class="p">,</span><span class="w"> </span><span class="mf">1618.496214</span><span class="p">,</span><span class="w"> </span><span class="mf">1950.975669</span><span class="p">,</span><span class="w"> </span><span class="mf">2217.004505</span><span class="p">,</span><span class="w"> </span><span class="mf">2423.426002</span><span class="p">,</span><span class="w"> </span><span class="mf">2579.811517</span><span class="p">,</span><span class="w"> </span><span class="mf">2696.156593</span><span class="p">,</span><span class="w"> </span><span class="mf">2781.548344</span><span class="p">,</span><span class="w"> </span><span class="mf">2843.600634</span><span class="p">,</span><span class="w"> </span><span class="mf">2888.366995</span><span class="p">,</span><span class="w"> </span><span class="mf">2920.494168</span><span class="p">,</span><span class="w"> </span><span class="mf">2943.464146</span><span class="p">,</span><span class="w"> </span><span class="mf">2959.842894</span><span class="p">]</span><span class="w">
+    </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"TotalStrainVol"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-5.000000</span><span class="p">,</span><span class="w"> </span><span class="mf">-4.310345</span><span class="p">,</span><span class="w"> </span><span class="mf">-3.620690</span><span class="p">,</span><span class="w"> </span><span class="mf">-2.931034</span><span class="p">,</span><span class="w"> </span><span class="mf">-2.241379</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.551724</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.862069</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.172414</span><span class="p">,</span><span class="w"> </span><span class="mf">0.517241</span><span class="p">,</span><span class="w"> </span><span class="mf">1.206897</span><span class="p">,</span><span class="w"> </span><span class="mf">1.896552</span><span class="p">,</span><span class="w"> </span><span class="mf">2.586207</span><span class="p">,</span><span class="w"> </span><span class="mf">3.275862</span><span class="p">,</span><span class="w"> </span><span class="mf">3.965517</span><span class="p">,</span><span class="w"> </span><span class="mf">4.655172</span><span class="p">,</span><span class="w"> </span><span class="mf">5.344828</span><span class="p">,</span><span class="w"> </span><span class="mf">6.034483</span><span class="p">,</span><span class="w"> </span><span class="mf">6.724138</span><span class="p">,</span><span class="w"> </span><span class="mf">7.413793</span><span class="p">,</span><span class="w"> </span><span class="mf">8.103448</span><span class="p">,</span><span class="w"> </span><span class="mf">8.793103</span><span class="p">,</span><span class="w"> </span><span class="mf">9.482759</span><span class="p">,</span><span class="w"> </span><span class="mf">10.172414</span><span class="p">,</span><span class="w"> </span><span class="mf">10.862069</span><span class="p">,</span><span class="w"> </span><span class="mf">11.551724</span><span class="p">,</span><span class="w"> </span><span class="mf">12.241379</span><span class="p">,</span><span class="w"> </span><span class="mf">12.931034</span><span class="p">,</span><span class="w"> </span><span class="mf">13.620690</span><span class="p">,</span><span class="w"> </span><span class="mf">14.310345</span><span class="p">,</span><span class="w"> </span><span class="mf">15.000000</span><span class="p">],</span><span class="w">
+      </span><span class="nl">"Pressure"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-2959.842894</span><span class="p">,</span><span class="w"> </span><span class="mf">-2943.464146</span><span class="p">,</span><span class="w"> </span><span class="mf">-2920.494168</span><span class="p">,</span><span class="w"> </span><span class="mf">-2888.366995</span><span class="p">,</span><span class="w"> </span><span class="mf">-2843.600634</span><span class="p">,</span><span class="w"> </span><span class="mf">-2781.548344</span><span class="p">,</span><span class="w"> </span><span class="mf">-2696.156593</span><span class="p">,</span><span class="w"> </span><span class="mf">-2579.811517</span><span class="p">,</span><span class="w"> </span><span class="mf">-2423.426002</span><span class="p">,</span><span class="w"> </span><span class="mf">-2217.004505</span><span class="p">,</span><span class="w"> </span><span class="mf">-1950.975669</span><span class="p">,</span><span class="w"> </span><span class="mf">-1618.496214</span><span class="p">,</span><span class="w"> </span><span class="mf">-1218.556435</span><span class="p">,</span><span class="w"> </span><span class="mf">-759.014896</span><span class="p">,</span><span class="w"> </span><span class="mf">-257.981931</span><span class="p">,</span><span class="w"> </span><span class="mf">257.981931</span><span class="p">,</span><span class="w"> </span><span class="mf">759.014896</span><span class="p">,</span><span class="w"> </span><span class="mf">1218.556435</span><span class="p">,</span><span class="w"> </span><span class="mf">1618.496214</span><span class="p">,</span><span class="w"> </span><span class="mf">1950.975669</span><span class="p">,</span><span class="w"> </span><span class="mf">2217.004505</span><span class="p">,</span><span class="w"> </span><span class="mf">2423.426002</span><span class="p">,</span><span class="w"> </span><span class="mf">2579.811517</span><span class="p">,</span><span class="w"> </span><span class="mf">2696.156593</span><span class="p">,</span><span class="w"> </span><span class="mf">2781.548344</span><span class="p">,</span><span class="w"> </span><span class="mf">2843.600634</span><span class="p">,</span><span class="w"> </span><span class="mf">2888.366995</span><span class="p">,</span><span class="w"> </span><span class="mf">2920.494168</span><span class="p">,</span><span class="w"> </span><span class="mf">2943.464146</span><span class="p">,</span><span class="w"> </span><span class="mf">2959.842894</span><span class="p">]</span><span class="w">
+    </span><span class="p">}]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}}</span></code></pre></figure>
 
 <h4 id="the-yield-function">The yield function</h4>
 <p>The yield function in this example is a nonlinear Drucker-Prager model.  The input file
-(<code>TabularTest_05_Yield.json</code>) is shown below:</p>
+(<code class="language-plaintext highlighter-rouge">TabularTest_05_Yield.json</code>) is shown below:</p>
 
-<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span><span class="nt">&quot;Vaango_tabular_data&quot;</span><span class="p">:</span> <span class="p">{</span>
-  <span class="nt">&quot;Meta&quot;</span> <span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;title&quot;</span> <span class="p">:</span> <span class="s2">&quot;Quadratic Drucker-Prager yield data&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;Data&quot;</span> <span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;Pressure&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">-333.333333</span><span class="p">,</span> <span class="mf">-298.850575</span><span class="p">,</span> <span class="mf">-264.367816</span><span class="p">,</span> <span class="mf">-229.885057</span><span class="p">,</span> <span class="mf">-195.402299</span><span class="p">,</span> <span class="mf">-160.919540</span><span class="p">,</span> <span class="mf">-126.436782</span><span class="p">,</span> <span class="mf">-91.954023</span><span class="p">,</span> <span class="mf">-57.471264</span><span class="p">,</span> <span class="mf">-22.988506</span><span class="p">,</span> <span class="mf">11.494253</span><span class="p">,</span> <span class="mf">45.977011</span><span class="p">,</span> <span class="mf">80.459770</span><span class="p">,</span> <span class="mf">114.942529</span><span class="p">,</span> <span class="mf">149.425287</span><span class="p">,</span> <span class="mf">183.908046</span><span class="p">,</span> <span class="mf">218.390805</span><span class="p">,</span> <span class="mf">252.873563</span><span class="p">,</span> <span class="mf">287.356322</span><span class="p">,</span> <span class="mf">321.839080</span><span class="p">,</span> <span class="mf">356.321839</span><span class="p">,</span> <span class="mf">390.804598</span><span class="p">,</span> <span class="mf">425.287356</span><span class="p">,</span> <span class="mf">459.770115</span><span class="p">,</span> <span class="mf">494.252874</span><span class="p">,</span> <span class="mf">528.735632</span><span class="p">,</span> <span class="mf">563.218391</span><span class="p">,</span> <span class="mf">597.701149</span><span class="p">,</span> <span class="mf">632.183908</span><span class="p">,</span> <span class="mf">666.666667</span><span class="p">],</span>
-    <span class="nt">&quot;SqrtJ2&quot;</span> <span class="p">:</span>   <span class="p">[</span><span class="mf">0.000000</span><span class="p">,</span> <span class="mf">45.485883</span><span class="p">,</span> <span class="mf">64.326752</span><span class="p">,</span> <span class="mf">78.783860</span><span class="p">,</span> <span class="mf">90.971765</span><span class="p">,</span> <span class="mf">101.709526</span><span class="p">,</span> <span class="mf">111.417203</span><span class="p">,</span> <span class="mf">120.344334</span><span class="p">,</span> <span class="mf">128.653504</span><span class="p">,</span> <span class="mf">136.457648</span><span class="p">,</span> <span class="mf">143.838990</span><span class="p">,</span> <span class="mf">150.859606</span><span class="p">,</span> <span class="mf">157.567719</span><span class="p">,</span> <span class="mf">164.001682</span><span class="p">,</span> <span class="mf">170.192589</span><span class="p">,</span> <span class="mf">176.166066</span><span class="p">,</span><span class="mf">181.943530</span><span class="p">,</span> <span class="mf">187.543098</span><span class="p">,</span> <span class="mf">192.980256</span><span class="p">,</span> <span class="mf">198.268366</span><span class="p">,</span> <span class="mf">203.419051</span><span class="p">,</span> <span class="mf">208.442500</span><span class="p">,</span> <span class="mf">213.347701</span><span class="p">,</span> <span class="mf">218.142630</span><span class="p">,</span> <span class="mf">222.834406</span><span class="p">,</span> <span class="mf">227.429413</span><span class="p">,</span> <span class="mf">231.933403</span><span class="p">,</span> <span class="mf">236.351579</span><span class="p">,</span> <span class="mf">240.688667</span><span class="p">,</span> <span class="mf">244.948974</span><span class="p">]</span>
-  <span class="p">}</span>
-<span class="p">}}</span></code></pre></figure>
-
-
-          
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="nl">"Vaango_tabular_data"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+  </span><span class="nl">"Meta"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"title"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Quadratic Drucker-Prager yield data"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"Data"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"Pressure"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-333.333333</span><span class="p">,</span><span class="w"> </span><span class="mf">-298.850575</span><span class="p">,</span><span class="w"> </span><span class="mf">-264.367816</span><span class="p">,</span><span class="w"> </span><span class="mf">-229.885057</span><span class="p">,</span><span class="w"> </span><span class="mf">-195.402299</span><span class="p">,</span><span class="w"> </span><span class="mf">-160.919540</span><span class="p">,</span><span class="w"> </span><span class="mf">-126.436782</span><span class="p">,</span><span class="w"> </span><span class="mf">-91.954023</span><span class="p">,</span><span class="w"> </span><span class="mf">-57.471264</span><span class="p">,</span><span class="w"> </span><span class="mf">-22.988506</span><span class="p">,</span><span class="w"> </span><span class="mf">11.494253</span><span class="p">,</span><span class="w"> </span><span class="mf">45.977011</span><span class="p">,</span><span class="w"> </span><span class="mf">80.459770</span><span class="p">,</span><span class="w"> </span><span class="mf">114.942529</span><span class="p">,</span><span class="w"> </span><span class="mf">149.425287</span><span class="p">,</span><span class="w"> </span><span class="mf">183.908046</span><span class="p">,</span><span class="w"> </span><span class="mf">218.390805</span><span class="p">,</span><span class="w"> </span><span class="mf">252.873563</span><span class="p">,</span><span class="w"> </span><span class="mf">287.356322</span><span class="p">,</span><span class="w"> </span><span class="mf">321.839080</span><span class="p">,</span><span class="w"> </span><span class="mf">356.321839</span><span class="p">,</span><span class="w"> </span><span class="mf">390.804598</span><span class="p">,</span><span class="w"> </span><span class="mf">425.287356</span><span class="p">,</span><span class="w"> </span><span class="mf">459.770115</span><span class="p">,</span><span class="w"> </span><span class="mf">494.252874</span><span class="p">,</span><span class="w"> </span><span class="mf">528.735632</span><span class="p">,</span><span class="w"> </span><span class="mf">563.218391</span><span class="p">,</span><span class="w"> </span><span class="mf">597.701149</span><span class="p">,</span><span class="w"> </span><span class="mf">632.183908</span><span class="p">,</span><span class="w"> </span><span class="mf">666.666667</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"SqrtJ2"</span><span class="w"> </span><span class="p">:</span><span class="w">   </span><span class="p">[</span><span class="mf">0.000000</span><span class="p">,</span><span class="w"> </span><span class="mf">45.485883</span><span class="p">,</span><span class="w"> </span><span class="mf">64.326752</span><span class="p">,</span><span class="w"> </span><span class="mf">78.783860</span><span class="p">,</span><span class="w"> </span><span class="mf">90.971765</span><span class="p">,</span><span class="w"> </span><span class="mf">101.709526</span><span class="p">,</span><span class="w"> </span><span class="mf">111.417203</span><span class="p">,</span><span class="w"> </span><span class="mf">120.344334</span><span class="p">,</span><span class="w"> </span><span class="mf">128.653504</span><span class="p">,</span><span class="w"> </span><span class="mf">136.457648</span><span class="p">,</span><span class="w"> </span><span class="mf">143.838990</span><span class="p">,</span><span class="w"> </span><span class="mf">150.859606</span><span class="p">,</span><span class="w"> </span><span class="mf">157.567719</span><span class="p">,</span><span class="w"> </span><span class="mf">164.001682</span><span class="p">,</span><span class="w"> </span><span class="mf">170.192589</span><span class="p">,</span><span class="w"> </span><span class="mf">176.166066</span><span class="p">,</span><span class="mf">181.943530</span><span class="p">,</span><span class="w"> </span><span class="mf">187.543098</span><span class="p">,</span><span class="w"> </span><span class="mf">192.980256</span><span class="p">,</span><span class="w"> </span><span class="mf">198.268366</span><span class="p">,</span><span class="w"> </span><span class="mf">203.419051</span><span class="p">,</span><span class="w"> </span><span class="mf">208.442500</span><span class="p">,</span><span class="w"> </span><span class="mf">213.347701</span><span class="p">,</span><span class="w"> </span><span class="mf">218.142630</span><span class="p">,</span><span class="w"> </span><span class="mf">222.834406</span><span class="p">,</span><span class="w"> </span><span class="mf">227.429413</span><span class="p">,</span><span class="w"> </span><span class="mf">231.933403</span><span class="p">,</span><span class="w"> </span><span class="mf">236.351579</span><span class="p">,</span><span class="w"> </span><span class="mf">240.688667</span><span class="p">,</span><span class="w"> </span><span class="mf">244.948974</span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}}</span></code></pre></figure>
 
 
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
 
 
+        
 
-  
-  
+      </footer>
 
-  
-  
+      
 
-  
-  
+      
+  <nav class="pagination">
+    
+      <a href="/docs/parsim/" class="pagination--pager" title="Parsim - Particle-based Simulation
+">Previous</a>
+    
+    
+      <a href="/docs/vaango/tutorials/tabular-j2-lin-elas/" class="pagination--pager" title="Tabular J2-plasticity with linear elasticity
+">Next</a>
+    
+  </nav>
 
-  
-  
-
-  
-  
-    <div class="section-nav">
-      <div class="left align-right">
-          
-            
-            
-            <a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/" class="prev">Back</a>
-          
-      </div>
-      <div class="right align-left">
-          
-            <span class="next disabled">Next</span>
-          
-      </div>
     </div>
-    <div class="clear"></div>
-    
-
-        </article>
-      </div>
-
-      <div class="unit one-fifth hide-on-mobiles">
-  <aside>
-    
-    <h4>Getting Started</h4>
-    <ul>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Download</a></li>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-instructions/">Building Vaango</a></li>
-
-  
-  
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
-
-</ul>
 
     
-    <h4>Vaango tutorials</h4>
-    <ul>
+  </article>
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2-plasticity with linear elasticity</a></li>
-
-</ul>
-
-    
-    <h4>MPM material models</h4>
-    <ul>
-
-  
-  
-  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/">Tabular plasticity</a></li>
-
-</ul>
-
-    
-  </aside>
 </div>
 
-
-      <div class="clear"></div>
-
     </div>
-  </section>
 
+    
 
-  <footer>
-  <div class="grid">
-    <div class="unit one-third center">
-      <p>&copy;&nbsp;2018 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
     </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Built with
-        <a href="https://jekyllrb.com">
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
-        </a>
-      </p>
-    </div>
-    <div class="unit one-third align-right center">
-      <p>
-        Hosted by
-        <a href="https://github.com">
-          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
-        </a>
-      </p>
-    </div>
-  </div>
-</footer>
 
-  <script>
-  var anchorForId = function (id) {
-    var anchor = document.createElement("a");
-    anchor.className = "header-link";
-    anchor.href      = "#" + id;
-    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
-    anchor.title = "Permalink";
-    return anchor;
-  };
+    
+  <script src="/assets/js/main.min.js"></script>
 
-  var linkifyAnchors = function (level, containingElement) {
-    var headers = containingElement.getElementsByTagName("h" + level);
-    for (var h = 0; h < headers.length; h++) {
-      var header = headers[h];
 
-      if (typeof header.id !== "undefined" && header.id !== "") {
-        header.appendChild(anchorForId(header.id));
-      }
-    }
-  };
 
-  document.onreadystatechange = function () {
-    if (this.readyState === "complete") {
-      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
-      if (!contentBlock) {
-        return;
-      }
-      for (var level = 1; level <= 6; level++) {
-        linkifyAnchors(level, contentBlock);
-      }
-    }
-  };
-</script>
 
-  
-</body>
+
+
+
+
+
+
+  </body>
 </html>
