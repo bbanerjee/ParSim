@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="https://bbanerjee.github.io/ParSim/feed.xml" rel="self" type="application/atom+xml" /><link href="https://bbanerjee.github.io/ParSim/" rel="alternate" type="text/html" /><updated>2021-01-20T17:39:41+13:00</updated><id>https://bbanerjee.github.io/ParSim/feed.xml</id><title type="html">Parresia Simulations</title><subtitle>Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.</subtitle><author><name>Biswajit Banerjee</name></author><entry><title type="html">Compiling and running the MPM code Vaango on a Cray</title><link href="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/" rel="alternate" type="text/html" title="Compiling and running the MPM code Vaango on a Cray" /><published>2017-12-16T13:30:00+13:00</published><updated>2017-12-16T13:30:00+13:00</updated><id>https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="https://bbanerjee.github.io/ParSim/feed.xml" rel="self" type="application/atom+xml" /><link href="https://bbanerjee.github.io/ParSim/" rel="alternate" type="text/html" /><updated>2021-01-20T17:59:51+13:00</updated><id>https://bbanerjee.github.io/ParSim/feed.xml</id><title type="html">Parresia Simulations</title><subtitle>Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.</subtitle><author><name>Biswajit Banerjee</name></author><entry><title type="html">Compiling and running the MPM code Vaango on a Cray</title><link href="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/" rel="alternate" type="text/html" title="Compiling and running the MPM code Vaango on a Cray" /><published>2017-12-16T13:30:00+13:00</published><updated>2017-12-16T13:30:00+13:00</updated><id>https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/vaango/compiling-vaango-on-a-cray/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#authentication&quot; id=&quot;markdown-toc-authentication&quot;&gt;Authentication&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#building-the-vaango-code-on-copper-cray-xe6m&quot; id=&quot;markdown-toc-building-the-vaango-code-on-copper-cray-xe6m&quot;&gt;Building the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Vaango&lt;/code&gt; code on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Copper&lt;/code&gt; (Cray XE6m)&lt;/a&gt;    &lt;ul&gt;
@@ -511,7 +511,7 @@ will continue when I get some free time.&lt;/p&gt;
 
 &lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;The Plimpton scheme of communicating ghost information between patches was described
-in &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/&quot;&gt;Part 3&lt;/a&gt; of this series.
+in &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/&quot;&gt;Part 3&lt;/a&gt; of this series.
 Let us now see how a similar approach can be used to migrate particles that have
 moved across patches.&lt;/p&gt;
 
@@ -593,13 +593,13 @@ that have left the domain, introduce them back in a periodic manner, or extend t
   &lt;span class=&quot;n&quot;&gt;d_patchP&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;removeParticlesOutsidePatch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;patchParticles&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; we defined
+&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; we defined
 a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PatchNeighborComm&lt;/code&gt; struct and a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt; struct.  We can keep the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PatchNeighborComm&lt;/code&gt;
 struct in the same form, with the possible addition of a method of two.  However, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt;
 struct becomes considerably simplified as show below.&lt;/p&gt;
 
 &lt;h5 id=&quot;patch-struct&quot;&gt;Patch struct&lt;/h5&gt;
-&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt; struct described in &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/&quot;&gt;Part 3&lt;/a&gt;
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt; struct described in &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/&quot;&gt;Part 3&lt;/a&gt;
 now has a few more methods.  Let us see how some of these new functions may be implemented.&lt;/p&gt;
 
 &lt;p&gt;The first new function is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sendRecvMigrateXMinus&lt;/code&gt; which is the equivalent of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sendRecvGhostXMinus&lt;/code&gt;
@@ -706,15 +706,15 @@ across patches.&lt;/p&gt;
 &lt;/script&gt;
 &lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/seedrandom.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/seedrandom.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particleMigrate.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particleMigrate.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particleMotion.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 3</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 3" /><published>2017-07-23T22:30:00+12:00</published><updated>2017-07-23T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particleMotion.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 3</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 3" /><published>2017-07-23T22:30:00+12:00</published><updated>2017-07-23T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#plimptons-scheme-for-exchanging-particles&quot; id=&quot;markdown-toc-plimptons-scheme-for-exchanging-particles&quot;&gt;Plimpton’s scheme for exchanging particles&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
@@ -726,7 +726,7 @@ across patches.&lt;/p&gt;
 &lt;/ul&gt;
 
 &lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
-&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; of this series
+&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; of this series
 we showed the direct way of communicating ghost particles between patches.  That approach
 requires 26 communication steps per patch in three-dimensions.  In this article we discuss
 the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular 
@@ -754,7 +754,7 @@ The same process can be used in three-dimensions, leading to only six communicat
 &lt;p /&gt;
 
 &lt;h4 id=&quot;mpi-implementation&quot;&gt;MPI implementation&lt;/h4&gt;
-&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; we defined
+&lt;p&gt;In &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; we defined
 a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PatchNeighborComm&lt;/code&gt; struct and a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt; struct.  We can keep the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;PatchNeighborComm&lt;/code&gt;
 struct in the same form, with the possible addition of a method of two.  However, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Patch&lt;/code&gt;
 struct becomes considerably simplified as show below.&lt;/p&gt;
@@ -958,11 +958,11 @@ part of this series, we will discuss the migration of particles when we use the 
 &lt;/script&gt;
 &lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particlePlimpton.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 2</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 2" /><published>2017-07-22T22:30:00+12:00</published><updated>2017-07-22T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particlePlimpton.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 2</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 2" /><published>2017-07-22T22:30:00+12:00</published><updated>2017-07-22T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#exchanging-particles-between-processes&quot; id=&quot;markdown-toc-exchanging-particles-between-processes&quot;&gt;Exchanging particles between processes&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
@@ -975,7 +975,7 @@ part of this series, we will discuss the migration of particles when we use the 
 &lt;/ul&gt;
 
 &lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
-&lt;p&gt;The &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/&quot;&gt;previous article&lt;/a&gt; in this series
+&lt;p&gt;The &lt;a href=&quot;https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-1/&quot;&gt;previous article&lt;/a&gt; in this series
 discussed the scatter operation for moving particles to various processes.  In this second part
 of the series we will discuss a commonly used method of communicating information between
 processes.  Each process is logically mapped to a “patch”.&lt;/p&gt;
@@ -1214,13 +1214,13 @@ SAND91-1144.UC-405, 1993).&lt;/p&gt;
 &lt;/script&gt;
 &lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particleScatterGhost.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particleScatterGhost.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particleExchange.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 1</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 1" /><published>2017-07-20T22:30:00+12:00</published><updated>2017-07-20T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particleExchange.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 1</title><link href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 1" /><published>2017-07-20T22:30:00+12:00</published><updated>2017-07-20T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-1/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#creating-and-scattering-particles&quot; id=&quot;markdown-toc-creating-and-scattering-particles&quot;&gt;Creating and scattering particles&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
@@ -1384,11 +1384,11 @@ for particle-based simulations.&lt;/p&gt;
 &lt;/script&gt;
 &lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;https://bbanerjee.github.io/ParSim/assets/js/particleScatter.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Can the Larsen-C ice shelf failure be predicted with Peridynamics?</title><link href="https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics/" rel="alternate" type="text/html" title="Can the Larsen-C ice shelf failure be predicted with Peridynamics?" /><published>2017-07-09T22:30:00+12:00</published><updated>2017-07-09T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
+&lt;script src=&quot;https://bbanerjee.github.io/assets/js/particleScatter.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="https://bbanerjee.github.io/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Can the Larsen-C ice shelf failure be predicted with Peridynamics?</title><link href="https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics/" rel="alternate" type="text/html" title="Can the Larsen-C ice shelf failure be predicted with Peridynamics?" /><published>2017-07-09T22:30:00+12:00</published><updated>2017-07-09T22:30:00+12:00</updated><id>https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics</id><content type="html" xml:base="https://bbanerjee.github.io/ParSim/fracture/Larsen-B-and-peridynamics/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
   &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#issues-to-be-resolved-before-a-simulation&quot; id=&quot;markdown-toc-issues-to-be-resolved-before-a-simulation&quot;&gt;Issues to be resolved before a simulation&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
@@ -1401,7 +1401,7 @@ large rift the &lt;a href=&quot;https://en.wikipedia.org/wiki/Larsen_Ice_Shelf#L
 slowing down.&lt;/p&gt;
 
 &lt;div align=&quot;center&quot;&gt;
-&lt;img style=&quot;width:400px&quot; alt=&quot;Larsen-C cracks&quot; src=&quot;https://bbanerjee.github.io/ParSim/assets/blogimg/LarsenC_crack.png&quot; /&gt; 
+&lt;img style=&quot;width:400px&quot; alt=&quot;Larsen-C cracks&quot; src=&quot;https://bbanerjee.github.io/assets/blogimg/LarsenC_crack.png&quot; /&gt; 
 &lt;/div&gt;
 
 &lt;p&gt;The image above (from http://www.projectmidas.org/blog/multiple-branches/) shows a number of branches
@@ -1409,7 +1409,7 @@ in the main crack as it approaches the sea.  This image reminded me of crack bra
 we observed in two-dimensional Peridynamics simulations.&lt;/p&gt;
 
 &lt;div align=&quot;center&quot;&gt;
-&lt;img style=&quot;width:500px&quot; alt=&quot;Peridynamics crack&quot; src=&quot;https://bbanerjee.github.io/ParSim/assets/blogimg/CrackPeri02.png&quot; /&gt; 
+&lt;img style=&quot;width:500px&quot; alt=&quot;Peridynamics crack&quot; src=&quot;https://bbanerjee.github.io/assets/blogimg/CrackPeri02.png&quot; /&gt; 
 &lt;/div&gt;
 
 &lt;p&gt;Will it be possible to predict when the main Larsen-C crack will reach the sea using Peridynamics?&lt;/p&gt;
@@ -1710,12 +1710,12 @@ amount of detail).  You can download the entire 15Mb report at &lt;a href=&quot;
 &lt;p&gt;One of the striking features of ARENA is that it can predict the behavior of &lt;em&gt;partially saturated&lt;/em&gt;
 soils under high-rate compression loading even though the model parameters are calibrated using &lt;em&gt;dry&lt;/em&gt; soil properties.  You can see a predicted curve compared with experimental data in the figure below.  The material is Colorado Mason sand containing 18% water by weight and the test is a split-Hopkinson pressure bar experiment that produces an average strain-rate of around 350/s.&lt;/p&gt;
 
-&lt;p&gt;&lt;img style=&quot;width:500px&quot; alt=&quot;ARENA_prediction&quot; src=&quot;https://bbanerjee.github.io/ParSim/assets/blogimg/MasonSandUniaxialStrainSHPB-081612-003_Sig_t.png&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img style=&quot;width:500px&quot; alt=&quot;ARENA_prediction&quot; src=&quot;https://bbanerjee.github.io/assets/blogimg/MasonSandUniaxialStrainSHPB-081612-003_Sig_t.png&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;A frame from a typical low-resolution MPM simulation of an explosion in ARENA soil can be seen
 in the image below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img style=&quot;width:600px&quot; alt=&quot;ARENA_prediction&quot; src=&quot;https://bbanerjee.github.io/ParSim/assets/blogimg/Centrifuge_VHull_BoulderClay_20g_13ww_midPBC_00120.png&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img style=&quot;width:600px&quot; alt=&quot;ARENA_prediction&quot; src=&quot;https://bbanerjee.github.io/assets/blogimg/Centrifuge_VHull_BoulderClay_20g_13ww_midPBC_00120.png&quot; /&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
 &lt;p&gt;Though the ARENA model produces excellent predictions in compression, its behavior in tension (particularly under disaggregation conditions) is not very accurate.  Our report contains a discussion section that identifies numerous research questions that arose during our work.  I hope some of you will find those interesting enough to improve upon our model.&lt;/p&gt;
@@ -1769,7 +1769,7 @@ $$
 &lt;p&gt;where \(\kappa\) and \(\mu\) are material constants, \(\mathbf{I}\) is the rank-2 identity tensor,
 and \(\mathbf{I}^{(4s)}\) is symmetrized rank-4 identity tensor.&lt;/p&gt;
 
-&lt;p&gt;In our &lt;a href=&quot;https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/closest-point-return/&quot;&gt;earlier article on closest-point return&lt;/a&gt; we saw that we can express the above modulus tensor in the terms of projection tensors:&lt;/p&gt;
+&lt;p&gt;In our &lt;a href=&quot;https://bbanerjee.github.io/mechanics/plasticity/algorithm/closest-point-return/&quot;&gt;earlier article on closest-point return&lt;/a&gt; we saw that we can express the above modulus tensor in the terms of projection tensors:&lt;/p&gt;
 &lt;div class=&quot;notice&quot;&gt;
 $$
   \mathsf{C}^{SE} = 3\kappa \mathsf{P}^{\text{iso}} + 2\mu\mathsf{P}^{\text{symdev}} \quad \quad \text{(1)}
