@@ -44,3 +44,5 @@ googletest
 octave-workspace
 _clang-format
 .clang-tidy
+.jekyll-cache
+.sass-cache

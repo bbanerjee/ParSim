@@ -1,6 +1,10 @@
 ---
 title: Tabular plasticity 
 permalink: /docs/vaango/mpm-materials/tabular-plasticity/
+layout: single
+author_profile: true
+sidebar:
+  nav: "parsim_docs"
 ---
 
 * Contents

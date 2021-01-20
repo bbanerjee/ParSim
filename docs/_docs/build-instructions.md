@@ -1,6 +1,10 @@
 ---
 title: Building Vaango
-permalink: /docs/build-instructions/
+layout: single
+author_profile: true
+sidebar:
+  nav: "parsim_docs"
+---
 ---
 
 Instructions for building Vaango on Ubuntu are given below.

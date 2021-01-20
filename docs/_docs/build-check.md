@@ -1,6 +1,10 @@
 ---
 title: Checking the build
-permalink: /docs/build-check/
+layout: single
+author_profile: true
+sidebar:
+  nav: "parsim_docs"
+---
 ---
 
 To check the build, you should run a few example problems.

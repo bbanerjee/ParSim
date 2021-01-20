@@ -15,7 +15,7 @@ header:
 excerpt: "We use open-source tools to bring parallel multiphysics engineering simulations to small and medium businesses.  Here you will find technical papers, expository blogs, and source code used in our work."
 
 intro:
-  - excerpt: '<strong>Technical reports and papers</strong>:  You can download draft reports of some of our work on various aspects of computational engineering and simulation from the links on this page.  More information on the types of analysis that we do can be found in our brochure.'
+  - excerpt: '<strong>Technical reports and papers</strong>:  You can download draft reports of some of our work on various aspects of computational engineering and simulation from the links on this page.  More information on the types of analysis that we do can be found in our brochure. <strong>Contact</strong>: Dr. Biswajit Banerjee, b.banerjee.nz@gmail.com'
 
 feature_row1:
   - image_path: assets/img/reports/mpm_simulations_jan_2021.png
@@ -97,113 +97,6 @@ feature_row7:
 
 {% include feature_row id="feature_row7" type="left" %}
 
-<section class="intro">
-  <div class="grid">
-    <div class="unit whole center-on-mobiles">
-      <h1>Parsim : Particle-based Simulation </h1>
-    </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section class="features">
-  <div class="grid">
-    <div class="unit two-thirds center-on-mobiles">
-
-      <h3> About ParSim </h3>
-      <p>
-        ParSim is a fork of the <a href="http://uintah.utah.edu">Uintah simulation software</a> 
-        with a focus on solid mechanics modeling and simulation.
-      </p>
-
-      <p>
-        Current development is focussed on <a href="{{ site.repository }}/tree/master/Vaango">Vaango</a>,
-        a MPM-CFD code, 
-        and <a href="{{ site.repository }}/tree/master/GranularSim">GranularSim</a>,
-        a DEM-SPH-Peridynamics code.
-      </p>
-
-      <p>
-        We are also exploring the development of a 
-        <a href="https://github.com/bbanerjee/VaangoUI">user interface</a> for these tools. 
-      </p>
-
-       
-    </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section>
-  <div class="grid">
-    <div class="unit two-thirds center-on-mobiles">
-    <h3> Documentation </h3>
-
-      <p>
-      This site contains HTML versions of parts of the Vaango manuals.
-      In addition, the following (almost complete) PDF manuals are available 
-      for users and developers of Vaango.
-      <ul>
-        <li> 
-          <a href="{{ site.url }}/assets/manuals/InstallationGuide.pdf">
-          Vaango installation manual
-          </a>
-        </li> 
-        <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoUserGuide.pdf">
-           Vaango user manual
-          </a>
-        </li> 
-        <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoTheoryGuide.pdf">
-           Vaango theory manual
-          </a>
-        </li> 
-        <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoAPI.pdf">
-           Vaango developer manual
-          </a>
-        </li> 
-      </ul>
-    </p>
-    </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<!--
-<section class="intro">
-  <div class="grid">
-    <div class="unit two-thirds align-right">
-      <h3>Hints</h3>
-
-      The following hint boxes are used in this  documentation:
-
-      <div class="note">
-        <h5>Tips</h5>
-        <p>These are tips and tricks that will make your development and simulations easier.</p>
-      </div>
-
-      <div class="note info">
-        <h5>Notes</h5>
-        <p>These are notes on features that may trip you up.</p>
-      </div>
-
-      <div class="note warning">
-        <h5>Warnings</h5>
-        <p>Notes on things such as exceptions.</p>
-      </div>
-
-      <div class="note unreleased">
-        <h5>Unreleased</h5>
-        <p>These are experimental features that should be used with caution.</p>
-      </div>
-    </div>
-  </div>
-  <div class="clear"></div>
-
-</section>
--->
 
 
 

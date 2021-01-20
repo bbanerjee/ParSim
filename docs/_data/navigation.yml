@@ -3,6 +3,31 @@ main:
   - title: "Blog articles"
     url: /docs/articles/
   - title: "ParSim software"
-    url: /docs/home/
+    url: /docs/parsim/
   - title: "Material data"
     url: /docs/material-data/
+
+parsim_docs:
+  - title: Getting Started
+    children:
+    - title: "Downloading ParSim"
+      url: docs/getting-started/
+    - title: "Building Vaango"
+      url: docs/build-instructions/
+    - title: "Testing Vaango"
+      url: docs/build-check/
+
+  - title: Vaango manuals
+    children:
+    - title: "PDF Manuals"
+      url: docs/manuals/
+  - title: Vaango tutorials
+    children:
+    - title: "Tabular J2 plasticity"
+      url: docs/vaango/tutorials/tabular-j2-lin-elas/
+
+  - title: MPM material models
+    children:
+    - title : "Tabular plasticity"
+      url: docs/vaango/mpm-materials/tabular-plasticity/
+
