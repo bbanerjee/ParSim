@@ -21,11 +21,11 @@ image:
 ##### Introduction #####
 In the previous articles in this series we talked about:
 
-1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.url }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
-2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.url }}/javascript/typescript/vue/vuex/vuex-store/)
-3. [Part 3: Initialization of a store and the user interface]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs/).
-4. [Part 4: Setting up the Three.js renderer]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
-5. [Part 5: Setting up the Three.js scene and camera]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-camera/)
+1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.baseurl }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
+2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.baseurl }}/javascript/typescript/vue/vuex/vuex-store/)
+3. [Part 3: Initialization of a store and the user interface]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/).
+4. [Part 4: Setting up the Three.js renderer]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
+5. [Part 5: Setting up the Three.js scene and camera]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-camera/)
 
 We are now ready to discuss the `three-ellipsoid-particles` component that we introduced in 
 `ThreeGraphicsPanel.vue`.  Recall that the template has the following form:
@@ -96,7 +96,7 @@ the particles are added to the scene only after the particle file has been read.
 {: .notice}
 
 In this example
-we do not stop watching the variable `particleReadComplete` (see [Part 2]({{ site.url }}/javascript/typescript/vue/vuex/vuex-store/) for details) after the particle data has been converted and saved.  However, that step is highly recommended.
+we do not stop watching the variable `particleReadComplete` (see [Part 2]({{ site.baseurl }}/javascript/typescript/vue/vuex/vuex-store/) for details) after the particle data has been converted and saved.  However, that step is highly recommended.
 {: .notice--warning}
 
 ##### Creating the ellipsoid particles #####
@@ -202,7 +202,7 @@ the code sample.
 #### Remarks ####
 A plot of the ellipsoids produced by our code can be seen below.
 
-![Plot produced by Three.js]({{site.url}}/assets/blogimg/ThreeGraphicsPanel.jpg){:class="img-responsive center-image" height="450px" border="5px double red"}
+![Plot produced by Three.js]({{site.baseurl}}/assets/blogimg/ThreeGraphicsPanel.jpg){:class="img-responsive center-image" height="450px" border="5px double red"}
 
 In the next part of this series we will explore how `vtk.js` can be used to do the same plot.
 

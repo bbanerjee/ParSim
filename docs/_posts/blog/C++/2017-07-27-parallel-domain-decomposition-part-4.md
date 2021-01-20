@@ -18,7 +18,7 @@ image:
 
 #### Introduction ####
 The Plimpton scheme of communicating ghost information between patches was described
-in [Part 3]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-3/) of this series.
+in [Part 3]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-3/) of this series.
 Let us now see how a similar approach can be used to migrate particles that have
 moved across patches.
 
@@ -102,13 +102,13 @@ void migrateParticle(...., const Vec& patchWidth, ParticlePArray& patchParticles
 }
 {% endhighlight %}
 
-In [Part 2]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-2/) we defined
+In [Part 2]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-2/) we defined
 a `PatchNeighborComm` struct and a `Patch` struct.  We can keep the `PatchNeighborComm`
 struct in the same form, with the possible addition of a method of two.  However, the `Patch`
 struct becomes considerably simplified as show below.
 
 ##### Patch struct #####
-The `Patch` struct described in [Part 3]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-3/)
+The `Patch` struct described in [Part 3]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-3/)
 now has a few more methods.  Let us see how some of these new functions may be implemented.
 
 The first new function is `sendRecvMigrateXMinus` which is the equivalent of `sendRecvGhostXMinus`
@@ -228,9 +228,9 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/colorbrewer.min.js"></script>
-<script src="{{ site.url }}/assets/js/seedrandom.min.js"></script>
-<script src="{{ site.url }}/assets/js/particleMigrate.js"></script>
-<script src="{{ site.url }}/assets/js/particleMotion.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/seedrandom.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/particleMigrate.js"></script>
+<script src="{{ site.baseurl }}/assets/js/particleMotion.js"></script>
 

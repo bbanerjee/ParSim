@@ -22,7 +22,7 @@ One of the main points of divergence of many implementations of plastic
 return algorithms is the choice of the algorithm used for numerical integration.
 Typically, this choice is limited to [forward Euler vs. backward Euler](https://en.wikipedia.org/wiki/Euler_method) for simplicity.
 
-Recall from [Part 2]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/) that the rate equations that we need to integrate are:
+Recall from [Part 2]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/) that the rate equations that we need to integrate are:
 <div>
 $$
   \dot{\boldsymbol{\sigma}} = \mathbf{C}\dot{\boldsymbol{\varepsilon}}^e
@@ -158,7 +158,7 @@ $$
   \Delta\lambda\mathbf{C}_n \boldsymbol{n}_n
 $$
 </div>
-where $$\Delta \lambda$$ can be solved using (see [Part 4]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/))
+where $$\Delta \lambda$$ can be solved using (see [Part 4]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/))
 <div>
 $$
   (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1}

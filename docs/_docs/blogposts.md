@@ -6,6 +6,6 @@ read_time: true
 comments:  true
 share: true
 related: true
-permalink: "docs/articles"
+permalink: "docs/articles/"
 ---
 

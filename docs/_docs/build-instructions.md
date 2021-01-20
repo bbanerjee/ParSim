@@ -2,6 +2,7 @@
 title: Building Vaango
 layout: single
 author_profile: true
+permalink: "docs/build-instructions/"
 sidebar:
   nav: "parsim_docs"
 ---

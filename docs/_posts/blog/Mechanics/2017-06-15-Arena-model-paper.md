@@ -36,12 +36,12 @@ We hope to publish a much abridged version of this report as a book chapter soon
 One of the striking features of ARENA is that it can predict the behavior of *partially saturated*
 soils under high-rate compression loading even though the model parameters are calibrated using *dry* soil properties.  You can see a predicted curve compared with experimental data in the figure below.  The material is Colorado Mason sand containing 18% water by weight and the test is a split-Hopkinson pressure bar experiment that produces an average strain-rate of around 350/s.
 
-<img style="width:500px" alt="ARENA_prediction" src="{{site.url}}/assets/blogimg/MasonSandUniaxialStrainSHPB-081612-003_Sig_t.png"/>
+<img style="width:500px" alt="ARENA_prediction" src="{{site.baseurl}}/assets/blogimg/MasonSandUniaxialStrainSHPB-081612-003_Sig_t.png"/>
 
 A frame from a typical low-resolution MPM simulation of an explosion in ARENA soil can be seen
 in the image below.
 
-<img style="width:600px" alt="ARENA_prediction" src="{{site.url}}/assets/blogimg/Centrifuge_VHull_BoulderClay_20g_13ww_midPBC_00120.png"/>
+<img style="width:600px" alt="ARENA_prediction" src="{{site.baseurl}}/assets/blogimg/Centrifuge_VHull_BoulderClay_20g_13ww_midPBC_00120.png"/>
 
 
 #### Remarks ####

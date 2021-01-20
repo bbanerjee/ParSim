@@ -2,6 +2,7 @@
 title: Vaango Manuals
 layout: single
 author_profile: true
+permalink: "docs/manuals/"
 sidebar:
   nav: "parsim_docs"
 ---
@@ -16,22 +17,22 @@ sidebar:
       and there are no standardized release cycles.
       <ul>
         <li> 
-          <a href="{{ site.url }}/assets/manuals/InstallationGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/InstallationGuide.pdf">
           Vaango installation manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoUserGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoUserGuide.pdf">
            Vaango user manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoTheoryGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoTheoryGuide.pdf">
            Vaango theory manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoAPI.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoAPI.pdf">
            Vaango developer manual
           </a>
         </li> 

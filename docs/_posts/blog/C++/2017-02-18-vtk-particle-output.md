@@ -190,7 +190,7 @@ You can see a working example of this approach in the [Matiti code](https://gith
 ##### Displaying the output #####
 The VTK XML file output to disk using this approach can be visualized in Visit or ParaView.  Notice that we are not able to  use the particle geometry and orientation information in either of these tools without extra work.  The plot below shows the output of a rigid body dynamics simulation in the presence of Coriolis forces.
 
-![Plot produced by Visit]({{site.url}}/assets/blogimg/CentrifugeRigidParticlesWithWallBothMat_060006.jpg){:class="img-responsive" margin="0 auto" display="block" height="450px" border="3px"}
+![Plot produced by Visit]({{site.baseurl}}/assets/blogimg/CentrifugeRigidParticlesWithWallBothMat_060006.jpg){:class="img-responsive" margin="0 auto" display="block" height="450px" border="3px"}
 
 #### Remarks ####
 Now that the basic input/output issues have been addressed, we will be able to

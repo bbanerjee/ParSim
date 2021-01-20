@@ -17,7 +17,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-Let us now change tack slightly and return to an issue I had talked about earlier in [Input files: reading XML]({{ site.url }}/c++/xml/xml-input/).  Typical input files in research simulation codes cannot be easily deciphered.  But in some cases headers are included to make the reading process easier.
+Let us now change tack slightly and return to an issue I had talked about earlier in [Input files: reading XML]({{ site.baseurl }}/c++/xml/xml-input/).  Typical input files in research simulation codes cannot be easily deciphered.  But in some cases headers are included to make the reading process easier.
 
 An example is a particle input file for a DEM code, called `particle_distribution.csv`, that looks
 like the following:

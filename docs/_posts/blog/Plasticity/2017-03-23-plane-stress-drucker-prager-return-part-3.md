@@ -20,8 +20,8 @@ image:
 ##### Introduction #####
 The previous parts of this series dealt with:
 
-* Part 1: [Background of 3D and plane stress Drucker-Prager plasticity]({{ site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
-* Part 2: [A forward Euler return algorithm for plane stress plasticity]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/)
+* Part 1: [Background of 3D and plane stress Drucker-Prager plasticity]({{ site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
+* Part 2: [A forward Euler return algorithm for plane stress plasticity]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/)
 
 Let us now take a slight detour and examine the spectral decomposition of the stiffness matrix
 ($$\mathbf{C}$$) and the transformation matrix ($$\mathbf{P}$$).

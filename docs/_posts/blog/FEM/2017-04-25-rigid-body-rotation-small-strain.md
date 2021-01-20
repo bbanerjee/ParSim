@@ -300,5 +300,5 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/elemRotate.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/elemRotate.js"></script>

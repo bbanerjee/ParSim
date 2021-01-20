@@ -2,6 +2,7 @@
 title: Parsim - Particle-based Simulation 
 layout: single
 author_profile: true
+permalink: "docs/parsim/"
 sidebar:
   nav: "parsim_docs"
 ---
@@ -11,7 +12,7 @@ sidebar:
     <div class="feature__item--left">
       <div class="archive__item">
         <div class="archive__item-teaser">
-          <img src="/assets/img/mpm/mpm_explicit_joints.png" alt="bench simulation" />
+          <img src="{{site.baseurl}}/assets/img/mpm/mpm_explicit_joints.png" alt="bench simulation" />
         </div>
         <div class="archive__item-body">
            <h2 class="archive__item-title">Parsim - Particle-based Simulation</h2>
@@ -35,22 +36,22 @@ sidebar:
       for users and developers of Vaango.
       <ul>
         <li> 
-          <a href="{{ site.url }}/assets/manuals/InstallationGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/InstallationGuide.pdf">
           Vaango installation manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoUserGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoUserGuide.pdf">
            Vaango user manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoTheoryGuide.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoTheoryGuide.pdf">
            Vaango theory manual
           </a>
         </li> 
         <li> 
-          <a href="{{ site.url }}/assets/manuals/VaangoAPI.pdf">
+          <a href="{{site.baseurl}}/assets/manuals/VaangoAPI.pdf">
            Vaango developer manual
           </a>
         </li> 

@@ -50,7 +50,7 @@ $$
 where $$\kappa$$ and $$\mu$$ are material constants, $$\mathbf{I}$$ is the rank-2 identity tensor,
 and $$\mathbf{I}^{(4s)}$$ is symmetrized rank-4 identity tensor.
 
-In our [earlier article on closest-point return]({{ site.url }}/mechanics/plasticity/algorithm/closest-point-return/) we saw that we can express the above modulus tensor in the terms of projection tensors:
+In our [earlier article on closest-point return]({{ site.baseurl }}/mechanics/plasticity/algorithm/closest-point-return/) we saw that we can express the above modulus tensor in the terms of projection tensors:
 <div>
 $$
   \mathsf{C}^{SE} = 3\kappa \mathsf{P}^{\text{iso}} + 2\mu\mathsf{P}^{\text{symdev}} \quad \quad \text{(1)}

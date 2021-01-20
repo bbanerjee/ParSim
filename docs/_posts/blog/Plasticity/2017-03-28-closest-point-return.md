@@ -18,7 +18,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In [Part 6]({{site.url }}/mechanics/plasticity/algorithm/primal-dual-closest-point-return/), I
+In [Part 6]({{site.baseurl }}/mechanics/plasticity/algorithm/primal-dual-closest-point-return/), I
 explained why a backward Euler stress update and a closest point return from the trial stress
 to the yield surface are closely related.  More specifically, the correct updated stress
 is at the shortest distance from the trial stress to the yield surface

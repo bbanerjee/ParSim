@@ -16,7 +16,7 @@ image:
 {:.notice--content}
 
 #### Introduction ####
-In [Part 3]({{ site.url }}/dem/CFL-condition-discrete-elements-part-3/) of this article I
+In [Part 3]({{ site.baseurl }}/dem/CFL-condition-discrete-elements-part-3/) of this article I
 discussed the approach where the equations for a system of rigid bodies are
 approximated by a spring-mass system.  The numerical stability conditions of that
 system are then taken to be representative of the system of discrete rigid bodies.
@@ -102,5 +102,5 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/demImpact.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/demImpact.js"></script>

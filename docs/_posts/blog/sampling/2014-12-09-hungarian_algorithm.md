@@ -15,7 +15,7 @@ image:
 #    credit: Unsplash.com
 #    url: http://unsplash.com
 ---
-<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.url}}/assets/blogimg/SensorsAndSamples.png"/>  
+<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.baseurl}}/assets/blogimg/SensorsAndSamples.png"/>  
 Recall that we had found a set of points that samples a cylindrical domain uniformly.  
 However, these points do not match the locations of our sensors and we will have to
 find the nearest sensor to each sample point.
@@ -43,7 +43,7 @@ first find the pairwise distances between the sensors and the samples
 
 ~~~
 
-<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.url}}/assets/blogimg/SparseSensorsAndSamples.png"/>  
+<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.baseurl}}/assets/blogimg/SparseSensorsAndSamples.png"/>  
 Next we define a radius of support around each sample location and find the sensors 
 in that region.
 
@@ -60,7 +60,7 @@ This procedure gives us the sensor locations (in red) that we care about.  Now w
 recompute a much smaller distance matrix and apply the Hungarian algorithm to find
 which sensors are closest to our sample points.
 
-<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.url}}/assets/blogimg/SampleSensors.png"/>  
+<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.baseurl}}/assets/blogimg/SampleSensors.png"/>  
 The `clue` package in R provides us with the required tools to solve the
 <em>Linear Sum Assignment Problem</em> and the computation is 
 direct:

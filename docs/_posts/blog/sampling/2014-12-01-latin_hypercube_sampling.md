@@ -15,7 +15,7 @@ image:
 #    credit: Unsplash.com
 #    url: http://unsplash.com
 ---
-<img style="float:right;width:300px" alt="SensorArray" src="{{site.url}}/assets/blogimg/SensorArray.png"/>  
+<img style="float:right;width:300px" alt="SensorArray" src="{{site.baseurl}}/assets/blogimg/SensorArray.png"/>  
 
 The amount of data is large.  Before we analyze the whole set of data, we can find trends  
 by examining a smaller set of sensors.  A smaller set is also useful if we want to
@@ -34,7 +34,7 @@ The R package `lhs` can be used to generate a sample:
   sampleCoords <- randomLHS(100, 3)
 ~~~
 
-<img style="float:right;width:300px" alt="LHS samples" src="{{site.url}}/assets/blogimg/SampleCoords.png"/>  
+<img style="float:right;width:300px" alt="LHS samples" src="{{site.baseurl}}/assets/blogimg/SampleCoords.png"/>  
 The sampling algorithm produces a set of points whose coordinates are in $$[0,1]$$.  The 
 adjacent figure shows some of the points.  Blue circles indicate the distance of the point
 from the plane of the screen.
@@ -57,9 +57,9 @@ $$
 A slightly better map is the [Shirley-Chew idea](https://mediatech.aalto.fi/~jaakko/T111-5310/K2013/JGT-97.pdf) that attempts to reduce distortion during mapping.
 Polar plots of the mapped LHS points show how the two maps operate.
 
-|<img style="float:right;width:300px" alt="PolarPlots" src="{{site.url}}/assets/blogimg/PolarPrime.png"/>|<img style="float:right;width:300px" alt="SensorArray" src="{{site.url}}/assets/blogimg/PolarShirleyChew.png"/>|
+|<img style="float:right;width:300px" alt="PolarPlots" src="{{site.baseurl}}/assets/blogimg/PolarPrime.png"/>|<img style="float:right;width:300px" alt="SensorArray" src="{{site.baseurl}}/assets/blogimg/PolarShirleyChew.png"/>|
 
-<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.url}}/assets/blogimg/SensorsAndSamples.png"/>  
+<img style="float:right;width:300px" alt="Sensors and samples" src="{{site.baseurl}}/assets/blogimg/SensorsAndSamples.png"/>  
 The sample coordinates generated in the unit disk can then be transformed so that 
 they lie in the first quadrant.
 

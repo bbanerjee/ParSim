@@ -18,7 +18,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In [Part 5]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/) I
+In [Part 5]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/) I
 briefly hinted at the closest-point return algorithm.  The ideas behind this were made rigorous in the
 mid-to-late 1980s by a group of researchers influenced by developments in convex optimization. Since
 then there has been a statis in the development of return algorithms for phenomenological plasticity.
@@ -187,7 +187,7 @@ $$
 $$
 
 If we use a first-order update approach, the discretized equations for perfect plasticity are
-(see [Part 5]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/))
+(see [Part 5]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/))
 <div>
 $$
   \begin{align}

@@ -10,7 +10,7 @@ image:
     credit: Parresia Research Limited
     header: "HummerLargeSim-WithLogo.png"
 ---
-<link rel='stylesheet' type='text/css' href='{{ site.url }}/assets/js/animateCFL.css' />
+<link rel='stylesheet' type='text/css' href='{{ site.baseurl }}/assets/js/animateCFL.css' />
 - Contents
 {:toc}
 {:.notice--content}
@@ -123,7 +123,7 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/animateWave.js"></script>
-<script src="{{ site.url }}/assets/js/animateCFL.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/animateWave.js"></script>
+<script src="{{ site.baseurl }}/assets/js/animateCFL.js"></script>
 

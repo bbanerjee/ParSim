@@ -17,7 +17,7 @@ image:
 {:.notice--content}
 
 #### Introduction ####
-The [previous article]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-1/) in this series
+The [previous article]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-1/) in this series
 discussed the scatter operation for moving particles to various processes.  In this second part
 of the series we will discuss a commonly used method of communicating information between
 processes.  Each process is logically mapped to a "patch".
@@ -267,8 +267,8 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/colorbrewer.min.js"></script>
-<script src="{{ site.url }}/assets/js/particleScatterGhost.js"></script>
-<script src="{{ site.url }}/assets/js/particleExchange.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/particleScatterGhost.js"></script>
+<script src="{{ site.baseurl }}/assets/js/particleExchange.js"></script>
 

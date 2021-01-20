@@ -22,18 +22,18 @@ image:
 ##### Introduction #####
 In the previous articles in this series we talked about:
 
-1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.url }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
-2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.url }}/javascript/typescript/vue/vuex/vuex-store/)
-3. [Part 3: Initialization of a store and the user interface]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs/).
-4. [Part 4: Setting up the Three.js renderer]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
-5. [Part 5: Setting up the Three.js scene and camera]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-camera/)
-5. [Part 6: Creating and plotting Three.js ellipsoids]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/)
+1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.baseurl }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
+2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.baseurl }}/javascript/typescript/vue/vuex/vuex-store/)
+3. [Part 3: Initialization of a store and the user interface]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/).
+4. [Part 4: Setting up the Three.js renderer]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
+5. [Part 5: Setting up the Three.js scene and camera]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-camera/)
+5. [Part 6: Creating and plotting Three.js ellipsoids]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/)
 
 Let us now explore the [vtk.js](https://kitware.github.io/vtk-js/) library to see if the process
 of displaying particles can be simplified given that we are using VTK format input files.
 
 ##### Registering VTK components #####
-As discussed in [Part 3]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs/), we first
+As discussed in [Part 3]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/), we first
 need to register components that are specific to VTK.  In our case, we need
 
 {% highlight js %}
@@ -45,7 +45,7 @@ Vue.component('vtk-ellipsoid-particles', VtkEllipsoidParticles);
 
 ##### Creating Vuex stores for VTK data #####
 Once again, we repeat the process discussed in
-[Part 3]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs/).  We have discussed
+[Part 3]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/).  We have discussed
 the `Store` in Part3, and in this case we create the files
 
 * `VTKGraphicsModule.ts` - similar to `ThreeGraphicsModule.ts`
@@ -343,7 +343,7 @@ an interactor had to be written).  We will discuss the three.js interactor in a 
 
 A plot of the spheres produced by our code can be seen below.
 
-![Plot produced by Three.js]({{site.url}}/assets/blogimg/VTKGraphicsPanel.jpg){:class="img-responsive center-image" height="450px" border="5px double red"}
+![Plot produced by Three.js]({{site.baseurl}}/assets/blogimg/VTKGraphicsPanel.jpg){:class="img-responsive center-image" height="450px" border="5px double red"}
 
 If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
 

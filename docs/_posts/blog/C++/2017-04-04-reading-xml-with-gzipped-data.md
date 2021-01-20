@@ -19,7 +19,7 @@ image:
 
 #### Introduction ####
 We saw how to create an XML file containing compressed particle data in
-the article ["XML format for particle input files"]({{site.url }}/r/xml/xml-particle-input-file/).
+the article ["XML format for particle input files"]({{site.baseurl }}/r/xml/xml-particle-input-file/).
 Let us now explore how to read in that data in our C++ particle simulation code.
 
 #### Recap ####
@@ -324,8 +324,8 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 <script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/yieldsurface.js"></script>
+<script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>
 <script>
-  d3.json("{{ site.url }}/assets/json/yieldSurfData.json", drawYieldSurface);
+  d3.json("{{ site.baseurl }}/assets/json/yieldSurfData.json", drawYieldSurface);
 </script>
 

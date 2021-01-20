@@ -2,6 +2,7 @@
 title: Checking the build
 layout: single
 author_profile: true
+permalink: "docs/build-check/"
 sidebar:
   nav: "parsim_docs"
 ---

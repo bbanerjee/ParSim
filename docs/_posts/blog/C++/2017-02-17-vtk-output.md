@@ -210,7 +210,7 @@ The output file produced by this approach has the extension `.vtu` and the forma
 
 The data can be easily read into Visit and the resulting plot can be seen below.
 
-![Plot produced by Visit]({{site.url}}/assets/blogimg/deposit_gridplot.jpg){:class="img-responsive" height="250px" border="5px double red"}
+![Plot produced by Visit]({{site.baseurl}}/assets/blogimg/deposit_gridplot.jpg){:class="img-responsive" height="250px" border="5px double red"}
 
 #### Remarks ####
 Writing your data to files in VTK format is straightforward and reading them in

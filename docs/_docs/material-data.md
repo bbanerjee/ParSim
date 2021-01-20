@@ -1,6 +1,7 @@
 ---
 title: Material and simulation data 
 layout: single
+permalink: "docs/material-data/"
 author_profile: true
 ---
 

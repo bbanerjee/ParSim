@@ -10,13 +10,13 @@ image:
     credit: Parresia Research Limited
     header: "HummerLargeSim-WithLogo.png"
 ---
-<link rel='stylesheet' type='text/css' href='{{ site.url }}/assets/js/animateCFL.css' />
+<link rel='stylesheet' type='text/css' href='{{ site.baseurl }}/assets/js/animateCFL.css' />
 - Contents
 {:toc}
 {:.notice--content}
 
 #### Introduction ####
-In the [first part]({{ site.url }}/dem/CFL-condition-discrete-elements/) of this article,
+In the [first part]({{ site.baseurl }}/dem/CFL-condition-discrete-elements/) of this article,
 we looked at the one-dimensional linear second-order wave equation
 <div>
 $$

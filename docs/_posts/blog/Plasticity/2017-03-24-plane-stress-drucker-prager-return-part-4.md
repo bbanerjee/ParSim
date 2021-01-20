@@ -18,7 +18,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In [Part 2]({{site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/)
+In [Part 2]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/)
 of this series, we saw that a forward Euler return algorithm leads to the discretized equations
 <div>
 $$
@@ -64,7 +64,7 @@ $$
 $$
 </div>
 {:.notice}
-In [Part 3]({{ site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/), we saw that
+In [Part 3]({{ site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/), we saw that
 <div>
 $$
   \mathbf{C} = \mathbf{Q} \mathbf{L}_C \mathbf{Q}^T \quad

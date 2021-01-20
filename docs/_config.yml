@@ -10,9 +10,9 @@ title_separator          : "-"
 subtitle                 : "Parallel particle and finite element simulation"
 name                     : "Biswajit Banerjee"
 description              : "Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes."
-url                      : "http://localhost:4000"
-#url                      : "https://bbanerjee.github.io/ParSim"
-baseurl                  : ""
+#url                      : "http://localhost:4000"
+url                      : "https://bbanerjee.github.io"
+baseurl                  : "/ParSim"
 repository               : https://github.com/bbanerjee/ParSim
 logo                     : "assets/img/ParresiaLogoSep2017_plain.png"
 words_per_minute         : 60

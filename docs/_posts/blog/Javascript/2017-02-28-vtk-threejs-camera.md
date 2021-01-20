@@ -21,10 +21,10 @@ image:
 ##### Introduction #####
 In the previous articles in this series we talked about:
 
-1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.url }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
-2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.url }}/javascript/typescript/vue/vuex/vuex-store/)
-3. [Part 3: Initialization of a store and the user interface]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs/).
-4. [Part 4: Setting up the Three.js renderer]({{ site.url }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
+1. [Part 1: Reading VTK format particles with Javascript in a browser]({{ site.baseurl }}/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
+2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.baseurl }}/javascript/typescript/vue/vuex/vuex-store/)
+3. [Part 3: Initialization of a store and the user interface]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/).
+4. [Part 4: Setting up the Three.js renderer]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
 
 Let us now discuss how we can set up the scene and the camera.
 

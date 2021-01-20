@@ -16,8 +16,8 @@ image:
 {:.notice--content}
 
 #### Introduction ####
-In [Part 1]({{ site.url }}/dem/CFL-condition-discrete-elements/) of this article,
-we revisited the CFL condition and in [Part 2]({{ site.url }}/dem/CFL-condition-discrete-elements-part-2/) we showed how the CFL condition and the von Neumann stability condition are
+In [Part 1]({{ site.baseurl }}/dem/CFL-condition-discrete-elements/) of this article,
+we revisited the CFL condition and in [Part 2]({{ site.baseurl }}/dem/CFL-condition-discrete-elements-part-2/) we showed how the CFL condition and the von Neumann stability condition are
 identical for linear wave equation PDEs.
 
 Both these conditions apply to PDEs for continuous systems (with the possibility

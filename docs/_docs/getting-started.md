@@ -2,6 +2,7 @@
 title: Downloading ParSim
 layout: single
 author_profile: true
+permalink: "docs/getting-started/"
 sidebar:
   nav: "parsim_docs"
 ---

@@ -22,7 +22,7 @@ large rift the [Larsen-C ice shelf](https://en.wikipedia.org/wiki/Larsen_Ice_She
 slowing down.
 
 <div align="center">
-<img style="width:400px" alt="Larsen-C cracks" src="{{site.url}}/assets/blogimg/LarsenC_crack.png"/> 
+<img style="width:400px" alt="Larsen-C cracks" src="{{site.baseurl}}/assets/blogimg/LarsenC_crack.png"/> 
 </div>
 
 The image above (from http://www.projectmidas.org/blog/multiple-branches/) shows a number of branches
@@ -30,7 +30,7 @@ in the main crack as it approaches the sea.  This image reminded me of crack bra
 we observed in two-dimensional Peridynamics simulations.
 
 <div align="center">
-<img style="width:500px" alt="Peridynamics crack" src="{{site.url}}/assets/blogimg/CrackPeri02.png"/> 
+<img style="width:500px" alt="Peridynamics crack" src="{{site.baseurl}}/assets/blogimg/CrackPeri02.png"/> 
 </div>
 
 Will it be possible to predict when the main Larsen-C crack will reach the sea using Peridynamics?

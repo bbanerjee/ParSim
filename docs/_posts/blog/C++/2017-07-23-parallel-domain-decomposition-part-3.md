@@ -17,7 +17,7 @@ image:
 {:.notice--content}
 
 #### Introduction ####
-In [Part 2]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-2/) of this series
+In [Part 2]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-2/) of this series
 we showed the direct way of communicating ghost particles between patches.  That approach
 requires 26 communication steps per patch in three-dimensions.  In this article we discuss
 the approach suggested by Steve Plimpton ("Fast parallel algorithms for short-range molecular 
@@ -45,7 +45,7 @@ The same process can be used in three-dimensions, leading to only six communicat
 <p/>
 
 #### MPI implementation ####
-In [Part 2]({{ site.url }}/mpi/c++/parallel-domain-decomposition-part-2/) we defined
+In [Part 2]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-2/) we defined
 a `PatchNeighborComm` struct and a `Patch` struct.  We can keep the `PatchNeighborComm`
 struct in the same form, with the possible addition of a method of two.  However, the `Patch`
 struct becomes considerably simplified as show below.
@@ -260,7 +260,7 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 </script>
 <script type="IN/Share" data-counter="right"></script>
 
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/colorbrewer.min.js"></script>
-<script src="{{ site.url }}/assets/js/particlePlimpton.js"></script>
+<script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>
+<script src="{{ site.baseurl }}/assets/js/particlePlimpton.js"></script>
 

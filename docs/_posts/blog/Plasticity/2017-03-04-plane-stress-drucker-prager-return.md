@@ -18,7 +18,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In the [previous part]({{ site.url }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
+In the [previous part]({{ site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
 of this discussion, I derived plane stress expressions for linear elasticity, the Drucker-Prager
 yield function, and the associated flow rule.
 

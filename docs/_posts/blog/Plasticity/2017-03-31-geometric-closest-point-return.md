@@ -18,7 +18,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In [Part 7]({{site.url }}/mechanics/plasticity/algorithm/closest-point-return/), we saw that
+In [Part 7]({{site.baseurl }}/mechanics/plasticity/algorithm/closest-point-return/), we saw that
 for isotropic elastic materials and perfect associated plasticity, the trial stress
 and the actual stress are at the shortest distance from each other in a transformed stress
 space.  We also saw that the transformed stress can be expressed as
@@ -418,8 +418,8 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 <script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/yieldsurface.js"></script>
+<script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>
 <script>
-  d3.json("{{ site.url }}/assets/json/yieldSurfData.json", drawYieldSurface);
+  d3.json("{{ site.baseurl }}/assets/json/yieldSurfData.json", drawYieldSurface);
 </script>
 

@@ -17,7 +17,7 @@ image:
 {:.notice--content}
 
 ##### Introduction #####
-In [Part 8]({{site.url }}/mechanics/plasticity/algorithm/geometric-closest-point-return/) of the
+In [Part 8]({{site.baseurl }}/mechanics/plasticity/algorithm/geometric-closest-point-return/) of the
 series on return algorithms for plasticity we animated the closest-point return algorithm as
 shown below.
 
@@ -417,10 +417,10 @@ In the HTML file, I added the following to allow the animation to be added to th
      <!-- Load D3.js -->
      <script src="https://d3js.org/d3.v4.min.js"></script>
      <!-- Load javascript for animating yield surface -->
-     <script src="{{ site.url }}/assets/js/yieldsurface.js"></script>
+     <script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>
      <script>
        // Read JSON file and then call javascript function to animate yield surface 
-       d3.json("{{ site.url }}/assets/json/yieldSurfData.json", drawYieldSurface);
+       d3.json("{{ site.baseurl }}/assets/json/yieldSurfData.json", drawYieldSurface);
      </script>
   </body>
 {% endhighlight %}
@@ -884,8 +884,8 @@ If you have questions/comments/corrections, please contact banerjee at parresian
 <script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/yieldsurface.js"></script>
+<script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>
 <script>
-  d3.json("{{ site.url }}/assets/json/yieldSurfData.json", drawYieldSurface);
+  d3.json("{{ site.baseurl }}/assets/json/yieldSurfData.json", drawYieldSurface);
 </script>
 
