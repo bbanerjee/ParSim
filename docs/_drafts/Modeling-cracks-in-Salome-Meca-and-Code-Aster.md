@@ -4,7 +4,7 @@ subheadline: "Biswajit Banerjee"
 description: "Tips on how to create and manipulate meshes in Salome-Meca for use with Code-Aster"
 tags: element group selection creation
 categories:
-    - Finite Elements
+    - FEM
     - Cracks
     - Python
     - Salome-Meca
