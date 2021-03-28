@@ -1,18 +1,20 @@
 ---
-layout: posts
 title:  "Formatting C++ code"
 subheadline: "Biswajit Banerjee"
 description: "Using clang-format and integration with vim"
 date:  2017-02-10 09:30:00
 categories:
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-Every once in a while I need to recall how `clang-format` is set up and run on my Ubuntu 16.04 
-machine.  This post is mean to act as a reminder.
 
+Every once in a while I need to recall how `clang-format` is set up and run on my Ubuntu 16.04 
+machine.  This post is meant to act as a reminder.
+
+<!--more-->
 If I want to change all the files in my repository to a particular format (I prefer the
 Mozilla style), I use:
 
@@ -52,12 +54,3 @@ You can also watch a talk on various clang tools below.
 
 <iframe width='970' height='546' src='//www.youtube.com/embed/cX_GhJ6BuWI' frameborder='0' allowfullscreen></iframe>
 
-
-
-
-<a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>

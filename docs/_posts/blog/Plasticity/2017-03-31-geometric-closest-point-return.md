@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Geometric closest point return algorithm"
 subheadline: "Biswajit Banerjee"
 description: "Part 8 of the series on plasticity return algorithms"
@@ -8,20 +7,19 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In [Part 7]({{site.baseurl }}/mechanics/plasticity/algorithm/closest-point-return/), we saw that
 for isotropic elastic materials and perfect associated plasticity, the trial stress
 and the actual stress are at the shortest distance from each other in a transformed stress
 space.  We also saw that the transformed stress can be expressed as
+<!--more-->
 <div>
 $$
   \boldsymbol{\sigma}^\star 
@@ -408,14 +406,6 @@ This geometric algorithm is remarkably accurate and avoids complications associa
 computing gradients in the transformed space.  In the next article we will discuss
 how the animation in this was created.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>

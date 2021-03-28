@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Creating an animation with d3.js"
 subheadline: "Biswajit Banerjee"
 description: "How the closest-point return animation was created"
@@ -7,19 +6,18 @@ date:  2017-04-01 10:30:00
 categories:
     - Javascript
     - D3JS
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In [Part 8]({{site.baseurl }}/mechanics/plasticity/algorithm/geometric-closest-point-return/) of the
 series on return algorithms for plasticity we animated the closest-point return algorithm as
 shown below.
+<!--more-->
 
 <div class="yield-surf-canvas">
 </div>
@@ -873,15 +871,6 @@ that are the norm in engineering literature.
 
 In the next article, we will go back to the work on XML particle data that we had started earlier
 and discuss ways to reading XML files using C++ code.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>

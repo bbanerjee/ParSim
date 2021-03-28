@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Writing VTK XML files in C++"
 subheadline: "Biswajit Banerjee"
 description: "Outputting simulation data"
@@ -8,11 +7,14 @@ categories:
     - C++
     - XML
     - VTK
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 I visualize the output of my simulations using either LLNL's [Visit](https://wci.llnl.gov/simulation/computer-codes/visit) or Kitware's [ParaView](http://www.paraview.org/).  These tools are wonderful for dealing with large datasets and can read a huge variety of file formats.  In particular, they are good for remote and visualization.
+<!--more-->
 
 One of the formats that both these tools can understand is the [VTK](http://www.vtk.org/) XML format.  The advantage of this format is its simplicity and that makes it suitable for small research codes.  
 
@@ -221,6 +223,3 @@ In the next post, I will discuss how you can save your particle data in VTK bina
 
 If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
 
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US </script>
-<script type="IN/Share" data-counter="right"></script>

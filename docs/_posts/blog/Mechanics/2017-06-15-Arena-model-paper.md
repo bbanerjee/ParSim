@@ -1,19 +1,16 @@
 ---
-layout: posts
 title:  "The ARENA model for partially saturated soils"
 subheadline: "Biswajit Banerjee"
 description: "A constitutive model for high-rate loading of soils"
 date:  2017-06-15 10:30:00
 categories:
     - Mechanics
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 I developed the ARENA model for partially saturated soils last year (2016).  Before that
@@ -22,6 +19,7 @@ model but could not get these models to either represent observed experimental d
 produce robust solutions under large deformations.  The new model, though not perfect,
 produced unexpectedly good predictions for partially saturated soils after being
 calibrated using only dry soil data.
+<!--more-->
 
 The model and its predictions have finally been made publicly available (with a large
 amount of detail).  You can download the entire 15Mb report at [ResearchGate](https://www.researchgate.net/publication/317578167_Theory_verification_and_validation_of_the_ARENA_constitutive_model_for_applications_to_high-rate_loading_of_fully_or_partially_saturated_granular_media).
@@ -46,13 +44,4 @@ in the image below.
 
 #### Remarks ####
 Though the ARENA model produces excellent predictions in compression, its behavior in tension (particularly under disaggregation conditions) is not very accurate.  Our report contains a discussion section that identifies numerous research questions that arose during our work.  I hope some of you will find those interesting enough to improve upon our model.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

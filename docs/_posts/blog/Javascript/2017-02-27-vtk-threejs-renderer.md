@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Setting up the Three.js renderer"
 subheadline: "Biswajit Banerjee"
 description: "Javascript scientific visualization - Part 4"
@@ -9,14 +8,12 @@ categories:
     - Typescript
     - Threejs
     - Vue
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 The previous articles in this series were about:
@@ -27,6 +24,7 @@ The previous articles in this series were about:
 
 In this article we will discuss the actual process of visualization of the particles.  
 The particles we are interested in are [oriented ellipsoids](https://en.wikipedia.org/wiki/Ellipsoid).
+<!--more-->
 
 ##### The graphics panel #####
 In the `main-panel` Vue component introduced in Part 3, we had declared a graphics panel
@@ -216,13 +214,4 @@ all the plotting is done on that element.
 
 #### Remarks ####
 In the next part of this article we'll discuss more details of setting up the scene and camera.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

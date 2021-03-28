@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "The plane stress return algorithm"
 subheadline: "Biswajit Banerjee"
 description: "Part 2 of the Drucker-Prager return algorithm"
@@ -8,19 +7,18 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In the [previous part]({{ site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
 of this discussion, I derived plane stress expressions for linear elasticity, the Drucker-Prager
 yield function, and the associated flow rule.
+<!--more-->
 
 Let us now review the approach used for finding the parameter $$\dot{\lambda}$$ that is needed
 in return algorithms, from a purely algebraic standpoint.
@@ -298,13 +296,4 @@ At this stage we are ready to get into some unpleasant algebra.
 #### Remarks ####
 We will explore the rest of the algebra and the backward Euler return algorithm in the next
 article in this series after a short break.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

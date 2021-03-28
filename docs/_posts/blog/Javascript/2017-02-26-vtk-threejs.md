@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Plotting VTK particles with Three.js"
 subheadline: "Biswajit Banerjee"
 description: "Javascript scientific visualization - Part 3"
@@ -9,13 +8,12 @@ categories:
     - Typescript
     - Threejs
     - Vue
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
 
 ##### Introduction #####
 In [Part 2](http://www.parresianz.com/javascript/typescript/vue/vuex/vuex-store/)
@@ -23,6 +21,7 @@ of this series, we showed how the particle data are saved into a Vuex store.  No
 to visualize the data.  In this article, we will discuss how [three.js](https://threejs.org/)
 can be used to display the particles. Interaction with the particles will be discussed in
 a future article.
+<!--more-->
 
 ##### A Vuex store for graphics #####
 To make our manipulations of the data more convenient, we use a store for the graphics state too.
@@ -176,13 +175,4 @@ export default class MainPanel extends Vue {
 #### Conclusion ####
 We are now ready to get into the details of the actual graphics components.  I'll discuss how
 I implemented that in the next part of this series.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

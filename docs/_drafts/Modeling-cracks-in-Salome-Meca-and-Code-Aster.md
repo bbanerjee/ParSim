@@ -1,25 +1,27 @@
 ---
-layout: post-right-sidebar
-title:  "The CFL condition for explicit discrete element methods:4"
+title:  "Modeling cracks in Salome-Meca and Code-Aster"
 subheadline: "Biswajit Banerjee"
-description: "Part 4: Stability condition and impact"
-date:  2017-04-23 10:30:00
+description: "Tips on how to create and manipulate meshes in Salome-Meca for use with Code-Aster"
+tags: element group selection creation
 categories:
-    - DEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+    - Finite Elements
+    - Cracks
+    - Python
+    - Salome-Meca
+    - Code-Aster
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 In [Part 3]({{ site.url }}/dem/CFL-condition-discrete-elements-part-3/) of this article I
 discussed the approach where the equations for a system of rigid bodies are
 approximated by a spring-mass system.  The numerical stability conditions of that
 system are then taken to be representative of the system of discrete rigid bodies.
+<!--more-->
+
 In that case, for a typical central difference scheme, the time step size is
 <div>
 $$
@@ -33,7 +35,8 @@ $$
   \Delta t \le 2\sqrt{\frac{m}{k}}(\sqrt{\frac{c^2}{4km}+1} - \frac{c}{2\sqrt{km}}) 
 $$
 </div>
-{:.notice}
+{: .notice}
+
 This condition assumes that the system of ODEs is linear.  Note that this assumption
 is clearly violated for complex discrete element calculations.
 
@@ -93,14 +96,6 @@ As a result, practitioners typically use timesteps that are a small fraction
 of that suggested by the analysis of the continuous linear ODE that describes
 a spring-mass-damper system.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
 
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
-
-<script src="{{ site.url }}/assets/js/d3.v4.min.js"></script>
-<script src="{{ site.url }}/assets/js/demImpact.js"></script>
+<script src="{{ site.url }}/ParSim/assets/js/d3.v4.min.js"></script>
+<script src="{{ site.url }}/ParSim/assets/js/demImpact.js"></script>

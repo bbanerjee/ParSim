@@ -7,11 +7,14 @@ date:  2017-02-15 09:30:00
 categories:
     - C++
     - JSON
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 In my previous post on [reading XML input files](http://www.parresianz.com/c++/xml/xml-input/), I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be preferable to have [JSON format files](http://json.org/example.html) instead.
+<!--more-->
 
 JSON is particularly useful when the [Javascript](http://es6-features.org/#Constants) is used during reading and writing.  Though Javascript is not the ideal platform for computational engineering, it has some potential is used for user interface development.
 
@@ -158,11 +161,3 @@ Sometimes input/output files for engineering simulations can be quite large.  In
 If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot json (without the dot json).
 
 
-<a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
-
-<!-- <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=cpp&amp;skin=sunburst"></script> -->

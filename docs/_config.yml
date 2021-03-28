@@ -1,7 +1,7 @@
 # Theme
 #theme                    : minimal-mistakes-jekyll
 remote_theme             : "mmistakes/minimal-mistakes@4.21.0"
-minimal_mistakes_skin    : "sunrise" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
+minimal_mistakes_skin    : "dirt" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site settings
 locale                   : "en-US"

@@ -1,24 +1,22 @@
 ---
-layout: posts
 title:  "Material and spatial incremental constitutive equations"
 subheadline: "Biswajit Banerjee"
 description: "An answer to a common question on objectivity"
 date:  2017-05-31 10:30:00
 categories:
     - Mechanics
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### The question ####
 A colleague asked a question on objectivity a few days ago that had me going back to
 Ray Ogden's book on nonlinear elastic deformations.  The question was on incremental
 stresses and their material and spatial descriptions.
+<!--more-->
 
 To be more specific, the question was on incremental stress-strain equations expressed
 in rate form and why the instantaneous moduli for material spatial stress measures were
@@ -159,13 +157,4 @@ to the other.
 
 A detailed discussion of these issues can be found in Odgen's book (chapter 6.1.4).  A shorter discussion
 can be found in *Computational Inelasticity* by Simo and Hughes (sections 7.1.5.3 - 7.1.5.5).
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

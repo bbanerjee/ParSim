@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Unit testing with MPI, googletest, and cmake"
 subheadline: "Biswajit Banerjee"
 description: "Continuous integration with make"
@@ -7,14 +6,11 @@ date:  2017-08-11 10:30:00
 categories:
     - MPI
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 In this article we take a short detour into the problem of continuous unit testing
@@ -30,6 +26,7 @@ and [advanced manual](https://github.com/google/googletest/blob/master/googletes
 do not contain many examples and can be cryptic at times.  I hope this
 article will provide pointers to those who run into a roadblock when testing MPI
 applications with `googletest`.
+<!--more-->
 
 #### Installing googletest ####
 I typically install `googletest` as a [submodule](https://git-scm.com/docs/git-submodule)
@@ -293,13 +290,5 @@ I hope this article has been of use to you.  Our series on communication between
 will continue when I get some free time.
 
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 

@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Plane stress return: Spectral decomposition"
 subheadline: "Biswajit Banerjee"
 description: ""
@@ -8,20 +7,19 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 The previous parts of this series dealt with:
 
 * Part 1: [Background of 3D and plane stress Drucker-Prager plasticity]({{ site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager/)
 * Part 2: [A forward Euler return algorithm for plane stress plasticity]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/)
+<!--more-->
 
 Let us now take a slight detour and examine the spectral decomposition of the stiffness matrix
 ($$\mathbf{C}$$) and the transformation matrix ($$\mathbf{P}$$).
@@ -132,13 +130,4 @@ $$
 We will use these decompositions to diagonalize the complicated matrix expressions in the
 next part of this series.
 
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

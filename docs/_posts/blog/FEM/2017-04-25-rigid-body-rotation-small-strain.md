@@ -1,19 +1,16 @@
 ---
-layout: posts
 title:  "Are stresses tensile or compressive during rigid body rotation?"
 subheadline: "Biswajit Banerjee"
 description: "Small strain finite elements"
 date:  2017-04-25 10:30:00
 categories:
     - FEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 Recently, I came across a question in StackExchange that pointed out that some
@@ -21,6 +18,7 @@ books on continuum mechanics suggest that an element will *increase in size*
 when rotated if a small strain approximation is used in a finite element simulation.
 This issue may be a source of confusion for students of mechanics.  Let us
 explore some aspects of the problem and try to answer the StackExchange question.  
+<!--more-->
 
 #### The question ####
 The animation below shows the motion of a two-dimensional square in the $$x$$-$$y$$-plane.
@@ -290,15 +288,6 @@ Of course one should not miss the point of the exercise which is to show that th
 correct strain measures have to be used for large deformation problems.  Even if a small
 strain measure is used, rotations have to be removed from the deformation before any
 stress computations are done.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/elemRotate.js"></script>

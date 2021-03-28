@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Reading VTK particles in Javascript"
 subheadline: "Biswajit Banerjee"
 description: "Parsing simulation output data"
@@ -10,14 +9,17 @@ categories:
     - Vue
     - Vuex
     - XML
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 In our [previous article](http://www.parresianz.com/c++/xml/vtk/vtk-particle-output/)
 we discussed the process of calling XML functions in C++ to write data produced by
 particle simulations in XML format files.  These output files can then
 be viewed in powerful tools such as VisIt or Paraview.
+<!--more-->
 
 Modern browsers have become powerful in recent years and can now render
 3D graphics quite efficiently.  The next few blog posts will discuss our
@@ -235,13 +237,4 @@ import $ = require("jquery"); // Use jQuery for the parsing
 #### Remarks ####
 Once the data have been stored, we can start the process of visualization.  Future articles will
 discuss our experience with [vtk.js](https://kitware.github.io/vtk-js/) and [three.js](https://threejs.org/).  We will also discuss the potential and pitfalls of Typescript and Vue.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

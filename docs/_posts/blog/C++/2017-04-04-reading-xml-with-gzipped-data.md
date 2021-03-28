@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Reading XML files containing gzipped data in C++"
 subheadline: "Biswajit Banerjee"
 description: "How to read particle input files created with R in XML format"
@@ -8,19 +7,17 @@ categories:
     - C++
     - XML
     - gzip
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 We saw how to create an XML file containing compressed particle data in
 the article ["XML format for particle input files"]({{site.baseurl }}/r/xml/xml-particle-input-file/).
 Let us now explore how to read in that data in our C++ particle simulation code.
+<!--more-->
 
 #### Recap ####
 Recall that the compressed base64 XML file contains data of the form shown below.  We would like
@@ -313,15 +310,6 @@ broadcast to several nodes of a multiprocessor system, compression can not only 
 lot of communication time during simulations but also disk space.
 
 In the next article, we will explore some more aspects of our particle simulation code.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/yieldsurface.js"></script>

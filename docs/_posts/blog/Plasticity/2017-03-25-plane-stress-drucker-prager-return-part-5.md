@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Forward vs. Backward Euler: Plane stress plasticity"
 subheadline: "Biswajit Banerjee"
 description: "Part 5 of the series on plane stress Drucker-Prager plasticity"
@@ -8,19 +7,18 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 One of the main points of divergence of many implementations of plastic
 return algorithms is the choice of the algorithm used for numerical integration.
 Typically, this choice is limited to [forward Euler vs. backward Euler](https://en.wikipedia.org/wiki/Euler_method) for simplicity.
+<!--more-->
 
 Recall from [Part 2]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/) that the rate equations that we need to integrate are:
 <div>
@@ -249,13 +247,4 @@ models is typically ignored.
 
 #### Remarks ####
 We mentioned the "closest-point return" approach in passing in this article.  In the next part of this series we will examine that approach in more detail.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

@@ -1,17 +1,19 @@
 ---
-layout: posts
 title:  "Auto-modernizing C++ code"
 subheadline: "Biswajit Banerjee"
 description: "Using clang-tidy with cmake"
 date:  2017-02-11 09:30:00
 categories:
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 The Clang static analyzer tools come with a handy interface called [clang-tidy](http://releases.llvm.org/3.8.0/tools/clang/tools/extra/docs/clang-tidy/index.html).  
 
+<!--more-->
 I've been try to set up this tool in my `cmake` toolchain with varying levels of success.  In 
 particular I'd like to automate the conversion of old code into a version that uses C++11 and
 some C++14 constructs.
@@ -148,11 +150,3 @@ applied only once.  It's much easier to use this process than to try to create a
 custom target for cmake. 
 
 
-
-<a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
-
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>

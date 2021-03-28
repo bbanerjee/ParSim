@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Parallel domain decomposition for particle methods: Part 1"
 subheadline: "Biswajit Banerjee"
 description: "The scatter operation"
@@ -7,14 +6,11 @@ date:  2017-07-20 10:30:00
 categories:
     - MPI
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 For parallel particle codes that have to be written quickly (while retaining flexibility), the
@@ -23,6 +19,7 @@ in those situations is some sort of domain decomposition and a lot of associated
 code for communication between processes.  One tries to strike the appropriate balance between
 communication and computation while making sure that the computation is load-balanced.  As a
 rule of thumb, less communication is better.
+<!--more-->
 
 One approach (among many) in particle-based codes that are being parallelized starting from
 a serial version is:
@@ -159,15 +156,6 @@ a structure of arrays (which is more efficient).
 #### Remarks ####
 In the next part of this series, we will discuss two approaches for inter-patch communication
 for particle-based simulations.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>

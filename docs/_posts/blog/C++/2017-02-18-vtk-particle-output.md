@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Particle data in VTK XML"
 subheadline: "Biswajit Banerjee"
 description: "Outputting simulation data in C++"
@@ -8,11 +7,14 @@ categories:
     - C++
     - XML
     - VTK
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 In my previous post on [writing VTK output files](http://www.parresianz.com/c++/xml/vtk/vtk-output/) I described how mesh data can be output in VTK XML format. In this article I will talk about how I output particle data from my simulations.
+<!--more-->
 
 These simulations use a number of techniques depending on the requirements. I use the MPM
 (Material Point Method) and RBD (Rigid body dynamics) with the occasional 
@@ -199,12 +201,4 @@ of input files and perform simple visualizations of the results.  Future blog po
 will discuss our exploration of Javascript frameworks and libraries that can potentially
 aid this process.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

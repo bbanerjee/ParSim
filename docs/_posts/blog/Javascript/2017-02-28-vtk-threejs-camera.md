@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Setting up the Three.js scene and camera"
 subheadline: "Biswajit Banerjee"
 description: "Javascript scientific visualization - Part 5"
@@ -9,14 +8,12 @@ categories:
     - Typescript
     - Threejs
     - Vue
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In the previous articles in this series we talked about:
@@ -25,6 +22,7 @@ In the previous articles in this series we talked about:
 2. [Part 2: Saving the read-in particle data in a Vuex store]({{ site.baseurl }}/javascript/typescript/vue/vuex/vuex-store/)
 3. [Part 3: Initialization of a store and the user interface]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs/).
 4. [Part 4: Setting up the Three.js renderer]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
+<!--more-->
 
 Let us now discuss how we can set up the scene and the camera.
 
@@ -225,12 +223,4 @@ its position.
 #### Remarks ####
 Now that the scene and the camera have been set up, we can see how ellipsoid are created and displayed in the next part of this series.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

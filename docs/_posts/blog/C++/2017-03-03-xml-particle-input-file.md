@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "XML format for particle input files"
 subheadline: "Biswajit Banerjee"
 description: ""
@@ -7,17 +6,15 @@ date:  2017-03-03 10:30:00
 categories:
     - R
     - XML
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 Let us now change tack slightly and return to an issue I had talked about earlier in [Input files: reading XML]({{ site.baseurl }}/c++/xml/xml-input/).  Typical input files in research simulation codes cannot be easily deciphered.  But in some cases headers are included to make the reading process easier.
+<!--more-->
 
 An example is a particle input file for a DEM code, called `particle_distribution.csv`, that looks
 like the following:
@@ -414,13 +411,4 @@ the compressed base64 XML file was 39.  The compressed ASCII XML file was also s
 In general it is better to use structured files for input data, provided the size of the data
 is not too large.  If the input files are large, a compressed binary format
 is better and should be used if possible.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

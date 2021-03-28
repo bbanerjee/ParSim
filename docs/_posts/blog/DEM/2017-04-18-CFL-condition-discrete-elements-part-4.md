@@ -1,25 +1,23 @@
 ---
-layout: posts
 title:  "The CFL condition for explicit discrete element methods:4"
 subheadline: "Biswajit Banerjee"
 description: "Part 4: Stability condition and impact"
 date:  2017-04-18 10:30:00
 categories:
     - DEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 In [Part 3]({{ site.baseurl }}/dem/CFL-condition-discrete-elements-part-3/) of this article I
 discussed the approach where the equations for a system of rigid bodies are
 approximated by a spring-mass system.  The numerical stability conditions of that
 system are then taken to be representative of the system of discrete rigid bodies.
+<!--more-->
 In that case, for a typical central difference scheme, the time step size is
 <div>
 $$
@@ -92,15 +90,6 @@ the region of stability of the nonlinear system of ODEs that describes DEM calcu
 As a result, practitioners typically use timesteps that are a small fraction
 of that suggested by the analysis of the continuous linear ODE that describes
 a spring-mass-damper system.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/demImpact.js"></script>

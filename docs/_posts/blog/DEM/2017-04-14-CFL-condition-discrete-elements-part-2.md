@@ -1,23 +1,22 @@
 ---
-layout: posts
 title:  "The CFL condition for explicit discrete element methods:2"
 subheadline: "Biswajit Banerjee"
 description: "Part 2: The von Neumann version of the CFL condition"
 date:  2017-04-14 10:30:00
 categories:
     - DEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 <link rel='stylesheet' type='text/css' href='{{ site.baseurl }}/assets/js/animateCFL.css' />
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 In the [first part]({{ site.baseurl }}/dem/CFL-condition-discrete-elements/) of this article,
 we looked at the one-dimensional linear second-order wave equation
+<!--more-->
 <div>
 $$
   \frac{\partial^2 u}{\partial t^2} - \frac{\partial^2 u}{\partial x^2} = 0 
@@ -201,13 +200,4 @@ for linear PDEs.
 
 We will see how these ideas are applied to discrete element methods in the next part of this
 series.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

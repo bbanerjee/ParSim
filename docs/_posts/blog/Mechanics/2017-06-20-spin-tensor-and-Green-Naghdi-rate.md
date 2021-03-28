@@ -1,22 +1,20 @@
 ---
-layout: posts
 title: "The difference between the spin and angular velocity tensors"
 description:  "The spin tensor and the Green-Naghdi rate"
 subheadline: "Biswajit Banerjee"
 date:  2017-06-20 10:30:00
 categories:
     - Mechanics
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 Several years ago I took created a Wikpedia article on [objective stress rates](https://en.wikipedia.org/wiki/Objective_stress_rate) based on [lecture notes](https://en.wikiversity.org/wiki/Nonlinear_finite_elements/Objective_stress_rates) in nonlinear finite elements for a class that I taught at the University of Utah.  In this article I will attempt to clarify one recurring question on the subject: what is the difference between the spin tensor ($$\boldsymbol{w}$$) and the angular velocity tensor ($$\boldsymbol{\Omega}$$)?
+<!--more-->
 
 #### The spin tensor ####
 Following standard continuum mechanics notation, let us denote a deformation by
@@ -218,13 +216,3 @@ velocity gradient for rigid body motions.
 In many practical applications the spin and the angular velocity tensors are assumed to be identical.
 One has to be careful to make sure that the assumptions made during that identification are valid
 for the application under consideration.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
-

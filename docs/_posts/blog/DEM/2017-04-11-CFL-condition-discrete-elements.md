@@ -1,25 +1,23 @@
 ---
-layout: posts
 title:  "The CFL condition for explicit discrete element methods:1"
 subheadline: "Biswajit Banerjee"
 description: "Part 1: How to estimate a stable timestep size"
 date:  2017-04-11 10:30:00
 categories:
     - DEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 <link rel='stylesheet' type='text/css' href='{{ site.baseurl }}/assets/js/animateCFL.css' />
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 Solutions of hyperbolic partial differential equations using explicit numerical methods
 need a means of limiting the timestep so that the solution is stable.  A criterion 
 that is usually used to constrain the step size is the 
 [Courant–Friedrichs–Lewy condition](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition).
+<!--more-->
 
 Let us first explore what the 1928 paper by the Courant, Friedrichs, and Lewy had to say on
 stability.  I will then examine the von Neumann form of the condition that is widely used
@@ -113,15 +111,6 @@ calculations.  The von Neumann result that will be discussed in the next part of
 will show how we can come up with a easier way of computing stability conditions for linear PDEs.
 
 The animations are a bit buggy at this point but will do for the purposes of this article.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/animateWave.js"></script>

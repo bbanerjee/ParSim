@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Nonlinear programming and closest point return plasticity"
 subheadline: "Biswajit Banerjee"
 description: "Part 6 of the series on plasticity return algorithms"
@@ -8,14 +7,12 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In [Part 5]({{site.baseurl }}/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/) I
@@ -24,6 +21,7 @@ mid-to-late 1980s by a group of researchers influenced by developments in convex
 then there has been a statis in the development of return algorithms for phenomenological plasticity.
 However, the recent surge in improvements in machine learning has the potential of leading to another
 leap forward in our understanding and implementation of nonlinear, history-dependent, constitutive models.
+<!--more-->
 
 Let us explore the basic ideas behind closest-point algorithms.
 
@@ -279,12 +277,4 @@ Most methods used for finding $$\boldsymbol{\sigma}_{n+1}$$ using the closest-po
 use variations on the Newton method that require the computation of second-derivatives of the
 yield function.  We will discuss a method that avoids those computations in the next part of this series.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

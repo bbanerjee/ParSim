@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Parallel domain decomposition for particle methods: Part 4"
 subheadline: "Biswajit Banerjee"
 description: "Applying the Plimpton method for migrating particles"
@@ -7,20 +6,18 @@ date:  2017-07-27 10:30:00
 categories:
     - MPI
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 The Plimpton scheme of communicating ghost information between patches was described
 in [Part 3]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-3/) of this series.
 Let us now see how a similar approach can be used to migrate particles that have
 moved across patches.
+<!--more-->
 
 In the animation below we just move the particles within each patch randomly.  To make
 the identity of the particles clear, we have used solid circles for the patch particles and
@@ -218,15 +215,6 @@ Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
 #### Remarks ####
 In the next part of this series we will explore how information about forces can be communicated
 across patches.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>

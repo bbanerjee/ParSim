@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Plotting particles with vtk.js"
 subheadline: "Biswajit Banerjee"
 description: "Javascript scientific visualization - Part 7"
@@ -10,14 +9,12 @@ categories:
     - vtkjs 
     - Threejs
     - Vue
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In the previous articles in this series we talked about:
@@ -28,6 +25,7 @@ In the previous articles in this series we talked about:
 4. [Part 4: Setting up the Three.js renderer]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-renderer/)
 5. [Part 5: Setting up the Three.js scene and camera]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-camera/)
 5. [Part 6: Creating and plotting Three.js ellipsoids]({{ site.baseurl }}/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/)
+<!--more-->
 
 Let us now explore the [vtk.js](https://kitware.github.io/vtk-js/) library to see if the process
 of displaying particles can be simplified given that we are using VTK format input files.
@@ -344,13 +342,4 @@ an interactor had to be written).  We will discuss the three.js interactor in a 
 A plot of the spheres produced by our code can be seen below.
 
 ![Plot produced by Three.js]({{site.baseurl}}/assets/blogimg/VTKGraphicsPanel.jpg){:class="img-responsive center-image" height="450px" border="5px double red"}
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

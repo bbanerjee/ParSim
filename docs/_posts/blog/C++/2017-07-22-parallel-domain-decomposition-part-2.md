@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Parallel domain decomposition for particle methods: Part 2"
 subheadline: "Biswajit Banerjee"
 description: "Communicating ghost regions the direct way"
@@ -7,20 +6,18 @@ date:  2017-07-22 10:30:00
 categories:
     - MPI
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 The [previous article]({{ site.baseurl }}/mpi/c++/parallel-domain-decomposition-part-1/) in this series
 discussed the scatter operation for moving particles to various processes.  In this second part
 of the series we will discuss a commonly used method of communicating information between
 processes.  Each process is logically mapped to a "patch".
+<!--more-->
 
 In the animation below, particles are generated in the red patch "P0" and then scattered
 to the other eight patches.  During a particle-based simulation, some information has to
@@ -257,15 +254,6 @@ SAND91-1144.UC-405, 1993).
 
 #### Remarks ####
 In the next part of this series, we will discuss Plimpton's approach for domain decomposition.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 <script src="{{ site.baseurl }}/assets/js/d3.v4.min.js"></script>
 <script src="{{ site.baseurl }}/assets/js/colorbrewer.min.js"></script>

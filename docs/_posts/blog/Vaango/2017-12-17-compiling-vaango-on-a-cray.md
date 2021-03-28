@@ -1,19 +1,16 @@
 ---
-layout: posts
 title:  "Compiling and running the MPM code Vaango on a Cray"
 subheadline: "Biswajit Banerjee"
 description: "Copper and Excalibur"
 date:  2017-12-16 00:30:00
 categories:
     - Vaango
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 
@@ -24,6 +21,7 @@ when I wanted to add some new feature or library.  After moving to `cmake` thing
 become decidedly easier.  In this article I will discuss how I ported my code to a couple of
 Cray XE6m machines and how I run the code on that machine. You can download the latest version of the code
 from [GitHub](https://github.com/bbanerjee/ParSim/tree/master/Vaango).
+<!--more-->
 
 #### Authentication ####
 
@@ -233,13 +231,5 @@ make
 The process of building Vaango on Cray machines has become considerably simpler over time if
 implicit codes are not needed.  That is still not true for IBM machines such as BlueGene/Q.
 
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
 

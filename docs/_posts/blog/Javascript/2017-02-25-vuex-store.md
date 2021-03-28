@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Saving particle data in a Vuex store"
 subheadline: "Biswajit Banerjee"
 description: "Javascript scientific visualization - Part 2"
@@ -9,18 +8,18 @@ categories:
     - Typescript
     - Vue
     - Vuex
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
 
 ##### Introduction #####
 In the [first part](http://www.parresianz.com/javascript/typescript/vue/vuex/xml/reading-vtk-particles/)
 of this series on scientific visualization in Javascript, we saw how data in VTK unstructured grid
 format produced by C++ simulation codes can be read in to a Javascript frontend.
+<!--more-->
 
 Recall the `parseAndSaveVTKXML` function in Typescript syntax:
 
@@ -230,13 +229,4 @@ strong typing to catch errors during compile time.  However, we a limited to usi
 that have been carefully assigned types by third-parties.  This is a serious limitation and
 significantly reduces the attractiveness of Typescript as a development platform.
 {: .notice}
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

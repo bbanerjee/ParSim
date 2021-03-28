@@ -1,24 +1,21 @@
 ---
-layout: posts
 title:  "The CFL condition for explicit discrete element methods:3"
 subheadline: "Biswajit Banerjee"
 description: "Part 3: Stability condition for discrete elements"
 date:  2017-04-16 10:30:00
 categories:
     - DEM
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
-
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 In [Part 1]({{ site.baseurl }}/dem/CFL-condition-discrete-elements/) of this article,
 we revisited the CFL condition and in [Part 2]({{ site.baseurl }}/dem/CFL-condition-discrete-elements-part-2/) we showed how the CFL condition and the von Neumann stability condition are
 identical for linear wave equation PDEs.
+<!--more-->
 
 Both these conditions apply to PDEs for continuous systems (with the possibility
 of shocks) that have been discretized.  However, the discrete element method is
@@ -229,13 +226,4 @@ calculations.
 #### Remarks ####
 In the next part of this series we will explore a slightly more realistic model of
 DEM calculations and see what can be said about the stability of that model.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

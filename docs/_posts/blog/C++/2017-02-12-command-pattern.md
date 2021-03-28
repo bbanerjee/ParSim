@@ -1,15 +1,16 @@
 ---
-layout: posts
 title:  "Command pattern for regression testing"
 subheadline: "Biswajit Banerjee"
 description: "Using the command pattern in C++"
 date:  2017-02-12 09:30:00
 categories:
     - C++
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
+
 A few days ago I had to refactor a 20,000 line class that was being used as
 a regression tester for [discrete element](https://en.wikipedia.org/wiki/Discrete_element_method)
 and [peridynamics](https://en.wikipedia.org/wiki/Peridynamics) simulations.  After some thought, I 
@@ -17,6 +18,8 @@ realized that the easiest way to achieve what I wanted was by using the [Command
 design pattern](https://en.wikipedia.org/wiki/Command_pattern) (minus the undo option).
 My approach was to keep the implementation simple enough that a typical student of
 mechanics would be able to follow the details, i.e., no [template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming) a la [Loki](http://loki-lib.sourceforge.net/index.php?n=Main.HomePage).
+
+<!--more-->
 
 #### The original code ####
 The regression tester in the original code looked something like this:
@@ -156,11 +159,3 @@ some look-ups of the virtual table, we have a much cleaner implementation
 of the tests and we can add more tests quite easily.
 
 
-<a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
-
-<!-- <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=cpp&amp;skin=sunburst"></script> -->

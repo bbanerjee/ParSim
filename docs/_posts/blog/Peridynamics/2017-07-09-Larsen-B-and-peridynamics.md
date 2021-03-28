@@ -1,25 +1,23 @@
 ---
-layout: posts
 title:  "Can the Larsen-C ice shelf failure be predicted with Peridynamics?"
 subheadline: "Biswajit Banerjee"
 description: "How good are we at fracture prediction?"
 date:  2017-07-09 10:30:00
 categories:
     - Fracture
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 #### Introduction ####
 On July 7, 2017, the [Project Midas group](http://www.projectmidas.org/blog/multiple-branches/)
 released a couple of plots of material velocities and interferograms showing the evolution of a
 large rift the [Larsen-C ice shelf](https://en.wikipedia.org/wiki/Larsen_Ice_Shelf#Larsen_C) in Antarctica.  The crack grew 11 miles in a few days before
 slowing down.
+<!--more-->
 
 <div align="center">
 <img style="width:400px" alt="Larsen-C cracks" src="{{site.baseurl}}/assets/blogimg/LarsenC_crack.png"/> 
@@ -71,13 +69,4 @@ Even though we have seen enormous improvements in algorithms and computational c
 fracture simulation over the last 15 years, predicting dynamic fracture continues to be elusive.
 The research that we do at Parresia attempts to improve the predictive fidelity of
 numerical methods to solve these types of problems.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

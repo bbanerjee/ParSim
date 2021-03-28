@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Exploring closest point return plasticity"
 subheadline: "Biswajit Banerjee"
 description: "Part 7 of the series on plasticity return algorithms"
@@ -8,14 +7,12 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 In [Part 6]({{site.baseurl }}/mechanics/plasticity/algorithm/primal-dual-closest-point-return/), I
@@ -23,6 +20,7 @@ explained why a backward Euler stress update and a closest point return from the
 to the yield surface are closely related.  More specifically, the correct updated stress
 is at the shortest distance from the trial stress to the yield surface
 in a 9-dimensional space that has the Euclidean distance measure
+<!--more-->
 <div>
 $$
   \lVert \boldsymbol{\sigma} \rVert_{\mathsf{C}^{-1}} = \sqrt{\boldsymbol{\sigma}:\mathsf{C}^{-1}:\boldsymbol{\sigma}}
@@ -289,13 +287,4 @@ $$
 So we have a straightforward way of computing stresses in the transformed space
 and will use this idea in the geometrical closest point return algorithm that we
 will discuss in the next part of this series.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 

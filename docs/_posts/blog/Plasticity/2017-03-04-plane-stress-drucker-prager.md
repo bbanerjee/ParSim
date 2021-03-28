@@ -1,5 +1,4 @@
 ---
-layout: posts
 title:  "Plane stress Drucker-Prager return algorithm"
 subheadline: "Biswajit Banerjee"
 description: ""
@@ -8,19 +7,18 @@ categories:
     - Mechanics
     - Plasticity
     - Algorithm
-image:
-    credit: Parresia Research Limited
-    header: "HummerLargeSim-WithLogo.png"
+excerpt_separator: <!--more-->
+toc: true
+toc_label: "Contents"
+toc_sticky: true
 ---
 
-- Contents
-{:toc}
-{:.notice--content}
 
 ##### Introduction #####
 Recently I've encountered questions on how the radial return algorithm works when applied
 to plane stress plasticity.  There seems to be some confusion about the application of the
 plane strain constraint.  Here's the first part of my take on the issue based on Simo's work from the mid-1980s.
+<!--more-->
 
 Warning: I have used the same symbols for tensors, matrices, and vectors (Voigt notation).  The meaning depends on the context.
 {:.notice--warning}
@@ -347,13 +345,4 @@ $$
 #### Remarks ####
 We will explore the return algorithm for the plane stress Drucker-Prager plasticity model in the next
 article in this series.
-
-If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).
-
-
-<a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script>
 
