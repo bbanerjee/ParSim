@@ -1,26 +1,86 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/ParSim/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/ParSim/" rel="alternate" type="text/html" /><updated>2021-01-20T18:27:57+13:00</updated><id>http://localhost:4000/ParSim/feed.xml</id><title type="html">Parresia Simulations</title><subtitle>Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.</subtitle><author><name>Biswajit Banerjee</name></author><entry><title type="html">Compiling and running the MPM code Vaango on a Cray</title><link href="http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/" rel="alternate" type="text/html" title="Compiling and running the MPM code Vaango on a Cray" /><published>2017-12-16T13:30:00+13:00</published><updated>2017-12-16T13:30:00+13:00</updated><id>http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray</id><content type="html" xml:base="http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#authentication&quot; id=&quot;markdown-toc-authentication&quot;&gt;Authentication&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#building-the-vaango-code-on-copper-cray-xe6m&quot; id=&quot;markdown-toc-building-the-vaango-code-on-copper-cray-xe6m&quot;&gt;Building the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Vaango&lt;/code&gt; code on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Copper&lt;/code&gt; (Cray XE6m)&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#downloading-the-code&quot; id=&quot;markdown-toc-downloading-the-code&quot;&gt;Downloading the code&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#checking-needed-third-party-packages&quot; id=&quot;markdown-toc-checking-needed-third-party-packages&quot;&gt;Checking needed third party packages&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#loading-modules&quot; id=&quot;markdown-toc-loading-modules&quot;&gt;Loading modules&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#installing-boost-and-eigen3&quot; id=&quot;markdown-toc-installing-boost-and-eigen3&quot;&gt;Installing Boost and Eigen3&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#compiling-vaango&quot; id=&quot;markdown-toc-compiling-vaango&quot;&gt;Compiling Vaango&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#running-the-vaango-code--on-copper&quot; id=&quot;markdown-toc-running-the-vaango-code--on-copper&quot;&gt;Running the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Vaango&lt;/code&gt; code  on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Copper&lt;/code&gt;&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#building-the-vaango-code-on-excalibur-cray-xc40&quot; id=&quot;markdown-toc-building-the-vaango-code-on-excalibur-cray-xc40&quot;&gt;Building the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Vaango&lt;/code&gt; code on &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Excalibur&lt;/code&gt; (Cray XC40)&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#downloading-the-code-1&quot; id=&quot;markdown-toc-downloading-the-code-1&quot;&gt;Downloading the code&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#installing-cmake&quot; id=&quot;markdown-toc-installing-cmake&quot;&gt;Installing cmake&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#installing-boost-and-eigen3-1&quot; id=&quot;markdown-toc-installing-boost-and-eigen3-1&quot;&gt;Installing boost and eigen3&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#compiling-vaango-1&quot; id=&quot;markdown-toc-compiling-vaango-1&quot;&gt;Compiling Vaango&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/ParSim/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/ParSim/" rel="alternate" type="text/html" /><updated>2021-03-28T18:16:20+13:00</updated><id>http://localhost:4000/ParSim/feed.xml</id><title type="html">Parresia Simulations</title><subtitle>Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.</subtitle><author><name>Biswajit Banerjee</name></author><entry><title type="html">Modeling cracks in Salome-Meca and Code-Aster</title><link href="http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster/" rel="alternate" type="text/html" title="Modeling cracks in Salome-Meca and Code-Aster" /><published>2021-03-28T18:16:17+13:00</published><updated>2021-03-28T18:16:17+13:00</updated><id>http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster</id><content type="html" xml:base="http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;In &lt;a href=&quot;http://localhost:4000/dem/CFL-condition-discrete-elements-part-3/&quot;&gt;Part 3&lt;/a&gt; of this article I
+discussed the approach where the equations for a system of rigid bodies are
+approximated by a spring-mass system.  The numerical stability conditions of that
+system are then taken to be representative of the system of discrete rigid bodies.
+&lt;!--more--&gt;&lt;/p&gt;
 
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;In that case, for a typical central difference scheme, the time step size is&lt;/p&gt;
+&lt;div&gt;
+$$
+  \Delta t \le \frac{2}{\omega}(\sqrt{\zeta^2+1} - \zeta) 
+$$
+&lt;/div&gt;
+&lt;p&gt;In terms of the spring stiffness \(k\), the damping coefficient \(c\), and the mass \(m\),
+we have&lt;/p&gt;
+&lt;div class=&quot;notice&quot;&gt;
+$$
+  \Delta t \le 2\sqrt{\frac{m}{k}}(\sqrt{\frac{c^2}{4km}+1} - \frac{c}{2\sqrt{km}}) 
+$$
+&lt;/div&gt;
+
+&lt;p&gt;This condition assumes that the system of ODEs is linear.  Note that this assumption
+is clearly violated for complex discrete element calculations.&lt;/p&gt;
+
+&lt;p&gt;Let us now look at some simple stability bounds for a system of discontinuous
+rigid bodies that interact occasionally via impact.&lt;/p&gt;
+
+&lt;h4 id=&quot;one-dimensional-equations-for-impact&quot;&gt;One-dimensional equations for impact&lt;/h4&gt;
+&lt;p&gt;The impact between two rigid bodies in discrete elements can be simplified to the following
+one-dimensional system of equations:&lt;/p&gt;
+&lt;div&gt;
+$$
+  m\ddot{d} = \begin{cases}
+                -c\dot{d} - kd &amp;amp; \quad \text{for} \quad d \ge 0 \quad \text{:contact} \\
+                0 &amp;amp; \quad \text{for} \quad d \lt 0 \quad \text{:separated} 
+              \end{cases}
+$$
+&lt;/div&gt;
+&lt;p&gt;where \(d\) is the gap distance.  An animation of the one-dimensional problem is shown below.
+In the animation, the smaller ball has been replaced with a spring and damper system (shown
+as a spring in the figure).
+Note that while the bodies are in contact, the governing equation is identical to
+that for a system of springs-dampers-masses.&lt;/p&gt;
+
+&lt;div&gt;
+  &lt;canvas id=&quot;ballball&quot; width=&quot;500&quot; height=&quot;300&quot;&gt;&lt;/canvas&gt;
+&lt;/div&gt;
+
+&lt;p&gt;At the end of the impact event, the bodies will typically separate.  The duration
+of impact (which can be found by solving the linear ODE for \(d \ge 0\)), is&lt;/p&gt;
+&lt;div&gt;
+$$
+  t_d = \frac{\pi}{\sqrt{1 - \zeta^2}}
+$$
+&lt;/div&gt;
+&lt;p&gt;and the exit velocity is&lt;/p&gt;
+&lt;div&gt;
+$$
+  v_e = v_0 \exp\left[-\frac{\zeta\pi}{\sqrt{1-\zeta^2}}\right]
+$$
+&lt;/div&gt;
+
+&lt;h4 id=&quot;stability-of-central-difference-for-one-dimensional-impact&quot;&gt;Stability of central difference for one-dimensional impact&lt;/h4&gt;
+&lt;p&gt;An algorithm that is used to solve the above non-linear problem will be stable is
+the exit velocity satisfies the condition \(v_e \le v_0\) where \(v_0\) is the
+relative velocity of the two bodies.&lt;/p&gt;
+
+&lt;p&gt;Feng’s work (IJNME 2005, 64:1959) used numerical solutions of the one-dimensional problem to prove that
+discrete element calculations can become unconditionally unstable for
+\(\Delta t &amp;lt; 2/\omega\), except for a few values where the exit velocity is equal
+to \(v_0\).  However, a small amount of damping can improve the stability behavior
+of the system.&lt;/p&gt;
+
+&lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
+&lt;p&gt;In general, there is no known closed-form expression that can be used to determine
+the region of stability of the nonlinear system of ODEs that describes DEM calculations.
+As a result, practitioners typically use timesteps that are a small fraction
+of that suggested by the analysis of the continuous linear ODE that describes
+a spring-mass-damper system.&lt;/p&gt;
+
+&lt;script src=&quot;http://localhost:4000/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
+
+&lt;script src=&quot;http://localhost:4000/ParSim/assets/js/demImpact.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="FEM" /><category term="Cracks" /><category term="Python" /><category term="Salome-Meca" /><category term="Code-Aster" /><category term="element" /><category term="group" /><category term="selection" /><category term="creation" /><summary type="html">Introduction In Part 3 of this article I discussed the approach where the equations for a system of rigid bodies are approximated by a spring-mass system. The numerical stability conditions of that system are then taken to be representative of the system of discrete rigid bodies.</summary></entry><entry><title type="html">Compiling and running the MPM code Vaango on a Cray</title><link href="http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/" rel="alternate" type="text/html" title="Compiling and running the MPM code Vaango on a Cray" /><published>2017-12-16T13:30:00+13:00</published><updated>2017-12-16T13:30:00+13:00</updated><id>http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray</id><content type="html" xml:base="http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 
 &lt;p&gt;One of the reasons I switched to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cmake&lt;/code&gt; for my builds was the need to compile my
 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Vaango&lt;/code&gt; code on a BlueGene/Q system.  The code was previously configured using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;autoconf&lt;/code&gt; and
@@ -28,7 +88,8 @@
 when I wanted to add some new feature or library.  After moving to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cmake&lt;/code&gt; things have
 become decidedly easier.  In this article I will discuss how I ported my code to a couple of
 Cray XE6m machines and how I run the code on that machine. You can download the latest version of the code
-from &lt;a href=&quot;https://github.com/bbanerjee/ParSim/tree/master/Vaango&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+from &lt;a href=&quot;https://github.com/bbanerjee/ParSim/tree/master/Vaango&quot;&gt;GitHub&lt;/a&gt;.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;authentication&quot;&gt;Authentication&lt;/h4&gt;
 
@@ -219,32 +280,7 @@ make&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
 
 &lt;p&gt;The process of building Vaango on Cray machines has become considerably simpler over time if
-implicit codes are not needed.  That is still not true for IBM machines such as BlueGene/Q.&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Vaango" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Unit testing with MPI, googletest, and cmake</title><link href="http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="alternate" type="text/html" title="Unit testing with MPI, googletest, and cmake" /><published>2017-08-11T22:30:00+12:00</published><updated>2017-08-11T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#installing-googletest&quot; id=&quot;markdown-toc-installing-googletest&quot;&gt;Installing googletest&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#making-sure-cmake-finds-and-compiles-googletest&quot; id=&quot;markdown-toc-making-sure-cmake-finds-and-compiles-googletest&quot;&gt;Making sure cmake finds and compiles googletest&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#adding-local-unit-tests&quot; id=&quot;markdown-toc-adding-local-unit-tests&quot;&gt;Adding local unit tests&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-cmakeliststxt-file-in-unittests&quot; id=&quot;markdown-toc-the-cmakeliststxt-file-in-unittests&quot;&gt;The CMakeLists.txt file in UnitTests&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-actual-test-c-code&quot; id=&quot;markdown-toc-the-actual-test-c-code&quot;&gt;The actual test C++ code&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-mpi-test-environment-class&quot; id=&quot;markdown-toc-the-mpi-test-environment-class&quot;&gt;The MPI test environment class&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-main-test-function&quot; id=&quot;markdown-toc-the-main-test-function&quot;&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;main&lt;/code&gt; test function&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-actual-test&quot; id=&quot;markdown-toc-the-actual-test&quot;&gt;The actual test&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#caveat&quot; id=&quot;markdown-toc-caveat&quot;&gt;Caveat&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-output-from-make&quot; id=&quot;markdown-toc-the-output-from-make&quot;&gt;The output from make&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+implicit codes are not needed.  That is still not true for IBM machines such as BlueGene/Q.&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Vaango" /><summary type="html">Introduction One of the reasons I switched to cmake for my builds was the need to compile my Vaango code on a BlueGene/Q system. The code was previously configured using autoconf and m4, and because I hadn’t done that implementation myself it was nightmare to change things when I wanted to add some new feature or library. After moving to cmake things have become decidedly easier. In this article I will discuss how I ported my code to a couple of Cray XE6m machines and how I run the code on that machine. You can download the latest version of the code from GitHub.</summary></entry><entry><title type="html">Unit testing with MPI, googletest, and cmake</title><link href="http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="alternate" type="text/html" title="Unit testing with MPI, googletest, and cmake" /><published>2017-08-11T22:30:00+12:00</published><updated>2017-08-11T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In this article we take a short detour into the problem of continuous unit testing
 of code that contains MPI calls and use either &lt;a href=&quot;https://www.mpich.org/&quot;&gt;mpich&lt;/a&gt;
 or &lt;a href=&quot;https://www.open-mpi.org/&quot;&gt;Open MPI&lt;/a&gt;.  I have recently moved from
@@ -257,7 +293,8 @@ provides.  However, the &lt;code class=&quot;language-plaintext highlighter-roug
 and &lt;a href=&quot;https://github.com/google/googletest/blob/master/googletest/docs/AdvancedGuide.md&quot;&gt;advanced manual&lt;/a&gt;
 do not contain many examples and can be cryptic at times.  I hope this
 article will provide pointers to those who run into a roadblock when testing MPI
-applications with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;googletest&lt;/code&gt;.&lt;/p&gt;
+applications with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;googletest&lt;/code&gt;.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;installing-googletest&quot;&gt;Installing googletest&lt;/h4&gt;
 &lt;p&gt;I typically install &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;googletest&lt;/code&gt; as a &lt;a href=&quot;https://git-scm.com/docs/git-submodule&quot;&gt;submodule&lt;/a&gt;
@@ -491,29 +528,12 @@ Tore down environment
 
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
 &lt;p&gt;I hope this article has been of use to you.  Our series on communication between patches
-will continue when I get some free time.&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 4</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 4" /><published>2017-07-27T22:30:00+12:00</published><updated>2017-07-27T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#plimptons-scheme-for-migrating-particles&quot; id=&quot;markdown-toc-plimptons-scheme-for-migrating-particles&quot;&gt;Plimpton’s scheme for migrating particles&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#patch-struct&quot; id=&quot;markdown-toc-patch-struct&quot;&gt;Patch struct&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+will continue when I get some free time.&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html">Introduction In this article we take a short detour into the problem of continuous unit testing of code that contains MPI calls and use either mpich or Open MPI. I have recently moved from CTest-based testing to a combination of CMake and googletest. The reason for the shift is the convenience googletest provides. However, the googletest primer and advanced manual do not contain many examples and can be cryptic at times. I hope this article will provide pointers to those who run into a roadblock when testing MPI applications with googletest.</summary></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 4</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 4" /><published>2017-07-27T22:30:00+12:00</published><updated>2017-07-27T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;The Plimpton scheme of communicating ghost information between patches was described
 in &lt;a href=&quot;/ParSim/mpi/c++/parallel-domain-decomposition-part-3/&quot;&gt;Part 3&lt;/a&gt; of this series.
 Let us now see how a similar approach can be used to migrate particles that have
-moved across patches.&lt;/p&gt;
+moved across patches.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;p&gt;In the animation below we just move the particles within each patch randomly.  To make
 the identity of the particles clear, we have used solid circles for the patch particles and
@@ -698,14 +718,6 @@ in general as it is costly and often not necessary.&lt;/p&gt;
 &lt;p&gt;In the next part of this series we will explore how information about forces can be communicated
 across patches.&lt;/p&gt;
 
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
-
 &lt;script src=&quot;/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
@@ -714,24 +726,15 @@ across patches.&lt;/p&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/particleMigrate.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;/ParSim/assets/js/particleMotion.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 3</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 3" /><published>2017-07-23T22:30:00+12:00</published><updated>2017-07-23T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#plimptons-scheme-for-exchanging-particles&quot; id=&quot;markdown-toc-plimptons-scheme-for-exchanging-particles&quot;&gt;Plimpton’s scheme for exchanging particles&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#patch-struct&quot; id=&quot;markdown-toc-patch-struct&quot;&gt;Patch struct&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-particle-exchange-function&quot; id=&quot;markdown-toc-the-particle-exchange-function&quot;&gt;The particle exchange function&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;script src=&quot;/ParSim/assets/js/particleMotion.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html">Introduction The Plimpton scheme of communicating ghost information between patches was described in Part 3 of this series. Let us now see how a similar approach can be used to migrate particles that have moved across patches.</summary></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 3</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 3" /><published>2017-07-23T22:30:00+12:00</published><updated>2017-07-23T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In &lt;a href=&quot;/ParSim/mpi/c++/parallel-domain-decomposition-part-2/&quot;&gt;Part 2&lt;/a&gt; of this series
 we showed the direct way of communicating ghost particles between patches.  That approach
 requires 26 communication steps per patch in three-dimensions.  In this article we discuss
 the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular 
-dynamics”, Sandia Report SAND91-1144.UC-405, 1993).&lt;/p&gt;
+dynamics”, Sandia Report SAND91-1144.UC-405, 1993).
+&lt;!--more--&gt;&lt;/p&gt;
 
+&lt;!--more--&gt;
 &lt;p&gt;Plimpton’s paper has been cited almost 15,000 times since its publication.  Among other
 things, the paper explains how the number of communication steps can be reduced to six in
 three dimensions.&lt;/p&gt;
@@ -950,35 +953,16 @@ However, there are two more important communication steps that need to be consid
 computation of interparticle forces and the migration of particles between patches.  In the next
 part of this series, we will discuss the migration of particles when we use the Plimpton scheme.&lt;/p&gt;
 
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
-
 &lt;script src=&quot;/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;/ParSim/assets/js/particlePlimpton.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 2</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 2" /><published>2017-07-22T22:30:00+12:00</published><updated>2017-07-22T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#exchanging-particles-between-processes&quot; id=&quot;markdown-toc-exchanging-particles-between-processes&quot;&gt;Exchanging particles between processes&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#patchneighborcomm-struct&quot; id=&quot;markdown-toc-patchneighborcomm-struct&quot;&gt;PatchNeighborComm struct&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#patch-struct&quot; id=&quot;markdown-toc-patch-struct&quot;&gt;Patch struct&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-particle-exchange-function&quot; id=&quot;markdown-toc-the-particle-exchange-function&quot;&gt;The particle exchange function&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;script src=&quot;/ParSim/assets/js/particlePlimpton.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html">Introduction In Part 2 of this series we showed the direct way of communicating ghost particles between patches. That approach requires 26 communication steps per patch in three-dimensions. In this article we discuss the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular dynamics”, Sandia Report SAND91-1144.UC-405, 1993).</summary></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 2</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 2" /><published>2017-07-22T22:30:00+12:00</published><updated>2017-07-22T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;The &lt;a href=&quot;/ParSim/mpi/c++/parallel-domain-decomposition-part-1/&quot;&gt;previous article&lt;/a&gt; in this series
 discussed the scatter operation for moving particles to various processes.  In this second part
 of the series we will discuss a commonly used method of communicating information between
-processes.  Each process is logically mapped to a “patch”.&lt;/p&gt;
+processes.  Each process is logically mapped to a “patch”.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;p&gt;In the animation below, particles are generated in the red patch “P0” and then scattered
 to the other eight patches.  During a particle-based simulation, some information has to
@@ -1206,38 +1190,20 @@ SAND91-1144.UC-405, 1993).&lt;/p&gt;
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
 &lt;p&gt;In the next part of this series, we will discuss Plimpton’s approach for domain decomposition.&lt;/p&gt;
 
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
-
 &lt;script src=&quot;/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/particleScatterGhost.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;/ParSim/assets/js/particleExchange.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 1</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 1" /><published>2017-07-20T22:30:00+12:00</published><updated>2017-07-20T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#creating-and-scattering-particles&quot; id=&quot;markdown-toc-creating-and-scattering-particles&quot;&gt;Creating and scattering particles&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#mpi-implementation&quot; id=&quot;markdown-toc-mpi-implementation&quot;&gt;MPI implementation&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#mpi-setup&quot; id=&quot;markdown-toc-mpi-setup&quot;&gt;MPI setup&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#the-scatter-operation&quot; id=&quot;markdown-toc-the-scatter-operation&quot;&gt;The scatter operation&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;script src=&quot;/ParSim/assets/js/particleExchange.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html">Introduction The previous article in this series discussed the scatter operation for moving particles to various processes. In this second part of the series we will discuss a commonly used method of communicating information between processes. Each process is logically mapped to a “patch”.</summary></entry><entry><title type="html">Parallel domain decomposition for particle methods: Part 1</title><link href="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1/" rel="alternate" type="text/html" title="Parallel domain decomposition for particle methods: Part 1" /><published>2017-07-20T22:30:00+12:00</published><updated>2017-07-20T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1</id><content type="html" xml:base="http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;For parallel particle codes that have to be written quickly (while retaining flexibility), the
 task-based parallelism approach doesn’t always work well.  The usual approach that is taken
 in those situations is some sort of domain decomposition and a lot of associated fine-grained
 code for communication between processes.  One tries to strike the appropriate balance between
 communication and computation while making sure that the computation is load-balanced.  As a
-rule of thumb, less communication is better.&lt;/p&gt;
+rule of thumb, less communication is better.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;p&gt;One approach (among many) in particle-based codes that are being parallelized starting from
 a serial version is:&lt;/p&gt;
@@ -1376,29 +1342,16 @@ a structure of arrays (which is more efficient).&lt;/p&gt;
 &lt;p&gt;In the next part of this series, we will discuss two approaches for inter-patch communication
 for particle-based simulations.&lt;/p&gt;
 
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;
-
 &lt;script src=&quot;/ParSim/assets/js/d3.v4.min.js&quot;&gt;&lt;/script&gt;
 
 &lt;script src=&quot;/ParSim/assets/js/colorbrewer.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;/ParSim/assets/js/particleScatter.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Can the Larsen-C ice shelf failure be predicted with Peridynamics?</title><link href="http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics/" rel="alternate" type="text/html" title="Can the Larsen-C ice shelf failure be predicted with Peridynamics?" /><published>2017-07-09T22:30:00+12:00</published><updated>2017-07-09T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics</id><content type="html" xml:base="http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#issues-to-be-resolved-before-a-simulation&quot; id=&quot;markdown-toc-issues-to-be-resolved-before-a-simulation&quot;&gt;Issues to be resolved before a simulation&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;script src=&quot;/ParSim/assets/js/particleScatter.js&quot;&gt;&lt;/script&gt;</content><author><name>Biswajit Banerjee</name></author><category term="MPI" /><category term="C++" /><summary type="html">Introduction For parallel particle codes that have to be written quickly (while retaining flexibility), the task-based parallelism approach doesn’t always work well. The usual approach that is taken in those situations is some sort of domain decomposition and a lot of associated fine-grained code for communication between processes. One tries to strike the appropriate balance between communication and computation while making sure that the computation is load-balanced. As a rule of thumb, less communication is better.</summary></entry><entry><title type="html">Can the Larsen-C ice shelf failure be predicted with Peridynamics?</title><link href="http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics/" rel="alternate" type="text/html" title="Can the Larsen-C ice shelf failure be predicted with Peridynamics?" /><published>2017-07-09T22:30:00+12:00</published><updated>2017-07-09T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics</id><content type="html" xml:base="http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;On July 7, 2017, the &lt;a href=&quot;http://www.projectmidas.org/blog/multiple-branches/&quot;&gt;Project Midas group&lt;/a&gt;
 released a couple of plots of material velocities and interferograms showing the evolution of a
 large rift the &lt;a href=&quot;https://en.wikipedia.org/wiki/Larsen_Ice_Shelf#Larsen_C&quot;&gt;Larsen-C ice shelf&lt;/a&gt; in Antarctica.  The crack grew 11 miles in a few days before
-slowing down.&lt;/p&gt;
+slowing down.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;div align=&quot;center&quot;&gt;
 &lt;img style=&quot;width:400px&quot; alt=&quot;Larsen-C cracks&quot; src=&quot;/ParSim/assets/blogimg/LarsenC_crack.png&quot; /&gt; 
@@ -1463,24 +1416,9 @@ sea is not straightforward and the error bounds will be large.&lt;/p&gt;
 &lt;p&gt;Even though we have seen enormous improvements in algorithms and computational capabilities for
 fracture simulation over the last 15 years, predicting dynamic fracture continues to be elusive.
 The research that we do at Parresia attempts to improve the predictive fidelity of
-numerical methods to solve these types of problems.&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Fracture" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">The difference between the spin and angular velocity tensors</title><link href="http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="alternate" type="text/html" title="The difference between the spin and angular velocity tensors" /><published>2017-06-20T22:30:00+12:00</published><updated>2017-06-20T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate</id><content type="html" xml:base="http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-spin-tensor&quot; id=&quot;markdown-toc-the-spin-tensor&quot;&gt;The spin tensor&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-green-naghdi-objective-rate&quot; id=&quot;markdown-toc-the-green-naghdi-objective-rate&quot;&gt;The Green-Naghdi objective rate&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#relation-between-spin-and-angular-velocity&quot; id=&quot;markdown-toc-relation-between-spin-and-angular-velocity&quot;&gt;Relation between spin and angular velocity&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
-&lt;p&gt;Several years ago I took created a Wikpedia article on &lt;a href=&quot;https://en.wikipedia.org/wiki/Objective_stress_rate&quot;&gt;objective stress rates&lt;/a&gt; based on &lt;a href=&quot;https://en.wikiversity.org/wiki/Nonlinear_finite_elements/Objective_stress_rates&quot;&gt;lecture notes&lt;/a&gt; in nonlinear finite elements for a class that I taught at the University of Utah.  In this article I will attempt to clarify one recurring question on the subject: what is the difference between the spin tensor (\(\boldsymbol{w}\)) and the angular velocity tensor (\(\boldsymbol{\Omega}\))?&lt;/p&gt;
+numerical methods to solve these types of problems.&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Fracture" /><summary type="html">Introduction On July 7, 2017, the Project Midas group released a couple of plots of material velocities and interferograms showing the evolution of a large rift the Larsen-C ice shelf in Antarctica. The crack grew 11 miles in a few days before slowing down.</summary></entry><entry><title type="html">The difference between the spin and angular velocity tensors</title><link href="http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/" rel="alternate" type="text/html" title="The difference between the spin and angular velocity tensors" /><published>2017-06-20T22:30:00+12:00</published><updated>2017-06-20T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate</id><content type="html" xml:base="http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;Several years ago I took created a Wikpedia article on &lt;a href=&quot;https://en.wikipedia.org/wiki/Objective_stress_rate&quot;&gt;objective stress rates&lt;/a&gt; based on &lt;a href=&quot;https://en.wikiversity.org/wiki/Nonlinear_finite_elements/Objective_stress_rates&quot;&gt;lecture notes&lt;/a&gt; in nonlinear finite elements for a class that I taught at the University of Utah.  In this article I will attempt to clarify one recurring question on the subject: what is the difference between the spin tensor (\(\boldsymbol{w}\)) and the angular velocity tensor (\(\boldsymbol{\Omega}\))?
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;the-spin-tensor&quot;&gt;The spin tensor&lt;/h4&gt;
 &lt;p&gt;Following standard continuum mechanics notation, let us denote a deformation by&lt;/p&gt;
@@ -1673,27 +1611,14 @@ velocity gradient for rigid body motions.&lt;/p&gt;
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
 &lt;p&gt;In many practical applications the spin and the angular velocity tensors are assumed to be identical.
 One has to be careful to make sure that the assumptions made during that identification are valid
-for the application under consideration.&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Mechanics" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">The ARENA model for partially saturated soils</title><link href="http://localhost:4000/ParSim/mechanics/Arena-model-paper/" rel="alternate" type="text/html" title="The ARENA model for partially saturated soils" /><published>2017-06-15T22:30:00+12:00</published><updated>2017-06-15T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mechanics/Arena-model-paper</id><content type="html" xml:base="http://localhost:4000/ParSim/mechanics/Arena-model-paper/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#introduction&quot; id=&quot;markdown-toc-introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#some-predictions-from-arena&quot; id=&quot;markdown-toc-some-predictions-from-arena&quot;&gt;Some predictions from ARENA&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#remarks&quot; id=&quot;markdown-toc-remarks&quot;&gt;Remarks&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
+for the application under consideration.&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Mechanics" /><summary type="html">Introduction Several years ago I took created a Wikpedia article on objective stress rates based on lecture notes in nonlinear finite elements for a class that I taught at the University of Utah. In this article I will attempt to clarify one recurring question on the subject: what is the difference between the spin tensor (\(\boldsymbol{w}\)) and the angular velocity tensor (\(\boldsymbol{\Omega}\))?</summary></entry><entry><title type="html">The ARENA model for partially saturated soils</title><link href="http://localhost:4000/ParSim/mechanics/Arena-model-paper/" rel="alternate" type="text/html" title="The ARENA model for partially saturated soils" /><published>2017-06-15T22:30:00+12:00</published><updated>2017-06-15T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mechanics/Arena-model-paper</id><content type="html" xml:base="http://localhost:4000/ParSim/mechanics/Arena-model-paper/">&lt;h4 id=&quot;introduction&quot;&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;I developed the ARENA model for partially saturated soils last year (2016).  Before that
 we had tried using a typical Drucker-Prager with cap model and then a modified Cam-Clay
 model but could not get these models to either represent observed experimental data or
 produce robust solutions under large deformations.  The new model, though not perfect,
 produced unexpectedly good predictions for partially saturated soils after being
-calibrated using only dry soil data.&lt;/p&gt;
+calibrated using only dry soil data.
+&lt;!--more--&gt;&lt;/p&gt;
 
 &lt;p&gt;The model and its predictions have finally been made publicly available (with a large
 amount of detail).  You can download the entire 15Mb report at &lt;a href=&quot;https://www.researchgate.net/publication/317578167_Theory_verification_and_validation_of_the_ARENA_constitutive_model_for_applications_to_high-rate_loading_of_fully_or_partially_saturated_granular_media&quot;&gt;ResearchGate&lt;/a&gt;.&lt;/p&gt;
@@ -1718,171 +1643,4 @@ in the image below.&lt;/p&gt;
 &lt;p&gt;&lt;img style=&quot;width:600px&quot; alt=&quot;ARENA_prediction&quot; src=&quot;/ParSim/assets/blogimg/Centrifuge_VHull_BoulderClay_20g_13ww_midPBC_00120.png&quot; /&gt;&lt;/p&gt;
 
 &lt;h4 id=&quot;remarks&quot;&gt;Remarks&lt;/h4&gt;
-&lt;p&gt;Though the ARENA model produces excellent predictions in compression, its behavior in tension (particularly under disaggregation conditions) is not very accurate.  Our report contains a discussion section that identifies numerous research questions that arose during our work.  I hope some of you will find those interesting enough to improve upon our model.&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Mechanics" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Material and spatial incremental constitutive equations</title><link href="http://localhost:4000/ParSim/mechanics/incremental-objectivity/" rel="alternate" type="text/html" title="Material and spatial incremental constitutive equations" /><published>2017-05-31T22:30:00+12:00</published><updated>2017-05-31T22:30:00+12:00</updated><id>http://localhost:4000/ParSim/mechanics/incremental-objectivity</id><content type="html" xml:base="http://localhost:4000/ParSim/mechanics/incremental-objectivity/">&lt;ul class=&quot;notice--content&quot; id=&quot;markdown-toc&quot;&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-question&quot; id=&quot;markdown-toc-the-question&quot;&gt;The question&lt;/a&gt;    &lt;ul&gt;
-      &lt;li&gt;&lt;a href=&quot;#instantaneous-moduli-for-pk-2-stress-and-green-strain&quot; id=&quot;markdown-toc-instantaneous-moduli-for-pk-2-stress-and-green-strain&quot;&gt;Instantaneous moduli for PK-2 stress and Green strain&lt;/a&gt;&lt;/li&gt;
-      &lt;li&gt;&lt;a href=&quot;#instantaneous-moduli-for-kirchhoff-stress&quot; id=&quot;markdown-toc-instantaneous-moduli-for-kirchhoff-stress&quot;&gt;Instantaneous moduli for Kirchhoff stress&lt;/a&gt;&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;#the-reason-for-the-inconsistency&quot; id=&quot;markdown-toc-the-reason-for-the-inconsistency&quot;&gt;The reason for the inconsistency&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h4 id=&quot;the-question&quot;&gt;The question&lt;/h4&gt;
-&lt;p&gt;A colleague asked a question on objectivity a few days ago that had me going back to
-Ray Ogden’s book on nonlinear elastic deformations.  The question was on incremental
-stresses and their material and spatial descriptions.&lt;/p&gt;
-
-&lt;p&gt;To be more specific, the question was on incremental stress-strain equations expressed
-in rate form and why the instantaneous moduli for material spatial stress measures were
-different.&lt;/p&gt;
-
-&lt;h6 id=&quot;instantaneous-moduli-for-pk-2-stress-and-green-strain&quot;&gt;Instantaneous moduli for PK-2 stress and Green strain&lt;/h6&gt;
-&lt;p&gt;Consider the relation between the second Piola-Kirchhoff (PK-2) stress
-(\(\boldsymbol{S}\)) and the Lagrangian Green strain (\(\boldsymbol{E}\)):&lt;/p&gt;
-&lt;div&gt;
-$$
-  \dot{\boldsymbol{S}} = \mathsf{C}^{SE} : \dot{\boldsymbol{E}}
-$$
-&lt;/div&gt;
-&lt;p&gt;where \(\mathsf{C}^{SE}\) is the first-order instantaneous modulus tensor (a rank-4 tensor).&lt;/p&gt;
-
-&lt;p class=&quot;notice--info&quot;&gt;Note that the first-order instantaneous modulus tensor is neither constant
-nor independent of the state of deformation.&lt;/p&gt;
-
-&lt;p&gt;Many books use an additional linearization assumption to simplify the instantaneous modulus tensor.
-In particular, for an isotropic material, the linearized instantaneous modulus tensor can be
-expressed as&lt;/p&gt;
-&lt;div&gt;
-$$
-  \mathsf{C}^{SE} = \kappa \mathbf{I}\otimes\mathbf{I} +
-    2\mu\left(\mathsf{I}^{(4s)} - \tfrac{1}{3}\mathbf{I}\otimes\mathbf{I}\right)
-$$
-&lt;/div&gt;
-&lt;p&gt;where \(\kappa\) and \(\mu\) are material constants, \(\mathbf{I}\) is the rank-2 identity tensor,
-and \(\mathbf{I}^{(4s)}\) is symmetrized rank-4 identity tensor.&lt;/p&gt;
-
-&lt;p&gt;In our &lt;a href=&quot;/ParSim/mechanics/plasticity/algorithm/closest-point-return/&quot;&gt;earlier article on closest-point return&lt;/a&gt; we saw that we can express the above modulus tensor in the terms of projection tensors:&lt;/p&gt;
-&lt;div class=&quot;notice&quot;&gt;
-$$
-  \mathsf{C}^{SE} = 3\kappa \mathsf{P}^{\text{iso}} + 2\mu\mathsf{P}^{\text{symdev}} \quad \quad \text{(1)}
-$$
-&lt;/div&gt;
-
-&lt;h6 id=&quot;instantaneous-moduli-for-kirchhoff-stress&quot;&gt;Instantaneous moduli for Kirchhoff stress&lt;/h6&gt;
-&lt;p&gt;My colleague wanted to use the expression in equation (1) above to determine the instantaneous moduli
-for a system that uses the Kirchhoff stress measure (\(\boldsymbol{\tau}\))&lt;/p&gt;
-&lt;div&gt;
-$$
-  \boldsymbol{\tau} = J \boldsymbol{\sigma} = \boldsymbol{F}\cdot\boldsymbol{S}\cdot\boldsymbol{F}^T
-$$
-&lt;/div&gt;
-&lt;p&gt;where \(\boldsymbol{F}\) is the deformation gradient, \(J = \det\boldsymbol{F}\), and \(\boldsymbol{\sigma}\) is
-the Cauchy stress.&lt;/p&gt;
-
-&lt;p&gt;The time derivative of this stress measure is&lt;/p&gt;
-&lt;div&gt;
-$$
-  \begin{align}
-  \dot{\boldsymbol{\tau}} &amp;amp; = \frac{d}{dt}(\boldsymbol{F}\cdot\boldsymbol{S}\cdot\boldsymbol{F}^T) \\
-     &amp;amp; = \dot{\boldsymbol{F}}\cdot\boldsymbol{S}\cdot\boldsymbol{F}^T + 
-         \boldsymbol{F}\cdot\dot{\boldsymbol{S}}\cdot\boldsymbol{F}^T + 
-         \boldsymbol{F}\cdot\boldsymbol{S}\cdot\dot{\boldsymbol{F}^T} \\
-     &amp;amp; = \boldsymbol{l}\cdot\boldsymbol{F}\cdot\boldsymbol{S}\cdot\boldsymbol{F}^T + 
-         \boldsymbol{F}\cdot(\mathsf{C}^{SE}:\dot{\boldsymbol{E}})\cdot\boldsymbol{F}^T + 
-         \boldsymbol{F}\cdot\boldsymbol{S}\cdot\boldsymbol{F}^T\cdot\boldsymbol{l}^T
-  \end{align}
-$$
-&lt;/div&gt;
-&lt;p&gt;where we have used the rate-form expression for \(\dot{\boldsymbol{S}}\) and the relationship
-between the velocity gradient (\(\boldsymbol{l}\)) and time derivative of the deformation gradient.
-Also,&lt;/p&gt;
-&lt;div&gt;
-$$
-  \begin{align}
-  \dot{\boldsymbol{E}}
-    &amp;amp; = \tfrac{1}{2}(\dot{\boldsymbol{F}^T}\cdot\boldsymbol{F} + \boldsymbol{F}^T\cdot\dot{\boldsymbol{F}}) \\
-    &amp;amp; = \tfrac{1}{2}(\boldsymbol{F}^T\cdot\boldsymbol{l}^T\cdot\boldsymbol{F} +
-                     \boldsymbol{F}^T\cdot\boldsymbol{l}\cdot\boldsymbol{F}) \\
-    &amp;amp; = \boldsymbol{F}^T\cdot\boldsymbol{d}\cdot\boldsymbol{F}
-  \end{align}
-$$
-&lt;/div&gt;
-&lt;p&gt;where \(\boldsymbol{d}\) is the symmetric part of the velocity gradient tensor.
-Therefore, defining the spin tensor (\(\boldsymbol{w}\)) via \(\boldsymbol{l} = \boldsymbol{d} + \boldsymbol{w}\),
-we have&lt;/p&gt;
-&lt;div&gt;
-  \begin{align}
-  \dot{\boldsymbol{\tau}} 
-     &amp;amp; = \boldsymbol{l}\cdot\boldsymbol{\tau} + 
-         \boldsymbol{F}\cdot\mathsf{C}^{SE}:(\boldsymbol{F}^T\cdot\boldsymbol{d}\cdot\boldsymbol{F})\cdot\boldsymbol{F}^T + 
-         \boldsymbol{\tau}\cdot\boldsymbol{l}^T \\
-     &amp;amp; = \boldsymbol{d}\cdot\boldsymbol{\tau} +  \boldsymbol{w}\cdot\boldsymbol{\tau} + 
-         \boldsymbol{F}\cdot\mathsf{C}^{SE}:(\boldsymbol{F}^T\cdot\boldsymbol{d}\cdot\boldsymbol{F})\cdot\boldsymbol{F}^T + 
-         \boldsymbol{\tau}\cdot\boldsymbol{d}^T + \boldsymbol{\tau}\cdot\boldsymbol{w}^T 
-  \end{align}
-&lt;/div&gt;
-&lt;p&gt;If we define the Jaumann rate of the Kirchhoff stress as&lt;/p&gt;
-&lt;div&gt;
-$$
-  \overset{\triangle J}{\boldsymbol{\tau}} = \dot{\boldsymbol{\tau}} - \boldsymbol{w}\cdot\boldsymbol{\tau} -\boldsymbol{\tau}\cdot\boldsymbol{w}^T 
-$$
-&lt;/div&gt;
-&lt;p&gt;and the Jaumann modulus using&lt;/p&gt;
-&lt;div class=&quot;notice&quot;&gt;
-$$
-  \mathsf{C}^{\tau J}:\boldsymbol{d} = 
-    \boldsymbol{F}\cdot\mathsf{C}^{SE}:(\boldsymbol{F}^T\cdot\boldsymbol{d}\cdot\boldsymbol{F})\cdot\boldsymbol{F}^T 
-$$
-&lt;/div&gt;
-&lt;p&gt;we have, assuming that the stress is always significantly smaller than the modulus,&lt;/p&gt;
-&lt;div&gt;
-$$
-  \overset{\triangle J}{\boldsymbol{\tau}} = \boldsymbol{d}\cdot\boldsymbol{\tau}  +
-    \boldsymbol{\tau}\cdot\boldsymbol{d}^T  + \mathsf{C}^{\tau J}:\boldsymbol{d}
-   \approx \mathsf{C}^{\tau J}:\boldsymbol{d}
-$$
-&lt;/div&gt;
-
-&lt;p&gt;Now, some authors express the Jaumann modulus as&lt;/p&gt;
-&lt;div class=&quot;notice&quot;&gt;
-$$
-  \mathsf{C}^{\tau J} = 3\kappa \mathsf{P}^{\text{iso}} + 2\mu\mathsf{P}^{\text{symdev}} \quad \quad \text{(2)}
-$$
-&lt;/div&gt;
-&lt;p class=&quot;notice--warning&quot;&gt;&lt;strong&gt;Where has the dependence on the deformation gradient gone?&lt;/strong&gt;  This is a common source of confusion.&lt;/p&gt;
-
-&lt;h4 id=&quot;the-reason-for-the-inconsistency&quot;&gt;The reason for the inconsistency&lt;/h4&gt;
-&lt;p&gt;The main reason for this inconsistency is&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;the use of the same symbols for two quite different sets of moduli and basis tensors, and&lt;/li&gt;
-  &lt;li&gt;ignoring the fact that a linearization operation has been performed to get the simplified modulus tensors.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;In other words, most importantly,&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;the quantities \(\kappa, \mu\) are not necessarily the same for the two cases,&lt;/li&gt;
-  &lt;li&gt;the basis tensors \(\mathsf{P}^{\text{iso}}\) and \(\mathsf{P}^{\text{symdev}}\) are not
-identical for the PK-2 case and the Kirchhoff stress case.  One has been rotated and stretched relative
-to the other.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;A detailed discussion of these issues can be found in Odgen’s book (chapter 6.1.4).  A shorter discussion
-can be found in &lt;em&gt;Computational Inelasticity&lt;/em&gt; by Simo and Hughes (sections 7.1.5.3 - 7.1.5.5).&lt;/p&gt;
-
-&lt;p&gt;If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).&lt;/p&gt;
-
-&lt;p&gt;&lt;a class=&quot;twitter-share-button&quot; href=&quot;https://twitter.com/intent/tweet&quot; data-via=&quot;parresianz&quot;&gt; Tweet&lt;/a&gt;
-&lt;script src=&quot;//platform.linkedin.com/in.js&quot; type=&quot;text/javascript&quot;&gt;
-  lang: en_US
-&lt;/script&gt;
-&lt;script type=&quot;IN/Share&quot; data-counter=&quot;right&quot;&gt;&lt;/script&gt;&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Mechanics" /><summary type="html"></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" /><media:content medium="image" url="http://localhost:4000/ParSim/%7B%22credit%22=%3E%22Parresia%20Research%20Limited%22,%20%22header%22=%3E%22HummerLargeSim-WithLogo.png%22%7D" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;p&gt;Though the ARENA model produces excellent predictions in compression, its behavior in tension (particularly under disaggregation conditions) is not very accurate.  Our report contains a discussion section that identifies numerous research questions that arose during our work.  I hope some of you will find those interesting enough to improve upon our model.&lt;/p&gt;</content><author><name>Biswajit Banerjee</name></author><category term="Mechanics" /><summary type="html">Introduction I developed the ARENA model for partially saturated soils last year (2016). Before that we had tried using a typical Drucker-Prager with cap model and then a modified Cam-Clay model but could not get these models to either represent observed experimental data or produce robust solutions under large deformations. The new model, though not perfect, produced unexpectedly good predictions for partially saturated soils after being calibrated using only dry soil data.</summary></entry></feed>

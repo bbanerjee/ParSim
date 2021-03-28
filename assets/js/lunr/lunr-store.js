@@ -66,7 +66,7 @@ var store = [{
         "teaser": null
       },{
         "title": "Formatting C++ code",
-        "excerpt":"Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 machine. This post is mean to act as a reminder. If I want to change all the files in my repository to a particular format (I prefer the Mozilla style),...","categories": ["C++"],
+        "excerpt":"Every once in a while I need to recall how clang-format is set up and run on my Ubuntu 16.04 machine. This post is meant to act as a reminder. If I want to change all the files in my repository to a particular format (I prefer the Mozilla style),...","categories": ["C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/c++/clang-format/",
         "teaser": null
@@ -114,194 +114,200 @@ var store = [{
         "teaser": null
       },{
         "title": "Saving particle data in a Vuex store",
-        "excerpt":"Introduction Typescript typings for Vue and Vuex The store The particle module The particle state The particle getters The particle mutations The particle actions Remarks Introduction In the first part of this series on scientific visualization in Javascript, we saw how data in VTK unstructured grid format produced by C++...","categories": ["Javascript","Typescript","Vue","Vuex"],
+        "excerpt":"Introduction In the first part of this series on scientific visualization in Javascript, we saw how data in VTK unstructured grid format produced by C++ simulation codes can be read in to a Javascript frontend. Recall the parseAndSaveVTKXML function in Typescript syntax: public parseAndSaveVTKXML(xmlDoc : any) { let $xml =...","categories": ["Javascript","Typescript","Vue","Vuex"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/vue/vuex/vuex-store/",
         "teaser": null
       },{
         "title": "Plotting VTK particles with Three.js",
-        "excerpt":"Introduction A Vuex store for graphics Interacting with Vue Conclusion Introduction In Part 2 of this series, we showed how the particle data are saved into a Vuex store. Now we are ready to visualize the data. In this article, we will discuss how three.js can be used to display...","categories": ["Javascript","Typescript","Threejs","Vue"],
+        "excerpt":"Introduction In Part 2 of this series, we showed how the particle data are saved into a Vuex store. Now we are ready to visualize the data. In this article, we will discuss how three.js can be used to display the particles. Interaction with the particles will be discussed in...","categories": ["Javascript","Typescript","Threejs","Vue"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs/",
         "teaser": null
       },{
         "title": "Setting up the Three.js renderer",
-        "excerpt":"Introduction The graphics panel The renderer template The renderer implementation Remarks Introduction The previous articles in this series were about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and the...","categories": ["Javascript","Typescript","Threejs","Vue"],
+        "excerpt":"Introduction The previous articles in this series were about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and the user interface before plotting the particles with Three.js. In this article...","categories": ["Javascript","Typescript","Threejs","Vue"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs-renderer/",
         "teaser": null
       },{
         "title": "Setting up the Three.js scene and camera",
-        "excerpt":"Introduction Flash-back: The graphics panel The three-scene component The three-camera component Remarks Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a...","categories": ["Javascript","Typescript","Threejs","Vue"],
+        "excerpt":"Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and the user interface. Part 4: Setting up the Three.js renderer...","categories": ["Javascript","Typescript","Threejs","Vue"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs-camera/",
         "teaser": null
       },{
         "title": "Setting up the Three.js ellipsoids",
-        "excerpt":"Introduction The ellipsoid particles component Creating the ellipsoid particles Remarks Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and...","categories": ["Javascript","Typescript","Threejs","Vue"],
+        "excerpt":"Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and the user interface. Part 4: Setting up the Three.js renderer...","categories": ["Javascript","Typescript","Threejs","Vue"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/",
         "teaser": null
       },{
         "title": "Plotting particles with vtk.js",
-        "excerpt":"Introduction Registering VTK components Creating Vuex stores for VTK data The VTK graphics panel The VTK renderer The VTK particles component Creating the particles Remarks Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving...","categories": ["Javascript","Typescript","vtkjs","Threejs","Vue"],
+        "excerpt":"Introduction In the previous articles in this series we talked about: Part 1: Reading VTK format particles with Javascript in a browser Part 2: Saving the read-in particle data in a Vuex store Part 3: Initialization of a store and the user interface. Part 4: Setting up the Three.js renderer...","categories": ["Javascript","Typescript","vtkjs","Threejs","Vue"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/",
         "teaser": null
       },{
         "title": "XML format for particle input files",
-        "excerpt":"Introduction R script converter from CSV to XML The output ASCII XML file The output compressed base64 XML file Remarks Introduction Let us now change tack slightly and return to an issue I had talked about earlier in Input files: reading XML. Typical input files in research simulation codes cannot...","categories": ["R","XML"],
+        "excerpt":"Introduction Let us now change tack slightly and return to an issue I had talked about earlier in Input files: reading XML. Typical input files in research simulation codes cannot be easily deciphered. But in some cases headers are included to make the reading process easier. An example is a...","categories": ["R","XML"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/r/xml/xml-particle-input-file/",
         "teaser": null
       },{
         "title": "Plane stress Drucker-Prager return algorithm",
-        "excerpt":"Introduction Plane stress elasticity Drucker-Prager plasticity Plane stress Drucker-Prager yield function Plane stress Drucker-Prager flow rule Remarks Introduction Recently I’ve encountered questions on how the radial return algorithm works when applied to plane stress plasticity. There seems to be some confusion about the application of the plane strain constraint. Here’s...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction Recently I’ve encountered questions on how the radial return algorithm works when applied to plane stress plasticity. There seems to be some confusion about the application of the plane strain constraint. Here’s the first part of my take on the issue based on Simo’s work from the mid-1980s. Warning:...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager/",
         "teaser": null
       },{
         "title": "The plane stress return algorithm",
-        "excerpt":"Introduction Review of 3D plasticity Plane stress plasticity Forward Euler Return algorithm Remarks Introduction In the previous part of this discussion, I derived plane stress expressions for linear elasticity, the Drucker-Prager yield function, and the associated flow rule. Let us now review the approach used for finding the parameter \\(\\dot{\\lambda}\\)...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction In the previous part of this discussion, I derived plane stress expressions for linear elasticity, the Drucker-Prager yield function, and the associated flow rule. Let us now review the approach used for finding the parameter \\(\\dot{\\lambda}\\) that is needed in return algorithms, from a purely algebraic standpoint. Warning: We...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/",
         "teaser": null
       },{
         "title": "Plane stress return: Spectral decomposition",
-        "excerpt":"Introduction Spectral decomposition of \\(\\mathbf{C}\\) Spectral decomposition of \\(\\mathbf{P}\\) Product of \\(\\mathbf{P}\\) and \\(\\mathbf{C}\\) Remarks Introduction The previous parts of this series dealt with: Part 1: Background of 3D and plane stress Drucker-Prager plasticity Part 2: A forward Euler return algorithm for plane stress plasticity Let us now take a...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction The previous parts of this series dealt with: Part 1: Background of 3D and plane stress Drucker-Prager plasticity Part 2: A forward Euler return algorithm for plane stress plasticity Let us now take a slight detour and examine the spectral decomposition of the stiffness matrix (\\(\\mathbf{C}\\)) and the transformation...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/",
         "teaser": null
       },{
         "title": "Plane stress forward Euler Drucker-Prager",
-        "excerpt":"Introduction Finding \\(\\Delta\\lambda\\) An attempt at simplification Remarks Introduction In Part 2 of this series, we saw that a forward Euler return algorithm leads to the discretized equations $$ \\boldsymbol{\\sigma}_{n+1} = \\boldsymbol{\\sigma}_{n+1}^{\\text{trial}} - \\Delta\\lambda \\,\\mathbf{C}\\, \\boldsymbol{n}_{n} $$ where $$ \\boldsymbol{n}_n = \\begin{bmatrix} n^n_{11} \\\\ n^n_{22} \\\\ n^n_{12} \\end{bmatrix} = \\left(...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction In Part 2 of this series, we saw that a forward Euler return algorithm leads to the discretized equations $$ \\boldsymbol{\\sigma}_{n+1} = \\boldsymbol{\\sigma}_{n+1}^{\\text{trial}} - \\Delta\\lambda \\,\\mathbf{C}\\, \\boldsymbol{n}_{n} $$ where $$ \\boldsymbol{n}_n = \\begin{bmatrix} n^n_{11} \\\\ n^n_{22} \\\\ n^n_{12} \\end{bmatrix} = \\left( \\tfrac{1}{\\sqrt{2}} \\frac{\\mathbf{P}\\,\\boldsymbol{\\sigma_n}}{ \\sqrt{\\boldsymbol{\\sigma_n}^T\\,\\mathbf{P}\\,\\boldsymbol{\\sigma_n}} } - \\tfrac{1}{3} \\frac{dq}{dp}(\\boldsymbol{\\sigma}_n)\\,\\mathbf{I} \\right)...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/",
         "teaser": null
       },{
         "title": "Forward vs. Backward Euler: Plane stress plasticity",
-        "excerpt":"Introduction Forward difference for stress rate Forward and Backward Euler for stress rate Forward and Backward Euler for flow rule Forward/Backward Euler stress updates Does the choice of Forward/Backward Euler matter? Accuracy Stability Optimization Remarks Introduction One of the main points of divergence of many implementations of plastic return algorithms...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction One of the main points of divergence of many implementations of plastic return algorithms is the choice of the algorithm used for numerical integration. Typically, this choice is limited to forward Euler vs. backward Euler for simplicity. Recall from Part 2 that the rate equations that we need to...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/",
         "teaser": null
       },{
         "title": "Nonlinear programming and closest point return plasticity",
-        "excerpt":"Introduction Background Primal form The Lagrangian Dual function Dual form Karush-Kuhn-Tucker optimality conditions Similarity with plasticity Closest point return Remarks Introduction In Part 5 I briefly hinted at the closest-point return algorithm. The ideas behind this were made rigorous in the mid-to-late 1980s by a group of researchers influenced by...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction In Part 5 I briefly hinted at the closest-point return algorithm. The ideas behind this were made rigorous in the mid-to-late 1980s by a group of researchers influenced by developments in convex optimization. Since then there has been a statis in the development of return algorithms for phenomenological plasticity....","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/primal-dual-closest-point-return/",
         "teaser": null
       },{
         "title": "Exploring closest point return plasticity",
-        "excerpt":"Introduction Eigendecompositions in linear elasticity The transformed space for isotropic linear elasticity The Lode invariants and the Lode basis The transformed stress tensor Remarks Introduction In Part 6, I explained why a backward Euler stress update and a closest point return from the trial stress to the yield surface are...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction In Part 6, I explained why a backward Euler stress update and a closest point return from the trial stress to the yield surface are closely related. More specifically, the correct updated stress is at the shortest distance from the trial stress to the yield surface in a 9-dimensional...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/closest-point-return/",
         "teaser": null
       },{
         "title": "Geometric closest point return algorithm",
-        "excerpt":"Introduction The Arena yield function The non-hardening return algorithm The closest point algorithm An animation of the closest point algorithm Remarks Introduction In Part 7, we saw that for isotropic elastic materials and perfect associated plasticity, the trial stress and the actual stress are at the shortest distance from each...","categories": ["Mechanics","Plasticity","Algorithm"],
+        "excerpt":"Introduction In Part 7, we saw that for isotropic elastic materials and perfect associated plasticity, the trial stress and the actual stress are at the shortest distance from each other in a transformed stress space. We also saw that the transformed stress can be expressed as $$ \\boldsymbol{\\sigma}^\\star = \\frac{z}{\\sqrt{3\\kappa}}\\,\\mathbf{E}_z...","categories": ["Mechanics","Plasticity","Algorithm"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/plasticity/algorithm/geometric-closest-point-return/",
         "teaser": null
       },{
         "title": "Creating an animation with d3.js",
-        "excerpt":"Introduction Input data The HTML file The Javascript code Generating points on the yield surface Drawing the yield surface and closest-point projection Creating the SVG Creating the canvas group Creating map from real to canvas coordinates Creating SVG polyline generator Creating the axes and the yield surface Creating groups for...","categories": ["Javascript","D3JS"],
+        "excerpt":"Introduction In Part 8 of the series on return algorithms for plasticity we animated the closest-point return algorithm as shown below. An animated GIF of the plot can be generated using the following R script. require(\"ggplot2\") require(\"animation\") require(\"latex2exp\") #------------------------------------------------------ # Plot single iteration #------------------------------------------------------ plotYieldSurface &lt;- function(zrprime_data) { zrprime_trial_closest =...","categories": ["Javascript","D3JS"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/javascript/d3js/d3-animation-closest-point-return/",
         "teaser": null
       },{
         "title": "Reading XML files containing gzipped data in C++",
-        "excerpt":"Introduction Recap The header file The implementation The read function The readParticleValues templated function The decodeAndUncompress templated function The convert&lt;T&gt; template specializations Remarks Introduction We saw how to create an XML file containing compressed particle data in the article “XML format for particle input files”. Let us now explore how...","categories": ["C++","XML","gzip"],
+        "excerpt":"Introduction We saw how to create an XML file containing compressed particle data in the article “XML format for particle input files”. Let us now explore how to read in that data in our C++ particle simulation code. Recap Recall that the compressed base64 XML file contains data of the...","categories": ["C++","XML","gzip"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/c++/xml/gzip/reading-xml-with-gzipped-data/",
         "teaser": null
       },{
         "title": "The CFL condition for explicit discrete element methods:1",
-        "excerpt":"Introduction The CFL condition Remarks Introduction Solutions of hyperbolic partial differential equations using explicit numerical methods need a means of limiting the timestep so that the solution is stable. A criterion that is usually used to constrain the step size is the Courant–Friedrichs–Lewy condition. Let us first explore what the...","categories": ["DEM"],
+        "excerpt":"Introduction Solutions of hyperbolic partial differential equations using explicit numerical methods need a means of limiting the timestep so that the solution is stable. A criterion that is usually used to constrain the step size is the Courant–Friedrichs–Lewy condition. Let us first explore what the 1928 paper by the Courant,...","categories": ["DEM"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/dem/CFL-condition-discrete-elements/",
         "teaser": null
       },{
         "title": "The CFL condition for explicit discrete element methods:2",
-        "excerpt":"Introduction The von Neumann approach to stability analysis Remarks Introduction In the first part of this article, we looked at the one-dimensional linear second-order wave equation $$ \\frac{\\partial^2 u}{\\partial t^2} - \\frac{\\partial^2 u}{\\partial x^2} = 0 $$ We saw that for a discretization with grid size \\(\\Delta x\\) and timestep...","categories": ["DEM"],
+        "excerpt":"Introduction In the first part of this article, we looked at the one-dimensional linear second-order wave equation $$ \\frac{\\partial^2 u}{\\partial t^2} - \\frac{\\partial^2 u}{\\partial x^2} = 0 $$ We saw that for a discretization with grid size \\(\\Delta x\\) and timestep \\(\\Delta t\\), a central difference approximation is convergent if...","categories": ["DEM"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/dem/CFL-condition-discrete-elements-part-2/",
         "teaser": null
       },{
         "title": "The CFL condition for explicit discrete element methods:3",
-        "excerpt":"Introduction Euler’s laws of motion Discretization of Euler equations Stability of central difference scheme One-dimensional unforced system Stability using the Hurwitz matrix approach Remarks Introduction In Part 1 of this article, we revisited the CFL condition and in Part 2 we showed how the CFL condition and the von Neumann...","categories": ["DEM"],
+        "excerpt":"Introduction In Part 1 of this article, we revisited the CFL condition and in Part 2 we showed how the CFL condition and the von Neumann stability condition are identical for linear wave equation PDEs. Both these conditions apply to PDEs for continuous systems (with the possibility of shocks) that...","categories": ["DEM"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/dem/CFL-condition-discrete-elements-part-3/",
         "teaser": null
       },{
         "title": "The CFL condition for explicit discrete element methods:4",
-        "excerpt":"Introduction One-dimensional equations for impact Stability of central difference for one-dimensional impact Remarks Introduction In Part 3 of this article I discussed the approach where the equations for a system of rigid bodies are approximated by a spring-mass system. The numerical stability conditions of that system are then taken to...","categories": ["DEM"],
+        "excerpt":"Introduction In Part 3 of this article I discussed the approach where the equations for a system of rigid bodies are approximated by a spring-mass system. The numerical stability conditions of that system are then taken to be representative of the system of discrete rigid bodies. In that case, for...","categories": ["DEM"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/dem/CFL-condition-discrete-elements-part-4/",
         "teaser": null
       },{
         "title": "Are stresses tensile or compressive during rigid body rotation?",
-        "excerpt":"Introduction The question The finite element solution Remarks Introduction Recently, I came across a question in StackExchange that pointed out that some books on continuum mechanics suggest that an element will increase in size when rotated if a small strain approximation is used in a finite element simulation. This issue...","categories": ["FEM"],
+        "excerpt":"Introduction Recently, I came across a question in StackExchange that pointed out that some books on continuum mechanics suggest that an element will increase in size when rotated if a small strain approximation is used in a finite element simulation. This issue may be a source of confusion for students...","categories": ["FEM"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/fem/rigid-body-rotation-small-strain/",
         "teaser": null
       },{
         "title": "Material and spatial incremental constitutive equations",
-        "excerpt":"The question Instantaneous moduli for PK-2 stress and Green strain Instantaneous moduli for Kirchhoff stress The reason for the inconsistency The question A colleague asked a question on objectivity a few days ago that had me going back to Ray Ogden’s book on nonlinear elastic deformations. The question was on...","categories": ["Mechanics"],
+        "excerpt":"The question A colleague asked a question on objectivity a few days ago that had me going back to Ray Ogden’s book on nonlinear elastic deformations. The question was on incremental stresses and their material and spatial descriptions. To be more specific, the question was on incremental stress-strain equations expressed...","categories": ["Mechanics"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/incremental-objectivity/",
         "teaser": null
       },{
         "title": "The ARENA model for partially saturated soils",
-        "excerpt":"Introduction Some predictions from ARENA Remarks Introduction I developed the ARENA model for partially saturated soils last year (2016). Before that we had tried using a typical Drucker-Prager with cap model and then a modified Cam-Clay model but could not get these models to either represent observed experimental data or...","categories": ["Mechanics"],
+        "excerpt":"Introduction I developed the ARENA model for partially saturated soils last year (2016). Before that we had tried using a typical Drucker-Prager with cap model and then a modified Cam-Clay model but could not get these models to either represent observed experimental data or produce robust solutions under large deformations....","categories": ["Mechanics"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/Arena-model-paper/",
         "teaser": null
       },{
         "title": "The difference between the spin and angular velocity tensors",
-        "excerpt":"Introduction The spin tensor The Green-Naghdi objective rate Relation between spin and angular velocity Remarks Introduction Several years ago I took created a Wikpedia article on objective stress rates based on lecture notes in nonlinear finite elements for a class that I taught at the University of Utah. In this...","categories": ["Mechanics"],
+        "excerpt":"Introduction Several years ago I took created a Wikpedia article on objective stress rates based on lecture notes in nonlinear finite elements for a class that I taught at the University of Utah. In this article I will attempt to clarify one recurring question on the subject: what is the...","categories": ["Mechanics"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mechanics/spin-tensor-and-Green-Naghdi-rate/",
         "teaser": null
       },{
         "title": "Can the Larsen-C ice shelf failure be predicted with Peridynamics?",
-        "excerpt":"Introduction Issues to be resolved before a simulation Remarks Introduction On July 7, 2017, the Project Midas group released a couple of plots of material velocities and interferograms showing the evolution of a large rift the Larsen-C ice shelf in Antarctica. The crack grew 11 miles in a few days...","categories": ["Fracture"],
+        "excerpt":"Introduction On July 7, 2017, the Project Midas group released a couple of plots of material velocities and interferograms showing the evolution of a large rift the Larsen-C ice shelf in Antarctica. The crack grew 11 miles in a few days before slowing down. The image above (from http://www.projectmidas.org/blog/multiple-branches/) shows...","categories": ["Fracture"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/fracture/Larsen-B-and-peridynamics/",
         "teaser": null
       },{
         "title": "Parallel domain decomposition for particle methods: Part 1",
-        "excerpt":"Introduction Creating and scattering particles MPI implementation MPI setup The scatter operation Remarks Introduction For parallel particle codes that have to be written quickly (while retaining flexibility), the task-based parallelism approach doesn’t always work well. The usual approach that is taken in those situations is some sort of domain decomposition...","categories": ["MPI","C++"],
+        "excerpt":"Introduction For parallel particle codes that have to be written quickly (while retaining flexibility), the task-based parallelism approach doesn’t always work well. The usual approach that is taken in those situations is some sort of domain decomposition and a lot of associated fine-grained code for communication between processes. One tries...","categories": ["MPI","C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-1/",
         "teaser": null
       },{
         "title": "Parallel domain decomposition for particle methods: Part 2",
-        "excerpt":"Introduction Exchanging particles between processes MPI implementation PatchNeighborComm struct Patch struct The particle exchange function Remarks Introduction The previous article in this series discussed the scatter operation for moving particles to various processes. In this second part of the series we will discuss a commonly used method of communicating information...","categories": ["MPI","C++"],
+        "excerpt":"Introduction The previous article in this series discussed the scatter operation for moving particles to various processes. In this second part of the series we will discuss a commonly used method of communicating information between processes. Each process is logically mapped to a “patch”. In the animation below, particles are...","categories": ["MPI","C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-2/",
         "teaser": null
       },{
         "title": "Parallel domain decomposition for particle methods: Part 3",
-        "excerpt":"Introduction Plimpton’s scheme for exchanging particles MPI implementation Patch struct The particle exchange function Remarks Introduction In Part 2 of this series we showed the direct way of communicating ghost particles between patches. That approach requires 26 communication steps per patch in three-dimensions. In this article we discuss the approach...","categories": ["MPI","C++"],
+        "excerpt":"Introduction In Part 2 of this series we showed the direct way of communicating ghost particles between patches. That approach requires 26 communication steps per patch in three-dimensions. In this article we discuss the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular dynamics”, Sandia Report SAND91-1144.UC-405, 1993)....","categories": ["MPI","C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-3/",
         "teaser": null
       },{
         "title": "Parallel domain decomposition for particle methods: Part 4",
-        "excerpt":"Introduction Plimpton’s scheme for migrating particles MPI implementation Patch struct Remarks Introduction The Plimpton scheme of communicating ghost information between patches was described in Part 3 of this series. Let us now see how a similar approach can be used to migrate particles that have moved across patches. In the...","categories": ["MPI","C++"],
+        "excerpt":"Introduction The Plimpton scheme of communicating ghost information between patches was described in Part 3 of this series. Let us now see how a similar approach can be used to migrate particles that have moved across patches. In the animation below we just move the particles within each patch randomly....","categories": ["MPI","C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mpi/c++/parallel-domain-decomposition-part-4/",
         "teaser": null
       },{
         "title": "Unit testing with MPI, googletest, and cmake",
-        "excerpt":"Introduction Installing googletest Making sure cmake finds and compiles googletest Adding local unit tests The CMakeLists.txt file in UnitTests The actual test C++ code The MPI test environment class The main test function The actual test Caveat The output from make Remarks Introduction In this article we take a short...","categories": ["MPI","C++"],
+        "excerpt":"Introduction In this article we take a short detour into the problem of continuous unit testing of code that contains MPI calls and use either mpich or Open MPI. I have recently moved from CTest-based testing to a combination of CMake and googletest. The reason for the shift is the...","categories": ["MPI","C++"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/",
         "teaser": null
       },{
         "title": "Compiling and running the MPM code Vaango on a Cray",
-        "excerpt":"Introduction Authentication Building the Vaango code on Copper (Cray XE6m) Downloading the code Checking needed third party packages Loading modules Installing Boost and Eigen3 Compiling Vaango Running the Vaango code on Copper Building the Vaango code on Excalibur (Cray XC40) Downloading the code Installing cmake Installing boost and eigen3 Compiling...","categories": ["Vaango"],
+        "excerpt":"Introduction One of the reasons I switched to cmake for my builds was the need to compile my Vaango code on a BlueGene/Q system. The code was previously configured using autoconf and m4, and because I hadn’t done that implementation myself it was nightmare to change things when I wanted...","categories": ["Vaango"],
         "tags": [],
         "url": "http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/",
+        "teaser": null
+      },{
+        "title": "Modeling cracks in Salome-Meca and Code-Aster",
+        "excerpt":"Introduction In Part 3 of this article I discussed the approach where the equations for a system of rigid bodies are approximated by a spring-mass system. The numerical stability conditions of that system are then taken to be representative of the system of discrete rigid bodies. In that case, for...","categories": ["FEM","Cracks","Python","Salome-Meca","Code-Aster"],
+        "tags": ["element","group","selection","creation"],
+        "url": "http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster/",
         "teaser": null
       },]

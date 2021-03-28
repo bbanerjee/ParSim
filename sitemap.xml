@@ -185,6 +185,21 @@
   
     
     <url>
+      <loc>http://localhost:4000/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster/</loc>
+      
+        <lastmod>2021-03-28T18:16:17+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
       <loc>http://localhost:4000/vaango/compiling-vaango-on-a-cray/</loc>
       
         <lastmod>2017-12-16T13:30:00+13:00</lastmod>
@@ -818,7 +833,7 @@
     <url>
       <loc>http://localhost:4000/docs/articles/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -833,7 +848,7 @@
     <url>
       <loc>http://localhost:4000/docs/build-check/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -848,7 +863,7 @@
     <url>
       <loc>http://localhost:4000/docs/build-instructions/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -863,7 +878,7 @@
     <url>
       <loc>http://localhost:4000/docs/getting-started/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -878,7 +893,7 @@
     <url>
       <loc>http://localhost:4000/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -893,7 +908,7 @@
     <url>
       <loc>http://localhost:4000/assets/js/lunr/lunr-en.js</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -908,7 +923,7 @@
     <url>
       <loc>http://localhost:4000/assets/js/lunr/lunr-gr.js</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -923,7 +938,7 @@
     <url>
       <loc>http://localhost:4000/assets/js/lunr/lunr-store.js</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -938,7 +953,7 @@
     <url>
       <loc>http://localhost:4000/assets/css/main.css</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -953,7 +968,7 @@
     <url>
       <loc>http://localhost:4000/docs/manuals/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -968,7 +983,7 @@
     <url>
       <loc>http://localhost:4000/docs/material-data/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -983,7 +998,7 @@
     <url>
       <loc>http://localhost:4000/docs/parsim/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -998,7 +1013,7 @@
     <url>
       <loc>http://localhost:4000/assets/css/screen.css</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1013,7 +1028,7 @@
     <url>
       <loc>http://localhost:4000/sitemap.xml</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1028,7 +1043,7 @@
     <url>
       <loc>http://localhost:4000/docs/vaango/tutorials/tabular-j2-lin-elas/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1043,7 +1058,7 @@
     <url>
       <loc>http://localhost:4000/docs/vaango/mpm-materials/tabular-plasticity/</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1058,7 +1073,7 @@
     <url>
       <loc>http://localhost:4000/feed.xml</loc>
       
-        <lastmod>2021-01-20T18:27:57+13:00</lastmod>
+        <lastmod>2021-03-28T18:16:20+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
