@@ -21,7 +21,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Parresia Simulations">
 <meta property="og:title" content="Parresia Simulations">
-<meta property="og:url" content="http://localhost:4000/ParSim/sitemap.xml">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/sitemap.xml">
 
 
   <meta property="og:description" content="Our goal is to bring parallel multiphysics engineering simulations to small/medium sized businesses with open-source tools.  Here you will find technical papers, expository blogs, and source codes.">
@@ -41,7 +41,7 @@
   
 
 
-<link rel="canonical" href="http://localhost:4000/ParSim/sitemap.xml">
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/sitemap.xml">
 
 
 
@@ -52,7 +52,7 @@
     
       "@type": "Person",
       "name": "Biswajit Banerjee",
-      "url": "http://localhost:4000/ParSim/"
+      "url": "https://bbanerjee.github.io/ParSim/"
     
   }
 </script>
@@ -97,7 +97,7 @@
 
     <!-- start custom head snippets -->
 
-<link rel="stylesheet" href="http://localhost:4000/ParSim/assets/css/parresia.css">
+<link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/parresia.css">
 
 <!-- insert favicons. use https://realfavicongenerator.net/ -->
 
@@ -187,7 +187,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/</loc>
+      <loc>https://bbanerjee.github.io/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/</loc>
       
         <lastmod>2021-03-20T00:00:00+13:00</lastmod>
       
@@ -202,7 +202,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/vaango/compiling-vaango-on-a-cray/</loc>
+      <loc>https://bbanerjee.github.io/vaango/compiling-vaango-on-a-cray/</loc>
       
         <lastmod>2017-12-16T13:30:00+13:00</lastmod>
       
@@ -217,7 +217,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mpi/c++/mpi-unit-testing-googletests-cmake/</loc>
+      <loc>https://bbanerjee.github.io/mpi/c++/mpi-unit-testing-googletests-cmake/</loc>
       
         <lastmod>2017-08-11T22:30:00+12:00</lastmod>
       
@@ -232,7 +232,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mpi/c++/parallel-domain-decomposition-part-4/</loc>
+      <loc>https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-4/</loc>
       
         <lastmod>2017-07-27T22:30:00+12:00</lastmod>
       
@@ -247,7 +247,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mpi/c++/parallel-domain-decomposition-part-3/</loc>
+      <loc>https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-3/</loc>
       
         <lastmod>2017-07-23T22:30:00+12:00</lastmod>
       
@@ -262,7 +262,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mpi/c++/parallel-domain-decomposition-part-2/</loc>
+      <loc>https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-2/</loc>
       
         <lastmod>2017-07-22T22:30:00+12:00</lastmod>
       
@@ -277,7 +277,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mpi/c++/parallel-domain-decomposition-part-1/</loc>
+      <loc>https://bbanerjee.github.io/mpi/c++/parallel-domain-decomposition-part-1/</loc>
       
         <lastmod>2017-07-20T22:30:00+12:00</lastmod>
       
@@ -292,7 +292,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/fracture/Larsen-B-and-peridynamics/</loc>
+      <loc>https://bbanerjee.github.io/fracture/Larsen-B-and-peridynamics/</loc>
       
         <lastmod>2017-07-09T22:30:00+12:00</lastmod>
       
@@ -307,7 +307,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/spin-tensor-and-Green-Naghdi-rate/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/spin-tensor-and-Green-Naghdi-rate/</loc>
       
         <lastmod>2017-06-20T22:30:00+12:00</lastmod>
       
@@ -322,7 +322,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/Arena-model-paper/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/Arena-model-paper/</loc>
       
         <lastmod>2017-06-15T22:30:00+12:00</lastmod>
       
@@ -337,7 +337,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/incremental-objectivity/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/incremental-objectivity/</loc>
       
         <lastmod>2017-05-31T22:30:00+12:00</lastmod>
       
@@ -352,7 +352,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/fem/rigid-body-rotation-small-strain/</loc>
+      <loc>https://bbanerjee.github.io/fem/rigid-body-rotation-small-strain/</loc>
       
         <lastmod>2017-04-25T22:30:00+12:00</lastmod>
       
@@ -367,7 +367,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/dem/CFL-condition-discrete-elements-part-4/</loc>
+      <loc>https://bbanerjee.github.io/dem/CFL-condition-discrete-elements-part-4/</loc>
       
         <lastmod>2017-04-18T22:30:00+12:00</lastmod>
       
@@ -382,7 +382,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/dem/CFL-condition-discrete-elements-part-3/</loc>
+      <loc>https://bbanerjee.github.io/dem/CFL-condition-discrete-elements-part-3/</loc>
       
         <lastmod>2017-04-16T22:30:00+12:00</lastmod>
       
@@ -397,7 +397,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/dem/CFL-condition-discrete-elements-part-2/</loc>
+      <loc>https://bbanerjee.github.io/dem/CFL-condition-discrete-elements-part-2/</loc>
       
         <lastmod>2017-04-14T22:30:00+12:00</lastmod>
       
@@ -412,7 +412,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/dem/CFL-condition-discrete-elements/</loc>
+      <loc>https://bbanerjee.github.io/dem/CFL-condition-discrete-elements/</loc>
       
         <lastmod>2017-04-11T22:30:00+12:00</lastmod>
       
@@ -427,7 +427,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/xml/gzip/reading-xml-with-gzipped-data/</loc>
+      <loc>https://bbanerjee.github.io/c++/xml/gzip/reading-xml-with-gzipped-data/</loc>
       
         <lastmod>2017-04-04T22:30:00+12:00</lastmod>
       
@@ -442,7 +442,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/d3js/d3-animation-closest-point-return/</loc>
+      <loc>https://bbanerjee.github.io/javascript/d3js/d3-animation-closest-point-return/</loc>
       
         <lastmod>2017-04-01T23:30:00+13:00</lastmod>
       
@@ -457,7 +457,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/geometric-closest-point-return/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/geometric-closest-point-return/</loc>
       
         <lastmod>2017-03-31T23:30:00+13:00</lastmod>
       
@@ -472,7 +472,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/closest-point-return/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/closest-point-return/</loc>
       
         <lastmod>2017-03-28T23:30:00+13:00</lastmod>
       
@@ -487,7 +487,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/primal-dual-closest-point-return/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/primal-dual-closest-point-return/</loc>
       
         <lastmod>2017-03-27T23:30:00+13:00</lastmod>
       
@@ -502,7 +502,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/</loc>
       
         <lastmod>2017-03-25T23:30:00+13:00</lastmod>
       
@@ -517,7 +517,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/</loc>
       
         <lastmod>2017-03-24T23:30:00+13:00</lastmod>
       
@@ -532,7 +532,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/</loc>
       
         <lastmod>2017-03-23T23:30:00+13:00</lastmod>
       
@@ -547,7 +547,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/</loc>
       
         <lastmod>2017-03-05T23:30:00+13:00</lastmod>
       
@@ -562,7 +562,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/mechanics/plasticity/algorithm/plane-stress-drucker-prager/</loc>
+      <loc>https://bbanerjee.github.io/mechanics/plasticity/algorithm/plane-stress-drucker-prager/</loc>
       
         <lastmod>2017-03-04T23:30:00+13:00</lastmod>
       
@@ -577,7 +577,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/r/xml/xml-particle-input-file/</loc>
+      <loc>https://bbanerjee.github.io/r/xml/xml-particle-input-file/</loc>
       
         <lastmod>2017-03-03T23:30:00+13:00</lastmod>
       
@@ -592,7 +592,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/vtkjs/threejs/vue/vtkjs-ellipsoid/</loc>
       
         <lastmod>2017-03-02T23:30:00+13:00</lastmod>
       
@@ -607,7 +607,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-ellipsoid/</loc>
       
         <lastmod>2017-03-01T23:30:00+13:00</lastmod>
       
@@ -622,7 +622,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/threejs/vue/vtk-threejs-camera/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-camera/</loc>
       
         <lastmod>2017-02-28T23:30:00+13:00</lastmod>
       
@@ -637,7 +637,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/threejs/vue/vtk-threejs-renderer/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs-renderer/</loc>
       
         <lastmod>2017-02-27T23:30:00+13:00</lastmod>
       
@@ -652,7 +652,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/threejs/vue/vtk-threejs/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/threejs/vue/vtk-threejs/</loc>
       
         <lastmod>2017-02-26T23:30:00+13:00</lastmod>
       
@@ -667,7 +667,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/vue/vuex/vuex-store/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/vue/vuex/vuex-store/</loc>
       
         <lastmod>2017-02-25T23:30:00+13:00</lastmod>
       
@@ -682,7 +682,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/javascript/typescript/vue/vuex/xml/reading-vtk-particles/</loc>
+      <loc>https://bbanerjee.github.io/javascript/typescript/vue/vuex/xml/reading-vtk-particles/</loc>
       
         <lastmod>2017-02-21T22:30:00+13:00</lastmod>
       
@@ -697,7 +697,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/xml/vtk/vtk-particle-output/</loc>
+      <loc>https://bbanerjee.github.io/c++/xml/vtk/vtk-particle-output/</loc>
       
         <lastmod>2017-02-18T22:30:00+13:00</lastmod>
       
@@ -712,7 +712,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/xml/vtk/vtk-output/</loc>
+      <loc>https://bbanerjee.github.io/c++/xml/vtk/vtk-output/</loc>
       
         <lastmod>2017-02-17T22:30:00+13:00</lastmod>
       
@@ -727,7 +727,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/json/json-input/</loc>
+      <loc>https://bbanerjee.github.io/c++/json/json-input/</loc>
       
         <lastmod>2017-02-15T22:30:00+13:00</lastmod>
       
@@ -742,7 +742,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/xml/xml-input/</loc>
+      <loc>https://bbanerjee.github.io/c++/xml/xml-input/</loc>
       
         <lastmod>2017-02-14T22:30:00+13:00</lastmod>
       
@@ -757,7 +757,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/command-pattern/</loc>
+      <loc>https://bbanerjee.github.io/c++/command-pattern/</loc>
       
         <lastmod>2017-02-12T22:30:00+13:00</lastmod>
       
@@ -772,7 +772,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/clang-tidy/</loc>
+      <loc>https://bbanerjee.github.io/c++/clang-tidy/</loc>
       
         <lastmod>2017-02-11T22:30:00+13:00</lastmod>
       
@@ -787,7 +787,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/c++/clang-format/</loc>
+      <loc>https://bbanerjee.github.io/c++/clang-format/</loc>
       
         <lastmod>2017-02-10T22:30:00+13:00</lastmod>
       
@@ -802,7 +802,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/sampling/hungarian_algorithm/</loc>
+      <loc>https://bbanerjee.github.io/sampling/hungarian_algorithm/</loc>
       
         <lastmod>2014-12-09T13:00:00+13:00</lastmod>
       
@@ -817,7 +817,7 @@
   
     
     <url>
-      <loc>http://localhost:4000/sampling/latin_hypercube_sampling/</loc>
+      <loc>https://bbanerjee.github.io/sampling/latin_hypercube_sampling/</loc>
       
         <lastmod>2014-12-01T13:00:00+13:00</lastmod>
       
@@ -833,24 +833,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/docs/articles/</loc>
+      <loc>https://bbanerjee.github.io/docs/articles/</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/docs/build-check/</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -863,24 +848,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/docs/build-instructions/</loc>
+      <loc>https://bbanerjee.github.io/docs/build-check/</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/docs/getting-started/</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -893,24 +863,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/</loc>
+      <loc>https://bbanerjee.github.io/docs/build-instructions/</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/assets/js/lunr/lunr-en.js</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -923,24 +878,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/assets/js/lunr/lunr-gr.js</loc>
+      <loc>https://bbanerjee.github.io/docs/getting-started/</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/assets/js/lunr/lunr-store.js</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -953,24 +893,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/assets/css/main.css</loc>
+      <loc>https://bbanerjee.github.io/</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/docs/manuals/</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -983,24 +908,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/docs/material-data/</loc>
+      <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-en.js</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/docs/parsim/</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1013,24 +923,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/assets/css/screen.css</loc>
+      <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-gr.js</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/sitemap.xml</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1043,24 +938,9 @@
   
     
     <url>
-      <loc>http://localhost:4000/docs/vaango/tutorials/tabular-j2-lin-elas/</loc>
+      <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-store.js</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.3</priority>
-      
-    </url>
-    
-  
-    
-    <url>
-      <loc>http://localhost:4000/docs/vaango/mpm-materials/tabular-plasticity/</loc>
-      
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1073,9 +953,129 @@
   
     
     <url>
-      <loc>http://localhost:4000/feed.xml</loc>
+      <loc>https://bbanerjee.github.io/assets/css/main.css</loc>
       
-        <lastmod>2021-03-30T16:11:26+13:00</lastmod>
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/docs/manuals/</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/docs/material-data/</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/docs/parsim/</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/assets/css/screen.css</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/sitemap.xml</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/docs/vaango/tutorials/tabular-j2-lin-elas/</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/docs/vaango/mpm-materials/tabular-plasticity/</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/feed.xml</loc>
+      
+        <lastmod>2021-03-30T16:33:56+13:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
