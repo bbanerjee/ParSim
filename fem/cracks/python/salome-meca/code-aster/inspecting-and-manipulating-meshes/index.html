@@ -1,0 +1,1083 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Inspecting and manipulating meshes in Salome-Meca for Code-Aster - Parresia Simulations</title>
+<meta name="description" content="Tips on how to create and manipulate meshes in Salome-Meca for use with Code-Aster">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Inspecting and manipulating meshes in Salome-Meca for Code-Aster">
+<meta property="og:url" content="http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/">
+
+
+  <meta property="og:description" content="Tips on how to create and manipulate meshes in Salome-Meca for use with Code-Aster">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2021-03-20T00:00:00+13:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "http://localhost:4000/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/ParSim/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/ParSim/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<link rel="stylesheet" href="http://localhost:4000/ParSim/assets/css/parresia.css">
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/ParSim/"><img src="/ParSim/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/ParSim/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/ParSim/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Inspecting and manipulating meshes in Salome-Meca for Code-Aster">
+    <meta itemprop="description" content="In this article, I will discuss how elements can be selected from deep inside a 3D meshin the Salome-Meca environment and manipulated with Python scripts.">
+    <meta itemprop="datePublished" content="2021-03-20T00:00:00+13:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Inspecting and manipulating meshes in Salome-Meca for Code-Aster
+</h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          29 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> Contents</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#the-mechanics-problem">The mechanics problem</a></li>
+  <li><a href="#the-initial-model">The initial model</a></li>
+  <li><a href="#the-refined-model">The refined model</a></li>
+  <li><a href="#geometry-groups">Geometry groups</a></li>
+  <li><a href="#running-the-simulation-first-attempt">Running the simulation (first attempt)</a></li>
+  <li><a href="#removing-seg2seg3-elements">Removing SEG2/SEG3 elements</a></li>
+  <li><a href="#running-the-simulation-second-attempt">Running the simulation (second attempt)</a></li>
+  <li><a href="#locating-elements-by-number">Locating elements by number</a></li>
+  <li><a href="#running-the-simulation-third-attempt">Running the simulation (third attempt)</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <p>In this article, I will discuss how elements can be selected from deep inside a 3D mesh
+in the <code class="language-plaintext highlighter-rouge">Salome-Meca</code> environment and manipulated with Python scripts.
+<!--more--></p>
+
+<p><code class="language-plaintext highlighter-rouge">Code-Aster</code> provides a large number of verification tests, several of which can also serve
+as tutorials on how to use the software.  Some of these tests have associated meshed models
+that are provided as part of the distribution with much detail on how these meshes were
+generated.</p>
+
+<p>One such case is the tutorial <code class="language-plaintext highlighter-rouge">FORMA07 (Model B)</code>, which I have expanded upon in my
+translation at <a href="https://biba1632.gitlab.io/code-aster-manuals/docs/validation/v3.04.156.html">Code-Aster Manuals</a>.</p>
+
+<h4 id="the-mechanics-problem">The mechanics problem</h4>
+
+<p>The problem involves a circular crack in a box that is modeled as an X-FEM interface.
+The <code class="language-plaintext highlighter-rouge">Code-Aster</code> model is built in two stages:</p>
+
+<ul>
+  <li>a coarse mesh is created and then refined with the mesh refinement tool <code class="language-plaintext highlighter-rouge">HOMARD</code>
+after insertion of an X-FEM interface</li>
+  <li>the refined mesh is used for a static mechanics simulation after enrichment with
+the X-FEM crack</li>
+</ul>
+
+<p>These features are both very convenient and useful for getting initial estimates of
+crack tip stress intensity factors and energy release rates.</p>
+
+<h4 id="the-initial-model">The initial model</h4>
+
+<p>Let us create a model in the <code class="language-plaintext highlighter-rouge">Geom</code> module of <code class="language-plaintext highlighter-rouge">Salome-Meca</code>.  For that we can create a box, 
+translate it, and then partition it with a plane.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">salome</span>
+<span class="kn">import</span> <span class="nn">salome_notebook</span>
+<span class="kn">import</span> <span class="nn">GEOM</span>
+<span class="kn">from</span> <span class="nn">salome.geom</span> <span class="kn">import</span> <span class="n">geomBuilder</span>
+
+<span class="c1"># Initialize
+</span><span class="n">salome</span><span class="p">.</span><span class="n">salome_init</span><span class="p">()</span>
+<span class="n">notebook</span> <span class="o">=</span> <span class="n">salome_notebook</span><span class="p">.</span><span class="n">NoteBook</span><span class="p">()</span>
+<span class="n">geompy</span> <span class="o">=</span> <span class="n">geomBuilder</span><span class="p">.</span><span class="n">New</span><span class="p">()</span>
+
+<span class="c1"># Create box
+</span><span class="n">box</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeBoxDXDYDZ</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="n">box</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeTranslation</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Partition box with a plane
+</span><span class="n">sk</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">Sketcher2D</span><span class="p">()</span>
+<span class="n">sk</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="o">-</span><span class="mf">10.000000</span><span class="p">,</span> <span class="o">-</span><span class="mf">10.000000</span><span class="p">)</span>
+<span class="n">sk</span><span class="p">.</span><span class="n">addSegmentAbsolute</span><span class="p">(</span><span class="o">-</span><span class="mf">10.000000</span><span class="p">,</span> <span class="mf">20.000000</span><span class="p">)</span>
+<span class="n">sk</span><span class="p">.</span><span class="n">addSegmentAbsolute</span><span class="p">(</span><span class="mf">20.000000</span><span class="p">,</span> <span class="mf">20.000000</span><span class="p">)</span>
+<span class="n">sk</span><span class="p">.</span><span class="n">addSegmentAbsolute</span><span class="p">(</span><span class="mf">20.000000</span><span class="p">,</span> <span class="o">-</span><span class="mf">10.000000</span><span class="p">)</span>
+<span class="n">sk</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">coord_sys_2D</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeMarker</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">Sketch_1</span> <span class="o">=</span> <span class="n">sk</span><span class="p">.</span><span class="n">wire</span><span class="p">(</span><span class="n">coord_sys_2D</span><span class="p">)</span>
+<span class="n">Face_1</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeFaceWires</span><span class="p">([</span><span class="n">Sketch_1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">box_partitioned</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakePartition</span><span class="p">([</span><span class="n">box</span><span class="p">],</span> <span class="p">[</span><span class="n">Face_1</span><span class="p">],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"SOLID"</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Add the partitioned box
+</span><span class="n">geompy</span><span class="p">.</span><span class="n">addToStudy</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="s">'Box_Partitioned'</span> <span class="p">)</span>
+
+<span class="c1"># Update objects
+</span><span class="k">if</span> <span class="n">salome</span><span class="p">.</span><span class="n">sg</span><span class="p">.</span><span class="n">hasDesktop</span><span class="p">():</span>
+  <span class="n">salome</span><span class="p">.</span><span class="n">sg</span><span class="p">.</span><span class="n">updateObjBrowser</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Next we will mesh the geometry with a coarse mesh (8 elements per cube) using the <code class="language-plaintext highlighter-rouge">Mesh</code>
+module of <code class="language-plaintext highlighter-rouge">Salome-Meca</code>.</p>
+
+<p>The Python script for that step is also straightforward and the mesh is output in MED format
+to a file called <code class="language-plaintext highlighter-rouge">box_mesh.med</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span>  <span class="nn">SMESH</span><span class="p">,</span> <span class="n">SALOMEDS</span>
+<span class="kn">from</span> <span class="nn">salome.smesh</span> <span class="kn">import</span> <span class="n">smeshBuilder</span>
+
+<span class="n">smesh</span> <span class="o">=</span> <span class="n">smeshBuilder</span><span class="p">.</span><span class="n">New</span><span class="p">()</span>
+
+<span class="c1"># Set up the meshing algorithm
+</span><span class="n">box_mesh</span> <span class="o">=</span> <span class="n">smesh</span><span class="p">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">)</span>
+<span class="n">Regular_1D</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">Segment</span><span class="p">()</span>
+<span class="n">Number_of_Segments_1</span> <span class="o">=</span> <span class="n">Regular_1D</span><span class="p">.</span><span class="n">NumberOfSegments</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Quadrangle_2D</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">Quadrangle</span><span class="p">(</span><span class="n">algo</span><span class="o">=</span><span class="n">smeshBuilder</span><span class="p">.</span><span class="n">QUADRANGLE</span><span class="p">)</span>
+<span class="n">Quadrangle_Parameters_1</span> <span class="o">=</span> <span class="n">Quadrangle_2D</span><span class="p">.</span><span class="n">QuadrangleParameters</span><span class="p">(</span><span class="n">smeshBuilder</span><span class="p">.</span><span class="n">QUAD_STANDARD</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,[],[])</span>
+<span class="n">Hexa_3D</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">Hexahedron</span><span class="p">(</span><span class="n">algo</span><span class="o">=</span><span class="n">smeshBuilder</span><span class="p">.</span><span class="n">Hexa</span><span class="p">)</span>
+
+<span class="c1"># Compute the mesh
+</span><span class="n">isDone</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">Compute</span><span class="p">()</span>
+
+<span class="c1"># Set names of Mesh objects
+</span><span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">Regular_1D</span><span class="p">.</span><span class="n">GetAlgorithm</span><span class="p">(),</span> <span class="s">'Regular_1D'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">Hexa_3D</span><span class="p">.</span><span class="n">GetAlgorithm</span><span class="p">(),</span> <span class="s">'Hexa_3D'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">Quadrangle_2D</span><span class="p">.</span><span class="n">GetAlgorithm</span><span class="p">(),</span> <span class="s">'Quadrangle_2D'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">Number_of_Segments_1</span><span class="p">,</span> <span class="s">'Number of Segments_1'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">Quadrangle_Parameters_1</span><span class="p">,</span> <span class="s">'Quadrangle Parameters_1'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">box_mesh</span><span class="p">.</span><span class="n">GetMesh</span><span class="p">(),</span> <span class="s">'box_mesh'</span><span class="p">)</span>
+
+<span class="c1"># Write the mesh to a file in MED format
+</span><span class="n">box_mesh</span><span class="p">.</span><span class="n">ExportMED</span><span class="p">(</span><span class="s">r'/home/Salome/forma07b/box_mesh.med'</span><span class="p">)</span>
+
+<span class="c1"># Update objects
+</span><span class="k">if</span> <span class="n">salome</span><span class="p">.</span><span class="n">sg</span><span class="p">.</span><span class="n">hasDesktop</span><span class="p">():</span>
+  <span class="n">salome</span><span class="p">.</span><span class="n">sg</span><span class="p">.</span><span class="n">updateObjBrowser</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>These scripts produce the geometry and the mesh shown in the figure below.</p>
+
+<figure>
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_init_model_mesh.svg" />
+  <figcaption>Geometry and initial mesh.</figcaption>
+</figure>
+
+<h4 id="the-refined-model">The refined model</h4>
+
+<p>If we use the command file in for Model B of <a href="https://biba1632.gitlab.io/code-aster-manuals/docs/validation/v3.04.156.html">V3.04.156</a>, and run the
+commands via <code class="language-plaintext highlighter-rouge">astk</code>, we get the warning</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>!-------------------------------------------------------------------------------------------------!
+! &lt;A&gt; &lt;XFEM_63&gt;                                                                                   !
+!                                                                                                 !
+!       -&gt; ---Éléments XFEM quadratiques ---                                                      !
+!     On a effectué un ajustement géométrique de la fissure, car les arêtes du maillage sain sont !
+!     coupées plusieurs fois par l'isovaleur zéro de la level-set.                                !
+!     Le nombre d'ajustements effectués est : 4804.                                               !
+!     Cette correction impacte légèrement la localisation de la fissure.                          !
+!   -&gt; Conseil :                                                                                  !
+!     Veuillez vérifier en post-traitement grâce à la commande POST_MAIL_XFEM que la nouvelle     !
+!     géométrie de la fissure respecte la géométrie imposée dans la commande DEFI_FISS_XFEM.      !
+!                                                                                                 !
+!                                                                                                 !
+! This is a warning. If you do not understand the meaning of this                                 !
+!  warning, you can obtain unexpected results!                                                    !
+!-------------------------------------------------------------------------------------------------!
+</code></pre></div></div>
+
+<p>A rough translation is</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>XFEM_63
+
+We carried out a geometrical adjustment of crack, because the edges of the 
+valid mesh are cut several times by the zero isovalue of the level-set.
+The number of adjustments made is: 4804
+This correction slightly impacts the location of the crack.
+
+Advice:
+Please check in postprocessing using the command POST_MAIL_XFEM that the new geometry of the 
+crack respects the geometry imposed in the command DEFI_FISS_XFEM.
+</code></pre></div></div>
+
+<p>We just check the MED file that’s produced and see it it looks OK at the coarse scale:</p>
+
+<figure>
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig3.png" />
+  <figcaption>Refined mesh.</figcaption>
+</figure>
+
+<h4 id="geometry-groups">Geometry groups</h4>
+
+<p>Note that we need to add various geometry groups to the mesh.  We should create the groups when we
+model the geometry, as that is more convenient.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Create the geometry groups
+</span><span class="n">top_face</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">top_face</span><span class="p">,</span> <span class="p">[</span><span class="mi">50</span><span class="p">])</span>
+<span class="n">bot_face</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">bot_face</span><span class="p">,</span> <span class="p">[</span><span class="mi">31</span><span class="p">])</span>
+<span class="n">symm_face_xz</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">symm_face_xz</span><span class="p">,</span> <span class="p">[</span><span class="mi">45</span><span class="p">,</span> <span class="mi">14</span><span class="p">])</span>
+<span class="n">symm_face_yz</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">symm_face_yz</span><span class="p">,</span> <span class="p">[</span><span class="mi">38</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="n">right_face</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">right_face</span><span class="p">,</span> <span class="p">[</span><span class="mi">58</span><span class="p">,</span> <span class="mi">34</span><span class="p">])</span>
+<span class="n">back_face</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"FACE"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">back_face</span><span class="p">,</span> <span class="p">[</span><span class="mi">55</span><span class="p">,</span> <span class="mi">26</span><span class="p">])</span>
+<span class="n">fixed_vert</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">CreateGroup</span><span class="p">(</span><span class="n">box_partitioned</span><span class="p">,</span> <span class="n">geompy</span><span class="p">.</span><span class="n">ShapeType</span><span class="p">[</span><span class="s">"VERTEX"</span><span class="p">])</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">UnionIDs</span><span class="p">(</span><span class="n">fixed_vert</span><span class="p">,</span> <span class="p">[</span><span class="mi">24</span><span class="p">])</span>
+
+<span class="c1"># Add the groups to the parent
+</span><span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">top_face</span><span class="p">,</span> <span class="s">'top_face'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">bot_face</span><span class="p">,</span> <span class="s">'bot_face'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">symm_face_xz</span><span class="p">,</span> <span class="s">'symm_face_xz'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">symm_face_yz</span><span class="p">,</span> <span class="s">'symm_face_yz'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">right_face</span><span class="p">,</span> <span class="s">'right_face'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">back_face</span><span class="p">,</span> <span class="s">'back_face'</span> <span class="p">)</span>
+<span class="n">geompy</span><span class="p">.</span><span class="n">addToStudyInFather</span><span class="p">(</span> <span class="n">box_partitioned</span><span class="p">,</span> <span class="n">fixed_vert</span><span class="p">,</span> <span class="s">'fixed_vert'</span> <span class="p">)</span>
+</code></pre></div></div>
+
+<p>To transfer these groups to the mesh, use</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Transfer the geometry groups to the mesh
+</span><span class="n">top_face_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">top_face</span><span class="p">,</span> <span class="s">'top_face'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">bot_face_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">bot_face</span><span class="p">,</span> <span class="s">'bot_face'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">symm_face_xz_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">symm_face_xz</span><span class="p">,</span> <span class="s">'symm_face_xz'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">symm_face_yz_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">symm_face_yz</span><span class="p">,</span> <span class="s">'symm_face_yz'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">right_face_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">right_face</span><span class="p">,</span> <span class="s">'right_face'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">back_face_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">back_face</span><span class="p">,</span> <span class="s">'back_face'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">)</span>
+<span class="n">fixed_vert_1</span> <span class="o">=</span> <span class="n">box_mesh</span><span class="p">.</span><span class="n">GroupOnGeom</span><span class="p">(</span><span class="n">fixed_vert</span><span class="p">,</span> <span class="s">'fixed_vert'</span><span class="p">,</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">NODE</span><span class="p">)</span>
+
+<span class="c1"># Update the groups names on the mesh (if needed)
+</span><span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">top_face_1</span><span class="p">,</span> <span class="s">'top_face'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">bot_face_1</span><span class="p">,</span> <span class="s">'bot_face'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">symm_face_xz_1</span><span class="p">,</span> <span class="s">'symm_face_xz'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">symm_face_yz_1</span><span class="p">,</span> <span class="s">'symm_face_yz'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">right_face_1</span><span class="p">,</span> <span class="s">'right_face'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">back_face_1</span><span class="p">,</span> <span class="s">'back_face'</span><span class="p">)</span>
+<span class="n">smesh</span><span class="p">.</span><span class="n">SetName</span><span class="p">(</span><span class="n">fixed_vert_1</span><span class="p">,</span> <span class="s">'fixed_vert'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h4 id="running-the-simulation-first-attempt">Running the simulation (first attempt)</h4>
+
+<p>Let us now try to run the simulation in <code class="language-plaintext highlighter-rouge">AsterStudy</code> with the input file provided in
+Model B of <a href="https://biba1632.gitlab.io/code-aster-manuals/docs/validation/v3.04.156.html">V3.04.156</a>.</p>
+
+<p>The simulation aborts with the error (roughly translated)</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>!-----------------------------------------------------------------------------------------------!
+! &lt;EXCEPTION&gt; &lt;XFEM_13&gt;                                                                         !
+!                                                                                               !
+!  In the model, elements SEG2 or SEG3 have new nodes enriched by X-FEM.                        !
+!  This is not yet possible in 3D.                                                              !
+!  Advice: if these elements are important for computation (linear load), they should           !
+!  be put far from crack.                                                                       !
+!  If these elements are not used for computation, it is better not to assign them in the model,!
+!  or to remove the elements.                                                                   !
+!-----------------------------------------------------------------------------------------------!
+</code></pre></div></div>
+
+<h4 id="removing-seg2seg3-elements">Removing SEG2/SEG3 elements</h4>
+
+<figure style="width: 150px" class="align-right">
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig4.png" alt="" />
+  <figcaption>Selected edges.</figcaption>
+</figure>
+
+<p>At this point we can use two resources:</p>
+
+<ul>
+  <li>the <code class="language-plaintext highlighter-rouge">Help</code> menu in <code class="language-plaintext highlighter-rouge">Salome-Meca</code></li>
+  <li>the example Python scripts in the <code class="language-plaintext highlighter-rouge">Code-Aster</code> installation under <code class="language-plaintext highlighter-rouge">share/doc/salome/gui/SMESH/_downloads</code>.</li>
+</ul>
+
+<p>The example scripts will point you to the commands you should search for in the GUI Help window
+search box.</p>
+
+<p>To remove the <code class="language-plaintext highlighter-rouge">SEG3</code> elements in the mesh, we go to the <code class="language-plaintext highlighter-rouge">Python Console</code> and select the mesh using</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mesh = salome.IDToObject("0:1:1:3")
+mesh_6 = smesh.Mesh(mesh)
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">IDToObject</code> method takes an ID that can be identified by hovering the mouse over the mesh in the
+object tree.</p>
+
+<p>You can print the number of edges in the mesh and the associated geometry type with</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>print("Edges : ", mesh_6.NbEdges())
+SMESH.GeometryType._items
+</code></pre></div></div>
+
+<p>Now, let us create a group that contains all the edge elements (<code class="language-plaintext highlighter-rouge">SEG3</code>):</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>seg3_filter = smesh.GetFilter(SMESH.EDGE, SMESH.FT_ElemGeomType, SMESH.Geom_EDGE)
+seg3_ids = mesh_6.GetIdsFromFilter(seg3_filter)
+g_seg3_elems = mesh_6.CreateEmptyGroup(SMESH.EDGE, "seg3_elems")
+elems = g_seg3_elems.Add(seg3_ids)
+salome.sg.updateObjBrowser()
+</code></pre></div></div>
+
+<p>If you select the group <code class="language-plaintext highlighter-rouge">seg3_elems</code>, and hide the rest of the mesh you will see the
+selected edges.</p>
+
+<p>Remove these edges from the mesh:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mesh_6.RemoveGroupWithContents(g_seg3_elems)
+mesh_6.RenumberElements()
+salome.sg.updateObjBrowser()
+</code></pre></div></div>
+
+<p>Now you can save the mesh to a MED file.  Let us call it <code class="language-plaintext highlighter-rouge">box_mesh_refined_no_seg3.med</code>.</p>
+
+<h4 id="running-the-simulation-second-attempt">Running the simulation (second attempt)</h4>
+
+<p>If you run the simulation with the new mesh (with <code class="language-plaintext highlighter-rouge">SEG3</code> elements removed), you will
+get a fatal error and the simulation will fail with the message:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! &lt;S&gt; Exception user raised but not interceptee.                                  !
+! The bases are fermees.                                                          !
+! Type of the exception: error                                                    !
+!                                                                                 !
+!  La maille de peau : M445 ne peut pas être réorientée.                          !
+!  Car elle est insérée entre 2 mailles "support" placées de part et d'autre :    !
+! M4727 et M6279.                                                                 !
+!                                                                                 !
+! Conseils :                                                                      !
+!  Vous pouvez utiliser les mots-clés GROUP_MA_VOL en 3D et GROUP_MA_SURF en 2D   !
+! pour choisir une des                                                            !
+!  deux mailles supports et ainsi choisir la normale permettant la réorientation. !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+</code></pre></div></div>
+
+<p>This message translates to</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The face mesh: M445 cannot be reoriented
+Because it is inserted between 2 "support" elements placed on either side
+M4727 and M6279.
+
+Tips:
+You can use the keywords GROUP_MA_VOL in 3D and GROUP_MA_SURF in 2D
+to choose one of two mesh supports and thus choose the normal, allowing 
+reorientation.
+</code></pre></div></div>
+
+<h4 id="locating-elements-by-number">Locating elements by number</h4>
+
+<p>Let use load the mesh in a new study in <code class="language-plaintext highlighter-rouge">Salome-Meca</code> and go to the <code class="language-plaintext highlighter-rouge">Python Console</code>.
+As before, select the mesh:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh</span> <span class="o">=</span> <span class="n">salome</span><span class="p">.</span><span class="n">IDToObject</span><span class="p">(</span><span class="s">"0:1:1:3"</span><span class="p">)</span>
+<span class="n">mesh_6</span> <span class="o">=</span> <span class="n">smesh</span><span class="p">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This time create the three element groups for the elements <code class="language-plaintext highlighter-rouge">445</code>, <code class="language-plaintext highlighter-rouge">4727</code>, and <code class="language-plaintext highlighter-rouge">6279</code>.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">elem_445</span> <span class="o">=</span> <span class="n">mesh_6</span><span class="p">.</span><span class="n">CreateEmptyGroup</span><span class="p">(</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">FACE</span><span class="p">,</span> <span class="s">'elem_445'</span> <span class="p">)</span>
+<span class="n">elems</span> <span class="o">=</span> <span class="n">elem_445</span><span class="p">.</span><span class="n">Add</span><span class="p">([</span><span class="mi">445</span><span class="p">])</span>
+<span class="n">elem_4727</span> <span class="o">=</span> <span class="n">mesh_6</span><span class="p">.</span><span class="n">CreateEmptyGroup</span><span class="p">(</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">VOLUME</span><span class="p">,</span> <span class="s">'elem_4727'</span> <span class="p">)</span>
+<span class="n">elems</span> <span class="o">=</span> <span class="n">elem_4727</span><span class="p">.</span><span class="n">Add</span><span class="p">([</span><span class="mi">4727</span><span class="p">])</span>
+<span class="n">elem_6279</span> <span class="o">=</span> <span class="n">mesh_6</span><span class="p">.</span><span class="n">CreateEmptyGroup</span><span class="p">(</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">VOLUME</span><span class="p">,</span> <span class="s">'elem_6279'</span> <span class="p">)</span>
+<span class="n">elems</span> <span class="o">=</span> <span class="n">elem_6279</span><span class="p">.</span><span class="n">Add</span><span class="p">([</span><span class="mi">6279</span><span class="p">])</span>
+<span class="n">salome</span><span class="p">.</span><span class="n">sg</span><span class="p">.</span><span class="n">updateObjBrowser</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Now we can select these groups, and turn off the other groups (except a reference group
+that will help you locate the elements in space).  The images below immediately identify
+the problem: the face elements have been placed internally in the mesh and are shared 
+with two elements that share a face.  These face elements will have to be removed.</p>
+
+<figure class="half">
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig5.png" alt="" />
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig6.png" alt="" />
+  <figcaption>Selected elements.</figcaption>
+</figure>
+
+<p>We could use the method used for removing the <code class="language-plaintext highlighter-rouge">SEG3</code> elements, but run the risk of removing
+elements that may be needed.  So let us try a more controlled approach.</p>
+
+<p>First, let use select the boundary face groups and create a filter criterion.
+Before we do that, let us make sure that the group names do not have any spaces:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">g_names</span> <span class="o">=</span> <span class="n">mesh_6</span><span class="p">.</span><span class="n">GetGroupNames</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">g_names</span><span class="p">:</span>
+   <span class="n">gr</span> <span class="o">=</span> <span class="n">mesh_6</span><span class="p">.</span><span class="n">GetGroupByName</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+   <span class="n">gr</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">SetName</span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="n">strip</span><span class="p">())</span>
+</code></pre></div></div>
+
+<p>Next, we select the boundary face groups:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>symm_face_xz = mesh_6.GetGroupByName("symm_face_xz")
+symm_face_yz = mesh_6.GetGroupByName("symm_face_yz")
+top_face = mesh_6.GetGroupByName("top_face")
+bot_face = mesh_6.GetGroupByName("bot_face")
+right_face = mesh_6.GetGroupByName("right_face")
+back_face = mesh_6.GetGroupByName("back_face")
+</code></pre></div></div>
+
+<p>Then we select the faces that do not belong to any of the boundary faces that we
+need.  To do that, we set up filter criteria:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>g_criteria = []
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          bot_face[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          top_face[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          right_face[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          back_face[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          symm_face_xz[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+crit = smesh.GetCriterion(SMESH.FACE, SMESH.FT_BelongToMeshGroup, '=',
+                          symm_face_yz[0], SMESH.FT_LogicalNOT)
+g_criteria.append(crit)
+</code></pre></div></div>
+
+<p>Next create a filter from the criteria:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>g_filter = smesh.GetFilterFromCriteria(g_criteria)
+</code></pre></div></div>
+
+<p>The remaining faces are unwanted.  Let us create a group using the filter criteria.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unwanted_faces = mesh_6.GroupOnFilter( SMESH.FACE, "unwanted_faces", g_filter)
+salome.sg.updateObjBrowser()
+</code></pre></div></div>
+
+<p>The faces in this group are shown below:</p>
+
+<figure>
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig7.png" alt="" />
+  <figcaption>Unwanted face elements.</figcaption>
+</figure>
+
+<p>Now you can remove these faces from the mesh, and the element groups for the three individual elements
+that you had created to check things:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mesh_6.RemoveGroup(elem_445)
+mesh_6.RemoveGroup(elem_4727)
+mesh_6.RemoveGroup(elem_6279)
+mesh_6.RemoveGroupWithContents(unwanted_faces)
+mesh_6.RenumberElements()
+salome.sg.updateObjBrowser()
+</code></pre></div></div>
+
+<p>Let us save this new mesh to <code class="language-plaintext highlighter-rouge">box_mesh_refined_final.med</code>.</p>
+
+<h4 id="running-the-simulation-third-attempt">Running the simulation (third attempt)</h4>
+
+<p>If you run the simulation case with the new file, you will get a solution.</p>
+
+<figure>
+  <img src="http://localhost:4000/ParSim/assets/blogimg/code-aster/forma07_fig8.png" alt="" />
+  <figcaption>von Mises stress</figcaption>
+</figure>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/tags/#creation" class="page__taxonomy-item" rel="tag">creation</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/tags/#element" class="page__taxonomy-item" rel="tag">element</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/tags/#group" class="page__taxonomy-item" rel="tag">group</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/tags/#selection" class="page__taxonomy-item" rel="tag">selection</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/categories/#code-aster" class="page__taxonomy-item" rel="tag">Code-Aster</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#cracks" class="page__taxonomy-item" rel="tag">Cracks</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#fem" class="page__taxonomy-item" rel="tag">FEM</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#python" class="page__taxonomy-item" rel="tag">Python</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#salome-meca" class="page__taxonomy-item" rel="tag">Salome-Meca</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-03-20T00:00:00+13:00">March 20, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Inspecting+and+manipulating+meshes+in+Salome-Meca+for+Code-Aster%20http%3A%2F%2Flocalhost%3A4000%2FParSim%2Ffem%2Fcracks%2Fpython%2Fsalome-meca%2Fcode-aster%2Finspecting-and-manipulating-meshes%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2FParSim%2Ffem%2Fcracks%2Fpython%2Fsalome-meca%2Fcode-aster%2Finspecting-and-manipulating-meshes%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2FParSim%2Ffem%2Fcracks%2Fpython%2Fsalome-meca%2Fcode-aster%2Finspecting-and-manipulating-meshes%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ParSim/vaango/compiling-vaango-on-a-cray/" class="pagination--pager" title="Compiling and running the MPM code Vaango on a Cray
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+
+One of the reasons I switched to cmake for my builds was the need to compile my
+Vaango code on a BlueGene/Q system.  The code was previously co...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+In this article we take a short detour into the problem of continuous unit testing
+of code that contains MPI calls and use either mpich
+or Open ...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+The Plimpton scheme of communicating ghost information between patches was described
+in Part 3 of this series.
+Let us now see how a similar appr...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-3/" rel="permalink">Parallel domain decomposition for particle methods: Part 3
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+In Part 2 of this series
+we showed the direct way of communicating ghost particles between patches.  That approach
+requires 26 communication ste...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/ParSim/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/ParSim/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
