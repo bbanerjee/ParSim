@@ -305,9 +305,9 @@ var store = [{
         "url": "http://localhost:4000/ParSim/vaango/compiling-vaango-on-a-cray/",
         "teaser": null
       },{
-        "title": "Modeling cracks in Salome-Meca and Code-Aster",
-        "excerpt":"Introduction In Part 3 of this article I discussed the approach where the equations for a system of rigid bodies are approximated by a spring-mass system. The numerical stability conditions of that system are then taken to be representative of the system of discrete rigid bodies. In that case, for...","categories": ["FEM","Cracks","Python","Salome-Meca","Code-Aster"],
+        "title": "Inspecting and manipulating meshes in Salome-Meca for Code-Aster",
+        "excerpt":"In this article, I will discuss how elements can be selected from deep inside a 3D mesh in the Salome-Meca environment and manipulated with Python scripts. Code-Aster provides a large number of verification tests, several of which can also serve as tutorials on how to use the software. Some of...","categories": ["FEM","Cracks","Python","Salome-Meca","Code-Aster"],
         "tags": ["element","group","selection","creation"],
-        "url": "http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/Modeling-cracks-in-Salome-Meca-and-Code-Aster/",
+        "url": "http://localhost:4000/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/",
         "teaser": null
       },]

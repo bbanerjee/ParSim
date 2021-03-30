@@ -52,3 +52,8 @@ img.blogimageleft {
   padding: 0.5em;
 }
 
+.highlight pre {
+  max-height: 250px;
+  overflow: scroll !important;
+}
+
