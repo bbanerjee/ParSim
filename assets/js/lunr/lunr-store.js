@@ -310,4 +310,10 @@ var store = [{
         "tags": ["element","group","selection","creation"],
         "url": "https://bbanerjee.github.io/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/",
         "teaser": null
+      },{
+        "title": "Creating quadrilateral surface meshes with gmsh",
+        "excerpt":"The Code-Aster cooling tower modal analysis validation test FORMA11c comes with a quadrilateral mesh provided by Code-Aster. Tips on quadrilateral meshing with gmsh are sparsely distributed on the open web. In this article, I will discuss how we can recreate the Code-Aster mesh with gmsh. Mesh provided with Code-Aster. Extracting...","categories": ["FEM","Meshing","gmsh"],
+        "tags": ["quadrilateral","meshing"],
+        "url": "https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/",
+        "teaser": null
       },]

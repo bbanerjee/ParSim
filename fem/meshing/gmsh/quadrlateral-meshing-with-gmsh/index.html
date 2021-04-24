@@ -1,0 +1,967 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Creating quadrilateral surface meshes with gmsh - Parresia Simulations</title>
+<meta name="description" content="Tips on how to create quad meshes with gmsh">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Creating quadrilateral surface meshes with gmsh">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/">
+
+
+  <meta property="og:description" content="Tips on how to create quad meshes with gmsh">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2021-04-24T00:00:00+12:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/ParSim/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/ParSim/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/parresia.css">
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/ParSim/"><img src="/ParSim/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/ParSim/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/ParSim/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Creating quadrilateral surface meshes with gmsh">
+    <meta itemprop="description" content="The Code-Aster cooling tower modal analysis validation testFORMA11c comes with a quadrilateral mesh provided by Code-Aster.Tips on quadrilateral meshing with gmsh are sparsely distributed on the open web.In this article, I will discuss how we can recreate the Code-Aster mesh with gmsh.">
+    <meta itemprop="datePublished" content="2021-04-24T00:00:00+12:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Creating quadrilateral surface meshes with gmsh
+</h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> Contents</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#extracting-the-geometry">Extracting the geometry</a></li>
+  <li><a href="#geometry-with-gmsh">Geometry with gmsh</a>
+    <ul>
+      <li><a href="#adding-the-profile-points-to-gmsh">Adding the profile points to gmsh</a></li>
+      <li><a href="#fit-a-spline-through-the-points">Fit a spline through the points</a></li>
+      <li><a href="#create-copies-of-the-line-and-rotate-them">Create copies of the line and rotate them</a></li>
+      <li><a href="#sweeping-the-lines">Sweeping the lines</a></li>
+      <li><a href="#merging-overlapping-entities">Merging overlapping entities</a></li>
+    </ul>
+  </li>
+  <li><a href="#quadrilateral-meshing-with-gmsh">Quadrilateral meshing with gmsh</a>
+    <ul>
+      <li><a href="#circumferential-lines">Circumferential lines</a></li>
+      <li><a href="#axial-lines">Axial lines</a></li>
+      <li><a href="#surfaces">Surfaces</a></li>
+      <li><a href="#algorithm-and-mesh-generation">Algorithm and mesh generation</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks">Remarks</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <p>The <code class="language-plaintext highlighter-rouge">Code-Aster</code> cooling tower modal analysis validation test
+<a href="https://biba1632.gitlab.io/code-aster-manuals/docs/validation/v2.08.011.html#model-c-modal-analysis-of-a-cooling-tower">FORMA11c</a> comes with a quadrilateral mesh provided by <code class="language-plaintext highlighter-rouge">Code-Aster</code>.<br />
+Tips on quadrilateral meshing with <code class="language-plaintext highlighter-rouge">gmsh</code> are sparsely distributed on the open web.
+In this article, I will discuss how we can recreate the <code class="language-plaintext highlighter-rouge">Code-Aster</code> mesh with <a href="https://gmsh.info/">gmsh</a>. 
+<!--more--></p>
+
+<figure style="width:70%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig1.png" />
+  <figcaption>Mesh provided with Code-Aster.</figcaption>
+</figure>
+
+<h4 id="extracting-the-geometry">Extracting the geometry</h4>
+
+<p>The first step in the process is to extract the profile of the cooling tower using the
+<code class="language-plaintext highlighter-rouge">Mesh</code> module of <code class="language-plaintext highlighter-rouge">Salome-Meca</code>.</p>
+
+<p>To do that, we could pick points along the profile manually but that gets tedious and error-prone
+quite rapidly as the number of nodes increases.  We will use Python scripting instead.</p>
+
+<ul>
+  <li>
+    <p>Read the mesh:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Read mesh
+</span> <span class="p">([</span><span class="n">mesh</span><span class="p">],</span> <span class="n">status</span><span class="p">)</span> <span class="o">=</span> <span class="n">smesh</span><span class="p">.</span><span class="n">CreateMeshesFromMED</span><span class="p">(</span><span class="s">r'/home/Salome/forma11/forma11c.mmed'</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Create a selection box for points on the profile.  We want points that are on one of the vertical 
+edges of the cooling tower. We choose points that are between \((0, x_{\text{max}})\) and
+\((z_{\text{min}}, z_{\text{max}})\) with a small buffer \(\epsilon\) :</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Create selection box
+</span> <span class="n">eps</span> <span class="o">=</span> <span class="mf">1.0e-3</span>
+ <span class="n">mesh_bb</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">.</span><span class="n">BoundingBox</span><span class="p">()</span>
+ <span class="n">x_min</span> <span class="o">=</span> <span class="mi">0</span>
+ <span class="n">x_max</span> <span class="o">=</span> <span class="n">mesh_bb</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">eps</span>
+ <span class="n">z_min</span> <span class="o">=</span> <span class="n">mesh_bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">eps</span>
+ <span class="n">z_max</span> <span class="o">=</span> <span class="n">mesh_bb</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="n">eps</span>
+ <span class="n">y_min</span> <span class="o">=</span> <span class="o">-</span><span class="n">eps</span>
+ <span class="n">y_max</span> <span class="o">=</span>  <span class="n">eps</span>
+
+ <span class="n">box_min</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeVertex</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">z_min</span><span class="p">)</span>
+ <span class="n">box_max</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeVertex</span><span class="p">(</span><span class="n">x_max</span><span class="p">,</span> <span class="n">y_max</span><span class="p">,</span> <span class="n">z_max</span><span class="p">)</span>
+ <span class="n">box</span> <span class="o">=</span> <span class="n">geompy</span><span class="p">.</span><span class="n">MakeBoxTwoPnt</span><span class="p">(</span><span class="n">box_min</span><span class="p">,</span> <span class="n">box_max</span><span class="p">)</span>
+ <span class="n">geompy</span><span class="p">.</span><span class="n">addToStudy</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s">"selection_box"</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Use a filter to select nodes inside the selection box</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Get the nodes that are in the selection box
+</span> <span class="nb">filter</span> <span class="o">=</span> <span class="n">smesh</span><span class="p">.</span><span class="n">GetFilter</span><span class="p">(</span><span class="n">SMESH</span><span class="p">.</span><span class="n">NODE</span><span class="p">,</span>  <span class="n">SMESH</span><span class="p">.</span><span class="n">FT_BelongToGeom</span><span class="p">,</span> <span class="n">box</span><span class="p">)</span>
+ <span class="n">ids</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">.</span><span class="n">GetIdsFromFilter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Next we extract the nodal coordinates and add them to a group:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Create a node group called "profile" 
+</span> <span class="n">profile</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">.</span><span class="n">CreateEmptyGroup</span><span class="p">(</span> <span class="n">SMESH</span><span class="p">.</span><span class="n">NODE</span><span class="p">,</span> <span class="s">'profile'</span> <span class="p">)</span>
+
+ <span class="c1"># Get the nodal coordinates
+</span> <span class="n">coords</span> <span class="o">=</span> <span class="p">[]</span>
+ <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+    <span class="n">coords</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">mesh</span><span class="p">.</span><span class="n">GetNodeXYZ</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+
+    <span class="c1"># Add the node to the "profile" group
+</span>    <span class="n">nbAdd</span> <span class="o">=</span> <span class="n">profile</span><span class="p">.</span><span class="n">Add</span><span class="p">([</span><span class="nb">id</span><span class="p">])</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Finally, save the coordinates to a <code class="language-plaintext highlighter-rouge">JSON</code> file.  We are using this format because
+we intend to use the Python interface for <code class="language-plaintext highlighter-rouge">gmsh</code> and it is easier to read <code class="language-plaintext highlighter-rouge">JSON</code>
+objects directly with Python.</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Save the coordinates (json)
+</span> <span class="n">ExportPATH</span><span class="o">=</span><span class="s">"/home/Salome/forma11/"</span>
+ <span class="n">file_id</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span> <span class="s">r''</span><span class="o">+</span><span class="n">ExportPATH</span><span class="o">+</span><span class="s">'forma11c_profile.json'</span><span class="o">+</span><span class="s">''</span><span class="p">,</span> <span class="s">'w'</span><span class="p">)</span>
+ <span class="n">json</span><span class="p">.</span><span class="n">dump</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">file_id</span><span class="p">)</span>
+ <span class="n">file_id</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>Now that we have saved the profile, it’s time to move to <code class="language-plaintext highlighter-rouge">gmsh</code> are explore meshing.</p>
+
+<h4 id="geometry-with-gmsh">Geometry with <code class="language-plaintext highlighter-rouge">gmsh</code></h4>
+
+<p>The process of creating and meshing the geometry is easier to iterate upon inside a
+<code class="language-plaintext highlighter-rouge">Jupyter notebook</code> running Python 3.</p>
+
+<ul>
+  <li>
+    <p>First, we import the packages we will need:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">gmsh</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">json</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Then we initialize <code class="language-plaintext highlighter-rouge">gmsh</code>.
+We will use the <code class="language-plaintext highlighter-rouge">OpenCascade</code> kernel to create and mesh the cooling tower geometry
+to take advantage of functions that can be used to select geometrical entities.</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Initialize gmsh
+</span><span class="n">gmsh</span><span class="p">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="c1"># Choose kernel
+</span><span class="n">model</span> <span class="o">=</span> <span class="n">gmsh</span><span class="p">.</span><span class="n">model</span>
+<span class="n">occ</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">occ</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">mesh</span>
+<span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"forma11c_gmsh"</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Next we read in the coordinates of the profile from the <code class="language-plaintext highlighter-rouge">JSON</code> file we
+had created in <code class="language-plaintext highlighter-rouge">Salome-Meca</code>:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Read the profile coordinates
+</span><span class="n">file_id</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span> <span class="s">r''</span><span class="o">+</span><span class="n">ExportPATH</span><span class="o">+</span><span class="s">'forma11c_profile.json'</span><span class="o">+</span><span class="s">''</span><span class="p">,</span> <span class="s">'r'</span><span class="p">)</span>
+<span class="n">coords</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
+<span class="n">file_id</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h5 id="adding-the-profile-points-to-gmsh">Adding the profile points to <code class="language-plaintext highlighter-rouge">gmsh</code></h5>
+
+<p>Now that we have the environment ready and the data read from file, we can
+start creating the geometry in <code class="language-plaintext highlighter-rouge">gmsh</code>.</p>
+
+<p>Add the profile points using</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Set a default element size
+</span><span class="n">el_size</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="c1"># Add profile points
+</span><span class="n">v_profile</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">:</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">coord</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">el_size</span><span class="p">)</span>
+    <span class="n">v_profile</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We can check that the points are reasonable by using to open the GUI after updating
+the objects.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">occ</span><span class="p">.</span><span class="n">synchronize</span><span class="p">()</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">fltk</span><span class="p">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div></div>
+
+<figure style="width:30%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig2.png" />
+  <figcaption>Profile points added to `gmsh`.</figcaption>
+</figure>
+
+<p>You will see a set of points as shown in the image on the right.</p>
+
+<p>Don’t forget to clean-up after closing the <code class="language-plaintext highlighter-rouge">gmsh</code> GUI with <code class="language-plaintext highlighter-rouge">gmsh.finalize()</code>.  After you do that, 
+you’ll have to rerun the previous steps again to create a clean data set.</p>
+
+<h5 id="fit-a-spline-through-the-points">Fit a spline through the points</h5>
+
+<p>After the points have been added to the OpenCascade model, you will have to create a line
+that interpolates the points.</p>
+
+<p>We do that in <code class="language-plaintext highlighter-rouge">gmsh</code> with the command <code class="language-plaintext highlighter-rouge">addBSpline</code> (the
+special features of this command in the OpenCascade kernel are another reason to use this
+kernel instead of the built-in <code class="language-plaintext highlighter-rouge">geo</code> kernel.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Add spline going through profile points
+</span><span class="n">l1</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addBSpline</span><span class="p">(</span><span class="n">v_profile</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h5 id="create-copies-of-the-line-and-rotate-them">Create copies of the line and rotate them</h5>
+
+<p>Because the <code class="language-plaintext highlighter-rouge">gmsh</code> sweep function limits the sweep angle, we will create three copies of
+the line and move them to different positions around the circumference of the
+cooling tower.</p>
+
+<p>This copying and rotation can be achieved with:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Create copies and rotate
+</span><span class="n">l2</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">copy</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">l1</span><span class="p">)])</span>
+<span class="n">l3</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">copy</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">l1</span><span class="p">)])</span>
+<span class="n">l4</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">copy</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span><span class="n">l1</span><span class="p">)])</span>
+
+<span class="c1"># Rotate the copy
+</span><span class="n">occ</span><span class="p">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">l2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">occ</span><span class="p">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">l3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="p">)</span>
+<span class="n">occ</span><span class="p">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">l4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>and produces the geometry shown below.</p>
+
+<figure style="width:50%;">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig3.png" />
+  <figcaption>Copied and rotated B-splines.</figcaption>
+</figure>
+
+<h5 id="sweeping-the-lines">Sweeping the lines</h5>
+
+<p>We are now ready to sweep the lines around the vertical axis of symmetry of the cooling tower.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Sweep the lines
+</span><span class="n">surf1</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">revolve</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="n">l1</span><span class="p">)],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">surf2</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">revolve</span><span class="p">(</span><span class="n">l2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">surf3</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">revolve</span><span class="p">(</span><span class="n">l3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">surf4</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">revolve</span><span class="p">(</span><span class="n">l4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<figure style="width:50%;">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig4.png" />
+  <figcaption>Swept B-splines.</figcaption>
+</figure>
+
+<h5 id="merging-overlapping-entities">Merging overlapping entities</h5>
+
+<p>As you can see for the figure, there are a number of overlapping geometric entities
+in the figure.  We would like to clean that up and merge them.   To do that we use
+the <code class="language-plaintext highlighter-rouge">fragment</code> command.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Join the surfaces
+</span><span class="n">surf5</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">fragment</span><span class="p">(</span><span class="n">surf1</span><span class="p">,</span> <span class="n">surf2</span><span class="p">)</span>
+<span class="n">surf6</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">fragment</span><span class="p">(</span><span class="n">surf3</span><span class="p">,</span> <span class="n">surf4</span><span class="p">)</span>
+<span class="n">surf7</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">fragment</span><span class="p">(</span><span class="n">surf5</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">surf6</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</code></pre></div></div>
+
+<figure style="width:50%;">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig5.png" />
+  <figcaption>Merged surfaces.</figcaption>
+</figure>
+
+<p>We are now ready to mesh the geometry after a call to <code class="language-plaintext highlighter-rouge">occ.synchronize()</code>.</p>
+
+<h4 id="quadrilateral-meshing-with-gmsh">Quadrilateral meshing with <code class="language-plaintext highlighter-rouge">gmsh</code></h4>
+
+<p>The most convenient quadrilateral mesh approach in <code class="language-plaintext highlighter-rouge">gmsh</code> is to use transfinite interpolation.
+An example of transfinite interpolation is the <a href="https://en.wikipedia.org/wiki/Coons_patch">Coon’s Patch</a>.</p>
+
+<p>For this approach to work, we need to assign the number of nodes along selected lines.</p>
+
+<h5 id="circumferential-lines">Circumferential lines</h5>
+
+<p>First we set up transfinite interpolation for all the lines, and assign a discretization of
+15 nodes for all the lines of the geometry.  We will then assign a different number of nodes to
+the axial lines.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_nodes_circ</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="n">occ</span><span class="p">.</span><span class="n">getEntities</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_nodes_circ</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h5 id="axial-lines">Axial lines</h5>
+
+<p>To match the element density used in the <code class="language-plaintext highlighter-rouge">Code-Aster</code> sample mesh, we need 32 nodes
+along the four lines in the axial direction.  We could select these lines using bounding boxes,
+but in this case it’s more straightforward to just pick the numbers from the <code class="language-plaintext highlighter-rouge">gmsh</code> GUI:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_nodes_vert</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">vertical_curves</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="n">vertical_curves</span><span class="p">:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes_vert</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h5 id="surfaces">Surfaces</h5>
+
+<p>We also need to tell <code class="language-plaintext highlighter-rouge">gmsh</code> that the four swept surfaces are transfinite.  If we do not, we will
+get a mesh that looks like the one below.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">surf</span> <span class="ow">in</span> <span class="n">occ</span><span class="p">.</span><span class="n">getEntities</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteSurface</span><span class="p">(</span><span class="n">surf</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre></div></div>
+
+<figure style="width: 200px">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig6.png" alt="" />
+  <figcaption>Mesh without transfinite surface interpolation</figcaption>
+</figure>
+
+<h5 id="algorithm-and-mesh-generation">Algorithm and mesh generation</h5>
+
+<p>The meshing algorithm settings can now be assigned:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.RecombineAll'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.RecombinationAlgorithm'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.Recombine3DLevel'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.ElementOrder'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>and the mesh generated:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generate mesh
+</span><span class="n">mesh</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The mesh looks similar to that provided with <code class="language-plaintext highlighter-rouge">Code-Aster</code> (and produces almost identical results
+to the benchmark case):</p>
+
+<figure style="width: 400px">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/forma11c_fig7.png" alt="" />
+  <figcaption>Quadrilateral mesh</figcaption>
+</figure>
+
+<h4 id="remarks">Remarks</h4>
+
+<p>This simple procedure can be used to mesh quite complex domains with quadrilateral elements.
+The other option provided by <code class="language-plaintext highlighter-rouge">gmsh</code> for quad meshing is, of code, the extrusion functionality.</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/tags/#meshing" class="page__taxonomy-item" rel="tag">meshing</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/tags/#quadrilateral" class="page__taxonomy-item" rel="tag">quadrilateral</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/categories/#fem" class="page__taxonomy-item" rel="tag">FEM</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#gmsh" class="page__taxonomy-item" rel="tag">gmsh</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#meshing" class="page__taxonomy-item" rel="tag">Meshing</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-04-24T00:00:00+12:00">April 24, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Creating+quadrilateral+surface+meshes+with+gmsh%20https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fquadrlateral-meshing-with-gmsh%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fquadrlateral-meshing-with-gmsh%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fquadrlateral-meshing-with-gmsh%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/" class="pagination--pager" title="Inspecting and manipulating meshes in Salome-Meca for Code-Aster
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/" rel="permalink">Inspecting and manipulating meshes in Salome-Meca for Code-Aster
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          29 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In this article, I will discuss how elements can be selected from deep inside a 3D mesh
+in the Salome-Meca environment and manipulated with Python scripts.
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+
+One of the reasons I switched to cmake for my builds was the need to compile my
+Vaango code on a BlueGene/Q system.  The code was previously co...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+In this article we take a short detour into the problem of continuous unit testing
+of code that contains MPI calls and use either mpich
+or Open ...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/parallel-domain-decomposition-part-4/" rel="permalink">Parallel domain decomposition for particle methods: Part 4
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+The Plimpton scheme of communicating ghost information between patches was described
+in Part 3 of this series.
+Let us now see how a similar appr...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/ParSim/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/ParSim/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
