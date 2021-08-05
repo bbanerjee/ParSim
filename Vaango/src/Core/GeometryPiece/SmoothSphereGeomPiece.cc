@@ -263,7 +263,7 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
 int 
 SmoothSphereGeomPiece::createSpherePointsEqualArea()
 {
-  std::cout << "Creating particles for the Solid Sphere" << "\n";
+  std::cout << "Creating particles for the Solid Sphere ..." ;
 
   // Find the characteristic distance between points
   double thickness = d_outerRadius - d_innerRadius; 
@@ -275,6 +275,9 @@ SmoothSphereGeomPiece::createSpherePointsEqualArea()
     double shell_outer_radius = d_innerRadius + (ii+1)*char_dist; 
     createPointSetPolar2D(shell_outer_radius, shell_inner_radius, char_dist);
   }
+
+  std::cout << " done. Created " << d_points.size() << " points " 
+            << " and " << d_volume.size() << " volumes.\n";
   
   return d_points.size();
 }
@@ -293,6 +296,23 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   if (mid_radius < char_dist) {
     d_points.push_back(d_center);
     d_volume.push_back(volumeOfSphere(mid_radius));
+    Matrix3 size;
+    Vector r1(mid_radius, 0, 0);
+    Vector r2(0, mid_radius, 0);
+    Vector r3(0, 0, mid_radius);
+    size(0,0) = r1[0];
+    size(1,0) = r1[1];
+    size(2,0) = r1[2];
+    size(0,1) = r2[0];
+    size(1,1) = r2[1];
+    size(2,1) = r2[2];
+    size(0,2) = r3[0];
+    size(1,2) = r3[1];
+    size(2,2) = r3[2];
+    d_size.push_back(size);
+    d_rvec1.push_back(r1);
+    d_rvec2.push_back(r2);
+    d_rvec3.push_back(r3);
     return;
   }
 
@@ -325,6 +345,23 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   points_polar_theta.push_back(0.0);
   points_polar_phi.push_back(0.0);
   d_volume.push_back(point_volume);
+  Matrix3 size;
+  Vector r1(outer_radius-inner_radius, 0, 0);
+  Vector r2(0, outer_radius-inner_radius, 0);
+  Vector r3(0, 0, outer_radius-inner_radius);
+  size(0,0) = r1[0];
+  size(1,0) = r1[1];
+  size(2,0) = r1[2];
+  size(0,1) = r2[0];
+  size(1,1) = r2[1];
+  size(2,1) = r2[2];
+  size(0,2) = r3[0];
+  size(1,2) = r3[1];
+  size(2,2) = r3[2];
+  d_size.push_back(size);
+  d_rvec1.push_back(r1);
+  d_rvec2.push_back(r2);
+  d_rvec3.push_back(r3);
 
   // Loop thru partitions
   int num_collars = int_regions.size() - 2;

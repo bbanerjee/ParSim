@@ -358,6 +358,9 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
     d_points.push_back(Point(node.x_, node.y_, node.z_));
     d_volume.push_back(node.volume_);
   }
+
+  std::cout << "Number of MPM points = " << d_points.size()
+            << " Number of MPM points/w volume = " << d_volume.size() << "\n";
 }
 
 void
@@ -605,6 +608,7 @@ AbaqusMeshGeometryPiece::getBoundingBox() const
 unsigned int
 AbaqusMeshGeometryPiece::createPoints()
 {
+  std::cout << "AbaqusMeshGeometryPiece: d_points.size() = " << d_points.size() << "\n";
   return d_points.size();
 }
 

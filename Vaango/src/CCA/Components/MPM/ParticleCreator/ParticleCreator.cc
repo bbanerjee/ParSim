@@ -710,7 +710,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   
   // If the object is a SmoothGeomPiece (e.g. FileGeometryPiece or
   // SmoothCylGeomPiece) then use the particle creators in that 
-  // class to do the counting d
+  // class to do the counting
   SmoothGeomPiece   *sgp = dynamic_cast<SmoothGeomPiece*>(piece.get_rep());
   if (sgp) {
     int numPts = 0;
@@ -741,6 +741,15 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     Point p;
     IntVector cell_idx;
     
+    //std::cout << "Range checking: \n";
+    //std::cout << "size: points = " << points->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: vols = " << vols->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: temps = " << temps->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: colors = " << colors->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: pforces = " << pforces->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: pFiberDirs = " << pFiberDirs->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: pvelocities = " << pvelocities->size() << " numPts = " << numPts << "\n";
+    //std::cout << "size: pSizes = " << pSizes->size() << " numPts = " << numPts << "\n";
     for (int ii = 0; ii < numPts; ++ii) {
       p = points->at(ii);
       if (patch->findCell(p,cell_idx)) {
