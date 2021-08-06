@@ -28,6 +28,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Parallel/Parallel.h>
+#include <Core/Math/FastMatrix.h>
 
 #include <fstream>
 #include <iostream>
@@ -67,10 +68,28 @@ AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP & ps,
   d_rotate = Matrix3(rotate_row0.x(), rotate_row0.y(), rotate_row0.z(),
                      rotate_row1.x(), rotate_row1.y(), rotate_row1.z(),
                      rotate_row2.x(), rotate_row2.y(), rotate_row2.z());
+
+  // Decide whether to use the nodes or the gauss points at the MPM particle
+  // positions (**warning** only for tets)
+  d_use_gauss_pts = false;
+  d_num_gauss_pts = 0;
+
+  bool gauss_pts = false;
+  ps->getWithDefault("use_gauss_points", d_use_gauss_pts, gauss_pts);
+  if (d_use_gauss_pts) {
+    int num_gauss_pts = 1;
+    ps->getWithDefault("num_gauss_points", d_num_gauss_pts, num_gauss_pts);
+    if (d_num_gauss_pts != 1 && d_num_gauss_pts != 4) {
+      std::ostringstream out;
+      out << "**ERROR** Gauss points can be used only for tetrahedral elements."
+          << " Please input a value for num_gauss_pts of either 1 or 4.\n";
+      throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+    }
+  }
   
   proc0cout << "AbaqusMesh Geometry Piece: reading file " << d_fileName << std::endl;
   
-  // Read the input file and dave the data
+  // Read the input file and save the data
   readMeshNodesAndElements(d_fileName);
 }
 
@@ -100,6 +119,8 @@ AbaqusMeshGeometryPiece::outputHelper( ProblemSpecP & ps ) const
   ps->appendElement("rotation_matrix_row0", Vector(d_rotate(0,0), d_rotate(0,1), d_rotate(0,2)));
   ps->appendElement("rotation_matrix_row1", Vector(d_rotate(1,0), d_rotate(1,1), d_rotate(1,2)));
   ps->appendElement("rotation_matrix_row2", Vector(d_rotate(2,0), d_rotate(2,1), d_rotate(2,2)));
+  ps->appendElement("use_gauss_pts",        d_use_gauss_pts);
+  ps->appendElement("num_gauss_pts",        d_num_gauss_pts);
 }
 
 //---------------------------------------------------------------------------
@@ -274,8 +295,13 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   }
   */
 
-  // Compute nodal volumes
-  computeNodalVolumes(nodeArray, volElemArray, volElemMap);
+  // Create particle locations and compute volumes
+  std::vector<MeshNode> gaussPtArray;
+  if (d_use_gauss_pts) {
+    computeGaussPtVolumes(nodeArray, volElemArray, gaussPtArray);
+  } else {
+    computeNodalVolumes(nodeArray, volElemArray, volElemMap);
+  }
 
 
   // Print nodes
@@ -334,14 +360,26 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   Vector centroid(0.5*(xmin+xmax), 0.5*(ymin+ymax), 0.5*(zmin+zmax));
 
   // Rotate points
-  for (auto& node : nodeArray) {
-    Vector point(node.x_, node.y_, node.z_);
-    point -= centroid;
-    point = d_rotate * point;
-    point += centroid;
-    node.x_ = point.x();
-    node.y_ = point.y();
-    node.z_ = point.z();
+  if (d_use_gauss_pts) {
+    for (auto& node : gaussPtArray) {
+      Vector point(node.x_, node.y_, node.z_);
+      point -= centroid;
+      point = d_rotate * point;
+      point += centroid;
+      node.x_ = point.x();
+      node.y_ = point.y();
+      node.z_ = point.z();
+    }
+  } else {
+    for (auto& node : nodeArray) {
+      Vector point(node.x_, node.y_, node.z_);
+      point -= centroid;
+      point = d_rotate * point;
+      point += centroid;
+      node.x_ = point.x();
+      node.y_ = point.y();
+      node.z_ = point.z();
+    }
   }
 
   // Timing
@@ -353,10 +391,17 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
             << min << " and max = " << max << std::endl;
 
   // Now push the coordinates and volumes of nodes into d_points and d_volumes
-  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); ++iter) {
-    MeshNode node = *iter;
-    d_points.push_back(Point(node.x_, node.y_, node.z_));
-    d_volume.push_back(node.volume_);
+  if (d_use_gauss_pts) {
+    for (auto node : gaussPtArray) {
+      d_points.push_back(Point(node.x_, node.y_, node.z_));
+      d_volume.push_back(node.volume_);
+    }
+  } else {
+    for (auto iter = nodeArray.begin(); iter != nodeArray.end(); ++iter) {
+      MeshNode node = *iter;
+      d_points.push_back(Point(node.x_, node.y_, node.z_));
+      d_volume.push_back(node.volume_);
+    }
   }
 
   std::cout << "Number of MPM points = " << d_points.size()
@@ -419,8 +464,9 @@ AbaqusMeshGeometryPiece::readMeshVolumeElement(const std::string& inputLine,
 
   if (data.size() != 5) {
     std::ostringstream out;
-    out << "Could not read volume element connectivity from input line: " 
+    out << "**ERROR**Could not read volume element connectivity from input line: " 
         << inputLine << std::endl;
+    out << "\t\t Only four-noded tetrahedral elements are supported.\n";
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
@@ -500,6 +546,93 @@ AbaqusMeshGeometryPiece::computeElementVolumes(std::vector<MeshNode>& nodes,
     double volume = 1.0/6.0*std::abs(Dot(vec1x2,vec03));
     elem.volume_ = volume; 
   }
+}
+
+void
+AbaqusMeshGeometryPiece::computeGaussPtVolumes(std::vector<MeshNode>& nodes,
+                                               std::vector<VolumeElement>& elements,
+                                               std::vector<MeshNode>& gaussPts)
+{
+
+  // Timing
+  auto startTime = std::chrono::system_clock::now();
+
+  // Set up parameter alpha
+  double alpha = 0.25;
+  if (d_num_gauss_pts == 4) {
+    alpha = std::sqrt(5.0)/5.0;
+  }
+
+  // Loop thru elements and quadrature point locations
+  int pt_id = 0;
+  for (auto elem : elements) {
+
+    // Get the nodal coordinates
+    Uintah::Vector e1(nodes[elem.node1_-1].x_,
+                      nodes[elem.node1_-1].y_,
+                      nodes[elem.node1_-1].z_);
+    Uintah::Vector e2(nodes[elem.node2_-1].x_,
+                      nodes[elem.node2_-1].y_,
+                      nodes[elem.node2_-1].z_);
+    Uintah::Vector e3(nodes[elem.node3_-1].x_,
+                      nodes[elem.node3_-1].y_,
+                      nodes[elem.node3_-1].z_);
+    Uintah::Vector e4(nodes[elem.node4_-1].x_,
+                      nodes[elem.node4_-1].y_,
+                      nodes[elem.node4_-1].z_);
+
+    // Compute locations of quadrature points
+    if (d_num_gauss_pts == 1) {
+
+      ++pt_id;
+      Uintah::Vector q = (e1 + e2 + e3 + e4) * alpha;
+      gaussPts.push_back(MeshNode(pt_id, q.x(), q.y(), q.z(), elem.volume_));
+
+    } else {
+
+      // Quadrature points (Journal of Computational and Applied Mathematics
+      //                    Volume 236, Issue 17, November 2012, Pages 4348-4364)
+      Uintah::FastMatrix A(4,4);
+      A(0, 0) = 0.5854101966249680;
+      A(0, 1) = 0.1381966011250110; 
+      A(0, 2) = 0.1381966011250110;
+      A(0, 3) = 0.1381966011250110;  
+      A(1, 0) = 0.1381966011250110;
+      A(1, 1) = 0.5854101966249680;
+      A(1, 2) = 0.1381966011250110; 
+      A(1, 3) = 0.1381966011250110;
+      A(2, 0) = 0.1381966011250110;
+      A(2, 1) = 0.1381966011250110;
+      A(2, 2) = 0.5854101966249680;
+      A(2, 3) = 0.1381966011250110;
+      A(3, 0) = 0.1381966011250110;
+      A(3, 1) = 0.1381966011250110;
+      A(3, 2) = 0.1381966011250110;
+      A(3, 3) = 0.5854101966249680;
+
+      Uintah::Vector q = A(0, 0) * e1 + A(0, 1) * e2 + A(0, 2) * e3 + A(0, 3) * e4;
+      ++pt_id;
+      gaussPts.push_back(MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25*elem.volume_));
+
+      q = A(1, 0) * e1 + A(1, 1) * e2 + A(1, 2) * e3 + A(1, 3) * e4;
+      ++pt_id;
+      gaussPts.push_back(MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25*elem.volume_));
+
+      q = A(2, 0) * e1 + A(2, 1) * e2 + A(2, 2) * e3 + A(2, 3) * e4;
+      ++pt_id;
+      gaussPts.push_back(MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25*elem.volume_));
+
+      q = A(3, 0) * e1 + A(3, 1) * e2 + A(3, 2) * e3 + A(3, 3) * e4;
+      ++pt_id;
+      gaussPts.push_back(MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25*elem.volume_));
+    }
+  }
+
+  // Timing
+  auto endTime = std::chrono::system_clock::now(); 
+  auto time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done computing quadrature points in " << time << " millisecs" << std::endl;
+  startTime = std::chrono::system_clock::now();
 }
 
 void

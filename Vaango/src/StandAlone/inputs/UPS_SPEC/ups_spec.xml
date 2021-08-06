@@ -244,6 +244,8 @@
       <rotation_matrix_row0   spec="OPTIONAL VECTOR" />
       <rotation_matrix_row1   spec="OPTIONAL VECTOR" />
       <rotation_matrix_row2   spec="OPTIONAL VECTOR" />
+      <use_gauss_points       spec="OPTIONAL BOOLEAN" />
+      <num_gauss_points       spec="OPTIONAL INTEGER" />
     </abaqus_mesh>
 
     <difference               spec="FORWARD_DECLARATION" />

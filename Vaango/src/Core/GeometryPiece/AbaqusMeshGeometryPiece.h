@@ -123,6 +123,10 @@ namespace Uintah {
         id_ = id; x_ = x; y_ = y; z_ = z; volume_ = -1.0;
       }
 
+      MeshNode(int id, double x, double y, double z, double vol) {
+        id_ = id; x_ = x; y_ = y; z_ = z; volume_ = vol;
+      }
+
       int id_;
       double x_;
       double y_;
@@ -153,6 +157,9 @@ namespace Uintah {
                                 std::vector<SurfaceElement>& elements);
     void computeElementVolumes(std::vector<MeshNode>& nodes,
                                std::vector<VolumeElement>& elements);
+    void computeGaussPtVolumes(std::vector<MeshNode>& nodes,
+                               std::vector<VolumeElement>& elements,
+                               std::vector<MeshNode>& gaussPts);
     void computeNodalVolumes(std::vector<MeshNode>& nodes,
                              std::vector<VolumeElement>& elements,
                              std::map<int, int>& volElemMap);
@@ -168,6 +175,8 @@ namespace Uintah {
     Uintah::Vector      d_reflect;
     Uintah::IntVector   d_axis;
     Uintah::Matrix3     d_rotate;
+    bool                d_use_gauss_pts;
+    int                 d_num_gauss_pts;
     
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
     void read_bbox(std::istream & source, Point & lowpt, Point & highpt) const;
