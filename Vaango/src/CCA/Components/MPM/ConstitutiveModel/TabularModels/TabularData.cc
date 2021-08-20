@@ -198,7 +198,7 @@ TabularData::loadJSON(std::stringstream& inputStream,
   json doc;
   try {
     doc << inputStream;
-  } catch (std::invalid_argument err) {
+  } catch (std::invalid_argument const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Cannot parse tabular input data file " << tableFile << "\n"
@@ -318,7 +318,7 @@ TabularData::getContentsJSON(const json& doc, const std::string& tableFile)
   json contents;
   try {
     contents = doc["Vaango_tabular_data"];
-  } catch (std::out_of_range err) {
+  } catch (std::out_of_range const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Cannot find the key \"Vaango_tabular_data\" in " << tableFile;
@@ -333,7 +333,7 @@ TabularData::getTitleJSON(const json& contents, const std::string& tableFile)
   std::string title;
   try {
     title = contents["Meta"].at("title").get<std::string>();
-  } catch (std::out_of_range err) {
+  } catch (std::out_of_range const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Could not find tabular EOS title in " << tableFile;
@@ -348,7 +348,7 @@ TabularData::getDataJSON(const json& contents, const std::string& tableFile)
   json data;
   try {
     data = contents["Data"];
-  } catch (std::out_of_range err) {
+  } catch (std::out_of_range const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Key \"Data\" not found in tabular EOS input file " << tableFile;
@@ -364,7 +364,7 @@ TabularData::getVectorJSON(const json& object, const std::string key,
   std::string str;
   try {
     str = object.at(key).get<std::string>();
-  } catch (std::out_of_range err) {
+  } catch (std::out_of_range const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" not found in tabular EOS input file "
@@ -388,7 +388,7 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
   try {
     data = object.at(key);
     // std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  } catch (std::out_of_range const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" not found in tabular EOS input file "
@@ -406,7 +406,7 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
     }
     std::cout << std::endl;
     */
-  } catch (std::exception err) {
+  } catch (std::exception const& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains invalid data. " << tableFile;

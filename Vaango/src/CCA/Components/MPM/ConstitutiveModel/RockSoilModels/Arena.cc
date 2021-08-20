@@ -703,7 +703,7 @@ Arena::initializeInternalVariables(const Patch* patch, const MPMMaterial* matl,
   try {
     PEAKI1 = params.at("PEAKI1");
     CR = params.at("CR");
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range const&) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1, CR" << std::endl;
     err << "\t Available parameters are:" << std::endl;
@@ -1635,7 +1635,7 @@ Arena::computeStepDivisions(particleIndex idx, long64 particleID,
   try {
     PEAKI1 = state_old.yieldParams.at("PEAKI1");
     // STREN = state_old.yieldParams.at("STREN");
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range const&) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1 and STREN"
         << std::endl;
@@ -1895,7 +1895,7 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   try {
     BETA = state_k_old.yieldParams.at("BETA");
     //PEAKI1 = state_k_old.yieldParams.at("PEAKI1");
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range const&) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters BETA and PEAKI1"
         << std::endl;
@@ -2744,7 +2744,7 @@ Arena::rateDependentPlasticUpdate(const Matrix3& D, const double& delT,
   try {
     T1 = stateStatic_old.yieldParams.at("T1");
     T2 = stateStatic_old.yieldParams.at("T2");
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range const&) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters T1 and T2" << std::endl;
     for (auto param : stateStatic_old.yieldParams) {
