@@ -334,21 +334,21 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
       }
     }
     
-  } catch (H5::FileIException error) {
+  } catch (H5::FileIException const& error) {
     std::cout << "File Input Exception Reading hdf5\n";
-    error.printError();
-  } catch (H5::DataSetIException error) {
+    error.printErrorStack();
+  } catch (H5::DataSetIException const& error) {
     std::cout << "Data set input Exception Reading hdf5\n";
-    error.printError();
-  } catch (H5::DataSpaceIException error) {
+    error.printErrorStack();
+  } catch (H5::DataSpaceIException const& error) {
     std::cout << "Data space input Exception Reading hdf5\n";
-    error.printError();
-  } catch (H5::DataTypeIException error) {
+    error.printErrorStack();
+  } catch (H5::DataTypeIException const& error) {
     std::cout << "Data type input Exception Reading hdf5\n";
-    error.printError();
-  } catch (H5::AttributeIException error) {
+    error.printErrorStack();
+  } catch (H5::AttributeIException const& error) {
     std::cout << "Attribute input Exception Reading hdf5\n";
-    error.printError();
+    error.printErrorStack();
   }
 
   #ifdef DEBUG_HDF5_READ
