@@ -98,7 +98,7 @@ namespace Uintah {
     ASSERTEQ(sizeof(NeighborConnectivity), sizeof(bool)*216);
 
     MPI_Datatype mpitype;
-    MPI_Type_vector(1, 216, 216, MPI_UB, &mpitype);
+    MPI_Type_vector(1, 216, 216, MPI_C_BOOL, &mpitype);
     MPI_Type_commit(&mpitype);
 
     return mpitype;
