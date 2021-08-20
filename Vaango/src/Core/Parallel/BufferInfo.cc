@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2014-2021 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -113,28 +90,30 @@ BufferInfo::get_type(void*& out_buf, int& out_count,
 		     MPI_Datatype& out_datatype)
 {
   ASSERT(count() > 0);
-  if(!have_datatype){
-    if(count() == 1){
-      buf=startbufs[0];
-      cnt=counts[0];
-      datatype=datatypes[0];
-      free_datatype=false; // Will get freed with array
+  if (!have_datatype) {
+    if (count() == 1) {
+      buf = startbufs[0];
+      cnt = counts[0];
+      datatype = datatypes[0];
+      free_datatype = false; // Will get freed with array
     } else {
       std::vector<MPI_Aint> indices(count());
-      for(int i=0;i<(int)startbufs.size();i++)
-	      indices[i]=(MPI_Aint)startbufs[i];
-      MPI_Type_struct(count(), &counts[0], &indices[0], &datatypes[0],
-		      &datatype);
+      indices[0] = 0;
+      for (unsigned int i = 0; i < startbufs.size(); i++) {
+	indices[i] = (MPI_Aint)((char*) startbufs.at(i) - (char*) startbufs.at(0));
+      }
+      MPI_Type_create_struct(count(), &counts[0], &indices[0], &datatypes[0],
+		             &datatype);
       MPI_Type_commit(&datatype);
-      buf=0;
-      cnt=1;
-      free_datatype=true;
+      buf = startbufs[0];
+      cnt = 1;
+      free_datatype = true;
     }
     have_datatype=true;
   }
-  out_buf=buf;
-  out_count=cnt;
-  out_datatype=datatype;
+  out_buf = buf;
+  out_count = cnt;
+  out_datatype = datatype;
 }
 
 Sendlist::~Sendlist()
