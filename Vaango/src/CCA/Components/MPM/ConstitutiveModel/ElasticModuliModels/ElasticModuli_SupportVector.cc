@@ -303,7 +303,7 @@ ElasticModuli_SupportVector::loadJSON(std::stringstream& inputStream,
 {
   nlohmann::json doc;
   try {
-    doc << inputStream;
+    inputStream >> doc;
   } catch (std::invalid_argument err) {
     std::ostringstream out;
     out << "**ERROR**"

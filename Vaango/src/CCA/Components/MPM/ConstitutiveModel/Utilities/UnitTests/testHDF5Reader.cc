@@ -2,7 +2,7 @@
 #include <string>
 
 #include "H5Cpp.h"
-#include <submodules/json/src/json.hpp>
+#include <submodules/json/single_include/nlohmann/json.hpp>
 #include <Eigen/Core>
 
 #include <gtest/gtest.h>
@@ -40,7 +40,7 @@ TEST(HDF5Tests, readTest)
     std::stringstream ss;
     ss.str(test);
     nlohmann::json doc;
-    doc << ss;
+    ss >> doc;
     //std::cout << doc;
 
     ASSERT_EQ(doc["class_name"], "Sequential");

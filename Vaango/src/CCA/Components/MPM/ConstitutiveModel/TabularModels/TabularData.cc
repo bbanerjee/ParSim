@@ -32,6 +32,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 using namespace Vaango;
 using IndependentVar = TableContainers::IndependentVar;
@@ -197,7 +198,7 @@ TabularData::loadJSON(std::stringstream& inputStream,
 {
   json doc;
   try {
-    doc << inputStream;
+    inputStream >> doc;
   } catch (std::invalid_argument const& err) {
     std::ostringstream out;
     out << "**ERROR**"

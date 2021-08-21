@@ -30,10 +30,11 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <Eigen/Core>
-#include <submodules/json/src/json.hpp>
+#include <submodules/json/single_include/nlohmann/json.hpp>
 #include "H5Cpp.h"
 
 #include <limits>
+#include <iomanip>
 
 namespace Vaango {
 

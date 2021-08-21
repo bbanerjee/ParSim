@@ -29,9 +29,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-#include <submodules/json/src/json.hpp>
+#include <submodules/json/single_include/nlohmann/json.hpp>
 
 #include <limits>
+#include <iomanip>
 
 namespace Vaango {
 

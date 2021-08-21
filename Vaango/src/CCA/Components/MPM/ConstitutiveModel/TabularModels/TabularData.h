@@ -5,7 +5,8 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Geometry/Vector.h>
 
-#include <submodules/json/src/json.hpp>
+//#include <submodules/json/src/json.hpp>
+#include <submodules/json/single_include/nlohmann/json.hpp>
 
 #include <array>
 #include <memory>

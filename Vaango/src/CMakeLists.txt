@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
+# Copyright (c) 2014-2021 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -920,6 +920,7 @@ endif()
 #----------------------------------------------------------------------------------
 if (USE_CLANG)
   set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+  set(CMAKE_CXX_FLAGS "-std=c++11")
 endif ()
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(submodules)

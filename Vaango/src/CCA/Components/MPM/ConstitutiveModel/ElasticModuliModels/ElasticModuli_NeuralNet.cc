@@ -213,7 +213,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     std::stringstream ss;
     ss.str(model_config_json);
     nlohmann::json doc;
-    doc << ss;
+    ss >> doc;
 
     //std::cout << doc.dump() << "\n";
 
