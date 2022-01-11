@@ -1,0 +1,58 @@
+  <Meta>
+    <title> Mason sand disaggregated spheres </title>
+  </Meta>
+  
+  <SimulationComponent>
+    <type>mpm</type>
+  </SimulationComponent>
+  
+  <Time>
+    <initTime> 0.0 </initTime>
+    <maxTime> 1.0 </maxTime>
+    <delt_init> 1.0E-9 </delt_init>
+    <delt_min> 0.0 </delt_min>
+    <delt_max> 0.001 </delt_max>
+    <max_delt_increase> 1.0 </max_delt_increase>
+    <timestep_multiplier> 0.5 </timestep_multiplier>
+  </Time>
+  
+  <DataArchiver>
+    <filebase> disaggregated_arena.uda </filebase>
+    <outputInterval> 1.0E-6 </outputInterval>
+    <checkpoint cycle="2" interval="5.0E-6"/>
+    <save label="KineticEnergy"/>
+    <save label="StrainEnergy"/>
+    <save label="AccStrainEnergy"/>
+    <save label="CenterOfMassVelocity"/>
+    <save label="TotalMass"/>
+    <save label="CenterOfMassPosition"/>
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.mass"/>
+    <save label="p.volume"/>
+    <save label="p.temperature"/>
+    <save label="p.deformationMeasure"/>
+    <save label="p.displacement"/>
+    <save label="p.velocity"/>
+    <save label="p.stress"/>
+    <save label="p.externalforce"/>
+    <save label="g.mass"/>
+    <save label="g.volume"/>
+    <save label="g.velocity"/>
+    <save label="g.stressFS"/>
+    <save label="g.acceleration"/>
+    <save label="rho_CC"/>
+    <save label="temp_CC"/>
+    <save label="vel_CC"/>
+    <save label="sp_vol_CC"/>
+    <save label="vol_frac_CC"/>
+    <save label="press_CC"/>
+    <save label="press_equil_CC"/>
+    <save label="int_eng_L_CC"/>
+    <save label="intE_source_CC"/>
+    <save label="Tdot"/>
+    <save label="mom_L_CC"/>
+    <save label="mom_source_CC"/>
+    <save label="delP_Dilatate"/>
+  </DataArchiver>
+  

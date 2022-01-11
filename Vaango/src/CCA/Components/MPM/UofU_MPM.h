@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018-2019 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

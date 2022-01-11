@@ -6,7 +6,7 @@
 #  Copyright (c) 2004 Scientific Computing and Imaging Institute,
 #  University of Utah.
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
 # 
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
