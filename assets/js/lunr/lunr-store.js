@@ -316,4 +316,10 @@ var store = [{
         "tags": ["quadrilateral","meshing"],
         "url": "https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/",
         "teaser": null
+      },{
+        "title": "Meshes with different element topologies in gmsh (for Code-Aster)",
+        "excerpt":"We have been translating a few Code-Aster verification test manuals into English. The process is not just a straightforward translation of the text in the French manuals. We also annotate the command files during the process and try to generate new meshes when the task is not too difficult. Sometimes...","categories": ["FEM","Meshing","gmsh"],
+        "tags": ["meshing"],
+        "url": "https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/gmsh-meshing-for-code-aster/",
+        "teaser": null
       },]

@@ -1,0 +1,1213 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.21.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Meshes with different element topologies in gmsh (for Code-Aster) - Parresia Simulations</title>
+<meta name="description" content="Tips on how to create various types of elements with gmsh">
+
+
+  <meta name="author" content="Biswajit Banerjee">
+  
+  <meta property="article:author" content="Biswajit Banerjee">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Parresia Simulations">
+<meta property="og:title" content="Meshes with different element topologies in gmsh (for Code-Aster)">
+<meta property="og:url" content="https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/gmsh-meshing-for-code-aster/">
+
+
+  <meta property="og:description" content="Tips on how to create various types of elements with gmsh">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2022-04-21T00:00:00+12:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://bbanerjee.github.io/ParSim/fem/meshing/gmsh/gmsh-meshing-for-code-aster/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Biswajit Banerjee",
+      "url": "https://bbanerjee.github.io/ParSim/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/ParSim/feed.xml" type="application/atom+xml" rel="alternate" title="Parresia Simulations Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/ParSim/assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/parresia.css">
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/ParSim/"><img src="/ParSim/assets/img/ParresiaLogoSep2017_plain.png" alt=""></a>
+        
+        <a class="site-title" href="/ParSim/">
+          Parresia Simulations
+          <span class="site-subtitle">Parallel particle and finite element simulation</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/ParSim/docs/articles/">Blog articles</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/parsim/">ParSim software</a>
+            </li><li class="masthead__menu-item">
+              <a href="/ParSim/docs/material-data/">Material data</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Biswajit Banerjee</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>PhD Mechanical Engineering</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Auckland, NZ</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="mailto:b.banerjee.nz@gmail.com" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+        
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Meshes with different element topologies in gmsh (for Code-Aster)">
+    <meta itemprop="description" content="We have been translating a few Code-Aster verification test manuals into English.The process is not just a straightforward translation of the text in the French manuals.  We also annotate the command files during the process and try to generate new meshes when the task is not too difficult.  Sometimes Salome-Meca is more convenientfor mesh generation.  At other times we choose to use gmsh.Recently, during the process of translation the manual for the SSNV112 tests, we realized that weneeded meshes containing HEXA20, PENTA15, TETRA10, QUAD8, and TRIA6 elements instead on the complete elementsHEXA27, PENTA18, TETRA10, QUAD9, and TRIA6 that are generated by gmsh under default conditions.In this article, we will discuss the options that can be used in gmsh to create meshes containing these elements.  We will also talk a bit about how the element numbers that are associated with the keyword MAILLE in Code_Aster canbe identified in the gmsh meshes.">
+    <meta itemprop="datePublished" content="2022-04-21T00:00:00+12:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Meshes with different element topologies in gmsh (for Code-Aster)
+</h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          38 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> Contents</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#the-geometry">The geometry</a></li>
+  <li><a href="#setting-up-gmsh-for-modeling-and-meshing">Setting up gmsh for modeling and meshing</a></li>
+  <li><a href="#20-node-hexahedra-hexa20">20-node hexahedra (HEXA20)</a></li>
+  <li><a href="#15-node-prism-penta15-elements">15-node prism (PENTA15) elements</a></li>
+  <li><a href="#mix-of-8-node-quadrilateral-quad8-and-6-node-triangle-tria6-elements">Mix of 8-node quadrilateral (QUAD8) and 6-node triangle (TRIA6) elements</a></li>
+  <li><a href="#identifying-specific-elements-in-code_aster-command-files">Identifying specific elements in Code_Aster command files</a>
+    <ul>
+      <li><a href="#model-a-hexa20-elements">Model A (HEXA20 elements)</a></li>
+      <li><a href="#model-b-tetra10-elements">Model B (TETRA10 elements)</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks">Remarks</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <p>We have been translating a few <code class="language-plaintext highlighter-rouge">Code-Aster</code> verification test manuals <a href="https://biba1632.gitlab.io/code-aster-manuals/">into English</a>.
+The process is not just a straightforward translation of the text in the French manuals.  We also annotate the command files 
+during the process and try to generate new meshes when the task is not too difficult.  Sometimes <code class="language-plaintext highlighter-rouge">Salome-Meca</code> is more convenient
+for mesh generation.  At other times we choose to use <a href="https://gmsh.info/">gmsh</a>.</p>
+
+<p>Recently, during the process of translation the manual for the 
+<a href="https://biba1632.gitlab.io/code-aster-manuals/docs/validation/v6.04.112.html">SSNV112 tests</a>, we realized that we
+needed meshes containing <code class="language-plaintext highlighter-rouge">HEXA20</code>, <code class="language-plaintext highlighter-rouge">PENTA15</code>, <code class="language-plaintext highlighter-rouge">TETRA10</code>, <code class="language-plaintext highlighter-rouge">QUAD8</code>, and <code class="language-plaintext highlighter-rouge">TRIA6</code> elements instead on the complete elements
+<code class="language-plaintext highlighter-rouge">HEXA27</code>, <code class="language-plaintext highlighter-rouge">PENTA18</code>, <code class="language-plaintext highlighter-rouge">TETRA10</code>, <code class="language-plaintext highlighter-rouge">QUAD9</code>, and <code class="language-plaintext highlighter-rouge">TRIA6</code> that are generated by <code class="language-plaintext highlighter-rouge">gmsh</code> under default conditions.</p>
+
+<p>In this article, we will discuss the options that can be used in <code class="language-plaintext highlighter-rouge">gmsh</code> to create meshes containing these elements.  We 
+will also talk a bit about how the element numbers that are associated with the keyword <code class="language-plaintext highlighter-rouge">MAILLE</code> in <code class="language-plaintext highlighter-rouge">Code_Aster</code> can
+be identified in the <code class="language-plaintext highlighter-rouge">gmsh</code> meshes.</p>
+
+<!--more-->
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112_geom.png" />
+  <figcaption>Geometry of the segment of the cylinder to be meshed.</figcaption>
+</figure>
+
+<h4 id="the-geometry">The geometry</h4>
+
+<p>The model consists a hollow circular cylinder that is modeled as a 45 degree segment 
+as shown in the figure.</p>
+
+<p>We want to mesh this geometry using:</p>
+
+<ul>
+  <li>20-node hexahedral elements</li>
+  <li>15-node prism elements</li>
+  <li>10-node tetrahedral elements</li>
+  <li>a mix of 8-node quarilaterals and 6-node triangle elements</li>
+</ul>
+
+<p>We also want to retain the general properties of the meshes provided with the <code class="language-plaintext highlighter-rouge">Code_Aster</code> validation test suite; the
+meshes that we create with <code class="language-plaintext highlighter-rouge">gmsh</code> have to be similar to those in the test suite.</p>
+
+<h4 id="setting-up-gmsh-for-modeling-and-meshing">Setting up <code class="language-plaintext highlighter-rouge">gmsh</code> for modeling and meshing</h4>
+
+<p>We will use the <code class="language-plaintext highlighter-rouge">Python</code> interface to <code class="language-plaintext highlighter-rouge">gmsh</code> and use <code class="language-plaintext highlighter-rouge">Juypter notebook</code> to make the process of mesh generation
+reasonably interactive.  To do that we set up a <code class="language-plaintext highlighter-rouge">Python3</code> environment and install <code class="language-plaintext highlighter-rouge">gmsh</code> into it using <code class="language-plaintext highlighter-rouge">pip</code>.
+Once inside the interactive environment:</p>
+
+<ul>
+  <li>
+    <p>First, we will import the packages we will need:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">gmsh</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">json</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Then we will initialize <code class="language-plaintext highlighter-rouge">gmsh</code>.
+We will use the <code class="language-plaintext highlighter-rouge">OpenCascade</code> kernel to create and mesh the geometry.</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Initialize gmsh
+</span> <span class="n">gmsh</span><span class="p">.</span><span class="n">initialize</span><span class="p">()</span>
+
+ <span class="c1"># Choose kernel
+</span> <span class="n">model</span> <span class="o">=</span> <span class="n">gmsh</span><span class="p">.</span><span class="n">model</span>
+ <span class="n">occ</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">occ</span>
+ <span class="n">mesh</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">mesh</span>
+ <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">"ssnv112a"</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>We will then create the <strong>plane geometry</strong> for the models</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Geometry parameters
+</span><span class="n">RI</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">RE</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">NR</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">NT</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">NZ</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">H</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="c1"># Add points
+</span><span class="n">PO</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span>
+<span class="n">POP</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="n">H</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>  <span class="n">RI</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>  <span class="n">RE</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span>
+<span class="n">E</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">((</span><span class="n">RI</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="o">-</span><span class="mf">2.</span><span class="p">)),</span> <span class="p">(</span><span class="n">RI</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">),</span>  <span class="mf">0.</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span> 
+<span class="n">F</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">((</span><span class="n">RE</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="o">-</span><span class="mf">2.</span><span class="p">)),</span> <span class="p">(</span><span class="n">RE</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">),</span>  <span class="mf">0.</span><span class="p">,</span> <span class="n">el_size</span><span class="p">)</span> 
+<span class="n">node_mid</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="n">RI</span><span class="p">,</span> <span class="p">(</span><span class="n">H</span><span class="o">/</span><span class="n">NZ</span><span class="o">/</span><span class="mf">2.</span><span class="p">),</span> <span class="n">el_size</span><span class="p">)</span>
+
+<span class="c1"># Add lines and arcs
+</span><span class="n">LAB</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+<span class="n">LBF</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+<span class="n">LFE</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">)</span>
+<span class="n">LEA</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">E</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+
+<span class="c1"># Add curve loop and plane surface
+</span><span class="n">FACINF_loop</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCurveLoop</span><span class="p">([</span><span class="n">LAB</span><span class="p">,</span> <span class="n">LBF</span><span class="p">,</span> <span class="n">LFE</span><span class="p">,</span> <span class="n">LEA</span><span class="p">])</span>
+<span class="n">FACINF</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPlaneSurface</span><span class="p">([</span><span class="n">FACINF_loop</span><span class="p">])</span> 
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><strong>We will then create 3D models, if necessary.
+Some minor differences exist between models which will be discussed later</strong>.</p>
+  </li>
+  <li>
+    <p>The geoemtry will then be synchronized in <code class="language-plaintext highlighter-rouge">gmsh</code>.</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">occ</span><span class="p">.</span><span class="n">synchronize</span><span class="p">()</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Physical groups needed in the <code class="language-plaintext highlighter-rouge">Code_Aster</code> computation will then be added.</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Physical groups for the points
+</span><span class="n">A_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">A</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">A_g</span><span class="p">,</span> <span class="s">'A'</span><span class="p">)</span>
+<span class="n">B_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">B</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">B_g</span><span class="p">,</span> <span class="s">'B'</span><span class="p">)</span>
+<span class="n">E_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">E</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">E_g</span><span class="p">,</span> <span class="s">'E'</span><span class="p">)</span>
+<span class="n">F_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">F</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">F_g</span><span class="p">,</span> <span class="s">'F'</span><span class="p">)</span>
+<span class="n">AP_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">AP_g</span><span class="p">,</span> <span class="s">'AP'</span><span class="p">)</span>
+<span class="n">EP_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">EP_g</span><span class="p">,</span> <span class="s">'EP'</span><span class="p">)</span>
+<span class="n">nodemid_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">node_mid</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nodemid_g</span><span class="p">,</span> <span class="s">'NOEUMI'</span><span class="p">)</span>
+  
+<span class="c1"># Physical groups for the edges
+</span><span class="n">LAB_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LAB</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LAB_g</span><span class="p">,</span> <span class="s">'LAB'</span><span class="p">)</span>
+<span class="n">LBF_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LBF</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LBF_g</span><span class="p">,</span> <span class="s">'LBF'</span><span class="p">)</span>
+<span class="n">LFE_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LFE</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LFE_g</span><span class="p">,</span> <span class="s">'LFE'</span><span class="p">)</span>
+<span class="n">LEA_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="n">LEA</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">LEA_g</span><span class="p">,</span> <span class="s">'LEA'</span><span class="p">)</span>
+  
+<span class="c1"># Physical groups for the faces
+</span><span class="n">FACEAB_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACEAB_g</span><span class="p">,</span> <span class="s">'FACEAB'</span><span class="p">)</span>
+<span class="n">FACEAE_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACEAE_g</span><span class="p">,</span> <span class="s">'FACEAE'</span><span class="p">)</span>
+<span class="n">FACSUP_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">6</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACSUP_g</span><span class="p">,</span> <span class="s">'FACSUP'</span><span class="p">)</span>
+<span class="n">FACEEF_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACEEF_g</span><span class="p">,</span> <span class="s">'FACEEF'</span><span class="p">)</span>
+<span class="n">FACINF_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="n">FACINF</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACINF_g</span><span class="p">,</span> <span class="s">'FACINF'</span><span class="p">)</span>
+  
+<span class="c1"># Physical group for the volume
+</span><span class="n">VOLUME_g</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">addPhysicalGroup</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">model</span><span class="p">.</span><span class="n">setPhysicalName</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">VOLUME_g</span><span class="p">,</span> <span class="s">'VOLUME'</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>If regular meshes are desired, we may need to set up transfinite interpolation:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NT</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">]:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+<span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NR</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">11</span><span class="p">]:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+<span class="n">num_node</span> <span class="o">=</span> <span class="n">NZ</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">]:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+  
+<span class="k">for</span> <span class="n">surf</span> <span class="ow">in</span> <span class="n">occ</span><span class="p">.</span><span class="n">getEntities</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteSurface</span><span class="p">(</span><span class="n">surf</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+  
+<span class="k">for</span> <span class="n">vol</span> <span class="ow">in</span> <span class="n">occ</span><span class="p">.</span><span class="n">getEntities</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteVolume</span><span class="p">(</span><span class="n">vol</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>The we will specify meshing options:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.RecombineAll'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.RecombinationAlgorithm'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.Recombine3DLevel'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.ElementOrder'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.MshFileVersion'</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.MedFileMinorVersion'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SaveAll'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SaveGroupsOfNodes'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SecondOrderIncomplete'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Finally, we generate and save the mesh:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generate mesh
+</span><span class="n">mesh</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">mesh</span><span class="p">.</span><span class="n">recombine</span><span class="p">()</span>
+
+<span class="c1"># Save mesh
+</span><span class="n">gmsh</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="s">"ssnv112a_upd.med"</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>To visualize the data, we use:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">fltk</span><span class="p">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>To cleanly exit the <code class="language-plaintext highlighter-rouge">gmsh</code> engine, we wrap up the run with</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">finalize</span><span class="p">()</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_orig.png" />
+  <figcaption>HEXA20 mesh provided by Code_Aster.</figcaption>
+</figure>
+
+<h4 id="20-node-hexahedra-hexa20">20-node hexahedra (<code class="language-plaintext highlighter-rouge">HEXA20</code>)</h4>
+
+<p>The <code class="language-plaintext highlighter-rouge">HEAX20</code> mesh provided by <code class="language-plaintext highlighter-rouge">Code_Aster</code> is shown in the adjacent figure.  We can see that
+the mesh has two elements through the thickness, 12 elements in the radial direction, and
+10 elements in the circumferential direction.</p>
+
+<p>To create a similar mesh with <code class="language-plaintext highlighter-rouge">gmsh</code>, we have to use <code class="language-plaintext highlighter-rouge">transfinite interpolation</code> and then
+use the <code class="language-plaintext highlighter-rouge">recombine</code> feature to create hexahedral elements.</p>
+
+<ul>
+  <li>
+    <p>To set up the model for recombination, we extrude the <strong>plane geometry</strong> created 
+in the previous section with a <code class="language-plaintext highlighter-rouge">recombine = True</code> flag and with <code class="language-plaintext highlighter-rouge">NZ = 2</code> elements
+through the thickness:</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1"># Create volume by extrusion
+</span> <span class="n">VOLUME</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">extrude</span><span class="p">([(</span><span class="mi">2</span><span class="p">,</span> <span class="n">FACINF</span><span class="p">)],</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="p">[</span><span class="n">NZ</span><span class="p">],</span> <span class="n">recombine</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>We use the transfinite interpolation commands in the previous section.  Note that we
+could alternatively have extruded the mesh directly (as we will shown for the <code class="language-plaintext highlighter-rouge">PENTA15</code>
+case).</p>
+  </li>
+  <li>
+    <p>To make sure that 20-node hexahedra are generated (instead of 27-node hexahedra), we use the flag</p>
+
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SecondOrderIncomplete'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_gmsh.png" />
+  <figcaption>HEXA20 mesh generated by gmsh.</figcaption>
+</figure>
+
+<p>The mesh created by <code class="language-plaintext highlighter-rouge">gmsh</code> is show in the adjacent figure.  Note that it is almost identical to
+that provided by <code class="language-plaintext highlighter-rouge">gmsh</code>.</p>
+
+<p>To generate tetrahedral meshes containing 10-node elements (<code class="language-plaintext highlighter-rouge">TETRA10</code>) from the same geometry, we
+have to turn a few options off.  We no longer need <code class="language-plaintext highlighter-rouge">mesh.setTransfiniteVolume(...)</code> and
+<code class="language-plaintext highlighter-rouge">mesh.recombine()</code>, or to set the option <code class="language-plaintext highlighter-rouge">Mesh.RecombineAll</code>.</p>
+
+<!--<figure style="width:50%; float:right">-->
+<figure class="half">
+  <a href="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet1_gmsh.png" title="(a) Transfinite curves/surfaces">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet1_gmsh.png" /> </a>
+  <a href="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet2_gmsh.png" title="(b) with Alternate flag">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet2_gmsh.png" /> </a>
+  <a href="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet3_gmsh.png" title="(c) No transfinite">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112a_tet3_gmsh.png" /> </a>
+  <figcaption>
+    TETRA10 meshes generated by gmsh. (a) with transfinite interpolation of the curves and surfaces.
+    (b) transfinite interpolation of curves and surface with Alternate flag.
+    (c) no transfinite interpolation.
+  </figcaption>
+</figure>
+
+<p>If we retain transfinite curves and surfaces, the tetrahedral mesh that is generated has a bias
+as can be seen in figure (a) above.  The bias can be removed with the <code class="language-plaintext highlighter-rouge">Alternate</code> flag:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteSurface</span><span class="p">(</span><span class="n">surf</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">arrangement</span><span class="o">=</span><span class="s">'Alternate'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The resulting mesh can be seen in the middle figure (b) above.  If we turn off transfinite
+interpolation, we get an unordered tetrahedral mesh as see in figure (c) above.</p>
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112e_orig.png" />
+  <figcaption>PENTA15 mesh provided by Code_Aster.</figcaption>
+</figure>
+
+<h4 id="15-node-prism-penta15-elements">15-node prism (<code class="language-plaintext highlighter-rouge">PENTA15</code>) elements</h4>
+
+<p>The mesh provided by <code class="language-plaintext highlighter-rouge">Code_Aster</code> is shown in the adjacent figure.  Note that the
+top and bottom faces have triangular facets while the sides have quadrilateral facets.</p>
+
+<p>Before generating this mesh, as before, we set up the geometry using extrusion with
+the <code class="language-plaintext highlighter-rouge">recombine = True</code> flag using two elements through the thickness.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Surfaces
+</span><span class="n">tri_loop</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCurveLoop</span><span class="p">([</span><span class="n">LAB</span><span class="p">,</span> <span class="n">LBF</span><span class="p">,</span> <span class="n">LFE</span><span class="p">,</span> <span class="n">LEA</span><span class="p">])</span>
+<span class="n">tri</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPlaneSurface</span><span class="p">([</span><span class="n">tri_loop</span><span class="p">])</span>
+
+<span class="c1"># Volume
+</span><span class="n">vol</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">extrude</span><span class="p">([(</span><span class="mi">2</span><span class="p">,</span> <span class="n">tri</span><span class="p">)],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">recombine</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We also set up transfinite interpolation for the surface that is extruded:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NT</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="n">LBF</span><span class="p">,</span> <span class="n">LEA</span><span class="p">]:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+<span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NR</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="n">LAB</span><span class="p">,</span> <span class="n">LFE</span><span class="p">]:</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+
+<span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteSurface</span><span class="p">(</span><span class="n">tri</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>However, we no longer need transfinite interpolation through the thickness.  We also 
+<strong>don’t need recombination</strong>.</p>
+
+<p>Nevertheless, to avoid generating complete prism elements, we do need</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SecondOrderIncomplete'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112e_gmsh.png" />
+  <figcaption>PENTA15 mesh generated by gmsh.</figcaption>
+</figure>
+
+<p>The mesh generated by this process is shown in the adjacent figure.  It is almost
+identical to that provided by <code class="language-plaintext highlighter-rouge">Code_Aster</code>.  However, the number of nodes and elements
+are slightly different.</p>
+
+<h4 id="mix-of-8-node-quadrilateral-quad8-and-6-node-triangle-tria6-elements">Mix of 8-node quadrilateral (<code class="language-plaintext highlighter-rouge">QUAD8</code>) and 6-node triangle (<code class="language-plaintext highlighter-rouge">TRIA6</code>) elements</h4>
+
+<figure style="width:50%; float:right">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112c_orig.png" />
+  <figcaption>QUAD8/TRIA6 mixed mesh provided by Code_Aster.</figcaption>
+</figure>
+
+<p>The adjacent figure show the 2D mesh of mixed quadrilateral/triangle elements 
+provide in the <code class="language-plaintext highlighter-rouge">Code_Aster</code> validation suite.</p>
+
+<p>To generate such a mesh with <code class="language-plaintext highlighter-rouge">gmsh</code>, we have to partition the geometry into two areas:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Geometry
+</span><span class="n">ri</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="n">re</span><span class="o">=</span><span class="mf">0.2</span>
+<span class="n">c225</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">22.5</span><span class="o">*</span><span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+<span class="n">s225</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">sin</span><span class="p">(</span><span class="mf">22.5</span><span class="o">*</span><span class="n">math</span><span class="p">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+<span class="n">NR</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">NT</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Default element size
+</span><span class="n">dens</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">;</span>
+
+<span class="c1"># Points of construction
+</span><span class="n">PO</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>  <span class="n">dens</span><span class="p">)</span>
+
+<span class="c1"># Points of the plane of the base z=0
+</span><span class="n">A</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ri</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">dens</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">re</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">dens</span><span class="p">)</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="o">-</span><span class="n">ri</span> <span class="o">*</span> <span class="n">s225</span><span class="p">,</span> <span class="n">ri</span> <span class="o">*</span> <span class="n">c225</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dens</span><span class="p">)</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="o">-</span><span class="n">re</span> <span class="o">*</span> <span class="n">s225</span><span class="p">,</span> <span class="n">re</span> <span class="o">*</span> <span class="n">c225</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dens</span><span class="p">)</span>
+<span class="n">E</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">ri</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">))</span> <span class="p">,</span> <span class="p">(</span><span class="n">ri</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)),</span> <span class="mf">0.</span><span class="p">,</span>  <span class="n">dens</span><span class="p">)</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPoint</span><span class="p">(</span><span class="o">-</span><span class="n">re</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="p">,</span> <span class="n">re</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span> <span class="p">,</span> <span class="mf">0.</span><span class="p">,</span>  <span class="n">dens</span><span class="p">)</span>
+
+<span class="c1"># Lines
+</span><span class="n">LAB</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+<span class="n">LBD</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+<span class="n">LDC</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+<span class="n">LCA</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+
+<span class="n">LDF</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+<span class="n">LFE</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addLine</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">)</span>
+<span class="n">LEC</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCircleArc</span><span class="p">(</span><span class="n">E</span><span class="p">,</span> <span class="n">PO</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+
+<span class="c1"># Surfaces
+</span><span class="n">tri_loop</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCurveLoop</span><span class="p">([</span><span class="n">LAB</span><span class="p">,</span> <span class="n">LBD</span><span class="p">,</span> <span class="n">LDC</span><span class="p">,</span> <span class="n">LCA</span><span class="p">])</span>
+<span class="n">tri</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPlaneSurface</span><span class="p">([</span><span class="n">tri_loop</span><span class="p">])</span>
+<span class="n">quad_loop</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addCurveLoop</span><span class="p">([</span><span class="o">-</span><span class="n">LDC</span><span class="p">,</span> <span class="n">LDF</span><span class="p">,</span> <span class="n">LFE</span><span class="p">,</span> <span class="n">LEC</span><span class="p">])</span>
+<span class="n">quad</span> <span class="o">=</span> <span class="n">occ</span><span class="p">.</span><span class="n">addPlaneSurface</span><span class="p">([</span><span class="n">quad_loop</span><span class="p">])</span>
+
+<span class="n">occ</span><span class="p">.</span><span class="n">synchronize</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>The edges are set to transfinite as before:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NT</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="n">LCA</span><span class="p">,</span> <span class="n">LEC</span><span class="p">,</span> <span class="n">LBD</span><span class="p">,</span> <span class="n">LDF</span><span class="p">]:</span>
+    <span class="c1">#print(curve)
+</span>    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+<span class="n">num_nodes</span> <span class="o">=</span> <span class="n">NR</span><span class="o">+</span><span class="mi">1</span>
+<span class="k">for</span> <span class="n">curve</span> <span class="ow">in</span> <span class="p">[</span><span class="n">LAB</span><span class="p">,</span> <span class="n">LFE</span><span class="p">]:</span>
+    <span class="c1">#print(curve)
+</span>    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>However, to match the lack of bias in the triangles in the <code class="language-plaintext highlighter-rouge">Code_Aster</code> mesh, we need
+to add the <code class="language-plaintext highlighter-rouge">Alternate</code> flag while flagging the transfinite surfaces</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">surf</span> <span class="ow">in</span> <span class="n">occ</span><span class="p">.</span><span class="n">getEntities</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">mesh</span><span class="p">.</span><span class="n">setTransfiniteSurface</span><span class="p">(</span><span class="n">surf</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">arrangement</span><span class="o">=</span><span class="s">'AlternateRight'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>An <strong>important step</strong> at this stage to to set recombination on for the area that is
+to be meshed with quadrilateral elements:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh</span><span class="p">.</span><span class="n">setRecombine</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">quad</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Also, to make sure that <code class="language-plaintext highlighter-rouge">QUAD9</code> elements are not generated instead of <code class="language-plaintext highlighter-rouge">QUAD8</code>, we need</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gmsh</span><span class="p">.</span><span class="n">option</span><span class="p">.</span><span class="n">setNumber</span><span class="p">(</span><span class="s">'Mesh.SecondOrderIncomplete'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Finally, since we only need a 2D mesh, we run</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<figure class="half">
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112c_gmsh.png" />
+  <img src="https://bbanerjee.github.io/ParSim/assets/blogimg/code-aster/ssnv112c_orig.png" />
+  <figcaption>QUAD8/TRIA6 mixed mesh generated by gmsh (compare with that provided by Code_Aster).</figcaption>
+</figure>
+
+<p>The mesh created by <code class="language-plaintext highlighter-rouge">gmsh</code> appears to have a less dense distribution of triangles than that
+provided by <code class="language-plaintext highlighter-rouge">Code_Aster</code>.  That is because <code class="language-plaintext highlighter-rouge">gmsh</code> does not allow the creation of cross-hatch
+elements.  It is not clear how the two meshes can be made identical.  However, for the purposes
+of verification, the differences between the two meshes appear not to matter much.</p>
+
+<h4 id="identifying-specific-elements-in-code_aster-command-files">Identifying specific elements in <code class="language-plaintext highlighter-rouge">Code_Aster</code> command files</h4>
+
+<p>The original verification tests contain hard-coded element numbers (<code class="language-plaintext highlighter-rouge">MAILLE = xx</code>) that are no longer valid when
+the mesh is changed.  Also, the <code class="language-plaintext highlighter-rouge">MAILLE</code> tag has been deprecated.  We would like to replace these
+with appropriate element groups (<code class="language-plaintext highlighter-rouge">GROUP_MA</code>).</p>
+
+<p>The first step in the process is to convert the mesh files (typically in <code class="language-plaintext highlighter-rouge">MED</code> format) into <code class="language-plaintext highlighter-rouge">ASTER</code> text format.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">DEBUT</span><span class="p">(</span><span class="n">LANG</span><span class="o">=</span><span class="s">'EN'</span><span class="p">)</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">LIRE_MAILLAGE</span><span class="p">(</span><span class="n">FORMAT</span><span class="o">=</span><span class="s">'MED'</span><span class="p">,</span>
+                     <span class="n">UNITE</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">IMPR_RESU</span><span class="p">(</span><span class="n">FORMAT</span><span class="o">=</span><span class="s">'ASTER'</span><span class="p">,</span>
+          <span class="n">RESU</span><span class="o">=</span><span class="n">_F</span><span class="p">(</span><span class="n">MAILLAGE</span><span class="o">=</span><span class="n">mesh</span><span class="p">),</span>
+          <span class="n">UNITE</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+<span class="n">FIN</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>The output file can then be used to identify the elements which have been referred to in the verification command
+files and the element groups can be chosen accordingly.</p>
+
+<p>Also, the output mesh file from <code class="language-plaintext highlighter-rouge">gmsh</code> does not contain any node groups.  These have to be generated from
+saved 0D element groups (point physical groups in <code class="language-plaintext highlighter-rouge">gmsh</code>).</p>
+
+<h5 id="model-a-hexa20-elements">Model A (HEXA20 elements)</h5>
+
+<p>In the case of <code class="language-plaintext highlighter-rouge">MODEL A</code> (<code class="language-plaintext highlighter-rouge">SSNV112A</code>), we need node groups for points <code class="language-plaintext highlighter-rouge">A</code>, <code class="language-plaintext highlighter-rouge">E</code>, <code class="language-plaintext highlighter-rouge">F</code>, and an element group
+for element <code class="language-plaintext highlighter-rouge">M1</code>.  These are created using <a href="https://biba1632.gitlab.io/code-aster-manuals/docs/user/u4.22.01.html">DEFI_GROUP</a>.</p>
+
+<p>The node groups are created using</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Define node groups
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">DEFI_GROUP</span><span class="p">(</span><span class="n">reuse</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">MAILLAGE</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">CREA_GROUP_NO</span> <span class="o">=</span> <span class="p">(</span><span class="n">_F</span><span class="p">(</span><span class="n">GROUP_MA</span> <span class="o">=</span> <span class="p">(</span><span class="s">'A'</span><span class="p">,</span> <span class="s">'E'</span><span class="p">,</span> <span class="s">'F'</span><span class="p">))))</span>
+</code></pre></div></div>
+
+<p>From the <code class="language-plaintext highlighter-rouge">ASTER</code> format mesh file, the element <code class="language-plaintext highlighter-rouge">M1</code> is found to be the one that contains point <code class="language-plaintext highlighter-rouge">A</code>.
+We can use a ball around <code class="language-plaintext highlighter-rouge">A</code> to find the element which belongs to this group.  Th radius is chosen so that
+we select only one element:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Define element groups
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">DEFI_GROUP</span><span class="p">(</span><span class="n">reuse</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">MAILLAGE</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">CREA_GROUP_MA</span> <span class="o">=</span> <span class="p">(</span><span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M1'</span><span class="p">,</span>
+                                      <span class="n">TYPE_MAILLE</span> <span class="o">=</span> <span class="s">'3D'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'SPHERE'</span><span class="p">,</span>
+                                      <span class="n">GROUP_NO_CENTRE</span> <span class="o">=</span> <span class="s">'A'</span><span class="p">,</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.002</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<h5 id="model-b-tetra10-elements">Model B (TETRA10 elements)</h5>
+
+<p>Finding the element groups for <code class="language-plaintext highlighter-rouge">Model B</code> (<code class="language-plaintext highlighter-rouge">SSNV112B</code>) is a bit more involved because all nodes are
+shared by multiple elements.</p>
+
+<p>As before, we extract the mesh in an <code class="language-plaintext highlighter-rouge">ASTER</code> format file and note that element <code class="language-plaintext highlighter-rouge">M537</code> is attached to
+nodes <code class="language-plaintext highlighter-rouge">A</code>, <code class="language-plaintext highlighter-rouge">N48</code>, <code class="language-plaintext highlighter-rouge">N84</code>, and <code class="language-plaintext highlighter-rouge">N362</code>.</p>
+
+<p>First we create node groups for these nodes:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Define node groups
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">DEFI_GROUP</span><span class="p">(</span><span class="n">reuse</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">MAILLAGE</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">CREA_GROUP_NO</span> <span class="o">=</span> <span class="p">(</span><span class="n">_F</span><span class="p">(</span><span class="n">GROUP_MA</span> <span class="o">=</span> <span class="s">'A'</span><span class="p">,</span>
+                                      <span class="n">NOM</span> <span class="o">=</span> <span class="s">'A'</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">GROUP_MA</span> <span class="o">=</span> <span class="s">'F'</span><span class="p">,</span>
+                                      <span class="n">NOM</span> <span class="o">=</span> <span class="s">'F'</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'N48'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'ENV_SPHERE'</span><span class="p">,</span>
+                                      <span class="n">POINT</span> <span class="o">=</span> <span class="p">(</span><span class="mf">9.93712209893243E-02</span><span class="p">,</span>  <span class="mf">1.11964476103304E-02</span><span class="p">,</span>  <span class="mf">0.00000000000000E+00</span><span class="p">),</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.002</span><span class="p">,</span>
+                                      <span class="n">PRECISION</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'N84'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'ENV_SPHERE'</span><span class="p">,</span>
+                                      <span class="n">POINT</span> <span class="o">=</span> <span class="p">(</span><span class="mf">9.93712209893243E-02</span><span class="p">,</span>  <span class="mf">1.11964476103307E-02</span><span class="p">,</span>  <span class="mf">1.00000000000000E-02</span><span class="p">),</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.002</span><span class="p">,</span>
+                                      <span class="n">PRECISION</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'N362'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'ENV_SPHERE'</span><span class="p">,</span>
+                                      <span class="n">POINT</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.03360166268687E-01</span><span class="p">,</span>  <span class="mf">5.80458243110394E-03</span><span class="p">,</span>  <span class="mf">5.00000000000017E-03</span><span class="p">),</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.002</span><span class="p">,</span>
+                                      <span class="n">PRECISION</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<p>Next we define element groups for the elements attached to these nodes:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Define element groups
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">DEFI_GROUP</span><span class="p">(</span><span class="n">reuse</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">MAILLAGE</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">CREA_GROUP_MA</span> <span class="o">=</span> <span class="p">(</span><span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M1'</span><span class="p">,</span>
+                                      <span class="n">TYPE_MAILLE</span> <span class="o">=</span> <span class="s">'3D'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'SPHERE'</span><span class="p">,</span>
+                                      <span class="n">GROUP_NO_CENTRE</span> <span class="o">=</span> <span class="s">'A'</span><span class="p">,</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M2'</span><span class="p">,</span>
+                                      <span class="n">TYPE_MAILLE</span> <span class="o">=</span> <span class="s">'3D'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'SPHERE'</span><span class="p">,</span>
+                                      <span class="n">GROUP_NO_CENTRE</span> <span class="o">=</span> <span class="s">'N48'</span><span class="p">,</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M3'</span><span class="p">,</span>
+                                      <span class="n">TYPE_MAILLE</span> <span class="o">=</span> <span class="s">'3D'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'SPHERE'</span><span class="p">,</span>
+                                      <span class="n">GROUP_NO_CENTRE</span> <span class="o">=</span> <span class="s">'N84'</span><span class="p">,</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">),</span>
+                                   <span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M4'</span><span class="p">,</span>
+                                      <span class="n">TYPE_MAILLE</span> <span class="o">=</span> <span class="s">'3D'</span><span class="p">,</span>
+                                      <span class="n">OPTION</span> <span class="o">=</span> <span class="s">'SPHERE'</span><span class="p">,</span>
+                                      <span class="n">GROUP_NO_CENTRE</span> <span class="o">=</span> <span class="s">'N362'</span><span class="p">,</span>
+                                      <span class="n">RAYON</span> <span class="o">=</span> <span class="mf">0.005</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<p>To get the unique element that is shared by these groups, we then perform an intersection operation
+to define the element group <code class="language-plaintext highlighter-rouge">M537</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mesh</span> <span class="o">=</span> <span class="n">DEFI_GROUP</span><span class="p">(</span><span class="n">reuse</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">MAILLAGE</span> <span class="o">=</span> <span class="n">mesh</span><span class="p">,</span>
+                  <span class="n">CREA_GROUP_MA</span> <span class="o">=</span> <span class="p">(</span><span class="n">_F</span><span class="p">(</span><span class="n">NOM</span> <span class="o">=</span> <span class="s">'M537'</span><span class="p">,</span>
+                                      <span class="n">INTERSEC</span> <span class="o">=</span> <span class="p">(</span><span class="s">'M1'</span><span class="p">,</span> <span class="s">'M2'</span><span class="p">,</span> <span class="s">'M3'</span><span class="p">,</span> <span class="s">'M4'</span><span class="p">))))</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">DEFI_GROUP</code> operations can be very useful when element groups are needed for a calculation but we only
+have access to a mesh and not its associated geometry.</p>
+
+<h4 id="remarks">Remarks</h4>
+
+<p>This article discusses ways of generating various types of meshes with <code class="language-plaintext highlighter-rouge">gmsh</code>.  These tips can be useful
+for situations such as contact, where standard tetrahedral meshes may not be adequate for convergence.</p>
+
+<p>The addition of element and node groups to meshes using selection criteria in <code class="language-plaintext highlighter-rouge">Code_Aster</code> is also 
+a very useful tool for situations where new meshes cannot be generated easily but new physical groups 
+are needed for extraction of results or the application of new boundary conditions.</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/tags/#meshing" class="page__taxonomy-item" rel="tag">meshing</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/ParSim/categories/#fem" class="page__taxonomy-item" rel="tag">FEM</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#gmsh" class="page__taxonomy-item" rel="tag">gmsh</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/ParSim/categories/#meshing" class="page__taxonomy-item" rel="tag">Meshing</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2022-04-21T00:00:00+12:00">April 21, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Meshes+with+different+element+topologies+in+gmsh+%28for+Code-Aster%29%20https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fgmsh-meshing-for-code-aster%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fgmsh-meshing-for-code-aster%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fbbanerjee.github.io%2FParSim%2Ffem%2Fmeshing%2Fgmsh%2Fgmsh-meshing-for-code-aster%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/" class="pagination--pager" title="Creating quadrilateral surface meshes with gmsh
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/" rel="permalink">Creating quadrilateral surface meshes with gmsh
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The Code-Aster cooling tower modal analysis validation test
+FORMA11c comes with a quadrilateral mesh provided by Code-Aster.
+Tips on quadrilateral meshing wi...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/fem/cracks/python/salome-meca/code-aster/inspecting-and-manipulating-meshes/" rel="permalink">Inspecting and manipulating meshes in Salome-Meca for Code-Aster
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          29 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">In this article, I will discuss how elements can be selected from deep inside a 3D mesh
+in the Salome-Meca environment and manipulated with Python scripts.
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/vaango/compiling-vaango-on-a-cray/" rel="permalink">Compiling and running the MPM code Vaango on a Cray
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+
+One of the reasons I switched to cmake for my builds was the need to compile my
+Vaango code on a BlueGene/Q system.  The code was previously co...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ParSim/mpi/c++/mpi-unit-testing-googletests-cmake/" rel="permalink">Unit testing with MPI, googletest, and cmake
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Introduction
+In this article we take a short detour into the problem of continuous unit testing
+of code that contains MPI calls and use either mpich
+or Open ...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+        
+      
+    
+
+    <li><a href="/ParSim/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/ParSim/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>

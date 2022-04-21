@@ -187,6 +187,21 @@
   
     
     <url>
+      <loc>https://bbanerjee.github.io/fem/meshing/gmsh/gmsh-meshing-for-code-aster/</loc>
+      
+        <lastmod>2022-04-21T00:00:00+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.5</priority>
+      
+    </url>
+    
+  
+    
+    <url>
       <loc>https://bbanerjee.github.io/fem/meshing/gmsh/quadrlateral-meshing-with-gmsh/</loc>
       
         <lastmod>2021-04-24T00:00:00+12:00</lastmod>
@@ -850,7 +865,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/articles/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -865,7 +880,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/build-check/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -880,7 +895,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/build-instructions/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -895,7 +910,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/getting-started/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -910,7 +925,7 @@
     <url>
       <loc>https://bbanerjee.github.io/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -925,7 +940,7 @@
     <url>
       <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-en.js</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -940,7 +955,7 @@
     <url>
       <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-gr.js</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -955,7 +970,7 @@
     <url>
       <loc>https://bbanerjee.github.io/assets/js/lunr/lunr-store.js</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -970,7 +985,7 @@
     <url>
       <loc>https://bbanerjee.github.io/assets/css/main.css</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -985,7 +1000,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/manuals/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1000,7 +1015,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/material-data/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1015,7 +1030,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/parsim/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1030,7 +1045,7 @@
     <url>
       <loc>https://bbanerjee.github.io/assets/css/screen.css</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1045,7 +1060,7 @@
     <url>
       <loc>https://bbanerjee.github.io/sitemap.xml</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1060,7 +1075,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/vaango/tutorials/tabular-j2-lin-elas/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1075,7 +1090,7 @@
     <url>
       <loc>https://bbanerjee.github.io/docs/vaango/mpm-materials/tabular-plasticity/</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1090,7 +1105,7 @@
     <url>
       <loc>https://bbanerjee.github.io/feed.xml</loc>
       
-        <lastmod>2021-04-24T15:07:10+12:00</lastmod>
+        <lastmod>2022-04-21T17:45:35+12:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -1153,7 +1168,7 @@
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 2021 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">&copy; 2022 Biswajit Banerjee. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
