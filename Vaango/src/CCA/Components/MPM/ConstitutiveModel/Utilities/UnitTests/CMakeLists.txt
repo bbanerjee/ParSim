@@ -22,6 +22,9 @@
 # IN THE SOFTWARE.
 #
 
+enable_testing()
+include(GoogleTest)
+
 #message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 #message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
@@ -64,7 +67,7 @@ SET(VAANGO_LIBS
 # Google tests
 #------------------------
 set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
-set(GTEST_LIB gtest_main gtest)
+set(GTEST_LIB GTest::gtest_main)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testHDF5Reader testHDF5Reader.cc)
@@ -78,6 +81,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testTensorUtils testTensorUtils.cc)
 target_link_libraries(testTensorUtils
@@ -90,11 +94,14 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testYieldCondUtils testYieldCondUtils.cc)
 target_link_libraries(testYieldCondUtils
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango_CCA_Components_MPM
+  MPM_ConstitutiveModel
 )
 set(UNIT_TEST testYieldCondUtils)
 add_custom_command(
@@ -102,6 +109,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testEigen testEigen.cc)
 target_link_libraries(testEigen
@@ -114,6 +122,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testBoostAutodiff testBoostAutodiff.cc)
 target_link_libraries(testBoostAutodiff
@@ -127,6 +136,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testBoostClosestPoint testBoostClosestPoint.cc)
 target_link_libraries(testBoostClosestPoint
@@ -140,3 +150,5 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
+

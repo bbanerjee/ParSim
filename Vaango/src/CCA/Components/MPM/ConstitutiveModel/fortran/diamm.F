@@ -1,3 +1,28 @@
+C
+C The MIT License
+C
+C Copyright (c) 1997-2012 The University of Utah
+C Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+C
+C Permission is hereby granted, free of charge, to any person obtaining a copy
+C of this software and associated documentation files (the "Software"), to
+C deal in the Software without restriction, including without limitation the
+C rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+C sell copies of the Software, and to permit persons to whom the Software is
+C furnished to do so, subject to the following conditions:
+C
+C The above copyright notice and this permission notice shall be included in
+C all copies or substantial portions of the Software.
+C
+C THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+C IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+C FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+C AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+C LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+C FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+C IN THE SOFTWARE.
+C
+
 
 
       SUBROUTINE DIAMM_CALC(NBLK,NINSV,DTARG,UI,SIGARG,D,SVARG,USM)
@@ -228,6 +253,7 @@ C     symmetric basis tensors
       DATA RIDENT/PONE,PONE,PONE,PZERO,PZERO,PZERO/
 C     Needed for induced anisotropy
       DIMENSION E(6),EDEV(6)
+      DIMENSION U(1), R(1), T(1)
 C...................................................................data
       LOGICAL INELASTIC
       DATA INELASTIC/.FALSE./
@@ -266,10 +292,11 @@ C     Set default values for all output-only state variables
       SV(KROOTJ2)= PZERO
 
 C     Initialize variables that change with deformation
-      T= SV(KT)
-      U= SV(KEU)
-      R= SV(KR)                 ! Density
-      TMLT= DMMTMULT(T,T0,TM,XP) ! J-C homologous temperature
+      T(1)= SV(KT)
+      U(1)= SV(KEU)
+      R(1)= SV(KR)                 ! Density
+      TEMP = T(1)
+      TMLT= DMMTMULT(TEMP,T0,TM,XP) ! J-C homologous temperature
       EQPS= SV(KEQPS)           ! Equivalent plastic strain
       EQPV= SV(KEQPV)           ! Equivalent plastic strain
 
@@ -366,7 +393,7 @@ C     Hardening modulus
          HY= DMMHYFNC(A3,A4,EQPS,RMS)
          HT= DMMHTFNC(QSTAU,RM,R0,CV)
          DFDY= TMLT
-         DFDT= DMMDYLDFNCDT(TOOR3*DMMTRACE(QSTAUN),EQPS,T)
+         DFDT= DMMDYLDFNCDT(TOOR3*DMMTRACE(QSTAUN),EQPS,TEMP)
          H= -ALPH*(DFDY*HY+DFDT*HT)
 ctim     until hardening is really properly implemented, set h to zero
          h=pzero
@@ -386,7 +413,7 @@ C     and S and set G trial to the value of the yield function
 C     corresponding to the updated Z and S.
          ZT = Z
          ST = S
-         TMLT= DMMTMULT(T,T0,TM,XP)
+         TMLT= DMMTMULT(TEMP,T0,TM,XP)
          GT= DMMYLDFNC(ZT,ST,EQPS,TMLT)
       ENDDO
 
@@ -445,7 +472,7 @@ C     Update temperature
       SV(KF4)= DMMENINC(QSTAUP,DEP,R0)
 
 C     Update quasistatic ISVs
-      SV(KR)= R*EXP(-TRDE)
+      SV(KR)= R(1)*EXP(-TRDE)
       SV(KRJ)= R0/SV(KR)
       SV(KEU)= SV(KEU) + DMMENINC(QSTAUP,DE,R0)
       SV(KCS)= SQRT(BM/R0)
@@ -1962,9 +1989,13 @@ C     REFZ: a characteristic scale for the Lode z coordinate
       COMMON /DMMPROPR/B0,B1,B2,G0,G1,G2,G3,TWOG1,A1,A2,A4G,A3,A4,PR,
      $T1,T2,T3,T4,R0,T0,TM,C0,S1,GP,CV,XP,A5,A6
 C.................................................................passed
-      DIMENSION UI(*)
+      DIMENSION UI(*), U(*), R(*), T(*)
+C    U:  Internal energy
+C    R:  Density
+C    T:  Temperature
+C    EV: Elastic volume strain
 C..................................................................local
-      DIMENSION S(9),UIMG(22)
+      DIMENSION S(9),UIMG(22), ALPHA(1), PRES(1), CS(1)
 C...................................................................data
 C...............................................................external
 C....................................................statement functions
@@ -1976,34 +2007,36 @@ C     Compute bulk modulus
       IF(IDK.EQ.0)THEN
 C     Kerley EOS to compute sound speed
          P= -PTHIRD*RI1
+         PRES(1) = P
+         ALPHA(1) = 0
          CALL EOSARRAYREORDER(UI,UIMG)
-         CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),R,U,0,0,P,T,CS,S)
+         CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),R,U,ALPHA,0,PRES,T,CS,S)
 
       ELSEIF(IDK.EQ.1)THEN
-         CS = SQRT((B0 + B1*EXP(-B2/MAX(-RI1,1.D-40)))/R0)
+         CS(1) = SQRT((B0 + B1*EXP(-B2/MAX(-RI1,1.D-40)))/R0)
 
       ELSEIF(IDK.EQ.2)THEN
          IF(EV.LT.PZERO)THEN
-            CS= SQRT((B0 + B1*EV + PHALF*B2*EV**2)/R0)
+            CS(1)= SQRT((B0 + B1*EV + PHALF*B2*EV**2)/R0)
          ELSE
-            CS= SQRT(B0/R0)
+            CS(1)= SQRT(B0/R0)
          ENDIF
 
       ENDIF
-      BM= R0*CS**2
+      BM= R0*CS(1)**2
 
 C     Compute shear modulus
       IF(IDG.EQ.0)THEN
 C     Shear modulus from SGC formula with elastic-plastic coupling
-         RJFAC= (R0/R)**PTHIRD
+         RJFAC= (R0/R(1))**PTHIRD
          C= -0.D0
-         SM= MAX(G0,G0 + G1*(EV*RJFAC+C*EQPS) + G2*(T-300.D0))
+         SM= MAX(G0,G0 + G1*(EV*RJFAC+C*EQPS) + G2*(T(1)-300.D0))
 
       ELSEIF(IDG.EQ.1)THEN
          SM= G0*(PONE-G1*EXP(-G2*RTJ2))/(PONE-G1)
 
       ELSEIF(IDG.EQ.2)THEN
-         SM= MAX(G0,G0 + G1*EV + G2*(T-300.D0))
+         SM= MAX(G0,G0 + G1*EV + G2*(T(1)-300.D0))
 
       ELSEIF(IDG.EQ.3)THEN
 C     Shear modulus from elasticity relations
@@ -2011,7 +2044,7 @@ C     Shear modulus from elasticity relations
       ENDIF
 
 C     Set shear modulus to zero if melt temp is exceeded
-      IF(T.GE.TM)THEN
+      IF(T(1).GE.TM)THEN
          CALL LOGMES('Melt temp reached, setting G=0')
          SM= G0
       ENDIF
@@ -2829,7 +2862,8 @@ C
         DO 6 J=I,NP+1
           IF(II.GE.1) THEN
             DO 5 K=1,II
- 5          A(I,J) = A(I,J)-A(I,K)*A(K,J)
+            A(I,J) = A(I,J)-A(I,K)*A(K,J)
+ 5      CONTINUE
           ENDIF
           IF(J.NE.I) THEN
             IF(J.LT.NP+1) A(J,I)=A(I,J)

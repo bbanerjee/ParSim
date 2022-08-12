@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2015-2022Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -24,8 +24,7 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ReactionDiffusion
 
-SET(Vaango_CCA_Components_MPM_SRCS
-  ${Vaango_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_Diffusion_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/JGConcentrationDiffusion.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModel.cc
@@ -34,6 +33,12 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModelFactory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/RFConcDiffusion1MPM.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/GaoDiffusion.cc
-  PARENT_SCOPE
 )
 
+add_library(MPM_Diffusion ${Vaango_CCA_Components_MPM_Diffusion_SRCS})
+
+target_link_libraries(MPM_Diffusion ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_Diffusion)
+ENDIF(BUILD_SHARED_LIBS)

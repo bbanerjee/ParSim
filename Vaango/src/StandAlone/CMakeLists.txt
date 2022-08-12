@@ -78,6 +78,7 @@ set(RESTART_LIBS
   Vaango_CCA_Components_Parent 
 #  Vaango_Core_ProblemSpec
   Vaango_CCA_Components_DataArchiver
+  MPM_ParticleCreator
 )
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})

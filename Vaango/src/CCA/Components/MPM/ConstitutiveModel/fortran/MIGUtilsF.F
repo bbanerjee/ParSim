@@ -2,6 +2,7 @@ C
 C The MIT License
 C
 C Copyright (c) 1997-2012 The University of Utah
+C Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
 C
 C Permission is hereby granted, free of charge, to any person obtaining a copy
 C of this software and associated documentation files (the "Software"), to
@@ -65,7 +66,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       KNT=0
       DO 502 I=1,N
          DO 500 NCHR=LEN(SA(I)),1,-1
-  500    IF(SA(I)(NCHR:NCHR).NE.BLANK) GO TO 7
+            IF(SA(I)(NCHR:NCHR).NE.BLANK) GO TO 7
+  500    CONTINUE
     7    DO 501 ICHR=1,NCHR
             KNT=KNT+1
             CA(KNT)=SA(I)(ICHR:ICHR)

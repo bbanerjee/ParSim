@@ -75,6 +75,8 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  MPM_ParticleCreator
+  MPM_GradientComputer
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
@@ -92,8 +94,8 @@ IF(BUILD_SHARED_LIBS)
   ADD_DEFINITIONS(-DBUILD_MPM_ConstitutiveModel)
 ENDIF(BUILD_SHARED_LIBS)
 
-IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
+#IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
   add_subdirectory(UnitTests)
-ENDIF()
+#ENDIF()
 
 

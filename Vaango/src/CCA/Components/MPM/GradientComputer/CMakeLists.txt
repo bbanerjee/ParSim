@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -24,12 +25,18 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/GradientComputer
 
-SET(Vaango_CCA_Components_MPM_SRCS
-  ${Vaango_CCA_Components_MPM_SRCS}
+set(Vaango_CCA_Components_MPM_GradientComputer_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DeformationGradientComputer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/DisplacementGradientComputer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/GradientComputer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/VelocityGradientComputer.cc
-  PARENT_SCOPE
 )
+
+add_library(MPM_GradientComputer ${Vaango_CCA_Components_MPM_GradientComputer_SRCS})
+
+target_link_libraries(MPM_GradientComputer ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_GradientComputer)
+ENDIF(BUILD_SHARED_LIBS)
 

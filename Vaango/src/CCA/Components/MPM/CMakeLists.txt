@@ -61,7 +61,12 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  MPM_ParticleCreator
+  MPM_GradientComputer
   MPM_ConstitutiveModel
+  MPM_PhysicalBC
+  MPM_MMS
+  MPM_Diffusion
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
