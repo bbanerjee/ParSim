@@ -318,7 +318,9 @@ bool Matrix3::solveParticularReduced(const Vec& rhs, Vec& xp,
       return false;
     
   default:
-    assert("unexpected num_zero_rows in Matrix3::solveParticularReduced"=="");
+    std::ostringstream out;
+    out << "unexpected num_zero_rows in Matrix3::solveParticularReduced";
+    throw(std::runtime_error(out.str()));
   }
   return false;
 }

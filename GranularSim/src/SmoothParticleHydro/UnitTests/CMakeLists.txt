@@ -34,7 +34,7 @@ add_executable(testSPHParticle testSPHParticle.cpp)
 
 target_link_libraries(testSPHParticle
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -55,7 +55,7 @@ add_executable(testSPHParticleCreator testSPHParticleCreator.cpp)
 
 target_link_libraries(testSPHParticleCreator
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -76,7 +76,7 @@ add_executable(testSPHParticleScatter testSPHParticleScatter.cpp)
 
 target_link_libraries(testSPHParticleScatter
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -98,7 +98,7 @@ add_executable(testSPHParticleCommu testSPHParticleCommu.cpp)
 
 target_link_libraries(testSPHParticleCommu
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

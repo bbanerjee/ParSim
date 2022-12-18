@@ -192,7 +192,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
   try {
     doc << iss;
     // //std::cout << std::setw(2) << doc << "\n";
-  } catch (std::invalid_argument e) {
+  } catch (const std::invalid_argument& e) {
     std::cerr << "*ERROR** Could not parse input file " << inputFileName
               << "\n";
     std::cerr << "Please check for correctness using a linter.\n";
@@ -203,7 +203,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
   json ps;
   try {
     ps = doc["Ellip3D_input"];
-  } catch (std::out_of_range e) {
+  } catch (const std::out_of_range& e) {
     std::cerr << "*ERROR** Could not find key Ellip3D_input in input file "
               << inputFileName << "\n";
     return false;
@@ -215,7 +215,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
     auto meta_ps = ps["Meta"];
     auto title_ps = meta_ps.at("title");
     title = title_ps.get<std::string>();
-  } catch (std::out_of_range e) {
+  } catch (const std::out_of_range& e) {
     std::cerr << "*ERROR** Could not find boundary title in input file "
               << inputFileName << "\n";
     std::cerr << "  Add the \"title\" key inside a \"Meta\" object\n";
@@ -227,7 +227,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
   json boundary_ps;
   try {
     boundary_ps = ps["Boundary"];
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     std::cerr << "**ERROR** \"Boundary\" key not found. \n";
     return false;
   }
@@ -236,7 +236,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
   std::string vecStr;
   try {
     vecStr = boundary_ps["containerMin"].get<std::string>();
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     std::cerr
       << "**ERROR** Container min. position not found in boundary geometry\n";
     std::cerr << "  Add the containerMin: [x, y, z]  tag.";
@@ -246,7 +246,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
 
   try {
     vecStr = boundary_ps["containerMax"].get<std::string>();
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     std::cerr
       << "**ERROR** Container max. position not found in boundary geometry\n";
     std::cerr << "  Add the <containerMax> [x, y, z] </containerMax> tag.";
@@ -285,7 +285,7 @@ BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
           break;
       }
     }
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     std::cerr << "**ERROR** Boundaries not found in boundary geometry\n";
     std::cerr << "  Add the boundary key: value array tags.";
     return false;

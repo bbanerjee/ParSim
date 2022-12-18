@@ -89,7 +89,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   OrientedBox periodicDomain(spatialDomain);
 
 
-  std::size_t numOverlaps = 0;
+  [[maybe_unused]] std::size_t numOverlaps = 0;
   //int numBisections = 0;
   while (iteration <= endStep && curTime < endTime) {
 

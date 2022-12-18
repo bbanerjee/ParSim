@@ -45,7 +45,7 @@ struct ResultType
 // http://herbsutter.com/2013/06/13/gotw-93-solution-auto-variables-part-2/
 template <class T>
 inline auto
-makeSigned(T t)
+makeSigned(T t) 
 {
   return static_cast<std::make_signed_t<T>>(t);
 }

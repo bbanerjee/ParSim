@@ -39,7 +39,7 @@ add_executable(test4002 4002/testComputeStressStrain.cpp)
 
 target_link_libraries(test4002
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

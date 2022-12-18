@@ -31,7 +31,7 @@ add_executable(testPeriParticle testPeriParticle.cpp)
 
 target_link_libraries(testPeriParticle
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
