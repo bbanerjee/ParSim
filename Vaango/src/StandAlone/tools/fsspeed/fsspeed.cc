@@ -129,7 +129,7 @@ int main(int argc,char *argv[])
   }
   MPI_Barrier(MPI_COMM_WORLD);
   start=MPI_Wtime();
-  system(command);
+  [[maybe_unused]] auto status = system(command);
   MPI_Barrier(MPI_COMM_WORLD);
   finish=MPI_Wtime();
   if(rank==0)

@@ -310,7 +310,7 @@ Vector Tensor::operator*(const Vector v) const
 void Tensor::build_eigens_from_mat()
 {
   if (have_eigens_) return;
-  float ten[7];
+  [[maybe_unused]] float ten[7];
   ten[0] = 1.0;
   ten[1] = mat_[0][0];
   ten[2] = mat_[0][1];

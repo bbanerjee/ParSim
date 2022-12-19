@@ -121,7 +121,7 @@ findIntersectionTableLinearSearch(const std::vector<double>& x_coords,
   Uintah::Point P1(x_end_seg, y_end_seg, 0);
 
   bool status = false;
-  double t_p, t_q;
+  double t_p = 0.0, t_q = 0.0;
   Uintah::Point intersect;
 
   for (auto index = 0u; index < x_coords.size()-1; ++index) {

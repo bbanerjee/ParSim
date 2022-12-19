@@ -46,7 +46,7 @@ Runnable::Runnable(bool delete_on_exit)
   my_thread_=0;
 }
 
-Runnable::~Runnable()
+Runnable::~Runnable() noexcept(false)
 {
   if(my_thread_){
     throw ThreadError("Runnable is being destroyed while thread is still running\n");

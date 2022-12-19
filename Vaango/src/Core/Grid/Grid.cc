@@ -195,7 +195,7 @@ Grid::parsePatchFromFile( FILE * fp, LevelP level, vector<int> & procMapForLevel
   bool      foundProc        = false;
 
   IntVector lowIndex, highIndex;
-  bool      foundLowIndex    = false;
+  [[maybe_unused]] bool      foundLowIndex    = false;
   bool      foundHighIndex   = false;
 
   IntVector interiorLowIndex, interiorHighIndex;
@@ -303,7 +303,7 @@ Grid::parseLevelFromFile( FILE * fp, vector<int> & procMapForLevel )
 {
   int       numPatches       = 0;
   int       numPatchesRead   = 0;
-  int       totalCells       = -1;
+  [[maybe_unused]] int       totalCells       = -1;
 
   bool      done_with_level  = false;
 
@@ -320,7 +320,7 @@ Grid::parseLevelFromFile( FILE * fp, vector<int> & procMapForLevel )
   bool      foundId          = false;
 
   IntVector extraCells(0,0,0);
-  bool      foundExtraCells  = false;
+  [[maybe_unused]] bool      foundExtraCells  = false;
 
   bool      foundStretch     = false;
 
@@ -467,7 +467,7 @@ bool
 Grid::parseGridFromFile( FILE * fp, vector< vector<int> > & procMap )
 {
   int  numLevelsRead  = 0;
-  int  numLevels      = 0;
+  [[maybe_unused]] int  numLevels      = 0;
   bool doneWithGrid   = false;
   bool foundLevelTag  = false;
 

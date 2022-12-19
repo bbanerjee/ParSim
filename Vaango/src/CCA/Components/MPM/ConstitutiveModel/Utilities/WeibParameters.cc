@@ -106,7 +106,7 @@ WeibParameters::WeibullParser(const std::string& weibDist)
 
     try {
       d_WeibMed = std::stod(d_WeibDist);
-    } catch (std::invalid_argument) {
+    } catch (const std::invalid_argument& e) {
       std::ostringstream out;
       out << "** ERROR: ** Input value " << d_WeibDist
           << " cannot be parsed. Please"

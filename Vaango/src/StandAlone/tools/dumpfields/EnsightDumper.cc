@@ -272,8 +272,8 @@ namespace Uintah {
             Point xpt = partposns[*iter];
             pstrm << setw(8) << ++nparts;
             for(int id=0;id<3;id++) {
-              char b[13];
-              snprintf(b, 12, "%12.5f", xpt(id));
+              char b[20];
+              snprintf(b, 20, "%12.5f", xpt(id));
               pstrm << b << endl;
             }
             pstrm << endl;

@@ -69,7 +69,7 @@ class Semaphore {
 
   //////////
   // Destroy the semaphore
-  ~Semaphore();
+  ~Semaphore() noexcept(false);
 
   //////////
   // Increment the semaphore count, unblocking up to <i>count</i>

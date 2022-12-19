@@ -488,7 +488,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
             Identity * (1.0 / (3.0 * alpha)) * current_yield_strength;
         }
 
-        double f_new;
+        [[maybe_unused]] double f_new;
         if (current_yield_strength < minimum_yield_stress) {
           f_new = YieldFunction(stress_new[idx], alpha, minimum_yield_stress,
                                 0.0, 0.0, hardening_type);
@@ -612,7 +612,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
           // compute a new estimate for the stress
           stress_new[idx] = trial_stress[idx] - A * pdlambda[idx];
 
-          double f_new;
+          [[maybe_unused]] double f_new;
           current_yield_strength = k_o[idx] +
                                    (eta_old[idx] + h_local * pdlambda[idx]) +
                                    (eta_nl_old[idx] + h_nonlocal * dlambda_nl);

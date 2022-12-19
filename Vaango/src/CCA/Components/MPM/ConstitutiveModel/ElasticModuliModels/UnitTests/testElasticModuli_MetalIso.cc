@@ -197,7 +197,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
   EXPECT_THROW({
     try {
       ElasticModuli_MetalIso model(ps);
-    } catch (Uintah::ProblemSetupException e) {
+    } catch (const Uintah::ProblemSetupException& e) {
       // std::cout << e.message() << std::endl;
       throw;
     }
@@ -240,7 +240,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearMTS)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -278,7 +278,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearMTS)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -393,7 +393,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearNadal)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -432,7 +432,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearNadal)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -544,7 +544,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearPTW)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -582,7 +582,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearPTW)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -693,7 +693,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearSCG)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -730,7 +730,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearSCG)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -839,7 +839,7 @@ TEST(ElasticModuliMetalIsoTest, bulkAirShearConstant)
   EXPECT_THROW({
     try {
       ElasticModuli_MetalIso model(ps);
-    } catch (Uintah::ProblemSetupException e) {
+    } catch (const Uintah::ProblemSetupException& e) {
       //std::cout << e.message() << std::endl;
       throw;
     }
@@ -880,7 +880,7 @@ TEST(ElasticModuliMetalIsoTest, bulkWaterShearConstant)
   EXPECT_THROW({
     try {
       ElasticModuli_MetalIso model(ps);
-    } catch (Uintah::ProblemSetupException e) {
+    } catch (const Uintah::ProblemSetupException& e) {
       //std::cout << e.message() << std::endl;
       throw;
     }
@@ -925,7 +925,7 @@ TEST(ElasticModuliMetalIsoTest, bulkBorjaShearConstant)
   EXPECT_THROW({
     try {
       ElasticModuli_MetalIso model(ps);
-    } catch (Uintah::ProblemSetupException e) {
+    } catch (const Uintah::ProblemSetupException& e) {
       //std::cout << e.message() << std::endl;
       throw;
     }
@@ -966,7 +966,7 @@ TEST(ElasticModuliMetalIsoTest, graniteBulkConstantShear)
   EXPECT_THROW({
     try {
       ElasticModuli_MetalIso model(ps);
-    } catch (Uintah::ProblemSetupException e) {
+    } catch (const Uintah::ProblemSetupException& e) {
       //std::cout << e.message() << "\n";
       throw;
     }
@@ -1009,7 +1009,7 @@ TEST(ElasticModuliMetalIsoTest, hyperBulkShearSCG)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -1046,7 +1046,7 @@ TEST(ElasticModuliMetalIsoTest, hyperBulkShearSCG)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -1160,7 +1160,7 @@ TEST(ElasticModuliMetalIsoTest, mieBulkShearSCG)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -1193,9 +1193,9 @@ TEST(ElasticModuliMetalIsoTest, mieBulkShearSCG)
   // Get the moduli upper bound at zero pressure
   try {
     moduli = model.getElasticModuliUpperBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -1206,7 +1206,7 @@ TEST(ElasticModuliMetalIsoTest, mieBulkShearSCG)
 
   try {
   moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -1322,7 +1322,7 @@ TEST(ElasticModuliMetalIsoTest, mieEnergyBulkShearSCG)
   // Check whether the combination fails
   try {
     ElasticModuli_MetalIso model(ps);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
 
@@ -1357,9 +1357,9 @@ TEST(ElasticModuliMetalIsoTest, mieEnergyBulkShearSCG)
   // Get the moduli upper bound at zero pressure
   try {
     moduli = model.getElasticModuliUpperBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)
@@ -1370,7 +1370,7 @@ TEST(ElasticModuliMetalIsoTest, mieEnergyBulkShearSCG)
 
   try {
     moduli = model.getElasticModuliLowerBound();
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << "\n";
   }
   //std::cout << std::setprecision(16)

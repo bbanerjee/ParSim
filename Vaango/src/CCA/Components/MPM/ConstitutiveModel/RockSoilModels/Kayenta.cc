@@ -720,7 +720,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
 
       // get the volumetric part of the deformation
       double J = pDefGrad_new[idx].Determinant();
-      double Jold = pDefGrad[idx].Determinant();
+      [[maybe_unused]] double Jold = pDefGrad[idx].Determinant();
 
       // Check 1: Look at Jacobian
       if (J <= 0.0 || J > d_hugeJ) {

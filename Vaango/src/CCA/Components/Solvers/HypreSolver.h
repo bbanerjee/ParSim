@@ -128,7 +128,7 @@ namespace Uintah {
       HX = 0;
     };
 
-    virtual ~hypre_solver_struct() {
+    virtual ~hypre_solver_struct() noexcept {
       if (created_solver) {
         HYPRE_StructMatrixDestroy( *HA );
         HYPRE_StructVectorDestroy( *HB );
@@ -155,8 +155,8 @@ namespace Uintah {
           HYPRE_StructJacobiDestroy(*solver);
           break;
         default:
-          throw InternalError( "HypreSolver given a bad solver type!", 
-                               __FILE__, __LINE__ );
+          std::cout << "HypreSolver given a bad solver type!" 
+                    <<__FILE__ << ":" <<  __LINE__  << std::endl;
         }
 
       if (created_precond_solver)
@@ -180,8 +180,8 @@ namespace Uintah {
           HYPRE_StructJacobiDestroy(*precond_solver);
           break;
         default:
-          throw InternalError("HypreSolver given a bad solver type!", 
-                              __FILE__, __LINE__);
+          std::cout << "HypreSolver given a bad solver type!" 
+                    <<__FILE__ << ":" <<  __LINE__  << std::endl;
       }
 
       if (HA) {

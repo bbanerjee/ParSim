@@ -17,8 +17,8 @@ TEST(YieldCondUtilsTest, reverse)
   std::vector<double> array = {{1,2,3,4,5,6,7}};
   std::size_t index = 0;
   for (auto i : Vaango::Util::reverse(array)) {
-    if (index == 0) EXPECT_EQ(i, 7);
-    if (index == array.size()-1) EXPECT_EQ(i, 1);
+    if (index == 0) { EXPECT_EQ(i, 7); }
+    if (index == array.size()-1) { EXPECT_EQ(i, 1);}
     index++;
   }
 }

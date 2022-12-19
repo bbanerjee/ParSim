@@ -46,7 +46,7 @@ struct TestPressureModel
   double
   computePressureNumVar(const Vaango::ModelStateBase* state_in)
   {
-    double pressure = 0.0;
+    [[maybe_unused]] double pressure = 0.0;
     Vaango::ModelStateBase s;
     if (state_in->numStateVar() != s.numStateVar()) {
       //std::cout << "NumStateVar: Wrong state object\n";
@@ -92,7 +92,7 @@ TEST(ModelStateTest, Casts)
   double p_dynamic = 0.0;
   double p_static = 0.0;
   double p_typeid = 0.0;
-  double p_numvar = 0.0;
+  [[maybe_unused]] double p_numvar = 0.0;
 
   auto start_dynamic = std::chrono::steady_clock::now();
   int count = 0;

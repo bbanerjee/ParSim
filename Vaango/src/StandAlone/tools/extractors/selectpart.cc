@@ -156,7 +156,7 @@ int main(const int argc, const char** argv)
   int mat = -1;
   unsigned long time_step_lower = 0;
   unsigned long time_step_upper = 1;
-  unsigned long time_step_inc = 1;
+  [[maybe_unused]] unsigned long time_step_inc = 1;
   bool tslow_set = false;
   bool tsup_set = false;
 

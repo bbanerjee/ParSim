@@ -945,7 +945,7 @@ intersectionPointLinearSearch(const std::vector<Uintah::Point>& polyline,
 {
 
   bool status = false;
-  double t1, t2;
+  double t1 = 0.0, t2 = 0.0;
   Uintah::Point intersect;
 
   std::size_t index = 0;

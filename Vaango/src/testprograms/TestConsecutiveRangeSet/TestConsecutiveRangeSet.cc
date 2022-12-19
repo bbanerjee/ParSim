@@ -158,7 +158,7 @@ void doAddInOrderTests(Suite* suite)
 	set.addInOrder(*it);
      suite->addTest("Not in order", false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
      suite->addTest("Not in order", true);
   }
 
@@ -210,14 +210,14 @@ void doStringInitTests(Suite* suite)
     ConsecutiveRangeSet set("1-,3-9");
     exceptionTest->setResults(false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
     exceptionTest->setResults(true);
   }
   try {
     ConsecutiveRangeSet set("#$%");
     exceptionTest->setResults(false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
     exceptionTest->setResults(true);
   }
 }

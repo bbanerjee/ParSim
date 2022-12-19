@@ -143,7 +143,7 @@ getNumberOfMaterials(DataArchive* da)
       const Patch* patch = *patchIter;
       ConsecutiveRangeSet matls = da->queryMaterials(posVar, patch, timeID);
       int localNumMat = 0;
-      for (auto matl : matls) {
+      for ([[maybe_unused]] auto matl : matls) {
         ++localNumMat;
       }
       if (localNumMat > numMat) {

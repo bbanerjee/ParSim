@@ -52,6 +52,7 @@ namespace Uintah {
   class IntVector {
   public:
     inline IntVector() {
+      value_[0] = 0; value_[1] = 0; value_[2] = 0;
     }
     inline ~IntVector() {
     }

@@ -66,8 +66,8 @@ target_link_libraries(${TEST}
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST ${TEST})
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)

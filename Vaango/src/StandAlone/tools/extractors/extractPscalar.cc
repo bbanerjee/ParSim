@@ -227,7 +227,7 @@ void printScalarVariable(DataArchive* da,
     if (var == partVar) {
 
       // Loop thru all time steps 
-      for (auto t = 0; t < times.size(); t++) {
+      for (auto t = 0ul; t < times.size(); t++) {
         double time = times[t];
 
         //std::cerr << "t = " << time ;
@@ -307,7 +307,7 @@ void printScalarVariable(DataArchive* da,
     file.precision(8);
     std::cout << "Created output file " << outFile << endl;
     //std::cout << "Data size = " << matData.size() << std::endl;
-    for (auto jj = 0; jj < times.size(); ++jj) {
+    for (auto jj = 0ul; jj < times.size(); ++jj) {
       double time = times[jj];
       int numFound = 0;
       for (auto particleID : partID) {

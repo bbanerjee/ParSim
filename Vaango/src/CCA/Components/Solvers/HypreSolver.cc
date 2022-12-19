@@ -518,7 +518,7 @@ namespace Uintah {
         //______________________________________________________________________
         // Solve the system
         if (params->solvertype == "SMG" || params->solvertype == "smg"){
-          int time_index = hypre_InitializeTiming("SMG Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("SMG Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver =  hypre_solver_s->solver;
@@ -567,7 +567,7 @@ namespace Uintah {
 #endif
         } else if(params->solvertype == "PFMG" || params->solvertype == "pfmg"){
 
-          int time_index = hypre_InitializeTiming("PFMG Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("PFMG Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver =  hypre_solver_s->solver;
@@ -622,7 +622,7 @@ namespace Uintah {
 #endif
 
         } else if(params->solvertype == "SparseMSG" || params->solvertype == "sparsemsg"){
-          int time_index = hypre_InitializeTiming("SparseMSG Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("SparseMSG Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver = hypre_solver_s->solver;
@@ -677,7 +677,7 @@ namespace Uintah {
                   || params->solvertype == "conjugategradient" 
                   || params->solvertype == "PCG" 
                   || params->solvertype == "cg"){
-          int time_index = hypre_InitializeTiming("PCG Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("PCG Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver =  hypre_solver_s->solver;
@@ -756,7 +756,7 @@ namespace Uintah {
            * Solve the system using Hybrid
            *-----------------------------------------------------------*/
 
-          int time_index = hypre_InitializeTiming("Hybrid Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("Hybrid Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver =  hypre_solver_s->solver;
@@ -839,7 +839,7 @@ namespace Uintah {
           //
         } else if(params->solvertype == "GMRES" 
                   || params->solvertype == "gmres"){
-          int time_index = hypre_InitializeTiming("GMRES Setup");
+          [[maybe_unused]] int time_index = hypre_InitializeTiming("GMRES Setup");
           hypre_BeginTiming(time_index);
 
           HYPRE_StructSolver* solver =  hypre_solver_s->solver;

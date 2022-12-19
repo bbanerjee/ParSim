@@ -228,7 +228,7 @@ void printMatrix3Variable(DataArchive* da,
     if (var == partVar) {
 
       // Loop thru all time steps 
-      for (auto t = 0; t < times.size(); t++) {
+      for (auto t = 0u; t < times.size(); t++) {
         double time = times[t];
 
         //std::cerr << "t = " << time ;
@@ -308,7 +308,7 @@ void printMatrix3Variable(DataArchive* da,
     file.precision(8);
     std::cout << "Created output file " << outFile << endl;
     //std::cout << "Data size = " << matData.size() << std::endl;
-    int num_timesteps = times.size();
+    unsigned int num_timesteps = times.size();
     for (auto particleID : partID) {
       if (matData[particleID].time.size() < num_timesteps) {
         num_timesteps = matData[particleID].time.size();
@@ -316,7 +316,7 @@ void printMatrix3Variable(DataArchive* da,
                   << particleID << std::endl;
       }
     }
-    for (auto jj = 0; jj < num_timesteps; ++jj) {
+    for (auto jj = 0u; jj < num_timesteps; ++jj) {
       double time = times[jj];
       int numFound = 0;
       for (auto particleID : partID) {

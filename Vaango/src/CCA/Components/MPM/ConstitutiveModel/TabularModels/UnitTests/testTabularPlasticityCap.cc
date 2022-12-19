@@ -325,7 +325,7 @@ TEST(TabularPlasticityCapTest, singleParticleTest)
   Dir::removeDir(uda_file.c_str());
 
   char * start_addr = (char*)sbrk(0);
-  bool thrownException = false;
+  [[maybe_unused]] bool thrownException = false;
 
   try {
     ProblemSpecP ups = VaangoEnv::createInput();

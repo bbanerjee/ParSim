@@ -85,7 +85,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     EXPECT_NEAR(dKdG.bulkModulus, -5398166832, 1);
     ASSERT_NEAR(dKdG.shearModulus, -4048625123, 1);
 
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
   }
@@ -98,7 +98,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     ASSERT_NEAR(moduli.shearModulus, 3.33282374e8, 1);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
   }
@@ -121,7 +121,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     EXPECT_NEAR(KG.shearModulus, 4.288700413e+09, 1.0);
     EXPECT_NEAR(dKdG.bulkModulus, -72637200355, 1.0);
     ASSERT_NEAR(dKdG.shearModulus, -54477900266, 1.0);
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
   }
@@ -157,7 +157,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     ASSERT_DOUBLE_EQ(tangent(1,1), K43G);
     ASSERT_DOUBLE_EQ(tangent(1,2), K23G);
     ASSERT_DOUBLE_EQ(tangent(4,4), G);
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
   }

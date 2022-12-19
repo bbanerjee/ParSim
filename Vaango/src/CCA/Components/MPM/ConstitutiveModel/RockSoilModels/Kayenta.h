@@ -69,9 +69,9 @@ public:
   int d_IEOSMGCT;
   int d_NINSV;
 
-  double UI[100];
-  double GC[100];
-  double DC[100];
+  double UI[120];
+  double GC[120];
+  double DC[120];
   double rinit[200];
   double d_hugeJ;
   // weibull parameter set

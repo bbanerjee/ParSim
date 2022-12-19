@@ -442,7 +442,7 @@ DenseColMajMatrix::io(Piostream& stream)
         FILE *f = fopen(raw_filename_.c_str(), "r");
         if (f)
         {
-          fread(dataptr_, sizeof(double), nrows_ * ncols_, f);
+          [[maybe_unused]] auto stat = fread(dataptr_, sizeof(double), nrows_ * ncols_, f);
           fclose(f);
         }
         else

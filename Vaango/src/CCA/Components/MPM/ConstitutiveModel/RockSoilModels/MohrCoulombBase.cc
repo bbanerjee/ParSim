@@ -1448,7 +1448,7 @@ MohrCoulombBase::findIntersectionWithBisection(double alpha_in, double f_alpha_i
   double f_min = f_alpha_in;
 
   bool solved = false;
-  double alpha, f_alpha;
+  double alpha = 0.0, f_alpha = 0.0;
   Vector6 sigma_alpha;
    
   int numIter = 0;

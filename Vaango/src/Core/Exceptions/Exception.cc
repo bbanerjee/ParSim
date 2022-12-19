@@ -181,7 +181,7 @@ void Exception::sci_throw(const Exception& exc)
 #endif
       }
       cerr << "Starting: " << command << '\n';
-      system(command);
+      [[maybe_unused]] auto status = system(command);
       emode="ask";
 #endif
     } else if(strcasecmp(emode, "cvd") == 0){
@@ -192,7 +192,7 @@ void Exception::sci_throw(const Exception& exc)
       char command[100];
       sprintf(command, "cvd -pid %d &", getpid());
       cerr << "Starting: " << command << '\n';
-      system(command);
+      [[maybe_unused]] auto status = system(command);
       emode="ask";
 #endif
     } else if(strcasecmp(emode, "abort") == 0){

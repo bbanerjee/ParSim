@@ -79,7 +79,7 @@ class Runnable {
     //////////
     // The runnable destructor.  See the note above about deleting any
     // object derived from runnable.
-    virtual ~Runnable();
+    virtual ~Runnable() noexcept(false);
 
     //////////
     // This method will be overridden to implement the main body

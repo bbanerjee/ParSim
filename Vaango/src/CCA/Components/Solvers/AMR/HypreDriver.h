@@ -293,7 +293,7 @@ namespace Uintah {
         cout_dbg << mpiRank << " Solving the linear system" << "\n";
         double solve_start = Uintah::Time::currentSeconds();
         // Setup & solve phases
-        int timeSolve = hypre_InitializeTiming("Solver Setup");
+        [[maybe_unused]] int timeSolve = hypre_InitializeTiming("Solver Setup");
         hypre_BeginTiming(timeSolve);
         
         solver->solve();  

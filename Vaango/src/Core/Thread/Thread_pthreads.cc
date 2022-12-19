@@ -1304,7 +1304,7 @@ Semaphore::Semaphore(const char* name, int value)
 }
 
 
-Semaphore::~Semaphore()
+Semaphore::~Semaphore() noexcept(false)
 {
 #if !defined(_AIX)
   // Dd: Don't know exactly what to do about this for AIX...

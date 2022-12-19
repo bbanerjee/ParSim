@@ -159,7 +159,7 @@ void printData(DataArchive* archive, string& variable_name,
   out.setf(ios::scientific,ios::floatfield);
   out.precision(16);
   
-  bool cellNotFound = false;
+  [[maybe_unused]] bool cellNotFound = false;
   //__________________________________
   
   if (verbose)

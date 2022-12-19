@@ -335,10 +335,10 @@ void shapeFunctionsHex8(double xi, double eta, double zeta,
   S[7] = d4 * d2 * d3;
   double d1h = 0.5 * d1;
   double d2h = 0.5 * d2;
-  double d3h = 0.5 * d3;
+  [[maybe_unused]] double d3h = 0.5 * d3;
   double d4h = 0.5 * d4;
   double d5h = 0.5 * d5;
-  double d6h = 0.5 * d6;
+  [[maybe_unused]] double d6h = 0.5 * d6;
 
   Array8_D s1, s2, s3;
   s1[0] = - d5h * d6;

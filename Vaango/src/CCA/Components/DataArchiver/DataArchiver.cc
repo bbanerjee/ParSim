@@ -194,7 +194,7 @@ DataArchiver::problemSetup( const ProblemSpecP    & params,
     try {
       saveItem.matls = ConsecutiveRangeSet(attributes["material"]);
     }
-    catch (ConsecutiveRangeSetException) {
+    catch (const ConsecutiveRangeSetException& e) {
       throw ProblemSetupException("'" + attributes["material"] + "'" +
                                   " cannot be parsed as a set of material" +
                                   " indices for saving '" + saveItem.labelName + "'",
@@ -213,7 +213,7 @@ DataArchiver::problemSetup( const ProblemSpecP    & params,
       //   I.e., -3--1 would be the top three levels.
       saveItem.levels = ConsecutiveRangeSet(attributes["levels"]);
     }
-    catch (ConsecutiveRangeSetException) {
+    catch (const ConsecutiveRangeSetException& e) {
       throw ProblemSetupException("'" + attributes["levels"] + "'" +
                                   " cannot be parsed as a set of levels" +
                                   " for saving '" + saveItem.labelName + "'",
@@ -2276,8 +2276,9 @@ DataArchiver::makeVersionedDir()
     unlink(d_filebase.c_str());
     make_link = true;
   }
-  if (make_link)
-    symlink(dirName.c_str(), d_filebase.c_str());
+  if (make_link) {
+    [[maybe_unused]] auto status = symlink(dirName.c_str(), d_filebase.c_str());
+  }
 #endif
 
   cout << "DataArchiver created " << dirName << endl;

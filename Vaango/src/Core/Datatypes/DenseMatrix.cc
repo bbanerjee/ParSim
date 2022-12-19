@@ -753,7 +753,7 @@ DenseMatrix::io(Piostream& stream)
         FILE *f=fopen(raw_filename_.c_str(), "r");
         if (f)
         {
-          fread(data[0], sizeof(double), nrows_ * ncols_, f);
+          [[maybe_unused]] auto status = fread(data[0], sizeof(double), nrows_ * ncols_, f);
           fclose(f);
         }
         else

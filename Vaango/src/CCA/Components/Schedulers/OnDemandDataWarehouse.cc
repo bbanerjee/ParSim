@@ -825,7 +825,7 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
     ReductionVariableBase* var;
     try {
       var = dynamic_cast<ReductionVariableBase*>(d_levelDB.get(label, matlIndex, level));
-    } catch (UnknownVariable) {
+    } catch (const UnknownVariable& e) {
       SCI_THROW(UnknownVariable(label->getName(), getID(), level, matlIndex,
                                 "on reduceMPI(pass 2)", __FILE__, __LINE__));
     }
@@ -872,7 +872,7 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
     ReductionVariableBase* var;
     try {
       var = dynamic_cast<ReductionVariableBase*>(d_levelDB.get(label, matlIndex, level));
-    } catch (UnknownVariable) {
+    } catch (const UnknownVariable& e) {
       SCI_THROW(UnknownVariable(label->getName(), getID(), level, matlIndex,
                                 "on reduceMPI(pass 2)", __FILE__, __LINE__));
     }
@@ -2257,7 +2257,7 @@ OnDemandDataWarehouse::getLevel(       constGridVariableBase& constGridVar,
     totalCells += diff.x() * diff.y() * diff.z();
   }  // patches loop
 
-  long totalLevelCells = level->totalCells();
+  [[maybe_unused]] long totalLevelCells = level->totalCells();
 
 #ifdef  BULLETPROOFING_FOR_CUBIC_DOMAINS
   //__________________________________
@@ -2627,7 +2627,7 @@ OnDemandDataWarehouse::print(ostream& intout,
     checkGetAccess(label, matlIndex, 0); 
     ReductionVariableBase* var = dynamic_cast<ReductionVariableBase*>(d_levelDB.get(label, matlIndex, level));
     var->print(intout);
-  } catch (UnknownVariable) {
+  } catch (const UnknownVariable& e) {
     SCI_THROW(UnknownVariable(label->getName(), getID(), level, matlIndex,
                               "on emit reduction", __FILE__, __LINE__));
   }

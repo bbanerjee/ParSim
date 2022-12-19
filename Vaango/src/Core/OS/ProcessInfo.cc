@@ -46,7 +46,6 @@
  * IN THE SOFTWARE.
  */
 
-
 /*
  *  ProcessInfo.cc:
  *
@@ -64,154 +63,170 @@
 #include <sys/param.h>
 #include <unistd.h>
 #endif
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <cstdio>
 #include <cstring>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#if defined( __sgi ) || defined ( __alpha ) || defined ( _AIX )
-#  include <fcntl.h>
-#  include <sys/ioctl.h>
-#  include <sys/procfs.h>
+#if defined(__sgi) || defined(__alpha) || defined(_AIX)
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/procfs.h>
 #endif
 
-#if defined( __APPLE__ )
-#  include <mach/mach_init.h>
-#  include <mach/task.h>
+#if defined(__APPLE__)
+#include <mach/mach_init.h>
+#include <mach/task.h>
 #endif
-
 
 namespace Uintah {
 
-  bool ProcessInfo::IsSupported ( int info_type )
-  {
+bool
+ProcessInfo::IsSupported(int info_type)
+{
 #if defined(REDSTORM)
-    return false;
+  return false;
 #endif
 
-#if defined( __linux ) || defined( __sgi ) || defined( __alpha) || defined( _AIX ) || defined( __APPLE__ )
+#if defined(__linux) || defined(__sgi) || defined(__alpha) || defined(_AIX) || \
+  defined(__APPLE__)
 
-    switch ( info_type ) {
-    case MEM_SIZE: return true;
-    case MEM_RSS : return true;
-    default      : return false;
-    }
-
-#else
-    return false;
-#endif
-
+  switch (info_type) {
+    case MEM_SIZE:
+      return true;
+    case MEM_RSS:
+      return true;
+    default:
+      return false;
   }
 
+#else
+  return false;
+#endif
+}
 
-  unsigned long ProcessInfo::GetInfo ( int info_type )
-  {
+unsigned long
+ProcessInfo::GetInfo(int info_type)
+{
 
-#if defined( __linux )
+#if defined(__linux)
 
-    char statusFileName[MAXPATHLEN];
-    sprintf( statusFileName, "/proc/%d/status", getpid() );
+  char statusFileName[MAXPATHLEN];
+  sprintf(statusFileName, "/proc/%d/status", getpid());
 
-    FILE* file = fopen( statusFileName, "r" );
+  FILE* file = fopen(statusFileName, "r");
 
-    if ( file != NULL ) {
-      unsigned long tempLong = 0;
-      char tempString[1024];
-      const char* compareString;
+  if (file != NULL) {
+    unsigned long tempLong = 0;
+    char tempString[1024];
+    const char* compareString;
 
-      switch ( info_type ) {
-      case MEM_SIZE: compareString = "VmSize:"; break;
-      case MEM_RSS : compareString = "VmRSS:" ; break;
+    switch (info_type) {
+      case MEM_SIZE:
+        compareString = "VmSize:";
+        break;
+      case MEM_RSS:
+        compareString = "VmRSS:";
+        break;
       default:
-	fclose( file );
-	return 0;
-      }
-
-      while ( !feof( file ) ) {
-	fscanf( file, "%s", tempString );
-	if ( !strcmp( tempString, compareString ) ) {
-	  fscanf( file, "%ld", &tempLong );
-	  fclose( file );
-	  return tempLong * 1024;
-	}
-      }
+        fclose(file);
+        return 0;
     }
 
-    return 0;
-
-#elif defined( __sgi ) || defined( __alpha )
-
-    char statusFileName[MAXPATHLEN];
-    sprintf( statusFileName, "/proc/%d", getpid() );
-
-    int file = open( statusFileName, O_RDONLY );
-
-    if ( file != -1 ) {
-      struct prpsinfo processInfo;
-      if ( ioctl( file, PIOCPSINFO, &processInfo ) == -1 ) {
-	close( file );
-	return 0;
-      }
-
-      close( file );
-
-      switch ( info_type ) {
-      case MEM_SIZE: return processInfo.pr_size   * getpagesize();
-      case MEM_RSS : return processInfo.pr_rssize * getpagesize();
-      default:       return 0;
+    while (!feof(file)) {
+      [[maybe_unused]] auto status = fscanf(file, "%s", tempString);
+      if (!strcmp(tempString, compareString)) {
+        [[maybe_unused]] auto stat = fscanf(file, "%ld", &tempLong);
+        fclose(file);
+        return tempLong * 1024;
       }
     }
-    
-    return 0;
+  }
 
-#elif defined( _AIX )
+  return 0;
 
-    char statusFileName[MAXPATHLEN];
-    sprintf( statusFileName, "/proc/%d/psinfo", getpid() );
+#elif defined(__sgi) || defined(__alpha)
 
-    int file = open( statusFileName, O_RDONLY );
+  char statusFileName[MAXPATHLEN];
+  sprintf(statusFileName, "/proc/%d", getpid());
 
-    if ( file != -1 ) {
-      struct psinfo processInfo;
-      read( file, &processInfo, sizeof( psinfo ) );
+  int file = open(statusFileName, O_RDONLY);
 
-      close( file );
-
-      switch ( info_type ) {
-      case MEM_SIZE: return processInfo.pr_size   * 1024;
-      case MEM_RSS : return processInfo.pr_rssize * 1024;
-      default:       return 0;
-      }
-    }
-
-    return 0;
-
-#elif defined( __APPLE__ )
-
-    task_basic_info_data_t processInfo;
-    mach_msg_type_number_t count;
-    kern_return_t          error;
-
-    count = TASK_BASIC_INFO_COUNT;
-    error = task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&processInfo, &count);
-
-    if (error != KERN_SUCCESS) {
+  if (file != -1) {
+    struct prpsinfo processInfo;
+    if (ioctl(file, PIOCPSINFO, &processInfo) == -1) {
+      close(file);
       return 0;
     }
 
-    switch ( info_type ) {
-    case MEM_SIZE: return processInfo.virtual_size;
-    case MEM_RSS : return processInfo.resident_size;
-    default:       return 0;
+    close(file);
+
+    switch (info_type) {
+      case MEM_SIZE:
+        return processInfo.pr_size * getpagesize();
+      case MEM_RSS:
+        return processInfo.pr_rssize * getpagesize();
+      default:
+        return 0;
     }
-    
+  }
+
+  return 0;
+
+#elif defined(_AIX)
+
+  char statusFileName[MAXPATHLEN];
+  sprintf(statusFileName, "/proc/%d/psinfo", getpid());
+
+  int file = open(statusFileName, O_RDONLY);
+
+  if (file != -1) {
+    struct psinfo processInfo;
+    read(file, &processInfo, sizeof(psinfo));
+
+    close(file);
+
+    switch (info_type) {
+      case MEM_SIZE:
+        return processInfo.pr_size * 1024;
+      case MEM_RSS:
+        return processInfo.pr_rssize * 1024;
+      default:
+        return 0;
+    }
+  }
+
+  return 0;
+
+#elif defined(__APPLE__)
+
+  task_basic_info_data_t processInfo;
+  mach_msg_type_number_t count;
+  kern_return_t error;
+
+  count = TASK_BASIC_INFO_COUNT;
+  error = task_info(mach_task_self(), TASK_BASIC_INFO,
+                    (task_info_t)&processInfo, &count);
+
+  if (error != KERN_SUCCESS) {
     return 0;
+  }
+
+  switch (info_type) {
+    case MEM_SIZE:
+      return processInfo.virtual_size;
+    case MEM_RSS:
+      return processInfo.resident_size;
+    default:
+      return 0;
+  }
+
+  return 0;
 
 #else
-    return 0;
+  return 0;
 #endif
 
-  } // unsigned long ProcessInfo::GetInfo ( int info_type )
+} // unsigned long ProcessInfo::GetInfo ( int info_type )
 
-
-} // namespace Uintah {
+} // namespace Uintah

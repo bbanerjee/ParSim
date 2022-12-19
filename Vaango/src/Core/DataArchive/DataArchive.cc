@@ -681,7 +681,7 @@ DataArchive::findPatchAndIndex(GridP grid, Patch*& patch, particleIndex& idx,
     ParticleVariable<long64> var;
     query(var, "p.particleID", matlIndex, patch, index);
     //  cerr<<"var["<<idx<<"] = "<<var[idx]<<endl;
-    if( idx < var.getParticleSubset()->numParticles() && var[idx] == particleID )
+    if( idx < static_cast<particleIndex>(var.getParticleSubset()->numParticles()) && var[idx] == particleID )
       return;
     else {
       ParticleSubset* subset = var.getParticleSubset();

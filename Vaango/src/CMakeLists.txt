@@ -37,16 +37,25 @@
 MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
 
 #----------------------------------------------------------------------------
 # C/C++ compiler 
 #----------------------------------------------------------------------------
+enable_language(C)
+enable_language(CXX)
+enable_language(Fortran)
+
 if (USE_CLANG)
   set(CMAKE_C_COMPILER "clang")
   set(CMAKE_CXX_COMPILER "clang++")
   set(CMAKE_Fortran_COMPILER "/usr/bin/gfortran")
 endif ()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 #----------------------------------------------------------------------------
 # Set the project
@@ -674,16 +683,6 @@ if (${HAVE_STDLIB_H})
   set(STDC_HEADERS 1)
 endif()
 message(STATUS "STDC_HEADERS ${STDC_HEADERS}")
-
-#-----------------------------------------------------------------------------
-# Package info for config_defs.h
-#-----------------------------------------------------------------------------
-set(PACKAGE_BUGREPORT "")
-set(PACKAGE_NAME "Vaango")
-set(PACKAGE_STRING "Vaango 1.0")
-set(PACKAGE_TARNAME "vaango")
-set(PACKAGE_URL "")
-set(PACKAGE_VERSION "1.0")
 
 #-----------------------------------------------------------------------------
 # Check for location of hash_map for hashmap_defs.h

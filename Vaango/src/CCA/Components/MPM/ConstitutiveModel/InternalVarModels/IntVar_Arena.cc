@@ -184,7 +184,7 @@ IntVar_Arena::initializeInternalVariable(const Patch* patch,
     phi0   = params.at("phi0");
     Sw0    = params.at("Sw0");
     pf0    = params.at("Pf0");
-  } catch (std::out_of_range) {
+  } catch (const std::out_of_range& e) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1, CR, phi0, Sw0"
         << std::endl;

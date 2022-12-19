@@ -2445,7 +2445,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         // Do Newton iteration to compute delGamma and updated
         // plastic strain, plastic strain rate, and yield stress
         ModelStateBase state_new(state_trial);
-        double delGamma = doApproxReturn(delT, matl, idx, 
+        [[maybe_unused]] double delGamma = doApproxReturn(delT, matl, idx, 
                                          &state_old, &state_trial, &state_new);
         pStress_new[idx]              = state_new.getStress();
         pPlasticStrain_new[idx]       = state_new.getPlasticStrain();

@@ -1893,14 +1893,14 @@ operator<<(std::ostream& out, const YieldCond_TabularCap& yc)
   try {
     pvals =
       yc.d_yield.table.getIndependentVarData("Pressure", IndexKey(0, 0, 0, 0));
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 
   try {
     qvals =
       yc.d_yield.table.getDependentVarData("SqrtJ2", IndexKey(0, 0, 0, 0));
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 

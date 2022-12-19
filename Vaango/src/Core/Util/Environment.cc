@@ -207,7 +207,7 @@ Uintah::create_sci_environment(char **env, char *execname, bool beSilent /* = fa
       string objdir(execname);
       if (execname[0] != '/') {
         char cwd[MAXPATHLEN];
-        getcwd(cwd,MAXPATHLEN);
+        [[maybe_unused]] auto status = getcwd(cwd, MAXPATHLEN);
         objdir = cwd+string("/")+objdir;
       }
       int pos = objdir.length()-1;
