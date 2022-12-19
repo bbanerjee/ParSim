@@ -2,12 +2,12 @@ language: cpp
 
 env:
   global:
-    - LINUX_DIST=bionic
+    - LINUX_DIST=focal
 
 matrix:
   include:
     - os: linux
-      dist: bionic
+      dist: focal
       sudo: require
       compiler: gcc
       addons:
