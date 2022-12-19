@@ -109,7 +109,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
     sph->migrateSPHParticle(iteration);
 
-    REAL commuT = 0, migraT = 0, gatherT = 0, totalT = 0;  
+    [[maybe_unused]] REAL commuT = 0, migraT = 0, gatherT = 0, totalT = 0;  
     REAL time1 = 0, time2 = 0, time3 = 0;  
     REAL time0 = MPI_Wtime();
 

@@ -35,18 +35,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
-option(USE_CLANG "Use Clang compiler" OFF)
-set(CLANG_ROOT_DIR "/usr/local")
-
-message("USE_CLANG = ${USE_CLANG}")
-if (USE_CLANG)
-  message("CLANG_ROOT_DIR = ${CLANG_ROOT_DIR}")
-  set(CMAKE_C_COMPILER "${CLANG_ROOT_DIR}/bin/clang")
-  set(CMAKE_CXX_COMPILER "${CLANG_ROOT_DIR}/bin/clang++")
-else()
-  option(USE_CLANG "Use Clang compiler" OFF)
-endif ()
-
 project(PARAELLIP3D_DEM_PD_SPH CXX)
 
 set(MAJOR_VERSION "0")
@@ -67,13 +55,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
 #set(BUILD_SHARED_LIBS ON)
 #set(CMAKE_BUILD_TYPE "Debug")
 
-if (USE_CLANG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -Wno-inconsistent-missing-override -fopenmp")
-  #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++14 -Wall -fno-omit-frame-pointer -fsanitize=address -pedantic -Werror")
-  #set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -fopenmp")
-endif ()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated -fopenmp")
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
@@ -131,9 +113,6 @@ include_directories(${Boost_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Add requirements for Output in VTK format
 #----------------------------------------------------------------------------
-#find_package(VTK 5.10 REQUIRED)
-#find_package(VTK 6 REQUIRED)
-#find_package(VTK 7 REQUIRED)
 set(VTK_DIR ${THIRDPARTY_DIR}/VTK-9.1.0/build CACHE PATH "vtk build directory")
 find_package(VTK 9.1 REQUIRED 
              COMPONENTS
@@ -170,22 +149,14 @@ endif()
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
-if (USE_CLANG)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
-endif()
 
 #------------------------------------------------------------------------------
 # Find the Qhull libraries 
 # (Make sure the qhull libraries and includes are in qhull/build)
 #------------------------------------------------------------------------------
 set(QHULL_USE_STATIC ON)
-if (USE_CLANG)
-  set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build_clang)
-else (USE_CLANG)
-  set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build)
-endif (USE_CLANG)
+set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build)
 find_package(Qhull REQUIRED)
-
 
 #----------------------------------------------------------------------------
 # Set up library sources
