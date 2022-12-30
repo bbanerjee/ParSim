@@ -38,7 +38,7 @@ MPMCommon::MPMCommon(const ProcessorGroup* myworld)
 {
 }
 
-MPMCommon::~MPMCommon()
+MPMCommon::~MPMCommon() noexcept(false)
 {
 }
 

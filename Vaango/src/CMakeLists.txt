@@ -232,24 +232,24 @@ endif(CXX_FLAGS)
 #------
 # For C++14
 #------
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
-endif ()
+#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
+#endif ()
 
 #------
 # For C++17
 #------
-#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
-#endif ()
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
+endif ()
 
 #SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 #SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
@@ -827,6 +827,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/hypre_testdefs.h.in 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ieeefp_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ieeefp_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/image_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/image_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kepler_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kepler_defs.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kokkos_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kokkos_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/lapack_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/lapack_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/loki_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/loki_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/malloc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/malloc_defs.h)

@@ -175,7 +175,7 @@ MPMLabel::MPMLabel()
   
   pXLabel = VarLabel::create("p.x",
 			     ParticleVariable<Point>::getTypeDescription(),
-			     IntVector(0,0,0), VarLabel::PositionVariable);
+			     IntVector(0,0,0), VarLabel::VarType::PositionVariable);
   
   pTemperatureLabel = VarLabel::create( "p.temperature",
 			ParticleVariable<double>::getTypeDescription() );
@@ -261,7 +261,7 @@ MPMLabel::MPMLabel()
   pXLabel_preReloc = VarLabel::create( "p.x+",
 			ParticleVariable<Point>::getTypeDescription(),
 			IntVector(0,0,0),
-			VarLabel::PositionVariable);
+			VarLabel::VarType::PositionVariable);
   
   pTemperatureLabel_preReloc = VarLabel::create( "p.temperature+",
 			ParticleVariable<double>::getTypeDescription() );

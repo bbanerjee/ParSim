@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,27 +22,21 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __CORE_UTILS_REFCOUNTED_H__
-#define __CORE_UTILS_REFCOUNTED_H__
+#ifndef SCI_KOKKOS_DEFS_H
+#define SCI_KOKKOS_DEFS_H
 
-namespace Uintah {
+@DEF_KOKKOS@
 
-class RefCounted
-{
-public:
-  RefCounted();
-  virtual ~RefCounted() noexcept(false);
+/* 
+   For reference, (if Kokkos is enabled, then) you are linking against this Kokkos:
 
-  void addReference() const;
-  bool removeReference() const;
-  int getReferenceCount() const { return d_refCount; }
+   @KOKKOS_LIB_DIR_FLAG@
 
-private:
-  RefCounted& operator=(const RefCounted&);
-  mutable int d_refCount{0};
-  int d_lockIndex{0};
-};
+   @INC_KOKKOS_H@
 
-} // End namespace Uintah
+   (Note, the above info is used to tell when the user configures
+   against a new Kokkos, so please leave it here.)
+*/
 
-#endif // __CORE_UTILS_REFCOUNTED_H__
+#endif
+

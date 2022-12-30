@@ -49,7 +49,7 @@ TEST(IntVarMetalTest, constructors)
 
   // Constructors
   IntVar_Metal model(ps);
-  IntVar_Metal model_copy(model);
+  IntVar_Metal model_copy(&model);
 
   // Get labels
   auto labels = model.getLabels();

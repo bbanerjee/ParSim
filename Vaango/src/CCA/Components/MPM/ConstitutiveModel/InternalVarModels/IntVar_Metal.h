@@ -48,6 +48,7 @@ public:
   /* constructors/destructor */
   IntVar_Metal(Uintah::ProblemSpecP& ps);
   IntVar_Metal(const IntVar_Metal* cm);
+  IntVar_Metal(const IntVar_Metal& cm) = delete;
   ~IntVar_Metal() override;
 
   IntVar_Metal&

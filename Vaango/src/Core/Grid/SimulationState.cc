@@ -48,7 +48,8 @@ SimulationState::SimulationState(ProblemSpecP &ps)
 {
   VarLabel* nonconstDelt = VarLabel::create("delT", 
                                             delt_vartype::getTypeDescription() );
-  nonconstDelt->allowMultipleComputes();
+  //nonconstDelt->allowMultipleComputes();
+  nonconstDelt->isReductionTask(false);
   delt_label = nonconstDelt;
 
   refineFlag_label       = VarLabel::create("refineFlag",
@@ -67,8 +68,10 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   VarLabel* nonconstCheckInv =      // check point interval
     VarLabel::create("checkpointInterval", min_vartype::getTypeDescription() );
 
-  nonconstOutputInv->allowMultipleComputes();
-  nonconstCheckInv->allowMultipleComputes();
+  //nonconstOutputInv->allowMultipleComputes();
+  //nonconstCheckInv->allowMultipleComputes();
+  nonconstOutputInv->isReductionTask(false);
+  nonconstCheckInv->isReductionTask(false);
 
   outputInterval_label     = nonconstOutputInv;
   checkpointInterval_label = nonconstCheckInv;

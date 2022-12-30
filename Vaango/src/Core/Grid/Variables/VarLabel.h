@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CORE_GRID_VARIABLES_VARLABEL_H
-#define CORE_GRID_VARIABLES_VARLABEL_H
+#ifndef __CORE_GRID_VARIABLES_VARLABEL_H__
+#define __CORE_GRID_VARIABLES_VARLABEL_H__
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Util/RefCounted.h>
@@ -39,32 +39,11 @@ namespace Uintah {
 class TypeDescription;
 class Patch;
 
-/**************************************
-
-  CLASS
-    VarLabel
-
-  GENERAL INFORMATION
-
-    VarLabel.h
-
-    Steven G. Parker
-    Department of Computer Science
-    University of Utah
-
-
-  KEYWORDS
-    VarLabel
-
-  DESCRIPTION
-
-  ****************************************/
-
 class VarLabel : public RefCounted
 {
 
 public:
-  enum VarType
+  enum class VarType
   {
     Normal,
     PositionVariable
@@ -74,7 +53,7 @@ public:
   static VarLabel* create(const std::string& name,
                           const TypeDescription* type_description,
                           const IntVector& boundaryLayer = IntVector(0, 0, 0),
-                          VarType vartype = Normal);
+                          VarType vartype = VarType::Normal);
 
   static bool destroy(const VarLabel* label);
 
@@ -82,17 +61,23 @@ public:
 
   std::string getFullName(int matlIndex, const Patch* patch) const;
 
-  bool isPositionVariable() const { return m_var_type == PositionVariable; }
+  bool isPositionVariable() const { return m_var_type == VarType::PositionVariable; }
 
   const TypeDescription* typeDescription() const { return m_td; }
 
   IntVector getBoundaryLayer() const { return m_boundary_layer; }
 
-  void allowMultipleComputes();
+  // void allowMultipleComputes();
 
-  bool allowsMultipleComputes() const { return m_allow_multiple_computes; }
+  // bool allowsMultipleComputes() const { return m_allow_multiple_computes; }
+
+  void isReductionTask(bool input);
+
+  bool isReductionTask() const { return m_is_reduction_task; }
 
   static VarLabel* find(const std::string& name);
+
+  static VarLabel* find(const std::string& name, const std::string& message);
 
   static VarLabel* particlePositionLabel();
 
@@ -156,16 +141,17 @@ public:
 
 private:
   // You must use VarLabel::create.
-  VarLabel(const std::string&, const TypeDescription*,
+  VarLabel(const std::string& label, const TypeDescription* type,
            const IntVector& boundaryLayer, VarType vartype);
 
   // You must use destroy.
   ~VarLabel(){};
 
+private:
   std::string m_name{ "" };
   const TypeDescription* m_td{ nullptr };
   IntVector m_boundary_layer{ IntVector(0, 0, 0) };
-  VarType m_var_type{ Normal };
+  VarType m_var_type{ VarType::Normal };
 
   mutable std::string m_compression_mode{ "default" };
   static std::string s_default_compression_mode;
@@ -173,7 +159,8 @@ private:
 
   // Allow a variable of this label to be computed multiple times in a TaskGraph
   // without complaining.
-  bool m_allow_multiple_computes{ false };
+  //bool m_allow_multiple_computes{ false };
+  bool m_is_reduction_task{ true };
 
   // eliminate copy, assignment and move
   VarLabel(const VarLabel&) = delete;
@@ -188,4 +175,4 @@ private:
 
 } // End namespace Uintah
 
-#endif // CORE_GRID_VARIABLES_VARLABEL_H
+#endif // __CORE_GRID_VARIABLES_VARLABEL_H__

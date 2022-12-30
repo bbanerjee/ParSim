@@ -46,7 +46,7 @@ namespace Uintah {
   public:
 
     MPMCommon(const ProcessorGroup* myworld);
-    virtual ~MPMCommon();
+    virtual ~MPMCommon() noexcept(false);
 
     virtual void materialProblemSetup(const ProblemSpecP& prob_spec,
                                       const GridP grid,

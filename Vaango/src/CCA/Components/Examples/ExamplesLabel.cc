@@ -143,7 +143,7 @@ ExamplesLabel::ExamplesLabel()
   pXLabel_preReloc = VarLabel::create( "p.x+",
 			ParticleVariable<Point>::getTypeDescription(),
 			IntVector(0,0,0),
-			VarLabel::PositionVariable);
+			VarLabel::VarType::PositionVariable);
 
   pParticleIDLabel = VarLabel::create("p.particleID",
 			ParticleVariable<long64>::getTypeDescription() );

@@ -721,7 +721,7 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
       int levelidx = dep->reductionLevel ? dep->reductionLevel->getIndex() : -1;
       int dw = dep->mapDataWarehouse();
 
-      if (dep->var->allowsMultipleComputes()) {
+      if (!dep->var->isReductionTask()) {
         if (dbg.active()) {
           dbg << d_myworld->myrank() << " Skipping Reduction task for multi compute variable: "
               << dep->var->getName() << " on level " << levelidx << ", DW " << dw << '\n';

@@ -139,7 +139,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   // Peridynamics labels
   pPositionLabel = Uintah::VarLabel::create("p.x",
 			     Uintah::ParticleVariable<Uintah::Point>::getTypeDescription(),
-			     Uintah::IntVector(0,0,0), Uintah::VarLabel::PositionVariable);
+			     Uintah::IntVector(0,0,0), Uintah::VarLabel::VarType::PositionVariable);
   pHorizonLabel = Uintah::VarLabel::create("p.horizon",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
   pDamageLabel = Uintah::VarLabel::create("p.damage",
@@ -171,7 +171,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   pPositionLabel_preReloc = Uintah::VarLabel::create( "p.x+",
 			Uintah::ParticleVariable<Uintah::Point>::getTypeDescription(),
 			Uintah::IntVector(0,0,0),
-			Uintah::VarLabel::PositionVariable);
+			Uintah::VarLabel::VarType::PositionVariable);
   pHorizonLabel_preReloc = Uintah::VarLabel::create("p.horizon+",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
   pDamageLabel_preReloc = Uintah::VarLabel::create("p.damage+",

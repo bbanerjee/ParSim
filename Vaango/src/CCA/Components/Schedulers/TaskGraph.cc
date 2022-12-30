@@ -201,7 +201,7 @@ TaskGraph::setupTaskConnections( GraphSortInfoMap& sortinfo )
         // for reduction var allows multi computes such as delT
         // do not generate reduction task each time it computes,
         // instead computes it in a system wide reduction task
-        if (comp->var->allowsMultipleComputes()) {
+        if (!comp->var->isReductionTask()) {
           if (detaileddbg.active()) {
             detaileddbg << d_myworld->myrank() << " Skipping Reduction task for variable: " << comp->var->getName() << " on level "
                         << levelidx << ", DW " << dw << "\n";
@@ -381,7 +381,7 @@ TaskGraph::addDependencyEdges( Task*              task,
             }
             // with reduction variables, you can modify them up to the Reduction Task, which also modifies
             // those who don't modify will get the reduced value.
-            if (!modifies && !req->var->allowsMultipleComputes()) {
+            if (!modifies && req->var->isReductionTask()) {
               requiresReductionTask = true;
             }
           }

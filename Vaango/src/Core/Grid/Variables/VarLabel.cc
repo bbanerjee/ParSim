@@ -30,15 +30,19 @@
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Util/DebugStream.h>
 
+//#include <Core/Util/DebugOutput.h>
+
 #include <iostream>
 #include <map>
-#include <sstream>
 #include <memory>
+#include <sstream>
 
-using namespace Uintah;
+namespace Uintah {
 
 namespace {
 MasterLock g_label_mutex{};
+//DebugOutput g_varlabel_dbg("VarLabel", "VarLabel", 
+//                           "Report Varlabel creation and deletion", false);
 }
 
 static DebugStream dbg("VarLabel", false);
@@ -57,8 +61,8 @@ std::map<std::string, VarLabel*> VarLabel::g_all_labels;
 VarLabel*
 VarLabel::create(const std::string& name, const TypeDescription* td,
                  const IntVector& boundaryLayer, /* = IntVector(0,0,0) */
-                 VarType vartype /* = Normal */
-                 )
+                 VarType vartype                 /* = Normal */
+)
 {
   VarLabel* label;
 
@@ -75,24 +79,19 @@ VarLabel::create(const std::string& name, const TypeDescription* td,
         SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
       }
 
-#if !defined(_AIX) && !defined(__APPLE__)
-      // AIX uses lib.a's, therefore the "same" var labels are different...
-      // Need to look into fixing this in a better way...
-      // And I am not sure why we have to do this on the mac or windows...
       if (td != dup->m_td || vartype != dup->m_var_type) {
         std::ostringstream out;
         out << "VarLabel with same name exists, '" << name
             << "', but with different type";
         SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
       }
-#endif
 
       label = dup;
     } else {
-      //auto label_sh = std::make_shared<VarLabel>(name, td, boundaryLayer, vartype);
-      //label = label_sh.get();
       label = scinew VarLabel(name, td, boundaryLayer, vartype);
       g_all_labels[name] = label;
+      //DEBUGOUT(g_varlabel_dbg,
+      //         "Created VarLabel: " << label->m_name << " [address = " << label);
       dbg << "Created VarLabel: " << label->m_name << " [address = " << label
           << "\n";
     }
@@ -117,6 +116,8 @@ VarLabel::destroy(const VarLabel* label)
       if (iter != g_all_labels.end() && iter->second == label) {
         g_all_labels.erase(iter);
       }
+      //DEBUGOUT(g_varlabel_dbg,
+      //           "Deleted VarLabel: " << label->m_name);
       dbg << "Deleted VarLabel: " << label->m_name << std::endl;
     }
     g_label_mutex.unlock();
@@ -141,11 +142,14 @@ VarLabel::VarLabel(const std::string& name, const Uintah::TypeDescription* td,
 void
 VarLabel::printAll()
 {
-  auto iter = g_all_labels.begin();
-
-  for (; iter != g_all_labels.end(); iter++) {
-    std::cout << (*iter).second->m_name << std::endl;
+  for (auto label : g_all_labels) {
+    std::cout << label.second->m_name << std::endl;
   }
+  //auto iter = g_all_labels.begin();
+
+  //for (; iter != g_all_labels.end(); iter++) {
+  //  std::cout << (*iter).second->m_name << std::endl;
+  //}
 }
 
 VarLabel*
@@ -158,6 +162,22 @@ VarLabel::find(const std::string& name)
   } else {
     return found->second;
   }
+}
+
+VarLabel*
+VarLabel::find(const std::string& name,
+               const std::string& message)
+{
+  auto label = VarLabel::find(name);
+  if (label == nullptr) {
+    std::ostringstream warn;
+    warn << message;
+    warn << "**ERROR** Could not find the VarLabel (" << name << " ).";
+    throw InternalError(warn.str(), __FILE__, __LINE__);
+    return nullptr;
+  }
+
+  return label;
 }
 
 VarLabel*
@@ -183,22 +203,23 @@ VarLabel::getFullName(int matlIndex, const Patch* patch) const
 }
 
 void
-VarLabel::allowMultipleComputes()
+VarLabel::isReductionTask(bool input)
 {
   if (!m_td->isReductionVariable()) {
-    SCI_THROW(InternalError(
-      std::string("Only reduction variables may allow multiple computes.\n'" +
-                  m_name + "' is not a reduction variable."),
-      __FILE__, __LINE__));
+    std::ostringstream out;
+    out << "Only reduction variables may allow multiple computes.\n'" 
+        << m_name << "' is not a reduction variable.";
+    SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
   }
-  m_allow_multiple_computes = true;
+
+  m_is_reduction_task = input;
 }
 
-namespace Uintah {
 std::ostream&
 operator<<(std::ostream& out, const Uintah::VarLabel& vl)
 {
   out << vl.getName();
   return out;
 }
-}
+
+} // namespace Uintah
