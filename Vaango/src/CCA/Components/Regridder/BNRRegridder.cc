@@ -106,8 +106,8 @@ bool BNRRegridder::getTags(int &tag1, int &tag2)
 }
 BNRRegridder::BNRRegridder(const ProcessorGroup* pg) : RegridderCommon(pg), task_count_(0),tola_(1),tolb_(1), patchfixer_(pg)
 {
-  int numprocs=d_myworld->size();
-  int rank=d_myworld->myrank();
+  int numprocs=d_myworld->nRanks();
+  int rank=d_myworld->myRank();
   
   int *tag_ub, maxtag_ ,flag;
 
@@ -168,8 +168,8 @@ Grid* BNRRegridder::regrid(Grid* oldGrid)
     patch_sets[0].push_back(Region((*p)->getCellLowIndex(),(*p)->getCellHighIndex()));
   }
     
-  int rank=d_myworld->myrank();
-  int procs=d_myworld->size();
+  int rank=d_myworld->myRank();
+  int procs=d_myworld->nRanks();
   MPI_Comm comm=d_myworld->getComm();
   
   t[0]+=Time::currentSeconds()-start;
@@ -284,7 +284,7 @@ Grid* BNRRegridder::regrid(Grid* oldGrid)
       //patches on level l must be at least one cell more than on level l+1
         //so use the patches on level l+1 to add extended flags to level l-1
         //(thus extending patches on level l)
-      AddSafetyLayer(patch_sets[l+1], coarse_flag_sets[l-1], lb_->getPerProcessorPatchSet(oldGrid->getLevel(l-1))->getSubset(d_myworld->myrank())->getVector(), l);
+      AddSafetyLayer(patch_sets[l+1], coarse_flag_sets[l-1], lb_->getPerProcessorPatchSet(oldGrid->getLevel(l-1))->getSubset(d_myworld->myRank())->getVector(), l);
     }
   }
   t[2]+=Time::currentSeconds()-start;
@@ -328,11 +328,11 @@ Grid* BNRRegridder::regrid(Grid* oldGrid)
   if(times.active())
   {
     MPI_Reduce(&t,&avg,6,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
-    if(d_myworld->myrank()==0)
+    if(d_myworld->myRank()==0)
     {
       times << "BNRTimes: ";
       for(int i=0;i<6;i++)
-        times << avg[i]/d_myworld->size() << " ";
+        times << avg[i]/d_myworld->nRanks() << " ";
       times << endl;
     }
   }
@@ -391,7 +391,7 @@ void BNRRegridder::CreateCoarseFlagSets(Grid *oldGrid, vector<set<IntVector> > &
   {
     const LevelP level=oldGrid->getLevel(l);
     //create coarse flag set
-    const PatchSubset *ps=lb_->getPerProcessorPatchSet(level)->getSubset(d_myworld->myrank());
+    const PatchSubset *ps=lb_->getPerProcessorPatchSet(level)->getSubset(d_myworld->myRank());
     for(int p=0;p<ps->size();p++)
     {
       const Patch *patch=ps->get(p);
@@ -415,7 +415,7 @@ void BNRRegridder::CreateCoarseFlagSets(Grid *oldGrid, vector<set<IntVector> > &
 
 void BNRRegridder::OutputGridStats(vector< vector<Region> > &patch_sets, Grid* newGrid)
 {
-  if (d_myworld->myrank() == 0) 
+  if (d_myworld->myRank() == 0) 
   {
     cout << " Grid Statistics:\n";
     for (unsigned int l = 0; l < patch_sets.size(); l++) 
@@ -451,8 +451,8 @@ void BNRRegridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
 {
   MALLOC_TRACE_TAG_SCOPE("BNRRegridder::RunBR");
   TAU_PROFILE("BNRRegridder::RunBR()", " ", TAU_USER);
-  int rank=d_myworld->myrank();
-  int numprocs=d_myworld->size();
+  int rank=d_myworld->myRank();
+  int numprocs=d_myworld->nRanks();
  
   vector<int> procs(numprocs);
   BNRTask *root=0;  
@@ -648,7 +648,7 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
                                 const GridP& oldGrid,
                                 const SimulationStateP& state)
 {
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
     cout << " WARNING: The BNR regridder has performance issues and has been superseeded by the tiled regridder\n";
 
   RegridderCommon::problemSetup(params, oldGrid, state);
@@ -702,28 +702,28 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
   regrid_spec->getWithDefault("patch_ratio_to_target",d_patchRatioToTarget,.125);
   //bound tolerances
   if (tola_ < 0) {
-    if (d_myworld->myrank() == 0)
+    if (d_myworld->myRank() == 0)
       cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
     tola_ = 0;
   }
   if (tola_ > 1) {
-    if (d_myworld->myrank() == 0)
+    if (d_myworld->myRank() == 0)
       cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
     tola_ = 1;
   }
   if (tolb_ < 0) {
-    if (d_myworld->myrank() == 0)
+    if (d_myworld->myRank() == 0)
       cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
     tolb_ = 0;
   }
   if (tolb_ > 1) {
-    if (d_myworld->myrank() == 0)
+    if (d_myworld->myRank() == 0)
       cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
     tolb_ = 1;
   }
  
   //set target patches
-  if(d_myworld->size()==1)
+  if(d_myworld->nRanks()==1)
   {
     //if there is only 1 processor attempt for minimum number of patches
     target_patches_=1;
@@ -734,11 +734,11 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
     regrid_spec->get("patches_per_level_per_proc",patches_per_proc);
     if (patches_per_proc<1)
     {
-      if (d_myworld->myrank() == 0)
+      if (d_myworld->myRank() == 0)
         cout << "  Bounding patches_per_level_per_proc to [1,infinity]\n";
       patches_per_proc=1;
     }
-    target_patches_=patches_per_proc*d_myworld->size();
+    target_patches_=patches_per_proc*d_myworld->nRanks();
   }
 
 
@@ -814,7 +814,7 @@ void BNRRegridder::PostFixup(vector<Region> &patches)
     volume+=patches[p].getVolume();
   }
 
-  double volume_threshold=volume/(float)d_myworld->size()*d_patchRatioToTarget;
+  double volume_threshold=volume/(float)d_myworld->nRanks()*d_patchRatioToTarget;
   
   //build a max heap
   make_heap(patches.begin(),patches.end(),Region::VolumeCompare());
@@ -918,7 +918,7 @@ void BNRRegridder::AddSafetyLayer(const vector<Region> patches, set<IntVector> &
 bool BNRRegridder::verifyGrid(Grid *grid)
 {
   //if we are running in serial there is no reason to verify that each processor has the same grid.
-  if(d_myworld->size()==1)
+  if(d_myworld->nRanks()==1)
     return true;
 
   vector<int> checksums;
@@ -926,17 +926,17 @@ bool BNRRegridder::verifyGrid(Grid *grid)
   vector<string> labels;
 
   int num_levels=grid->numLevels();
-  grid_dbg << d_myworld->myrank() << " Grid number of levels:" << num_levels << endl;
-  their_checksums.resize(d_myworld->size());
+  grid_dbg << d_myworld->myRank() << " Grid number of levels:" << num_levels << endl;
+  their_checksums.resize(d_myworld->nRanks());
   MPI_Gather(&num_levels,1,MPI_INT,&their_checksums[0],1,MPI_INT,0,d_myworld->getComm());
 
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
   {
-    for(int i=0;i<d_myworld->size();i++)
+    for(int i=0;i<d_myworld->nRanks();i++)
     {
       if(num_levels!=their_checksums[i])
       {
-        cout << d_myworld->myrank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
+        cout << d_myworld->myRank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
         return false;
       }
     }
@@ -956,35 +956,35 @@ bool BNRRegridder::verifyGrid(Grid *grid)
     for(int p=0;p<level->numPatches();p++)
     {
       const Patch* patch = level->getPatch(p); 
-      grid_dbg << d_myworld->myrank() << "    Level: " << i << " Patch " << p << ": " << *patch << endl;
+      grid_dbg << d_myworld->myRank() << "    Level: " << i << " Patch " << p << ": " << *patch << endl;
       Sum=Abs(patch->getCellHighIndex())+Abs(patch->getCellLowIndex());
       Diff=Abs(patch->getCellHighIndex())-Abs(patch->getCellLowIndex());
       
       sum+=Sum[0]*Sum[1]*Sum[2]*(p+1);
       diff+=Diff[0]*Diff[1]*Diff[2]*(p+1000000);
-      //cout << d_myworld->myrank() << " patch:" << *patch << " sum:" << Sum[0]*Sum[1]*Sum[2]*(p+1) << " diff:" << Diff[0]*Diff[1]*Diff[2]*(p+1) << endl;
+      //cout << d_myworld->myRank() << " patch:" << *patch << " sum:" << Sum[0]*Sum[1]*Sum[2]*(p+1) << " diff:" << Diff[0]*Diff[1]*Diff[2]*(p+1) << endl;
     }
     checksums[i]+=(sum+diff);
   }
 
-  their_checksums.resize(checksums.size()*d_myworld->size());
+  their_checksums.resize(checksums.size()*d_myworld->nRanks());
   MPI_Gather(&checksums[0],checksums.size(),MPI_INT,&their_checksums[0],checksums.size(),MPI_INT,0,d_myworld->getComm());
  
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
   {
-    for(int p=0;p<d_myworld->size();p++)
+    for(int p=0;p<d_myworld->nRanks();p++)
     {
       for(unsigned int i=0;i<checksums.size();i++)
       {
         if(checksums[i]!=their_checksums[p*checksums.size()+i])
         {
-          cout << d_myworld->myrank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
+          cout << d_myworld->myRank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
           return false;
         }
       }
     }
   }
-  //if(d_myworld->myrank()==0)
+  //if(d_myworld->myRank()==0)
   //  cout << " GRIDS ARE CONSISTENT\n";
   return true;
 }

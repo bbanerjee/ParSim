@@ -234,7 +234,7 @@ main( int argc, char *argv[], char *env[] )
   bool   validateUps = true, onlyValidateUps = false;
     
   // Checks to see if user is running an MPI version of vaango.
-  Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+  //Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 
 #ifdef HAVE_MPICH_OLD
   /*
@@ -282,9 +282,9 @@ main( int argc, char *argv[], char *env[] )
       }
       solver = argv[i];
     } else if(arg == "-mpi") {
-      Uintah::Parallel::forceMPI();
+      //Uintah::Parallel::forceMPI();
     } else if(arg == "-nompi") {
-      Uintah::Parallel::forceNoMPI();
+      //Uintah::Parallel::forceNoMPI();
     } else if (arg == "-emit_taskgraphs") {
       emit_graphs = true;
     } else if(arg == "-restart") {

@@ -146,12 +146,12 @@ void
 PatchFixer::FixUp(vector<Region> &patches)
 {
   //search lattice
-  int size=patches.size()/d_myworld->size();
-  int rem=patches.size()%d_myworld->size();
+  int size=patches.size()/d_myworld->nRanks();
+  int rem=patches.size()%d_myworld->nRanks();
   int mystart=0,myend;
   int mysize=size;
         
-  if(d_myworld->myrank()<rem)
+  if(d_myworld->myRank()<rem)
     mysize++;
 
   if(mysize==0)
@@ -160,9 +160,9 @@ PatchFixer::FixUp(vector<Region> &patches)
     }
   else
     {
-      for(int p=0;p<d_myworld->size();p++)
+      for(int p=0;p<d_myworld->nRanks();p++)
         {
-          if(p==d_myworld->myrank())
+          if(p==d_myworld->myRank())
             break;
           if(p<rem)
             mystart+=size+1;
@@ -210,16 +210,16 @@ PatchFixer::FixUp(vector<Region> &patches)
   //it may be worth moving splitting patches below the threashold to here
  
   //allgather patchset sizes
-  if(d_myworld->size()>1)
+  if(d_myworld->nRanks()>1)
     {
-      vector<int> patch_sizes(d_myworld->size());
-      vector<int> displacements(d_myworld->size());
+      vector<int> patch_sizes(d_myworld->nRanks());
+      vector<int> displacements(d_myworld->nRanks());
       MPI_Allgather(&my_patch_size,1,MPI_INT,&patch_sizes[0],1,MPI_INT,d_myworld->getComm());   
 
       int total_size=patch_sizes[0];
       displacements[0]=0;
       patch_sizes[0]*=sizeof(Region);
-      for(int p=1;p<d_myworld->size();p++)
+      for(int p=1;p<d_myworld->nRanks();p++)
         {
           displacements[p]=total_size*sizeof(Region);
           total_size+=patch_sizes[p];

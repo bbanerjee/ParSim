@@ -214,27 +214,27 @@ void printData(DataArchive* archive, string& variable_name,
     vector<Variable*> vars(patches.size());
     for (int p = 0; p < patches.size(); p++) {
       switch (variable_type->getType()) {
-      case Uintah::TypeDescription::CCVariable:
+      case Uintah::TypeDescription::Type::CCVariable:
         vars[p] = scinew CCVariable<T>;
         archive->query( *(CCVariable<T>*)vars[p], variable_name, 
                         material, patches[p], timestep);
         break;
-      case Uintah::TypeDescription::NCVariable:
+      case Uintah::TypeDescription::Type::NCVariable:
         vars[p] = scinew NCVariable<T>;
         archive->query( *(NCVariable<T>*)vars[p], variable_name, 
                         material, patches[p], timestep);
         break;
-      case Uintah::TypeDescription::SFCXVariable:
+      case Uintah::TypeDescription::Type::SFCXVariable:
         vars[p] = scinew SFCXVariable<T>;
         archive->query( *(SFCXVariable<T>*)vars[p], variable_name, 
                         material, patches[p], timestep);
         break;
-      case Uintah::TypeDescription::SFCYVariable:
+      case Uintah::TypeDescription::Type::SFCYVariable:
         vars[p] = scinew SFCYVariable<T>;
         archive->query( *(SFCYVariable<T>*)vars[p], variable_name, 
                         material, patches[p], timestep);
         break;
-      case Uintah::TypeDescription::SFCZVariable:
+      case Uintah::TypeDescription::Type::SFCZVariable:
         vars[p] = scinew SFCZVariable<T>;
         archive->query( *(SFCZVariable<T>*)vars[p], variable_name, 
                         material, patches[p], timestep);
@@ -341,7 +341,7 @@ void printData(DataArchive* archive, string& variable_name,
       Vector dx = patches[p]->dCell();
       Vector shift(0,0,0);  // shift the cellPosition if it's a (X,Y,Z)FC variable
       switch (variable_type->getType()) {
-      case Uintah::TypeDescription::CCVariable: 
+      case Uintah::TypeDescription::Type::CCVariable: 
         val = (*dynamic_cast<CCVariable<int>*>(vars[p]))[c]; 
         val_xm = (*dynamic_cast<CCVariable<int>*>(vars[p_xm]))[c-IntVector(1,0,0)]; 
         val_xp = (*dynamic_cast<CCVariable<int>*>(vars[p_xp]))[c+IntVector(1,0,0)]; 
@@ -350,15 +350,15 @@ void printData(DataArchive* archive, string& variable_name,
         val_zm = (*dynamic_cast<CCVariable<int>*>(vars[p_zm]))[c-IntVector(0,0,1)]; 
         val_zp = (*dynamic_cast<CCVariable<int>*>(vars[p_zp]))[c+IntVector(0,0,1)]; 
         break;
-      case Uintah::TypeDescription::NCVariable: 
+      case Uintah::TypeDescription::Type::NCVariable: 
         break;
-      case Uintah::TypeDescription::SFCXVariable: 
+      case Uintah::TypeDescription::Type::SFCXVariable: 
         shift.x(-dx.x()/2.0); 
         break;
-      case Uintah::TypeDescription::SFCYVariable: 
+      case Uintah::TypeDescription::Type::SFCYVariable: 
         shift.y(-dx.y()/2.0); 
         break;
-      case Uintah::TypeDescription::SFCZVariable: 
+      case Uintah::TypeDescription::Type::SFCZVariable: 
         shift.z(-dx.z()/2.0); 
         break;
       default: break;
@@ -680,25 +680,25 @@ int main(int argc, char** argv)
     //__________________________________
     //  print data
     switch (subtype->getType()) {
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       break;
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       break;
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       printData<int>(archive, variable_name, td, material,
                      levelIndex, var_start, var_end,
                      timestep, container, *output_stream,
                      path_to_timeextract, input_uda_name);
       break;
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       break;
-    case Uintah::TypeDescription::Stencil7:
+    case Uintah::TypeDescription::Type::Stencil7:
       // don't break on else - flow to the error statement
-    case Uintah::TypeDescription::Matrix3:
-    case Uintah::TypeDescription::bool_type:
-    case Uintah::TypeDescription::short_int_type:
-    case Uintah::TypeDescription::long_type:
-    case Uintah::TypeDescription::long64_type:
+    case Uintah::TypeDescription::Type::Matrix3:
+    case Uintah::TypeDescription::Type::bool_type:
+    case Uintah::TypeDescription::Type::short_int_type:
+    case Uintah::TypeDescription::Type::long_type:
+    case Uintah::TypeDescription::Type::long64_type:
       cerr << "Subtype is not implemented\n";
       exit(1);
       break;

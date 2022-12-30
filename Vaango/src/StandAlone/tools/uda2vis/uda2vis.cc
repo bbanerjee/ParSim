@@ -318,20 +318,20 @@ GridDataRaw* getGridDataMainType(DataArchive *archive,
                                  const Uintah::TypeDescription *subtype) {
 
   switch (subtype->getType()) {
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readGridData<VAR, double>(archive, patch, level, variable_name, material, timestep, low, high);
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readGridData<VAR, float>(archive, patch, level, variable_name, material, timestep, low, high);
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readGridData<VAR, int>(archive, patch, level, variable_name, material, timestep, low, high);
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readGridData<VAR, Vector>(archive, patch, level, variable_name, material, timestep, low, high);
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readGridData<VAR, Matrix3>(archive, patch, level, variable_name, material, timestep, low, high);
-  case Uintah::TypeDescription::bool_type:
-  case Uintah::TypeDescription::short_int_type:
-  case Uintah::TypeDescription::long_type:
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::bool_type:
+  case Uintah::TypeDescription::Type::short_int_type:
+  case Uintah::TypeDescription::Type::long_type:
+  case Uintah::TypeDescription::Type::long64_type:
     cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
     return NULL;
   default:
@@ -378,15 +378,15 @@ getGridData(DataArchive *archive,
 
 
   switch(maintype->getType()) {
-  case Uintah::TypeDescription::CCVariable:
+  case Uintah::TypeDescription::Type::CCVariable:
     return getGridDataMainType<CCVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
-  case Uintah::TypeDescription::NCVariable:
+  case Uintah::TypeDescription::Type::NCVariable:
     return getGridDataMainType<NCVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
-  case Uintah::TypeDescription::SFCXVariable:
+  case Uintah::TypeDescription::Type::SFCXVariable:
     return getGridDataMainType<SFCXVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
-  case Uintah::TypeDescription::SFCYVariable:
+  case Uintah::TypeDescription::Type::SFCYVariable:
     return getGridDataMainType<SFCYVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
-  case Uintah::TypeDescription::SFCZVariable:
+  case Uintah::TypeDescription::Type::SFCZVariable:
     return getGridDataMainType<SFCZVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
   default:
     cerr << "Type is unknown.\n";
@@ -493,19 +493,19 @@ getParticleData(DataArchive *archive,
 
 
   switch (subtype->getType()) {
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readParticleData<double>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readParticleData<float>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readParticleData<int>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::long64_type:
     return readParticleData<long64>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::Point:
+  case Uintah::TypeDescription::Type::Point:
     return readParticleData<Point>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readParticleData<Vector>(archive, patch, variable_name, material, timestep);
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readParticleData<Matrix3>(archive, patch, variable_name, material, timestep);
   default:
     cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";

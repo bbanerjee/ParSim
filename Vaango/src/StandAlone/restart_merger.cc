@@ -126,7 +126,7 @@ main( int argc, char *argv[], char *env[] )
 
   bool thrownException = false;
   
-  Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+  //Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 
   string new_uda_dir;
   try {

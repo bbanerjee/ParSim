@@ -252,7 +252,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
 Switcher::~Switcher()
 {
 
-  dbg << d_myworld->myrank() << " Switcher::~Switcher" <<  endl;
+  dbg << d_myworld->myRank() << " Switcher::~Switcher" <<  endl;
   
   for (unsigned i = 0; i < d_carryOverVarMatls.size(); i++)
     if (d_carryOverVarMatls[i] && d_carryOverVarMatls[i]->removeReference())
@@ -547,11 +547,11 @@ void Switcher::scheduleCarryOverVars(const LevelP& level,
         t->requires(Task::OldDW, var, matls, Ghost::None, 0);
         t->computes(var, matls);
      
-        if(UintahParallelComponent::d_myworld->myrank() == 0){
+        if(UintahParallelComponent::d_myworld->myRank() == 0){
           if (matls)
-            cout << d_myworld->myrank() << "  Carry over " << *var << "\t\tmatls: " << *matls << " on level " << L_indx << endl;
+            cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tmatls: " << *matls << " on level " << L_indx << endl;
           else
-            cout << d_myworld->myrank() << "  Carry over " << *var << "\t\tAll matls on level " << L_indx << "\n";
+            cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tAll matls on level " << L_indx << "\n";
         }
       }
     }  
@@ -632,7 +632,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
     }
     
     // Bulletproofing
-    if(l->typeDescription()->getType() == TypeDescription::ParticleVariable &&
+    if(l->typeDescription()->getType() == TypeDescription::Type::ParticleVariable &&
        relative_indx != -1){
       ostringstream warn;
       warn << " \nERROR: switcher: subcomponent: init var: (" << l->getName() 
@@ -656,16 +656,16 @@ void Switcher::initNewVars(const ProcessorGroup*,
         
         //__________________________________
         //
-        case TypeDescription::CCVariable:
+        case TypeDescription::Type::CCVariable:
           switch( l->typeDescription()->getSubType()->getType() ) {
-          case TypeDescription::double_type:
+          case TypeDescription::Type::double_type:
             {
             CCVariable<double> q;
             new_dw->allocateAndPut(q, l, indx, patch);
             q.initialize(0);
             break;
             }
-          case TypeDescription::Vector:
+          case TypeDescription::Type::Vector:
             {
             CCVariable<Vector> q;
             new_dw->allocateAndPut(q, l, indx, patch);
@@ -678,16 +678,16 @@ void Switcher::initNewVars(const ProcessorGroup*,
           break;
         //__________________________________
         //
-        case TypeDescription::NCVariable:
+        case TypeDescription::Type::NCVariable:
           switch(l->typeDescription()->getSubType()->getType()) {
-          case TypeDescription::double_type:
+          case TypeDescription::Type::double_type:
             {
             NCVariable<double> q;
             new_dw->allocateAndPut(q, l, indx, patch);
             q.initialize(0);
             break;
             }
-          case TypeDescription::Vector:
+          case TypeDescription::Type::Vector:
             {
             NCVariable<Vector> q;
             new_dw->allocateAndPut(q, l, indx, patch);
@@ -700,12 +700,12 @@ void Switcher::initNewVars(const ProcessorGroup*,
           break;
         //__________________________________
         //
-        case TypeDescription::ParticleVariable:
+        case TypeDescription::Type::ParticleVariable:
           {
           
           ParticleSubset* pset = old_dw->getParticleSubset(indx, patch); 
           switch(l->typeDescription()->getSubType()->getType()) {
-          case TypeDescription::int_type:
+          case TypeDescription::Type::int_type:
             {
             ParticleVariable<int> q;
             new_dw->allocateAndPut(q, l, pset);
@@ -716,7 +716,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
             
             break;
             }
-          case TypeDescription::double_type:
+          case TypeDescription::Type::double_type:
             {
             ParticleVariable<double> q;
             new_dw->allocateAndPut(q, l, pset);
@@ -726,7 +726,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
             }
             break;
             }
-          case TypeDescription::Vector:
+          case TypeDescription::Type::Vector:
             {
             ParticleVariable<Vector> q;
             new_dw->allocateAndPut(q, l, pset);
@@ -736,7 +736,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
             }
             break;
             }
-          case TypeDescription::Matrix3:
+          case TypeDescription::Type::Matrix3:
             {
             ParticleVariable<Matrix3> q;
             new_dw->allocateAndPut(q, l, pset);
@@ -783,7 +783,7 @@ void Switcher::carryOverVars(const ProcessorGroup *,
         if( label->typeDescription()->isReductionVariable() ){
 
 	  switch( label->typeDescription()->getSubType()->getType() ){
-	  case Uintah::TypeDescription::double_type:
+	  case Uintah::TypeDescription::Type::double_type:
 	    {
 	      ReductionVariable<double, Reductions::Max<double> > var_d;
 	      old_dw->get(var_d, label);

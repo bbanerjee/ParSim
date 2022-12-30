@@ -102,7 +102,7 @@ AMRSimulationController::run()
     ApplicationInterface::interactiveVar var;
     var.component  = "DataWarehouse";
     var.name       = "Scrub";
-    var.type       = Uintah::TypeDescription::bool_type;
+    var.type       = Uintah::TypeDescription::Type::bool_type;
     var.value      = (void *) &(m_scrub_datawarehouse);
     var.range[0]   = 0;
     var.range[1]   = 1;

@@ -553,7 +553,7 @@ UofU_MPM::printParticleCount(const ProcessorGroup* pg, const PatchSubset*,
   sumlong_vartype pcount;
   new_dw->get(pcount, d_labels->partCountLabel);
 
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     std::cerr << "**INFO** Created " << (long)pcount << " total particles\n";
   }
 }
@@ -921,7 +921,7 @@ UofU_MPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
   // However, this task needs to do something in the case that MPM
   // is being run on more than one level.
   Task* t = 0;
-  cout_doing << UintahParallelComponent::d_myworld->myrank()
+  cout_doing << UintahParallelComponent::d_myworld->myRank()
              << " MPM::scheduleComputeStableTimestep \t\t\t\tL-"
              << level->getIndex() << endl;
 

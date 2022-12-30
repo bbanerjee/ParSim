@@ -121,7 +121,7 @@ WARNING
   CCVariable<T>::getTypeDescription()
   {
     if(!td){
-      td = scinew TypeDescription(TypeDescription::CCVariable,
+      td = scinew TypeDescription(TypeDescription::Type::CCVariable,
                                   "CCVariable", &maker,
                                   fun_getTypeDescription((T*)0));
     }

@@ -428,7 +428,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::Other,
+      td = scinew TypeDescription(TypeDescription::Type::Other,
                                   "CNH_MMS::StateData", 
                                   true, &makeMPI_CMData);
     }

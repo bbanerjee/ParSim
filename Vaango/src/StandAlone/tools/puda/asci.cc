@@ -135,9 +135,9 @@ Uintah::asci( DataArchive *   da,
           switch(td->getType()){
 	        
             // The following only accesses particle data
-          case Uintah::TypeDescription::ParticleVariable:
+          case Uintah::TypeDescription::Type::ParticleVariable:
             switch(subtype->getType()){
-            case Uintah::TypeDescription::double_type:
+            case Uintah::TypeDescription::Type::double_type:
               {
                 ParticleVariable<double> value;
                 da->query(value, var, matl, patch, t);
@@ -155,7 +155,7 @@ Uintah::asci( DataArchive *   da,
                 partnum=num_of_particles;
               }
             break;
-            case Uintah::TypeDescription::float_type:
+            case Uintah::TypeDescription::Type::float_type:
               {
                 ParticleVariable<float> value;
                 da->query(value, var, matl, patch, t);
@@ -173,7 +173,7 @@ Uintah::asci( DataArchive *   da,
                 partnum=num_of_particles;
               }
             break;
-            case Uintah::TypeDescription::Point:
+            case Uintah::TypeDescription::Type::Point:
               {
                 ParticleVariable<Point> value;
                 da->query(value, var, matl, patch, t);
@@ -185,7 +185,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::Vector:
+            case Uintah::TypeDescription::Type::Vector:
               {
                 ParticleVariable<Vector> value;
                 da->query(value, var, matl, patch, t);
@@ -197,7 +197,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::Matrix3:
+            case Uintah::TypeDescription::Type::Matrix3:
               {
                 ParticleVariable<Matrix3> value;
                 da->query(value, var, matl, patch, t);
@@ -253,9 +253,9 @@ Uintah::asci( DataArchive *   da,
 	        
           // the following only accesses particle data
           switch(td->getType()){
-          case Uintah::TypeDescription::ParticleVariable:
+          case Uintah::TypeDescription::Type::ParticleVariable:
             switch(subtype->getType()){
-            case Uintah::TypeDescription::double_type:
+            case Uintah::TypeDescription::Type::double_type:
               {
                 ParticleVariable<double> value;
                 da->query(value, var, matl, patch, t);
@@ -269,7 +269,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::float_type:
+            case Uintah::TypeDescription::Type::float_type:
               {
                 ParticleVariable<float> value;
                 da->query(value, var, matl, patch, t);
@@ -283,7 +283,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::Point:
+            case Uintah::TypeDescription::Type::Point:
               {
                 ParticleVariable<Point> value;
                 da->query(value, var, matl, patch, t);
@@ -307,7 +307,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::Vector:
+            case Uintah::TypeDescription::Type::Vector:
               {
                 ParticleVariable<Vector> value;
                 da->query(value, var, matl, patch, t);
@@ -331,7 +331,7 @@ Uintah::asci( DataArchive *   da,
                 }
               }
             break;
-            case Uintah::TypeDescription::Matrix3:
+            case Uintah::TypeDescription::Type::Matrix3:
               {
                 ParticleVariable<Matrix3> value;
                 da->query(value, var, matl, patch, t);

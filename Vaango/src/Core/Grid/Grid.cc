@@ -973,7 +973,7 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
           }
         }
         if(i > 0 && stretch[axis][i-1].toSpacing != spec.fromSpacing){
-          if(pg->myrank() == 0){
+          if(pg->myRank() == 0){
             cerr << "WARNING: specifying two uniform sections with a different spacing can cause erroneous grid (" << stretch[axis][i-1].toSpacing << ", " << spec.fromSpacing << "\n";
           }
         }
@@ -1018,7 +1018,7 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
       }
     }
 
-    if(pg->myrank() == 0 && stretch_count != 0){
+    if(pg->myRank() == 0 && stretch_count != 0){
       cerr << "Stretched grid information:\n";
       for(int axis=0;axis<3;axis++){
         if(axis == 0)
@@ -1190,7 +1190,7 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
         box_ps->getAttributes(patchAttributes);
         proc0cout << "Automatically performing patch layout.\n";
           
-        int numProcs = pg->size();
+        int numProcs = pg->nRanks();
         int targetPatches = (int)(numProcs * autoPatchValue);
           
         Primes::FactorType factors;
@@ -1291,7 +1291,7 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
       } // end for(int i=0;i<patches.x();i++){
     } // end for(ProblemSpecP box_ps = level_ps->findBlock("Box");
 
-    if (pg->size() > 1 && (level->numPatches() < pg->size()) && !do_amr) {
+    if (pg->nRanks() > 1 && (level->numPatches() < pg->nRanks()) && !do_amr) {
       throw ProblemSetupException("Number of patches must >= the number of processes in an mpi run",
                                   __FILE__, __LINE__);
     }

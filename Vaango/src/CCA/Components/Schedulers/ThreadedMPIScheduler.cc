@@ -61,12 +61,12 @@ ThreadedMPIScheduler::ThreadedMPIScheduler( const ProcessorGroup*       myworld,
 {
   if (threadedmpi_timeout.active()) {
     char filename[64];
-    sprintf(filename, "timingStats.%d", d_myworld->myrank());
+    sprintf(filename, "timingStats.%d", d_myworld->myRank());
     timingStats.open(filename);
-    if (d_myworld->myrank() == 0) {
-      sprintf(filename, "timingStats.%d.max", d_myworld->size());
+    if (d_myworld->myRank() == 0) {
+      sprintf(filename, "timingStats.%d.max", d_myworld->nRanks());
       maxStats.open(filename);
-      sprintf(filename, "timingStats.%d.avg", d_myworld->size());
+      sprintf(filename, "timingStats.%d.avg", d_myworld->nRanks());
       avgStats.open(filename);
     }
   }
@@ -88,7 +88,7 @@ ThreadedMPIScheduler::~ThreadedMPIScheduler()
 
   if (threadedmpi_timeout.active()) {
     timingStats.close();
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       maxStats.close();
       avgStats.close();
     }
@@ -153,20 +153,20 @@ ThreadedMPIScheduler::problemSetup( const ProblemSpecP&     prob_spec,
   proc0cout << "   Using \"" << taskQueueAlg << "\" task queue priority algorithm" << std::endl;
 
   numThreads_ = Uintah::Parallel::getNumThreads() - 1;
-  if ((numThreads_ < 1) && Uintah::Parallel::usingMPI()) {
-    if (d_myworld->myrank() == 0) {
+  if ((numThreads_ < 1) ) {
+    if (d_myworld->myRank() == 0) {
       std::cerr << "Error: no thread number specified for ThreadedMPIScheduler" << std::endl;
       throw ProblemSetupException("This scheduler requires number of threads to be in the range [2, 64],\n.... please use -nthreads <num>", __FILE__, __LINE__);
       }
     }
   else if (numThreads_ > MAX_THREADS) {
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       std::cerr << "Error: Number of threads too large..." << std::endl;
       throw ProblemSetupException("Too many threads. Reduce MAX_THREADS and recompile.", __FILE__, __LINE__);
     }
   }
 
-  if (d_myworld->myrank() == 0) {
+  if (d_myworld->myRank() == 0) {
     std::string plural = (numThreads_ == 1) ? " thread" : " threads";
     std::cout << "   WARNING: Component tasks must be thread safe.\n"
               << "   Using 1 thread for scheduling, and " << numThreads_
@@ -174,7 +174,7 @@ ThreadedMPIScheduler::problemSetup( const ProblemSpecP&     prob_spec,
   }
 
   if (threadedmpi_compactaffinity.active()) {
-    if ( (threadedmpi_threaddbg.active()) && (d_myworld->myrank() == 0) ) {
+    if ( (threadedmpi_threaddbg.active()) && (d_myworld->myRank() == 0) ) {
       threadedmpi_threaddbg << "   Binding main thread (ID "<<  Thread::self()->myid() << ") to core 0\n";
     }
     Thread::self()->set_affinity(0);   // Bind main thread to core 0
@@ -185,7 +185,7 @@ ThreadedMPIScheduler::problemSetup( const ProblemSpecP&     prob_spec,
   for (int i = 0; i < numThreads_; i++) {
     TaskWorker* worker = scinew TaskWorker(this, i);
     t_worker[i] = worker;
-    sprintf(name, "Computing Worker %d-%d", Parallel::getRootProcessorGroup()->myrank(), i);
+    sprintf(name, "Computing Worker %d-%d", Parallel::getRootProcessorGroup()->myRank(), i);
     Thread* t = scinew Thread(worker, name);
     t_thread[i] = t;
   }
@@ -217,7 +217,7 @@ ThreadedMPIScheduler::createSubScheduler()
 
     // Bind main execution thread
     if (threadedmpi_compactaffinity.active()) {
-      if ((threadedmpi_threaddbg.active()) && (d_myworld->myrank() == 0)) {
+      if ((threadedmpi_threaddbg.active()) && (d_myworld->myRank() == 0)) {
         threadedmpi_threaddbg << "Binding main subscheduler thread (ID " << Thread::self()->myid() << ") to core 0\n";
       }
       Thread::self()->set_affinity(0);    // Bind subscheduler main thread to core 0
@@ -286,7 +286,7 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
     //emitTime("time since last execute");
   }
 
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
   makeTaskGraphDoc(dts, me);
 
   // TODO - figure out and fix this (APH - 01/12/15)
@@ -493,7 +493,7 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
 
     MPI_Reduce(&queuelength, &allqueuelength, 1, MPI_FLOAT, MPI_SUM, 0, d_myworld->getComm());
 
-    proc0cout << "average queue length:" << allqueuelength / d_myworld->size() << std::endl;
+    proc0cout << "average queue length:" << allqueuelength / d_myworld->nRanks() << std::endl;
   }
 
   if (threadedmpi_timeout.active()) {
@@ -614,7 +614,7 @@ TaskWorker::TaskWorker( ThreadedMPIScheduler* scheduler,
     d_runmutex("run mutex"),
     d_quit( false ),
     d_thread_id( thread_id ),
-    d_rank( scheduler->getProcessorGroup()->myrank() ),
+    d_rank( scheduler->getProcessorGroup()->myRank() ),
     d_iteration( 0 ),
     d_waittime( 0.0 ),
     d_waitstart( 0.0 ),

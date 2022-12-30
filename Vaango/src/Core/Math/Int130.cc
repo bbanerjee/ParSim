@@ -118,7 +118,7 @@ const TypeDescription* fun_getTypeDescription(Int130*)
 {
   static TypeDescription* td = 0;
   if(!td){
-    td = scinew TypeDescription(TypeDescription::Int130, "Int130", true,
+    td = scinew TypeDescription(TypeDescription::Type::Int130, "Int130", true,
                                 &makeMPI_Int130);
   }
   return td;

@@ -110,7 +110,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::NeighborBondInternalForce, "NeighborBondInternalForce", true,
+      td = scinew TypeDescription(TypeDescription::Type::NeighborBondInternalForce, "NeighborBondInternalForce", true,
                                   &makeMPI_NeighborBondInternalForce);
     }
     return td;

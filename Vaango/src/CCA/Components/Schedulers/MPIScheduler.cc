@@ -98,9 +98,9 @@ MPIScheduler::MPIScheduler( const ProcessorGroup * myworld,
 
   if (timeout.active()) {    
     char filename[64];
-    sprintf(filename, "timingStats.%d", d_myworld->myrank());
+    sprintf(filename, "timingStats.%d", d_myworld->myRank());
     timingStats.open(filename);
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       sprintf(filename, "timingStats.avg");
       avgStats.open(filename);
       sprintf(filename, "timingStats.max");
@@ -122,7 +122,7 @@ MPIScheduler::~MPIScheduler()
 {
   if (timeout.active()) {
     timingStats.close();
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       avgStats.close();
       maxStats.close();
     }
@@ -143,7 +143,6 @@ void
 MPIScheduler::verifyChecksum()
 {
 #if SCI_ASSERTION_LEVEL >= 3
-  if (Uintah::Parallel::usingMPI()) {
 
     // Compute a simple checksum to make sure that all processes
     // are trying to execute the same graph.  We should do two
@@ -174,7 +173,7 @@ MPIScheduler::verifyChecksum()
 
     if (mpidbg.active()) {
       coutLock.lock();
-      mpidbg << d_myworld->myrank() << " (MPI_Allreduce) Checking checksum of " << checksum << '\n';
+      mpidbg << d_myworld->myRank() << " (MPI_Allreduce) Checking checksum of " << checksum << '\n';
       coutLock.unlock();
     }
 
@@ -184,18 +183,17 @@ MPIScheduler::verifyChecksum()
 
     if(checksum != result_checksum){
       std::cerr << "Failed task checksum comparison! Not all processes are executing the same taskgraph \n";
-      std::cerr << " Rank- " << d_myworld->myrank() << " of "
-                << d_myworld->size() - 1 << ": has sum " << checksum
+      std::cerr << " Rank- " << d_myworld->myRank() << " of "
+                << d_myworld->nRanks() - 1 << ": has sum " << checksum
                 << " and global is " << result_checksum << '\n';
       MPI_Abort(d_myworld->getComm(), 1);
     }
 
     if (mpidbg.active()) {
       coutLock.lock();
-      mpidbg << d_myworld->myrank() << " (MPI_Allreduce) Check succeeded\n";
+      mpidbg << d_myworld->myRank() << " (MPI_Allreduce) Check succeeded\n";
       coutLock.unlock();
     }
-  }
 #endif
 }
 
@@ -215,7 +213,7 @@ MPIScheduler::initiateTask( DetailedTask * task,
 void
 MPIScheduler::initiateReduction( DetailedTask* task )
 {
-  if (reductionout.active() && d_myworld->myrank() == 0) {
+  if (reductionout.active() && d_myworld->myRank() == 0) {
     coutLock.lock();
     reductionout << "Running Reduction Task: " << task->getName() << std::endl;
     coutLock.unlock();
@@ -332,7 +330,7 @@ MPIScheduler::postMPISends( DetailedTask* task,
   double sendstart = Time::currentSeconds();
   bool dbg_active = dbg.active();
 
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
   if (dbg_active) {
     cerrLock.lock();
     dbg << "Rank-" << me << " postMPISends - task " << *task << '\n';
@@ -354,7 +352,7 @@ MPIScheduler::postMPISends( DetailedTask* task,
 #endif
     // Create the MPI type
     int to = batch->toTasks.front()->getAssignedResourceIndex();
-    ASSERTRANGE(to, 0, d_myworld->size());
+    ASSERTRANGE(to, 0, d_myworld->nRanks());
 
     std::ostringstream ostr;
     ostr.clear();
@@ -476,10 +474,10 @@ MPIScheduler::postMPISends( DetailedTask* task,
   mpi_info_.totalsend += dsend;
 
   if (dbgst.active() && numSend > 0) {
-    if (d_myworld->myrank() == d_myworld->size() / 2) {
+    if (d_myworld->myRank() == d_myworld->nRanks() / 2) {
       if (dbgst.active()) {
         cerrLock.lock();
-        dbgst << d_myworld->myrank() << " Time: " << Time::currentSeconds() << " , NumSend= " << numSend << " , VolSend: "
+        dbgst << d_myworld->myRank() << " Time: " << Time::currentSeconds() << " , NumSend= " << numSend << " , VolSend: "
               << volSend << std::endl;
         cerrLock.unlock();
       }
@@ -508,7 +506,7 @@ MPIScheduler::postMPIRecvs( DetailedTask* task,
 
   if( dbg_active) {
     cerrLock.lock();
-    dbg << "Rank-" << d_myworld->myrank() << " postMPIRecvs - task " << *task << '\n';
+    dbg << "Rank-" << d_myworld->myRank() << " postMPIRecvs - task " << *task << '\n';
     cerrLock.unlock();
   }
 
@@ -587,7 +585,7 @@ MPIScheduler::postMPIRecvs( DetailedTask* task,
           // See comment in DetailedDep about CommCondition
           if (dbg_active) {
             cerrLock.lock();
-            dbg << "Rank-" << d_myworld->myrank() << "   Ignoring conditional receive for " << *req << std::endl;
+            dbg << "Rank-" << d_myworld->myRank() << "   Ignoring conditional receive for " << *req << std::endl;
             cerrLock.unlock();
           }
           continue;
@@ -597,14 +595,14 @@ MPIScheduler::postMPIRecvs( DetailedTask* task,
         if (req->toTasks.front()->getTask()->getType() == Task::Output && !oport_->isOutputTimestep() 
             && !oport_->isCheckpointTimestep()) {
           cerrLock.lock();
-          dbg << "Rank-" << d_myworld->myrank() << "   Ignoring non-output-timestep receive for " << *req << std::endl;
+          dbg << "Rank-" << d_myworld->myRank() << "   Ignoring non-output-timestep receive for " << *req << std::endl;
           cerrLock.unlock();
           continue;
         }
         if (dbg_active) {
           cerrLock.lock();
           {
-            dbg << "Rank-" << d_myworld->myrank() << " <-- receiving " << *req << ", ghost type: " << "\""
+            dbg << "Rank-" << d_myworld->myRank() << " <-- receiving " << *req << ", ghost type: " << "\""
                 << Ghost::getGhostTypeName(req->req->gtype) << "\", " << "num req ghost "
                 << Ghost::getGhostTypeName(req->req->gtype) << ": " << req->req->numGhostCells
                 << ", Ghost::direction: " << Ghost::getGhostTypeDir(req->req->gtype)
@@ -664,12 +662,12 @@ MPIScheduler::postMPIRecvs( DetailedTask* task,
         //if(count>0)
         //{
         int from = batch->fromTask->getAssignedResourceIndex();
-        ASSERTRANGE(from, 0, d_myworld->size());
+        ASSERTRANGE(from, 0, d_myworld->nRanks());
         MPI_Request requestid;
 
         if (mpidbg.active()) {
           cerrLock.lock();
-          mpidbg << "Rank-" << d_myworld->myrank() << " Posting recv for message number " << batch->messageTag << " from rank-" << from
+          mpidbg << "Rank-" << d_myworld->myRank() << " Posting recv for message number " << batch->messageTag << " from rank-" << from
                  << ", length: " << count << " (bytes)\n";
           cerrLock.unlock();
         }
@@ -726,20 +724,20 @@ MPIScheduler::processMPIRecvs(int how_much)
         break;
       case WAIT_ONCE :
         coutLock.lock();
-        mpidbg << "Rank-" << d_myworld->myrank() << " Start waiting once (WAIT_ONCE)...\n";
+        mpidbg << "Rank-" << d_myworld->myRank() << " Start waiting once (WAIT_ONCE)...\n";
         coutLock.unlock();
 
       recvs_.waitsome(d_myworld);
 
         coutLock.lock();
-        mpidbg << "Rank-" << d_myworld->myrank() << " Done waiting once (WAIT_ONCE)...\n";
+        mpidbg << "Rank-" << d_myworld->myRank() << " Done waiting once (WAIT_ONCE)...\n";
         coutLock.unlock();
         break;
       case WAIT_ALL :
         // This will allow some receives to be "handled" by their
         // AfterCommincationHandler while waiting for others.
         coutLock.lock();
-        mpidbg << "Rank-" << d_myworld->myrank() << "  Start waiting (WAIT_ALL)...\n";
+        mpidbg << "Rank-" << d_myworld->myRank() << "  Start waiting (WAIT_ALL)...\n";
         coutLock.unlock();
 
       while( (recvs_.numRequests() > 0)) {
@@ -748,7 +746,7 @@ MPIScheduler::processMPIRecvs(int how_much)
       }
 
         coutLock.lock();
-        mpidbg << "Rank-" << d_myworld->myrank() << "  Done waiting (WAIT_ALL)...\n";
+        mpidbg << "Rank-" << d_myworld->myRank() << "  Done waiting (WAIT_ALL)...\n";
         coutLock.unlock();
         break;
     } // end switch
@@ -779,7 +777,7 @@ MPIScheduler::execute(int tgnum     /*=0*/,
   DetailedTasks* dts = tg->getDetailedTasks();
 
   if(dts == 0){
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       cerrLock.lock();
       std::cerr << "MPIScheduler skipping execute, no tasks\n";
       cerrLock.unlock();
@@ -803,7 +801,7 @@ MPIScheduler::execute(int tgnum     /*=0*/,
     //emitTime("time since last execute");
   }
 
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
   makeTaskGraphDoc(dts, me);
 
   //if(timeout.active())
@@ -861,7 +859,7 @@ MPIScheduler::execute(int tgnum     /*=0*/,
     numTasksDone++;
 
     if (taskorder.active()) {
-      taskorder << d_myworld->myrank() << " Running task static order: " << task->getStaticOrder() << " , scheduled order: "
+      taskorder << d_myworld->myRank() << " Running task static order: " << task->getStaticOrder() << " , scheduled order: "
                 << numTasksDone << std::endl;
     }
 
@@ -881,7 +879,7 @@ MPIScheduler::execute(int tgnum     /*=0*/,
 
       //  output to help application developers
       if (taskdbg.active()) {
-        taskdbg << d_myworld->myrank() << " Completed task:  \t";
+        taskdbg << d_myworld->myRank() << " Completed task:  \t";
         printTask(taskdbg, task);
         taskdbg << '\n';
         printTaskLevels(d_myworld, taskLevel_dbg, task);
@@ -982,7 +980,7 @@ MPIScheduler::outputTimingStats(const char* label)
   int numCells = 0, numParticles = 0;
   OnDemandDataWarehouseP dw = d_dws[d_dws.size() - 1];
   const GridP grid(const_cast<Grid*>(dw->getGrid()));
-  const PatchSubset* myPatches = getLoadBalancer()->getPerProcessorPatchSet(grid)->getSubset(d_myworld->myrank());
+  const PatchSubset* myPatches = getLoadBalancer()->getPerProcessorPatchSet(grid)->getSubset(d_myworld->myRank());
   for (int p = 0; p < myPatches->size(); p++) {
     const Patch* patch = myPatches->get(p);
     IntVector range = patch->getExtraCellHighIndex() - patch->getExtraCellLowIndex();
@@ -1011,7 +1009,7 @@ MPIScheduler::outputTimingStats(const char* label)
 
   double total = 0, avgTotal = 0, maxTotal = 0;
   for (int i = 0; i < (int)d_totaltimes.size(); i++) {
-    d_avgtimes[i] = d_totaltimes[i] / d_myworld->size();
+    d_avgtimes[i] = d_totaltimes[i] / d_myworld->nRanks();
     if (strcmp(d_labels[i], "Total task time") == 0) {
       avgTask = d_avgtimes[i];
       maxTask = d_maxtimes[i];
@@ -1040,7 +1038,7 @@ MPIScheduler::outputTimingStats(const char* label)
   files.push_back(&timingStats);
   data.push_back(&d_times);
 
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
 
   if (me == 0) {
     files.push_back(&avgStats);
@@ -1085,7 +1083,7 @@ MPIScheduler::outputTimingStats(const char* label)
     if (++count % 10 == 0) {
       std::ofstream fout;
       char filename[100];
-      sprintf(filename, "exectimes.%d.%d", d_myworld->size(), d_myworld->myrank());
+      sprintf(filename, "exectimes.%d.%d", d_myworld->nRanks(), d_myworld->myRank());
       fout.open(filename);
 
       // Report which timesteps TaskExecTime values have been accumulated over
@@ -1096,7 +1094,7 @@ MPIScheduler::outputTimingStats(const char* label)
            << ")" << std::endl;
 
       for (auto iter = exectimes.begin(); iter != exectimes.end(); iter++) {
-        fout << std::fixed << d_myworld->myrank() << ": TaskExecTime(s): " << iter->second << " Task:" << iter->first << std::endl;
+        fout << std::fixed << d_myworld->myRank() << ": TaskExecTime(s): " << iter->second << " Task:" << iter->first << std::endl;
       }
       fout.close();
       exectimes.clear();
@@ -1109,20 +1107,20 @@ MPIScheduler::outputTimingStats(const char* label)
     // only output the exec times every 10 timesteps
     if (++count % 10 == 0) {
 
-      if (d_myworld->myrank() == 0 || d_myworld->myrank() == d_myworld->size() / 2 || d_myworld->myrank() == d_myworld->size() - 1) {
+      if (d_myworld->myRank() == 0 || d_myworld->myRank() == d_myworld->nRanks() / 2 || d_myworld->myRank() == d_myworld->nRanks() - 1) {
 
         std::ofstream wout;
         char fname[100];
-        sprintf(fname, "waittimes.%d.%d", d_myworld->size(), d_myworld->myrank());
+        sprintf(fname, "waittimes.%d.%d", d_myworld->nRanks(), d_myworld->myRank());
         wout.open(fname);
 
         for (auto iter = waittimes.begin(); iter != waittimes.end(); iter++) {
-          wout << std::fixed << d_myworld->myrank() << ":   TaskWaitTime(TO): " << iter->second << " Task:" << iter->first << std::endl;
+          wout << std::fixed << d_myworld->myRank() << ":   TaskWaitTime(TO): " << iter->second << " Task:" << iter->first << std::endl;
         }
 
         for (auto iter = DependencyBatch::waittimes.begin(); iter != DependencyBatch::waittimes.end();
              iter++) {
-          wout << std::fixed << d_myworld->myrank() << ": TaskWaitTime(FROM): " << iter->second << " Task:" << iter->first << std::endl;
+          wout << std::fixed << d_myworld->myRank() << ": TaskWaitTime(FROM): " << iter->second << " Task:" << iter->first << std::endl;
         }
         wout.close();
       }

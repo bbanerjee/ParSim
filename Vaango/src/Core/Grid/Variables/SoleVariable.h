@@ -123,7 +123,7 @@ WARNING
   {
     static TypeDescription* td;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::SoleVariable,
+      td = scinew TypeDescription(TypeDescription::Type::SoleVariable,
                                   "SoleVariable", &maker,
                                   fun_getTypeDescription((int*)0));
     }

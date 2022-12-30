@@ -445,7 +445,7 @@ DataArchive::queryVariables( FILE* fp,
       if( !td ){
         static TypeDescription* unknown_type = 0;
         if( !unknown_type ) {
-          unknown_type = scinew TypeDescription( TypeDescription::Unknown, "-- unknown type --", false, MPI_Datatype(-1) );
+          unknown_type = scinew TypeDescription( TypeDescription::Type::Unknown, "-- unknown type --", false, MPI_Datatype(-1) );
         }
         td = unknown_type;
       }
@@ -526,7 +526,7 @@ DataArchive::query( Variable& var,
   const TypeDescription* td = var.virtualGetTypeDescription();
   ASSERT(td->getName() == varinfo.type);
   
-  if (td->getType() == TypeDescription::ParticleVariable) {
+  if (td->getType() == TypeDescription::Type::ParticleVariable) {
     if(dfi->numParticles == -1)
       throw InternalError("DataArchive::query:Cannot get numParticles",
                           __FILE__, __LINE__);
@@ -552,7 +552,7 @@ DataArchive::query( Variable& var,
     (static_cast<ParticleVariableBase*>(&var))->allocate(psubset);
 //      (dynamic_cast<ParticleVariableBase*>(&var))->allocate(psubset);
   }
-  else if (td->getType() != TypeDescription::ReductionVariable) {
+  else if (td->getType() != TypeDescription::Type::ReductionVariable) {
     var.allocate(patch, varinfo.boundaryLayer);
   }
   
@@ -881,7 +881,7 @@ DataArchive::reduceUda_ReadUda( const ProcessorGroup * pg,
     // If this proc does not own this patch
     // then ignore the variable 
     int proc = lb->getPatchwiseProcessorAssignment(patch);
-    if ( proc != pg->myrank() ) {
+    if ( proc != pg->myRank() ) {
       continue;
     }
 

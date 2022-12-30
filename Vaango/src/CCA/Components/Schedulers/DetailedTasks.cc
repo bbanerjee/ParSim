@@ -146,9 +146,9 @@ void DetailedTasks::assignMessageTags(int me)
   for (int i = 0; i < (int)batches_.size(); i++) {
     DependencyBatch* batch = batches_[i];
     int from = batch->fromTask->getAssignedResourceIndex();
-    ASSERTRANGE(from, 0, d_myworld->size());
+    ASSERTRANGE(from, 0, d_myworld->nRanks());
     int to = batch->to;
-    ASSERTRANGE(to, 0, d_myworld->size());
+    ASSERTRANGE(to, 0, d_myworld->nRanks());
 
     if (from == me || to == me) {
       // Easier to go in reverse order now, instead of reinitializing
@@ -192,8 +192,8 @@ DetailedTasks::makeDWKeyDatabase()
       for (int m = 0; m < matls->size(); m++) {
         int matl = matls->get(m);
         // if variables saved on levelDB
-        if (comp->var->typeDescription()->getType() == TypeDescription::ReductionVariable ||
-            comp->var->typeDescription()->getType() == TypeDescription::SoleVariable) {
+        if (comp->var->typeDescription()->getType() == TypeDescription::Type::ReductionVariable ||
+            comp->var->typeDescription()->getType() == TypeDescription::Type::SoleVariable) {
           levelKeyDB.insert(comp->var, matl, comp->reductionLevel);
         }
         else { // if variables saved on varDB
@@ -229,7 +229,7 @@ DetailedTasks::computeLocalTasks(int me)
   for (int i = 0; i < (int)tasks_.size(); i++) {
     DetailedTask* task = tasks_[i];
 
-    ASSERTRANGE(task->getAssignedResourceIndex(), 0, d_myworld->size());
+    ASSERTRANGE(task->getAssignedResourceIndex(), 0, d_myworld->nRanks());
     if (task->getAssignedResourceIndex() == me || task->getTask()->getType() == Task::Reduction) {
       localtasks_.push_back(task);
 
@@ -394,7 +394,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
 
     //scrubout << "\t Required variable " << req << " type = " << type << " " <<  __FILE__ << ":" << __LINE__ << std::endl;
 
-    if (type != TypeDescription::ReductionVariable && type != TypeDescription::SoleVariable) {
+    if (type != TypeDescription::Type::ReductionVariable && type != TypeDescription::Type::SoleVariable) {
       int dw = req->mapDataWarehouse();
 
       //scrubout << "\t\t Step 1" << " dw = " << dw << std::endl;
@@ -493,7 +493,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
       constHandle<PatchSubset> patches = mod->getPatchesUnderDomain(getPatches());
       constHandle<MaterialSubset> matls = mod->getMaterialsUnderDomain(getMaterials());
       TypeDescription::Type type = mod->var->typeDescription()->getType();
-      if (type != TypeDescription::ReductionVariable && type != TypeDescription::SoleVariable) {
+      if (type != TypeDescription::Type::ReductionVariable && type != TypeDescription::Type::SoleVariable) {
         for (int i = 0; i < patches->size(); i++) {
           const Patch* patch = patches->get(i);
           for (int m = 0; m < matls->size(); m++) {
@@ -512,7 +512,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
   // Set the scrub count for each of the computes variables
   for (const Task::Dependency* comp = task->getComputes(); comp != 0; comp = comp->next) {
     TypeDescription::Type type = comp->var->typeDescription()->getType();
-    if (type != TypeDescription::ReductionVariable && type != TypeDescription::SoleVariable) {
+    if (type != TypeDescription::Type::ReductionVariable && type != TypeDescription::Type::SoleVariable) {
       int whichdw = comp->whichdw;
       int dw = comp->mapDataWarehouse();
       DataWarehouse::ScrubMode scrubmode = dws[dw]->getScrubMode();
@@ -624,7 +624,7 @@ void DetailedTasks::createScrubCounts()
       constHandle<MaterialSubset> matls = req->getMaterialsUnderDomain(dtask->getMaterials());
       int whichdw = req->whichdw;
       TypeDescription::Type type = req->var->typeDescription()->getType();
-      if (type != TypeDescription::ReductionVariable) {
+      if (type != TypeDescription::Type::ReductionVariable) {
         for (int i = 0; i < patches->size(); i++) {
           const Patch* patch = patches->get(i);
           Patch::selectType neighbors;
@@ -645,7 +645,7 @@ void DetailedTasks::createScrubCounts()
       constHandle<MaterialSubset> matls = req->getMaterialsUnderDomain(dtask->getMaterials());
       int whichdw = req->whichdw;
       TypeDescription::Type type = req->var->typeDescription()->getType();
-      if (type != TypeDescription::ReductionVariable) {
+      if (type != TypeDescription::Type::ReductionVariable) {
         for (int i = 0; i < patches->size(); i++) {
           const Patch* patch = patches->get(i);
           for (int m = 0; m < matls->size(); m++) {
@@ -755,12 +755,12 @@ DetailedDep* DetailedTasks::findMatchingDetailedDep(DependencyBatch* batch,
             //keep searching in case there is a better dep to combine with
           }
         } else if (dbg.active()) {
-          dbg << d_myworld->myrank() << "            Ignoring: " << dep->low << " " << dep->high << ", fromPatch = ";
+          dbg << d_myworld->myRank() << "            Ignoring: " << dep->low << " " << dep->high << ", fromPatch = ";
           if (fromPatch)
             dbg << fromPatch->getID() << '\n';
           else
             dbg << "NULL\n";
-          dbg << d_myworld->myrank() << " TP: " << totalLow << " " << totalHigh << endl;
+          dbg << d_myworld->myRank() << " TP: " << totalLow << " " << totalHigh << endl;
         }
       } else {
         if (extraComm) {
@@ -807,11 +807,11 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
   if (dbg.active()) {
     cerrLock.lock();
     {
-      dbg << d_myworld->myrank() << "          " << *to << " depends on " << *from << "\n";
+      dbg << d_myworld->myRank() << "          " << *to << " depends on " << *from << "\n";
       if (comp)
-        dbg << d_myworld->myrank() << "            From comp " << *comp;
+        dbg << d_myworld->myRank() << "            From comp " << *comp;
       else
-        dbg << d_myworld->myrank() << "            From OldDW ";
+        dbg << d_myworld->myRank() << "            From OldDW ";
       dbg << " to req " << *req << '\n';
     }
     cerrLock.unlock();
@@ -821,18 +821,18 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
   int fromresource = from->getAssignedResourceIndex();
 
   // if neither task talks to this processor, return
-  if (fromresource != d_myworld->myrank() && toresource != d_myworld->myrank()) {
+  if (fromresource != d_myworld->myRank() && toresource != d_myworld->myRank()) {
     return;
   }
 
-  if ((toresource == d_myworld->myrank() || (req->patches_dom != Task::ThisLevel && fromresource == d_myworld->myrank()))
+  if ((toresource == d_myworld->myRank() || (req->patches_dom != Task::ThisLevel && fromresource == d_myworld->myRank()))
       && fromPatch && !req->var->typeDescription()->isReductionVariable()) {
     // add scrub counts for local tasks, and not for non-data deps
     addScrubCount(req->var, matl, fromPatch, req->whichdw);
   }
 
   //if the dependency is on the same processor then add an internal dependency
-  if (fromresource == d_myworld->myrank() && fromresource == toresource) {
+  if (fromresource == d_myworld->myRank() && fromresource == toresource) {
     to->addInternalDependency(from, req->var);
     return;
   }
@@ -841,7 +841,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
   ASSERT(!req->var->typeDescription()->isReductionVariable())
 
     // Do not check external deps on SoleVariable
-    if (req->var->typeDescription()->getType() == TypeDescription::SoleVariable) {
+    if (req->var->typeDescription()->getType() == TypeDescription::Type::SoleVariable) {
       return;
     }
 
@@ -869,7 +869,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
 #endif
     ASSERTL2(newRequireBatch);
     if (dbg.active())
-      dbg << d_myworld->myrank() << "          NEW BATCH!\n";
+      dbg << d_myworld->myRank() << "          NEW BATCH!\n";
   } else if (mustConsiderInternalDependencies_) {  // i.e. threaded mode
     if (to->addRequires(batch)) {
       // this is a new requires batch for this task, so add
@@ -877,7 +877,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
       batch->toTasks.push_back(to);
     }
     if (dbg.active())
-      dbg << d_myworld->myrank() << "          USING PREVIOUSLY CREATED BATCH!\n";
+      dbg << d_myworld->myRank() << "          USING PREVIOUSLY CREATED BATCH!\n";
   }
 
   IntVector varRangeLow(INT_MAX, INT_MAX, INT_MAX), varRangeHigh(INT_MIN, INT_MIN, INT_MIN);
@@ -901,7 +901,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
 
     //debugging output
     if (dbg.active()) {
-      dbg << d_myworld->myrank() << "            EXTENDED from " << new_dep->low << " " << new_dep->high << " to "
+      dbg << d_myworld->myRank() << "            EXTENDED from " << new_dep->low << " " << new_dep->high << " to "
           << Min(new_dep->low, matching_dep->low) << " " << Max(new_dep->high, matching_dep->high) << "\n";
       dbg << *req->var << '\n';
       dbg << *new_dep->req->var << '\n';
@@ -929,15 +929,15 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     new_dep->toTasks.splice(new_dep->toTasks.begin(), matching_dep->toTasks);
 
     //erase particle sends/recvs
-    if (req->var->typeDescription()->getType() == TypeDescription::ParticleVariable && req->whichdw == Task::OldDW) {
+    if (req->var->typeDescription()->getType() == TypeDescription::Type::ParticleVariable && req->whichdw == Task::OldDW) {
       PSPatchMatlGhostRange pmg(fromPatch, matl, matching_dep->low, matching_dep->high, (int)cond);
 
       if (req->var->getName() == "p.x")
-        dbg << d_myworld->myrank() << " erasing particles from " << fromresource << " to " << toresource << " var " << *req->var
+        dbg << d_myworld->myRank() << " erasing particles from " << fromresource << " to " << toresource << " var " << *req->var
             << " on patch " << fromPatch->getID() << " matl " << matl << " range " << matching_dep->low << " " << matching_dep->high
             << " cond " << cond << " dw " << req->mapDataWarehouse() << endl;
 
-      if (fromresource == d_myworld->myrank()) {
+      if (fromresource == d_myworld->myRank()) {
         std::set<PSPatchMatlGhostRange>::iterator iter = particleSends_[toresource].find(pmg);
         ASSERT(iter!=particleSends_[toresource].end());
         //subtract one from the count
@@ -947,7 +947,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
           particleSends_[toresource].erase(iter);
           //particleSends_[toresource].erase(pmg);
         }
-      } else if (toresource == d_myworld->myrank()) {
+      } else if (toresource == d_myworld->myRank()) {
         std::set<PSPatchMatlGhostRange>::iterator iter = particleRecvs_[fromresource].find(pmg);
         ASSERT(iter!=particleRecvs_[fromresource].end());
         //subtract one from the count
@@ -996,10 +996,10 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
 
   //add communication for particle data
   // these are to post all the particle quantities up front - sort them in TG::createDetailedDepenedencies
-  if (req->var->typeDescription()->getType() == TypeDescription::ParticleVariable && req->whichdw == Task::OldDW) {
+  if (req->var->typeDescription()->getType() == TypeDescription::Type::ParticleVariable && req->whichdw == Task::OldDW) {
     PSPatchMatlGhostRange pmg = PSPatchMatlGhostRange(fromPatch, matl, new_dep->low, new_dep->high, (int)cond, 1);
 
-    if (fromresource == d_myworld->myrank()) {
+    if (fromresource == d_myworld->myRank()) {
       std::set<PSPatchMatlGhostRange>::iterator iter = particleSends_[toresource].find(pmg);
       if (iter == particleSends_[toresource].end())  //if does not exist
       {
@@ -1009,7 +1009,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
         //increment count
         iter->count_++;
       }
-    } else if (toresource == d_myworld->myrank()) {
+    } else if (toresource == d_myworld->myRank()) {
       std::set<PSPatchMatlGhostRange>::iterator iter = particleRecvs_[fromresource].find(pmg);
       if (iter == particleRecvs_[fromresource].end()) {
         //add to the recvs list
@@ -1021,13 +1021,13 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
 
     }
     if (req->var->getName() == "p.x")
-      dbg << d_myworld->myrank() << " scheduling particles from " << fromresource << " to " << toresource << " on patch "
+      dbg << d_myworld->myRank() << " scheduling particles from " << fromresource << " to " << toresource << " on patch "
           << fromPatch->getID() << " matl " << matl << " range " << low << " " << high << " cond " << cond << " dw "
           << req->mapDataWarehouse() << endl;
   }
 
   if (dbg.active()) {
-    dbg << d_myworld->myrank() << "            ADDED " << low << " " << high << ", fromPatch = ";
+    dbg << d_myworld->myRank() << "            ADDED " << low << " " << high << ", fromPatch = ";
     if (fromPatch)
       dbg << fromPatch->getID() << '\n';
     else
@@ -1042,7 +1042,7 @@ DetailedTask* DetailedTasks::getOldDWSendTask(int proc)
   //verify the map entry has been created
   if(sendoldmap.find(proc)==sendoldmap.end())
   {
-    std::cout << d_myworld->myrank() << " Error trying to get oldDWSendTask for processor: " << proc << " but it does not exist\n";
+    std::cout << d_myworld->myRank() << " Error trying to get oldDWSendTask for processor: " << proc << " but it does not exist\n";
     throw InternalError("oldDWSendTask does not exist",__FILE__,__LINE__);
   }
 #endif 
@@ -1523,7 +1523,7 @@ void DependencyBatch::received(const ProcessorGroup * pg)
   }
   for (std::list<DetailedTask*>::iterator iter = toTasks.begin(); iter != toTasks.end(); iter++) {
     // if the count is 0, the task will add itself to the external ready queue
-    //std::cout << pg->myrank() << "  Dec: " << *fromTask << " for " << *(*iter) << endl;
+    //std::cout << pg->myRank() << "  Dec: " << *fromTask << " for " << *(*iter) << endl;
     (*iter)->decrementExternalDepCount();
     //std::cout << Parallel::getMPIRank() << "   task " << **(iter) << " received a message, remaining count " << (*iter)->getExternalDepCount() << endl;
     (*iter)->checkExternalDepCount();
@@ -1542,7 +1542,7 @@ void DependencyBatch::received(const ProcessorGroup * pg)
       for (std::set<int>::iterator iter = receiveListeners_.begin();
            iter != receiveListeners_.end(); ++iter) {
         // send WakeUp messages to threads on the same processor
-        MPI_Send(0, 0, MPI_INT, pg->myrank(), *iter, pg->getComm());
+        MPI_Send(0, 0, MPI_INT, pg->myRank(), *iter, pg->getComm());
       }
       receiveListeners_.clear();
     }
@@ -1575,7 +1575,7 @@ void DetailedTasks::emitEdges(ProblemSpecP edgesElement,
                               int rank)
 {
   for (int i = 0; i < (int)tasks_.size(); i++) {
-    ASSERTRANGE(tasks_[i]->getAssignedResourceIndex(), 0, d_myworld->size());
+    ASSERTRANGE(tasks_[i]->getAssignedResourceIndex(), 0, d_myworld->nRanks());
     if (tasks_[i]->getAssignedResourceIndex() == rank) {
       tasks_[i]->emitEdges(edgesElement);
     }

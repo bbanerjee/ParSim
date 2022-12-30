@@ -147,7 +147,7 @@ fun_getTypeDescription(MetalIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "MetalIntVar", true,
                                 &makeMPI_MetalIntVar);
   }
@@ -170,7 +170,7 @@ fun_getTypeDescription(DStressDMetalIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "DStressDMetalIntVar", true,
                                 &makeMPI_DStressDMetalIntVar);
   }
@@ -193,7 +193,7 @@ fun_getTypeDescription(ArenaIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "ArenaIntVar", true,
                                 &makeMPI_ArenaIntVar);
   }
@@ -216,7 +216,7 @@ fun_getTypeDescription(BorjaIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "BorjaIntVar", true,
                                 &makeMPI_BorjaIntVar);
   }
@@ -239,7 +239,7 @@ fun_getTypeDescription(SoilBrannonIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "SoilBrannonIntVar", true,
                                 &makeMPI_SoilBrannonIntVar);
   }
@@ -262,7 +262,7 @@ fun_getTypeDescription(TabularCapIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "TabularCapIntVar", true,
                                 &makeMPI_TabularCapIntVar);
   }

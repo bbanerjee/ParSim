@@ -1362,18 +1362,18 @@ Patch::VariableBasis Patch::translateTypeToBasis(Uintah::TypeDescription::Type t
                                                  bool mustExist)
 {
   switch(type){
-  case TypeDescription::CCVariable:
+  case TypeDescription::Type::CCVariable:
     return CellBased;
-  case TypeDescription::NCVariable:
+  case TypeDescription::Type::NCVariable:
     return NodeBased;
-  case TypeDescription::SFCXVariable:
+  case TypeDescription::Type::SFCXVariable:
     return XFaceBased;
-  case TypeDescription::SFCYVariable:
+  case TypeDescription::Type::SFCYVariable:
     return YFaceBased;
-  case TypeDescription::SFCZVariable:
+  case TypeDescription::Type::SFCZVariable:
     return ZFaceBased;
-  case TypeDescription::ParticleVariable:
-  case TypeDescription::PerPatch:
+  case TypeDescription::Type::ParticleVariable:
+  case TypeDescription::Type::PerPatch:
     return CellBased;
   default:
     if (mustExist)

@@ -112,7 +112,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::NeighborBondEnergy, "NeighborBondEnergy", true,
+      td = scinew TypeDescription(TypeDescription::Type::NeighborBondEnergy, "NeighborBondEnergy", true,
                                   &makeMPI_NeighborBondEnergy);
     }
     return td;

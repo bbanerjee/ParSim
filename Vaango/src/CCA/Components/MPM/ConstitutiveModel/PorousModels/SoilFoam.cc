@@ -641,7 +641,7 @@ const TypeDescription* fun_getTypeDescription(SoilFoam::CMData*)
 {
    static TypeDescription* td = 0;
    if(!td){
-      td = scinew TypeDescription(TypeDescription::Other, "SoilFoam::CMData", true, &makeMPI_CMData);
+      td = scinew TypeDescription(TypeDescription::Type::Other, "SoilFoam::CMData", true, &makeMPI_CMData);
    }
    return td;   
 }

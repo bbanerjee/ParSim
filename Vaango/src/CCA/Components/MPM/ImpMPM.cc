@@ -534,7 +534,7 @@ ImpMPM::printParticleCount(const ProcessorGroup* pg,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     sumlong_vartype pcount;
     new_dw->get(pcount, lb->partCountLabel);
     std::cerr << "Created " << (long) pcount << " total particles\n";
@@ -550,7 +550,7 @@ ImpMPM::switchInitialize(const LevelP& level, SchedulerP& sched)
 
   if (flags->d_useLoadCurves) {
     // Schedule the initialization of HeatFlux BCs per particle
-    if(UintahParallelComponent::d_myworld->myrank() == 0){
+    if(UintahParallelComponent::d_myworld->myRank() == 0){
       std::cout << " \n--------------------------------------------------------------"<< endl;
       std::cout << " ImpMPM: the heat flux BC cannot be applied on the timestep" << endl; 
       std::cout << " immediately after a component switch.  The computes/requires " << endl;
@@ -2633,7 +2633,7 @@ ImpMPM::iterate(const ProcessorGroup*,
     double frac_Norm  = dispIncNorm/(dispIncNormMax + 1.e-100);
     double frac_QNorm = dispIncQNorm/(dispIncQNorm0 + 1.e-100);
 
-    if (UintahParallelComponent::d_myworld->myrank() == 0) {
+    if (UintahParallelComponent::d_myworld->myRank() == 0) {
       std::cerr << "  dispIncNorm/dispIncNormMax = " << frac_Norm << "\n";
       std::cerr << "  dispIncQNorm/dispIncQNorm0 = "<< frac_QNorm << "\n";
     }
@@ -2652,7 +2652,7 @@ ImpMPM::iterate(const ProcessorGroup*,
          std::isnan(dispIncNorm/dispIncNormMax))
          && dispIncQNorm0!=0.) {
       restart_nan = true;
-      if (UintahParallelComponent::d_myworld->myrank() == 0) {
+      if (UintahParallelComponent::d_myworld->myRank() == 0) {
         std::cerr << "Restarting due to a nan residual\n";
       }
     }
@@ -2661,7 +2661,7 @@ ImpMPM::iterate(const ProcessorGroup*,
     if (dispIncQNorm/(dispIncQNorm0 + 1e-100) < 0. ||
         dispIncNorm/(dispIncNormMax+1e-100) < 0.) {
       restart_neg_residual = true;
-      if (UintahParallelComponent::d_myworld->myrank() == 0) {
+      if (UintahParallelComponent::d_myworld->myRank() == 0) {
         std::cerr << "Restarting due to a negative residual\n";
       }
     }
@@ -2669,7 +2669,7 @@ ImpMPM::iterate(const ProcessorGroup*,
     bool restart_num_iters = false;
     if (count > flags->d_maxNumIterations) {
       restart_num_iters = true;
-      if (UintahParallelComponent::d_myworld->myrank() == 0) {
+      if (UintahParallelComponent::d_myworld->myRank() == 0) {
         std::cerr << "Restarting due to exceeding max number of iterations\n";
       }
     }

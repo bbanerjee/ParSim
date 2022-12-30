@@ -273,13 +273,13 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     GridP grid = coarsestLevelwithParticles->getGrid();
     // make per-proc patch set of each level >= level
     patches = scinew PatchSet();
-    patches->createEmptySubsets(pg->size());
+    patches->createEmptySubsets(pg->nRanks());
     
     for (int i = coarsestLevelwithParticles->getIndex(); i < grid->numLevels(); i++) {
       
       const PatchSet* p = lb->getPerProcessorPatchSet(grid->getLevel(i));
       
-      for (int proc = 0; proc < pg->size(); proc++) {
+      for (int proc = 0; proc < pg->nRanks(); proc++) {
         for (int j = 0; j < p->getSubset(proc)->size(); j++) {
           const Patch* patch = p->getSubset(proc)->get(j);
           patches->getSubset(lb->getPatchwiseProcessorAssignment(patch))->add(patch);
@@ -369,13 +369,13 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     GridP grid = coarsestLevelwithParticles->getGrid();
     // make per-proc patch set of each level >= level
     patches = scinew PatchSet();
-    patches->createEmptySubsets(pg->size());
+    patches->createEmptySubsets(pg->nRanks());
    
     for (int i = coarsestLevelwithParticles->getIndex(); i < grid->numLevels(); i++) {
       
       const PatchSet* p = lb->getPerProcessorPatchSet(grid->getLevel(i));
       
-      for (int proc = 0; proc < pg->size(); proc++) {
+      for (int proc = 0; proc < pg->nRanks(); proc++) {
         for (int j = 0; j < p->getSubset(proc)->size(); j++) {
           const Patch* patch = p->getSubset(proc)->get(j);
           patches->getSubset(lb->getPatchwiseProcessorAssignment(patch))->add(patch);
@@ -506,7 +506,7 @@ void MPIScatterRecords::addNeighbor(LoadBalancer* lb,
 {
   neighbor = neighbor->getRealPatch();
   int toProc = lb->getPatchwiseProcessorAssignment(neighbor);
-  ASSERTRANGE(toProc, 0, pg->size());
+  ASSERTRANGE(toProc, 0, pg->nRanks());
   
   procmaptype::iterator iter = procs.find(toProc);
   
@@ -570,7 +570,7 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
   
   int numMatls = (int)reloc_old_labels.size();
 
-  int me = pg->myrank();
+  int me = pg->myRank();
   for(procmaptype::iterator iter = scatter_records->procs.begin();
       iter != scatter_records->procs.end(); iter++){
     
@@ -694,9 +694,9 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
     MPI_Request rid;
     int to=iter->first;
     
-    mpidbg << pg->myrank() << " Send relocate msg size " << sendsize << " tag " << RELOCATE_TAG << " to " << to << endl;
+    mpidbg << pg->myRank() << " Send relocate msg size " << sendsize << " tag " << RELOCATE_TAG << " to " << to << endl;
     MPI_Isend(buf, sendsize, MPI_PACKED, to, RELOCATE_TAG, pg->getComm(), &rid);
-    mpidbg << pg->myrank() << " done Sending relocate msg size " << sendsize << " tag " << RELOCATE_TAG << " to " << to << endl;
+    mpidbg << pg->myRank() << " done Sending relocate msg size " << sendsize << " tag " << RELOCATE_TAG << " to " << to << endl;
     
     sendbuffers.push_back(buf);
     sendrequests.push_back(rid);
@@ -727,10 +727,10 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
     
     char* buf = scinew char[size];
     recvbuffers[idx]=buf;
-    mpidbg << pg->myrank() << " Recv relocate msg size " << size << " tag " << RELOCATE_TAG << " from " << iter->first << endl;
+    mpidbg << pg->myRank() << " Recv relocate msg size " << size << " tag " << RELOCATE_TAG << " from " << iter->first << endl;
     MPI_Recv(recvbuffers[idx], size, MPI_PACKED, iter->first, RELOCATE_TAG, pg->getComm(), &status);
 
-    mpidbg << pg->myrank() << " Done Recving relocate msg size " << size << " tag " << RELOCATE_TAG << " from " << iter->first << endl;
+    mpidbg << pg->myRank() << " Done Recving relocate msg size " << size << " tag " << RELOCATE_TAG << " from " << iter->first << endl;
     // Partially unpack
     int position=0;
     int numrecords;
@@ -921,7 +921,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
   if (patches->size() != 0)
   {
     printTask(patches, patches->get(0),coutdbg,"Relocate::relocateParticles");
-    int me = pg->myrank();
+    int me = pg->myRank();
 
     // First pass: For each of the patches we own, look for particles
     // that left the patch.  Create a scatter record for each one.
@@ -1073,7 +1073,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
     }  // patches loop
     
     //__________________________________
-    if (pg->size() > 1) {
+    if (pg->nRanks() > 1) {
       // send the particles where they need to go
       exchangeParticles(pg, patches, matls, old_dw, new_dw, &scatter_records, total_reloc);
     }
@@ -1112,7 +1112,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
           const Patch* fromPatch=neighborPatches[i];
 
           int fromProc = lb->getPatchwiseProcessorAssignment(fromPatch->getRealPatch());
-          ASSERTRANGE(fromProc, 0, pg->size());
+          ASSERTRANGE(fromProc, 0, pg->nRanks());
           
           if(fromProc == me){
             ScatterRecord* record = scatter_records.findRecord(fromPatch, toPatch, matl, curLevelIndex);
@@ -1313,13 +1313,13 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
     int alltotal[3] = {total_reloc[0], total_reloc[1], total_reloc[2] };
     
     // don't reduce if number of patches on this level is < num procs.  Will wait forever in reduce.
-    //if (!lb->isDynamic() && level->getGrid()->numLevels() == 1 && level->numPatches() >= pg->size() && pg->size() > 1) {
-    if (pg->size() > 1) {
-      mpidbg << pg->myrank() << " Relocate reduce\n";
+    //if (!lb->isDynamic() && level->getGrid()->numLevels() == 1 && level->numPatches() >= pg->nRanks() && pg->nRanks() > 1) {
+    if (pg->nRanks() > 1) {
+      mpidbg << pg->myRank() << " Relocate reduce\n";
       MPI_Reduce(total_reloc, &alltotal, 3, MPI_INT, MPI_SUM, 0, pg->getComm());
-      mpidbg << pg->myrank() << " Done Relocate reduce\n";
+      mpidbg << pg->myRank() << " Done Relocate reduce\n";
     }
-    if(pg->myrank() == 0){
+    if(pg->myRank() == 0){
       ASSERTEQ(alltotal[1], alltotal[2]);
       if(alltotal[0] != 0){
         cerr << "Particles crossing patch boundaries: " << alltotal[0] << ", crossing processor boundaries: " << alltotal[1] << '\n';
@@ -1328,7 +1328,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
   }
 #endif
   
-  if (pg->size() > 1){
+  if (pg->nRanks() > 1){
     finalizeCommunication();
   }
   
@@ -1364,7 +1364,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
   int total_reloc[3] = {0,0,0};
   if (patches->size() != 0) {
     printTask(patches, patches->get(0),coutdbg,"Relocate::relocateParticles");
-    int me = pg->myrank();
+    int me = pg->myRank();
 
     // First pass: For each of the patches we own, look for particles
     // that left the patch.  Create a scatter record for each of the patches
@@ -1533,7 +1533,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
     }  // patches loop
 
     //__________________________________
-    if (pg->size() > 1) {
+    if (pg->nRanks() > 1) {
       //proc0cout << "Exchanging particles " << __FILE__ << __LINE__ << std::endl;
       // send the particles where they need to go
       exchangeParticles(pg, patches, matls, old_dw, new_dw,
@@ -1577,7 +1577,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           const Patch* fromPatch=neighborPatches[i];
 
           int fromProc = lb->getPatchwiseProcessorAssignment(fromPatch->getRealPatch());
-          ASSERTRANGE(fromProc, 0, pg->size());
+          ASSERTRANGE(fromProc, 0, pg->nRanks());
           
           if(fromProc == me){
             ScatterRecord* record = scatter_records.findRecord(fromPatch,
@@ -1817,13 +1817,13 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
     int alltotal[3] = {total_reloc[0], total_reloc[1], total_reloc[2] };
 
     // don't reduce if number of patches on this level is < num procs.  Will wait forever in reduce.
-    //if (!lb->isDynamic() && level->getGrid()->numLevels() == 1 && level->numPatches() >= pg->size() && pg->size() > 1) {
-    if (pg->size() > 1) {
-      mpidbg << pg->myrank() << " Relocate reduce\n";
+    //if (!lb->isDynamic() && level->getGrid()->numLevels() == 1 && level->numPatches() >= pg->nRanks() && pg->nRanks() > 1) {
+    if (pg->nRanks() > 1) {
+      mpidbg << pg->myRank() << " Relocate reduce\n";
       MPI_Reduce(total_reloc, &alltotal, 3, MPI_INT, MPI_SUM, 0, pg->getComm());
-      mpidbg << pg->myrank() << " Done Relocate reduce\n";
+      mpidbg << pg->myRank() << " Done Relocate reduce\n";
     }
-    if(pg->myrank() == 0){
+    if(pg->myRank() == 0){
       ASSERTEQ(alltotal[1], alltotal[2]);
       if(alltotal[0] != 0){
         cerr << "Particles crossing patch boundaries: " << alltotal[0] << ", crossing processor boundaries: " << alltotal[1] << '\n';
@@ -1832,7 +1832,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
   }
 #endif
 
-  if (pg->size() > 1){
+  if (pg->nRanks() > 1){
     finalizeCommunication();
   }
 

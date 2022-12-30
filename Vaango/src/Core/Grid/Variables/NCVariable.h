@@ -121,7 +121,7 @@ WARNING
   NCVariable<T>::getTypeDescription()
   {
     if(!td){
-      td = scinew TypeDescription(TypeDescription::NCVariable,
+      td = scinew TypeDescription(TypeDescription::Type::NCVariable,
                                   "NCVariable", &maker,
                                   fun_getTypeDescription((T*)0));
     }

@@ -1288,7 +1288,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::Other,
+      td = scinew TypeDescription(TypeDescription::Type::Other,
                                   "ViscoTransIsoHyperImplicit::StateData", true,
                                   &makeMPI_CMData);
     }

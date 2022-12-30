@@ -304,7 +304,7 @@ Peridynamics::scheduleInitialize(const LevelP& level,
                                  SchedulerP& sched)
 {
   cout_doing << "Doing schedule initialize: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   //--------------------------------------------------------------------------
@@ -364,7 +364,7 @@ Peridynamics::scheduleInitialize(const LevelP& level,
   // After the basic quantities have been initialized, find the neighbor information
   // for the particles
   cout_doing << "Doing schedule compute neighbors/family: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* neighborFinderTask = scinew Task("Peridynamics::findNeighborsInHorizon",
@@ -447,7 +447,7 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
                                  DataWarehouse* new_dw)
 {
   cout_doing << "Doing actually initialize: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
   particleIndex totalParticles=0;
   for(int p=0;p<patches->size();p++){
@@ -658,7 +658,7 @@ Peridynamics::findNeighborsInHorizon(const ProcessorGroup*,
                                      DataWarehouse* new_dw)
 {
   cout_doing << "Doing find neighbors in horizon: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   for (int p = 0; p < patches->size(); p++) {
@@ -685,7 +685,7 @@ void
 Peridynamics::restartInitialize()
 {
   cout_doing << "Doing restart initialize: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 }
 
@@ -702,7 +702,7 @@ Peridynamics::scheduleComputeStableTimestep(const LevelP& level,
                                             SchedulerP& sched)
 {
   cout_doing << "Doing schedule compute time step: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   // However, this task needs to do something in the case that Peridynamics
@@ -729,7 +729,7 @@ Peridynamics::actuallyComputeStableTimestep(const ProcessorGroup*,
                                             DataWarehouse* new_dw)
 {
   cout_doing << "Doing actually compute stable time step: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   // Put something here to satisfy the need for a reduction operation in
@@ -749,7 +749,7 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
                                   SchedulerP & sched)
 {
   cout_doing << "Doing schedule time advance: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   const PatchSet* patches = level->eachPatch();
@@ -826,7 +826,7 @@ Peridynamics::scheduleApplyExternalLoads(SchedulerP& sched,
                                          const MaterialSet* matls)
 {
   cout_doing << "Doing schedule apply external loads: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::applyExternalLoads",
@@ -856,7 +856,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
                                  DataWarehouse* new_dw)
 {
   cout_doing << "Doing apply external loads: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   // Get the current time
@@ -988,7 +988,7 @@ Peridynamics::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                                  const MaterialSet* matls)
 {
   cout_doing << "Doing schedule interpolate particle to grid: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew   Task("Peridynamics::interpolateParticlesToGrid",
@@ -1029,7 +1029,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
                                          DataWarehouse* new_dw)
 {
   cout_doing << "Doing interpolate particles to grid: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Matrix3 dummyMatrix(0.0);
@@ -1180,7 +1180,7 @@ Peridynamics::scheduleContactMomentumExchangeAfterInterpolate(SchedulerP& sched,
                                                               const MaterialSet* matls)
 {
   cout_doing << "Doing schedule contact momentum exchage: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
   d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
 }
@@ -1197,7 +1197,7 @@ Peridynamics::scheduleComputeDeformationGradient(SchedulerP& sched,
                                                  const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute deformation gradient: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::computeDeformationGradient",
@@ -1226,7 +1226,7 @@ Peridynamics::computeDeformationGradient(const ProcessorGroup*,
                                          DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute deformation gradient: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   for (int p = 0; p < patches->size(); p++) {
@@ -1251,7 +1251,7 @@ Peridynamics::scheduleComputeStressTensor(SchedulerP& sched,
                                           const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute stress tensor: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::computeStressTensor",
@@ -1285,7 +1285,7 @@ Peridynamics::computeStressTensor(const ProcessorGroup*,
                                   DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute stress tensor: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
@@ -1314,7 +1314,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
                                            const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute internal force: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   //-------------------------------------------
@@ -1494,7 +1494,7 @@ Peridynamics::computeBondInternalForce(const ProcessorGroup*,
                                        DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute bond internal force: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
@@ -1518,7 +1518,7 @@ Peridynamics::computeParticleInternalForce(const ProcessorGroup*,
                                            DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute particle internal force: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
@@ -1626,7 +1626,7 @@ Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
                                                               const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::computeAndIntegrateParticleAcceleration",
@@ -1668,7 +1668,7 @@ Peridynamics::computeAndIntegrateParticleAcceleration(const ProcessorGroup*,
                                                       DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute and integrate acceleration: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;
@@ -1788,7 +1788,7 @@ Peridynamics::scheduleProjectParticleAccelerationToGrid(SchedulerP& sched,
 
 {
   cout_doing << "Doing schedule project particle acceleration to grid: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::projectParticleAccelerationToGrid",
@@ -1820,7 +1820,7 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
                                                 DataWarehouse* new_dw)
 {
   cout_doing << "Doing project particle acceleration to grid: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Matrix3 dummyMatrix(0.0);
@@ -1908,7 +1908,7 @@ Peridynamics::scheduleContactMomentumExchangeAfterIntegration(SchedulerP& sched,
                                                               const MaterialSet* matls)
 {
   cout_doing << "Doing schedule contact momentum exchange after integration: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   d_contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
@@ -1927,7 +1927,7 @@ Peridynamics::scheduleSetGridBoundaryConditions(SchedulerP& sched,
 
 {
   cout_doing << "Doing schedule set grid boundary conditions: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::setGridBoundaryConditions",
@@ -1959,7 +1959,7 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
                                         DataWarehouse* new_dw)
 {
   cout_doing << "Doing set grid boundary conditions: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;            
@@ -2014,7 +2014,7 @@ Peridynamics::scheduleUpdateParticleKinematics(SchedulerP& sched,
 
 {
   cout_doing << "Doing schedule update particle kinematics: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::updateParticleKinematics",
@@ -2056,7 +2056,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
                                        DataWarehouse* new_dw)
 {
   cout_doing << "Doing update particle kinematics: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Matrix3 dummyMatrix(0.0);
@@ -2177,7 +2177,7 @@ Peridynamics::scheduleComputeDamage(SchedulerP& sched,
                                     const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute damage: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::computeDamage",
@@ -2207,7 +2207,7 @@ Peridynamics::computeDamage(const ProcessorGroup*,
                             DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute damage: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   for(int body = 0; body < d_sharedState->getNumPeridynamicsMatls(); body++){
@@ -2233,7 +2233,7 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
 
 {
   cout_doing << "Doing schedule finalize particle state: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::finalizeParticleState",
@@ -2280,7 +2280,7 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
                                     DataWarehouse* new_dw)
 {
   cout_doing << "Doing finalize particle state: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   for (int p=0; p<patches->size(); p++) {

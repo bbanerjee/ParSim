@@ -132,10 +132,10 @@ DESCRIPTION
         MPI_Reduce(&numMessages_,&max_messages,1,MPI_UNSIGNED,MPI_MAX,0,d_myworld->getComm());
         MPI_Reduce(&messageVolume_,&max_volume,1,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
 
-        if(d_myworld->myrank()==0)
+        if(d_myworld->myRank()==0)
         {
-          mpi_stats << "MPIStats: Num Messages (avg): " << total_messages/(float)d_myworld->size() << " (max):" << max_messages << endl;
-          mpi_stats << "MPIStats: Message Volume (avg): " << total_volume/(float)d_myworld->size() << " (max):" << max_volume << endl;
+          mpi_stats << "MPIStats: Num Messages (avg): " << total_messages/(float)d_myworld->nRanks() << " (max):" << max_messages << endl;
+          mpi_stats << "MPIStats: Message Volume (avg): " << total_volume/(float)d_myworld->nRanks() << " (max):" << max_volume << endl;
         }
       }
     }

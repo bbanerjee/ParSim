@@ -165,7 +165,7 @@ MPMPetscSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
                                            const int n8or27)
 {
   //TAU_PROFILE("MPMPetscSolver::createLocalToGlobalMapping", " ", TAU_USER);
-  int numProcessors = d_myworld->size();
+  int numProcessors = d_myworld->nRanks();
   d_numNodes.resize(numProcessors, 0);
   d_startIndex.resize(numProcessors);
   d_totalNodes = 0;
@@ -326,7 +326,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
                                   const map<int,int>& dof_diag)
 {
   //TAU_PROFILE("MPMPetscSolver::createMatrix", " ", TAU_USER);
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
   int numlrows = d_numNodes[me];
   
   int numlcolumns = numlrows;

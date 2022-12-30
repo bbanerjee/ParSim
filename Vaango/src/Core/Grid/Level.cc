@@ -718,8 +718,8 @@ void Level::setBCTypes()
   if (Parallel::isInitialized()) {
     // only sus uses Parallel, but anybody else who uses DataArchive to read data does not
     myworld=Parallel::getRootProcessorGroup();
-    numProcs=myworld->size();
-    rank=myworld->myrank();
+    numProcs=myworld->nRanks();
+    rank=myworld->myRank();
   }
 
   vector<int> displacements(numProcs,0);
@@ -883,11 +883,11 @@ void Level::setBCTypes()
     double avg[3]={0};
     MPI_Reduce(&rtimes,&avg,3,MPI_DOUBLE,MPI_SUM,0,myworld->getComm());
     
-    if(myworld->myrank()==0) {
+    if(myworld->myRank()==0) {
 
       cout << "SetBCType Avg Times: ";
       for(int i=0;i<3;i++){
-        avg[i]/=myworld->size();
+        avg[i]/=myworld->nRanks();
         cout << avg[i] << " ";
       }
       cout << endl;
@@ -896,7 +896,7 @@ void Level::setBCTypes()
     double max[3]={0};
     MPI_Reduce(&rtimes,&max,3,MPI_DOUBLE,MPI_MAX,0,myworld->getComm());
 
-    if(myworld->myrank()==0) {
+    if(myworld->myRank()==0) {
       cout << "SetBCType Max Times: ";
       for(int i=0;i<3;i++){
         cout << max[i] << " ";

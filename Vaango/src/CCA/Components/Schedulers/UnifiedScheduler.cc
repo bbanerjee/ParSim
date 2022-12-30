@@ -114,12 +114,12 @@ UnifiedScheduler::UnifiedScheduler( const ProcessorGroup*   myworld,
 
   if (unified_timeout.active()) {
     char filename[64];
-    sprintf(filename, "timingStats.%d", d_myworld->myrank());
+    sprintf(filename, "timingStats.%d", d_myworld->myRank());
     timingStats.open(filename);
-    if (d_myworld->myrank() == 0) {
-      sprintf(filename, "timingStats.%d.max", d_myworld->size());
+    if (d_myworld->myRank() == 0) {
+      sprintf(filename, "timingStats.%d.max", d_myworld->nRanks());
       maxStats.open(filename);
-      sprintf(filename, "timingStats.%d.avg", d_myworld->size());
+      sprintf(filename, "timingStats.%d.avg", d_myworld->nRanks());
       avgStats.open(filename);
     }
   }
@@ -130,7 +130,6 @@ UnifiedScheduler::UnifiedScheduler( const ProcessorGroup*   myworld,
 
 UnifiedScheduler::~UnifiedScheduler()
 {
-  if (Uintah::Parallel::usingMPI()) {
     for (int i = 0; i < numThreads_; i++) {
       t_worker[i]->d_runmutex.lock();
       t_worker[i]->quit();
@@ -139,11 +138,10 @@ UnifiedScheduler::~UnifiedScheduler()
       t_thread[i]->setCleanupFunction(NULL);
       t_thread[i]->join();
     }
-  }
 
   if (unified_timeout.active()) {
     timingStats.close();
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       maxStats.close();
       avgStats.close();
     }
@@ -210,9 +208,10 @@ UnifiedScheduler::problemSetup( const ProblemSpecP&     prob_spec,
 
   proc0cout << "   Using \"" << taskQueueAlg << "\" task queue priority algorithm" << std::endl;
 
+  bool usingMPI = true;
   numThreads_ = Uintah::Parallel::getNumThreads() - 1;
-  if (numThreads_ < 1 && (Uintah::Parallel::usingMPI() || Uintah::Parallel::usingDevice())) {
-    if (d_myworld->myrank() == 0) {
+  if (numThreads_ < 1 && (usingMPI || Uintah::Parallel::usingDevice())) {
+    if (d_myworld->myRank() == 0) {
       std::cerr << "Error: no thread number specified for Unified Scheduler" << std::endl;
       throw ProblemSetupException(
           "This scheduler requires number of threads to be in the range [2, 64],\n.... please use -nthreads <num>, and -gpu if using GPUs",
@@ -221,13 +220,13 @@ UnifiedScheduler::problemSetup( const ProblemSpecP&     prob_spec,
     }
   }
   else if (numThreads_ > MAX_THREADS) {
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       std::cerr << "Error: Number of threads too large..." << std::endl;
       throw ProblemSetupException("Too many threads. Reduce MAX_THREADS and recompile.", __FILE__, __LINE__);
     }
   }
 
-  if (d_myworld->myrank() == 0) {
+  if (d_myworld->myRank() == 0) {
     std::string plural = (numThreads_ == 1) ? " thread" : " threads";
     std::cout << "   WARNING: Multi-threaded Unified scheduler is EXPERIMENTAL, not all tasks are thread safe yet.\n"
               << "   Creating " << numThreads_ << " additional "
@@ -250,7 +249,7 @@ UnifiedScheduler::problemSetup( const ProblemSpecP&     prob_spec,
   }
 
   if (unified_compactaffinity.active()) {
-    if ( (unified_threaddbg.active()) && (d_myworld->myrank() == 0) ) {
+    if ( (unified_threaddbg.active()) && (d_myworld->myRank() == 0) ) {
       unified_threaddbg << "   Binding main thread (ID "<<  Thread::self()->myid() << ") to core 0\n";
     }
     Thread::self()->set_affinity(0);  // Bind main thread to core 0
@@ -261,7 +260,7 @@ UnifiedScheduler::problemSetup( const ProblemSpecP&     prob_spec,
   for (int i = 0; i < numThreads_; i++) {
     UnifiedSchedulerWorker* worker = scinew UnifiedSchedulerWorker(this, i);
     t_worker[i] = worker;
-    sprintf(name, "Computing Worker %d-%d", Parallel::getRootProcessorGroup()->myrank(), i);
+    sprintf(name, "Computing Worker %d-%d", Parallel::getRootProcessorGroup()->myRank(), i);
     Thread* t = scinew Thread(worker, name);
     t_thread[i] = t;
   }
@@ -291,7 +290,7 @@ UnifiedScheduler::createSubScheduler()
 
     // Bind main execution thread
     if (unified_compactaffinity.active()) {
-      if ( (unified_threaddbg.active()) && (d_myworld->myrank() == 0) ) {
+      if ( (unified_threaddbg.active()) && (d_myworld->myRank() == 0) ) {
         unified_threaddbg << "Binding main subscheduler thread (ID " << Thread::self()->myid() << ") to core 0\n";
       }
       Thread::self()->set_affinity(0);    // bind subscheduler main thread to core 0
@@ -374,19 +373,15 @@ UnifiedScheduler::runTask( DetailedTask*         task,
   // For CPU and postGPU task runs, post MPI sends and call task->done;
   if (event == Task::CPU || event == Task::postGPU) {
 
-    if (Uintah::Parallel::usingMPI()) {
       postMPISends(task, iteration, thread_id);
-    }
 
     task->done(d_dws);  // should this be part of task execution time? - APH 09/16/15
 
     // -------------------------< begin MPI test timing >-------------------------
     double test_start_time = Time::currentSeconds();
 
-    if (Uintah::Parallel::usingMPI()) {
       // This is per thread, no lock needed.
       sends_[thread_id].testsome(d_myworld);
-    }
 
     mpi_info_.totaltestmpi += Time::currentSeconds() - test_start_time;
     // -------------------------< end MPI test timing >-------------------------
@@ -418,7 +413,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
                            int iteration /* = 0 */ )
 {
   // copy data and restart timesteps must be single threaded for now
-  bool isMPICopyDataTS = Uintah::Parallel::usingMPI() && d_sharedState->isCopyDataTimestep();
+  bool isMPICopyDataTS = d_sharedState->isCopyDataTimestep();
   bool runSingleThreaded = isMPICopyDataTS || d_isRestartInitTimestep;
   if (runSingleThreaded) {
     MPIScheduler::execute( tgnum, iteration );
@@ -458,7 +453,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
   }
 
 //  // TODO - determine if this TG output code is even working correctly (APH - 09/16/15)
-//  makeTaskGraphDoc(dts, d_myworld->myrank());
+//  makeTaskGraphDoc(dts, d_myworld->myRank());
 //  if (useInternalDeps() && emit_timings) {
 //    emitTime("taskGraph output");
 //  }
@@ -501,7 +496,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
     coutLock.lock();
     {
       unified_dbg << "\n"
-                  << "Rank-" << d_myworld->myrank() << " Executing " << dts->numTasks() << " tasks (" << ntasks << " local)\n"
+                  << "Rank-" << d_myworld->myRank() << " Executing " << dts->numTasks() << " tasks (" << ntasks << " local)\n"
                   << "Total task phases: " << numPhases
                   << "\n";
       for (size_t phase = 0; phase < phaseTasks.size(); ++phase) {
@@ -553,7 +548,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
     float allqueuelength = 0;
     MPI_Reduce(&queuelength, &allqueuelength, 1, MPI_FLOAT, MPI_SUM, 0, d_myworld->getComm());
 
-    proc0cout << "average queue length:" << allqueuelength / d_myworld->size() << std::endl;
+    proc0cout << "average queue length:" << allqueuelength / d_myworld->nRanks() << std::endl;
   }
 
   emitTime("MPI Send time", mpi_info_.totalsendmpi);
@@ -608,7 +603,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
   }
 
   if (unified_dbg.active()) {
-    unified_dbg << "Rank-" << d_myworld->myrank() << " - UnifiedScheduler finished" << std::endl;
+    unified_dbg << "Rank-" << d_myworld->myRank() << " - UnifiedScheduler finished" << std::endl;
   }
 } // end execute()
 
@@ -618,7 +613,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
 void
 UnifiedScheduler::runTasks( int thread_id )
 {
-  int me = d_myworld->myrank();
+  int me = d_myworld->myRank();
 
   while( numTasksDone < ntasks ) {
 
@@ -652,7 +647,7 @@ UnifiedScheduler::runTasks( int thread_id )
         havework = true;
         numTasksDone++;
         if (taskorder.active()) {
-          if (me == d_myworld->size() / 2) {
+          if (me == d_myworld->nRanks() / 2) {
             coutLock.lock();
             taskorder << myRankThread()  << " Running task static order: " << readyTask->getStaticOrder()
                       << " , scheduled order: " << numTasksDone << std::endl;
@@ -706,7 +701,7 @@ UnifiedScheduler::runTasks( int thread_id )
 #endif
           numTasksDone++;
           if (taskorder.active()) {
-            if (d_myworld->myrank() == d_myworld->size() / 2) {
+            if (d_myworld->myRank() == d_myworld->nRanks() / 2) {
               coutLock.lock();
               taskorder << myRankThread() << " Running task static order: " << readyTask->getStaticOrder()
                         << ", scheduled order: " << numTasksDone << std::endl;
@@ -801,7 +796,7 @@ UnifiedScheduler::runTasks( int thread_id )
           gpuPending = true;
           numTasksDone++;
           if (taskorder.active()) {
-            if (d_myworld->myrank() == d_myworld->size() / 2) {
+            if (d_myworld->myRank() == d_myworld->nRanks() / 2) {
               coutLock.lock();
               taskorder << myRankThread() << " Running task static order: " << readyTask->getStaticOrder()
                         << " , scheduled order: " << numTasksDone << std::endl;
@@ -1017,11 +1012,11 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
 
         TypeDescription::Type type = req->var->typeDescription()->getType();
         switch (type) {
-          case TypeDescription::CCVariable :
-          case TypeDescription::NCVariable :
-          case TypeDescription::SFCXVariable :
-          case TypeDescription::SFCYVariable :
-          case TypeDescription::SFCZVariable : {
+          case TypeDescription::Type::CCVariable :
+          case TypeDescription::Type::NCVariable :
+          case TypeDescription::Type::SFCXVariable :
+          case TypeDescription::Type::SFCYVariable :
+          case TypeDescription::Type::SFCZVariable : {
 
             GridVariableBase* gridVar = dynamic_cast<GridVariableBase*>(req->var->typeDescription()->createInstance());
             
@@ -1191,7 +1186,7 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
           }  // end GridVariable switch case
           //__________________________________
           //
-          case TypeDescription::ReductionVariable : {
+          case TypeDescription::Type::ReductionVariable : {
 
             levelID = -1;
             ReductionVariableBase* reductionVar = dynamic_cast<ReductionVariableBase*>(req->var->typeDescription()->createInstance());
@@ -1249,7 +1244,7 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
           }  // end ReductionVariable switch case
           //__________________________________
           //
-          case TypeDescription::PerPatch : {
+          case TypeDescription::Type::PerPatch : {
 
             PerPatchBase* perPatchVar = dynamic_cast<PerPatchBase*>(req->var->typeDescription()->createInstance());
             host_ptr   = perPatchVar->getBasePointer();
@@ -1304,7 +1299,7 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
 
           }  // end PerPatch switch case
 
-          case TypeDescription::ParticleVariable : {
+          case TypeDescription::Type::ParticleVariable : {
             SCI_THROW(InternalError("Copying ParticleVariables to GPU not yet supported:" + reqVarName, __FILE__, __LINE__));
             break;
           }  // end ParticleVariable switch case
@@ -1358,11 +1353,11 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
 
         TypeDescription::Type type = comp->var->typeDescription()->getType();
         switch (type) {
-          case TypeDescription::CCVariable :
-          case TypeDescription::NCVariable :
-          case TypeDescription::SFCXVariable :
-          case TypeDescription::SFCYVariable :
-          case TypeDescription::SFCZVariable : {
+          case TypeDescription::Type::CCVariable :
+          case TypeDescription::Type::NCVariable :
+          case TypeDescription::Type::SFCXVariable :
+          case TypeDescription::Type::SFCYVariable :
+          case TypeDescription::Type::SFCZVariable : {
 
             IntVector low, high, lowOffset, highOffset;
             Patch::VariableBasis basis = Patch::translateTypeToBasis(type, false);
@@ -1446,7 +1441,7 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
           }  // end GridVariable switch case
           //__________________________________
           //
-          case TypeDescription::ReductionVariable : {
+          case TypeDescription::Type::ReductionVariable : {
 
             d2hComputesLock_.writeLock();
             {
@@ -1473,7 +1468,7 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
           }  // end ReductionVariable switch case
           //__________________________________
           //
-          case TypeDescription::PerPatch : {
+          case TypeDescription::Type::PerPatch : {
 
             d2hComputesLock_.writeLock();
             {
@@ -1498,7 +1493,7 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
 
           }  // end PerPatch switch case
 
-          case TypeDescription::ParticleVariable : {
+          case TypeDescription::Type::ParticleVariable : {
             SCI_THROW(
                 InternalError("Allocating device memory for ParticleVariables not yet supported: " + compVarName, __FILE__, __LINE__));
             break;
@@ -1557,11 +1552,11 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
 
         TypeDescription::Type type = comp->var->typeDescription()->getType();
         switch (type) {
-          case TypeDescription::CCVariable :
-          case TypeDescription::NCVariable :
-          case TypeDescription::SFCXVariable :
-          case TypeDescription::SFCYVariable :
-          case TypeDescription::SFCZVariable : {
+          case TypeDescription::Type::CCVariable :
+          case TypeDescription::Type::NCVariable :
+          case TypeDescription::Type::SFCXVariable :
+          case TypeDescription::Type::SFCYVariable :
+          case TypeDescription::Type::SFCZVariable : {
 
             GridVariableBase* gridVar = dynamic_cast<GridVariableBase*>(comp->var->typeDescription()->createInstance());
             dw->allocateAndPut(*gridVar, comp->var, matlID, patches->get(i), comp->gtype, comp->numGhostCells);
@@ -1656,7 +1651,7 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
           }  // end GridVariable switch case
           //__________________________________
           //
-          case TypeDescription::ReductionVariable : {
+          case TypeDescription::Type::ReductionVariable : {
 
             levelID = -1;
             ReductionVariableBase* reductionVar = dynamic_cast<ReductionVariableBase*>(comp->var->typeDescription()->createInstance());
@@ -1700,7 +1695,7 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
           }  // end ReductionVariable switch case
           //__________________________________
           //
-          case TypeDescription::PerPatch : {
+          case TypeDescription::Type::PerPatch : {
 
             PerPatchBase* perPatchVar = dynamic_cast<PerPatchBase*>(comp->var->typeDescription()->createInstance());
             dw->put(*perPatchVar, comp->var, matlID, patches->get(i));
@@ -1743,7 +1738,7 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
           }  // end PerPatch switch case
           //__________________________________
           //
-          case TypeDescription::ParticleVariable : {
+          case TypeDescription::Type::ParticleVariable : {
             SCI_THROW(
                 InternalError("Copying ParticleVariables to GPU not yet supported:" + compVarName, __FILE__, __LINE__));
             break;
@@ -1933,7 +1928,7 @@ UnifiedSchedulerWorker::UnifiedSchedulerWorker( UnifiedScheduler*  scheduler,
     d_quit( false ),
     d_idle( true ),
     d_thread_id( thread_id + 1),
-    d_rank( scheduler->getProcessorGroup()->myrank() ),
+    d_rank( scheduler->getProcessorGroup()->myRank() ),
     d_waittime( 0.0 ),
     d_waitstart( 0.0 )
 {

@@ -571,7 +571,7 @@ const TypeDescription* fun_getTypeDescription(MWViscoElastic::StateData*)
    static TypeDescription* td = 0;
    if(!td){
       td = scinew
-        TypeDescription(TypeDescription::Other,
+        TypeDescription(TypeDescription::Type::Other,
                         "MWViscoElastic::StateData", true, &makeMPI_CMData);
    }
    return td;

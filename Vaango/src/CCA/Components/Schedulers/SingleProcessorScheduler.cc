@@ -130,7 +130,7 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     double start = Time::currentSeconds();
     DetailedTask* task = dts->getTask( i );
     
-    taskdbg << d_myworld->myrank() << " SPS: Initiating: "; printTask(taskdbg, task); taskdbg << '\n';
+    taskdbg << d_myworld->myRank() << " SPS: Initiating: "; printTask(taskdbg, task); taskdbg << '\n';
 
     if (d_trackingVarsPrintLocation & SchedulerCommon::PRINT_BEFORE_EXEC) {
       printTrackedVars(task, SchedulerCommon::PRINT_BEFORE_EXEC);
@@ -143,7 +143,7 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
     task->done(d_dws);
     
-    taskdbg << d_myworld->myrank() << " SPS: Completed:  "; printTask(taskdbg, task); taskdbg << '\n';
+    taskdbg << d_myworld->myRank() << " SPS: Completed:  "; printTask(taskdbg, task); taskdbg << '\n';
     printTaskLevels( d_myworld, taskLevel_dbg, task );
     
     

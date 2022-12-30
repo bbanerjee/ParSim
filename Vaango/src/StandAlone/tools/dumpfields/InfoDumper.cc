@@ -156,7 +156,7 @@ namespace Uintah {
           for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
             const Patch* patch = *iter;
             
-            if(td->getType()==Uintah::TypeDescription::CCVariable) {
+            if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
               
               CCVariable<double> svals;
               (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -174,7 +174,7 @@ namespace Uintah {
                 
                 sumdiffsq += pow(val-avgval, 2.0);
               }
-            } else if(td->getType()==Uintah::TypeDescription::NCVariable) {
+            } else if(td->getType()==Uintah::TypeDescription::Type::NCVariable) {
               
               NCVariable<double> svals;
               (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -192,7 +192,7 @@ namespace Uintah {
                 
                 sumdiffsq += pow(val-avgval, 2.0);
               }
-            } else if (td->getType()==Uintah::TypeDescription::ParticleVariable) {
+            } else if (td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
               ParticleVariable<Point> posns;
               da_->query(posns, "p.x", matl, patch, index_);
               ParticleSubset* pset = posns.getParticleSubset();

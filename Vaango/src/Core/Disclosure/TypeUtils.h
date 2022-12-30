@@ -29,23 +29,16 @@
 
 #include <sci_defs/compile_defs.h> // for STATIC_BUILD
 
-#ifndef _WIN32
-#  include <inttypes.h>
-#else
-#  include <Core/Util/Endian.h> // for long64 and the like
-#endif
+#include <inttypes.h>
 
 #include <cfloat>
 
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/Geometry/IntVector.h>
 
 
 namespace Uintah {
-
-using Uintah::Point;
-using Uintah::Vector;
-
 
 class Matrix3;
 class Stencil7;
@@ -60,7 +53,11 @@ class NeighborConnectivity;
 class NeighborBondEnergy;
 class NeighborBondInternalForce;
 
-class MetalPlastic;
+class MetalIntVar;
+class ArenaIntVar;
+class BorjaIntVar;
+class SoilBrannonIntVar;
+class TabularCapIntVar;
 
 typedef int64_t long64;
 typedef int64_t ParticleID;
@@ -103,7 +100,11 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondEnergy*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondInternalForce*);
 
- //const TypeDescription* fun_getTypeDescription(Uintah::MetalPlastic*);
+ const TypeDescription* fun_getTypeDescription(Uintah::MetalIntVar*);
+ const TypeDescription* fun_getTypeDescription(Uintah::ArenaIntVar*);
+ const TypeDescription* fun_getTypeDescription(Uintah::BorjaIntVar*);
+ const TypeDescription* fun_getTypeDescription(Uintah::SoilBrannonIntVar*);
+ const TypeDescription* fun_getTypeDescription(Uintah::TabularCapIntVar*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include
@@ -132,12 +133,9 @@ typedef int64_t ParticleID;
 #if !defined( STATIC_BUILD )
 
 namespace Uintah {
-  using std::string;
-  using Uintah::long64;
 
-  template<>  const string find_type_name(long64*);
-
-   const TypeDescription* get_type_description(long64*);
+  template<> const std::string find_type_name(Uintah::long64*);
+  const TypeDescription* get_type_description(Uintah::long64*);
 
 } // namespace Uintah 
 #endif // STATIC_BUILD

@@ -209,37 +209,37 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
     const TypeDescription* td = label->typeDescription();
     const TypeDescription* subtype = td->getSubType();
     
-    const int baseType = td->getType();
-    const int subType  = subtype->getType();
+    const TypeDescription::Type baseType = td->getType();
+    const TypeDescription::Type subType  = subtype->getType();
     
     //__________________________________
     bool throwException = false;  
     
     // only CC, SFCX, SFCY, SFCZ variables
-    if(baseType != TypeDescription::CCVariable &&
-       baseType != TypeDescription::NCVariable &&
-       baseType != TypeDescription::SFCXVariable &&
-       baseType != TypeDescription::SFCYVariable &&
-       baseType != TypeDescription::SFCZVariable ){
+    if(baseType != TypeDescription::Type::CCVariable &&
+       baseType != TypeDescription::Type::NCVariable &&
+       baseType != TypeDescription::Type::SFCXVariable &&
+       baseType != TypeDescription::Type::SFCYVariable &&
+       baseType != TypeDescription::Type::SFCZVariable ){
        throwException = true;
     }
     // CC Variables, only Doubles and Vectors 
-    if(baseType != TypeDescription::CCVariable &&
-       subType  != TypeDescription::double_type &&
-       subType  != TypeDescription::Vector  ){
+    if(baseType != TypeDescription::Type::CCVariable &&
+       subType  != TypeDescription::Type::double_type &&
+       subType  != TypeDescription::Type::Vector  ){
       throwException = true;
     }
     // NC Variables, only Doubles and Vectors 
-    if(baseType != TypeDescription::NCVariable &&
-       subType  != TypeDescription::double_type &&
-       subType  != TypeDescription::Vector  ){
+    if(baseType != TypeDescription::Type::NCVariable &&
+       subType  != TypeDescription::Type::double_type &&
+       subType  != TypeDescription::Type::Vector  ){
       throwException = true;
     }
     // Face Centered Vars, only Doubles
-    if( (baseType == TypeDescription::SFCXVariable ||
-         baseType == TypeDescription::SFCYVariable ||
-         baseType == TypeDescription::SFCZVariable) &&
-         subType != TypeDescription::double_type) {
+    if( (baseType == TypeDescription::Type::SFCXVariable ||
+         baseType == TypeDescription::Type::SFCYVariable ||
+         baseType == TypeDescription::Type::SFCZVariable) &&
+         subType != TypeDescription::Type::double_type) {
       throwException = true;
     } 
     if(throwException){       
@@ -260,12 +260,12 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
     VarLabel* meMin = NULL;
     
     // double
-    if( subType == TypeDescription::double_type ) {
+    if( subType == TypeDescription::Type::double_type ) {
       meMax = VarLabel::create( VLmax, max_vartype::getTypeDescription() );
       meMin = VarLabel::create( VLmin, min_vartype::getTypeDescription() );
     }
     // Vectors
-    if( subType == TypeDescription::Vector ) {
+    if( subType == TypeDescription::Type::Vector ) {
       meMax = VarLabel::create( VLmax, maxvec_vartype::getTypeDescription() );
       meMin = VarLabel::create( VLmin, minvec_vartype::getTypeDescription() );
     }    
@@ -497,15 +497,15 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
         int indx = d_analyzeVars[i].matl;
         
         switch(td->getType()){
-          case TypeDescription::CCVariable:             // CC Variables
+          case TypeDescription::Type::CCVariable:             // CC Variables
             switch(subtype->getType()) {
             
-            case TypeDescription::double_type:{         // CC double
+            case TypeDescription::Type::double_type:{         // CC double
               GridIterator iter=patch->getCellIterator();
               findMinMax <constCCVariable<double>, double > ( new_dw, label, indx, patch, iter );
               break;
             }
-            case TypeDescription::Vector: {             // CC Vector
+            case TypeDescription::Type::Vector: {             // CC Vector
               GridIterator iter=patch->getCellIterator();
               findMinMax< constCCVariable<Vector>, Vector > ( new_dw, label, indx, patch, iter );
               break;
@@ -515,15 +515,15 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
             }
             break;
             
-          case TypeDescription::NCVariable:             // NC Variables
+          case TypeDescription::Type::NCVariable:             // NC Variables
             switch(subtype->getType()) {
             
-            case TypeDescription::double_type:{         // NC double
+            case TypeDescription::Type::double_type:{         // NC double
               GridIterator iter=patch->getNodeIterator();
               findMinMax <constNCVariable<double>, double > ( new_dw, label, indx, patch, iter );
               break;
             }
-            case TypeDescription::Vector: {             // NC Vector
+            case TypeDescription::Type::Vector: {             // NC Vector
               GridIterator iter=patch->getNodeIterator();
               findMinMax< constNCVariable<Vector>, Vector > ( new_dw, label, indx, patch, iter );
               break; 
@@ -532,17 +532,17 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
               throw InternalError("MinMax: invalid data type", __FILE__, __LINE__); 
             }
             break;            
-          case TypeDescription::SFCXVariable: {         // SFCX double
+          case TypeDescription::Type::SFCXVariable: {         // SFCX double
             GridIterator iter=patch->getSFCXIterator();
             findMinMax <constSFCXVariable<double>, double > ( new_dw, label, indx, patch, iter );
             break;
           }
-          case TypeDescription::SFCYVariable: {         // SFCY double
+          case TypeDescription::Type::SFCYVariable: {         // SFCY double
             GridIterator iter=patch->getSFCYIterator();
             findMinMax <constSFCYVariable<double>, double > ( new_dw, label, indx, patch, iter );
             break;
           }
-          case TypeDescription::SFCZVariable: {         // SFCZ double
+          case TypeDescription::Type::SFCZVariable: {         // SFCZ double
             GridIterator iter=patch->getSFCZIterator();
             findMinMax <constSFCZVariable<double>, double > ( new_dw, label, indx, patch, iter );
             break;
@@ -613,7 +613,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
     // write data if this processor owns this patch
     // and if it's time to write.  With AMR data the proc
     // may not own the patch
-    if( proc == pg->myrank() && now >= nextWriteTime){  
+    if( proc == pg->myRank() && now >= nextWriteTime){  
 
       printTask(patches, patch,cout_doing,"Doing MinMax::doAnalysis");
 
@@ -682,7 +682,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
                 
         switch(subtype->getType()) {
 
-          case TypeDescription::double_type:{
+          case TypeDescription::Type::double_type:{
             max_vartype maxQ;
             min_vartype minQ;
             
@@ -692,7 +692,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
             fprintf( fp, "%16.15E     %16.15E    %16.15E\n",now, (double)minQ, (double)maxQ );
            break;
           }
-          case TypeDescription::Vector: {
+          case TypeDescription::Type::Vector: {
             maxvec_vartype maxQ;
             minvec_vartype minQ;
             

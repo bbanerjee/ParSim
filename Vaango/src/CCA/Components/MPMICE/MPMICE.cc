@@ -675,7 +675,7 @@ void
 MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
 {
   cout_doing << "----------------------------"<<endl;
-  cout_doing << d_myworld->myrank() << " MPMICE::scheduleFinalizeTimestep\t\t\t\tL-" <<level->getIndex()<< endl;
+  cout_doing << d_myworld->myRank() << " MPMICE::scheduleFinalizeTimestep\t\t\t\tL-" <<level->getIndex()<< endl;
 
   const PatchSet* ice_patches = level->eachPatch();
   const MaterialSet* ice_matls = d_sharedState->allICEMaterials();
@@ -3011,7 +3011,7 @@ void MPMICE::scheduleRefineInterface(const LevelP& fineLevel,
   if(fineLevel->getIndex() > 0 && d_sharedState->isCopyDataTimestep() &&
      d_mpm->flags->doMPMOnLevel(fineLevel->getIndex(),
 				fineLevel->getGrid()->numLevels())) {
-    cout_doing << d_myworld->myrank() 
+    cout_doing << d_myworld->myRank() 
 	       << " MPMICE::scheduleRefineInterface \t\t\tL-"
 	       << fineLevel->getIndex() << endl;
 
@@ -3039,7 +3039,7 @@ void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
   // copyData doesn't copy extra cell data.
   const Level* level = getLevel(patches);
   if(level->getIndex() > 0){
-    cout_doing << d_myworld->myrank()
+    cout_doing << d_myworld->myRank()
 	       << " Doing refineCoarseFineInterface"<< "\t\t\t MPMICE L-"
 	       << level->getIndex() << " Patches: " << *patches << endl;
 
@@ -3127,11 +3127,11 @@ void MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
 		       DataWarehouse*, DataWarehouse*, const VarLabel*);
 
   switch(variable->typeDescription()->getSubType()->getType()){
-  case TypeDescription::double_type:
+  case TypeDescription::Type::double_type:
     func = &MPMICE::refineVariableCC<double>;
     t=scinew Task(taskName.str().c_str(),this, func, variable);
     break;
-  case TypeDescription::Vector:
+  case TypeDescription::Type::Vector:
     func = &MPMICE::refineVariableCC<Vector>;
     t=scinew Task(taskName.str().c_str(),this, func, variable);
     break;
@@ -3250,7 +3250,7 @@ MPMICE::refine(const ProcessorGroup*,
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
-      cout_doing << d_myworld->myrank() << " Doing refine on patch "
+      cout_doing << d_myworld->myRank() << " Doing refine on patch "
 		 << patch->getID() << " material # = " << dwi << endl;
 
       // for now, create 0 heat flux

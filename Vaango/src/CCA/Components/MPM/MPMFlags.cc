@@ -298,7 +298,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("artificial_viscosity_heating",
                    d_artificialViscosityHeating);
   if (d_artificialViscosity && d_integratorType == "implicit") {
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       std::cerr << "artificial viscosity is not implemented" << "\n";
       std::cerr << "with implicit time integration" << "\n";
     }

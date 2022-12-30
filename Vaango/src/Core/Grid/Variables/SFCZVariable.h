@@ -116,7 +116,7 @@ WARNING
   SFCZVariable<T>::getTypeDescription()
   {
     if(!td){
-      td = scinew TypeDescription(TypeDescription::SFCZVariable,
+      td = scinew TypeDescription(TypeDescription::Type::SFCZVariable,
                                   "SFCZVariable", &maker,
                                   fun_getTypeDescription((T*)0));
     }

@@ -288,7 +288,7 @@ namespace Uintah {
   
   int numberOfTensorDiags(const Uintah::TypeDescription * fldtype) {
     createTensorDiags();
-    if(fldtype->getSubType()->getType()!=Uintah::TypeDescription::Matrix3) return 0;
+    if(fldtype->getSubType()->getType()!=Uintah::TypeDescription::Type::Matrix3) return 0;
     return _ttdiagtable.size();
   }
   

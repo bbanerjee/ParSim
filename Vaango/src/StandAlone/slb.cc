@@ -299,7 +299,7 @@ int
 main(int argc, char *argv[])
 {
   try {
-    Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+    //Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
     Uintah::Parallel::initializeManager( argc, argv );
 
     int    nump;

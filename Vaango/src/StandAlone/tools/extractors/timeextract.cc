@@ -354,27 +354,27 @@ main(int argc, char** argv)
   //__________________________________
   //  Now print out the data  
   switch (subtype->getType()) {
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     printData<double>(archive, variable_name, material, var_id, levelIndex,
                       time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     printData<float>(archive, variable_name, material, var_id, levelIndex,
                       time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     printData<int>(archive, variable_name, material, var_id, levelIndex,
                    time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     printData<Vector>(archive, variable_name, material, var_id, levelIndex,
                    time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::Matrix3:
-  case Uintah::TypeDescription::bool_type:
-  case Uintah::TypeDescription::short_int_type:
-  case Uintah::TypeDescription::long_type:
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::Matrix3:
+  case Uintah::TypeDescription::Type::bool_type:
+  case Uintah::TypeDescription::Type::short_int_type:
+  case Uintah::TypeDescription::Type::long_type:
+  case Uintah::TypeDescription::Type::long64_type:
     cerr << "Subtype is not implemented\n";
     exit(1);
     break;

@@ -212,27 +212,27 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
         for (int p = 0; p < patches.size(); p++) {
           if (patches[p]->isVirtual()) continue;
           switch (variable_type->getType()) {
-          case Uintah::TypeDescription::CCVariable:
+          case Uintah::TypeDescription::Type::CCVariable:
             vars[p] = scinew CCVariable<T>;
             archive->query( *(CCVariable<T>*)vars[p], variable_name, 
                             material, patches[p], time_step);
             break;
-          case Uintah::TypeDescription::NCVariable:
+          case Uintah::TypeDescription::Type::NCVariable:
             vars[p] = scinew NCVariable<T>;
             archive->query( *(NCVariable<T>*)vars[p], variable_name, 
                             material, patches[p], time_step);
             break;
-          case Uintah::TypeDescription::SFCXVariable:
+          case Uintah::TypeDescription::Type::SFCXVariable:
             vars[p] = scinew SFCXVariable<T>;
             archive->query( *(SFCXVariable<T>*)vars[p], variable_name, 
                             material, patches[p], time_step);
             break;
-          case Uintah::TypeDescription::SFCYVariable:
+          case Uintah::TypeDescription::Type::SFCYVariable:
             vars[p] = scinew SFCYVariable<T>;
             archive->query( *(SFCYVariable<T>*)vars[p], variable_name, 
                             material, patches[p], time_step);
             break;
-          case Uintah::TypeDescription::SFCZVariable:
+          case Uintah::TypeDescription::Type::SFCZVariable:
             vars[p] = scinew SFCZVariable<T>;
             archive->query( *(SFCZVariable<T>*)vars[p], variable_name, 
                             material, patches[p], time_step);
@@ -262,33 +262,33 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
             bool foundCell = false;
             
             switch (variable_type->getType()) {
-            case Uintah::TypeDescription::CCVariable: 
+            case Uintah::TypeDescription::Type::CCVariable: 
               if(patch->containsCell(c)){
                 val = (*dynamic_cast<CCVariable<T>*>(vars[p]))[c];
                 foundCell = true; 
               }
 	      break;
-            case Uintah::TypeDescription::NCVariable: 
+            case Uintah::TypeDescription::Type::NCVariable: 
               if(patch->containsNode(c)){
                 val = (*dynamic_cast<NCVariable<T>*>(vars[p]))[c];
                 foundCell = true; 
               }
 	      break;
-            case Uintah::TypeDescription::SFCXVariable: 
+            case Uintah::TypeDescription::Type::SFCXVariable: 
               if(patch->containsSFCX(c)){
                 val = (*dynamic_cast<SFCXVariable<T>*>(vars[p]))[c];
                 shift.x(-dx.x()/2.0);
                 foundCell = true;
               } 
 	      break;
-            case Uintah::TypeDescription::SFCYVariable:
+            case Uintah::TypeDescription::Type::SFCYVariable:
               if(patch->containsSFCY(c)){ 
                 val = (*dynamic_cast<SFCYVariable<T>*>(vars[p]))[c];
                 shift.y(-dx.y()/2.0); 
                 foundCell = true;
               }
 	      break;
-            case Uintah::TypeDescription::SFCZVariable: 
+            case Uintah::TypeDescription::Type::SFCZVariable: 
               if(patch->containsSFCY(c)){
                 val = (*dynamic_cast<SFCZVariable<T>*>(vars[p]))[c];
                 shift.z(-dx.z()/2.0); 
@@ -776,43 +776,43 @@ int main(int argc, char** argv)
     //__________________________________
     //  print data
     //  N C / C C   V A R I A B L E S  
-    if(td->getType() != Uintah::TypeDescription::ParticleVariable){
+    if(td->getType() != Uintah::TypeDescription::Type::ParticleVariable){
       switch (subtype->getType()) {
-      case Uintah::TypeDescription::double_type:
+      case Uintah::TypeDescription::Type::double_type:
         printData<double>(archive, variable_name, td, material, use_cellIndex_file,
                           levelIndex, var_start, var_end, cells,
                           time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::float_type:
+      case Uintah::TypeDescription::Type::float_type:
         printData<float>(archive, variable_name, td, material, use_cellIndex_file,
 			 levelIndex, var_start, var_end, cells,
 			 time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::int_type:
+      case Uintah::TypeDescription::Type::int_type:
         printData<int>(archive, variable_name, td, material, use_cellIndex_file,
                        levelIndex, var_start, var_end, cells,
                        time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::Vector:
+      case Uintah::TypeDescription::Type::Vector:
         printData<Vector>(archive, variable_name, td, material, use_cellIndex_file,
                           levelIndex, var_start, var_end, cells,
                           time_start, time_end, output_precision, *output_stream);    
         break;
-      case Uintah::TypeDescription::Matrix3:
+      case Uintah::TypeDescription::Type::Matrix3:
 	printData<Matrix3>(archive, variable_name, td, material, use_cellIndex_file,
 			   levelIndex, var_start, var_end, cells,
 			   time_start, time_end, output_precision, *output_stream);    
         break;
-      case Uintah::TypeDescription::Stencil7:
+      case Uintah::TypeDescription::Type::Stencil7:
 	printData<Stencil7>(archive, variable_name, td, material, use_cellIndex_file,
                             levelIndex, var_start, var_end, cells,
                             time_start, time_end, output_precision, *output_stream);    
 	break;
         // don't break on else - flow to the error statement
-      case Uintah::TypeDescription::bool_type:
-      case Uintah::TypeDescription::short_int_type:
-      case Uintah::TypeDescription::long_type:
-      case Uintah::TypeDescription::long64_type:
+      case Uintah::TypeDescription::Type::bool_type:
+      case Uintah::TypeDescription::Type::short_int_type:
+      case Uintah::TypeDescription::Type::long_type:
+      case Uintah::TypeDescription::Type::long64_type:
         cerr << "Subtype is not implemented\n";
         exit(1);
         break;
@@ -823,39 +823,39 @@ int main(int argc, char** argv)
     }
     //__________________________________
     //  P A R T I C L E   V A R I A B L E  
-    if(td->getType() == Uintah::TypeDescription::ParticleVariable){
+    if(td->getType() == Uintah::TypeDescription::Type::ParticleVariable){
       switch (subtype->getType()) {
-      case Uintah::TypeDescription::double_type:
+      case Uintah::TypeDescription::Type::double_type:
         printData_PV<double>(archive, variable_name, td, material, use_cellIndex_file,
 			     levelIndex, var_start, var_end, cells,
 			     time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::float_type:
+      case Uintah::TypeDescription::Type::float_type:
         printData_PV<float>(archive, variable_name, td, material, use_cellIndex_file,
 			    levelIndex, var_start, var_end, cells,
 			    time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::int_type:
+      case Uintah::TypeDescription::Type::int_type:
         printData_PV<int>(archive, variable_name, td, material, use_cellIndex_file,
 			  levelIndex, var_start, var_end, cells,
 			  time_start, time_end, output_precision, *output_stream);
         break;
-      case Uintah::TypeDescription::Vector:
+      case Uintah::TypeDescription::Type::Vector:
         printData_PV<Vector>(archive, variable_name, td, material, use_cellIndex_file,
 			     levelIndex, var_start, var_end, cells,
 			     time_start, time_end, output_precision, *output_stream);    
         break;
-      case Uintah::TypeDescription::Matrix3:
+      case Uintah::TypeDescription::Type::Matrix3:
         printData_PV<Matrix3>(archive, variable_name, td, material, use_cellIndex_file,
 			      levelIndex, var_start, var_end, cells,
 			      time_start, time_end, output_precision, *output_stream);    
         break;
-      case Uintah::TypeDescription::Other:
+      case Uintah::TypeDescription::Type::Other:
         // don't break on else - flow to the error statement
-      case Uintah::TypeDescription::bool_type:
-      case Uintah::TypeDescription::short_int_type:
-      case Uintah::TypeDescription::long_type:
-      case Uintah::TypeDescription::long64_type:
+      case Uintah::TypeDescription::Type::bool_type:
+      case Uintah::TypeDescription::Type::short_int_type:
+      case Uintah::TypeDescription::Type::long_type:
+      case Uintah::TypeDescription::Type::long64_type:
         cerr << "Subtype is not implemented\n";
         exit(1);
         break;

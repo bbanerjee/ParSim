@@ -110,7 +110,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::NeighborList, "NeighborList", true,
+      td = scinew TypeDescription(TypeDescription::Type::NeighborList, "NeighborList", true,
                                   &makeMPI_NeighborList);
     }
     return td;

@@ -108,7 +108,7 @@ void HierarchicalRegridder::problemSetup(const ProblemSpecP& params,
 				   const SimulationStateP& state)
 
 {
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
     cout << " WARNING: The Hierarchical regridder has major performance issues and has been superseeded by the tiled regridder\n";
   rdbg << "HierarchicalRegridder::problemSetup() BGN" << endl;
   RegridderCommon::problemSetup(params, oldGrid, state);
@@ -287,7 +287,7 @@ Grid* HierarchicalRegridder::regrid(Grid* oldGrid)
   // copy dilation to the "old dw" so mpi copying will work correctly
     const PatchSet* perproc = sched_->getLoadBalancer()->getPerProcessorPatchSet(oldGrid->getLevel(levelIndex));
     perproc->addReference();
-    const PatchSubset* psub = perproc->getSubset(d_myworld->myrank());
+    const PatchSubset* psub = perproc->getSubset(d_myworld->myRank());
     MaterialSubset* msub = scinew MaterialSubset;
     msub->add(0);
     DataWarehouse* old_dw = tempsched->get_dw(2);
@@ -434,12 +434,12 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
     // place to end up with all subpatches
     vector<SubPatchFlagP> allSubpatches(l->numPatches());
     vector<int> recvbuf(numSubpatches); // buffer to recv data (and hold pointers from allSubpatches)
-    if (d_myworld->size() > 1) {
+    if (d_myworld->nRanks() > 1) {
 
       // num subpatches per patch - this is dynamic per patch, as on the regrid before
       // we could have combined several patches together
       vector<int> nsppp(l->numPatches());
-      vector<int> recvcounts(d_myworld->size(),0);
+      vector<int> recvcounts(d_myworld->nRanks(),0);
       for (Level::const_patchIterator iter = l->patchesBegin(); iter != l->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         IntVector patchRefinement = 
@@ -450,14 +450,14 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
         recvcounts[lb->getPatchwiseProcessorAssignment(patch)] += nsp;
       }
       
-      vector<int> displs(d_myworld->size(),0);
+      vector<int> displs(d_myworld->nRanks(),0);
       
       for (int p = 1; p < (int)displs.size(); p++) {
         displs[p] = displs[p-1]+recvcounts[p-1];
       }
     
       // create the buffers to send the data
-      vector<int> sendbuf(recvcounts[d_myworld->myrank()]);
+      vector<int> sendbuf(recvcounts[d_myworld->myRank()]);
 
       int sendbufindex = 0;
 
@@ -501,7 +501,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
 
         allSubpatches[patch->getLevelIndex()] = spf1;
 
-        if (proc != d_myworld->myrank())
+        if (proc != d_myworld->myRank())
           continue;
         
         // get the variable and prepare to send it: put its base pointer in the send buffer
@@ -540,7 +540,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
 
     }
 #if 1
-    if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myrank() == 0) {
+    if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myRank() == 0) {
 #endif
       // loop over each patch's subpatches (these will be the patches on level+1)
       IntVector periodic = oldGrid->getLevel(0)->getPeriodicBoundaries();
@@ -553,7 +553,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
           // if that subpatch is active...
           if ((*allSubpatches[j].get_rep())[idx]) {
             // add this subpatch to become the next level's patch
-            rdbg << d_myworld->myrank() << " Adding normal subpatch " << idx << " to level " << i+1 << endl;
+            rdbg << d_myworld->myRank() << " Adding normal subpatch " << idx << " to level " << i+1 << endl;
             d_patches[i+1].insert(idx);
           }
           else {
@@ -587,7 +587,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
         } // end for celliterator
       } // end for unsigned j
 #if 1
-    } // end if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myrank() == 0)
+    } // end if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myRank() == 0)
 #endif
   } // end for i = toplevel
 
@@ -626,7 +626,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
   for (int levelIdx=0; levelIdx < (int)d_patches.size(); levelIdx++) {
     if (
 #if 1
-        (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myrank() == 0) && 
+        (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myRank() == 0) && 
 #endif
         d_patches[levelIdx].size() == 0)
       break;
@@ -661,7 +661,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
     Grid bogusGrid;
     Level* addToLevel = newLevel.get_rep();
 #if 1
-    if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myrank() == 0) {
+    if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx] || d_myworld->myRank() == 0) {
 #endif
       if (d_maxPatchSize[levelIdx] != d_patchSize[levelIdx]) {
         // attempt to combine the patches together so we don't have so many patches (weakness of this regridder)
@@ -672,7 +672,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
       int id = -999999;
       for (subpatchset::iterator iter = d_patches[levelIdx].begin(); iter != d_patches[levelIdx].end(); iter++) {
         IntVector idx(*iter);
-        rdbg << d_myworld->myrank() << "   Creating patch "<< *iter << endl;
+        rdbg << d_myworld->myRank() << "   Creating patch "<< *iter << endl;
         IntVector startCell       = idx * d_patchSize[levelIdx];
         IntVector endCell         = (idx + IntVector(1,1,1)) * d_patchSize[levelIdx] - IntVector(1,1,1);
         IntVector inStartCell(startCell);
@@ -717,7 +717,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
       int size;
       vector<PatchShell> finalPatches;
 #if 1
-      if (d_myworld->myrank() == 0) {
+      if (d_myworld->myRank() == 0) {
 #endif
         const SuperPatchContainer* superPatches;
         LocallyComputedPatchVarMap patchGrouper;
@@ -742,7 +742,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
             in_high = Max(memberPatch->getCellHighIndex(), in_high);
           }
           finalPatches.push_back(PatchShell(low, high, in_low, in_high));
-          //cout << d_myworld->myrank() << "  Adding " << low << endl;
+          //cout << d_myworld->myRank() << "  Adding " << low << endl;
         }
         
 #if 1
@@ -753,7 +753,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
         size = finalPatches.size();
       }
 
-      if (d_myworld->size() > 1) {
+      if (d_myworld->nRanks() > 1) {
         MPI_Bcast(&size, 1, MPI_INT, 0, d_myworld->getComm());
         finalPatches.resize(size);
         MPI_Bcast(&finalPatches[0], size*4*3, MPI_INT, 0, d_myworld->getComm());
@@ -781,7 +781,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
                 if (idx[dim] == divisions[dim] - 1) sub_high[dim] = high[dim];
               }
               // finally add the superpatch to the real level
-              if (d_myworld->myrank() == 0)
+              if (d_myworld->myRank() == 0)
                 rdbg << "   Using superpatch " << sub_low << " " << sub_high << " " << sub_in_low << " " << sub_in_high << endl;
               newLevel->addPatch(sub_low, sub_high, sub_in_low, sub_in_high,newGrid);
             }

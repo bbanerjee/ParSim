@@ -108,7 +108,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::NeighborConnectivity, "NeighborConnectivity", true,
+      td = scinew TypeDescription(TypeDescription::Type::NeighborConnectivity, "NeighborConnectivity", true,
                                   &makeMPI_NeighborConnectivity);
     }
     return td;

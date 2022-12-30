@@ -246,7 +246,7 @@ namespace Uintah
 
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
-      dbg << d_myworld->myrank() << "  RegridderTest::timeAdvance() on patch " << patch->getID()<< endl;
+      dbg << d_myworld->myRank() << "  RegridderTest::timeAdvance() on patch " << patch->getID()<< endl;
       for(int m = 0;m<matls->size();m++){
 	int matl = matls->get(m);
 	CCVariable<double> density;
@@ -313,7 +313,7 @@ namespace Uintah
 
     for ( int p = 0; p < patches->size(); p++ ) {
       const Patch* patch = patches->get(p);
-      dbg << d_myworld->myrank() << "  RegridderTest::errorEstimate() on patch " << patch->getID()<< endl;
+      dbg << d_myworld->myRank() << "  RegridderTest::errorEstimate() on patch " << patch->getID()<< endl;
 
       CCVariable<int> refineFlag;
       new_dw->getModifiable(refineFlag, d_sharedState->get_refineFlag_label(), 0, patch);
@@ -373,7 +373,7 @@ namespace Uintah
     double ratio = 1./(rr.x()*rr.y()*rr.z());
     for(int p=0;p<patches->size();p++){  
       const Patch* coarsePatch = patches->get(p);
-      dbg << d_myworld->myrank() << "  RegridderTest::coarsen() on patch " << coarsePatch->getID()<< endl;
+      dbg << d_myworld->myRank() << "  RegridderTest::coarsen() on patch " << coarsePatch->getID()<< endl;
       // Find the overlapping regions...
       Level::selectType finePatches;
       coarsePatch->getFineLevelPatches(finePatches);
@@ -423,7 +423,7 @@ namespace Uintah
     //    cerr << "RANDY: RegridderTest::refine()" << endl;
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
-      dbg << d_myworld->myrank() << "  RegridderTest::refine() on patch " << patch->getID()<< endl;
+      dbg << d_myworld->myRank() << "  RegridderTest::refine() on patch " << patch->getID()<< endl;
       for(int m = 0;m<matls->size();m++){
 	int matl = matls->get(m);
 	CCVariable<double> density;

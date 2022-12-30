@@ -213,24 +213,24 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
     bool throwException = false;  
     
     // only CC, SFCX, SFCY, SFCZ variables
-    if(td->getType() != TypeDescription::CCVariable &&
-       td->getType() != TypeDescription::SFCXVariable &&
-       td->getType() != TypeDescription::SFCYVariable &&
-       td->getType() != TypeDescription::SFCZVariable ){
+    if(td->getType() != TypeDescription::Type::CCVariable &&
+       td->getType() != TypeDescription::Type::SFCXVariable &&
+       td->getType() != TypeDescription::Type::SFCYVariable &&
+       td->getType() != TypeDescription::Type::SFCZVariable ){
        throwException = true;
     }
     // CC Variables, only Doubles and Vectors 
-    if(td->getType() != TypeDescription::CCVariable &&
-       subtype->getType() != TypeDescription::double_type &&
-       subtype->getType() != TypeDescription::int_type &&
-       subtype->getType() != TypeDescription::Vector  ){
+    if(td->getType() != TypeDescription::Type::CCVariable &&
+       subtype->getType() != TypeDescription::Type::double_type &&
+       subtype->getType() != TypeDescription::Type::int_type &&
+       subtype->getType() != TypeDescription::Type::Vector  ){
       throwException = true;
     }
     // Face Centered Vars, only Doubles
-    if( (td->getType() == TypeDescription::SFCXVariable ||
-         td->getType() == TypeDescription::SFCYVariable ||
-         td->getType() == TypeDescription::SFCZVariable) &&
-         subtype->getType() != TypeDescription::double_type) {
+    if( (td->getType() == TypeDescription::Type::SFCXVariable ||
+         td->getType() == TypeDescription::Type::SFCYVariable ||
+         td->getType() == TypeDescription::Type::SFCZVariable) &&
+         subtype->getType() != TypeDescription::Type::double_type) {
       throwException = true;
     } 
     if(throwException){       
@@ -489,9 +489,9 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
     //__________________________________
     // write data if this processor owns this patch
     // and if it's time to write
-    if( proc == pg->myrank() && now >= nextWriteTime){
+    if( proc == pg->myRank() && now >= nextWriteTime){
     
-     cout_doing << pg->myrank() << " " 
+     cout_doing << pg->myRank() << " " 
                 << "Doing doAnalysis (lineExtract)\t\t\t\tL-"
                 << level->getIndex()
                 << " patch " << patch->getGridIndex()<< endl;
@@ -531,20 +531,20 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
 
         int indx = d_varMatl[i];        
         switch(td->getType()){
-          case Uintah::TypeDescription::CCVariable:      // CC Variables
+          case Uintah::TypeDescription::Type::CCVariable:      // CC Variables
             switch(subtype->getType()) {
             
-            case Uintah::TypeDescription::double_type:
+            case Uintah::TypeDescription::Type::double_type:
               new_dw->get(q_CC_double, d_varLabels[i], indx, patch, gac, 1);
               CC_double_data.push_back(q_CC_double);
               break;
              
-            case Uintah::TypeDescription::Vector:
+            case Uintah::TypeDescription::Type::Vector:
               new_dw->get(q_CC_Vector, d_varLabels[i], indx, patch, gac, 1);
               CC_Vector_data.push_back(q_CC_Vector);
               break;
               
-            case Uintah::TypeDescription::int_type:
+            case Uintah::TypeDescription::Type::int_type:
               new_dw->get(q_CC_integer, d_varLabels[i], indx, patch, gac, 1);
               CC_integer_data.push_back(q_CC_integer);
               break; 
@@ -552,15 +552,15 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
               throw InternalError("LineExtract: invalid data type", __FILE__, __LINE__); 
             }
             break;
-          case Uintah::TypeDescription::SFCXVariable:   // SFCX Variables
+          case Uintah::TypeDescription::Type::SFCXVariable:   // SFCX Variables
             new_dw->get(q_SFCX_double, d_varLabels[i], indx, patch, gac, 1);
             SFCX_double_data.push_back(q_SFCX_double);
             break;
-          case Uintah::TypeDescription::SFCYVariable:    // SFCY Variables
+          case Uintah::TypeDescription::Type::SFCYVariable:    // SFCY Variables
             new_dw->get(q_SFCY_double, d_varLabels[i], indx, patch, gac, 1);
             SFCY_double_data.push_back(q_SFCY_double);
             break;
-          case Uintah::TypeDescription::SFCZVariable:   // SFCZ Variables
+          case Uintah::TypeDescription::Type::SFCZVariable:   // SFCZ Variables
             new_dw->get(q_SFCZ_double, d_varLabels[i], indx, patch, gac, 1);
             SFCZ_double_data.push_back(q_SFCZ_double);
             break;
@@ -725,8 +725,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::CCVariable && 
-       subtype->getType() == TypeDescription::int_type){
+    if(td->getType()      == TypeDescription::Type::CCVariable && 
+       subtype->getType() == TypeDescription::Type::int_type){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s(%i)", name.c_str(),d_varMatl[i]);
     }
@@ -736,8 +736,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::CCVariable && 
-       subtype->getType() == TypeDescription::double_type){
+    if(td->getType()      == TypeDescription::Type::CCVariable && 
+       subtype->getType() == TypeDescription::Type::double_type){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s(%i)", name.c_str(),d_varMatl[i]);
     }
@@ -747,8 +747,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::CCVariable && 
-       subtype->getType() == TypeDescription::Vector){
+    if(td->getType()      == TypeDescription::Type::CCVariable && 
+       subtype->getType() == TypeDescription::Type::Vector){
       string name = d_varLabels[i]->getName(); 
       int m = d_varMatl[i];
       fprintf(fp,"     %s(%i).x      %s(%i).y      %s(%i).z", name.c_str(),m,name.c_str(),m,name.c_str(),m);
@@ -759,8 +759,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::SFCXVariable && 
-       subtype->getType() == TypeDescription::double_type){
+    if(td->getType()      == TypeDescription::Type::SFCXVariable && 
+       subtype->getType() == TypeDescription::Type::double_type){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s", name.c_str());
     }
@@ -770,8 +770,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::SFCYVariable && 
-       subtype->getType() == TypeDescription::double_type){
+    if(td->getType()      == TypeDescription::Type::SFCYVariable && 
+       subtype->getType() == TypeDescription::Type::double_type){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s", name.c_str());
     }
@@ -781,8 +781,8 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     const Uintah::TypeDescription* td = d_varLabels[i]->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if(td->getType()      == TypeDescription::SFCZVariable && 
-       subtype->getType() == TypeDescription::double_type){
+    if(td->getType()      == TypeDescription::Type::SFCZVariable && 
+       subtype->getType() == TypeDescription::Type::double_type){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s", name.c_str());
     }

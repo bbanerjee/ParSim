@@ -125,9 +125,9 @@ namespace Uintah {
   EnsightDumper::addField(string fieldname, const Uintah::TypeDescription * td)
   {
     string subtypestr, typestr;
-    if(td->getType()==Uintah::TypeDescription::NCVariable)
+    if(td->getType()==Uintah::TypeDescription::Type::NCVariable)
       typestr = "node";
-    else if(td->getType()==Uintah::TypeDescription::CCVariable)
+    else if(td->getType()==Uintah::TypeDescription::Type::CCVariable)
       typestr = "cell";
     else
       return; // FIXME: dont dump particle data
@@ -293,7 +293,7 @@ namespace Uintah {
   void
   EnsightDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
   {
-    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
       if(data_->withpart_) {
         storePartField(fieldname, td);
       }

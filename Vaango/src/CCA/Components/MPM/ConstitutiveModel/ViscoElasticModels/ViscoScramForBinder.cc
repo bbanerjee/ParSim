@@ -1093,7 +1093,7 @@ fun_getTypeDescription(ViscoScramForBinder::Statedata*)
 {
   static Uintah::TypeDescription* td = 0;
   if (!td) {
-    td = scinew Uintah::TypeDescription(TypeDescription::Other,
+    td = scinew Uintah::TypeDescription(TypeDescription::Type::Other,
                                         "ViscoScramForBinder::Statedata", true,
                                         &makeMPI_CMData);
   }

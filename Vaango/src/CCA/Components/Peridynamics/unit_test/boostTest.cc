@@ -183,7 +183,7 @@ int main(int argc, char *argv[], char *env[]) {
     int returnCode = -1;
     Uintah::Thread::setDefaultAbortMode("exit");
     Uintah::Thread::self()->setCleanupFunction( &abortCleanupFunc );
-    Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+    //Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
     Uintah::create_sci_environment( env, 0, true );
     bool thrownException = false;
 

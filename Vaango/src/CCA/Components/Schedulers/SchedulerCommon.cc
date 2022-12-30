@@ -296,7 +296,7 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
       track->getWithDefault("end_index", d_trackingEndIndex, IntVector(-9,-9,-9));
       track->getWithDefault("patchid", d_trackingPatchID, -1);
 
-      if( d_myworld->myrank() == 0 ) {
+      if( d_myworld->myRank() == 0 ) {
         std::cout << "\n";
         std::cout << "-----------------------------------------------------------\n";
         std::cout << "-- Initializing VarTracker...\n";
@@ -521,8 +521,8 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
       }
 
       // don't print ghost patches (dw->get will yell at you)
-      if ((d_trackingDWs[i] == Task::OldDW && lb->getOldProcessorAssignment(patch) != d_myworld->myrank()) ||
-          (d_trackingDWs[i] == Task::NewDW && lb->getPatchwiseProcessorAssignment(patch) != d_myworld->myrank())) {
+      if ((d_trackingDWs[i] == Task::OldDW && lb->getOldProcessorAssignment(patch) != d_myworld->myRank()) ||
+          (d_trackingDWs[i] == Task::NewDW && lb->getPatchwiseProcessorAssignment(patch) != d_myworld->myRank())) {
         continue;
       }
 
@@ -556,8 +556,8 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           handleError( 6, mesg.str(), d_trackingVars[i] );
           continue;
         }
-        if (td->getSubType()->getType() != TypeDescription::double_type &&
-            td->getSubType()->getType() != TypeDescription::Vector) {
+        if (td->getSubType()->getType() != TypeDescription::Type::double_type &&
+            td->getSubType()->getType() != TypeDescription::Type::Vector) {
           // only allow *Variable<double> and *Variable<Vector> for now
           std::ostringstream mesg;
           mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
@@ -570,11 +570,11 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
         // pending the task that allocates the var, we may not have allocated it yet
         GridVariableBase* v;
         switch (td->getType()) {
-        case TypeDescription::CCVariable:
-        case TypeDescription::NCVariable:
-        case TypeDescription::SFCXVariable:
-        case TypeDescription::SFCYVariable:
-        case TypeDescription::SFCZVariable: 
+        case TypeDescription::Type::CCVariable:
+        case TypeDescription::Type::NCVariable:
+        case TypeDescription::Type::SFCXVariable:
+        case TypeDescription::Type::SFCYVariable:
+        case TypeDescription::Type::SFCZVariable: 
           v = dynamic_cast<GridVariableBase*>(dw->d_varDB.get(label, m, patch));
           break;
         default: 
@@ -593,25 +593,25 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           case PRINT_BEFORE_EXEC: location = " before execution of "; break;
           case PRINT_AFTER_EXEC: location = " after execution of "; break;
           }
-          std::cout << d_myworld->myrank() << location << *dt << endl;
+          std::cout << d_myworld->myRank() << location << *dt << endl;
           printedHeader = true;
         }
         
         if (!printedVarName) {
-          std::cout << d_myworld->myrank() << "  Variable: " << d_trackingVars[i] << ", DW " << dw->getID() << ", Patch " << patch->getID() << ", Matl " << m << endl;
+          std::cout << d_myworld->myRank() << "  Variable: " << d_trackingVars[i] << ", DW " << dw->getID() << ", Patch " << patch->getID() << ", Matl " << m << endl;
           if (d_trackingVars[i] == "rho_CC")
             std::cout << "  RHO: " << dw->getID() << " original input " << d_trackingDWs[i] << endl;
         }
             
 
         switch (td->getSubType()->getType()) {
-        case TypeDescription::double_type: 
+        case TypeDescription::Type::double_type: 
         {
           GridVariable<double>* var = dynamic_cast<GridVariable<double>*>(v);
           
           for (int z = start.z(); z < end.z(); z++) {
             for (int y = start.y(); y < end.y(); y++) {
-              std::cout << d_myworld->myrank() << "  ";
+              std::cout << d_myworld->myRank() << "  ";
               for (int x = start.x(); x < end.x(); x++) {
                 IntVector c(x,y,z);
                 std::cout << " " << c << ": " << (*var)[c];
@@ -622,13 +622,13 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           }
         }
         break;
-        case TypeDescription::Vector: 
+        case TypeDescription::Type::Vector: 
         {
           GridVariable<Vector>* var = dynamic_cast<GridVariable<Vector>*>(v);
           
           for (int z = start.z(); z < end.z(); z++) {
             for (int y = start.y(); y < end.y(); y++) {
-              std::cout << d_myworld->myrank() << "  ";
+              std::cout << d_myworld->myRank() << "  ";
               for (int x = start.x(); x < end.x(); x++) {
                 IntVector c(x,y,z);
                 std::cout << " " << c << ": " << (*var)[c];
@@ -723,14 +723,14 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
 
       if (!dep->var->isReductionTask()) {
         if (dbg.active()) {
-          dbg << d_myworld->myrank() << " Skipping Reduction task for multi compute variable: "
+          dbg << d_myworld->myRank() << " Skipping Reduction task for multi compute variable: "
               << dep->var->getName() << " on level " << levelidx << ", DW " << dw << '\n';
         }
         continue;
       }
 
       if (dbg.active()) {
-        dbg << d_myworld->myrank() << " Creating Reduction task for variable: " << dep->var->getName()
+        dbg << d_myworld->myRank() << " Creating Reduction task for variable: " << dep->var->getName()
             << " on level " << levelidx << ", DW " << dw << '\n';
       }
 
@@ -987,7 +987,7 @@ SchedulerCommon::logMemoryUse()
 {
   if(!d_memlogfile){
     std::ostringstream fname;
-    fname << "uintah_memuse.log.p" << std::setw(5) << std::setfill('0') << d_myworld->myrank() << "." << d_myworld->size();
+    fname << "uintah_memuse.log.p" << std::setw(5) << std::setfill('0') << d_myworld->myRank() << "." << d_myworld->nRanks();
     d_memlogfile = scinew std::ofstream(fname.str().c_str());
     if(!*d_memlogfile){
       std::cerr << "Error opening file: " << fname.str() << '\n';
@@ -1047,13 +1047,13 @@ void SchedulerCommon::compile()
 
   if(d_numTasks > 0){
 
-    dbg << d_myworld->myrank() << " SchedulerCommon starting compile\n";
+    dbg << d_myworld->myRank() << " SchedulerCommon starting compile\n";
     
     // pass the first to the rest, so we can share the scrubcountTable
     DetailedTasks* first = 0;
     for (unsigned i = 0; i < d_graphs.size(); i++) {
       if (d_graphs.size() > 1) {
-        dbg << d_myworld->myrank() << "  Compiling graph#" << i << " of " 
+        dbg << d_myworld->myRank() << "  Compiling graph#" << i << " of " 
             << d_graphs.size() << endl;
       }
 
@@ -1065,7 +1065,7 @@ void SchedulerCommon::compile()
       }
     }
     verifyChecksum();
-    dbg << d_myworld->myrank() << " SchedulerCommon finished compile\n";
+    dbg << d_myworld->myRank() << " SchedulerCommon finished compile\n";
   } else {
     // NOTE: this was added with scheduleRestartInititalize() support (for empty TGs)
     //  Even when numTasks_ <= 0, the code below executed and did nothing worthwhile... seemingly
@@ -1078,7 +1078,7 @@ void SchedulerCommon::compile()
 #if 1
   for (int i = 0; i < grid->numLevels(); i++) {
     const PatchSubset* patches = 
-      getLoadBalancer()->getPerProcessorPatchSet(grid->getLevel(i))->getSubset(d_myworld->myrank());
+      getLoadBalancer()->getPerProcessorPatchSet(grid->getLevel(i))->getSubset(d_myworld->myRank());
     if (patches->size() > 0) {
       m_locallyComputedPatchVarMap->addComputedPatchSet(patches);
     }
@@ -1093,7 +1093,7 @@ void SchedulerCommon::compile()
         const DetailedTask* dt = dts->localTask(i);
         for(const Task::Dependency* comp = dt->getTask()->getComputes();
             comp != 0; comp = comp->next){
-          if (comp->var->typeDescription()->getType() != TypeDescription::ReductionVariable) {
+          if (comp->var->typeDescription()->getType() != TypeDescription::Type::ReductionVariable) {
             constHandle<PatchSubset> patches =
               comp->getPatchesUnderDomain(dt->getPatches());
             m_locallyComputedPatchVarMap->addComputedPatchSet(patches.get_rep());
@@ -1132,7 +1132,7 @@ bool SchedulerCommon::isNewDW(int idx) const
 void
 SchedulerCommon::finalizeTimestep()
 {
-  finalizeNodes(d_myworld->myrank());
+  finalizeNodes(d_myworld->myRank());
   for(unsigned int i=d_numOldDWs;i<d_dws.size();i++)
     d_dws[i]->finalize();
 }
@@ -1178,7 +1178,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
         }
 
         if (copyThisVar) {
-          if (dep->var->typeDescription()->getType() == TypeDescription::ReductionVariable)
+          if (dep->var->typeDescription()->getType() == TypeDescription::Type::ReductionVariable)
             // we will take care of reduction variables in a different section
             continue;
           
@@ -1247,7 +1247,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
   for (int i = 0; i < grid->numLevels(); i++) {
     LevelP newLevel = grid->getLevel(i);
-    //const PatchSubset  *patches = getLoadBalancer()->getPerProcessorPatchSet(newLevel)->getSubset(d_myworld->myrank());
+    //const PatchSubset  *patches = getLoadBalancer()->getPerProcessorPatchSet(newLevel)->getSubset(d_myworld->myRank());
     if (i > 0) {
       if (i >= oldGrid->numLevels()) {
         // new level - refine everywhere
@@ -1266,7 +1266,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
         // covered by patches on the old grid, and interpolate them.  
         // then after, copy the data, and if necessary, overwrite interpolated data
         const PatchSubset *ps = 
-          getLoadBalancer()->getPerProcessorPatchSet(newLevel)->getSubset(d_myworld->myrank());
+          getLoadBalancer()->getPerProcessorPatchSet(newLevel)->getSubset(d_myworld->myRank());
 
         // for each patch I own
         for (int p = 0; p < ps->size(); p++) {
@@ -1298,36 +1298,26 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
             sum += dist.x()*dist.y()*dist.z();
           }  // for oldPatches
           if (sum != totalCells) {
-            if (Uintah::Parallel::usingMPI()) {
               myPatchIDs.push_back(newPatch->getID());
-            } else {
-              refinePatchSets[i]->add(newPatch);
-            }
-          } else {
-            if (!Uintah::Parallel::usingMPI()) {
-              copyPatchSets[i]->add(newPatch);
-            }
-          }
+          } 
         } // for patch
-
-        if (Uintah::Parallel::usingMPI()) {
 
           //Gather size from all processors
           int mycount = myPatchIDs.size();
-          std::vector<int> counts(d_myworld->size());
+          std::vector<int> counts(d_myworld->nRanks());
           MPI_Allgather(&mycount, 1, MPI_INT, &counts[0], 1, MPI_INT, d_myworld->getComm());
 
           //compute recieve array offset and size
-          std::vector<int> displs(d_myworld->size());
+          std::vector<int> displs(d_myworld->nRanks());
           int pos = 0;
 
-          for (int p = 0; p < d_myworld->size(); p++) {
+          for (int p = 0; p < d_myworld->nRanks(); p++) {
             displs[p] = pos;
             pos += counts[p];
           }
 
           std::vector<int> allPatchIDs(pos);  //receive array;
-          MPI_Allgatherv(&myPatchIDs[0], counts[d_myworld->myrank()], 
+          MPI_Allgatherv(&myPatchIDs[0], counts[d_myworld->myRank()], 
                          MPI_INT, &allPatchIDs[0], &counts[0], &displs[0], MPI_INT,
                          d_myworld->getComm());
           //make refinePatchSets from patch ids
@@ -1342,10 +1332,9 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
               copyPatchSets[i]->add(newPatch);
             }
           }
-        }  // using MPI
       }
       if (refinePatchSets[i]->size() > 0) {
-        dbg << d_myworld->myrank() << "  Calling scheduleRefine for patches " << *refinePatchSets[i].get_rep() << endl;
+        dbg << d_myworld->myRank() << "  Calling scheduleRefine for patches " << *refinePatchSets[i].get_rep() << endl;
         sim->scheduleRefine(refinePatchSets[i].get_rep(), sched);
       }
     } else {
@@ -1506,7 +1495,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
 
         //__________________________________
         //  Grid Variables
-        if (label->typeDescription()->getType() != TypeDescription::ParticleVariable) {
+        if (label->typeDescription()->getType() != TypeDescription::Type::ParticleVariable) {
           Patch::selectType oldPatches;
           oldLevel->selectPatches(newLowIndex, newHighIndex, oldPatches);
           
@@ -1536,11 +1525,11 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
             
             
             switch(label->typeDescription()->getType()){
-            case TypeDescription::NCVariable:
-            case TypeDescription::CCVariable:
-            case TypeDescription::SFCXVariable:
-            case TypeDescription::SFCYVariable:
-            case TypeDescription::SFCZVariable:
+            case TypeDescription::Type::NCVariable:
+            case TypeDescription::Type::CCVariable:
+            case TypeDescription::Type::SFCXVariable:
+            case TypeDescription::Type::SFCYVariable:
+            case TypeDescription::Type::SFCZVariable:
             {
               if(!oldDataWarehouse->exists(label, matl, oldPatch))
                 SCI_THROW(UnknownVariable(label->getName(), oldDataWarehouse->getID(), oldPatch, matl,
@@ -1586,7 +1575,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
               }
             }
             break;
-            case TypeDescription::PerPatch:
+            case TypeDescription::Type::PerPatch:
             {
             }
             break;
@@ -1815,7 +1804,7 @@ SchedulerCommon::printTaskLevels( const ProcessorGroup* d_myworld,
         
         if(taskPatches->contains(firstPatch)){
         
-          out << d_myworld->myrank() << "   ";
+          out << d_myworld->myRank() << "   ";
           out << std::left;
           out.width(70);
           out << task->getTask()->getName();

@@ -133,7 +133,7 @@ tecplot( DataArchive *   da,
         //___________________________________________
         //  Curently C C  V A R I A B L E S Only
         //
-      case Uintah::TypeDescription::CCVariable:
+      case Uintah::TypeDescription::Type::CCVariable:
         { //CCVariable case: 5 
           //    generate the name of the output file;
           string filename;
@@ -150,20 +150,20 @@ tecplot( DataArchive *   da,
           outfile << "TITLE = " << "\"" << ccVariable << " tecplot data file" << "\"" << endl;
 
           if(i_xd == "i_3d") {
-            if(subtype->getType() == Uintah::TypeDescription::double_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"Y" << "\", " << "\"Z" << "\", "
                       << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::float_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::float_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"Y" << "\", " << "\"Z" << "\", "
                       << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::Vector || subtype->getType() == Uintah::TypeDescription::Point) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Vector || subtype->getType() == Uintah::TypeDescription::Type::Point) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"Y" << "\", " << "\"Z" << "\", "
                       << "\"" << ccVariable << ".X" << "\", " << "\"" << ccVariable << ".Y" << "\", " 
                       << "\"" << ccVariable << ".Z" << "\"";
             }
-            if(subtype->getType() == Uintah::TypeDescription::Matrix3) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Matrix3) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"Y" << "\", " << "\"Z" << "\", " 
                       << "\"" << ccVariable  << ".1.1\"" << ", \"" << ccVariable << ".1.2\"" << ", \"" << ccVariable << ".1.3\""
                       << ", \"" << ccVariable << ".2.1\"" << ", \"" << ccVariable << ".2.2\"" << ", \"" << ccVariable << ".2.3\""
@@ -171,35 +171,35 @@ tecplot( DataArchive *   da,
             }
             outfile << endl;
           } else if(i_xd == "i_2d") {
-            if(subtype->getType() == Uintah::TypeDescription::double_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"Y" << "\", " 
                       << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::float_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::float_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"Y" << "\", " 
                       << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::Vector || subtype->getType() == Uintah::TypeDescription::Point) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Vector || subtype->getType() == Uintah::TypeDescription::Type::Point) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"Y" << "\", "
                       << "\"" << ccVariable << ".X" << "\", " << "\"" << ccVariable << ".Y" << "\"";
             }
-            if(subtype->getType() == Uintah::TypeDescription::Matrix3) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Matrix3) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"Y" << "\", " 
                       << "\"" << ccVariable  << ".1.1\"" << ", \"" << ccVariable << ".1.2\"" 
                       << ", \"" << ccVariable << ".2.1\"" << ", \"" << ccVariable << ".2.2\""; 
             }
             outfile << endl;
           } else if(i_xd == "i_1d") {
-            if(subtype->getType() == Uintah::TypeDescription::double_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::float_type) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::float_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"" << ccVariable << "\""; 
             }
-            if(subtype->getType() == Uintah::TypeDescription::Vector || subtype->getType() == Uintah::TypeDescription::Point) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Vector || subtype->getType() == Uintah::TypeDescription::Type::Point) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"" << ccVariable << ".X" << "\" ";
             }
-            if(subtype->getType() == Uintah::TypeDescription::Matrix3) {
+            if(subtype->getType() == Uintah::TypeDescription::Type::Matrix3) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"" << ccVariable  << ".1.1\"";
             }
             outfile << endl;
@@ -297,7 +297,7 @@ tecplot( DataArchive *   da,
                       int matl = *matlIter;
                       if(matlsIndex == matl) { // if(matlsIndex == matl): 11
                         switch(subtype->getType()){ //switch to get data subtype: 12
-                        case Uintah::TypeDescription::double_type:
+                        case Uintah::TypeDescription::Type::double_type:
                           {
                             CCVariable<double> value;
                             da->query(value, ccVariable, matl, patch, t);
@@ -341,7 +341,7 @@ tecplot( DataArchive *   da,
                             }//end of if(i_xd == "i_1d") 
                           }
                         break;
-                        case Uintah::TypeDescription::float_type:
+                        case Uintah::TypeDescription::Type::float_type:
                           {
                             CCVariable<float> value;
                             da->query(value, ccVariable, matl, patch, t);
@@ -385,7 +385,7 @@ tecplot( DataArchive *   da,
                             }//end of if(i_xd == "i_1d") 
                           }
                         break;
-                        case Uintah::TypeDescription::Vector:
+                        case Uintah::TypeDescription::Type::Vector:
                           {
                             CCVariable<Vector> value;
                             da->query(value, ccVariable, matl, patch, t);
@@ -429,7 +429,7 @@ tecplot( DataArchive *   da,
                             } //end of if(i_xd == "i_1d")
                           }
                         break;
-                        case Uintah::TypeDescription::Point:
+                        case Uintah::TypeDescription::Type::Point:
                           {
                             CCVariable<Point> value;
                             da->query(value, ccVariable, matl, patch, t);
@@ -475,7 +475,7 @@ tecplot( DataArchive *   da,
                           }
                         break;
 
-                        case Uintah::TypeDescription::Matrix3:
+                        case Uintah::TypeDescription::Type::Matrix3:
                           {
                             CCVariable<Matrix3> value;
                             da->query(value, ccVariable, matl, patch, t);

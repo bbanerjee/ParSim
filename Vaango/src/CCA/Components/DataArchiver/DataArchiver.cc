@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -331,12 +331,10 @@ DataArchiver::problemSetup( const ProblemSpecP    & params,
   if (d_checkpointWalltimeInterval > 0) {
     d_nextCheckpointWalltime=d_checkpointWalltimeStart + 
       (int) Time::currentSeconds();
-    if(Parallel::usingMPI()){
       // make sure we are all writing at same time,
       // even if our clocks disagree
       // make decision based on processor zero time
       MPI_Bcast(&d_nextCheckpointWalltime, 1, MPI_INT, 0, d_myworld->getComm());
-    }
   } else {
     d_nextCheckpointWalltime=0;
   }
@@ -353,11 +351,10 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     return;
   }
 
-  if( Parallel::usingMPI() ){
     // See how many shared filesystems that we have
     double start=Time::currentSeconds();
     string basename;
-    if(d_myworld->myrank() == 0){
+    if(d_myworld->myRank() == 0){
       // Create a unique string, using hostname+pid
       char* base = strdup(d_filebase.c_str());
       char* p = base+strlen(base);
@@ -400,7 +397,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     }
     // Create a file, of the name p0_hostname-p0_pid-processor_number
     ostringstream myname;
-    myname << basename << "-" << d_myworld->myrank() << ".tmp";
+    myname << basename << "-" << d_myworld->myRank() << ".tmp";
     string fname = myname.str();
 
     // This will be an empty file, everything is encoded in the name anyway
@@ -420,7 +417,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     // See who else we can see
     d_writeMeta=true;
     int i;
-    for(i=0;i<d_myworld->myrank();i++){
+    for(i=0;i<d_myworld->myRank();i++){
       ostringstream name;
       name << basename << "-" << i << ".tmp";
       struct stat st;
@@ -481,7 +478,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     // ensure that all processors wait before they remove the tmp files
     MPI_Allreduce(&count, &nunique, 1, MPI_INT, MPI_SUM,
                   d_myworld->getComm());
-    if(d_myworld->myrank() == 0){
+    if(d_myworld->myRank() == 0){
       double dt=Time::currentSeconds()-start;
       cerr << "Discovered " << nunique << " unique filesystems in " << dt << " seconds\n";
     }
@@ -491,10 +488,6 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
       cerr << "Cannot unlink file: " << myname.str() << '\n';
       throw ErrnoException("unlink", errno, __FILE__, __LINE__);
     }
-  } else {
-    makeVersionedDir();
-    d_writeMeta = true;
-  }
 
   if (d_writeMeta) {
 
@@ -530,8 +523,9 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     //     routine.
 
     cout << "Saving original .ups file in UDA...\n";
-    Dir ups_location( pathname( params->getFile() ) );
-    ups_location.copy( basename( params->getFile() ), d_dir );
+    basename = params->getFile();
+    Dir ups_location( pathname(basename ) );
+    ups_location.copy( basename, d_dir );
 
     //
     /////////////////////////////////////////////////////////
@@ -550,9 +544,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
   }
 
   //sync up before every rank can use the base dir
-  if (Parallel::usingMPI()) { 
     MPI_Barrier(d_myworld->getComm());
-  }
   
 } // end initializeOutput()
 
@@ -596,11 +588,7 @@ DataArchiver::restartSetup(Dir& restartFromDir, int startTimestep,
           cout.flush();
 
           // The file system just gave us some problems...
-          if( Parallel::usingMPI() ) {
             printf( "WARNING: Filesystem check failed on processor %d\n", Parallel::getMPIRank() );
-          } else {
-            printf( "WARNING: The filesystem appears to be flaky...\n" );
-          }
         }
         // Verify that "system works"
         int code = system( "echo how_are_you" );
@@ -645,9 +633,7 @@ DataArchiver::restartSetup(Dir& restartFromDir, int startTimestep,
   }
   if( d_checkpointWalltimeInterval > 0 ) {
     d_nextCheckpointWalltime = d_checkpointWalltimeInterval + (int)Time::currentSeconds();
-    if(Parallel::usingMPI()){
       MPI_Bcast(&d_nextCheckpointWalltime, 1, MPI_INT, 0, d_myworld->getComm());
-    }
   }
 }
 
@@ -954,7 +940,7 @@ DataArchiver::createIndexXML(Dir& dir)
 {
   ProblemSpecP rootElem = ProblemSpec::createDocument("Uintah_DataArchive");
 
-  rootElem->appendElement("numberOfProcessors", d_myworld->size());
+  rootElem->appendElement("numberOfProcessors", d_myworld->nRanks());
   rootElem->appendElement("ParticlePosition", d_particlePositionName);
 
   ProblemSpecP metaElem = rootElem->appendChild("Meta");
@@ -1153,7 +1139,7 @@ DataArchiver::beginOutputTimestep( double time, double delt,
   }
   
   int currsecs = (int)Time::currentSeconds();
-  if(Parallel::usingMPI() && d_checkpointWalltimeInterval != 0) {
+  if(d_checkpointWalltimeInterval != 0) {
     MPI_Bcast(&currsecs, 1, MPI_INT, 0, d_myworld->getComm());
   }
    
@@ -1202,11 +1188,7 @@ DataArchiver::beginOutputTimestep( double time, double delt,
             cout << error_stream.str();
             cout.flush();
             // The file system just gave us some problems...
-            if( Parallel::usingMPI() ) {
               printf( "WARNING: Filesystem check failed on processor %d\n", Parallel::getMPIRank() );
-            } else {
-              printf( "WARNING: The filesystem appears to be flaky...\n" );
-            }
           }
         }
       }
@@ -1275,7 +1257,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
   }
 
   if( tries > 1 ) {
-    cout << d_myworld->myrank() << " - tries: " << tries << "\n";
+    cout << d_myworld->myRank() << " - tries: " << tries << "\n";
   }
     
   // Create the directory for this level, if necessary
@@ -1306,7 +1288,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
       }
     }
     if( tries > 1 ) {
-      cout << d_myworld->myrank() << ": " << l << " - tries: " << tries << "\n";
+      cout << d_myworld->myRank() << ": " << l << " - tries: " << tries << "\n";
     }
     
   } // end for( int l = 0 )
@@ -1527,7 +1509,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
       ProblemSpecP metaElem = rootElem->appendChild("Meta");
       metaElem->appendElement("endianness", endianness().c_str());
       metaElem->appendElement("nBits", (int)sizeof(unsigned long) * 8 );
-      metaElem->appendElement("numProcs", d_myworld->size());
+      metaElem->appendElement("numProcs", d_myworld->nRanks());
       
 
       ProblemSpecP timeElem = rootElem->appendChild("Time");
@@ -1581,7 +1563,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
 
         Level::const_patchIterator iter;
 
-        procOnLevel[l].resize(d_myworld->size());
+        procOnLevel[l].resize(d_myworld->nRanks());
 
         for(iter=level->patchesBegin(); iter != level->patchesEnd(); iter++){
           const Patch* patch=*iter;
@@ -1611,7 +1593,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
         lname << "l" << l;
 
         // create a pxxxxx.xml file for each proc doing the outputting
-        for(int i=0;i<d_myworld->size();i++){
+        for(int i=0;i<d_myworld->nRanks();i++){
           if (i % lb->getNthProc() != 0 || procOnLevel[l][i] == 0)
             continue;
           ostringstream pname;
@@ -1626,7 +1608,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
           df->setAttribute("proc",procID.str());
           
           ostringstream labeltext;
-          labeltext << "Processor " << i << " of " << d_myworld->size();
+          labeltext << "Processor " << i << " of " << d_myworld->nRanks();
         }
       }
       
@@ -1951,7 +1933,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
     Dir ldir = tdir.getSubdir(lname.str());
     
     ostringstream pname;
-    pname << "p" << setw(5) << setfill('0') << d_myworld->myrank();
+    pname << "p" << setw(5) << setfill('0') << d_myworld->myRank();
     xmlFilename = ldir.getName() + "/" + pname.str() + ".xml";
     dataFilebase = pname.str() + ".data";
     dataFilename = ldir.getName() + "/" + dataFilebase;

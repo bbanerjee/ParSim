@@ -89,12 +89,12 @@ int f_array[X_RES][Y_RES]=
 */
 int main(int argc, char** argv)
 {
-	Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+	//Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 	Uintah::Parallel::initializeManager( argc, argv );
 
 	ProcessorGroup *d_myworld=Uintah::Parallel::getRootProcessorGroup();
-	int rank=d_myworld->myrank();
-	int numprocs=d_myworld->size();
+	int rank=d_myworld->myRank();
+	int numprocs=d_myworld->nRanks();
 	cout << "rank:" << rank <<  ": Starting \n";
 	
 	srand(rank*rank*rank);

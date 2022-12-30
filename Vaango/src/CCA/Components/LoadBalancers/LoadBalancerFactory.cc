@@ -49,14 +49,10 @@ LoadBalancerFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
     lb_ps->getAttribute("type", loadbalancer);
 
   // Default settings
-  if (Uintah::Parallel::usingMPI()) {
     if (loadbalancer == "")
       loadbalancer = "SimpleLoadBalancer";
-  } else // No MPI
-    if (loadbalancer == "")
-    loadbalancer = "SingleProcessorLoadBalancer";
 
-  if (world->myrank() == 0)
+  if (world->myRank() == 0)
     cout << "Load Balancer: \t\t" << loadbalancer << endl;
 
   if (loadbalancer == "SingleProcessorLoadBalancer") {

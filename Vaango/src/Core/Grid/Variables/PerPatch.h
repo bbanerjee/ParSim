@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_CORE_GRID_VARIABLES_PERPATCH_H
-#define UINTAH_CORE_GRID_VARIABLES_PERPATCH_H
+#ifndef __CORE_GRID_VARIABLES_PERPATCH_H__
+#define __CORE_GRID_VARIABLES_PERPATCH_H__
 
 #include <Core/Grid/Variables/PerPatchBase.h>
 #include <Core/Exceptions/TypeMismatchException.h>
@@ -144,7 +145,7 @@ WARNING
           // var for some functions the perpatches are used in (i.e., task->computes).
           // Since they're not fully-qualified variables, maker
           // would fail anyway.  And since most instances use Handle, it would be difficult.
-          td = scinew TypeDescription(TypeDescription::PerPatch,
+          td = scinew TypeDescription(TypeDescription::Type::PerPatch,
                                       "PerPatch", &maker,
                                       fun_getTypeDescription((int*)0));
         }
@@ -190,4 +191,4 @@ WARNING
       }
 } // End namespace Uintah
 
-#endif // UINTAH_CORE_GRID_VARIABLES_PERPATCH_H
+#endif // __CORE_GRID_VARIABLES_PERPATCH_H__

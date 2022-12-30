@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,153 +24,117 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_PARALLEL_H
-#define UINTAH_HOMEBREW_PARALLEL_H
-
-#include <Core/Thread/Thread.h>
+#ifndef __CORE_PARALLEL_PARALLEL_H__
+#define __CORE_PARALLEL_PARALLEL_H__
 
 #include <iostream>
+#include <thread>
 
-
-// Macro used by components to eliminate excess spew on large parallel runs...
+// Macro used to reduce output on large parallel runs
 //
-//   Note, make sure that MPI_Init (or MPI_Init_thread) is called
-//   before using isProc0_macro.
+//   Note, make sure that Uintah::MPI::Init (or Uintah::MPI::Init_thread) is
+//   called before using isProc0_macro.
 //
-#define isProc0_macro ( Uintah::Parallel::getMPIRank() == 0 &&          \
-                        ( ( Uintah::Parallel::getNumThreads() > 1 &&    \
-                            Uintah::Thread::self()->myid() == 0 ) ||    \
-                          ( Uintah::Parallel::getNumThreads() <= 1 ) ) )
+#define isProc0_macro                                                          \
+  (Uintah::Parallel::getMPIRank() == 0) &&                                     \
+    (Uintah::Parallel::getMainThreadID() == std::this_thread::get_id())
 
-#define proc0cout if( isProc0_macro ) std::cout
-#define proc0cerr if( isProc0_macro ) std::cerr
+#define proc0cout                                                              \
+  if (isProc0_macro)                                                           \
+  std::cout
+
+#define proc0cerr                                                              \
+  if (isProc0_macro)                                                           \
+  std::cerr
+
+#define MAX_THREADS 64
+#define MAX_HALO_DEPTH 5
 
 namespace Uintah {
 
-  class ProcessorGroup;
+class ProcessorGroup;
 
-/**************************************
-
-CLASS
-   Parallel
-   
-   Short description...
-
-GENERAL INFORMATION
-
-   Parallel.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-
-KEYWORDS
-   Parallel
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
-
-  class Parallel {
-  public:
-    enum Circumstances {
-      NormalShutdown,
-      Abort
-    };
-
-    //////////
-    // Determines if MPI is being used.  MUST BE CALLED BEFORE
-    // initializeManager()!  Also must be called before any one
-    // calls "Uintah::Parallel::usingMPI()".  argc/argv are only
-    // passed in so that they can be parsed to see if we are using
-    // mpich. (mpich mpirun adds some flags to the args.)
-    static void determineIfRunningUnderMPI( int argc, char** argv );
-
-    //////////
-    // Initializes MPI if necessary. 
-    static void initializeManager( int& argc, char**& arg );
-
-    //////////
-    // check to see whether initializeManager has been called
-    static bool isInitialized();
-      
-    //////////
-    // Insert Documentation Here:
-    static void finalizeManager( Circumstances cirumstances = NormalShutdown );
-
-    //////////
-    // Insert Documentation here:
-    static ProcessorGroup* getRootProcessorGroup();
-
-    //////////
-    // Returns the MPI Rank of this process.  If this is not running
-    // under MPI, than 0 is returned.  Rank value is set after call to
-    // initializeManager();
-    static int getMPIRank();
-
-    //////////
-    // Returns the size of MPI_Comm
-    static int getMPISize();
-      
-    //////////
-    // Returns true if this process is using MPI
-    static bool usingMPI();
-      
-    //////////
-    // Ignore mpi probe, and force this to use MPI
-    static void forceMPI();
-
-    //////////
-    // Ignore mpi probe, and force this to not use MPI
-    static void forceNoMPI();
-
-    //////////
-    // Tells Parallel that Threads are not to be used
-    static void noThreading();
-
-    //////////
-    // Returns true if this process is to use GPUs, false otherwise
-    static bool usingDevice();
-
-    //////////
-    // Sets whether or not to use available GPUs
-    static void setUsingDevice( bool state );
-
-    //////////
-    // Returns the number of threads that a processing element is
-    // allowed to use to compute its tasks.  
-    static int getNumThreads();
-
-    //////////
-    // Insert Documentation here:
-    static void setNumThreads( int num );
-      
-  private:
-    Parallel();
-    Parallel(const Parallel&);
-    ~Parallel();
-    Parallel& operator=(const Parallel&);
-
-//     static bool          allowThreads;
-
-    static int             numThreads_;
-    static bool            determinedIfUsingMPI_;
-
-    static bool            initialized_;
-    static bool            usingMPI_;
-    static bool            usingDevice_;
-//      static MPI_Comm        worldComm_;
-    static int             worldRank_;
-    static int             worldSize_;
-    static ProcessorGroup* rootContext_;
-
+class Parallel
+{
+public:
+  enum Circumstances
+  {
+    NormalShutdown,
+    Abort
   };
+
+  // Initializes MPI if necessary.
+  static void initializeManager(int& argc, char**& arg);
+
+  // Check to see whether initializeManager has been called
+  static bool isInitialized();
+
+  // Shut down MPI gracefully
+  static void finalizeManager(Circumstances cirumstances = NormalShutdown);
+
+  // Return root context processorgroup
+  static ProcessorGroup* getRootProcessorGroup();
+
+  // Return the MPI Rank of this process.  If this is not running
+  // under MPI, then 0 is returned.  Rank value is set after call to
+  // initializeManager();
+  static int getMPIRank();
+
+  // Return the size of MPI_Comm
+  static int getMPISize();
+
+  // Return true if this process is to use GPUs, false otherwise
+  static bool usingDevice();
+
+  // Set whether or not to use available GPUs
+  static void setUsingDevice(bool state);
+
+  // Return the number of threads that a processing element is
+  // allowed to use to compute its tasks.
+  static int getNumThreads();
+
+  // Return the number of thread partitions that a processing element is
+  // allowed to use to compute its tasks.
+  static int getNumPartitions();
+
+  // Return the number of threads per partition.
+  static int getThreadsPerPartition();
+
+  // Return the ID of the main thread, via std::this_thread::get_id()
+  static std::thread::id getMainThreadID();
+
+  // Set the number of task runner threads to the value specified
+  static void setNumThreads(int num);
+
+  // Set the number of task runner OMP thread partitions to the value specified
+  static void setNumPartitions(int num);
+
+  // Set the number of threads per OMP partition
+  static void setThreadsPerPartition(int num);
+
+  // Pass the specified exit code to std::exit()
+  static void exitAll(int code);
+
+public:
+  Parallel(const Parallel&) = delete;
+  Parallel& operator=(const Parallel&) = delete;
+  Parallel(Parallel&&) = delete;
+  Parallel& operator=(Parallel&&) = delete;
+
+private:
+  Parallel();
+  ~Parallel();
+
+  static bool s_initialized;
+  static bool s_using_device;
+  static int s_num_threads;
+  static int s_num_partitions;
+  static int s_threads_per_partition;
+  static int s_world_rank;
+  static int s_world_size;
+  static std::thread::id s_main_thread_id;
+  static ProcessorGroup* s_root_context;
+};
 } // End namespace Uintah
 
-#endif
+#endif // __CORE_PARALLEL_PARALLEL_H__

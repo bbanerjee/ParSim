@@ -123,12 +123,12 @@ int main(int argc, char** argv)
 
       // ParticleVariable switch
       switch(td->getType()){
-      case Uintah::TypeDescription::ParticleVariable:
+      case Uintah::TypeDescription::Type::ParticleVariable:
 
         switch(subtype->getType()){
 
         // Double variable
-        case Uintah::TypeDescription::double_type:
+        case Uintah::TypeDescription::Type::double_type:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
         break;
 
         // Float variable
-        case Uintah::TypeDescription::float_type:
+        case Uintah::TypeDescription::Type::float_type:
           {
             // Set up variables to store min and max
             float min = 1.0e20, max = -1.0e20;
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
         break;
 
         // Int variable
-        case Uintah::TypeDescription::int_type:
+        case Uintah::TypeDescription::Type::int_type:
           {
             // Set up variables to store min and max
             int min = 40000000, max = -40000000;
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
         break;
 
         // Vector variable
-        case Uintah::TypeDescription::Vector:
+        case Uintah::TypeDescription::Type::Vector:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -331,7 +331,7 @@ int main(int argc, char** argv)
         break;
 
         // Matrix3 variable
-        case Uintah::TypeDescription::Matrix3:
+        case Uintah::TypeDescription::Type::Matrix3:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -380,10 +380,10 @@ int main(int argc, char** argv)
           } // end Matrix3 case
         break;
 
-        case Uintah::TypeDescription::Point:
+        case Uintah::TypeDescription::Type::Point:
         break;
 
-        case Uintah::TypeDescription::long64_type:
+        case Uintah::TypeDescription::Type::long64_type:
         break;
 
         default:
@@ -395,19 +395,19 @@ int main(int argc, char** argv)
 
         } // end switch subtype
 
-      case Uintah::TypeDescription::NCVariable:
+      case Uintah::TypeDescription::Type::NCVariable:
       break;
 
-      case Uintah::TypeDescription::CCVariable:
+      case Uintah::TypeDescription::Type::CCVariable:
       break;
 
-      case Uintah::TypeDescription::SFCXVariable:
+      case Uintah::TypeDescription::Type::SFCXVariable:
       break;
 
-      case Uintah::TypeDescription::SFCYVariable:
+      case Uintah::TypeDescription::Type::SFCYVariable:
       break;
 
-      case Uintah::TypeDescription::SFCZVariable:
+      case Uintah::TypeDescription::Type::SFCZVariable:
       break;
 
       default:

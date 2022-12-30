@@ -555,31 +555,31 @@ compare(MaterialParticleVarData& data2, int matl, double time1, double time2,
 
   switch (pvb1->virtualGetTypeDescription()->getSubType()->getType())
     {
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return compare(data2, dynamic_cast<ParticleVariable<double>*>(pvb1),
                      dynamic_cast<ParticleVariable<double>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return compare(data2, dynamic_cast<ParticleVariable<float>*>(pvb1),
                      dynamic_cast<ParticleVariable<float>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::long64_type:
+    case Uintah::TypeDescription::Type::long64_type:
       return compare(data2, dynamic_cast<ParticleVariable<long64>*>(pvb1),
                      dynamic_cast<ParticleVariable<long64>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return compare(data2, dynamic_cast<ParticleVariable<int>*>(pvb1),
                      dynamic_cast<ParticleVariable<int>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return compare(data2, dynamic_cast<ParticleVariable<Point>*>(pvb1),
                      dynamic_cast<ParticleVariable<Point>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return compare(data2, dynamic_cast<ParticleVariable<Vector>*>(pvb1),
                      dynamic_cast<ParticleVariable<Vector>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return compare(data2, dynamic_cast<ParticleVariable<Matrix3>*>(pvb1),
                      dynamic_cast<ParticleVariable<Matrix3>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
@@ -721,7 +721,7 @@ void addParticleData(MaterialParticleDataMap& matlParticleDataMap,
       const Uintah::TypeDescription* td = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
     
-      if (td->getType() == Uintah::TypeDescription::ParticleVariable) {
+      if (td->getType() == Uintah::TypeDescription::Type::ParticleVariable) {
         ConsecutiveRangeSet matls = da->queryMaterials(var, patch, timestep);
     
         for (ConsecutiveRangeSet::iterator matlIter = matls.begin();
@@ -733,25 +733,25 @@ void addParticleData(MaterialParticleDataMap& matlParticleDataMap,
           data.setMatl(matl);
           ParticleVariableBase* pvb = NULL;
           switch(subtype->getType()){
-          case Uintah::TypeDescription::double_type:
+          case Uintah::TypeDescription::Type::double_type:
             pvb = scinew ParticleVariable<double>();
             break;
-          case Uintah::TypeDescription::float_type:
+          case Uintah::TypeDescription::Type::float_type:
             pvb = scinew ParticleVariable<float>();
             break;
-          case Uintah::TypeDescription::long64_type:
+          case Uintah::TypeDescription::Type::long64_type:
             pvb = scinew ParticleVariable<long64>();
             break;
-          case Uintah::TypeDescription::int_type:
+          case Uintah::TypeDescription::Type::int_type:
             pvb = scinew ParticleVariable<int>();
             break;
-          case Uintah::TypeDescription::Point:
+          case Uintah::TypeDescription::Type::Point:
             pvb = scinew ParticleVariable<Point>();
             break;
-          case Uintah::TypeDescription::Vector:
+          case Uintah::TypeDescription::Type::Vector:
             pvb = scinew ParticleVariable<Vector>(); 
             break;
-          case Uintah::TypeDescription::Matrix3:
+          case Uintah::TypeDescription::Type::Matrix3:
             pvb = scinew ParticleVariable<Matrix3>();
             break;
           default:
@@ -912,28 +912,28 @@ makeFieldComparator(const Uintah::TypeDescription* td,
                     const Patch* patch)
 {
   switch(td->getType()){
-  case Uintah::TypeDescription::ParticleVariable:
+  case Uintah::TypeDescription::Type::ParticleVariable:
     // Particles handled differently (and previously)
     break;
-  case Uintah::TypeDescription::NCVariable: {
+  case Uintah::TypeDescription::Type::NCVariable: {
     NodeIterator iter = patch->getNodeIterator();
     switch(subtype->getType()){
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return scinew
         SpecificFieldComparator<NCVariable<double>,  NodeIterator>(iter);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return scinew
         SpecificFieldComparator<NCVariable<float>,   NodeIterator>(iter);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return scinew
         SpecificFieldComparator<NCVariable<int>,     NodeIterator>(iter);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return scinew
         SpecificFieldComparator<NCVariable<Point>,   NodeIterator>(iter);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return scinew
         SpecificFieldComparator<NCVariable<Vector>,  NodeIterator>(iter);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return scinew
         SpecificFieldComparator<NCVariable<Matrix3>, NodeIterator>(iter);
     default:
@@ -942,28 +942,28 @@ makeFieldComparator(const Uintah::TypeDescription* td,
     }
   }
   
-  case Uintah::TypeDescription::CCVariable: {
+  case Uintah::TypeDescription::Type::CCVariable: {
     CellIterator iter = patch->getCellIterator();
     switch(subtype->getType()){
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return scinew
         SpecificFieldComparator<CCVariable<double>,  CellIterator>(iter);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return scinew
         SpecificFieldComparator<CCVariable<float>,   CellIterator>(iter);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return scinew
         SpecificFieldComparator<CCVariable<int>,     CellIterator>(iter);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return scinew
         SpecificFieldComparator<CCVariable<Point>,   CellIterator>(iter);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return scinew
         SpecificFieldComparator<CCVariable<Vector>,  CellIterator>(iter);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return scinew
         SpecificFieldComparator<CCVariable<Matrix3>, CellIterator>(iter);
-    case Uintah::TypeDescription::Stencil7:
+    case Uintah::TypeDescription::Type::Stencil7:
       return scinew
         SpecificFieldComparator<CCVariable<Stencil7>, CellIterator>(iter);
     default:
@@ -972,25 +972,25 @@ makeFieldComparator(const Uintah::TypeDescription* td,
     }
   }
   
-  case Uintah::TypeDescription::SFCXVariable: {
+  case Uintah::TypeDescription::Type::SFCXVariable: {
     CellIterator iter = patch->getSFCXIterator();
     switch(subtype->getType()){
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return scinew
         SpecificFieldComparator<SFCXVariable<double>, CellIterator>(iter);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return scinew
         SpecificFieldComparator<SFCXVariable<float>,  CellIterator>(iter);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return scinew
         SpecificFieldComparator<SFCXVariable<int>,    CellIterator>(iter);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return scinew
         SpecificFieldComparator<SFCXVariable<Point>,  CellIterator>(iter);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return scinew
         SpecificFieldComparator<SFCXVariable<Vector>, CellIterator>(iter);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return scinew
         SpecificFieldComparator<SFCXVariable<Matrix3>, CellIterator>(iter);
     default:
@@ -999,25 +999,25 @@ makeFieldComparator(const Uintah::TypeDescription* td,
     }
   }
   
-  case Uintah::TypeDescription::SFCYVariable: {
+  case Uintah::TypeDescription::Type::SFCYVariable: {
     CellIterator iter = patch->getSFCYIterator();
     switch(subtype->getType()){
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return scinew
         SpecificFieldComparator<SFCYVariable<double>,  CellIterator>(iter);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return scinew
         SpecificFieldComparator<SFCYVariable<float>,   CellIterator>(iter);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return scinew
         SpecificFieldComparator<SFCYVariable<int>,     CellIterator>(iter);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return scinew
         SpecificFieldComparator<SFCYVariable<Point>,   CellIterator>(iter);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return scinew
         SpecificFieldComparator<SFCYVariable<Vector>,  CellIterator>(iter);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return scinew
         SpecificFieldComparator<SFCYVariable<Matrix3>, CellIterator>(iter);
     default:
@@ -1026,25 +1026,25 @@ makeFieldComparator(const Uintah::TypeDescription* td,
     }
   }
   
-  case Uintah::TypeDescription::SFCZVariable: {
+  case Uintah::TypeDescription::Type::SFCZVariable: {
     CellIterator iter = patch->getSFCZIterator();
     switch(subtype->getType()){
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       return scinew
         SpecificFieldComparator<SFCZVariable<double>,   CellIterator>(iter);
-    case Uintah::TypeDescription::float_type:
+    case Uintah::TypeDescription::Type::float_type:
       return scinew
         SpecificFieldComparator<SFCZVariable<float>,    CellIterator>(iter);
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       return scinew
         SpecificFieldComparator<SFCZVariable<int>,      CellIterator>(iter);
-    case Uintah::TypeDescription::Point:
+    case Uintah::TypeDescription::Type::Point:
       return scinew
         SpecificFieldComparator<SFCZVariable<Point>,    CellIterator>(iter);
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       return scinew
         SpecificFieldComparator<SFCZVariable<Vector>,   CellIterator>(iter);
-    case Uintah::TypeDescription::Matrix3:
+    case Uintah::TypeDescription::Type::Matrix3:
       return scinew
         SpecificFieldComparator<SFCZVariable<Matrix3>,  CellIterator>(iter);
     default:
@@ -1432,7 +1432,7 @@ main(int argc, char** argv)
         if (var == "p.particleID"){
           hasParticleIDs = true;
         }
-        if (types[v]->getType() == Uintah::TypeDescription::ParticleVariable){
+        if (types[v]->getType() == Uintah::TypeDescription::Type::ParticleVariable){
           hasParticleData = true;
         }
 
@@ -1567,29 +1567,29 @@ main(int argc, char** argv)
                 
                 cerr << "\t\t\tMaterial: " << matl << "\n";
                 
-                if (td->getType() == Uintah::TypeDescription::ParticleVariable) {
+                if (td->getType() == Uintah::TypeDescription::Type::ParticleVariable) {
                   switch(subtype->getType()){
-                  case Uintah::TypeDescription::double_type:
+                  case Uintah::TypeDescription::Type::double_type:
                     compareParticles<double>(da1, da2, var, matl, patch, patch2,
                                              time1, tstep, abs_tolerance, rel_tolerance);
                     break;
-                  case Uintah::TypeDescription::float_type:
+                  case Uintah::TypeDescription::Type::float_type:
                     compareParticles<float>(da1, da2, var, matl, patch, patch2,
                                             time1, tstep, abs_tolerance, rel_tolerance);
                     break;
-                  case Uintah::TypeDescription::int_type:
+                  case Uintah::TypeDescription::Type::int_type:
                     compareParticles<int>(da1, da2, var, matl, patch, patch2,
                                           time1, tstep, abs_tolerance, rel_tolerance);
                     break;
-                  case Uintah::TypeDescription::Point:
+                  case Uintah::TypeDescription::Type::Point:
                     compareParticles<Point>(da1, da2, var, matl, patch, patch2,
                                             time1, tstep, abs_tolerance, rel_tolerance);
                     break;
-                  case Uintah::TypeDescription::Vector:
+                  case Uintah::TypeDescription::Type::Vector:
                     compareParticles<Vector>(da1, da2, var, matl, patch, patch2,
                                              time1, tstep, abs_tolerance, rel_tolerance);
                     break;
-                  case Uintah::TypeDescription::Matrix3:
+                  case Uintah::TypeDescription::Type::Matrix3:
                     compareParticles<Matrix3>(da1, da2, var, matl, patch, patch2,
                                               time1, tstep, abs_tolerance, rel_tolerance);
                     break;
@@ -1648,7 +1648,7 @@ main(int argc, char** argv)
         const Uintah::TypeDescription* td = types[v];
         const Uintah::TypeDescription* subtype = td->getSubType();
         
-        if (td->getType() == Uintah::TypeDescription::ParticleVariable)
+        if (td->getType() == Uintah::TypeDescription::Type::ParticleVariable)
           continue;
         cerr << "\tVariable: " << var << ", type " << td->getName() << "\n";
         

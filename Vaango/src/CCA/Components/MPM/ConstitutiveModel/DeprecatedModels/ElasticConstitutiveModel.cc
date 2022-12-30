@@ -517,7 +517,7 @@ fun_getTypeDescription(ElasticConstitutiveModel::CMData*)
 {
   static TypeDescription* td = 0;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "ElasticConstitutiveModel::CMData", true,
                                 &makeMPI_CMData);
   }

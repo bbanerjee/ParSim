@@ -58,7 +58,7 @@ namespace Uintah {
       //some compilers don't like passing templated function pointers directly
       //across function calls
       MPI_Datatype (*func)() = makeMPI_facedata<T>;
-      td = scinew TypeDescription(TypeDescription::Other,
+      td = scinew TypeDescription(TypeDescription::Type::Other,
 				  "facedata", true, 
 				  func);
     }
@@ -90,7 +90,7 @@ namespace Uintah {
       //some compilers don't like passing templated function pointers directly
       //across function calls
       MPI_Datatype (*func)() = makeMPI_vertex<T>;
-      td = scinew TypeDescription(TypeDescription::Other,
+      td = scinew TypeDescription(TypeDescription::Type::Other,
 				  "vertex", true, 
 				  func);
     }

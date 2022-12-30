@@ -239,7 +239,7 @@ public:
     double dt=Time::currentSeconds()-tstart;
     double mflops = (double(flops)*1.e-6)/dt;
     double memrate = (double(memrefs)*1.e-9)/dt;
-    if(pg->myrank() == 0){
+    if(pg->myRank() == 0){
       cout << "Solve of " << X_label->getName() 
 	   << " on level " << level->getIndex()
            << " completed in " << dt << " seconds (" 
@@ -302,42 +302,48 @@ DirectSolve::scheduleSolve( const LevelP           & level,
   // tweaked everytime solve is called.
 
   TypeDescription::Type domtype = A->typeDescription()->getType();
-  ASSERTEQ(domtype, x->typeDescription()->getType());
-  ASSERTEQ(domtype, b->typeDescription()->getType());
+  ASSERTEQ(
+    static_cast<std::underlying_type<TypeDescription::Type>::type>(domtype),
+    static_cast<std::underlying_type<TypeDescription::Type>::type>(
+      x->typeDescription()->getType()));
+  ASSERTEQ(
+    static_cast<std::underlying_type<TypeDescription::Type>::type>(domtype),
+    static_cast<std::underlying_type<TypeDescription::Type>::type>(
+      b->typeDescription()->getType()));
   const DirectSolveParams* dparams = dynamic_cast<const DirectSolveParams*>(params);
   if(!dparams)
     throw InternalError("Wrong type of params passed to Direct solver!", __FILE__, __LINE__);
 
   switch(domtype){
-  case TypeDescription::SFCXVariable:
+  case TypeDescription::Type::SFCXVariable:
     {
       DirectStencil7<SFCXTypes>* that = scinew DirectStencil7<SFCXTypes>(level.get_rep(), matls, A, which_A_dw, x, modifies_x, b, which_b_dw, dparams);
       Handle<DirectStencil7<SFCXTypes> > handle = that;
       task = scinew Task("DirectSolve::Matrix solve (SFCX)", that, &DirectStencil7<SFCXTypes>::solve, handle);
     }
     break;
-  case TypeDescription::SFCYVariable:
+  case TypeDescription::Type::SFCYVariable:
     {
       DirectStencil7<SFCYTypes>* that = scinew DirectStencil7<SFCYTypes>(level.get_rep(), matls, A, which_A_dw, x, modifies_x, b, which_b_dw, dparams);
       Handle<DirectStencil7<SFCYTypes> > handle = that;
       task = scinew Task("DirectSolve::Matrix solve (SFCY)", that, &DirectStencil7<SFCYTypes>::solve, handle);
     }
     break;
-  case TypeDescription::SFCZVariable:
+  case TypeDescription::Type::SFCZVariable:
     {
       DirectStencil7<SFCZTypes>* that = scinew DirectStencil7<SFCZTypes>(level.get_rep(), matls, A, which_A_dw, x, modifies_x, b, which_b_dw, dparams);
       Handle<DirectStencil7<SFCZTypes> > handle = that;
       task = scinew Task("DirectSolve::Matrix solve (SFCZ)", that, &DirectStencil7<SFCZTypes>::solve, handle);
     }
     break;
-  case TypeDescription::CCVariable:
+  case TypeDescription::Type::CCVariable:
     {
       DirectStencil7<CCTypes>* that = scinew DirectStencil7<CCTypes>(level.get_rep(), matls, A, which_A_dw, x, modifies_x, b, which_b_dw, dparams);
       Handle<DirectStencil7<CCTypes> > handle = that;
       task = scinew Task("DirectSolve::Matrix solve (CC)", that, &DirectStencil7<CCTypes>::solve, handle);
     }
     break;
-  case TypeDescription::NCVariable:
+  case TypeDescription::Type::NCVariable:
     {
       DirectStencil7<NCTypes>* that = scinew DirectStencil7<NCTypes>(level.get_rep(), matls, A, which_A_dw, x, modifies_x, b, which_b_dw, dparams);
       Handle<DirectStencil7<NCTypes> > handle = that;

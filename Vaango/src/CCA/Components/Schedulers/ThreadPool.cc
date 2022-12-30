@@ -61,7 +61,7 @@ Worker::Worker( ThreadPool * parent, int id,
 		Mutex * ready ) : 
   d_ready( ready ), d_id( id ), d_parent( parent ), d_task( 0 ), quit_( false )
 {
-  proc_group_ = Parallel::getRootProcessorGroup()->myrank();
+  proc_group_ = Parallel::getRootProcessorGroup()->myRank();
 }
 
 void
@@ -216,7 +216,7 @@ Receiver::Receiver( ThreadPool * parent, int id )
     d_lock("ThreadPool Receiver lock"),
     quit_(false)
 {
-  proc_group_ = Parallel::getRootProcessorGroup()->myrank();  
+  proc_group_ = Parallel::getRootProcessorGroup()->myRank();  
 }
 
 void
@@ -238,7 +238,7 @@ Receiver::assignTask(DetailedTask* task)
   }
   newTasks_.push(task);
  d_lock.unlock();
-  MPI_Send(0, 0, MPI_INT, pg_->myrank(), d_id, pg_->getComm());  
+  MPI_Send(0, 0, MPI_INT, pg_->myRank(), d_id, pg_->getComm());  
 }
 
 void
@@ -308,10 +308,10 @@ Receiver::run()
 
   cout << "Here: pg_ is " << pg_ << "\n";
   cout << " and size of it is: " << pg_->size() << "\n";
-  cout << " and rank of it is: " << pg_->myrank() << "\n";
+  cout << " and rank of it is: " << pg_->myRank() << "\n";
 
   // post receive for self-mpi-process wake up signal
-  MPI_Irecv(0, 0, MPI_INT, pg_->myrank(), d_id, pg_->getComm(),
+  MPI_Irecv(0, 0, MPI_INT, pg_->myRank(), d_id, pg_->getComm(),
 	    &wakeUpRequest);
   recvs_.add(wakeUpRequest, 0, 0,"",0,-1);
 
@@ -351,9 +351,9 @@ Receiver::run()
       // clear out all wake-up signals since it's already awake
       int flag;	
       do {
-	MPI_Iprobe(pg_->myrank(), d_id, pg_->getComm(), &flag, &status);
+	MPI_Iprobe(pg_->myRank(), d_id, pg_->getComm(), &flag, &status);
 	if (flag) {
-	  MPI_Recv(0, 0, MPI_INT, pg_->myrank(), d_id, pg_->getComm(),
+	  MPI_Recv(0, 0, MPI_INT, pg_->myRank(), d_id, pg_->getComm(),
 		   &status);
 	}
       } while (flag);
@@ -363,7 +363,7 @@ Receiver::run()
       addedTasks = addAwaitingTasks();
       
       // post wake up signal receive again
-      MPI_Irecv(0, 0, MPI_INT, pg_->myrank(), d_id, pg_->getComm(),
+      MPI_Irecv(0, 0, MPI_INT, pg_->myRank(), d_id, pg_->getComm(),
 		&wakeUpRequest);
       recvs_.add(wakeUpRequest, 0, 0,"",0,-1);	
     }
@@ -437,7 +437,7 @@ bool Receiver::AwaitingTask::isReady() {
 MPIReducer::MPIReducer(ThreadPool * parent)
   : d_parent( parent ), lock_("MPIReducer lock"), paused_(true), quit_(false)
 {
-  proc_group_ = Parallel::getRootProcessorGroup()->myrank();
+  proc_group_ = Parallel::getRootProcessorGroup()->myRank();
 }
 
 void MPIReducer::assignTask( DetailedTask* task )
@@ -513,7 +513,7 @@ ThreadPool::ThreadPool( MixedScheduler* scheduler,
 
   //if( mixedDebug.active() ) {
     cerrLock.lock();
-    cerr/*mixedDebug*/ << "Main " << Parallel::getRootProcessorGroup()->myrank()
+    cerr/*mixedDebug*/ << "Main " << Parallel::getRootProcessorGroup()->myRank()
 	       << " -- PID is " << getpid() << "\n";
     cerrLock.unlock();
     //}
@@ -545,7 +545,7 @@ ThreadPool::ThreadPool( MixedScheduler* scheduler,
 				     d_workerReadyLocks[ i ] );
 
     sprintf( name, "Worker %d-%d",
-	     Parallel::getRootProcessorGroup()->myrank(), i );
+	     Parallel::getRootProcessorGroup()->myRank(), i );
 
     Thread * t = scinew Thread( worker, name );
     t->detach();
@@ -569,13 +569,13 @@ ThreadPool::ThreadPool( MixedScheduler* scheduler,
     d_receivers[i]->setPriorityItem(priorityItem);
     
     sprintf( name, "Receiver %d-%d",
-	     Parallel::getRootProcessorGroup()->myrank(), i );
+	     Parallel::getRootProcessorGroup()->myRank(), i );
 
     Thread * t = scinew Thread(d_receivers[i], name);
     t->detach();
   }
   sprintf( name, "MPIReducer %d",
-	   Parallel::getRootProcessorGroup()->myrank());
+	   Parallel::getRootProcessorGroup()->myRank());
   d_reducer = scinew MPIReducer(this);
   Thread * t = scinew Thread(d_reducer, name);
   t->detach();

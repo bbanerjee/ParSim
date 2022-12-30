@@ -57,7 +57,7 @@ void MessageLog::problemSetup(const ProblemSpecP& prob_spec)
    if(mess){
       d_enabled = true;
       ostringstream outname;
-      outname << d_oport->getOutputLocation() << "/message_" << setw(5) << setfill('0') << d_myworld->myrank() << ".log";
+      outname << d_oport->getOutputLocation() << "/message_" << setw(5) << setfill('0') << d_myworld->myRank() << ".log";
       out.open(outname.str().c_str());
       if(!out){
 	 cerr << "Message log disabled, cannot open file\n";
@@ -90,7 +90,7 @@ void MessageLog::logSend(const DetailedReq* dep, int bytes,
 	 out << dep->d_patch->getID();
       else
 	 out << "-";
-      out << "\t" << d_myworld->myrank() << "\t" << dep->d_task->getAssignedResourceIndex() << "\t";
+      out << "\t" << d_myworld->myRank() << "\t" << dep->d_task->getAssignedResourceIndex() << "\t";
       if(dep->d_var)
 	 out << dep->d_var->getName();
       else

@@ -132,7 +132,7 @@ namespace Uintah {
   {
     static TypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription(TypeDescription::Other,
+      td = scinew TypeDescription(TypeDescription::Type::Other,
                                   "fflux", true, 
                                   &makeMPI_fflux);
     }

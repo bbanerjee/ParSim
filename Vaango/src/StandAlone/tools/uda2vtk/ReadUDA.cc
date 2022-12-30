@@ -593,23 +593,23 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
 
   switch (maintype->getType()) {
 
-  case Uintah::TypeDescription::CCVariable:
+  case Uintah::TypeDescription::Type::CCVariable:
     return getGridDataMainType<CCVariable>(patch, level, variable_name, material, timestep, 
                                            low, high, subtype);
 
-  case Uintah::TypeDescription::NCVariable:
+  case Uintah::TypeDescription::Type::NCVariable:
     return getGridDataMainType<NCVariable>(patch, level, variable_name, material, timestep, 
                                            low, high, subtype);
 
-  case Uintah::TypeDescription::SFCXVariable:
+  case Uintah::TypeDescription::Type::SFCXVariable:
     return getGridDataMainType<SFCXVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
-  case Uintah::TypeDescription::SFCYVariable:
+  case Uintah::TypeDescription::Type::SFCYVariable:
     return getGridDataMainType<SFCYVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
-  case Uintah::TypeDescription::SFCZVariable:
+  case Uintah::TypeDescription::Type::SFCZVariable:
     return getGridDataMainType<SFCZVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
@@ -639,31 +639,31 @@ ReadUDA::getGridDataMainType(const Patch *patch,
 {
   switch (subtype->getType()) {
 
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readGridData<VAR, double>(d_archive, patch, level, variable_name, material, 
                                      timestep, low, high);
 
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readGridData<VAR, float>(d_archive, patch, level, variable_name, material, 
                                     timestep, low, high);
 
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readGridData<VAR, int>(d_archive, patch, level, variable_name, material, 
                                   timestep, low, high);
 
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readGridData<VAR, Vector>(d_archive, patch, level, variable_name, material, 
                                      timestep, low, high);
 
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readGridData<VAR, Matrix3>(d_archive, patch, level, variable_name, material, 
                                       timestep, low, high);
 
-  case Uintah::TypeDescription::bool_type:
-  case Uintah::TypeDescription::short_int_type:
-  case Uintah::TypeDescription::long_type:
+  case Uintah::TypeDescription::Type::bool_type:
+  case Uintah::TypeDescription::Type::short_int_type:
+  case Uintah::TypeDescription::Type::long_type:
 
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::long64_type:
     cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
     return NULL;
 
@@ -760,25 +760,25 @@ ReadUDA::getParticleData(int level_i,
 
   switch (subtype->getType()) {
 
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readParticleData<double>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readParticleData<float>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readParticleData<int>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::long64_type:
     return readParticleData<long64>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Point:
+  case Uintah::TypeDescription::Type::Point:
     return readParticleData<Point>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readParticleData<Vector>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readParticleData<Matrix3>(patch, variable_name, material, timestep);
 
   default:

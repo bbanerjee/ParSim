@@ -73,7 +73,7 @@ CommRecMPI::print(const ProcessorGroup * pg)
 {
   for (unsigned i = 0; i < ids_.size(); i++) 
   {
-    cout << pg->myrank() << " Message: " << byteCounts_[i] << " vars: " << " num " 
+    cout << pg->myRank() << " Message: " << byteCounts_[i] << " vars: " << " num " 
          << messageNums_[i] << " Vars: " << vars_[i] << endl;
   }
 }
@@ -89,7 +89,7 @@ CommRecMPI::waitsome(const ProcessorGroup * pg,
   indices.resize(ids_.size());
  
   if (mixedDebug.active()) {
-    int me = pg->myrank();
+    int me = pg->myRank();
     mixedDebug << me << " Waitsome: " << ids_.size() << " waiters:\n";
     for (unsigned i = 0; i < messageNums_.size(); i++) {
       mixedDebug << me << "  Num: " << messageNums_[i] << " size: " << byteCounts_[i] << endl;
@@ -134,12 +134,12 @@ CommRecMPI::waitsome(const ProcessorGroup * pg,
   for (unsigned int i = 0; i < cr.ids_.size(); i++)
     combinedIDs.push_back(cr.ids_[i]);
 
-  // if (!pg->myrank())
+  // if (!pg->myRank())
   //cout << "Size: " << size << ", thissize: " << ids_.size() 
   // << ", crsize: " << cr.ids_.size() << ", combinedsize: "
   // << combinedIDs.size() << endl;
 
-  int me = pg->myrank();
+  int me = pg->myRank();
   mixedDebug << me << " Calling combined waitsome with " << ids_.size()
              << " and " << cr.ids_.size() << " waiters\n";
 
@@ -194,7 +194,7 @@ CommRecMPI::testsome(const ProcessorGroup * pg,
     return false; // no more to test
   statii.resize(ids_.size());
   indices.resize(ids_.size());
-  int me = pg->myrank();
+  int me = pg->myRank();
   if( mixedDebug.active() ) {
     cerrLock.lock();
     mixedDebug << me << " Calling testsome with " << ids_.size() << " waiters\n";
@@ -257,9 +257,9 @@ CommRecMPI::donesome( const ProcessorGroup * pg,
   }
 
   if (dbg.active() && numReceived > 0) {
-    if (pg->myrank() == pg->size() / 2) {
+    if (pg->myRank() == pg->nRanks() / 2) {
       cerrLock.lock();
-      dbg << pg->myrank() << " Time: " << Time::currentSeconds() << " , NumReceived= " << numReceived << " , VolReceived: "
+      dbg << pg->myRank() << " Time: " << Time::currentSeconds() << " , NumReceived= " << numReceived << " , VolReceived: "
           << volReceived << endl;
       cerrLock.unlock();
     }

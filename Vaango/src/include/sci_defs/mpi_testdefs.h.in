@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2021-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,20 +26,16 @@
 #ifndef SCI_MPI_DEFS_H
 #define SCI_MPI_DEFS_H
 
-/* MPI++ (MPIPP_H) on SGI has a bad interaction with <iostream>.  On some linuxes, mpicxx also
-   causes problems, so we turn it off too. This prevents it from being included (from mpi.h).
-   We don't use it anyway. */
 #define MPIPP_H
+
+// Disable c++ bindings
 #define MPICH_SKIP_MPICXX 1
 
-@DEF_MPI@
+// Check if const MPI functions work
+@DEF_MPI_CONST_WORKS@
 
-#include <mpi.h>
-
-#ifdef MALLOC_TRACE
-#  include "MallocTraceMPI.h"
-#  include "MallocTraceMPIOn.h"
-#endif
+@DEF_MPI_MAX_THREADS@
+@DEF_MPI3_ENABLED@
 
 #endif
 

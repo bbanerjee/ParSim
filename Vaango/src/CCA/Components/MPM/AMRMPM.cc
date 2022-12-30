@@ -1786,7 +1786,7 @@ AMRMPM::printParticleCount(const ProcessorGroup* pg,
   sumlong_vartype pcount;
   new_dw->get(pcount, lb->partCountLabel);
 
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     std::cout << "Created " << (long)pcount << " total particles" << std::endl;
   }
 }

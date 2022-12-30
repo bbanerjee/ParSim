@@ -119,7 +119,7 @@ void runTest(int argc, char *argv[], char *env[]) {
   bool validateUps = true;
     
   // Checks to see if user is running an MPI version of vaango.
-  Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+  //Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 
   // Pass the env into the sci env so it can be used there...
   Uintah::create_sci_environment( env, 0, true );

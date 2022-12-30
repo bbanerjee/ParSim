@@ -198,24 +198,24 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
         bool throwException = false;  
 
         // only CC, SFCX, SFCY, SFCZ variables
-        if(td->getType() != TypeDescription::CCVariable &&
-            td->getType() != TypeDescription::SFCXVariable &&
-            td->getType() != TypeDescription::SFCYVariable &&
-            td->getType() != TypeDescription::SFCZVariable ){
+        if(td->getType() != TypeDescription::Type::CCVariable &&
+            td->getType() != TypeDescription::Type::SFCXVariable &&
+            td->getType() != TypeDescription::Type::SFCYVariable &&
+            td->getType() != TypeDescription::Type::SFCZVariable ){
           throwException = true;
         }
         // CC Variables, only Doubles and Vectors 
-        if(td->getType() != TypeDescription::CCVariable &&
-            subtype->getType() != TypeDescription::double_type &&
-            subtype->getType() != TypeDescription::int_type &&
-            subtype->getType() != TypeDescription::Vector  ){
+        if(td->getType() != TypeDescription::Type::CCVariable &&
+            subtype->getType() != TypeDescription::Type::double_type &&
+            subtype->getType() != TypeDescription::Type::int_type &&
+            subtype->getType() != TypeDescription::Type::Vector  ){
           throwException = true;
         }
         // Face Centered Vars, only Doubles
-        if( (td->getType() == TypeDescription::SFCXVariable ||
-              td->getType() == TypeDescription::SFCYVariable ||
-              td->getType() == TypeDescription::SFCZVariable) &&
-            subtype->getType() != TypeDescription::double_type) {
+        if( (td->getType() == TypeDescription::Type::SFCXVariable ||
+              td->getType() == TypeDescription::Type::SFCYVariable ||
+              td->getType() == TypeDescription::Type::SFCZVariable) &&
+            subtype->getType() != TypeDescription::Type::double_type) {
           throwException = true;
         } 
         if(throwException){       
@@ -236,9 +236,9 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
         //user specifies VarLabel above
         /* You may only specify surface mode with SFC{X Y Z} vars. */
         const Uintah::TypeDescription* td = label->typeDescription();
-        if(   td->getType() != TypeDescription::SFCXVariable &&
-            td->getType() != TypeDescription::SFCYVariable &&
-            td->getType() != TypeDescription::SFCZVariable) {
+        if(   td->getType() != TypeDescription::Type::SFCXVariable &&
+            td->getType() != TypeDescription::Type::SFCYVariable &&
+            td->getType() != TypeDescription::Type::SFCZVariable) {
           ostringstream warn;
           warn << "ERROR:AnalysisModule:containerExtract: only SFC X Y Z variables are allowed in 'surface' mode." 
             << " (You spefified "<<label->getName() << ", which is a " 
@@ -652,9 +652,9 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
     //__________________________________
     // write data if this processor owns this patch
     // and if it's time to write
-    if( proc == pg->myrank() && now >= nextWriteTime){
+    if( proc == pg->myRank() && now >= nextWriteTime){
 
-      cout_doing << pg->myrank() << " " 
+      cout_doing << pg->myRank() << " " 
         << "Doing doAnalysis (containerExtract)\t\t\t\tL-"
         << level->getIndex()
         << " patch " << patch->getGridIndex()<< endl;
@@ -711,21 +711,21 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
         string name;
 
         switch(td->getType()){
-          case Uintah::TypeDescription::CCVariable:      // CC Variables
+          case Uintah::TypeDescription::Type::CCVariable:      // CC Variables
             switch(subtype->getType()) {
 
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 new_dw->get(q_CC_double, d_varLabels[i], indx, patch, gac, 1);
                 CC_double_data.push_back(q_CC_double);
                 ccd_var_labels.push_back(d_varLabels[i]);
                 break;
 
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 new_dw->get(q_CC_Vector, d_varLabels[i], indx, patch, gac, 1);
                 CC_Vector_data.push_back(q_CC_Vector);
                 ccv_var_labels.push_back(d_varLabels[i]);
                 break;
-              case Uintah::TypeDescription::int_type:
+              case Uintah::TypeDescription::Type::int_type:
                 new_dw->get(q_CC_integer, d_varLabels[i], indx, patch, gac, 1);
                 CC_integer_data.push_back(q_CC_integer);
                 cci_var_labels.push_back(d_varLabels[i]);
@@ -734,17 +734,17 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
                 throw InternalError("containerExtract: invalid data type", __FILE__, __LINE__); 
             }
             break;
-          case Uintah::TypeDescription::SFCXVariable:   // SFCX Variables
+          case Uintah::TypeDescription::Type::SFCXVariable:   // SFCX Variables
             new_dw->get(q_SFCX_double, d_varLabels[i], indx, patch, gac, 1);
             SFCX_double_data.push_back(q_SFCX_double);
             sfcx_var_labels.push_back(d_varLabels[i]);
             break;
-          case Uintah::TypeDescription::SFCYVariable:    // SFCY Variables
+          case Uintah::TypeDescription::Type::SFCYVariable:    // SFCY Variables
             new_dw->get(q_SFCY_double, d_varLabels[i], indx, patch, gac, 1);
             SFCY_double_data.push_back(q_SFCY_double);
             sfcy_var_labels.push_back(d_varLabels[i]);
             break;
-          case Uintah::TypeDescription::SFCZVariable:   // SFCZ Variables
+          case Uintah::TypeDescription::Type::SFCZVariable:   // SFCZ Variables
             new_dw->get(q_SFCZ_double, d_varLabels[i], indx, patch, gac, 1);
             SFCZ_double_data.push_back(q_SFCZ_double);
             sfcz_var_labels.push_back(d_varLabels[i]);
@@ -804,19 +804,19 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
           unsigned int i = 0;
 
           switch(td->getType()){
-            case Uintah::TypeDescription::CCVariable:      // CC Variables
+            case Uintah::TypeDescription::Type::CCVariable:      // CC Variables
               switch(subtype->getType()) {
-                case Uintah::TypeDescription::double_type:
+                case Uintah::TypeDescription::Type::double_type:
                   for (i = 0; i < CC_double_data.size(); i++)
                     if (exc->vl->getName() == ccd_var_labels[i]->getName()) 
                       fprintf(fp, "    %16E",CC_double_data[i][c]);
                   break;
-                case Uintah::TypeDescription::Vector:
+                case Uintah::TypeDescription::Type::Vector:
                   for (i = 0; i < CC_Vector_data.size(); i++)
                     if (exc->vl->getName() == ccv_var_labels[i]->getName()) 
                       fprintf(fp, "    %16E    %16E    %16E", CC_Vector_data[i][c].x(), CC_Vector_data[i][c].y(), CC_Vector_data[i][c].z());
                   break;
-                case Uintah::TypeDescription::int_type:
+                case Uintah::TypeDescription::Type::int_type:
                   for (i = 0; i < CC_integer_data.size(); i++)
                     if (exc->vl->getName() == cci_var_labels[i]->getName()) 
                       fprintf(fp, "    %16i",CC_integer_data[i][c]);
@@ -825,17 +825,17 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
                   throw InternalError("containerExtract: invalid data type", __FILE__, __LINE__); 
               }
               break;
-            case Uintah::TypeDescription::SFCXVariable:   // SFCX Variables
+            case Uintah::TypeDescription::Type::SFCXVariable:   // SFCX Variables
               for (i = 0; i < SFCX_double_data.size(); i++)
                 if (exc->vl->getName() == sfcx_var_labels[i]->getName()) 
                   fprintf(fp, "    %16E",SFCX_double_data[i][c]);
               break;
-            case Uintah::TypeDescription::SFCYVariable:    // SFCY Variables
+            case Uintah::TypeDescription::Type::SFCYVariable:    // SFCY Variables
               for (i = 0; i < SFCY_double_data.size(); i++)
                 if (exc->vl->getName() == sfcy_var_labels[i]->getName()) 
                   fprintf(fp, "    %16E",SFCY_double_data[i][c]);
               break;
-            case Uintah::TypeDescription::SFCZVariable:   // SFCZ Variables
+            case Uintah::TypeDescription::Type::SFCZVariable:   // SFCZ Variables
               for (i = 0; i < SFCZ_double_data.size(); i++)
                 if (exc->vl->getName() == sfcz_var_labels[i]->getName()) 
                   fprintf(fp, "    %16E",SFCZ_double_data[i][c]);

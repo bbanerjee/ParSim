@@ -181,7 +181,7 @@ SimulationController::gridSetup( void )
     Dir restartFromDir(d_fromDir);
     Dir checkpointRestartDir = restartFromDir.getSubdir("checkpoints");
     d_archive = scinew DataArchive(checkpointRestartDir.getName(),
-                                   d_myworld->myrank(), d_myworld->size());
+                                   d_myworld->myRank(), d_myworld->nRanks());
 
     vector<int> indices;
     vector<double> times;
@@ -245,7 +245,7 @@ SimulationController::gridSetup( void )
   }
    
   // Print out meta data
-  if (d_myworld->myrank() == 0){
+  if (d_myworld->myRank() == 0){
     grid->printStatistics();
     amrout << "Restart grid\n" << *grid.get_rep() << endl;
   }
@@ -473,7 +473,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
       mallocPerProcStream = &dbg;
     } else {
       char filename[256];
-      sprintf( filename, "%s.%d" ,filenamePrefix, d_myworld->myrank() );
+      sprintf( filename, "%s.%d" ,filenamePrefix, d_myworld->myRank() );
       if ( timestep == 0 ) {
         mallocPerProcStream = scinew ofstream( filename, ios::out | ios::trunc );
       } else {
@@ -484,7 +484,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
         mallocPerProcStream = &dbg;
       }
     }
-    *mallocPerProcStream << "Proc "     << d_myworld->myrank() << "   ";
+    *mallocPerProcStream << "Proc "     << d_myworld->myRank() << "   ";
     *mallocPerProcStream << "Timestep " << timestep << "   ";
     *mallocPerProcStream << "Size "     << ProcessInfo::GetMemoryUsed() << "   ";
     *mallocPerProcStream << "RSS "      << ProcessInfo::GetMemoryResident() << "   ";
@@ -546,7 +546,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   std::vector<double_int> toReduceMax;
   std::vector<double_int> maxReduce;
   std::vector<const char*> statLabels;
-  int rank=d_myworld->myrank();
+  int rank=d_myworld->myRank();
   double total_time=0, overhead_time=0, percent_overhead=0;
   toReduce.push_back(memuse);
   toReduceMax.push_back(double_int(memuse,rank));
@@ -624,7 +624,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   maxReduce.resize(toReduce.size());
 
 
-  if (d_myworld->size() > 1) {
+  if (d_myworld->nRanks() > 1) {
     //if AMR and using dynamic dilation use an allreduce
     if(d_regridder && d_regridder->useDynamicDilation())
     {
@@ -641,7 +641,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
 
     // make sums averages
     for (unsigned i = 0; i < avgReduce.size(); i++) {
-      avgReduce[i] /= d_myworld->size();
+      avgReduce[i] /= d_myworld->nRanks();
     }
 
     // get specific values - pop front since we don't know if there is a highwater
@@ -744,11 +744,11 @@ stdDev = stdDeviation(d_sumOfWallTimes, d_sumOfWallTimeSquares, d_n-2);
   if (istats.active()) {
     for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
       if (toReduce[i] > 0)
-        istats << "rank: " << d_myworld->myrank() << " " << statLabels[i] << " avg: " << toReduce[i] << "\n";
+        istats << "rank: " << d_myworld->myRank() << " " << statLabels[i] << " avg: " << toReduce[i] << "\n";
     }
   } 
 
-  if(d_myworld->myrank() == 0){
+  if(d_myworld->myRank() == 0){
     char walltime[96];
     if (d_n > 3) {
       //sprintf(walltime, ", elap T = %.2lf, mean: %.2lf +- %.3lf", d_wallTime, mean, stdDev);
@@ -788,7 +788,7 @@ stdDev = stdDeviation(d_sumOfWallTimes, d_sumOfWallTimeSquares, d_n-2);
     cout.flush();
 
     if (stats.active()) {
-      if(d_myworld->size()>1)
+      if(d_myworld->nRanks()>1)
       {
         for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
           if (maxReduce[i].val > 0)

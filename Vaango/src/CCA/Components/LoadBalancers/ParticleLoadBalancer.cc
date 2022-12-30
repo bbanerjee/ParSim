@@ -84,8 +84,8 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
   // (it's either this or do 2 consecutive load balances).  For now, it's safe to assume that
   // if there is a new level or a new patch there are no particles there.
 
-  int numProcs = d_myworld->size();
-  int myrank = d_myworld->myrank();
+  int numProcs = d_myworld->nRanks();
+  int myrank = d_myworld->myRank();
   int num_patches = 0;
 
   particles.resize(newGridRegions.size());
@@ -113,7 +113,7 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
         // new patch - no particles yet
         recvcounts[0]++;
         totalsize++;
-        if (d_myworld->myrank() == 0) {
+        if (d_myworld->myRank() == 0) {
           PatchInfo pi(grid_index, 0);
           subpatchParticles.push_back(pi);
         }
@@ -128,7 +128,7 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
       if (oldPatches.size() == 0) {
         recvcounts[0]++;
         totalsize++;
-        if (d_myworld->myrank() == 0) {
+        if (d_myworld->myRank() == 0) {
           PatchInfo pi(grid_index, 0);
           subpatchParticles.push_back(pi);
         }
@@ -169,7 +169,7 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
 
   vector<int> num_particles(num_patches, 0);
 
-  if (d_myworld->size() > 1) {
+  if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
     MPI_Datatype particletype;
     MPI_Type_contiguous(2, MPI_INT, &particletype);
@@ -181,10 +181,10 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
       displs[i] = displs[i-1]+recvcounts[i-1];
     }
 
-    MPI_Gatherv(&subpatchParticles[0], recvcounts[d_myworld->myrank()], particletype, &recvbuf[0],
+    MPI_Gatherv(&subpatchParticles[0], recvcounts[d_myworld->myRank()], particletype, &recvbuf[0],
         &recvcounts[0], &displs[0], particletype, 0, d_myworld->getComm());
 
-    if ( d_myworld->myrank() == 0) {
+    if ( d_myworld->myRank() == 0) {
       for (unsigned i = 0; i < recvbuf.size(); i++) {
         PatchInfo& spi = recvbuf[i];
         num_particles[spi.id] += spi.numParticles;
@@ -213,9 +213,9 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
     particles[level][index] += num_particles[i];
   }
 
-  if (dbg.active() && d_myworld->myrank() == 0) {
+  if (dbg.active() && d_myworld->myRank() == 0) {
     for (unsigned i = 0; i < num_particles.size(); i++) {
-      dbg << d_myworld->myrank() << "  Post gather index " << i << ": " << " numP : " << num_particles[i] << endl;
+      dbg << d_myworld->myRank() << "  Post gather index " << i << ": " << " numP : " << num_particles[i] << endl;
     }
   }
 
@@ -232,15 +232,15 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
   if (d_processorAssignment.size() == 0)
     return; // if we haven't been through the LB yet, don't try this.
 
-  if (d_myworld->myrank() == 0)
+  if (d_myworld->myRank() == 0)
     dbg << " DLB::collectParticles\n";
 
   int num_patches = 0;
   for (int i = 0; i < grid->numLevels(); i++)
     num_patches += grid->getLevel(i)->numPatches();
 
-  int numProcs = d_myworld->size();
-  int myrank = d_myworld->myrank();
+  int numProcs = d_myworld->nRanks();
+  int myrank = d_myworld->myRank();
   // get how many particles were each patch had at the end of the last timestep
   //   gather from each proc - based on the last location
 
@@ -278,7 +278,7 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
     }
   }
 
-  if (d_myworld->size() > 1) {
+  if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
     vector<int> displs(numProcs, 0);
     vector<int> recvcounts(numProcs,0); // init the counts to 0
@@ -299,10 +299,10 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
     MPI_Allgatherv(&particleList[0], particleList.size()*sizeof(PatchInfo),  MPI_BYTE,
                    &all_particles[0], &recvcounts[0], &displs[0], MPI_BYTE, d_myworld->getComm());
 
-    if (dbg.active() && d_myworld->myrank() == 0) {
+    if (dbg.active() && d_myworld->myRank() == 0) {
       for (unsigned i = 0; i < all_particles.size(); i++) {
         PatchInfo& pi = all_particles[i];
-        dbg << d_myworld->myrank() << "  Post gather index " << i << ": " << pi.id << " numP : " << pi.numParticles << endl;
+        dbg << d_myworld->myRank() << "  Post gather index " << i << ": " << pi.id << " numP : " << pi.numParticles << endl;
       }
     }
     for (int i = 0; i < num_patches; i++) {
@@ -332,7 +332,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
   if(patches.size()==0)
     return;
 
-  int numProcs=d_myworld->size();
+  int numProcs=d_myworld->nRanks();
 
   //resize vectors to appropriate size
   assignments.resize(patches.size());
@@ -360,7 +360,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
   {
     double currentMaxCost=0;  
     //give each processor a different max to try to achieve
-    double myMaxCost =bestMaxCost-(bestMaxCost-avgCostPerProc)/d_myworld->size()*(double)d_myworld->myrank();
+    double myMaxCost =bestMaxCost-(bestMaxCost-avgCostPerProc)/d_myworld->nRanks()*(double)d_myworld->myRank();
     
     vector<double> currentProcCosts(numProcs,0);
     double remainingCost=totalCost;
@@ -419,7 +419,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
 
     }
 
-    double_int maxInfo(myStoredMax,d_myworld->myrank());
+    double_int maxInfo(myStoredMax,d_myworld->myRank());
     double_int min;
 
     //gather the maxes
@@ -448,7 +448,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
     MPI_Bcast(&assignments[0],assignments.size(),MPI_INT,minProcLoc,d_myworld->getComm());
   }
 #if 0
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
   {
     cout << " Assignments in function: ";
     for(int p=0;p<assignments.size();p++)
@@ -463,11 +463,11 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
 bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 {
   MALLOC_TRACE_TAG_SCOPE("ParticleLoadBalancer::loadBalanceGrid");
-  doing << d_myworld->myrank() << "   APF\n";
+  doing << d_myworld->myRank() << "   APF\n";
   vector<vector<double> > cellCosts;
   vector<vector<double> > particleCosts;
 
-  int numProcs = d_myworld->size();
+  int numProcs = d_myworld->nRanks();
 
   getCosts(grid.get_rep(),particleCosts,cellCosts);
 
@@ -526,7 +526,7 @@ bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 
   }
 
-  if(stats.active() && d_myworld->myrank()==0)
+  if(stats.active() && d_myworld->myRank()==0)
   {
     double cellImb, partImb;
 
@@ -546,7 +546,7 @@ bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 
 double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& costs)
 {
-  int numProcs = d_myworld->size();
+  int numProcs = d_myworld->nRanks();
   int numLevels = costs.size();
   vector<vector<double> > tempProcCosts(numLevels);
   
@@ -563,7 +563,7 @@ double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& cos
     }
   }
 #if 0
-  if(d_myworld->myrank()==0)
+  if(d_myworld->myRank()==0)
   {
     for(int l=0;l<numLevels;l++)
     {
@@ -577,7 +577,7 @@ double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& cos
 
   double total_max_temp=0, total_avg_temp=0;
 
-  for(int i=0;i<d_myworld->size();i++)
+  for(int i=0;i<d_myworld->nRanks();i++)
   {
     double temp_cost=0;
     for(int l=0;l<numLevels;l++)
@@ -588,13 +588,13 @@ double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& cos
       total_max_temp=temp_cost;
     total_avg_temp+=temp_cost;
   }
-  total_avg_temp/=d_myworld->size();
+  total_avg_temp/=d_myworld->nRanks();
 
   return (total_max_temp-total_avg_temp)/total_avg_temp;
 }
 double ParticleLoadBalancer::computePercentImprovement(const vector<vector<double> >& costs, double &avg, double &max)
 {
-  int numProcs = d_myworld->size();
+  int numProcs = d_myworld->nRanks();
   int numLevels = costs.size();
 
   vector<vector<double> > currentProcCosts(numLevels);
@@ -620,7 +620,7 @@ double ParticleLoadBalancer::computePercentImprovement(const vector<vector<doubl
   double total_max_current=0, total_avg_current=0;
   double total_max_temp=0, total_avg_temp=0;
 
-  for(int i=0;i<d_myworld->size();i++)
+  for(int i=0;i<d_myworld->nRanks();i++)
   {
     double current_cost=0, temp_cost=0;
     for(int l=0;l<numLevels;l++)
@@ -635,8 +635,8 @@ double ParticleLoadBalancer::computePercentImprovement(const vector<vector<doubl
     total_avg_current+=current_cost;
     total_avg_temp+=temp_cost;
   }
-  total_avg_current/=d_myworld->size();
-  total_avg_temp/=d_myworld->size();
+  total_avg_current/=d_myworld->nRanks();
+  total_avg_temp/=d_myworld->nRanks();
 
   max=total_max_temp;
   avg=total_avg_temp;
@@ -652,7 +652,7 @@ bool ParticleLoadBalancer::thresholdExceeded(const vector<vector<double> >& cell
   double cellImp=computePercentImprovement(cellCosts,cellAvg,cellMax);
   double partImp=computePercentImprovement(partCosts,partAvg,partMax);
   
-  if (d_myworld->myrank() == 0)
+  if (d_myworld->myRank() == 0)
     stats << "Total:"  << " Load Balance:  Cell Improvement:" << cellImp << " Particle Improvement:"  << partImp << endl;
 
   if((cellImp+partImp)/2>d_lbThreshold)
@@ -691,12 +691,12 @@ ParticleLoadBalancer::needRecompile(double /*time*/, double /*delt*/,
   }
 #endif
 
-//  if (dbg.active() && d_myworld->myrank() == 0)
-//    dbg << d_myworld->myrank() << " DLB::NeedRecompile: check=" << do_check << " ts: " << timestep << " " << d_lbTimestepInterval << " t " << time << " " << d_lbInterval << " last: " << d_lastLbTimestep << " " << d_lastLbTime << endl;
+//  if (dbg.active() && d_myworld->myRank() == 0)
+//    dbg << d_myworld->myRank() << " DLB::NeedRecompile: check=" << do_check << " ts: " << timestep << " " << d_lbTimestepInterval << " t " << time << " " << d_lbInterval << " last: " << d_lastLbTimestep << " " << d_lastLbTime << endl;
 
   // if it determines we need to re-load-balance, recompile
   if (do_check && possiblyDynamicallyReallocate(grid, LoadBalancer::check)) {
-    doing << d_myworld->myrank() << " PLB - scheduling recompile " <<endl;
+    doing << d_myworld->myRank() << " PLB - scheduling recompile " <<endl;
     return true;
   }
   else {
@@ -749,7 +749,7 @@ void ParticleLoadBalancer::getCosts(const Grid* grid, vector<vector<double> >&pa
       particle_costs[l].push_back(num_particles[l][p]*d_particleCost);
     }
 #if 0
-    if(d_myworld->myrank()==0)
+    if(d_myworld->myRank()==0)
     {
       cout << " Level: " << l << " cellCosts: ";
       for (int p = 0; p < grid->getLevel(l)->numPatches(); p++) 
@@ -772,8 +772,8 @@ bool ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int 
 {
   MALLOC_TRACE_TAG_SCOPE("ParticleLoadBalancer::possiblyDynamicallyReallocate");
 
-  if (d_myworld->myrank() == 0)
-    dbg << d_myworld->myrank() << " In DLB, state " << state << endl;
+  if (d_myworld->myRank() == 0)
+    dbg << d_myworld->myRank() << " In DLB, state " << state << endl;
 
   double start = Time::currentSeconds();
 
@@ -826,7 +826,7 @@ bool ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int 
       }
         
       if (lb.active()) {
-        int myrank = d_myworld->myrank();
+        int myrank = d_myworld->myRank();
         if (myrank == 0) {
           LevelP curLevel = grid->getLevel(0);
           Level::const_patchIterator iter = curLevel->patchesBegin();

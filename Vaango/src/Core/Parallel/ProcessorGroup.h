@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,97 +24,91 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_PROCESSORGROUP_H
-#define UINTAH_HOMEBREW_PROCESSORGROUP_H
+#ifndef __CORE_PARALLEL_PROCESSORGROUP_H__
+#define __CORE_PARALLEL_PROCESSORGROUP_H__
 
-#include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
+#include <Core/Parallel/UintahMPI.h>
 #include <vector>
 
 namespace Uintah {
-/**************************************
-
-CLASS
-   ProcessorGroup
-   
-   Short description...
-
-GENERAL INFORMATION
-
-   ProcessorGroup.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-
-KEYWORDS
-   Processor_Group
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
 
 class Parallel;
 
-class ProcessorGroup {
+class ProcessorGroup
+{
+public:
+  ~ProcessorGroup();
 
-  public:
+  // Eliminate copy, assignment and move
+  ProcessorGroup(const ProcessorGroup&) = delete;
+  ProcessorGroup& operator=(const ProcessorGroup&) = delete;
+  ProcessorGroup(ProcessorGroup&&) = delete;
+  ProcessorGroup& operator=(ProcessorGroup&&) = delete;
 
-    ~ProcessorGroup();
+  std::string myNodeName() const;
 
-    int size() const { return d_size; }
+  // Returns the total number of MPI nodes in this MPI session.
+  int nNodes() const { return d_all_proc_names.size(); }
+  int myNode() const { return d_all_proc_indices[d_rank]; }
 
-    int myrank() const { return d_rank; }
+  // Returns the total number of MPI rank in the node MPI session.
+  int myNode_nRanks() const { return d_node_nRanks; }
+  int myNode_myRank() const { return d_node_rank; }
 
-    MPI_Comm getComm() const
-    {
+  // Returns the total number of MPI ranks in this MPI session.
+  int nRanks() const { return d_nRanks; }
+  int myRank() const { return d_rank; }
+
+  MPI_Comm getComm() const { return d_comm; }
+  MPI_Comm getNodeComm() const { return d_node_comm; }
+
+  MPI_Comm getGlobalComm(int comm_index) const
+  {
+    if (d_threads <= 1 || comm_index == -1) {
       return d_comm;
+    } else {
+      return d_global_comms[comm_index];
     }
+  }
 
-    MPI_Comm getgComm( int i ) const
-    {
-      if (d_threads < 1 || i == -1) {
-        return d_comm;
-      }
-      else {
-        return d_gComms[i];
-      }
-    }
+  void setGlobalComm(int num_comms) const;
 
-    void setgComm( int i ) const;
+  // Utilities for getting node based information.
+  int getNodeIndexFromRank(unsigned int rank) const;
+  std::string getNodeNameFromRank(unsigned int rank) const;
+  std::string getNodeName(unsigned int node) const;
 
-  private:
+private:
+  friend class Parallel;
+  ProcessorGroup(const ProcessorGroup* parent, MPI_Comm comm, int rank,
+                 int size, int threads);
 
-    const ProcessorGroup* d_parent;
+private:
+  const ProcessorGroup* d_parent_group{ nullptr };
 
-    friend class Parallel;
+  MPI_Comm d_comm{ 0 };
+  MPI_Comm d_node_comm{ 0 };
+  mutable std::vector<MPI_Comm> d_global_comms;
 
-    ProcessorGroup( const ProcessorGroup* parent,
-                          MPI_Comm        comm,
-                          bool            allmpi,
-                          int             rank,
-                          int             size,
-                          int             threads );
+  int d_node_rank{ -1 };  // MPI rank of this process relative to the node.
+  int d_node_nRanks{ 0 }; // Total number of MPI Ranks relative to the node.
 
-    int                           d_rank;
-    int                           d_size;
-    int                           d_threads;
-    MPI_Comm                      d_comm;
-    mutable std::vector<MPI_Comm> d_gComms;
-    bool                          d_allmpi;
+  int d_rank{ -1 };  // MPI rank of this process.
+  int d_nRanks{ 0 }; // Total number of MPI ranks
 
-    // disable copy and assignment
-    ProcessorGroup(const ProcessorGroup&);
-    ProcessorGroup& operator=(const ProcessorGroup&);
+  int d_threads{ 0 };
+
+  // For storing all the processor names so to provide a mapping from
+  // the name to an index from any rank.
+  typedef char procName_t[MPI_MAX_PROCESSOR_NAME + 1];
+
+  // For each rank store an index to its node.
+  std::vector<unsigned int> d_all_proc_indices;
+
+  // For each node store its processor name.
+  std::vector<std::string> d_all_proc_names;
 };
 
 } // End namespace Uintah
-   
 
-
-#endif
+#endif //__CORE_PARALLEL_PROCESSORGROUP_H__

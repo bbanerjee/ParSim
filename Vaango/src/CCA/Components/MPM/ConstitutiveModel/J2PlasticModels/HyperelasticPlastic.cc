@@ -2999,7 +2999,7 @@ const TypeDescription* fun_getTypeDescription(HyperelasticPlastic::double*)
 {
   static TypeDescription* td = 0;
   if(!td){
-    td = scinew TypeDescription(TypeDescription::Other,
+    td = scinew TypeDescription(TypeDescription::Type::Other,
                                 "HyperelasticPlastic::double",
                                 true, &makeMPI_CMData);
   }

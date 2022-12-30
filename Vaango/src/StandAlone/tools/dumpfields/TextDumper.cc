@@ -227,7 +227,7 @@ namespace Uintah {
               cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<double> svals;
                   (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -244,7 +244,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<double> svals;
                   (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -261,7 +261,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);
@@ -294,7 +294,7 @@ namespace Uintah {
               cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<Vector> vvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, vvals);
@@ -313,7 +313,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<Vector> vvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, vvals);
@@ -332,7 +332,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);
@@ -367,7 +367,7 @@ namespace Uintah {
               cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<Matrix3> tvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, tvals);
@@ -392,7 +392,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<Matrix3> tvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, tvals);
@@ -417,7 +417,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);

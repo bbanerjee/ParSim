@@ -1824,7 +1824,7 @@ fun_getTypeDescription(ViscoScramStateData*)
   static Uintah::TypeDescription* td = nullptr;
   if (!td) {
     td = scinew Uintah::TypeDescription(
-      TypeDescription::Other, "ViscoScramStateData", true, &makeMPI_CMData);
+      TypeDescription::Type::Other, "ViscoScramStateData", true, &makeMPI_CMData);
   }
   return td;
 }

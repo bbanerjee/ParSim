@@ -131,7 +131,7 @@ void GPUSchedulerTest::computeStableTimestep(const ProcessorGroup* pg,
                                              const MaterialSubset* matls,
                                              DataWarehouse*  old_dw,
                                              DataWarehouse* new_dw) {
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     sum_vartype residual;
     new_dw->get(residual, residual_label);
     cerr << "Residual=" << residual << '\n';

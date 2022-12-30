@@ -105,12 +105,12 @@ AMRSimulationController::run()
 #ifdef USE_GPERFTOOLS
   if (gprofile.active()){
     char gprofname[512];
-    sprintf(gprofname, "cpuprof-rank%d", d_myworld->myrank());
+    sprintf(gprofname, "cpuprof-rank%d", d_myworld->myRank());
     ProfilerStart(gprofname);
   }
   if (gheapprofile.active()){
     char gheapprofname[512];
-    sprintf(gheapprofname, "heapprof-rank%d", d_myworld->myrank());
+    sprintf(gheapprofname, "heapprof-rank%d", d_myworld->myRank());
     HeapProfilerStart(gheapprofname);
   }
 
@@ -118,7 +118,7 @@ AMRSimulationController::run()
   if (gheapchecker.active()){
     if (!gheapprofile.active()){
       char gheapchkname[512];
-      sprintf(gheapchkname, "heapchk-rank%d", d_myworld->myrank());
+      sprintf(gheapchkname, "heapchk-rank%d", d_myworld->myRank());
       heap_checker= new HeapLeakChecker(gheapchkname);
     } else {
       std::cout<< "HEAPCHECKER: Cannot start with heapprofiler" <<"\n";
@@ -268,7 +268,7 @@ AMRSimulationController::run()
       // (So usually in optimized mode this will not be run.)
       d_scheduler->logMemoryUse();
       ostringstream fn;
-      fn << "alloc." << std::setw(5) << std::setfill('0') << d_myworld->myrank() << ".out";
+      fn << "alloc." << std::setw(5) << std::setfill('0') << d_myworld->myRank() << ".out";
       string filename(fn.str());
 #if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
       DumpAllocator(DefaultAllocator(), filename.c_str());
@@ -439,11 +439,11 @@ AMRSimulationController::run()
       barrier_times[4]+=Time::currentSeconds()-start;
       double avg[5];
       MPI_Reduce(&barrier_times,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
-      if(d_myworld->myrank()==0) {
+      if(d_myworld->myRank()==0) {
         std::cout << "Barrier Times: "; 
         for(int i=0;i<5;i++)
         {
-          avg[i]/=d_myworld->size();
+          avg[i]/=d_myworld->nRanks();
           std::cout << avg[i] << " ";
         }
         std::cout << "\n";
@@ -642,7 +642,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
     // iteration only matters if it's zero or greater than 0
     int iteration = curDW + (d_lastRecompileTimestep == d_sharedState->getCurrentTopLevelTimeStep() ? 0 : 1);
     if (dbg.active())
-      dbg << d_myworld->myrank() << "   Executing TG on level " << levelNum << " with old DW " 
+      dbg << d_myworld->myRank() << "   Executing TG on level " << levelNum << " with old DW " 
           << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
           << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
           << "CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << "\n";
@@ -672,7 +672,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
       d_scheduler->get_dw(startDW+dwStride)->setScrubbing(DataWarehouse::ScrubNonPermanent); // CoarseNewDW
       //}
       if (dbg.active())
-        dbg << d_myworld->myrank() << "   Executing INT TG on level " << levelNum << " with old DW " 
+        dbg << d_myworld->myRank() << "   Executing INT TG on level " << levelNum << " with old DW " 
             << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
             << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
             << " CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << "\n";
@@ -689,7 +689,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
   if (levelNum == 0) {
     // execute the final TG
     if (dbg.active())
-      dbg << d_myworld->myrank() << "   Executing Final TG on level " << levelNum << " with old DW " 
+      dbg << d_myworld->myRank() << "   Executing Final TG on level " << levelNum << " with old DW " 
           << curDW << " = " << d_scheduler->get_dw(curDW)->getID() << " and new " 
           << curDW+newDWStride << " = " << d_scheduler->get_dw(curDW+newDWStride)->getID() << "\n";
     d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
@@ -852,7 +852,7 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
 
     //__________________________________
     //  output regridding stats
-    if (d_myworld->myrank() == 0) {
+    if (d_myworld->myRank() == 0) {
       std::cout << "  REGRIDDING:";
      
       //amrout << "---------- OLD GRID ----------" << "\n" << *(oldGrid.get_rep());
@@ -890,7 +890,7 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
 
     double time = Time::currentSeconds() - start;
     
-    if(d_myworld->myrank() == 0){
+    if(d_myworld->myRank() == 0){
       std::cout << "done regridding (" << time << " seconds, regridding took " << regridTime;
       if (!initialTimestep)
         std::cout << ", scheduling and copying took " << scheduleTime << ")";
@@ -927,20 +927,20 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
       if ( i > 0)
         // we have the first one already
         d_scheduler->addTaskGraph(Scheduler::NormalTaskGraph);
-      dbg << d_myworld->myrank() << "   Creating level " << i << " tg " << "\n";
+      dbg << d_myworld->myRank() << "   Creating level " << i << " tg " << "\n";
       d_sim->scheduleTimeAdvance(currentGrid->getLevel(i), d_scheduler);
     }
     
     for (int i = 0; i < currentGrid->numLevels(); i++) {
       if (d_doAMR && currentGrid->numLevels() > 1) {
-        dbg << d_myworld->myrank() << "   Doing Int TG level " << i << " tg " << "\n";
+        dbg << d_myworld->myRank() << "   Doing Int TG level " << i << " tg " << "\n";
         // taskgraphs numlevels-2*numlevels-1
         d_scheduler->addTaskGraph(Scheduler::IntermediateTaskGraph);
       }
     
       // schedule a coarsen from the finest level to this level
       for (int j = currentGrid->numLevels()-2; j >= i; j--) {
-        dbg << d_myworld->myrank() << "   schedule coarsen on level " << j << "\n";
+        dbg << d_myworld->myRank() << "   schedule coarsen on level " << j << "\n";
         d_sim->scheduleCoarsen(currentGrid->getLevel(j), d_scheduler);
       }
     
@@ -949,7 +949,7 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
       // schedule a refineInterface from this level to the finest level
       for (int j = i; j < currentGrid->numLevels(); j++) {
         if (j != 0) {
-          dbg << d_myworld->myrank() << "   schedule RI on level " << j << " for tg " << i << " coarseold " << (j==i) << " coarsenew " << true << "\n";
+          dbg << d_myworld->myRank() << "   schedule RI on level " << j << " for tg " << i << " coarseold " << (j==i) << " coarsenew " << true << "\n";
           d_sim->scheduleRefineInterface(currentGrid->getLevel(j), d_scheduler, j==i, true);
         }
       }
@@ -965,7 +965,7 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
   }
     
   for(int i = currentGrid->numLevels()-1; i >= 0; i--){
-    dbg << d_myworld->myrank() << "   final TG " << i << "\n";
+    dbg << d_myworld->myRank() << "   final TG " << i << "\n";
     
     if (d_regridder) {
       d_regridder->scheduleInitializeErrorEstimate(currentGrid->getLevel(i));
@@ -1154,7 +1154,7 @@ AMRSimulationController::reduceSysVar( const ProcessorGroup*,
     }
   }
   
-  if (d_myworld->size() > 1) {
+  if (d_myworld->nRanks() > 1) {
     new_dw->reduceMPI(d_sharedState->get_delt_label() , 0 , 0 , -1 ) ;
   }
   
@@ -1170,7 +1170,7 @@ AMRSimulationController::reduceSysVar( const ProcessorGroup*,
       inv.setBenignValue();
       new_dw->put(inv, d_sharedState->get_outputInterval_label());
     }
-    if (d_myworld->size() > 1) {
+    if (d_myworld->nRanks() > 1) {
       new_dw->reduceMPI(d_sharedState->get_outputInterval_label() , 0 , 0 , -1 ) ;
     }
 
@@ -1183,7 +1183,7 @@ AMRSimulationController::reduceSysVar( const ProcessorGroup*,
       inv.setBenignValue();
       new_dw->put(inv, d_sharedState->get_checkpointInterval_label());
     }
-    if (d_myworld->size() > 1) {
+    if (d_myworld->nRanks() > 1) {
       new_dw->reduceMPI(d_sharedState->get_checkpointInterval_label() , 0 , 0 , -1 ) ;
     }
 

@@ -199,24 +199,24 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
               material_data = material_data_list[matl];
                 
             switch(td->getType()){
-            case Uintah::TypeDescription::ParticleVariable:
+            case Uintah::TypeDescription::Type::ParticleVariable:
               if (clf.do_PTvar) {
                 switch(subtype->getType()){
-                case Uintah::TypeDescription::double_type:
+                case Uintah::TypeDescription::Type::double_type:
                   {
                     ParticleVariable<double> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_double_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::float_type:
+                case Uintah::TypeDescription::Type::float_type:
                   {
                     ParticleVariable<float> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_float_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::Point:
+                case Uintah::TypeDescription::Type::Point:
                   {
                     ParticleVariable<Point> value;
                     da->query(value, var, matl, patch, t);
@@ -230,14 +230,14 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                     }
                   }
                 break;
-                case Uintah::TypeDescription::Vector:
+                case Uintah::TypeDescription::Type::Vector:
                   {
                     ParticleVariable<Vector> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_vector_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::Matrix3:
+                case Uintah::TypeDescription::Type::Matrix3:
                   {
                     ParticleVariable<Matrix3> value;
                     da->query(value, var, matl, patch, t);
@@ -250,9 +250,9 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
                 break;
               }
-            case Uintah::TypeDescription::NCVariable:
+            case Uintah::TypeDescription::Type::NCVariable:
               switch(subtype->getType()){
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 {
                   if (clf.do_NCvar_double) {
                     // setup output files
@@ -294,7 +294,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::float_type:
+              case Uintah::TypeDescription::Type::float_type:
                 {
                   if (clf.do_NCvar_float) {
                     // setup output files
@@ -336,21 +336,21 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::Point:
+              case Uintah::TypeDescription::Type::Point:
                 {
                   if (clf.do_NCvar_point) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 {
                   if (clf.do_NCvar_vector) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Matrix3:
+              case Uintah::TypeDescription::Type::Matrix3:
                 {
                   if (clf.do_NCvar_matrix3) {
                     // not implemented at this time
@@ -362,9 +362,9 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 break;
               }
               break;
-            case Uintah::TypeDescription::CCVariable:
+            case Uintah::TypeDescription::Type::CCVariable:
               switch(subtype->getType()){
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 {
                   if (clf.do_CCvar_double) {
                     // setup output files
@@ -406,7 +406,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::float_type:
+              case Uintah::TypeDescription::Type::float_type:
                 {
                   if (clf.do_CCvar_float) {
                     // setup output files
@@ -448,21 +448,21 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::Point:
+              case Uintah::TypeDescription::Type::Point:
                 {
                   if (clf.do_CCvar_point) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 {
                   if (clf.do_CCvar_vector) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Matrix3:
+              case Uintah::TypeDescription::Type::Matrix3:
                 {
                   if (clf.do_CCvar_matrix3) {
                     // not implemented at this time
