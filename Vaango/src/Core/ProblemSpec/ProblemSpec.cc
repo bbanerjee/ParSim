@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,7 +49,7 @@ using namespace std;
 
 ProblemSpec::ProblemSpec( const string & buffer ) : d_documentNode( true )
 {
-  xmlDocPtr doc = xmlReadMemory( buffer.c_str(), buffer.length(), NULL, NULL, 0 );
+  xmlDocPtr doc = xmlReadMemory( buffer.c_str(), buffer.length(), nullptr, nullptr, 0 );
   d_node = xmlDocGetRootElement( doc );
 }
 
@@ -63,7 +63,7 @@ ProblemSpec::findBlock() const
       child = child->next;
     }
   }
-  if (child == NULL) {
+  if (child == nullptr) {
     return 0;
   }
   else {
@@ -160,7 +160,7 @@ ProblemSpecP ProblemSpec::findNextBlock() const
     }
   }
     
-  if (found_node == NULL ) {
+  if (found_node == nullptr ) {
     return 0;
   }
   else {
@@ -186,7 +186,7 @@ ProblemSpec::findNextBlock(const string& name) const
 
     found_node = found_node->next;
   }
-  if (found_node == NULL) {
+  if (found_node == nullptr) {
     return 0;
   }
   else {
@@ -204,7 +204,7 @@ ProblemSpec::findTextBlock()
       return scinew ProblemSpec( child, false );
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 string
@@ -1081,7 +1081,7 @@ ProblemSpec::appendElement( const char* name, bool value )
 void
 ProblemSpec::require(const string& name, double& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1089,7 +1089,7 @@ ProblemSpec::require(const string& name, double& value)
 void
 ProblemSpec::require(const string& name, int& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1097,7 +1097,7 @@ ProblemSpec::require(const string& name, int& value)
 void
 ProblemSpec::require(const string& name, unsigned int& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1105,7 +1105,7 @@ ProblemSpec::require(const string& name, unsigned int& value)
 void
 ProblemSpec::require(const string& name, long& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1113,7 +1113,7 @@ ProblemSpec::require(const string& name, long& value)
 void
 ProblemSpec::require(const string& name, bool& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1121,7 +1121,7 @@ ProblemSpec::require(const string& name, bool& value)
 void
 ProblemSpec::require(const string& name, string& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1129,7 +1129,7 @@ ProblemSpec::require(const string& name, string& value)
 void
 ProblemSpec::require(const string& name, Vector  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1138,7 +1138,7 @@ void
 ProblemSpec::require(const string& name, vector<double>& value)
 {
 
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
 
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
@@ -1149,7 +1149,7 @@ void
 ProblemSpec::require(const string& name, vector<string>& value)
 {
   
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
@@ -1161,7 +1161,7 @@ void
 ProblemSpec::require(const string& name, vector<int>& value)
 {
 
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
 
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
@@ -1171,7 +1171,7 @@ ProblemSpec::require(const string& name, vector<int>& value)
 void
 ProblemSpec::require(const string& name, vector<IntVector>& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 } 
@@ -1179,7 +1179,7 @@ ProblemSpec::require(const string& name, vector<IntVector>& value)
 void
 ProblemSpec::require(const string& name, IntVector  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1187,7 +1187,7 @@ ProblemSpec::require(const string& name, IntVector  &value)
 void
 ProblemSpec::require(const string& name, Point  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
@@ -1460,8 +1460,8 @@ ProblemSpec::appendChild( ProblemSpecP pspec )
   xmlAddChild(d_node, pspec->d_node);
 }
 
-// filename is a default param (NULL)
-//   call with no parameters or NULL to output
+// filename is a default param (nullptr)
+//   call with no parameters or nullptr to output
 //   to stdout
 void
 ProblemSpec::output(const char* filename) const 

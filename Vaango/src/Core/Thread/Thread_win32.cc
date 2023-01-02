@@ -191,7 +191,7 @@ bool exiting=false;
   {
     char* lpMsgBuf;
     FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL);
+      nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, nullptr);
 
     return lpMsgBuf;
 
@@ -200,7 +200,7 @@ bool exiting=false;
 Mutex::Mutex(const char* name)
 {
 	priv_ = scinew Mutex_private;
-	priv_->lock = CreateMutex(NULL,0,0);
+	priv_->lock = CreateMutex(nullptr,0,0);
 	if (priv_->lock == 0)
 	{
 	  throw ThreadError(std::string("CreateMutex failed")
@@ -256,7 +256,7 @@ __declspec(dllexport) HANDLE main_sema;
 Semaphore::Semaphore(const char* name,int count)
 {
 	priv_ = scinew Semaphore_private;
-	priv_->hSema = CreateSemaphore(NULL,count,MAX(1000,MIN(2*count,100)),0);
+	priv_->hSema = CreateSemaphore(nullptr,count,MAX(1000,MIN(2*count,100)),0);
 	if (priv_->hSema == 0)
 	{
 	  throw ThreadError(std::string("CreateSemaphore failed")
@@ -554,13 +554,13 @@ Barrier::wait(int n)
 ConditionVariable_private::ConditionVariable_private(const char* name)
   : waiters_count_lock_(name), waiters_count_(0), was_broadcast_(0)
 {
-  sema_ = CreateSemaphore(NULL,0,50,NULL);
+  sema_ = CreateSemaphore(nullptr,0,50,nullptr);
   if (sema_ == 0) {
     throw ThreadError(std::string("CreateSemaphore failed")
 		      +threadError());
   }
   
-  waiters_done_ = CreateEvent(NULL, FALSE, FALSE, NULL);
+  waiters_done_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
   if (waiters_done_ == 0) {
     throw ThreadError(std::string("CreateEvent failed")
 		      +threadError());
@@ -1043,7 +1043,7 @@ void Thread::checkExit()
 
 void Thread::detach()
 {
-  ReleaseSemaphore(priv_->delete_ready,1,NULL);
+  ReleaseSemaphore(priv_->delete_ready,1,nullptr);
   detached_=true;
 }
 
@@ -1061,8 +1061,8 @@ void Thread::join()
 {
   // wait for thread to be done - get the handle and release it
   WaitForSingleObject(priv_->done,INFINITE);
-  ReleaseSemaphore(priv_->done,1,NULL);
-  ReleaseSemaphore(this->priv_->delete_ready,1,NULL);
+  ReleaseSemaphore(priv_->done,1,nullptr);
+  ReleaseSemaphore(this->priv_->delete_ready,1,nullptr);
 }
 
 void Thread::yield()

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,26 +24,28 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/Geometry/BBox.h>
 #include <Core/GeometryPiece/BoxGeometryPiece.h>
 #include <Core/GeometryPiece/CylinderGeometryPiece.h>
-#include <Core/GeometryPiece/SphereGeometryPiece.h>
 #include <Core/GeometryPiece/DifferenceGeometryPiece.h>
-#include <Core/Malloc/Allocator.h>
+#include <Core/GeometryPiece/SphereGeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
-#include <Core/Geometry/BBox.h>
+#include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
 
 using namespace Uintah;
 using namespace std;
 
 // Store the geometry object and the load curve
-PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
+PressureBC::PressureBC(ProblemSpecP& ps,
+                       const GridP& grid,
+                       const MPMFlags* flags)
 {
   // First read the geometry information
   // d_surface is the geometry object containing the surface to be loaded.
@@ -50,51 +53,53 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   // of the outward normal and -ve if applied in the direction of the
   // inward normal
   // **WARNING** Currently allows only for box, cylinder or sphere.
-  if (flags->d_useCBDI){
-    ps->require("outward_normal",d_outwardNormal);
+  if (flags->d_useCBDI) {
+    ps->require("outward_normal", d_outwardNormal);
   }
-  d_dxpp = Vector(1.,1.,1.);  // Only needed for axisymmetric end, see below
-  ProblemSpecP adult = ps->findBlock("geom_object");
-  ProblemSpecP child = adult->findBlock();
+  d_dxpp = Vector(1., 1., 1.); // Only needed for axisymmetric end, see below
+  ProblemSpecP adult  = ps->findBlock("geom_object");
+  ProblemSpecP child  = adult->findBlock();
   std::string go_type = child->getNodeName();
-  //std::cerr << "PressureBC::go_type = " << go_type << endl;
+  // std::cerr << "PressureBC::go_type = " << go_type << endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
-    //Box box = d_surface->getBoundingBox();
+    // Box box = d_surface->getBoundingBox();
     d_surfaceType = "box";
   } else if (go_type == "sphere") {
-    d_surface = scinew SphereGeometryPiece(child);
+    d_surface     = scinew SphereGeometryPiece(child);
     d_surfaceType = "sphere";
   } else if (go_type == "cylinder") {
-    d_surface = scinew CylinderGeometryPiece(child);
+    d_surface     = scinew CylinderGeometryPiece(child);
     d_surfaceType = "cylinder";
-    CylinderGeometryPiece* cgp =dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    d_cylinder_end=cgp->cylinder_end();
-    d_axisymmetric_end=cgp->axisymmetric_end();
-    d_axisymmetric_side=cgp->axisymmetric_side();
-    if(d_axisymmetric_end){
-      ps->require("res",d_res);
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(d_surface);
+    d_cylinder_end      = cgp->cylinder_end();
+    d_axisymmetric_end  = cgp->axisymmetric_end();
+    d_axisymmetric_side = cgp->axisymmetric_side();
+    if (d_axisymmetric_end) {
+      ps->require("res", d_res);
       Vector dx = grid->getLevel(0)->dCell();
-      d_dxpp =  Vector(dx.x()/((double) d_res.x()),
-                       dx.y()/((double) d_res.y()),
-                       dx.z()/((double) d_res.z()));
+      d_dxpp    = Vector(dx.x() / ((double)d_res.x()),
+                      dx.y() / ((double)d_res.y()),
+                      dx.z() / ((double)d_res.z()));
     }
   } else {
-    throw ParameterNotFound("** ERROR ** No surface specified for pressure BC.",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "** ERROR ** No surface specified for pressure BC.", __FILE__, __LINE__);
   }
 
   d_volFracInsideDomain = 1.0;
   ps->get("volume_fraction_inside_domain", d_volFracInsideDomain);
 
-  d_numMaterialPoints = 0;  // this value is read in on a restart
-  ps->get("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
+  d_numMaterialPoints = 0; // this value is read in on a restart
+  ps->get("numberOfParticlesOnLoadSurface", d_numMaterialPoints);
 
   // Read the scaling function for the load curve
-  ps->getWithDefault("load_curve_scaling_function", d_scaling_function_expr, "1.0");
+  ps->getWithDefault(
+    "load_curve_scaling_function", d_scaling_function_expr, "1.0");
 
   // Parse the expression
-  d_time = 0.0;
+  d_time  = 0.0;
   d_pos_x = 0.0;
   d_pos_y = 0.0;
   d_pos_z = 0.0;
@@ -106,14 +111,13 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   d_expression.register_symbol_table(d_symbol_table);
   if (!d_parser.compile(d_scaling_function_expr, d_expression)) {
     std::ostringstream out;
-    out << "** ERROR ** Failed to parse load_curve_scaling_function" 
+    out << "** ERROR ** Failed to parse load_curve_scaling_function"
         << d_scaling_function_expr << ".  Parser error was " << d_parser.error()
         << "." << std::endl;
     for (std::size_t i = 0; i < d_parser.error_count(); ++i) {
       exprtk::parser_error::type error = d_parser.get_error(i);
 
-      out << "\t Error: " << i 
-          << " Position: " << error.token.position
+      out << "\t Error: " << i << " Position: " << error.token.position
           << " Type: " << exprtk::parser_error::to_str(error.mode)
           << " Msg: " << error.diagnostic << std::endl;
     }
@@ -130,26 +134,28 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   Box boundingBox = d_surface->getBoundingBox();
   BBox compDomain;
   grid->getSpatialRange(compDomain);
-  
+
   Point BB_min = boundingBox.lower();
   Point CD_min = compDomain.min();
   Point BB_max = boundingBox.upper();
-  Point CD_max = compDomain.max(); 
-  
-  if( ( BB_min.x() < CD_min.x() ) ||
-      ( BB_min.y() < CD_min.y() ) || 
-      ( BB_min.z() < CD_min.z() ) ||
-      ( BB_max.x() > CD_max.x() ) ||
-      ( BB_max.y() > CD_max.y() ) ||
-      ( BB_max.z() > CD_max.z() ) ){
-     if(!d_axisymmetric_end && !d_axisymmetric_side){
-      proc0cout <<"_________________________________________________________\n";
+  Point CD_max = compDomain.max();
+
+  if ((BB_min.x() < CD_min.x()) || (BB_min.y() < CD_min.y()) ||
+      (BB_min.z() < CD_min.z()) || (BB_max.x() > CD_max.x()) ||
+      (BB_max.y() > CD_max.y()) || (BB_max.z() > CD_max.z())) {
+    if (!d_axisymmetric_end && !d_axisymmetric_side) {
+      proc0cout
+        << "_________________________________________________________\n";
       proc0cout << "\n Input File WARNING: <PhysicalBC : MPM : Pressure> \n"
-                << " The geometry Object ["<<d_surface->getType() << "] exceeds the dimensions of the computational domain.\n"
+                << " The geometry Object [" << d_surface->getType()
+                << "] exceeds the dimensions of the computational domain.\n"
                 << " \n Please change the parameters so it doesn't. \n\n"
-                << " There is a flaw in the surface area calculation for the geometry object,\n"
-                << " it does not take into account that the object exceeds the domain\n";
-      proc0cout <<"_________________________________________________________\n";
+                << " There is a flaw in the surface area calculation for the "
+                   "geometry object,\n"
+                << " it does not take into account that the object exceeds the "
+                   "domain\n";
+      proc0cout
+        << "_________________________________________________________\n";
     }
   }
 }
@@ -161,93 +167,94 @@ PressureBC::~PressureBC()
   delete d_loadCurve;
 }
 
-void PressureBC::outputProblemSpec(ProblemSpecP& ps)
+void
+PressureBC::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP press_ps = ps->appendChild("pressure");
-  ProblemSpecP geom_ps = press_ps->appendChild("geom_object");
+  ProblemSpecP geom_ps  = press_ps->appendChild("geom_object");
   d_surface->outputProblemSpec(geom_ps);
-  press_ps->appendElement("volume_fraction_inside_domain", d_volFracInsideDomain);
-  press_ps->appendElement("numberOfParticlesOnLoadSurface", d_numMaterialPoints);
+  press_ps->appendElement("volume_fraction_inside_domain",
+                          d_volFracInsideDomain);
+  press_ps->appendElement("numberOfParticlesOnLoadSurface",
+                          d_numMaterialPoints);
   d_loadCurve->outputProblemSpec(press_ps);
-  press_ps->appendElement("res",d_res);
-  press_ps->appendElement("load_curve_scaling_function", d_scaling_function_expr);
+  press_ps->appendElement("res", d_res);
+  press_ps->appendElement("load_curve_scaling_function",
+                          d_scaling_function_expr);
 }
 
 // Get the type of this object for BC application
-std::string 
+std::string
 PressureBC::getType() const
 {
   return "Pressure";
 }
 
 // Locate and flag the material points to which this pressure BC is
-// to be applied. Assumes that the "checkForSurface" function in ParticleCreator.cc
-// has been used to identify this material point as being on the surface of the body.
-// WARNING : For this logic to work, the surface object should be a 
-// box (zero volume), cylinder, sphere geometry piece that touches or
-// contains the surface on which the pressure is to be applied.
+// to be applied. Assumes that the "checkForSurface" function in
+// ParticleCreator.cc has been used to identify this material point as being on
+// the surface of the body. WARNING : For this logic to work, the surface object
+// should be a box (zero volume), cylinder, sphere geometry piece that touches
+// or contains the surface on which the pressure is to be applied.
 bool
-PressureBC::flagMaterialPoint(const Point& p, 
-                              const Vector& dxpp)
+PressureBC::flagMaterialPoint(const Point& p, const Vector& dxpp)
 {
   bool flag = false;
   if (d_surfaceType == "box") {
     // Create box that is min-dxpp, max+dxpp;
-    Box box = d_surface->getBoundingBox();
-    GeometryPiece* volume = scinew BoxGeometryPiece(box.lower()-dxpp, 
-                                                 box.upper()+dxpp);
+    Box box               = d_surface->getBoundingBox();
+    GeometryPieceP volume = std::make_shared<BoxGeometryPiece>(
+      box.lower() - dxpp, box.upper() + dxpp);
 
-    if (volume->inside(p)) flag = true;
-    delete volume;
+    if (volume->inside(p))
+      flag = true;
 
   } else if (d_surfaceType == "cylinder") {
-    double tol = 0.9*dxpp.minComponent();
-    CylinderGeometryPiece* cgp =dynamic_cast<CylinderGeometryPiece*>(d_surface);
+    double tol = 0.9 * dxpp.minComponent();
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(d_surface);
 
-    if(!d_cylinder_end && !d_axisymmetric_end){  // Not a cylinder end
+    if (!d_cylinder_end && !d_axisymmetric_end) { // Not a cylinder end
       // Create a cylindrical annulus with radius-|dxpp|, radius+|dxpp|
-      GeometryPiece* outer = scinew CylinderGeometryPiece(cgp->top(), 
-                                                       cgp->bottom(), 
-                                                       cgp->radius()+tol);
-      GeometryPiece* inner = scinew CylinderGeometryPiece(cgp->top(), 
-                                                       cgp->bottom(), 
-                                                       cgp->radius()-tol);
+      GeometryPieceP outer = std::make_shared<CylinderGeometryPiece>(
+        cgp->top(), cgp->bottom(), cgp->radius() + tol);
+      GeometryPieceP inner = std::make_shared<CylinderGeometryPiece>(
+        cgp->top(), cgp->bottom(), cgp->radius() - tol);
 
-      GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
-      if (volume->inside(p)){
+      GeometryPieceP volume =
+        std::make_shared<DifferenceGeometryPiece>(outer, inner);
+      if (volume->inside(p)) {
         flag = true;
       }
-      delete volume;
 
-    }else if(d_cylinder_end || d_axisymmetric_end){
-      Vector add_ends = tol*(cgp->top()-cgp->bottom())
-                           /(cgp->top()-cgp->bottom()).length();
+    } else if (d_cylinder_end || d_axisymmetric_end) {
+      Vector add_ends = tol * (cgp->top() - cgp->bottom()) /
+                        (cgp->top() - cgp->bottom()).length();
 
-      GeometryPiece* end = scinew CylinderGeometryPiece(cgp->top()+add_ends, 
-                                                        cgp->bottom()-add_ends,
-                                                        cgp->radius());
-      if (end->inside(p)){
-         flag = true;
+      GeometryPieceP end = std::make_shared<CylinderGeometryPiece>(
+        cgp->top() + add_ends, cgp->bottom() - add_ends, cgp->radius());
+      if (end->inside(p)) {
+        flag = true;
       }
-      delete end;
     }
   } else if (d_surfaceType == "sphere") {
     // Create a spherical shell with radius-|dxpp|, radius+|dxpp|
-    double tol = dxpp.length();
+    double tol               = dxpp.length();
     SphereGeometryPiece* sgp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    GeometryPiece* outer = scinew SphereGeometryPiece(sgp->origin(), 
-                                                   sgp->radius()+tol);
-    GeometryPiece* inner = scinew SphereGeometryPiece(sgp->origin(), 
-                                                   sgp->radius()-tol);
-    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
-    if (volume->inside(p)) flag = true;
-    delete volume;
+    GeometryPieceP outer =
+      std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() + tol);
+    GeometryPieceP inner =
+      std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() - tol);
+    GeometryPieceP volume =
+      std::make_shared<DifferenceGeometryPiece>(outer, inner);
+    if (volume->inside(p))
+      flag = true;
 
   } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "ERROR: Unknown surface specified for pressure BC", __FILE__, __LINE__);
   }
-  
+
   return flag;
 }
 
@@ -260,38 +267,37 @@ PressureBC::getSurfaceArea() const
   if (d_surfaceType == "box") {
 
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
-    area = gp->volume()/gp->smallestSide();
-    //std::cout << "Surface area = " << area << std::endl;
+    area                 = gp->volume() / gp->smallestSide();
+    // std::cout << "Surface area = " << area << std::endl;
 
   } else if (d_surfaceType == "cylinder") {
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    if(!d_cylinder_end && !d_axisymmetric_end){  // Not a cylinder end
+    if (!d_cylinder_end && !d_axisymmetric_end) { // Not a cylinder end
       area = gp->surfaceArea();
-      if(d_axisymmetric_side){
-        area/=(2.0*M_PI);
+      if (d_axisymmetric_side) {
+        area /= (2.0 * M_PI);
       }
-    }
-    else if(d_cylinder_end){
-      area = gp->surfaceAreaEndCaps()/2.0;
-    }
-    else if(d_axisymmetric_end){
-      area = (gp->radius()*gp->radius())/2.0; // area of a 1 radian wedge
+    } else if (d_cylinder_end) {
+      area = gp->surfaceAreaEndCaps() / 2.0;
+    } else if (d_axisymmetric_end) {
+      area = (gp->radius() * gp->radius()) / 2.0; // area of a 1 radian wedge
     }
   } else if (d_surfaceType == "sphere") {
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    area = gp->surfaceArea();
+    area                    = gp->surfaceArea();
   } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "ERROR: Unknown surface specified for pressure BC", __FILE__, __LINE__);
   }
   return area;
 }
 
 // Calculate the force per particle at a certain time
-double 
+double
 PressureBC::forcePerParticle(double time)
 {
-  if (d_numMaterialPoints < 1) return 0.0;
+  if (d_numMaterialPoints < 1)
+    return 0.0;
 
   // Get the area of the surface on which the pressure BC is applied
   double area = getSurfaceArea();
@@ -301,16 +307,18 @@ PressureBC::forcePerParticle(double time)
   double press = pressure(time);
 
   // Calculate the force per particle
-  double force = (press*area)/static_cast<double>(d_numMaterialPoints);
-  //std::cout << "Force = " << force << " pressure = " << press << " area = " << area
-  //          << " num. points = " << d_numMaterialPoints << std::endl;
+  double force = (press * area) / static_cast<double>(d_numMaterialPoints);
+  // std::cout << "Force = " << force << " pressure = " << press << " area = "
+  // << area
+  //           << " num. points = " << d_numMaterialPoints << std::endl;
   return force;
 }
 
-double 
+double
 PressureBC::forcePerParticle(double time, const Point& pX)
 {
-  if (d_numMaterialPoints < 1) return 0.0;
+  if (d_numMaterialPoints < 1)
+    return 0.0;
 
   // Get the area of the surface on which the pressure BC is applied
   double area = getSurfaceArea();
@@ -320,45 +328,45 @@ PressureBC::forcePerParticle(double time, const Point& pX)
   double press = pressure(time, pX);
 
   // Calculate the force per particle
-  return (press*area)/static_cast<double>(d_numMaterialPoints);
+  return (press * area) / static_cast<double>(d_numMaterialPoints);
 }
 
-double 
+double
 PressureBC::pressure(double t)
 {
   double load = d_loadCurve->getLoad(t);
 
-  d_time = t;
+  d_time  = t;
   d_pos_x = 0.0;
   d_pos_y = 0.0;
   d_pos_z = 0.0;
 
   double scale_factor = d_expression.value();
-  //std::cout << "scale_factor = " << scale_factor << std::endl;
+  // std::cout << "scale_factor = " << scale_factor << std::endl;
 
-  return (load*scale_factor);
+  return (load * scale_factor);
 }
 
-double 
+double
 PressureBC::pressure(double t, const Point& pX)
 {
   double load = d_loadCurve->getLoad(t);
 
-  d_time = t;
-  d_pos_x = pX.x();  
-  d_pos_y = pX.y();  
-  d_pos_z = pX.z();  
+  d_time  = t;
+  d_pos_x = pX.x();
+  d_pos_y = pX.y();
+  d_pos_z = pX.z();
 
   double scale_factor = d_expression.value();
-  //std::cout << "scale_factor = " << scale_factor << std::endl;
+  // std::cout << "scale_factor = " << scale_factor << std::endl;
 
-  return (load*scale_factor);
+  return (load * scale_factor);
 }
 
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-PressureBC::getForceVector(const Point& px, 
+PressureBC::getForceVector(const Point& px,
                            const Vector& pDisp,
                            double forcePerParticle,
                            const double time,
@@ -368,59 +376,60 @@ PressureBC::getForceVector(const Point& px,
   Point pX = px - pDisp;
 
   // Compute F^{-T} for Nanson's relation
-  double JJ = defGrad.Determinant();
+  double JJ     = defGrad.Determinant();
   Matrix3 FinvT = (defGrad.Inverse()).Transpose();
 
-  Vector force(0.0,0.0,0.0);
+  Vector force(0.0, 0.0, 0.0);
   if (d_surfaceType == "box") {
 
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
     Vector normalRef(0.0, 0.0, 0.0);
     normalRef[gp->thicknessDirection()] = 1.0;
-    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
-    force = scaledNormalCur*forcePerParticle;
+    Vector scaledNormalCur              = (FinvT * normalRef) * JJ;
+    force                               = scaledNormalCur * forcePerParticle;
 
     // std::cout << " Force vector = " << force << std::endl;
     //          << " Normal vector = " << scaledNormalCur << std::endl
     //          << " DefGrad = " << defGrad << std::endl
-    //          << " J = " << JJ << " Area ratio = " << scaledNormalCur.length() << std::endl;
+    //          << " J = " << JJ << " Area ratio = " << scaledNormalCur.length()
+    //          << std::endl;
 
   } else if (d_surfaceType == "cylinder") {
 
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    Vector normalRef= gp->radialDirection(px);
-    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
-    force = scaledNormalCur*forcePerParticle;
+    Vector normalRef          = gp->radialDirection(px);
+    Vector scaledNormalCur    = (FinvT * normalRef) * JJ;
+    force                     = scaledNormalCur * forcePerParticle;
 
     if (d_cylinder_end || d_axisymmetric_end) {
 
-      normalRef = (gp->top()-gp->bottom())/(gp->top()-gp->bottom()).length();
-      scaledNormalCur = (FinvT*normalRef)*JJ;
+      normalRef =
+        (gp->top() - gp->bottom()) / (gp->top() - gp->bottom()).length();
+      scaledNormalCur = (FinvT * normalRef) * JJ;
 
-      if(!d_axisymmetric_end){
+      if (!d_axisymmetric_end) {
 
-        force = scaledNormalCur*forcePerParticle;
+        force = scaledNormalCur * forcePerParticle;
 
-      } else {  // It IS on an axisymmetric end
+      } else { // It IS on an axisymmetric end
 
-        double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
+        double pArea = px.x() * d_dxpp.x() * 1.0; /*(theta = 1 radian)*/
         double press = pressure(time, pX);
-        double fpP = pArea*press;
-        force = scaledNormalCur*fpP;
-
+        double fpP   = pArea * press;
+        force        = scaledNormalCur * fpP;
       }
     }
 
   } else if (d_surfaceType == "sphere") {
 
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    Vector normalRef= gp->radialDirection(px);
-    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
-    force = scaledNormalCur*forcePerParticle;
+    Vector normalRef        = gp->radialDirection(px);
+    Vector scaledNormalCur  = (FinvT * normalRef) * JJ;
+    force                   = scaledNormalCur * forcePerParticle;
 
   } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "ERROR: Unknown surface specified for pressure BC", __FILE__, __LINE__);
   }
   return force;
 }
@@ -428,11 +437,12 @@ PressureBC::getForceVector(const Point& px,
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-PressureBC::getForceVectorCBDI(const Point& px, 
+PressureBC::getForceVectorCBDI(const Point& px,
                                const Vector& pDisp,
                                const Matrix3& psize,
                                const Matrix3& pDeformationMeasure,
-                               double forcePerParticle,const double time,
+                               double forcePerParticle,
+                               const double time,
                                Point& pExternalForceCorner1,
                                Point& pExternalForceCorner2,
                                Point& pExternalForceCorner3,
@@ -443,73 +453,74 @@ PressureBC::getForceVectorCBDI(const Point& px,
   Point pX = px - pDisp;
 
   // Compute force vector
-  Vector force(0.0,0.0,0.0);
+  Vector force(0.0, 0.0, 0.0);
   Vector normal(0.0, 0.0, 0.0);
   if (d_surfaceType == "box") {
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
     normal[gp->thicknessDirection()] = 1.0;
-    force = normal*forcePerParticle;
+    force                            = normal * forcePerParticle;
   } else if (d_surfaceType == "cylinder") {
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-    //std::cout << "px = " << px << " force = " << force << " normal = " << normal
-    //          << " fpp = " << forcePerParticle << "\n";
-    if(d_cylinder_end || d_axisymmetric_end){
-      normal = (gp->top()-gp->bottom())
-              /(gp->top()-gp->bottom()).length();
-      if(!d_axisymmetric_end){
-        force = normal*forcePerParticle;
-      }else{  // It IS on an axisymmetric end
-        double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
+    normal                    = gp->radialDirection(px);
+    force                     = normal * forcePerParticle;
+    // std::cout << "px = " << px << " force = " << force << " normal = " <<
+    // normal
+    //           << " fpp = " << forcePerParticle << "\n";
+    if (d_cylinder_end || d_axisymmetric_end) {
+      normal = (gp->top() - gp->bottom()) / (gp->top() - gp->bottom()).length();
+      if (!d_axisymmetric_end) {
+        force = normal * forcePerParticle;
+      } else { // It IS on an axisymmetric end
+        double pArea = px.x() * d_dxpp.x() * 1.0; /*(theta = 1 radian)*/
         double press = pressure(time, pX);
-        double fpP = pArea*press;
-        force = normal*fpP;
+        double fpP   = pArea * press;
+        force        = normal * fpP;
       }
     }
   } else if (d_surfaceType == "sphere") {
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
+    normal                  = gp->radialDirection(px);
+    force                   = normal * forcePerParticle;
   } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "ERROR: Unknown surface specified for pressure BC", __FILE__, __LINE__);
   }
   // 25% of total particle force goes to each corner
-  force = force*0.25;
+  force = force * 0.25;
   // modify the sign of force if outward normal is not correctly defined
   if (!d_outwardNormal) {
-    force = force*(-1.0);
+    force = force * (-1.0);
   }
   // determine four boundary-corners of the particle
   std::vector<Point> corners(4);
   Matrix3 pSize_new = pDeformationMeasure * psize;
-  auto i1i2 = getParticleBoundaryCorners(px, pSize_new, normal, dxCell, corners);
+  auto i1i2 =
+    getParticleBoundaryCorners(px, pSize_new, normal, dxCell, corners);
   pExternalForceCorner1 = corners[0];
   pExternalForceCorner2 = corners[1];
   pExternalForceCorner3 = corners[2];
   pExternalForceCorner4 = corners[3];
-  
+
   // Recalculate the force based on area changes (current vs. initial)
   int i1 = i1i2.first;
   int i2 = i1i2.second;
   if (i1 != i2) {
-    Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
-    Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
-    Vector curVec1(pSize_new(0,i1),pSize_new(1,i1),pSize_new(2,i1));
-    Vector curVec2(pSize_new(0,i2),pSize_new(1,i2),pSize_new(2,i2));
-    Vector iniA = Cross(iniVec1,iniVec2);
-    Vector curA = Cross(curVec1,curVec2);
-    double iniArea=iniA.length();
-    double curArea=curA.length();
-    force=force*(curArea/iniArea);
+    Vector iniVec1(psize(0, i1), psize(1, i1), psize(2, i1));
+    Vector iniVec2(psize(0, i2), psize(1, i2), psize(2, i2));
+    Vector curVec1(pSize_new(0, i1), pSize_new(1, i1), pSize_new(2, i1));
+    Vector curVec2(pSize_new(0, i2), pSize_new(1, i2), pSize_new(2, i2));
+    Vector iniA    = Cross(iniVec1, iniVec2);
+    Vector curA    = Cross(curVec1, curVec2);
+    double iniArea = iniA.length();
+    double curArea = curA.length();
+    force          = force * (curArea / iniArea);
   }
   return force;
 }
 
 // Get the particle corners for CBDI
 std::vector<Point>
-PressureBC::getParticleCornersCBDI(const Point& pX, 
+PressureBC::getParticleCornersCBDI(const Point& pX,
                                    const Matrix3& pSize,
                                    const Matrix3& pDefGrad,
                                    const Vector& dxCell)
@@ -520,19 +531,19 @@ PressureBC::getParticleCornersCBDI(const Point& pX,
     pNormal[gp->thicknessDirection()] = 1.0;
   } else if (d_surfaceType == "cylinder") {
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    pNormal = gp->radialDirection(pX);
+    pNormal                   = gp->radialDirection(pX);
   } else if (d_surfaceType == "sphere") {
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    pNormal = gp->radialDirection(pX);
+    pNormal                 = gp->radialDirection(pX);
   } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "ERROR: Unknown surface specified for pressure BC", __FILE__, __LINE__);
   }
   // determine four boundary-corners of the particle
   std::vector<Point> corners(4);
   Matrix3 pSize_new = pDefGrad * pSize;
   getParticleBoundaryCorners(pX, pSize_new, pNormal, dxCell, corners);
-  
+
   return corners;
 }
 
@@ -554,85 +565,100 @@ PressureBC::getParticleBoundaryCorners(const Point& pX,
 
     double dxLength     = dxDeformed.length();
     double normalLength = pNormal.length();
-    double cos_angle = Dot(pNormal, dxDeformed) / (normalLength * dxLength);
+    double cos_angle    = Dot(pNormal, dxDeformed) / (normalLength * dxLength);
 
     if (std::abs(cos_angle - 1.0) < 0.1) {
       px1 = pX + dxDeformed;
-      i1 = (ii+1) % 3;
-      i2 = (ii+2) % 3;
+      i1  = (ii + 1) % 3;
+      i2  = (ii + 2) % 3;
     } else if (std::abs(cos_angle + 1.0) < 0.1) {
       px1 = pX - dxDeformed;
-      i1 = (ii+1) % 3;
-      i2 = (ii+2) % 3;
-    } 
+      i1  = (ii + 1) % 3;
+      i2  = (ii + 2) % 3;
+    }
     // else {
-      //std::cout << "cos_angle = " << cos_angle << " px1 = " << px1 << "\n";
-      //std::cout << "dx = " << dxDeformed << " normal = " << pNormal << "\n";
+    // std::cout << "cos_angle = " << cos_angle << " px1 = " << px1 << "\n";
+    // std::cout << "dx = " << dxDeformed << " normal = " << pNormal << "\n";
     // }
   }
-  // px1 is the position of the center of the boundary particle face that is on the physical boundary.
+  // px1 is the position of the center of the boundary particle face that is on
+  // the physical boundary.
   if (i1 == 0 && i2 == 0) {
     corners[0] = px1;
     corners[1] = px1;
     corners[2] = px1;
     corners[3] = px1;
   } else {
-    corners[0] = Point(px1.x()-pSize_new(0,i1)*dxCell[0]/2.0-pSize_new(0,i2)*dxCell[0]/2.0,
-                       px1.y()-pSize_new(1,i1)*dxCell[1]/2.0-pSize_new(1,i2)*dxCell[1]/2.0,
-                       px1.z()-pSize_new(2,i1)*dxCell[2]/2.0-pSize_new(2,i2)*dxCell[2]/2.0);
-    corners[1] = Point(px1.x()+pSize_new(0,i1)*dxCell[0]/2.0-pSize_new(0,i2)*dxCell[0]/2.0,
-                       px1.y()+pSize_new(1,i1)*dxCell[1]/2.0-pSize_new(1,i2)*dxCell[1]/2.0,
-                       px1.z()+pSize_new(2,i1)*dxCell[2]/2.0-pSize_new(2,i2)*dxCell[2]/2.0);
-    corners[2] = Point(px1.x()-pSize_new(0,i1)*dxCell[0]/2.0+pSize_new(0,i2)*dxCell[0]/2.0,
-                       px1.y()-pSize_new(1,i1)*dxCell[1]/2.0+pSize_new(1,i2)*dxCell[1]/2.0,
-                       px1.z()-pSize_new(2,i1)*dxCell[2]/2.0+pSize_new(2,i2)*dxCell[2]/2.0);
-    corners[3] = Point(px1.x()+pSize_new(0,i1)*dxCell[0]/2.0+pSize_new(0,i2)*dxCell[0]/2.0,
-                       px1.y()+pSize_new(1,i1)*dxCell[1]/2.0+pSize_new(1,i2)*dxCell[1]/2.0,
-                       px1.z()+pSize_new(2,i1)*dxCell[2]/2.0+pSize_new(2,i2)*dxCell[2]/2.0);
+    corners[0] = Point(px1.x() - pSize_new(0, i1) * dxCell[0] / 2.0 -
+                         pSize_new(0, i2) * dxCell[0] / 2.0,
+                       px1.y() - pSize_new(1, i1) * dxCell[1] / 2.0 -
+                         pSize_new(1, i2) * dxCell[1] / 2.0,
+                       px1.z() - pSize_new(2, i1) * dxCell[2] / 2.0 -
+                         pSize_new(2, i2) * dxCell[2] / 2.0);
+    corners[1] = Point(px1.x() + pSize_new(0, i1) * dxCell[0] / 2.0 -
+                         pSize_new(0, i2) * dxCell[0] / 2.0,
+                       px1.y() + pSize_new(1, i1) * dxCell[1] / 2.0 -
+                         pSize_new(1, i2) * dxCell[1] / 2.0,
+                       px1.z() + pSize_new(2, i1) * dxCell[2] / 2.0 -
+                         pSize_new(2, i2) * dxCell[2] / 2.0);
+    corners[2] = Point(px1.x() - pSize_new(0, i1) * dxCell[0] / 2.0 +
+                         pSize_new(0, i2) * dxCell[0] / 2.0,
+                       px1.y() - pSize_new(1, i1) * dxCell[1] / 2.0 +
+                         pSize_new(1, i2) * dxCell[1] / 2.0,
+                       px1.z() - pSize_new(2, i1) * dxCell[2] / 2.0 +
+                         pSize_new(2, i2) * dxCell[2] / 2.0);
+    corners[3] = Point(px1.x() + pSize_new(0, i1) * dxCell[0] / 2.0 +
+                         pSize_new(0, i2) * dxCell[0] / 2.0,
+                       px1.y() + pSize_new(1, i1) * dxCell[1] / 2.0 +
+                         pSize_new(1, i2) * dxCell[1] / 2.0,
+                       px1.z() + pSize_new(2, i1) * dxCell[2] / 2.0 +
+                         pSize_new(2, i2) * dxCell[2] / 2.0);
   }
 
   return std::make_pair(i1, i2);
 }
 
-
 // Update the load curve
 void
 PressureBC::updateLoadCurve(const std::vector<double>& time,
-                            const std::vector<double>& pressure) {
+                            const std::vector<double>& pressure)
+{
   d_loadCurve->setTimeLoad(time, pressure);
 }
 
 namespace Uintah {
 // A method to print out the pressure bcs
-ostream& operator<<(ostream& out, const PressureBC& bc) 
+ostream&
+operator<<(ostream& out, const PressureBC& bc)
 {
-   out << "Begin MPM Pressure BC # = " << bc.loadCurveID() << endl;
-   std::string surfType = bc.getSurfaceType();
-   out << "    Surface of application = " << surfType << endl;
-   if (surfType == "box") {
-      Box box = (bc.getSurface())->getBoundingBox();
-      out << "        " << box << endl;
-   } else if (surfType == "cylinder") {
-      CylinderGeometryPiece* cgp = 
-         dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
-      out << "        " << "radius = " << cgp->radius() 
-                        << " top = " << cgp->top() 
-                        << " bottom = " << cgp->bottom() << endl;
-   } else if (surfType == "sphere") {
-      SphereGeometryPiece* sgp = 
-         dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
-      out << "        " << "radius = " << sgp->radius() 
-                        << " origin = " << sgp->origin() << endl;
-   }
-   out << "    Time vs. Load = " << endl;
-   LoadCurve<double>* lc = bc.getLoadCurve();
-   int numPts = lc->numberOfPointsOnLoadCurve();
-   for (int ii = 0; ii < numPts; ++ii) {
-     out << "        time = " << lc->getTime(ii) 
-         << " pressure = " << lc->getLoad(ii) << endl;
-   }
-   out << "End MPM Pressure BC # = " << bc.loadCurveID() << endl;
-   return out;
+  out << "Begin MPM Pressure BC # = " << bc.loadCurveID() << endl;
+  std::string surfType = bc.getSurfaceType();
+  out << "    Surface of application = " << surfType << endl;
+  if (surfType == "box") {
+    Box box = (bc.getSurface())->getBoundingBox();
+    out << "        " << box << endl;
+  } else if (surfType == "cylinder") {
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
+    out << "        "
+        << "radius = " << cgp->radius() << " top = " << cgp->top()
+        << " bottom = " << cgp->bottom() << endl;
+  } else if (surfType == "sphere") {
+    SphereGeometryPiece* sgp =
+      dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
+    out << "        "
+        << "radius = " << sgp->radius() << " origin = " << sgp->origin()
+        << endl;
+  }
+  out << "    Time vs. Load = " << endl;
+  LoadCurve<double>* lc = bc.getLoadCurve();
+  int numPts            = lc->numberOfPointsOnLoadCurve();
+  for (int ii = 0; ii < numPts; ++ii) {
+    out << "        time = " << lc->getTime(ii)
+        << " pressure = " << lc->getLoad(ii) << endl;
+  }
+  out << "End MPM Pressure BC # = " << bc.loadCurveID() << endl;
+  return out;
 }
 
 } // end namespace Uintah

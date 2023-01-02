@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,24 +27,24 @@
 #ifndef __CORRUG_EDGE_PIECE_H__
 #define __CORRUG_EDGE_PIECE_H__
 
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
 #include <Core/Geometry/Point.h>
+#include <Core/GeometryPiece/SmoothGeomPiece.h>
 
 #include <cmath>
 #ifndef M_PI
-# define M_PI           3.14159265358979323846  /* pi */
+#define M_PI 3.14159265358979323846 /* pi */
 #endif
 
 namespace Uintah {
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
-	
+
  \class CorrugEdgeGeomPiece
-	
- \brief Creates a plate with one edge corrugated. 
-	
- \warning Does not allow for correct application of symmetry 
+
+ \brief Creates a plate with one edge corrugated.
+
+ \warning Does not allow for correct application of symmetry
           boundary conditions.  Use symmetry at your own risk.
           Normal is not used .. needs to be implemented.
           Volume is not calculated accurately.
@@ -58,70 +58,77 @@ namespace Uintah {
    per grid cell.\n
    The input looks like this: \n
    \verbatim
-   <corrugated> 
-     <xymin>      [0.0,0.0,0.0]    </xymin> 
-     <xymax>      [20.0,20.0,0.0]  </xymax> 
+   <corrugated>
+     <xymin>      [0.0,0.0,0.0]    </xymin>
+     <xymax>      [20.0,20.0,0.0]  </xymax>
      <thickness>  1.0              </thickness>
      <normal>     [0.0,0.0,1.0]    </normal>
      <corr_edge>  x+               </corr_edge>
      <curve>      sin              </curve>
      <wavelength> 2.0              </wavelength>
      <amplitude>  2.0              </amplitude>
-   </corrugated> 
+   </corrugated>
    \endverbatim
 */
 /////////////////////////////////////////////////////////////////////////////
 
-  class CorrugEdgeGeomPiece : public SmoothGeomPiece {
-	 
-  public:
-    //////////////////////////////////////////////////////////////////////
-    /*!  
-      \brief Constructor that takes a ProblemSpecP argument.   
-      It reads the xml input specification and builds a plate with
-      one corrugated edge.
-    */
-    //////////////////////////////////////////////////////////////////////
-    CorrugEdgeGeomPiece(ProblemSpecP &);
-	 
-    //////////////////////////////////////////////////////////////////////
-    /*! Destructor */
-    //////////////////////////////////////////////////////////////////////
-    virtual ~CorrugEdgeGeomPiece() = default;
+class CorrugEdgeGeomPiece : public SmoothGeomPiece {
+ public:
+  //////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Constructor that takes a ProblemSpecP argument.
+    It reads the xml input specification and builds a plate with
+    one corrugated edge.
+  */
+  //////////////////////////////////////////////////////////////////////
+  CorrugEdgeGeomPiece(ProblemSpecP &);
 
-    static const string TYPE_NAME;
-    virtual std::string getType() const { return TYPE_NAME; }
+  //////////////////////////////////////////////////////////////////////
+  /*! Destructor */
+  //////////////////////////////////////////////////////////////////////
+  virtual ~CorrugEdgeGeomPiece() = default;
 
-    /// Make a clone
-    virtual GeometryPieceP clone() const;
-	 
-    //////////////////////////////////////////////////////////////////////
-    /*! Determines whether a point is inside the geometry. */
-    //////////////////////////////////////////////////////////////////////
-    virtual bool inside(const Point &p) const;
-	 
-    //////////////////////////////////////////////////////////////////////
-    /*! Returns the bounding box surrounding the box. */
-    //////////////////////////////////////////////////////////////////////
-    virtual Box getBoundingBox() const;
+  static const string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-    //////////////////////////////////////////////////////////////////////
-    /*! Creates the particles */
-    //////////////////////////////////////////////////////////////////////
-    unsigned int createPoints();
+  /// Make a clone
+  virtual GeometryPieceP
+  clone() const;
 
-  private:
-    virtual void outputHelper( ProblemSpecP & ps) const;
-	 
-    Point  d_xymin;
-    Point  d_xymax;
-    double d_thickness;
-    Vector d_normal;
-    string d_edge;
-    string d_curve;
-    double d_wavelength;
-    double d_amplitude;
-  };
-} // End namespace Uintah
+  //////////////////////////////////////////////////////////////////////
+  /*! Determines whether a point is inside the geometry. */
+  //////////////////////////////////////////////////////////////////////
+  virtual bool
+  inside(const Point &p) const;
 
-#endif // __CORRUG_EDGE_PIECE_H__
+  //////////////////////////////////////////////////////////////////////
+  /*! Returns the bounding box surrounding the box. */
+  //////////////////////////////////////////////////////////////////////
+  virtual Box
+  getBoundingBox() const;
+
+  //////////////////////////////////////////////////////////////////////
+  /*! Creates the particles */
+  //////////////////////////////////////////////////////////////////////
+  unsigned int
+  createPoints();
+
+ private:
+  virtual void
+  outputHelper(ProblemSpecP &ps) const;
+
+  Point d_xymin;
+  Point d_xymax;
+  double d_thickness;
+  Vector d_normal;
+  string d_edge;
+  string d_curve;
+  double d_wavelength;
+  double d_amplitude;
+};
+}  // End namespace Uintah
+
+#endif  // __CORRUG_EDGE_PIECE_H__

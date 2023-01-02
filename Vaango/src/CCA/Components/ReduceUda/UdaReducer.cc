@@ -103,8 +103,8 @@ void UdaReducer::problemSetup(const ProblemSpecP& prob_spec,
   d_sharedState->d_switchState = true;         /// HACK NEED TO CHANGE THIS
    
   // This matl is for delT
-  d_oneMatl = scinew SimpleMaterial();
-  d_sharedState->registerSimpleMaterial( d_oneMatl );
+  d_oneMatl = scinew EmptyMaterial();
+  d_sharedState->registerEmptyMaterial( d_oneMatl );
   
   delt_label = d_sharedState->get_delt_label();
 

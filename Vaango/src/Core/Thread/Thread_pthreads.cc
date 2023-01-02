@@ -449,7 +449,7 @@ Thread::numProcessors()
 #ifdef __APPLE__
     size_t len = sizeof(np);
     int tparams[2] = {CTL_HW, HW_NCPU};
-    sysctl(tparams, 2, &np, &len, NULL, 0);
+    sysctl(tparams, 2, &np, &len, nullptr, 0);
 #else
     // Linux
     std::ifstream cpuinfo("/proc/cpuinfo");
@@ -672,7 +672,7 @@ handle_abort_signals(int sig, SigContext ctx)
   sigemptyset(&action.sa_mask);
   action.sa_handler = SIG_DFL;
   action.sa_flags = 0;
-  if (sigaction(sig, &action, NULL) == -1) {
+  if (sigaction(sig, &action, nullptr) == -1) {
     throw ThreadError(std::string("sigaction failed") + strerror(errno));
   }
 
@@ -715,11 +715,11 @@ handle_abort_signals(int sig, SigContext ctx)
 
   Uintah::WAIT_FOR_DEBUGGER(true);
 
-  Thread::niceAbort(NULL,print);
+  Thread::niceAbort(nullptr,print);
   
   action.sa_handler = (SIG_HANDLER_T)handle_abort_signals;
   action.sa_flags = 0;
-  if (sigaction(sig, &action, NULL) == -1) {
+  if (sigaction(sig, &action, nullptr) == -1) {
     throw ThreadError(std::string("sigaction failed") + strerror(errno));
   }
 } // handle_abort_signals()
@@ -797,7 +797,7 @@ handle_quit(int sig, SigContext /*ctx*/)
   }
   Uintah::WAIT_FOR_DEBUGGER(true);
 
-  Thread::niceAbort(NULL, print); // Enter the monitor
+  Thread::niceAbort(nullptr, print); // Enter the monitor
   control_c_sema.up();
 }
 
@@ -836,25 +836,25 @@ install_signal_handlers()
   action.sa_flags = 0;
 
   action.sa_handler = (SIG_HANDLER_T)handle_abort_signals;
-  if (sigaction(SIGILL, &action, NULL) == -1)
+  if (sigaction(SIGILL, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGILL failed") + strerror(errno));
-  if (sigaction(SIGABRT, &action, NULL) == -1)
+  if (sigaction(SIGABRT, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGABRT failed") + strerror(errno));
-  if (sigaction(SIGTRAP, &action, NULL) == -1)
+  if (sigaction(SIGTRAP, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGTRAP failed") + strerror(errno));
-  if (sigaction(SIGBUS, &action, NULL) == -1)
+  if (sigaction(SIGBUS, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGBUS failed") + strerror(errno));
-  if (sigaction(SIGSEGV, &action, NULL) == -1)
+  if (sigaction(SIGSEGV, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGSEGV failed") + strerror(errno));
 
   action.sa_handler = (SIG_HANDLER_T)handle_quit;
-  if (sigaction(SIGQUIT, &action, NULL) == -1)
+  if (sigaction(SIGQUIT, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGQUIT failed") + strerror(errno));
-  if (sigaction(SIGINT, &action, NULL) == -1)
+  if (sigaction(SIGINT, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGINT failed") + strerror(errno));
 
   action.sa_handler = (SIG_HANDLER_T)handle_siguser2;
-  if (sigaction(SIGUSR2, &action, NULL) == -1)
+  if (sigaction(SIGUSR2, &action, nullptr) == -1)
     throw ThreadError(std::string("SIGUSR2 failed") + strerror(errno));
 }
 
@@ -864,11 +864,11 @@ exit_handler()
 {
   Thread * self = Thread::self();
 
-  // Self appears to be able to be NULL if the program has already
+  // Self appears to be able to be nullptr if the program has already
   // mostly shutdown before the atexit() function (this function)
   // kicks in.
 
-  if( exiting || self == NULL ) {
+  if( exiting || self == nullptr ) {
     return;
   }
   Thread_shutdown( self );
@@ -903,9 +903,9 @@ Thread::initialize()
   if (!getenv("THREAD_NO_ATEXIT"))
     atexit(exit_handler);
 
-  pthread_mutex_init(&sched_lock, NULL);
+  pthread_mutex_init(&sched_lock, nullptr);
 
-  if (pthread_key_create(&thread_key, NULL) != 0)
+  if (pthread_key_create(&thread_key, nullptr) != 0)
   {
     throw ThreadError("pthread_key_create:  Out of resources.");
   }
@@ -980,7 +980,7 @@ Mutex::Mutex(const char* name)
   pthread_mutex_init(&priv_->mutex, &attr); // always returns zero
   pthread_mutexattr_destroy(&attr);  // usually noop
 #else
-  pthread_mutex_init(&priv_->mutex, NULL); // always returns zero
+  pthread_mutex_init(&priv_->mutex, nullptr); // always returns zero
 #endif
 }
 
@@ -1051,7 +1051,7 @@ Mutex::lock()
   // if we lock on priv_ and then call the constructor to replace it.
   if ( !priv_ ) {
     priv_=new Mutex_private;
-    pthread_mutex_init(&priv_->mutex, NULL);
+    pthread_mutex_init(&priv_->mutex, nullptr);
   }
 #endif
 
@@ -1172,7 +1172,7 @@ RecursiveMutex::lock()
 {
   Thread* self = Thread::self();
   int oldstate = 0;
-  Thread_private* p = NULL;
+  Thread_private* p = nullptr;
   if (self) {
     p = Thread::self()->priv_;
     oldstate = Thread::push_bstack(p, Thread::BLOCK_ANY, name_);
@@ -1294,7 +1294,7 @@ Semaphore::Semaphore(const char* name, int value)
 
 #if defined(_AIX)
   priv_->sem =
-    (msemaphore*) mmap(NULL,sizeof(msemaphore),
+    (msemaphore*) mmap(nullptr,sizeof(msemaphore),
                        PROT_READ | PROT_WRITE,
                        MAP_SHARED | MAP_ANONYMOUS | MAP_VARIABLE, -1, 0 );
 #endif
@@ -1343,7 +1343,7 @@ Semaphore::down(int count)
 {
   Thread* self = Thread::self();
   int oldstate = 0;
-  Thread_private* p = NULL;
+  Thread_private* p = nullptr;
   if (self) {
     p = Thread::self()->priv_;
     oldstate = Thread::push_bstack(p, Thread::BLOCK_SEMAPHORE, name_);
@@ -1425,7 +1425,7 @@ ConditionVariable::timedWait(Mutex& m, const struct timespec* abstime)
 {
   Thread* self = Thread::self();
   int oldstate = 0;
-  Thread_private* p = NULL;
+  Thread_private* p = nullptr;
   if (self) {
     p = Thread::self()->priv_;
     oldstate = Thread::push_bstack(p, Thread::BLOCK_ANY, name_);

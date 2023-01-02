@@ -155,7 +155,7 @@ void SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(d_material);
       int d_indx = mpm_matl->getDWIndex();
 
-      int numAllMatls = d_sharedState->getNumMatls();
+      int numAllMatls = d_sharedState->getNumMaterials();
       int numMPMMatls = d_sharedState->getNumMPMMatls();
 
       // mpm matls

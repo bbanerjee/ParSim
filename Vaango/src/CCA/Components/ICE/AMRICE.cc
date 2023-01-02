@@ -154,13 +154,13 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
       printf( "WARNING: AMRICE.cc: stringstream failed...\n" );
     }
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
 
     //__________________________________
     //  bulletproofing    
     VarLabel* label = VarLabel::find(name);
     
-    if(label == NULL){
+    if(label == nullptr){
       throw ProblemSetupException("The threshold variable name("+name+") could not be found",
                                    __FILE__, __LINE__);
     }
@@ -1936,7 +1936,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
 
     //__________________________________
     //  initialize mag_grad for all matls
-    int numAllMatls = d_sharedState->getNumMatls();
+    int numAllMatls = d_sharedState->getNumMaterials();
     std::vector<CCVariable<double> > mag_grad_rho_CC(numAllMatls);
     std::vector<CCVariable<double> > mag_grad_temp_CC(numAllMatls);
     std::vector<CCVariable<double> > mag_grad_vol_frac_CC(numAllMatls);
@@ -1968,7 +1968,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
     if (initial){
       numMatls = d_sharedState->getNumICEMatls();
     }else{
-      numMatls = d_sharedState->getNumMatls();
+      numMatls = d_sharedState->getNumMaterials();
     }
     
     for(int m=0;m < numMatls;m++){
@@ -2009,7 +2009,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
       double thresholdValue = data.value;
       VarLabel* mag_grad_qLabel = VarLabel::find("mag_grad_"+name);
       
-      if(mag_grad_qLabel==NULL){  // bulletproofing
+      if(mag_grad_qLabel==nullptr){  // bulletproofing
         throw InternalError("AMRICE::errorEstimate: label(mag_grad_"+name+") not found.",
                             __FILE__, __LINE__);
       }

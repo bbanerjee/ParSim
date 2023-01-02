@@ -105,7 +105,7 @@ findLocation( int value )
     return infoVector[ low-1 ];
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void
@@ -113,7 +113,7 @@ readSymbolLocations( char * filename )
 {
   FILE * fp = fopen( filename, "r" );
 
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     printf( "Error reading file '%s'.  Goodbye.\n\n", filename );
     exit( 1 );
   }
@@ -178,7 +178,7 @@ printStackTrace( char * filename )
 {
   FILE * fp = fopen( filename, "r" );
 
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     printf( "Error reading file '%s'.  Goodbye.\n\n", filename );
     exit( 1 );
   }
@@ -193,7 +193,7 @@ printStackTrace( char * filename )
 
     char * result = fgets( line, LINE_SIZE, fp );
 
-    if( result == NULL ) { 
+    if( result == nullptr ) { 
       break;
     }
     printf("%s", line);

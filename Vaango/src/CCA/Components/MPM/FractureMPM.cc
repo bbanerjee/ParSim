@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -235,7 +235,7 @@ void FractureMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   Task* t = scinew Task("FractureMPM::actuallyInitializeAddedMaterial",
                   this, &FractureMPM::actuallyInitializeAddedMaterial);
 
-  int numALLMatls = d_sharedState->getNumMatls();
+  int numALLMatls = d_sharedState->getNumMaterials();
   int numMPMMatls = d_sharedState->getNumMPMMatls();
   MaterialSubset* add_matl = scinew MaterialSubset();
   cout << "Added Material = " << numALLMatls-1 << endl;
@@ -433,13 +433,13 @@ void FractureMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
 
   t->computes(lb->gMassLabel);
-  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gTemperatureLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gTemperatureLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gVolumeLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gVolumeLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);  
-  t->computes(lb->gVelocityLabel,    d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gVelocityLabel,    d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
   t->computes(lb->gSp_volLabel);
   t->computes(lb->gVolumeLabel);
@@ -641,7 +641,7 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
   Ghost::GhostType  gan   = Ghost::AroundNodes;
   Ghost::GhostType  gnone = Ghost::None;
   t->requires(Task::NewDW,lb->gMassLabel, gnone);
-  t->requires(Task::NewDW,lb->gMassLabel, d_sharedState->getAllInOneMatl(),
+  t->requires(Task::NewDW,lb->gMassLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain, gnone);
   t->requires(Task::OldDW,lb->pStressLabel,               gan,NGP);
   t->requires(Task::OldDW,lb->pVolumeLabel,               gan,NGP);
@@ -677,7 +677,7 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
   }
 
   t->computes(lb->gStressForSavingLabel);
-  t->computes(lb->gStressForSavingLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gStressForSavingLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
@@ -1326,13 +1326,13 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     NCVariable<double> gmassglobal,gtempglobal,gvolumeglobal;
     NCVariable<Vector> gvelglobal;
     new_dw->allocateAndPut(gmassglobal, lb->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gtempglobal, lb->gTemperatureLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gvolumeglobal, lb->gVolumeLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);    
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);    
     new_dw->allocateAndPut(gvelglobal, lb->gVelocityLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gmassglobal.initialize(d_SMALL_NUM_MPM);
     gvolumeglobal.initialize(d_SMALL_NUM_MPM);
     gtempglobal.initialize(0.0);
@@ -1802,9 +1802,9 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
     NCVariable<Matrix3>       gstressglobal;
     constNCVariable<double>   gmassglobal;
     new_dw->get(gmassglobal,  lb->gMassLabel,
-                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,0);
+                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
     new_dw->allocateAndPut(gstressglobal, lb->gStressForSavingLabel, 
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     //gstressglobal.initialize(Matrix3(0.));
 
     for(int m = 0; m < numMPMMatls; m++){

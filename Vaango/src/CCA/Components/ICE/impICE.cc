@@ -463,7 +463,7 @@ void ICE::setupMatrix(const ProcessorGroup*,
     delt_vartype delT;
     parent_old_dw->get(delT, d_sharedState->get_delt_label(),level);
     Vector dx     = patch->dCell();
-    int numMatls  = d_sharedState->getNumMatls();
+    int numMatls  = d_sharedState->getNumMaterials();
     CCVariable<Stencil7> A; 
     CCVariable<double> imp_delP;
     constCCVariable<double> sumKappa;
@@ -606,7 +606,7 @@ void ICE::setupRHS(const ProcessorGroup*,
       pOldDW  = old_dw;
     }
            
-    int numMatls  = d_sharedState->getNumMatls();
+    int numMatls  = d_sharedState->getNumMaterials();
     delt_vartype delT;
     pOldDW->get(delT, d_sharedState->get_delt_label(), level);
     
@@ -857,7 +857,7 @@ void ICE::updatePressure(const ProcessorGroup*,
     DataWarehouse* parent_old_dw = 
           new_dw->getOtherDataWarehouse(Task::ParentOldDW);
                     
-    int numMatls  = d_sharedState->getNumMatls(); 
+    int numMatls  = d_sharedState->getNumMaterials(); 
     Ghost::GhostType  gn = Ghost::None;
           
     CCVariable<double> press_CC;     
@@ -940,7 +940,7 @@ void ICE::computeDel_P(const ProcessorGroup*,
               << patch->getID() <<"\t\t\t\t ICE \tL-" 
               << level->getIndex()<<endl;
             
-    int numMatls  = d_sharedState->getNumMatls(); 
+    int numMatls  = d_sharedState->getNumMaterials(); 
       
     CCVariable<double> delP_Dilatate;
     CCVariable<double> delP_MassX;
@@ -1030,7 +1030,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
 
   bool recursion  = true;
   bool modifies_X = true;
-  const VarLabel* whichInitialGuess = NULL;
+  const VarLabel* whichInitialGuess = nullptr;
   const PatchSet* patch_set = level->eachPatch();
   //const VarLabel* whichInitialGuess = lb->initialGuessLabel;
 
@@ -1147,7 +1147,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
     d_subsched->execute();
     
     counter ++;
-    whichInitialGuess = NULL;
+    whichInitialGuess = nullptr;
     
     //__________________________________
     // diagnostics

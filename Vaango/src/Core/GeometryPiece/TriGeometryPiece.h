@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,108 +27,128 @@
 #ifndef __TRI_GEOMETRY_OBJECT_H__
 #define __TRI_GEOMETRY_OBJECT_H__
 
+#include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Plane.h>
+#include <Core/Geometry/Point.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/GeometryPiece/UniformGrid.h>
 #include <Core/Grid/Box.h>
 
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/IntVector.h>
-#include <Core/Geometry/Plane.h>
-
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace Uintah {
 
 /**************************************
-        
+
 CLASS
    TriGeometryPiece
-        
+
    Creates a triangulated surface piece from the xml input file description.
-        
+
 GENERAL INFORMATION
-        
+
    TriGeometryPiece.h
-        
+
    John A. Schmidt
    Department of Mechanical Engineering
    University of Utah
-        
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-        
+
 KEYWORDS
    TriGeometryPiece BoundingBox inside
-        
+
 DESCRIPTION
    Creates a triangulated surface piece from the xml input file description.
-   Requires one input: file name (convetion use suffix .dat).  
+   Requires one input: file name (convetion use suffix .dat).
    There are methods for checking if a point is inside the surface
    and also for determining the bounding box for the surface.
    The input form looks like this:
        <tri>
          <file>surface.dat</file>
        </tri>
-        
+
 ****************************************/
 
 class TriGeometryPiece : public GeometryPiece {
-public:
+ public:
+  TriGeometryPiece(ProblemSpecP&);
+  TriGeometryPiece(const TriGeometryPiece&);
+  TriGeometryPiece&
+  operator=(const TriGeometryPiece&);
+  virtual ~TriGeometryPiece() = default;
 
-   TriGeometryPiece(ProblemSpecP &);
-   TriGeometryPiece(const TriGeometryPiece&);
-   TriGeometryPiece& operator=(const TriGeometryPiece&);
-   virtual ~TriGeometryPiece() = default;
+  static const std::string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-   static const string TYPE_NAME;
-   virtual std::string getType() const { return TYPE_NAME; }
+  virtual GeometryPieceP
+  clone() const;
 
-   virtual GeometryPieceP clone() const;
+  virtual bool
+  inside(const Point& p) const;
+  virtual Box
+  getBoundingBox() const;
 
-   virtual bool inside(const Point &p) const;
-   virtual Box getBoundingBox() const;
+  void
+  scale(const double factor);
 
-   void scale(const double factor);
+  double
+  surfaceArea() const;
 
-   double surfaceArea() const;
-   
-private:
+ private:
+  void
+  checkInput() const;
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
 
-   void checkInput() const;
-   virtual void outputHelper( ProblemSpecP & ps ) const;
-   
-   void readPoints(const std::string& file);
-   void readTriangles(const std::string& file);
-   void readPLYMesh();
-   void readOBJMesh();
-   void readSTLMesh();
-   void readMeshFromAsciiStlFile(std::ifstream& in);
-   void readMeshFromBinaryStlFile(std::ifstream in);
-   void mergeIdenticalVertices();
-   void scaleTranslateReflect();
-   void findBoundingBox();
+  void
+  readPoints(const std::string& file);
+  void
+  readTriangles(const std::string& file);
+  void
+  readPLYMesh();
+  void
+  readOBJMesh();
+  void
+  readSTLMesh();
+  void
+  readMeshFromAsciiStlFile(std::ifstream& in);
+  void
+  readMeshFromBinaryStlFile(std::ifstream in);
+  void
+  mergeIdenticalVertices();
+  void
+  scaleTranslateReflect();
+  void
+  findBoundingBox();
 
-   void makePlanes();
-   void makeTriangleBoxes();
-   void insideTriangle(Point& p, int i, int& NCS, int& NES) const;
-   
-   std::string d_file;
-   std::string d_fileType;
-   double d_scale_factor;
-   Vector d_trans_vector;
-   Vector d_reflect_vector;
-   IntVector d_axis_sequence;
+  void
+  makePlanes();
+  void
+  makeTriangleBoxes();
+  void
+  insideTriangle(Point& p, int i, int& NCS, int& NES) const;
 
-   Box d_box;
-   std::vector<Point>     d_points;
-   std::vector<IntVector> d_triangles;
-   std::vector<Plane>     d_planes;
-   std::vector<Box>       d_boxes;
+  std::string d_file;
+  std::string d_fileType;
+  double d_scale_factor;
+  Vector d_trans_vector;
+  Vector d_reflect_vector;
+  IntVector d_axis_sequence;
 
-   std::unique_ptr<UniformGrid> d_grid;
-   
+  Box d_box;
+  std::vector<Point> d_points;
+  std::vector<IntVector> d_triangles;
+  std::vector<Plane> d_planes;
+  std::vector<Box> d_boxes;
+
+  std::unique_ptr<UniformGrid> d_grid;
 };
 
-} // End namespace Uintah
+}  // End namespace Uintah
 
-#endif // __TRI_GEOMETRY_PIECE_H__
+#endif  // __TRI_GEOMETRY_PIECE_H__

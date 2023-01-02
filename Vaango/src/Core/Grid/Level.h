@@ -316,8 +316,8 @@ WARNING
     IntVector d_idxHigh;
     IntVector d_idxSize;
     IntVector d_gridSize;
-    vector<int> d_gridStarts;
-    vector<Patch*> d_gridPatches;
+    std::vector<int> d_gridStarts;
+    std::vector<Patch*> d_gridPatches;
 
     // For stretched grids
     bool d_stretched;

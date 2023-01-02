@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,8 +26,8 @@
 
 // NullContact.h
 
-#ifndef __NULL_CONTACT_H__
-#define __NULL_CONTACT_H__
+#ifndef __nullptr_CONTACT_H__
+#define __nullptr_CONTACT_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Ports/DataWarehouseP.h>
@@ -71,4 +71,4 @@ public:
 };
 } // End namespace Uintah
 
-#endif /* __NULL_CONTACT_H__ */
+#endif /* __nullptr_CONTACT_H__ */

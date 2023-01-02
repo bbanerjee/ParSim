@@ -87,8 +87,8 @@ const double NAN_REPLACE_VAL=1.0E9;
 // ****************************************************************************
 udaFileFormat::udaFileFormat(const char *filename)
   useExtraCells(true),
-  archive(NULL),
-  grid(NULL)
+  archive(nullptr),
+  grid(nullptr)
 {
   for (int i = 0; attrs != 0 && i<attrs->GetNumberOfOptions(); ++i) {
     if (attrs->GetName(i) == "Load extra cells") {
@@ -99,7 +99,7 @@ udaFileFormat::udaFileFormat(const char *filename)
   // Verify that it is a UDA index.xml file:
   // The 2nd line should look like this <Uintah_DataArchive>.
   FILE * fp = fopen( filename, "r" );
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     std::ostringstream error;
     error << "Failed to open file: " << filename;
     throw InvalidFilesExpection(error.str(), __FILE__, __LINE__);
@@ -129,7 +129,7 @@ udaFileFormat::udaFileFormat(const char *filename)
   cycleTimes = getCycleTimes(archive);
 
   // haven't loaded any timestep data yet
-  stepInfo = NULL;  
+  stepInfo = nullptr;  
   currTimeStep = -1;
 }
 

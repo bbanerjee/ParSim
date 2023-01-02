@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -571,7 +571,7 @@ void setBC(CCVariable<double>& press_CC,
   cout_BC_CC << "setBC (press_CC) \t"<< kind <<" " << which_Var
             << " mat_id = " << mat_id <<  ", Patch: "<< patch->getID() << endl;
 
-  int numALLMatls = sharedState->getNumMatls();
+  int numALLMatls = sharedState->getNumMaterials();
   bool isNotInitialTimestep = (sharedState->getCurrentTopLevelTimeStep() > 0);  
   Vector gravity = custom_BC_basket->d_gravity;
   std::vector<CCVariable<double> > rho_micro(numALLMatls);
@@ -1140,7 +1140,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   Vector tagFace_plus(0,0,0);
                                
   ProblemSpecP bc_ps  = grid_ps->findBlock("BoundaryConditions");
-  int numAllMatls = sharedState->getNumMatls();
+  int numAllMatls = sharedState->getNumMaterials();
   
   // If a face is periodic then is_press_BC_set = true
   map<string,bool> is_press_BC_set;

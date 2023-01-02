@@ -41,7 +41,7 @@
 
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/ParticleInterpolator.h>
@@ -103,7 +103,7 @@ namespace Vaango {
     Uintah::SimulationStateP d_sharedState;
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
-    Uintah::SimpleMaterial* d_mymat;
+    Uintah::EmptyMaterial* d_mymat;
 
     int d_doOutput;
     int d_numGhostCells;

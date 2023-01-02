@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,11 +24,11 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/GeometryPiece/ShellGeometryFactory.h>
-#include <Core/GeometryPiece/PlaneShellPiece.h>
-#include <Core/GeometryPiece/SphereShellPiece.h>
 #include <Core/GeometryPiece/CylinderShellPiece.h>
-//#include <Core/GeometryPiece/GUVSphereShellPiece.h>
+#include <Core/GeometryPiece/PlaneShellPiece.h>
+#include <Core/GeometryPiece/ShellGeometryFactory.h>
+#include <Core/GeometryPiece/SphereShellPiece.h>
+// #include <Core/GeometryPiece/GUVSphereShellPiece.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -36,27 +36,23 @@
 #include <iostream>
 #include <string>
 
-using std::cerr;
-using std::endl;
+namespace Uintah {
 
-using namespace Uintah;
-
-GeometryPiece *
-ShellGeometryFactory::create( ProblemSpecP & ps )
-{
+GeometryPieceP
+ShellGeometryFactory::create(ProblemSpecP& ps) {
   std::string go_type = ps->getNodeName();
 
-  if (     go_type == PlaneShellPiece::TYPE_NAME ) {
-    return scinew PlaneShellPiece(ps);
+  if (go_type == PlaneShellPiece::TYPE_NAME) {
+    return std::make_shared<PlaneShellPiece>(ps);
+  } else if (go_type == SphereShellPiece::TYPE_NAME) {
+    return std::make_shared<SphereShellPiece>(ps);
+  } else if (go_type == CylinderShellPiece::TYPE_NAME) {
+    return std::make_shared<CylinderShellPiece>(ps);
   }
-  else if( go_type == SphereShellPiece::TYPE_NAME ) {
-    return scinew SphereShellPiece(ps);
-  }
-  else if (go_type == CylinderShellPiece::TYPE_NAME ) {
-    return scinew CylinderShellPiece(ps);
-  }
-//  else if (go_type == GUVSphereShellPiece::TYPE_NAME ) {
-//    return scinew GUVSphereShellPiece(ps);
-//  }
-  return NULL;
+  //  else if (go_type == GUVSphereShellPiece::TYPE_NAME ) {
+  //    return std::make_unique<GUVSphereShellPiece>(ps);
+  //  }
+  return nullptr;
 }
+
+}  // end namespace Uintah

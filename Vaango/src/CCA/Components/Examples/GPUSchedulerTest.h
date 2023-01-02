@@ -73,7 +73,7 @@ void launchGPUSchedulerTestKernel(dim3 dimGrid,
 
 namespace Uintah {
 
-  class SimpleMaterial;
+  class EmptyMaterial;
 
 
 /**************************************
@@ -129,7 +129,7 @@ Warning
   private:
     SimulationStateP  sharedState_;
     double            delt_;
-    SimpleMaterial*   simpleMaterial_;
+    EmptyMaterial*   simpleMaterial_;
     const VarLabel*   phi_label;
     const VarLabel*   residual_label;
 

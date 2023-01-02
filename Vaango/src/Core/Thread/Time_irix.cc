@@ -149,7 +149,7 @@ Time::initialize()
 	sigemptyset(&action.sa_mask);
 
 	action.sa_handler=(SIG_PF)handle_alrm;
-	if(sigaction(SIGALRM, &action, NULL) == -1)
+	if(sigaction(SIGALRM, &action, nullptr) == -1)
 	    throw ThreadError(std::string("sigaction failed")
 			      +strerror(errno));
 

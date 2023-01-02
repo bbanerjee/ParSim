@@ -51,7 +51,7 @@ class ICEMaterial;
 class MPMMaterial;
 class ArchesMaterial; 
 class SpatialOpsMaterial;
-class SimpleMaterial;
+class EmptyMaterial;
 class Level;
    
 /**************************************
@@ -106,7 +106,7 @@ public:
     return switch_label;
   }
 
-  void registerSimpleMaterial(SimpleMaterial*);
+  void registerEmptyMaterial(EmptyMaterial*);
   void registerMPMMaterial(MPMMaterial*);
   void registerMPMMaterial(MPMMaterial*,unsigned int index);
   void registerArchesMaterial(ArchesMaterial*);
@@ -115,7 +115,7 @@ public:
   void registerICEMaterial(ICEMaterial*,unsigned int index);
   int getNumVelFields() const;
 
-  int getNumMatls() const {
+  int getNumMaterials() const {
     return (int)matls.size();
   }
   int getNumMPMMatls() const {
@@ -131,7 +131,7 @@ public:
     return (int)ice_matls.size();
   }
 
-  MaterialSubset* getAllInOneMatl() {
+  MaterialSubset* getAllInOneMaterial() {
     return allInOneMatl;
   }
 
@@ -270,7 +270,7 @@ private:
   std::vector<ArchesMaterial*> arches_matls;
   std::vector<SpatialOpsMaterial*> spatialops_matls;
   std::vector<ICEMaterial*>    ice_matls;
-  std::vector<SimpleMaterial*> simple_matls;
+  std::vector<EmptyMaterial*> simple_matls;
 
   //! for carry over vars in Switcher
   int max_matl_index;

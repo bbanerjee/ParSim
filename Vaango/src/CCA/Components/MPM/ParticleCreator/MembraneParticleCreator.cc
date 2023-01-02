@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -116,7 +116,7 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
                  0.,0.,1./((double) ppc.z()));
 
     SphereMembraneGeometryPiece* SMGP =
-      dynamic_cast<SphereMembraneGeometryPiece*>(piece.get_rep());
+      dynamic_cast<SphereMembraneGeometryPiece*>(piece.get());
     if(SMGP){
       int numP = SMGP->createParticles(patch, pvars.position, pvars.pVolume,
                                        pvars.pTang1, pvars.pTang2, pvars.pNorm, pvars.pSize, start); // CPTI
@@ -208,7 +208,7 @@ MembraneParticleCreator::countAndCreateParticles(const Patch* patch,
   GeometryPieceP piece = obj->getPiece();
   
   SphereMembraneGeometryPiece* SMGP =
-    dynamic_cast<SphereMembraneGeometryPiece*>(piece.get_rep());
+    dynamic_cast<SphereMembraneGeometryPiece*>(piece.get());
   
   if(SMGP){
     return SMGP->returnParticleCount(patch);

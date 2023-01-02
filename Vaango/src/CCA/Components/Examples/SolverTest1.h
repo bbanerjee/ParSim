@@ -58,7 +58,7 @@
 #include <CCA/Ports/SolverInterface.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************
@@ -123,7 +123,7 @@ WARNING
     ExamplesLabel* lb_;
     SimulationStateP sharedState_;
     double delt_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
     SolverInterface* solver;
     SolverParameters* solver_parameters;    
     bool x_laplacian, y_laplacian, z_laplacian;

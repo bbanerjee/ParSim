@@ -576,7 +576,7 @@ void GLAnimatedStreams::AdvanceStreams(int start, int end) {
 	tempNode = tail[i];
 	tail[i] = tail[i]->next;
 	delete tempNode;
-	if (tail[i] == NULL) {
+	if (tail[i] == nullptr) {
 	  newStreamer(i);
 	}
       }

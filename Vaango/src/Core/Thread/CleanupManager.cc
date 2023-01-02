@@ -43,9 +43,9 @@ namespace Uintah {
 
 typedef std::pair<CleanupManagerCallback, void *> CMCPair;
 
-std::vector<CMCPair>* CleanupManager::callbacks_ = NULL;
+std::vector<CMCPair>* CleanupManager::callbacks_ = nullptr;
 bool    CleanupManager::initialized_ = false;
-Mutex * CleanupManager::lock_ = NULL;
+Mutex * CleanupManager::lock_ = nullptr;
 
 void
 CleanupManager::initialize()

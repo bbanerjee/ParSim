@@ -232,7 +232,7 @@ GPUDataWarehouse::allocateAndPut(GPUGridVariableBase &var, char const* label, in
   cudaError_t retVal;
   int3 size = make_int3(high.x - low.x, high.y - low.y, high.z - low.z);
   int3 offset = low;
-  void* addr = NULL;
+  void* addr = nullptr;
 
   var.setArray3(offset, size, addr);
   CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(d_device_id));
@@ -261,7 +261,7 @@ GPUDataWarehouse::allocateAndPut(GPUReductionVariableBase& var, char const* labe
   //__________________________________
   //  cpu code
   cudaError_t retVal;
-  void* addr = NULL;
+  void* addr = nullptr;
 
   CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(d_device_id));
   CUDA_RT_SAFE_CALL(retVal = cudaMalloc(&addr, var.getMemSize()));
@@ -287,7 +287,7 @@ GPUDataWarehouse::allocateAndPut(GPUPerPatchBase& var, char const* label, int pa
   //__________________________________
   //  cpu code
   cudaError_t retVal;
-  void* addr = NULL;
+  void* addr = nullptr;
 
   CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(d_device_id));
   CUDA_RT_SAFE_CALL(retVal = cudaMalloc(&addr, var.getMemSize()));
@@ -342,7 +342,7 @@ GPUDataWarehouse::getItem(char const* label, int patchID, int matlIndex)
   __syncthreads();
 
   if (index == -1) {
-    return NULL;
+    return nullptr;
   }
   else {
     return &d_varDB[index];

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -346,7 +346,7 @@ WARNING
     //////////
     // Look for the child tag named 'name' and pass back its
     // 'value'.  Returns the child ProblemSpecP if found, otherwise
-    // NULL.  Has the possiblity of throwing a ProblemSetupException
+    // nullptr.  Has the possiblity of throwing a ProblemSetupException
     // if the data is not the correct type (ie: you call
     // get(name,double) but the tag contains a string).
     //

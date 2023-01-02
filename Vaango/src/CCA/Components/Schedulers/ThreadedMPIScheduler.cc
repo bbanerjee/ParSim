@@ -82,7 +82,7 @@ ThreadedMPIScheduler::~ThreadedMPIScheduler()
     t_worker[i]->quit();
     t_worker[i]->d_runsignal.conditionSignal();
     t_worker[i]->d_runmutex.unlock();
-    t_thread[i]->setCleanupFunction( NULL );
+    t_thread[i]->setCleanupFunction( nullptr );
     t_thread[i]->join();
   }
 
@@ -394,7 +394,7 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
       }
     }
     //if it is time to run reduction task
-    else if ((phaseSyncTask[currphase] != NULL) && (phaseTasksDone[currphase] == phaseTasks[currphase] - 1)) {
+    else if ((phaseSyncTask[currphase] != nullptr) && (phaseTasksDone[currphase] == phaseTasks[currphase] - 1)) {
       if (threadedmpi_queuelength.active()) {
         if ((int)histogram.size() < dts->numExternalReadyTasks() + 1) {
           histogram.resize(dts->numExternalReadyTasks() + 1);
@@ -565,7 +565,7 @@ int ThreadedMPIScheduler::getAvailableThreadNum()
 {
   int num = 0;
   for (int i = 0; i < numThreads_; i++) {
-    if (t_worker[i]->d_task == NULL) {
+    if (t_worker[i]->d_task == nullptr) {
       num++;
     }
   }
@@ -585,7 +585,7 @@ void ThreadedMPIScheduler::assignTask( DetailedTask* task,
   // find an idle thread and assign task
   int targetThread = -1;
   for (int i = 0; i < numThreads_; i++) {
-    if (t_worker[i]->d_task == NULL) {
+    if (t_worker[i]->d_task == nullptr) {
       targetThread = i;
       t_worker[i]->d_numtasks++;
       break;
@@ -609,7 +609,7 @@ void ThreadedMPIScheduler::assignTask( DetailedTask* task,
 TaskWorker::TaskWorker( ThreadedMPIScheduler* scheduler,
                         int                   thread_id )
   : d_scheduler( scheduler ),
-    d_task( NULL ),
+    d_task( nullptr ),
     d_runsignal( "run condition" ),
     d_runmutex("run mutex"),
     d_quit( false ),
@@ -672,7 +672,7 @@ TaskWorker::run()
       cerrLock.unlock();
     }
 
-    ASSERT(d_task != NULL);
+    ASSERT(d_task != nullptr);
     try {
       if (d_task->getTask()->getType() == Task::Reduction) {
         d_scheduler->initiateReduction(d_task);
@@ -699,7 +699,7 @@ TaskWorker::run()
     // Signal main thread for next task.
     d_scheduler->d_nextmutex.lock();
     d_runmutex.lock();
-    d_task = NULL;
+    d_task = nullptr;
     d_iteration = 0;
     d_waitstart = Time::currentSeconds();
     d_scheduler->d_nextsignal.conditionSignal();

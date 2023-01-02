@@ -135,7 +135,7 @@ UnifiedScheduler::~UnifiedScheduler()
       t_worker[i]->quit();
       t_worker[i]->d_runsignal.conditionSignal();
       t_worker[i]->d_runmutex.unlock();
-      t_thread[i]->setCleanupFunction(NULL);
+      t_thread[i]->setCleanupFunction(nullptr);
       t_thread[i]->join();
     }
 
@@ -484,7 +484,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
   phaseTasksDone.clear();
   phaseTasksDone.resize(numPhases, 0);
   phaseSyncTask.clear();
-  phaseSyncTask.resize(numPhases, NULL);
+  phaseSyncTask.resize(numPhases, nullptr);
   dts->setTaskPriorityAlg(taskQueueAlg_);
 
   // get the number of tasks in each task phase
@@ -617,8 +617,8 @@ UnifiedScheduler::runTasks( int thread_id )
 
   while( numTasksDone < ntasks ) {
 
-    DetailedTask* readyTask = NULL;
-    DetailedTask* initTask = NULL;
+    DetailedTask* readyTask = nullptr;
+    DetailedTask* initTask = nullptr;
 
     int pendingMPIMsgs = 0;
     bool havework = false;
@@ -642,7 +642,7 @@ UnifiedScheduler::runTasks( int thread_id )
        * If it is time to setup for a reduction task, then do so.
        *
        */
-      if ((phaseSyncTask[currphase] != NULL) && (phaseTasksDone[currphase] == phaseTasks[currphase] - 1)) {
+      if ((phaseSyncTask[currphase] != nullptr) && (phaseTasksDone[currphase] == phaseTasks[currphase] - 1)) {
         readyTask = phaseSyncTask[currphase];
         havework = true;
         numTasksDone++;
@@ -679,7 +679,7 @@ UnifiedScheduler::runTasks( int thread_id )
        */
       else if (dts->numExternalReadyTasks() > 0) {
         readyTask = dts->getNextExternalReadyTask();
-        if (readyTask != NULL) {
+        if (readyTask != nullptr) {
           havework = true;
 #ifdef HAVE_CUDA
           /*
@@ -735,7 +735,7 @@ UnifiedScheduler::runTasks( int thread_id )
        */
       else if (dts->numInternalReadyTasks() > 0) {
         initTask = dts->getNextInternalReadyTask();
-        if (initTask != NULL) {
+        if (initTask != nullptr) {
           if (initTask->getTask()->getType() == Task::Reduction || initTask->getTask()->usesMPI()) {
             if (taskdbg.active()) {
               coutLock.lock();
@@ -744,12 +744,12 @@ UnifiedScheduler::runTasks( int thread_id )
             }
             phaseSyncTask[initTask->getTask()->d_phase] = initTask;
             ASSERT(initTask->getRequires().size() == 0)
-            initTask = NULL;
+            initTask = nullptr;
           }
           else if (initTask->getRequires().size() == 0) {  // no ext. dependencies, then skip MPI sends
             initTask->markInitiated();
             initTask->checkExternalDepCount();  // where tasks get added to external ready queue
-            initTask = NULL;
+            initTask = nullptr;
           }
           else {
             havework = true;
@@ -842,7 +842,7 @@ UnifiedScheduler::runTasks( int thread_id )
     //      Each thread does its own thing here... modify this code with caution
     // ----------------------------------------------------------------------------------
 
-    if (initTask != NULL) {
+    if (initTask != nullptr) {
       initiateTask(initTask, abort, abort_point, currentIteration);
       if (taskdbg.active()) {
         coutLock.lock();
@@ -853,7 +853,7 @@ UnifiedScheduler::runTasks( int thread_id )
       initTask->markInitiated();
       initTask->checkExternalDepCount();
     }
-    else if (readyTask != NULL) {
+    else if (readyTask != nullptr) {
       if (taskdbg.active()) {
         coutLock.lock();
         taskdbg << myRankThread() << " Task external ready " << *readyTask << std::endl;
@@ -991,8 +991,8 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
     bool isLevelItem = (req->numGhostCells == SHRT_MAX);           // We should generalize this.
     int numPatches = (isLevelItem)? 1 : patches->size();
 
-    void* host_ptr    = NULL;    // host base pointer to raw data
-    void* device_ptr  = NULL;  // device base pointer to raw data
+    void* host_ptr    = nullptr;    // host base pointer to raw data
+    void* device_ptr  = nullptr;  // device base pointer to raw data
     size_t host_bytes = 0;    // raw byte count to copy to the device
     size_t device_bytes = 0;  // raw byte count to copy to the host
     IntVector host_low, host_high, host_offset, host_size, host_strides;
@@ -1333,7 +1333,7 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
     int dwIndex = comp->mapDataWarehouse();
     OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
-    void* device_ptr = NULL;  // device base pointer to raw data
+    void* device_ptr = nullptr;  // device base pointer to raw data
     size_t num_bytes = 0;
 
     int numPatches = patches->size();
@@ -1530,8 +1530,8 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
     int dwIndex = comp->mapDataWarehouse();
     OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
-    void* host_ptr   = NULL;    // host base pointer to raw data
-    void* device_ptr = NULL;    // device base pointer to raw data
+    void* host_ptr   = nullptr;    // host base pointer to raw data
+    void* device_ptr = nullptr;    // device base pointer to raw data
     size_t host_bytes = 0;      // raw byte count to copy to the device
     size_t device_bytes = 0;    // raw byte count to copy to the host
     IntVector host_low, host_high, host_offset, host_size, host_strides;
@@ -1890,7 +1890,7 @@ UnifiedScheduler::reclaimCudaStreams( DetailedTask* dtask )
     stream = dtask->getCUDAStream();
     deviceNum = dtask->getDeviceNum();
     idleStreams[deviceNum].push(stream);
-    dtask->setCUDAStream(NULL);
+    dtask->setCUDAStream(nullptr);
   }
   idleStreamsLock_.writeUnlock();
 

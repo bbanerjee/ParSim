@@ -58,7 +58,7 @@ SendState::find_sendset(int dest, const Patch* patch, int matlIndex,
   maptype::const_iterator iter = sendSubsets.find( make_pair( PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid), dest) );
 
   if( iter == sendSubsets.end() ) {
-    ret=NULL;
+    ret=nullptr;
   } else {
     ret=iter->second;
   }

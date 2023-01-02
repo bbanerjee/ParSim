@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,37 +27,44 @@
 #define UINTAH_RD_JGSCALARDIFFUSION_H
 
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  class Task;
-  class MPMFlags;
-  class MPMLabel;
-  class MPMMaterial;
-  class DataWarehouse;
-  class ProcessorGroup;
+class Task;
+class MPMFlags;
+class MPMLabel;
+class MPMMaterial;
+class DataWarehouse;
+class ProcessorGroup;
 
-  
-  class JGConcentrationDiffusion : public ScalarDiffusionModel {
-  public:
-    
-    JGConcentrationDiffusion(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag,
-                             std::string diff_type);
-    ~JGConcentrationDiffusion();
+class JGConcentrationDiffusion : public ScalarDiffusionModel
+{
+public:
+  JGConcentrationDiffusion(ProblemSpecP& ps,
+                           MaterialManagerP& matManager,
+                           MPMFlags* Mflag,
+                           std::string diff_type);
+  ~JGConcentrationDiffusion() = default;
 
-    virtual void scheduleComputeFlux(Task* task, const MPMMaterial* matl, 
-		                                      const PatchSet* patch) const;
+  JGConcentrationDiffusion(const JGConcentrationDiffusion&) = delete;
+  JGConcentrationDiffusion&
+  operator=(const JGConcentrationDiffusion&) = delete;
 
-    virtual void computeFlux(const Patch* patch, const MPMMaterial* matl,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void
+  scheduleComputeFlux(Task* task,
+                      const MPMMaterial* matl,
+                      const PatchSet* patch) const;
 
-  private:
-    JGConcentrationDiffusion(const JGConcentrationDiffusion&);
-    JGConcentrationDiffusion& operator=(const JGConcentrationDiffusion&);
-  };
-  
+  virtual void
+  computeFlux(const Patch* patch,
+              const MPMMaterial* matl,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw);
+
+};
+
 } // end namespace Uintah
 #endif

@@ -31,7 +31,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/CohesiveZone/CZMaterial.h>
@@ -184,7 +184,7 @@ void SimulationState::registerWasatchMaterial(WasatchMaterial* matl,unsigned int
   registerMaterial(matl,index);
 }
 
-void SimulationState::registerSimpleMaterial(SimpleMaterial* matl)
+void SimulationState::registerEmptyMaterial(EmptyMaterial* matl)
 {
   simple_matls.push_back(matl);
   registerMaterial(matl);
@@ -412,7 +412,7 @@ Material* SimulationState::parseAndLookupMaterial(ProblemSpecP& params,
   // for single material problems return matl 0
   Material* result = getMaterial(0);
 
-  if( getNumMatls() > 1){
+  if( getNumMaterials() > 1){
     string matlname;
     if(!params->get(name, matlname)){
       throw ProblemSetupException("Cannot find material section", __FILE__, __LINE__);

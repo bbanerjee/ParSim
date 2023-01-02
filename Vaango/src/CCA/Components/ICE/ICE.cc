@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -436,7 +436,7 @@ void ICE::problemSetup(const ProblemSpecP& prob_spec,
 
   //_________________________________
   // Exchange Coefficients
-  proc0cout << "numMatls " << d_sharedState->getNumMatls() << endl;
+  proc0cout << "numMatls " << d_sharedState->getNumMaterials() << endl;
 
   d_exchCoeff->problemSetup(mat_ps, sharedState);
 
@@ -658,7 +658,7 @@ void ICE::scheduleInitializeAddedMaterial(const LevelP& level,SchedulerP& sched)
   Task* t = scinew Task("ICE::actuallyInitializeAddedMaterial",
                         this, &ICE::actuallyInitializeAddedMaterial);
 
-  int numALLMatls = d_sharedState->getNumMatls();
+  int numALLMatls = d_sharedState->getNumMaterials();
   MaterialSubset* add_matl = scinew MaterialSubset();
   cout << "Added Material = " << numALLMatls-1 << endl;
   add_matl->add(numALLMatls-1);
@@ -727,7 +727,7 @@ void ICE::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     viscosity.initialize  ( ice_matl->getViscosity());
     thermalCond.initialize( ice_matl->getThermalConductivity());
 
-    int numALLMatls = d_sharedState->getNumMatls();
+    int numALLMatls = d_sharedState->getNumMaterials();
     ice_matl->initializeCells(rho_micro,  rho_CC,
                               Temp_CC,    speedSound, 
                               vol_frac_CC, vel_CC, 
@@ -1150,7 +1150,7 @@ void ICE::scheduleComputePressure(SchedulerP& sched,
   cout_doing << d_myworld->myRank() << " ICE::scheduleComputeEquilibrationPressure" 
              << "\t\t\tL-" << levelIndex<< endl;
 
-  if(d_sharedState->getNumMatls() == 1){    
+  if(d_sharedState->getNumMaterials() == 1){    
     t = scinew Task("ICE::computeEquilPressure_1_matl",
                     this, &ICE::computeEquilPressure_1_matl); 
   } else{
@@ -2192,7 +2192,7 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing Initialize on patch " << patch->getID() 
                << "\t\t\t\t ICE \tL-" <<L_indx<< endl;
     int numMatls    = d_sharedState->getNumICEMatls();
-    int numALLMatls = d_sharedState->getNumMatls();
+    int numALLMatls = d_sharedState->getNumMaterials();
     Vector grav     = getGravity();
     std::vector<constCCVariable<double> > placeHolder(0);
     std::vector<CCVariable<double>   > rho_micro(max_indx);
@@ -3087,7 +3087,7 @@ void ICE::computeTempFC(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing compute_FC_Temp on patch " 
                << patch->getID() << "\t\t\t ICE \tL-" <<level->getIndex()<< endl;
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
     Ghost::GhostType  gac = Ghost::AroundCells; 
 
     // Compute the face centered Temperatures
@@ -3233,7 +3233,7 @@ void ICE::computeVel_FC(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing computeVel_FC on patch " 
                << patch->getID() << "\t\t\t ICE \tL-"<<level->getIndex()<< endl;
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
 
     Vector dx      = patch->dCell();
     Vector gravity = getGravity();
@@ -3391,7 +3391,7 @@ void ICE::updateVel_FC(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing updateVel_FC on patch " 
                << patch->getID() << "\t\t\t\tICE \tL-"<<level->getIndex()<< endl;
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
 
     Vector dx      = patch->dCell();
     Ghost::GhostType  gac = Ghost::AroundCells; 
@@ -3606,7 +3606,7 @@ void ICE::addExchangeContributionToFCVel(const ProcessorGroup*,
       pOldDW  = old_dw;
     } 
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
     delt_vartype delT;
     pOldDW->get(delT, d_sharedState->get_delt_label(),level);
 
@@ -3739,7 +3739,7 @@ void ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing explicit delPress on patch " << patch->getID() 
                <<  "\t\t\t ICE \tL-" <<level->getIndex()<< endl;
 
-    int numMatls  = d_sharedState->getNumMatls();
+    int numMatls  = d_sharedState->getNumMaterials();
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(),level);
     Vector dx     = patch->dCell();
@@ -4066,7 +4066,7 @@ void ICE::updateVolumeFraction(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     Ghost::GhostType  gn = Ghost::None;
-    int numALLMatls = d_sharedState->getNumMatls();
+    int numALLMatls = d_sharedState->getNumMaterials();
     CCVariable<double> sumKappa;
     std::vector<CCVariable<double> > vol_frac(numALLMatls);
     std::vector<CCVariable<double> > f_theta(numALLMatls);
@@ -4129,7 +4129,7 @@ void ICE::accumulateMomentumSourceSinks(const ProcessorGroup*,
       patch->getID() << "\t ICE \tL-" <<level->getIndex()<< endl;
 
     int indx;
-    int numMatls  = d_sharedState->getNumMatls();
+    int numMatls  = d_sharedState->getNumMaterials();
 
     IntVector right, left, top, bottom, front, back;
     Vector dx, gravity;
@@ -4298,7 +4298,7 @@ void ICE::accumulateEnergySourceSinks(const ProcessorGroup*,
                << " Doing accumulate_energy_source_sinks on patch " 
                << patch->getID() << "\t ICE \tL-" <<level->getIndex()<< endl;
 
-    int numMatls = d_sharedState->getNumMatls();
+    int numMatls = d_sharedState->getNumMaterials();
 
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(),level);
@@ -4443,7 +4443,7 @@ void ICE::computeLagrangianValues(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing Lagrangian mass, momentum and energy on patch " <<
       patch->getID() << "\t ICE \tL-" <<level->getIndex()<< endl;
 
-    int numALLMatls = d_sharedState->getNumMatls();
+    int numALLMatls = d_sharedState->getNumMaterials();
     Vector  dx = patch->dCell();
     double vol = dx.x()*dx.y()*dx.z();    
 
@@ -4618,7 +4618,7 @@ void ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(),level);
 
-    int numALLMatls = d_sharedState->getNumMatls();
+    int numALLMatls = d_sharedState->getNumMaterials();
     Vector  dx = patch->dCell();
     double vol = dx.x()*dx.y()*dx.z();
     Ghost::GhostType  gn  = Ghost::None;
@@ -5370,7 +5370,7 @@ void ICE::maxMach_on_Lodi_BC_Faces(const ProcessorGroup*,
       patch->getID() << "\t\t\t ICE \tL-" <<level->getIndex()<< endl;
 
     Ghost::GhostType  gn = Ghost::None;
-    int numAllMatls = d_sharedState->getNumMatls();
+    int numAllMatls = d_sharedState->getNumMaterials();
     std::vector<constCCVariable<Vector> > vel_CC(numAllMatls);
     std::vector<constCCVariable<double> > speedSound(numAllMatls);
 
@@ -5951,7 +5951,7 @@ void ICE::TestConservation(const ProcessorGroup*,
       double sum_int_eng_L_CC = 0.0;
       double sum_eng_L_ME_CC  = 0.0;
 
-      int numALLmatls = d_sharedState->getNumMatls();
+      int numALLmatls = d_sharedState->getNumMaterials();
       for(int m = 0; m < numALLmatls; m++) {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
@@ -6036,7 +6036,7 @@ void ICE::hydrostaticPressureAdjustment(const Patch* patch,
   _____________________________________________________________________  */
 void ICE::getConstantExchangeCoefficients( FastMatrix& K, FastMatrix& H  )
 {
-  int numMatls  = d_sharedState->getNumMatls();
+  int numMatls  = d_sharedState->getNumMaterials();
 
   // The vector of exchange coefficients only contains the upper triagonal
   // matrix
@@ -6111,7 +6111,7 @@ void ICE::getVariableExchangeCoefficients( FastMatrix& ,
                                            IntVector & c,
                                            std::vector<constCCVariable<double> >& mass_L  )
 {
-  int numMatls  = d_sharedState->getNumMatls();
+  int numMatls  = d_sharedState->getNumMaterials();
 
   //__________________________________
   // Momentum  (do nothing for now)
@@ -6216,7 +6216,7 @@ void ICE::ICEModelSetup::registerAMR_RefluxVariable(const MaterialSet* matlSet,
   t->matls   = matlSet->getSubset(0);
   string var_adv_name = var->getName() + "_adv";
   t->var_adv = VarLabel::find(var_adv_name);  //Advected conserved quantity
-  if(t->var_adv==NULL){
+  if(t->var_adv==nullptr){
     throw ProblemSetupException("The refluxing variable name("+var_adv_name +") could not be found",
                                 __FILE__, __LINE__);
   }

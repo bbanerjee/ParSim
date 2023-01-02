@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,100 +26,98 @@
 
 #include <Core/GeometryPiece/UniformGrid.h>
 #include <Core/Malloc/Allocator.h>
+
 #include <iostream>
 #include <map>
 
 using namespace Uintah;
 using TriangleList = std::list<Triangle>;
 
-Triangle::Triangle(Point& p1, Point& p2, Point& p3)
-{
+Triangle::Triangle(Point& p1, Point& p2, Point& p3) {
   d_points[0] = p1;
   d_points[1] = p2;
   d_points[2] = p3;
-  d_plane = Plane(p1,p2,p3);
+  d_plane     = Plane(p1, p2, p3);
 }
 
-Point 
-Triangle::centroid()
-{
-  Vector cent(0.,0.,0);
+Point
+Triangle::centroid() {
+  Vector cent(0., 0., 0);
   for (int i = 0; i < 3; i++) {
     cent += d_points[i].asVector();
   }
 
   cent /= 3.;
-  
-  return Point(cent.x(),cent.y(),cent.z());
+
+  return Point(cent.x(), cent.y(), cent.z());
 }
 
-Point 
-Triangle::vertex(int i)
-{
+Point
+Triangle::vertex(int i) {
   return d_points[i];
 }
 
-TriangleList 
+TriangleList
 Triangle::makeTriangleList(std::vector<IntVector>& triangle_nodes,
-                           std::vector<Point>& node_coords)
-{
+                           std::vector<Point>& node_coords) {
   TriangleList tri_list;
   for (auto nodes : triangle_nodes) {
     auto node_1 = nodes[0];
     auto node_2 = nodes[1];
     auto node_3 = nodes[2];
-    Triangle triangle(node_coords[node_1], node_coords[node_2], 
-                      node_coords[node_3]);
-    tri_list.emplace_back(node_coords[node_1], node_coords[node_2], 
-                          node_coords[node_3]);
+    Triangle triangle(
+        node_coords[node_1], node_coords[node_2], node_coords[node_3]);
+    tri_list.emplace_back(
+        node_coords[node_1], node_coords[node_2], node_coords[node_3]);
   }
   /*
   vector<IntVector>::const_iterator tri_itr;
   for (tri_itr = tris.begin(); tri_itr != tris.end(); ++tri_itr) {
     Triangle triangle = Triangle(pts[(*tri_itr).x()],pts[(*tri_itr).y()],
-		       pts[(*tri_itr).z()]);
+                       pts[(*tri_itr).z()]);
     tri_list.push_back(triangle);
   }
   */
   return tri_list;
 }
 
-bool 
-Triangle::inside(Point& pt)
-{
-  Vector plane_normal = d_plane.normal();
+bool
+Triangle::inside(Point& pt) {
+  Vector plane_normal     = d_plane.normal();
   Vector plane_normal_abs = Abs(plane_normal);
-  double largest = plane_normal_abs.maxComponent();
+  double largest          = plane_normal_abs.maxComponent();
 
   // WARNING: if dominant_coord is not 1-3, then this code breaks...
   int dominant_coord = -1;
-  if (largest == plane_normal_abs.x()) dominant_coord = 1;
-  else if (largest == plane_normal_abs.y()) dominant_coord = 2;
-  else if (largest == plane_normal_abs.z()) dominant_coord = 3;
+  if (largest == plane_normal_abs.x())
+    dominant_coord = 1;
+  else if (largest == plane_normal_abs.y())
+    dominant_coord = 2;
+  else if (largest == plane_normal_abs.z())
+    dominant_coord = 3;
 
   int x = static_cast<int>(Triangle::Coord::X);
-  int y = static_cast<int>(Triangle::Coord::Y); 
-  switch (dominant_coord) 
-  {
+  int y = static_cast<int>(Triangle::Coord::Y);
+  switch (dominant_coord) {
     case 1:
       x = static_cast<int>(Triangle::Coord::Y);
       y = static_cast<int>(Triangle::Coord::Z);
       break;
     case 2:
-      x = static_cast<int>(Triangle::Coord::Z); 
+      x = static_cast<int>(Triangle::Coord::Z);
       y = static_cast<int>(Triangle::Coord::X);
       break;
     case 3:
       x = static_cast<int>(Triangle::Coord::X);
       y = static_cast<int>(Triangle::Coord::Y);
-      break; 
+      break;
   }
-  
+
   double tx = pt(x), ty = pt(y);
 
   Point *p1 = &d_points[2], *p2 = d_points;
   int yflag0 = ((*p1)(y) >= ty);
-  
+
   bool inside = false;
 
   for (int i = 3; i--;) {
@@ -127,97 +125,89 @@ Triangle::inside(Point& pt)
     if (yflag0 != yflag1) {
       int xflag0 = ((*p1)(x) >= tx);
       if (xflag0 == ((*p2)(x) >= tx)) {
-	if (xflag0)
-	  inside = !inside;
+        if (xflag0) inside = !inside;
       } else {
-	double cmp = ((*p2)(x)-((*p2)(y)-ty)*((*p1)(x)-(*p2)(x))/((*p1)(y)-(*p2)(y)));
-	//	if (cmp >= tx)
-	//	if (abs(cmp - tx) >= 0.)
-	if (cmp - tx >= -1.e-8)
-	  inside = !inside;
+        double cmp = ((*p2)(x) - ((*p2)(y)-ty) * ((*p1)(x) - (*p2)(x)) /
+                                     ((*p1)(y) - (*p2)(y)));
+        //	if (cmp >= tx)
+        //	if (abs(cmp - tx) >= 0.)
+        if (cmp - tx >= -1.e-8) inside = !inside;
       }
     }
     yflag0 = yflag1;
-    p1 = p2;
+    p1     = p2;
     p2++;
   }
   return bool(inside);
 }
 
-Plane 
-Triangle::plane()
-{
+Plane
+Triangle::plane() {
   return d_plane;
 }
 
-
-UniformGrid::UniformGrid(Box& bound_box)
-{
-  const IntVector low(0,0,0), hi(10,10,10);
-  Vector diff = Vector(hi.x(),hi.y(),hi.z()) - Vector(low.x(),low.y(),low.z());
+UniformGrid::UniformGrid(Box& bound_box) {
+  const IntVector low(0, 0, 0), hi(10, 10, 10);
+  Vector diff =
+      Vector(hi.x(), hi.y(), hi.z()) - Vector(low.x(), low.y(), low.z());
   d_bound_box = bound_box;
-  d_max_min = (bound_box.upper().asVector() - bound_box.lower().asVector())/diff;
+  d_max_min =
+      (bound_box.upper().asVector() - bound_box.lower().asVector()) / diff;
   d_grid.resize(low, hi);
 }
 
-UniformGrid::UniformGrid(const UniformGrid& copy)
-{
+UniformGrid::UniformGrid(const UniformGrid& copy) {
   d_bound_box = copy.d_bound_box;
-  d_max_min = copy.d_max_min;
+  d_max_min   = copy.d_max_min;
 
   d_grid.resize(copy.d_grid.getLowIndex(), copy.d_grid.getHighIndex());
 
-  for (auto gridIter = copy.d_grid.begin();
-       gridIter != copy.d_grid.end(); gridIter++) {
+  for (auto gridIter = copy.d_grid.begin(); gridIter != copy.d_grid.end();
+       gridIter++) {
     IntVector index = gridIter.getIndex();
-    d_grid[index] = copy.d_grid[index];
+    d_grid[index]   = copy.d_grid[index];
   }
 }
 
-UniformGrid& 
-UniformGrid::operator=(const UniformGrid& rhs) 
-{
-  if (this == &rhs)
-    return *this;
+UniformGrid&
+UniformGrid::operator=(const UniformGrid& rhs) {
+  if (this == &rhs) return *this;
 
   std::cout << "d_grid size = " << d_grid.size() << endl;
-  if (d_grid.size() != IntVector(0,0,0) ) {
+  if (d_grid.size() != IntVector(0, 0, 0)) {
     // Delete the lhs stuff grid and copy the rhs to it
-    for (auto gridIter = d_grid.begin();
-         gridIter != d_grid.end(); gridIter++) {
+    for (auto gridIter = d_grid.begin(); gridIter != d_grid.end(); gridIter++) {
       IntVector index = gridIter.getIndex();
       d_grid[index].clear();
     }
   }
 
-  d_grid.resize(rhs.d_grid.getLowIndex(),rhs.d_grid.getHighIndex());
-  
+  d_grid.resize(rhs.d_grid.getLowIndex(), rhs.d_grid.getHighIndex());
+
   d_bound_box = rhs.d_bound_box;
-  d_max_min = rhs.d_max_min;
-  
-  for (auto gridIter = rhs.d_grid.begin();
-       gridIter != rhs.d_grid.end(); gridIter++) {
+  d_max_min   = rhs.d_max_min;
+
+  for (auto gridIter = rhs.d_grid.begin(); gridIter != rhs.d_grid.end();
+       gridIter++) {
     IntVector index = gridIter.getIndex();
-    d_grid[index] = rhs.d_grid[index];
+    d_grid[index]   = rhs.d_grid[index];
   }
-   
+
   return *this;
 }
 
-IntVector 
-UniformGrid::cellID(Point point)
-{
+IntVector
+UniformGrid::cellID(Point point) {
   Vector pt_diff = point.asVector() - (d_bound_box.lower()).asVector();
-  Vector id = pt_diff/d_max_min;
-  int i = (int)floor(id.x());
-  int j = (int)floor(id.y());
-  int k = (int)floor(id.z());
-  return IntVector(i,j,k);
+  Vector id      = pt_diff / d_max_min;
+  int i          = (int)floor(id.x());
+  int j          = (int)floor(id.y());
+  int k          = (int)floor(id.z());
+  return IntVector(i, j, k);
 }
 
-void 
-UniformGrid::buildUniformGrid(TriangleList& polygons)
-{
+void
+UniformGrid::buildUniformGrid(TriangleList& polygons) {
   for (auto triangle : polygons) {
     IntVector v0 = cellID(triangle.vertex(0));
     IntVector v1 = cellID(triangle.vertex(1));
@@ -234,58 +224,55 @@ UniformGrid::buildUniformGrid(TriangleList& polygons)
 	 << triangle.vertex(2) << endl;
     cout << "v0 " << v0 << " v1 " << v1 << " v2 " << v2 << endl;
 #endif
-    IntVector low = Min(v0,v1);
-    low = Min(low,v2);
-    IntVector hi = Max(v0,v1);
-    hi = Max(hi,v2);
+    IntVector low = Min(v0, v1);
+    low           = Min(low, v2);
+    IntVector hi  = Max(v0, v1);
+    hi            = Max(hi, v2);
     for (int i = low.x(); i <= hi.x(); i++) {
       for (int j = low.y(); j <= hi.y(); j++) {
-	for (int k = low.z(); k <= hi.z(); k++) {
-	  IntVector id(i,j,k);
-	  //  cout << "Inserting into cellID = " << id << endl;
-	  d_grid[id].push_back(triangle);
-	}
+        for (int k = low.z(); k <= hi.z(); k++) {
+          IntVector id(i, j, k);
+          //  cout << "Inserting into cellID = " << id << endl;
+          d_grid[id].push_back(triangle);
+        }
       }
     }
   }
 }
 
-void 
-UniformGrid::countIntersections(const Point& pt, int& crossings)
-{
+void
+UniformGrid::countIntersections(const Point& pt, int& crossings) {
   // Make a ray and shoot it in the +x direction
-  Vector infinity = Vector(pt.x()+1e10,pt.y(),pt.z());
+  Vector infinity      = Vector(pt.x() + 1e10, pt.y(), pt.z());
   IntVector test_pt_id = cellID(pt);
-  IntVector start = d_grid.getLowIndex();
-  IntVector stop = d_grid.getHighIndex();
+  IntVector start      = d_grid.getLowIndex();
+  IntVector stop       = d_grid.getHighIndex();
 
-  std::map<double,Triangle> cross_map;
+  std::map<double, Triangle> cross_map;
   for (int i = start.x(); i < stop.x(); i++) {
-    IntVector curr(i,test_pt_id.y(),test_pt_id.z());
+    IntVector curr(i, test_pt_id.y(), test_pt_id.z());
     TriangleList triangles = d_grid[curr];
     for (auto triangle : triangles) {
       Point hit;
-      if ((triangle.plane()).Intersect(pt,infinity,hit)) {
-	Vector int_ray = hit.asVector() - pt.asVector();
-	double cos_angle = Dot(infinity,int_ray)/
-	  (infinity.length()*int_ray.length());
-	if (cos_angle < 0.)
-	  continue;
-	if (triangle.inside(hit)) {
+      if ((triangle.plane()).Intersect(pt, infinity, hit)) {
+        Vector int_ray = hit.asVector() - pt.asVector();
+        double cos_angle =
+            Dot(infinity, int_ray) / (infinity.length() * int_ray.length());
+        if (cos_angle < 0.) continue;
+        if (triangle.inside(hit)) {
 #if 0
 	  cout << "Inside_new hit = " << hit << "vertices: " 
 	       << triangle.vertex(0) << " " << triangle.vertex(1) <<  " "
 	       << triangle.vertex(2) << endl;
 #endif
-	  double distance = int_ray.length();
-	  auto duplicate = cross_map.find(distance);
-	  if (duplicate == cross_map.end()) {
-	    cross_map[distance] = triangle;
-	    crossings++;
-	  }
-	}
+          double distance = int_ray.length();
+          auto duplicate  = cross_map.find(distance);
+          if (duplicate == cross_map.end()) {
+            cross_map[distance] = triangle;
+            crossings++;
+          }
+        }
       }
     }
   }
 }
-

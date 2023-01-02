@@ -51,7 +51,7 @@ namespace Uintah {
   class DataArchive;
   class DetailedTask;
 
-  typedef vector<Uintah::IntVector> SizeList;
+  typedef std::vector<Uintah::IntVector> SizeList;
 /****************************************
 
 CLASS

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1022,7 +1022,7 @@ void MPMICE::scheduleComputePressure(SchedulerP& sched,
 				     const MaterialSubset* press_matl,
 				     const MaterialSet* all_matls)
 {
-  Task* t = NULL;
+  Task* t = nullptr;
 
   printSchedule(patches, cout_doing,"MPMICE::scheduleComputeEquilibrationPressure");
 
@@ -1097,7 +1097,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
 	   << "ICE["<< *(d_sharedState->allICEMaterials()) << "]" << endl;
 
       cout << "Material Names:";
-      int numAllMatls = d_sharedState->getNumMatls();
+      int numAllMatls = d_sharedState->getNumMaterials();
       for (int m = 0; m < numAllMatls; m++) {
         Material* matl = d_sharedState->getMaterial( m );
         cout <<" " << matl->getDWIndex() << ") " << matl->getName();
@@ -2929,7 +2929,7 @@ void MPMICE::scheduleInitializeAddedMaterial(const LevelP& level,
     Task* t = scinew Task("MPMICE::actuallyInitializeAddedMPMMaterial",
 			  this, &MPMICE::actuallyInitializeAddedMPMMaterial);
 
-    int addedMaterialIndex = d_sharedState->getNumMatls() - 1;
+    int addedMaterialIndex = d_sharedState->getNumMaterials() - 1;
 
     MaterialSubset* add_matl = scinew MaterialSubset();
     add_matl->add(addedMaterialIndex);
@@ -2962,7 +2962,7 @@ void MPMICE::actuallyInitializeAddedMPMMaterial(const ProcessorGroup*,
 
     double junk=-9, tmp;
     int m    = d_sharedState->getNumMPMMatls() - 1;
-    int indx = d_sharedState->getNumMatls() - 1;
+    int indx = d_sharedState->getNumMaterials() - 1;
     double p_ref = d_ice->getRefPress();
     CCVariable<double> rho_micro, sp_vol_CC, rho_CC, Temp_CC, speedSound, vol_frac_CC;
     CCVariable<double>  heatRate_CC;

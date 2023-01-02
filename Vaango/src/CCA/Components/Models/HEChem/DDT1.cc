@@ -609,7 +609,7 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
  
   int m0 = d_matl0->getDWIndex();
   int m1 = d_matl1->getDWIndex();
-  int numAllMatls = d_sharedState->getNumMatls();
+  int numAllMatls = d_sharedState->getNumMaterials();
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch   = patches->get(p);  
@@ -978,7 +978,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
   int m2 = d_matl2->getDWIndex();
   double totalBurnedMass   = 0;
   double totalHeatReleased = 0;
-  int numAllMatls = d_sharedState->getNumMatls();
+  int numAllMatls = d_sharedState->getNumMaterials();
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch   = patches->get(p);

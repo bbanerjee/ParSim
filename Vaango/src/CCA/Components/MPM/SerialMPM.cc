@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -495,9 +495,9 @@ SerialMPM::scheduleInitialize(const LevelP& level,
     // Add damage model computes
     if (cout_damage.active()) {
       cout_damage << "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
-                  << " Do damage = " << mpm_matl->d_doBasicDamage << "\n" ;
+                  << " Do damage = " << mpm_matl->doBasicDamage() << "\n" ;
     }
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
     }
@@ -620,7 +620,7 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
       cm->initializeCMData(patch,mpm_matl,new_dw);
 
       // Initialize basic damage model
-      if (mpm_matl->d_doBasicDamage) {
+      if (mpm_matl->doBasicDamage()) {
         mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
       }
 
@@ -1859,13 +1859,13 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   #endif
 
   t->computes(lb->gMassLabel);
-  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gTemperatureLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gTemperatureLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gVolumeLabel,      d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gVolumeLabel,      d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gVelocityLabel,    d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gVelocityLabel,    d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
   t->computes(lb->gSp_volLabel);
   t->computes(lb->gVolumeLabel);
@@ -1911,13 +1911,13 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     NCVariable<double> gMassglobal,gTempglobal,gVolumeglobal;
     NCVariable<Vector> gVelglobal;
     new_dw->allocateAndPut(gMassglobal, lb->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gTempglobal, lb->gTemperatureLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gVolumeglobal, lb->gVolumeLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gVelglobal, lb->gVelocityLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gMassglobal.initialize(d_SMALL_NUM_MPM);
     gVolumeglobal.initialize(d_SMALL_NUM_MPM);
     gTempglobal.initialize(0.0);
@@ -3448,7 +3448,7 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
   Ghost::GhostType  gan   = Ghost::AroundNodes;
   Ghost::GhostType  gnone = Ghost::None;
   t->requires(Task::NewDW, lb->gVolumeLabel, gnone);
-  t->requires(Task::NewDW, lb->gVolumeLabel, d_sharedState->getAllInOneMatl(),
+  t->requires(Task::NewDW, lb->gVolumeLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain, gnone);
   t->requires(Task::OldDW, lb->pStressLabel,               gan, NGP);
   t->requires(Task::OldDW, lb->pVolumeLabel,               gan, NGP);
@@ -3478,7 +3478,7 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
   }
   
   t->computes(lb->gStressForSavingLabel);
-  t->computes(lb->gStressForSavingLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gStressForSavingLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
@@ -3526,9 +3526,9 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
     NCVariable<Matrix3>       gStressglobal;
     constNCVariable<double>   gVolumeglobal;
     new_dw->get(gVolumeglobal,  lb->gVolumeLabel,
-                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,0);
+                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
     new_dw->allocateAndPut(gStressglobal, lb->gStressForSavingLabel, 
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
 
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
@@ -4764,7 +4764,7 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
     // Add requires and computes for vel grad/def grad
-    if (mpm_matl->d_doBasicDamage) {    
+    if (mpm_matl->doBasicDamage()) {    
       Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
       d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches, lb);
     }
@@ -4794,7 +4794,7 @@ SerialMPM::computeBasicDamage(const ProcessorGroup*,
     if (cout_dbg.active()) cout_dbg << " MPM_Mat = " << mpm_matl;
 
     // Compute basic damage
-    if (mpm_matl->d_doBasicDamage) { 
+    if (mpm_matl->doBasicDamage()) { 
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw, lb);
       if (cout_dbg.active()) cout_dbg << " Damage model = " << basicDamageModel;
@@ -4824,7 +4824,7 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
-    if (mpm_matl->d_doBasicDamage) {    
+    if (mpm_matl->doBasicDamage()) {    
       Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
       d_basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
     }
@@ -4883,7 +4883,7 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
       }
 
       // Update the localization info from basic damage model
-      if (mpm_matl->d_doBasicDamage) { 
+      if (mpm_matl->doBasicDamage()) { 
         Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
         basicDamageModel->getLocalizationParameter(patch, isLocalized, matID, old_dw, new_dw);
       } 
@@ -5217,7 +5217,7 @@ void SerialMPM::scheduleAddNewParticles(SchedulerP& sched,
     cm->allocateCMDataAddRequires(t,mpm_matl, patches,lb);
 
     // Basic damage model related stuff
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl, patches,lb);
       basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
@@ -5276,7 +5276,7 @@ SerialMPM::addNewParticles(const ProcessorGroup*,
 
       ParticleSubset* delset = scinew ParticleSubset(0, matID, patch);
       
-      if (mpm_matl->d_doBasicDamage) { 
+      if (mpm_matl->doBasicDamage()) { 
         Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
         basicDamageModel->getLocalizationParameter(patch, damage, matID, old_dw, new_dw);
       } else {
@@ -5352,7 +5352,7 @@ SerialMPM::addNewParticles(const ProcessorGroup*,
                                                              old_dw);
 
         // Add null material basic damage variables
-        if (null_matl->d_doBasicDamage) {
+        if (null_matl->doBasicDamage()) {
           null_matl->getBasicDamageModel()->copyDamageDataFromDeletedToAddedParticle(new_dw, addset,
                                                                                      newState, delset, old_dw);
         }
@@ -5433,7 +5433,7 @@ SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
 
 
     // Basic damage model related stuff
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl, patches,lb);
       basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
@@ -5502,7 +5502,7 @@ SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
 
       ParticleSubset* delset = scinew ParticleSubset(0, matID, patch);
       
-      if (mpm_matl->d_doBasicDamage) { 
+      if (mpm_matl->doBasicDamage()) { 
         Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
         basicDamageModel->getLocalizationParameter(patch, isLocalized, matID, old_dw, new_dw);
       } else {
@@ -5580,7 +5580,7 @@ SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
                                                              old_dw);
 
         // Add conv material basic damage variables
-        if (conv_matl->d_doBasicDamage) {
+        if (conv_matl->doBasicDamage()) {
           conv_matl->getBasicDamageModel()->copyDamageDataFromDeletedToAddedParticle(new_dw, addset,
                                                                                      newState, delset, old_dw);
         }
@@ -7422,7 +7422,7 @@ SerialMPM::scheduleRefine(const PatchSet* patches,
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Basic damage model related stuff
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
     }
@@ -7520,7 +7520,7 @@ SerialMPM::refine(const ProcessorGroup*,
                                                            mpm_matl,new_dw);
 
         // Initialize basic damage models
-        if (mpm_matl->d_doBasicDamage) {
+        if (mpm_matl->doBasicDamage()) {
           mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
         }
 
@@ -7811,7 +7811,7 @@ SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   Task* t = scinew Task("SerialMPM::actuallyInitializeAddedMaterial",
                         this, &SerialMPM::actuallyInitializeAddedMaterial);
                                                                                 
-  int numALLMatls = d_sharedState->getNumMatls();
+  int numALLMatls = d_sharedState->getNumMaterials();
   int numMPMMatls = d_sharedState->getNumMPMMatls();
   MaterialSubset* add_matl = scinew MaterialSubset();
   std::cout << "Added Material = " << numALLMatls-1 << "\n";
@@ -7859,7 +7859,7 @@ SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
   // Add damage model computes
-  if (mpm_matl->d_doBasicDamage) {
+  if (mpm_matl->doBasicDamage()) {
     Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
     basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
   }
@@ -7902,7 +7902,7 @@ SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     mpm_matl->getConstitutiveModel()->initializeCMData(patch, mpm_matl, new_dw);
 
     // Initialize basic damage models of added particles
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
     }
 

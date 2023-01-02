@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,52 +24,51 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __GEOMETRY_OBJECT_FACTORY_H__
-#define __GEOMETRY_OBJECT_FACTORY_H__
+#ifndef __CORE_GEOMETRY_GEOMETRY_PIECE_FACTORY_H__
+#define __CORE_GEOMETRY_GEOMETRY_PIECE_FACTORY_H__
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/Grid/GridP.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
-#include   <vector>
-#include   <map>
-#include   <string>
+#include <map>
+#include <string>
+#include <vector>
 
 namespace Uintah {
 
+class GeometryPieceFactory {
+ public:
+  // this function has a switch for all known go_types
+  // and calls the proper class' readParameters()
+  // addMaterial() calls this
+  static void
+  create(const ProblemSpecP& ps, std::vector<GeometryPieceP>& objs);
 
-  class GeometryPieceFactory
-  {
-  public:
-    // this function has a switch for all known go_types
-    // and calls the proper class' readParameters()
-    // addMaterial() calls this
-    static void create(const ProblemSpecP& ps,
-                       const GridP grid,
-		       std::vector<GeometryPieceP>& objs);
+  // Clears out the saved geometry piece information...  In theory, this should
+  // only be called by (and necessary for) the Switcher component (and only if
+  // a component that is being switched to happens to be a 'copy' of a previous
+  // component).
+  static void
+  resetFactory();
 
-    // Clears out the saved geometry piece information...  In theory, this should
-    // only be called by (and necessary for) the Switcher component (and only if 
-    // a component that is being switched to happens to be a 'copy' of a previous component).
-    static void resetFactory();
+  // Runs through all the GeometryPiece that have been created and
+  // sets their flag for first time output.  This should be done at
+  // the beginning of any output of a problemspec.
+  static void
+  resetGeometryPiecesOutput();
 
-    // Runs through all the GeometryPiece that have been created and
-    // sets their flag for first time output.  This should be done at
-    // the beginning of any output of a problemspec.
-    static void resetGeometryPiecesOutput();
+ private:
+  // This variable records all named GeometryPieces, so that if they
+  // are referenced a 2nd time, they don't have to be rebuilt.
+  //
+  // Assuming multiple GeometryPieceFactory's will not exist and if
+  // they do, they won't be executing at the same time (in different
+  // threads)... If this is not the case, then this variable should
+  // be locked...
+  static std::map<std::string, GeometryPieceP> s_namedPieces;
+  static std::vector<GeometryPieceP> s_unnamedPieces;
+};
 
-  private:
-    // This variable records all named GeometryPieces, so that if they
-    // are referenced a 2nd time, they don't have to be rebuilt.
-    //
-    // Assuming multiple GeometryPieceFactory's will not exist and if
-    // they do, they won't be executing at the same time (in different
-    // threads)... If this is not the case, then this variable should
-    // be locked...
-    static std::map<std::string,GeometryPieceP> namedPieces_;
-    static std::vector<GeometryPieceP>          unnamedPieces_;
-  };
+}  // End namespace Uintah
 
-} // End namespace Uintah
-
-#endif /* __GEOMETRY_PIECE_FACTORY_H__ */
+#endif /* __CORE_GEOMETRY_GEOMETRY_PIECE_FACTORY_H__ */

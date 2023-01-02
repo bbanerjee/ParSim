@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,14 +24,15 @@
  */
 
 
-#include <Core/Grid/SimpleMaterial.h>
+#ifndef __CORE_GRID_MATERIAL_MANAGERP_H__
+#define __CORE_GRID_MATERIAL_MANAGERP_H__
 
-using namespace Uintah;
+#include <memory>
 
-SimpleMaterial::SimpleMaterial()
-{
+namespace Uintah {
+   class MaterialManager;
+   typedef std::shared_ptr<MaterialManager> MaterialManagerP;
 }
 
-SimpleMaterial::~SimpleMaterial()
-{
-}
+#endif //__CORE_GRID_MATERIAL_MANAGERP_H__
+

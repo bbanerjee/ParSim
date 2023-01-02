@@ -240,7 +240,7 @@ CommRecMPI::donesome( const ProcessorGroup * pg,
 
     numReceived++;
     volReceived += byteCounts_[idx];
-    ids_[idx] = MPI_REQUEST_NULL;
+    ids_[idx] = MPI_REQUEST_nullptr;
     totalBytes_ -= byteCounts_[idx];    
     byteCounts_[idx] = 0;
     int groupID = groupIDs_[idx];
@@ -279,7 +279,7 @@ CommRecMPI::donesome( const ProcessorGroup * pg,
   // remove finished requests
   int j = 0;
   for (int i=0; i < (int)ids_.size(); i++) {
-    if (ids_[i] != MPI_REQUEST_NULL) {
+    if (ids_[i] != MPI_REQUEST_nullptr) {
       ids_[j] = ids_[i];
       groupIDs_[j] = groupIDs_[i];
       handlers_[j] = handlers_[i];

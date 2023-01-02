@@ -55,7 +55,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -86,8 +86,8 @@ void Burger::problemSetup(const ProblemSpecP& params,
   sharedState_ = sharedState;
   ProblemSpecP burger = params->findBlock("Burger");
   burger->require("delt", delt_);
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
  
 //______________________________________________________________________

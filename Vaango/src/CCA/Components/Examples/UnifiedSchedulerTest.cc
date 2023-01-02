@@ -54,7 +54,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -90,8 +90,8 @@ void UnifiedSchedulerTest::problemSetup(const ProblemSpecP& params,
   sharedState_ = sharedState;
   ProblemSpecP gpuSchedTest = params->findBlock("UnifiedSchedulerTest");
   gpuSchedTest->require("delt", delt_);
-  simpleMaterial_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(simpleMaterial_);
+  simpleMaterial_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(simpleMaterial_);
 }
 //______________________________________________________________________
 //
@@ -395,8 +395,8 @@ void UnifiedSchedulerTest::timeAdvanceGPU(const ProcessorGroup* pg,
   int matl = 0;
 
   // requisite pointers
-  double* d_phi = NULL;
-  double* d_newphi = NULL;
+  double* d_phi = nullptr;
+  double* d_newphi = nullptr;
 
   int numPatches = patches->size();
   for (int p = 0; p < numPatches; p++) {

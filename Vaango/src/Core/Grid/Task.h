@@ -1285,7 +1285,7 @@ WARNING
     void displayAll( std::ostream & out ) const;
     
     int mapDataWarehouse(WhichDW dw) const;
-    DataWarehouse* mapDataWarehouse(WhichDW dw, vector<DataWarehouseP>& dws) const;
+    DataWarehouse* mapDataWarehouse(WhichDW dw, std::vector<DataWarehouseP>& dws) const;
 
     int getSortedOrder() const {
       return sortedOrder;

@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2016-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,12 +23,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
-#define CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
+#ifndef __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__
+#define __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__
 
 #include <CCA/Components/Schedulers/MPIScheduler.h>
-#include <Core/Thread/ConditionVariable.h>
-#include <Core/Thread/Runnable.h>
+
+#ifdef HAVE_CUDA
+#include <CCA/Components/Schedulers/GPUGridVariableGhosts.h>
+#include <CCA/Components/Schedulers/GPUGridVariableInfo.h>
+#include <CCA/Components/Schedulers/GPUMemoryPool.h>
+#endif
 
 #include <sci_defs/cuda_defs.h>
 
@@ -38,19 +43,16 @@ class DetailedTask;
 class UnifiedSchedulerWorker;
 
 /**************************************
-
 CLASS
    UnifiedScheduler
-   
 
 GENERAL INFORMATION
    UnifiedScheduler.h
 
-   Qingyu Meng & Alan Humphrey
+   Qingyu Meng, Alan Humphrey, Brad Peterson
    Scientific Computing and Imaging Institute
    University of Utah
 
-   
 KEYWORDS
    Task Scheduler, Multi-threaded MPI, CPU, GPU, MIC
 
@@ -60,114 +62,121 @@ DESCRIPTION
    out-of-order execution of tasks at runtime. One MPI rank per multi-core node.
    Pthreads are pinned to individual CPU cores where these tasks are executed.
    Uses a decentralized model wherein all threads can access task queues,
-   processes there own MPI send and recvs, with shared access to the DataWarehouse.
+   processes there own MPI send and recvs, with shared access to the
+   DataWarehouse.
 
    Uintah task scheduler to support, schedule and execute solely CPU tasks
    or some combination of CPU, GPU and MIC tasks when enabled.
-  
+
 WARNING
    This scheduler is still EXPERIMENTAL and undergoing extensive
-   development, not all tasks/components are GPU/MIC-enabled and/or thread-safe yet.
-   
+   development, not all tasks/components are GPU/MIC-enabled and/or thread-safe
+   yet.
+
    Requires MPI_THREAD_MULTIPLE support.
-  
 ****************************************/
 
-class UnifiedScheduler : public MPIScheduler  {
+class UnifiedScheduler : public MPIScheduler
+{
+public:
+  UnifiedScheduler(const ProcessorGroup* myworld,
+                   UnifiedScheduler* parentScheduler = nullptr);
 
-  public:
+  virtual ~UnifiedScheduler();
 
-    UnifiedScheduler( const ProcessorGroup* myworld, const Output* oport, UnifiedScheduler* parentScheduler = 0 );
+  // Used only to check if this Vaango build can communicate with a GPU.  This
+  // function exits the program
+  static int verifyAnyGPUActive();
 
-    virtual ~UnifiedScheduler();
-    
-    virtual void problemSetup( const ProblemSpecP& prob_spec, SimulationStateP& state );
-      
-    virtual SchedulerP createSubScheduler();
-    
-    virtual void execute( int tgnum = 0, int iteration = 0 );
-    
-    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep(); }
-    
-    virtual void runTask( DetailedTask* task, int iteration, int thread_id, Task::CallBackEvent event );
+  virtual void problemSetup(const ProblemSpecP& prob_spec,
+                            SimulationStateP& state);
 
-            void runTasks( int thread_id );
+  virtual SchedulerP createSubScheduler();
 
-    friend class UnifiedSchedulerWorker;
+  virtual void execute(int tgnum = 0, int iteration = 0);
 
-  private:
+  virtual bool useInternalDeps()
+  {
+    return !d_sharedState->isCopyDataTimestep();
+  }
 
-    // Disable copy and assignment
-    UnifiedScheduler( const UnifiedScheduler& );
-    UnifiedScheduler& operator=( const UnifiedScheduler& );
+  virtual void runTask(DetailedTask* task, int iteration, int thread_id,
+                       Task::CallBackEvent event);
 
-    int getAvailableThreadNum();
+  void runTasks(int thread_id);
 
-    int  pendingMPIRecvs();
-    
-    std::string myRankThread();
-    
+  friend class UnifiedSchedulerWorker;
 
-    ConditionVariable          d_nextsignal;           // conditional wait mutex
-    Mutex                      d_nextmutex;            // next mutex
-    Mutex                      schedulerLock;          // scheduler lock (acquire and release quickly)
-    UnifiedSchedulerWorker*    t_worker[MAX_THREADS];  // the workers
-    Thread*                    t_thread[MAX_THREADS];  // the threads themselves
+private:
+  // Disable copy and assignment
+  UnifiedScheduler(const UnifiedScheduler&);
+  UnifiedScheduler& operator=(const UnifiedScheduler&);
 
-    // thread shared data, needs lock protection when accessed
-    std::vector<int>           phaseTasks;
-    std::vector<int>           phaseTasksDone;
-    std::vector<DetailedTask*> phaseSyncTask;
-    std::vector<int>           histogram;
-    DetailedTasks*             dts;
+  int getAvailableThreadNum();
 
-    QueueAlg taskQueueAlg_;
-    int      currentIteration;
-    int      numTasksDone;
-    int      ntasks;
-    int      currphase;
-    int      numPhases;
-    bool     abort;
-    int      abort_point;
-    int      numThreads_;
+  int pendingMPIRecvs();
+
+  std::string myRankThread();
+
+  ConditionVariable d_nextsignal; // conditional wait mutex
+  Mutex d_nextmutex;              // next mutex
+  Mutex schedulerLock; // scheduler lock (acquire and release quickly)
+  UnifiedSchedulerWorker* t_worker[MAX_THREADS]; // the workers
+  Thread* t_thread[MAX_THREADS];                 // the threads themselves
+
+  // thread shared data, needs lock protection when accessed
+  std::vector<int> phaseTasks;
+  std::vector<int> phaseTasksDone;
+  std::vector<DetailedTask*> phaseSyncTask;
+  std::vector<int> histogram;
+  DetailedTasks* dts;
+
+  QueueAlg taskQueueAlg_;
+  int currentIteration;
+  int numTasksDone;
+  int ntasks;
+  int currphase;
+  int numPhases;
+  bool abort;
+  int abort_point;
+  int numThreads_;
 
 #ifdef HAVE_CUDA
 
-    void gpuInitialize( bool reset=false );
+  void gpuInitialize(bool reset = false);
 
-    void postD2HCopies( DetailedTask* dtask );
-    
-    void preallocateDeviceMemory( DetailedTask* dtask );
+  void postD2HCopies(DetailedTask* dtask);
 
-    void postH2DCopies( DetailedTask* dtask );
+  void preallocateDeviceMemory(DetailedTask* dtask);
 
-    void createCudaStreams( int device, int numStreams = 1 );
+  void postH2DCopies(DetailedTask* dtask);
 
-    cudaStream_t* getCudaStream(int device);
+  void createCudaStreams(int device, int numStreams = 1);
 
-    void reclaimCudaStreams( DetailedTask* dtask );
+  cudaStream_t* getCudaStream(int device);
 
-    void freeCudaStreams();
+  void reclaimCudaStreams(DetailedTask* dtask);
 
-    int  numDevices_;
-    int  currentDevice_;
+  void freeCudaStreams();
 
-    std::vector<std::queue<cudaStream_t*> >  idleStreams;
+  int numDevices_;
+  int currentDevice_;
 
-    // All are multiple reader, single writer locks (pthread_rwlock_t wrapper)
-    mutable CrowdMonitor idleStreamsLock_;
-    mutable CrowdMonitor d2hComputesLock_;
-    mutable CrowdMonitor h2dRequiresLock_;
+  std::vector<std::queue<cudaStream_t*>> idleStreams;
+
+  // All are multiple reader, single writer locks (pthread_rwlock_t wrapper)
+  mutable CrowdMonitor idleStreamsLock_;
+  mutable CrowdMonitor d2hComputesLock_;
+  mutable CrowdMonitor h2dRequiresLock_;
 
 #endif
 };
 
-
-class UnifiedSchedulerWorker : public Runnable {
+class UnifiedSchedulerWorker : public Runnable
+{
 
 public:
-  
-  UnifiedSchedulerWorker( UnifiedScheduler* scheduler, int thread_id );
+  UnifiedSchedulerWorker(UnifiedScheduler* scheduler, int thread_id);
 
   void run();
 
@@ -175,23 +184,22 @@ public:
 
   double getWaittime();
 
-  void resetWaittime( double start );
-  
+  void resetWaittime(double start);
+
   friend class UnifiedScheduler;
 
 private:
-
-  UnifiedScheduler*      d_scheduler;
-  ConditionVariable      d_runsignal;
-  Mutex                  d_runmutex;
-  bool                   d_quit;
-  bool                   d_idle;
-  int                    d_thread_id;
-  int                    d_rank;
-  double                 d_waittime;
-  double                 d_waitstart;
+  UnifiedScheduler* d_scheduler;
+  ConditionVariable d_runsignal;
+  Mutex d_runmutex;
+  bool d_quit;
+  bool d_idle;
+  int d_thread_id;
+  int d_rank;
+  double d_waittime;
+  double d_waitstart;
 };
 
 } // End namespace Uintah
-   
-#endif // End CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
+
+#endif // End __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__

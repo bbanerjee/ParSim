@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,92 +23,51 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MATERIAL_H__
-#define __MATERIAL_H__
+#ifndef __CORE_GRID_MATERIAL_H__
+#define __CORE_GRID_MATERIAL_H__
 
-#include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+
+#include <string>
 
 namespace Uintah {
 
-/**************************************
+class Material
+{
+public:
+  Material(ProblemSpecP& ps);
+  Material();
 
-CLASS
-   Material
+  virtual ~Material();
 
-   Short description...
+  virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
 
-GENERAL INFORMATION
+  // Return index associated with this material's
+  // location in the data warehouse
+  int getDWIndex() const;
 
-   Material.h
+  void setDWIndex(int);
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+  const MaterialSubset* thisMaterial() const { return d_mat_subset; }
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+  // virtual void registerParticleState(SimulationState* ss);
 
+  bool hasName() const { return d_have_name; }
+  std::string getName() const { return d_name; }
 
-KEYWORDS
-   Material
+protected:
+  // Index associated with this material's spot in the DW
+  int d_dwindex{ -1 };
+  MaterialSubset* d_mat_subset{ nullptr };
 
-DESCRIPTION
-   Long description...
+private:
+  bool d_have_name{ false };
+  std::string d_name{ "" };
 
-WARNING
-
-****************************************/
-
-//using ::Grid::Patch;
-//using ::Interface::DataWarehouseP;
-
-
-   class Material {
-   public:
-     Material(ProblemSpecP& ps);
-     Material();
-      
-     virtual ~Material();
-      
-     virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
-
-      //////////
-      // Return index associated with this material's
-      // location in the data warehouse
-      int getDWIndex() const;
-      
-      void setDWIndex(int);
-
-     const MaterialSubset* thisMaterial() const {
-       return thismatl;
-     }
-     
-     virtual void registerParticleState(SimulationState* ss);
-
-     bool hasName() const {
-       return haveName;
-     }
-     std::string getName() const {
-       return name;
-     }
-   protected:
-
-      // Index associated with this material's spot in the DW
-      int d_dwindex;
-      MaterialSubset* thismatl;
-
-
-
-   private:
-
-     bool haveName;
-     std::string name;
-      
-     Material(const Material &mat);
-     Material& operator=(const Material &mat);
-   };
+  Material(const Material& mat) = delete;
+  Material& operator=(const Material& mat) = delete;
+};
 } // End namespace Uintah
 
-#endif // __MATERIAL_H__
+#endif // __CORE_GRID_MATERIAL_H__

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -98,7 +98,7 @@ SimulationController::SimulationController(const ProcessorGroup* myworld,
   d_restarting = false;
   d_reduceUda = false;
   d_doMultiTaskgraphing = false;
-  d_archive = NULL;
+  d_archive = nullptr;
   d_sim = 0;
 
   d_grid_ps = d_ups->findBlock("Grid");
@@ -467,7 +467,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
 
   // get memory stats for each proc if MALLOC_PERPROC is in the environent
   if ( getenv( "MALLOC_PERPROC" ) ) {
-    ostream* mallocPerProcStream = NULL;
+    ostream* mallocPerProcStream = nullptr;
     char* filenamePrefix = getenv( "MALLOC_PERPROC" );
     if ( !filenamePrefix || strlen( filenamePrefix ) == 0 ) {
       mallocPerProcStream = &dbg;
@@ -919,7 +919,7 @@ SimulationController::startPAPIEventSet()
   d_papiErrorCodes.insert(pair<int, string>(-24, "Bad combination of features"));
 
   d_eventValues = scinew long long[d_papiEvents.size()];
-  d_eventSet = PAPI_NULL;
+  d_eventSet = PAPI_nullptr;
   int retp = -1;
 
   // some PAPI boiler plate

@@ -987,7 +987,7 @@ MPIScheduler::outputTimingStats(const char* label)
     numCells += range.x() * range.y() * range.z();
 
     // go through all materials since getting an MPMMaterial correctly would depend on MPM
-    for (int m = 0; m < d_sharedState->getNumMatls(); m++) {
+    for (int m = 0; m < d_sharedState->getNumMaterials(); m++) {
       if (dw->haveParticleSubset(m, patch))
         numParticles += dw->getParticleSubset(m, patch)->numParticles();
     }

@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,42 +27,49 @@
 #define UINTAH_RD_GAODIFFUSION_H
 
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  class Task;
-  class MPMFlags;
-  class MPMLabel;
-  class MPMMaterial;
-  class DataWarehouse;
-  class ProcessorGroup;
+class Task;
+class MPMFlags;
+class MPMLabel;
+class MPMMaterial;
+class DataWarehouse;
+class ProcessorGroup;
 
-  class GaoDiffusion : public ScalarDiffusionModel {
-  public:
-    
-    GaoDiffusion(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag,
-                 std::string diff_type);
+class GaoDiffusion : public ScalarDiffusionModel
+{
+public:
+  GaoDiffusion(ProblemSpecP& ps,
+               MaterialManagerP& sS,
+               MPMFlags* Mflag,
+               std::string diff_type);
 
-    ~GaoDiffusion();
+  ~GaoDiffusion()                   = default;
+  GaoDiffusion(const GaoDiffusion&) = delete;
+  GaoDiffusion&
+  operator=(const GaoDiffusion&) = delete;
 
-    virtual void scheduleComputeFlux(Task* task, const MPMMaterial* matl, 
-		                                      const PatchSet* patch) const;
+  virtual void
+  scheduleComputeFlux(Task* task,
+                      const MPMMaterial* matl,
+                      const PatchSet* patch) const;
 
-    virtual void computeFlux(const Patch* patch, const MPMMaterial* matl,
-                             DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void
+  computeFlux(const Patch* patch,
+              const MPMMaterial* matl,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw);
 
-  private:
-    double partial_atomic_vol;
-    double operating_temp;
-    double boltzmann;
-    double mech_val;
+private:
+  double partial_atomic_vol;
+  double operating_temp;
+  double boltzmann;
+  double mech_val;
+};
 
-    GaoDiffusion(const GaoDiffusion&);
-    GaoDiffusion& operator=(const GaoDiffusion&);
-  };
-  
 } // end namespace Uintah
 #endif

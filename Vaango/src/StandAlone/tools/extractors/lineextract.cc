@@ -631,11 +631,11 @@ int main(int argc, char** argv)
     } else if (s == "-q" || s == "--quiet") {
       quiet = true;
     } else if (s == "-tlow" || s == "--timesteplow") {
-      time_start = strtoul(argv[++i],(char**)NULL,10);
+      time_start = strtoul(argv[++i],(char**)nullptr,10);
     } else if (s == "-thigh" || s == "--timestephigh") {
-      time_end = strtoul(argv[++i],(char**)NULL,10);
+      time_end = strtoul(argv[++i],(char**)nullptr,10);
     } else if (s == "-pr" || s == "--precision") {
-      output_precision = strtoul(argv[++i],(char**)NULL,10);
+      output_precision = strtoul(argv[++i],(char**)nullptr,10);
       if (output_precision > 32) {
         std::cout << "Output precision cannot be larger than 32. Setting precision to 32 \n";        
         output_precision = 32;
@@ -645,7 +645,7 @@ int main(int argc, char** argv)
         output_precision = 16;
       }
     } else if (s == "-timestep" || s == "--timestep") {
-      int val = strtoul(argv[++i],(char**)NULL,10);
+      int val = strtoul(argv[++i],(char**)nullptr,10);
       time_start = val;
       time_end = val;
     } else if (s == "-istart" || s == "--indexs") {

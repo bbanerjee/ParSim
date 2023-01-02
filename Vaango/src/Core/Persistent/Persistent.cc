@@ -155,9 +155,9 @@ PersistentTypeID::~PersistentTypeID()
 {
   Piostream::MapStringPersistentTypeID::iterator iter;
 
-  if (table == NULL)
+  if (table == nullptr)
   {
-    printf( "WARNING: Persistent.cc: ~PersistentTypeID(): table is NULL\n" );
+    printf( "WARNING: Persistent.cc: ~PersistentTypeID(): table is nullptr\n" );
     printf( "         For: %s, %s\n", type.c_str(), parent.c_str() );
     return;
   }
@@ -206,7 +206,7 @@ Piostream::Piostream(Direction dir, int version, const string &name,
     backwards_compat_id_(false),
     file_name(name)
 {
-  if (reporter_ == NULL)
+  if (reporter_ == nullptr)
   {
     reporter_ = scinew ProgressReporter();
     own_reporter_ = true;

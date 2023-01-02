@@ -62,7 +62,7 @@ VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
 					       const std::string& extramsg,
                                                const char* file, int line)
 {
-  ostringstream s;
+  std::ostringstream s;
   s << "A VariableNotFoundInGrid exception was thrown.\n"
     << file << ":" << line << "\n";
 
@@ -118,7 +118,7 @@ VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
 					       const std::string& extramsg,
                                                const char* file, int line)
 {
-  ostringstream s;
+  std::ostringstream s;
   s << "Variable not found: " << varname;
   if(extramsg != "")
     s << " (" << extramsg << ")";

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __NULL_PRESSURE_TEMPLATED_MODEL_H__
-#define __NULL_PRESSURE_TEMPLATED_MODEL_H__
+#ifndef __nullptr_PRESSURE_TEMPLATED_MODEL_H__
+#define __nullptr_PRESSURE_TEMPLATED_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EquationOfStateT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_MetalT.h>
@@ -195,4 +195,4 @@ public:
 
 } // End namespace Vaango
 
-#endif // __NULL_PRESSURE_TEMPLATED_MODEL_H__
+#endif // __nullptr_PRESSURE_TEMPLATED_MODEL_H__

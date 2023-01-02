@@ -64,14 +64,14 @@ namespace Uintah {
 
     customBC_var_basket() {
       Lodi_var_basket = 0;
-      lv = NULL;
-      sv = NULL;
-      mms_v=NULL;
-      sine_v=NULL;
+      lv = nullptr;
+      sv = nullptr;
+      mms_v=nullptr;
+      sine_v=nullptr;
 
-      Slip_var_basket=NULL;
-      mms_var_basket=NULL;
-      sine_var_basket=NULL;
+      Slip_var_basket=nullptr;
+      mms_var_basket=nullptr;
+      sine_var_basket=nullptr;
 
       usingMicroSlipBCs=false;
       using_MMS_BCs=false;

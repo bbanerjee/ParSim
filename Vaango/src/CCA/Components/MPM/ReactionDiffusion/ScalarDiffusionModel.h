@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,86 +26,106 @@
 #ifndef UINTAH_RF_SCALARDIFFUSIONMODEL_H
 #define UINTAH_RF_SCALARDIFFUSIONMODEL_H
 
-#include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/LevelP.h>
+#include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <string>
 namespace Uintah {
 
-  class Task;
-  class MPMFlags;
-  class MPMLabel;
-  class MPMMaterial;
-  class DataWarehouse;
-  class ProcessorGroup;
+class Task;
+class MPMFlags;
+class MPMLabel;
+class MPMMaterial;
+class DataWarehouse;
+class ProcessorGroup;
 
-  
-  class ScalarDiffusionModel {
-  public:
-    
-    ScalarDiffusionModel(ProblemSpecP& ps, SimulationStateP& sS,
-                         MPMFlags* Mflag,
-                         std::string diff_type);
-    virtual ~ScalarDiffusionModel();
+class ScalarDiffusionModel
+{
+public:
+  ScalarDiffusionModel(ProblemSpecP& ps,
+                       MaterialManagerP& matManager,
+                       MPMFlags* Mflag,
+                       std::string diff_type);
+  virtual ~ScalarDiffusionModel();
 
-    virtual std::string getDiffusionType();
+  virtual std::string
+  getDiffusionType();
 
-    virtual double getMaxConcentration();
+  virtual double
+  getMaxConcentration();
 
-    virtual void setIncludeHydroStress(bool value);
+  virtual void
+  setIncludeHydroStress(bool value);
 
-//    virtual void addInitialComputesAndRequires(Task* task, 
-//                                               const MPMMaterial* matl,
-//                                               const PatchSet* patches) const;
+  //    virtual void addInitialComputesAndRequires(Task* task,
+  //                                               const MPMMaterial* matl,
+  //                                               const PatchSet* patches)
+  //                                               const;
 
-//    virtual void initializeSDMData(const Patch* patch, const MPMMaterial* matl,
-//                                   DataWarehouse* new_dw);
+  //    virtual void initializeSDMData(const Patch* patch, const MPMMaterial*
+  //    matl,
+  //                                   DataWarehouse* new_dw);
 
-    virtual void scheduleComputeFlux(Task* task, const MPMMaterial* matl, 
-		                                 const PatchSet* patch) const;
+  virtual void
+  scheduleComputeFlux(Task* task,
+                      const MPMMaterial* matl,
+                      const PatchSet* patch) const;
 
-    virtual void computeFlux(const Patch* patch, const MPMMaterial* matl,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void
+  computeFlux(const Patch* patch,
+              const MPMMaterial* matl,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw);
 
-    virtual void scheduleComputeDivergence(Task* task, const MPMMaterial* matl, 
-                                           const PatchSet* patch) const;
+  virtual void
+  scheduleComputeDivergence(Task* task,
+                            const MPMMaterial* matl,
+                            const PatchSet* patch) const;
 
-    virtual void computeDivergence(const Patch* patch, const MPMMaterial* matl,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void
+  computeDivergence(const Patch* patch,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw);
 
-    virtual void scheduleComputeDivergence_CFI(Task* task, 
-                                               const MPMMaterial* matl, 
-                                               const PatchSet* patch) const;
+  virtual void
+  scheduleComputeDivergence_CFI(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patch) const;
 
-    virtual void computeDivergence_CFI(const PatchSubset* finePatches,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw);
+  virtual void
+  computeDivergence_CFI(const PatchSubset* finePatches,
+                        const MPMMaterial* matl,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_rdm_tag = true);
-    virtual double computeStableTimeStep(double Dif, Vector dx);
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps, bool output_rdm_tag = true);
+  virtual double
+  computeStableTimeStep(double Dif, Vector dx);
 
-  protected:
-    MPMLabel* d_lb;
-    MPMFlags* d_Mflag;
-    SimulationStateP d_sharedState;
+protected:
+  MPMLabel* d_lb;
+  MPMFlags* d_Mflag;
+  MaterialManagerP d_matManager;
 
-    int NGP, NGN;
-    std::string diffusion_type;
-    bool include_hydrostress;
+  int NGP, NGN;
+  std::string diffusion_type;
+  bool include_hydrostress;
 
-    ScalarDiffusionModel(const ScalarDiffusionModel&);
-    ScalarDiffusionModel& operator=(const ScalarDiffusionModel&);
-    
-    double diffusivity;
-    double max_concentration;
+  ScalarDiffusionModel(const ScalarDiffusionModel&) = delete;
+  ScalarDiffusionModel&
+  operator=(const ScalarDiffusionModel&) = delete;
 
-    MaterialSubset* d_one_matl;         // matlsubset for zone of influence
-  };
-  
+  double diffusivity;
+  double max_concentration;
+
+  MaterialSubset* d_one_matl; // matlsubset for zone of influence
+};
+
 } // end namespace Uintah
 #endif

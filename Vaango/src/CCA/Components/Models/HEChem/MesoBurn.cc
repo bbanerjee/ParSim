@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -200,9 +200,9 @@ void MesoBurn::problemSetup(GridP&,
   //  so that it has a melting temperature model
   if(afterMelting) {
     const MPMMaterial *solid = dynamic_cast<const MPMMaterial *>(matl0);
-    if(solid == NULL)
+    if(solid == nullptr)
       throw new ProblemSetupException(std::string("The 'afterMelting' parameter requires a MPM based reactant."), __FILE__, __LINE__);
-    if(dynamic_cast<ElasticPlasticHP *>(solid->getConstitutiveModel()) == NULL)
+    if(dynamic_cast<ElasticPlasticHP *>(solid->getConstitutiveModel()) == nullptr)
       throw new ProblemSetupException(std::string("The 'afterMelting' parameter requires an ElasticPlasticHP based reactant for its melting temperature."), __FILE__, __LINE__);
   }
 }
@@ -564,7 +564,7 @@ void MesoBurn::computeModelSources(const ProcessorGroup*,
     surfTemp.initialize(0.0);
 
     /* All Material Data */
-    int numAllMatls = d_sharedState->getNumMatls();
+    int numAllMatls = d_sharedState->getNumMaterials();
     std::vector<constCCVariable<double> >  vol_frac_CC(numAllMatls);
     std::vector<constCCVariable<double> >  temp_CC(numAllMatls);
     for (int m = 0; m < numAllMatls; m++) {

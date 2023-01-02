@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,50 +23,40 @@
  * IN THE SOFTWARE.
  */
 
-//  Material.cc
-
 #include <Core/Grid/Material.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <string>
 #include <iostream>
 #include <sstream>
+#include <string>
 
-using namespace Uintah;
+namespace Uintah {
 
-
-Material::Material()
-{
-  thismatl=0;
-  haveName = false;
-  name="";
-}
+Material::Material() {}
 
 Material::Material(ProblemSpecP& ps)
 {
-  
-  thismatl=0;
- 
-  // Look for the name attribute
-  if(ps->getAttribute("name", name))
-    haveName = true;
-  else
-    haveName = false;
-
+  d_mat_subset = nullptr;
+  if (ps->getAttribute("name", d_name)) {
+    d_have_name = true;
+  } else {
+    d_have_name = false;
+  }
 }
 
 Material::~Material()
 {
-  //std::cout << "In material destructor\n";
-  if(thismatl && thismatl->removeReference())
-    delete thismatl;
+  if (d_mat_subset && d_mat_subset->removeReference()) {
+    delete d_mat_subset;
+  }
 }
 
-ProblemSpecP Material::outputProblemSpec(ProblemSpecP& ps)
+ProblemSpecP
+Material::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP mat = 0;
-  if (haveName) {
+  if (d_have_name) {
     mat = ps->appendChild("material");
-    mat->setAttribute("name",name);
+    mat->setAttribute("name", d_name);
   } else {
     mat = ps->appendChild("material");
   }
@@ -73,26 +64,27 @@ ProblemSpecP Material::outputProblemSpec(ProblemSpecP& ps)
   std::stringstream strstream;
   strstream << getDWIndex();
   std::string index_val = strstream.str();
-  mat->setAttribute("index",index_val);
+  mat->setAttribute("index", index_val);
   return mat;
 }
 
-int Material::getDWIndex() const
+int
+Material::getDWIndex() const
 {
   // Return this material's index into the data warehouse
   return d_dwindex;
 }
 
-void Material::setDWIndex(int idx)
+void
+Material::setDWIndex(int idx)
 {
-   d_dwindex = idx;
-   ASSERT(!thismatl);
-   thismatl = scinew MaterialSubset(); 
-                                       
-   thismatl->addReference();
-   thismatl->add(idx);
+  d_dwindex = idx;
+
+  ASSERT(!d_mat_subset);
+  d_mat_subset = scinew MaterialSubset();
+
+  d_mat_subset->addReference();
+  d_mat_subset->add(d_dwindex);
 }
 
-void Material::registerParticleState(SimulationState* ss)
-{
-}
+} // end namespace Uintah

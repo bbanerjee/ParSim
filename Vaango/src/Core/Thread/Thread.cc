@@ -125,7 +125,7 @@ Thread::Thread(ThreadGroup* g, const char* name)
   cpu_ = -1;
   myid_ = 0;
   stacksize_ = Thread::DEFAULT_STACKSIZE;
-  abortCleanupFunc_ = NULL;
+  abortCleanupFunc_ = nullptr;
 }
 
 void
@@ -274,14 +274,14 @@ void
 Thread::handleCleanup()
 {
   Thread::ptr2cleanupfunc funcPtr = Thread::self()->getCleanupFunction();
-  if (funcPtr != NULL) {
+  if (funcPtr != nullptr) {
 
     // printf( "Handling thread cleanup for thread '%s'.\n", threadname_ );
 
     (*funcPtr)();
 
     // handleCleanup() should only be called once, but just in case...
-    Thread::self()->setCleanupFunction(NULL);
+    Thread::self()->setCleanupFunction(nullptr);
   }
 }
 
@@ -305,7 +305,7 @@ Thread::niceAbort(void* context /* = 0 */, bool print /*= true */)
     if (s)
       fprintf(stderr, "Occured for thread: \"%s\"\n", s->threadname_);
     else
-      fprintf(stderr, "With NULL thread pointer.\n");
+      fprintf(stderr, "With nullptr thread pointer.\n");
   }
 
   for (;;) {

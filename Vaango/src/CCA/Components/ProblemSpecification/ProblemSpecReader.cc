@@ -463,7 +463,7 @@ public:
   // for the value of the tag.  The specification of valid values depends on the
   // type of Tag:
   //
-  //  STRING: a comma separated lists of strings, or "*" (or NULL) which means
+  //  STRING: a comma separated lists of strings, or "*" (or nullptr) which means
   //  anything
   //  INTEGER/DOUBLE: "*" = any value, "positive" = a positive value, "num, num"
   //  = min, max values
@@ -568,7 +568,7 @@ public:
 
     AttributeAndTagBase::print(recursively, depth, isTag);
 
-    dbg << "(parent: " << (parent_ ? parent_->name_ : "NULL") << " - "
+    dbg << "(parent: " << (parent_ ? parent_->name_ : "nullptr") << " - "
         << parent_.get_rep() << ") "
         << "(common: " << isCommonTag_ << ")\n";
 
@@ -1619,7 +1619,7 @@ void
 Tag::validateAttribute(xmlAttr* attr)
 {
   if (attr == nullptr) {
-    throw ProblemSetupException("Error... attr is NULL", __FILE__, __LINE__);
+    throw ProblemSetupException("Error... attr is nullptr", __FILE__, __LINE__);
   }
 
   const string attrName = (const char*)(attr->name);
@@ -2360,7 +2360,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child, xmlNode* parent,
       }
 
       if (child != nullptr) {
-        // Child can be NULL if an <include> is the last 'child'... as the
+        // Child can be nullptr if an <include> is the last 'child'... as the
         // <include> is
         // removed from the tree above.
         xmlNode* grandchild = child->children;
@@ -2373,6 +2373,6 @@ ProblemSpecReader::resolveIncludes(xmlNode* child, xmlNode* parent,
 
     child = child->next;
 
-  } // end while( child != NULL )
+  } // end while( child != nullptr )
 
 } // end resolveIncludes()

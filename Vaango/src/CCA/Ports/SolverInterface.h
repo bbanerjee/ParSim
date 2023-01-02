@@ -45,7 +45,7 @@ namespace Uintah {
   class SolverParameters {
   public:
     SolverParameters() : useStencil4(false), symmetric(true), solveOnExtraCells(false), residualNormalizationFactor(1),
-                        restartableTimestep(false), outputFileName("NULL") {}
+                        restartableTimestep(false), outputFileName("nullptr") {}
     
     void setSolveOnExtraCells(bool s) {
       solveOnExtraCells = s;

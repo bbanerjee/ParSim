@@ -126,7 +126,7 @@ SocketInitializer::SocketInitializer() {
   sig.sa_handler = SIG_IGN;
   sig.sa_flags = 0;
   sigemptyset(&sig.sa_mask);
-  sigaction(SIGPIPE,&sig,NULL);
+  sigaction(SIGPIPE,&sig,nullptr);
 
 #endif
 
@@ -166,16 +166,16 @@ Socket::FindReadyToRead(Socket** sockArray, int n, bool block) {
 				// set timeval to zero, for
 				// non-blocking
   timeval timeout;
-  timeval* to = NULL;
+  timeval* to = nullptr;
   if (!block) {
     memset(&timeout, 0, sizeof(timeout));
     to = &timeout;
   }
   
 
-				// if the last argument is NULL, make
+				// if the last argument is nullptr, make
 				// this call Block until ready
-  if (select(maxfd+1, &readset, NULL, NULL, to) == SOCKET_ERROR) {
+  if (select(maxfd+1, &readset, nullptr, nullptr, to) == SOCKET_ERROR) {
     cerr << "Socket::FindReadyToRead: select() error" << endl;
   }
 
@@ -390,20 +390,20 @@ Socket::AcceptConnection()
 #ifdef _WIN32
     errno = WSAGetLastError();
     if (errno == WSAEWOULDBLOCK) {
-      return NULL;
+      return nullptr;
     }
     else {
       cerr << "Socket::AcceptConnection: Error accepting socket:"
 	   << errno << endl;
       prError(errno);
-      return NULL;
+      return nullptr;
     }
 #else
     if (synchronous == false && errno == EWOULDBLOCK) {
-      return NULL;
+      return nullptr;
     }
     perror("Socket::AcceptConnection: Error accepting socket");
-    return NULL;
+    return nullptr;
 #endif
   }
   

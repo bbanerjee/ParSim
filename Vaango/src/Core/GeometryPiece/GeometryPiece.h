@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,107 +27,108 @@
 #ifndef __GEOMETRY_PIECE_H__
 #define __GEOMETRY_PIECE_H__
 
-#include <Core/Util/RefCounted.h>
-
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Util/RefCounted.h>
 
-#include   <string>
+#include <string>
+#include <memory>
 
 namespace Uintah {
 
 class Box;
 class GeometryPiece;
 
-template<class T> class Handle;
-typedef Handle<GeometryPiece> GeometryPieceP;
+// template<class T> class Handle;
+// typedef Handle<GeometryPiece> GeometryPieceP;
+using GeometryPieceUP = std::unique_ptr<GeometryPiece>;
+using GeometryPieceP = std::shared_ptr<GeometryPiece>;
 
 /**************************************
-	
+
 CLASS
    GeometryPiece
-	
+
    Short description...
-	
+
 GENERAL INFORMATION
-	
+
    GeometryPiece.h
-	
+
    John A. Schmidt
    Department of Mechanical Engineering
    University of Utah
-	
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-	
+
 KEYWORDS
    GeometryPiece
-	
+
 DESCRIPTION
    Long description...
-	
+
 WARNING
-	
+
 ****************************************/
-      
+
 class GeometryPiece : public RefCounted {
-	 
-public:
-  //////////
-  // Insert Documentation Here:
-  GeometryPiece();
-	 
-  //////////
-  // Insert Documentation Here:
-  virtual ~GeometryPiece();
+ public:
+  GeometryPiece() = default;
+  virtual ~GeometryPiece() = default;
 
   /// Clone a geometry piece
-  virtual GeometryPieceP clone() const = 0;
+  virtual GeometryPieceP
+  clone() const = 0;
 
-  void outputProblemSpec( ProblemSpecP & ps ) const;
+  void
+  outputProblemSpec(ProblemSpecP& ps) const;
 
-  //////////
-  // Insert Documentation Here:
-  virtual Box getBoundingBox() const = 0;
-	 
-    //////////
-    // Insert Documentation Here:
-  virtual bool inside(const Point &p) const = 0;	 
+  virtual Box
+  getBoundingBox() const = 0;
 
-  std::string getName() const {
-    return name_;
+  virtual bool
+  inside(const Point& p) const = 0;
+
+  std::string
+  getName() const {
+    return d_name;
   }
 
   // Returns the type as a string (eg: sphere, box, etc).
-  // The string must/will match the string checks found in GeometryPieceFactory.cc::create()
-  virtual std::string getType() const = 0;
+  // The string must/will match the string checks found in
+  // GeometryPieceFactory.cc::create()
+  virtual std::string
+  getType() const = 0;
 
-  void setName(const std::string& name) {
-    nameSet_ = true;
-    name_    = name;
+  void
+  setName(const std::string& name) {
+    d_nameSet = true;
+    d_name    = name;
   }
 
   // Call at the beginning of outputing (ProblemSpec) so that this
   // object will output the full spec the first time, and only a
   // reference subsequently.
-  void resetOutput() const { firstOutput_ = true; }
+  void
+  resetOutput() const {
+    d_firstOutput = true;
+  }
 
-protected:
+ protected:
+  virtual void
+  outputHelper(ProblemSpecP& ps) const = 0;
 
-  virtual void outputHelper( ProblemSpecP & ps ) const = 0;
-
-  bool        nameSet_; // defaults to false
-  std::string name_;
+  bool d_nameSet{ false };  // defaults to false
+  std::string d_name;
 
   // Used for outputing the problem spec... on the 1st output, the
   // entire object is output, on the 2nd, only a reference is output.
   // Must be 'mutable' as most of these objects are (mostly) 'const'
-  mutable bool firstOutput_;
-
+  mutable bool d_firstOutput{ true };
 };
 
-} // End namespace Uintah
+}  // End namespace Uintah
 
-#endif // __GEOMETRY_PIECE_H__
+#endif  // __GEOMETRY_PIECE_H__

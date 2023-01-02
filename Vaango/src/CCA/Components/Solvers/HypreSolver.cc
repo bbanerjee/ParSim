@@ -1085,9 +1085,9 @@ public:
       precond_solver_type = diagonal;
 #ifdef HYPRE_USE_PTHREADS
       for (i = 0; i < hypre_NumThreads; i++)
-        precond[i] = NULL;
+        precond[i] = nullptr;
 #else
-      precond = NULL;
+      precond = nullptr;
 #endif
       precond = HYPRE_StructDiagScale;
       pcsetup = HYPRE_StructDiagScaleSetup;

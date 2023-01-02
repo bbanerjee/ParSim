@@ -441,7 +441,7 @@ void Unsteady_Burn::computeModelSources(const ProcessorGroup*,
     new_dw->allocateAndPut(pTsNew,   PartTsLabel,   pset_gn);
                 
     /* All Material Data */
-    int numAllMatls = d_sharedState->getNumMatls();
+    int numAllMatls = d_sharedState->getNumMaterials();
     std::vector<constCCVariable<double> >  vol_frac_CC(numAllMatls);
     std::vector<constCCVariable<double> >  temp_CC(numAllMatls);
     for(int m = 0; m < numAllMatls; m++){

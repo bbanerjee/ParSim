@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-20(0,1) The University of Utah
  * Copyright (c) 20(0,2)-20(0,3) Callaghan Innovation, New Zealand
- * Copyright (c) 20(0,4)-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 20(0,4)-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

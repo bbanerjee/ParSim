@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -40,7 +40,7 @@ Output::Output(const std::string& fileName,
   d_output_iter_interval = iterInterval;
   char buffer[2000];
   char * str = getcwd( buffer, 2000 );
-  if (str == NULL) {
+  if (str == nullptr) {
     throw Exception("**ERROR** Directory not returned by getcwd()", __FILE__, __LINE__); 
   } else {
     d_output_folder_name = std::string(buffer);
@@ -65,7 +65,7 @@ Output::initialize(const Uintah::ProblemSpecP& ps)
   io_ps->require("output_iteration_interval", d_output_iter_interval);
   char buffer[2000];
   char * str = getcwd( buffer, 2000 );
-  if (str == NULL) {
+  if (str == nullptr) {
     throw Exception("**ERROR** Directory not returned by getcwd()", __FILE__, __LINE__); 
   } else {
     d_output_folder_name = std::string(buffer);

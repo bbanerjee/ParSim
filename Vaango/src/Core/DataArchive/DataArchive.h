@@ -472,16 +472,16 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
   std::vector<std::string> type_names;
   std::vector<const TypeDescription*> type_descriptions;
   queryVariables(type_names, type_descriptions);
-  const TypeDescription* type = NULL;
+  const TypeDescription* type = nullptr;
   std::vector<std::string>::iterator name_iter = type_names.begin();
   std::vector<const TypeDescription*>::iterator type_iter =
     type_descriptions.begin();
-  for (; name_iter != type_names.end() && type == NULL;
+  for (; name_iter != type_names.end() && type == nullptr;
        name_iter++, type_iter++) {
     if (*name_iter == name)
       type = *type_iter;
   }
-  if (type == NULL)
+  if (type == nullptr)
     throw InternalError("Unable to determine variable type", __FILE__,
                         __LINE__);
   if (type->getType() != TypeDescription::Type::ParticleVariable)
@@ -499,11 +499,11 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
     // nothing prevents this from changing between timesteps, so we have to
     // do this every time -- if that can't actually happen we might be able
     // to speed this up.
-    Patch* patch = NULL;
+    Patch* patch = nullptr;
     GridP grid = queryGrid(ts);
     findPatchAndIndex(grid, patch, idx, particleID, matlIndex, levelIndex, ts);
     //    std::cerr <<" Patch = 0x"<<hex<<patch<<dec<<", index = "<<idx;
-    if (patch == NULL)
+    if (patch == nullptr)
       throw VariableNotFoundInGrid(name, particleID, matlIndex,
                                    "DataArchive::query", __FILE__, __LINE__);
 
@@ -533,16 +533,16 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
   std::vector<std::string> type_names;
   std::vector<const TypeDescription*> type_descriptions;
   queryVariables(type_names, type_descriptions);
-  const TypeDescription* type = NULL;
+  const TypeDescription* type = nullptr;
   std::vector<std::string>::iterator name_iter = type_names.begin();
   std::vector<const TypeDescription*>::iterator type_iter =
     type_descriptions.begin();
-  for (; name_iter != type_names.end() && type == NULL;
+  for (; name_iter != type_names.end() && type == nullptr;
        name_iter++, type_iter++) {
     if (*name_iter == name)
       type = *type_iter;
   }
-  if (type == NULL)
+  if (type == nullptr)
     throw InternalError("Unable to determine variable type", __FILE__,
                         __LINE__);
 
@@ -556,7 +556,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
     // nothing prevents this from changing between timesteps, so we have to
     // do this every time -- if that can't actually happen we might be able
     // to speed this up.
-    Patch* patch = NULL;
+    Patch* patch = nullptr;
     GridP grid = queryGrid(ts);
 
     // which levels to query between.
@@ -569,14 +569,14 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
       endLevel = levelIndex + 1;
     }
 
-    for (int level_nr = startLevel; (level_nr < endLevel) && (patch == NULL);
+    for (int level_nr = startLevel; (level_nr < endLevel) && (patch == nullptr);
          level_nr++) {
       const LevelP level = grid->getLevel(level_nr);
 
       switch (type->getType()) {
         case TypeDescription::Type::CCVariable:
           for (Level::const_patchIterator iter = level->patchesBegin();
-               (iter != level->patchesEnd()) && (patch == NULL); iter++) {
+               (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsCell(loc)) {
               patch = *iter;
               // We found our patch, quit looking.
@@ -587,7 +587,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
 
         case TypeDescription::Type::NCVariable:
           for (Level::const_patchIterator iter = level->patchesBegin();
-               (iter != level->patchesEnd()) && (patch == NULL); iter++) {
+               (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsNode(loc)) {
               patch = *iter;
               break;
@@ -596,7 +596,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
           break;
         case TypeDescription::Type::SFCXVariable:
           for (Level::const_patchIterator iter = level->patchesBegin();
-               (iter != level->patchesEnd()) && (patch == NULL); iter++) {
+               (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCX(loc)) {
               patch = *iter;
               break;
@@ -605,7 +605,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
           break;
         case TypeDescription::Type::SFCYVariable:
           for (Level::const_patchIterator iter = level->patchesBegin();
-               (iter != level->patchesEnd()) && (patch == NULL); iter++) {
+               (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCY(loc)) {
               patch = *iter;
               break;
@@ -614,7 +614,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
           break;
         case TypeDescription::Type::SFCZVariable:
           for (Level::const_patchIterator iter = level->patchesBegin();
-               (iter != level->patchesEnd()) && (patch == NULL); iter++) {
+               (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCZ(loc)) {
               patch = *iter;
               break;
@@ -631,7 +631,7 @@ DataArchive::query(std::vector<T>& values, const std::string& name,
           break;
       }
     }
-    if (patch == NULL) {
+    if (patch == nullptr) {
       throw VariableNotFoundInGrid(name, loc, matlIndex, "DataArchive::query",
                                    __FILE__, __LINE__);
     }

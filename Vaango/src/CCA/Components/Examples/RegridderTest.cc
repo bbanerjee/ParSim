@@ -61,7 +61,7 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Geometry/BBox.h>
@@ -98,8 +98,8 @@ namespace Uintah
                                    GridP& grid, SimulationStateP& state )
   {
     d_sharedState = state;
-    d_material = scinew SimpleMaterial();
-    d_sharedState->registerSimpleMaterial( d_material );
+    d_material = scinew EmptyMaterial();
+    d_sharedState->registerEmptyMaterial( d_material );
 
     ProblemSpecP spec = params->findBlock("RegridderTest");
     

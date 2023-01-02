@@ -73,7 +73,7 @@ ExchangeCoefficients::~ExchangeCoefficients()
 void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
                                         SimulationStateP& sharedState)
 {
-  if(sharedState->getNumMatls() >1){
+  if(sharedState->getNumMaterials() >1){
     //__________________________________
     // Pull out the constant Coeff exchange coefficients
     ProblemSpecP exch_ps = ps->findBlock("exchange_properties");

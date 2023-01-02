@@ -240,7 +240,7 @@ handle_abort_signals(int sig, int /* code */, sigcontext context)
   sigemptyset(&action.sa_mask);
   action.sa_handler=SIG_DFL;
   action.sa_flags=0;
-  if(sigaction(sig, &action, NULL) == -1)
+  if(sigaction(sig, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction (SIG_DFL) failed")
 		      +strerror(errno));
 
@@ -276,7 +276,7 @@ handle_abort_signals(int sig, int /* code */, sigcontext context)
 
   action.sa_handler=(SIG_HANDLER_T)handle_abort_signals;
   action.sa_flags=0;
-  if(sigaction(sig, &action, NULL) == -1)
+  if(sigaction(sig, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction (restore) failed")
 		      +strerror(errno));
 }
@@ -293,30 +293,30 @@ install_signal_handlers()
   action.sa_flags=0;
 
   action.sa_handler=(SIG_HANDLER_T)handle_abort_signals;
-  if(sigaction(SIGILL, &action, NULL) == -1)
+  if(sigaction(SIGILL, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGILL) failed")
 		      +strerror(errno));
-  if(sigaction(SIGABRT, &action, NULL) == -1)
+  if(sigaction(SIGABRT, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGABRT) failed")
 		      +strerror(errno));
-  if(sigaction(SIGTRAP, &action, NULL) == -1)
+  if(sigaction(SIGTRAP, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGTRAP) failed")
 		      +strerror(errno));
-  if(sigaction(SIGBUS, &action, NULL) == -1)
+  if(sigaction(SIGBUS, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGBUS) failed")
 		      +strerror(errno));
-  if(sigaction(SIGSEGV, &action, NULL) == -1)
+  if(sigaction(SIGSEGV, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGSEGV) failed")
 		      +strerror(errno));
-  if(sigaction(SIGFPE, &action, NULL) == -1)
+  if(sigaction(SIGFPE, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGFPE) failed")
 		      +strerror(errno));
 
   action.sa_handler=(SIG_HANDLER_T)handle_quit;
-  if(sigaction(SIGQUIT, &action, NULL) == -1)
+  if(sigaction(SIGQUIT, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGQUIT) failed")
 		      +strerror(errno));
-  if(sigaction(SIGINT, &action, NULL) == -1)
+  if(sigaction(SIGINT, &action, nullptr) == -1)
     throw ThreadError(std::string("sigaction(SIGINT) failed")
 		      +strerror(errno));
 }

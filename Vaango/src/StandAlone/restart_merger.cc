@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -139,7 +139,7 @@ main( int argc, char *argv[], char *env[] )
 
     DataArchiver out_uda(world);
     out_uda.attachPort("sim", sim);
-    out_uda.problemSetup(ups, NULL);
+    out_uda.problemSetup(ups, nullptr);
     out_uda.initializeOutput(ups);
     new_uda_dir = out_uda.getOutputLocation();
 

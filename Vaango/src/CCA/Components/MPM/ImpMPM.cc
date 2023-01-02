@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1308,9 +1308,9 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
     t->requires(Task::OldDW, lb->gTemperatureLabel, one_matl, Ghost::None, 0);
   }
 
-  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gVolumeLabel,      d_sharedState->getAllInOneMatl(),
+  t->computes(lb->gVolumeLabel,      d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   t->computes(lb->gMassLabel);
@@ -1361,9 +1361,9 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     NCVariable<double> gMass_global, gVolume_global;
     new_dw->allocateAndPut(gMass_global, lb->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gVolume_global, lb->gVolumeLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gMass_global.initialize(d_SMALL_NUM_MPM);
     gVolume_global.initialize(d_SMALL_NUM_MPM);
 
@@ -3825,7 +3825,7 @@ ImpMPM::scheduleInterpolateStressToGrid(SchedulerP& sched,
   t->requires(Task::NewDW, lb->pVolumeLabel_preReloc, Ghost::AroundNodes,1);
   t->requires(Task::NewDW, lb->pStressLabel_preReloc, Ghost::AroundNodes,1);
   t->requires(Task::NewDW, lb->gVolumeLabel,          Ghost::None);
-  t->requires(Task::NewDW, lb->gVolumeLabel, d_sharedState->getAllInOneMatl(),
+  t->requires(Task::NewDW, lb->gVolumeLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain, Ghost::None);
   t->requires(Task::OldDW, lb->pDefGradLabel,         Ghost::AroundNodes,1);
 
@@ -3870,7 +3870,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
 
     constNCVariable<double>   gVolume_sum;
     new_dw->get(gVolume_sum, lb->gVolumeLabel,
-                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None, 0);
+                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None, 0);
 
     NCVariable<Vector>  gInternalForce_sum;
     NCVariable<Matrix3> gStress_sum;

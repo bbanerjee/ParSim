@@ -46,8 +46,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_NULL_CRACK_H
-#define UINTAH_HOMEBREW_NULL_CRACK_H
+#ifndef UINTAH_HOMEBREW_nullptr_CRACK_H
+#define UINTAH_HOMEBREW_nullptr_CRACK_H
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -73,4 +73,4 @@ class NullCrack : public CrackGeometry
 
 }//End namespace Uintah
 
-#endif  /* __NULL_CRACK_H__*/
+#endif  /* __nullptr_CRACK_H__*/

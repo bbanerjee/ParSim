@@ -55,7 +55,7 @@
 
 namespace Uintah
 {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
   class VarLabel;
 /**************************************
@@ -139,7 +139,7 @@ WARNING
 
     ExamplesLabel*   d_examplesLabel;
     SimulationStateP d_sharedState;
-    SimpleMaterial*  d_material;
+    EmptyMaterial*  d_material;
 
     VarLabel* d_oldDensityLabel;
     VarLabel* d_densityLabel;

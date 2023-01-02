@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,105 +25,107 @@
  */
 
 #ifndef __UNION_GEOMETRY_OBJECT_H__
-#define __UNION_GEOMETRY_OBJECT_H__      
+#define __UNION_GEOMETRY_OBJECT_H__
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/GridP.h>
 
-#include   <vector>
+#include <vector>
 
 namespace Uintah {
 
-
 /**************************************
-	
+
 CLASS
    UnionGeometryPiece
-	
-   Creates a collection of geometry pieces from the xml input 
-   file description. 
-	
+
+   Creates a collection of geometry pieces from the xml input
+   file description.
+
 GENERAL INFORMATION
-	
+
    UnionGeometryPiece.h
-	
+
    John A. Schmidt
    Department of Mechanical Engineering
    University of Utah
-	
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-	
- 
-	
+
+
+
 KEYWORDS
    UnionGeometryPiece BoundingBox inside
-	
+
 DESCRIPTION
-   Creates a union of different geometry pieces from the xml input 
+   Creates a union of different geometry pieces from the xml input
    file description.
-   Requires multiple inputs: specify multiple geometry pieces.  
-   There are methods for checking if a point is inside the union of 
+   Requires multiple inputs: specify multiple geometry pieces.
+   There are methods for checking if a point is inside the union of
    pieces and also for determining the bounding box for the collection.
    The input form looks like this:
        <union>
          <box>
-	   <min>[0.,0.,0.]</min>
-	   <max>[1.,1.,1.]</max>
-	 </box>
-	 <sphere>
-	   <origin>[.5,.5,.5]</origin>
-	   <radius>1.5</radius>
-	 </sphere>
+           <min>[0.,0.,0.]</min>
+           <max>[1.,1.,1.]</max>
+         </box>
+         <sphere>
+           <origin>[.5,.5,.5]</origin>
+           <radius>1.5</radius>
+         </sphere>
        </union>
-	
-	
+
+
 WARNING
-	
+
 ****************************************/
 
-      class UnionGeometryPiece : public GeometryPiece {
-	 
-      public:
-	 //////////
-	 // Constructor that takes a ProblemSpecP argument.   It reads the xml 
-	 // input specification and builds the intersection of geometry pieces.
-	 UnionGeometryPiece(ProblemSpecP & ps,
-                            const GridP grid);
-	 
-	 //////////
-	 // Constructor that takes an array of children. It copies the array,
-	 // and assume ownership of the children.
-	 UnionGeometryPiece(const std::vector<GeometryPieceP>& children);
+class UnionGeometryPiece : public GeometryPiece {
+ public:
+  //////////
+  // Constructor that takes a ProblemSpecP argument.   It reads the xml
+  // input specification and builds the intersection of geometry pieces.
+  UnionGeometryPiece(ProblemSpecP& ps);
 
-	 /// Assignment operator
-	 UnionGeometryPiece& operator=(const UnionGeometryPiece& );
+  //////////
+  // Constructor that takes an array of children. It copies the array,
+  // and assume ownership of the children.
+  UnionGeometryPiece(const std::vector<GeometryPieceP>& children);
 
-	 //// Make a clone
-	 GeometryPieceP clone() const;
+  /// Assignment operator
+  UnionGeometryPiece&
+  operator=(const UnionGeometryPiece&);
 
-	 //////////
-	 // Destructor
-         virtual ~UnionGeometryPiece() {}
-	 
-         static const string TYPE_NAME;
-         virtual std::string getType() const { return TYPE_NAME; }
+  //// Make a clone
+  GeometryPieceP
+  clone() const;
 
-	 //////////
-	 // Determines whether a point is inside the intersection piece.
-	 virtual bool inside(const Point &p) const;
-	 
-	 //////////
-	 // Returns the bounding box surrounding the union piece.
-	 virtual Box getBoundingBox() const;
-	 
-      private:
-         virtual void outputHelper( ProblemSpecP & ps ) const;
+  //////////
+  // Destructor
+  virtual ~UnionGeometryPiece() = default;
 
-	 std::vector<GeometryPieceP> child_;
-	 
-      };
-} // End namespace Uintah
-      
+  static const std::string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-#endif // __UNION_GEOMETRY_PIECE_H__
+  //////////
+  // Determines whether a point is inside the intersection piece.
+  virtual bool
+  inside(const Point& p) const;
 
+  //////////
+  // Returns the bounding box surrounding the union piece.
+  virtual Box
+  getBoundingBox() const;
+
+ private:
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
+
+  std::vector<GeometryPieceP> d_children;
+};
+}  // End namespace Uintah
+
+#endif  // __UNION_GEOMETRY_PIECE_H__

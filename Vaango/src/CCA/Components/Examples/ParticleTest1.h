@@ -56,7 +56,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************
@@ -119,7 +119,7 @@ WARNING
     ExamplesLabel* lb_;
     SimulationStateP sharedState_;
     double delt_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
     int doOutput_;
     int doGhostCells_;
     ParticleTest1(const ParticleTest1&);

@@ -150,7 +150,7 @@ bool load_timestep(int timestep, float prune_percent)
     pname << "/taskgraph_" << setw(5) << setfill('0') << process << ".xml";
     xmlFileName = xmlDir + pname.str();
     
-    if ((tstFile = fopen(xmlFileName.c_str(), "r")) == NULL)
+    if ((tstFile = fopen(xmlFileName.c_str(), "r")) == nullptr)
       break;
     fclose(tstFile);
 
@@ -185,7 +185,7 @@ bool load_timestep(int timestep, float prune_percent)
       int sourcenode = taskNumbers[source];
       int targetnode = taskNumbers[target];
 
-    if (sourceTask != NULL && targetTask != NULL) {
+    if (sourceTask != nullptr && targetTask != nullptr) {
       if (m_edgeMap.find(source + " -> " + target) == m_edgeMap.end()) {
 	Edge* edge = targetTask->addDependency(sourceTask);
 	if (edge) {
@@ -194,9 +194,9 @@ bool load_timestep(int timestep, float prune_percent)
       }
     }
     else {
-      if (sourceTask == NULL)
+      if (sourceTask == nullptr)
 	cerr << "ERROR: Undefined task, '" << source << "'" << endl;
-      if (targetTask == NULL) 
+      if (targetTask == nullptr) 
 	cerr << "ERROR: Undefined task, '" << target << "'" << endl;
     }
   }

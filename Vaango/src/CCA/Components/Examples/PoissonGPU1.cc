@@ -52,7 +52,7 @@
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -90,8 +90,8 @@ void PoissonGPU1::problemSetup(const ProblemSpecP& params,
 
   poisson->require("delt", delt_);
 
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
 //______________________________________________________________________
 //

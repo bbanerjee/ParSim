@@ -57,7 +57,7 @@
 #include <Core/Grid/Task.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************
@@ -154,7 +154,7 @@ WARNING
     string initial_condition;
     string integration;
     SimulationStateP sharedState_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
     Step rk4steps[4];
 
     Wave(const Wave&);

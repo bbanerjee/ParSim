@@ -114,7 +114,7 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
 {
   cout_doing << "Doing problemSetup \t\t\t\tMinMax" << endl;
   
-  int numMatls  = d_sharedState->getNumMatls();
+  int numMatls  = d_sharedState->getNumMaterials();
   if(!d_dataArchiver){
     throw InternalError("MinMax:couldn't get output port", __FILE__, __LINE__);
   }
@@ -194,7 +194,7 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
     // Read in the variable name
     string labelName = attribute["label"];
     VarLabel* label = VarLabel::find(labelName);
-    if(label == NULL){
+    if(label == nullptr){
       throw ProblemSetupException("MinMax: analyze label not found: "
                            + labelName , __FILE__, __LINE__);
     }
@@ -256,8 +256,8 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
     
     string VLmax = labelName + "_max";
     string VLmin = labelName + "_min";
-    VarLabel* meMax = NULL;
-    VarLabel* meMin = NULL;
+    VarLabel* meMax = nullptr;
+    VarLabel* meMin = nullptr;
     
     // double
     if( subType == TypeDescription::Type::double_type ) {
@@ -336,7 +336,7 @@ void MinMax::initialize(const ProcessorGroup*,
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
-      if ( check == NULL){
+      if ( check == nullptr){
         ostringstream warn;
         warn << "ERROR:MinMax  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -381,7 +381,7 @@ void MinMax::scheduleDoAnalysis(SchedulerP& sched,
     if ( isRightLevel( myLevel, L_indx, level ) ){
     
       // bulletproofing
-      if( label == NULL ){
+      if( label == nullptr ){
         string name = label->getName();
         throw InternalError("MinMax: scheduleDoAnalysis label not found: " 
                            + name , __FILE__, __LINE__);
@@ -478,7 +478,7 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
         string labelName = label->getName();
 
         // bulletproofing
-        if( label == NULL ){
+        if( label == nullptr ){
           throw InternalError("MinMax: analyze label not found: " 
                                + labelName , __FILE__, __LINE__);
         }    
@@ -622,7 +622,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
         string labelName = label->getName();
          
         // bulletproofing
-        if(label == NULL){
+        if(label == nullptr){
           throw InternalError("MinMax: analyze label not found: " 
                           + labelName , __FILE__, __LINE__);
         }
@@ -805,7 +805,7 @@ void
 MinMax::createDirectory(string& dirName, string& levelIndex)
 {
   DIR *check = opendir(dirName.c_str());
-  if ( check == NULL ) {
+  if ( check == nullptr ) {
     cout << Parallel::getMPIRank() << "MinMax:Making directory " << dirName << endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {

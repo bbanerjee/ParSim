@@ -61,7 +61,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -117,8 +117,8 @@ void SolverTest1::problemSetup(const ProblemSpecP& prob_spec,
   if (!x_laplacian && !y_laplacian && !z_laplacian)
     throw ProblemSetupException("SolverTest: Must specify one of X_Laplacian, Y_Laplacian, or Z_Laplacian",
                                 __FILE__, __LINE__);
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
 //__________________________________
 // 

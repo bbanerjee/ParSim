@@ -136,7 +136,7 @@ public:
   ListenTo(char* hostname, int port);
 
 				// start a new connection- returns
-				// NULL if a connection couldn't be
+				// nullptr if a connection couldn't be
 				// made
   Socket*
   AcceptConnection();

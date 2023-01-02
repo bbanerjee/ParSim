@@ -43,7 +43,7 @@ class GPUDataWarehouse {
 
 public:
 
-           GPUDataWarehouse() { d_numItems=0; d_device_copy=NULL; d_device_id=0; d_debug=true; d_dirty=true; }
+           GPUDataWarehouse() { d_numItems=0; d_device_copy=nullptr; d_device_id=0; d_debug=true; d_dirty=true; }
   virtual ~GPUDataWarehouse() {}
 
   HOST_DEVICE void get(const GPUGridVariableBase& var, char const* label, int patchID, int matlIndex);

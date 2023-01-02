@@ -55,12 +55,12 @@
 using namespace std;
 using namespace Uintah;
 
-TrackerClient * TrackerClient::trackerClient_ = NULL;
+TrackerClient * TrackerClient::trackerClient_ = nullptr;
 
 bool
 TrackerClient::initialize( const std::string & host )
 {
-  if( trackerClient_ != NULL ) {
+  if( trackerClient_ != nullptr ) {
     // ERROR, already intialized...
     cout << "ERROR: TrackerClient is already initialized... continuing, but something is probabl wrong...\n";
     return true;
@@ -75,7 +75,7 @@ TrackerClient::initialize( const std::string & host )
   if( !result ) {
     // FIXME
     cout << "socket connect failed\n";
-    trackerClient_ = NULL;
+    trackerClient_ = nullptr;
     return false;
   }
   return true;

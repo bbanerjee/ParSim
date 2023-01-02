@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,24 +23,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VAANGO_BASIC_DAMAGE_MODEL_H__
-#define __VAANGO_BASIC_DAMAGE_MODEL_H__
+#ifndef __VAANGO_CCA_COMPONENTS_MPM_BASIC_DAMAGE_MODEL_H__
+#define __VAANGO_CCA_COMPONENTS_MPM_BASIC_DAMAGE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Parallel/ProcessorGroup.h>
-
-/*
-#include <vector>
-#include <Core/Grid/LinearInterpolator.h>
-#include <Core/Grid/Variables/Array3.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Math/Matrix3.h>
-#include <Core/Math/Short27.h>
-*/
 
 #include <vector>
 
@@ -51,7 +43,6 @@ namespace Vaango {
   \class BasicDamageModel
 
   \brief Base class for the default damage models.
-
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -62,98 +53,143 @@ public:
   BasicDamageModel(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* MFlag);
   virtual ~BasicDamageModel();
 
-  inline void setSharedState(Uintah::SimulationState* sharedState)
+  inline void
+  setMaterialManager(Uintah::MaterialManagerP manager)
+  {
+    d_materialManager = manager;
+  }
+  inline void
+  setSharedState(Uintah::SimulationState* sharedState)
   {
     d_sharedState = sharedState;
   }
 
-  virtual BasicDamageModel* clone();
-  virtual void actuallyCreateDamageModel(Uintah::ProblemSpecP& ps);
-  virtual void actuallyCopyDamageModel(const BasicDamageModel* bdm);
-  virtual void outputProblemSpecDamage(Uintah::ProblemSpecP& cm_ps);
-  virtual void deleteDamageVarLabels();
-  virtual void copyDamageDataFromDeletedToAddedParticle(
-    Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset,
+  virtual std::unique_ptr<BasicDamageModel>
+  clone();
+  virtual void
+  actuallyCreateDamageModel(Uintah::ProblemSpecP& ps);
+  virtual void
+  actuallyCopyDamageModel(const BasicDamageModel* bdm);
+  virtual void
+  outputProblemSpecDamage(Uintah::ProblemSpecP& cm_ps);
+  virtual void
+  deleteDamageVarLabels();
+  virtual void
+  copyDamageDataFromDeletedToAddedParticle(
+    Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleSubset* addset,
     std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
-    Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw);
+    Uintah::ParticleSubset* delset,
+    Uintah::DataWarehouse* old_dw);
 
-  virtual void allocateDamageDataAddRequires(Uintah::Task* task,
-                                             const Uintah::MPMMaterial* matl,
-                                             const Uintah::PatchSet* patches,
-                                             Uintah::MPMLabel* lb) const;
+  virtual void
+  allocateDamageDataAddRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches,
+                                Uintah::MPMLabel* lb) const;
 
-  virtual void carryForwardDamageData(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* old_dw,
-                                      Uintah::DataWarehouse* new_dw,
-                                      const Uintah::MPMMaterial* matl);
+  virtual void
+  carryForwardDamageData(Uintah::ParticleSubset* pset,
+                         Uintah::DataWarehouse* old_dw,
+                         Uintah::DataWarehouse* new_dw,
+                         const Uintah::MPMMaterial* matl);
 
-  virtual void initializeDamageData(const Uintah::Patch* patch,
-                                    const Uintah::MPMMaterial* matl,
-                                    Uintah::DataWarehouse* new_dw,
-                                    Uintah::MPMLabel* lb);
+  virtual void
+  initializeDamageData(const Uintah::Patch* patch,
+                       const Uintah::MPMMaterial* matl,
+                       Uintah::DataWarehouse* new_dw,
+                       Uintah::MPMLabel* lb);
 
-  virtual void addComputesAndRequires(Uintah::Task* task,
-                                      const Uintah::MPMMaterial* matl,
-                                      const Uintah::PatchSet* patches,
-                                      Uintah::MPMLabel* lb) const;
+  virtual void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches,
+                         Uintah::MPMLabel* lb) const;
 
-  virtual void addInitialComputesAndRequires(Uintah::Task* task,
-                                             const Uintah::MPMMaterial* matl,
-                                             const Uintah::PatchSet* patches,
-                                             Uintah::MPMLabel* lb) const;
+  virtual void
+  addInitialComputesAndRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches,
+                                Uintah::MPMLabel* lb) const;
 
-  virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                std::vector<const Uintah::VarLabel*>& to);
+  virtual void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to);
 
-  virtual void computeBasicDamage(const Uintah::PatchSubset* patches,
-                                  const Uintah::MPMMaterial* matl,
-                                  Uintah::DataWarehouse* old_dw,
-                                  Uintah::DataWarehouse* new_dw,
-                                  Uintah::MPMLabel* lb);
+  virtual void
+  computeBasicDamage(const Uintah::PatchSubset* patches,
+                     const Uintah::MPMMaterial* matl,
+                     Uintah::DataWarehouse* old_dw,
+                     Uintah::DataWarehouse* new_dw,
+                     Uintah::MPMLabel* lb);
 
   // This is for the localization flags to be updated
-  virtual void addRequiresLocalizationParameter(
-    Uintah::Task* task, const Uintah::MPMMaterial* matl,
-    const Uintah::PatchSet* patches) const;
+  virtual void
+  addRequiresLocalizationParameter(Uintah::Task* task,
+                                   const Uintah::MPMMaterial* matl,
+                                   const Uintah::PatchSet* patches) const;
 
   // This is for the localization flag to be updated
-  virtual void getLocalizationParameter(
-    const Uintah::Patch* patch, Uintah::ParticleVariable<int>& islocalized,
-    int dwi, Uintah::DataWarehouse* old_dw, Uintah::DataWarehouse* new_dw);
+  virtual void
+  getLocalizationParameter(const Uintah::Patch* patch,
+                           Uintah::ParticleVariable<int>& islocalized,
+                           int dwi,
+                           Uintah::DataWarehouse* old_dw,
+                           Uintah::DataWarehouse* new_dw);
 
 protected:
-  virtual void getDamageModelData(Uintah::ProblemSpecP& ps);
-  virtual void getBrittleDamageData(Uintah::ProblemSpecP& ps);
-  virtual void getFailureStressOrStrainData(Uintah::ProblemSpecP& ps);
-  virtual void setErosionAlgorithm();
-  virtual void initializeDamageVarLabels();
+  virtual void
+  getDamageModelData(Uintah::ProblemSpecP& ps);
+  virtual void
+  getBrittleDamageData(Uintah::ProblemSpecP& ps);
+  virtual void
+  getFailureStressOrStrainData(Uintah::ProblemSpecP& ps);
+  virtual void
+  setErosionAlgorithm();
+  virtual void
+  initializeDamageVarLabels();
 
-  virtual void setDamageModelData(const BasicDamageModel* bdm);
-  virtual void setBrittleDamageData(const BasicDamageModel* bdm);
-  virtual void setFailureStressOrStrainData(const BasicDamageModel* bdm);
-  virtual void setErosionAlgorithm(const BasicDamageModel* bdm);
+  virtual void
+  setDamageModelData(const BasicDamageModel* bdm);
+  virtual void
+  setBrittleDamageData(const BasicDamageModel* bdm);
+  virtual void
+  setFailureStressOrStrainData(const BasicDamageModel* bdm);
+  virtual void
+  setErosionAlgorithm(const BasicDamageModel* bdm);
 
-  virtual void updateDamageAndModifyStress(
-    const Uintah::Matrix3& defGrad, const double& pFailureStrain,
-    double& pFailureStrain_new, const double& pVolume, const double& pDamage,
-    double& pDamage_new, Uintah::Matrix3& pStress,
-    const Uintah::long64 particleID);
+  virtual void
+  updateDamageAndModifyStress(const Uintah::Matrix3& defGrad,
+                              const double& pFailureStrain,
+                              double& pFailureStrain_new,
+                              const double& pVolume,
+                              const double& pDamage,
+                              double& pDamage_new,
+                              Uintah::Matrix3& pStress,
+                              const Uintah::long64 particleID);
 
-  virtual void updateFailedParticlesAndModifyStress(
-    const Uintah::Matrix3& defGrad, const double& pFailureStr,
-    const int& pLocalized, int& pLocalized_new, const double& pTimeOfLoc,
-    double& pTimeOfLoc_new, Uintah::Matrix3& pStress,
-    const Uintah::long64 particleID, double time);
+  virtual void
+  updateFailedParticlesAndModifyStress(const Uintah::Matrix3& defGrad,
+                                       const double& pFailureStr,
+                                       const int& pLocalized,
+                                       int& pLocalized_new,
+                                       const double& pTimeOfLoc,
+                                       double& pTimeOfLoc_new,
+                                       Uintah::Matrix3& pStress,
+                                       const Uintah::long64 particleID,
+                                       double time);
 
 private:
   // Prevent copy constructor from being invoked.
   BasicDamageModel(const BasicDamageModel* bdm);
   // Prevent assignement operator from being invoked
-  BasicDamageModel& operator=(const BasicDamageModel* bdm);
+  BasicDamageModel&
+  operator=(const BasicDamageModel* bdm);
 
 protected:
   Uintah::MPMFlags* flag;
   Uintah::SimulationState* d_sharedState;
+  Uintah::MaterialManagerP d_materialManager;
 
   // Damage Requirements //
   /////////////////////////
@@ -205,7 +241,7 @@ protected:
   bool d_brittleDamage; /* use brittle damage with mesh size control*/
 
   std::string d_failure_criterion; /* Options are:  "MaximumPrincipalStrain" */
-                                  /* "MaximumPrincipalStress", "MohrColoumb"*/
+                                   /* "MaximumPrincipalStress", "MohrColoumb"*/
 
   // These three are for the MohrColoumb option
   double d_friction_angle; // Assumed to come in degrees
@@ -214,4 +250,4 @@ protected:
 };
 } // End namespace Uintah
 
-#endif // __VAANGO_BASIC_DAMAGE_MODEL_H__
+#endif // __VAANGO_CCA_COMPONENTS_MPM_BASIC_DAMAGE_MODEL_H__

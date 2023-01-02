@@ -51,7 +51,7 @@ class MPMMaterial;
 class CZMaterial;
 class ArchesMaterial; 
 class WasatchMaterial;
-class SimpleMaterial;
+class EmptyMaterial;
 class Level;
    
 /**************************************
@@ -106,7 +106,7 @@ public:
     return switch_label;
   }
 
-  void registerSimpleMaterial(SimpleMaterial*);
+  void registerEmptyMaterial(EmptyMaterial*);
   void registerMPMMaterial(MPMMaterial*);
   void registerMPMMaterial(MPMMaterial*,unsigned int index);
   void registerCZMaterial(CZMaterial*);
@@ -117,7 +117,7 @@ public:
   void registerWasatchMaterial(WasatchMaterial*);
   void registerWasatchMaterial(WasatchMaterial*,unsigned int index);
 
-  int getNumMatls() const {
+  int getNumMaterials() const {
     return (int)matls.size();
   }
   int getNumMPMMatls() const {
@@ -136,7 +136,7 @@ public:
     return (int)wasatch_matls.size();
   }  
 
-  MaterialSubset* getAllInOneMatl() {
+  MaterialSubset* getAllInOneMaterial() {
     return allInOneMatl;
   }
 
@@ -279,7 +279,7 @@ private:
   std::vector<ArchesMaterial*>  arches_matls;
   std::vector<ICEMaterial*>     ice_matls;
   std::vector<WasatchMaterial*> wasatch_matls;
-  std::vector<SimpleMaterial*>  simple_matls;
+  std::vector<EmptyMaterial*>  simple_matls;
 
   //! for carry over vars in Switcher
   int max_matl_index;

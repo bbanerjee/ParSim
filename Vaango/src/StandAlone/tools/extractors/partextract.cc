@@ -136,7 +136,7 @@ main(int argc, char** argv)
       string id = argv[++i];
       if (id[0] == '-')
         usage("-partid <particle id>", argv[0]);
-      particleID = strtoll(argv[i], (char**)NULL, 10);
+      particleID = strtoll(argv[i], (char**)nullptr, 10);
     } else if (s == "-part_stress") {
       do_part_stress = true;
       if (++i < argc) {
@@ -171,13 +171,13 @@ main(int argc, char** argv)
                 argv[0]);
       }
     } else if (s == "-timesteplow") {
-      time_step_lower = strtoul(argv[++i], (char**)NULL, 10);
+      time_step_lower = strtoul(argv[++i], (char**)nullptr, 10);
       tslow_set = true;
     } else if (s == "-timestephigh") {
-      time_step_upper = strtoul(argv[++i], (char**)NULL, 10);
+      time_step_upper = strtoul(argv[++i], (char**)nullptr, 10);
       tsup_set = true;
     } else if (s == "-timestepinc") {
-      time_step_inc = strtoul(argv[++i], (char**)NULL, 10);
+      time_step_inc = strtoul(argv[++i], (char**)nullptr, 10);
       //      tsinc_set = true;
     }
   }

@@ -112,9 +112,9 @@ protected:
     // adjust pointers so that they are 1-offset:
     // v_[] is the internal contiguous array, it is still 0-offset
     //
-    assert(v_ == NULL);
+    assert(v_ == nullptr);
     v_ = scinew T[N];
-    assert(v_ != NULL);
+    assert(v_ != nullptr);
     vm1_ = v_ - 1;
     n_ = N;
   }
@@ -173,14 +173,14 @@ protected:
   void destroy()
   {
     /* do nothing, if no memory has been previously allocated */
-    if (v_ == NULL)
+    if (v_ == nullptr)
       return;
 
     /* if we are here, then matrix was previously allocated */
     delete[](v_);
 
-    v_ = NULL;
-    vm1_ = NULL;
+    v_ = nullptr;
+    vm1_ = nullptr;
   }
 
 public:

@@ -59,12 +59,12 @@ using namespace std;
 using namespace Uintah;
 using namespace Uintah;
 
-TrackerServer * TrackerServer::trackerServer_ = NULL;
+TrackerServer * TrackerServer::trackerServer_ = nullptr;
 
 void
 TrackerServer::startTracking( unsigned int numClients )
 {
-  if( trackerServer_ != NULL ) {
+  if( trackerServer_ != nullptr ) {
     // ERROR, already intialized...
     cout << "ERROR: TrackerServer is already started... continuing, but something is probabl wrong...\n";
     return;

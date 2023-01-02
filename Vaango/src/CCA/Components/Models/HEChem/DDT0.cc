@@ -391,7 +391,7 @@ void DDT0::computeModelSources(const ProcessorGroup*,
   int m1 = d_matl1->getDWIndex();
   double totalBurnedMass = 0;
   double totalHeatReleased = 0;
-  int numAllMatls = d_sharedState->getNumMatls();
+  int numAllMatls = d_sharedState->getNumMaterials();
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);  

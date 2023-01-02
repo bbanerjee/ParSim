@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,50 +23,24 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef Packages_Uintah_Core_Grid_SimpleMaterial_h
-#define Packages_Uintah_Core_Grid_SimpleMaterial_h
+#ifndef __CORE_GRID_EMPTY_MATERIAL_H__
+#define __CORE_GRID_EMPTY_MATERIAL_H__
 
 #include <Core/Grid/Material.h>
 namespace Uintah {
 
 using namespace Uintah;
 
-/**************************************
-     
-CLASS
-   SimpleMaterial
+class EmptyMaterial : public Material
+{
+public:
+  EmptyMaterial();
 
-   Short description...
+  ~EmptyMaterial();
 
-GENERAL INFORMATION
-
-   SimpleMaterial.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-KEYWORDS
-
-DESCRIPTION
-   Long description...
-
-WARNING
-
-****************************************/
-
-      class SimpleMaterial : public Material {
-      public:
-         SimpleMaterial();
-         
-         ~SimpleMaterial();
- 
-      private:
-      };
+private:
+};
 
 } // End namespace Uintah
 
-#endif // __MPM_MATERIAL_H__
+#endif // __CORE_GRID_EMPTY_MATERIAL_H__

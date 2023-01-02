@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,7 +56,7 @@ namespace Uintah {
   class ICEMaterial;
   class MPMMaterial;
   class CZMaterial;
-  class SimpleMaterial;
+  class EmptyMaterial;
   class Level;
    
 /**************************************
@@ -119,7 +119,7 @@ namespace Uintah {
       return checkpointInterval_label;
     }
 
-    void registerSimpleMaterial(SimpleMaterial*);
+    void registerEmptyMaterial(EmptyMaterial*);
     void registerMPMMaterial(MPMMaterial*);
     void registerMPMMaterial(MPMMaterial*,unsigned int index);
     void registerCZMaterial(CZMaterial*);
@@ -130,7 +130,7 @@ namespace Uintah {
     void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat);
     void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat, unsigned int index);
 
-    int getNumMatls() const {
+    int getNumMaterials() const {
       return (int)matls.size();
     }
     int getNumMPMMatls() const {
@@ -147,7 +147,7 @@ namespace Uintah {
       return (int) peridynamics_matls.size();
     }
 
-    MaterialSubset* getAllInOneMatl() {
+    MaterialSubset* getAllInOneMaterial() {
       return allInOneMatl;
     }
 
@@ -307,7 +307,7 @@ namespace Uintah {
     std::vector<MPMMaterial*>     mpm_matls;
     std::vector<CZMaterial*>      cz_matls;
     std::vector<ICEMaterial*>     ice_matls;
-    std::vector<SimpleMaterial*>  simple_matls;
+    std::vector<EmptyMaterial*>  simple_matls;
 
     std::vector<Vaango::PeridynamicsMaterial*>  peridynamics_matls;
 

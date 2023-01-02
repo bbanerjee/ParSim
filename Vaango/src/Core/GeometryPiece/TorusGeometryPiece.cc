@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,37 +24,37 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/GeometryPiece/TorusGeometryPiece.h>
 #include <Core/Grid/Box.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
-#include <Core/Geometry/Vector.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Uintah;
+#include <memory>
+
+namespace Uintah {
 
 const string TorusGeometryPiece::TYPE_NAME = "torus";
 
-TorusGeometryPiece::TorusGeometryPiece() 
-{
-  name_ = "Unnamed " + TYPE_NAME + " from BasicCtor";
+TorusGeometryPiece::TorusGeometryPiece() {
+  d_name = "Unnamed " + TYPE_NAME + " from BasicCtor";
 
-  d_center = Point(0.,0.,0.);
+  d_center       = Point(0., 0., 0.);
   d_major_radius = 1.0;
   d_minor_radius = 0.0;
-  d_axis_vec = Vector(0, 0, 1.0);
+  d_axis_vec     = Vector(0, 0, 1.0);
   checkInput();
   computeRotation();
 }
 
-TorusGeometryPiece::TorusGeometryPiece(ProblemSpecP& ps) 
-{
-  name_ = "Unnamed " + TYPE_NAME + " from PS";
+TorusGeometryPiece::TorusGeometryPiece(ProblemSpecP& ps) {
+  d_name = "Unnamed " + TYPE_NAME + " from PS";
 
-  ps->require("center",                d_center);
-  ps->require("major_radius",          d_major_radius);
-  ps->require("minor_radius",          d_minor_radius);
-  ps->require("axis_vector",           d_axis_vec);
+  ps->require("center", d_center);
+  ps->require("major_radius", d_major_radius);
+  ps->require("minor_radius", d_minor_radius);
+  ps->require("axis_vector", d_axis_vec);
 
   checkInput();
   d_axis_vec /= d_axis_vec.length();
@@ -64,59 +64,57 @@ TorusGeometryPiece::TorusGeometryPiece(ProblemSpecP& ps)
 TorusGeometryPiece::TorusGeometryPiece(const Point& center,
                                        const Vector& axis_vec,
                                        const double major,
-                                       const double minor)
-{
-  name_ = "Unnamed " + TYPE_NAME + " from center/major/minor";
+                                       const double minor) {
+  d_name = "Unnamed " + TYPE_NAME + " from center/major/minor";
 
-  d_center = center;
+  d_center       = center;
   d_major_radius = major;
   d_minor_radius = minor;
-  d_axis_vec = axis_vec;
+  d_axis_vec     = axis_vec;
 
   checkInput();
   d_axis_vec /= d_axis_vec.length();
   computeRotation();
 }
 
-void 
-TorusGeometryPiece::checkInput() const
-{
-  if ( d_minor_radius <= 0.0) {
+void
+TorusGeometryPiece::checkInput() const {
+  if (d_minor_radius <= 0.0) {
     std::ostringstream err;
-    err << "**ERROR** Input File: Torus minor_radius must be > 0.0."; 
+    err << "**ERROR** Input File: Torus minor_radius must be > 0.0.";
     SCI_THROW(ProblemSetupException(err.str(), __FILE__, __LINE__));
   }
-  if ( d_major_radius <= 0.0) {
+  if (d_major_radius <= 0.0) {
     std::ostringstream err;
-    err << "**ERROR** Input File: Torus major_radius must be > 0.0."; 
+    err << "**ERROR** Input File: Torus major_radius must be > 0.0.";
     SCI_THROW(ProblemSetupException(err.str(), __FILE__, __LINE__));
   }
   if (d_major_radius <= d_minor_radius) {
     std::ostringstream err;
-    err << "**ERROR** Input File: Torus major_radius must be greater than torus minor radius."; 
+    err << "**ERROR** Input File: Torus major_radius must be greater than "
+           "torus minor radius.";
     SCI_THROW(ProblemSetupException(err.str(), __FILE__, __LINE__));
   }
   if (std::abs(d_axis_vec.length()) < 1.0e-12) {
     std::ostringstream err;
-    err << "**ERROR** Input File: Torus axis vector has zero length.  Please check input file.";
+    err << "**ERROR** Input File: Torus axis vector has zero length.  Please "
+           "check input file.";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
 }
 
-void 
-TorusGeometryPiece::computeRotation()
-{
+void
+TorusGeometryPiece::computeRotation() {
   // Find rotation matrix that takes the axis vector to the z-axis
   Vector z_axis(0.0, 0.0, 1.0);
-  Vector z_rot_axis = Cross(d_axis_vec, z_axis);
+  Vector z_rot_axis  = Cross(d_axis_vec, z_axis);
   double z_rot_angle = std::acos(Dot(d_axis_vec, z_axis));
-  d_rotation = Matrix3(z_rot_angle, z_rot_axis);
-  d_rotation = d_rotation.Transpose();
+  d_rotation         = Matrix3(z_rot_angle, z_rot_axis);
+  d_rotation         = d_rotation.Transpose();
 }
 
 void
-TorusGeometryPiece::outputHelper( ProblemSpecP & ps ) const
-{
+TorusGeometryPiece::outputHelper(ProblemSpecP& ps) const {
   ps->appendElement("center", d_center);
   ps->appendElement("major_radius", d_major_radius);
   ps->appendElement("minor_radius", d_minor_radius);
@@ -124,50 +122,47 @@ TorusGeometryPiece::outputHelper( ProblemSpecP & ps ) const
 }
 
 GeometryPieceP
-TorusGeometryPiece::clone() const
-{
-  return scinew TorusGeometryPiece(*this);
+TorusGeometryPiece::clone() const {
+  return std::make_shared<TorusGeometryPiece>(*this);
 }
 
 bool
-TorusGeometryPiece::inside(const Point &p) const
-{
+TorusGeometryPiece::inside(const Point& p) const {
   // Translate point
   Vector pTransformed = p - d_center;
-  
+
   // Rotate point so that torus axis is along "z"
   pTransformed = d_rotation * pTransformed;
 
   double x = pTransformed.x();
   double y = pTransformed.y();
   double z = pTransformed.z();
-  if ((d_major_radius - sqrt(x*x + y*y)) *
-      (d_major_radius - sqrt(x*x + y*y)) + z*z <
-       d_minor_radius*d_minor_radius) {
+  if ((d_major_radius - sqrt(x * x + y * y)) *
+              (d_major_radius - sqrt(x * x + y * y)) +
+          z * z <
+      d_minor_radius * d_minor_radius) {
     return true;
   }
   return false;
 }
 
 Box
-TorusGeometryPiece::getBoundingBox() const
-{
+TorusGeometryPiece::getBoundingBox() const {
   // This is an overly generous bounding box.
-  double R = d_major_radius+d_minor_radius;
-  Point minBB = Point(d_center.x()-R,d_center.y()-R,d_center.z()-R);
-  Point maxBB = Point(d_center.x()+R,d_center.y()+R,d_center.z()+R);
-  
-  return Box(minBB,maxBB);
+  double R    = d_major_radius + d_minor_radius;
+  Point minBB = Point(d_center.x() - R, d_center.y() - R, d_center.z() - R);
+  Point maxBB = Point(d_center.x() + R, d_center.y() + R, d_center.z() + R);
+
+  return Box(minBB, maxBB);
 }
 
 //////////
 // Calculate the unit normal vector to axis from point
-Vector 
-TorusGeometryPiece::radialDirection(const Point& pt) const
-{
+Vector
+TorusGeometryPiece::radialDirection(const Point& pt) const {
   // Translate point
   Vector pNormal = pt - d_center;
-  
+
   // Rotate point so that torus axis is along "z"
   pNormal = d_rotation * pNormal;
 
@@ -180,3 +175,5 @@ TorusGeometryPiece::radialDirection(const Point& pt) const
 
   return pNormal;
 }
+
+}  // end namespace Uintah

@@ -56,7 +56,7 @@
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************
@@ -126,7 +126,7 @@ WARNING
     SimulationStateP sharedState_;
     double delt_;
     double maxresidual_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
 
     HeatEquation(const HeatEquation&);
     HeatEquation& operator=(const HeatEquation&);

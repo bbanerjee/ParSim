@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,96 +24,75 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/GeometryPiece/IntersectionGeometryPiece.h>
-#include <Core/GeometryPiece/GeometryPieceFactory.h>
-#include <Core/Grid/Box.h>
-#include <Core/Grid/Grid.h>
-#include <Core/Malloc/Allocator.h>
 #include <Core/Geometry/Point.h>
+#include <Core/GeometryPiece/GeometryPieceFactory.h>
+#include <Core/GeometryPiece/IntersectionGeometryPiece.h>
+#include <Core/Grid/Box.h>
+#include <Core/Malloc/Allocator.h>
 
-using namespace Uintah;
+#include <memory>
 
-using std::vector;
+namespace Uintah {
 
-const string IntersectionGeometryPiece::TYPE_NAME = "intersection";
+const std::string IntersectionGeometryPiece::TYPE_NAME = "intersection";
 
-IntersectionGeometryPiece::IntersectionGeometryPiece(ProblemSpecP &ps,
-                                                     const GridP grid) 
-{
-  name_ = "Unnamed Intersection";
-  GeometryPieceFactory::create(ps, grid, child_);
-
+IntersectionGeometryPiece::IntersectionGeometryPiece(ProblemSpecP& ps) {
+  d_name = "Unnamed Intersection";
+  GeometryPieceFactory::create(ps, d_children);
 }
 
-IntersectionGeometryPiece::IntersectionGeometryPiece(const IntersectionGeometryPiece& rhs)
-{
-  for( vector<GeometryPieceP>::const_iterator it = rhs.child_.begin();
-       it != rhs.child_.end(); ++it )
-    child_.push_back((*it)->clone());
-}
-
-
-IntersectionGeometryPiece::~IntersectionGeometryPiece()
-{
+IntersectionGeometryPiece::IntersectionGeometryPiece(
+    const IntersectionGeometryPiece& rhs) {
+  for (auto& child : rhs.d_children) {
+    d_children.emplace_back(child->clone());
+  }
 }
 
 IntersectionGeometryPiece&
-IntersectionGeometryPiece::operator=(const IntersectionGeometryPiece& rhs)
-{
-  if (this == &rhs)
-    return *this;
-
-  child_.clear();
-
-  // Copy in the new values
-  for( vector<GeometryPieceP>::const_iterator it = rhs.child_.begin();
-       it != rhs.child_.end(); ++it ) {
-    child_.push_back((*it)->clone());
+IntersectionGeometryPiece::operator=(const IntersectionGeometryPiece& rhs) {
+  if (this == &rhs) return *this;
+  d_children.clear();
+  for (auto& child : rhs.d_children) {
+    d_children.emplace_back(child->clone());
   }
-
   return *this;
 }
 
 void
-IntersectionGeometryPiece::outputHelper( ProblemSpecP & ps) const
-{
-  for (vector<GeometryPieceP>::const_iterator it = child_.begin(); it != child_.end(); ++it) {
-    (*it)->outputProblemSpec( ps );
+IntersectionGeometryPiece::outputHelper(ProblemSpecP& ps) const {
+  for (auto& child : d_children) {
+    child->outputProblemSpec(ps);
   }
 }
 
 GeometryPieceP
-IntersectionGeometryPiece::clone() const
-{
-  return scinew IntersectionGeometryPiece(*this);
+IntersectionGeometryPiece::clone() const {
+  return std::make_shared<IntersectionGeometryPiece>(*this);
 }
 
 bool
-IntersectionGeometryPiece::inside(const Point &p) const 
-{
-  for( unsigned int i = 0; i < child_.size(); i++ ) {
-    if (!child_[i]->inside(p))
-      return false;
+IntersectionGeometryPiece::inside(const Point& p) const {
+  for (const auto& child : d_children) {
+    if (!child->inside(p)) return false;
   }
   return true;
 }
 
 Box
-IntersectionGeometryPiece::getBoundingBox() const
-{
-  Point lo,hi;
+IntersectionGeometryPiece::getBoundingBox() const {
+  Point lo, hi;
 
   // Initialize the lo and hi points to the first element
+  lo = d_children[0]->getBoundingBox().lower();
+  hi = d_children[0]->getBoundingBox().upper();
 
-  lo = child_[0]->getBoundingBox().lower();
-  hi = child_[0]->getBoundingBox().upper();
-
-  for (unsigned int i = 0; i < child_.size(); i++) {
-    Box box = child_[i]->getBoundingBox();
-    lo = Min(lo,box.lower());
-    hi = Max(hi,box.upper());
+  for (const auto& child : d_children) {
+    Box box = child->getBoundingBox();
+    lo      = Min(lo, box.lower());
+    hi      = Max(hi, box.upper());
   }
 
-  return Box(lo,hi);
+  return Box(lo, hi);
 }
 
+} // end namespace Uintah

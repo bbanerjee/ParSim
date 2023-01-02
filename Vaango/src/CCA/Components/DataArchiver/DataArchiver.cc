@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -112,8 +112,8 @@ DataArchiver::DataArchiver(const ProcessorGroup* myworld, int udaSuffix)
   d_particlePositionName  = "p.x";
   d_usingReduceUda        = false;
 
-  d_XMLIndexDoc = NULL;
-  d_CheckpointXMLIndexDoc = NULL;
+  d_XMLIndexDoc = nullptr;
+  d_CheckpointXMLIndexDoc = nullptr;
 
   d_outputDoubleAsFloat = false;
 
@@ -949,7 +949,7 @@ DataArchiver::createIndexXML(Dir& dir)
   const char * logname = getenv("LOGNAME");
   if(logname) metaElem->appendElement("username", logname);
 
-  time_t t = time(NULL) ;
+  time_t t = time(nullptr) ;
    
   // Chop the newline character off the time string so that the Date
   // field will appear properly in the XML
@@ -1911,7 +1911,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
   string xmlFilename;
   string dataFilebase;
   string dataFilename;
-  const Level* level = NULL;
+  const Level* level = nullptr;
   IntVector clowIndex, chighIndex;
 
   // find the xml filename and data filename that we will write to
@@ -2297,7 +2297,7 @@ DataArchiver::initSaveLabels(SchedulerP& sched, bool initTimestep)
     //   make sure that the scheduler shows that that it has been scheduled
     //   to be computed.  Then save it to saveItems.
     VarLabel* var = VarLabel::find((*it).labelName);
-    if (var == NULL) {
+    if (var == nullptr) {
       if (initTimestep)
         continue;
       else
@@ -2408,7 +2408,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   for (mapIter = label_map.begin();
        mapIter != label_map.end(); mapIter++) {
     VarLabel* var = VarLabel::find(mapIter->first);
-    if (var == NULL)
+    if (var == nullptr)
       throw ProblemSetupException(mapIter->first +
                                   " variable not found to checkpoint.", __FILE__, __LINE__);
      
@@ -2440,7 +2440,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
 
   if (!hasDelT) {
     VarLabel* var = VarLabel::find("delT");
-    if (var == NULL)
+    if (var == nullptr)
       throw ProblemSetupException("delT variable not found to checkpoint.", __FILE__, __LINE__);
     saveItem.label_ = var;
     saveItem.matlSet_.clear();

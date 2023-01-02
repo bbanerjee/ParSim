@@ -277,7 +277,7 @@ DetailedTask::DetailedTask(Task* task,
   deviceExternallyReady_ = false;
   completed_ = false;
   deviceNum_ = -1;
-  setCUDAStream(NULL);
+  setCUDAStream(nullptr);
 #endif
 }
 
@@ -323,10 +323,10 @@ void DetailedTask::doit(const ProcessorGroup* pg,
     CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(deviceNum_));
     task->doit(event, pg, patches, matls, dws, d_cudaStream, deviceNum_);
   } else {
-    task->doit(event, pg, patches, matls, dws, NULL, -1);
+    task->doit(event, pg, patches, matls, dws, nullptr, -1);
   }
 #else
-  task->doit(event, pg, patches, matls, dws, NULL, -1);
+  task->doit(event, pg, patches, matls, dws, nullptr, -1);
 #endif
 
   for (int i = 0; i < (int)dws.size(); i++) {
@@ -759,7 +759,7 @@ DetailedDep* DetailedTasks::findMatchingDetailedDep(DependencyBatch* batch,
           if (fromPatch)
             dbg << fromPatch->getID() << '\n';
           else
-            dbg << "NULL\n";
+            dbg << "nullptr\n";
           dbg << d_myworld->myRank() << " TP: " << totalLow << " " << totalHigh << endl;
         }
       } else {
@@ -961,7 +961,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     }
 
     //remove the matching_dep from the batch list
-    if (parent_dep == NULL) {
+    if (parent_dep == nullptr) {
       batch->head = matching_dep->next;
     } else {
       parent_dep->next = matching_dep->next;
@@ -984,10 +984,10 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
   new_dep->patchLow = varRangeLow;
   new_dep->patchHigh = varRangeHigh;
 
-  if (insert_dep == NULL) {
+  if (insert_dep == nullptr) {
     //no dependencies are in the list so add it to the head
     batch->head = new_dep;
-    new_dep->next = NULL;
+    new_dep->next = nullptr;
   } else {
     //depedencies already exist so add it at the insert location.
     new_dep->next = insert_dep->next;
@@ -1031,7 +1031,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     if (fromPatch)
       dbg << fromPatch->getID() << '\n';
     else
-      dbg << "NULL\n";
+      dbg << "nullptr\n";
   }
 }
 
@@ -1319,7 +1319,7 @@ void DetailedTasks::internalDependenciesSatisfied(DetailedTask* task)
 DetailedTask*
 DetailedTasks::getNextInternalReadyTask()
 {
-  DetailedTask* nextTask = NULL;
+  DetailedTask* nextTask = nullptr;
   readyQueueLock_.writeLock();
   {
     if (!readyTasks_.empty()) {
@@ -1345,7 +1345,7 @@ int DetailedTasks::numInternalReadyTasks()
 DetailedTask*
 DetailedTasks::getNextExternalReadyTask()
 {
-  DetailedTask* nextTask = NULL;
+  DetailedTask* nextTask = nullptr;
   mpiCompletedQueueLock_.writeLock();
   {
     if (!mpiCompletedTasks_.empty()) {
@@ -1371,7 +1371,7 @@ int DetailedTasks::numExternalReadyTasks()
 #ifdef HAVE_CUDA
 DetailedTask* DetailedTasks::getNextInitiallyReadyDeviceTask()
 {
-  DetailedTask* nextTask = NULL;
+  DetailedTask* nextTask = nullptr;
   deviceReadyQueueLock_.writeLock();
   if (!initiallyReadyDeviceTasks_.empty()) {
     nextTask = initiallyReadyDeviceTasks_.top();
@@ -1384,7 +1384,7 @@ DetailedTask* DetailedTasks::getNextInitiallyReadyDeviceTask()
 
 DetailedTask* DetailedTasks::getNextCompletionPendingDeviceTask()
 {
-  DetailedTask* nextTask = NULL;
+  DetailedTask* nextTask = nullptr;
   deviceCompletedQueueLock_.writeLock();
   if (!completionPendingDeviceTasks_.empty()) {
     nextTask = completionPendingDeviceTasks_.top();
@@ -1406,7 +1406,7 @@ DetailedTask* DetailedTasks::peekNextInitiallyReadyDeviceTask()
 
 DetailedTask* DetailedTasks::peekNextCompletionPendingDeviceTask()
 {
-  DetailedTask* dtask = NULL;
+  DetailedTask* dtask = nullptr;
   deviceCompletedQueueLock_.readLock();
   {
     dtask = completionPendingDeviceTasks_.top();

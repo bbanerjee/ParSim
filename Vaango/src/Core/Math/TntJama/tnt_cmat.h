@@ -118,9 +118,9 @@ protected:
     row_ = scinew T * [M];
     rowm1_ = scinew T * [M];
 
-    assert(v_ != NULL);
-    assert(row_ != NULL);
-    assert(rowm1_ != NULL);
+    assert(v_ != nullptr);
+    assert(row_ != nullptr);
+    assert(rowm1_ != nullptr);
 
     T* p = v_;
     vm1_ = v_ - 1;
@@ -187,18 +187,18 @@ protected:
   void destroy()
   {
     /* do nothing, if no memory has been previously allocated */
-    if (v_ == NULL)
+    if (v_ == nullptr)
       return;
 
     /* if we are here, then matrix was previously allocated */
-    if (v_ != NULL)
+    if (v_ != nullptr)
       delete[](v_);
-    if (row_ != NULL)
+    if (row_ != nullptr)
       delete[](row_);
 
     /* return rowm1_ back to original value */
     rowm1_++;
-    if (rowm1_ != NULL)
+    if (rowm1_ != nullptr)
       delete[](rowm1_);
   }
 

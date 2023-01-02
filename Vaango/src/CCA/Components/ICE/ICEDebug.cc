@@ -1066,7 +1066,7 @@ void ICE::createDirs( const Patch* patch,
   string udaDir = dataArchiver->getOutputLocation();
   // bullet proofing
   DIR *check = opendir(udaDir.c_str());
-  if ( check == NULL){
+  if ( check == nullptr){
     ostringstream warn;
     warn << "ICE:printData:Dumping GnuPlot Data:  The main uda directory does not exist. "
          << " Make sure you're dumping out at least one timestep in the input file";

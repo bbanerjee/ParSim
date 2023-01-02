@@ -333,10 +333,10 @@ GridDataRaw* getGridDataMainType(DataArchive *archive,
   case Uintah::TypeDescription::Type::long_type:
   case Uintah::TypeDescription::Type::long64_type:
     cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
-    return NULL;
+    return nullptr;
   default:
     cerr << "Unknown subtype\n";
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -361,8 +361,8 @@ getGridData(DataArchive *archive,
   vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -373,7 +373,7 @@ getGridData(DataArchive *archive,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
 
@@ -390,7 +390,7 @@ getGridData(DataArchive *archive,
     return getGridDataMainType<SFCZVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
   default:
     cerr << "Type is unknown.\n";
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -476,8 +476,8 @@ getParticleData(DataArchive *archive,
   vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -488,7 +488,7 @@ getParticleData(DataArchive *archive,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
 
@@ -509,7 +509,7 @@ getParticleData(DataArchive *archive,
     return readParticleData<Matrix3>(archive, patch, variable_name, material, timestep);
   default:
     cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";
-    return NULL;
+    return nullptr;
   }
 }
 

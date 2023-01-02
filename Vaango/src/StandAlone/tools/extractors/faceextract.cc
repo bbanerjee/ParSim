@@ -557,10 +557,10 @@ int main(int argc, char** argv)
     } else if (s == "-vv" || s == "--verbose") {
       verbose = true;
     } else if (s == "-timestep" || s == "--timestep") {
-      int val = strtoul(argv[++i],(char**)NULL,10);
+      int val = strtoul(argv[++i],(char**)nullptr,10);
       timestep = val;
     } else if (s == "-container" || s == "--container") {
-      int val = strtoul(argv[++i],(char**)NULL,10);
+      int val = strtoul(argv[++i],(char**)nullptr,10);
       container = val;
     } else if (s == "-istart" || s == "--indexs") {
       int x = atoi(argv[++i]);

@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VAANGO_NULL_CONTACT_H__
-#define __VAANGO_NULL_CONTACT_H__
+#ifndef __VAANGO_nullptr_CONTACT_H__
+#define __VAANGO_nullptr_CONTACT_H__
 
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
@@ -92,5 +92,5 @@ namespace Vaango {
     
 
 
-#endif /* __VAANGO_NULL_CONTACT_H__ */
+#endif /* __VAANGO_nullptr_CONTACT_H__ */
 

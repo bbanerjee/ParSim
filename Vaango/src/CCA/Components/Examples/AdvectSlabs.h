@@ -58,7 +58,7 @@
 #include <Core/Grid/Variables/CCVariable.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************
@@ -133,7 +133,7 @@ WARNING
     SimulationStateP sharedState_;
     double delt_;
     double maxresidual_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
 
     // Our advector variables  
     CCVariable<fflux> d_OFS;

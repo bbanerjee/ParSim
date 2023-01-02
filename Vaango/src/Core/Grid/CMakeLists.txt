@@ -1,6 +1,7 @@
 #  The MIT License
 # 
 #  Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+#  Copyright (c) 2015-2023 Biswajit Banerjee
 # 
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -44,11 +45,12 @@ SET(Vaango_Core_Grid_SRCS
   LinearInterpolator.cc
   AxiLinearInterpolator.cc
   Material.cc
+  MaterialManager.cc
   ParticleInterpolator.cc
   Patch.cc
   PatchRangeTree.cc
   Region.cc
-  SimpleMaterial.cc
+  EmptyMaterial.cc
   SimulationState.cc
   SimulationTime.cc
   Task.cc

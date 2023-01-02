@@ -103,7 +103,7 @@ InsertStringInFile(char* filename, const char* match, const char* add_text)
   /* create a copy of the original file */
   ifile = fopen(filename,"r");
 
-  if( ifile == NULL ) {
+  if( ifile == nullptr ) {
     printf( "ERROR: In Core/Util/FileUtils.cc: InsertStringInFile:\n" );
     printf("        File '%s' does not exist!\n", filename );
     printf( "       There is something seriously wrong with your Uintah installation.\n");
@@ -353,7 +353,7 @@ testFilesystem( const string & directoryPath,
 
   // Create a temporary file
   fp = fopen( fileName.c_str(), "w" );
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     error_stream << "ERROR: testFilesystem() failed to create a temp file (" << fileName << ") in " 
                  << directoryPath << "\n";
     error_stream << "       errno is " << errno << "\n";
@@ -704,7 +704,7 @@ opendir(const char *name)
 {
   // grab the first file in the directory by ending name with "/*"
   DIR *dir = 0;
-  if (name != NULL) {
+  if (name != nullptr) {
     unsigned length = strlen(name);
     if (length > 0) {
       dir = new DIR;

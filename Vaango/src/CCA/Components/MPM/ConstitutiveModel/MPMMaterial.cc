@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,10 +26,10 @@
 
 //  MPMMaterial.cc
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
@@ -42,58 +42,45 @@
 #include <Core/GeometryPiece/NullGeometryPiece.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Grid/Box.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
 #include <iostream>
 #include <list>
 #include <string>
 
 #define d_TINY_RHO 1.0e-12 // also defined  ICE.cc and ICEMaterial.cc
 
-#define OLD
-
-using namespace std;
-using namespace Uintah;
+namespace Uintah {
 
 // Default constructor
 MPMMaterial::MPMMaterial()
-  : d_cm(nullptr)
-  , d_particle_creator(nullptr)
 {
-  d_lb = scinew MPMLabel();
-  d_doBasicDamage = false;
-  d_basicDamageModel = nullptr;
-  d_sdm = nullptr;
+  d_lb = std::make_unique<MPMLabel>();
 }
 
 // Standard Constructor
-MPMMaterial::MPMMaterial(ProblemSpecP& ps, const GridP grid,
-                         SimulationStateP& ss, MPMFlags* flags)
+MPMMaterial::MPMMaterial(ProblemSpecP& ps,
+                         MaterialManagerP& matManager,
+                         MPMFlags* flags,
+                         bool isRestart)
   : Material(ps)
-  , d_cm(nullptr)
-  , d_particle_creator(nullptr)
 {
-  d_lb = scinew MPMLabel();
-
-  // The standard set of initializations needed
-  standardInitialization(ps, grid, ss, flags);
-
-  d_cm->setSharedState(ss.get_rep());
-  if (d_doBasicDamage) {
-    d_basicDamageModel->setSharedState(ss.get_rep());
-  }
-
-  // Check to see which ParticleCreator object we need
+  d_lb = std::make_unique<MPMLabel>();
+  standardInitialization(ps, matManager, flags, isRestart);
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 }
 
 void
-MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
-                                    SimulationStateP& ss, MPMFlags* flags)
+MPMMaterial::standardInitialization(ProblemSpecP& ps,
+                                    MaterialManagerP& matManager,
+                                    MPMFlags* flags,
+                                    bool isRestart)
 
 {
   // Follow the layout of the input file
@@ -114,29 +101,27 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
   d_doBasicDamage = false;
   ps->get("do_basic_damage", d_doBasicDamage);
   if (d_doBasicDamage) {
-    d_basicDamageModel = scinew Vaango::BasicDamageModel(ps, flags);
+    d_basicDamageModel = std::make_unique<Vaango::BasicDamageModel>(ps, flags);
+    d_basicDamageModel->setMaterialManager(matManager);
   }
 
   // Step 1 -- create the constitutive gmodel.
   d_cm = ConstitutiveModelFactory::create(ps, flags);
+  d_cm->setMaterialManager(matManager);
   if (!d_cm) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the ConstitutiveModelFactory that has \n"
-         << " slipped through the existing bullet proofing. Please tell \n"
-         << " either Jim, John or Todd " << endl;
+         << "slipped through the existing bullet proofing.\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   // Step 1.1 -- check if scalar diffusion is used and
   // create the scalar diffusion model.
   if (flags->d_doScalarDiffusion) {
-    d_sdm = ScalarDiffusionModelFactory::create(ps, ss, flags);
-  } else {
-    d_sdm = nullptr;
+    d_sdm = ScalarDiffusionModelFactory::create(ps, matManager, flags);
   }
 
   // Step 2 -- get the general material properties
-
   ps->require("density", d_density);
   ps->require("thermal_conductivity", d_thermalConductivity);
   ps->require("specific_heat", d_specificHeat);
@@ -163,7 +148,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
 
   // Step 3 -- Loop through all of the pieces in this geometry object
   // int piece_num = 0;
-  list<GeometryObject::DataItem> geom_obj_data;
+  std::list<GeometryObject::DataItem> geom_obj_data;
   geom_obj_data.push_back(
     GeometryObject::DataItem("res", GeometryObject::IntVector));
   geom_obj_data.push_back(
@@ -195,59 +180,34 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
   for (ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0;
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object")) {
-
-    vector<GeometryPieceP> pieces;
-    GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
+    std::vector<GeometryPieceP> pieces;
+    GeometryPieceFactory::create(geom_obj_ps, pieces);
 
     GeometryPieceP mainpiece;
     if (pieces.size() == 0) {
-      throw ParameterNotFound("No piece specified in geom_object", __FILE__,
-                              __LINE__);
+      throw ParameterNotFound(
+        "No piece specified in geom_object", __FILE__, __LINE__);
     } else if (pieces.size() > 1) {
-      mainpiece = scinew UnionGeometryPiece(pieces);
+      mainpiece = std::make_shared<UnionGeometryPiece>(pieces);
     } else {
       mainpiece = pieces[0];
     }
 
     //    piece_num++;
     d_geom_objs.push_back(
-      scinew GeometryObject(mainpiece, geom_obj_ps, geom_obj_data));
+      std::make_shared<GeometryObject>(mainpiece, geom_obj_ps, geom_obj_data));
   }
 }
 
-MPMMaterial::~MPMMaterial()
-{
-  if (d_lb) {
-    delete d_lb;
-  }
-  if (d_cm) {
-    delete d_cm;
-  }
-  if (d_particle_creator) {
-    delete d_particle_creator;
-  }
-  if (d_doBasicDamage) {
-    delete d_basicDamageModel;
-  }
-  if (d_sdm) {
-    delete d_sdm;
-  }
-  if (d_geom_objs.size() > 0.0) {
-    for (auto& d_geom_obj : d_geom_objs) {
-      delete d_geom_obj;
-    }
-  }
+MPMMaterial::~MPMMaterial() {
 }
 
-/*
- */
 void
-MPMMaterial::registerParticleState(SimulationState* sharedState)
+MPMMaterial::registerParticleState(std::vector<VarLabelVector>& state,
+                                   std::vector<VarLabelVector>& state_preReloc)
 {
-  sharedState->d_particleState.push_back(
-    d_particle_creator->returnParticleState());
-  sharedState->d_particleState_preReloc.push_back(
-    d_particle_creator->returnParticleStatePreReloc());
+  state.push_back(d_particle_creator->returnParticleState());
+  state_preReloc.push_back(d_particle_creator->returnParticleStatePreReloc());
 }
 
 ProblemSpecP
@@ -275,7 +235,8 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
   }
 
   for (vector<GeometryObject*>::const_iterator it = d_geom_objs.begin();
-       it != d_geom_objs.end(); it++) {
+       it != d_geom_objs.end();
+       it++) {
     (*it)->outputProblemSpec(mpm_ps);
   }
 
@@ -283,7 +244,8 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-MPMMaterial::copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat,
+MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,
+                             const MPMMaterial* mat,
                              MPMFlags* flags)
 {
   d_doBasicDamage = mat->d_doBasicDamage;
@@ -291,15 +253,15 @@ MPMMaterial::copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat,
     d_basicDamageModel = mat->d_basicDamageModel->clone();
   }
 
-  d_cm = mat->d_cm->clone();
-  d_density = mat->d_density;
+  d_cm                  = mat->d_cm->clone();
+  d_density             = mat->d_density;
   d_thermalConductivity = mat->d_thermalConductivity;
-  d_specificHeat = mat->d_specificHeat;
-  d_Cv = mat->d_Cv;
-  d_Cp = mat->d_Cp;
-  d_troom = mat->d_troom;
-  d_tmelt = mat->d_tmelt;
-  d_is_rigid = mat->d_is_rigid;
+  d_specificHeat        = mat->d_specificHeat;
+  d_Cv                  = mat->d_Cv;
+  d_Cp                  = mat->d_Cp;
+  d_troom               = mat->d_troom;
+  d_tmelt               = mat->d_tmelt;
+  d_is_rigid            = mat->d_is_rigid;
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
@@ -311,7 +273,7 @@ MPMMaterial::getConstitutiveModel() const
   // Return the pointer to the constitutive model associated
   // with this material
 
-  return d_cm;
+  return d_cm.get();
 }
 
 Vaango::BasicDamageModel*
@@ -320,27 +282,28 @@ MPMMaterial::getBasicDamageModel() const
   // Return the pointer to the basic damage model associated
   // with this material
 
-  return d_basicDamageModel;
+  return d_basicDamageModel.get();
 }
 
 ScalarDiffusionModel*
 MPMMaterial::getScalarDiffusionModel() const
 {
-  return d_sdm;
+  return d_sdm.get();
 }
 
 particleIndex
 MPMMaterial::createParticles(CCVariable<short int>& cellNAPID,
-                             const Patch* patch, DataWarehouse* new_dw)
+                             const Patch* patch,
+                             DataWarehouse* new_dw)
 {
-  return d_particle_creator->createParticles(this, cellNAPID, patch, new_dw,
-                                             d_geom_objs);
+  return d_particle_creator->createParticles(
+    this, cellNAPID, patch, new_dw, d_geom_objs);
 }
 
 ParticleCreator*
 MPMMaterial::getParticleCreator()
 {
-  return d_particle_creator;
+  return d_particle_creator.get();
 }
 
 double
@@ -376,38 +339,17 @@ MPMMaterial::getMeltTemperature() const
 int
 MPMMaterial::nullGeomObject() const
 {
-  for (int obj = 0; obj < (int)d_geom_objs.size(); obj++) {
-    GeometryPieceP piece = d_geom_objs[obj]->getPiece();
+  int count = 0;
+  for (const auto& object : d_geom_objs) {
+    GeometryPieceP piece = object->getPiece();
     NullGeometryPiece* null_piece =
-      dynamic_cast<NullGeometryPiece*>(piece.get_rep());
-    if (null_piece)
-      return obj;
+      dynamic_cast<NullGeometryPiece*>(piece.get());
+    if (null_piece) {
+      return count;
+    }
+    count++;
   }
   return -1;
-}
-
-bool
-MPMMaterial::getIsRigid() const
-{
-  return d_is_rigid;
-}
-
-bool
-MPMMaterial::getIncludeFlowWork() const
-{
-  return d_includeFlowWork;
-}
-
-double
-MPMMaterial::getSpecificHeat() const
-{
-  return d_specificHeat;
-}
-
-double
-MPMMaterial::getThermalConductivity() const
-{
-  return d_thermalConductivity;
 }
 
 /* ---------------------------------------------------------------------
@@ -436,18 +378,20 @@ MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
 
   for (auto& d_geom_obj : d_geom_objs) {
     GeometryPieceP piece = d_geom_obj->getPiece();
-    IntVector ppc = d_geom_obj->getInitialData_IntVector("res");
-    Vector dxpp = patch->dCell() / ppc;
-    Vector dcorner = dxpp * 0.5;
-    double totalppc = ppc.x() * ppc.y() * ppc.z();
+    IntVector ppc        = d_geom_obj->getInitialData_IntVector("res");
+    Vector dxpp          = patch->dCell() / ppc;
+    Vector dcorner       = dxpp * 0.5;
+    double totalppc      = ppc.x() * ppc.y() * ppc.z();
 
     // Find the bounds of a region a little bigger than the piece's BBox.
     Box bb = piece->getBoundingBox();
 
-    Point bb_low(bb.lower().x() - 3.0 * dx.x(), bb.lower().y() - 3.0 * dx.y(),
+    Point bb_low(bb.lower().x() - 3.0 * dx.x(),
+                 bb.lower().y() - 3.0 * dx.y(),
                  bb.lower().z() - 3.0 * dx.z());
 
-    Point bb_up(bb.upper().x() + 3.0 * dx.x(), bb.upper().y() + 3.0 * dx.y(),
+    Point bb_up(bb.upper().x() + 3.0 * dx.x(),
+                bb.upper().y() + 3.0 * dx.y(),
                 bb.upper().z() + 3.0 * dx.z());
 
     for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
@@ -455,7 +399,7 @@ MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
       IntVector c = *iter;
 
       Point lower = patch->nodePosition(*iter) + dcorner;
-      int count = 0;
+      int count   = 0;
 
       for (int ix = 0; ix < ppc.x(); ix++) {
         for (int iy = 0; iy < ppc.y(); iy++) {
@@ -477,7 +421,7 @@ MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
       }
 
       rho_micro[c] = getInitialDensity();
-      rho_CC[c] = rho_micro[c] * vol_frac_CC[c] + d_TINY_RHO;
+      rho_CC[c]    = rho_micro[c] * vol_frac_CC[c] + d_TINY_RHO;
 
       // these values of temp_CC and vel_CC are only used away from the mpm
       // objects
@@ -499,7 +443,7 @@ MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
       //  timmestep
       if (inside_bb_lo && inside_bb_up) {
         vel_CC[c] = d_geom_obj->getInitialData_Vector("velocity");
-        temp[c] = d_geom_obj->getInitialData_double("temperature");
+        temp[c]   = d_geom_obj->getInitialData_double("temperature");
       }
 
     } // Loop over cells
@@ -521,3 +465,5 @@ MPMMaterial::initializeDummyCCVariables(CCVariable<double>& rho_micro,
   temp.initialize(d_troom);
   vol_frac_CC.initialize(1.0);
 }
+
+} // end namespace Uintah

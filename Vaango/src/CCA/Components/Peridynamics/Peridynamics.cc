@@ -1008,9 +1008,9 @@ Peridynamics::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(d_labels->gVolumeLabel);
   t->computes(d_labels->gVelocityLabel);
   t->computes(d_labels->gExternalForceLabel);
-  t->computes(d_labels->gMassLabel,     d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
-  t->computes(d_labels->gVolumeLabel,   d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
-  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  t->computes(d_labels->gMassLabel,     d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
+  t->computes(d_labels->gVolumeLabel,   d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
+  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
 }
@@ -1046,17 +1046,17 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
     // Allocate and initialize global data
     NCVariable<double> gMassGlobal;
     new_dw->allocateAndPut(gMassGlobal, d_labels->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gMassGlobal.initialize(std::numeric_limits<double>::epsilon());
 
     NCVariable<double> gVolGlobal;
     new_dw->allocateAndPut(gVolGlobal, d_labels->gVolumeLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gVolGlobal.initialize(std::numeric_limits<double>::epsilon());
 
     NCVariable<Vector> gVelGlobal;
     new_dw->allocateAndPut(gVelGlobal, d_labels->gVelocityLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gVelGlobal.initialize(Vector(0.0));
 
     // Loop through peridynamics objects
@@ -1325,7 +1325,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
 
   int numGhostCells = 1;  // Linear interpolation
   task1->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
-  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMatl(), 
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMaterial(), 
                   Task::OutOfDomain, Ghost::None);
   task1->requires(Task::OldDW, d_labels->pStressLabel, Ghost::AroundNodes, numGhostCells);
   task1->requires(Task::OldDW, d_labels->pVolumeLabel, Ghost::AroundNodes, numGhostCells);
@@ -1335,7 +1335,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
 
   task1->computes(d_labels->gInternalForceLabel);
   task1->computes(d_labels->gStressLabel);
-  task1->computes(d_labels->gStressLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  task1->computes(d_labels->gStressLabel, d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
   
   sched->addTask(task1, patches, matls);
 
@@ -1399,11 +1399,11 @@ Peridynamics::computeGridInternalForce(const ProcessorGroup*,
 
     constNCVariable<double>   gVolumeGlobal;
     new_dw->get(gVolumeGlobal,  d_labels->gVolumeLabel,
-                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,0);
+                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
 
     NCVariable<Matrix3> gStressGlobal;
     new_dw->allocateAndPut(gStressGlobal, d_labels->gStressLabel, 
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
 
     int numGhostCells = 1;
     for(int m = 0; m < numPeridynamicsMatls; m++){

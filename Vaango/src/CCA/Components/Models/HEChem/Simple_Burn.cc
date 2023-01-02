@@ -376,7 +376,7 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
    
 
     // Get all Temperatures for burning check
-    int numAllMatls = d_sharedState->getNumMatls();
+    int numAllMatls = d_sharedState->getNumMaterials();
     std::vector<constCCVariable<double> >  vol_frac_CC(numAllMatls);
     std::vector<constCCVariable<double> >  temp_CC(numAllMatls);
     for (int m = 0; m < numAllMatls; m++) {

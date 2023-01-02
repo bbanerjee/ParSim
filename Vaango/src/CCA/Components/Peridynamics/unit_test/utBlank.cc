@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/Peridynamics/unit_test/utBlank.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Malloc/Allocator.h>
 
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
@@ -40,7 +40,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/LinearInterpolator.h>
@@ -78,7 +78,7 @@ using Uintah::PatchSet;
 using Uintah::PatchSubset;
 using Uintah::ProblemSpecP;
 using Uintah::ProcessorGroup;
-using Uintah::SimpleMaterial;
+using Uintah::EmptyMaterial;
 using Uintah::Task;
 using Uintah::UintahParallelComponent;
 
@@ -106,8 +106,8 @@ void utBlank::problemSetup(const ProblemSpecP& params,
   ProblemSpecP pt1 = params->findBlock("ParticleTest1");
   pt1->getWithDefault("doOutput", d_doOutput, 0);
   pt1->getWithDefault("doGhostCells", d_numGhostCells , 0);
-  d_mymat = scinew Uintah::SimpleMaterial();
-  d_sharedState->registerSimpleMaterial(d_mymat);
+  d_mymat = scinew Uintah::EmptyMaterial();
+  d_sharedState->registerEmptyMaterial(d_mymat);
 }
  
 void utBlank::scheduleInitialize(const Uintah::LevelP& level,

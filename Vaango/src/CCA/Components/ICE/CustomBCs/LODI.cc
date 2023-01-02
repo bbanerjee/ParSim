@@ -128,7 +128,7 @@ VarLabel* getMaxMach_face_VarLabel( Patch::FaceType face)
 {
   string labelName = "maxMach_" + Patch::getFaceName(face);
   VarLabel* V_Label = VarLabel::find(labelName); 
-  if (V_Label == NULL){
+  if (V_Label == nullptr){
     throw InternalError("Label " + labelName+ " doesn't exist", __FILE__, __LINE__);
   }
   return V_Label;
@@ -213,7 +213,7 @@ void lodi_getVars_pressBC( const Patch* patch,
                            DataWarehouse* new_dw)
 {
   cout_doing << "lodi_getVars_pressBC on patch "<<patch->getID()<< endl;
-  int numMatls = sharedState->getNumMatls();
+  int numMatls = sharedState->getNumMaterials();
   std::vector<constCCVariable<double> > Temp_CC(numMatls);
   std::vector<constCCVariable<double> > f_theta_CC(numMatls);
   std::vector<constCCVariable<double> > gamma(numMatls);
@@ -1613,7 +1613,7 @@ void FacePress_LODI(const Patch* patch,
     throw InternalError("FacePress_LODI: Lodi_vars_pressBC = null", __FILE__, __LINE__);
   }
 
-  int numMatls = sharedState->getNumMatls();
+  int numMatls = sharedState->getNumMaterials();
   std::vector<double> press_eos(numMatls);
   std::vector<constCCVariable<double> >& gamma   = lv->gamma;
   std::vector<constCCVariable<double> >& cv      = lv->cv;

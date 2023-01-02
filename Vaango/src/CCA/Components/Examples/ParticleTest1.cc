@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,7 +33,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -66,8 +66,8 @@ void ParticleTest1::problemSetup(const ProblemSpecP& params,
   pt1->getWithDefault("doOutput", doOutput_, 0);
   pt1->getWithDefault("doGhostCells", doGhostCells_ , 0);
   
-  mymat_ = scinew SimpleMaterial();
-  sharedState_->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState_->registerEmptyMaterial(mymat_);
 
 }
  

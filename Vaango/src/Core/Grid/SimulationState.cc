@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/CohesiveZone/CZMaterial.h>
@@ -124,7 +124,7 @@ SimulationState::SimulationState(ProblemSpecP &ps)
 void 
 SimulationState::registerMaterial(Material* matl)
 {
-  matl->registerParticleState(this);
+  //matl->registerParticleState(this);
   matl->setDWIndex((int)matls.size());
 
   matls.push_back(matl);
@@ -141,7 +141,7 @@ void
 SimulationState::registerMaterial(Material* matl,
                                   unsigned int index)
 {
-  matl->registerParticleState(this);
+  //matl->registerParticleState(this);
   matl->setDWIndex(index);
 
   if (matls.size() <= index) {
@@ -220,7 +220,7 @@ SimulationState::registerICEMaterial(ICEMaterial* matl,
 }
 
 void 
-SimulationState::registerSimpleMaterial(SimpleMaterial* matl)
+SimulationState::registerEmptyMaterial(EmptyMaterial* matl)
 {
   simple_matls.push_back(matl);
   registerMaterial(matl);
@@ -457,7 +457,7 @@ SimulationState::parseAndLookupMaterial(ProblemSpecP& params,
   // for single material problems return matl 0
   Material* result = getMaterial(0);
 
-  if( getNumMatls() > 1){
+  if( getNumMaterials() > 1){
     string matlname;
     if(!params->get(name, matlname)){
       throw ProblemSetupException("Cannot find material section", __FILE__, __LINE__);

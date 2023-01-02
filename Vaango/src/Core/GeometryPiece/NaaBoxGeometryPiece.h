@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,42 +27,40 @@
 #ifndef __NAABOX_GEOMETRY_OBJECT_H__
 #define __NAABOX_GEOMETRY_OBJECT_H__
 
+#include <Core/Geometry/Vector.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Math/Matrix3.h>
 
-#include <Core/Geometry/Vector.h>
-
 namespace Uintah {
 
 /**************************************
-	
+
 CLASS
    NaaBoxGeometryPiece
-	
+
    Creates a NON-ACCESS-ALIGNED box from the xml input file description.
-	
+
 GENERAL INFORMATION
-	
+
    NaaBoxGeometryPiece.h
-	
+
    J. Davison de St. Germain
    SCI Institute
    University of Utah
-	
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-	
+
 KEYWORDS
    Non-Access-Aligned NaaBoxGeometryPiece BoundingBox inside Parallelepiped
-	
+
 DESCRIPTION
 
-	
+
 ****************************************/
 
 class NaaBoxGeometryPiece : public GeometryPiece {
-	 
-public:
+ public:
   //////////
   // Construct a box from four points.  //
   //                                    //
@@ -76,11 +74,13 @@ public:
   //         P1---------------P3        //
   //                                    //
   // (The order of p2, p3, and p4 don't really matter.)
-  NaaBoxGeometryPiece( const Point& p1, const Point& p2, 
-                       const Point& p3, const Point& p4 );
+  NaaBoxGeometryPiece(const Point& p1,
+                      const Point& p2,
+                      const Point& p3,
+                      const Point& p4);
 
   //////////
-  // Constructor that takes a ProblemSpecP argument.   It reads the xml 
+  // Constructor that takes a ProblemSpecP argument.   It reads the xml
   // input specification and builds a generalized box.  UPS file should
   // use:
   //      <parallelepiped label = "cube">
@@ -93,37 +93,43 @@ public:
 
   //////////
   // Destructor
-  virtual ~NaaBoxGeometryPiece();
+  virtual ~NaaBoxGeometryPiece() = default;
 
-  static const string TYPE_NAME;
-  virtual std::string getType() const { return TYPE_NAME; }
+  static const std::string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
   /// Make a clone
-  virtual GeometryPieceP clone() const;
+  virtual GeometryPieceP
+  clone() const;
 
   //////////
   // Determines whether a point is inside the box.
-  virtual bool inside( const Point & pt ) const;
-	 
+  virtual bool
+  inside(const Point& pt) const;
+
   //////////
   //  Returns the bounding box surrounding the NaaBox
-  virtual Box getBoundingBox() const;
-	 
-private:
+  virtual Box
+  getBoundingBox() const;
 
-  virtual void outputHelper( ProblemSpecP & ps ) const;
+ private:
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
 
   // Called by the different constructors to create the NaaBox
-  void init( const Point& p1, const Point& p2, 
-             const Point& p3, const Point& p4 );
+  void
+  init(const Point& p1, const Point& p2, const Point& p3, const Point& p4);
 
-  Point   p1_, p2_, p3_, p4_;
-  Matrix3 toUnitCube_;
+  Point p1_, p2_, p3_, p4_;
+  Matrix3 d_toUnitCube;
 
-  Box boundingBox_;
-	 
-}; // end class NaaBoxGeometryPiece
+  Box d_boundingBox;
 
-} // End namespace Uintah
+};  // end class NaaBoxGeometryPiece
 
-#endif // __NAABOX_GEOMTRY_Piece_H__
+}  // End namespace Uintah
+
+#endif  // __NAABOX_GEOMTRY_Piece_H__

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1420,11 +1420,11 @@ UofU_MPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
               d_numGhostParticles);
 #endif
 
-  t->computes(d_labels->gMassLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(d_labels->gMassLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(d_labels->gVolumeLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(d_labels->gVolumeLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   t->computes(d_labels->gMassLabel);
@@ -1464,11 +1464,11 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
     NCVariable<double> gMassglobal, gVolumeglobal;
     NCVariable<Vector> gVelglobal;
     new_dw->allocateAndPut(gMassglobal, d_labels->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gVolumeglobal, d_labels->gVolumeLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gVelglobal, d_labels->gVelocityLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
     gMassglobal.initialize(SMALL_NUM_MPM);
     gVolumeglobal.initialize(SMALL_NUM_MPM);
     gVelglobal.initialize(Vector(0.0));
@@ -1768,7 +1768,7 @@ UofU_MPM::scheduleComputeInternalForce(SchedulerP& sched,
 
   t->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
   t->requires(Task::NewDW, d_labels->gVolumeLabel,
-              d_sharedState->getAllInOneMatl(), Task::OutOfDomain, Ghost::None);
+              d_sharedState->getAllInOneMaterial(), Task::OutOfDomain, Ghost::None);
   t->requires(Task::OldDW, d_labels->pStressLabel, Ghost::AroundNodes,
               d_numGhostParticles);
   t->requires(Task::OldDW, d_labels->pVolumeLabel, Ghost::AroundNodes,
@@ -1800,7 +1800,7 @@ UofU_MPM::scheduleComputeInternalForce(SchedulerP& sched,
   }
 
   t->computes(d_labels->gStressForSavingLabel);
-  t->computes(d_labels->gStressForSavingLabel, d_sharedState->getAllInOneMatl(),
+  t->computes(d_labels->gStressForSavingLabel, d_sharedState->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
@@ -1845,10 +1845,10 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
     NCVariable<Matrix3> gStressglobal;
     constNCVariable<double> gVolumeglobal;
     new_dw->get(gVolumeglobal, d_labels->gVolumeLabel,
-                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,
+                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,
                 0);
     new_dw->allocateAndPut(gStressglobal, d_labels->gStressForSavingLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
+                           d_sharedState->getAllInOneMaterial()->get(0), patch);
 
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
@@ -3197,7 +3197,7 @@ UofU_MPM::scheduleComputeBasicDamage(SchedulerP& sched,
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
     // Add requires and computes for vel grad/def grad
-    if (mpm_matl->d_doBasicDamage) {    
+    if (mpm_matl->doBasicDamage()) {    
       Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
       d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches, d_labels);
     }
@@ -3227,7 +3227,7 @@ UofU_MPM::computeBasicDamage(const ProcessorGroup*,
     if (cout_dbg.active()) cout_dbg << " MPM_Mat = " << mpm_matl;
 
     // Compute basic damage
-    if (mpm_matl->d_doBasicDamage) { 
+    if (mpm_matl->doBasicDamage()) { 
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw, d_labels);
       if (cout_dbg.active()) cout_dbg << " Damage model = " << basicDamageModel;
@@ -3257,7 +3257,7 @@ UofU_MPM::scheduleUpdateErosionParameter(SchedulerP& sched,
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
-    if (mpm_matl->d_doBasicDamage) {
+    if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* d_basicDamageModel =
         mpm_matl->getBasicDamageModel();
       d_basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl,
@@ -3311,7 +3311,7 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
       for (auto particle : *pset) {
         isLocalized[particle] = 0;
       }
-      if (mpm_matl->d_doBasicDamage) {
+      if (mpm_matl->doBasicDamage()) {
         Vaango::BasicDamageModel* basicDamageModel =
           mpm_matl->getBasicDamageModel();
         basicDamageModel->getLocalizationParameter(patch, isLocalized, matID,

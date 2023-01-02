@@ -34,7 +34,7 @@
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/SimulationStateP.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 
 #include <vector>
 
@@ -165,7 +165,7 @@ WARNING
     LoadBalancer         * d_lb;
     const VarLabel       * delt_label;
     SimulationStateP       d_sharedState;
-    SimpleMaterial       * d_oneMatl;
+    EmptyMaterial       * d_oneMatl;
   };
 } // End namespace Uintah
    

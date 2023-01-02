@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -329,9 +329,9 @@ main(int argc, char** argv)
         return 0;
       }
 
-      cellx = strtoul(argv[++i], (char**)NULL, 10);
-      celly = strtoul(argv[++i], (char**)NULL, 10);
-      cellz = strtoul(argv[++i], (char**)NULL, 10);
+      cellx = strtoul(argv[++i], (char**)nullptr, 10);
+      celly = strtoul(argv[++i], (char**)nullptr, 10);
+      cellz = strtoul(argv[++i], (char**)nullptr, 10);
     } else if (s == "-pol") {
       if (i + 3 >= argc) {
         usage("-pol", argv[0]);
@@ -339,8 +339,8 @@ main(int argc, char** argv)
       }
 
       axis = *argv[++i];
-      ortho1 = strtoul(argv[++i], (char**)NULL, 10);
-      ortho2 = strtoul(argv[++i], (char**)NULL, 10);
+      ortho1 = strtoul(argv[++i], (char**)nullptr, 10);
+      ortho2 = strtoul(argv[++i], (char**)nullptr, 10);
 
       clf.do_POL = true;
 
@@ -442,7 +442,7 @@ main(int argc, char** argv)
         usage("-mat", argv[0]);
         return 0;
       }
-      clf.matl_jim = strtoul(argv[++i], (char**)NULL, 10);
+      clf.matl_jim = strtoul(argv[++i], (char**)nullptr, 10);
       clf.do_material = true;
       mat = clf.matl_jim;
 
@@ -454,7 +454,7 @@ main(int argc, char** argv)
         usage("-timesteplow", argv[0]);
         return 0;
       }
-      clf.time_step_lower = strtoul(argv[++i], (char**)NULL, 10);
+      clf.time_step_lower = strtoul(argv[++i], (char**)nullptr, 10);
       clf.tslow_set = true;
     } else if (s == "-timestephigh" || s == "-timeStepHigh" ||
                s == "-timestep_high") {
@@ -462,7 +462,7 @@ main(int argc, char** argv)
         usage("-timestephigh", argv[0]);
         return 0;
       }
-      clf.time_step_upper = strtoul(argv[++i], (char**)NULL, 10);
+      clf.time_step_upper = strtoul(argv[++i], (char**)nullptr, 10);
       clf.tsup_set = true;
     } else if (s == "-timestepinc" || s == "-timestepInc" ||
                s == "-timestep_inc") {
@@ -470,7 +470,7 @@ main(int argc, char** argv)
         usage("-timestepinc", argv[0]);
         return 0;
       }
-      clf.time_step_inc = strtoul(argv[++i], (char**)NULL, 10);
+      clf.time_step_inc = strtoul(argv[++i], (char**)nullptr, 10);
     } else if ((s == "-help") || (s == "-h")) {
       usage("", argv[0]);
     } else if (clf.filebase == "") {

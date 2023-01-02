@@ -57,7 +57,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -91,8 +91,8 @@ void Poisson2::problemSetup(const ProblemSpecP& params,
   ProblemSpecP poisson = params->findBlock("Poisson");
   poisson->require("delt", delt_);
   poisson->require("maxresidual", maxresidual_);
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
  
 void Poisson2::scheduleInitialize(const LevelP& level,

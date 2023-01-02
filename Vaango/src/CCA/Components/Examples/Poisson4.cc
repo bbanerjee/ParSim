@@ -57,7 +57,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -96,9 +96,9 @@ void Poisson4::problemSetup(const ProblemSpecP& params,
   
   poisson->require("delt", delt_);
   
-  mymat_ = scinew SimpleMaterial();
+  mymat_ = scinew EmptyMaterial();
   
-  sharedState->registerSimpleMaterial(mymat_);
+  sharedState->registerEmptyMaterial(mymat_);
 }
 //______________________________________________________________________
 //

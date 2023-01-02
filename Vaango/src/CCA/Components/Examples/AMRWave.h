@@ -53,7 +53,7 @@
 #include <CCA/Components/Examples/Wave.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
   class ExamplesLabel;
 
 /**************************************

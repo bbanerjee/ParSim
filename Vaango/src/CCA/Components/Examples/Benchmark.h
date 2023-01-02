@@ -56,7 +56,7 @@
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
 
 
 /**************************************
@@ -128,7 +128,7 @@ WARNING
                      
     SimulationStateP sharedState_;
     double delt_;
-    SimpleMaterial* mymat_;
+    EmptyMaterial* mymat_;
     const VarLabel* phi_label;
     const VarLabel* residual_label;
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -76,12 +76,12 @@ extern DebugStream mixedDebug;
 static DebugStream dbg("SchedulerCommon", false);
 
 // for calculating memory usage when sci-malloc is disabled.
-char * SchedulerCommon::d_start_addr = NULL;
+char * SchedulerCommon::d_start_addr = nullptr;
 
 
 SchedulerCommon::SchedulerCommon(const ProcessorGroup* myworld, const Output* oport)
   : UintahParallelComponent(myworld), m_outPort(oport),
-    d_trackingVarsPrintLocation(0), d_maxMemUse(0), m_graphDoc(NULL), m_nodes(NULL)
+    d_trackingVarsPrintLocation(0), d_maxMemUse(0), m_graphDoc(nullptr), m_nodes(nullptr)
 {
   d_generation = 0;
   d_numOldDWs = 0;
@@ -196,7 +196,7 @@ SchedulerCommon::makeTaskGraphDoc(const DetailedTasks*/* dt*/, int rank)
   
   ProblemSpecP meta = m_graphDoc->appendChild("Meta");
   meta->appendElement("username", getenv("LOGNAME"));
-  time_t t = time(NULL);
+  time_t t = time(nullptr);
   meta->appendElement("date", ctime(&t));
   
   m_nodes = m_graphDoc->appendChild("Nodes");
@@ -264,8 +264,8 @@ SchedulerCommon::finalizeNodes(int process /* = 0*/)
   }
     
   //m_graphDoc->releaseDocument();
-  //m_graphDoc = NULL;
-  //m_nodes = NULL;
+  //m_graphDoc = nullptr;
+  //m_nodes = nullptr;
 }
 
 //______________________________________________________________________
@@ -404,7 +404,7 @@ handleError( int errorPosition, const std::string & errorMessage, const std::str
 
   std::map<std::string, bool> * varToReportedMap = errorsReported[ errorPosition ];
 
-  if( varToReportedMap == NULL ) {
+  if( varToReportedMap == nullptr ) {
     varToReportedMap = new std::map<std::string, bool>;
     errorsReported[ errorPosition ] = varToReportedMap;
   }
@@ -462,7 +462,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     if (dw == 0) { // old on initialization timestep
       std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i] 
-           << ") because DW is NULL.  Requested DW was: " 
+           << ") because DW is nullptr.  Requested DW was: " 
            << dt->getTask()->mapDataWarehouse(d_trackingDWs[i]) << "\n";
       handleError( 1, mesg.str(), d_trackingVars[i] );
       continue;
@@ -491,7 +491,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     if (!label) {
       std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
-           << ") because label is NULL.\n";
+           << ") because label is nullptr.\n";
       handleError( 2, mesg.str(), d_trackingVars[i] );
       continue;
     }
@@ -534,7 +534,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
         Min(patch->getExtraHighIndex(basis, IntVector(0,0,0)), d_trackingEndIndex);
 
       // loop over matls too
-      for (int m = 0; m < d_sharedState->getNumMatls(); m++) {
+      for (int m = 0; m < d_sharedState->getNumMaterials(); m++) {
 
         if (!dw->exists(label, m, patch)) {
           std::ostringstream mesg;
@@ -1417,7 +1417,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
       // std::cout << "REDUNCTION:  Label(" << std::setw(15) << currentReductionVar.label_->getName() << "): Patch(" << reinterpret_cast<int>(currentReductionVar.level_) << "): Material(" << currentReductionVar.matlIndex_ << ")" << endl; 
       const Level* oldLevel = currentReductionVar.domain_;
-      const Level* newLevel = NULL;
+      const Level* newLevel = nullptr;
       if (oldLevel && oldLevel->getIndex() < grid->numLevels() ) {
         if (oldLevel->getIndex() >= grid->numLevels()) {
           // the new grid no longer has this level
@@ -1462,7 +1462,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
     const Level* newLevel = newPatch->getLevel();
 
     // to create once per matl instead of once per matl-var
-    std::vector<ParticleSubset*> oldsubsets(d_sharedState->getNumMatls()), newsubsets(d_sharedState->getNumMatls());
+    std::vector<ParticleSubset*> oldsubsets(d_sharedState->getNumMaterials()), newsubsets(d_sharedState->getNumMaterials());
 
     // If there is a level that didn't exist, we don't need to copy it
     if ( newLevel->getIndex() >= oldDataWarehouse->getGrid()->numLevels() ) {
@@ -1536,7 +1536,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
                                           "in copyDataTo GridVariableBase", __FILE__, __LINE__));
               std::vector<Variable *> varlist;
               oldDataWarehouse->d_varDB.getlist(label, matl, oldPatch, varlist);
-              GridVariableBase* v=NULL;
+              GridVariableBase* v=nullptr;
 
               IntVector srclow = copyLowIndex;
               IntVector srchigh = copyHighIndex;

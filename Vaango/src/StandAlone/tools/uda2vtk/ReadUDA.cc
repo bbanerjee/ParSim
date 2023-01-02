@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,8 +41,8 @@ ReadUDA::ReadUDA()
 {
   d_useExtraCells = true;
   d_input_uda_name = "NoArchive";
-  d_archive = NULL;
-  d_stepInfo = NULL;
+  d_archive = nullptr;
+  d_stepInfo = nullptr;
 }
 
 ReadUDA::ReadUDA(const std::string& input_uda_name) 
@@ -61,7 +61,7 @@ ReadUDA::ReadUDA(const std::string& input_uda_name)
     d_cycleTimes = getCycleTimes();
 
     // haven't loaded any timestep data yet
-    d_stepInfo = NULL;
+    d_stepInfo = nullptr;
     d_currTimeStep = -1;
   } 
 }
@@ -83,7 +83,7 @@ bool
 ReadUDA::isUDAFile(const std::string& fileName) 
 {
   FILE * fp = fopen( filename, "r" );
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     std::ostringstream error;
     error << "Failed to open file: " << filename;
     throw InvalidFilesExpection(error.str(), __FILE__, __LINE__);
@@ -260,7 +260,7 @@ ReadUDA::readMesh(int timestate, int domain, const std::string& meshname)
     return ugrid;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -346,7 +346,7 @@ readUDA::readVar(int timestate, int domain, const std::string& varname)
     int qlow[3], qhigh[3]; // region we're going to ask uintah for (from qlow to qhigh-1)
     patchInfo.getBounds(qlow, qhigh, varType);
 
-    GridDataRaw *gd=NULL;
+    GridDataRaw *gd=nullptr;
 
     if (strcmp(varname, "proc_id")==0) {
       gd = new GridDataRaw;
@@ -576,8 +576,8 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
   vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -588,7 +588,7 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
   switch (maintype->getType()) {
@@ -615,7 +615,7 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
 
   default:
     cerr << "Type is unknown.\n";
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -665,11 +665,11 @@ ReadUDA::getGridDataMainType(const Patch *patch,
 
   case Uintah::TypeDescription::Type::long64_type:
     cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
-    return NULL;
+    return nullptr;
 
   default:
     cerr << "Unknown subtype\n";
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -743,8 +743,8 @@ ReadUDA::getParticleData(int level_i,
   vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -755,7 +755,7 @@ ReadUDA::getParticleData(int level_i,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
   switch (subtype->getType()) {
@@ -783,7 +783,7 @@ ReadUDA::getParticleData(int level_i,
 
   default:
     cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";
-    return NULL;
+    return nullptr;
   }
 }
 

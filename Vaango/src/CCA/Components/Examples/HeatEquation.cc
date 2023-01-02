@@ -57,7 +57,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -89,8 +89,8 @@ void HeatEquation::problemSetup(const ProblemSpecP& params,
   ProblemSpecP heateqn = params->findBlock("HeatEquation");
   heateqn->require("delt", delt_);
   heateqn->require("maxresidual", maxresidual_);
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
  
 void HeatEquation::scheduleInitialize(const LevelP& level,

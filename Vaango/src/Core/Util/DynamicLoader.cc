@@ -657,7 +657,7 @@ DynamicLoader::compile_so(const CompileInfo &info, ProgressReporter *pr)
 #ifdef __sgi
   command += " 2>&1";
   pipe = popen(command.c_str(), "r");
-  if (pipe == NULL)
+  if (pipe == nullptr)
   {
     pr->remark("DynamicLoader::compile_so() syscal error unable to make.");
     result = false;
@@ -748,7 +748,7 @@ DynamicLoader::compile_so(const CompileInfo &info, ProgressReporter *pr)
 #endif // __sgi
 
   char buffer[256];
-  while (pipe && fgets(buffer, 256, pipe) != NULL)
+  while (pipe && fgets(buffer, 256, pipe) != nullptr)
   {
     pr->add_raw_message(buffer);
   }

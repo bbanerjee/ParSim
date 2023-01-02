@@ -116,7 +116,7 @@ ProcessInfo::GetInfo(int info_type)
 
   FILE* file = fopen(statusFileName, "r");
 
-  if (file != NULL) {
+  if (file != nullptr) {
     unsigned long tempLong = 0;
     char tempString[1024];
     const char* compareString;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -131,7 +131,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
     // If the geometry object is a shell perform special 
     // operations else just treat the geom object in the standard
     // way
-    ShellGeometryPiece* shell = dynamic_cast<ShellGeometryPiece*>(piece.get_rep());
+    ShellGeometryPiece* shell = dynamic_cast<ShellGeometryPiece*>(piece.get());
 
     // Create the appropriate particles 
     if (shell) {
@@ -307,7 +307,7 @@ ShellParticleCreator::countAndCreateParticles(const Patch* patch,
 {
 
   GeometryPieceP piece = obj->getPiece();
-  ShellGeometryPiece* shell = dynamic_cast<ShellGeometryPiece*>(piece.get_rep());
+  ShellGeometryPiece* shell = dynamic_cast<ShellGeometryPiece*>(piece.get());
   if (shell) return shell->returnParticleCount(patch);
   return ParticleCreator::countAndCreateParticles(patch,obj, vars); 
 }

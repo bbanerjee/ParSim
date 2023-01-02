@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2015-2022 Parresia Research Limited, NZ
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,82 +23,78 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/GeometryPiece/SphereGeometryPiece.h>
-#include <Core/Geometry/Vector.h>
-#include <Core/Grid/Box.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Geometry/Vector.h>
+#include <Core/GeometryPiece/SphereGeometryPiece.h>
+#include <Core/Grid/Box.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Uintah;
+#include <memory>
 
-const string SphereGeometryPiece::TYPE_NAME = "sphere";
+namespace Uintah {
 
-SphereGeometryPiece::SphereGeometryPiece(ProblemSpecP& ps)
-{
-  name_ = "Unnamed " + TYPE_NAME + " from PS";
+const std::string SphereGeometryPiece::TYPE_NAME = "sphere";
 
-  Point orig = Point(0.,0.,0.);
+SphereGeometryPiece::SphereGeometryPiece(ProblemSpecP& ps) {
+  d_name = "Unnamed " + TYPE_NAME + " from PS";
+
+  Point orig = Point(0., 0., 0.);
   double rad = 0.;
 
-  if(!ps->get("center", orig)) // Alternate specification
-    ps->require("origin",orig);
-  ps->require("radius",rad);
-  
-  if ( rad <= 0.0)
-    SCI_THROW(ProblemSetupException("Input File Error: Sphere radius must be > 0.0", __FILE__, __LINE__));
-  
+  if (!ps->get("center", orig))  // Alternate specification
+    ps->require("origin", orig);
+  ps->require("radius", rad);
+
+  if (rad <= 0.0)
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Sphere radius must be > 0.0", __FILE__, __LINE__));
+
   d_origin = orig;
   d_radius = rad;
 }
 
-SphereGeometryPiece::SphereGeometryPiece(const Point& origin,
-                                         double radius)
-{
-  if ( radius <= 0.0)
-    SCI_THROW(ProblemSetupException("Input File Error: Sphere radius must be > 0.0", __FILE__, __LINE__));
-  
+SphereGeometryPiece::SphereGeometryPiece(const Point& origin, double radius) {
+  if (radius <= 0.0)
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Sphere radius must be > 0.0", __FILE__, __LINE__));
+
   d_origin = origin;
   d_radius = radius;
 }
 
-SphereGeometryPiece::~SphereGeometryPiece()
-{
-}
-
 void
-SphereGeometryPiece::outputHelper( ProblemSpecP & ps ) const
-{
-  ps->appendElement("origin",d_origin);
-  ps->appendElement("radius",d_radius);
+SphereGeometryPiece::outputHelper(ProblemSpecP& ps) const {
+  ps->appendElement("origin", d_origin);
+  ps->appendElement("radius", d_radius);
 }
 
 GeometryPieceP
-SphereGeometryPiece::clone() const
-{
-  return scinew SphereGeometryPiece(*this);
+SphereGeometryPiece::clone() const {
+  return std::make_shared<SphereGeometryPiece>(*this);
 }
 
 bool
-SphereGeometryPiece::inside(const Point& p) const
-{
+SphereGeometryPiece::inside(const Point& p) const {
   Vector diff = p - d_origin;
 
-  if (diff.length2() > d_radius*d_radius)
+  if (diff.length2() > d_radius * d_radius)
     return false;
-  else 
+  else
     return true;
-  
 }
 
-Box SphereGeometryPiece::getBoundingBox() const
-{
-    Point lo(d_origin.x()-d_radius,d_origin.y()-d_radius,
-           d_origin.z()-d_radius);
+Box
+SphereGeometryPiece::getBoundingBox() const {
+  Point lo(d_origin.x() - d_radius,
+           d_origin.y() - d_radius,
+           d_origin.z() - d_radius);
 
-    Point hi(d_origin.x()+d_radius,d_origin.y()+d_radius,
-           d_origin.z()+d_radius);
+  Point hi(d_origin.x() + d_radius,
+           d_origin.y() + d_radius,
+           d_origin.z() + d_radius);
 
-    return Box(lo,hi);
-
+  return Box(lo, hi);
 }
+
+} // end namespace Uintah

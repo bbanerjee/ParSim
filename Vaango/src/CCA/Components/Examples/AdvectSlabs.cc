@@ -57,7 +57,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -107,8 +107,8 @@ void AdvectSlabs::problemSetup(const ProblemSpecP& params,
   sharedState_ = sharedState;
   ProblemSpecP ps = params->findBlock("AdvectSlabs");
   ps->require("delt", delt_);
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  sharedState->registerEmptyMaterial(mymat_);
 }
  
 void AdvectSlabs::scheduleInitialize(const LevelP& level,

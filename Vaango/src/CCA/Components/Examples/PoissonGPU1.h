@@ -74,7 +74,7 @@ void launchPoisson1Kernel(dim3 dimGrid,
 
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
 
 
 /**************************************
@@ -135,7 +135,7 @@ WARNING
   private:
     SimulationStateP  sharedState_;
     double            delt_;
-    SimpleMaterial*   mymat_;
+    EmptyMaterial*   mymat_;
     const VarLabel*   phi_label;
     const VarLabel*   residual_label;
 
