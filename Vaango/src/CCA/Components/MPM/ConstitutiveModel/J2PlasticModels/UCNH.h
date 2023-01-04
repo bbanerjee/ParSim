@@ -102,7 +102,7 @@ public:
   UCNH& operator=(const UCNH& cm) = delete;
   ~UCNH() override;
 
-  UCNH* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

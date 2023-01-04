@@ -84,7 +84,8 @@ public:
   TransIsoHyper(const TransIsoHyper* cm);
   TransIsoHyper& operator=(const TransIsoHyper& cm) = delete;
   virtual ~TransIsoHyper() override;
-  TransIsoHyper* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

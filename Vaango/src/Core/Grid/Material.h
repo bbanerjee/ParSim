@@ -30,6 +30,8 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <string>
+#include <string_view>
+#include <memory>
 
 namespace Uintah {
 
@@ -37,9 +39,12 @@ class Material
 {
 public:
   Material(ProblemSpecP& ps);
-  Material();
+  Material() = default;
 
-  virtual ~Material();
+  virtual ~Material(); 
+
+  Material(const Material& mat) = delete;
+  Material& operator=(const Material& mat) = delete;
 
   virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
 
@@ -49,24 +54,20 @@ public:
 
   void setDWIndex(int);
 
-  const MaterialSubset* thisMaterial() const { return d_mat_subset; }
-
-  // virtual void registerParticleState(SimulationState* ss);
+  const MaterialSubset* thisMaterial() const { return d_mat_subset.get(); }
 
   bool hasName() const { return d_have_name; }
-  std::string getName() const { return d_name; }
+  std::string_view getName() const { return d_name; }
 
 protected:
   // Index associated with this material's spot in the DW
   int d_dwindex{ -1 };
-  MaterialSubset* d_mat_subset{ nullptr };
+  std::unique_ptr<MaterialSubset> d_mat_subset{ nullptr };
 
 private:
   bool d_have_name{ false };
   std::string d_name{ "" };
 
-  Material(const Material& mat) = delete;
-  Material& operator=(const Material& mat) = delete;
 };
 } // End namespace Uintah
 

@@ -147,7 +147,8 @@ public:
   ~ElasticPlasticHP() override;
 
   ElasticPlasticHP& operator=(const ElasticPlasticHP& cm) = delete;
-  ElasticPlasticHP* clone() override;
+
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /* For restarts */
   void

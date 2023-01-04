@@ -197,10 +197,10 @@ ShellMaterial::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("includeFlowWork", d_includeFlowWork);
 }
 
-ShellMaterial*
+std::unique_ptr<ConstitutiveModel>
 ShellMaterial::clone()
 {
-  return scinew ShellMaterial(*this);
+  return std::make_unique<ShellMaterial>(*this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

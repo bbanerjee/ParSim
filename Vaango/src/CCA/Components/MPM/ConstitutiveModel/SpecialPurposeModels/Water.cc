@@ -77,10 +77,10 @@ Water::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("gamma", d_initialData.d_Gamma);
 }
 
-Water*
+std::unique_ptr<ConstitutiveModel>
 Water::clone()
 {
-  return scinew Water(*this);
+  return std::make_unique<Water>(*this);
 }
 
 void

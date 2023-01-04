@@ -157,7 +157,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
@@ -183,7 +183,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
         << " default type is 'metal_internal_var'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
     ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
@@ -268,8 +268,8 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_melt   = MeltingTempModelFactory::createCopy(cm->d_melt);
   d_eos->setBulkModulus(d_initialData.Bulk);
 
-  d_intvar    = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
-  d_elastic   = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_intvar    = std::make_shared<Vaango::IntVar_Metal>(cm->d_intvar.get());
+  d_elastic   = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
   d_devStress = nullptr;
 
   initializeLocalMPMLabels();
@@ -364,10 +364,10 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_scalarDam.scalarDamageDist);
 }
 
-ElasticPlasticHP*
+std::unique_ptr<ConstitutiveModel>
 ElasticPlasticHP::clone()
 {
-  return scinew ElasticPlasticHP(this);
+  return std::make_unique<ElasticPlasticHP>(*this);
 }
 
 //______________________________________________________________________

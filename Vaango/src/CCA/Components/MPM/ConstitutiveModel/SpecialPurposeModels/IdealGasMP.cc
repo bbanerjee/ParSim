@@ -82,10 +82,10 @@ IdealGasMP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("reference_temperature", d_initialData.Tref);
 }
 
-IdealGasMP*
+std::unique_ptr<ConstitutiveModel>
 IdealGasMP::clone()
 {
-  return scinew IdealGasMP(*this);
+  return std::make_unique<IdealGasMP>(*this);
 }
 
 void

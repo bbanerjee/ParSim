@@ -65,10 +65,10 @@ TransIsoHyperImplicit::~TransIsoHyperImplicit()
 {
 }
 
-TransIsoHyperImplicit*
+std::unique_ptr<ConstitutiveModel>
 TransIsoHyperImplicit::clone()
 {
-  return scinew TransIsoHyperImplicit(*this);
+  return std::make_unique<TransIsoHyperImplicit>(*this);
 }
 
 void

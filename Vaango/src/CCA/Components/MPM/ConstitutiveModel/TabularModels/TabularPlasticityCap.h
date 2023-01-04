@@ -68,7 +68,7 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  TabularPlasticityCap* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Get parameters */
   ParameterDict getParameters() const

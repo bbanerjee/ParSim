@@ -81,10 +81,10 @@ HypoElastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("alpha", d_modelParam.alpha);
 }
 
-HypoElastic*
+std::unique_ptr<ConstitutiveModel>
 HypoElastic::clone()
 {
-  return scinew HypoElastic(*this);
+  return std::make_unique<HypoElastic>(*this);
 }
 
 void

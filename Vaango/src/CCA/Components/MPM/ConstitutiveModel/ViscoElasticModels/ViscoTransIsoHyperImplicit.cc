@@ -232,10 +232,10 @@ ViscoTransIsoHyperImplicit::outputProblemSpec(ProblemSpecP& ps,
   cm_ps->appendElement("active", d_active);
 }
 
-ViscoTransIsoHyperImplicit*
+std::unique_ptr<ConstitutiveModel>
 ViscoTransIsoHyperImplicit::clone()
 {
-  return scinew ViscoTransIsoHyperImplicit(*this);
+  return std::make_unique<ViscoTransIsoHyperImplicit>(*this);
 }
 
 void

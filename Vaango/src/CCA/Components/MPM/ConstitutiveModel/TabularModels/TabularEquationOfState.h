@@ -63,7 +63,7 @@ public:
   void outputProblemSpec(Uintah::ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  TabularEquationOfState* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // compute stable timestep for this patch
   void computeStableTimestep(const Uintah::Patch* patch,

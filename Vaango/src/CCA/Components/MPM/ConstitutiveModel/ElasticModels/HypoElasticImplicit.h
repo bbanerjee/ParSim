@@ -52,7 +52,8 @@ public:
   HypoElasticImplicit(const HypoElasticImplicit* cm);
   HypoElasticImplicit& operator=(const HypoElasticImplicit& cm) = delete;
   ~HypoElasticImplicit() override = default;
-  HypoElasticImplicit* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;

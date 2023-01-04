@@ -373,10 +373,10 @@ Kayenta::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
 }
 
-Kayenta*
+std::unique_ptr<ConstitutiveModel>
 Kayenta::clone()
 {
-  return scinew Kayenta(*this);
+  return std::make_unique<Kayenta>(*this);
 }
 
 void

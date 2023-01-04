@@ -56,7 +56,8 @@ public:
   Membrane(const Membrane* cm);
   Membrane& operator=(const Membrane& cm) = delete;
   virtual ~Membrane() override;
-  Membrane* clone() override;
+
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

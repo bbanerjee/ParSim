@@ -36,6 +36,7 @@
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/Grid/MaterialManagerP.h>
 // put here to avoid template problems
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
@@ -105,8 +106,7 @@ WARNING
                                     SchedulerP&);
 
     virtual void addMaterial(const ProblemSpecP& params,
-                             GridP& grid,
-                             SimulationStateP&);
+                             MaterialManagerP& matManager);
 
     virtual void scheduleInitializeAddedMaterial(const LevelP& level, SchedulerP&);
 

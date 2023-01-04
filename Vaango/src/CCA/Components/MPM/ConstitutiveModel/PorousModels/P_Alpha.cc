@@ -101,10 +101,10 @@ P_Alpha::~P_Alpha()
   VarLabel::destroy(pTempAlpha1Label_preReloc);
 }
 
-P_Alpha*
+std::unique_ptr<ConstitutiveModel>
 P_Alpha::clone()
 {
-  return scinew P_Alpha(*this);
+  return std::make_unique<P_Alpha>(*this);
 }
 
 void

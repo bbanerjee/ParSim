@@ -161,7 +161,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ViscoPlastic* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Initial CR */

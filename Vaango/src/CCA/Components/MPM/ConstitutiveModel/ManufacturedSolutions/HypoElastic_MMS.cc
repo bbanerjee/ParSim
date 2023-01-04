@@ -91,10 +91,10 @@ HypoElastic_MMS::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   }
 }
 
-HypoElastic_MMS*
+std::unique_ptr<ConstitutiveModel>
 HypoElastic_MMS::clone()
 {
-  return scinew HypoElastic_MMS(*this);
+  return std::make_unique<HypoElastic_MMS>(*this);
 }
 
 void

@@ -46,7 +46,8 @@ public:
   TransIsoHyperImplicit(const TransIsoHyperImplicit* cm);
   TransIsoHyperImplicit& operator=(const TransIsoHyperImplicit& cm) = delete;
   ~TransIsoHyperImplicit() override;
-  TransIsoHyperImplicit* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

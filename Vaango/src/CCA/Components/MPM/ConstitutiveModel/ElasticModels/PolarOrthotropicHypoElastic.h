@@ -78,7 +78,7 @@ public:
     const PolarOrthotropicHypoElastic& cm) = delete;
 
   // Make a clone of the constitutive model
-  PolarOrthotropicHypoElastic* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // Destroy
   ~PolarOrthotropicHypoElastic() override;

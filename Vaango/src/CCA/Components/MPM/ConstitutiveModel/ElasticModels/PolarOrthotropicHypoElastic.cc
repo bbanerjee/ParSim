@@ -195,10 +195,10 @@ PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(
 }
 
 // Make a clone of the constitutive model
-PolarOrthotropicHypoElastic*
+std::unique_ptr<Uintah::ConstitutiveModel>
 PolarOrthotropicHypoElastic::clone()
 {
-  return scinew PolarOrthotropicHypoElastic(*this);
+  return std::make_unique<PolarOrthotropicHypoElastic>(*this);
 }
 
 PolarOrthotropicHypoElastic::~PolarOrthotropicHypoElastic()

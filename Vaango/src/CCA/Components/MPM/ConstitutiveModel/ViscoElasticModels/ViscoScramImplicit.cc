@@ -263,10 +263,10 @@ ViscoScramImplicit::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("C2", d_tt.C2_WLF);
 }
 
-ViscoScramImplicit*
+std::unique_ptr<ConstitutiveModel>
 ViscoScramImplicit::clone()
 {
-  return scinew ViscoScramImplicit(*this);
+  return std::make_unique<ViscoScramImplicit>(*this);
 }
 
 void

@@ -127,10 +127,10 @@ ViscoSCRAMHotSpot::~ViscoSCRAMHotSpot()
   VarLabel::destroy(pChemHeatRateLabel_preReloc);
 }
 
-ViscoSCRAMHotSpot*
+std::unique_ptr<ConstitutiveModel>
 ViscoSCRAMHotSpot::clone()
 {
-  return scinew ViscoSCRAMHotSpot(*this);
+  return std::make_unique<ViscoSCRAMHotSpot>(*this);
 }
 
 void

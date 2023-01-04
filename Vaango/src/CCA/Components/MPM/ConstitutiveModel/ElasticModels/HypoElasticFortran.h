@@ -51,7 +51,8 @@ public:
   HypoElasticFortran(const HypoElasticFortran* cm);
   HypoElasticFortran& operator=(const HypoElasticFortran& cm) = delete;
   virtual ~HypoElasticFortran() override = default;
-  HypoElasticFortran* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

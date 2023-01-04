@@ -121,10 +121,10 @@ ProgramBurn::~ProgramBurn()
   VarLabel::destroy(pLocalizedLabel_preReloc);
 }
 
-ProgramBurn*
+std::unique_ptr<ConstitutiveModel>
 ProgramBurn::clone()
 {
-  return scinew ProgramBurn(*this);
+  return std::make_unique<ProgramBurn>(*this);
 }
 
 void

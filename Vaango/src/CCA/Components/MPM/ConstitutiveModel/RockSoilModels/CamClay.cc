@@ -101,7 +101,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
         << " default type is 'borja_consolidation_pressure'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear);
+  d_intvar = std::make_shared<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear);
   if (!d_intvar) {
     ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
@@ -127,7 +127,7 @@ CamClay::CamClay(const CamClay* cm)
   d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(cm->d_intvar.get());
+  d_intvar = std::make_shared<Vaango::IntVar_BorjaPressure>(cm->d_intvar.get());
 
   initializeLocalMPMLabels();
 }
@@ -163,10 +163,10 @@ CamClay::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_intvar->outputProblemSpec(cm_ps);
 }
 
-CamClay*
+std::unique_ptr<ConstitutiveModel>
 CamClay::clone()
 {
-  return scinew CamClay(this);
+  return std::make_unique<CamClay>(*this);
 }
 
 void

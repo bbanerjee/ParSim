@@ -133,7 +133,7 @@ SimulationState::registerMaterial(Material* matl)
   }
 
   if (matl->hasName()) {
-    named_matls[matl->getName()] = matl;
+    named_matls[static_cast<std::string>(matl->getName())] = matl;
   }
 }
 
@@ -154,7 +154,7 @@ SimulationState::registerMaterial(Material* matl,
   }
 
   if (matl->hasName()) {
-    named_matls[matl->getName()] = matl;
+    named_matls[static_cast<std::string>(matl->getName())] = matl;
   }
 }
 

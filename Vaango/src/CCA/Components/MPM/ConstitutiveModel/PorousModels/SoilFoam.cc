@@ -179,10 +179,10 @@ SoilFoam::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("p9", d_initialData.p[9]);
 }
 
-SoilFoam*
+std::unique_ptr<ConstitutiveModel>
 SoilFoam::clone()
 {
-  return scinew SoilFoam(*this);
+  return std::make_unique<SoilFoam>(*this);
 }
 
 void

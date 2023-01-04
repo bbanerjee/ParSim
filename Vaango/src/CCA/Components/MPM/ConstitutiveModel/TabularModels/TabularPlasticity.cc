@@ -281,10 +281,10 @@ TabularPlasticity::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_hydrostat.outputProblemSpec(cm_ps);
 }
 
-TabularPlasticity*
+std::unique_ptr<Uintah::ConstitutiveModel>
 TabularPlasticity::clone()
 {
-  return scinew TabularPlasticity(*this);
+  return std::make_unique<TabularPlasticity>(*this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

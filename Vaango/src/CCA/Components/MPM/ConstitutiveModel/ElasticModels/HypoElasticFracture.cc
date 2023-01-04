@@ -128,10 +128,10 @@ HypoElasticFracture::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   }
 }
 
-HypoElasticFracture*
+std::unique_ptr<ConstitutiveModel>
 HypoElasticFracture::clone()
 {
-  return scinew HypoElasticFracture(*this);
+  return std::make_unique<HypoElasticFracture>(*this);
 }
 
 void

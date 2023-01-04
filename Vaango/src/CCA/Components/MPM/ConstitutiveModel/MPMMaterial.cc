@@ -234,10 +234,8 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
     d_sdm->outputProblemSpec(mpm_ps);
   }
 
-  for (vector<GeometryObject*>::const_iterator it = d_geom_objs.begin();
-       it != d_geom_objs.end();
-       it++) {
-    (*it)->outputProblemSpec(mpm_ps);
+  for (const auto& obj : d_geom_objs) {
+    obj->outputProblemSpec(mpm_ps);
   }
 
   return mpm_ps;

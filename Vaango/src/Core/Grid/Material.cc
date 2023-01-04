@@ -25,17 +25,14 @@
 
 #include <Core/Grid/Material.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
 
 namespace Uintah {
 
-Material::Material() {}
-
-Material::Material(ProblemSpecP& ps)
-{
-  d_mat_subset = nullptr;
+Material::Material(ProblemSpecP& ps) {
   if (ps->getAttribute("name", d_name)) {
     d_have_name = true;
   } else {
@@ -43,48 +40,41 @@ Material::Material(ProblemSpecP& ps)
   }
 }
 
-Material::~Material()
-{
-  if (d_mat_subset && d_mat_subset->removeReference()) {
-    delete d_mat_subset;
+Material::~Material() {
+  if (d_mat_subset.get()) {
+    d_mat_subset->removeReference();
   }
 }
 
 ProblemSpecP
-Material::outputProblemSpec(ProblemSpecP& ps)
-{
-  ProblemSpecP mat = 0;
+Material::outputProblemSpec(ProblemSpecP& ps) {
+  ProblemSpecP mat = nullptr;
   if (d_have_name) {
     mat = ps->appendChild("material");
     mat->setAttribute("name", d_name);
   } else {
     mat = ps->appendChild("material");
   }
-
-  std::stringstream strstream;
-  strstream << getDWIndex();
-  std::string index_val = strstream.str();
-  mat->setAttribute("index", index_val);
+  mat->setAttribute("index", std::to_string(getDWIndex()));
   return mat;
 }
 
 int
-Material::getDWIndex() const
-{
+Material::getDWIndex() const {
   // Return this material's index into the data warehouse
   return d_dwindex;
 }
 
 void
-Material::setDWIndex(int idx)
-{
-  d_dwindex = idx;
+Material::setDWIndex(int idx) {
 
-  ASSERT(!d_mat_subset);
-  d_mat_subset = scinew MaterialSubset();
+  ASSERT(!d_mat_subset.get());
+  d_mat_subset = std::make_unique<MaterialSubset>();
 
   d_mat_subset->addReference();
-  d_mat_subset->add(d_dwindex);
+  d_mat_subset->add(idx);
+
+  d_dwindex = idx;
 }
 
-} // end namespace Uintah
+}  // end namespace Uintah

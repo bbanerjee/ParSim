@@ -155,10 +155,10 @@ JWLppMPM::~JWLppMPM()
   VarLabel::destroy(pLocalizedLabel_preReloc);
 }
 
-JWLppMPM*
+std::unique_ptr<ConstitutiveModel>
 JWLppMPM::clone()
 {
-  return scinew JWLppMPM(*this);
+  return std::make_unique<JWLppMPM>(*this);
 }
 
 void

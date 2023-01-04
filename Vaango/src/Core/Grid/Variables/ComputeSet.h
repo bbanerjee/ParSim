@@ -91,10 +91,10 @@ public:
   {
   }
 
-  // auto begin() { return d_items.begin(); }
-  // auto end() { return d_items.end(); }
-  // const auto begin() const { return d_items.begin(); }
-  // const auto end() const { return d_items.end(); }
+  auto begin() { return d_items.begin(); }
+  auto end() { return d_items.end(); }
+  const auto begin() const { return d_items.begin(); }
+  const auto end() const { return d_items.end(); }
 
   int size() const { return (int)d_items.size(); }
 
@@ -363,7 +363,7 @@ ComputeSet<T>::getUnion() const
     d_subset->addReference();
     for (unsigned int i = 0; i < d_set.size(); i++) {
       ComputeSubset<T>* ss = d_set[i];
-      for (unsigned int j = 0; j < ss->size(); j++) {
+      for (int j = 0; j < ss->size(); j++) {
         d_subset->add(ss->get(j));
       }
     }

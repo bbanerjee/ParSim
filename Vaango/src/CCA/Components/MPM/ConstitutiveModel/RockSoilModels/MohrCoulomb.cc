@@ -156,10 +156,10 @@ MohrCoulomb::operator=(const MohrCoulomb& cm)
 /*
  * Create clone
  */
-MohrCoulomb*
+std::unique_ptr<ConstitutiveModel>
 MohrCoulomb::clone()
 {
-  return scinew MohrCoulomb(*this);
+  return std::make_unique<MohrCoulomb>(*this);
 }
 
 /**

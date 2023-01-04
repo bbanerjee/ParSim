@@ -80,7 +80,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  CamClay* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Computes and requires for the initialization of the model */
@@ -199,7 +199,7 @@ private:
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
-  std::unique_ptr<Vaango::IntVar_BorjaPressure> d_intvar;
+  std::shared_ptr<Vaango::IntVar_BorjaPressure> d_intvar;
 
   void initializeLocalMPMLabels();
 

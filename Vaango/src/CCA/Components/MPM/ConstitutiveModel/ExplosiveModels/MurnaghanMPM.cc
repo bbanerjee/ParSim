@@ -86,10 +86,10 @@ MurnaghanMPM::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("viscosity", d_modelParam.d_viscosity);
 }
 
-MurnaghanMPM*
+std::unique_ptr<ConstitutiveModel>
 MurnaghanMPM::clone()
 {
-  return scinew MurnaghanMPM(*this);
+  return std::make_unique<MurnaghanMPM>(*this);
 }
 
 void

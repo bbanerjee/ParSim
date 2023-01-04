@@ -110,7 +110,8 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  Kayenta* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
+
   void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
                                   const PatchSet* patches) const override;
 

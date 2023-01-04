@@ -82,10 +82,10 @@ CompMooneyRivlin::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("he_PR", d_initialData.PR);
 }
 
-CompMooneyRivlin*
+std::unique_ptr<ConstitutiveModel>
 CompMooneyRivlin::clone()
 {
-  return scinew CompMooneyRivlin(*this);
+  return std::make_unique<CompMooneyRivlin>(*this);
 }
 
 void

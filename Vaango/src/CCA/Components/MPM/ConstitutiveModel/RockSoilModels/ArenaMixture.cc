@@ -522,10 +522,10 @@ ArenaMixture::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_mpmiceEOSParam[1].n_Murnaghan_EOS);
 }
 
-ArenaMixture*
+std::unique_ptr<ConstitutiveModel>
 ArenaMixture::clone()
 {
-  return scinew ArenaMixture(*this);
+  return std::make_unique<ArenaMixture>(*this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

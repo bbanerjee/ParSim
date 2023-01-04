@@ -123,10 +123,10 @@ MWViscoElastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("ve_deviatoric_viscosity", d_initialData.D_Viscosity);
 }
 
-MWViscoElastic*
+std::unique_ptr<ConstitutiveModel>
 MWViscoElastic::clone()
 {
-  return scinew MWViscoElastic(*this);
+  return std::make_unique<MWViscoElastic>(*this);
 }
 
 void

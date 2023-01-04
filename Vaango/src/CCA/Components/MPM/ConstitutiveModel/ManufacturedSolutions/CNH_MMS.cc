@@ -80,10 +80,10 @@ CNH_MMS::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("useModifiedEOS", d_useModifiedEOS);
 }
 
-CNH_MMS*
+std::unique_ptr<ConstitutiveModel>
 CNH_MMS::clone()
 {
-  return scinew CNH_MMS(*this);
+  return std::make_unique<CNH_MMS>(*this);
 }
 
 void

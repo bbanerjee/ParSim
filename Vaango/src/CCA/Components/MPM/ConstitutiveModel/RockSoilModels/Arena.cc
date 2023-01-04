@@ -473,10 +473,10 @@ Arena::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
 }
 
-Arena*
+std::unique_ptr<ConstitutiveModel>
 Arena::clone()
 {
-  return scinew Arena(*this);
+  return std::make_unique<Arena>(*this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

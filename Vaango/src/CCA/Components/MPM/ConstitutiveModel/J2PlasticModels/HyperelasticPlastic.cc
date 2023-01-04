@@ -534,10 +534,10 @@ HyperelasticPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_eos->outputProblemSpec(cm_ps);
 }
 
-HyperelasticPlastic*
+std::unique_ptr<ConstitutiveModel>
 HyperelasticPlastic::clone()
 {
-  return scinew HyperelasticPlastic(*this);
+  return std::make_unique<HyperelasticPlastic>(*this);
 }
 
 HyperelasticPlastic::~HyperelasticPlastic()

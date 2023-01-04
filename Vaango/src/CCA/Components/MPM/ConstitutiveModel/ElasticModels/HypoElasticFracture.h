@@ -62,7 +62,8 @@ public:
   HypoElasticFracture(const HypoElasticFracture* cm);
   HypoElasticFracture& operator=(const HypoElasticFracture& cm) = delete;
   virtual ~HypoElasticFracture() override = default;
-  HypoElasticFracture* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override
   {

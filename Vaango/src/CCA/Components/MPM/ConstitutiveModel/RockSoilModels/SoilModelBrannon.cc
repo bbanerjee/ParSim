@@ -190,10 +190,10 @@ SoilModelBrannon::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_intvar->outputProblemSpec(cm_ps);
 }
 
-SoilModelBrannon*
+std::unique_ptr<ConstitutiveModel>
 SoilModelBrannon::clone()
 {
-  return scinew SoilModelBrannon(*this);
+  return std::make_unique<SoilModelBrannon>(*this);
 }
 
 void

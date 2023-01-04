@@ -84,7 +84,9 @@ public:
   JWLppMPM(ProblemSpecP& ps, MPMFlags* flag);
   JWLppMPM(const JWLppMPM* cm);
   JWLppMPM& operator=(const JWLppMPM& cm) = delete;
-  JWLppMPM* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
+
   virtual ~JWLppMPM() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }

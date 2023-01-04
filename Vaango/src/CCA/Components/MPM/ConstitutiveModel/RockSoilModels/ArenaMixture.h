@@ -199,7 +199,7 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  ArenaMixture* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Get parameters */
   ParameterDict getParameters() const

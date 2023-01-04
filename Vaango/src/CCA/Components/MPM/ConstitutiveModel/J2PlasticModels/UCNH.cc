@@ -283,10 +283,10 @@ UCNH::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_eos->outputProblemSpec(cm_ps);
 }
 
-UCNH*
+std::unique_ptr<ConstitutiveModel>
 UCNH::clone()
 {
-  return scinew UCNH(*this);
+  return std::make_unique<UCNH>(*this);
 }
 
 UCNH::~UCNH()

@@ -138,10 +138,10 @@ TransIsoHyper::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("useModifiedEOS", d_useModifiedEOS);
 }
 
-TransIsoHyper*
+std::unique_ptr<ConstitutiveModel>
 TransIsoHyper::clone()
 {
-  return scinew TransIsoHyper(*this);
+  return std::make_unique<TransIsoHyper>(*this);
 }
 
 Vector

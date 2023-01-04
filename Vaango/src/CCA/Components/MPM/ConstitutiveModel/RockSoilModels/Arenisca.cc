@@ -412,10 +412,10 @@ Arenisca::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
 }
 
-Arenisca*
+std::unique_ptr<ConstitutiveModel>
 Arenisca::clone()
 {
-  return scinew Arenisca(*this);
+  return std::make_unique<Arenisca>(*this);
 }
 
 void

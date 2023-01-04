@@ -235,10 +235,10 @@ ViscoPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_eos->outputProblemSpec(cm_ps);
 }
 
-ViscoPlastic*
+std::unique_ptr<ConstitutiveModel>
 ViscoPlastic::clone()
 {
-  return scinew ViscoPlastic(*this);
+  return std::make_unique<ViscoPlastic>(*this);
 }
 
 void

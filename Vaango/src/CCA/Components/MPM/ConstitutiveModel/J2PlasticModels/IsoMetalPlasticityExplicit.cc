@@ -134,7 +134,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
@@ -176,7 +176,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
         << " default type is 'metal_internal_var'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
     ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
@@ -255,13 +255,13 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(
   d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
   d_shear   = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
 
   d_melt                = MeltingTempModelFactory::createCopy(cm->d_melt);
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
   d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp);
 
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(cm->d_intvar.get());
   d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
   d_kinematic =
@@ -357,10 +357,10 @@ IsoMetalPlasticityExplicit::outputProblemSpec(ProblemSpecP& ps,
                        d_scalarDam.scalarDamageDist);
 }
 
-IsoMetalPlasticityExplicit*
+std::unique_ptr<ConstitutiveModel>
 IsoMetalPlasticityExplicit::clone()
 {
-  return scinew IsoMetalPlasticityExplicit(this);
+  return std::make_unique<IsoMetalPlasticityExplicit>(*this);
 }
 
 void

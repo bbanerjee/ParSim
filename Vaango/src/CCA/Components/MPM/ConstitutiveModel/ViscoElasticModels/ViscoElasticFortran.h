@@ -104,7 +104,8 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  ViscoElasticFortran* clone() override;
+  //std::unique_ptr<ViscoElasticFortran> clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // Initialize local labels
   void initializeLocalMPMLabels();

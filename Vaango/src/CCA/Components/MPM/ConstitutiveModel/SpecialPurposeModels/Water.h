@@ -69,7 +69,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  Water* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // initialize  each particle's constitutive model data
   void initializeCMData(const Patch* patch, const MPMMaterial* matl,

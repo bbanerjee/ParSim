@@ -152,8 +152,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-
-  Arenisca* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,

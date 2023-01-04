@@ -223,10 +223,10 @@ ViscoTransIsoHyper::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("t6", d_initialData.t6);
 }
 
-ViscoTransIsoHyper*
+std::unique_ptr<ConstitutiveModel>
 ViscoTransIsoHyper::clone()
 {
-  return scinew ViscoTransIsoHyper(*this);
+  return std::make_unique<ViscoTransIsoHyper>(*this);
 }
 
 void

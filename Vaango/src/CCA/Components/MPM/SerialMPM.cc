@@ -53,6 +53,7 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/UnknownVariable.h>
 #include <Core/Grid/Variables/CCVariable.h>
@@ -7777,8 +7778,8 @@ SerialMPM::totalParticleCount(const ProcessorGroup*,
  *   For adding materials mid-Simulation
  *-----------------------------------------------------------------------*/
 void 
-SerialMPM::addMaterial(const ProblemSpecP& prob_spec, GridP& grid,
-                       SimulationStateP& sharedState)
+SerialMPM::addMaterial(const ProblemSpecP& prob_spec, 
+                       MaterialManagerP& matManager)
 {
   d_recompile = true;
   ProblemSpecP mat_ps =  
@@ -7792,8 +7793,10 @@ SerialMPM::addMaterial(const ProblemSpecP& prob_spec, GridP& grid,
     for (ProblemSpecP ps = mpm_mat_ps->findBlock("material"); ps != 0;
          ps = ps->findNextBlock("material") ) {
       //Create and register as an MPM material
-      MPMMaterial *mat = scinew MPMMaterial(ps, grid, d_sharedState, flags);
-      sharedState->registerMPMMaterial(mat);
+      //MPMMaterial *mat = scinew MPMMaterial(ps, grid, d_sharedState, flags);
+      std::shared_ptr<MPMMaterial> mat = 
+         std::make_shared<MPMMaterial>(ps, matManager, flags, false);
+      matManager->registerMaterial("MPM", std::move(mat));
     }
   }
 }

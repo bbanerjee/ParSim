@@ -69,7 +69,8 @@ public:
   ProgramBurn(const ProgramBurn* cm);
   ProgramBurn& operator=(const ProgramBurn& cm) = delete;
   ~ProgramBurn() override;
-  ProgramBurn* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

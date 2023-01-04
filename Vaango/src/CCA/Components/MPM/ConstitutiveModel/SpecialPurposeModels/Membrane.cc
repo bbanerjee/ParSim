@@ -123,10 +123,10 @@ Membrane::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("shear_modulus", d_modelParam.shear);
 }
 
-Membrane*
+std::unique_ptr<ConstitutiveModel>
 Membrane::clone()
 {
-  return scinew Membrane(*this);
+  return std::make_unique<Membrane>(*this);
 }
 
 void

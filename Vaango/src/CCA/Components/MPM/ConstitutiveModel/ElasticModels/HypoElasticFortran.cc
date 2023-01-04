@@ -98,10 +98,10 @@ HypoElasticFortran::HypoElasticFortran(const HypoElasticFortran* cm)
   d_modelParam.K = cm->d_modelParam.K;
 }
 
-HypoElasticFortran*
+std::unique_ptr<ConstitutiveModel>
 HypoElasticFortran::clone()
 {
-  return scinew HypoElasticFortran(*this);
+  return std::make_unique<HypoElasticFortran>(*this);
 }
 
 void

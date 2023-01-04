@@ -213,10 +213,10 @@ Diamm::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("DC13", UI[dcprop + 13]); //
 }
 
-Diamm*
+std::unique_ptr<ConstitutiveModel>
 Diamm::clone()
 {
-  return scinew Diamm(*this);
+  return std::make_unique<Diamm>(*this);
 }
 
 void

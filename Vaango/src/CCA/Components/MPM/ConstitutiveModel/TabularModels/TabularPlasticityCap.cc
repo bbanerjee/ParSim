@@ -207,10 +207,10 @@ TabularPlasticityCap::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_decrease_substep);
 }
 
-TabularPlasticityCap*
+std::unique_ptr<Uintah::ConstitutiveModel>
 TabularPlasticityCap::clone()
 {
-  return scinew TabularPlasticityCap(*this);
+  return std::make_unique<TabularPlasticityCap>(*this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

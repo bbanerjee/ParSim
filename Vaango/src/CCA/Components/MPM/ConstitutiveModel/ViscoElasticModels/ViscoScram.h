@@ -171,7 +171,7 @@ public:
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-  ViscoScram* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Computes and requires for initialization of history variables */
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,

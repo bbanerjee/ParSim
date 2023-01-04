@@ -65,7 +65,7 @@ public:
   virtual void outputProblemSpec(ProblemSpecP& ps,
                                  bool output_cm_tag = true) override;
 
-  MohrCoulomb* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;

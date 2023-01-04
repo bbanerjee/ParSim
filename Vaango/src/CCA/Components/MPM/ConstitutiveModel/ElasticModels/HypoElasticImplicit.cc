@@ -62,10 +62,10 @@ HypoElasticImplicit::HypoElasticImplicit(const HypoElasticImplicit* cm)
 {
 }
 
-HypoElasticImplicit*
+std::unique_ptr<ConstitutiveModel>
 HypoElasticImplicit::clone()
 {
-  return scinew HypoElasticImplicit(*this);
+  return std::make_unique<HypoElasticImplicit>(*this);
 }
 
 void 

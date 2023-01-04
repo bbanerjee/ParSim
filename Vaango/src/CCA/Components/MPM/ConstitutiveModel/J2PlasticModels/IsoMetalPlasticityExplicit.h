@@ -82,7 +82,9 @@ class MPMFlags;
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class IsoMetalPlasticityExplicit : public ConstitutiveModel, public ImplicitCM
+class IsoMetalPlasticityExplicit
+  : public ConstitutiveModel
+  , public ImplicitCM
 {
 
 public:
@@ -159,8 +161,8 @@ protected:
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::KinematicHardeningModel* d_kinematic;
-  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
-  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
+  std::shared_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
+  std::shared_ptr<Vaango::IntVar_Metal> d_intvar;
   Vaango::YieldCondition* d_yield;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
@@ -192,7 +194,7 @@ public:
   outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  IsoMetalPlasticityExplicit*
+  std::unique_ptr<ConstitutiveModel>
   clone() override;
 
   ////////////////////////////////////////////////////////////////////////

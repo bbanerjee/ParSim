@@ -206,7 +206,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  HyperelasticPlastic* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // destructor
   ~HyperelasticPlastic() override;

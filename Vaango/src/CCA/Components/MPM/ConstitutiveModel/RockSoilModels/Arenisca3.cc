@@ -373,10 +373,10 @@ Arenisca3::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 }
 
-Arenisca3*
+std::unique_ptr<ConstitutiveModel>
 Arenisca3::clone()
 {
-  return scinew Arenisca3(*this);
+  return std::make_unique<Arenisca3>(*this);
 }
 
 void

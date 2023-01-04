@@ -94,10 +94,10 @@ TabularEquationOfState::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_table.outputProblemSpec(cm_ps);
 }
 
-TabularEquationOfState*
+std::unique_ptr<Uintah::ConstitutiveModel>
 TabularEquationOfState::clone()
 {
-  return scinew TabularEquationOfState(*this);
+  return std::make_unique<TabularEquationOfState>(*this);
 }
 
 void

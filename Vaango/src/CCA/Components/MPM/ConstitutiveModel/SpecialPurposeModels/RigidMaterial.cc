@@ -81,10 +81,10 @@ RigidMaterial::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("bulk_modulus", d_initialData.K);
 }
 
-RigidMaterial*
+std::unique_ptr<ConstitutiveModel>
 RigidMaterial::clone()
 {
-  return scinew RigidMaterial(*this);
+  return std::make_unique<RigidMaterial>(*this);
 }
 
 void

@@ -47,7 +47,8 @@ public:
   HypoElastic(const HypoElastic* cm);
   HypoElastic& operator=(const HypoElastic& cm) = delete;
   virtual ~HypoElastic() override = default;
-  HypoElastic* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override
   {

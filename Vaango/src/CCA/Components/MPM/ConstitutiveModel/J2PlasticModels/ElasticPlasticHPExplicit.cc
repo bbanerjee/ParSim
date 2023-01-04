@@ -304,12 +304,11 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("scalar_damage_seed", d_scalarDam.seed);
 }
 
-ElasticPlasticHP*
+std::unique_ptr<ConstitutiveModel>
 ElasticPlasticHP::clone()
 {
-  return scinew ElasticPlasticHP(*this);
+  return std::make_unique<ElasticPlasticHP>(*this);
 }
-
 //______________________________________________________________________
 //
 void

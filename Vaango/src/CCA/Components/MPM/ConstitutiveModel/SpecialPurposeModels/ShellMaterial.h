@@ -101,7 +101,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ShellMaterial* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
                                      const PatchSet* patches) const override;

@@ -232,10 +232,18 @@ ViscoElasticFortran::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("Tref_WLF", d_param.Tref_WLF);
 }
 
+/*
 ViscoElasticFortran*
 ViscoElasticFortran::clone()
 {
   return scinew ViscoElasticFortran(*this);
+}
+*/
+
+std::unique_ptr<ConstitutiveModel>
+ViscoElasticFortran::clone()
+{
+  return std::make_unique<ViscoElasticFortran>(*this);
 }
 
 void

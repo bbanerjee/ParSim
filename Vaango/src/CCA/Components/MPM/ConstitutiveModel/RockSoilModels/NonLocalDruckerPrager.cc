@@ -146,10 +146,10 @@ NonLocalDruckerPrager::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("k_o_dist", wdist.WeibDist);
 }
 
-NonLocalDruckerPrager*
+std::unique_ptr<ConstitutiveModel>
 NonLocalDruckerPrager::clone()
 {
-  return scinew NonLocalDruckerPrager(*this);
+  return std::make_unique<NonLocalDruckerPrager>(*this);
 }
 
 void

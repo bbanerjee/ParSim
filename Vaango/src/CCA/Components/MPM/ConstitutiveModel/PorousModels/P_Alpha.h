@@ -67,7 +67,8 @@ public:
   P_Alpha(const P_Alpha* cm);
   P_Alpha& operator=(const P_Alpha& cm) = delete;
   virtual ~P_Alpha() override;
-  P_Alpha* clone() override;
+
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

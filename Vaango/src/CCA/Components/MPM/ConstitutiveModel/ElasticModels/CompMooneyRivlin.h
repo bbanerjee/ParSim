@@ -52,7 +52,8 @@ public:
   CompMooneyRivlin(const CompMooneyRivlin* cm);
   CompMooneyRivlin& operator=(const CompMooneyRivlin& cm) = delete;
   ~CompMooneyRivlin() override = default;
-  CompMooneyRivlin* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override
   {
