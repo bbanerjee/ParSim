@@ -64,11 +64,12 @@ class MaterialManager : public RefCounted {
   finalizeMaterials();
 
   void
-  registerMaterial(const std::string& name, const std::shared_ptr<Material>& material);
+  registerMaterial(const std::string& name,
+                   const std::shared_ptr<Material>& material);
   void
   registerMaterial(const std::string& name,
                    const std::shared_ptr<Material>& material,
-                   unsigned int index);
+                   std::uint32_t index);
   void
   registerEmptyMaterial(const std::shared_ptr<EmptyMaterial>& material);
 
@@ -85,14 +86,12 @@ class MaterialManager : public RefCounted {
   }
 
   Material*
-  getMaterial(const std::string& name, int index) const;
+  getMaterial(const std::string& name, std::uint32_t index) const;
   Material*
-  getMaterial(int index) const {
-    return d_all_materials[index].get();
+  getMaterial(std::uint32_t index) const {
+    return index < d_all_materials.size() ? d_all_materials[index].get()
+                                          : nullptr;
   }
-
-  Material*
-  getMaterialByName(const std::string& name) const;
 
   MaterialSubset*
   getAllInOneMaterial() {
@@ -108,7 +107,11 @@ class MaterialManager : public RefCounted {
   void
   registerMaterial(const std::shared_ptr<Material>& material);
   void
-  registerMaterial(const std::shared_ptr<Material>& material, unsigned int index);
+  registerMaterial(const std::shared_ptr<Material>& material,
+                   unsigned int index);
+
+  Material*
+  getMaterialByName(const std::string& name) const;
 
   std::vector<std::shared_ptr<Material>> d_all_materials;
   std::vector<std::shared_ptr<EmptyMaterial>> d_empty_materials;

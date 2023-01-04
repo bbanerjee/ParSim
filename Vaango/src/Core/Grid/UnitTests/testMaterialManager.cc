@@ -98,6 +98,7 @@ TEST(MaterialManagerTest, others) {
   std::shared_ptr<Material> mat1 = std::make_shared<Material>(ps);
   std::shared_ptr<Material> mat2 = std::make_shared<Material>(ps);
   std::shared_ptr<EmptyMaterial> mat3 = std::make_shared<EmptyMaterial>();
+  std::shared_ptr<Material> mat4 = std::make_shared<Material>(ps);
 
   // Create manager
   try {
@@ -108,11 +109,97 @@ TEST(MaterialManagerTest, others) {
     manager.registerMaterial("material 1", mat1);
     manager.registerMaterial("material 2", mat2, 7);
     manager.registerEmptyMaterial(mat3);
+    manager.registerMaterial("material 1", mat4);
 
     manager.finalizeMaterials();
+
+    // Get materials
+    auto matset = manager.allMaterials();
+    auto matset1 = manager.allMaterials("material 1");
+
+    // Get num materials
+    auto num = manager.getNumMaterials();
+    auto num1 = manager.getNumMaterials("material 1");
+    std::cout << "num materials: " << num << " matset: " << *matset << "\n";
+    std::cout << "num1 materials: " << num1 << " matset1: " << *matset1 << "\n";
+
+    // Get materials
+    auto mat_get00 = manager.getMaterial(15);
+    EXPECT_EQ(mat_get00, nullptr);
+    auto mat_get01 = manager.getMaterial("material 1", 7);
+    EXPECT_EQ(mat_get01, nullptr);
+
+    auto mat_get = manager.getMaterial(1);
+    if (mat_get) {
+      auto mat_get_ptr = mat_get->thisMaterial();
+      auto data_get    = mat_get_ptr->getVector();
+      for (auto& idx : data_get) {
+        std::cout << "mat_get: idx = " << idx << "\n";
+      }
+    }
+
+    auto mat_get1 = manager.getMaterial("material 1", 1);
+    if (mat_get1) {
+      auto mat_get_ptr = mat_get1->thisMaterial();
+      auto data_get    = mat_get_ptr->getVector();
+      for (auto& idx : data_get) {
+        std::cout << "mat_get1: idx = " << idx << "\n";
+      }
+    }
+
+    /* Now private*/
+    //auto mat_get02 = manager.getMaterialByName("test material");
+
+    // Get all materials in one
+    auto allmat = manager.getAllInOneMaterial();
+    std::cout << "All = " << *allmat << "\n";
+
+    // Get original materials
+    auto orig = manager.originalAllMaterials();
+    std::cout << "Original = " << *orig << "\n";
+
   } catch (const ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   } catch (const std::exception& e) {
     std::cout << e.what() << "\n";
+  }
+
+}
+
+TEST(MaterialManagerTest, forICE) {
+
+  // Create a new document
+  xmlDocPtr doc1 = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode1 = xmlNewNode(nullptr, BAD_CAST "test");
+  xmlDocSetRootElement(doc1, rootNode1);
+  xmlNewChild(rootNode1, nullptr, BAD_CAST "from_material",
+              BAD_CAST "material from");
+
+  // Print the document to stdout
+  xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps1 = scinew ProblemSpec(xmlDocGetRootElement(doc1), false);
+  if (!ps1) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  MaterialManager manager;
+  std::shared_ptr<Material> mat0 = std::make_shared<Material>(ps1);
+  manager.registerMaterial("from_material", mat0);
+  manager.finalizeMaterials();
+
+  ProblemSpecP child = ps1->findBlock("test");
+  auto mat_get02 = manager.parseAndLookupMaterial(child, "from_material");
+  if (mat_get02) {
+    auto mat_get_ptr = mat_get02->thisMaterial();
+    auto data_get    = mat_get_ptr->getVector();
+    for (auto& idx : data_get) {
+      std::cout << "mat_get2: idx = " << idx << "\n";
+    }
   }
 }
