@@ -33,7 +33,7 @@ TEST(MaterialTest, construction) {
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     exit(-1);
   }
-  ps->output("-");
+  //ps->output("-");
 
   // With ProblemSpec
   Material mat(ps);
@@ -55,7 +55,7 @@ TEST(MaterialTest, construction) {
 
   // Output
   ProblemSpecP out_ps = mat.outputProblemSpec(ps);
-  out_ps->output("-");
+  //out_ps->output("-");
 
   // Get the material subset
   auto mat_ptr = mat.thisMaterial();
@@ -114,14 +114,16 @@ TEST(MaterialManagerTest, others) {
     manager.finalizeMaterials();
 
     // Get materials
-    auto matset = manager.allMaterials();
-    auto matset1 = manager.allMaterials("material 1");
+    [[maybe_unused]] auto matset = manager.allMaterials();
+    [[maybe_unused]] auto matset1 = manager.allMaterials("material 1");
 
     // Get num materials
     auto num = manager.getNumMaterials();
     auto num1 = manager.getNumMaterials("material 1");
-    std::cout << "num materials: " << num << " matset: " << *matset << "\n";
-    std::cout << "num1 materials: " << num1 << " matset1: " << *matset1 << "\n";
+    EXPECT_EQ(num, 5);
+    EXPECT_EQ(num1, 2);
+    //std::cout << "num materials: " << num << " matset: " << *matset << "\n";
+    //std::cout << "num1 materials: " << num1 << " matset1: " << *matset1 << "\n";
 
     // Get materials
     auto mat_get00 = manager.getMaterial(15);
@@ -134,7 +136,8 @@ TEST(MaterialManagerTest, others) {
       auto mat_get_ptr = mat_get->thisMaterial();
       auto data_get    = mat_get_ptr->getVector();
       for (auto& idx : data_get) {
-        std::cout << "mat_get: idx = " << idx << "\n";
+        //std::cout << "mat_get: idx = " << idx << "\n";
+        EXPECT_EQ(idx, 1);
       }
     }
 
@@ -143,7 +146,8 @@ TEST(MaterialManagerTest, others) {
       auto mat_get_ptr = mat_get1->thisMaterial();
       auto data_get    = mat_get_ptr->getVector();
       for (auto& idx : data_get) {
-        std::cout << "mat_get1: idx = " << idx << "\n";
+        //std::cout << "mat_get1: idx = " << idx << "\n";
+        EXPECT_EQ(idx, 4);
       }
     }
 
@@ -151,12 +155,12 @@ TEST(MaterialManagerTest, others) {
     //auto mat_get02 = manager.getMaterialByName("test material");
 
     // Get all materials in one
-    auto allmat = manager.getAllInOneMaterial();
-    std::cout << "All = " << *allmat << "\n";
+    [[maybe_unused]] auto allmat = manager.getAllInOneMaterial();
+    //std::cout << "All = " << *allmat << "\n";
 
     // Get original materials
-    auto orig = manager.originalAllMaterials();
-    std::cout << "Original = " << *orig << "\n";
+    [[maybe_unused]] auto orig = manager.originalAllMaterials();
+    //std::cout << "Original = " << *orig << "\n";
 
   } catch (const ProblemSetupException& e) {
     std::cout << e.message() << "\n";
@@ -178,7 +182,7 @@ TEST(MaterialManagerTest, forICE) {
               BAD_CAST "material from");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps1 = scinew ProblemSpec(xmlDocGetRootElement(doc1), false);
@@ -199,7 +203,8 @@ TEST(MaterialManagerTest, forICE) {
     auto mat_get_ptr = mat_get02->thisMaterial();
     auto data_get    = mat_get_ptr->getVector();
     for (auto& idx : data_get) {
-      std::cout << "mat_get2: idx = " << idx << "\n";
+      //std::cout << "mat_get2: idx = " << idx << "\n";
+      EXPECT_EQ(idx, 0);
     }
   }
 }
