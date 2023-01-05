@@ -28,10 +28,11 @@
 
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
+#include <CCA/Ports/DataWarehouse.h>
 
 namespace Uintah {
 
-class DataWarehouse;
+//class DataWarehouse;
 
 class SimulationReductionVariable {
  public:
