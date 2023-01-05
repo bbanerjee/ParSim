@@ -26,42 +26,33 @@
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/Parallel/UintahParallelComponent.h>
+
 #include <algorithm>
 
 namespace Uintah {
 
 UintahParallelComponent::UintahParallelComponent(const ProcessorGroup* myworld)
-  : d_myworld(myworld)
-{
-}
+    : d_myworld(myworld) {}
 
-UintahParallelComponent::~UintahParallelComponent() noexcept(false)
-{
-  for (auto iter = portmap.begin(); iter != portmap.end(); iter++) {
-    delete iter->second;
-  }
-}
+UintahParallelComponent::~UintahParallelComponent() noexcept(false) {}
 
 void
 UintahParallelComponent::attachPort(const std::string& name,
-                                    UintahParallelPort* port)
-{
+                                    UintahParallelPort* port) {
   auto iter = portmap.find(name);
   if (iter == portmap.end()) {
-    portmap[name] = scinew PortRecord(port);
+    portmap[name] = std::make_unique<PortRecord>(port);
   } else {
     iter->second->connections.push_back(port);
   }
 }
 
-UintahParallelComponent::PortRecord::PortRecord(UintahParallelPort* port)
-{
+UintahParallelComponent::PortRecord::PortRecord(UintahParallelPort* port) {
   connections.push_back(port);
 }
 
 UintahParallelPort*
-UintahParallelComponent::getPort(const std::string& name)
-{
+UintahParallelComponent::getPort(const std::string& name) {
   auto iter = portmap.find(name);
   if (iter == portmap.end()) {
     return 0;
@@ -73,8 +64,7 @@ UintahParallelComponent::getPort(const std::string& name)
 }
 
 UintahParallelPort*
-UintahParallelComponent::getPort(const std::string& name, unsigned int i)
-{
+UintahParallelComponent::getPort(const std::string& name, unsigned int i) {
   auto iter = portmap.find(name);
   if (iter == portmap.end()) {
     return 0;
@@ -86,13 +76,10 @@ UintahParallelComponent::getPort(const std::string& name, unsigned int i)
 }
 
 void
-UintahParallelComponent::releasePort(const std::string&)
-{
-}
+UintahParallelComponent::releasePort(const std::string&) {}
 
 unsigned int
-UintahParallelComponent::numConnections(const std::string& name)
-{
+UintahParallelComponent::numConnections(const std::string& name) {
   auto iter = portmap.find(name);
   if (iter == portmap.end()) {
     return 0;
@@ -101,4 +88,4 @@ UintahParallelComponent::numConnections(const std::string& name)
   }
 }
 
-} // end namespace Uintah
+}  // end namespace Uintah

@@ -41,7 +41,7 @@ namespace Uintah {
 
 struct KillMap {
   KillMap();
-  ~KillMap();
+  ~KillMap() noexcept(false);
 };
 
 KillMap::KillMap()
@@ -53,7 +53,7 @@ static vector<const FETypeDescription*>* typelist=0;
 static Mutex typelist_lock("FETypeDescription::typelist lock");
 static bool killed=false;
 
-KillMap::~KillMap()
+KillMap::~KillMap() noexcept(false)
 {
   if(!types){
     ASSERT(!killed);

@@ -29,16 +29,12 @@
 
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Grid/Ghost.h>
+#include <Core/Grid/Variables/VarLabel.h>
 
+#include <map>
 #include <memory>
-/*
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/Grid/DbgOutput.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/LevelP.h>
-#include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Util/DebugStream.h>
-*/
+#include <vector>
 
 namespace Uintah {
 
@@ -56,7 +52,7 @@ public:
 
 public:
   MPMCommon(const MaterialManagerP materialManager);
-  ~MPMCommon() noexcept(false) = default;
+  ~MPMCommon() {}
 
   virtual void
   materialProblemSetup(const ProblemSpecP& prob_spec,
