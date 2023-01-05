@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,42 +24,84 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_MPM_COMMON_H
-#define UINTAH_HOMEBREW_MPM_COMMON_H
+#ifndef __CCA_COMPONENTS_MPM_MPMCOMMON_H__
+#define __CCA_COMPONENTS_MPM_MPMCOMMON_H__
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/LevelP.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <Core/Grid/Variables/ComputeSet.h>
+
+#include <memory>
+/*
+#include <CCA/Components/MPM/MPMFlags.h>
 #include <Core/Grid/DbgOutput.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Util/DebugStream.h>
+*/
 
 namespace Uintah {
 
-  class ProcessorGroup;
+class ProcessorGroup;
 
-  using namespace Uintah;
-  
-  class MPMCommon {
+class MPMFlags;
+class MPMLabel;
 
-  public:
+class MPMCommon
+{
+public:
+  template<class T>
+  static std::map<int, T>
+  initializeMap(const T& val);
 
-    MPMCommon(const ProcessorGroup* myworld);
-    virtual ~MPMCommon() noexcept(false);
+public:
+  MPMCommon(const MaterialManagerP materialManager);
+  ~MPMCommon() noexcept(false) = default;
 
-    virtual void materialProblemSetup(const ProblemSpecP& prob_spec,
-                                      const GridP grid,
-                                      SimulationStateP& sharedState,
-                                      MPMFlags* flags);
+  virtual void
+  materialProblemSetup(const ProblemSpecP& prob_spec,
+                       MPMFlags* flags,
+                       bool is_restart);
 
-    virtual void cohesiveZoneProblemSetup(const ProblemSpecP& prob_spec,
-                                          SimulationStateP& sharedState,
-                                          MPMFlags* flags);
-   protected:
-    const ProcessorGroup* d_myworld;
-  };
+  // Used by the switcher
+  virtual void
+  setupForSwitching()
+  {
+    d_particleState.clear();
+    d_particleState_preReloc.clear();
+  }
+
+  inline void
+  setParticleGhostLayer(Ghost::GhostType type, int num_ghost_cells)
+  {
+    d_particle_ghost_type  = type;
+    d_particle_ghost_layer = num_ghost_cells;
+  }
+
+  inline void
+  getParticleGhostLayer(Ghost::GhostType& type, int& num_ghost_cells)
+  {
+    type = d_particle_ghost_type;
+    num_ghost_cells  = d_particle_ghost_layer;
+  }
+
+public:
+  // Particle state
+  std::vector<std::vector<const VarLabel*>> d_particleState;
+  std::vector<std::vector<const VarLabel*>> d_particleState_preReloc;
+
+  std::shared_ptr<MPMLabel> d_lb{ nullptr };
+
+protected:
+  //! so all components can know how many particle ghost cells to ask for
+  Ghost::GhostType d_particle_ghost_type{ Ghost::None };
+  int d_particle_ghost_layer{ 0 };
+
+private:
+  inline static MaterialManagerP s_materialManager{ nullptr };
+
+  MPMFlags* d_flags{ nullptr };
+};
 }
 
-#endif
+#endif //__CCA_COMPONENTS_MPM_MPMCOMMON_H__

@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -21,32 +22,30 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
+SET(Vaango_CCA_Components_SimulationCommon_SRCS
+  SimulationCommon.cc    
+)
 
+SET(LIBS
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Labels
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Math
+  ${XML2_LIBRARY}
+  ${VT_LIBRARY}
+  ${M_LIBRARY}
+  ${MPI_LIBRARY}
+)
 
-IF(MPM)
-  ADD_SUBDIRECTORY(MPM)
-ENDIF(MPM)
-IF(ICE)
-  ADD_SUBDIRECTORY(ICE)
-  # only do Models with ICE
-  ADD_SUBDIRECTORY(Models)
-ENDIF(ICE)
-IF(MPM AND ICE)
-  ADD_SUBDIRECTORY(MPMICE)
-ENDIF(MPM AND ICE)
+add_library(Vaango_CCA_Components_SimulationCommon ${Vaango_CCA_Components_SimulationCommon_SRCS})
 
-ADD_SUBDIRECTORY(Peridynamics)
+target_link_libraries(Vaango_CCA_Components_SimulationCommon ${LIBS})
 
-ADD_SUBDIRECTORY(OnTheFlyAnalysis)
-ADD_SUBDIRECTORY(Regridder)
-ADD_SUBDIRECTORY(SimulationCommon)
-ADD_SUBDIRECTORY(SimulationController)
-ADD_SUBDIRECTORY(SwitchingCriteria)
-ADD_SUBDIRECTORY(DataArchiver)
-ADD_SUBDIRECTORY(Examples)
-ADD_SUBDIRECTORY(LoadBalancers)
-ADD_SUBDIRECTORY(Parent)
-ADD_SUBDIRECTORY(ProblemSpecification)
-ADD_SUBDIRECTORY(Schedulers)
-ADD_SUBDIRECTORY(Solvers)
-ADD_SUBDIRECTORY(ReduceUda)
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_Vaango_CCA_Components_SimulationCommon)
+ENDIF(BUILD_SHARED_LIBS)

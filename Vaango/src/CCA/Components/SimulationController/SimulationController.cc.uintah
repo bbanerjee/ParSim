@@ -69,7 +69,7 @@ Uintah::Dout g_comp_stats(      "ComponentStats"            , "SimulationControl
 Uintah::Dout g_comp_node_stats( "ComponentNodeStats"        , "SimulationController", "Aggregated node component stats"  , false );
 Uintah::Dout g_comp_indv_stats( "ComponentIndividualStats"  , "SimulationController", "Individual component stats"       , false );
 
-Uintah::Dout g_app_stats(       "ApplicationStats"          , "SimulationController", "Aggregated application stats"     , false );
+Uintah::Dout g_app_stats(       "SimulationStats"          , "SimulationController", "Aggregated application stats"     , false );
 Uintah::Dout g_app_node_stats(  "ApplicationNodeStats"      , "SimulationController", "Aggregated node application stats", false );
 Uintah::Dout g_app_indv_stats(  "ApplicationIndividualStats", "SimulationController", "Individual application stats"     , false );
 
@@ -198,9 +198,9 @@ SimulationController::setPostProcessFlags()
 void
 SimulationController::getComponents( void )
 {
-  m_application = dynamic_cast<ApplicationInterface*>( getPort( "application" ) );
+  d_simulation = dynamic_cast<ApplicationInterface*>( getPort( "application" ) );
 
-  if (!m_application) {
+  if (!d_simulation) {
     throw InternalError("dynamic_cast of 'm_app' failed!", __FILE__, __LINE__);
   }
 
@@ -218,7 +218,7 @@ SimulationController::getComponents( void )
 
   m_regridder = dynamic_cast<Regridder*>( getPort("regridder") );
 
-  if (m_application->isDynamicRegridding() && !m_regridder) {
+  if (d_simulation->isDynamicRegridding() && !m_regridder) {
     throw InternalError("dynamic_cast of 'm_regridder' failed!", __FILE__, __LINE__);
   }
 
@@ -240,7 +240,7 @@ SimulationController::releaseComponents( void )
   releasePort( "regridder" );
   releasePort( "scheduler" );
  
-  m_application  = nullptr;
+  d_simulation  = nullptr;
   m_loadBalancer = nullptr;
   m_output       = nullptr;
   m_regridder    = nullptr;
@@ -337,7 +337,7 @@ SimulationController::outputSetup( void )
   // Set up the output - needs to be done before the application is setup.
   m_output->setRuntimeStats( &m_runtime_stats );
 
-  m_output->problemSetup( m_ups, m_restart_ps, m_application->getMaterialManagerP() );
+  m_output->problemSetup( m_ups, m_restart_ps, d_simulation->getMaterialManagerP() );
 
 #ifdef HAVE_VISIT
   if( getVisIt() ) {
@@ -379,10 +379,10 @@ SimulationController::gridSetup( void )
     // it internally. This call gives the option to do just that though
     // it does not follow normal paradigm of calling problemSetup
     // immediately after a component or other object is created.
-    m_application->preGridProblemSetup( m_ups, m_current_gridP );
+    d_simulation->preGridProblemSetup( m_ups, m_current_gridP );
 
     // Now that the simulation interface has made its changes do the normal grid problemSetup()
-    m_current_gridP->problemSetup( m_ups, d_myworld, m_application->isAMR() );
+    m_current_gridP->problemSetup( m_ups, d_myworld, d_simulation->isAMR() );
   }
 
   if (m_current_gridP->numLevels() == 0) {
@@ -405,7 +405,7 @@ SimulationController::regridderSetup( void )
   // Do this step before fully setting up the application interface so that the
   // Switcher (being an application) can reset the state of the regridder.
   if (m_regridder) {
-    m_regridder->problemSetup(m_ups, m_current_gridP, m_application->getMaterialManagerP());
+    m_regridder->problemSetup(m_ups, m_current_gridP, d_simulation->getMaterialManagerP());
   }
 }
 
@@ -417,7 +417,7 @@ SimulationController::schedulerSetup( void )
   // Now that the grid is completely set up, set up the scheduler.
   m_scheduler->setRuntimeStats( &m_runtime_stats );
 
-  m_scheduler->problemSetup( m_ups, m_application->getMaterialManagerP() );
+  m_scheduler->problemSetup( m_ups, d_simulation->getMaterialManagerP() );
 
   // Additional set up calls.
   m_scheduler->setInitTimestep( true );
@@ -446,7 +446,7 @@ SimulationController::loadBalancerSetup( void )
  
   // In addition, do this step after regridding setup as the minimum
   // patch size that the regridder will create will be known.
-  m_loadBalancer->problemSetup( m_ups, m_current_gridP, m_application->getMaterialManagerP() );
+  m_loadBalancer->problemSetup( m_ups, m_current_gridP, d_simulation->getMaterialManagerP() );
 }
 
 //______________________________________________________________________
@@ -459,12 +459,12 @@ SimulationController::applicationSetup( void )
   // If the properties are not available, then pull the properties
   // from the m_ups instead.  This step needs to be done before
   // DataArchive::restartInitialize.
-  m_application->problemSetup(m_ups, m_restart_ps, m_current_gridP);
+  d_simulation->problemSetup(m_ups, m_restart_ps, m_current_gridP);
 
   // Finalize the materials
-  m_application->getMaterialManagerP()->finalizeMaterials();
+  d_simulation->getMaterialManagerP()->finalizeMaterials();
 
-  m_application->setRestartTimeStep( m_restarting );
+  d_simulation->setRestartTimeStep( m_restarting );
 }
 
 
@@ -486,16 +486,16 @@ SimulationController::timeStateSetup()
 
     // Set the time step to the restart time step which is immediately
     // written to the DW.
-    m_application->setTimeStep( m_restart_timestep );
+    d_simulation->setTimeStep( m_restart_timestep );
 
     // Set the simulation time to the restart simulation time which is
     // immediately written to the DW.
-    m_application->setSimTime( simTime );
+    d_simulation->setSimTime( simTime );
 
     // Set the next delta T which is immediately written to the DW.
 
     // Note the old delta t is the delta t used for that time step.
-    m_application->setNextDelT( m_restart_archive->getOldDelt( m_restart_index ), m_restarting );
+    d_simulation->setNextDelT( m_restart_archive->getOldDelt( m_restart_index ), m_restarting );
 
     // Tell the scheduler the generation of the re-started simulation.
     // (Add +1 because the scheduler will be starting on the next
@@ -508,10 +508,10 @@ SimulationController::timeStateSetup()
   }
   else {
     // Set the default time step to which is immediately written to the DW.
-    m_application->setTimeStep( m_application->getTimeStep() );
+    d_simulation->setTimeStep( d_simulation->getTimeStep() );
 
     // Set the default simulation time which is immediately written to the DW.
-    m_application->setSimTime( m_application->getSimTime() );
+    d_simulation->setSimTime( d_simulation->getSimTime() );
 
     // Note the above seems back asswards but the initial sim time
     // must be set in the UPS file, the time step will always default
@@ -526,7 +526,7 @@ SimulationController::timeStateSetup()
 void
 SimulationController::finalSetup()
 {
-  // This step is done after the call to m_application->problemSetup to get
+  // This step is done after the call to d_simulation->problemSetup to get
   // the defaults set by the simulation interface into the input.xml,
   // which the output writes along with index.xml
   m_output->initializeOutput( m_ups, m_current_gridP );
@@ -538,7 +538,7 @@ SimulationController::finalSetup()
   if (m_restarting) {
     Dir dir( m_from_dir );
     m_output->restartSetup( dir, 0, m_restart_timestep,
-                            m_application->getSimTime(),
+                            d_simulation->getSimTime(),
                             m_restart_from_scratch, m_restart_remove_old_dir );
   }
 
@@ -554,7 +554,7 @@ SimulationController::finalSetup()
 void SimulationController::ResetStats( void )
 {
   m_runtime_stats.reset( 0 );
-  m_application->resetApplicationStats( 0 );
+  d_simulation->resetSimulationStats( 0 );
 }
 
 //______________________________________________________________________
@@ -569,11 +569,11 @@ SimulationController::ScheduleReportStats( bool header )
   // Require delta T so that the task gets scheduled
   // correctly. Otherwise the scheduler/taskgraph will toss an error :
   // Caught std exception: map::at: key not found
-  task->requires(Task::NewDW, m_application->getDelTLabel() );
+  task->requires(Task::NewDW, d_simulation->getDelTLabel() );
 
   m_scheduler->addTask(task,
                        m_loadBalancer->getPerProcessorPatchSet(m_current_gridP),
-                       m_application->getMaterialManagerP()->allMaterials() );
+                       d_simulation->getMaterialManagerP()->allMaterials() );
 }
 
 //______________________________________________________________________
@@ -600,20 +600,20 @@ SimulationController::ReportStats(const ProcessorGroup*,
     if (header) {
       reportStats = true;
     }
-    else if (m_application->getTimeStep() % m_reportStatsFrequency == m_reportStatsOnTimeStep) {
+    else if (d_simulation->getTimeStep() % m_reportStatsFrequency == m_reportStatsOnTimeStep) {
       reportStats = true;
     }
     else {
       // Get the wall time if is needed, otherwise ignore it.
       double walltime;
 
-      if (m_application->getWallTimeMax() > 0) {
+      if (d_simulation->getWallTimeMax() > 0) {
         walltime = m_wall_timers.GetWallTime();
       }
       else {
         walltime = 0;
       }
-      reportStats = m_application->isLastTimeStep(walltime);
+      reportStats = d_simulation->isLastTimeStep(walltime);
     }
   }
   
@@ -640,13 +640,13 @@ SimulationController::ReportStats(const ProcessorGroup*,
   }
 
   if (g_app_stats || g_app_node_stats || reduce) {
-    m_application->getApplicationStats().calculateNodeSum    ( true );
-    m_application->getApplicationStats().calculateNodeMinimum( true );
-    m_application->getApplicationStats().calculateNodeAverage( true );
-    m_application->getApplicationStats().calculateNodeMaximum( true );
-    m_application->getApplicationStats().calculateNodeStdDev ( true );
+    d_simulation->getSimulationStats().calculateNodeSum    ( true );
+    d_simulation->getSimulationStats().calculateNodeMinimum( true );
+    d_simulation->getSimulationStats().calculateNodeAverage( true );
+    d_simulation->getSimulationStats().calculateNodeMaximum( true );
+    d_simulation->getSimulationStats().calculateNodeStdDev ( true );
 
-    m_application->reduceApplicationStats(m_regridder && m_regridder->useDynamicDilation(), d_myworld);
+    d_simulation->reduceSimulationStats(m_regridder && m_regridder->useDynamicDilation(), d_myworld);
   }
   
   // Update the moving average and get the wall time for this time step.
@@ -667,9 +667,9 @@ SimulationController::ReportStats(const ProcessorGroup*,
     }
 
     message << std::left
-            << "Timestep "      << std::setw(8)  << m_application->getTimeStep()
-            << "Time="          << std::setw(12) << m_application->getSimTime()
-            << "Next delT="     << std::setw(12) << m_application->getNextDelT()
+            << "Timestep "      << std::setw(8)  << d_simulation->getTimeStep()
+            << "Time="          << std::setw(12) << d_simulation->getSimTime()
+            << "Next delT="     << std::setw(12) << d_simulation->getNextDelT()
             << "Wall Time="     << std::setw(10) << m_wall_timers.GetWallTime()
 //          << "Net Wall Time=" << std::setw(10) << timeStepTime.seconds()
             << "EMA="           << std::setw(12) << m_wall_timers.ExpMovingAverage().seconds();
@@ -793,8 +793,8 @@ SimulationController::ReportStats(const ProcessorGroup*,
       m_runtime_stats.reportRankSummaryStats( "Runtime Summary ", "",
                                               d_myworld->myRank(),
                                               d_myworld->nRanks(),
-                                              m_application->getTimeStep(),
-                                              m_application->getSimTime(),
+                                              d_simulation->getTimeStep(),
+                                              d_simulation->getSimTime(),
                                               BaseInfoMapper::Dout,
                                               true );
 
@@ -834,8 +834,8 @@ SimulationController::ReportStats(const ProcessorGroup*,
                                               d_myworld->myNode_nRanks(),
                                               d_myworld->myNode(),
                                               d_myworld->nNodes(),
-                                              m_application->getTimeStep(),
-                                              m_application->getSimTime(),
+                                              d_simulation->getTimeStep(),
+                                              d_simulation->getSimTime(),
                                               BaseInfoMapper::Dout,
                                               true );
     }
@@ -845,45 +845,45 @@ SimulationController::ReportStats(const ProcessorGroup*,
       m_runtime_stats.reportIndividualStats( "Runtime", "",
                                              d_myworld->myRank(),
                                              d_myworld->nRanks(),
-                                             m_application->getTimeStep(),
-                                             m_application->getSimTime(),
+                                             d_simulation->getTimeStep(),
+                                             d_simulation->getSimTime(),
                                              BaseInfoMapper::Dout );
     }
 
     // Application proc runtime performance stats.
     if (g_app_stats && d_myworld->myRank() == 0) {      
-      m_application->getApplicationStats().
+      d_simulation->getSimulationStats().
         reportRankSummaryStats( "Application Summary", "",
                                 d_myworld->myRank(),
                                 d_myworld->nRanks(),
-                                m_application->getTimeStep(),
-                                m_application->getSimTime(),
+                                d_simulation->getTimeStep(),
+                                d_simulation->getSimTime(),
                                 BaseInfoMapper::Dout,
                                 false );
     }
 
     // Application per node runtime performance stats.
     if (g_app_node_stats && d_myworld->myNode_myRank() == 0 ) {
-      m_application->getApplicationStats().
+      d_simulation->getSimulationStats().
         reportNodeSummaryStats( ("Application Node " + d_myworld->myNodeName()).c_str(), "",
                                 d_myworld->myNode_myRank(),
                                 d_myworld->myNode_nRanks(),
                                 d_myworld->myNode(),
                                 d_myworld->nNodes(),
-                                m_application->getTimeStep(),
-                                m_application->getSimTime(),
+                                d_simulation->getTimeStep(),
+                                d_simulation->getSimTime(),
                                 BaseInfoMapper::Dout,
                                 false );
     }
 
     // Application per proc runtime performance stats
     if (g_app_indv_stats) {
-      m_application->getApplicationStats().
+      d_simulation->getSimulationStats().
         reportIndividualStats( "Application", "",
                                d_myworld->myRank(),
                                d_myworld->nRanks(),
-                               m_application->getTimeStep(),
-                               m_application->getSimTime(),
+                               d_simulation->getTimeStep(),
+                               d_simulation->getSimTime(),
                                BaseInfoMapper::Dout );
     }
   }
@@ -937,7 +937,7 @@ SimulationController::getMemoryStats( bool create /* = false */ )
     }
 
     *mallocPerProcStream << "Proc "     << d_myworld->myRank()  << "   ";
-    *mallocPerProcStream << "TimeStep " << m_application->getTimeStep() << "   ";
+    *mallocPerProcStream << "TimeStep " << d_simulation->getTimeStep() << "   ";
 
     if (ProcessInfo::isSupported(ProcessInfo::MEM_SIZE)) {
       *mallocPerProcStream << "Size " << ProcessInfo::getMemoryUsed() << "   ";
@@ -979,11 +979,11 @@ SimulationController::ScheduleCheckInSitu( bool first )
     // Require delta T so that the task gets scheduled
     // correctly. Otherwise the scheduler/taskgraph will toss an error
     // : Caught std exception: map::at: key not found
-    task->requires(Task::NewDW, m_application->getDelTLabel() );
+    task->requires(Task::NewDW, d_simulation->getDelTLabel() );
 
     m_scheduler->addTask(task,
                          m_loadBalancer->getPerProcessorPatchSet(m_current_gridP),
-                         m_application->getMaterialManagerP()->allMaterials() );
+                         d_simulation->getMaterialManagerP()->allMaterials() );
   }
 #endif      
 }
@@ -1013,29 +1013,29 @@ SimulationController::CheckInSitu( const ProcessorGroup *
     // Get the wall time if it is needed, otherwise ignore it.
     double walltime;
     
-    if( m_application->getWallTimeMax() > 0 )
+    if( d_simulation->getWallTimeMax() > 0 )
       walltime = m_wall_timers.GetWallTime();
     else
       walltime = 0;
     
     // Update all of the simulation grid and time dependent variables.
     visit_UpdateSimData( m_visitSimData, m_current_gridP,
-                         first, m_application->isLastTimeStep(walltime) );
+                         first, d_simulation->isLastTimeStep(walltime) );
 
     // Check the state - if the return value is true the user issued
     // a termination.
     if( visit_CheckState( m_visitSimData ) ) {
 
       if( new_dw ) {
-        m_application->activateReductionVariable( endSimulation_name, true );
-        m_application->setReductionVariable( new_dw, endSimulation_name, true );
+        d_simulation->activateReductionVariable( endSimulation_name, true );
+        d_simulation->setReductionVariable( new_dw, endSimulation_name, true );
       }
       
       // Set the max wall time to the current wall time which will
       // cause the simulation to terminate because the next wall time
       // check will be greater.
       else
-        m_application->setWallTimeMax( m_wall_timers.GetWallTime() );
+        d_simulation->setWallTimeMax( m_wall_timers.GetWallTime() );
 
       // Disconnect from VisIt.
       visit_EndLibSim( m_visitSimData );

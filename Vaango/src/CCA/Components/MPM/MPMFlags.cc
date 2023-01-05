@@ -34,8 +34,8 @@
 #include <Core/Grid/axiCpdiInterpolator.h>
 #include <Core/Grid/cpdiInterpolator.h>
 #include <Core/Grid/cptiInterpolator.h>
-//#include <Core/Grid/fastCpdiInterpolator.h>
-//#include <Core/Grid/fastAxiCpdiInterpolator.h>
+// #include <Core/Grid/fastCpdiInterpolator.h>
+// #include <Core/Grid/fastAxiCpdiInterpolator.h>
 #include <Core/Grid/BSplineInterpolator.h>
 #include <Core/Grid/TOBSplineInterpolator.h>
 #include <Core/Parallel/ProcessorGroup.h>
@@ -72,15 +72,15 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_useCPTI          = false;
 
   d_axisymmetric = false;
-  d_doGridReset = true;
-  d_withICE    = false;
+  d_doGridReset  = true;
+  d_withICE      = false;
 
   d_minGridLevel = 0;
   d_maxGridLevel = 1000;
 
-  d_minPartMass             = 3.e-15;
+  d_minPartMass            = 3.e-15;
   d_minMassForAcceleration = 0;
-  d_maxVel                   = 3.e105;
+  d_maxVel                 = 3.e105;
 
   d_artificialViscosity        = false;
   d_artificialViscosityHeating = false;
@@ -122,7 +122,8 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_exactDeformation          = false;
 
   // MMS
-  // Options: "AxisAligned", "GeneralizedVortex", "ExpandingRing", "AxisAligned3L"
+  // Options: "AxisAligned", "GeneralizedVortex", "ExpandingRing",
+  // "AxisAligned3L"
   //          etc.
   d_mmsType = "none";
 
@@ -148,6 +149,9 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_AMR             = false;
   d_GEVelProj       = false;
   d_refineParticles = false;
+
+  particle_ghost_type  = Ghost::None;
+  particle_ghost_layer = 0;
 }
 
 void
@@ -267,10 +271,14 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   int junk = 0;
   mpm_flag_ps->get("nodes8or27", junk);
   if (junk != 0) {
-    std::cerr << "nodes8or27 is deprecated, use " << "\n";
-    std::cerr << "<interpolator>type</interpolator>" << "\n";
-    std::cerr << "where type is one of the following:" << "\n";
-    std::cerr << "linear, gimp, 3rdorderBS, cpdi, cpti" << "\n";
+    std::cerr << "nodes8or27 is deprecated, use "
+              << "\n";
+    std::cerr << "<interpolator>type</interpolator>"
+              << "\n";
+    std::cerr << "where type is one of the following:"
+              << "\n";
+    std::cerr << "linear, gimp, 3rdorderBS, cpdi, cpti"
+              << "\n";
     exit(1);
   }
   // Get the size of the vectors associated with the interpolator
@@ -299,8 +307,10 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
                    d_artificialViscosityHeating);
   if (d_artificialViscosity && d_integratorType == "implicit") {
     if (d_myworld->myRank() == 0) {
-      std::cerr << "artificial viscosity is not implemented" << "\n";
-      std::cerr << "with implicit time integration" << "\n";
+      std::cerr << "artificial viscosity is not implemented"
+                << "\n";
+      std::cerr << "with implicit time integration"
+                << "\n";
     }
   }
   if (!d_artificialViscosity && d_artificialViscosityHeating) {

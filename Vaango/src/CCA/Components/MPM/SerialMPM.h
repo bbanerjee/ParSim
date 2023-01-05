@@ -27,7 +27,10 @@
 #ifndef VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 #define VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+#include <CCA/Components/MPM/MPMCommon.h>
+#include <Core/Grid/MaterialManagerP.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/SimulationInterface.h>
@@ -36,13 +39,11 @@
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/MaterialManagerP.h>
 // put here to avoid template problems
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/Labels/MPMLabel.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/MPMCommon.h>
 #include <Core/Geometry/Vector.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
@@ -59,35 +60,7 @@ namespace Uintah {
   class HeatConduction;
   class AnalysisModule;
 
-/**************************************
-
-CLASS
-   SerialMPM
-   
-   Short description...
-
-GENERAL INFORMATION
-
-   SerialMPM.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
-KEYWORDS
-   SerialMPM
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
-
-  class SerialMPM : public MPMCommon, public SimulationInterface, public UintahParallelComponent {
+  class SerialMPM : public SimulationCommon, public MPMCommon {
   public:
     SerialMPM(const ProcessorGroup* myworld);
     virtual ~SerialMPM() noexcept(false);
@@ -665,9 +638,8 @@ WARNING
   
     virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
                    
-
   
-    SimulationStateP d_sharedState;
+    MaterialManagerP d_materialManager;
     MPMLabel* lb;
     MPMFlags* flags;
     Output* dataArchiver;

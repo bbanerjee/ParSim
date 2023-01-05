@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,10 +25,7 @@
 
 
 #include <CCA/Ports/SimulationInterface.h>
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Grid/Task.h>
 
-using namespace Uintah;
 using namespace Uintah;
 
 SimulationInterface::SimulationInterface()
@@ -36,77 +34,4 @@ SimulationInterface::SimulationInterface()
 
 SimulationInterface::~SimulationInterface()
 {
-}
-
-void
-SimulationInterface::scheduleRefine(const PatchSet*, 
-                                    SchedulerP&)
-{
-  throw InternalError("scheduleRefine not implemented for this component\n", __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleRefineInterface(const LevelP&, 
-                                             SchedulerP&,
-                                             bool, bool)
-{
-  throw InternalError("scheduleRefineInterface not implemented for this component\n",
-                      __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleCoarsen(const LevelP&, 
-                                     SchedulerP&)
-{
-  throw InternalError("scheduleCoarsen not implemented for this component\n", __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleTimeAdvance(const LevelP&,
-                                         SchedulerP&)
-{
-  throw InternalError("no simulation implemented?", __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleErrorEstimate(const LevelP&,
-						SchedulerP&)
-{
-  throw InternalError("scheduleErrorEstimate not implemented for this component",
-                      __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleInitialErrorEstimate(const LevelP& /*coarseLevel*/,
-                                                  SchedulerP& /*sched*/)
-{
-  throw InternalError("scheduleInitialErrorEstimate not implemented for this component",
-                      __FILE__, __LINE__);
-}
-
-double
-SimulationInterface::recomputeTimestep(double)
-{
-  throw InternalError("recomputeTimestep not implemented for this component", __FILE__, __LINE__);
-}
-
-bool
-SimulationInterface::restartableTimesteps()
-{
-  return false;
-}
-
-
-double
-SimulationInterface::getSubCycleProgress(DataWarehouse* fineDW)
-{
-  // DWs are always created in order of time.
-  int fineID = fineDW->getID();  
-  int coarseNewID = fineDW->getOtherDataWarehouse(Task::CoarseNewDW)->getID();
-  // need to do this check, on init timestep, old DW is nullptr, and getOtherDW will throw exception
-  if (fineID == coarseNewID)
-    return 1.0; 
-  int coarseOldID = fineDW->getOtherDataWarehouse(Task::CoarseOldDW)->getID();
-  
-  return ((double)fineID-coarseOldID) / (coarseNewID-coarseOldID);
 }

@@ -187,7 +187,7 @@ public:
   SchedulerP            getSchedulerP() { return m_scheduler; }
   LoadBalancer*         getLoadBalancer() { return m_loadBalancer; }
   Output*               getOutput() { return m_output; }
-  ApplicationInterface* getApplicationInterface() { return m_application; }
+  ApplicationInterface* getApplicationInterface() { return d_simulation; }
   Regridder*            getRegridder() { return m_regridder; }
   WallTimers*           getWallTimers() { return &m_wall_timers; }
 
@@ -226,7 +226,7 @@ protected:
   ProblemSpecP           m_restart_ps    {nullptr};
   GridP                  m_current_gridP {nullptr};
 
-  ApplicationInterface * m_application   {nullptr};
+  ApplicationInterface * d_simulation   {nullptr};
   LoadBalancer         * m_loadBalancer  {nullptr};
   Output               * m_output        {nullptr};
   Regridder            * m_regridder     {nullptr};

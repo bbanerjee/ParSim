@@ -70,12 +70,16 @@ public:
 
   MPMFlags(const ProcessorGroup* myworld);
   MPMFlags(const MPMFlags& state) = delete;
-  MPMFlags& operator=(const MPMFlags& state) = delete;
-  virtual ~MPMFlags() = default;
+  MPMFlags&
+  operator=(const MPMFlags& state) = delete;
+  virtual ~MPMFlags()              = default;
 
-  virtual void readMPMFlags(ProblemSpecP& ps, Output* dataArchive);
-  virtual void outputProblemSpec(ProblemSpecP& ps);
-  bool doMPMOnLevel(int level, int numLevels) const;
+  virtual void
+  readMPMFlags(ProblemSpecP& ps, Output* dataArchive);
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps);
+  bool
+  doMPMOnLevel(int level, int numLevels) const;
 
 public:
   const ProcessorGroup* d_myworld;
@@ -116,13 +120,13 @@ public:
   bool d_prescribeDeformation; // Prescribe deformation via a table of U and R
   bool d_useCohesiveZones;     // Flag for using cohesive zones
   bool d_useCoordRotation;     // Coordinate rotation on/off
-  bool d_useCBDI;           // Flag for using CBDI boundary condition treatment
-  bool d_useCPTI;           // Flag for using CPTI interpolation
-  bool d_useLoadCurves;     // Flag for using load curves
-  bool d_withColor;         // to turn on the color variable
-  bool d_AMR;               // Do AMR?
-  bool d_GEVelProj;         // Flag for adaptive mesh refinement
-  bool d_refineParticles;   // Flag for refinement
+  bool d_useCBDI;         // Flag for using CBDI boundary condition treatment
+  bool d_useCPTI;         // Flag for using CPTI interpolation
+  bool d_useLoadCurves;   // Flag for using load curves
+  bool d_withColor;       // to turn on the color variable
+  bool d_AMR;             // Do AMR?
+  bool d_GEVelProj;       // Flag for adaptive mesh refinement
+  bool d_refineParticles; // Flag for refinement
 
   int d_8or27;                 // Number of nodes a particle can interact with
   int d_minGridLevel;          // Only do MPM on this grid level
@@ -157,6 +161,10 @@ public:
   Uintah::Point d_coordRotationCenter;       // Center of rotation
   Uintah::Point d_coordRotationBodyRefPoint; // Reference point in rotating body
   Uintah::Vector d_coordRotationAxis;        // Axis of rotation
+
+  // So all components can know how many particle ghost cells to ask for
+  Ghost::GhostType particle_ghost_type{ Ghost::None };
+  int particle_ghost_layer{ 0 };
 };
 
 } // End namespace Uintah

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2018-2022 Parresia Research Limited, NZ
+ * Copyright (c) 2018-2023 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -39,64 +39,78 @@ namespace Uintah {
 class TypeDescription;
 class Patch;
 
-class VarLabel : public RefCounted
-{
-
-public:
-  enum class VarType
-  {
-    Normal,
-    PositionVariable
-  };
+class VarLabel : public RefCounted {
+ public:
+  enum class VarType { Normal, PositionVariable };
 
   // Ensure the uniqueness of VarLabel names (same name, same object).
-  static VarLabel* create(const std::string& name,
-                          const TypeDescription* type_description,
-                          const IntVector& boundaryLayer = IntVector(0, 0, 0),
-                          VarType vartype = VarType::Normal);
+  static VarLabel*
+  create(const std::string& name,
+         const TypeDescription* type_description,
+         const IntVector& boundaryLayer = IntVector(0, 0, 0),
+         VarType vartype                = VarType::Normal);
 
-  static bool destroy(const VarLabel* label);
+  static bool
+  destroy(const VarLabel* label);
 
-  inline const std::string& getName() const { return m_name; }
+  inline const std::string&
+  getName() const {
+    return d_name;
+  }
 
-  std::string getFullName(int matlIndex, const Patch* patch) const;
+  std::string
+  getFullName(int matlIndex, const Patch* patch) const;
 
-  bool isPositionVariable() const { return m_var_type == VarType::PositionVariable; }
+  bool
+  isPositionVariable() const {
+    return d_var_type == VarType::PositionVariable;
+  }
 
-  const TypeDescription* typeDescription() const { return m_td; }
+  const TypeDescription*
+  typeDescription() const {
+    return d_td;
+  }
 
-  IntVector getBoundaryLayer() const { return m_boundary_layer; }
+  IntVector
+  getBoundaryLayer() const {
+    return d_boundary_layer;
+  }
 
   // void allowMultipleComputes();
 
-  // bool allowsMultipleComputes() const { return m_allow_multiple_computes; }
+  // bool allowsMultipleComputes() const { return d_allow_multiple_computes; }
 
-  void isReductionTask(bool input);
+  void
+  isReductionTask(bool input);
 
-  bool isReductionTask() const { return m_is_reduction_task; }
+  bool
+  isReductionTask() const {
+    return d_is_reduction_task;
+  }
 
-  static VarLabel* find(const std::string& name);
+  static VarLabel*
+  find(const std::string& name);
 
-  static VarLabel* find(const std::string& name, const std::string& message);
+  static VarLabel*
+  find(const std::string& name, const std::string& message);
 
-  static VarLabel* particlePositionLabel();
+  static VarLabel*
+  particlePositionLabel();
 
-  static void setParticlePositionName(const std::string& pPosName)
-  {
+  static void
+  setParticlePositionName(const std::string& pPosName) {
     s_particle_position_name = pPosName;
   }
 
-  static std::string& getParticlePositionName()
-  {
+  static std::string&
+  getParticlePositionName() {
     return s_particle_position_name;
   }
 
-  class Compare
-  {
-
-  public:
-    inline bool operator()(const VarLabel* v1, const VarLabel* v2) const
-    {
+  class Compare {
+   public:
+    inline bool
+    operator()(const VarLabel* v1, const VarLabel* v2) const {
       // because of uniqueness, we can use pointer comparisons
       // return v1 < v2;
       // No we cannot, because we need the order to be the same on different
@@ -108,8 +122,8 @@ public:
     }
   };
 
-  bool equals(const VarLabel* v2) const
-  {
+  bool
+  equals(const VarLabel* v2) const {
     // because of uniqueness, we can use pointer comparisons
     return this == v2;
     /* old way
@@ -119,60 +133,66 @@ public:
     */
   }
 
-  void setCompressionMode(std::string compressionMode)
-  {
-    m_compression_mode = compressionMode;
+  void
+  setCompressionMode(std::string compressionMode) {
+    d_compression_mode = compressionMode;
   }
 
-  const std::string& getCompressionMode() const
-  {
-    return (m_compression_mode == "default") ? s_default_compression_mode
-                                             : m_compression_mode;
+  const std::string&
+  getCompressionMode() const {
+    return (d_compression_mode == "default") ? s_default_compression_mode
+                                             : d_compression_mode;
   }
 
-  static void setDefaultCompressionMode(const std::string& compressionMode)
-  {
+  static void
+  setDefaultCompressionMode(const std::string& compressionMode) {
     s_default_compression_mode = compressionMode;
   }
 
-  static void printAll(); // for debugging
+  static void
+  printAll();  // for debugging
 
-  friend std::ostream& operator<<(std::ostream& out, const VarLabel& vl);
+  friend std::ostream&
+  operator<<(std::ostream& out, const VarLabel& vl);
 
-private:
+ private:
   // You must use VarLabel::create.
-  VarLabel(const std::string& label, const TypeDescription* type,
-           const IntVector& boundaryLayer, VarType vartype);
+  VarLabel(const std::string& label,
+           const TypeDescription* type,
+           const IntVector& boundaryLayer,
+           VarType vartype);
 
   // You must use destroy.
   ~VarLabel(){};
 
-private:
-  std::string m_name{ "" };
-  const TypeDescription* m_td{ nullptr };
-  IntVector m_boundary_layer{ IntVector(0, 0, 0) };
-  VarType m_var_type{ VarType::Normal };
+ private:
+  std::string d_name{""};
+  const TypeDescription* d_td{nullptr};
+  IntVector d_boundary_layer{IntVector(0, 0, 0)};
+  VarType d_var_type{VarType::Normal};
 
-  mutable std::string m_compression_mode{ "default" };
+  mutable std::string d_compression_mode{"default"};
   static std::string s_default_compression_mode;
   static std::string s_particle_position_name;
 
   // Allow a variable of this label to be computed multiple times in a TaskGraph
   // without complaining.
-  //bool m_allow_multiple_computes{ false };
-  bool m_is_reduction_task{ true };
+  // bool d_allow_multiple_computes{ false };
+  bool d_is_reduction_task{true};
 
   // eliminate copy, assignment and move
   VarLabel(const VarLabel&) = delete;
-  VarLabel& operator=(const VarLabel&) = delete;
-  VarLabel(VarLabel&&) = delete;
-  VarLabel& operator=(VarLabel&&) = delete;
+  VarLabel&
+  operator=(const VarLabel&) = delete;
+  VarLabel(VarLabel&&)       = delete;
+  VarLabel&
+  operator=(VarLabel&&) = delete;
 
   // Static member to keep track of all labels created to prevent
   // duplicates.
   static std::map<std::string, VarLabel*> g_all_labels;
 };
 
-} // End namespace Uintah
+}  // End namespace Uintah
 
-#endif // __CORE_GRID_VARIABLES_VARLABEL_H__
+#endif  // __CORE_GRID_VARIABLES_VARLABEL_H__
