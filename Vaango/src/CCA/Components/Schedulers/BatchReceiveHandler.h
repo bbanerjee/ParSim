@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,25 +24,31 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/Schedulers/DependencyBatch.h>
 #include <CCA/Components/Schedulers/DetailedTasks.h>
-#include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
 
 namespace Uintah {
 
-  class BatchReceiveHandler {
+class BatchReceiveHandler
+{
 
-  public:
+public:
   BatchReceiveHandler(DependencyBatch* batch)
-    : batch_(batch) {}
+    : d_dependency_batch(batch)
+  {
+  }
 
   BatchReceiveHandler(const BatchReceiveHandler& copy)
-    : batch_(copy.batch_) {}
-  
-    void finishedCommunication(const ProcessorGroup * pg)
-    { batch_->received(pg); }
+    : d_dependency_batch(copy.d_dependency_batch)
+  {
+  }
 
-  private:
-    DependencyBatch* batch_;
-  
-  };
+  void finishedCommunication(const ProcessorGroup* pg)
+  {
+    d_dependency_batch->received(pg);
+  }
+
+private:
+  DependencyBatch* d_dependency_batch;
+};
 }

@@ -26,7 +26,10 @@
 
 SET(Vaango_CCA_Components_Schedulers_SRCS
   CommRecMPI.cc 
+  DependencyBatch.cc 
   DependencyException.cc 
+  DetailedDependency.cc 
+  DetailedTask.cc 
   DetailedTasks.cc 
   DynamicMPIScheduler.cc 
   IncorrectAllocation.cc 
@@ -35,6 +38,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   MPIScheduler.cc 
   OnDemandDataWarehouse.cc 
   Relocate.cc 
+  RuntimeStats.cc 
   SchedulerCommon.cc 
   SchedulerFactory.cc 
   SendState.cc 
@@ -50,7 +54,13 @@ if (CUDA)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUDataWarehouse.cu
+    GPUGridVariableInfo.cc
+    GPUGridVariableGhosts.cc
+    GPUMemoryPool.cc
   )
+  set(CUDA_OBJECT
+      GPUDataWarehouse.o
+     )
 endif (CUDA)
 
 ADD_LIBRARY(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})

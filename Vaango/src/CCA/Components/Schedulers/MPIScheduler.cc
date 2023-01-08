@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -362,7 +362,7 @@ MPIScheduler::postMPISends( DetailedTask* task,
 
       if ((req->condition == DetailedDep::FirstIteration && iteration > 0) || 
           (req->condition == DetailedDep::SubsequentIterations && iteration == 0)||
-          (d_notCopyDataVars.count(req->req->var->getName()) > 0  )){
+          (d_not_copy_data_vars.count(req->req->var->getName()) > 0  )){
         // See comment in DetailedDep about CommCondition
         if (dbg_active) {
           cerrLock.lock();
@@ -580,7 +580,7 @@ MPIScheduler::postMPIRecvs( DetailedTask* task,
         OnDemandDataWarehouse* dw = d_dws[req->req->mapDataWarehouse()].get_rep();
         if ((req->condition == DetailedDep::FirstIteration && iteration > 0) || 
             (req->condition == DetailedDep::SubsequentIterations && iteration == 0) ||
-            (d_notCopyDataVars.count(req->req->var->getName()) > 0  )){
+            (d_not_copy_data_vars.count(req->req->var->getName()) > 0  )){
 
           // See comment in DetailedDep about CommCondition
           if (dbg_active) {
