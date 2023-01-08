@@ -31,64 +31,46 @@
 
 namespace Uintah {
 
-  using std::vector;
-  using std::ofstream;
+class Task;
 
-  class Task;
+class DynamicMPIScheduler : public MPIScheduler
+{
 
-/**************************************
+public:
+  DynamicMPIScheduler(const ProcessorGroup* myworld,
+                      const Output* oport,
+                      DynamicMPIScheduler* parentScheduler = 0);
 
-CLASS
-   DynamicMPIScheduler
-   
-   Short description...
+  virtual ~DynamicMPIScheduler();
 
-GENERAL INFORMATION
+  // eliminate copy, assignment and move
+  DynamicMPIScheduler(const DynamicMPIScheduler&) = delete;
+  DynamicMPIScheduler&
+  operator=(const DynamicMPIScheduler&)      = delete;
+  DynamicMPIScheduler(DynamicMPIScheduler&&) = delete;
+  DynamicMPIScheduler&
+  operator=(DynamicMPIScheduler&&) = delete;
 
-   DynamicMPIScheduler.h
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec, SimulationStateP& state);
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+  virtual SchedulerP
+  createSubScheduler();
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-KEYWORDS
-   Dynamic MPI Scheduler
+  virtual void
+  execute(int tgnum = 0, int iteration = 0);
 
-DESCRIPTION
-   Dynamic scheduling with non-deterministic, out-of-order execution of
-   tasks at runtime. One MPI rank per CPU core. 
-  
-****************************************/
+  virtual bool
+  useInternalDeps()
+  {
+    return !d_is_copy_data_timestep;
+  }
 
-  class DynamicMPIScheduler : public MPIScheduler  {
+private:
 
-  public:
-
-    DynamicMPIScheduler(const ProcessorGroup* myworld, 
-                        const Output* oport, 
-                        DynamicMPIScheduler* parentScheduler = 0);
-
-    virtual ~DynamicMPIScheduler();
-    
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              SimulationStateP& state);
-      
-    virtual SchedulerP createSubScheduler();
-    
-    virtual void execute(int tgnum = 0, int iteration = 0);
-    
-    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep();}
-    
-  private:
-
-    DynamicMPIScheduler(const DynamicMPIScheduler&);
-    DynamicMPIScheduler& operator=(const DynamicMPIScheduler&);
-
-    QueueAlg taskQueueAlg_;
-  };
+  QueueAlg d_task_queue_algo{ MostMessages };
+};
 
 } // End namespace Uintah
-   
+
 #endif
