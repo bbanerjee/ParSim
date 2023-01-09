@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,7 +23,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Uintah_MemoryLog_h
 #define Uintah_MemoryLog_h
 
@@ -30,12 +30,19 @@
 #include <string>
 
 namespace Uintah {
-  class Patch;
-  void logMemory(std::ostream& out, unsigned long& total,
-		 const std::string& label, const std::string& name,
-		 const std::string& type, const Patch* patch,
-		 int material, const std::string& elems,
-		 unsigned long size, void* ptr, int dwid=-1);
+class Patch;
+void
+logMemory(std::ostream& out,
+          unsigned long& total,
+          const std::string& label,
+          const std::string& name,
+          const std::string& type,
+          const Patch* patch,
+          int material,
+          const std::string& elems,
+          unsigned long size,
+          void* ptr,
+          int dwid = -1);
 }
 
 #endif
