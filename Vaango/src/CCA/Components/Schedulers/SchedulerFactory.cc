@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,37 +23,32 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/Schedulers/DynamicMPIScheduler.h>
-#include <CCA/Components/Schedulers/MPIScheduler.h>
-#include <CCA/Components/Schedulers/SchedulerCommon.h>
 #include <CCA/Components/Schedulers/SchedulerFactory.h>
-#include <CCA/Components/Schedulers/SingleProcessorScheduler.h>
-#include <CCA/Components/Schedulers/ThreadedMPIScheduler.h>
+
+#include <CCA/Components/Schedulers/SchedulerCommon.h>
+
+#include <CCA/Components/Schedulers/DynamicMPIScheduler.h>
+#include <CCA/Components/Schedulers/KokkosOpenMPScheduler.h>
+#include <CCA/Components/Schedulers/MPIScheduler.h>
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Util/DebugStream.h>
 
 #include <sci_defs/cuda_defs.h>
+#include <sci_defs/kokkos_defs.h>
 
 #include <iostream>
 #include <string>
 
-using namespace Uintah;
-
-// Enable specific schedulers via environment variable
-static DebugStream singleProcessor("SingleProcessorScheduler", false);
-static DebugStream dynamicMPI("DynamicMPIScheduler", false);
-static DebugStream unified("UnifiedScheduler", false);
+namespace Uintah {
 
 SchedulerCommon*
-SchedulerFactory::create(const ProblemSpecP& ps, const ProcessorGroup* world,
-                         const Output* output)
+SchedulerFactory::create(const ProblemSpecP& ps, const ProcessorGroup* world)
 {
-  SchedulerCommon* sch = 0;
+  SchedulerCommon* sch  = nullptr;
   std::string scheduler = "";
 
   ProblemSpecP sc_ps = ps->findBlock("Scheduler");
@@ -63,57 +59,57 @@ SchedulerFactory::create(const ProblemSpecP& ps, const ProcessorGroup* world,
   // Default settings - nothing specified in the input file
   if (scheduler == "") {
 
-    // Using MPI
-
-    // Using MPI without threads
+#if defined(UINTAH_ENABLE_KOKKOS) && !defined(HAVE_CUDA)
+    scheduler = "KokkosOpenMP";
+#else
     if (!(Uintah::Parallel::getNumThreads() > 0)) {
-      if (singleProcessor.active()) {
-        throw ProblemSetupException(
-          "Cannot use Single Processor Scheduler with MPI.", __FILE__,
-          __LINE__);
-      } else if (dynamicMPI.active()) {
-        scheduler = "DynamicMPI";
-      } else {
-        scheduler = "MPI";
-      }
-    }
-
-    // Using MPI and threads (Unified and ThreadedMPI schedulers)
-    if (Uintah::Parallel::usingDevice() || unified.active()) {
       scheduler = "Unified";
     } else {
-      scheduler = "ThreadedMPI";
+      scheduler = "MPI";
     }
+#endif
   }
 
   // Check for specific scheduler request from the input file
-  if (scheduler == "SingleProcessor") {
-    sch = scinew SingleProcessorScheduler(world, output, nullptr);
-  } else if (scheduler == "MPI") {
-    sch = scinew MPIScheduler(world, output, nullptr);
+  if (scheduler == "MPI") {
+    sch = scinew MPIScheduler(world, nullptr);
   } else if (scheduler == "DynamicMPI") {
-    sch = scinew DynamicMPIScheduler(world, output, nullptr);
-  } else if (scheduler == "ThreadedMPI") {
-    sch = scinew ThreadedMPIScheduler(world, output, nullptr);
+    sch = scinew DynamicMPIScheduler(world, nullptr);
   } else if (scheduler == "Unified") {
-    sch = scinew UnifiedScheduler(world, output, nullptr);
+    sch = scinew UnifiedScheduler(world, nullptr);
+  } else if (scheduler == "KokkosOpenMP") {
+    sch = scinew UnifiedScheduler(world, nullptr);
   } else {
-    sch = 0;
+    sch               = nullptr;
     std::string error = "Unknown scheduler: '" + scheduler +
                         "' Please check UPS Spec for valid scheduler options "
                         "(.../src/StandAlone/inputs/UPS_SPEC/ups_spec.xml)'";
     throw ProblemSetupException(error, __FILE__, __LINE__);
   }
 
-  //__________________________________
-  //  bulletproofing
   // "-nthreads" at command line, something other than "ThreadedMPI" specified
   // in UPS file (w/ -do_not_validate)
-  if ((Uintah::Parallel::getNumThreads() > 0) &&
-      ((scheduler != "Unified") && (scheduler != "ThreadedMPI"))) {
+  if ((Uintah::Parallel::getNumThreads() > 0) && (scheduler != "Unified")) {
     throw ProblemSetupException(
-      "ThreadedMPI or Unified Scheduler needed for '-nthreads <n>' option",
-      __FILE__, __LINE__);
+      "Unified Scheduler needed for '-nthreads <n>' option",
+      __FILE__,
+      __LINE__);
+  }
+
+  // "-gpu" provided at command line, but not using "Unified"
+  if ((scheduler != "Unified") && Uintah::Parallel::usingDevice()) {
+    std::string error =
+      "\nERROR<Scheduler>: To use '-gpu' option you must invoke the Unified "
+      "Scheduler.  Add '-nthreads <n>' to the sus command line.\n";
+    throw ProblemSetupException(error, __FILE__, __LINE__);
+  }
+
+  // "Unified" specified in UPS file, but "-nthreads" not given at command line
+  if ((scheduler == "Unified") && !(Uintah::Parallel::getNumThreads() > 0)) {
+    std::string error =
+      "\nERROR<Scheduler>: Add '-nthreads <n>' to the sus command line if you "
+      "are specifying Unified in your input file.\n";
+    throw ProblemSetupException(error, __FILE__, __LINE__);
   }
 
   if ((scheduler != "Unified") && Uintah::Parallel::usingDevice()) {
@@ -128,3 +124,5 @@ SchedulerFactory::create(const ProblemSpecP& ps, const ProcessorGroup* world,
 
   return sch;
 }
+
+} // namespace Uintah

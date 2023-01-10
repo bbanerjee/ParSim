@@ -25,25 +25,23 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/Schedulers
 
 SET(Vaango_CCA_Components_Schedulers_SRCS
-  CommRecMPI.cc 
   DependencyBatch.cc 
   DependencyException.cc 
   DetailedDependency.cc 
   DetailedTask.cc 
   DetailedTasks.cc 
   DynamicMPIScheduler.cc 
-  IncorrectAllocation.cc 
   MemoryLog.cc 
-  MessageLog.cc 
   MPIScheduler.cc 
   OnDemandDataWarehouse.cc 
   Relocate.cc 
+  RelocateMPIScatterRecord.cc 
   RuntimeStats.cc 
   SchedulerCommon.cc 
   SchedulerFactory.cc 
   SendState.cc 
-  SingleProcessorScheduler.cc 
   TaskGraph.cc 
+  TaskGraphCompTable.cc 
   ThreadedMPIScheduler.cc 
   UnifiedScheduler.cc 
   Util.cc 
