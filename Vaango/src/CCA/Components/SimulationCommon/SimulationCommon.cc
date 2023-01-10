@@ -108,7 +108,7 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
   // delta t
   VarLabel* nonconstDelT =
       VarLabel::create(delT_name, delt_vartype::getTypeDescription());
-  nonconstDelT->schedReductionTask(false);
+  nonconstDelT->isReductionTask(false);
   d_delTLabel = nonconstDelT;
 
   d_simulation_stats.calculateRankMinimum(true);

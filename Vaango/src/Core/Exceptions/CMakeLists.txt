@@ -75,6 +75,10 @@ SET(Vaango_Core_Exceptions_SRCS
 
 ADD_LIBRARY(Vaango_Core_Exceptions ${Vaango_Core_Exceptions_SRCS})
 
+target_link_libraries(Vaango_Core_Exceptions
+  ${CMAKE_DL_LIBS}
+)
+
 IF(BUILD_SHARED_LIBS)
   ADD_DEFINITIONS(-DBUILD_Vaango_Core_Exceptions)
 ENDIF(BUILD_SHARED_LIBS)

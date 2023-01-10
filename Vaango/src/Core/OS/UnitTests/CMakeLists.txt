@@ -1,9 +1,6 @@
 #
 # The MIT License
 #
-# Copyright (c) 2004 Scientific Computing and Imaging Institute,
-# University of Utah.
-# Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
 # Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,24 +21,34 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-# CMakeLists.txt for Vaango/src/Core/OS
 
-SET(Vaango_Core_OS_SRCS
-  Dir.cc 
-  ProcessInfo.cc 
-  sock.cc
+enable_testing()
+include(GoogleTest)
+
+SET(VAANGO_LIBS
+    Vaango_Core_OS
+    Vaango_Core_Exceptions
+    )
+
+#------------------------
+# Google tests
+#------------------------
+set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+set(GTEST_LIB GTest::gtest_main)
+include_directories(${GTEST_INCLUDE_DIR})
+
+add_executable(testDir testDir.cc)
+target_include_directories(testDir PRIVATE
+                           ${CMAKE_SOURCE_DIR}/Core/OS) 
+target_link_libraries(testDir
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  ${CMAKE_DL_LIBS}
 )
-
-ADD_LIBRARY(Vaango_Core_OS ${Vaango_Core_OS_SRCS})
-
-TARGET_LINK_LIBRARIES(Vaango_Core_OS
-  Vaango_Core_Exceptions
-  ${SOCKET_LIBRARY}
+set(UNIT_TEST testDir)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
 )
-
-IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_OS)
-ENDIF(BUILD_SHARED_LIBS)
-
-add_subdirectory(UnitTests)
-
+gtest_discover_tests(${UNIT_TEST})

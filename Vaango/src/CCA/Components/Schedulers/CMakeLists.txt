@@ -42,10 +42,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   SendState.cc 
   TaskGraph.cc 
   TaskGraphCompTable.cc 
-  ThreadedMPIScheduler.cc 
   UnifiedScheduler.cc 
-  Util.cc 
-  templates.cc
 )
 
 if (CUDA)

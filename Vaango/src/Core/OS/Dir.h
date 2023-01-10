@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,100 +29,69 @@
 #include <string>
 #include <vector>
 
-#include <sys/stat.h>
-
-#ifdef _WIN32
-#  include <io.h>
-#  include <direct.h>
-#  define S_IRUSR 0x0100
-#  define S_ISDIR(m)      (((m) & S_IFMT) == S_IFDIR)
-#  define S_ISREG(m)      (((m) & S_IFMT) == S_IFREG)
-#endif
-
-#include <Core/OS/share.h>
-
 namespace Uintah {
-   
-/**************************************
-     
-     CLASS
-       Dir
-      
-       Short Description...
-      
-     GENERAL INFORMATION
-      
-       Dir.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-      
-     KEYWORDS
-       Dir
-      
-     DESCRIPTION
-       Long description...
-      
-     WARNING
-      
-****************************************/
-    
-class SCISHARE Dir {
+
+class Dir
+{
 public:
-  Dir();
+  Dir() = default;
   Dir(const Dir&);
   Dir(const std::string&);
-  ~Dir();
-  Dir& operator=(const Dir&);
-  
-  static Dir create(const std::string& name);
-  
-  void remove(bool throwOnError = true);
-    
+  ~Dir() = default;
+  Dir&
+  operator=(const Dir&);
+
+  static Dir
+  create(const std::string& name);
+
+  void
+  remove(bool throwOnError = true);
+
   // removes even if the directory has contents
-  void forceRemove(bool throwOnError = true);
+  void
+  forceRemove(bool throwOnError = true);
 
   // remove a file
-  void remove(const std::string& filename, bool throwOnError = true);
+  void
+  remove(const std::string& filename, bool throwOnError = true);
 
   // copy this directory to under the destination directory
-  void copy(Dir& destDir);
-  void move(Dir& destDir);
+  void
+  copy(Dir& destDir);
+  void
+  move(Dir& destDir);
 
   // copy a file in this directory to the destination directory
-  void copy(const std::string& filename, Dir& destDir);
-  void move(const std::string& filename, Dir& destDir);
-  
-  Dir createSubdir(const std::string& name);
-  Dir getSubdir(const std::string& name);
-  bool exists();
-  
-  void getFilenamesBySuffix( const std::string& suffix,
-                             std::vector<std::string>& filenames );
+  void
+  copy(const std::string& filename, Dir& destDir);
+  void
+  move(const std::string& filename, Dir& destDir);
 
-  std::string getName() const {
-    return name_;
+  Dir
+  createSubdir(const std::string& name);
+  Dir
+  getSubdir(const std::string& name);
+  bool
+  exists();
+
+  void
+  getFilenamesBySuffix(const std::string& suffix,
+                       std::vector<std::string>& filenames);
+
+  std::string
+  getName() const
+  {
+    return d_name;
   }
 
-  // Delete the dir and all of its files/sub directories using C++ calls.
-  //
-  static bool removeDir( const char * dirName );
-  
-private:
+  // Delete the dir and all of its files/sub directories
+  static bool
+  removeDir(const char* dirName);
 
-  std::string name_;
+private:
+  std::string d_name;
 };
 
 } // End namespace Uintah
-
-#ifdef _WIN32
-#  define MKDIR(dir, perm) mkdir(dir)       // windows mkdir doesn't take permissions
-#  define LSTAT(file, buf) stat(file, buf)  // windows doesn't have lstat
-#else
-#  define MKDIR(dir, perm) mkdir(dir, perm)
-#  define LSTAT(file, buf) lstat(file, buf)
-#endif
 
 #endif // Core_OS_Dir_H

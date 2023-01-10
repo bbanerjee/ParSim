@@ -22,6 +22,7 @@
 # IN THE SOFTWARE.
 #
 
+add_subdirectory(OS) 
 add_subdirectory(Basis)
 add_subdirectory(Containers) 
 add_subdirectory(DataArchive) 
@@ -34,7 +35,6 @@ add_subdirectory(IO)
 #add_subdirectory(Lockfree) 
 add_subdirectory(Malloc) 
 add_subdirectory(Math) 
-add_subdirectory(OS) 
 add_subdirectory(Parallel) 
 add_subdirectory(Persistent) 
 add_subdirectory(ProblemSpec) 

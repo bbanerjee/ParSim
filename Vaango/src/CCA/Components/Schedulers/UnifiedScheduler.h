@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2016-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__
-#define __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__
+#ifndef CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
+#define CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
 
 #include <CCA/Components/Schedulers/MPIScheduler.h>
 
@@ -36,6 +36,10 @@
 
 #include <sci_defs/cuda_defs.h>
 
+#include <map>
+#include <string>
+#include <vector>
+
 namespace Uintah {
 
 class Task;
@@ -43,8 +47,10 @@ class DetailedTask;
 class UnifiedSchedulerWorker;
 
 /**************************************
+
 CLASS
    UnifiedScheduler
+
 
 GENERAL INFORMATION
    UnifiedScheduler.h
@@ -53,153 +59,352 @@ GENERAL INFORMATION
    Scientific Computing and Imaging Institute
    University of Utah
 
+
 KEYWORDS
-   Task Scheduler, Multi-threaded MPI, CPU, GPU, MIC
+   Task Scheduler, Multi-threaded MPI, CPU, GPU
 
 DESCRIPTION
-   A multi-threaded scheduler that uses a combination of MPI + Pthreads
+   A multi-threaded scheduler that uses a combination of MPI + std::thread
    and offers support for GPU tasks. Dynamic scheduling with non-deterministic,
    out-of-order execution of tasks at runtime. One MPI rank per multi-core node.
-   Pthreads are pinned to individual CPU cores where these tasks are executed.
-   Uses a decentralized model wherein all threads can access task queues,
-   processes there own MPI send and recvs, with shared access to the
-   DataWarehouse.
+   threads (std::thread) are pinned to individual CPU cores where these tasks
+are executed. Uses a decentralized model wherein all threads can access task
+queues, processes there own MPI sends and recvs, with shared access to the
+DataWarehouse.
 
    Uintah task scheduler to support, schedule and execute solely CPU tasks
-   or some combination of CPU, GPU and MIC tasks when enabled.
+   or some combination of CPU and GPU tasks when enabled.
 
 WARNING
    This scheduler is still EXPERIMENTAL and undergoing extensive
-   development, not all tasks/components are GPU/MIC-enabled and/or thread-safe
-   yet.
+   development, not all tasks/components are GPU-enabled and/or thread-safe yet.
 
    Requires MPI_THREAD_MULTIPLE support.
+
 ****************************************/
 
 class UnifiedScheduler : public MPIScheduler
 {
+
 public:
   UnifiedScheduler(const ProcessorGroup* myworld,
                    UnifiedScheduler* parentScheduler = nullptr);
 
   virtual ~UnifiedScheduler();
 
-  // Used only to check if this Vaango build can communicate with a GPU.  This
-  // function exits the program
-  static int verifyAnyGPUActive();
+  // eliminate copy, assignment and move
+  UnifiedScheduler(const UnifiedScheduler&) = delete;
+  UnifiedScheduler&
+  operator=(const UnifiedScheduler&)   = delete;
+  UnifiedScheduler(UnifiedScheduler&&) = delete;
+  UnifiedScheduler&
+  operator=(UnifiedScheduler&&) = delete;
 
-  virtual void problemSetup(const ProblemSpecP& prob_spec,
-                            SimulationStateP& state);
 
-  virtual SchedulerP createSubScheduler();
+  static int
+  verifyAnyGpuActive(); // used only to check if this Uintah build can
+                        // communicate with a GPU.  This function exits the
+                        // program
 
-  virtual void execute(int tgnum = 0, int iteration = 0);
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const MaterialManagerP& materialManager);
 
-  virtual bool useInternalDeps()
+  virtual SchedulerP
+  createSubScheduler();
+
+  virtual void
+  execute(int tgnum = 0, int iteration = 0);
+
+  virtual bool
+  useInternalDeps()
   {
-    return !d_sharedState->isCopyDataTimestep();
+    return !m_is_copy_data_timestep;
   }
 
-  virtual void runTask(DetailedTask* task, int iteration, int thread_id,
-                       Task::CallBackEvent event);
+  void
+  runTask(DetailedTask* dtask,
+          int iteration,
+          int thread_id,
+          Task::CallBackEvent event);
 
-  void runTasks(int thread_id);
+  void
+  runTasks(int thread_id);
+
+  static const int bufferPadding =
+    128; // 32 threads can write floats out in one coalesced access.  (32 * 4
+         // bytes = 128 bytes).
+         // TODO: Ideally, this number should be determined from the CUDA arch
+         // during the CMAKE/configure step so that future programmers don't
+         // have to manually remember to update this value if it ever changes.
+
+  // timing statistics for Uintah infrastructure overhead
+  enum ThreadStatsEnum
+  {
+    WaitTime,
+    LocalTID,
+    Affinity,
+    NumTasks,
+    NumPatches
+  };
+
+  VectorInfoMapper<ThreadStatsEnum, double> m_thread_info;
+
+  static std::string
+  myRankThread();
 
   friend class UnifiedSchedulerWorker;
 
 private:
-  // Disable copy and assignment
-  UnifiedScheduler(const UnifiedScheduler&);
-  UnifiedScheduler& operator=(const UnifiedScheduler&);
+  void
+  markTaskConsumed(int& numTasksDone,
+                   int& currphase,
+                   int numPhases,
+                   DetailedTask* dtask);
 
-  int getAvailableThreadNum();
-
-  int pendingMPIRecvs();
-
-  std::string myRankThread();
-
-  ConditionVariable d_nextsignal; // conditional wait mutex
-  Mutex d_nextmutex;              // next mutex
-  Mutex schedulerLock; // scheduler lock (acquire and release quickly)
-  UnifiedSchedulerWorker* t_worker[MAX_THREADS]; // the workers
-  Thread* t_thread[MAX_THREADS];                 // the threads themselves
+  static void
+  init_threads(UnifiedScheduler* scheduler, int num_threads);
 
   // thread shared data, needs lock protection when accessed
-  std::vector<int> phaseTasks;
-  std::vector<int> phaseTasksDone;
-  std::vector<DetailedTask*> phaseSyncTask;
-  std::vector<int> histogram;
-  DetailedTasks* dts;
+  std::vector<int> m_phase_tasks;
+  std::vector<int> m_phase_tasks_done;
+  std::vector<DetailedTask*> m_phase_sync_task;
+  std::vector<int> m_histogram;
+  DetailedTasks* m_detailed_tasks{ nullptr };
 
-  QueueAlg taskQueueAlg_;
-  int currentIteration;
-  int numTasksDone;
-  int ntasks;
-  int currphase;
-  int numPhases;
-  bool abort;
-  int abort_point;
-  int numThreads_;
+  QueueAlg m_task_queue_alg{ MostMessages };
+  int m_curr_iteration{ 0 };
+  int m_num_tasks_done{ 0 };
+  int m_num_tasks{ 0 };
+  int m_curr_phase{ 0 };
+  int m_num_phases{ 0 };
+  bool m_abort{ false };
+  int m_abort_point{ 0 };
 
 #ifdef HAVE_CUDA
 
-  void gpuInitialize(bool reset = false);
+  using DeviceVarDest = GpuUtilities::DeviceVarDestination;
 
-  void postD2HCopies(DetailedTask* dtask);
+  void
+  assignStatusFlagsToPrepareACpuTask(DetailedTask* dtask);
 
-  void preallocateDeviceMemory(DetailedTask* dtask);
+  void
+  assignDevicesAndStreams(DetailedTask* dtask);
 
-  void postH2DCopies(DetailedTask* dtask);
+  void
+  assignDevicesAndStreamsFromGhostVars(DetailedTask* dtask);
 
-  void createCudaStreams(int device, int numStreams = 1);
+  void
+  findIntAndExtGpuDependencies(DetailedTask* dtask, int iteration, int t_id);
 
-  cudaStream_t* getCudaStream(int device);
+  void
+  prepareGpuDependencies(DetailedTask* dtask,
+                         DependencyBatch* batch,
+                         const VarLabel* pos_var,
+                         OnDemandDataWarehouse* dw,
+                         OnDemandDataWarehouse* old_dw,
+                         const DetailedDep* dep,
+                         DeviceVarDest des);
 
-  void reclaimCudaStreams(DetailedTask* dtask);
+  void
+  createTaskGpuDWs(DetailedTask* dtask);
 
-  void freeCudaStreams();
+  void
+  gpuInitialize(bool reset = false);
 
-  int numDevices_;
-  int currentDevice_;
+  void
+  syncTaskGpuDWs(DetailedTask* dtask);
 
-  std::vector<std::queue<cudaStream_t*>> idleStreams;
+  void
+  performInternalGhostCellCopies(DetailedTask* dtask);
 
-  // All are multiple reader, single writer locks (pthread_rwlock_t wrapper)
-  mutable CrowdMonitor idleStreamsLock_;
-  mutable CrowdMonitor d2hComputesLock_;
-  mutable CrowdMonitor h2dRequiresLock_;
+  void
+  copyAllGpuToGpuDependences(DetailedTask* dtask);
+
+  void
+  copyAllExtGpuDependenciesToHost(DetailedTask* dtask);
+
+  void
+  initiateH2DCopies(DetailedTask* dtask);
+
+  void
+  turnIntoASuperPatch(GPUDataWarehouse* const gpudw,
+                      const Level* const level,
+                      const IntVector& low,
+                      const IntVector& high,
+                      const VarLabel* const label,
+                      const Patch* const patch,
+                      const int matlIndx,
+                      const int levelID);
+
+  void
+  prepareDeviceVars(DetailedTask* dtask);
+
+  void
+  prepareTaskVarsIntoTaskDW(DetailedTask* dtask);
+
+  void
+  prepareGhostCellsIntoTaskDW(DetailedTask* dtask);
+
+  void
+  markDeviceRequiresDataAsValid(DetailedTask* dtask);
+
+  void
+  markDeviceGhostsAsValid(DetailedTask* dtask);
+
+  void
+  markDeviceComputesDataAsValid(DetailedTask* dtask);
+
+  void
+  markHostRequiresDataAsValid(DetailedTask* dtask);
+
+  void
+  initiateD2HForHugeGhostCells(DetailedTask* dtask);
+
+  void
+  initiateD2H(DetailedTask* dtask);
+
+  bool
+  ghostCellsProcessingReady(DetailedTask* dtask);
+
+  bool
+  allHostVarsProcessingReady(DetailedTask* dtask);
+
+  bool
+  allGPUVarsProcessingReady(DetailedTask* dtask);
+
+  void
+  reclaimCudaStreamsIntoPool(DetailedTask* dtask);
+
+  void
+  freeCudaStreamsFromPool();
+
+  cudaStream_t*
+  getCudaStreamFromPool(int device);
+
+  cudaError_t
+  freeDeviceRequiresMem();
+
+  cudaError_t
+  freeComputesMem();
+
+  void
+  assignDevice(DetailedTask* task);
+
+  struct GPUGridVariableInfo
+  {
+
+    GPUGridVariableInfo(DetailedTask* dtask,
+                        double* ptr,
+                        IntVector size,
+                        int device)
+      : m_dtask{ dtask }
+      , m_ptr{ ptr }
+      , m_size{ size }
+      , m_device{ device }
+    {
+    }
+
+    DetailedTask* m_dtask;
+    double* m_ptr;
+    IntVector m_size;
+    int m_device;
+  };
+
+  std::map<VarLabelMatl<Patch>, GPUGridVariableInfo> m_device_requires_ptrs;
+  std::map<VarLabelMatl<Patch>, GPUGridVariableInfo> m_device_computes_ptrs;
+  std::map<std::string, GPUGridVariableInfo> m_device_computes_temp_ptrs;
+  std::vector<VarLabel*> m_tmp_var_labels;
+
+  std::vector<GPUGridVariableInfo> m_device_requires_allocation_ptrs;
+  std::vector<GPUGridVariableInfo> m_device_computes_allocation_ptrs;
+  std::vector<double*> m_host_computes_allocation_ptrs;
+
+  std::map<VarLabelMatl<Patch>, GPUGridVariableInfo> m_host_requires_ptrs;
+  std::map<VarLabelMatl<Patch>, GPUGridVariableInfo> m_host_computes_ptrs;
+  std::vector<std::queue<cudaEvent_t*>> m_idle_events;
+
+  int m_num_devices;
+  int m_current_device;
+
+  struct labelPatchMatlDependency
+  {
+
+    labelPatchMatlDependency(const char* label,
+                             int patchID,
+                             int matlIndex,
+                             Task::DepType depType)
+      : m_label{ label }
+      , m_patchID{ patchID }
+      , m_matlIndex{ matlIndex }
+      , m_depType{ depType }
+    {
+    }
+
+    // this so it can be used in an STL map
+    bool
+    operator<(const labelPatchMatlDependency& right) const
+    {
+      if (m_label < right.m_label) {
+        return true;
+      } else if (m_label == right.m_label && (m_patchID < right.m_patchID)) {
+        return true;
+      } else if (m_label == right.m_label && (m_patchID == right.m_patchID) &&
+                 (m_matlIndex < right.m_matlIndex)) {
+        return true;
+      } else if (m_label == right.m_label && (m_patchID == right.m_patchID) &&
+                 (m_matlIndex == right.m_matlIndex) &&
+                 (m_depType < right.m_depType)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    std::string m_label;
+    int m_patchID;
+    int m_matlIndex;
+    Task::DepType m_depType;
+  };
 
 #endif
 };
 
-class UnifiedSchedulerWorker : public Runnable
+class UnifiedSchedulerWorker
 {
 
 public:
-  UnifiedSchedulerWorker(UnifiedScheduler* scheduler, int thread_id);
+  UnifiedSchedulerWorker(UnifiedScheduler* scheduler, int tid, int affinity);
 
-  void run();
+  void
+  run();
 
-  void quit() { d_quit = true; };
+  const double
+  getWaitTime() const;
+  const int
+  getLocalTID() const;
+  const int
+  getAffinity() const;
 
-  double getWaittime();
-
-  void resetWaittime(double start);
+  void
+  startWaitTime();
+  void
+  stopWaitTime();
+  void
+  resetWaitTime();
 
   friend class UnifiedScheduler;
 
 private:
-  UnifiedScheduler* d_scheduler;
-  ConditionVariable d_runsignal;
-  Mutex d_runmutex;
-  bool d_quit;
-  bool d_idle;
-  int d_thread_id;
-  int d_rank;
-  double d_waittime;
-  double d_waitstart;
+  UnifiedScheduler* m_scheduler{ nullptr };
+  int m_rank{ -1 };
+  int m_tid{ -1 };
+  int m_affinity{ -1 };
+
+  Timers::Simple m_wait_timer{};
+  double m_wait_time{ 0.0 };
 };
 
-} // End namespace Uintah
+} // namespace Uintah
 
-#endif // End __CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H__
+#endif // CCA_COMPONENTS_SCHEDULERS_UNIFIEDSCHEDULER_H
