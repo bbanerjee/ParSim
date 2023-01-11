@@ -5,7 +5,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Task.h>
 
-#include <Core/Thread/CrowdMonitor.h>
+#include <Core/Parallel/CrowdMonitor.h>
 
 #include <vector>
 #include <map>

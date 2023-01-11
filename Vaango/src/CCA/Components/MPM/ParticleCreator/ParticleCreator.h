@@ -27,7 +27,7 @@
 #ifndef __PARTICLE_CREATOR_H__
 #define __PARTICLE_CREATOR_H__
 
-#include <Core/Thread/CrowdMonitor.h>
+#include <Core/Parallel/CrowdMonitor.h>
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/SimulationState.h>

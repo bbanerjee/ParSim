@@ -34,7 +34,7 @@ operator<<(std::ostream& arg_out, const DetailedDep& dep)
 {
   std::ostringstream out;
 
-  out << dep.m_req->m_var->getName();
+  out << dep.m_req->var->getName();
 
   if (dep.isNonDataDependency()) {
     out << " non-data dependency";

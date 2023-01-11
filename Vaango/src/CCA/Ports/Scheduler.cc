@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,13 +25,4 @@
 
 #include <CCA/Ports/Scheduler.h>
 
-using namespace Uintah;
-
-Scheduler::Scheduler()
-{
-}
-
-Scheduler::~Scheduler()
-{
-}
 

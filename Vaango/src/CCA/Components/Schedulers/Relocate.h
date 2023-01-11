@@ -45,7 +45,7 @@ class MPIScatterRecords;
 
 class Relocate
 {
-  using VarLabel2DVector = stdd::vector<std::vector<const VarLabel*>>;
+  using VarLabel2DVector = std::vector<std::vector<const VarLabel*>>;
 
 public:
   Relocate();

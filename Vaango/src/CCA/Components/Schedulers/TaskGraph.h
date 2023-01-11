@@ -148,7 +148,7 @@ public:
   inline int
   getIndex()
   {
-    return m_index;
+    return d_index;
   }
 
   /// This will go through the detailed tasks and create the
@@ -208,7 +208,7 @@ public:
   inline bool
   getDistalRequires() const
   {
-    return m_has_distal_requires;
+    return d_has_distal_requires;
   }
 
   /// Makes and returns a map that associates VarLabel names with

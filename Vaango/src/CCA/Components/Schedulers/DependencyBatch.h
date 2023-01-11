@@ -48,28 +48,35 @@ public:
   ~DependencyBatch();
 
   DependencyBatch(const DependencyBatch&) = delete;
-  DependencyBatch& operator=(const DependencyBatch&) = delete;
+  DependencyBatch&
+  operator=(const DependencyBatch&)  = delete;
   DependencyBatch(DependencyBatch&&) = delete;
-  DependencyBatch& operator=(DependencyBatch&&) = delete;
+  DependencyBatch&
+  operator=(DependencyBatch&&) = delete;
 
   // Initialize receiving information for makeMPIRequest() and received() so
   // that it can receive again.
-  void reset();
+  void
+  reset();
 
   // The first thread calling this will return true, all others will return
   // false.
-  bool makeMPIRequest();
+  bool
+  makeMPIRequest();
 
   // Tells this batch that it has actually been received and
   // awakens anybody blocked in makeMPIRequest().
-  void received(const ProcessorGroup* pg);
+  void
+  received(const ProcessorGroup* pg);
 
   // Add invalid variables to dep batch. These variables will be marked as valid
   // when MPI completes.
-  void addVar(Variable* var);
+  void
+  addVar(Variable* var);
 
   DependencyBatch* comp_next{ nullptr };
   DetailedTask* from_task{ nullptr };
+  DetailedDep* head{ nullptr };
   std::list<DetailedTask*> to_tasks{};
   int message_tag{ -1 };
   int to_rank{ -1 };

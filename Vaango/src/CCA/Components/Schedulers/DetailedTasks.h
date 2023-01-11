@@ -53,7 +53,7 @@
 #include <list>
 #include <map>
 #include <queue>
-#include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace Uintah {
@@ -98,9 +98,8 @@ class DetailedTasks
 public:
   DetailedTasks(SchedulerCommon* sc,
                 const ProcessorGroup* pg,
-                DetailedTasks* first,
                 const TaskGraph* taskgraph,
-                const std::set<int>& neighborhood_processors,
+                const std::unordered_set<int>& neighborhood_processors,
                 bool mustConsiderInternalDependencies = false);
 
   ~DetailedTasks();
@@ -391,7 +390,7 @@ private:
 
 private:
   SchedulerCommon* m_sched_common{ nullptr };
-  const ProcessorGroup* d_proc_group;
+  const ProcessorGroup* m_proc_group;
 
   KeyDatabase<Patch> m_var_keyDB;
   KeyDatabase<Level> m_level_keyDB;

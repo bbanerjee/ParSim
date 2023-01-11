@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,18 +22,11 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/Util/DOUT.hpp>
 
-#include <CCA/Ports/Output.h>
-#include <iostream>
+namespace Uintah {
 
-using namespace Uintah;
-using std::cerr;
+std::map<std::string, Dout*> Dout::m_all_douts;
+bool                         Dout::m_all_douts_initialized;
 
-Output::Output()
-{
-}
-
-Output::~Output()
-{
-}
-
+} // End namespace Uintah

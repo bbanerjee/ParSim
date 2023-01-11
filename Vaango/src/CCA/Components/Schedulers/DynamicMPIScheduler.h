@@ -38,7 +38,6 @@ class DynamicMPIScheduler : public MPIScheduler
 
 public:
   DynamicMPIScheduler(const ProcessorGroup* myworld,
-                      const Output* oport,
                       DynamicMPIScheduler* parentScheduler = 0);
 
   virtual ~DynamicMPIScheduler();
@@ -52,7 +51,7 @@ public:
   operator=(DynamicMPIScheduler&&) = delete;
 
   virtual void
-  problemSetup(const ProblemSpecP& prob_spec, SimulationStateP& state);
+  problemSetup(const ProblemSpecP& prob_spec, const MaterialManagerP& state);
 
   virtual SchedulerP
   createSubScheduler();

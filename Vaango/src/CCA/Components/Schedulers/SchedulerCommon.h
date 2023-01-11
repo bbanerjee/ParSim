@@ -143,7 +143,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   virtual TaskGraph*
   getTaskGraph(unsigned int index) {
     ASSERT(0 <= index && index < d_task_graphs.size());
-    return (d_task_graphs[index]).get();
+    return d_task_graphs[index];
   }
 
   virtual int
@@ -344,7 +344,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
   bool
   isCopyDataTimestep() const {
-    return d_is_copy_data_timestamp;
+    return d_is_copy_data_timestep;
   }
 
   bool
@@ -353,18 +353,18 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   }
 
   void
-  setInitTimestep(bool is_init_timestamp) {
-    d_is_init_timestamp = is_init_timestamp;
+  setInitTimestep(bool is_init_timestep) {
+    d_is_init_timestep = is_init_timestep;
   }
 
   void
-  setRestartInitTimestep(bool is_restart_init_timestamp) {
-    d_is_restart_init_timestamp = is_restart_init_timestamp;
+  setRestartInitTimestep(bool is_restart_init_timestep) {
+    d_is_restart_init_timestep = is_restart_init_timestep;
   }
 
   virtual bool
-  isRestartInitTimestamp() {
-    return d_is_restart_init_timestamp;
+  isRestartInitTimestep() const {
+    return d_is_restart_init_timestep;
   }
 
   void
@@ -429,8 +429,8 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   Output* d_output{nullptr};
 
   MaterialManagerP d_material_manager{nullptr};
-  std::vector<std::unique_ptr<OnDemandDataWarehouse>> d_dws;
-  std::vector<std::unique_ptr<TaskGraph>> d_task_graphs;
+  std::vector<OnDemandDataWarehouseP> d_dws;
+  std::vector<TaskGraph*> d_task_graphs;
 
   //! These are so we can track certain variables over the taskgraph's
   //! execution.

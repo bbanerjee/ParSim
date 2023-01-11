@@ -32,7 +32,7 @@
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/SchedulerCommon.h>
 
-#include <CCA/Ports/DataWarehouseP.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 #include <Core/Util/InfoMapper.h>
 #include <Core/Util/Timers/Timers.hpp>
@@ -60,7 +60,7 @@ public:
   operator=(MPIScheduler&&) = delete;
 
   virtual void
-  problemSetup(const ProblemSpecP& prob_spec, MaterialManangerP& mat_manager);
+  problemSetup(const ProblemSpecP& prob_spec, const MaterialManagerP& mat_manager);
 
   virtual void
   execute(int tgnum = 0, int iteration = 0);

@@ -64,6 +64,7 @@ class VarLabel;
 using ValidateFlag = unsigned char;
 
 class SimulationInterface : public UintahParallelPort {
+
   // NOTE: No physics simulation component should be a friend class.
   // They should access the data via the DataWarehouse.
   friend class SimulationController;
@@ -72,6 +73,9 @@ class SimulationInterface : public UintahParallelPort {
 
   friend class SchedulerCommon;
   friend class DynamicMPIScheduler;
+  friend class MPIScheduler;
+  friend class UnifiedScheduler;
+  friend class DetailedTasks;
 
   friend class LoadBalancersCommon;
   friend class DynamicLoadBalancer;
@@ -86,8 +90,11 @@ class SimulationInterface : public UintahParallelPort {
   virtual ~SimulationInterface();
 
   SimulationInterface(const SimulationInterface&) = delete;
+  SimulationInterface(SimulationInterface&&) = delete;
   SimulationInterface&
   operator=(const SimulationInterface&) = delete;
+  SimulationInterface&
+  operator=(SimulationInterface&&) = delete;
 
   // Methods for managing the components attached via the ports.
   virtual void
@@ -323,7 +330,7 @@ class SimulationInterface : public UintahParallelPort {
   getMaterialManagerP() const = 0;
 
   // Simulation statistics
-  enum class SimulationStatsEnum { DummyEnum = 999 };
+  enum SimulationStatsEnum { DummyEnum = 999 };
 
   virtual ReductionInfoMapper<SimulationStatsEnum, double>&
   getSimulationStats() = 0;

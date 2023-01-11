@@ -30,7 +30,6 @@ SET(Vaango_CCA_Ports_SRCS
   LoadBalancer.cc 
   ModelInterface.cc 
   ModelMaker.cc 
-  Output.cc 
   ProblemSpecInterface.cc 
   Regridder.cc 
   Scheduler.cc 

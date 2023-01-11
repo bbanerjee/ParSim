@@ -118,26 +118,26 @@ using delsetDB_monitor = Uintah::CrowdMonitor<delsetDB_tag>;
 using task_acced_send_statemonitor =
   Uintah::CrowdMonitor<task_acced_send_statetag>;
 
-Dout g_foreign_dbg("ForeignVariables",
-                   "OnDemandDataWarehouse",
-                   "report when foreign variable is added to DW",
-                   false);
-Dout g_dw_get_put_dbg("OnDemandDW",
-                      "OnDemandDataWarehouse",
-                      "report general dbg info for OnDemandDW",
-                      false);
-Dout g_particles_dbg("DWParticleExchanges",
-                     "OnDemandDataWarehouse",
-                     "report MPI particle exchanges (sends/recvs)",
-                     false);
-Dout g_check_accesses("DWCheckTaskAccess",
-                      "OnDemandDataWarehouse",
-                      "report on task DW access checking (DBG-only)",
-                      false);
-Dout g_warnings_dbg("DWWarnings",
-                    "OnDemandDataWarehouse",
-                    "report DW GridVar progressive warnings",
-                    false);
+Uintah::Dout g_foreign_dbg("ForeignVariables",
+                           "OnDemandDataWarehouse",
+                           "report when foreign variable is added to DW",
+                           false);
+Uintah::Dout g_dw_get_put_dbg("OnDemandDW",
+                              "OnDemandDataWarehouse",
+                              "report general dbg info for OnDemandDW",
+                              false);
+Uintah::Dout g_particles_dbg("DWParticleExchanges",
+                             "OnDemandDataWarehouse",
+                             "report MPI particle exchanges (sends/recvs)",
+                             false);
+Uintah::Dout g_check_accesses("DWCheckTaskAccess",
+                              "OnDemandDataWarehouse",
+                              "report on task DW access checking (DBG-only)",
+                              false);
+Uintah::Dout g_warnings_dbg("DWWarnings",
+                            "OnDemandDataWarehouse",
+                            "report DW GridVar progressive warnings",
+                            false);
 
 Uintah::MasterLock g_running_tasks_lock{};
 
@@ -4298,7 +4298,7 @@ OnDemandDataWarehouse::pushRunningTask(const Task* task,
   ASSERT(task);
 
   // true if the element was inserted, false if already exists
-  bool inserted = m_running_tasks
+  bool inserted = d_running_tasks
                     .insert(std::make_pair(std::this_thread::get_id(),
                                            RunningTaskInfo(task, dws)))
                     .second;
@@ -4315,9 +4315,9 @@ OnDemandDataWarehouse::popRunningTask()
 {
   std::lock_guard<Uintah::MasterLock> pop_lock(g_running_tasks_lock);
 
-  auto iter = m_running_tasks.find(std::this_thread::get_id());
-  if (iter != m_running_tasks.end()) {
-    size_t num_erased = m_running_tasks.erase(std::this_thread::get_id());
+  auto iter = d_running_tasks.find(std::this_thread::get_id());
+  if (iter != d_running_tasks.end()) {
+    size_t num_erased = d_running_tasks.erase(std::this_thread::get_id());
     DOUT(g_check_accesses,
          "Rank-" << Parallel::getMPIRank() << " TID-"
                  << std::this_thread::get_id()
@@ -4326,16 +4326,16 @@ OnDemandDataWarehouse::popRunningTask()
   }
 }
 
-inline std::list<OnDemandDataWarehouse::RunningTaskInfo>*
+inline std::map<std::thread::id, OnDemandDataWarehouse::RunningTaskInfo>*
 OnDemandDataWarehouse::getRunningTasksInfo()
 {
   std::lock_guard<Uintah::MasterLock> get_running_task_lock(
     g_running_tasks_lock);
 
-  if (m_running_tasks.empty()) {
+  if (d_running_tasks.empty()) {
     return nullptr;
   } else {
-    return &m_running_tasks;
+    return &d_running_tasks;
   }
 }
 
@@ -4345,8 +4345,8 @@ OnDemandDataWarehouse::hasRunningTask()
   std::lock_guard<Uintah::MasterLock> has_running_task_lock(
     g_running_tasks_lock);
 
-  return (m_running_tasks.find(std::this_thread::get_id()) !=
-          m_running_tasks.end());
+  return (d_running_tasks.find(std::this_thread::get_id()) !=
+          d_running_tasks.end());
 }
 
 inline OnDemandDataWarehouse::RunningTaskInfo*
@@ -4355,12 +4355,12 @@ OnDemandDataWarehouse::getCurrentTaskInfo()
   std::lock_guard<Uintah::MasterLock> get_running_task_lock(
     g_running_tasks_lock);
 
-  auto iter = m_running_tasks.find(std::this_thread::get_id());
+  auto iter = d_running_tasks.find(std::this_thread::get_id());
 
-  if (iter == m_running_tasks.end()) {
+  if (iter == d_running_tasks.end()) {
     return nullptr;
   } else {
-    return &(m_running_tasks.find(std::this_thread::get_id())->second);
+    return &(d_running_tasks.find(std::this_thread::get_id())->second);
   }
 }
 
@@ -4369,7 +4369,7 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw,
                                              RunningTaskInfo* info)
 {
   int dwindex           = info->d_task->mapDataWarehouse(dw);
-  DataWarehouse* result = (*info->dws)[dwindex].get_rep();
+  DataWarehouse* result = (*info->d_dws)[dwindex].get_rep();
   return result;
 }
 
@@ -4378,7 +4378,7 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw)
 {
   RunningTaskInfo* info = getCurrentTaskInfo();
   int dwindex           = info->d_task->mapDataWarehouse(dw);
-  DataWarehouse* result = (*info->dws)[dwindex].get_rep();
+  DataWarehouse* result = (*info->d_dws)[dwindex].get_rep();
   return result;
 }
 
@@ -4444,7 +4444,7 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
     IntVector lowOffset, highOffset;
     Patch::getGhostOffsets(label->typeDescription()->getType(),
                            dep->gtype,
-                           dep->numGhostCells,
+                           dep->num_ghost_cells,
                            lowOffset,
                            highOffset);
 
@@ -4544,8 +4544,8 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
           string has, needs;
           has = "task requires";
           ostringstream ghost_str;
-          ghost_str << " requesting " << dep->numGhostCells << " layer";
-          if (dep->numGhostCells > 1) {
+          ghost_str << " requesting " << dep->num_ghost_cells << " layer";
+          if (dep->num_ghost_cells > 1) {
             ghost_str << "s";
           }
           ghost_str << " of ghosts around "
@@ -4624,8 +4624,8 @@ OnDemandDataWarehouse::print()
        << "  -----------------------";
   DOUT(true, mesg.str());
 
-  d_var_DB.print(std::cout, d_myworld->myRank());
-  d_level_DB.print(std::cout, d_myworld->myRank());
+  d_var_DB.print(d_myworld->myRank());
+  d_level_DB.print(d_myworld->myRank());
 }
 
 void

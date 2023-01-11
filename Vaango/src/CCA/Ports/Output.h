@@ -29,24 +29,40 @@
 
 #include <Core/Parallel/UintahParallelPort.h>
 
+#include <CCA/Components/Schedulers/RuntimeStatsEnum.h>
 #include <CCA/Ports/SchedulerP.h>
+
 #include <Core/Grid/GridP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/OS/Dir.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <Core/Util/InfoMapper.h>
+
 #include <string>
 
 namespace Uintah {
 
 class UintahParallelComponent;
 class ProcessorGroup;
+
 class Patch;
-class SimulationState;
+class VarLabel;
 
 class Output : public UintahParallelPort
 {
 public:
-  Output();
-  virtual ~Output();
+  Output() = default;
+  virtual ~Output() = default;
+
+  // Disallow copy and move
+  Output(const Output&) = delete;
+  Output(Output&&)      = delete;
+
+  Output&
+  operator=(const Output&) = delete;
+  Output&
+  operator=(Output&&) = delete;
 
   // Methods for managing the components attached via the ports.
   virtual void
@@ -57,132 +73,187 @@ public:
   releaseComponents() = 0;
 
   virtual void
-  problemSetup(const ProblemSpecP& params, 
+  problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                const MaterialManagerP& material_manager) = 0;
 
   virtual void
-  initializeOutput(const ProblemSpecP& params,
-                  const GridP& grid) = 0;
+  initializeOutput(const ProblemSpecP& params, const GridP& grid) = 0;
 
   // Call this when restarting from a checkpoint after calling
   // problemSetup.
   virtual void
   restartSetup(Dir& restartFromDir,
-               int startTimestep,
+               int startTimeStep,
                int timestep,
                double time,
                bool fromScratch,
                bool removeOldDir) = 0;
-  //////////
-  // set timeinfoFlags and
+
+  // set timeinfoFlags
   virtual void
-  reduceUdaSetup(Dir& fromDir) = 0;
+  postprocessUdaSetup(Dir& fromDir) = 0;
 
   virtual bool
-  needRecompile(double time, double delt, const GridP& grid) = 0;
+  needRecompile(const GridP& grid) = 0;
 
-  //////////
+  virtual void
+  recompile(const GridP& grid) = 0;
+
   // Call this after all other tasks have been added to the scheduler
   virtual void
-  finalizeTimestep(double t,
-                   double delt,
-                   const GridP&,
-                   SchedulerP&,
+  finalizeTimeStep(const GridP& grid,
+                   SchedulerP& scheduler,
                    bool recompile  = false,
                    int addMaterial = 0) = 0;
 
   // schedule all output tasks
   virtual void
-  sched_allOutputTasks(double delt,
-                       const GridP&,
-                       SchedulerP&,
+  sched_allOutputTasks(const GridP& grid,
+                       SchedulerP& scheduler,
                        bool recompile = false) = 0;
 
-  //////////
-  // Call this after a timestep restart to make sure we still
-  // have an output timestep
-  virtual void
-  reEvaluateOutputTimestep(double old_delt, double new_delt) = 0;
-
-  //////////
   // Call this after the timestep has been executed.
   virtual void
-  findNext_OutputCheckPoint_Timestep(double delt, const GridP&) = 0;
+  findNext_OutputCheckPoint_TimeStep(bool restart, const GridP& grid) = 0;
 
-  //////////
+  //! Called after a time step recompute where delta t is adjusted
+  //! to make sure an output and/or checkpoint time step is needed.
+  virtual void
+  recompute_OutputCheckPointTimeStep() = 0;
+
   // update or write to the xml files
   virtual void
-  writeto_xml_files(double delt, const GridP& grid) = 0;
+  writeto_xml_files(const GridP& grid) = 0;
 
-  //////////
-  // Insert Documentation Here:
+  virtual void
+  writeto_xml_files(std::map<std::string, std::pair<std::string, std::string>>&
+                      modifiedVars) = 0;
+
   virtual const std::string
   getOutputLocation() const = 0;
+  virtual bool
+  doesOutputDirExist() const = 0;
 
-  //////////
-  // Get the current time step
-  virtual int
-  getCurrentTimestep() const = 0;
+  virtual void
+  setScrubSavedVariables(bool val) = 0;
 
-  //////////
-  // Get the current time step
-  virtual double
-  getCurrentTime() const = 0;
-
-  // Get the time the next output will occur
+  // Get the time/timestep the next output will occur
   virtual double
   getNextOutputTime() const = 0;
-
-  // Get the timestep the next output will occur
   virtual int
-  getNextOutputTimestep() const = 0;
+  getNextOutputTimeStep() const = 0;
 
-  // Get the time the next checkpoint will occur
+  // Pushes output back by one time step.
+  virtual void
+  postponeNextOutputTimeStep() = 0;
+
+  // Get the time/timestep the next checkpoint will occur
   virtual double
   getNextCheckpointTime() const = 0;
-
-  // Get the timestep the next checkpoint will occur
   virtual int
-  getNextCheckpointTimestep() const = 0;
+  getNextCheckpointTimeStep() const = 0;
+  virtual int
+  getNextCheckpointWallTime() const = 0; // integer - seconds
 
   // Returns true if data will be output this timestep
+  virtual void
+  setOutputTimeStep(bool val, const GridP& grid) = 0;
   virtual bool
-  isOutputTimestep() const = 0;
+  isOutputTimeStep() const = 0;
 
   // Returns true if data will be checkpointed this timestep
+  virtual void
+  setCheckpointTimeStep(bool val, const GridP& grid) = 0;
   virtual bool
-  isCheckpointTimestep() const = 0;
+  isCheckpointTimeStep() const = 0;
 
   // Returns true if the label is being saved
   virtual bool
   isLabelSaved(const std::string& label) const = 0;
 
-  // update output interval
+  // output interval
   virtual void
-  updateOutputInterval(double inv) = 0;
-
-  // get output interval
+  setOutputInterval(double inv) = 0;
   virtual double
   getOutputInterval() const = 0;
-
-  // update checkpoint interval
   virtual void
-  updateCheckpointInterval(double inv) = 0;
+  setOutputTimeStepInterval(int inv) = 0;
+  virtual int
+  getOutputTimeStepInterval() const = 0;
 
-  // get checkpoint interval
+  // checkpoint interval
+  virtual void
+  setCheckpointInterval(double inv) = 0;
   virtual double
   getCheckpointInterval() const = 0;
+  virtual void
+  setCheckpointTimeStepInterval(int inv) = 0;
+  virtual int
+  getCheckpointTimeStepInterval() const = 0;
+  virtual void
+  setCheckpointWallTimeInterval(int inv) = 0;
+  virtual int
+  getCheckpointWallTimeInterval() const = 0;
 
-  //////////
+  // Returns true if the UPS file has specified to save the UDA using PIDX
+  // format.
+  virtual bool
+  savingAsPIDX() const = 0;
+
+  // Instructs the output source (DataArchivers) on which format to use when
+  // saving data.
+  virtual void
+  setSaveAsUDA() = 0;
+  virtual void
+  setSaveAsPIDX() = 0;
+
+  //! Called by the in situ VisIt to output and checkpoint on
+  //! demand.
+  virtual void
+  outputTimeStep(const GridP& grid, SchedulerP& sched, bool previous) = 0;
+
+  virtual void
+  checkpointTimeStep(const GridP& grid, SchedulerP& sched, bool previous) = 0;
+
+  virtual void
+  maybeLastTimeStep(bool val) = 0;
+  virtual bool
+  maybeLastTimeStep() = 0;
+
+  virtual void
+  setElapsedWallTime(double val) = 0;
+  virtual double
+  getElapsedWallTime() const = 0;
+
+  virtual void
+  setCheckpointCycle(int val) = 0;
+  virtual double
+  getCheckpointCycle() const = 0;
+
+  virtual void
+  setUseLocalFileSystems(bool val) = 0;
+  virtual bool
+  getUseLocalFileSystems() const = 0;
+
+  virtual void
+  setSwitchState(bool val) = 0;
+  virtual bool
+  getSwitchState() const = 0;
+
   // Get the directory of the current time step for outputting info.
   virtual const std::string&
-  getLastTimestepOutputLocation() const = 0;
+  getLastTimeStepOutputLocation() const = 0;
 
-private:
-  Output(const Output&);
-  Output&
-  operator=(const Output&);
+  virtual void
+  setRuntimeStats(
+    ReductionInfoMapper<RuntimeStatsEnum, double>* runtimeStats) = 0;
+
+  // Returns trus if an output or checkpoint exists for the time step
+  virtual bool
+  outputTimeStepExists(unsigned int ts) = 0;
+  virtual bool
+  checkpointTimeStepExists(unsigned int ts) = 0;
 };
 
 } // End namespace Uintah

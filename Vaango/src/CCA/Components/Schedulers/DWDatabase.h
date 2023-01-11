@@ -27,7 +27,6 @@
 #ifndef VAANGO_CCA_COMPONENTS_SCHEDULERS_DWDatabase_H
 #define VAANGO_CCA_COMPONENTS_SCHEDULERS_DWDatabase_H
 
-#include <CCA/Components/Schedulers/DetailedTasks.h>
 #include <CCA/Components/Schedulers/MemoryLog.h>
 
 #include <Core/Grid/UnknownVariable.h>
@@ -253,10 +252,10 @@ template<class DomainType>
 void
 KeyDatabase<DomainType>::merge(const KeyDatabase<DomainType>& newDB)
 {
-  for (auto& const_keyiter = newDB.m_keys.cbegin();
+  for (auto const_keyiter = newDB.m_keys.cbegin();
        const_keyiter != newDB.m_keys.cend();
        ++const_keyiter) {
-    auto& const_db_iter = m_keys.find(const_keyiter->first);
+    auto const_db_iter = m_keys.find(const_keyiter->first);
     if (const_db_iter == m_keys.end()) {
       m_keys.insert(
         std::pair<VarLabelMatl<DomainType>, int>(const_keyiter->first,
@@ -332,7 +331,7 @@ void
 DWDatabase<DomainType>::cleanForeign()
 {
   for (auto iter = m_vars.begin(); iter != m_vars.end(); ++iter) {
-    if (*iter && (*iter)->m_var->isForeign()) {
+    if (*iter && (*iter)->var->isForeign()) {
       delete (*iter);
       (*iter) = nullptr;
     }
@@ -355,7 +354,7 @@ DWDatabase<DomainType>::decrementScrubCount(const VarLabel* label,
 
   std::lock_guard<MasterLock> decrement_scrub_count_lock(g_keyDB_lock);
 
-  int idx = lookup(label, matlIndex, dom);
+  int idx = m_keyDB->lookup(label, matlIndex, dom);
   if (idx == -1) {
     return 0;
   }
@@ -404,7 +403,7 @@ DWDatabase<DomainType>::scrub(const VarLabel* label,
 
   std::lock_guard<MasterLock> scrub_lock(g_keyDB_lock);
 
-  int idx = lookup(label, matlIndex, dom);
+  int idx = m_keyDB->lookup(label, matlIndex, dom);
   if (idx != -1 && m_vars[idx]) {
     delete m_vars[idx];
     m_vars[idx] = nullptr;
@@ -421,8 +420,8 @@ DWDatabase<DomainType>::initializeScrubs(
   // loop over each variable, probing the scrubcount map. Set the
   // scrubcount appropriately.  if the variable has no entry in
   // the scrubcount map, delete it
-  for (auto keyiter = m_keyDB.begin();
-       keyiter != m_keyDB.end();) {
+  for (auto keyiter = m_keyDB->m_keys.begin();
+       keyiter != m_keyDB->m_keys.end();) {
     if (m_vars[keyiter->second]) {
       VarLabelMatl<DomainType> vlm = keyiter->first;
       // See if it is in the scrubcounts map.
@@ -471,7 +470,7 @@ DWDatabase<DomainType>::exists(const VarLabel* label,
 {
   std::lock_guard<MasterLock> exists_lock(g_keyDB_lock);
 
-  int idx = lookup(label, matlIndex, dom);
+  int idx = m_keyDB->lookup(label, matlIndex, dom);
   if (idx == -1) {
     return false;
   }
@@ -495,11 +494,11 @@ DWDatabase<DomainType>::put(const VarLabel* label,
   std::lock_guard<MasterLock> put_lock(g_keyDB_lock);
 
   if (init) {
-    insert(label, matlIndex, dom);
+    m_keyDB->insert(label, matlIndex, dom);
     this->doReserve(m_keyDB);
   }
 
-  int idx = lookup(label, matlIndex, dom);
+  int idx = m_keyDB->lookup(label, matlIndex, dom);
   if (idx == -1) {
     SCI_THROW(UnknownVariable(label->getName(),
                               -1,
@@ -511,14 +510,14 @@ DWDatabase<DomainType>::put(const VarLabel* label,
   }
 
   if (m_vars[idx]) {
-    if (m_vars[idx]->m_next) {
+    if (m_vars[idx]->next) {
       SCI_THROW(
         InternalError("More than one vars on this label", __FILE__, __LINE__));
     }
     if (!replace) {
       SCI_THROW(InternalError("Put replacing old vars", __FILE__, __LINE__));
     }
-    ASSERT(m_vars[idx]->m_var != var);
+    ASSERT(m_vars[idx]->var != var);
     delete m_vars[idx];
   }
 
@@ -601,11 +600,11 @@ DWDatabase<DomainType>::putForeign(const VarLabel* label,
   }
 
   DataItem* newdi = new DataItem();
-  newdi->m_var    = var;
+  newdi->var    = var;
   do {
-    newdi->m_next = m_vars[idx];
+    newdi->next = m_vars[idx];
   } while (!__sync_bool_compare_and_swap(&m_vars[idx],
-                                         newdi->m_next,
+                                         newdi->next,
                                          newdi)); // vars[iter->second] = newdi;
 }
 
@@ -666,8 +665,8 @@ DWDatabase<DomainType>::getlist(const VarLabel* label,
 
   for (DataItem* dataItem = getDataItem(label, matlIndex, dom);
        dataItem != nullptr;
-       dataItem = dataItem->m_next) {
-    varlist.push_back(dataItem->m_var);
+       dataItem = dataItem->next) {
+    varlist.push_back(dataItem->var);
   }
 }
 
@@ -708,7 +707,7 @@ DWDatabase<DomainType>::logMemoryUse(ostream& out,
   for (auto keyiter = m_keyDB->m_keys.begin(); keyiter != m_keyDB->m_keys.end();
        ++keyiter) {
     if (m_vars[keyiter->second]) {
-      Variable* var                = m_vars[keyiter->second]->m_var;
+      Variable* var                = m_vars[keyiter->second]->var;
       VarLabelMatl<DomainType> vlm = keyiter->first;
       const VarLabel* label        = vlm.m_label;
       std::string elems;

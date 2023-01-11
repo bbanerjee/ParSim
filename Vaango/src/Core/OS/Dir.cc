@@ -45,9 +45,10 @@ Dir::create(const string& name)
                     fs::perms::owner_all | fs::perms::group_all,
                     fs::perm_options::add);
   } catch (fs::filesystem_error& err) {
-    throw InternalError("Dir::could not create directory: " + name + " " + err.what(),
-                         __FILE__,
-                         __LINE__);
+    throw InternalError("Dir::could not create directory: " + name + " " +
+                          err.what(),
+                        __FILE__,
+                        __LINE__);
   }
   return Dir(name);
 }
@@ -75,9 +76,10 @@ Dir::remove(bool throwOnError)
   try {
     fs::remove(d_name);
   } catch (fs::filesystem_error& err) {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " + err.what(),
-                             __FILE__,
-                             __LINE__);
+    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
+                              err.what(),
+                            __FILE__,
+                            __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -108,9 +110,10 @@ Dir::forceRemove(bool throwOnError)
   try {
     fs::remove_all(d_name);
   } catch (fs::filesystem_error& err) {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " + err.what(),
-                             __FILE__,
-                             __LINE__);
+    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
+                              err.what(),
+                            __FILE__,
+                            __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -128,10 +131,11 @@ Dir::remove(const string& filename, bool throwOnError)
   string filepath = d_name + "/" + filename;
   try {
     fs::remove(filepath);
-  } catch(fs::filesystem_error& err)  {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " + err.what(),
-                             __FILE__,
-                             __LINE__);
+  } catch (fs::filesystem_error& err) {
+    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
+                              err.what(),
+                            __FILE__,
+                            __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -210,7 +214,8 @@ Dir::move(const std::string& filename, Dir& destDir)
 }
 
 void
-Dir::getFilenamesBySuffix(const std::string& suffix, std::vector<std::string>& filenames)
+Dir::getFilenamesBySuffix(const std::string& suffix,
+                          std::vector<std::string>& filenames)
 {
   if (!fs::exists(d_name)) {
     return;

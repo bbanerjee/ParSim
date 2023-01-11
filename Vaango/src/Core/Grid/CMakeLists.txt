@@ -25,28 +25,32 @@
 
 # CMakeLists.txt for Vaango/src/Core/Grid
 
+SET(Vaango_Core_Grid_MPMInterpolator_SRCS
+    MPMInterpolators/axiCpdiInterpolator.cc
+    MPMInterpolators/AxiGIMPInterpolator.cc
+    MPMInterpolators/BSplineInterpolator.cc
+    MPMInterpolators/cpdiInterpolator.cc
+    MPMInterpolators/cptiInterpolator.cc
+    MPMInterpolators/fastAxiCpdiInterpolator.cc
+    MPMInterpolators/fastCpdiInterpolator.cc
+    MPMInterpolators/GIMPInterpolator.cc
+    MPMInterpolators/LinearInterpolator.cc
+    MPMInterpolators/AxiLinearInterpolator.cc
+    MPMInterpolators/ParticleInterpolator.cc
+    MPMInterpolators/TOBSplineInterpolator.cc
+)
+
 SET(Vaango_Core_Grid_SRCS
   Box.h
   AMR.cc
   AMR_CoarsenRefine.cc
-  axiCpdiInterpolator.cc
-  AxiGIMPInterpolator.cc
   Box.cc
-  BSplineInterpolator.cc
-  cpdiInterpolator.cc
-  cptiInterpolator.cc
   DbgOutput.cc
-  fastAxiCpdiInterpolator.cc
-  fastCpdiInterpolator.cc
   Ghost.cc
-  GIMPInterpolator.cc
   Grid.cc
   Level.cc
-  LinearInterpolator.cc
-  AxiLinearInterpolator.cc
   Material.cc
   MaterialManager.cc
-  ParticleInterpolator.cc
   Patch.cc
   PatchRangeTree.cc
   Region.cc
@@ -54,8 +58,8 @@ SET(Vaango_Core_Grid_SRCS
   SimulationState.cc
   SimulationTime.cc
   Task.cc
-  TOBSplineInterpolator.cc
   UnknownVariable.cc
+  ${Vaango_Core_Grid_MPMInterpolator_SRCS}
 )
 
 add_subdirectory(BoundaryConditions)
