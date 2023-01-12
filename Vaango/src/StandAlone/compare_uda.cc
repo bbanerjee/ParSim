@@ -52,7 +52,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Util/ProgressiveWarning.h>
 #include <iostream>
 #include <string>

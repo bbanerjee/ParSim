@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/Array3.h>

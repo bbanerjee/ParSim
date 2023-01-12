@@ -74,7 +74,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h> // for MKDIR
-#include <Core/Thread/Thread.h>
+
 #include <Core/Util/ProgressiveWarning.h>
 #include <dirent.h>
 #include <iostream>

@@ -27,16 +27,15 @@
 #ifndef __CORE_GRID_MATERIAL_MANAGER_H__
 #define __CORE_GRID_MATERIAL_MANAGER_H__
 
-#include <Core/Geometry/Vector.h>
-#include <Core/Grid/Ghost.h>
-#include <Core/Grid/SimulationTime.h>
-#include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Math/MinMax.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Util/RefCounted.h>
 
-#include <iostream>
+#include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <Core/Util/DOUT.hpp>
+
+#include <sci_defs/uintah_defs.h>
+
 #include <map>
 #include <memory>
 #include <vector>

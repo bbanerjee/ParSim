@@ -26,18 +26,18 @@
 
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Grid/AxiGIMPInterpolator.h>
-#include <Core/Grid/AxiLinearInterpolator.h>
-#include <Core/Grid/GIMPInterpolator.h>
+#include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiLinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/LinearInterpolator.h>
-#include <Core/Grid/axiCpdiInterpolator.h>
-#include <Core/Grid/cpdiInterpolator.h>
-#include <Core/Grid/cptiInterpolator.h>
-// #include <Core/Grid/fastCpdiInterpolator.h>
-// #include <Core/Grid/fastAxiCpdiInterpolator.h>
-#include <Core/Grid/BSplineInterpolator.h>
-#include <Core/Grid/TOBSplineInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/axiCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/cptiInterpolator.h>
+// #include <Core/Grid/MPMInterpolators/fastCpdiInterpolator.h>
+// #include <Core/Grid/MPMInterpolators/fastAxiCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/BSplineInterpolator.h>
+#include <Core/Grid/MPMInterpolators/TOBSplineInterpolator.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/DebugStream.h>
 #include <iostream>

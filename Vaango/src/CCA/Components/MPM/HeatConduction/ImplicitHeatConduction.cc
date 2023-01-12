@@ -39,7 +39,7 @@
 #include <Core/Grid/Task.h>
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/LoadBalancer.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Parallel/Parallel.h>

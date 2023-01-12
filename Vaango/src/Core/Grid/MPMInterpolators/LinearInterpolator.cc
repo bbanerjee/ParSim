@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;

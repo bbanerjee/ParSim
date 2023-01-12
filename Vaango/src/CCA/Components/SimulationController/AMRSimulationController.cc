@@ -35,7 +35,7 @@
 #include <Core/Math/MiscMath.h>
 #include <Core/OS/ProcessInfo.h>
 #include <Core/Thread/Time.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Parallel/Parallel.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>

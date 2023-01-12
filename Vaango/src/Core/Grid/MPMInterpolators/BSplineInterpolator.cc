@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/BSplineInterpolator.h>
+#include <Core/Grid/MPMInterpolators/BSplineInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>

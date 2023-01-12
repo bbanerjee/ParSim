@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/TOBSplineInterpolator.h>
+#include <Core/Grid/MPMInterpolators/TOBSplineInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>

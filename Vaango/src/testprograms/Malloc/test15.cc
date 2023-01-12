@@ -52,7 +52,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <Core/Thread/Runnable.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Malloc/Allocator.h>
 #include <cstdio>
 #include <cstddef>

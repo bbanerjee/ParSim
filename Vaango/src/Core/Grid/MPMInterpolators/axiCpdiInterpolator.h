@@ -26,7 +26,7 @@
 #define AXICPDI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
-#include <Core/Grid/cpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
 
 namespace Uintah {
 

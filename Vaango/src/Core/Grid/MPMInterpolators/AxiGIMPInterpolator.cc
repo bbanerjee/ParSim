@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/AxiGIMPInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiGIMPInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>

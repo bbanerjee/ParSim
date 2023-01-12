@@ -46,7 +46,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Task.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/CellIterator.h>

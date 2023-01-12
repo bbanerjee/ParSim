@@ -55,8 +55,6 @@ SET(Vaango_Core_Grid_SRCS
   PatchRangeTree.cc
   Region.cc
   EmptyMaterial.cc
-  SimulationState.cc
-  SimulationTime.cc
   Task.cc
   UnknownVariable.cc
   ${Vaango_Core_Grid_MPMInterpolator_SRCS}

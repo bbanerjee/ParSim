@@ -26,7 +26,7 @@
 #define AXICPTI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
-#include <Core/Grid/cptiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/cptiInterpolator.h>
 /* Axisymmetric CPTI (Convected Particle Triangle/Tetrahedral domain Interpolator) 
    This has not actually been implemented yet, but is proposed based on 
    methods developed by Alireza Sadeghirad and Rebecca Brannon

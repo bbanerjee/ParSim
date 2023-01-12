@@ -47,7 +47,7 @@
  */
 
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/Barrier.h>
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/ThreadGroup.h>

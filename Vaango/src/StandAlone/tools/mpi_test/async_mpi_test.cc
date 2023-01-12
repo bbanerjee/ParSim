@@ -61,7 +61,7 @@
 #  include <sys/time.h>
 #endif
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/Time.h>
 #include <Core/Thread/Runnable.h>
 

@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/AxiLinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiLinearInterpolator.h>
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;

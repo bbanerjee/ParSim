@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/fastCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/fastCpdiInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Parallel/Parallel.h>

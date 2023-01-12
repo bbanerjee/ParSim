@@ -44,7 +44,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>

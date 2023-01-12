@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/WorkQueue.h>
 
 #include <Core/Thread/Parallel.h>

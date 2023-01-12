@@ -53,7 +53,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstdlib>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/Time.h>
 #include <Core/Thread/Runnable.h>
 

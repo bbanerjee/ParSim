@@ -31,7 +31,7 @@
 #include <Core/Math/Short27.h>
 #include <vector>
 #include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <vector>
 

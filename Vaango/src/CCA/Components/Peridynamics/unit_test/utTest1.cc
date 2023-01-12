@@ -75,7 +75,7 @@
 #include <Core/Exceptions/InternalError.h>
 
 #include <Core/Thread/Time.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/Environment.h>
 #include <Core/Util/FileUtils.h>

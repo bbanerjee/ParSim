@@ -47,7 +47,7 @@
  */
 #include <StandAlone/tools/puda/util.h>
 
-#include <Core/Thread/Thread.h>
+
 
 #include <cstdlib>
 #include <iostream>

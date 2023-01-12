@@ -47,7 +47,7 @@
 #include <Core/OS/Dir.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Thread/Time.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Parallel/Parallel.h>
 #include <Core/Exceptions/PapiInitializationError.h>
 
