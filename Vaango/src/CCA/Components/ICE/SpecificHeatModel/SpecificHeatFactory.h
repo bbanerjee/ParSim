@@ -50,7 +50,7 @@
 #define _SPECIFICHEATFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 namespace Uintah {
 

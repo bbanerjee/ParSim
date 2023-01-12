@@ -840,6 +840,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/mpi_testdefs.h.in ${
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/osx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/osx_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/papi_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/papi_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/petsc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/petsc_defs.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/pidx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/pidx_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ptolemy_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ptolemy_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ruby_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ruby_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/scisock_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/scisock_defs.h)

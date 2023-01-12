@@ -31,7 +31,7 @@
 #include <CCA/Components/ICE/CustomBCs/microSlipBCs.h>
 #include <CCA/Components/ICE/CustomBCs/LODI2.h>
 #include <Core/Grid/BoundaryConditions/BCUtils.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,9 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-
-#ifndef UINTAH_HOMEBREW_ParticleVariableBase_H
-#define UINTAH_HOMEBREW_ParticleVariableBase_H
+#ifndef __CORE_GRID_VARIABLES_ParticleVariableBase_H__
+#define __CORE_GRID_VARIABLES_ParticleVariableBase_H__
 
 #include <Core/Grid/Variables/ParticleSubset.h>
 #include <Core/Grid/Variables/Variable.h>
@@ -33,124 +33,140 @@
 
 #include <Core/Util/Assert.h>
 
-#include   <vector>
-
+#include <vector>
 
 namespace Uintah {
-  class BufferInfo;
-  class OutputContext;
-  class ParticleSubset;
-  class Patch;
-  class ProcessorGroup;
-  class TypeDescription;
 
-/**************************************
+class BufferInfo;
+class OutputContext;
+class ParticleSubset;
+class Patch;
+class ProcessorGroup;
+class TypeDescription;
 
-CLASS
-   ParticleVariableBase
-   
-   Short description...
+using constParticleVariableBase = constVariableBase<ParticleVariableBase>;
 
-GENERAL INFORMATION
+class ParticleVariableBase : public Variable
+{
+public:
+  virtual ~ParticleVariableBase();
 
-   ParticleVariableBase.h
+  virtual ParticleVariableBase*
+  clone() = 0;
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+  virtual ParticleVariableBase*
+  cloneSubset(ParticleSubset*) = 0;
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+  // Make a new default object of the base class.
+  virtual ParticleVariableBase*
+  cloneType() const = 0;
 
-KEYWORDS
-   ParticleVariableBase
+  virtual constParticleVariableBase*
+  cloneConstType() const = 0;
 
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
+  // not something we normally do, but helps in AMR when we copy
+  // data from one patch to another where they are the same boundaries
+  // instead of copying all the data
+  void
+  setParticleSubset(ParticleSubset* pset);
 
-  typedef constVariableBase<ParticleVariableBase> constParticleVariableBase;
+  virtual void
+  copyData(const ParticleVariableBase* src) = 0;
 
-   class ParticleVariableBase : public Variable {
-   public:
-      
-      virtual ~ParticleVariableBase();
+  virtual void
+  allocate(
+    const Patch*,
+    const Uintah::IntVector& boundary) = 0; // will throw an InternalError
 
-      //////////
-      // Insert Documentation Here:
-//      virtual const ParticleVariableBase* clone() const = 0;
-      virtual ParticleVariableBase* clone() = 0;     
-//      virtual const ParticleVariableBase* cloneSubset(ParticleSubset*) const = 0;
-      virtual ParticleVariableBase* cloneSubset(ParticleSubset*) = 0;
+  virtual void
+  allocate(ParticleSubset*) = 0;
 
-      // Make a new default object of the base class.
-      virtual ParticleVariableBase* cloneType() const = 0;
-      virtual constParticleVariableBase* cloneConstType() const = 0;
+  virtual void
+  allocate(int totalParticles) = 0;
 
-      // not something we normally do, but helps in AMR when we copy
-      // data from one patch to another where they are the same boundaries
-      // instead of copying all the data
-      void setParticleSubset(ParticleSubset* pset);
+  virtual void
+  gather(ParticleSubset* dest,
+         const std::vector<ParticleSubset*>& subsets,
+         const std::vector<ParticleVariableBase*>& srcs,
+         particleIndex extra = 0) = 0;
 
-      virtual void copyData(const ParticleVariableBase* src) = 0;
-      
-      virtual void allocate(const Patch*, const Uintah::IntVector& boundary) = 0; // will throw an InternalError
-      virtual void allocate(ParticleSubset*) = 0;
-      virtual void allocate(int totalParticles) = 0;
-      virtual void gather(ParticleSubset* dest,
-                          const std::vector<ParticleSubset*> &subsets,
-                          const std::vector<ParticleVariableBase*> &srcs,
-                          particleIndex extra = 0) = 0;
-      virtual void gather(ParticleSubset* dest,
-                          const std::vector<ParticleSubset*> &subsets,
-                          const std::vector<ParticleVariableBase*> &srcs,
-                          const std::vector<const Patch*>& srcPatches,
-                          particleIndex extra = 0) = 0;
-      virtual void unpackMPI(void* buf, int bufsize, int* bufpos,
-                             const ProcessorGroup* pg,
-                             ParticleSubset* pset) = 0;
-      virtual void packMPI(void* buf, int bufsize, int* bufpos,
-                           const ProcessorGroup* pg,
-                           ParticleSubset* pset) = 0;
-      virtual void packMPI(void* buf, int bufsize, int* bufpos,
-                           const ProcessorGroup* pg,
-                           ParticleSubset* pset, const Patch* forPatch) = 0;
-      virtual void packsizeMPI(int* bufpos,
-                               const ProcessorGroup* pg,
-                               ParticleSubset* pset) = 0;
+  virtual void
+  gather(ParticleSubset* dest,
+         const std::vector<ParticleSubset*>& subsets,
+         const std::vector<ParticleVariableBase*>& srcs,
+         const std::vector<const Patch*>& srcPatches,
+         particleIndex extra = 0) = 0;
 
-      virtual int size() = 0;
+  virtual void
+  unpackMPI(void* buf,
+            int bufsize,
+            int* bufpos,
+            const ProcessorGroup* pg,
+            ParticleSubset* pset) = 0;
 
-      virtual size_t getDataSize() const = 0;
+  virtual void
+  packMPI(void* buf,
+          int bufsize,
+          int* bufpos,
+          const ProcessorGroup* pg,
+          ParticleSubset* pset) = 0;
 
-      virtual bool copyOut(void* dst) const = 0;
+  virtual void
+  packMPI(void* buf,
+          int bufsize,
+          int* bufpos,
+          const ProcessorGroup* pg,
+          ParticleSubset* pset,
+          const Patch* forPatch) = 0;
 
-      //////////
-      // Insert Documentation Here:
-      ParticleSubset* getParticleSubset() const {
-        ASSERT(!isForeign());
-         return d_pset;
-      }
+  virtual void
+  packsizeMPI(int* bufpos, const ProcessorGroup* pg, ParticleSubset* pset) = 0;
 
-      virtual void* getBasePointer() const = 0;
-      void getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset);
-      virtual const TypeDescription* virtualGetTypeDescription() const = 0;
-     virtual RefCounted* getRefCounted() = 0;
-     virtual void getSizeInfo(std::string& elems, unsigned long& totsize,
-                              void*& ptr) const = 0;
-   protected:
-      ParticleVariableBase(const ParticleVariableBase&);
-      ParticleVariableBase(ParticleSubset* pset);
-      ParticleVariableBase& operator=(const ParticleVariableBase&);
-      
-      ParticleSubset*  d_pset;
+  virtual int
+  size() = 0;
 
-   private:
-   };
+  virtual size_t
+  getDataSize() const = 0;
+
+  virtual bool
+  copyOut(void* dst) const = 0;
+
+  ParticleSubset*
+  getParticleSubset() const
+  {
+    ASSERT(!isForeign());
+    return d_pset;
+  }
+
+  virtual void*
+  getBasePointer() const = 0;
+
+  void
+  getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset);
+
+  virtual const TypeDescription*
+  virtualGetTypeDescription() const = 0;
+
+  virtual RefCounted*
+  getRefCounted() = 0;
+
+  virtual void
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const = 0;
+
+protected:
+
+  ParticleVariableBase(const ParticleVariableBase&);
+
+  ParticleVariableBase(ParticleSubset* pset);
+
+  ParticleVariableBase&
+  operator=(const ParticleVariableBase&);
+
+  ParticleSubset* d_pset;
+
+private:
+};
 
 } // End namespace Uintah
 
-#endif
+#endif // __CORE_GRID_VARIABLES_ParticleVariableBase_H__

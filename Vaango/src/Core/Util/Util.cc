@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,13 +23,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/Parallel/MasterLock.h>
 
-
-#include <Core/Thread/Mutex.h>
-#include <Core/Util/DebugStream.h>
-
-using Uintah::Mutex;
-Mutex cerrLock( "cerr lock" );
-Mutex coutLock( "cout lock" );
-
-Uintah::DebugStream dbg_barrier("MPIBarriers",false);
+Uintah::MasterLock cerrLock{};
+Uintah::MasterLock coutLock{};

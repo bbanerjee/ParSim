@@ -27,7 +27,7 @@
 #ifndef __MPM_FLAGS_H__
 #define __MPM_FLAGS_H__
 #include <CCA/Ports/Output.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
 #include <vector>

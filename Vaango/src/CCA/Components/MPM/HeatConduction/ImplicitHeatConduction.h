@@ -53,7 +53,7 @@
 
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/Array3.h>
 #include <vector>

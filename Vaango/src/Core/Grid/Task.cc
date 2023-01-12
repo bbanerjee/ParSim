@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Containers/StringUtil.h>
+#include <Core/Util/StringUtil.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Grid/Grid.h>

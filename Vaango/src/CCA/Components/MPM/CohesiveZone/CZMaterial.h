@@ -56,7 +56,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <CCA/Components/MPM/CohesiveZone/CohesiveZone.h>
 #include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

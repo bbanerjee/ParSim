@@ -29,7 +29,7 @@
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
+
 
 using namespace Uintah;
 using namespace Uintah;

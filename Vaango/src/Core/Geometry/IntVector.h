@@ -206,9 +206,9 @@ namespace Uintah {
     //! support dynamic compilation
     static const string& get_h_file_path();
 
-    SCISHARE friend void Pio( Piostream&, IntVector& );
+     friend void Pio( Piostream&, IntVector& );
 
-    SCISHARE friend std::ostream& operator<<(std::ostream&, const Uintah::IntVector&);
+     friend std::ostream& operator<<(std::ostream&, const Uintah::IntVector&);
 
   private:
     int value_[3];

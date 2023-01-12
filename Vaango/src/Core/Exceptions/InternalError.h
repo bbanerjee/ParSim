@@ -65,10 +65,10 @@
 #include <Core/Exceptions/Exception.h>
 #include <string>
 
-#include <Core/Exceptions/share.h>
+
 
 namespace Uintah {
-  class SCISHARE InternalError : public Exception {
+  class  InternalError : public Exception {
   public:
     InternalError(const std::string&, const char* file, int line);
     InternalError(const InternalError&);

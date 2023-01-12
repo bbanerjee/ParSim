@@ -67,7 +67,7 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Util/DebugStream.h>
 
 #include <fstream>

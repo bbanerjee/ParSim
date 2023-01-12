@@ -30,7 +30,7 @@
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/ParticleSubset.h>
 #include <Core/Grid/Variables/ParticleVariableBase.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>

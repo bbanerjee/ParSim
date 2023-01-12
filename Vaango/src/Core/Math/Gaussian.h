@@ -43,12 +43,12 @@
 #include <Core/Math/Trig.h> // for M_PI
 #include <cmath>
 
-#include <Core/Math/share.h>
+
 
 namespace Uintah {
 
 //   http://mathworld.wolfram.com/GaussianDistribution.html
-class SCISHARE Gaussian {
+class  Gaussian {
 public:
   double mean_;
   double sigma_;

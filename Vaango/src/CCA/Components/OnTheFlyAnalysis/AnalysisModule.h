@@ -30,7 +30,7 @@
 #include <CCA/Ports/SimulationInterface.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 
 #include <Core/Geometry/Vector.h>

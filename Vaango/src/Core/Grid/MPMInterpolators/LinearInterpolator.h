@@ -26,7 +26,7 @@
 #define LINEAR_INTERPOLATOR_H
 
 #include <Core/Math/MiscMath.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/Stencil7.h>

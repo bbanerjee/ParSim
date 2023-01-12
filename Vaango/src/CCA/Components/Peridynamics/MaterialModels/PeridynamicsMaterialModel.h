@@ -26,7 +26,7 @@
 #define __VAANGO_PERIDYNAMICS_MATERIAL_MODEL_H__
 
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <vector>

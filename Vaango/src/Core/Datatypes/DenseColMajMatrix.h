@@ -72,7 +72,7 @@ namespace Uintah {
 
 using std::vector;
 
-class SCISHARE DenseColMajMatrix : public Matrix
+class  DenseColMajMatrix : public Matrix
 {
   double*  dataptr_;
 

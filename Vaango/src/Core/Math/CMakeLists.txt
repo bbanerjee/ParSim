@@ -58,10 +58,8 @@ SET(Vaango_Core_Math_SRCS
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Plane.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Point.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Polygon.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Quaternion.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Ray.cc 
+  ${CMAKE_SOURCE_DIR}/Core/Geometry/PolyPlane.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Tensor.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Transform.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Vector.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeDescription.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeUtils.cc 
@@ -89,8 +87,6 @@ set(LIBS
 TARGET_LINK_LIBRARIES(Vaango_Core_Math
   Vaango_Core_Exceptions
   Vaango_Core_Util
-  Vaango_Core_Thread
-  Vaango_Core_Persistent
   ${LIBS}
 )
 

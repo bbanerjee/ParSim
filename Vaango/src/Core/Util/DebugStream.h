@@ -90,7 +90,7 @@
 #include <iostream>
 
 
-#include <Core/Util/share.h>
+
 
 namespace Uintah {
 
@@ -121,7 +121,7 @@ namespace Uintah {
     ///////////////////
     // class DebugStream
     // A general purpose debugging ostream.
-    class SCISHARE DebugStream: public ostream{
+    class  DebugStream: public ostream{
     private:
       // identifies me uniquely
       string name;

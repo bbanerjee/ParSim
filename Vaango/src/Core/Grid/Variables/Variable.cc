@@ -29,7 +29,7 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <CCA/Ports/InputContext.h>
 #include <CCA/Ports/OutputContext.h>
-#include <Core/IO/SpecializedRunLengthEncoder.h>
+
 #include <Core/Grid/Patch.h>
 #include <Core/Exceptions/ErrnoException.h>
 #include <Core/Malloc/Allocator.h>

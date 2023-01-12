@@ -35,7 +35,7 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

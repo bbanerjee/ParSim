@@ -63,11 +63,11 @@
 
 #include <Core/Geometry/Vector.h>
 
-#include <Core/Geometry/share.h>
+
 
 namespace Uintah {
   class Point;
-class SCISHARE Plane {
+class  Plane {
    Vector n;
    double d;
 public:

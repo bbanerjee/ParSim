@@ -62,7 +62,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Mutex.h>
+
 
 #include <iostream>
 #include <fstream>

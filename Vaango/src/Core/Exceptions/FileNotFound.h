@@ -65,10 +65,10 @@
 #include <Core/Exceptions/Exception.h>
 #include <string>
 
-#include <Core/Exceptions/share.h>
+
 
 namespace Uintah {
-	class SCISHARE FileNotFound : public Exception {
+	class  FileNotFound : public Exception {
 	public:
 	    FileNotFound(const std::string&, const char* file, int line);
 	    FileNotFound(const FileNotFound&);

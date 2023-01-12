@@ -33,7 +33,7 @@
 #include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelBase.h>
 
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/SimulationInterface.h>
 
 #include <Core/Parallel/UintahParallelComponent.h>
@@ -42,7 +42,7 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 #include <Core/Geometry/Vector.h>
 

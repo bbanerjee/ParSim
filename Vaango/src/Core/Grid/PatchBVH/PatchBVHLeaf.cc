@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,75 +27,58 @@
 
 namespace Uintah {
 
-  /**************************************
+PatchBVHLeaf::PatchBVHLeaf(std::vector<PatchKeyVal>::iterator begin,
+                           std::vector<PatchKeyVal>::iterator end)
+  : begin_(begin)
+  , end_(end)
+{
+  // set bounding box
+  low_  = begin->patch->getExtraCellLowIndex();
+  high_ = begin->patch->getExtraCellHighIndex();
 
-    CLASS
-    PatchBVHLeaf
+  for (std::vector<PatchKeyVal>::iterator iter = begin + 1; iter < end;
+       iter++) {
+    low_  = Min(low_, iter->patch->getExtraCellLowIndex());
+    high_ = Max(high_, iter->patch->getExtraCellHighIndex());
+  }
+}
 
-    A Bounding Volume Hiearchy for querying patches that are 
-    within a given range.  This class is a leaf of the tree.
+PatchBVHLeaf::~PatchBVHLeaf()
+{
+  // no need to delete anything
+}
 
-    GENERAL INFORMATION
-
-    PatchBVHLeaf.cc
-
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
-
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-    KEYWORDS
-    PatchBVH
-
-    DESCRIPTION
-    The PatchBVH is used for querying patches within a given range.
-    WARNING
-
-   ****************************************/
-
-  PatchBVHLeaf::PatchBVHLeaf(std::vector<PatchKeyVal>::iterator begin, std::vector<PatchKeyVal>::iterator end) : begin_(begin), end_(end)
-  {
-    //set bounding box
-    low_=begin->patch->getExtraCellLowIndex();
-    high_=begin->patch->getExtraCellHighIndex();
-
-    for(std::vector<PatchKeyVal>::iterator iter=begin+1; iter<end; iter++)
-    {
-      low_=Min(low_,iter->patch->getExtraCellLowIndex());
-      high_=Max(high_,iter->patch->getExtraCellHighIndex());
-    }
-
+void
+PatchBVHLeaf::query(const IntVector& low,
+                    const IntVector& high,
+                    std::vector<const Patch*>& patches,
+                    bool includeExtraCells)
+{
+  // check that the query intersects my bounding box
+  if (!doesIntersect(low, high, low_, high_)) {
+    return;
   }
 
-  PatchBVHLeaf::~PatchBVHLeaf()
-  {
-    //no need to delete anything
-  }
-
-  void PatchBVHLeaf::query(const IntVector& low, const IntVector& high, Level::selectType& patches, bool includeExtraCells)
-  {
-    //check that the query intersects my bounding box
-    if(!doesIntersect(low,high,low_,high_))
-      return;
-
-    //loop through lists individually
-    for(std::vector<PatchKeyVal>::iterator iter=begin_;iter<end_;iter++)
-    {
-      if(includeExtraCells)
-      {
-        //if patch intersects range
-        if(doesIntersect(low,high, iter->patch->getExtraCellLowIndex(), iter->patch->getExtraCellHighIndex()))
-          patches.push_back(iter->patch); //add it to the list
+  // loop through lists individually
+  for (std::vector<PatchKeyVal>::iterator iter = begin_; iter < end_; iter++) {
+    if (includeExtraCells) {
+      // if patch intersects range
+      if (doesIntersect(low,
+                        high,
+                        iter->patch->getExtraCellLowIndex(),
+                        iter->patch->getExtraCellHighIndex())) {
+        patches.push_back(iter->patch); // add it to the list
       }
-      else
-      {
-        //if patch intersects range
-        if(doesIntersect(low,high, iter->patch->getCellLowIndex(), iter->patch->getCellHighIndex()))
-          patches.push_back(iter->patch); //add it to the list
+    } else {
+      // if patch intersects range
+      if (doesIntersect(low,
+                        high,
+                        iter->patch->getCellLowIndex(),
+                        iter->patch->getCellHighIndex())) {
+        patches.push_back(iter->patch); // add it to the list
       }
     }
   }
+}
 
 } // end namespace Uintah

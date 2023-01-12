@@ -54,7 +54,7 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <vector>

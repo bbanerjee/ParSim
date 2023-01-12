@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,120 +23,130 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VAANGO_PARTICLE_CREATOR_H__
-#define __VAANGO_PARTICLE_CREATOR_H__
+#ifndef __VAANGO_CCA_COMPONENTS_PERIDYNAMICS_PARTICLE_CREATOR_H__
+#define __VAANGO_CCA_COMPONENTS_PERIDYNAMICS_PARTICLE_CREATOR_H__
 
 #include <Core/GeometryPiece/GeometryPiece.h>
+#include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
 
 #include <Core/Parallel/CrowdMonitor.h>
 
-#include <vector>
 #include <map>
+#include <vector>
 
 namespace Uintah {
-  class GeometryObject;
-  class Patch;
-  class DataWarehouse;
-  class ParticleSubset;
-  class VarLabel;
+class GeometryObject;
+class Patch;
+class DataWarehouse;
+class ParticleSubset;
+class VarLabel;
 }
 
 namespace Vaango {
 
-  typedef int particleIndex;
-  typedef int particleId;
+using particleIndex = int;
+using particleId    = int;
 
-  class PeridynamicsFlags;
-  class PeridynamicsMaterial;
-  class PeridynamicsLabel;
+class PeridynamicsFlags;
+class PeridynamicsMaterial;
+class PeridynamicsLabel;
 
-  class ParticleCreator {
+class ParticleCreator
+{
 
-  public:
-    
-    ParticleCreator(PeridynamicsMaterial* matl, PeridynamicsFlags* flags);
-    virtual ~ParticleCreator();
+public:
+  ParticleCreator(PeridynamicsMaterial* matl, PeridynamicsFlags* flags);
+  virtual ~ParticleCreator();
 
-    virtual particleIndex countParticles(const Uintah::Patch*,
-                                         std::vector<Uintah::GeometryObject*>&);
+  virtual particleIndex
+  countParticles(const Uintah::Patch*, std::vector<Uintah::GeometryObject*>&);
 
-    virtual Uintah::ParticleSubset* createParticles(PeridynamicsMaterial* matl,
-                                                    particleIndex numParticles,
-                                                    Uintah::CCVariable<short int>& cellNAPID,
-                                                    const Uintah::Patch*,
-                                                    Uintah::DataWarehouse* new_dw,
-                                                    std::vector<Uintah::GeometryObject*>&);
+  virtual Uintah::ParticleSubset*
+  createParticles(PeridynamicsMaterial* matl,
+                  particleIndex numParticles,
+                  Uintah::CCVariable<short int>& cellNAPID,
+                  const Uintah::Patch*,
+                  Uintah::DataWarehouse* new_dw,
+                  std::vector<Uintah::GeometryObject*>&);
 
-    virtual Uintah::ParticleSubset* allocateVariables(particleIndex numParticles,
-                                                      int dwi, 
-                                                      const Uintah::Patch* patch,
-                                                      Uintah::DataWarehouse* new_dw);
+  virtual Uintah::ParticleSubset*
+  allocateVariables(particleIndex numParticles,
+                    int dwi,
+                    const Uintah::Patch* patch,
+                    Uintah::DataWarehouse* new_dw);
 
-    virtual void allocateVariablesAddRequires(Uintah::Task* task, 
-                                              const PeridynamicsMaterial* matl,
-                                              const Uintah::PatchSet* patch) const;
+  virtual void
+  allocateVariablesAddRequires(Uintah::Task* task,
+                               const PeridynamicsMaterial* matl,
+                               const Uintah::PatchSet* patch) const;
 
-    virtual void registerPermanentParticleState(PeridynamicsMaterial* matl);
+  virtual void
+  registerPermanentParticleState(PeridynamicsMaterial* matl);
 
-    std::vector<const Uintah::VarLabel* > returnParticleState();
-    std::vector<const Uintah::VarLabel* > returnParticleStatePreReloc();
+  std::vector<const Uintah::VarLabel*>
+  returnParticleState();
+  std::vector<const Uintah::VarLabel*>
+  returnParticleStatePreReloc();
 
-  protected:
+protected:
+  particleIndex
+  countAndCreateParticles(const Uintah::Patch*, Uintah::GeometryObject* obj);
 
-    particleIndex countAndCreateParticles(const Uintah::Patch*,
-                                          Uintah::GeometryObject* obj);
+  void
+  createPoints(const Uintah::Patch* patch, Uintah::GeometryObject* obj);
 
-    void createPoints(const Uintah::Patch* patch, Uintah::GeometryObject* obj);
+  virtual void
+  initializeParticle(const Uintah::Patch* patch,
+                     std::vector<Uintah::GeometryObject*>::const_iterator obj,
+                     PeridynamicsMaterial* matl,
+                     Uintah::Point p,
+                     Uintah::IntVector cell_idx,
+                     particleIndex i,
+                     Uintah::CCVariable<short int>& cellNAPI);
 
-    virtual void initializeParticle(const Uintah::Patch* patch,
-                                    std::vector<Uintah::GeometryObject*>::const_iterator obj,
-                                    PeridynamicsMaterial* matl,
-                                    Uintah::Point p, Uintah::IntVector cell_idx,
-                                    particleIndex i,
-                                    Uintah::CCVariable<short int>& cellNAPI);
-    
-   int checkForSurface(const Uintah::GeometryPieceP piece, const Uintah::Point p, const Uintah::Vector dxpp);
+  int
+  checkForSurface(const Uintah::GeometryPieceP piece,
+                  const Uintah::Point p,
+                  const Uintah::Vector dxpp);
 
-   int getLoadCurveID(const Uintah::Point& pp, const Uintah::Vector& dxpp);
+  int
+  getLoadCurveID(const Uintah::Point& pp, const Uintah::Vector& dxpp);
 
-  protected:
+protected:
+  Uintah::ParticleVariable<Uintah::Point> d_position;
+  Uintah::ParticleVariable<Uintah::Vector> d_pvelocity, d_pexternalforce;
+  Uintah::ParticleVariable<Uintah::Matrix3> d_psize;
+  Uintah::ParticleVariable<double> d_pmass, d_pvolume;
+  Uintah::ParticleVariable<Uintah::long64> d_pparticleID;
+  Uintah::ParticleVariable<Uintah::Vector> d_pdisp;
 
-    Uintah::ParticleVariable<Uintah::Point> d_position;
-    Uintah::ParticleVariable<Uintah::Vector> d_pvelocity, d_pexternalforce;
-    Uintah::ParticleVariable<Uintah::Matrix3> d_psize;
-    Uintah::ParticleVariable<double> d_pmass, d_pvolume;
-    Uintah::ParticleVariable<Uintah::long64> d_pparticleID;
-    Uintah::ParticleVariable<Uintah::Vector> d_pdisp;
+  Uintah::ParticleVariable<double> d_pHorizon;
+  Uintah::ParticleVariable<int> d_pLoadCurveID;
 
-    Uintah::ParticleVariable<double> d_pHorizon;
-    Uintah::ParticleVariable<int> d_pLoadCurveID;
+  PeridynamicsLabel* d_varLabel;
+  PeridynamicsFlags* d_flags;
 
-    PeridynamicsLabel* d_varLabel;
-    PeridynamicsFlags* d_flags;
+  std::vector<const Uintah::VarLabel*> particle_state, particle_state_preReloc;
 
-    std::vector<const Uintah::VarLabel* > particle_state, particle_state_preReloc;
+  using PointArray  = std::vector<Uintah::Point>;
+  using DoubleArray = std::vector<double>;
+  using VectorArray = std::vector<Uintah::Vector>;
 
-    typedef std::vector<Uintah::Point> PointArray;
-    typedef std::vector<double> DoubleArray;
-    typedef std::vector<Uintah::Vector> VectorArray;
+  using PatchGeometryObjectPair =
+    std::pair<const Uintah::Patch*, Uintah::GeometryObject*>;
 
-    typedef std::pair<const Uintah::Patch*, Uintah::GeometryObject*> PatchGeometryObjectPair;
+  using GeometryPoints = std::map<PatchGeometryObjectPair, PointArray>; 
+  using GeometryScalars = std::map<PatchGeometryObjectPair, DoubleArray>; 
+  using GeometryVectors = std::map<PatchGeometryObjectPair, VectorArray>; 
 
-    typedef std::map<PatchGeometryObjectPair, PointArray > GeometryPoints;
-    typedef std::map<PatchGeometryObjectPair, DoubleArray > GeometryScalars;
-    typedef std::map<PatchGeometryObjectPair, VectorArray > GeometryVectors;
-
-    GeometryPoints d_object_points;
-    GeometryScalars d_object_vols;
-    GeometryVectors d_object_velocity; 
-    GeometryVectors d_object_forces; 
-    
-    mutable Uintah::CrowdMonitor   d_lock;
-  };
+  GeometryPoints d_object_points;
+  GeometryScalars d_object_vols;
+  GeometryVectors d_object_velocity;
+  GeometryVectors d_object_forces;
+};
 
 } // End of namespace Vaango
 
-#endif // __VAANGO_PARTICLE_CREATOR_H__
+#endif // __VAANGO_CCA_COMPONENTS_PERIDYNAMICS_PARTICLE_CREATOR_H__

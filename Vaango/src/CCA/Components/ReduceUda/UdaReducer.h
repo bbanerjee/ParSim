@@ -33,7 +33,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/EmptyMaterial.h>
 
 #include <vector>

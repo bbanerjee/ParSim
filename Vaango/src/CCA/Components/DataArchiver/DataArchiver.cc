@@ -35,7 +35,7 @@
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/SimulationInterface.h>
 
-#include <Core/Containers/StringUtil.h>
+#include <Core/Util/StringUtil.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/Grid/Box.h>

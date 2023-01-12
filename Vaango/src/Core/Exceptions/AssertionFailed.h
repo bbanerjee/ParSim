@@ -69,10 +69,10 @@
 
 #include   <string>
 
-#include <Core/Exceptions/share.h>
+
 
 namespace Uintah {
-class SCISHARE AssertionFailed : public Exception {
+class  AssertionFailed : public Exception {
 public:
   AssertionFailed(const char* msg,
 		  const char* file,

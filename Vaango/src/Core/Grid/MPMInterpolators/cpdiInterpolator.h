@@ -35,7 +35,7 @@
 #ifndef CPDI_INTERPOLATOR_H
 #define CPDI_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 namespace Uintah {
 

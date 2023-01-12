@@ -26,7 +26,7 @@
 #define _SDINTERFACEMODELFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
 
 #include <string>

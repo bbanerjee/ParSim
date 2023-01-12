@@ -26,7 +26,7 @@
 #ifndef BSPLINE_INTERPOLATOR_H
 #define BSPLINE_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 namespace Uintah {
 

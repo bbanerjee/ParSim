@@ -38,43 +38,27 @@
 #include <cfloat>
 #include <climits>
 
-using namespace Uintah;
-
 namespace Uintah {
 
-using std::string;
-
 #if !defined(STATIC_BUILD)
-template <>
-const string
+template<>
+const std::string
 find_type_name(long64*)
 {
   static const string name = "long64";
   return name;
 }
-
-const FETypeDescription*
-get_fetype_description(long64*)
-{
-  static FETypeDescription* td = 0;
-  if (!td) {
-    td = scinew FETypeDescription("long64", "builtin", "builtin");
-  }
-  return td;
-}
 #endif
-
-} // namespace Uintah
-
-namespace Uintah {
 
 const TypeDescription*
 fun_getTypeDescription(double*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::double_type, "double",
-                                true, MPI_DOUBLE);
+    td = scinew TypeDescription(TypeDescription::Type::double_type,
+                                "double",
+                                true,
+                                MPI_DOUBLE);
   }
   return td;
 }
@@ -84,8 +68,10 @@ fun_getTypeDescription(float*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::float_type, "float",
-                                true, MPI_FLOAT);
+    td = scinew TypeDescription(TypeDescription::Type::float_type,
+                                "float",
+                                true,
+                                MPI_FLOAT);
   }
   return td;
 }
@@ -95,7 +81,9 @@ fun_getTypeDescription(int*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::int_type, "int", true,
+    td = scinew TypeDescription(TypeDescription::Type::int_type,
+                                "int",
+                                true,
                                 MPI_INT);
   }
   return td;
@@ -107,7 +95,9 @@ fun_getTypeDescription(short int*)
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::short_int_type,
-                                "short int", true, MPI_INT);
+                                "short int",
+                                true,
+                                MPI_INT);
   }
   return td;
 }
@@ -118,7 +108,9 @@ fun_getTypeDescription(FILE**)
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::ParticleVariable,
-                                "filePointer", true, MPI_BYTE);
+                                "filePointer",
+                                true,
+                                MPI_BYTE);
   }
   return td;
 }
@@ -144,8 +136,10 @@ fun_getTypeDescription(long64*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::long64_type, "long64",
-                                true, MPI_LONG_LONG_INT);
+    td = scinew TypeDescription(TypeDescription::Type::long64_type,
+                                "long64",
+                                true,
+                                MPI_LONG_LONG_INT);
   }
   return td;
 }
@@ -156,8 +150,10 @@ fun_getTypeDescription(long long*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::long64_type, "long64",
-                                true, MPI_LONG_LONG_INT);
+    td = scinew TypeDescription(TypeDescription::Type::long64_type,
+                                "long64",
+                                true,
+                                MPI_LONG_LONG_INT);
   }
   return td;
 }
@@ -168,7 +164,9 @@ fun_getTypeDescription(bool*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::bool_type, "bool", true,
+    td = scinew TypeDescription(TypeDescription::Type::bool_type,
+                                "bool",
+                                true,
                                 MPI_C_BOOL);
   }
   return td;
@@ -179,7 +177,9 @@ fun_getTypeDescription(unsigned char*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::bool_type, "uchar", true,
+    td = scinew TypeDescription(TypeDescription::Type::bool_type,
+                                "uchar",
+                                true,
                                 MPI_UNSIGNED_CHAR);
   }
   return td;
@@ -200,7 +200,9 @@ fun_getTypeDescription(Point*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::Point, "Point", true,
+    td = scinew TypeDescription(TypeDescription::Type::Point,
+                                "Point",
+                                true,
                                 &makeMPI_Point);
   }
   return td;
@@ -221,7 +223,9 @@ fun_getTypeDescription(Vector*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::Vector, "Vector", true,
+    td = scinew TypeDescription(TypeDescription::Type::Vector,
+                                "Vector",
+                                true,
                                 &makeMPI_Vector);
   }
   return td;
@@ -242,32 +246,14 @@ fun_getTypeDescription(IntVector*)
 {
   static TypeDescription* td;
   if (!td) {
-    td = scinew TypeDescription(TypeDescription::Type::IntVector, "IntVector", true,
+    td = scinew TypeDescription(TypeDescription::Type::IntVector,
+                                "IntVector",
+                                true,
                                 &makeMPI_IntVector);
   }
   return td;
 }
 
-void
-fun_getLargeValue(bool* val)
-{
-  // this should never get called.  It doesn't make sense for a bool
-  // to get used in a min or max op
-  *val = true;
-}
-
-void
-fun_getSmallValue(bool* val)
-{
-  // this should never get called.  It doesn't make sense for a bool
-  // to get used in a min or max op
-  *val = false;
-}
-void
-fun_getZeroValue(double* val)
-{
-  *val = 0;
-}
 #if !defined(SCI_32BITS) && !defined(OSX_SNOW_LEOPARD_OR_LATER)
 void
 fun_getZeroValue(long long* val)

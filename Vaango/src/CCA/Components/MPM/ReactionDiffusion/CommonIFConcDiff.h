@@ -26,7 +26,7 @@
 #define __COMMONIFCONCDIFF_H__
 
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationState.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

@@ -69,7 +69,7 @@
 
 namespace Uintah {
 
-class SCISHARE SparseRowMatrix : public Matrix {
+class  SparseRowMatrix : public Matrix {
 private:
   SparseRowMatrix(); // This is only used by the maker function.
 

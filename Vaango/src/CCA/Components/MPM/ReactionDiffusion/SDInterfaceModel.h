@@ -25,7 +25,7 @@
 #ifndef __SDINTERFACEMODEL_H__
 #define __SDINTERFACEMODEL_H__
 
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

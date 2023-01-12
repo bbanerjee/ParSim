@@ -52,7 +52,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <vector>
 
 namespace Uintah {

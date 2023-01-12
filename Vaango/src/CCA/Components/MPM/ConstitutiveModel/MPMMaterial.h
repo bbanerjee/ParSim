@@ -37,7 +37,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

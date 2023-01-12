@@ -26,7 +26,7 @@
 #ifndef FAST_CPDI_INTERPOLATOR_H
 #define FAST_CPDI_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 namespace Uintah {
 

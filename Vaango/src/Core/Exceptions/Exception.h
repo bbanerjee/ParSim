@@ -69,7 +69,7 @@
 #include <string>
 
 #include <sci_defs/error_defs.h>
-#include <Core/Exceptions/share.h>
+
 
 namespace Uintah {
 
@@ -85,7 +85,7 @@ namespace Uintah {
   //
   ///////////////////////////////////////////////////////////////////////////////////
 
-  class SCISHARE Exception {
+  class  Exception {
   public:
     Exception(bool ignoreWait=false);
     virtual ~Exception();
@@ -103,7 +103,7 @@ namespace Uintah {
     Exception& operator=(const Exception&);
   };
 
-  SCISHARE std::string getStackTrace(void* context = 0);
+   std::string getStackTrace(void* context = 0);
 } // End namespace Uintah
 
 #endif

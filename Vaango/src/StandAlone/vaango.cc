@@ -58,7 +58,7 @@
 
 #include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/Time.h>
 #include <Core/Thread/Thread.h>
 #include <Core/Util/DebugStream.h>

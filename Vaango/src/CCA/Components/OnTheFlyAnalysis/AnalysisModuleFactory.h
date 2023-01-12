@@ -26,7 +26,7 @@
 #define Packages_Uintah_CCA_Components_OnTheFlyAnalysis_Factory_h
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/Output.h>
 
 

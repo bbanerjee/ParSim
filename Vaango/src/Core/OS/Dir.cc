@@ -34,10 +34,10 @@
 
 namespace fs = std::filesystem;
 
-using namespace Uintah;
+namespace Uintah {
 
 Dir
-Dir::create(const string& name)
+Dir::create(const std::string& name)
 {
   try {
     fs::create_directories(name);
@@ -53,7 +53,7 @@ Dir::create(const string& name)
   return Dir(name);
 }
 
-Dir::Dir(const string& name)
+Dir::Dir(const std::string& name)
   : d_name(name)
 {
 }
@@ -123,12 +123,12 @@ Dir::forceRemove(bool throwOnError)
 }
 
 void
-Dir::remove(const string& filename, bool throwOnError)
+Dir::remove(const std::string& filename, bool throwOnError)
 {
   if (!exists()) {
     return;
   }
-  string filepath = d_name + "/" + filename;
+  std::string filepath = d_name + "/" + filename;
   try {
     fs::remove(filepath);
   } catch (fs::filesystem_error& err) {
@@ -146,13 +146,13 @@ Dir::remove(const string& filename, bool throwOnError)
 }
 
 Dir
-Dir::createSubdir(const string& sub)
+Dir::createSubdir(const std::string& sub)
 {
   return create(d_name + "/" + sub);
 }
 
 Dir
-Dir::getSubdir(const string& sub)
+Dir::getSubdir(const std::string& sub)
 {
   // This should probably do more
   return Dir(d_name + "/" + sub);
@@ -165,7 +165,7 @@ Dir::copy(Dir& destDir)
   try {
     fs::copy(d_name, destDir.d_name, copyOptions);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(string("Dir::copy failed to copy: ") + d_name,
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name,
                         __FILE__,
                         __LINE__);
   }
@@ -178,7 +178,7 @@ Dir::move(Dir& destDir)
   try {
     fs::rename(d_name, destDir.d_name);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(string("Dir::move failed to move: ") + d_name,
+    throw InternalError(std::string("Dir::move failed to move: ") + d_name,
                         __FILE__,
                         __LINE__);
   }
@@ -188,11 +188,11 @@ Dir::move(Dir& destDir)
 void
 Dir::copy(const std::string& filename, Dir& destDir)
 {
-  string filepath = d_name + "/" + filename;
+  std::string filepath = d_name + "/" + filename;
   try {
     fs::copy(filepath, destDir.d_name + "/" + filename);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(string("Dir::copy failed to copy: ") + filepath,
+    throw InternalError(std::string("Dir::copy failed to copy: ") + filepath,
                         __FILE__,
                         __LINE__);
   }
@@ -202,11 +202,11 @@ Dir::copy(const std::string& filename, Dir& destDir)
 void
 Dir::move(const std::string& filename, Dir& destDir)
 {
-  string filepath = d_name + "/" + filename;
+  std::string filepath = d_name + "/" + filename;
   try {
     fs::rename(filepath, destDir.d_name + "/" + filename);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(string("Dir::move failed to move: ") + filepath,
+    throw InternalError(std::string("Dir::move failed to move: ") + filepath,
                         __FILE__,
                         __LINE__);
   }
@@ -238,3 +238,5 @@ Dir::exists()
   }
   return false;
 }
+
+} // namespace Uintah

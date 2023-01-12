@@ -35,7 +35,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
 #include <Core/Util/NotFinished.h>

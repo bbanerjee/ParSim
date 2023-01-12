@@ -26,7 +26,7 @@
 #ifndef AXI_GIMP_INTERPOLATOR_H
 #define AXI_GIMP_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 namespace Uintah {
 

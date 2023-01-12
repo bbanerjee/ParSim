@@ -34,8 +34,8 @@
 
 #include <atomic>
 
-//#include <Core/Thread/AtomicCounter.h>
-//#include <Core/Thread/Mutex.h>
+//
+//
 
 namespace Uintah {
 

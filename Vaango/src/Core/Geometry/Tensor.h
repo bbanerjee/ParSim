@@ -64,14 +64,14 @@
 #include <iosfwd>
 #include <vector>
 
-#include <Core/Geometry/share.h>
+
 
 namespace Uintah {
 
 template<class T> class Array1;
 class Piostream;
 
-class SCISHARE Tensor {
+class  Tensor {
 private:
   Vector e1_, e2_, e3_;  // these are already scaled by the eigenvalues
   double l1_, l2_, l3_;
@@ -128,7 +128,7 @@ public:
   //! support dynamic compilation
   static const string& get_h_file_path();
 
-  SCISHARE friend void Pio(Piostream&, Tensor&);
+   friend void Pio(Piostream&, Tensor&);
 };
 
 inline bool operator<(Tensor t1, Tensor t2)
@@ -155,10 +155,10 @@ inline
 Tensor operator*(double d, const Tensor &t) {
   return t*d;
 }
-SCISHARE const TypeDescription* get_type_description(Tensor*);
+ const TypeDescription* get_type_description(Tensor*);
 
-SCISHARE std::ostream& operator<<(std::ostream& os, const Tensor& t);
-SCISHARE std::istream& operator>>(std::istream& os, Tensor& t);
+ std::ostream& operator<<(std::ostream& os, const Tensor& t);
+ std::istream& operator>>(std::istream& os, Tensor& t);
 
 } // End namespace Uintah
 

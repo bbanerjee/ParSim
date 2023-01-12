@@ -30,7 +30,7 @@
 #include <Core/Parallel/ProcessorGroup.h> // process determination
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <Core/Containers/StringUtil.h>
+#include <Core/Util/StringUtil.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/DebugStream.h>

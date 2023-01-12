@@ -29,7 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Parallel/ProcessorGroup.h>

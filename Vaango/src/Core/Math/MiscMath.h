@@ -40,7 +40,7 @@
 #ifndef SCI_Math_MiscMath_h
 #define SCI_Math_MiscMath_h 1
 
-#include <Core/Math/share.h>
+
 #include <cmath>
 #include <cfloat>
 
@@ -310,7 +310,7 @@ inline int Tile(int tile, int tf)
   }
 }
 
-double SCISHARE MakeReal(double value);
+double  MakeReal(double value);
 
 
 template <class T>

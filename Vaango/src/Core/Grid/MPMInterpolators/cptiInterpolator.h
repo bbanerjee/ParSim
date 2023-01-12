@@ -48,7 +48,7 @@ center to any corner that exceeds the side length of a computational cell.
 #ifndef CPTI_INTERPOLATOR_H
 #define CPTI_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 namespace Uintah {
 

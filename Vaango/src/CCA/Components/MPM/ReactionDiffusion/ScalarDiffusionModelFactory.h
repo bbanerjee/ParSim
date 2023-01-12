@@ -27,7 +27,7 @@
 #define _SCALARDIFFUSIONMODELFACTORY_H_
 
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <memory>
 #include <string>

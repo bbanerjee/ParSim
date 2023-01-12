@@ -59,7 +59,7 @@
  */
 
 #include <Core/Datatypes/Datatype.h>
-#include <Core/Thread/AtomicCounter.h>
+
 
 namespace Uintah {
 

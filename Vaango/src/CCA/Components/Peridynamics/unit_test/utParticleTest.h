@@ -34,7 +34,7 @@
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/SimulationInterface.h>
 
 #include <Core/Parallel/UintahParallelComponent.h>
@@ -44,7 +44,7 @@
 #include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 #include <Core/Geometry/Vector.h>
 

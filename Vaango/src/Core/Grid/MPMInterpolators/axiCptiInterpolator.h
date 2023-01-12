@@ -25,7 +25,7 @@
 #ifndef AXICPTI_INTERPOLATOR_H
 #define AXICPTI_INTERPOLATOR_H
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 #include <Core/Grid/cptiInterpolator.h>
 /* Axisymmetric CPTI (Convected Particle Triangle/Tetrahedral domain Interpolator) 
    This has not actually been implemented yet, but is proposed based on 

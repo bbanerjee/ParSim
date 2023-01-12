@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 #include <Core/Math/MiscMath.h>
 
 using namespace Uintah;

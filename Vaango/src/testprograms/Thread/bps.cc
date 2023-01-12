@@ -51,7 +51,7 @@
 #include <Core/Thread/Barrier.h>
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/ThreadGroup.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/Time.h>
 #include <iostream>
 using std::cerr;

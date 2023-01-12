@@ -431,8 +431,8 @@ private:
   IntVector d_extraCells{ IntVector(0, 0, 0) };
   IntVector d_numcells_patch_max{ IntVector(0, 0, 0) };
 
-  std::vector<Patch*> d_realPatches{};           // only real patches
-  std::vector<Patch*> d_virtualAndRealPatches{}; // real and virtual
+  std::vector<Patch*> d_realPatches{};
+  std::vector<Patch*> d_virtualAndRealPatches{};
 
   int d_id{};
   IntVector d_refinementRatio{};
@@ -454,7 +454,7 @@ private:
                                IntVectorCompare>;
   mutable selectCache d_selectCache; // we like const Levels in most places :)
 
-  PatchBVH* d_bvh{ nullptr };
+  std::unique_ptr<PatchBVH> d_bvh{ nullptr };
 
   // overlapping patches
   std::map<std::pair<int, int>, overlap> d_overLapPatches{};

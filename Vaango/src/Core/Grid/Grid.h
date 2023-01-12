@@ -27,29 +27,29 @@
 #ifndef UINTAH_HOMEBREW_GRID_H
 #define UINTAH_HOMEBREW_GRID_H
 
-#include <Core/Grid/GridP.h>
-#include <Core/Util/Handle.h>
-#include <Core/Grid/LevelP.h>
-#include <Core/Util/RefCounted.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <CCA/Ports/LoadBalancer.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/LevelP.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Util/Handle.h>
+#include <Core/Util/RefCounted.h>
 
-#include <Core/Geometry/Vector.h>
 #include <Core/Geometry/BBox.h>
 #include <Core/Geometry/Point.h>
+#include <Core/Geometry/Vector.h>
 
-#include <vector>
 #include <list>
+#include <vector>
 
 namespace Uintah {
 
-  class ProcessorGroup;
-  class Patch;
+class ProcessorGroup;
+class Patch;
 /**************************************
 
 CLASS
    Grid
-   
+
    This class manages the grid used to solve the CFD and MPM problems.
 
 GENERAL INFORMATION
@@ -61,125 +61,169 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Grid, Level
 
 DESCRIPTION
    This class basicly manages the pointers to the levels that make
-   up the grid.  
-  
+   up the grid.
+
 WARNING
-  
+
 ****************************************/
 
-  class Grid : public RefCounted {
-  public:
-    Grid();
-    virtual ~Grid();
-    
-    //////////
-    // Returns the number of levels in this grid.
-    int numLevels() const { return d_levels.size(); }
-    
-    //////////
-    // Returns a "Handle" to the "idx"th level 
-    const LevelP& getLevel(int idx) const;
-    
-    //////////
-    // Adds a level to the grid.
-    Level* addLevel( const Uintah::Point  & anchor,
-                     const Uintah::Vector & dcell, int id = -1 );
+class Grid : public RefCounted
+{
+public:
+  Grid();
+  virtual ~Grid();
 
-    // Reads in XML data line by line to create a level...
-    void readLevelsFromFile( FILE * fp, std::vector< std::vector<int> > & procMap );
-   
-    void performConsistencyCheck() const;
-    void printStatistics() const;
+  //////////
+  // Returns the number of levels in this grid.
+  int
+  numLevels() const
+  {
+    return d_levels.size();
+  }
 
-    //////////
-    // Computes the physical boundaries for the grid (including extra cells)
-    void getSpatialRange(Uintah::BBox& b) const;
+  //////////
+  // Returns a "Handle" to the "idx"th level
+  const LevelP&
+  getLevel(int idx) const;
 
-    const Patch* getPatchByID(int id, int startLevel) const;
+  //////////
+  // Adds a level to the grid.
+  Level*
+  addLevel(const Uintah::Point& anchor,
+           const Uintah::Vector& dcell,
+           int id = -1);
 
-    ////////// 
-    // Returns the boundary of the grid exactly (without
-    // extra cells).  The value returned is the same value
-    // as found in the .ups file.
-    void getInteriorSpatialRange(Uintah::BBox& b) const;
-    
-    //////////
-    // Computes the length of the grid
-    void getLength(       Uintah::Vector & length,
-                    const std::string    & flag = "plusExtraCells" ) const;
-    
-    //////////
-    // Problem setup functions called from simulation controller
-    void problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do_amr); 
+  // Reads in XML data line by line to create a level...
+  void
+  readLevelsFromFile(FILE* fp, std::vector<std::vector<int>>& procMap);
 
-    // For comparing grids - level and patch structure must be equal
-    bool operator==(const Grid& othergrid) const;
+  void
+  readLevelsFromFileBinary(FILE* fp, std::vector<std::vector<int>>& procMap);
 
-    // Returns true if the two grids cover the exact same region.  Patch structure can be different.
-    bool isSimilar(const Grid& othergrid) const;
+  void
+  performConsistencyCheck() const;
+  void
+  printStatistics() const;
 
-    //Assigns the boundary conditions to the grid
-    void assignBCS( const ProblemSpecP &grid_ps, Uintah::LoadBalancer *lb );
+  //////////
+  // Computes the physical boundaries for the grid (including extra cells)
+  void
+  getSpatialRange(Uintah::BBox& b) const;
 
-    void setExtraCells( const IntVector & ex );
-           
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::Grid& grid);
+  const Patch*
+  getPatchByID(int id, int startLevel) const;
 
-    // Used in Level and Patch for stretched grids
-    enum Axis {
-      XAxis, YAxis, ZAxis
-    };
+  //////////
+  // Returns the boundary of the grid exactly (without
+  // extra cells).  The value returned is the same value
+  // as found in the .ups file.
+  void
+  getInteriorSpatialRange(Uintah::BBox& b) const;
 
+  //////////
+  // Computes the length of the grid
+  void
+  getLength(Uintah::Vector& length,
+            const std::string& flag = "plusExtraCells") const;
 
-  private:
-    std::vector<LevelP> d_levels;
-    
-    Grid& operator=(const Grid&);
+  //////////
+  // Problem setup functions called from simulation controller
+  void
+  problemSetup(const ProblemSpecP& params,
+               const ProcessorGroup* pg,
+               bool do_amr);
 
-    // For automatic patch layout.  run_partition() will initialize the values of
-    // af_, bf_, cf_, and nf_, then start the recursive call.  You should never
-    // explicitly call partition(), only run_partition().
-    IntVector run_partition3D(std::list<int> primes);
-    void      partition3D(std::list<int> primes, int a, int b, int c);
-    
-    IntVector run_partition2D(std::list<int> primes);
-    void      partition2D(std::list<int> primes, int a, int b);
+  // For comparing grids - level and patch structure must be equal
+  bool
+  operator==(const Grid& othergrid) const;
 
-    // Helper function for reading in xml specification of the grid from timestep.xml.
-    bool      parseGridFromFile(  FILE * fp, std::vector< std::vector<int> > & procMap );         // returns true if "</Grid>" found.
-    bool      parseLevelFromFile( FILE * fp, std::vector<int> & procMapForLevel );                // returns true if "</Level>" found.
-    bool      parsePatchFromFile( FILE * fp, LevelP level, std::vector<int> & procMapForLevel );  // returns true if "</Patch>" found.
+  // Returns true if the two grids cover the exact same region.  Patch structure
+  // can be different.
+  bool
+  isSimilar(const Grid& othergrid) const;
 
-    // The current (final) values of a,b,c, and norm for the partitian function.
-    // Used to hold data between recursive calls.
-    int    af_;
-    int    bf_;
-    int    cf_;
-    double nf_;
+  // Assigns the boundary conditions to the grid
+  void
+  assignBCS(const ProblemSpecP& grid_ps, Uintah::LoadBalancer* lb);
 
-    // Temporary storage of the resolution values for use in the norm functions
-    // In the 3D case, (a,b,c) corresponds to (x,y,z).  However in the 2D case
-    // we do not know which dimensions (a,b) are, so the calling method will
-    // place the results into the correct dimensions.
-    int ares_;
-    int bres_;
-    int cres_;
+  void
+  setExtraCells(const IntVector& ex);
 
-    // Arbitrary desired maxium value for the norm.  If the norm of the best possible
-    // patch layout exceeds this number, a warning message will be printed suggestion
-    // the user run on a different number of processors.
-    // static const double PATCH_TOLERANCE_ = 3;  
-    
-    IntVector d_extraCells;
+  friend std::ostream&
+  operator<<(std::ostream& out, const Uintah::Grid& grid);
 
+  // Used in Level and Patch for stretched grids
+  enum Axis
+  {
+    XAxis,
+    YAxis,
+    ZAxis
   };
+
+private:
+  std::vector<LevelP> d_levels;
+
+  Grid&
+  operator=(const Grid&);
+
+  // For automatic patch layout.  run_partition() will initialize the values of
+  // af_, bf_, cf_, and nf_, then start the recursive call.  You should never
+  // explicitly call partition(), only run_partition().
+  IntVector
+  run_partition3D(std::list<int> primes);
+  void
+  partition3D(std::list<int> primes, int a, int b, int c);
+
+  IntVector
+  run_partition2D(std::list<int> primes);
+  void
+  partition2D(std::list<int> primes, int a, int b);
+
+  // Helper function for reading in xml specification of the grid from
+  // timestep.xml.
+  bool
+  parseGridFromFile(
+    FILE* fp,
+    std::vector<std::vector<int>>& procMap); // returns true if "</Grid>" found.
+  bool
+  parseLevelFromFile(
+    FILE* fp,
+    std::vector<int>& procMapForLevel); // returns true if "</Level>" found.
+  bool
+  parsePatchFromFile(
+    FILE* fp,
+    LevelP level,
+    std::vector<int>& procMapForLevel); // returns true if "</Patch>" found.
+
+  // The current (final) values of a,b,c, and norm for the partitian function.
+  // Used to hold data between recursive calls.
+  int af_;
+  int bf_;
+  int cf_;
+  double nf_;
+
+  // Temporary storage of the resolution values for use in the norm functions
+  // In the 3D case, (a,b,c) corresponds to (x,y,z).  However in the 2D case
+  // we do not know which dimensions (a,b) are, so the calling method will
+  // place the results into the correct dimensions.
+  int ares_;
+  int bres_;
+  int cres_;
+
+  // Arbitrary desired maxium value for the norm.  If the norm of the best
+  // possible patch layout exceeds this number, a warning message will be
+  // printed suggestion the user run on a different number of processors. static
+  // const double PATCH_TOLERANCE_ = 3;
+
+  IntVector d_extraCells;
+};
 
 } // End namespace Uintah
 

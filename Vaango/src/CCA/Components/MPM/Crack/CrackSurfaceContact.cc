@@ -65,7 +65,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

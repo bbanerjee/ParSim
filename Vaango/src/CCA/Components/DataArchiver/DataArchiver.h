@@ -31,11 +31,11 @@
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/Grid/Variables/MaterialSetP.h>
 #include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Util/Assert.h>
 #include <Core/OS/Dir.h>
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Thread/Mutex.h>
+
 
 namespace Uintah {
   class DataWarehouse;

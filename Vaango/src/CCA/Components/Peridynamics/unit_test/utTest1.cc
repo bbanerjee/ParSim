@@ -26,7 +26,7 @@
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
 
@@ -36,7 +36,7 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 #include <Core/Geometry/Vector.h>
 
@@ -73,7 +73,7 @@
 
 #include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/Time.h>
 #include <Core/Thread/Thread.h>
 #include <Core/Util/DebugStream.h>
