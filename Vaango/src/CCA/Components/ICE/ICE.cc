@@ -81,7 +81,7 @@
 
 #define SET_CFI_BC 0
 
-using namespace std;
+
 using namespace Uintah;
 
 //__________________________________

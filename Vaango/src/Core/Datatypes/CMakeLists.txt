@@ -58,7 +58,7 @@ TARGET_LINK_LIBRARIES(Vaango_Core_Datatypes
   Vaango_Core_Grid   
   Vaango_Core_Math         
   Vaango_Core_Persistent   
-  Vaango_Core_Thread       
+         
   Vaango_Core_Util         
   Vaango_Core_ProblemSpec
   ${LIBS}

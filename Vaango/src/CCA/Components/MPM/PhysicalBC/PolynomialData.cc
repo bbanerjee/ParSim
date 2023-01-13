@@ -55,7 +55,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 
 PolynomialData::PolynomialData(ProblemSpecP& ps, const Point& bottom, 

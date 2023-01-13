@@ -46,7 +46,7 @@
 #include <fstream>
 #include <iostream>
 
-using namespace std;
+
 using namespace Uintah;
 
 // _________________transversely isotropic hyperelastic material [Jeff Weiss's]

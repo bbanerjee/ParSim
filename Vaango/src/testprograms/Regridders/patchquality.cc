@@ -26,7 +26,7 @@
 #include <iostream>
 #include <ostream>
 #include <fstream>
-using namespace std;
+
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>

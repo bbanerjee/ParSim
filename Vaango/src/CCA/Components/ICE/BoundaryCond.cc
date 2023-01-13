@@ -51,7 +51,7 @@ static DebugStream BC_doing("ICE_BC_DOING", false);
 
 //#define TEST
 #undef TEST
-using namespace std;
+
 using namespace Uintah;
 namespace Uintah {
 

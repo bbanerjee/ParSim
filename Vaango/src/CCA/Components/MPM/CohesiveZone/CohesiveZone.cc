@@ -59,7 +59,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 //______________________________________________________________________
 //  Reference: N. P. Daphalapukar, Hongbing Lu, Demir Coker, Ranga Komanduri,

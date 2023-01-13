@@ -37,7 +37,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 
 //#define USE_RADIOMETER
 /*______________________________________________________________________

@@ -91,7 +91,7 @@ to the equations in the following three references:
 
 using std::cerr;
 using namespace Uintah;
-using namespace std;
+
 
 const double Arenisca3::one_third(1.0 / 3.0);
 const double Arenisca3::two_third(2.0 / 3.0);

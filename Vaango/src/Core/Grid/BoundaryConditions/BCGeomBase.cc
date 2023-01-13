@@ -32,14 +32,22 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/GridIterator.h>
 #include <Core/Grid/Variables/ListOfCellsIterator.h>
-#include <Core/Util/DebugStream.h>
+#include <Core/Util/DOUT.hpp>
 #include <iostream>
 #include <vector>
 
+
+namespace {
+
+// Usage: export SCI_DEBUG="BC_dbg:+"
+Uintah::Dout bc_dbg{ "BC_dbg",
+                     "Grid_BoundaryConditions",
+                     "Grid Side BC debug info",
+                     false };
+
+}
+
 namespace Uintah {
-
-static DebugStream BC_dbg("BC_dbg", "Grid_BoundaryConditions", "", false);
-
 BCGeomBase::BCGeomBase()
 {
   d_cells           = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
@@ -133,26 +141,22 @@ BCGeomBase::determineIteratorLimits(Patch::FaceType face,
     }
   }
 
-  ListOfCellsIterator list_cells;
   if (vec_cells.empty()) {
     d_cells = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
   } else {
-    for (std::vector<IntVector>::const_iterator i = vec_cells.begin();
-         i != vec_cells.end();
-         ++i) {
-      list_cells.add(*i);
+    ListOfCellsIterator list_cells(vec_cells.size());
+    for (const auto& cell : vec_cells) {
+      list_cells.add(cell);
     }
     d_cells = list_cells;
   }
 
-  ListOfCellsIterator list_nodes;
   if (vec_nodes.empty()) {
     d_nodes = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
   } else {
-    for (std::vector<IntVector>::const_iterator i = vec_nodes.begin();
-         i != vec_nodes.end();
-         ++i) {
-      list_nodes.add(*i);
+    ListOfCellsIterator list_nodes(vec_nodes.size());
+    for (const auto& node : vec_nodes) {
+      list_nodes.add(node);
     }
     d_nodes = list_nodes;
   }
@@ -252,10 +256,8 @@ BCGeomBase::determineInteriorBndIteratorLimits(const Patch::FaceType face,
     d_cells = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
   } else {
     ListOfCellsIterator list_cells(vec_cells.size());
-    for (std::vector<IntVector>::const_iterator i = vec_cells.begin();
-         i != vec_cells.end();
-         ++i) {
-      list_cells.add(*i);
+    for (const auto& cell : vec_cells) {
+      list_cells.add(cell);
     }
     d_cells = list_cells;
   }
@@ -276,10 +278,8 @@ BCGeomBase::determineInteriorBndIteratorLimits(const Patch::FaceType face,
     d_nodes = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
   } else {
     ListOfCellsIterator list_nodes(vec_nodes.size());
-    for (std::vector<IntVector>::const_iterator i = vec_nodes.begin();
-         i != vec_nodes.end();
-         ++i) {
-      list_nodes.add(*i);
+    for (const auto& node : vec_nodes) {
+      list_nodes.add(node);
     }
     d_nodes = list_nodes;
   }
@@ -290,7 +290,7 @@ BCGeomBase::determineInteriorBndIteratorLimits(const Patch::FaceType face,
 void
 BCGeomBase::printLimits() const
 {
-  using namespace std;
+  
   std::cout << std::endl;
   std::cout << "d_cells = " << d_cells.begin() << " " << d_cells.end()
             << std::endl;

@@ -51,7 +51,7 @@
 #include <list>
 
 using namespace Uintah;
-using namespace std;
+
 
 BoxRangeQuerier::~BoxRangeQuerier()
 {

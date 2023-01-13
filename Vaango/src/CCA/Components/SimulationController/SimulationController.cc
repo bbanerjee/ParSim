@@ -71,7 +71,7 @@
 
 #define AVERAGE_WINDOW 10
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream dbg("SimulationStats", true);
 static DebugStream dbgTime("SimulationTimeStats", false);

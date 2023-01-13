@@ -56,7 +56,7 @@
 
 // Find the current location of a set of points whose initial
 // position is known (from puda) (for the Taylor impact test)
-using namespace std;
+
 
 bool inbox(double px, double py, double pz, double xmin, double xmax,
 	   double ymin, double ymax, double zmin, double zmax)

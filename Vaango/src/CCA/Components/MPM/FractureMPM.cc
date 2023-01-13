@@ -72,7 +72,7 @@
 
 using namespace Uintah;
 
-using namespace std;
+
 
 static DebugStream cout_doing("MPM", false);
 static DebugStream cout_dbg("FractureMPM", false);

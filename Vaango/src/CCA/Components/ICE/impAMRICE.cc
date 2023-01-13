@@ -66,7 +66,7 @@
 #include <Core/Util/DebugStream.h>
 #include <Core/Exceptions/InternalError.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 static DebugStream cout_doing("ICE_DOING_COUT", false);

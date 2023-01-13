@@ -54,7 +54,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 int main(int argc, char* argv[])

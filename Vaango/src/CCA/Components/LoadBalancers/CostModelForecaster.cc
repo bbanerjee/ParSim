@@ -29,7 +29,7 @@
 #include <Core/Parallel/Parallel.h>
 #include <Core/Math/Mat.h>
 
-using namespace std;
+
 using namespace Uintah;
 using namespace Uintah;
    

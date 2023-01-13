@@ -59,7 +59,7 @@
 #include <fstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 SpecificHeatFactory::SpecificHeatFactory()
 {

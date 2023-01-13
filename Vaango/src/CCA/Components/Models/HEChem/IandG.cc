@@ -62,7 +62,7 @@
 #include <Core/Util/DebugStream.h>
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  setenv SCI_DEBUG "MODELS_DOING_COUT:+"
 //  MODELS_DOING_COUT:   dumps when tasks are scheduled and performed

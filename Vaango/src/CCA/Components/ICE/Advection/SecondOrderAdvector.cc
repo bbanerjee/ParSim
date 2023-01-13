@@ -63,7 +63,7 @@
 #define is_rightFace_variable(face,var) ( ((face == "xminus" || face == "xplus") && var == "scalar-f") ?1:0  )
 
 using namespace Uintah;
-using namespace std;
+
 
 SecondOrderAdvector::SecondOrderAdvector()
 {

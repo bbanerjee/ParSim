@@ -39,7 +39,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Construct a shear stress model.
 NeoHookean::NeoHookean(ProblemSpecP& ps)

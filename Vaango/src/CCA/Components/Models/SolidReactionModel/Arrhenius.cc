@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/Arrhenius.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 
 

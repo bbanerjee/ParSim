@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/ContractingCylinderModel.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 ContractingCylinderModel::ContractingCylinderModel(ProblemSpecP &params)
 {

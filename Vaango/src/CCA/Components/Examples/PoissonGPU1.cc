@@ -62,7 +62,7 @@
 
 #include <sci_defs/cuda_defs.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 //______________________________________________________________________

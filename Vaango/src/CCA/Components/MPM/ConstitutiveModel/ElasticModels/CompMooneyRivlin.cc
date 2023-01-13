@@ -46,7 +46,7 @@
 #include <iostream>
 #include <sci_values.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 // Material Constants are C1, C2 and PR (poisson's ratio).

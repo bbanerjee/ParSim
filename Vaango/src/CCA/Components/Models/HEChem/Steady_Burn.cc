@@ -69,7 +69,7 @@
 #define DEBUG_SCALAR
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________   
 //  MODELS_DOING_COUT:   dumps when tasks are scheduled and performed
 static DebugStream cout_doing("MODELS_DOING_COUT", false);

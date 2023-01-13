@@ -51,7 +51,7 @@
 #include <testprograms/TestBoxGrouper/BoxRangeQuerier.h>
 #include <Core/Containers/SuperBox.h>
 
-using namespace std;
+
 
 
 namespace Uintah {

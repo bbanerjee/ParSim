@@ -50,7 +50,7 @@
 //#include "Level.h"
 #include "util.h"
 
-using namespace std;
+
 
 Box::Box(const Counter numDims)
 {

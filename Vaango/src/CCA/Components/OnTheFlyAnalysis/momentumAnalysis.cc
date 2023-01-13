@@ -45,7 +45,7 @@
 #include <cstdio>
 
 using namespace Uintah;
-using namespace std;
+
 //______________________________________________________________________
 //     T O D O
 //

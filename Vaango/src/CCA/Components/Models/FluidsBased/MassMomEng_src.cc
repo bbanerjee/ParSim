@@ -60,7 +60,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 MassMomEng_src::MassMomEng_src(const ProcessorGroup* myworld, ProblemSpecP& params)
   : ModelInterface(myworld), params(params)

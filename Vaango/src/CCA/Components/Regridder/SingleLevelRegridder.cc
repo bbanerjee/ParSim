@@ -31,7 +31,7 @@
 
 #include <Core/Util/DebugStream.h>
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream grid_dbg("GridDBG",false);
 

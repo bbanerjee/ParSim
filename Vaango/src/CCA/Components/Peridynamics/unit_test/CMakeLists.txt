@@ -28,7 +28,7 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 set(UT_SRCS utParticleTest.cc)
 set(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    

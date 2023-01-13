@@ -243,7 +243,7 @@ struct native
 
    static inline T func08(Type x, Type y)
    {
-      using namespace std;
+      
       return (T(1.1)*pow(x,T(1))+T(2.2)*pow(y,T(2))-T(3.3)*pow(x,T(3))+T(4.4)*pow(y,T(15))-T(5.5)*pow(x,T(23))+T(6.6)*pow(y,T(55)));
    }
 

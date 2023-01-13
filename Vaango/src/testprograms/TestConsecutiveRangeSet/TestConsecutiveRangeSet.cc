@@ -58,7 +58,7 @@
 #endif
 #include <climits>
 
-using namespace std;
+
 using namespace Uintah;
 
 list<int> getRandomList(int size, int min, int max);

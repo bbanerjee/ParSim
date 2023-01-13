@@ -32,7 +32,7 @@
 #include <Core/Util/DebugStream.h>
 
 using Uintah::IntVector;
-using namespace std;
+
 
 namespace Uintah {
 

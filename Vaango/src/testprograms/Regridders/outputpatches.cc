@@ -33,7 +33,7 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Patch.h>
 
-using namespace std;
+
 
 using namespace Uintah;
 

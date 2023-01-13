@@ -38,7 +38,7 @@ endif ()
 
 ADD_LIBRARY(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
 TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers
-  Vaango_Core_Thread
+  
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid

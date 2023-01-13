@@ -48,7 +48,7 @@
 
 #include "TestLinear.h"
 
-using namespace std;
+
 
 TestLinear::TestLinear(const Counter d,
                        const Counter base) :

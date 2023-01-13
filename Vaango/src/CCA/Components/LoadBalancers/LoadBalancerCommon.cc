@@ -44,7 +44,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:

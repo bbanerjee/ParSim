@@ -32,7 +32,7 @@
 
 using namespace Uintah;
 using namespace Uintah;
-using namespace std;
+
     
 cptiInterpolator::cptiInterpolator()
 {

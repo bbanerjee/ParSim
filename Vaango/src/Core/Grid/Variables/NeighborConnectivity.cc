@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,95 +24,62 @@
  */
 
 #include <Core/Grid/Variables/NeighborConnectivity.h>
+
 #include <Core/Disclosure/TypeDescription.h>
+#include <Core/Malloc/Allocator.h>
 #include <Core/Util/Endian.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Malloc/Allocator.h>
 
 namespace Uintah {
 
-  const std::string& 
-  NeighborConnectivity::get_h_file_path()
-  {
-    static const std::string path(Uintah::FETypeDescription::cc_to_h(__FILE__));
-    return path;
+std::ostream&
+operator<<(std::ostream& out, const Uintah::NeighborConnectivity& conn)
+{
+  for (int ii = 0; ii < 216; ii++) {
+    out << conn.d_connected[ii] << " ";
   }
-}
-
-namespace Uintah {
-
-  std::ostream& operator<<(std::ostream &out, 
-                           const Uintah::NeighborConnectivity& conn) 
-  {
-    for (int ii = 0; ii < 216; ii++) {
-      out << conn.d_connected[ii] << " ";
-    }
-    return out;
-  }
+  return out;
 }
 
 // Added for compatibility with core types
-namespace Uintah {
+void
+swapbytes(Uintah::NeighborConnectivity&)
+{
+  // Nothing to be done here
+}
 
-  void 
-  swapbytes(Uintah::NeighborConnectivity& )
-  {
-    // Nothing to be done here
+template<>
+const std::string
+find_type_name(Uintah::NeighborConnectivity*)
+{
+  static const std::string name = "NeighborConnectivity";
+  return name;
+}
+
+//* TODO: Serialize **/
+MPI_Datatype
+makeMPI_NeighborConnectivity()
+{
+  ASSERTEQ(sizeof(NeighborConnectivity), sizeof(bool) * 216);
+
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, 216, 216, MPI_C_BOOL, &mpitype);
+  MPI_Type_commit(&mpitype);
+
+  return mpitype;
+}
+
+const TypeDescription*
+fun_getTypeDescription(NeighborConnectivity*)
+{
+  static TypeDescription* td = 0;
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Type::NeighborConnectivity,
+                                "NeighborConnectivity",
+                                true,
+                                &makeMPI_NeighborConnectivity);
   }
-
-  template<> const std::string 
-  find_type_name(Uintah::NeighborConnectivity*)
-  {
-    static const std::string name = "NeighborConnectivity";
-    return name;
-  }
-
-  const FETypeDescription* 
-  get_fetype_description(Uintah::NeighborConnectivity*)
-  {
-    static FETypeDescription* td = 0;
-    if (!td) {
-      td = scinew FETypeDescription("NeighborConnectivity", 
-                                  Uintah::NeighborConnectivity::get_h_file_path(),
-                                  "Uintah");
-    }
-    return td;
-  }
-
-  void 
-  Pio(Piostream& stream, Uintah::NeighborConnectivity& broken)
-  {
-    stream.begin_cheap_delim();
-    for (int ii = 0; ii < 216; ii++) {
-      Pio(stream, broken[ii]);
-    }
-    stream.end_cheap_delim();
-  }
-
-} // namespace Uintah
-
-
-namespace Uintah {
-  //* TODO: Serialize **/
-  MPI_Datatype makeMPI_NeighborConnectivity()
-  {
-    ASSERTEQ(sizeof(NeighborConnectivity), sizeof(bool)*216);
-
-    MPI_Datatype mpitype;
-    MPI_Type_vector(1, 216, 216, MPI_C_BOOL, &mpitype);
-    MPI_Type_commit(&mpitype);
-
-    return mpitype;
-  }
-
-  const TypeDescription* fun_getTypeDescription(NeighborConnectivity*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::Type::NeighborConnectivity, "NeighborConnectivity", true,
-                                  &makeMPI_NeighborConnectivity);
-    }
-    return td;
-  }
+  return td;
+}
 
 } // End namespace Uintah

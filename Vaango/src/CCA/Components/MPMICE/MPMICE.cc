@@ -68,7 +68,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on normal output
 //  setenv SCI_DEBUG "MPMICE_NORMAL_COUT:+,MPMICE_DOING_COUT".....

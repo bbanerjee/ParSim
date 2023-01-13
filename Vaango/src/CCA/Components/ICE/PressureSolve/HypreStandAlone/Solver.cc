@@ -55,7 +55,7 @@
 #include <string>
 #include <map>
 
-using namespace std;
+
 
 void
 Solver::initialize(const Hierarchy& hier,

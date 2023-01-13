@@ -43,7 +43,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SimulationController
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
   Vaango_CCA_Components_ReduceUda
-  Vaango_Core_Thread
+  
   Vaango_Core_Tracker
   ${XML2_LIBRARY}
   ${M_LIBRARY}

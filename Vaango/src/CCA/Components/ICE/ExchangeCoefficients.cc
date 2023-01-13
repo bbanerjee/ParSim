@@ -53,7 +53,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream cout_norm("ICE_NORMAL_COUT", false);  
 

@@ -29,7 +29,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Util/DebugStream.h>
 
-using namespace std;
+
 using namespace Uintah;
 static DebugStream dbg("HypoViscoElasticDevStress", false);
 

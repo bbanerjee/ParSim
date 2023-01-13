@@ -68,7 +68,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
+  
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${MPI_LIBS}

@@ -23,135 +23,123 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_GRID_BoundCond_H
-#define UINTAH_GRID_BoundCond_H
+#ifndef __CORE_GRID_BOUNDARYCONDITIONS_BoundCond_H__
+#define __CORE_GRID_BOUNDARYCONDITIONS_BoundCond_H__
 
 #include <Core/Grid/BoundaryConditions/BoundCondBase.h>
-#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
+
 #include <Core/Geometry/Vector.h>
 #include <Core/Malloc/Allocator.h>
+
 #include <string>
 
 namespace Uintah {
 
-   
-/**************************************
+class NoValue
+{
+public:
+  NoValue()  = default;
+  ~NoValue() = default;
+};
 
-CLASS
-   BoundCond
-   
-   
-GENERAL INFORMATION
+} // namespace Uintah
 
-   BoundCond.h
+namespace Uintah {
 
-   John A. Schmidt
-   Department of Mechanical Engineering
-   University of Utah
+template<class T>
+class BoundCond : public BoundCondBase
+{
+public:
+  using BoundCondP = std::shared_ptr<BoundCond<T>>;
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+  BoundCond(){};
 
-KEYWORDS
-   BoundCond
+  BoundCond(const std::string& var_name,
+            const std::string& type,
+            const T value,
+            const std::string& face_label,
+            const BoundCondBase::BoundCondValueTypeEnum val_type)
+    : d_value{ value }
+  {
+    d_variable   = var_name;
+    d_type       = type;
+    d_face_label = face_label;
+    d_value_type = val_type;
+  }
 
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
+  virtual ~BoundCond() = default;
 
- class NoValue {
+  BoundCondP
+  clone()
+  {
+    return BoundCondP(cloneImpl());
+  };
 
- public:
-   NoValue() {};
-   ~NoValue() {};
- };
+  T
+  getValue() const
+  {
+    return d_value;
+  };
 
- template <class T>  class BoundCond : public BoundCondBase {
+  const std::string
+  getType() const
+  {
+    return d_type;
+  };
 
- public:
-   typedef std::shared_ptr<BoundCond<T> > BoundCondP;
+protected:
+  virtual BoundCond*
+  cloneImpl()
+  {
+    return scinew BoundCond(*this);
+  }
 
- public:
-   BoundCond() {};
+protected:
+  T d_value;
+};
 
-   BoundCond(string var_name, string type, T value, const std::string face_label, const std::string functor_name)
-     {
-       d_variable = var_name;
-       d_type__NEW = type;
-       d_value = value;
-       d_face_label = face_label;
-       d_functor_name = functor_name;
-     };
-   virtual ~BoundCond() {};
+} // namespace Uintah
 
-   BoundCondP clone()
-   {
-     return BoundCondP(cloneImpl());
-   };
+namespace Uintah {
 
-   T getValue() const { return d_value;}; 
+template<>
+class BoundCond<NoValue> : public BoundCondBase
+{
 
- protected:
+public:
+  using BoundCondP = std::shared_ptr<BoundCond<NoValue>>;
 
-   virtual BoundCond* cloneImpl() 
-   {
-     return scinew BoundCond(*this);
-   }
+public:
+  BoundCond(string var_name, string type)
+  {
+    d_value    = NoValue();
+    d_variable = var_name;
+    d_type     = type;
+  }
 
- protected:
-   T d_value;
+  BoundCond(string var_name)
+  {
+    d_value    = NoValue();
+    d_variable = var_name;
+  }
 
- };
+  BoundCondP
+  clone()
+  {
+    return BoundCondP(cloneImpl());
+  }
 
+protected:
+  virtual BoundCond*
+  cloneImpl()
+  {
+    return scinew BoundCond(*this);
+  }
 
- template <> class BoundCond<NoValue> : public BoundCondBase {
+protected:
+  NoValue d_value;
+};
 
- public:
-   typedef std::shared_ptr<BoundCond<NoValue> > BoundCondP;
-
- public:
-
-   BoundCond(string var_name,string type)
-     {
-       d_variable = var_name;
-       d_type__NEW = type;
-       d_value = NoValue();
-       d_face_label = "none";
-       d_functor_name = "none";
-     };
-
-   BoundCond(string var_name)
-     {
-       d_variable = var_name;
-       d_type__NEW = "";
-       d_value = NoValue();
-       d_face_label = "none";
-       d_functor_name = "none";
-     };
-
-   BoundCondP clone()
-   {
-     return BoundCondP(cloneImpl());
-   };
-
-   
- protected:
-
-   virtual BoundCond* cloneImpl() 
-   {
-     return scinew BoundCond(*this);
-   }
-
- protected:
-   NoValue d_value;
-
- };
- 
 } // End namespace Uintah
 
-
-
-#endif
+#endif //__CORE_GRID_BOUNDARYCONDITIONS_BoundCond_H__

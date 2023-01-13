@@ -78,7 +78,7 @@ porosity).
 using std::cerr;
 
 using namespace Uintah;
-using namespace std;
+
 
 // Requires the necessary input parameters
 SoilModelBrannon::SoilModelBrannon(ProblemSpecP& ps, MPMFlags* Mflag)

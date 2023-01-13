@@ -1,9 +1,9 @@
 /*
+
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,14 +24,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __CORE_GRID_BOUNDARYCONDITIONS_SideBCData_H__
-#define __CORE_GRID_BOUNDARYCONDITIONS_SideBCData_H__
+#ifndef __CORE_GRID_BOUNDARYCONDITIONS_RectangulusBCData_H__
+#define __CORE_GRID_BOUNDARYCONDITIONS_RectangulusBCData_H__
 
-#include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
-#include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BCGeomBase.h>
-#include <Core/Grid/Variables/GridIterator.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <vector>
 
@@ -39,42 +37,37 @@ namespace Uintah {
 
 /*!
 
-\class SideBCData
+\class RectangulusBCData
 
-\ brief Defines a boundary condition geometry for the entire side of the
-domain.
+\ brief Defines a rectangulus geometry for a boundary condition.
 
-\author John A. Schmidt \n
-Department of Mechanical Engineering \n
+\author Ben Isaac \n
+Department of Chemical Engineering \n
 University of Utah \n
-Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n\n
+PSAAP II \n\n
 
 */
 
-class SideBCData : public BCGeomBase
+class RectangulusBCData : public BCGeomBase
 {
 
 public:
   /// Constructor
-  SideBCData();
+  RectangulusBCData();
 
-  /// Assignment Operator
-  SideBCData&
-  operator=(const SideBCData& bc);
+  /// Constructor used with a point defining the lower and upper corners of the
+  /// inner and oute square.
+  RectangulusBCData(Point& low_in, Point& up_in, Point& low_out, Point& up_out);
 
   /// Destructor
-  virtual ~SideBCData();
+  virtual ~RectangulusBCData();
 
   virtual bool
   operator==(const BCGeomBase&) const;
 
   /// Clone the boundary condition geometry -- allocates memory.
-  SideBCData*
+  RectangulusBCData*
   clone();
-
-  /// Get the boundary condition data
-  void
-  getBCData(BCData& bc) const;
 
   /// Add the boundary condition data
   void
@@ -88,7 +81,11 @@ public:
   void
   sudoAddBC(BoundCondBaseP& bc);
 
-  /// Determines if a point is inside -- always returns true.
+  /// Get the boundary condition data
+  void
+  getBCData(BCData& bc) const;
+
+  /// Determines if a point is inside the rectangulus
   bool
   inside(const Point& p) const;
 
@@ -100,12 +97,16 @@ public:
   virtual void
   determineIteratorLimits(Patch::FaceType face,
                           const Patch* patch,
-                          vector<Point>& test_pts);
+                          std::vector<Point>& test_pts);
 
 private:
   BCData d_bc;
+  Point d_min_in;
+  Point d_max_in;
+  Point d_min_out;
+  Point d_max_out;
 };
 
 } // End namespace Uintah
 
-#endif //__CORE_GRID_BOUNDARYCONDITIONS_SideBCData_H__
+#endif //__CORE_GRID_BOUNDARYCONDITIONS_RectangulusBCData_H__

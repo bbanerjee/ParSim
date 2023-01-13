@@ -57,7 +57,7 @@
 #include <cstdlib>
 
 
-using namespace std;
+
 using namespace Uintah;
 
 Advector* AdvectionFactory::create(ProblemSpecP& ps,

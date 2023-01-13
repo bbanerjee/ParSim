@@ -30,7 +30,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 NoneCheck::NoneCheck()
 {

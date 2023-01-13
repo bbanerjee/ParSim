@@ -183,6 +183,12 @@ public:
   void
   getNodeFaceIterator(Iterator& b_ptr);
 
+  bool
+  hasIterator()
+  {
+    return (d_cells.size() > 0);
+  }
+
   /// Determine if a point is inside the geometry where the boundary
   /// condition is applied.
   virtual bool
@@ -277,7 +283,6 @@ protected:
   ParticleBndSpec d_particleBndSpec;
   double d_surfaceArea;
   Point d_origin;
-
 };
 
 template<class T>

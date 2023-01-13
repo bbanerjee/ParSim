@@ -86,7 +86,7 @@ void DMMRXV(double UI[], double UJ[], double UK[], int& nx, char* namea[],
 
 // End fortran functions.
 ////////////////////////////////////////////////////////////////////////////////
-using namespace std;
+
 using namespace Uintah;
 
 Diamm::Diamm(ProblemSpecP& ps, MPMFlags* Mflag)

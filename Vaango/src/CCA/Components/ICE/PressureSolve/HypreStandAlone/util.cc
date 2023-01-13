@@ -59,7 +59,7 @@
 #include "Vector.h"
 #include "DebugStream.h"
 #include <utilities.h>
-using namespace std;
+
 
 string lineHeader(const Counter indent)
   // Print header for each output line printed using DebugStream

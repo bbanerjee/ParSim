@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/AvaramiErofeevModel.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 AvaramiErofeevModel::AvaramiErofeevModel(ProblemSpecP &params)
 {

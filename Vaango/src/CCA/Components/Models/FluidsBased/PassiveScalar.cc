@@ -54,7 +54,7 @@
 #include <cstdio>
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on the output
 //  setenv SCI_DEBUG "MODELS_DOING_COUT:+,PASSIVE_SCALAR_DBG_COUT:+"

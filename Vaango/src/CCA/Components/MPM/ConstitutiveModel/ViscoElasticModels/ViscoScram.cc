@@ -51,7 +51,7 @@
 #include <iomanip>
 #include <iostream>
 
-using namespace std;
+
 using namespace Uintah;
 
 static DebugStream dbg("VS", false);

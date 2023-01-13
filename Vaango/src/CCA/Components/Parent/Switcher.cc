@@ -55,7 +55,7 @@
 #include <Core/OS/Dir.h>
 #include <Core/Parallel/Parallel.h>
 
-using namespace std;
+
 using namespace Uintah;
 static DebugStream dbg("SWITCHER", false);
 #define ALL_LEVELS  99

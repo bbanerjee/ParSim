@@ -81,7 +81,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <fstream>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 ViscoElasticDamage::ViscoElasticDamage(ProblemSpecP& ps)

@@ -23,82 +23,91 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_GRID_BoundCondBase_H
-#define UINTAH_GRID_BoundCondBase_H
+#ifndef __CORE_GRID_BOUNDARYCONDITIONS_BoundCondBase_H__
+#define __CORE_GRID_BOUNDARYCONDITIONS_BoundCondBase_H__
 
 #include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
 
 #include <string>
 
 namespace Uintah {
-using std::string;
-   
-/**************************************
 
-CLASS
-   BoundCondBase
-   
-   
-GENERAL INFORMATION
-
-   BoundCondBase.h
-
-   John A. Schmidt
-   Department of Mechanical Engineering
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-
-KEYWORDS
-   BoundCondBase
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
-
-  class BoundCondBase  {
-  public:
-  
-    /**
-     *  \enum   BoundCondValueTypeEnum
-     *  \author Tony Saad
-     *  \date   August 29, 2013
-     *
-     *  \brief An enum that lists the datatypes associated with the values specified for boundary conditions.
-     */
-    enum BoundCondValueTypeEnum
-    {
-      INT_TYPE,
-      DOUBLE_TYPE,
-      VECTOR_TYPE,
-      STRING_TYPE,
-      UNKNOWN_TYPE
-    };
-
-    BoundCondBase() {};
-    virtual ~BoundCondBase() {};
-    BoundCondBaseP clone() { 
-      return std::shared_ptr<BoundCondBase>(cloneImpl());
-    }
-    const string getBCVariable() const { return d_variable; }
-    const string getBCType__NEW() const { return d_type__NEW; }
-    const std::string getBCFaceName() const { return d_face_label; }
-    const std::string getFunctorName() const { return d_functor_name; }
-    
-  protected:
-
-    virtual BoundCondBase* cloneImpl() = 0;
-
-  protected:
-    string d_variable;          // Pressure, Density, etc
-    string d_type__NEW;         // Dirichlet, Neumann, etc
-    std::string d_face_label;   // holds the user specified name of the bc face: left-wall, ox-inlet,...
-    std::string d_functor_name; // holds the name of a functor to be applied on this boundary
+class BoundCondBase
+{
+public:
+  /**
+   *  \enum   BoundCondValueTypeEnum
+   *  \author Tony Saad
+   *  \date   August 29, 2013
+   *
+   *  \brief An enum that lists the datatypes associated with the values
+   * specified for boundary conditions.
+   */
+  enum BoundCondValueTypeEnum
+  {
+    INT_TYPE,
+    DOUBLE_TYPE,
+    VECTOR_TYPE,
+    STRING_TYPE,
+    UNKNOWN_TYPE
   };
+
+  BoundCondBase() = default;
+
+  virtual ~BoundCondBase() = default;
+
+  BoundCondBaseP
+  clone()
+  {
+    return std::shared_ptr<BoundCondBase>(cloneImpl());
+  }
+
+  const std::string
+  getBCVariable() const
+  {
+    return d_variable;
+  }
+
+  const std::string
+  getBCType() const
+  {
+    return d_type;
+  }
+
+  const std::string
+  getBCFaceName() const
+  {
+    return d_face_label;
+  }
+
+  /**
+   *  \author Tony Saad
+   *  \date   August 29, 2013
+   *  \brief  Returns a BoundCondValueTypeEnum that designates the data type
+   * associated with the value of this boundary condition.
+   */
+  BoundCondValueTypeEnum
+  getValueType() const
+  {
+    return d_value_type;
+  }
+
+protected:
+  virtual BoundCondBase*
+  cloneImpl() = 0;
+
+protected:
+  std::string d_variable{ "none" }; // Pressure, Density, etc
+
+  std::string d_type{ "" };     // Dirichlet, Neumann, etc
+
+  // holds the user specified name of the bc
+  // face: left-wall, ox-inlet,...
+  std::string d_face_label{ "none" };
+
+  // int, double, string, vector, unknown
+  BoundCondValueTypeEnum d_value_type{ BoundCondBase::UNKNOWN_TYPE };
+};
 } // End namespace Uintah
 
-#endif
+#endif //__CORE_GRID_BOUNDARYCONDITIONS_BoundCondBase_H__

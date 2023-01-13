@@ -58,7 +58,7 @@
 #include <iostream>
 #include <cstring>
 
-using namespace std;
+
 using namespace Uintah;
 
 list<Point*> getRandomPoints(int n);

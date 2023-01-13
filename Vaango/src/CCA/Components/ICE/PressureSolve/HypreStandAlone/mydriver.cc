@@ -73,7 +73,7 @@
 #include <sstruct_mv.h>
 #include <sstruct_ls.h>
 
-using namespace std;
+
 
 /*================== Global variables ==================*/
 

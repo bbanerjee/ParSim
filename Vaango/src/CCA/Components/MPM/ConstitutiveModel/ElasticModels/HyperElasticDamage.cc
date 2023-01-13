@@ -79,7 +79,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <fstream>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 HyperElasticDamage::HyperElasticDamage(ProblemSpecP& ps)

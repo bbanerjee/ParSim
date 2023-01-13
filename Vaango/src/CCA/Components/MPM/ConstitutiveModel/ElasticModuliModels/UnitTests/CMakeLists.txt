@@ -43,7 +43,7 @@ configure_file(DrySand_BulkModulusPressureData_Ten_Com.json DrySand_BulkModulusP
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    

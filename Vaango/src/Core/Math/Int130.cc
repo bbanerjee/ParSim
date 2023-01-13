@@ -37,7 +37,7 @@
 #include <cstdlib>
 
 using namespace Uintah;
-using namespace std;
+
 
 
 // Added for compatibility with Core types

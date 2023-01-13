@@ -66,7 +66,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
 
-using namespace std;
+
 using namespace Uintah;
 using namespace Uintah;
 

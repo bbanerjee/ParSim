@@ -40,7 +40,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Regridder
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
+  
   ${XML2_LIBRARY}
   ${MPI_LIBS}
   ${M_LIBRARY}

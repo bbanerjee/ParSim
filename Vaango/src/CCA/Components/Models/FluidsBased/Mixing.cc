@@ -42,7 +42,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <iostream>
 using namespace Uintah;
-using namespace std;
+
 
 Mixing::Mixing(const ProcessorGroup* myworld, ProblemSpecP& params)
   : ModelInterface(myworld), params(params)

@@ -53,7 +53,7 @@
 #include "Patch.h"
 #include <string>
 
-using namespace std;
+
 
 void
 SolverFAC::initializeData(const Hierarchy& hier,

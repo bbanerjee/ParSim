@@ -53,7 +53,7 @@
 #include <Core/Grid/Variables/UnionIterator.h>
 
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 int main()
 {

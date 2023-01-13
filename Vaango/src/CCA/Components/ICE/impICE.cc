@@ -75,7 +75,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream cout_norm("ICE_NORMAL_COUT", false);  
 static DebugStream cout_doing("ICE_DOING_COUT", false);

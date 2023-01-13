@@ -51,7 +51,7 @@
 
 using namespace Uintah;
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream doing( "DynamicLoadBalancer_doing", false );
 static DebugStream lb(    "DynamicLoadBalancer_lb", false );

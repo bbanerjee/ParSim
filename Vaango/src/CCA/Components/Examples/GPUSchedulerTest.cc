@@ -65,7 +65,7 @@
 
 #include <sci_defs/cuda_defs.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 GPUSchedulerTest::GPUSchedulerTest(const ProcessorGroup* myworld) :

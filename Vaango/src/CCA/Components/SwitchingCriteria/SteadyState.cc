@@ -59,7 +59,7 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
+
 using namespace Uintah;
 static DebugStream dbg("SWITCHER", false);
 

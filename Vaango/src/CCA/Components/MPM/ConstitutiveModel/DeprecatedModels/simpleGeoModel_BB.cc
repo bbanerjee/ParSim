@@ -73,7 +73,7 @@
 using std::cerr;
 
 using namespace Uintah;
-using namespace std;
+
 
 simpleGeoModel_BB::simpleGeoModel_BB(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)

@@ -51,7 +51,7 @@
 #include <cstdio>
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on the output
 //  setenv SCI_DEBUG "MODELS_DOING_COUT:+,SIMPLE_RXN_DBG_COUT:+"

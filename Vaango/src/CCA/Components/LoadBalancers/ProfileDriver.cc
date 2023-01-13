@@ -26,7 +26,7 @@
 #include <Core/Util/DebugStream.h>
 #include <sstream>
 #include <iomanip>
-using namespace std;
+
 using namespace Uintah;
 using namespace Uintah;
 

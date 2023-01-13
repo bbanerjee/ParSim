@@ -53,7 +53,7 @@ using namespace Uintah;
 #include <vector>
 #include <set>
 #include <algorithm>
-using namespace std;
+
 
 int getsign(int i)
 {

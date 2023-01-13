@@ -49,7 +49,7 @@ configure_file(mlp_regression_keras_total_scaled.h5
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    

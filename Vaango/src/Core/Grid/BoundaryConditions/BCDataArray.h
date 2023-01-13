@@ -60,7 +60,7 @@ class BCDataArray
 {
 public:
   /// Constructor
-  BCDataArray();
+  BCDataArray() = default;
 
   /// Destructor
   ~BCDataArray();

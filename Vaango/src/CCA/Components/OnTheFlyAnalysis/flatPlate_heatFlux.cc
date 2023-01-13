@@ -42,7 +42,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 
 //______________________________________________________________________ 
 //  To turn on the output

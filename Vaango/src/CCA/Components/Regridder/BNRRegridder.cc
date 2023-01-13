@@ -64,7 +64,7 @@ using namespace Uintah;
 #include <set>
 #include <algorithm>
 #include <iomanip>
-using namespace std;
+
 
 
 static DebugStream times("BNRTimes",false);

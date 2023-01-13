@@ -36,7 +36,7 @@
 #include <Core/Grid/Ghost.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag)
                  : SDInterfaceModel(ps, sS, Mflag){

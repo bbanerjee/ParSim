@@ -50,7 +50,7 @@
 #include <cstdio>
 
 using namespace Uintah;
-using namespace std;
+
 static DebugStream cout_doing("MODELS_DOING_COUT", false);
 
 //______________________________________________________________________

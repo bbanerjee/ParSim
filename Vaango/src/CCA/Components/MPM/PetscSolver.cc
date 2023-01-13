@@ -45,7 +45,7 @@
 #define CHKERRQ(x) if(x) throw PetscError(x, __FILE__, __FILE__, __LINE__);
 
 using namespace Uintah;
-using namespace std;
+
 
 #undef LOG
 //#define LOG

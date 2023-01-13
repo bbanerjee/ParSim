@@ -45,7 +45,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
                   vector<vector<double> > diaLocs,

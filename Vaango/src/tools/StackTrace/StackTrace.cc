@@ -66,7 +66,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 struct Info_S {
   string name;

@@ -47,7 +47,7 @@
 
 //#define d_TINY_RHO 1.0e-12 // also defined ICE.cc and MPMMaterial.cc 
 
-using namespace std;
+
 using namespace Uintah;
 
  // Constructor

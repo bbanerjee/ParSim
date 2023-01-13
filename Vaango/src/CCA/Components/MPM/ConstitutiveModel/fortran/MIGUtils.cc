@@ -27,7 +27,7 @@
 #include <cstdlib>
 #include <iostream>
 
-using namespace std;
+
 using namespace Uintah;
 
 extern "C" {

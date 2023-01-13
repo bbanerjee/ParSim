@@ -54,7 +54,7 @@
 
 #include <string>
 
-using namespace std;
+
 
 void
 SolverAMG::setup(void)

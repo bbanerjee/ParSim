@@ -91,7 +91,7 @@ to the equations in the following three references:
 
 using std::cerr;
 using namespace Uintah;
-using namespace std;
+
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)

@@ -47,7 +47,7 @@
  */
 
 #include "DebugStream.h"
-using namespace std;
+
 
 DebugBuf::DebugBuf(void)
 : _lineBegin(true)

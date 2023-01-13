@@ -36,7 +36,7 @@ add_subdirectory(HyprePreconds)
 # message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
 ADD_LIBRARY(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
 TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
-  Vaango_Core_Thread
+  
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid

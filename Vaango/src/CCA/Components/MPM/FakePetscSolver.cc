@@ -51,7 +51,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 
 //#define LOG
 #undef LOG

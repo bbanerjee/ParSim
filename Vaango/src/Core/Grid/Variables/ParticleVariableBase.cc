@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,96 +23,104 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/Variables/ParticleVariableBase.h>
+
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Parallel/BufferInfo.h>
 
-
-
 #include <iostream>
 
-using namespace std;
-
-using namespace Uintah;
-using namespace Uintah;
-
+namespace Uintah {
 
 ParticleVariableBase::~ParticleVariableBase()
-{       
-   if(d_pset && d_pset->removeReference())
-      delete d_pset;
+{
+  if (d_pset && d_pset->removeReference()) {
+    delete d_pset;
+  }
 }
 
 ParticleVariableBase::ParticleVariableBase(ParticleSubset* pset)
-   : d_pset(pset)
+  : d_pset(pset)
 {
-   if(d_pset)
-      d_pset->addReference();
+  if (d_pset) {
+    d_pset->addReference();
+  }
 }
 
 ParticleVariableBase::ParticleVariableBase(const ParticleVariableBase& copy)
-   : d_pset(copy.d_pset)
+  : d_pset(copy.d_pset)
 {
-   if(d_pset)
-      d_pset->addReference();
-}   
-
-ParticleVariableBase& ParticleVariableBase::operator=(const ParticleVariableBase& copy)
-{
-   if(this != &copy){
-      if(d_pset && d_pset->removeReference())
-         delete d_pset;
-      d_pset = copy.d_pset;
-      if(d_pset)
-         d_pset->addReference();
-   }
-   return *this;
+  if (d_pset) {
+    d_pset->addReference();
+  }
 }
 
-void ParticleVariableBase::getMPIBuffer(BufferInfo& buffer,
-                                        ParticleSubset* sendset)
+ParticleVariableBase&
+ParticleVariableBase::operator=(const ParticleVariableBase& copy)
+{
+  if (this != &copy) {
+    if (d_pset && d_pset->removeReference()) {
+      delete d_pset;
+    }
+    d_pset = copy.d_pset;
+    if (d_pset) {
+      d_pset->addReference();
+    }
+  }
+  return *this;
+}
+
+void
+ParticleVariableBase::getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset)
 {
   const TypeDescription* td = virtualGetTypeDescription()->getSubType();
 
-  //  cerr << "ParticleVariableBase::getMPIBuffer for a " <<  td->getName() 
+  //  cerr << "ParticleVariableBase::getMPIBuffer for a " <<  td->getName()
   //       << endl;
   //  cerr << "   buffer: " << &buffer << ", sendset: " << sendset << "\n";
 
-  bool linear=true;
+  bool linear                   = true;
   ParticleSubset::iterator iter = sendset->begin();
-  if(iter != sendset->end()){
+  if (iter != sendset->end()) {
     particleIndex last = *iter;
-    for(;iter != sendset->end(); iter++){
+    for (; iter != sendset->end(); iter++) {
       particleIndex idx = *iter;
-      if(idx != last+1){
-        linear=false;
+      if (idx != last + 1) {
+        linear = false;
         break;
       }
     }
   }
   void* buf = getBasePointer();
   int count = sendset->numParticles();
-  if(linear){
+  if (linear) {
     buffer.add(buf, count, td->getMPIType(), false);
   } else {
-    vector<int> blocklens( count, 1);
+    std::vector<int> blocklens(count, 1);
     MPI_Datatype datatype;
 
     //    cerr << "cnt: " << count << ", buf: " << buf << "\n";
-    MPI_Type_indexed( count, &blocklens[0],
-                        sendset->getPointer(), td->getMPIType(), &datatype );
-    MPI_Type_commit(&datatype);
-    
+    Uintah::MPI::Type_indexed(count,
+                              &blocklens[0],
+                              sendset->getPointer(),
+                              td->getMPIType(),
+                              &datatype);
+    Uintah::MPI::Type_commit(&datatype);
+
     buffer.add(buf, 1, datatype, true);
-  } 
+  }
 }
 
-void ParticleVariableBase::setParticleSubset(ParticleSubset* subset)
+void
+ParticleVariableBase::setParticleSubset(ParticleSubset* subset)
 {
-  if(d_pset && d_pset->removeReference())
+  if (d_pset && d_pset->removeReference()) {
     delete d_pset;
+  }
   d_pset = subset;
-  if(d_pset)
+  if (d_pset) {
     d_pset->addReference();
+  }
 }
+
+} // namespace Uintah

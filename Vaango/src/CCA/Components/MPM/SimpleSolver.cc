@@ -54,7 +54,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 SimpleSolver::SimpleSolver()
 {

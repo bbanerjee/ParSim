@@ -49,7 +49,7 @@
 #include <sci_values.h>
 #include <string>
 
-using namespace std;
+
 using namespace Uintah;
 
 NonLocalDruckerPrager::NonLocalDruckerPrager(ProblemSpecP& ps, MPMFlags* Mflag)

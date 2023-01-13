@@ -27,6 +27,7 @@
 #ifndef __CORE_GRID_BOUNDARYCONDITIONS_BOUNDARYCONDITIONREADER_H__
 #define __CORE_GRID_BOUNDARYCONDITIONS_BOUNDARYCONDITIONREADER_H__
 
+#include <Core/Geometry/Point.h>
 #include <Core/Grid/BoundaryConditions/BCData.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BCGeomBase.h>
@@ -87,26 +88,28 @@ class BoundCondReader
 {
 public:
   /// Constructor
-  BoundCondReader();
+  BoundCondReader() = default;
 
   /// Destructor
-  ~BoundCondReader();
+  ~BoundCondReader() = default;
 
   bool
-  is_on_face(const int dir, const Point p, const std::vector<Point>& points);
+  is_on_face(const int dir,
+             const Point p,
+             const std::vector<Point>& points) const;
 
   bool
   isPtOnFace(const int dir,
              const int plusMinusFaces,
              const Point pt,
              const std::vector<Point>& grid_LoPts,
-             const std::vector<Point>& grid_HiPts);
+             const std::vector<Point>& grid_HiPts) const;
 
   void
   whichPatchFace(const std::string fc,
                  Patch::FaceType& face_side,
                  int& plusMinusFaces,
-                 int& p_dir);
+                 int& p_dir) const;
 
   /// Read in the boundary conditions given a problem specification, ps.
   /// Each face is read in and processed using the function
@@ -184,11 +187,57 @@ private:
   readInteriorBndBCs(ProblemSpecP& ps,
                      const ProblemSpecP& grid_ps,
                      const LevelP level);
+
+  BCGeomBase*
+  createSideBC(const std::map<std::string, std::string>& values,
+               Patch::FaceType& face_side) const;
+
+  BCGeomBase*
+  createCircleBC(const std::map<std::string, std::string>& values,
+                 const std::vector<Point>& grid_LoPts,
+                 const std::vector<Point>& grid_HiPts,
+                 Patch::FaceType& face_side) const;
+
+  BCGeomBase*
+  createAnnulusBC(const std::map<std::string, std::string>& values,
+                  const std::vector<Point>& grid_LoPts,
+                  const std::vector<Point>& grid_HiPts,
+                  Patch::FaceType& face_side) const;
+
+  BCGeomBase*
+  createEllipseBC(const std::map<std::string, std::string>& values,
+                  const std::vector<Point>& grid_LoPts,
+                  const std::vector<Point>& grid_HiPts,
+                  Patch::FaceType& face_side) const;
+
+  BCGeomBase*
+  createRectangleBC(const std::map<std::string, std::string>& values,
+                    const std::vector<Point>& grid_LoPts,
+                    const std::vector<Point>& grid_HiPts,
+                    Patch::FaceType& face_side) const;
+
+  BCGeomBase*
+  createRectangulusBC(const std::map<std::string, std::string>& values,
+                      const std::vector<Point>& grid_LoPts,
+                      const std::vector<Point>& grid_HiPts,
+                      Patch::FaceType& face_side) const;
 };
+
+} // End namespace Uintah
+
+namespace Uintah {
+namespace BCReaderUtils {
 
 void
 print(BCGeomBase* p);
 
+Point
+moveToClosestNode(const LevelP level,
+                  const int facedir,
+                  const int plusMinusFaces,
+                  const Point& p0);
+
+} // namespace BCReaderUtils
 } // End namespace Uintah
 
 #endif //__CORE_GRID_BOUNDARYCONDITIONS_BOUNDARYCONDITIONREADER_H__

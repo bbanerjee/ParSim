@@ -62,7 +62,7 @@
 #include <unistd.h>
 #endif
 
-using namespace std;
+
 using namespace Uintah;
 
 class ParallelWorker {

@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/PowerModel.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 PowerModel::PowerModel(ProblemSpecP &params)
 {

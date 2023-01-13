@@ -65,7 +65,7 @@
 #include <CCA/Components/MPM/Util/Matrix.cc> // for bounded array multiplier
 #include <fstream>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 ElasticConstitutiveModel::ElasticConstitutiveModel(ProblemSpecP& ps)

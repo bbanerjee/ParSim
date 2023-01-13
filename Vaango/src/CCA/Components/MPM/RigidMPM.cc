@@ -60,7 +60,7 @@
 
 using namespace Uintah;
 
-using namespace std;
+
 
 #undef INTEGRAL_TRACTION
 

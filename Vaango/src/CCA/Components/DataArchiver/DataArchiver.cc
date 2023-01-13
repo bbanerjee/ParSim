@@ -93,7 +93,7 @@
 #define CHECKPOINT_REDUCTION 2
 
 using namespace Uintah;
-using namespace std;
+
 using namespace Uintah;
 
 static DebugStream dbg("DataArchiver", false);

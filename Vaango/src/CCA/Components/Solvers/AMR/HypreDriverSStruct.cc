@@ -52,7 +52,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 //#define DEBUG
 

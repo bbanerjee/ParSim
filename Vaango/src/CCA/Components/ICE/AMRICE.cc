@@ -72,7 +72,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 static DebugStream cout_doing("AMRICE_DOING_COUT", false);
 
 //setenv SCI_DEBUG AMR:+ you can see the new grid it creates

@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/NthOrderModel.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 NthOrderModel::NthOrderModel(ProblemSpecP &params)
 {

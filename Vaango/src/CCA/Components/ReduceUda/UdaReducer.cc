@@ -38,7 +38,7 @@
 
 #include <iomanip>
 
-using namespace std;
+
 using namespace Uintah;
 
 //__________________________________

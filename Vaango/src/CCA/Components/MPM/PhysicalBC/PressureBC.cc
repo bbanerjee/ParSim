@@ -40,7 +40,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Store the geometry object and the load curve
 PressureBC::PressureBC(ProblemSpecP& ps,

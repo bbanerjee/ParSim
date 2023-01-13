@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/SolidReactionModel/ContractingSphereModel.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 ContractingSphereModel::ContractingSphereModel(ProblemSpecP &params)
 {

@@ -49,7 +49,7 @@
 #include "Param.h"
 #include "util.h"
 
-using namespace std;
+
 
 void Param::setNumDims(const Counter d)
 {

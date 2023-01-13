@@ -53,7 +53,7 @@
 #define ALL_LEVELS 99
 #define FINEST_LEVEL -1 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on the output
 //  setenv SCI_DEBUG "MinMax_DBG_COUT:+" 

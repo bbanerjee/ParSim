@@ -22,9 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-
-#ifndef UINTAH_HOMEBREW_UnionIterator_H
-#define UINTAH_HOMEBREW_UnionIterator_H
+#ifndef __CORE_GRID_VARIABLES_UnionIterator_H__
+#define __CORE_GRID_VARIABLES_UnionIterator_H__
 
 #include <Core/Geometry/IntVector.h>
 
@@ -34,54 +33,55 @@
 
 namespace Uintah {
 
-  using Uintah::IntVector;
+using Uintah::IntVector;
 
-  /**************************************
+/**************************************
 
-    CLASS
-    UnionIterator
+  CLASS
+  UnionIterator
 
-    This iterator will iterator over the union between two iterators
+  This iterator will iterator over the union between two iterators
 
-    GENERAL INFORMATION
+  GENERAL INFORMATION
 
-    UnionIterator.h
+  UnionIterator.h
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  Justin Luitjens
+  Department of Computer Science
+  University of Utah
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-    KEYWORDS
-    UnionIterator
-
-    DESCRIPTION
-    This iterator will iterator over the union between two iterators
-
-    WARNING
-
-   ****************************************/
-
-  class UnionIterator : public ListOfCellsIterator {
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::UnionIterator& b);
-    public:
-
-    UnionIterator(Iterator iter1, Iterator iter2);
-    UnionIterator() : ListOfCellsIterator() {}
-
-    std::ostream& put(std::ostream& out) const
-    {
-      out << *this;
-      return out;
-    }
-
-    private:
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
 
-    }; // end class UnionIterator
+  KEYWORDS
+  UnionIterator
+
+  DESCRIPTION
+  This iterator will iterator over the union between two iterators
+
+  WARNING
+
+ ****************************************/
+
+class UnionIterator : public ListOfCellsIterator
+{
+  friend std::ostream&
+  operator<<(std::ostream& out, const Uintah::UnionIterator& b);
+
+public:
+  UnionIterator(Iterator iter1, Iterator iter2);
+
+  UnionIterator() {}
+
+  std::ostream&
+  put(std::ostream& out) const
+  {
+    out << *this;
+    return out;
+  }
+
+}; // end class UnionIterator
 
 } // End namespace Uintah
-  
-#endif
+
+#endif //__CORE_GRID_VARIABLES_UnionIterator_H__

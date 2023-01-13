@@ -63,7 +63,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 TestModel::TestModel(const ProcessorGroup* myworld, ProblemSpecP& params)
   : ModelInterface(myworld), params(params)

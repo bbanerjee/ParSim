@@ -40,7 +40,7 @@
 // TODO:  Interpolation could be a lot faster
 // TODO: parentheses in expressions, other ops in expressions
 
-using namespace std;
+
 using namespace Uintah;
 
 static DebugStream cerr_dbg("ARCHES_TABLE", true);

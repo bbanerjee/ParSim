@@ -53,7 +53,7 @@
 #include <Core/Util/FancyAssert.h>
 #include <iostream>
 
-using namespace std;
+
 using namespace Uintah;
 
 Advector::Advector()

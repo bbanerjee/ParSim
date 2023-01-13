@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,19 +24,17 @@
  */
 
 #include <Core/Grid/PatchRangeTree.h>
+
 #include <list>
 
-using namespace std;
 using namespace Uintah;
-using namespace Uintah;
-
 
 PatchRangeTree::PatchRangeTree(const std::vector<Patch*>& patches)
   :  d_maxPatchDimensions(0, 0, 0),
      d_patchPoints(new PatchPoint[patches.size()]),
      d_numPatches((int)patches.size())
 {
-  list<PatchPoint*> pointList;
+  std::list<PatchPoint*> pointList;
   IntVector dimensions;
   
   for (int i = 0; i < (int)patches.size(); i++) {
@@ -60,7 +59,7 @@ PatchRangeTree::PatchRangeTree(const std::vector<const Patch*>& patches)
      d_patchPoints(new PatchPoint[patches.size()]),
      d_numPatches((int)patches.size())
 {
-  list<PatchPoint*> pointList;
+  std::list<PatchPoint*> pointList;
   IntVector dimensions;
   
   for (int i = 0; i < (int)patches.size(); i++) {
@@ -89,7 +88,7 @@ PatchRangeTree::~PatchRangeTree()
 void PatchRangeTree::query(const IntVector& low, const IntVector& high,
                            Patch::selectType& foundPatches)
 {
-  list<PatchPoint*> foundPoints;
+  std::list<PatchPoint*> foundPoints;
 
   // Note: factor of 2 is to make calculations simple and not
   // require rounding, but think of this as doing a query on
@@ -113,7 +112,7 @@ void PatchRangeTree::query(const IntVector& low, const IntVector& high,
   // the average patch dimensions).
 
   //foundPatches.reserve(foundPatches.size() + foundPoints.size());
-  for (list<PatchPoint*>::iterator it = foundPoints.begin();
+  for (std::list<PatchPoint*>::iterator it = foundPoints.begin();
        it != foundPoints.end(); it++) {    
     const Patch* patch = (*it)->getPatch();
     IntVector l=Max(patch->getCellLowIndex(), low);

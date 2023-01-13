@@ -39,7 +39,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Construct the default pressure model for hyperelastic materials.
 //            W = D1 (J-1)^2 = 0.5*kappa*(J-1)^2

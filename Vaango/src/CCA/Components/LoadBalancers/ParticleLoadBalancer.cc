@@ -50,7 +50,7 @@
 
 using namespace Uintah;
 using namespace Uintah;
-using namespace std;
+
 
 static DebugStream doing( "ParticleLoadBalancer_doing", false );
 static DebugStream lb(    "ParticleLoadBalancer_lb", false );

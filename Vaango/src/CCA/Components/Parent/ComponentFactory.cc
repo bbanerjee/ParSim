@@ -69,7 +69,7 @@
 #include <locale>
 
 using namespace Uintah;
-using namespace std;
+
 
 UintahParallelComponent *
 ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world, 

@@ -46,7 +46,7 @@
 #include <Core/Util/DebugStream.h>
 #include <vector>
 
-using namespace std;
+
 using namespace Uintah;
 
 

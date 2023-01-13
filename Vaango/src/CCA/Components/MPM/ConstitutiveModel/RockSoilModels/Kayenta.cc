@@ -92,7 +92,7 @@ void KAYENTA_RXV(double UI[], double GC[], double DC[], int& nx, char namea[],
 
 // End fortran functions.
 ////////////////////////////////////////////////////////////////////////////////
-using namespace std;
+
 using namespace Uintah;
 
 Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)

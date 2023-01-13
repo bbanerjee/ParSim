@@ -51,7 +51,7 @@
 #include "Level.h"
 #include "Patch.h"
 #include <sci_defs/mpi_defs.h>
-using namespace std;
+
 
 void
 Hierarchy::make()

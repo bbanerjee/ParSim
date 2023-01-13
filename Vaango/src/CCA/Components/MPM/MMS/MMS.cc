@@ -29,7 +29,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 //=====================================================================================
 // Initialize MMS models

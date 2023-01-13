@@ -59,7 +59,7 @@
  */
 
 #include <iostream>
-using namespace std;
+
 #include <cstdio>
 #include <Core/Math/MiscMath.h>
 #include <Core/Math/Expon.h>

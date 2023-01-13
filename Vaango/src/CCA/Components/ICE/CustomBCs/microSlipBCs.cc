@@ -36,7 +36,7 @@
 
 #define d_SMALL_NUM 1e-100
 
-using namespace std;
+
 using namespace Uintah;
 namespace Uintah {
 //__________________________________

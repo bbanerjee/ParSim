@@ -31,7 +31,7 @@
 
 using namespace Uintah;
 using namespace Uintah;
-using namespace std;
+
     
 GIMPInterpolator::GIMPInterpolator()
 {

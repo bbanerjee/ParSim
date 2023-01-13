@@ -49,7 +49,7 @@
 #include <iostream>
 #include <algorithm>
 
-using namespace std;
+
 
 #include <cstdio>
 #include <memory.h>

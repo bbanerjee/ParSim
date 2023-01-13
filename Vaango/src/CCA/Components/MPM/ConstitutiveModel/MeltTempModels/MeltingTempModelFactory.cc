@@ -35,7 +35,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
 
-using namespace std;
+
 using namespace Uintah;
 
 /// Create an instance of a Melting Temperature Model

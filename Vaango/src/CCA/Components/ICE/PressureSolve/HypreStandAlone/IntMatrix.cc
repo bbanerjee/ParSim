@@ -48,7 +48,7 @@
 
 #include "IntMatrix.h"
 #include <iostream>
-using namespace std;
+
 
 IntMatrix::IntMatrix(const Counter rows, 
                      const Counter cols)

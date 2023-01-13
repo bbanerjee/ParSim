@@ -48,7 +48,7 @@
 
 #include <testprograms/Regridders/GBRv2Regridder.h>
 
-using namespace std;
+
 
 namespace Uintah {
 

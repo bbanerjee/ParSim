@@ -55,7 +55,7 @@ using namespace Uintah;
 #include <algorithm>
 #include <stdio.h>
 
-using namespace std;
+
 
 int sign(int i)
 {

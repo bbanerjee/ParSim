@@ -82,7 +82,7 @@
 using std::cout;
 using std::endl;
 using std::vector;
-//using namespace std;
+//
 
 namespace Uintah {
 

@@ -67,7 +67,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 
 //__________________________________   

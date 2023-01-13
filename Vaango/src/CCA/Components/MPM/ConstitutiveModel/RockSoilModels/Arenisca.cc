@@ -109,7 +109,7 @@ porosity).
 using std::cerr;
 
 using namespace Uintah;
-using namespace std;
+
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca::Arenisca(ProblemSpecP& ps, MPMFlags* Mflag)

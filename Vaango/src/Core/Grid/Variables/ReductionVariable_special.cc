@@ -34,319 +34,356 @@
 
 namespace Uintah {
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Min<double>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 1;
-  op = MPI_MIN;
+  count    = 1;
+  op       = MPI_MIN;
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Min<double>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr        = *(d_value.get());
   index += sizeof(double);
 }
 
 #if !defined(SCI_32BITS)
-template <>
+template<>
 void
 ReductionVariable<long long, Reductions::Min<long long>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(long long)));
   long long* ptr = reinterpret_cast<long long*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr           = *(d_value.get());
   index += sizeof(long long);
 }
 
-template <>
+template<>
 void
 ReductionVariable<long long, Reductions::Sum<long long>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(long long)));
   long long* ptr = reinterpret_cast<long long*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr           = *(d_value.get());
   index += sizeof(long long);
 }
 #endif
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Min<double>>::putMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  d_value = std::make_shared<double>(*ptr);
+  d_value     = std::make_shared<double>(*ptr);
   index += sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Max<double>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 1;
-  op = MPI_MAX;
+  count    = 1;
+  op       = MPI_MAX;
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Max<double>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr        = *(d_value.get());
   index += sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Max<double>>::putMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  d_value = std::make_shared<double>(*ptr);
+  d_value     = std::make_shared<double>(*ptr);
   index += sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Sum<double>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 1;
-  op = MPI_SUM;
+  count    = 1;
+  op       = MPI_SUM;
 }
 
 #if !defined(SCI_32BITS)
-template <>
+template<>
 void
 ReductionVariable<long long, Reductions::Sum<long long>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_LONG_LONG;
-  count = 1;
-  op = MPI_SUM;
+  count    = 1;
+  op       = MPI_SUM;
 }
 #endif
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Sum<double>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr        = *(d_value.get());
   index += sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<double, Reductions::Sum<double>>::putMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  d_value = std::make_shared<double>(*ptr);
+  d_value     = std::make_shared<double>(*ptr);
   index += sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<bool, Reductions::And<bool>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_CHAR;
-  count = 1;
-  op = MPI_LAND;
+  count    = 1;
+  op       = MPI_LAND;
 }
 
-template <>
+template<>
 void
-ReductionVariable<bool, Reductions::And<bool>>::getMPIData(std::vector<char>& data,
-                                                           int& index)
+ReductionVariable<bool, Reductions::And<bool>>::getMPIData(
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
   char* ptr = reinterpret_cast<char*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr      = *(d_value.get());
   index += sizeof(char);
 }
 
-template <>
+template<>
 void
-ReductionVariable<bool, Reductions::And<bool>>::putMPIData(vector<char>& data,
-                                                           int& index)
+ReductionVariable<bool, Reductions::And<bool>>::putMPIData(
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
   char* ptr = reinterpret_cast<char*>(&data[index]);
-  d_value = std::make_shared<bool>(*ptr);
+  d_value   = std::make_shared<bool>(*ptr);
   index += sizeof(char);
 }
 
-template <>
+template<>
 void
 ReductionVariable<long64, Reductions::Sum<long64>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_LONG;
-  count = 1;
-  op = MPI_SUM;
+  count    = 1;
+  op       = MPI_SUM;
 }
 
-template <>
+template<>
 void
 ReductionVariable<long64, Reductions::Sum<long64>>::getMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(long)));
   long* ptr = reinterpret_cast<long*>(&data[index]);
-  *ptr = *(d_value.get());
+  *ptr      = *(d_value.get());
   index += sizeof(long);
 }
 
-template <>
+template<>
 void
 ReductionVariable<long64, Reductions::Sum<long64>>::putMPIData(
-  std::vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(long)));
   long* ptr = reinterpret_cast<long*>(&data[index]);
-  d_value = std::make_shared<long64>(*ptr);
+  d_value   = std::make_shared<long64>(*ptr);
   index += sizeof(long);
 }
 
-template <>
+template<>
 void
 ReductionVariable<long long, Reductions::Sum<long long>>::putMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(long long)));
   long long* ptr = reinterpret_cast<long long*>(&data[index]);
-  d_value = std::make_shared<long long>(*ptr);
+  d_value        = std::make_shared<long long>(*ptr);
   index += sizeof(long long);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Sum<Vector>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 3;
-  op = MPI_SUM;
+  count    = 3;
+  op       = MPI_SUM;
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Sum<Vector>>::getMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr++ = d_value.get()->x();
-  *ptr++ = d_value.get()->y();
-  *ptr++ = d_value.get()->z();
-  index += 3*sizeof(double);
+  *ptr++      = d_value.get()->x();
+  *ptr++      = d_value.get()->y();
+  *ptr++      = d_value.get()->z();
+  index += 3 * sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Sum<Vector>>::putMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
   d_value.get()->x(*ptr++);
   d_value.get()->y(*ptr++);
   d_value.get()->z(*ptr++);
-  index += 3*sizeof(double);
+  index += 3 * sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Min<Vector>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 3;
-  op = MPI_MIN;
+  count    = 3;
+  op       = MPI_MIN;
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Min<Vector>>::getMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr++ = d_value.get()->x();
-  *ptr++ = d_value.get()->y();
-  *ptr++ = d_value.get()->z();
-  index += 3*sizeof(double);
+  *ptr++      = d_value.get()->x();
+  *ptr++      = d_value.get()->y();
+  *ptr++      = d_value.get()->z();
+  index += 3 * sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Min<Vector>>::putMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
   d_value.get()->x(*ptr++);
   d_value.get()->y(*ptr++);
   d_value.get()->z(*ptr++);
-  index += 3*sizeof(double);
+  index += 3 * sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Max<Vector>>::getMPIInfo(
-  int& count, MPI_Datatype& datatype, MPI_Op& op)
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
 {
   datatype = MPI_DOUBLE;
-  count = 3;
-  op = MPI_MAX;
+  count    = 3;
+  op       = MPI_MAX;
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Max<Vector>>::getMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr++ = d_value.get()->x();
-  *ptr++ = d_value.get()->y();
-  *ptr++ = d_value.get()->z();
-  index += 3*sizeof(double);
+  *ptr++      = d_value.get()->x();
+  *ptr++      = d_value.get()->y();
+  *ptr++      = d_value.get()->z();
+  index += 3 * sizeof(double);
 }
 
-template <>
+template<>
 void
 ReductionVariable<Vector, Reductions::Max<Vector>>::putMPIData(
-  vector<char>& data, int& index)
+  std::vector<char>& data,
+  int& index)
 {
   ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - 3 * sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
   d_value.get()->x(*ptr++);
   d_value.get()->y(*ptr++);
   d_value.get()->z(*ptr++);
-  index += 3*sizeof(double);
+  index += 3 * sizeof(double);
 }
 
 } // end namespace Uintah

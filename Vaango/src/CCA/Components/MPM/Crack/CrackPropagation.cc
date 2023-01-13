@@ -55,7 +55,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 using std::vector;
 using std::string;

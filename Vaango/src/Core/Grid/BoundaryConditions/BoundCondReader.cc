@@ -37,13 +37,15 @@
 #include <Core/Grid/BoundaryConditions/DifferenceBCData.h>
 #include <Core/Grid/BoundaryConditions/EllipseBCData.h>
 #include <Core/Grid/BoundaryConditions/RectangleBCData.h>
+#include <Core/Grid/BoundaryConditions/RectangulusBCData.h>
 #include <Core/Grid/BoundaryConditions/SideBCData.h>
 #include <Core/Grid/BoundaryConditions/UnionBCData.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Util/DebugStream.h>
+#include <Core/Util/DOUT.hpp>
+#include <Core/Util/StringUtil.h>
 
 #include <algorithm>
 #include <iostream>
@@ -56,35 +58,30 @@
 #include <utility>
 
 namespace {
-// Usage:: export SCI_DEBUG="BCR_DBG:+,OLD_BC_DBG:+"
-DebugStream BCR_dbg("BCR_DBG",
-                    "BoundaryCondReader",
-                    "report info regarding the BC setup",
-                    false);
+
+// Usage: export SCI_DEBUG="BCR_dbg:+"
+Uintah::Dout BCR_dbg{ "BCBCR_dbg",
+                      "BoundaryCondReader",
+                      "report info regarding the BC setup",
+                      false };
+
 }
 
 namespace Uintah {
-
-BoundCondReader::BoundCondReader() {}
-
-BoundCondReader::~BoundCondReader()
-{
-  // cout << "Calling BoundCondReader destructor" << endl;
-}
 
 // given a set of lower or upper bounds for multiple boxes (points)
 // this function checks if Point p (usually center of circle, ellipse, or
 // annulus)
 // is on a given face on any of the boxes.
 bool
-is_on_face(const int dir, const Point p, const std::vector<Point>& points)
+BoundCondReader::is_on_face(const int dir,
+                            const Point p_in,
+                            const std::vector<Point>& points) const
 {
-  auto iter = points.begin();
-  while (iter != points.end()) {
-    if (p(dir) == (*iter)(dir)) {
+  for (const auto& pt : points) {
+    if (p_in(dir) == pt(dir)) {
       return true;
     }
-    ++iter;
   }
   return false;
 }
@@ -94,7 +91,7 @@ BoundCondReader::isPtOnFace(const int dir,
                             const int plusMinusFaces,
                             const Point pt,
                             const std::vector<Point>& grid_LoPts,
-                            const std::vector<Point>& grid_HiPts)
+                            const std::vector<Point>& grid_HiPts) const
 {
   bool isOnFace = false;
   if (plusMinusFaces == -1) { // x-, y-, z- faces
@@ -111,7 +108,7 @@ void
 BoundCondReader::whichPatchFace(const std::string fc,
                                 Patch::FaceType& face_side,
                                 int& plusMinusFaces,
-                                int& p_dir)
+                                int& p_dir) const
 {
   if (fc == "x-") {
     plusMinusFaces = -1;
@@ -191,294 +188,21 @@ BoundCondReader::createBoundaryConditionFace(ProblemSpecP& face_ps,
   // side.  Will use the notion of a UnionBoundaryCondtion and Difference
   // BoundaryCondition.
 
-  std::string fc;
-  int plusMinusFaces = 0, p_dir;
   BCGeomBase* bcGeom;
 
   if (values.find("side") != values.end()) {
-    fc = values["side"];
-    whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-    bcGeom = scinew SideBCData();
+    bcGeom = createSideBC(values, face_side);
   } else if (values.find("circle") != values.end()) {
-    fc = values["circle"];
-    whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-    string origin = values["origin"];
-    string radius = values["radius"];
-    std::stringstream origin_stream(origin);
-    std::stringstream radius_stream(radius);
-    double r, o[3];
-    radius_stream >> r;
-    origin_stream >> o[0] >> o[1] >> o[2];
-    Point p(o[0], o[1], o[2]);
-
-    if (!radius_stream || !origin_stream) {
-      std::cout << "WARNING: BoundCondReader.cc: stringstream failed..."
-                << std::endl;
-    }
-
-    //  bullet proofing-- origin must be on the same plane as the face
-
-    bool isOnFace = false;
-
-    if (plusMinusFaces == -1) { // x-, y-, z- faces
-      isOnFace = is_on_face(p_dir, p, grid_LoPts);
-    }
-
-    if (plusMinusFaces == 1) { // x+, y+, z+ faces
-      isOnFace = is_on_face(p_dir, p, grid_HiPts);
-    }
-
-    if (!isOnFace) {
-      std::ostringstream warn;
-      warn << "ERROR: Input file\n The Circle BC geometry is not correctly "
-              "specified."
-           << " The origin " << p << " must be on the same plane"
-           << " as face (" << fc
-           << "). Double check the origin and Level:box spec. \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    if (origin == "" || radius == "") {
-      std::ostringstream warn;
-      warn << "ERROR\n Circle BC geometry not correctly specified \n"
-           << " you must specify origin [x,y,z] and radius [r] \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    bcGeom = scinew CircleBCData(p, r);
+    bcGeom = createCircleBC(values, grid_LoPts, grid_HiPts, face_side);
   } else if (values.find("annulus") != values.end()) {
-    fc = values["annulus"];
-    whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-    std::string origin     = values["origin"];
-    std::string in_radius  = values["inner_radius"];
-    std::string out_radius = values["outer_radius"];
-    std::stringstream origin_stream(origin);
-    std::stringstream in_radius_stream(in_radius);
-    std::stringstream out_radius_stream(out_radius);
-    double i_r, o_r, o[3];
-    in_radius_stream >> i_r;
-    out_radius_stream >> o_r;
-    origin_stream >> o[0] >> o[1] >> o[2];
-    Point p(o[0], o[1], o[2]);
-
-    //  bullet proofing-- origin must be on the same plane as the face
-    bool isOnFace = false;
-
-    if (plusMinusFaces == -1) { // x-, y-, z- faces
-      isOnFace = is_on_face(p_dir, p, grid_LoPts);
-    }
-
-    if (plusMinusFaces == 1) { // x+, y+, z+ faces
-      isOnFace = is_on_face(p_dir, p, grid_HiPts);
-    }
-
-    if (!isOnFace) {
-      std::ostringstream warn;
-      warn << "ERROR: Input file\n The Annulus BC geometry is not correctly "
-              "specified."
-           << " The origin " << p << " must be on the same plane"
-           << " as face (" << fc
-           << "). Double check the origin and Level:box spec. \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    if (origin == "" || in_radius == "" || out_radius == "") {
-      std::ostringstream warn;
-      warn << "ERROR\n Annulus BC geometry not correctly specified \n"
-           << " you must specify origin [x,y,z], inner_radius [r] outer_radius "
-              "[r] \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-    bcGeom = scinew AnnulusBCData(p, i_r, o_r);
-    else if (values.find("rectangulus") != values.end())
-    {
-      fc = values["rectangulus"];
-      whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-      string in_low_str  = values["inner_lower"];
-      string in_up_str   = values["inner_upper"];
-      string out_low_str = values["outer_lower"];
-      string out_up_str  = values["outer_upper"];
-
-      if (in_low_str == "" || in_up_str == "") {
-        std::ostringstream warn;
-        warn << "ERROR\n Rectangle BC geometry on face " << fc
-             << " was not correctly specified \n"
-             << " you must specify inner_lower \"x,y,z\" and "
-                "inner_upper\"x,y,z\" \n\n";
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-      }
-      if (out_low_str == "" || out_up_str == "") {
-        std::ostringstream warn;
-        warn << "ERROR\n Rectangle BC geometry on face " << fc
-             << " was not correctly specified \n"
-             << " you must specify outer_lower \"x,y,z\" and outer_upper "
-                "\"x,y,z\" \n\n";
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-      }
-
-      Point in_low  = string_to_Point(in_low_str, delimiters);
-      Point in_up   = string_to_Point(in_up_str, delimiters);
-      Point out_low = string_to_Point(out_low_str, delimiters);
-      Point out_up  = string_to_Point(out_up_str, delimiters);
-
-      //  bullet proofing-- both rectangles must be on the same plane as the
-      //  face
-      bool isOnFace_inLow =
-        isPtOnFace(p_dir, plusMinusFaces, in_low, grid_LoPts, grid_HiPts);
-      bool isOnFace_inUp =
-        isPtOnFace(p_dir, plusMinusFaces, in_up, grid_LoPts, grid_HiPts);
-      bool isOnFace_outLow =
-        isPtOnFace(p_dir, plusMinusFaces, out_low, grid_LoPts, grid_HiPts);
-      bool isOnFace_outUp =
-        isPtOnFace(p_dir, plusMinusFaces, out_up, grid_LoPts, grid_HiPts);
-
-      if (!isOnFace_inLow || !isOnFace_inUp || !isOnFace_outLow ||
-          !isOnFace_outUp) {
-        std::ostringstream warn;
-        warn << "ERROR: Input file\n The rectangle BC geometry on face " << fc
-             << " was not correctly specified."
-             << " The low " << in_low << " high " << in_up
-             << " points must be on the same plane"
-             << " The low " << out_low << " high " << out_up
-             << " points must be on the same plane"
-             << " as face (" << fc
-             << "). Double check against and Level:box spec. \n\n";
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-      }
-
-      if ((in_low.x() > in_up.x() || in_low.y() > in_up.y() ||
-           in_low.z() > in_up.z()) ||
-          (in_low.x() == in_up.x() && in_low.y() == in_up.y() &&
-           in_low.z() == in_up.z())) {
-        std::ostringstream warn;
-        warn << "ERROR\n Rectangle BC geometry on face " << fc
-             << " was not correctly specified \n"
-             << " inner_lower " << in_low << " inner_upper " << in_up;
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-      }
-
-      if ((out_low.x() > out_up.x() || out_low.y() > out_up.y() ||
-           out_low.z() > out_up.z()) ||
-          (out_low.x() == out_up.x() && out_low.y() == out_up.y() &&
-           out_low.z() == out_up.z())) {
-        std::ostringstream warn;
-        warn << "ERROR\n Rectangle BC geometry on face " << fc
-             << " was not correctly specified \n"
-             << " outer_lower " << out_low << " outer_upper " << out_up;
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-      }
-      bcGeom = scinew RectangulusBCData(in_low, in_up, out_low, out_up);
-    }
+    bcGeom = createAnnulusBC(values, grid_LoPts, grid_HiPts, face_side);
+  } else if (values.find("rectangulus") != values.end()) {
+    bcGeom = createRectangulusBC(values, grid_LoPts, grid_HiPts, face_side);
   } else if (values.find("ellipse") != values.end()) {
-    fc = values["ellipse"];
-    whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-    std::string str_origin       = values["origin"];
-    std::string str_minor_radius = values["minor_radius"];
-    std::string str_major_radius = values["major_radius"];
-    std::string str_angle        = values["angle"];
-    std::stringstream origin_stream(str_origin);
-    std::stringstream minor_radius_stream(str_minor_radius);
-    std::stringstream major_radius_stream(str_major_radius);
-    std::stringstream angle_stream(str_angle);
-    double minor_r, major_r, origin[3], angle;
-    minor_radius_stream >> minor_r;
-    major_radius_stream >> major_r;
-    origin_stream >> origin[0] >> origin[1] >> origin[2];
-    Point p(origin[0], origin[1], origin[2]);
-    angle_stream >> angle;
-
-    //  bullet proofing-- origin must be on the same plane as the face
-    bool isOnFace = false;
-
-    if (plusMinusFaces == -1) { // x-, y-, z- faces
-      isOnFace = is_on_face(p_dir, p, grid_LoPts);
-    }
-
-    if (plusMinusFaces == 1) { // x+, y+, z+ faces
-      isOnFace = is_on_face(p_dir, p, grid_HiPts);
-    }
-
-    if (!isOnFace) {
-      std::ostringstream warn;
-      warn << "ERROR: Input file\n The Ellipse BC geometry is not correctly "
-              "specified."
-           << " The origin " << p << " must be on the same plane"
-           << " as face (" << fc
-           << "). Double check the origin and Level:box spec. \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    if (major_r < minor_r) {
-      std::ostringstream warn;
-      warn << "ERROR\n Ellipse BC geometry not correctly specified \n"
-           << " Major radius must be larger than minor radius \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    if (str_origin == "" || str_minor_radius == "" || str_major_radius == "") {
-      std::ostringstream warn;
-      warn << "ERROR\n Ellipse BC geometry not correctly specified \n"
-           << " you must specify origin [x,y,z], inner_radius [r] outer_radius "
-              "[r] \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    bcGeom = scinew EllipseBCData(p, minor_r, major_r, fc, angle);
-  }
-
-  else if (values.find("rectangle") != values.end()) {
-    fc = values["rectangle"];
-    whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
-    std::string low = values["lower"];
-    std::string up  = values["upper"];
-    std::stringstream low_stream(low), up_stream(up);
-    double lower[3], upper[3];
-    low_stream >> lower[0] >> lower[1] >> lower[2];
-    up_stream >> upper[0] >> upper[1] >> upper[2];
-    Point l(lower[0], lower[1], lower[2]), u(upper[0], upper[1], upper[2]);
-
-    //  bullet proofing-- rectangle must be on the same plane as the face
-    bool isOnFace = false;
-
-    if (plusMinusFaces == -1) { // x-, y-, z- faces
-      isOnFace =
-        is_on_face(p_dir, l, grid_LoPts) && is_on_face(p_dir, u, grid_LoPts);
-    }
-
-    if (plusMinusFaces == 1) { // x+, y+, z+ faces
-      isOnFace =
-        is_on_face(p_dir, l, grid_HiPts) && is_on_face(p_dir, u, grid_HiPts);
-    }
-
-    if (!isOnFace) {
-      std::ostringstream warn;
-      warn << "ERROR: Input file\n The rectangle BC geometry is not correctly "
-              "specified."
-           << " The low " << l << " high " << u
-           << " points must be on the same plane"
-           << " as face (" << fc
-           << "). Double check against and Level:box spec. \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    if (low == "" || up == "") {
-      std::ostringstream warn;
-      warn << "ERROR\n Rectangle BC geometry not correctly specified \n"
-           << " you must specify lower [x,y,z] and upper[x,y,z] \n\n";
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-    if ((l.x() > u.x() || l.y() > u.y() || l.z() > u.z()) ||
-        (l.x() == u.x() && l.y() == u.y() && l.z() == u.z())) {
-      std::ostringstream warn;
-      warn << "ERROR\n Rectangle BC geometry not correctly specified \n"
-           << " lower pt " << l << " upper pt " << u;
-      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-    }
-
-    bcGeom = scinew RectangleBCData(l, u);
-  }
-
-  else {
+    bcGeom = createEllipseBC(values, grid_LoPts, grid_HiPts, face_side);
+  } else if (values.find("rectangle") != values.end()) {
+    bcGeom = createRectangleBC(values, grid_LoPts, grid_HiPts, face_side);
+  } else {
     std::ostringstream warn;
     warn << "ERROR\n Boundary condition geometry not correctly specified "
             " Valid options (side, circle, rectangle, annulus";
@@ -489,14 +213,14 @@ BoundCondReader::createBoundaryConditionFace(ProblemSpecP& face_ps,
   std::string bcname;
   if (values.find("name") != values.end()) {
     std::string name = values["name"];
-    BCR_dbg << "Setting name to: " << name << endl;
+    DOUT(BCR_dbg, "Setting name to: " << name);
     bcGeom->setBCName(name);
   }
 
   // get the bctype - mainly used by wasatch:
   if (values.find("type") != values.end()) {
     string bndType = values["type"];
-    BCR_dbg << "Setting bc type to: " << bndType << std::endl;
+    DOUT(BCR_dbg, "Setting bc type to: " << bndType);
     bcGeom->setBndType(bndType);
   }
 
@@ -529,8 +253,370 @@ BoundCondReader::createBoundaryConditionFace(ProblemSpecP& face_ps,
     bcGeom->setParticleBndSpec(pBndSpec);
   }
 
-  BCR_dbg << "Face = " << fc << endl;
   return bcGeom;
+}
+
+BCGeomBase*
+BoundCondReader::createSideBC(const std::map<std::string, std::string>& values,
+                              Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("side");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+  return scinew SideBCData();
+}
+
+BCGeomBase*
+BoundCondReader::createCircleBC(
+  const std::map<std::string, std::string>& values,
+  const std::vector<Point>& grid_LoPts,
+  const std::vector<Point>& grid_HiPts,
+  Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("circle");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+
+  const std::string& origin = values.at("origin");
+  const std::string& radius = values.at("radius");
+
+  std::stringstream origin_stream(origin);
+  std::stringstream radius_stream(radius);
+  if (!radius_stream || !origin_stream) {
+    std::cout << "WARNING: BoundCondReader.cc: stringstream failed..."
+              << std::endl;
+  }
+
+  double r, o[3];
+  radius_stream >> r;
+  origin_stream >> o[0] >> o[1] >> o[2];
+
+  Point p(o[0], o[1], o[2]);
+
+  //  bullet proofing-- origin must be on the same plane as the face
+  bool isOnFace = false;
+  if (plusMinusFaces == -1) { // x-, y-, z- faces
+    isOnFace = is_on_face(p_dir, p, grid_LoPts);
+  }
+
+  if (plusMinusFaces == 1) { // x+, y+, z+ faces
+    isOnFace = is_on_face(p_dir, p, grid_HiPts);
+  }
+
+  if (!isOnFace) {
+    std::ostringstream warn;
+    warn << "ERROR: Input file\n The Circle BC geometry is not correctly "
+            "specified."
+         << " The origin " << p << " must be on the same plane"
+         << " as face (" << fc
+         << "). Double check the origin and Level:box spec. \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (origin == "" || radius == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Circle BC geometry not correctly specified \n"
+         << " you must specify origin [x,y,z] and radius [r] \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  return scinew CircleBCData(p, r);
+}
+
+BCGeomBase*
+BoundCondReader::createAnnulusBC(
+  const std::map<std::string, std::string>& values,
+  const std::vector<Point>& grid_LoPts,
+  const std::vector<Point>& grid_HiPts,
+  Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("annulus");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+
+  const std::string& origin     = values.at("origin");
+  const std::string& in_radius  = values.at("inner_radius");
+  const std::string& out_radius = values.at("outer_radius");
+
+  std::stringstream origin_stream(origin);
+  std::stringstream in_radius_stream(in_radius);
+  std::stringstream out_radius_stream(out_radius);
+
+  double i_r, o_r, o[3];
+  in_radius_stream >> i_r;
+  out_radius_stream >> o_r;
+  origin_stream >> o[0] >> o[1] >> o[2];
+
+  Point p(o[0], o[1], o[2]);
+
+  //  bullet proofing-- origin must be on the same plane as the face
+  bool isOnFace = false;
+
+  if (plusMinusFaces == -1) { // x-, y-, z- faces
+    isOnFace = is_on_face(p_dir, p, grid_LoPts);
+  }
+
+  if (plusMinusFaces == 1) { // x+, y+, z+ faces
+    isOnFace = is_on_face(p_dir, p, grid_HiPts);
+  }
+
+  if (!isOnFace) {
+    std::ostringstream warn;
+    warn << "ERROR: Input file\n The Annulus BC geometry is not correctly "
+            "specified."
+         << " The origin " << p << " must be on the same plane"
+         << " as face (" << fc
+         << "). Double check the origin and Level:box spec. \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (origin == "" || in_radius == "" || out_radius == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Annulus BC geometry not correctly specified \n"
+         << " you must specify origin [x,y,z], inner_radius [r] outer_radius "
+            "[r] \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  return scinew AnnulusBCData(p, i_r, o_r);
+}
+
+BCGeomBase*
+BoundCondReader::createEllipseBC(
+  const std::map<std::string, std::string>& values,
+  const std::vector<Point>& grid_LoPts,
+  const std::vector<Point>& grid_HiPts,
+  Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("ellipse");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+
+  const std::string& str_origin       = values.at("origin");
+  const std::string& str_minor_radius = values.at("minor_radius");
+  const std::string& str_major_radius = values.at("major_radius");
+  const std::string& str_angle        = values.at("angle");
+
+  std::stringstream origin_stream(str_origin);
+  std::stringstream minor_radius_stream(str_minor_radius);
+  std::stringstream major_radius_stream(str_major_radius);
+  std::stringstream angle_stream(str_angle);
+
+  double minor_r, major_r, origin[3], angle;
+  minor_radius_stream >> minor_r;
+  major_radius_stream >> major_r;
+  origin_stream >> origin[0] >> origin[1] >> origin[2];
+
+  Point p(origin[0], origin[1], origin[2]);
+  angle_stream >> angle;
+
+  //  bullet proofing-- origin must be on the same plane as the face
+  bool isOnFace = false;
+
+  if (plusMinusFaces == -1) { // x-, y-, z- faces
+    isOnFace = is_on_face(p_dir, p, grid_LoPts);
+  }
+
+  if (plusMinusFaces == 1) { // x+, y+, z+ faces
+    isOnFace = is_on_face(p_dir, p, grid_HiPts);
+  }
+
+  if (!isOnFace) {
+    std::ostringstream warn;
+    warn << "ERROR: Input file\n The Ellipse BC geometry is not correctly "
+            "specified."
+         << " The origin " << p << " must be on the same plane"
+         << " as face (" << fc
+         << "). Double check the origin and Level:box spec. \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (major_r < minor_r) {
+    std::ostringstream warn;
+    warn << "ERROR\n Ellipse BC geometry not correctly specified \n"
+         << " Major radius must be larger than minor radius \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (str_origin == "" || str_minor_radius == "" || str_major_radius == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Ellipse BC geometry not correctly specified \n"
+         << " you must specify origin [x,y,z], inner_radius [r] outer_radius "
+            "[r] \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  return scinew EllipseBCData(p, minor_r, major_r, fc, angle);
+}
+
+BCGeomBase*
+BoundCondReader::createRectangleBC(
+  const std::map<std::string, std::string>& values,
+  const std::vector<Point>& grid_LoPts,
+  const std::vector<Point>& grid_HiPts,
+  Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("rectangle");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+
+  const std::string& low = values.at("lower");
+  const std::string& up  = values.at("upper");
+
+  std::stringstream low_stream(low), up_stream(up);
+  double lower[3], upper[3];
+  low_stream >> lower[0] >> lower[1] >> lower[2];
+  up_stream >> upper[0] >> upper[1] >> upper[2];
+
+  Point l(lower[0], lower[1], lower[2]), u(upper[0], upper[1], upper[2]);
+
+  //  bullet proofing-- rectangle must be on the same plane as the face
+  bool isOnFace = false;
+
+  if (plusMinusFaces == -1) { // x-, y-, z- faces
+    isOnFace =
+      is_on_face(p_dir, l, grid_LoPts) && is_on_face(p_dir, u, grid_LoPts);
+  }
+
+  if (plusMinusFaces == 1) { // x+, y+, z+ faces
+    isOnFace =
+      is_on_face(p_dir, l, grid_HiPts) && is_on_face(p_dir, u, grid_HiPts);
+  }
+
+  if (!isOnFace) {
+    std::ostringstream warn;
+    warn << "ERROR: Input file\n The rectangle BC geometry is not correctly "
+            "specified."
+         << " The low " << l << " high " << u
+         << " points must be on the same plane"
+         << " as face (" << fc
+         << "). Double check against and Level:box spec. \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (low == "" || up == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry not correctly specified \n"
+         << " you must specify lower [x,y,z] and upper[x,y,z] \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if ((l.x() > u.x() || l.y() > u.y() || l.z() > u.z()) ||
+      (l.x() == u.x() && l.y() == u.y() && l.z() == u.z())) {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry not correctly specified \n"
+         << " lower pt " << l << " upper pt " << u;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  return scinew RectangleBCData(l, u);
+}
+
+BCGeomBase*
+BoundCondReader::createRectangulusBC(
+  const std::map<std::string, std::string>& values,
+  const std::vector<Point>& grid_LoPts,
+  const std::vector<Point>& grid_HiPts,
+  Patch::FaceType& face_side) const
+{
+  const auto& fc = values.at("rectangulus");
+  DOUT(BCR_dbg, "Face = " << fc);
+
+  int plusMinusFaces = 0;
+  int p_dir          = 0;
+  whichPatchFace(fc, face_side, plusMinusFaces, p_dir);
+
+  const std::string& in_low_str  = values.at("inner_lower");
+  const std::string& in_up_str   = values.at("inner_upper");
+  const std::string& out_low_str = values.at("outer_lower");
+  const std::string& out_up_str  = values.at("outer_upper");
+
+  if (in_low_str == "" || in_up_str == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry on face " << fc
+         << " was not correctly specified \n"
+         << " you must specify inner_lower \"x,y,z\" and "
+            "inner_upper\"x,y,z\" \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (out_low_str == "" || out_up_str == "") {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry on face " << fc
+         << " was not correctly specified \n"
+         << " you must specify outer_lower \"x,y,z\" and outer_upper "
+            "\"x,y,z\" \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  std::vector<char> delimiters = { ' ', ',' }; // used to parse input strings
+  Point in_low                 = string_to_Point(in_low_str, delimiters);
+  Point in_up                  = string_to_Point(in_up_str, delimiters);
+  Point out_low                = string_to_Point(out_low_str, delimiters);
+  Point out_up                 = string_to_Point(out_up_str, delimiters);
+
+  //  bullet proofing-- both rectangles must be on the same plane as the
+  //  face
+  bool isOnFace_inLow =
+    isPtOnFace(p_dir, plusMinusFaces, in_low, grid_LoPts, grid_HiPts);
+  bool isOnFace_inUp =
+    isPtOnFace(p_dir, plusMinusFaces, in_up, grid_LoPts, grid_HiPts);
+  bool isOnFace_outLow =
+    isPtOnFace(p_dir, plusMinusFaces, out_low, grid_LoPts, grid_HiPts);
+  bool isOnFace_outUp =
+    isPtOnFace(p_dir, plusMinusFaces, out_up, grid_LoPts, grid_HiPts);
+
+  if (!isOnFace_inLow || !isOnFace_inUp || !isOnFace_outLow ||
+      !isOnFace_outUp) {
+    std::ostringstream warn;
+    warn << "ERROR: Input file\n The rectangle BC geometry on face " << fc
+         << " was not correctly specified."
+         << " The low " << in_low << " high " << in_up
+         << " points must be on the same plane"
+         << " The low " << out_low << " high " << out_up
+         << " points must be on the same plane"
+         << " as face (" << fc
+         << "). Double check against and Level:box spec. \n\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if ((in_low.x() > in_up.x() || in_low.y() > in_up.y() ||
+       in_low.z() > in_up.z()) ||
+      (in_low.x() == in_up.x() && in_low.y() == in_up.y() &&
+       in_low.z() == in_up.z())) {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry on face " << fc
+         << " was not correctly specified \n"
+         << " inner_lower " << in_low << " inner_upper " << in_up;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if ((out_low.x() > out_up.x() || out_low.y() > out_up.y() ||
+       out_low.z() > out_up.z()) ||
+      (out_low.x() == out_up.x() && out_low.y() == out_up.y() &&
+       out_low.z() == out_up.z())) {
+    std::ostringstream warn;
+    warn << "ERROR\n Rectangle BC geometry on face " << fc
+         << " was not correctly specified \n"
+         << " outer_lower " << out_low << " outer_upper " << out_up;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  return scinew RectangulusBCData(in_low, in_up, out_low, out_up);
 }
 
 BCGeomBase*
@@ -596,7 +682,10 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
     radius_stream >> r;
     origin_stream >> o[0] >> o[1] >> o[2];
     Point p0(o[0], o[1], o[2]);
-    Point p = moveToClosestNode(level, p_dir, plusMinusFaces, p0);
+    Point p = Uintah::BCReaderUtils::moveToClosestNode(level,
+                                                       p_dir,
+                                                       plusMinusFaces,
+                                                       p0);
     if (!radius_stream || !origin_stream) {
       std::cout << "WARNING: BoundCondReader.cc: stringstream failed..."
                 << std::endl;
@@ -623,7 +712,10 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
               "[r] \n\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
-    Point p = moveToClosestNode(level, p_dir, plusMinusFaces, p0);
+    Point p = Uintah::BCReaderUtils::moveToClosestNode(level,
+                                                       p_dir,
+                                                       plusMinusFaces,
+                                                       p0);
     bcGeom  = scinew AnnulusBCData(p, i_r, o_r);
   } else if (values.find("ellipse") != values.end()) {
     fc = values["ellipse"];
@@ -641,7 +733,10 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
     major_radius_stream >> major_r;
     origin_stream >> origin[0] >> origin[1] >> origin[2];
     Point p0(origin[0], origin[1], origin[2]);
-    Point p = moveToClosestNode(level, p_dir, plusMinusFaces, p0);
+    Point p = Uintah::BCReaderUtils::moveToClosestNode(level,
+                                                       p_dir,
+                                                       plusMinusFaces,
+                                                       p0);
     angle_stream >> angle;
 
     if (major_r < minor_r) {
@@ -672,8 +767,14 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
     low_stream >> lower[0] >> lower[1] >> lower[2];
     up_stream >> upper[0] >> upper[1] >> upper[2];
     Point l0(lower[0], lower[1], lower[2]), u0(upper[0], upper[1], upper[2]);
-    Point l = moveToClosestNode(level, p_dir, plusMinusFaces, l0);
-    Point u = moveToClosestNode(level, p_dir, plusMinusFaces, u0);
+    Point l = Uintah::BCReaderUtils::moveToClosestNode(level,
+                                                       p_dir,
+                                                       plusMinusFaces,
+                                                       l0);
+    Point u = Uintah::BCReaderUtils::moveToClosestNode(level,
+                                                       p_dir,
+                                                       plusMinusFaces,
+                                                       u0);
 
     if (low == "" || up == "") {
       std::ostringstream warn;
@@ -703,14 +804,14 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
   std::string bcname;
   if (values.find("name") != values.end()) {
     std::string name = values["name"];
-    BCR_dbg << "Setting name to: " << name << std::endl;
+    DOUT(BCR_dbg, "Setting name to: " << name);
     bcGeom->setBCName(name);
   }
 
   // get the bctype - mainly used by wasatch:
   if (values.find("type") != values.end()) {
     std::string bndType = values["type"];
-    BCR_dbg << "Setting bc type to: " << bndType << std::endl;
+    DOUT(BCR_dbg, "Setting bc type to: " << bndType);
     bcGeom->setBndType(bndType);
   }
 
@@ -740,7 +841,7 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
     bcGeom->setParticleBndSpec(pBndSpec);
   }
 
-  BCR_dbg << "Face = " << fc << std::endl;
+  DOUT(BCR_dbg, "Face = " << fc);
   return bcGeom;
 }
 
@@ -780,13 +881,13 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
 
     std::string face_label = "none";
     face_ps->getAttribute("name", face_label);
-    BCR_dbg << "Face Label = " << face_label << std::endl;
+    DOUT(BCR_dbg, "Face Label = " << face_label);
 
-    BCR_dbg << endl
-            << endl
-            << "Face = " << face_side
-            << " Geometry type = " << typeid(*bcGeom).name() << " " << bcGeom
-            << endl;
+    DOUT(BCR_dbg,
+         std::endl
+           << std::endl
+           << "Face = " << face_side
+           << " Geometry type = " << typeid(*bcGeom).name() << " " << bcGeom);
 
     std::multimap<int, BoundCondBaseP> bctype_data;
 
@@ -794,37 +895,21 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
          child              = child->findNextBlock("BCType")) {
       int mat_id;
       BoundCondBaseP bc = BoundCondFactory::create(child, mat_id, face_label);
-      BCR_dbg << "Inserting into mat_id = " << mat_id
-              << " bc = " << bc->getBCVariable()
-              << " bctype = " << bc->getBCType__NEW() << " " << bc << endl;
+      DOUT(BCR_dbg,
+           "Inserting into mat_id = "
+             << mat_id << " bc = " << bc->getBCVariable()
+             << " bctype = " << bc->getBCType() << " " << bc);
 
-      bctype_data.insert(pair<int, BoundCondBaseP>(mat_id, bc->clone()));
+      bctype_data.insert(std::pair<int, BoundCondBaseP>(mat_id, bc->clone()));
     }
-
-// Add the Auxillary boundary condition type
-#if 1
-    set<int> materials;
-    for (multimap<int, BoundCondBaseP>::const_iterator i = bctype_data.begin();
-         i != bctype_data.end();
-         i++) {
-      //      cout << "mat id = " << i->first << endl;
-      materials.insert(i->first);
-    }
-    for (int material : materials) {
-      BoundCondBaseP bc = std::make_shared<BoundCond<NoValue>>("Auxiliary");
-      bctype_data.insert(pair<int, BoundCondBaseP>(material, bc->clone()));
-    }
-#endif
 
     // Print out all of the bcs just created
-    multimap<int, BoundCondBaseP>::const_iterator it;
-    for (it = bctype_data.begin(); it != bctype_data.end(); it++) {
-      BCR_dbg << "Getting out mat_id = " << it->first
-              << " bc = " << it->second->getBCVariable()
-              << " bctype = " << it->second->getBCType__NEW() << endl;
-      //      cout << "mat = " << it -> first << " BoundCondBase address = "
-      //   << it->second << " bctype = "
-      //   << typeid(*(it->second)).name() << endl;
+    std::multimap<int, BoundCondBaseP>::const_iterator it;
+    for (auto& [mat_id, bc] : bctype_data) {
+      DOUT(BCR_dbg,
+           "Getting out mat_id = "
+             << mat_id << " bc = " << bc->getBCVariable()
+             << " bctype = " << bc->getBCType());
     }
 
     // Search through the newly created boundary conditions and create
@@ -833,12 +918,12 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
     // specified for material id = 0, and other bcs such as velocity,
     // temperature, etc. for material_id != 0.
 
-    map<int, BCGeomBase*> bcgeom_data;
-    map<int, BCGeomBase*>::const_iterator bc_geom_itr, mat_all_itr;
+    std::map<int, BCGeomBase*> bcgeom_data;
+    std::map<int, BCGeomBase*>::const_iterator bc_geom_itr, mat_all_itr;
 
     // Search through the bctype_data and make sure that there are
     // enough bcGeom clones for each material.
-    multimap<int, BoundCondBaseP>::const_iterator itr;
+    std::multimap<int, BoundCondBaseP>::const_iterator itr;
     for (const auto& bcType : bctype_data) {
       bc_geom_itr = bcgeom_data.find(bcType.first);
       // Clone it
@@ -846,9 +931,11 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
         bcgeom_data[bcType.first] = bcGeom->clone();
       }
 
-      BCR_dbg << "Storing in  = " << typeid(bcgeom_data[bcType.first]).name()
-              << " " << bcgeom_data[bcType.first] << " "
-              << typeid(bcType.second).name() << " " << bcType.second << endl;
+      DOUT(BCR_dbg,
+           "Storing in  = " << typeid(bcgeom_data[bcType.first]).name() << " "
+                            << bcgeom_data[bcType.first] << " "
+                            << typeid(bcType.second).name() << " "
+                            << bcType.second);
 
       bcgeom_data[bcType.first]->addBC(bcType.second);
     }
@@ -860,7 +947,7 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
       delete bc_geom_itr->second;
     }
 
-    BCR_dbg << "Printing out bcDataArray . . " << endl;
+    DOUT(BCR_dbg, "Printing out bcDataArray . . ");
     d_BCReaderData[face_side].print();
 
     delete bcGeom;
@@ -874,7 +961,7 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
 #if 1
   // Find the mat_id = "all" (-1) information and store it in each
   // materials boundary condition section.
-  BCR_dbg << "Add 'all' boundary condition information" << endl;
+  DOUT(BCR_dbg, "Add 'all' boundary condition information");
   BCDataArray::bcDataArrayType::const_iterator mat_all_itr, bc_geom_itr;
 
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
@@ -896,18 +983,19 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
       }
     }
 #if 1
-    BCR_dbg << endl << "Combining BCGeometryTypes for face " << face << endl;
+    DOUT(BCR_dbg, std::endl << "Combining BCGeometryTypes for face " << face);
     for (bc_geom_itr = d_BCReaderData[face].d_BCDataArray.begin();
          bc_geom_itr != d_BCReaderData[face].d_BCDataArray.end();
          bc_geom_itr++) {
-      BCR_dbg << "mat_id = " << bc_geom_itr->first << endl;
+      DOUT(BCR_dbg, "mat_id = " << bc_geom_itr->first);
       d_BCReaderData[face].combineBCGeometryTypes_NEW(bc_geom_itr->first);
     }
 #endif
 
-    BCR_dbg << endl
-            << "Printing out bcDataArray for face " << face
-            << " after adding 'all' . . " << endl;
+    DOUT(BCR_dbg,
+         std::endl
+           << "Printing out bcDataArray for face " << face
+           << " after adding 'all' . . ");
     d_BCReaderData[face].print();
   } // face loop
 #endif
@@ -917,21 +1005,21 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
   // rectangles.  This only happens if there are more than 1 bc_data per
   // face.
 
-  BCR_dbg << endl << "Before combineBCS() . . ." << endl << endl;
+  DOUT(BCR_dbg, std::endl << "Before combineBCS() . . ." << std::endl);
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << endl << endl << "Before Face . . ." << face << endl;
+    DOUT(BCR_dbg, std::endl << std::endl << "Before Face . . ." << face);
     d_BCReaderData[face].print();
   }
 
   bulletProofing();
 
-  combineBCS_NEW();
+  combineBCS();
 
-  BCR_dbg << endl << "After combineBCS() . . ." << endl << endl;
+  DOUT(BCR_dbg, std::endl << "After combineBCS() . . ." << std::endl);
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << "After Face . . .  " << face << endl;
+    DOUT(BCR_dbg, "After Face . . .  " << face);
     d_BCReaderData[face].print();
   }
 }
@@ -974,15 +1062,15 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
 
     std::string face_label = "none";
     face_ps->getAttribute("name", face_label);
-    BCR_dbg << "Face Label = " << face_label << "\n";
+    DOUT(BCR_dbg, "Face Label = " << face_label);
 
-    BCR_dbg << std::endl
-            << std::endl
-            << "Face = " << face_side
-            << " Geometry type = " << typeid(*bcGeom).name() << " " << bcGeom
-            << "\n";
+    DOUT(BCR_dbg,
+         std::endl
+           << std::endl
+           << "Face = " << face_side
+           << " Geometry type = " << typeid(*bcGeom).name() << " " << bcGeom);
 
-    std::multimap<int, BoundCondBase*> bctype_data;
+    std::multimap<int, BoundCondBaseP> bctype_data;
 
     for (ProblemSpecP child = face_ps->findBlock("BCType"); child != nullptr;
          child              = child->findNextBlock("BCType")) {
@@ -1007,22 +1095,22 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
         mat_id         = (id == "all") ? -1 : atoi(id.c_str());
       }
 
-      BoundCondBase* bc;
-      BoundCondFactory::create(child, bc, mat_id, face_label);
-      BCR_dbg << "Inserting into mat_id = " << mat_id
-              << " bc = " << bc->getBCVariable()
-              << " bctype = " << bc->getBCType() << " " << bc << std::endl;
+      BoundCondBaseP bc = BoundCondFactory::create(child, mat_id, face_label);
+      DOUT(BCR_dbg,
+           "Inserting into mat_id = "
+             << mat_id << " bc = " << bc->getBCVariable()
+             << " bctype = " << bc->getBCType() << " " << bc);
 
-      bctype_data.insert(std::pair<int, BoundCondBase*>(mat_id, bc->clone()));
-      delete bc;
+      bctype_data.insert(std::pair<int, BoundCondBaseP>(mat_id, bc->clone()));
     }
 
     // Print out all of the bcs just created
     std::multimap<int, BoundCondBase*>::const_iterator it;
-    for (it = bctype_data.begin(); it != bctype_data.end(); it++) {
-      BCR_dbg << "Getting out mat_id = " << it->first
-              << " bc = " << it->second->getBCVariable()
-              << " bctype = " << it->second->getBCType() << std::endl;
+    for (auto& [mat_id, bc] : bctype_data) {
+      DOUT(BCR_dbg,
+           "Getting out mat_id = " << mat_id
+                                   << " bc = " << bc->getBCVariable()
+                                   << " bctype = " << bc->getBCType());
     }
 
     // Search through the newly created boundary conditions and create
@@ -1036,20 +1124,20 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
 
     // Search through the bctype_data and make sure that there are
     // enough bcGeom clones for each material.
-    std::multimap<int, BoundCondBase*>::const_iterator itr;
-    for (itr = bctype_data.begin(); itr != bctype_data.end(); itr++) {
-      bc_geom_itr = bcgeom_data.find(itr->first);
+    for (auto& [mat_id, bc] : bctype_data) {
+      auto bc_geom_itr = bcgeom_data.find(mat_id);
       // Clone it
       if (bc_geom_itr == bcgeom_data.end()) {
-        bcgeom_data[itr->first] = bcGeom->clone();
+        bcgeom_data[mat_id] = bcGeom->clone();
       }
 
-      BCR_dbg << "Storing in  = " << typeid(bcgeom_data[itr->first]).name()
-              << " " << bcgeom_data[itr->first] << " "
-              << typeid(*(itr->second)).name() << " " << (itr->second)
-              << std::endl;
+      DOUT(BCR_dbg,
+           "Storing in  = " << typeid(bcgeom_data[mat_id]).name() << " "
+                            << bcgeom_data[mat_id] << " "
+                            << typeid(*(bc)).name() << " "
+                            << bc);
 
-      bcgeom_data[itr->first]->addBC(itr->second);
+      bcgeom_data[mat_id]->addBC(bc);
     }
 
     //____________________________________________________________________
@@ -1073,19 +1161,14 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
       delete bc_geom_itr->second;
     }
 
-    BCR_dbg << "Printing out bcDataArray . . "
-            << "for face_side = " << face_side << std::endl;
+    DOUT(BCR_dbg,
+         "Printing out bcDataArray . . "
+           << "for face_side = " << face_side);
     d_interiorBndBCReaderData[face_side].print();
 
     delete bcGeom;
 
     // Delete stuff in bctype_data
-    std::multimap<int, BoundCondBase*>::const_iterator m_itr;
-    for (m_itr = bctype_data.begin(); m_itr != bctype_data.end(); ++m_itr) {
-      //      cout << "deleting BoundCondBase address = " << m_itr->second
-      //   << " bctype = " << typeid(*(m_itr->second)).name() << std::endl;
-      delete m_itr->second;
-    }
     bctype_data.clear();
     bcgeom_data.clear();
 
@@ -1094,7 +1177,7 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
 #if 1
   // Find the mat_id = "all" (-1) information and store it in each
   // materials boundary condition section.
-  BCR_dbg << "Add 'all' boundary condition information" << std::endl;
+  DOUT(BCR_dbg, "Add 'all' boundary condition information");
   BCDataArray::bcDataArrayType::const_iterator mat_all_itr, bc_geom_itr;
 
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
@@ -1117,19 +1200,19 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
       }
     }
 #if 1
-    BCR_dbg << std::endl
-            << "Combining BCGeometryTypes for face " << face << std::endl;
+    DOUT(BCR_dbg, std::endl << "Combining BCGeometryTypes for face " << face);
     for (bc_geom_itr = d_interiorBndBCReaderData[face].d_BCDataArray.begin();
          bc_geom_itr != d_interiorBndBCReaderData[face].d_BCDataArray.end();
          bc_geom_itr++) {
-      BCR_dbg << "mat_id = " << bc_geom_itr->first << std::endl;
+      DOUT(BCR_dbg, "mat_id = " << bc_geom_itr->first);
       // d_interiorBndBCReaderData[face].combineBCGeometryTypes_NEW(bc_geom_itr->first);
     }
 #endif
 
-    BCR_dbg << std::endl
-            << "Printing out bcDataArray for face " << face
-            << " after adding 'all' . . " << std::endl;
+    DOUT(BCR_dbg,
+         std::endl
+           << "Printing out bcDataArray for face " << face
+           << " after adding 'all' . . ");
     d_interiorBndBCReaderData[face].print();
   } // face loop
 #endif
@@ -1139,12 +1222,10 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
   // rectangles.  This only happens if there are more than 1 bc_data per
   // face.
 
-  BCR_dbg << std::endl << "Before combineBCS() . . ." << std::endl << std::endl;
+  DOUT(BCR_dbg, std::endl << "Before combineBCS() . . ." << std::endl);
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << std::endl
-            << std::endl
-            << "Before Face . . ." << face << std::endl;
+    DOUT(BCR_dbg, std::endl << std::endl << "Before Face . . ." << face);
     d_interiorBndBCReaderData[face].print();
   }
 
@@ -1152,10 +1233,10 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
 
   // combineBCS();
 
-  BCR_dbg << std::endl << "After combineBCS() . . ." << std::endl << std::endl;
+  DOUT(BCR_dbg, std::endl << "After combineBCS() . . ." << std::endl);
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << "After Face . . .  " << face << std::endl;
+    DOUT(BCR_dbg, "After Face . . .  " << face);
     d_interiorBndBCReaderData[face].print();
   }
 }
@@ -1163,7 +1244,7 @@ BoundCondReader::readInteriorBndBCs(ProblemSpecP& bc_ps,
 const BCDataArray
 BoundCondReader::getBCDataArray(Patch::FaceType& face) const
 {
-  map<Patch::FaceType, BCDataArray> m = this->d_BCReaderData;
+  std::map<Patch::FaceType, BCDataArray> m = this->d_BCReaderData;
   return m[face];
 }
 
@@ -1172,14 +1253,14 @@ BoundCondReader::combineBCS()
 {
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << std::endl << "Working on Face = " << face << std::endl;
-    BCR_dbg << std::endl << "Original inputs" << std::endl;
+    DOUT(BCR_dbg, std::endl << "Working on Face = " << face);
+    DOUT(BCR_dbg, std::endl << "Original inputs");
 
     BCDataArray rearranged;
     BCDataArray& original = d_BCReaderData[face];
 
     original.print();
-    BCR_dbg << std::endl;
+    DOUT(BCR_dbg, std::endl);
 
     BCDataArray::bcDataArrayType::iterator mat_id_itr;
     for (mat_id_itr = original.d_BCDataArray.begin();
@@ -1187,7 +1268,7 @@ BoundCondReader::combineBCS()
          ++mat_id_itr) {
       int mat_id = mat_id_itr->first;
 
-      BCR_dbg << "Mat ID = " << mat_id << std::endl;
+      DOUT(BCR_dbg, "Mat ID = " << mat_id);
 
       // Find all of the BCData types that are in a given BCDataArray
       std::vector<BCGeomBase*>::const_iterator vec_itr, side_index, other_index;
@@ -1215,7 +1296,7 @@ BoundCondReader::combineBCS()
                                  bcgeom_vec.end(),
                                  not_type<SideBCData>());
 
-        BCR_dbg << "num_other = " << num_other << std::endl << std::endl;
+        DOUT(BCR_dbg, "num_other = " << num_other << std::endl);
 
         if (num_other == 1) {
 
@@ -1296,21 +1377,22 @@ BoundCondReader::combineBCS()
                delete_object<BCGeomBase>());
       bcgeom_vec.clear();
     }
-    BCR_dbg << std::endl << "Printing out rearranged list" << std::endl;
+    DOUT(BCR_dbg, std::endl << "Printing out rearranged list");
     rearranged.print();
 
     d_BCReaderData[face] = rearranged;
 
-    BCR_dbg << std::endl
-            << "Printing out rearranged from d_BCReaderData list" << std::endl;
+    DOUT(BCR_dbg,
+         std::endl
+           << "Printing out rearranged from d_BCReaderData list");
 
     d_BCReaderData[face].print();
   }
 
-  BCR_dbg << std::endl << "Printing out in combineBCS()" << std::endl;
+  DOUT(BCR_dbg, std::endl << "Printing out in combineBCS()");
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    BCR_dbg << "After Face . . .  " << face << std::endl;
+    DOUT(BCR_dbg, "After Face . . .  " << face);
     d_BCReaderData[face].print();
   }
 }
@@ -1343,7 +1425,7 @@ BoundCondReader::bulletProofing()
         count_if(bcgeom_vec.begin(), bcgeom_vec.end(), cmp_type<SideBCData>());
 
       if (nSides != 1) {
-        ostringstream warn;
+        std::ostringstream warn;
         warn << "ERROR: <BoundaryConditions> <" << Patch::getFaceName(face)
              << ">\n"
              << "There must be 1 and only 1 side boundary condition specified "
@@ -1354,10 +1436,15 @@ BoundCondReader::bulletProofing()
   }   // patch faces
 }
 
+} // end namespace Uintah
+
+namespace Uintah {
+namespace BCReaderUtils {
+
 void
 print(BCGeomBase* p)
 {
-  BCR_dbg << "type = " << typeid(*p).name() << endl;
+  DOUT(BCR_dbg, "type = " << typeid(*p).name());
 }
 
 Point
@@ -1402,4 +1489,5 @@ moveToClosestNode(const LevelP level,
   return newPos;
 }
 
-} // end namespac Uintah
+} // end namespace BCReaderUtils
+} // end namespace Uintah

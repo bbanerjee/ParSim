@@ -64,7 +64,7 @@
 #include <string>
 #include <list>
 
-using namespace std;
+
 using namespace Uintah;
 
 // Standard Constructor

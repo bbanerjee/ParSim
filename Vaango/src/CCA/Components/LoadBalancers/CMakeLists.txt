@@ -49,7 +49,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_LoadBalancers
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_CCA_Components_ProblemSpecification
-  Vaango_Core_Thread
+  
   ${XML2_LIBRARY}
   ${MPI_LIBS}
 )

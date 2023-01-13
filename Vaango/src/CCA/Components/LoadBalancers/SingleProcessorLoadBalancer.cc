@@ -28,7 +28,7 @@
 #include <Core/Grid/Level.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 SingleProcessorLoadBalancer::SingleProcessorLoadBalancer(
   const ProcessorGroup* myworld)

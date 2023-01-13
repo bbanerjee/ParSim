@@ -80,7 +80,7 @@
 // profile
 
 using namespace Uintah;
-using namespace std;
+
 
 Mixing3::Mixing3(const ProcessorGroup* myworld, ProblemSpecP& params)
   : ModelInterface(myworld), params(params)

@@ -63,7 +63,7 @@
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 Poisson1::Poisson1(const ProcessorGroup* myworld)

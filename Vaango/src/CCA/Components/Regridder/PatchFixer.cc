@@ -51,7 +51,7 @@
 
 #include <stack>
 
-using namespace std;
+
 using namespace Uintah;
 
 void

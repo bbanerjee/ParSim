@@ -69,13 +69,7 @@ BoundCondFactory::create(ProblemSpecP& child,
   int i_value;
   double d_value;
   Vector v_value;
-  std::string s_value      = "none";
-  std::string functor_name = "none";
-
-  ProblemSpecP functorPS = child->findBlock("functor_name");
-  if (functorPS) {
-    child->get("functor_name", functor_name);
-  }
+  std::string s_value = "none";
 
   std::string valAttribute;
   bool attrPS          = child->getAttribute("value", valAttribute);
@@ -143,12 +137,21 @@ BoundCondFactory::create(ProblemSpecP& child,
 
     switch (theInputType) {
       case ProblemSpec::NUMBER_TYPE:
-        child->get("value", d_value);
-        bc = std::make_shared<BoundCond<double>>(bc_attr["label"],
-                                                 bc_attr["var"],
-                                                 d_value,
-                                                 face_label,
-                                                 functor_name);
+        if (bc_attr["type"] == "int") {
+          child->get("value", i_value);
+          bc = std::make_shared<BoundCond<double>>(bc_attr["label"],
+                                                   bc_attr["var"],
+                                                   i_value,
+                                                   face_label,
+                                                   BoundCondBase::INT_TYPE);
+        } else {
+          child->get("value", d_value);
+          bc = std::make_shared<BoundCond<double>>(bc_attr["label"],
+                                                   bc_attr["var"],
+                                                   d_value,
+                                                   face_label,
+                                                   BoundCondBase::DOUBLE_TYPE);
+        }
         break;
       case ProblemSpec::VECTOR_TYPE:
         child->get("value", v_value);
@@ -156,14 +159,15 @@ BoundCondFactory::create(ProblemSpecP& child,
                                                  bc_attr["var"],
                                                  v_value,
                                                  face_label,
-                                                 functor_name);
+                                                 BoundCondBase::VECTOR_TYPE);
         break;
       case ProblemSpec::STRING_TYPE:
-        bc = std::make_shared<BoundCond<std::string>>(bc_attr["label"],
-                                                      bc_attr["var"],
-                                                      s_value,
-                                                      face_label,
-                                                      functor_name);
+        bc =
+          std::make_shared<BoundCond<std::string>>(bc_attr["label"],
+                                                   bc_attr["var"],
+                                                   s_value,
+                                                   face_label,
+                                                   BoundCondBase::STRING_TYPE);
         break;
       case ProblemSpec::UNKNOWN_TYPE:
       default:

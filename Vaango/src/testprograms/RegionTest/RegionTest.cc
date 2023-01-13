@@ -51,7 +51,7 @@
 #include <Core/Grid/Region.h>
 
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 int main()

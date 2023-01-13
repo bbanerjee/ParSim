@@ -50,7 +50,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on the output
 //  setenv SCI_DEBUG "particleExtract_DBG_COUT:+" 

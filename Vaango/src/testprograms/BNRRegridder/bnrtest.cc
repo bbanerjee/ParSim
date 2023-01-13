@@ -56,7 +56,7 @@ using namespace Uintah;
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 const int X_RES=10, Y_RES=10;
 float prob=.98;
 int f_array[X_RES][Y_RES]=

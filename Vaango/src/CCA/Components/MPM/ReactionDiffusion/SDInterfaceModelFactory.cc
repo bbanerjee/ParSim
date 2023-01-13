@@ -35,7 +35,7 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+
 using namespace Uintah;
 
 SDInterfaceModel* SDInterfaceModelFactory::create(ProblemSpecP& ps,

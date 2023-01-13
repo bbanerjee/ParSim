@@ -42,7 +42,7 @@
 
 
 using namespace Uintah;
-using namespace std;
+
 //__________________________________
 //  To turn on the output
 //  setenv SCI_DEBUG "VORTICITY_DBG_COUT:+" 

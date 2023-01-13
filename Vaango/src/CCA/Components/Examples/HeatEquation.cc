@@ -63,7 +63,7 @@
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Malloc/Allocator.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 HeatEquation::HeatEquation(const ProcessorGroup* myworld)

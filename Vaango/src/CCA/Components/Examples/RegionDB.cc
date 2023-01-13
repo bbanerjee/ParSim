@@ -35,7 +35,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 RegionDB::RegionDB()
 {

@@ -51,7 +51,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 ProutTompkinsModel::ProutTompkinsModel(ProblemSpecP &params)
 {

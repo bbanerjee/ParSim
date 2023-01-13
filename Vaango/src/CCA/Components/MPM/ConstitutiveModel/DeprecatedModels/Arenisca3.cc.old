@@ -92,7 +92,7 @@ Software is furnished to do so, subject to the following conditions:
 
 using std::cerr;
 using namespace Uintah;
-using namespace std;
+
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)

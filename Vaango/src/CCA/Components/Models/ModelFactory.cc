@@ -79,7 +79,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 ModelFactory::ModelFactory(const ProcessorGroup* myworld)
   : UintahParallelComponent(myworld)

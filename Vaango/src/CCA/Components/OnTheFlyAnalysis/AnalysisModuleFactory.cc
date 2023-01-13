@@ -36,7 +36,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/SimulationState.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 AnalysisModuleFactory::AnalysisModuleFactory()

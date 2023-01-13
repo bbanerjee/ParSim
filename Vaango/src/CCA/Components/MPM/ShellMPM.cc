@@ -52,7 +52,7 @@
 
 using namespace Uintah;
 
-using namespace std;
+
 
 
 static DebugStream cout_doing("ShellMPM", false);

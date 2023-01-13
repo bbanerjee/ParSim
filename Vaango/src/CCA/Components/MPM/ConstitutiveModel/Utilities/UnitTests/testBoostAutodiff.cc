@@ -19,7 +19,7 @@ T fourth_power(T const& x) {
 template <typename W, typename X, typename Y, typename Z>
 promote<W, X, Y, Z> 
 f(const W& w, const X& x, const Y& y, const Z& z) {
-  using namespace std;
+  
   return exp(w * sin(x * log(y) / z) + sqrt(w * z / (x * y))) + w * w / tan(z);
 }
 

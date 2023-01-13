@@ -54,7 +54,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 //  This is a standalone program (g++ partpostprocess.cc) that
 //  can read in the datafiles like those created by the puda -jim1

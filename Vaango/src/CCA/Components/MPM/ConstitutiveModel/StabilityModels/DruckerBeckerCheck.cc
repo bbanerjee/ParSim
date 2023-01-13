@@ -34,7 +34,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 DruckerBeckerCheck::DruckerBeckerCheck(ProblemSpecP&)
 {

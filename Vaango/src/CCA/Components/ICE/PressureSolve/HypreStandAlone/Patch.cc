@@ -52,7 +52,7 @@
 #include <string>
 #include <map>
 
-using namespace std;
+
 
 Patch::Patch(const int procID, 
              const Counter levelID,

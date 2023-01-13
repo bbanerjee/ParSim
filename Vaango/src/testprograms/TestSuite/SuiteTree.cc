@@ -48,7 +48,7 @@
 
 #include "SuiteTree.h"
 #include <iostream>
-using namespace std;
+
 
 SuiteTreeNode::~SuiteTreeNode()
 {
