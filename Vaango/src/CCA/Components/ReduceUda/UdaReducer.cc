@@ -131,7 +131,7 @@ void UdaReducer::problemSetup(const ProblemSpecP& prob_spec,
 
   //__________________________________
   //  define the varLabels that will be saved
-  std::vector<string> varNames;
+  std::vector<std::string> varNames;
   std::vector< const TypeDescription *> typeDescriptions;
   d_dataArchive->queryVariables( varNames, typeDescriptions );
   

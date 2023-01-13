@@ -188,7 +188,7 @@ getTimeStepInfo(DataArchive *archive, GridP *grid, int timestep, bool useExtraCe
   stepInfo->levelInfo.resize(numLevels);
 
   // get variable information
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
   stepInfo->varInfo.resize(vars.size());
@@ -357,7 +357,7 @@ getGridData(DataArchive *archive,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 
@@ -472,7 +472,7 @@ getParticleData(DataArchive *archive,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 

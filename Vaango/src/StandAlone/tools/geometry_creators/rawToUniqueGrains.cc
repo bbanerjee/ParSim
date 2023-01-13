@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
                       child = child->findNextBlock("matl")) {
 
       std::vector<int> threshold;
-      std::map<string,string> matlIndex;
+      std::map<std::string,string> matlIndex;
 
       child->getAttributes(matlIndex);
       child->require("threshold", threshold);

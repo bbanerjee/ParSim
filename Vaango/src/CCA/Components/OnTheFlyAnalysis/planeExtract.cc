@@ -145,7 +145,7 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
   d_matl_set = scinew MaterialSet();
-  std::map<string,string> attribute;
+  std::map<std::string,string> attribute;
     
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze"); var_spec != 0; 
                     var_spec = var_spec->findNextBlock("analyze")) {

@@ -69,7 +69,7 @@ DXDumper::~DXDumper()
   dxstrm_ << "default \"udadata\"" << endl;
   dxstrm_ << "end" << endl;
   
-  for(map<string,FldWriter*>::iterator fit(fldwriters_.begin());fit!=fldwriters_.end();fit++) {
+  for(map<std::string,FldWriter*>::iterator fit(fldwriters_.begin());fit!=fldwriters_.end();fit++) {
     delete fit->second;
   }
 }

@@ -140,10 +140,10 @@ Crack::Crack(const ProblemSpecP& ps,
     ps->findBlock("Grid")->findBlock("BoundaryConditions");
   for (ProblemSpecP face_ps = grid_bc_ps->findBlock("Face"); face_ps != 0;
        face_ps              = face_ps->findNextBlock("Face")) {
-    std::map<string, string> values;
+    std::map<std::string, std::string> values;
     face_ps->getAttributes(values);
     ProblemSpecP bcType_ps = face_ps->findBlock("BCType");
-    std::map<string, string> bc_attr;
+    std::map<std::string, std::string> bc_attr;
     bcType_ps->getAttributes(bc_attr);
     if (values["side"] == "x-")
       GridBCType[Patch::xminus] = bc_attr["var"];

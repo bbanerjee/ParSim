@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,108 +23,87 @@
  * IN THE SOFTWARE.
  */
 
-
-#ifndef UINTAH_HOMEBREW_VarnameMatlPatch_H
-#define UINTAH_HOMEBREW_VarnameMatlPatch_H
+#ifndef __VAANGO_CORE_GRID_VARIABLES_VarnameMatlPatch_H__
+#define __VAANGO_CORE_GRID_VARIABLES_VarnameMatlPatch_H__
 
 #include <string>
-#include <Core/Containers/HashTable.h>
 
 namespace Uintah {
 class Patch;
 
-    /**************************************
-      
-      struct
-        VarnameMatlPatch
-      
-        Variable name, Material, and Patch
-        
-      
-      GENERAL INFORMATION
-      
-        VarnameMatlPatch.h
-      
-        Wayne Witzel
-        Department of Computer Science
-        University of Utah
-      
-        Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-      
-      ****************************************/
-
-struct VarnameMatlPatch {
+struct VarnameMatlPatch
+{
   VarnameMatlPatch(const std::string name, int matlIndex, int patchid)
-    : name_(name), matlIndex_(matlIndex), patchid_(patchid)
+    : name_(name)
+    , matlIndex_(matlIndex)
+    , patchid_(patchid)
   {
-    hash_ = (unsigned int)(((unsigned int)patchid_<<2)
-      ^(string_hash(name_.c_str()))
-      ^matlIndex_);
+    hash_ = (unsigned int)(((unsigned int)patchid_ << 2) ^
+                           (string_hash(name_.c_str())) ^ matlIndex_);
   }
 
   VarnameMatlPatch(const VarnameMatlPatch& copy)
-    : name_(copy.name_), matlIndex_(copy.matlIndex_), patchid_(copy.patchid_), hash_(copy.hash_)
-  {}
-  //__________________________________
-  //
-  VarnameMatlPatch& operator=(const VarnameMatlPatch& copy)
+    : name_(copy.name_)
+    , matlIndex_(copy.matlIndex_)
+    , patchid_(copy.patchid_)
+    , hash_(copy.hash_)
   {
-    name_      = copy.name_; 
-    matlIndex_ = copy.matlIndex_; 
-    patchid_   = copy.patchid_; 
+  }
+
+  VarnameMatlPatch&
+  operator=(const VarnameMatlPatch& copy)
+  {
+    name_      = copy.name_;
+    matlIndex_ = copy.matlIndex_;
+    patchid_   = copy.patchid_;
     hash_      = copy.hash_;
     return *this;
   }
-  
-  //__________________________________
-  //
-  bool operator<(const VarnameMatlPatch& other) const
+
+  bool
+  operator<(const VarnameMatlPatch& other) const
   {
     if (name_ == other.name_) {
-      if (matlIndex_ == other.matlIndex_){
+      if (matlIndex_ == other.matlIndex_) {
         return patchid_ < other.patchid_;
-      }else{
+      } else {
         return matlIndex_ < other.matlIndex_;
       }
-    }
-    else {
+    } else {
       return name_ < name_;
     }
   }
-  
-  //__________________________________
-  //
-  bool operator==(const VarnameMatlPatch& other) const
+
+  bool
+  operator==(const VarnameMatlPatch& other) const
   {
-    bool test = (name_ == other.name_ && patchid_ == other.patchid_ && matlIndex_ == other.matlIndex_);
+    bool test = (name_ == other.name_ && patchid_ == other.patchid_ &&
+                 matlIndex_ == other.matlIndex_);
     return test;
   }
-  
-  //__________________________________
-  //
-  unsigned int string_hash(const char* p) const {
-    unsigned int sum=0;
-    while(*p){
-      sum = sum*7 + (unsigned char)*p++;
+
+  unsigned int
+  string_hash(const char* p) const
+  {
+    unsigned int sum = 0;
+    while (*p) {
+      sum = sum * 7 + (unsigned char)*p++;
     }
     return sum;
   }
-  
-  //__________________________________
-  //
-  int hash(int hash_size) const
+
+  int
+  hash(int hash_size) const
   {
     return hash_ % hash_size;
   }
-  
-  //______________________________________________________________________
-  //
+
   std::string name_;
   int matlIndex_;
-  int patchid_;    
+  int patchid_;
   unsigned hash_;
-};  
+};
 
 } // End namespace Uintah
 
-#endif
+#endif //__VAANGO_CORE_GRID_VARIABLES_VarnameMatlPatch_H__

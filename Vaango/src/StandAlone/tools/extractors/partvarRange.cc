@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     
     //______________________________________________________________________
     //              V A R S U M M A R Y   O P T I O N
-    std::vector<string> vars;
+    std::vector<std::string> vars;
     std::vector<const Uintah::TypeDescription*> types;
     da->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());

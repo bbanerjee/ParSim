@@ -195,8 +195,8 @@ namespace Uintah {
           for(list<TensorDiag const *>::const_iterator diagit(tensordiaggens.begin());diagit!=tensordiaggens.end();diagit++) 
             outdiags.push_back( (*diagit)->name() );
           
-          std::map<string, ofstream *> outfiles;
-          std::map<string, string>     outfieldnames;
+          std::map<std::string, ofstream *> outfiles;
+          std::map<std::string, std::string>     outfieldnames;
           for(list<string>::const_iterator dit(outdiags.begin());dit!=outdiags.end();dit++)
             {
               string outfieldname = fieldname;
@@ -452,7 +452,7 @@ namespace Uintah {
               
             } // vectort diag
           
-          for(map<string, ofstream *>::iterator fit(outfiles.begin());fit!=outfiles.end();fit++)
+          for(map<std::string, ofstream *>::iterator fit(outfiles.begin());fit!=outfiles.end();fit++)
             {
               delete fit->second;
             }

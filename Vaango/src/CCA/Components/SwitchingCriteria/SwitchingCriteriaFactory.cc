@@ -50,7 +50,7 @@ SwitchingCriteria* SwitchingCriteriaFactory::create(ProblemSpecP& ps,
   string criteria("");
   ProblemSpecP switch_ps = ps->findBlock("SwitchCriteria");
   if (switch_ps) {
-    std::map<string,string> attributes;
+    std::map<std::string,string> attributes;
     switch_ps->getAttributes(attributes);
     criteria = attributes["type"];
   } else {

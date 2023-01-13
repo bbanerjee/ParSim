@@ -63,13 +63,13 @@ bool read_MicroSlip_BC_inputs(const ProblemSpecP& prob_spec,
   
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
-    std::map<string,string> face;
+    std::map<std::string,string> face;
     face_ps->getAttributes(face);
     bool is_a_MicroSlip_face = false;
     
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      std::map<string,string> bc_type;
+      std::map<std::string,string> bc_type;
       bc_iter->getAttributes(bc_type);
       
 

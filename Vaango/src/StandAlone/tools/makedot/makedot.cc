@@ -139,7 +139,7 @@ bool load_timestep(int timestep, float prune_percent)
   int process = 0;
   string xmlFileName;
   FILE* tstFile;
-  std::map<string, int> taskNumbers;
+  std::map<std::string, int> taskNumbers;
   int nextTask = 0;
    std::ostringstream outname;
   outname << "graph_" << timestep << ".dot";

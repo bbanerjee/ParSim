@@ -122,7 +122,7 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
   ProblemSpecP cfd_ps = params->findBlock("CFD");
   ProblemSpecP iceps = cfd_ps->findBlock("ICE");
   ProblemSpecP advect_ps = iceps->findBlock("advection"); 
-  std::map<string,string> advect_options;
+  std::map<std::string,string> advect_options;
   advect_ps->getAttributes(advect_options);
   if (advect_options["type"] == "FirstOrder" && d_doRefluxing){
     throw ProblemSetupException("\n ICE: You cannot use AMR refluxing and the first order advection operator together."
@@ -136,7 +136,7 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
     thresholdVar data; 
     string name, value, matl;
         
-    std::map<string,string> input;
+    std::map<std::string,string> input;
     var_ps->getAttributes(input);
     name  = input["name"];
     value = input["value"];

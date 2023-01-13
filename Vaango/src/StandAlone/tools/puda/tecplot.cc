@@ -78,7 +78,7 @@ tecplot( DataArchive *   da,
 {
   string ccVariable;
   bool ccVarFound = false;
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());

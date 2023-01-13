@@ -264,7 +264,7 @@ main(int argc, char** argv)
       archive->turnOffXMLCaching();
     }
     
-    std::vector<string> vars;
+    std::vector<std::string> vars;
     std::vector<const Uintah::TypeDescription*> types;
 
     archive->queryVariables(vars, types);

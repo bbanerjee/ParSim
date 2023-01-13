@@ -332,7 +332,7 @@ void AdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
     probe_ps->require("probeSamplingFreq", d_probeFreq);
      
     Vector location = Vector(0,0,0);
-    std::map<string,string> attr;                    
+    std::map<std::string,string> attr;                    
     for (ProblemSpecP prob_spec = probe_ps->findBlock("location"); prob_spec != 0; 
                       prob_spec = prob_spec->findNextBlock("location")) {
                       

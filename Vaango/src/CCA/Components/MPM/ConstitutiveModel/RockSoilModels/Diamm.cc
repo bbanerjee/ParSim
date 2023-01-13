@@ -716,7 +716,7 @@ Diamm::getInputParameters(ProblemSpecP& ps)
 void
 Diamm::initializeLocalMPMLabels()
 {
-  std::vector<string> ISVNames;
+  std::vector<std::string> ISVNames;
 
   ISVNames.push_back("EQDOT");
   ISVNames.push_back("I1");

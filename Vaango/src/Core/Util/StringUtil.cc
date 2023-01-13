@@ -86,7 +86,7 @@ string_to_IntVector(const std::string& input, std::vector<char> separators)
 Vector
 string_to_Vector(const std::string& input, const std::vector<char> separators)
 {
-  std::vector<string> strV = split_string(input, separators);
+  std::vector<std::string> strV = split_string(input, separators);
 
   if (strV.size() != 3) {
     std::ostringstream msg;

@@ -695,7 +695,7 @@ int main(int argc, char** argv)
   try {
     DataArchive* archive = scinew DataArchive(input_uda_name);
     
-    std::vector<string> vars;
+    std::vector<std::string> vars;
     std::vector<const Uintah::TypeDescription*> types;
 
     archive->queryVariables(vars, types);

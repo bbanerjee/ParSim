@@ -428,9 +428,9 @@ main(int argc, char** argv)
   DataArchive* da1 = scinew DataArchive(filebase1);
   DataArchive* da2 = scinew DataArchive(filebase2);
 
-  std::vector<string> vars, vars2;
+  std::vector<std::string> vars, vars2;
   std::vector<const Uintah::TypeDescription*> types, types2;
-  std::vector< pair<string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
+  std::vector< pair<std::string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
   da1->queryVariables(vars,  types);
   da2->queryVariables(vars2, types2);
 

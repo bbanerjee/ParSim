@@ -99,7 +99,7 @@ void customInitialization_problemSetup( const ProblemSpecP& cfd_ice_ps,
     ProblemSpecP mms_ps= c_init_ps->findBlock("manufacturedSolution");
     if(mms_ps) {
       
-      std::map<string,string> whichmms;
+      std::map<std::string,string> whichmms;
       mms_ps->getAttributes(whichmms);
       
       cib->which = whichmms["type"];

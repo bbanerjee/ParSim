@@ -68,7 +68,7 @@ using namespace std;
 void
 Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 {
-	vector<string> vars;
+	vector<std::string> vars;
 	vector<const Uintah::TypeDescription*> types;
 	da->queryVariables(vars, types);
 	ASSERTEQ(vars.size(), types.size());

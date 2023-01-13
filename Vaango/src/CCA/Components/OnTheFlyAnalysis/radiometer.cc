@@ -137,7 +137,7 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
 
    //__________________________________
    // using float or doubles for all-to-all variables
-   std::map<string,string> type;
+   std::map<std::string,string> type;
    rad_ps->getAttributes(type);
 
    string isFloat = type["type"];

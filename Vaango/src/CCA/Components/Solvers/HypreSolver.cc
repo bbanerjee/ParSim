@@ -905,7 +905,7 @@ public:
 #ifdef PRINTSYSTEM
       //__________________________________
       //   Debugging
-      std::vector<string> fname;
+      std::vector<std::string> fname;
       params->getOutputFileName(fname);
       HYPRE_StructMatrixPrint(fname[0].c_str(), *HA, 0);
       HYPRE_StructVectorPrint(fname[1].c_str(), *HB, 0);

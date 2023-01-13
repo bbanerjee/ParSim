@@ -241,7 +241,7 @@ WARNING
     // global constants
     bool d_doAMR;
     std::vector<Vector> d_probePts;
-    std::vector<string> d_probePtsNames;
+    std::vector<std::string> d_probePtsNames;
     bool d_usingProbePts;
     double d_probeFreq;
     

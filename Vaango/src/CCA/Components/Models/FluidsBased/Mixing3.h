@@ -164,7 +164,7 @@ WARNING
     };
 
     std::vector<Stream*> streams;
-    std::map<string, Stream*> names;
+    std::map<std::string, Stream*> names;
 
     Cantera::IdealGasMix* gas;
     Cantera::Reactor* reactor;

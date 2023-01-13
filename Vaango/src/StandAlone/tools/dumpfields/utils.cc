@@ -50,10 +50,10 @@
 
 using namespace std;
 
-vector<string> 
+vector<std::string> 
 split(const string & s, char sep, bool skipmult)
 {
-  std::vector<string> res;
+  std::vector<std::string> res;
   
   string::size_type ls(s.size());
   string::size_type p0(0), p1;

@@ -65,7 +65,7 @@ AnalysisModuleFactory::create(const ProblemSpecP& prob_spec,
       if(!module_ps){
         throw ProblemSetupException("\nERROR:<DataAnalysis>, could not find find <Module> tag \n",__FILE__, __LINE__);
       }
-      std::map<string,string> attributes;
+      std::map<std::string,string> attributes;
       module_ps->getAttributes(attributes);
       module = attributes["name"];
 

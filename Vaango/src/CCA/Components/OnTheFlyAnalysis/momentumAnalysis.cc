@@ -219,7 +219,7 @@ void momentumAnalysis::problemSetup(const ProblemSpecP&,
   for (ProblemSpecP face_ps = ma_ps->findBlock("Face");
       face_ps != 0; face_ps=face_ps->findNextBlock("Face")) {
 
-    std::map<string,string> faceMap;
+    std::map<std::string,string> faceMap;
     face_ps->getAttributes(faceMap);
 
     string side = faceMap["side"];
@@ -592,7 +592,7 @@ void momentumAnalysis::doAnalysis(const ProcessorGroup* pg,
         fileInfo.get() = myFileInfo;
       }
 
-      std::map<string, FILE *> myFiles;
+      std::map<std::string, FILE *> myFiles;
 
       if( fileInfo.get().get_rep() ){
         myFiles = fileInfo.get().get_rep()->files;

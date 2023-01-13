@@ -129,7 +129,7 @@ void ICE::printData_problemSetup( const ProblemSpecP& prob_spec)
 
     for (ProblemSpecP child = debug_ps->findBlock("debug"); child != 0;
         child = child->findNextBlock("debug")) {
-      std::map<string,string> debug_attr;
+      std::map<std::string,string> debug_attr;
       child->getAttributes(debug_attr);
       if (debug_attr["label"]      == "switchDebug_Initialize")
        switchDebug_Initialize            = true;

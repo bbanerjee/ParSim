@@ -1713,7 +1713,7 @@ private:
     { // second line is version
       string styleLine;
       std::getline(inStream, styleLine);
-      std::vector<string> tokens = tokenSplit(styleLine);
+      std::vector<std::string> tokens = tokenSplit(styleLine);
       if (tokens.size() != 3) throw std::runtime_error("PLY parser: bad format line");
       std::string formatStr = tokens[0];
       std::string typeStr = tokens[1];
@@ -1766,7 +1766,7 @@ private:
 
       // Parse an element
       else if (startsWith(line, "element")) {
-        std::vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid element line");
         string name = tokens[1];
         size_t count;
@@ -1779,7 +1779,7 @@ private:
 
       // Parse a property list
       else if (startsWith(line, "property list")) {
-        std::vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 5) throw std::runtime_error("PLY parser: Invalid property list line");
         if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property list without previous element");
         string countType = tokens[2];
@@ -1794,7 +1794,7 @@ private:
 
       // Parse a property
       else if (startsWith(line, "property")) {
-        std::vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid property line");
         if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property without previous element");
         string type = tokens[1];
@@ -1842,7 +1842,7 @@ private:
         string line;
         std::getline(inStream, line);
 
-        std::vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         size_t iTok = 0;
         for (size_t iP = 0; iP < elem.properties.size(); iP++) {
           elem.properties[iP]->parseNext(tokens, iTok);

@@ -71,7 +71,7 @@ Uintah::asci( DataArchive *   da,
               unsigned long & time_step_lower,
               unsigned long & time_step_upper )
 {
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
 
   da->queryVariables(vars, types);

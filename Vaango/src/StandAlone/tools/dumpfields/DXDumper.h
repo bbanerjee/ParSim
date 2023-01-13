@@ -100,7 +100,7 @@ namespace Uintah {
     int           dxobj_;
      std::ostringstream timestrm_;
     ofstream      dxstrm_;
-    std::map<string,FldWriter*> fldwriters_;
+    std::map<std::string,FldWriter*> fldwriters_;
     bool          bin_;
     bool          onedim_;
     string        dirname_;

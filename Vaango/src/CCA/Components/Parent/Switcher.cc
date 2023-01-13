@@ -141,7 +141,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
     initVars* initVar = scinew initVars;
     for( ProblemSpecP var = child->findBlock("init"); var != 0; var = var->findNextBlock("init") ) {
 
-      std::map<string,string> attributes;
+      std::map<std::string,string> attributes;
       var->getAttributes(attributes);
       
       // matlsetNames
@@ -210,7 +210,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
   //__________________________________
   // Get the vars that will need to be carried over 
   for( ProblemSpecP var = sim_block->findBlock("carry_over"); var != 0; var = var->findNextBlock("carry_over") ) {
-    std::map<string,string> attributes;
+    std::map<std::string,string> attributes;
     var->getAttributes(attributes);
     string name  = attributes["var"];
     string matls = attributes["matls"];
@@ -318,7 +318,7 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
  
  
     // Find the varLabel   
-    std::vector<string>& varNames    = tmp->varNames;
+    std::vector<std::string>& varNames    = tmp->varNames;
     std::vector<VarLabel*> varLabels = tmp->varLabels;
  
     for (unsigned j = 0; j < varNames.size(); j++) {

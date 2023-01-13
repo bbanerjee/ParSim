@@ -375,7 +375,7 @@ void GV_TaskGraph::markObsoleteEdges()
 GV_Task*
 GV_TaskGraph::findTask(string name)
 {
-  std::map<string, GV_Task*>::iterator iter = m_taskMap.find(name);
+  std::map<std::string, GV_Task*>::iterator iter = m_taskMap.find(name);
   if (iter == m_taskMap.end())
     return 0;
   return iter->second;
@@ -384,7 +384,7 @@ GV_TaskGraph::findTask(string name)
 Edge*
 GV_TaskGraph::findEdge(string name)
 {
-  std::map<string, Edge*>::iterator iter = m_edgeMap.find(name);
+  std::map<std::string, Edge*>::iterator iter = m_edgeMap.find(name);
   if (iter == m_edgeMap.end())
     return 0;
   return iter->second;

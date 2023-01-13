@@ -115,7 +115,7 @@ using namespace Uintah;
 // -----------------------------------------------------------------------------
 
 // store tuple of (variable, it's type)
-typedef pair<string, const Uintah::TypeDescription*> typed_varname;		  
+typedef pair<std::string, const Uintah::TypeDescription*> typed_varname;		  
 
 static 
 void usage(const string& badarg, const string& progname)
@@ -202,14 +202,14 @@ main(int argc, char** argv)
     DataArchive* da = scinew DataArchive(filebase);
     
     // load list of possible variables from the data archive
-    std::vector<string> allvars;
+    std::vector<std::string> allvars;
     std::vector<const Uintah::TypeDescription*> alltypes;
     da->queryVariables(allvars, alltypes);
     ASSERTEQ(allvars.size(), alltypes.size());
     
     if(args.getLogical("showfields")) {
       std::cout << "Valid field names are: " << endl;
-      for(vector<string>::const_iterator vit(allvars.begin());vit!=allvars.end();vit++) {
+      for(vector<std::string>::const_iterator vit(allvars.begin());vit!=allvars.end();vit++) {
         if(*vit != "p.x") 
           std::cout << "   " << *vit << endl;
       }
@@ -243,8 +243,8 @@ main(int argc, char** argv)
     
     if(args.hasUnused()) {
       cerr << "Unused options detected" << endl;
-      std::vector<string> extraargs = args.unusedArgs();
-      for(vector<string>::const_iterator ait(extraargs.begin());ait!=extraargs.end();ait++)
+      std::vector<std::string> extraargs = args.unusedArgs();
+      for(vector<std::string>::const_iterator ait(extraargs.begin());ait!=extraargs.end();ait++)
         {
           cerr << "    " << *ait << endl;
         }

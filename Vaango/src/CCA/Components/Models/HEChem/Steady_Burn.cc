@@ -150,7 +150,7 @@ void Steady_Burn::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup
   for (ProblemSpecP child = DA_ps->findBlock("save");
        child != 0;
        child = child->findNextBlock("save") ){
-    std::map<string,string> var_attr;
+    std::map<std::string,string> var_attr;
     child->getAttributes(var_attr);
     if (var_attr["label"] == "totalMassBurned"){
       d_saveConservedVars->mass  = true;

@@ -155,7 +155,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
   
   //__________________________________
   //  Read in containers 
-  std::map<string,string> attribute;
+  std::map<std::string,string> attribute;
   ProblemSpecP objects_ps = d_prob_spec->findBlock("objects"); 
   if (!objects_ps){
     throw ProblemSetupException("\n ERROR:containerExtract: Couldn't find <objects> tag \n", __FILE__, __LINE__);    

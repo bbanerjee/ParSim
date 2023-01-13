@@ -64,6 +64,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+namespace {
+// Usage: export SCI_DEBUG="BC_dbg:+"
+// There can be multiple DataArchives so must be static.
+inline static Uintah::Dout DA_dbg{ "DA_dbg",
+                                   "DataArchive",
+                                   "DataArchive debug info",
+                                   false };
+}
+
 namespace Uintah {
 
 class VarLabel;
@@ -91,7 +100,7 @@ private:
   struct DataFileInfo; // Forward declaration
 
 public:
-  static std::vector<double> s_empty_vectorD;
+  inline static std::vector<double> s_empty_vectorD{};
 
   // Used as the first byte of the grid.xml file to designate/verify that it is
   // stored in binary format.
@@ -151,12 +160,12 @@ public:
   //  This is used by postprocessUda component.  It reads in the data and puts
   //  it into the DW. This is a specialization of restartInitialize().
   void
-  postprocessUda_ReadUda(const ProcessorGroup* pg,
-                         int timestep,
-                         const GridP& grid,
-                         const PatchSubset* patches,
-                         DataWarehouse* dw,
-                         LoadBalancer* lb);
+  postprocess_ReadUda(const ProcessorGroup* pg,
+                      int timestep,
+                      const GridP& grid,
+                      const PatchSubset* patches,
+                      DataWarehouse* dw,
+                      LoadBalancer* lb);
 
   // GROUP:  Information Access
   //////////
@@ -214,7 +223,7 @@ public:
   // Queries a variable for a material, patch, and index in time.
   // Optionally pass in DataFileInfo if you're iterating over
   // entries in the hash table (like restartInitialize does)
-  void
+  bool
   query(Variable& var,
         const std::string& name,
         int matlIndex,
@@ -222,7 +231,7 @@ public:
         int timeIndex,
         DataFileInfo* dfi = nullptr);
 
-  void
+  bool
   query(Variable& var,
         const std::string& name,
         int matlIndex,
@@ -352,11 +361,11 @@ public:
 
   // Tells you the number of timesteps to cache. Less than or equal to
   // zero means to cache all of them.
-  int timestep_cache_size;
+  int timestep_cache_size{ 10 };
 
   // This will be the default number of timesteps cached, determined
   // by the number of processors.
-  int default_cache_size;
+  int default_cache_size{ 10 };
 
 protected:
   DataArchive();
@@ -371,10 +380,7 @@ private:
   static void
   queryEndiannessAndBits(FILE* fp, std::string& endianness, int& numBits);
 
-  static bool s_types_initialized;
-
-  // There can be multiple DataArchives so must be static.
-  static DebugStream s_dbg;
+  inline static bool s_types_initialized{ false };
 
 private:
   // For file format
@@ -501,13 +507,12 @@ private:
   };
 
 private:
-  Uintah::MasterLock d_lock;
-
   using psetDBType =
     std::map<std::pair<int, const Patch*>, Handle<ParticleSubset>>;
   psetDBType d_pset_DB;
   std::map<std::string, VarLabel*> d_created_var_labels;
-  std::string d_particle_position_name;
+
+  std::string d_particle_position_name{ "p.x" };
 
   std::string d_file_base;
   FILE* d_index_file; // File pointer to XML index document.
@@ -530,6 +535,8 @@ private:
 
   // Array of MPI Communicators for PIDX usage...
   std::vector<MPI_Comm> d_pidx_comms;
+
+  MasterLock d_lock;
 
 private:
   void
@@ -649,7 +656,8 @@ DataArchive::query(std::vector<T>& values,
                    double startTime,
                    double endTime)
 {
-  double call_start = Uintah::Time::currentSeconds();
+  Timers::Simple timer;
+  timer.start();
 
   std::vector<int> index;
   std::vector<double> times;
@@ -657,8 +665,9 @@ DataArchive::query(std::vector<T>& values,
 
   // figure out what kind of variable we're looking for
   std::vector<std::string> type_names;
+  std::vector<int> num_matls;
   std::vector<const TypeDescription*> type_descriptions;
-  queryVariables(type_names, type_descriptions);
+  queryVariables(type_names, num_matls, type_descriptions);
   const TypeDescription* type                  = nullptr;
   std::vector<std::string>::iterator name_iter = type_names.begin();
   std::vector<const TypeDescription*>::iterator type_iter =
@@ -711,8 +720,9 @@ DataArchive::query(std::vector<T>& values,
     // std::cerr <<" time = "<<t<<",  value = "<<var[idx]<<std::endl;
     values.push_back(var[idx]);
   }
-  dbg << "DataArchive::query(values) completed in "
-      << (Uintah::Time::currentSeconds() - call_start) << " seconds\n";
+  DOUT(DA_dbg,
+       "DataArchive::query(values) completed in " << timer().seconds()
+                                                  << " seconds");
 }
 
 template<class T>
@@ -725,7 +735,8 @@ DataArchive::query(std::vector<T>& values,
                    double endTime,
                    int levelIndex /*=-1*/)
 {
-  double call_start = Uintah::Time::currentSeconds();
+  Timers::Simple timer;
+  timer.start();
 
   std::vector<int> index;
   std::vector<double> times;
@@ -733,8 +744,9 @@ DataArchive::query(std::vector<T>& values,
 
   // figure out what kind of variable we're looking for
   std::vector<std::string> type_names;
+  std::vector<int> num_matls;
   std::vector<const TypeDescription*> type_descriptions;
-  queryVariables(type_names, type_descriptions);
+  queryVariables(type_names, num_matls, type_descriptions);
   const TypeDescription* type                  = nullptr;
   std::vector<std::string>::iterator name_iter = type_names.begin();
   std::vector<const TypeDescription*>::iterator type_iter =
@@ -889,8 +901,9 @@ DataArchive::query(std::vector<T>& values,
     // std::cerr << "DataArchive::query:data extracted" << std::endl;
   }
 
-  dbg << "DataArchive::query(values) completed in "
-      << (Uintah::Time::currentSeconds() - call_start) << " seconds\n";
+  DOUT(DA_dbg,
+       "DataArchive::query(values) completed in " << timer().seconds()
+                                                  << " seconds");
 }
 
 } // end namespace Uintah

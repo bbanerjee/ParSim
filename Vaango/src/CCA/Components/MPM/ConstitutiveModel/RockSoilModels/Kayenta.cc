@@ -1153,7 +1153,7 @@ Kayenta::initializeLocalMPMLabels()
     "p.localized", ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create(
     "p.localized+", ParticleVariable<int>::getTypeDescription());
-  std::vector<string> ISVNames;
+  std::vector<std::string> ISVNames;
 
   // These lines of code are added by KC to replace the currently hard-coded
   // internal variable allocation with a proper call to KMMRXV routine.

@@ -258,7 +258,7 @@ struct NeedAppliesTo
 {
   string parentAttributeName_;      // Eg: The parent of this tag will have an
                                     // attribute named "type" or "label".
-  std::vector<string> validValues_; //     the value of "type" might be
+  std::vector<std::string> validValues_; //     the value of "type" might be
                                     //     'hard_sphere_gas'.  If that value
 }; //     is in the validValues_ array, then the 'need' of the tag applies.
 
@@ -272,7 +272,7 @@ struct ChildRequirement : public RefCounted
 
   Req typeOfRequirement;
   bool appliesToAttribute; // 'false' if requirement applies to a child tag.
-  std::vector<string> childrenList; // used for ONE_OF and ALL_OR_NONE_OF
+  std::vector<std::string> childrenList; // used for ONE_OF and ALL_OR_NONE_OF
 };
 
 ostream&
@@ -327,7 +327,7 @@ struct AttributeAndTagBase : public RefCounted
   AttributeAndTagBase(string name,
                       need_e need,
                       type_e type,
-                      std::vector<string> validValues,
+                      std::vector<std::string> validValues,
                       /*const*/ TagP parent)
     : parent_(parent)
     , name_(std::move(name))
@@ -365,7 +365,7 @@ struct AttributeAndTagBase : public RefCounted
   string name_;
   need_e need_;
   type_e type_;
-  std::vector<string> validValues_;
+  std::vector<std::string> validValues_;
   int occurrences_;
 
   NeedAppliesTo needAppliesTo_;
@@ -386,7 +386,7 @@ struct AttributeAndTagBase : public RefCounted
   // is
   // being validated, but overwritten the next time that type of tag is
   // validated.)
-  std::vector<string> currentChildrenTags_;
+  std::vector<std::string> currentChildrenTags_;
 
   ///////////////////////////////////
 
@@ -645,10 +645,10 @@ static TagP commonTags_g;
 // This map is used to allow validation of Geom tags (in the .ups files) that
 // are 'name'd (or 'label'd) so they can be referenced again.  This is used
 // only for 'cylinder's and 'box's currently.
-std::map<string, TagP> namedGeomPieces_g;
+std::map<std::string, TagP> namedGeomPieces_g;
 
 std::list<TagP> needForwardDeclResolution;
-std::map<string, bool> forwardDeclMap;
+std::map<std::string, bool> forwardDeclMap;
 
 //
 ///////////////////////////////////////////////////////////////////////
@@ -794,7 +794,7 @@ getNeedAndTypeAndValidValues(const string& specStr,
   std::vector<char> separators;
   separators.push_back('\'');
 
-  std::vector<string> specs = split_string(specStr, separators);
+  std::vector<std::string> specs = split_string(specStr, separators);
 
   if (specs.size() < 1 || specs.size() > 2) {
     throw ProblemSetupException("Error in getNeedAndTypeAndValidValues()...",
@@ -805,7 +805,7 @@ getNeedAndTypeAndValidValues(const string& specStr,
   separators.clear();
   separators.push_back(' ');
   separators.push_back('\t');
-  std::vector<string> needType = split_string(specs[0], separators);
+  std::vector<std::string> needType = split_string(specs[0], separators);
 
   if (needType.size() == 1) {
     // Only the 'need' is provided... grab it, and drop out.
@@ -858,7 +858,7 @@ getLabelAndNeedAndTypeAndValidValues(const string& specStr,
   std::vector<char> separators;
   separators.push_back('\''); // Split by "'"s (single quotes).
 
-  std::vector<string> specs = split_string(specStr, separators);
+  std::vector<std::string> specs = split_string(specStr, separators);
 
   if (specs.size() < 1 || specs.size() > 2) {
     std::ostringstream errorMsg;
@@ -874,7 +874,7 @@ getLabelAndNeedAndTypeAndValidValues(const string& specStr,
   separators.clear();
   separators.push_back(' ');
   separators.push_back('\t');
-  std::vector<string> labelNeedType = split_string(specs[0], separators);
+  std::vector<std::string> labelNeedType = split_string(specs[0], separators);
 
   if (labelNeedType.size() != 3) {
     throw ProblemSetupException(
@@ -1150,7 +1150,7 @@ Tag::parseXmlTag(const xmlNode* xmlTag)
                    0) { // attribute string begins with "children"
 
           string attrStr = (const char*)(child->children->content);
-          std::vector<string> strings;
+          std::vector<std::string> strings;
           std::vector<char> separators;
 
           separators.push_back(',');
@@ -1202,7 +1202,7 @@ Tag::parseXmlTag(const xmlNode* xmlTag)
                    0) { // attribute string begins with "children"
 
           string attrStr = (const char*)(child->children->content);
-          std::vector<string> strings;
+          std::vector<std::string> strings;
           std::vector<char> separators;
 
           separators.push_back(',');
@@ -1916,7 +1916,7 @@ Tag::validate(const ProblemSpec* ps, unsigned int depth /* = 0 */)
         dbg << "  We are currently looking at the " +
                  childTag->getCompleteName() + " tag.\n";
 
-        std::vector<string>::const_iterator iter =
+        std::vector<std::string>::const_iterator iter =
           find(childTag->needAppliesTo_.validValues_.begin(),
                childTag->needAppliesTo_.validValues_.end(),
                attribute->currentValue_);
@@ -2101,7 +2101,7 @@ Tag::validate(const ProblemSpec* ps, unsigned int depth /* = 0 */)
                                       __FILE__,
                                       __LINE__); // FIXME fix error message...
         } else {
-          std::vector<string>::const_iterator iter =
+          std::vector<std::string>::const_iterator iter =
             find(tag->needAppliesTo_.validValues_.begin(),
                  tag->needAppliesTo_.validValues_.end(),
                  attribute->currentValue_);
@@ -2379,7 +2379,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
       string name1 = (const char*)(child->name);
       if (name1 == "include") {
         ProblemSpec temp(child);
-        std::map<string, string> attributes;
+        std::map<std::string, std::string> attributes;
         temp.getAttributes(attributes);
         xmlNode* prevChild = child->prev;
 
@@ -2407,7 +2407,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
           if (section !=
               "") { // Find the right section of the included file (to include).
 
-            std::vector<string> sections;
+            std::vector<std::string> sections;
             std::vector<char> separators;
             separators.push_back('/');
             sections = split_string(section, separators);

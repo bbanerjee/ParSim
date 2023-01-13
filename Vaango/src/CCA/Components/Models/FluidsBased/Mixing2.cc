@@ -184,7 +184,7 @@ void Mixing2::problemSetup(GridP&, SimulationStateP& in_state,
        child = child->findNextBlock("stream")) {
     string name;
     child->getAttribute("name", name);
-    std::map<string, Stream*>::iterator iter = names.find(name);
+    std::map<std::string, Stream*>::iterator iter = names.find(name);
     if(iter == names.end())
       throw ProblemSetupException("Stream "+name+" species not found", __FILE__, __LINE__);
     Stream* stream = iter->second;

@@ -178,7 +178,7 @@ DataArchiver::problemSetup( const ProblemSpecP    & params,
    
   // get the variables to save
   d_saveLabelNames.clear(); // we can problemSetup multiple times on a component Switch, clear the old ones.
-  std::map<string, string> attributes;
+  std::map<std::string, std::string> attributes;
   SaveNameItem saveItem;
   ProblemSpecP save = p->findBlock("save");
 
@@ -672,7 +672,7 @@ DataArchiver::reduceUdaSetup(Dir& fromDir)
     }
     
     // copy the original ups file if it exists
-    std::vector<string> ups;
+    std::vector<std::string> ups;
     fromDir.getFilenamesBySuffix( "ups", ups );
     
     if ( ups.size() != 0 ){
@@ -830,7 +830,7 @@ DataArchiver::copyTimesteps(Dir& fromDir, Dir& toDir, int startTimestep,
     if (timestep >= startTimestep &&
         (timestep <= maxTimestep || maxTimestep < 0)) {
       // copy the timestep directory over
-      std::map<string,string> attributes;
+      std::map<std::string,string> attributes;
       ts->getAttributes(attributes);
 
       string hrefNode = attributes["href"];
@@ -858,7 +858,7 @@ DataArchiver::copyTimesteps(Dir& fromDir, Dir& toDir, int startTimestep,
       timestep_str << timestep;
       ProblemSpecP newTS = timesteps->appendElement("timestep", timestep_str.str().c_str());
 
-      for (map<string,string>::iterator iter = attributes.begin();
+      for (map<std::string,string>::iterator iter = attributes.begin();
            iter != attributes.end(); iter++) {
         newTS->setAttribute((*iter).first, (*iter).second);
       }
@@ -893,7 +893,7 @@ DataArchiver::copyDatFiles(Dir& fromDir, Dir& toDir, int startTimestep,
     ProblemSpecP variable = globals->findBlock("variable");
     // copy data file associated with each variable
     while (variable != 0) {
-      std::map<string,string> attributes;
+      std::map<std::string,string> attributes;
       variable->getAttributes(attributes);
 
       string hrefNode = attributes["href"];
@@ -1441,7 +1441,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
           bool found=false;
           for(ProblemSpecP n = vs->getFirstChild(); n != 0; n=n->getNextSibling()){
             if(n->getNodeName() == "variable") {
-              std::map<string,string> attributes;
+              std::map<std::string,string> attributes;
               n->getAttributes(attributes);
               string varname = attributes["name"];
               if(varname == "")

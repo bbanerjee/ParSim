@@ -56,7 +56,7 @@ namespace Uintah {
   using namespace std;
   
   
-  FieldSelection::FieldSelection(Args & args, const vector<string> & allfields)
+  FieldSelection::FieldSelection(Args & args, const vector<std::string> & allfields)
   {
     // let user select fields using 
     // -fields f1,f2,f3
@@ -66,8 +66,8 @@ namespace Uintah {
     if(fieldnames=="all") {
       this->fieldnames = allfields;      
     } else {
-      std::vector<string> requested_fields = split(fieldnames,',',false);
-      for(vector<string>::const_iterator fit(requested_fields.begin());
+      std::vector<std::string> requested_fields = split(fieldnames,',',false);
+      for(vector<std::string>::const_iterator fit(requested_fields.begin());
           fit!=requested_fields.end();fit++) {
         if(!count(allfields.begin(), allfields.end(), *fit))
           throw ProblemSetupException("Failed to find field called "+*fit,__FILE__,__LINE__);
@@ -81,7 +81,7 @@ namespace Uintah {
     string diagnames = args.getString("diagnostic", "value");
     if(diagnames!="all") {
       this->diagnames = split(diagnames, ',', false);
-      for(vector<string>::const_iterator dit(this->diagnames.begin());
+      for(vector<std::string>::const_iterator dit(this->diagnames.begin());
           dit!=this->diagnames.end();dit++)
         std::cout << "   writing " << *dit << endl;
     }
@@ -96,8 +96,8 @@ namespace Uintah {
     // -material mat1,mat2
     string matnames = args.getString("material", "all");
     if(matnames!="all") {
-      std::vector<string> matlist = split(matnames, ',', false);
-      for(vector<string>::const_iterator mit(matlist.begin());mit!=matlist.end();mit++) {
+      std::vector<std::string> matlist = split(matnames, ',', false);
+      for(vector<std::string>::const_iterator mit(matlist.begin());mit!=matlist.end();mit++) {
         int imat = (int)strtol(mit->c_str(), 0, 10);
         this->mats.push_back(imat);
       }

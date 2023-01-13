@@ -438,7 +438,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   if (DA_ps) {
     for (ProblemSpecP label_iter = DA_ps->findBlock("save"); label_iter != 0;
          label_iter              = label_iter->findNextBlock("save")) {
-      std::map<string, string> labelName;
+      std::map<std::string, std::string> labelName;
       label_iter->getAttributes(labelName);
       if (labelName["label"] == "g.heatflux") {
         d_computeNodalHeatFlux = true;
@@ -454,7 +454,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     for (ProblemSpecP module_ps = da_ps->findBlock("Module"); module_ps != 0;
          module_ps              = module_ps->findNextBlock("Module")) {
       if (module_ps) {
-        std::map<string, string> attributes;
+        std::map<std::string, std::string> attributes;
         module_ps->getAttributes(attributes);
         if (attributes["name"] == "flatPlate_heatFlux") {
           d_computeNodalHeatFlux = true;

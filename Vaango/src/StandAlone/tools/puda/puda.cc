@@ -519,7 +519,7 @@ main(int argc, char** argv)
     //__________________________________
     //  LIST VARIABLES
     if (clf.do_listvars) {
-      std::vector<string> vars;
+      std::vector<std::string> vars;
       std::vector<const Uintah::TypeDescription*> types;
       da->queryVariables(vars, types);
       std::cout << "There are " << vars.size() << " variables:\n";
@@ -611,7 +611,7 @@ main(int argc, char** argv)
     //______________________________________________________________________
     //	       DO CELL STRESSES
     if (clf.do_cell_stresses) {
-      std::vector<string> vars;
+      std::vector<std::string> vars;
       std::vector<const Uintah::TypeDescription*> types;
       da->queryVariables(vars, types);
       ASSERTEQ(vars.size(), types.size());
@@ -775,7 +775,7 @@ printParticleVariable(DataArchive* da, string particleVariable,
                       unsigned long time_step_upper, int mat)
 {
   // Check if the particle variable is available
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());

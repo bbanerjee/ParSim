@@ -185,7 +185,7 @@ void printVelocity(DataArchive* da,
 {
 
   // Check if the particle variable is available
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());

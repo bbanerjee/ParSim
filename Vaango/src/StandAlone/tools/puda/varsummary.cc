@@ -255,14 +255,14 @@ MinMaxInfo<Type>::initializeMinMax(int startingIndex)
 //
 //  * Map of string ("variable_name malt#") to min/max info
 //
-map<string, MinMaxInfoBase*> globalMinMax;
+map<std::string, MinMaxInfoBase*> globalMinMax;
 
 static void
 displayGlobalMinMax()
 {
   std::cout << "Global Min/Max are:\n\n";
 
-  for (map<string, MinMaxInfoBase*>::iterator iter = globalMinMax.begin();
+  for (map<std::string, MinMaxInfoBase*>::iterator iter = globalMinMax.begin();
        iter != globalMinMax.end(); iter++) {
 
     std::cout << iter->first << ": ";
@@ -556,7 +556,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
   cout.setf(ios::scientific, ios::floatfield);
   cout.precision(16);
 
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());

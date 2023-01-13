@@ -1143,7 +1143,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   int numAllMatls = sharedState->getNumMaterials();
   
   // If a face is periodic then is_press_BC_set = true
-  std::map<string,bool> is_press_BC_set;
+  std::map<std::string,bool> is_press_BC_set;
   is_press_BC_set["x-"] = (periodic.x() ==1) ? true:false;
   is_press_BC_set["x+"] = (periodic.x() ==1) ? true:false;
   is_press_BC_set["y-"] = (periodic.y() ==1) ? true:false;
@@ -1155,14 +1155,14 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
   
-    std::map<string,bool>isBC_set;
+    std::map<std::string,bool>isBC_set;
     isBC_set["Temperature"] =false;
     isBC_set["Density"]     =false;
     isBC_set["Velocity"]    =false;            
     isBC_set["SpecificVol"] =true;  
     isBC_set["Symmetric"]   =false;    
                       
-    std::map<string,string> face;
+    std::map<std::string,string> face;
     face_ps->getAttributes(face);
     
     // tag each face if it's been specified
@@ -1177,7 +1177,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
     // loop over all BCTypes for that face 
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      std::map<string,string> bc_type;
+      std::map<std::string,string> bc_type;
       bc_iter->getAttributes(bc_type);
             
       // valid user input      

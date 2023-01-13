@@ -158,7 +158,7 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
   d_matl_set = scinew MaterialSet();
-  std::map<string,string> attribute;
+  std::map<std::string,string> attribute;
     
   //__________________________________
   //  Now loop over all the variables to be analyzed  
@@ -602,7 +602,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
       fileInfo.get() = myFileInfo;
     }
     
-    std::map<string, FILE *> myFiles;
+    std::map<std::string, FILE *> myFiles;
 
     if( fileInfo.get().get_rep() ){
       myFiles = fileInfo.get().get_rep()->files;

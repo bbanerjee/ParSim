@@ -923,7 +923,7 @@ bool BNRRegridder::verifyGrid(Grid *grid)
 
   std::vector<int> checksums;
   std::vector<int> their_checksums;
-  std::vector<string> labels;
+  std::vector<std::string> labels;
 
   int num_levels=grid->numLevels();
   grid_dbg << d_myworld->myRank() << " Grid number of levels:" << num_levels << endl;

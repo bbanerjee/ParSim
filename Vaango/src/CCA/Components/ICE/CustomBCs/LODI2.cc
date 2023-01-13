@@ -106,13 +106,13 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
   
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
-    std::map<string,string> face;
+    std::map<std::string,string> face;
     face_ps->getAttributes(face);
     bool is_a_Lodi_face = false;
     
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      std::map<string,string> bc_type;
+      std::map<std::string,string> bc_type;
       bc_iter->getAttributes(bc_type);
       
       //__________________________________
@@ -203,7 +203,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
     ProblemSpecP DA_ps = prob_spec->findBlock("DataArchiver");
     for (ProblemSpecP child = DA_ps->findBlock("save"); child != 0;
                       child = child->findNextBlock("save")) {
-      std::map<string,string> var_attr;
+      std::map<std::string,string> var_attr;
       child->getAttributes(var_attr);
       if( ( var_attr["label"] == "Li1" ||
             var_attr["label"] == "Li2" ||

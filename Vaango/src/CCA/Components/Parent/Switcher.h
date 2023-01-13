@@ -156,8 +156,8 @@ namespace Uintah {
     unsigned int d_componentIndex;
     
     struct initVars{
-      std::vector<string>            varNames;
-      std::vector<string>            matlSetNames;
+      std::vector<std::string>            varNames;
+      std::vector<std::string>            matlSetNames;
       std::vector<const MaterialSet*> matls;
       std::vector<int>               levels;
       std::vector<VarLabel*>         varLabels;
@@ -168,8 +168,8 @@ namespace Uintah {
     set<const VarLabel*, VarLabel::Compare> d_computedVars;
     
 
-    std::vector<string>          d_in_file;                  // contains the name of all the subcomponent inputfiles
-    std::vector<string>          d_carryOverVars;
+    std::vector<std::string>          d_in_file;                  // contains the name of all the subcomponent inputfiles
+    std::vector<std::string>          d_carryOverVars;
     std::vector<VarLabel*>       d_carryOverVarLabels;
     std::vector<MaterialSubset*> d_carryOverVarMatls;
     std::vector<bool>            d_carryOverFinestLevelOnly; // either all levels or finest only

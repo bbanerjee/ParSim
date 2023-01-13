@@ -47,7 +47,7 @@ using namespace std;
 void
 Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
 {
-  std::vector<string> vars;
+  std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
