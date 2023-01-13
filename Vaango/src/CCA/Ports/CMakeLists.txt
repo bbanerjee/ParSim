@@ -29,9 +29,7 @@ SET(Vaango_CCA_Ports_SRCS
   DataWarehouse.cc 
   LoadBalancer.cc 
   ModelInterface.cc 
-  ModelMaker.cc 
   ProblemSpecInterface.cc 
-  Regridder.cc 
   Scheduler.cc 
   SolverInterface.cc 
   SwitchingCriteria.cc 

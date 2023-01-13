@@ -50,7 +50,7 @@
 #include <Core/OS/ProcessInfo.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
 #include <time.h>
@@ -1483,7 +1483,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid) {
           // Gather size from all processors
           int mycount = my_patch_ids.size();
           std::vector<int> counts(d_myworld->nRanks());
-          MPI_Allgather(&mycount,
+          Uintah::MPI::Allgather(&mycount,
                         1,
                         MPI_INT,
                         &counts[0],
@@ -1501,7 +1501,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid) {
           }
 
           std::vector<int> all_patch_ids(pos);  // receive array;
-          MPI_Allgatherv(&my_patch_ids[0],
+          Uintah::MPI::Allgatherv(&my_patch_ids[0],
                          counts[d_myworld->myRank()],
                          MPI_INT,
                          &all_patch_ids[0],

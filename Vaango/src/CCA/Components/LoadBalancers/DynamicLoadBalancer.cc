@@ -41,7 +41,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/FancyAssert.h>
 #include <Core/Util/DebugStream.h>
 
@@ -328,7 +328,7 @@ DynamicLoadBalancer::collectParticles( const Grid                  * grid,
     }
 
 
-    MPI_Allgatherv(&particleList[0], particleList.size()*sizeof(PatchInfo),  MPI_BYTE,
+    Uintah::MPI::Allgatherv(&particleList[0], particleList.size()*sizeof(PatchInfo),  MPI_BYTE,
                    &all_particles[0], &recvcounts[0], &displs[0], MPI_BYTE, d_myworld->getComm());
         
     if (dbg.active() && d_myworld->myRank() == 0) {
@@ -545,7 +545,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
       //gather the maxes
       //change to all reduce with loc
       if(num_procs>1){
-        MPI_Allreduce(&maxInfo,&min,1,MPI_DOUBLE_INT,MPI_MINLOC,d_myworld->getComm());    
+        Uintah::MPI::Allreduce(&maxInfo,&min,1,MPI_DOUBLE_INT,MPI_MINLOC,d_myworld->getComm());    
       }else{
         min=maxInfo;
       }
@@ -686,7 +686,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
   {
     double avg[5]={0};
     
-    MPI_Reduce(&lbtimes,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
+    Uintah::MPI::Reduce(&lbtimes,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
     
     if(d_myworld->myRank()==0) {
       cout << "LoadBalance Avg Times: "; 
@@ -699,7 +699,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     
     double max[5]={0};
     
-    MPI_Reduce(&lbtimes,&max,5,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
+    Uintah::MPI::Reduce(&lbtimes,&max,5,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
     
     if(d_myworld->myRank()==0) {
       cout << "LoadBalance Max Times: "; 

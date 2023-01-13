@@ -122,9 +122,9 @@ void CostModelForecaster::outputError(const GridP grid)
   double max_error=0;
   
   if(d_myworld->nRanks()>1){
-    MPI_Reduce(&sum_error_local, &sum_error, 1,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
-    MPI_Reduce(&sum_aerror_local,&sum_aerror,1,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
-    MPI_Reduce(&max_error_local, &max_error, 1,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
+    Uintah::MPI::Reduce(&sum_error_local, &sum_error, 1,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
+    Uintah::MPI::Reduce(&sum_aerror_local,&sum_aerror,1,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
+    Uintah::MPI::Reduce(&max_error_local, &max_error, 1,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
   }
   else
   {
@@ -187,7 +187,7 @@ void CostModelForecaster::collectPatchInfo(const GridP grid, vector<PatchInfo> &
   
   //allgather the patch info
   if(d_myworld->nRanks()>1){
-    MPI_Allgatherv(&patchList[0], patchList.size()*sizeof(PatchInfo),  MPI_BYTE,
+    Uintah::MPI::Allgatherv(&patchList[0], patchList.size()*sizeof(PatchInfo),  MPI_BYTE,
                     &patch_info[0], &recvs[0], &displs[0], MPI_BYTE,
                     d_myworld->getComm());
   }

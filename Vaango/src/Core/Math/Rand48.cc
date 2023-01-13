@@ -48,7 +48,7 @@
 
 #if defined(_WIN32) && !defined(HAVE_DRAND48)
 #include <Core/Math/Rand48.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <cstdlib>
 static bool initialized = false;
 

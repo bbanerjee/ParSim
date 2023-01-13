@@ -39,7 +39,7 @@
 
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Util/Assert.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Containers/OffsetArray1.h>
 #include <Core/Util/XMLUtils.h>

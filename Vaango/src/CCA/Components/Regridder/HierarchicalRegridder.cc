@@ -472,7 +472,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
       // We're going to get what data we have from the DW and put its pointer data in sendbuf.  While
       // we're doing that, we need to prepare the receiving buffer to receive these, so we create a subPatchFlag
       // for each patch we're going to receive from, and then put it in the right order, as the 
-      // MPI_Allgatherv puts them in order of processor.
+      // Uintah::MPI::Allgatherv puts them in order of processor.
       
       for (Level::const_patchIterator citer = l->patchesBegin();
            citer != l->patchesEnd(); citer++) {
@@ -517,7 +517,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
 #if 1
       if (d_maxPatchSize[levelIdx] == d_patchSize[levelIdx]) {
 #endif
-        MPI_Allgatherv(&sendbuf[0], sendbufindex, MPI_INT, 
+        Uintah::MPI::Allgatherv(&sendbuf[0], sendbufindex, MPI_INT, 
                        &recvbuf[0], &recvcounts[0], &displs[0], MPI_INT, d_myworld->getComm());
 #if 1
       }

@@ -40,7 +40,7 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
 
@@ -296,7 +296,7 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
       displs[i] = displs[i-1]+recvcounts[i-1];
     }
 
-    MPI_Allgatherv(&particleList[0], particleList.size()*sizeof(PatchInfo),  MPI_BYTE,
+    Uintah::MPI::Allgatherv(&particleList[0], particleList.size()*sizeof(PatchInfo),  MPI_BYTE,
                    &all_particles[0], &recvcounts[0], &displs[0], MPI_BYTE, d_myworld->getComm());
 
     if (dbg.active() && d_myworld->myRank() == 0) {
@@ -425,7 +425,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
     //gather the maxes
     //change to all reduce with loc
     if(numProcs>1)
-      MPI_Allreduce(&maxInfo,&min,1,MPI_DOUBLE_INT,MPI_MINLOC,d_myworld->getComm());    
+      Uintah::MPI::Allreduce(&maxInfo,&min,1,MPI_DOUBLE_INT,MPI_MINLOC,d_myworld->getComm());    
     else
       min=maxInfo;
 

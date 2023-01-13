@@ -214,7 +214,7 @@ PatchFixer::FixUp(vector<Region> &patches)
     {
       vector<int> patch_sizes(d_myworld->nRanks());
       vector<int> displacements(d_myworld->nRanks());
-      MPI_Allgather(&my_patch_size,1,MPI_INT,&patch_sizes[0],1,MPI_INT,d_myworld->getComm());   
+      Uintah::MPI::Allgather(&my_patch_size,1,MPI_INT,&patch_sizes[0],1,MPI_INT,d_myworld->getComm());   
 
       int total_size=patch_sizes[0];
       displacements[0]=0;
@@ -228,7 +228,7 @@ PatchFixer::FixUp(vector<Region> &patches)
       vector<Region> mypatches(patches);
       patches.resize(total_size);
       //allgatherv patchsets
-      MPI_Allgatherv(&mypatches[0],my_patch_size*sizeof(Region),MPI_BYTE,&patches[0],&patch_sizes[0],&displacements[0],MPI_BYTE,d_myworld->getComm());
+      Uintah::MPI::Allgatherv(&mypatches[0],my_patch_size*sizeof(Region),MPI_BYTE,&patches[0],&patch_sizes[0],&displacements[0],MPI_BYTE,d_myworld->getComm());
     }
 }
 

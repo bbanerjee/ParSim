@@ -391,7 +391,7 @@ DynamicMPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     float g_queue_length = lengthsum / totaltasks;
     float allqueuelength = 0;
 
-    MPI_Reduce(&g_queue_length,
+    Uintah::MPI::Reduce(&g_queue_length,
                &allqueuelength,
                1,
                MPI_FLOAT,
@@ -403,7 +403,7 @@ DynamicMPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   }
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids MPI_Waitsome &
+  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
   // MPI_Donesome - APH 07/20/16
   // ---------------------------------------------------------------------------
   // wait on all pending requests

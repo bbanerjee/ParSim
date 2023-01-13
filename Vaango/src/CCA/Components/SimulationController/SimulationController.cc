@@ -46,7 +46,7 @@
 #include <Core/OS/ProcessInfo.h>
 #include <Core/OS/Dir.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 
 #include <Core/Parallel/Parallel.h>
 #include <Core/Exceptions/PapiInitializationError.h>
@@ -628,14 +628,14 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
     //if AMR and using dynamic dilation use an allreduce
     if(d_regridder && d_regridder->useDynamicDilation())
     {
-      MPI_Allreduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, d_myworld->getComm());
-      MPI_Allreduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, d_myworld->getComm());
+      Uintah::MPI::Allreduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, d_myworld->getComm());
+      Uintah::MPI::Allreduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, d_myworld->getComm());
     }
     else
     {
-      MPI_Reduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, 0,
+      Uintah::MPI::Reduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, 0,
                  d_myworld->getComm());
-      MPI_Reduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0,
+      Uintah::MPI::Reduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0,
                  d_myworld->getComm());
     }
 

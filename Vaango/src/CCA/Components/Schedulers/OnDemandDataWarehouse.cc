@@ -662,7 +662,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
       }
 
       MPI_Request req;
-      MPI_Irecv(&(recvdata[data_index][0]),
+      Uintah::MPI::Irecv(&(recvdata[data_index][0]),
                 recv_set.size(),
                 MPI_INT,
                 proc_index,
@@ -758,7 +758,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
              << proc_index << " index " << data_index);
 
       MPI_Request req;
-      MPI_Isend(&(senddata[data_index][0]),
+      Uintah::MPI::Isend(&(senddata[data_index][0]),
                 s.size(),
                 MPI_INT,
                 proc_index,
@@ -1224,7 +1224,7 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
                             << sendbuf.size() << " level "
                             << (level ? level->getID() : -1));
 
-  int error = MPI_Allreduce(&sendbuf[0],
+  int error = Uintah::MPI::Allreduce(&sendbuf[0],
                             &recvbuf[0],
                             count,
                             datatype,

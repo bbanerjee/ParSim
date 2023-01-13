@@ -32,7 +32,7 @@
 #include <Core/Grid/PatchBVH/PatchBVH.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
 using namespace Uintah;
 
@@ -248,7 +248,7 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
   // ignore...
   if (rgtimes.active()) {
     double avg[20] = { 0 };
-    MPI_Reduce(&rtimes, &avg, 20, MPI_DOUBLE, MPI_SUM, 0, d_myworld->getComm());
+    Uintah::MPI::Reduce(&rtimes, &avg, 20, MPI_DOUBLE, MPI_SUM, 0, d_myworld->getComm());
     if (d_myworld->myRank() == 0) {
       cout << "Regrid Avg Times: ";
       for (int i = 0; i < 20; i++) {
@@ -258,7 +258,7 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
       cout << endl;
     }
     double max[20] = { 0 };
-    MPI_Reduce(&rtimes, &max, 20, MPI_DOUBLE, MPI_MAX, 0, d_myworld->getComm());
+    Uintah::MPI::Reduce(&rtimes, &max, 20, MPI_DOUBLE, MPI_MAX, 0, d_myworld->getComm());
     if (d_myworld->myRank() == 0) {
       cout << "Regrid Max Times: ";
       for (int i = 0; i < 20; i++) {
@@ -710,7 +710,7 @@ void TiledRegridder::GatherTiles(vector<IntVector>& mytiles, vector<IntVector> &
     }
    
     //gather the number of tiles on each processor
-    MPI_Allgather(&mycount,1,MPI_UNSIGNED,&counts[0],1,MPI_UNSIGNED,d_myworld->getComm());
+    Uintah::MPI::Allgather(&mycount,1,MPI_UNSIGNED,&counts[0],1,MPI_UNSIGNED,d_myworld->getComm());
 
     //compute the displacements and recieve counts for a gatherv
     vector<int> displs(d_myworld->nRanks());
@@ -728,7 +728,7 @@ void TiledRegridder::GatherTiles(vector<IntVector>& mytiles, vector<IntVector> &
     gtiles.resize(pos/sizeof(CompressedIntVector));
 
     //gatherv tiles
-    MPI_Allgatherv(&tiles[0],recvcounts[d_myworld->myRank()], MPI_BYTE, &gtiles[0], &recvcounts[0],
+    Uintah::MPI::Allgatherv(&tiles[0],recvcounts[d_myworld->myRank()], MPI_BYTE, &gtiles[0], &recvcounts[0],
                    &displs[0], MPI_BYTE, d_myworld->getComm());
     
     //tiles might not be unique so add them to a set to make them unique

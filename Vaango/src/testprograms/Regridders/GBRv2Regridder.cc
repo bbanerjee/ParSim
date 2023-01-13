@@ -161,7 +161,7 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
   if(numprocs>1)
   {
     vector<Region> bounds(numprocs);
-    MPI_Allgather(&patch,sizeof(Region),MPI_BYTE,&bounds[0],sizeof(Region),MPI_BYTE,MPI_COMM_WORLD);
+    Uintah::MPI::Allgather(&patch,sizeof(Region),MPI_BYTE,&bounds[0],sizeof(Region),MPI_BYTE,MPI_COMM_WORLD);
 
     //calculate participating processor set
     int count=0;
@@ -236,10 +236,10 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
         int count;
         //wait on requests
         //MPI_STATUSES_IGNORE
-        if(MPI_Waitsome(requests_.size(),&requests_[0],&count,&indicies_[0],&statuses_[0])==MPI_ERR_IN_STATUS)
+        if(Uintah::MPI::Waitsome(requests_.size(),&requests_[0],&count,&indicies_[0],&statuses_[0])==MPI_ERR_IN_STATUS)
         {
                 BNRTask *task;
-                cerr << "rank:" << rank << " error in MPI_Waitsome status\n";
+                cerr << "rank:" << rank << " error in Uintah::MPI::Waitsome status\n";
                 for(int c=0;c<count;c++)
                 {
                   if(statuses_[c].MPI_ERROR!=MPI_SUCCESS)

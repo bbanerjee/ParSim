@@ -34,7 +34,7 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/OS/ProcessInfo.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 
 #include <Core/Parallel/Parallel.h>
 
@@ -438,7 +438,7 @@ AMRSimulationController::run()
       MPI_Barrier(d_myworld->getComm());
       barrier_times[4]+=Time::currentSeconds()-start;
       double avg[5];
-      MPI_Reduce(&barrier_times,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
+      Uintah::MPI::Reduce(&barrier_times,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
       if(d_myworld->myRank()==0) {
         std::cout << "Barrier Times: "; 
         for(int i=0;i<5;i++)

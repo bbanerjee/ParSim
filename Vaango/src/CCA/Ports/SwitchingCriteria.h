@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,40 +23,46 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_SwitchingCriteria_H
-#define UINTAH_HOMEBREW_SwitchingCriteria_H
+#ifndef __VAANGO_CCA_PORTS_SwitchingCriteria_H__
+#define __VAANGO_CCA_PORTS_SwitchingCriteria_H__
 
 #include <Core/Parallel/UintahParallelPort.h>
-#include <Core/Grid/MaterialManagerP.h>
+
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Grid/LevelP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-
 
 namespace Uintah {
 
-  class SwitchingCriteria : public UintahParallelPort {
-    
-  public:
-    
-    SwitchingCriteria();
-    virtual ~SwitchingCriteria();
+class UintahParallelComponent;
+class VarLabel;
 
-    virtual void problemSetup(const ProblemSpecP& params,
-                              const ProblemSpecP& restart_prob_spec,
-                              SimulationStateP& state) = 0;
+class SwitchingCriteria : public UintahParallelPort
+{
 
-    virtual void scheduleInitialize(const LevelP& level, SchedulerP& sched)
-      {};
-    virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
-      {};
+public:
+  SwitchingCriteria();
+  virtual ~SwitchingCriteria();
 
-  private:
-    
-    SwitchingCriteria(const SwitchingCriteria&);
-    SwitchingCriteria& operator=(const SwitchingCriteria&);
-    
-  };
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               MaterialManagerP& state) = 0;
+
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched){};
+  virtual void
+  scheduleSwitchTest(const LevelP& level, SchedulerP& sched){};
+
+  SwitchingCriteria(const SwitchingCriteria&) = delete;
+  SwitchingCriteria(SwitchingCriteria&&) = delete;
+
+  SwitchingCriteria&
+  operator=(const SwitchingCriteria&) = delete;
+  SwitchingCriteria&
+  operator=(SwitchingCriteria&&) = delete;
+};
 }
 
-#endif
+#endif //__VAANGO_CCA_PORTS_SwitchingCriteria_H__

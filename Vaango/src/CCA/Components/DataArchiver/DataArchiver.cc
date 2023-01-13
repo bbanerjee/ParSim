@@ -55,7 +55,7 @@
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Util/FancyAssert.h>
 #include <Core/Util/Endian.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 
 #include   <iomanip>
 #include   <cerrno>
@@ -476,7 +476,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     int nunique;
     // This is an AllReduce, not a reduce.  This is necessary to
     // ensure that all processors wait before they remove the tmp files
-    MPI_Allreduce(&count, &nunique, 1, MPI_INT, MPI_SUM,
+    Uintah::MPI::Allreduce(&count, &nunique, 1, MPI_INT, MPI_SUM,
                   d_myworld->getComm());
     if(d_myworld->myRank() == 0){
       double dt=Time::currentSeconds()-start;

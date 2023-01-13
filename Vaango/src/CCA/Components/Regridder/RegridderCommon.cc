@@ -35,7 +35,7 @@
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Grid.h>
@@ -221,7 +221,7 @@ RegridderCommon::needsToReGrid(const GridP &oldGrid)
     GATHER:
     //Only reduce if we are running in parallel
     if (d_myworld->nRanks() > 1) {
-      MPI_Allreduce(&result, &retval, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
+      Uintah::MPI::Allreduce(&result, &retval, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
     }
     else {
       retval = result;
@@ -264,7 +264,7 @@ RegridderCommon::flaggedCellsOnFinestLevel(const GridP& grid)
         }
       }
     }
-    MPI_Allreduce(&thisproc, &allprocs, 1, MPI_INT, MPI_MAX, d_myworld->getComm());
+    Uintah::MPI::Allreduce(&thisproc, &allprocs, 1, MPI_INT, MPI_MAX, d_myworld->getComm());
     rdbg << "RegridderCommon::flaggedCellsOnFinestLevel() END" << std::endl;
     return allprocs;
   }

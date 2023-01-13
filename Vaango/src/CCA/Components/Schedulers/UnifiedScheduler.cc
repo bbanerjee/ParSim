@@ -632,7 +632,7 @@ UnifiedScheduler::runTask(DetailedTask* dtask,
     g_lb_mutex.unlock();
 
     //---------------------------------------------------------------------------
-    // New way of managing single MPI requests - avoids MPI_Waitsome &
+    // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
     // MPI_Donesome - APH 07/20/16
     //---------------------------------------------------------------------------
     // test a pending request
@@ -804,7 +804,7 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
   //------------------------------------------------------------------------------------------------
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids MPI_Waitsome &
+  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
   // MPI_Donesome - APH 07/20/16
   //---------------------------------------------------------------------------
   // wait on all pending requests

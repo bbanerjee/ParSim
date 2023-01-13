@@ -63,7 +63,7 @@
 #include <string>
 #include <sstream>
 
-#include <Core/Thread/Time.h>    // for currentSeconds()
+#include <Core/Util/Timers/Timers.hpp>    // for currentSeconds()
 #include <Core/Util/FileUtils.h> // for testFilesystem()
 
 using namespace Uintah;
@@ -202,7 +202,7 @@ main( int argc, char* argv[] )
         MPI_Recv( &hnMessage, HOST_NAME_SIZE, MPI_CHAR, proc, 0, MPI_COMM_WORLD, &status );
 
         // int numBytesReceived = -1;
-        // MPI_Get_count( &status, MPI_CHAR, &numBytesReceived );
+        // Uintah::MPI::Get_count( &status, MPI_CHAR, &numBytesReceived );
         // printf("result is %d, received bytes: %d\n", result, numBytesReceived);
 
         hostnames[ proc ] = hnMessage;
@@ -223,10 +223,10 @@ main( int argc, char* argv[] )
   // exact processor number (rank) if there is a problem...
   testme( point2pointasync_test,  "Point To Point ASync" );
 
-  testme( allreduce_test,        "MPI_Allreduce" );
-  testme( reduce_test,           "MPI_Reduce" );
+  testme( allreduce_test,        "Uintah::MPI::Allreduce" );
+  testme( reduce_test,           "Uintah::MPI::Reduce" );
   testme( broadcast_test,        "MPI_Bcast" );
-  testme( allgather_test,        "MPI_Allgather" );
+  testme( allgather_test,        "Uintah::MPI::Allgather" );
   testme( gather_test,           "MPI_Gather" );
   testme( point2pointsync_test, "Point To Point Sync" );
 
@@ -259,7 +259,7 @@ testme(int (*testfunc)(void),const char* name)
 
   int all_pass = false;
   
-  MPI_Allreduce( &pass, &all_pass, 1, MPI_INT, MPI_LAND, MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce( &pass, &all_pass, 1, MPI_INT, MPI_LAND, MPI_COMM_WORLD);
  
   if( rank == 0) {
 
@@ -291,7 +291,7 @@ allreduce_test()
   int pass=true;
   int message;
   int n=procs-1;
-  MPI_Allreduce(&rank,&message,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&rank,&message,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
 
   if( message != (n*(n+1))/2 ) {
     pass=false;
@@ -328,7 +328,7 @@ reduce_test()
 
   for( int p = 0; p < procs; p++ ) {
     message=rank;
-    MPI_Reduce(&rank,&message,1,MPI_INT,MPI_SUM,p,MPI_COMM_WORLD);
+    Uintah::MPI::Reduce(&rank,&message,1,MPI_INT,MPI_SUM,p,MPI_COMM_WORLD);
     
     if( p == rank && message != (n*(n+1))/2 ) {
       pass = false;
@@ -345,7 +345,7 @@ allgather_test()
   int         pass = true;
   vector<int> message(procs,0);
   
-  MPI_Allgather(&rank,1,MPI_INT,&message[0],1,MPI_INT,MPI_COMM_WORLD);
+  Uintah::MPI::Allgather(&rank,1,MPI_INT,&message[0],1,MPI_INT,MPI_COMM_WORLD);
 
   for( int p = 0; p < procs; p++ ) {
     if( message[p] != p ) {
@@ -413,7 +413,7 @@ fileSystem_test()
       MPI_Request  * rrequest = new MPI_Request[ procs-1 ];
 
       for( int proc = 1; proc < procs; proc++ ) {    
-        MPI_Irecv( &messages[proc-1], 1, MPI_INT, proc, proc, MPI_COMM_WORLD, &rrequest[proc-1] );
+        Uintah::MPI::Irecv( &messages[proc-1], 1, MPI_INT, proc, proc, MPI_COMM_WORLD, &rrequest[proc-1] );
       }
       bool done = false;
       int  totalCompleted = 0;
@@ -438,7 +438,7 @@ fileSystem_test()
 
         // See if any processors have reported their status...
         //
-        MPI_Testsome( procs-1, rrequest, &numCompleted, completedBuffer, status );
+        Uintah::MPI::Testsome( procs-1, rrequest, &numCompleted, completedBuffer, status );
 
         if( numCompleted > 0 ) {
           for( int pos = 0; pos < numCompleted; pos++ ) {
@@ -492,7 +492,7 @@ fileSystem_test()
       // Tell rank 0 that we have succeeded or failed (-rank).
       int data = pass ? rank : -rank;
 
-      MPI_Isend( &data, 1, MPI_INT, 0, rank, MPI_COMM_WORLD, &request );
+      Uintah::MPI::Isend( &data, 1, MPI_INT, 0, rank, MPI_COMM_WORLD, &request );
     }
   } // end if verbose
 
@@ -519,10 +519,10 @@ point2pointasync_test()
     //}
 
     //start send
-    MPI_Isend( &data, 1, MPI_INT, p, p, MPI_COMM_WORLD, &srequest[p] );
+    Uintah::MPI::Isend( &data, 1, MPI_INT, p, p, MPI_COMM_WORLD, &srequest[p] );
     
     //start recv
-    MPI_Irecv( &messages[p], 1, MPI_INT, p, rank, MPI_COMM_WORLD, &rrequest[p] );
+    Uintah::MPI::Irecv( &messages[p], 1, MPI_INT, p, rank, MPI_COMM_WORLD, &rrequest[p] );
 
     //if( rank == 5 ) { // Simulate proc 5 sending bad info....
     //  data = 99;
@@ -558,10 +558,10 @@ point2pointasync_test()
   
   while( !done ) {
 
-    // While it is unclear in the docs, apparently the MPI_Testsome
+    // While it is unclear in the docs, apparently the Uintah::MPI::Testsome
     // not only tests for the data having arrived, but handles the
     // recv too (ie, places the data in the specified buffer).
-    MPI_Testsome( procs, rrequest, &numCompleted, completedBuffer, status );
+    Uintah::MPI::Testsome( procs, rrequest, &numCompleted, completedBuffer, status );
 
     //reset timer if progress is made
     if(numCompleted>0)

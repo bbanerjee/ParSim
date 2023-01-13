@@ -62,7 +62,7 @@
 #endif
 
 
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Thread/Runnable.h>
 
 #include <Core/Thread/ConditionVariable.h>
@@ -130,9 +130,9 @@ main(int argc, char** argv)
   
   if (myid == 1){
     sprintf((char*)send_buf, "this a message sent from myid1, signed Bruce R. Kanobi");
-    MPI_Isend(send_buf, message_size, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &rq1);
+    Uintah::MPI::Isend(send_buf, message_size, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &rq1);
     sprintf((char*)send_buf2, "this a 2nd message sent from myid1, signed Bruce R. Kanobi");
-    MPI_Isend(send_buf2, message_size, MPI_CHAR, dest, tag+5, MPI_COMM_WORLD, &rq2);
+    Uintah::MPI::Isend(send_buf2, message_size, MPI_CHAR, dest, tag+5, MPI_COMM_WORLD, &rq2);
   }
   else{
     MPI_Recv(recv_buf, message_size, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &st1);
@@ -147,7 +147,7 @@ main(int argc, char** argv)
   }
   else{
     sprintf(send_buf, "this a message sent from myid0, signed Thomas S. Duku");
-    MPI_Isend(send_buf, message_size, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &rq3);
+    Uintah::MPI::Isend(send_buf, message_size, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &rq3);
 
     MPI_Recv(recv_buf2, message_size, MPI_CHAR, dest, tag+5, MPI_COMM_WORLD,&st3);
     cout<<"0 Got message "<<recv_buf2<<endl;

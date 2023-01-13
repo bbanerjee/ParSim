@@ -338,7 +338,7 @@ MPIScheduler::runTask(DetailedTask* dtask, int iteration)
   g_lb_mutex.unlock();
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids MPI_Waitsome &
+  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
   // MPI_Donesome - APH 07/20/16
   // ---------------------------------------------------------------------------
   // test a pending request
@@ -515,7 +515,7 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
       }
 
       //---------------------------------------------------------------------------
-      // New way of managing single MPI requests - avoids MPI_Waitsome &
+      // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
       // MPI_Donesome - APH 07/20/16
       //---------------------------------------------------------------------------
       CommRequestPool::iterator comm_sends_iter =
@@ -737,7 +737,7 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
                 << ", length: " << count << " (bytes)");
 
         //---------------------------------------------------------------------------
-        // New way of managing single MPI requests - avoids MPI_Waitsome &
+        // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
         // MPI_Donesome - APH 07/20/16
         //---------------------------------------------------------------------------
         CommRequestPool::iterator comd_d_recvsiter =
@@ -787,7 +787,7 @@ MPIScheduler::processMPIRecvs(int how_much)
   process_recv_timer.start();
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids MPI_Waitsome &
+  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
   // MPI_Donesome - APH 07/20/16
   //---------------------------------------------------------------------------
   auto test_request = [](CommRequest const& n) -> bool { return n.test(); };
@@ -965,7 +965,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   } // end while( numTasksDone < ntasks )
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids MPI_Waitsome &
+  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
   // MPI_Donesome - APH 07/20/16
   // ---------------------------------------------------------------------------
   // wait on all pending requests

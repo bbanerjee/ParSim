@@ -50,7 +50,7 @@
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Rand48.h>
 #include <Core/Math/MiscMath.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>

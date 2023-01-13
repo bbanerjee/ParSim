@@ -66,14 +66,14 @@ unsigned int getTotalNumFlags(vector<IntVector> flags)
 {
   unsigned int num=flags.size();
   unsigned int gnum;
-  MPI_Allreduce(&num,&gnum,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&num,&gnum,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
   return gnum;
 }
 unsigned int getTotalNumPatches(vector<Region> patches)
 {
   unsigned int num=patches.size();
   unsigned int gnum;
-  MPI_Allreduce(&num,&gnum,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&num,&gnum,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
   return gnum;
 }
 void makeFlagsList(const vector<Region> &patches, vector<CCVariable<int>*> flags, vector<IntVector> &lflags)
@@ -110,7 +110,7 @@ void gatherFlags(vector<IntVector> &flags, vector<IntVector> &gflags)
   vector<int> num_flags(num_procs);
   int num=flags.size();
 
-  MPI_Allgather(&num,1,MPI_INT,&num_flags[0],1,MPI_INT,MPI_COMM_WORLD);
+  Uintah::MPI::Allgather(&num,1,MPI_INT,&num_flags[0],1,MPI_INT,MPI_COMM_WORLD);
 
   vector<int> counts(num_procs);
   vector<int> displ(num_procs);
@@ -124,7 +124,7 @@ void gatherFlags(vector<IntVector> &flags, vector<IntVector> &gflags)
   }
 
   gflags.resize(total);
-  MPI_Allgatherv(&flags[0],counts[rank],MPI_BYTE,&gflags[0],&counts[0],&displ[0],MPI_BYTE,MPI_COMM_WORLD);
+  Uintah::MPI::Allgatherv(&flags[0],counts[rank],MPI_BYTE,&gflags[0],&counts[0],&displ[0],MPI_BYTE,MPI_COMM_WORLD);
 }
 void outputFlags(vector<IntVector> &flags, ostream &out)
 {
@@ -146,7 +146,7 @@ void gatherPatches(vector<Region> &patches, vector<Region> &global_patches)
   vector<int> num_patches(num_procs);
   int num=patches.size();
 
-  MPI_Allgather(&num,1,MPI_INT,&num_patches[0],1,MPI_INT,MPI_COMM_WORLD);
+  Uintah::MPI::Allgather(&num,1,MPI_INT,&num_patches[0],1,MPI_INT,MPI_COMM_WORLD);
 
   vector<int> counts(num_procs);
   vector<int> displ(num_procs);
@@ -160,7 +160,7 @@ void gatherPatches(vector<Region> &patches, vector<Region> &global_patches)
   }
 
   global_patches.resize(total);
-  MPI_Allgatherv(&patches[0],counts[rank],MPI_BYTE,&global_patches[0],&counts[0],&displ[0],MPI_BYTE,MPI_COMM_WORLD);
+  Uintah::MPI::Allgatherv(&patches[0],counts[rank],MPI_BYTE,&global_patches[0],&counts[0],&displ[0],MPI_BYTE,MPI_COMM_WORLD);
 }
 
 void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double p)
@@ -172,7 +172,7 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
     vol+=patches[i].getVolume();
 
   long long total_vol;
-  MPI_Allreduce(&vol,&total_vol,1,MPI_LONG_LONG,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&vol,&total_vol,1,MPI_LONG_LONG,MPI_SUM,MPI_COMM_WORLD);
 
   //if(rank==0)
   //  cout << "local vol: " << vol << " total vol: " << total_vol << endl;

@@ -259,9 +259,9 @@ int main(int argc, char **argv)
 
 void getTime(double time, double &mint, double &maxt, double &avgt)
 {
-  MPI_Allreduce(&time,&mint,1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-  MPI_Allreduce(&time,&maxt,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-  MPI_Allreduce(&time,&avgt,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&mint,1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&maxt,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&avgt,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   avgt/=num_procs;
 }
 

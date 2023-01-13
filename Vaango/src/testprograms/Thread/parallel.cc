@@ -52,7 +52,7 @@
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/ThreadGroup.h>
 //
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
