@@ -663,21 +663,21 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
 #ifdef MHdeleteBadF
       if (pDefGrad[idx].MaxAbsElem() > 1.0e2) {
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient component: [F] = " << pDefGrad[idx]
+        std::cout << "Large deformation gradient component: [F] = " << pDefGrad[idx]
              << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else if (pDefGrad[idx].Determinant() < 1.0e-3) {
         pLocalized_new[idx] = -999;
-        cout << "Small deformation gradient determinant: [F] = "
+        std::cout << "Small deformation gradient determinant: [F] = "
              << pDefGrad[idx] << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else if (pDefGrad[idx].Determinant() > 1.0e5) {
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient determinant: [F] = "
+        std::cout << "Large deformation gradient determinant: [F] = "
              << pDefGrad[idx] << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
         pDefGrad[idx].polarDecompositionRMB(tensorU, tensorR);
@@ -754,7 +754,7 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       // has failed, and the particle will be deleted.
       if (stepFlag != 0) {
         pLocalized_new[idx] = -999;
-        cout << "bad step, deleting particle" << endl;
+        std::cout << "bad step, deleting particle" << endl;
       }
 
       // Plastic volumetric strain at end of step
@@ -837,23 +837,23 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
 #ifdef MHdeleteBadF
       if (pDefGrad_new[idx].MaxAbsElem() > 1.0e2) {
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient component: [F_new] = "
+        std::cout << "Large deformation gradient component: [F_new] = "
              << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
+        std::cout << "Resetting [F_new]=[I] for this step and deleting particle"
              << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else if (pDefGrad_new[idx].Determinant() < 1.0e-3) {
         pLocalized_new[idx] = -999;
-        cout << "Small deformation gradient determinant: [F_new] = "
+        std::cout << "Small deformation gradient determinant: [F_new] = "
              << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
+        std::cout << "Resetting [F_new]=[I] for this step and deleting particle"
              << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else if (pDefGrad_new[idx].Determinant() > 1.0e2) {
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient determinant: [F_new] = "
+        std::cout << "Large deformation gradient determinant: [F_new] = "
              << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
+        std::cout << "Resetting [F_new]=[I] for this step and deleting particle"
              << endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
@@ -1067,11 +1067,11 @@ failedStep:
   ep_p = ep_n;
   stepFlag = 1;
 #ifdef MHdebug
-  cout << "995: Step Failed I1_n = " << sigma_n.Trace()
+  std::cout << "995: Step Failed I1_n = " << sigma_n.Trace()
        << ", I1_p = " << sigma_p.Trace() << endl;
-  cout << "996: evp_p = " << ep_p.Trace() << ", evp_n = " << ep_n.Trace()
+  std::cout << "996: evp_p = " << ep_p.Trace() << ", evp_n = " << ep_n.Trace()
        << endl;
-  cout << "997: X_p = " << X_p << ", X_n = " << X_n << endl;
+  std::cout << "997: X_p = " << X_p << ", X_n = " << X_n << endl;
 #endif
   return stepFlag;
 
@@ -1270,14 +1270,14 @@ Arenisca4::computeStepDivisions(const double& X, const double& Zeta,
 
   if (nsub > d_cm.subcycling_characteristic_number) {
 #ifdef MHdebug
-    cout << "\nstepDivide out of range." << endl;
-    cout << "d_sigma.Norm() = " << d_sigma.Norm() << endl;
-    cout << "size = " << size << endl;
-    cout << "n_yield = " << n_yield << endl;
-    cout << "bulk_n = " << bulk_n << endl;
-    cout << "bulk_trial = " << bulk_trial << endl;
-    cout << "n_bulk = " << n_bulk << endl;
-    cout << "nsub = " << nsub << " > " << d_cm.subcycling_characteristic_number
+    std::cout << "\nstepDivide out of range." << endl;
+    std::cout << "d_sigma.Norm() = " << d_sigma.Norm() << endl;
+    std::cout << "size = " << size << endl;
+    std::cout << "n_yield = " << n_yield << endl;
+    std::cout << "bulk_n = " << bulk_n << endl;
+    std::cout << "bulk_trial = " << bulk_trial << endl;
+    std::cout << "n_bulk = " << n_bulk << endl;
+    std::cout << "nsub = " << nsub << " > " << d_cm.subcycling_characteristic_number
          << endl;
 #endif
     nsub = -1;
@@ -1389,7 +1389,7 @@ Arenisca4::computeSubstep(
                          bulk, shear, sigma_0, d_ep_0);
     if (returnFlag != 0) {
 #ifdef MHdebug
-      cout << "1344: failed nonhardeningReturn in substep " << endl;
+      std::cout << "1344: failed nonhardeningReturn in substep " << endl;
 #endif
       goto failedSubstep;
     }
@@ -1475,7 +1475,7 @@ Arenisca4::computeSubstep(
                          bulk, shear, sigma_new, d_ep_new);
     if (returnFlag != 0) {
 #ifdef MHdebug
-      cout << "1344: failed nonhardeningReturn in substep " << endl;
+      std::cout << "1344: failed nonhardeningReturn in substep " << endl;
 #endif
       goto failedSubstep;
     }
@@ -1540,7 +1540,7 @@ Arenisca4::computeSubstep(
 // This code was never reached in testing, but is here to catch
 // unforseen errors.
 #ifdef MHdebug
-      cout << "1273: i>=imax, failed substep " << endl;
+      std::cout << "1273: i>=imax, failed substep " << endl;
 #endif
       goto failedSubstep;
     }
@@ -2052,7 +2052,7 @@ int Arenisca4::nonHardeningReturn(
   if (k >= 10 * nmax) {
     returnFlag = 1;
 #ifdef MHdebug
-    cout << "k >= 10*nmax, nonHardening return failed." << endl;
+    std::cout << "k >= 10*nmax, nonHardening return failed." << endl;
 #endif
   }
 
@@ -2338,7 +2338,7 @@ Arenisca4::computeLimitParameters(double limitParameters[4],
     a4 = YSLOPE;
   } else {
     // Bad inputs, call exception:
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Bad input parameters for shear limit surface. FSLOPE = " << FSLOPE
          << ", YSLOPE = " << YSLOPE << ", PEAKI1 = " << PEAKI1
          << ", STREN = " << STREN << endl;
@@ -2364,7 +2364,7 @@ Arenisca4::computeRotationToSphericalCS(
   // but the rotation around that axis is arbitrary.
   if (pnew ==
       p0) { // This shouldn't happen, but will cause nan in computeR if it does.
-    cout << "Error in computeRotationToSphericalCS: pnew = p0 " << endl;
+    std::cout << "Error in computeRotationToSphericalCS: pnew = p0 " << endl;
   }
   Vector x, y, z = pnew - p0;
   z = z / sqrt(z[0] * z[0] + z[1] * z[1] + z[2] * z[2]);
@@ -2503,119 +2503,119 @@ Arenisca4::checkInputParameters()
 {
 
   if (d_cm.PEAKI1 < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "PEAKI1 must be nonnegative. PEAKI1 = " << d_cm.PEAKI1 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.FSLOPE < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "FSLOPE must be nonnegative. FSLOPE = " << d_cm.FSLOPE << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.FSLOPE < d_cm.YSLOPE) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "FSLOPE must be greater than YSLOPE. FSLOPE = " << d_cm.FSLOPE
          << ", YSLOPE = " << d_cm.YSLOPE << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.BETA_nonassociativity <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "BETA_nonassociativity must be positive. BETA_nonassociativity = "
          << d_cm.BETA_nonassociativity << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.B0 <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "B0 must be positive. B0 = " << d_cm.B0 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.B1 < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "B1 must be nonnegative. B1 = " << d_cm.B1 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.B2 < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "B2 must be nonnegative. B2 = " << d_cm.B2 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.G0 <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "G0 must be positive. G0 = " << d_cm.G0 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.p0_crush_curve >= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "p0 must be negative. p0 = " << d_cm.p0_crush_curve << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.p1_crush_curve <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "p1 must be positive. p1 = " << d_cm.p1_crush_curve << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.p3_crush_curve <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "p3 must be positive. p3 = " << d_cm.p3_crush_curve << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.CR >= 1 || d_cm.CR <= 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "CR must be 0<CR<1. CR = " << d_cm.CR << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.fluid_B0 < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "fluid_b0 must be >=0. fluid_b0 = " << d_cm.fluid_B0 << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.fluid_pressure_initial < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Negative pfi not supported. fluid_pressure_initial = "
          << d_cm.fluid_pressure_initial << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.fluid_B0 < 0.0 && (d_cm.B0 == 0.0 || d_cm.B1 == 0.0)) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "B0 and B1 must be positive to use fluid model." << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.T1_rate_dependence < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "T1 must be nonnegative. T1 = " << d_cm.T1_rate_dependence << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.T2_rate_dependence < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "T2 must be nonnegative. T2 = " << d_cm.T2_rate_dependence << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if ((d_cm.T1_rate_dependence > 0.0 || d_cm.T2_rate_dependence > 0.0) !=
       (d_cm.T1_rate_dependence > 0.0 && d_cm.T2_rate_dependence > 0.0)) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "For rate dependence both T1 and T2 must be positive. T1 = "
          << d_cm.T1_rate_dependence << ", T2 = " << d_cm.T2_rate_dependence
          << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.subcycling_characteristic_number < 1) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "subcycling characteristic number should be > 1. Default = 256"
          << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.Use_Disaggregation_Algorithm && d_cm.fluid_B0 != 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Disaggregation algorithm not supported with fluid model" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.Use_Disaggregation_Algorithm && d_cm.PEAKI1 != 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Disaggregation algorithm not supported with PEAKI1 > 0.0" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_cm.principal_stress_cutoff < 0.0) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Principal stress cutoff must be nonnegative" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
@@ -2791,7 +2791,7 @@ void
 Arenisca4::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
                                   const bool, const bool) const
 {
-  cout << "NO VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca4"
+  std::cout << "NO VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca4"
        << endl;
 }
 
@@ -2808,7 +2808,7 @@ Arenisca4::computeRhoMicroCM(double pressure, const double p_ref,
 
   rho_cur = rho_orig / (1.0 - p_gauge / bulk);
 
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca4" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca4" << endl;
   return rho_cur;
 }
 
@@ -2827,14 +2827,14 @@ Arenisca4::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   dp_drho = 0.5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
   tmp = (bulk + 4.0 * shear / 3.0) / rho_cur; // speed of sound squared
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
 }
 
 // T2D: Throw exception that this is not supported
 double
 Arenisca4::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
   return 1.0;
 }
 

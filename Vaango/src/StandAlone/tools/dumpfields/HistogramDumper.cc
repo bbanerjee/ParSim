@@ -132,7 +132,7 @@ namespace Uintah {
     
     // need to count materials before we start, since we want material loop outside
     // of patch loop
-    vector<int> mats;
+    std::vector<int> mats;
     for(int l=0;l<=0;l++) {
       LevelP level = grid->getLevel(l);
       for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
@@ -148,30 +148,30 @@ namespace Uintah {
     
     // loop through requested diagnostics
     TensorDiag const * tensor_preop = createTensorOp(fselect_);
-    list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
+     std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
     
     if(scalardiaggens.size())
       {
-        cout << "   " << fieldname << endl;
+        std::cout << "   " << fieldname << endl;
       }
     else
       {
         static int noisecount = 0;
         if(++noisecount<=20)
           {
-            cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << endl;
-            cout << "            You probably want a '-diagnostic magnitude' option for vectors" << endl;
-            cout << "            or the '-diagnostic norm' option for tensors." << endl;
-            cout << endl;
-            cout << "            Try running with '-showdiags' to get the available diagnostics" << endl;
-            cout << endl;
+            std::cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << endl;
+            std::cout << "            You probably want a '-diagnostic magnitude' option for vectors" << endl;
+            std::cout << "            or the '-diagnostic norm' option for tensors." << endl;
+            std::cout << endl;
+            std::cout << "            Try running with '-showdiags' to get the available diagnostics" << endl;
+            std::cout << endl;
           }
       }
     
     for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());
         diagit!=scalardiaggens.end();diagit++) 
       {
-        vector<int> bins(opts_.nbins);
+        std::vector<int> bins(opts_.nbins);
         double minval=opts_.minval;
         double maxval=opts_.maxval;
         
@@ -247,7 +247,7 @@ namespace Uintah {
                 {
                   if(fabs(minval)<2.e-16)
                     {
-                      cout << "   WARNING: all your data seems to be at zero, adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at zero, adjusting the range" << endl;
                       // both zero
                       minval = -1;
                       maxval =  1;
@@ -255,7 +255,7 @@ namespace Uintah {
                   else
                     {
                       double midval = (minval+maxval)/2; 
-                      cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << endl;
                       minval = 0.9 * midval;
                       maxval = 1.1 * midval;
                     }
@@ -267,8 +267,8 @@ namespace Uintah {
         string ext = (*diagit)->name();
         if(ext=="norm" || ext=="value") ext = "";
         string fname = this->fileName(fieldname+ext, "hist");
-        cout << "     " << fname << endl;
-        cout << "     range = " << minval << "," << maxval
+        std::cout << "     " << fname << endl;
+        std::cout << "     range = " << minval << "," << maxval
              << endl;
         
         ofstream os(fname.c_str());

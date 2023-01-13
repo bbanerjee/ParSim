@@ -58,7 +58,7 @@ DXDumper::DXDumper(DataArchive* da, string basedir, bool bin, bool onedim)
     cerr << "Can't open output file " << indexfilename << endl;
     abort();
   }
-  cout << "     " << indexfilename << endl;
+  std::cout << "     " << indexfilename << endl;
 }
 
 DXDumper::~DXDumper()
@@ -104,7 +104,7 @@ DXDumper::FldWriter::FldWriter(string outdir, string fieldname)
     cerr << "Can't open output file " << outname << endl;
     abort();
   }
-  cout << "     " << outname << endl;
+  std::cout << "     " << outname << endl;
 }
 
 DXDumper::FldWriter::~FldWriter()
@@ -123,7 +123,7 @@ DXDumper::FldWriter::~FldWriter()
 }
 
 DXDumper::Step::Step(DataArchive * da, string tsdir, int timestep, double time, int index, int fileindex, 
-		     const map<string,DXDumper::FldWriter*> & fldwriters, bool bin, bool onedim)
+		     const  std::map< string,DXDumper::FldWriter*> & fldwriters, bool bin, bool onedim)
   :
   Dumper::Step(tsdir, timestep, time, index),
   da_(da), 
@@ -290,7 +290,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
   
   int ncomps, rank;
   string shp, source;
-  vector<float> minval, maxval;
+  std::vector<float> minval, maxval;
   
   /*if(1)*/ { // FIXME: skip p.x
     int nvals;
@@ -318,7 +318,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
       abort();
     }
     
-    cout << "     " << fieldname << endl;
+    std::cout << "     " << fieldname << endl;
     switch(subtype->getType()) {
     case Uintah::TypeDescription::Type::float_type:  rank = 0; ncomps = 1; shp = " "; break;
     case Uintah::TypeDescription::Type::double_type: rank = 0; ncomps = 1; shp = " "; break;
@@ -330,7 +330,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
       abort();
     };
   
-    vector<float> vals(nvals*ncomps);
+    std::vector<float> vals(nvals*ncomps);
     for(vector<float>::iterator vit(vals.begin());vit!=vals.end();vit++) *vit = 0.;
     
     minval.resize(ncomps);

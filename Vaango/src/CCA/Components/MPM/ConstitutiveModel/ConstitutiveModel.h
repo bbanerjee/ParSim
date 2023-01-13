@@ -389,8 +389,8 @@ protected:
       for Kmat and B matrix for Kgeo */
   void
   computeGradAndBmats(Matrix3& grad,
-                      vector<IntVector>& ni,
-                      vector<Vector>& d_S,
+                      std::vector<IntVector>& ni,
+                      std::vector<Vector>& d_S,
                       const double* oodx,
                       constNCVariable<Vector>& gVec,
                       const Array3<int>& l2g,

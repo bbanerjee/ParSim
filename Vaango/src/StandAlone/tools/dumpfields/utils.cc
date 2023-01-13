@@ -53,7 +53,7 @@ using namespace std;
 vector<string> 
 split(const string & s, char sep, bool skipmult)
 {
-  vector<string> res;
+  std::vector<string> res;
   
   string::size_type ls(s.size());
   string::size_type p0(0), p1;

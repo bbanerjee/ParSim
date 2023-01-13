@@ -155,7 +155,7 @@ void BNRRegridder::computeHistogram(std::list<IntVector> &flags, const Region &b
   {
     for(size_t i=0;i<hist[d].size();i++)
     {
-      cout << "Hist[" << d << "][" << i << "]: " << hist[d][i] << endl; 
+      std::cout << "Hist[" << d << "][" << i << "]: " << hist[d][i] << endl; 
     }
   }
 #endif
@@ -264,16 +264,16 @@ void BNRRegridder::split(std::list<IntVector> &flags, const Split &split, std::l
   }
 
 #if 0
-  cout << "Left flags: " << endl;
+  std::cout << "Left flags: " << endl;
   for(std::list<IntVector>::iterator iter=left.begin();iter!=left.end();iter++)
   {
-    cout << "  " << *iter << endl;
+    std::cout << "  " << *iter << endl;
   }
   
-  cout << "Right flags: " << endl;
+  std::cout << "Right flags: " << endl;
   for(std::list<IntVector>::iterator iter=right.begin();iter!=right.end();iter++)
   {
-    cout << "  " << *iter << endl;
+    std::cout << "  " << *iter << endl;
   }
 #endif 
 }

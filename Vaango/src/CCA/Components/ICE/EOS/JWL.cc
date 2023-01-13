@@ -140,7 +140,7 @@ double JWL::computeRhoMicro(double press, double,
       }
       
       if(iter>=100 || std::isnan(rhoM)){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << setprecision(15);
         warn << "ERROR:ICE:JWL::computeRhoMicro not converging. iter = " << iter;
         warn << "\n\tpress= " << press << " temp=" << Temp ;

@@ -220,63 +220,63 @@ class Crack
                                    //   between J-integral contour and crack plane; 
 
     // Physical parameters of cracks
-    vector<string> stressState;    // Crack front stress state 
-    vector<string> crackType;      // Crack contact type
-    vector<double> cmu;            // Crack surface friction coefficient
+    std::vector<string> stressState;    // Crack front stress state 
+    std::vector<string> crackType;      // Crack contact type
+    std::vector<double> cmu;            // Crack surface friction coefficient
 
-    vector<CrackGeometry*> d_crackGeometry;
+    std::vector<CrackGeometry*> d_crackGeometry;
 
     // Geometrical parameters of crack segments
-    vector<vector<vector<Point> > > quads;
-    vector<vector<int> >            quadN12,quadN23;       
-    vector<vector<vector<short> > > quadCrackSidesAtFront;
-    vector<vector<int> >            quadRepetition;
-    vector<vector<Vector> >         quadOffset;    
-    vector<vector<vector<Point> > > cquads;
-    vector<vector<int> >            cquadNStraightSides;
-    vector<vector<vector<Point> > > cquadPtsSide2;
-    vector<vector<vector<Point> > > cquadPtsSide4;
-    vector<vector<vector<short> > > cquadCrackSidesAtFront;
-    vector<vector<int> >            cquadRepetition;
-    vector<vector<Vector> >         cquadOffset;
-    vector<vector<vector<Point> > > triangles;
-    vector<vector<int> >            triNCells;
-    vector<vector<vector<short> > > triCrackSidesAtFront;
-    vector<vector<int> >            triRepetition;
-    vector<vector<Vector> >         triOffset;    
-    vector<vector<vector<Point> > > arcs;
-    vector<vector<int> >            arcNCells;
-    vector<vector<int> >            arcCrkFrtSegID;
-    vector<vector<vector<Point> > > ellipses;
-    vector<vector<int> >            ellipseNCells;
-    vector<vector<int> >            ellipseCrkFrtSegID;
-    vector<vector<vector<Point> > > pellipses;
-    vector<vector<int> >            pellipseNCells;
-    vector<vector<int> >            pellipseCrkFrtSegID;
-    vector<vector<double> >         pellipseExtent;
-    vector<Point>                   cmin,cmax;  
+    std::vector<vector<vector<Point> > > quads;
+    std::vector<vector<int> >            quadN12,quadN23;       
+    std::vector<vector<vector<short> > > quadCrackSidesAtFront;
+    std::vector<vector<int> >            quadRepetition;
+    std::vector<vector<Vector> >         quadOffset;    
+    std::vector<vector<vector<Point> > > cquads;
+    std::vector<vector<int> >            cquadNStraightSides;
+    std::vector<vector<vector<Point> > > cquadPtsSide2;
+    std::vector<vector<vector<Point> > > cquadPtsSide4;
+    std::vector<vector<vector<short> > > cquadCrackSidesAtFront;
+    std::vector<vector<int> >            cquadRepetition;
+    std::vector<vector<Vector> >         cquadOffset;
+    std::vector<vector<vector<Point> > > triangles;
+    std::vector<vector<int> >            triNCells;
+    std::vector<vector<vector<short> > > triCrackSidesAtFront;
+    std::vector<vector<int> >            triRepetition;
+    std::vector<vector<Vector> >         triOffset;    
+    std::vector<vector<vector<Point> > > arcs;
+    std::vector<vector<int> >            arcNCells;
+    std::vector<vector<int> >            arcCrkFrtSegID;
+    std::vector<vector<vector<Point> > > ellipses;
+    std::vector<vector<int> >            ellipseNCells;
+    std::vector<vector<int> >            ellipseCrkFrtSegID;
+    std::vector<vector<vector<Point> > > pellipses;
+    std::vector<vector<int> >            pellipseNCells;
+    std::vector<vector<int> >            pellipseCrkFrtSegID;
+    std::vector<vector<double> >         pellipseExtent;
+    std::vector<Point>                   cmin,cmax;  
 
     // Crack data after mesh  
-    vector<double>               css;  // Average length of crack-front segments
-    vector<double>               csa;  // Average angle of crack-front segments  
-    vector<vector<Point> >        cx;  // Coordinates of crack nodes
-    vector<vector<IntVector> >    ce;  // Crack elements
-    vector<vector<int> >  cfSegNodes;  // Crack-front nodes 
-    vector<vector<double> > cfSegVel;  // Velocity of crack-front nodes
-    vector<vector<double> >cfSegTime;  // Time instant of crack propagation
-    vector<vector<double> >cfSegDis;   // Crack incremental 
-    vector<vector<int> > cfSegPreIdx;  // node[i]=node[preIdx]
-    vector<vector<int> > cfSegMinIdx;  // Minimum node-index of the sub-crack
-    vector<vector<int> > cfSegMaxIdx;  // Maximum node-index of the sub-crack
-    vector<vector<Point> > cfSegPtsT;  // Crack-front points after propagation
-    vector<vector<Vector> >  cfSegV1;  // Bi-normals at crack-front nodes
-    vector<vector<Vector> >  cfSegV2;  // Outer normals at crack-front nodes
-    vector<vector<Vector> >  cfSegV3;  // Tangential normals at crack-front nodes
-    vector<vector<Vector> >   cfSegJ;  // J-integral at crack-front nodes
-    vector<vector<Vector> >   cfSegK;  // SIF at crack-front nodes
-    vector<vector<vector<int> > > cnset;  // Crack-node subset in each patch
-    vector<vector<vector<int> > > cfnset; // Crack-front-node index subset
-    vector<vector<vector<int> > > cfsset; // Crack-front-seg subset in each patch
+    std::vector<double>               css;  // Average length of crack-front segments
+    std::vector<double>               csa;  // Average angle of crack-front segments  
+    std::vector<vector<Point> >        cx;  // Coordinates of crack nodes
+    std::vector<vector<IntVector> >    ce;  // Crack elements
+    std::vector<vector<int> >  cfSegNodes;  // Crack-front nodes 
+    std::vector<vector<double> > cfSegVel;  // Velocity of crack-front nodes
+    std::vector<vector<double> >cfSegTime;  // Time instant of crack propagation
+    std::vector<vector<double> >cfSegDis;   // Crack incremental 
+    std::vector<vector<int> > cfSegPreIdx;  // node[i]=node[preIdx]
+    std::vector<vector<int> > cfSegMinIdx;  // Minimum node-index of the sub-crack
+    std::vector<vector<int> > cfSegMaxIdx;  // Maximum node-index of the sub-crack
+    std::vector<vector<Point> > cfSegPtsT;  // Crack-front points after propagation
+    std::vector<vector<Vector> >  cfSegV1;  // Bi-normals at crack-front nodes
+    std::vector<vector<Vector> >  cfSegV2;  // Outer normals at crack-front nodes
+    std::vector<vector<Vector> >  cfSegV3;  // Tangential normals at crack-front nodes
+    std::vector<vector<Vector> >   cfSegJ;  // J-integral at crack-front nodes
+    std::vector<vector<Vector> >   cfSegK;  // SIF at crack-front nodes
+    std::vector<vector<vector<int> > > cnset;  // Crack-node subset in each patch
+    std::vector<vector<vector<int> > > cfnset; // Crack-front-node index subset
+    std::vector<vector<vector<int> > > cfsset; // Crack-front-seg subset in each patch
 
 
     // PRIVATE METHODS

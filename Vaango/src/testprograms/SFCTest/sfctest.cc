@@ -158,7 +158,7 @@ int main(int argc, char** argv)
   mycurve.SetCenter(center);
 
   if(rank==0)
-    cout << " Generating curve in parallel\n";
+    std::cout << " Generating curve in parallel\n";
 
   MPI_Barrier(Comm);
   
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
   mycurve.GenerateCurve();
   double finish=Time::currentSeconds();
   
-  cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << endl;
 
   MPI_Barrier(Comm);
 
@@ -176,20 +176,20 @@ int main(int argc, char** argv)
   mycurve.SetLocations(&locss);
   
   if(rank==0)
-    cout << " Generating curve in serial\n";
+    std::cout << " Generating curve in serial\n";
   MPI_Barrier(Comm);
 
   start=Time::currentSeconds();
   mycurve.GenerateCurve(true);
   finish=Time::currentSeconds();
   
-  cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << endl;
 
   MPI_Barrier(Comm);
 
   if(rank==0)
   {
-    cout << "Verifying curve\n";
+    std::cout << "Verifying curve\n";
 	  unsigned int pn=N/P;
     unsigned int j=0,r;
     unsigned int starti;
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
       int index1=starti  + orders[i].i;
       int index2=orderss[j].i;
       if(index1!=index2)
-        cout << j << ": " << index1 << "!=" << index2 << "\n";
+        std::cout << j << ": " << index1 << "!=" << index2 << "\n";
 
       //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
       j++;
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
         int index1=starti  + orders[i].i;
         int index2=orderss[j].i;
         if(index1!=index2)
-          cout << j << ": " << index1 << "!=" << index2 <<  "\n";
+          std::cout << j << ": " << index1 << "!=" << index2 <<  "\n";
         //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
         j++;
       }

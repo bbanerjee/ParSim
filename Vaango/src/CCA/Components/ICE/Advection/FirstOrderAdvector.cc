@@ -187,8 +187,8 @@ void FirstOrderAdvector::inFluxOutFluxVolume(
   bool tsr = new_dw->timestepRestarted();
   
   if (error && bulletProof_test && !tsr) {
-    vector<IntVector> badCells;
-    vector<fflux>  badOutflux;
+    std::vector<IntVector> badCells;
+    std::vector<fflux>  badOutflux;
     
     for(CellIterator iter = patch->getExtraCellIterator(NGC); !iter.done(); iter++) {
       IntVector c = *iter; 
@@ -372,7 +372,7 @@ void FirstOrderAdvector::q_FC_PlusFaces(
                                    SFCYVariable<double>& q_YFC,
                                    SFCZVariable<double>& q_ZFC)
 {                                                  
-  vector<IntVector> adj_offset(3);
+  std::vector<IntVector> adj_offset(3);
   adj_offset[0] = IntVector(-1, 0, 0);    // X faces
   adj_offset[1] = IntVector(0, -1, 0);    // Y faces
   adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -486,7 +486,7 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
       q_Y_FC_flux.copyData(q_Y_FC_flux_old);
       q_Z_FC_flux.copyData(q_Z_FC_flux_old);
     }
-    vector<IntVector> adj_offset(3);
+    std::vector<IntVector> adj_offset(3);
     adj_offset[0] = IntVector(-1, 0, 0);    // X faces
     adj_offset[1] = IntVector(0, -1, 0);    // Y faces
     adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -506,19 +506,19 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
                                            
  /*`==========TESTING==========*/    
 #ifdef SPEW                
-    vector<Patch::FaceType> cf;
+    std::vector<Patch::FaceType> cf;
     patch->getCoarseFaces(cf);
-    vector<Patch::FaceType>::const_iterator itr;  
+    std::vector<Patch::FaceType>::const_iterator itr;  
     for (itr = cf.begin(); itr != cf.end(); ++itr){
       Patch::FaceType patchFace = *itr;
       string name = patch->getFaceName(patchFace);
 
 
       if(is_rightFace_variable(name,desc)){
-          cout << " ------------ FirstOrderAdvector::q_FC_fluxes " << desc<< endl;
-        cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
+          std::cout << " ------------ FirstOrderAdvector::q_FC_fluxes " << desc<< endl;
+        std::cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
               << " Patch " << patch->getGridIndex()<< endl;
-        cout <<" patchFace " << name << " " ;
+        std::cout <<" patchFace " << name << " " ;
 
         IntVector shift = patch->faceDirection(patchFace);
         shift = Uintah::Max(IntVector(0,0,0), shift);  // set -1 values to 0
@@ -531,13 +531,13 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
 
         IntVector half  = (end - begin)/IntVector(2,2,2) + begin;
         if(patchFace == Patch::xminus || patchFace == Patch::xplus){
-          cout << half << " \t sum_q_flux " << q_X_FC_flux[half] <<  endl; 
+          std::cout << half << " \t sum_q_flux " << q_X_FC_flux[half] <<  endl; 
         } 
         if(patchFace == Patch::yminus || patchFace == Patch::yplus){
-          cout << half << " \t sum_q_flux " << q_Y_FC_flux[half] <<  endl;
+          std::cout << half << " \t sum_q_flux " << q_Y_FC_flux[half] <<  endl;
         }
         if(patchFace == Patch::zminus || patchFace == Patch::zplus){
-          cout << half << " \t sum_q_flux " << q_Z_FC_flux[half] <<  endl;
+          std::cout << half << " \t sum_q_flux " << q_Z_FC_flux[half] <<  endl;
         }
       } 
     } 

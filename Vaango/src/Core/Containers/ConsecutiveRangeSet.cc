@@ -288,7 +288,7 @@ ConsecutiveRangeSet::unioned(const ConsecutiveRangeSet& set2) const
   std::list<Range> newRangeSet;
   Range range(0, 0);
 
-  // cout << set2.size() << endl;
+  // std::cout << set2.size() << endl;
   if (size() == 0) {
     return set2;
   } else if (set2.size() == 0) {

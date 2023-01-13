@@ -237,8 +237,8 @@ SecondOrderAdvector::inFluxOutFluxVolume( const SFCXVariable<double>& uvel_FC,
   bool tsr = new_dw->timestepRestarted();
   
   if (error && bulletProof_test && !tsr) {
-    vector<IntVector> badCells;
-    vector<fflux>  badOutflux;
+    std::vector<IntVector> badCells;
+    std::vector<fflux>  badOutflux;
   
     for(CellIterator iter = patch->getExtraCellIterator(NGC); !iter.done(); iter++) {
       const IntVector& c = *iter; 
@@ -260,8 +260,8 @@ SecondOrderAdvector::inFluxOutFluxVolume( const SFCXVariable<double>& uvel_FC,
   }  // if total_fluxout > vol  
   
   if (error && !bulletProof_test) {
-    ostringstream mesg;
-    cout << " WARNING: ICE Advection operator Influx/Outflux volume error:"
+     std::ostringstream mesg;
+    std::cout << " WARNING: ICE Advection operator Influx/Outflux volume error:"
          << " Patch " << patch->getID()
          << ", Level " << patch->getLevel()->getIndex()<< endl;
   }
@@ -329,7 +329,7 @@ void SecondOrderAdvector::advectQ( const CCVariable<double>& A_CC,
   d_smokeOnOff = false;
 #if 0
   if(varBasket->desc == "scalar-f"){
-    cout << " SCALAR-F--------------------------------- L-" <<patch->getLevel()->getIndex()<< endl;
+    std::cout << " SCALAR-F--------------------------------- L-" <<patch->getLevel()->getIndex()<< endl;
     d_smokeOnOff = true;
   }
 #endif
@@ -629,7 +629,7 @@ void SecondOrderAdvector::q_FC_PlusFaces(
                                    SFCYVariable<double>& q_YFC,
                                    SFCZVariable<double>& q_ZFC)
 {                                                  
-  vector<IntVector> adj_offset(3);
+  std::vector<IntVector> adj_offset(3);
   adj_offset[0] = IntVector(-1, 0, 0);    // X faces
   adj_offset[1] = IntVector(0, -1, 0);    // Y faces
   adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -756,7 +756,7 @@ void SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
       q_Y_FC_flux.copyData(q_Y_FC_flux_old);
       q_Z_FC_flux.copyData(q_Z_FC_flux_old);
     }
-    vector<IntVector> adj_offset(3);
+    std::vector<IntVector> adj_offset(3);
     adj_offset[0] = IntVector(-1, 0, 0);    // X faces
     adj_offset[1] = IntVector(0, -1, 0);    // Y faces
     adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -777,7 +777,7 @@ void SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
  /*`==========TESTING==========*/    
 #ifdef REFLUX_DBG                
                         
-    vector<Patch::FaceType>::const_iterator itr;  
+    std::vector<Patch::FaceType>::const_iterator itr;  
     for (itr  = patch->getCoarseFineInterfaceFaces()->begin(); 
          itr != patch->getCoarseFineInterfaceFaces()->end(); ++itr){
       Patch::FaceType patchFace = *itr;
@@ -785,10 +785,10 @@ void SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
 
 
       if(is_rightFace_variable(name,desc)){
-        cout << " ------------ SecondOrderAdvector::q_FC_fluxes " << desc<< endl;
-        cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
+        std::cout << " ------------ SecondOrderAdvector::q_FC_fluxes " << desc<< endl;
+        std::cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
               << " Patch " << patch->getGridIndex()<< endl;
-        cout <<" patchFace " << name << " " ;
+        std::cout <<" patchFace " << name << " " ;
 
         IntVector shift = patch->faceDirection(patchFace);
         shift = Uintah::Max(IntVector(0,0,0), shift);  // set -1 values to 0
@@ -801,13 +801,13 @@ void SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
 
         IntVector half  = (end - begin)/IntVector(2,2,2) + begin;
         if(patchFace == Patch::xminus || patchFace == Patch::xplus){
-          cout << half << " \t sum_q_flux " << q_X_FC_flux[half] <<  endl; 
+          std::cout << half << " \t sum_q_flux " << q_X_FC_flux[half] <<  endl; 
         } 
         if(patchFace == Patch::yminus || patchFace == Patch::yplus){
-          cout << half << " \t sum_q_flux " << q_Y_FC_flux[half] <<  endl;
+          std::cout << half << " \t sum_q_flux " << q_Y_FC_flux[half] <<  endl;
         }
         if(patchFace == Patch::zminus || patchFace == Patch::zplus){
-          cout << half << " \t sum_q_flux " << q_Z_FC_flux[half] <<  endl;
+          std::cout << half << " \t sum_q_flux " << q_Z_FC_flux[half] <<  endl;
         }
       } 
     } 

@@ -91,7 +91,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
     std::vector<constNCVariable<double> > gmass(numMatls);
     std::vector<constNCVariable<double> > gTemp(numMatls);
     std::vector<NCVariable<double> > thermalContactTemperatureRate(numMatls);
-    vector<double> Cp(numMatls);
+    std::vector<double> Cp(numMatls);
     // for Fracture (additional field)-----------------------------------------
     std::vector<constNCVariable<double> > Gmass(numMatls);
     std::vector<constNCVariable<double> > GTemp(numMatls);

@@ -467,7 +467,7 @@ ConstitutiveModel::artificialBulkViscosity(double Dkk, double c_bulk,
 
 void 
 ConstitutiveModel::computeGradAndBmats(Matrix3& grad, vector<IntVector>& ni,
-                                vector<Vector>& d_S, const double* oodx,
+                                std::vector<Vector>& d_S, const double* oodx,
                                 constNCVariable<Vector>& gVec,
                                 const Array3<int>& l2g, double B[6][24],
                                 double Bnl[3][24], int* dof)

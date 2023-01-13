@@ -439,9 +439,9 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};

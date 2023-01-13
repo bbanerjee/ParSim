@@ -118,7 +118,7 @@ CircleBCData::print()
 void
 CircleBCData::determineIteratorLimits(Patch::FaceType face,
                                       const Patch* patch,
-                                      vector<Point>& test_pts)
+                                      std::vector<Point>& test_pts)
 {
   DOUT(bc_dbg, "Circle determineIteratorLimits() " << patch->getFaceName(face));
 

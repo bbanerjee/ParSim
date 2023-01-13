@@ -128,7 +128,7 @@ namespace Uintah {
   {
     GridP grid = da_->queryGrid(index_);
   
-    cout << "   " << fieldname << endl;
+    std::cout << "   " << fieldname << endl;
     const Uintah::TypeDescription* subtype = td->getSubType();
   
     int nmats = 0;
@@ -177,17 +177,17 @@ namespace Uintah {
           const int matl = *matlIter;
           if(!flds_.wantMaterial(matl)) continue;
           
-          list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, flds_, tensor_preop);
-          list<VectorDiag const *> vectordiaggens = createVectorDiags(td, flds_, tensor_preop);
-          list<TensorDiag const *> tensordiaggens = createTensorDiags(td, flds_, tensor_preop);
+           std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, flds_, tensor_preop);
+           std::list<VectorDiag const *> vectordiaggens = createVectorDiags(td, flds_, tensor_preop);
+           std::list<TensorDiag const *> tensordiaggens = createTensorDiags(td, flds_, tensor_preop);
           /*
-          cout << " have " << scalardiaggens.size() << " scalar diagnostics" << endl;
-          cout << " have " << vectordiaggens.size() << " vector diagnostics" << endl;
-          cout << " have " << tensordiaggens.size() << " tensor diagnostics" << endl;
+          std::cout << " have " << scalardiaggens.size() << " scalar diagnostics" << endl;
+          std::cout << " have " << vectordiaggens.size() << " vector diagnostics" << endl;
+          std::cout << " have " << tensordiaggens.size() << " tensor diagnostics" << endl;
           */
           
           // loop through requested diagnostics
-          list<string> outdiags;
+           std::list<string> outdiags;
           for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());diagit!=scalardiaggens.end();diagit++) 
             outdiags.push_back( (*diagit)->name() );
           for(list<VectorDiag const *>::const_iterator diagit(vectordiaggens.begin());diagit!=vectordiaggens.end();diagit++) 
@@ -195,8 +195,8 @@ namespace Uintah {
           for(list<TensorDiag const *>::const_iterator diagit(tensordiaggens.begin());diagit!=tensordiaggens.end();diagit++) 
             outdiags.push_back( (*diagit)->name() );
           
-          map<string, ofstream *> outfiles;
-          map<string, string>     outfieldnames;
+          std::map<string, ofstream *> outfiles;
+          std::map<string, string>     outfieldnames;
           for(list<string>::const_iterator dit(outdiags.begin());dit!=outdiags.end();dit++)
             {
               string outfieldname = fieldname;
@@ -224,7 +224,7 @@ namespace Uintah {
           for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());diagit!=scalardiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
               case Uintah::TypeDescription::Type::CCVariable:
@@ -291,7 +291,7 @@ namespace Uintah {
           for(list<VectorDiag const *>::const_iterator diagit(vectordiaggens.begin());diagit!=vectordiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
               case Uintah::TypeDescription::Type::CCVariable:
@@ -364,7 +364,7 @@ namespace Uintah {
           for(list<TensorDiag const *>::const_iterator diagit(tensordiaggens.begin());diagit!=tensordiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
               case Uintah::TypeDescription::Type::CCVariable:

@@ -345,7 +345,7 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
   double theta_0 = a_0 + d_CM.a_1 * log(edot) + d_CM.a_2 * sqrt(edot) - a_3 * T;
 
   if (theta_0 < 0.0) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << " **ERROR** MTS Plasticity Model: Negative initial hardening rate! "
          << "\n";
     desc << "     edot = " << edot << " ep = " << state->eqPlasticStrain << "\n";
@@ -660,7 +660,7 @@ MTSFlow::computeShearModulus(const ModelStateBase* state)
   ASSERT(expT0_T != 0);
   double mu = d_CM.mu_0 - d_CM.D / expT0_T;
   if (!(mu > 0.0)) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**MTS Deriv Edot ERROR** Shear modulus <= 0." << "\n";
     desc << "T = " << T << " mu0 = " << d_CM.mu_0 << " T0 = " << d_CM.T_0
          << " exp(To/T) = " << expT0_T << " D = " << d_CM.D << "\n";

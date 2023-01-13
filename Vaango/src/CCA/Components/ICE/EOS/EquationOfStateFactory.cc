@@ -122,7 +122,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
   else if (EOS == "KnaussSeaWater") 
     return(scinew KnaussSeaWater(EOS_ps));    
   else{
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR ICE: Unknown Equation of State ("<< EOS << " )\n"
          << "Valid equations of State:\n" 
          << "ideal_gas\n"

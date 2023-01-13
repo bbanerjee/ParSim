@@ -229,8 +229,8 @@ udaFileFormat::ReadMetaData(avtDatabaseMetaData *md, int timeState)
     totalPatches +=  stepInfo->levelInfo[i].patchInfo.size();
   //debug5 << "udaFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << endl;
 
-  vector<int> groupIds(totalPatches);
-  vector<string> pieceNames(totalPatches);
+  std::vector<int> groupIds(totalPatches);
+  std::vector<string> pieceNames(totalPatches);
 
   for (int i = 0; i < totalPatches; i++) {
     char tmpName[64];

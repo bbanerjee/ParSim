@@ -91,7 +91,7 @@ ICEMaterial::ICEMaterial(ProblemSpecP& ps,
    // Step 3 -- Loop through all of the pieces in this geometry object
    int piece_num = 0;
 
-   list<GeometryObject::DataItem> geom_obj_data;
+    std::list<GeometryObject::DataItem> geom_obj_data;
    geom_obj_data.push_back(GeometryObject::DataItem("res",        GeometryObject::IntVector));
    geom_obj_data.push_back(GeometryObject::DataItem("temperature",GeometryObject::Double));
    geom_obj_data.push_back(GeometryObject::DataItem("pressure",   GeometryObject::Double));
@@ -109,7 +109,7 @@ ICEMaterial::ICEMaterial(ProblemSpecP& ps,
         geom_obj_ps != 0;
         geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
 
-      vector<GeometryPieceP> pieces;
+      std::vector<GeometryPieceP> pieces;
       GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
       GeometryPieceP mainpiece;
@@ -263,7 +263,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
     // points, so evidently the fgp is being carried over from MPMMaterial
 //    fgp->readPoints(patch->getID());
     int numPts = fgp->returnPointCount();
-    vector<Point>* points = fgp->getPoints();
+    std::vector<Point>* points = fgp->getPoints();
     if(numMatls > 2)  {
       cerr << "ERROR!!!\n";
       cerr << "File Geometry Piece with ICE only supported for one ice matl.\n";
@@ -283,8 +283,8 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
 
     IntVector ppc = d_geom_objs[obj]->getInitialData_IntVector("res");
     double ppc_tot = ppc.x()*ppc.y()*ppc.z();
-    cout << "ppc_tot = " << ppc_tot << endl;
-    cout << "numPts = " << numPts << endl;
+    std::cout << "ppc_tot = " << ppc_tot << endl;
+    std::cout << "numPts = " << numPts << endl;
     IntVector cell_idx;
     for (int ii = 0; ii < numPts; ++ii) {
       Point p = points->at(ii);

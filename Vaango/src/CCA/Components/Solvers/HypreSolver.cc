@@ -905,7 +905,7 @@ public:
 #ifdef PRINTSYSTEM
       //__________________________________
       //   Debugging
-      vector<string> fname;
+      std::vector<string> fname;
       params->getOutputFileName(fname);
       HYPRE_StructMatrixPrint(fname[0].c_str(), *HA, 0);
       HYPRE_StructVectorPrint(fname[1].c_str(), *HB, 0);
@@ -919,7 +919,7 @@ public:
       if (final_res_norm > params->tolerance || finite(final_res_norm) == 0) {
         if (params->getRestartTimestepOnFailure()) {
           if (pg->myRank() == 0)
-            cout << "HypreSolver not converged in " << num_iterations
+            std::cout << "HypreSolver not converged in " << num_iterations
                  << "iterations, final residual= " << final_res_norm
                  << ", requesting smaller timestep\n";
           // new_dw->abortTimestep();
@@ -984,7 +984,7 @@ public:
       double dt = Time::currentSeconds() - tstart;
       if (pg->myRank() == 0) {
 
-        cout << "Solve of " << X_label->getName() << " on level "
+        std::cout << "Solve of " << X_label->getName() << " on level "
              << level->getIndex() << " completed in " << dt
              << " s (solve only: " << solve_dt << " s, ";
         if (timestep > 2) {
@@ -992,9 +992,9 @@ public:
           // averaging window is 10.
           double alpha = 2.0 / (std::min(timestep - 2, 10) + 1);
           movingAverage_ = alpha * solve_dt + (1 - alpha) * movingAverage_;
-          cout << "mean: " << movingAverage_ << " s, ";
+          std::cout << "mean: " << movingAverage_ << " s, ";
         }
-        cout << num_iterations << " iterations, residual = " << final_res_norm
+        std::cout << num_iterations << " iterations, residual = " << final_res_norm
              << ")." << std::endl;
       }
       tstart = Time::currentSeconds();
@@ -1218,7 +1218,7 @@ void
 HypreSolver2::allocateHypreMatrices(DataWarehouse* new_dw)
 {
 
-  // cout << "Doing HypreSolver2::allocateHypreMatrices" << endl;
+  // std::cout << "Doing HypreSolver2::allocateHypreMatrices" << endl;
 
   SoleVariable<hypre_solver_structP> hypre_solverP_;
   hypre_solver_struct* hypre_solver_ = scinew hypre_solver_struct;
@@ -1285,7 +1285,7 @@ HypreSolver2::scheduleSolve(const LevelP& level, SchedulerP& sched,
     IntVector range = (h - l) * periodic;
     if (fmodf(range.x(), 2) != 0 || fmodf(range.y(), 2) != 0 ||
         fmodf(range.z(), 2) != 0) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\nINPUT FILE WARNING: hypre solver: \n"
            << "With periodic boundary conditions the resolution of your grid "
            << range

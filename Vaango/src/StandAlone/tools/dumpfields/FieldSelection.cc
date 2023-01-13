@@ -61,12 +61,12 @@ namespace Uintah {
     // let user select fields using 
     // -fields f1,f2,f3
     string fieldnames = args.getString("field", "all");
-    cout << "fieldnames: " << fieldnames << endl;
+    std::cout << "fieldnames: " << fieldnames << endl;
     
     if(fieldnames=="all") {
       this->fieldnames = allfields;      
     } else {
-      vector<string> requested_fields = split(fieldnames,',',false);
+      std::vector<string> requested_fields = split(fieldnames,',',false);
       for(vector<string>::const_iterator fit(requested_fields.begin());
           fit!=requested_fields.end();fit++) {
         if(!count(allfields.begin(), allfields.end(), *fit))
@@ -83,7 +83,7 @@ namespace Uintah {
       this->diagnames = split(diagnames, ',', false);
       for(vector<string>::const_iterator dit(this->diagnames.begin());
           dit!=this->diagnames.end();dit++)
-        cout << "   writing " << *dit << endl;
+        std::cout << "   writing " << *dit << endl;
     }
     
     // let user select tensor operations
@@ -96,7 +96,7 @@ namespace Uintah {
     // -material mat1,mat2
     string matnames = args.getString("material", "all");
     if(matnames!="all") {
-      vector<string> matlist = split(matnames, ',', false);
+      std::vector<string> matlist = split(matnames, ',', false);
       for(vector<string>::const_iterator mit(matlist.begin());mit!=matlist.end();mit++) {
         int imat = (int)strtol(mit->c_str(), 0, 10);
         this->mats.push_back(imat);

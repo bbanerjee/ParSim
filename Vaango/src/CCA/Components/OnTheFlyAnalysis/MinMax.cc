@@ -154,11 +154,11 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   int defaultMatl = d_matl->getDWIndex();
   
   //__________________________________
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
   d_matl_set = scinew MaterialSet();
-  map<string,string> attribute;
+  std::map<string,string> attribute;
     
   //__________________________________
   //  Now loop over all the variables to be analyzed  
@@ -243,7 +243,7 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
       throwException = true;
     } 
     if(throwException){       
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:AnalysisModule:MinMax: ("<<label->getName() << " " 
            << td->getName() << " ) has not been implemented" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__); 
@@ -280,7 +280,7 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   //
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
+  std::vector<int>::iterator it;
   it = unique(m.begin(), m.end());
   m.erase(it, m.end());
 
@@ -337,7 +337,7 @@ void MinMax::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:MinMax  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -548,7 +548,7 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
             break;
           }
           default:
-            ostringstream warn;
+             std::ostringstream warn;
             warn << "ERROR:AnalysisModule:MinMax: ("<< label->getName() << " " 
                  << td->getName() << " ) has not been implemented" << endl;
             throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -638,7 +638,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
         // create the directory structure
         string udaDir = d_dataArchiver->getOutputLocation();
 
-        ostringstream li;
+         std::ostringstream li;
         li<<"L-"<<level->getIndex();
         string levelIndex = li.str();
         string path = udaDir + "/" + levelIndex;
@@ -648,7 +648,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
           d_isDirCreated.insert(path);
         }
         
-        ostringstream fname;
+         std::ostringstream fname;
         fname<< path << "/" << labelName <<"_"<<d_analyzeVars[i].matl;
         string filename = fname.str();
 
@@ -769,8 +769,8 @@ void MinMax::findMinMax( DataWarehouse*  new_dw,
   //Point maxPos = level->getCellPosition(maxIndx);
   //Point minPos = level->getCellPosition(minIndx);          
 
-  // cout << varLabel->getName() << " max: " << maxQ << " " << maxIndx << " maxPos " << maxPos << endl;
-  // cout << "         min: " << minQ << " " << minIndx << " minPos " << minPos << endl; 
+  // std::cout << varLabel->getName() << " max: " << maxQ << " " << maxIndx << " maxPos " << maxPos << endl;
+  // std::cout << "         min: " << minQ << " " << minIndx << " minPos " << minPos << endl; 
   
   const string labelName = varLabel->getName();
   string VLmax = labelName + "_max";
@@ -797,7 +797,7 @@ void MinMax::createFile(string& filename,  FILE*& fp, string& levelIndex)
   fprintf( fp,"#The reported min & max values are for this level %s \n", levelIndex.c_str() );
   fprintf( fp,"#Time                      min                       max\n" );
   
-  cout << Parallel::getMPIRank() << " MinMax:Created file " << filename << endl;
+  std::cout << Parallel::getMPIRank() << " MinMax:Created file " << filename << endl;
 }
 //______________________________________________________________________
 // create the directory structure   dirName/LevelIndex
@@ -806,7 +806,7 @@ MinMax::createDirectory(string& dirName, string& levelIndex)
 {
   DIR *check = opendir(dirName.c_str());
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << "MinMax:Making directory " << dirName << endl;
+    std::cout << Parallel::getMPIRank() << "MinMax:Making directory " << dirName << endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {
     closedir(check);

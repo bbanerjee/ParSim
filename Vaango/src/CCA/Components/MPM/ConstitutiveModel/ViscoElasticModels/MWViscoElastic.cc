@@ -303,9 +303,9 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
     double onethird = (1.0 / 3.0);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Identity.Identity();
 
@@ -517,7 +517,7 @@ MWViscoElastic::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 0
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR MWViscoElastic"
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR MWViscoElastic"
        << endl;
 #endif
 }
@@ -543,7 +543,7 @@ MWViscoElastic::computePressEOSCM(const double rho_cur, double& pressure,
   tmp = sqrt((bulk + 4. * shear / 3.) / rho_cur); // speed of sound squared
 
 #if 0
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR MWViscoElastic"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR MWViscoElastic"
        << endl;
 #endif
 }

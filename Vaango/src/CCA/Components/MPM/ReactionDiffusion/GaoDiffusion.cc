@@ -48,7 +48,7 @@ GaoDiffusion::GaoDiffusion(ProblemSpecP& ps,
 
   mech_val = (diffusivity * partial_atomic_vol) / (boltzmann * operating_temp);
 
-  // cout << "Mech_val: " << mech_val << endl;
+  // std::cout << "Mech_val: " << mech_val << endl;
 }
 
 void
@@ -83,8 +83,8 @@ GaoDiffusion::computeFlux(const Patch* patch,
   Ghost::GhostType gnone = Ghost::None;
 
   auto interpolator = d_Mflag->d_interpolator->clone(patch);
-  vector<IntVector> ni(interpolator->size());
-  vector<Vector> d_S(interpolator->size());
+  std::vector<IntVector> ni(interpolator->size());
+  std::vector<Vector> d_S(interpolator->size());
 
   Vector dx = patch->dCell();
   double oodx[3];
@@ -149,7 +149,7 @@ GaoDiffusion::computeFlux(const Patch* patch,
 
     pFlux[idx] = chem_potential * pConcGradient[idx] +
                  mech_potential * pHydroStressGradient[idx];
-    // cout << "id: " << idx << " CG: " << pConcentrationGradient[idx] << ", PF:
+    // std::cout << "id: " << idx << " CG: " << pConcentrationGradient[idx] << ", PF:
     // " << pPotentialFlux[idx] << endl;
   } // End of Particle Loop
 

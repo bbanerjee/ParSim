@@ -154,10 +154,10 @@ Grid* BNRRegridder::regrid(Grid* oldGrid)
   double start=Time::currentSeconds();
   
   TAU_PROFILE("BNRRegridder::regrid", " ", TAU_USER);
-  vector<set<IntVector> > coarse_flag_sets(oldGrid->numLevels());
-  vector< vector<Region> > patch_sets(min(oldGrid->numLevels()+1,d_maxLevels));
+  std::vector<set<IntVector> > coarse_flag_sets(oldGrid->numLevels());
+  std::vector< vector<Region> > patch_sets(min(oldGrid->numLevels()+1,d_maxLevels));
 
-  vector<int> processor_assignments;
+  std::vector<int> processor_assignments;
 
   //create coarse flag sets
   CreateCoarseFlagSets(oldGrid,coarse_flag_sets);
@@ -181,7 +181,7 @@ Grid* BNRRegridder::regrid(Grid* oldGrid)
     t[1]+=Time::currentSeconds()-start;
     start=Time::currentSeconds();
     //create coarse flag vector
-    vector<IntVector> coarse_flag_vector(coarse_flag_sets[l].size());
+    std::vector<IntVector> coarse_flag_vector(coarse_flag_sets[l].size());
     coarse_flag_vector.assign(coarse_flag_sets[l].begin(),coarse_flag_sets[l].end());
    
     //Calcualte coarsening factor
@@ -417,7 +417,7 @@ void BNRRegridder::OutputGridStats(vector< vector<Region> > &patch_sets, Grid* n
 {
   if (d_myworld->myRank() == 0) 
   {
-    cout << " Grid Statistics:\n";
+    std::cout << " Grid Statistics:\n";
     for (unsigned int l = 0; l < patch_sets.size(); l++) 
     {
       if(patch_sets[l].empty())
@@ -442,7 +442,7 @@ void BNRRegridder::OutputGridStats(vector< vector<Region> > &patch_sets, Grid* n
       //calculate mean
       double mean = total_cells /(double) n;
       double stdv = sqrt((sum_of_cells_squared-total_cells*total_cells/(double)n)/(double)n);
-      cout << left << "  L" << setw(8) << l+1 << ": Patches: " << setw(8) << n << " Total Cells: " << setw(8) << total_cells << " Mean Cells: " << setw(8) << mean << " stdv: " << setw(8) << stdv << " relative stdv: " << setw(8) << stdv/mean << " Volume: " << setw(8) << total_cells*factor << endl;
+      std::cout << left << "  L" << setw(8) << l+1 << ": Patches: " << setw(8) << n << " Total Cells: " << setw(8) << total_cells << " Mean Cells: " << setw(8) << mean << " stdv: " << setw(8) << stdv << " relative stdv: " << setw(8) << stdv/mean << " Volume: " << setw(8) << total_cells*factor << endl;
     }
   }
 }
@@ -454,7 +454,7 @@ void BNRRegridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
   int rank=d_myworld->myRank();
   int numprocs=d_myworld->nRanks();
  
-  vector<int> procs(numprocs);
+  std::vector<int> procs(numprocs);
   BNRTask *root=0;  
   //bound local flags
   Region patch;
@@ -478,7 +478,7 @@ void BNRRegridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
   //Calculate global bounds
   if(numprocs>1)
   {
-    vector<Region> bounds(numprocs);
+    std::vector<Region> bounds(numprocs);
     Uintah::MPI::Allgather(&patch,sizeof(Region),MPI_BYTE,&bounds[0],sizeof(Region),MPI_BYTE,d_myworld->getComm());
 
     //calculate participating processor set
@@ -649,7 +649,7 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
                                 const SimulationStateP& state)
 {
   if(d_myworld->myRank()==0)
-    cout << " WARNING: The BNR regridder has performance issues and has been superseeded by the tiled regridder\n";
+    std::cout << " WARNING: The BNR regridder has performance issues and has been superseeded by the tiled regridder\n";
 
   RegridderCommon::problemSetup(params, oldGrid, state);
   d_sharedState = state;
@@ -687,7 +687,7 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
       patch_size=size;
     if(size!=patch_size)
     {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup Error: The patch size on level 0 is not constant. \n"
           << "The BNR Regridder requires all patches on level 0 to be constant. \n"
           << "Please update your input file so that the number of patches divides into the resolution evenly. \n";
@@ -703,22 +703,22 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
   //bound tolerances
   if (tola_ < 0) {
     if (d_myworld->myRank() == 0)
-      cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
+      std::cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
     tola_ = 0;
   }
   if (tola_ > 1) {
     if (d_myworld->myRank() == 0)
-      cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
+      std::cout << "  Bounding Regridder's patch_split_tolerance to [0,1]\n";
     tola_ = 1;
   }
   if (tolb_ < 0) {
     if (d_myworld->myRank() == 0)
-      cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
+      std::cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
     tolb_ = 0;
   }
   if (tolb_ > 1) {
     if (d_myworld->myRank() == 0)
-      cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
+      std::cout << "  Bounding Regridder's patch_combine_tolerance to [0,1]\n";
     tolb_ = 1;
   }
  
@@ -735,7 +735,7 @@ void BNRRegridder::problemSetup(const ProblemSpecP& params,
     if (patches_per_proc<1)
     {
       if (d_myworld->myRank() == 0)
-        cout << "  Bounding patches_per_level_per_proc to [1,infinity]\n";
+        std::cout << "  Bounding patches_per_level_per_proc to [1,infinity]\n";
       patches_per_proc=1;
     }
     target_patches_=patches_per_proc*d_myworld->nRanks();
@@ -759,7 +759,7 @@ void BNRRegridder::problemSetup_BulletProofing(const int k)
   // and the cell refinement ratio must be 1 in that plane
   for(int dir = 0; dir <3; dir++){
     if(k!=0 && d_cellNum[k][dir] == 1 && d_minPatchSize[k][dir] != 1) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: The problem you're running is <3D. \n"
           << " The min Patch Size must be 1 in the other dimensions. \n"
           << "Grid Size: " << d_cellNum[k] 
@@ -769,7 +769,7 @@ void BNRRegridder::problemSetup_BulletProofing(const int k)
     }
 
     if(k!=0 && d_cellNum[k][dir] != 1 && d_minPatchSize[k][dir] < 4) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: Min Patch Size needs to be greater than 4 cells in each dimension \n"
           << "except for 1-cell-wide dimensions.\n"
           << "  Patch size on level " << k << ": " << d_minPatchSize[k] << endl;
@@ -778,7 +778,7 @@ void BNRRegridder::problemSetup_BulletProofing(const int k)
     }
 
     if(k!=0 && d_cellNum[k][dir] != 1 && d_minPatchSize[k][dir] % d_cellRefinementRatio[k][dir] != 0) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: Min Patch Size needs to be divisible by the cell refinement ratio\n"
           << "  Patch size on level " << k << ": " << d_minPatchSize[k] 
           << ", refinement ratio on level " << k << ": " << d_cellRefinementRatio[k] << endl;
@@ -787,7 +787,7 @@ void BNRRegridder::problemSetup_BulletProofing(const int k)
     }
   }
   if (k!=0 && Mod( d_cellNum[k], d_minPatchSize[k] ) != IntVector(0,0,0) ) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Problem Setup: Regridder: The overall number of cells on level " << k << "(" << d_cellNum[k] << ") is not divisible by the minimum patch size (" <<  d_minPatchSize[k] << ")\n";
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
@@ -921,9 +921,9 @@ bool BNRRegridder::verifyGrid(Grid *grid)
   if(d_myworld->nRanks()==1)
     return true;
 
-  vector<int> checksums;
-  vector<int> their_checksums;
-  vector<string> labels;
+  std::vector<int> checksums;
+  std::vector<int> their_checksums;
+  std::vector<string> labels;
 
   int num_levels=grid->numLevels();
   grid_dbg << d_myworld->myRank() << " Grid number of levels:" << num_levels << endl;
@@ -936,7 +936,7 @@ bool BNRRegridder::verifyGrid(Grid *grid)
     {
       if(num_levels!=their_checksums[i])
       {
-        cout << d_myworld->myRank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
+        std::cout << d_myworld->myRank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
         return false;
       }
     }
@@ -978,13 +978,13 @@ bool BNRRegridder::verifyGrid(Grid *grid)
       {
         if(checksums[i]!=their_checksums[p*checksums.size()+i])
         {
-          cout << d_myworld->myRank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
+          std::cout << d_myworld->myRank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
           return false;
         }
       }
     }
   }
   //if(d_myworld->myRank()==0)
-  //  cout << " GRIDS ARE CONSISTENT\n";
+  //  std::cout << " GRIDS ARE CONSISTENT\n";
   return true;
 }

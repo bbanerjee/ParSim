@@ -212,13 +212,13 @@ GUVSphereShellPiece::createParticles(const Patch*,
                                      ParticleVariable<Vector>&,
                                      ParticleVariable<Matrix3>&,
                                      particleIndex) {
-  cout << "**ERROR**GUVSphereShellPiece:: No create particles implemented.";
+  std::cout << "**ERROR**GUVSphereShellPiece:: No create particles implemented.";
   return 0;
 }
 
 int
 GUVSphereShellPiece::returnParticleCount(const Patch*) {
-  cout << "**ERROR**GUVSphereShellPiece:: No per patch particle count.";
+  std::cout << "**ERROR**GUVSphereShellPiece:: No per patch particle count.";
   return 0;
 }
 

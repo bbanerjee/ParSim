@@ -52,7 +52,7 @@ namespace Uintah {
 static std::atomic<int32_t> ids{ 0 };
 static Uintah::MasterLock ids_init{};
 
-// Used to sync cout when output by multiple ranks
+// Used to sync std::cout when output by multiple ranks
 extern Uintah::MasterLock coutLock;
 
 Patch::Patch(const Level* level,
@@ -554,7 +554,7 @@ Patch::haveBC(FaceType face,
     ubc->print();
 #endif
     BCDataArray::bcDataArrayType::const_iterator v_itr;
-    vector<BCGeomBase*>::const_iterator it;
+    std::vector<BCGeomBase*>::const_iterator it;
 
     v_itr = itr->d_BCDataArray.find(mat_id);
     if (v_itr != itr->d_BCDataArray.end()) {
@@ -1087,7 +1087,7 @@ Patch::getEdgeCellIterator(const FaceType& face0,
                                   __FILE__,
                                   __LINE__);
   };
-  vector<IntVector> loPt(2), hiPt(2);
+  std::vector<IntVector> loPt(2), hiPt(2);
 
   loPt[0] = loPt[1] = patchExtraLow;
   hiPt[0] = hiPt[1] = patchExtraHigh;
@@ -1612,7 +1612,7 @@ Patch::getOtherLevelPatches55902(int levelOffset,
     low = low - IntVector(2, 2, 2);
   }
 
-  // cout << "  Patch:Golp: " << low-pc << " " << high+pc << std::endl;
+  // std::cout << "  Patch:Golp: " << low-pc << " " << high+pc << std::endl;
   Level::selectType patches;
   otherLevel->selectPatches(low - pc, high + pc, patches);
 
@@ -2145,7 +2145,7 @@ Patch::initializeBoundaryConditions()
 // on coarse and fine levels.
 //
 //  usage:
-//  vector<Region> regions
+//  std::vector<Region> regions
 //  coarsePatch->getFinestRegionsOnPatch(regions)
 //
 //  for(vector<Region>::iterator
@@ -2158,7 +2158,7 @@ void
 Patch::getFinestRegionsOnPatch(vector<Region>& difference) const
 {
   const Level* level = getLevel();
-  vector<Region> coarsePatch_q, finePatch_q;
+  std::vector<Region> coarsePatch_q, finePatch_q;
   IntVector zero(0, 0, 0);
   finePatch_q.push_back(Region(zero, zero));
 

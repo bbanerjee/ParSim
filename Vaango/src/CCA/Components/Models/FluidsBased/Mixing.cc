@@ -110,7 +110,7 @@ void Mixing::problemSetup(GridP& grid, SimulationStateP& sharedState,
 {
   matl = sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = matl->getDWIndex();
   mymatls = scinew MaterialSet();
   mymatls->addAll(m);
@@ -134,7 +134,7 @@ void Mixing::problemSetup(GridP& grid, SimulationStateP& sharedState,
          geom_obj_ps != 0;
          geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
       
-      vector<GeometryPieceP> pieces;
+      std::vector<GeometryPieceP> pieces;
       GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
       
       GeometryPieceP mainpiece;
@@ -166,7 +166,7 @@ void Mixing::problemSetup(GridP& grid, SimulationStateP& sharedState,
     Reaction* rxn = scinew Reaction();
     string from;
     child->require("from", from);
-    vector<Stream*>::iterator iter = streams.begin();
+    std::vector<Stream*>::iterator iter = streams.begin();
     for(;iter != streams.end(); iter++)
       if((*iter)->name == from)
         break;
@@ -249,7 +249,7 @@ void Mixing::initialize(const ProcessorGroup*,
       for(CellIterator iter = patch->getExtraCellIterator();
           !iter.done(); iter++){
         if(sum[*iter] != 1.0){
-          ostringstream msg;
+           std::ostringstream msg;
           msg << "Initial massFraction != 1.0: value=";
           msg << sum[*iter] << " at " << *iter;
           throw ProblemSetupException(msg.str(), __FILE__, __LINE__);

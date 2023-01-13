@@ -107,7 +107,7 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_plastic = ViscoPlasticityModelFactory::create(ps);
   if (!d_plastic) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the ViscoPlasticityModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " ffjhl.  "
@@ -118,7 +118,7 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = Vaango::MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " ffjhl.  "
@@ -572,8 +572,8 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // std::cerr << getpid() << " patch = " << patch->getID() << "\n";
     // Get grid size
@@ -1107,8 +1107,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get grid size
     // Vector dx = patch->dCell();
@@ -1522,8 +1522,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     // Get interpolation functions
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get patch indices for parallel solver
     //    IntVector lowIndex = patch->getInteriorNodeLowIndex();

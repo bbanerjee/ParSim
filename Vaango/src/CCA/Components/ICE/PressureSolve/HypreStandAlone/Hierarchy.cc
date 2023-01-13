@@ -352,7 +352,7 @@ Hierarchy::finePatchesOverMe(const Patch& patch) const
   for (int owner = 0; owner < numProcs; owner++) {
     dbg.setLevel(3);
     dbg << "Looking in patch list of owner = " << owner << "\n";
-    vector<Patch*>& ownerList = _levels[fineLevel]->_patchList[owner];
+    std::vector<Patch*>& ownerList = _levels[fineLevel]->_patchList[owner];
     for (vector<Patch*>::iterator iter = ownerList.begin();
          iter != ownerList.end(); ++iter) {
       Patch* finePatch = *iter;

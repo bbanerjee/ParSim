@@ -176,7 +176,7 @@
 
     for(int l=0;l<grid->numLevels();l++){
       LevelP level = grid->getLevel(l);
-      cout << "Level: " <<  endl;
+      std::cout << "Level: " <<  endl;
       for(Level::const_patchIterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;

@@ -82,7 +82,7 @@ TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps) {
   makePlanes();
   makeTriangleBoxes();
 
-  // cout << "Triangulated surfaces read: \t" <<d_triangles.size() <<endl;
+  // std::cout << "Triangulated surfaces read: \t" <<d_triangles.size() <<endl;
   Triangle tri;
   TriangleList tri_list = tri.makeTriangleList(d_triangles, d_points);
   d_grid                = std::make_unique<UniformGrid>(d_box);
@@ -800,7 +800,7 @@ TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const {
 
   Triangle tri(p[0], p[1], p[2]);
   // bool inside = tri.inside(q);
-  //   cout << "inside = " << inside << endl;
+  //   std::cout << "inside = " << inside << endl;
 
   // Now translate the points that make up the vertices of the triangle.
   Point trans_pt(0., 0., 0.), trans_vt[3];

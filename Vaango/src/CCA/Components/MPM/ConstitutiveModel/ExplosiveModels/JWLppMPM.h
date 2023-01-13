@@ -222,7 +222,7 @@ private:
                 const double& pM,
                 const double& pJWL,
                 const double& delT,
-                vector<double>& G) const;
+                std::vector<double>& G) const;
 
   //------------------------------------------------------------------
   // Compute the Jacobian of G

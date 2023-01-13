@@ -149,7 +149,7 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps,
 
   if (d_consistency_bisection_tolerance < 1.0e-16 ||
       d_consistency_bisection_tolerance > 1.0e-2) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
          << endl;

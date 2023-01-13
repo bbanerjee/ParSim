@@ -53,7 +53,7 @@ LoadBalancerFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
       loadbalancer = "SimpleLoadBalancer";
 
   if (world->myRank() == 0)
-    cout << "Load Balancer: \t\t" << loadbalancer << endl;
+    std::cout << "Load Balancer: \t\t" << loadbalancer << endl;
 
   if (loadbalancer == "SingleProcessorLoadBalancer") {
     bal = scinew SingleProcessorLoadBalancer(world);

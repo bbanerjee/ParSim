@@ -89,8 +89,8 @@ namespace Uintah {
     
     /*! Needed for AMRMPM */
     virtual void findCellAndWeights(const Point& pos,
-                                    vector<IntVector>& ni,
-                                    vector<double>& S,
+                                    std::vector<IntVector>& ni,
+                                    std::vector<double>& S,
                                     constNCVariable<Stencil7>& zoi,
                                     constNCVariable<Stencil7>& zoi_fine,
                                     const bool& getFiner,
@@ -100,16 +100,16 @@ namespace Uintah {
                                     
     /*! Needed for AMRMPM */
     virtual void findCellAndWeights_CFI(const Point& pos,
-                                        vector<IntVector>& ni,
-                                        vector<double>& S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<double>& S,
                                         constNCVariable<Stencil7>& zoi) {}
                                     
     /*! Needed for AMRMPM */
     virtual void findCellAndWeightsAndShapeDerivatives_CFI(
                                             const Point& pos,
-                                            vector<IntVector>& CFI_ni,
-                                            vector<double>& S,
-                                            vector<Vector>& d_S,
+                                            std::vector<IntVector>& CFI_ni,
+                                            std::vector<double>& S,
+                                            std::vector<Vector>& d_S,
                                             constNCVariable<Stencil7>& zoi) {}
   private:
     const Patch* d_patch;

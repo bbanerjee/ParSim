@@ -136,9 +136,9 @@ int main ( int argc, char** argv )
     return EXIT_FAILURE;
   }
 
-  cout << "Simple Math Benchmark: " << endl;
-  cout << "Resolution (" << size << ", " << size << ", " << size << ")" << endl;
-  cout << "Repeating " << loop << " time(s)." << endl;
+  std::cout << "Simple Math Benchmark: " << endl;
+  std::cout << "Resolution (" << size << ", " << size << ", " << size << ")" << endl;
+  std::cout << "Repeating " << loop << " time(s)." << endl;
 
   IntVector low ( 0,0,0 );
   IntVector high( size,size,size );
@@ -162,8 +162,8 @@ int main ( int argc, char** argv )
     double deltaTime = Time::currentSeconds() - startTime;
     double megaFlops = (loop * size * size * size * 2.0) / 1000000.0 / deltaTime;
 
-    cout << "Completed in " << deltaTime << " seconds.";
-    cout << " (" << megaFlops << " MFLOPS)" << endl;
+    std::cout << "Completed in " << deltaTime << " seconds.";
+    std::cout << " (" << megaFlops << " MFLOPS)" << endl;
   }
   {
     double startTime = Time::currentSeconds();
@@ -172,8 +172,8 @@ int main ( int argc, char** argv )
     double deltaTime = Time::currentSeconds() - startTime;
     double megaFlops = (loop * size * size * size * 2.0) / 1000000.0 / deltaTime;
 
-    cout << "Completed in " << deltaTime << " seconds.";
-    cout << " (" << megaFlops << " MFLOPS)" << endl;
+    std::cout << "Completed in " << deltaTime << " seconds.";
+    std::cout << " (" << megaFlops << " MFLOPS)" << endl;
   }
  
   return EXIT_SUCCESS;

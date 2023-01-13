@@ -83,13 +83,13 @@ bool read_Sine_BC_inputs(const ProblemSpecP& prob_spec,
   
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
-    map<string,string> face;
+    std::map<string,string> face;
     face_ps->getAttributes(face);
     bool is_a_Sine_face = false;
     
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      map<string,string> bc_type;
+      std::map<string,string> bc_type;
       bc_iter->getAttributes(bc_type);
 
       if (bc_type["var"] == "Sine" && !is_a_Sine_face) {

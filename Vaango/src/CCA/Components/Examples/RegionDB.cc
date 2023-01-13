@@ -47,7 +47,7 @@ RegionDB::problemSetup(ProblemSpecP& ps, const GridP& grid)
   ProblemSpecP regions = ps->findBlock("Regions");
   if(!regions)
     throw ProblemSetupException("Regions block not found", __FILE__, __LINE__);
-  vector<GeometryPieceP> pieces;
+  std::vector<GeometryPieceP> pieces;
   GeometryPieceFactory::create(regions, grid, pieces);
   for(vector<GeometryPieceP>::iterator iter = pieces.begin();
       iter != pieces.end(); iter++){

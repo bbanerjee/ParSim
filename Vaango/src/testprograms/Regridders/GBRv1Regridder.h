@@ -69,7 +69,7 @@ Region GBRv1Regridder::computeBounds(std::list<IntVector> &flags)
 
   //cout << getpid() << " local flags: " << endl;
   //for(std::list<IntVector>::iterator iter=flags.begin();iter!=flags.end();iter++)
-  //  cout << "      " << getpid() << " " << *iter << endl;
+  //  std::cout << "      " << getpid() << " " << *iter << endl;
   //cout << getpid() << " local bounds: " << bounds << endl;
  
   Region gbounds;

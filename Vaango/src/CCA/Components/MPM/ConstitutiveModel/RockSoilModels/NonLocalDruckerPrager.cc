@@ -165,7 +165,7 @@ NonLocalDruckerPrager::initializeCMData(const Patch* patch,
 
   Uintah::Weibull weibGen(wdist.WeibMed, wdist.WeibMod, wdist.WeibRefVol,
                           wdist.WeibSeed, wdist.WeibMod);
-  cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
+  std::cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
        << "Median:            " << wdist.WeibMed
        << "\nModulus:         " << wdist.WeibMod
        << "\nReference Vol:   " << wdist.WeibRefVol
@@ -278,9 +278,9 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
@@ -478,12 +478,12 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
         Matrix3 S_new;
         computeInvariants(stress_new[idx], S_new, I1_new, J2_new);
         if (current_yield_strength < 0) {
-          cout << "zero yield strength detected" << endl;
+          std::cout << "zero yield strength detected" << endl;
           // just set deviator to zero (von-Mise ONLY!!)
           stress_new[idx] = Identity * (1.0 / 3.0) * trial_stress[idx].Trace();
         } else if (alpha * I1_new > current_yield_strength) {
           // just put the stress on the vertex
-          cout << "stress on yield vertex" << endl;
+          std::cout << "stress on yield vertex" << endl;
           stress_new[idx] =
             Identity * (1.0 / (3.0 * alpha)) * current_yield_strength;
         }
@@ -673,7 +673,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
           if (f_max > 0.0) {
             softened[idx] = 1;
             soften_elastic = true;
-            cout << "elastic softening" << endl;
+            std::cout << "elastic softening" << endl;
           }
 
         } // end elastic part
@@ -682,7 +682,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
       // check if the error in the plastic multiplier is small and that
       // there are no softened elastic particles
-      cout << "maximum iteration error after iteration " << q << " is "
+      std::cout << "maximum iteration error after iteration " << q << " is "
            << error_max << endl;
       if (error_max < tolerance && !soften_elastic)
         done = true;
@@ -749,7 +749,7 @@ NonLocalDruckerPrager::EvaluateNonLocalAverage(
   const double& l_nonlocal)
 {
   Vector dx = patch->dCell();
-  vector<double> l_nonlocal_index(3);
+  std::vector<double> l_nonlocal_index(3);
   l_nonlocal_index[0] = l_nonlocal / dx.x();
   l_nonlocal_index[1] = l_nonlocal / dx.y();
   l_nonlocal_index[2] = l_nonlocal / dx.z();
@@ -982,7 +982,7 @@ NonLocalDruckerPrager::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR NonLocalDruckerPrager"
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR NonLocalDruckerPrager"
        << endl;
 #endif
 }
@@ -1003,14 +1003,14 @@ NonLocalDruckerPrager::computePressEOSCM(double rho_cur, double& pressure,
   dp_drho = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
   tmp = (bulk + 4. * shear / 3.) / rho_cur; // speed of sound squared
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
        << endl;
 }
 
 double
 NonLocalDruckerPrager::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
        << endl;
   return 1.0;
 }

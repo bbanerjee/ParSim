@@ -32,7 +32,7 @@ using namespace Uintah;
 ContactMaterialSpec::ContactMaterialSpec(ProblemSpecP& ps)
 {
   if (ps) {
-    vector<int> materials;
+    std::vector<int> materials;
     if (ps->get("materials", materials)) {
       for (const auto material : materials) {
         if (material < 0) {
@@ -72,7 +72,7 @@ ContactMaterialSpec::add(unsigned int matlIndex)
       d_matls[i] = false;
   }
   if (matlIndex >= d_matls.size()) {
-    vector<bool> copy(d_matls);
+    std::vector<bool> copy(d_matls);
     d_matls.resize(matlIndex + 1);
     for (size_t i = 0; i < copy.size(); i++)
       d_matls[i] = copy[i];

@@ -637,9 +637,9 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
@@ -725,13 +725,13 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       // Check 1: Look at Jacobian
       if (J <= 0.0 || J > d_hugeJ) {
         double Jold = pDefGrad[idx].Determinant();
-        cout << "negative or huge J encountered J=" << J << ", Jold = " << Jold
+        std::cout << "negative or huge J encountered J=" << J << ", Jold = " << Jold
              << " deleting particle" << endl;
-        cout << "pos = " << px[idx] << endl;
+        std::cout << "pos = " << px[idx] << endl;
 
         pLocalized_new[idx] = -999;
-        cout << "localizing (deleting) particle " << pParticleID[idx] << endl;
-        cout << "material = " << dwi << endl
+        std::cout << "localizing (deleting) particle " << pParticleID[idx] << endl;
+        std::cout << "material = " << dwi << endl
              << "Momentum deleted = " << pvelocity[idx] * pmass[idx] << endl;
         pDefGrad_new[idx] = Vaango::Util::Identity;
         D = Matrix3(0.);
@@ -967,7 +967,7 @@ Kayenta::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << endl;
 #endif
 }
 
@@ -986,7 +986,7 @@ Kayenta::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << endl;
 #endif
 }
 
@@ -1153,7 +1153,7 @@ Kayenta::initializeLocalMPMLabels()
     "p.localized", ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create(
     "p.localized+", ParticleVariable<int>::getTypeDescription());
-  vector<string> ISVNames;
+  std::vector<string> ISVNames;
 
   // These lines of code are added by KC to replace the currently hard-coded
   // internal variable allocation with a proper call to KMMRXV routine.

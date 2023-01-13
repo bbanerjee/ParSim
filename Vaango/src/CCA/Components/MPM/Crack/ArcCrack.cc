@@ -93,20 +93,20 @@ void ArcCrack::readCrack(ProblemSpecP& arc_ps)
 void ArcCrack::outputInitialCrackPlane(int i)
 {
 
-  cout << "  * Arc " << i+1 << ": meshed by " << NCells
+  std::cout << "  * Arc " << i+1 << ": meshed by " << NCells
        << " cells on the circumference." << endl;
   if(CrkFrtSegID==-1)
-    cout << "   crack front: on the arc" << endl;
+    std::cout << "   crack front: on the arc" << endl;
   else
-    cout << "   crack front segment ID: " << CrkFrtSegID << endl;
-  cout << "\n    start, middle and end points of the arc:"  << endl;
+    std::cout << "   crack front segment ID: " << CrkFrtSegID << endl;
+  std::cout << "\n    start, middle and end points of the arc:"  << endl;
   for(int j=0;j<3;j++)
-    cout << "    p" << j+1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j+1 << ": " << vertices[j] << endl;
 
 }
 
 void ArcCrack::discretize(int& nstart0,vector<Point>& cx, 
-                           vector<IntVector>& ce,vector<int>& SegNodes)
+                           std::vector<IntVector>& ce,vector<int>& SegNodes)
 {
 
   // Three points of the arc

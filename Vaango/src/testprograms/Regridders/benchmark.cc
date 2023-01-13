@@ -61,11 +61,11 @@ int main(int argc, char **argv)
   {
     if(rank==0)
     {
-      cout << "Usage: benchmark patch_size number_of_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
-      cout << " Command was: ";
+      std::cout << "Usage: benchmark patch_size number_of_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
+      std::cout << " Command was: ";
       for(int i=0;i<argc;i++)
-        cout << argv[i] << " ";
-      cout << endl;
+        std::cout << argv[i] << " ";
+      std::cout << endl;
     }
     MPI_Finalize();
     return 1;
@@ -104,10 +104,10 @@ int main(int argc, char **argv)
   //cout << "rad: " << rad << endl;
 
   //create coarse patch set
-  vector<Region> patches;
-  vector<CCVariable<int> * > flags;
-  vector<IntVector> gflags;
-  vector<list<IntVector> > lflags;
+  std::vector<Region> patches;
+  std::vector<CCVariable<int> * > flags;
+  std::vector<IntVector> gflags;
+  std::vector<list<IntVector> > lflags;
 
   int total_patches=num_patches.x()*num_patches.y()*num_patches.z();
   int div=total_patches/num_procs;
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
         if(p_assigned==to_assign)
         { 
           //if(rank==0)
-          //  cout << p << " assigned: " << to_assign << " patches\n"; 
+          //  std::cout << p << " assigned: " << to_assign << " patches\n"; 
           p++;
           p_assigned=0;
           to_assign=div+int(mod>p);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
   }
 
   //for(unsigned int i=0;i<patches.size();i++)
-  //  cout << rank << " patch: " << patches[i] << endl;
+  //  std::cout << rank << " patch: " << patches[i] << endl;
 
   //create refinement flags
   flags.resize(patches.size());
@@ -185,14 +185,14 @@ int main(int argc, char **argv)
 
   ofstream fout;
   
-  vector<Region> fine_patches,global_patches;
+  std::vector<Region> fine_patches,global_patches;
 
   TiledRegridder tiled(patch_size,rr);
   LBNRRegridder lbnr(.85,rr);
   GBRv1Regridder gbrv1(.85,rr,rank,num_procs);
   GBRv2Regridder gbrv2(.85,rr,rank,num_procs);
 
-  cout << setprecision(20);
+  std::cout << setprecision(20);
   clock_t start;
   double time;
 #if 1
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
   outputTime(time,1);
 #endif
 #if 1
-  vector<IntVector> tmpflags;
+  std::vector<IntVector> tmpflags;
   MPI_Barrier(MPI_COMM_WORLD);
   start=clock();
   for(int i=0;i<REPEAT2;i++)
@@ -271,7 +271,7 @@ void outputTime(double time, int alg)
   getTime(time,mint,maxt,avgt);
 
   if(rank==0)
-    cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << endl; 
+    std::cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << endl; 
 
 }
 

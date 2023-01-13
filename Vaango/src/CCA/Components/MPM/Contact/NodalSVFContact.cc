@@ -75,7 +75,7 @@ NodalSVFContact::NodalSVFContact(const ProcessorGroup* myworld,
   ps->require("myu", d_myu);
   ps->require("use_svf", b_svf);
 
-  vector<int> materials;
+  std::vector<int> materials;
   ps->get("materials", materials);
 
   int numMatlsUPS = 0;

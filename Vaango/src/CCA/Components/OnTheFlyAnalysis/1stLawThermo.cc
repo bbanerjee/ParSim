@@ -147,7 +147,7 @@ void FirstLawThermo::problemSetup(const ProblemSpecP&,
   for (ProblemSpecP face_ps = cv_ps->findBlock("Face");
       face_ps != 0; face_ps=face_ps->findNextBlock("Face")) {
  
-    map<string,string> faceMap;
+    std::map<string,string> faceMap;
     face_ps->getAttributes(faceMap);
     
     string side = faceMap["side"];
@@ -251,7 +251,7 @@ void FirstLawThermo::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:FirstLawThermo  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -409,7 +409,7 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup* pg,
       cout_dbg.precision(15);
       //__________________________________
       // Sum the fluxes passing through the boundaries      
-      vector<Patch::FaceType> bf;
+      std::vector<Patch::FaceType> bf;
       patch->getBoundaryFaces(bf);
       double mat_fluxes = 0.0;
 
@@ -734,7 +734,7 @@ void FirstLawThermo::createFile(string& filename,  FILE*& fp)
   fprintf(fp,"#    - mpm matls are listed in order 0, 1, 2, 3\n");
   fprintf(fp,"#    - Energy conversion factor, in SI units KJ ->J %E\n",d_conversion);
   fprintf(fp,"#Time                      ICE_totalIntEng            MPM_totalIntEng             totalIntEng                 total_ICE_Flux\n");
-  cout << Parallel::getMPIRank() << " FirstLawThermo:Created file " << filename << endl;
+  std::cout << Parallel::getMPIRank() << " FirstLawThermo:Created file " << filename << endl;
 }
 
 
@@ -802,7 +802,7 @@ void FirstLawThermo::bulletProofing(GridP& grid,
    }
 
    if( validPlane == false ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane on face ("<< side
           << ") that you've specified " << start << " " << end 
           << " is not parallel to the coordinate system. \n" << endl;
@@ -838,7 +838,7 @@ void FirstLawThermo::bulletProofing(GridP& grid,
      }
    }
    if( validPlane == false ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane on face ("<< side
           << ") that you've specified " << start << " to " << end 
           << " is not at the edge of the computational domain. \n" << endl;
@@ -849,14 +849,14 @@ void FirstLawThermo::bulletProofing(GridP& grid,
    //the plane can't exceed computational domain
    if( start.x() < min.x() || start.y() < min.y() ||start.z() < min.z() ||
        end.x() > max.x()   || end.y() > max.y()   || end.z() > max.z() ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: a portion of plane that you've specified " << start 
           << " " << end << " lies outside of the computational domain. \n" << endl;
      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
    }
 
    if( start.x() > end.x() || start.y() > end.y() || start.z() > end.z() ) {
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane that you've specified " << start 
           << " " << end << " the starting point is > than the ending point \n" << endl;
      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);

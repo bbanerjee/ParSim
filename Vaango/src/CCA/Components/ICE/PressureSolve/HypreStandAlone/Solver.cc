@@ -559,7 +559,7 @@ Solver::makeGraph(const Hierarchy& hier,
         const Vector<Counter>& refRat = hier._levels[level+1]->_refRat;
         dbg.indent();
         // List of fine patches covering this patch
-        vector<Patch*> finePatchList = hier.finePatchesOverMe(*patch);
+        std::vector<Patch*> finePatchList = hier.finePatchesOverMe(*patch);
         Box coarseRefined(patch->_box.get(Left) * refRat,
                           (patch->_box.get(Right) + 1) * refRat - 1);
         dbg << "coarseRefined " << coarseRefined << "\n";
@@ -971,7 +971,7 @@ Solver::makeLinearSystem(const Hierarchy& hier,
         const Vector<Counter>& refRat = hier._levels[level+1]->_refRat;
         dbg.indent();
         // List of fine patches covering this patch
-        vector<Patch*> finePatchList = hier.finePatchesOverMe(*patch);
+        std::vector<Patch*> finePatchList = hier.finePatchesOverMe(*patch);
         Box coarseRefined(patch->_box.get(Left) * refRat,
                           (patch->_box.get(Right) + 1) * refRat - 1);
         dbg << "coarseRefined " << coarseRefined << "\n";

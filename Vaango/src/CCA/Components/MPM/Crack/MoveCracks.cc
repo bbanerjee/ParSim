@@ -168,8 +168,8 @@ Crack::MoveCracks(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     int pid,patch_size;
     MPI_Comm_rank(mpi_crack_comm, &pid);
@@ -261,7 +261,7 @@ Crack::MoveCracks(const ProcessorGroup*,
 
               // Check if the node is still inside the grid
               if(!PhysicalGlobalGridContainsPoint(dx_min,cptmp[j])) {
-                cout << "Error: cx[" << m << "," << idx << "]=" << cx[m][idx]
+                std::cout << "Error: cx[" << m << "," << idx << "]=" << cx[m][idx]
                      << " has moved to " << cptmp[j] << ", outside the global grid."
                      << " Center-of-mass velocity, vcm=" << vcm 
                      << ". Program terminated." << endl;

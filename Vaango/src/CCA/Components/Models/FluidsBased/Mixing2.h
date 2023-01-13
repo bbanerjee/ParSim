@@ -162,11 +162,11 @@ WARNING
       string name;
       VarLabel* massFraction_CCLabel;
       VarLabel* massFraction_source_CCLabel;
-      vector<Region*> regions;
+      std::vector<Region*> regions;
     };
 
-    vector<Stream*> streams;
-    map<string, Stream*> names;
+    std::vector<Stream*> streams;
+    std::map<string, Stream*> names;
 
     Cantera::IdealGasMix* gas;
     Cantera::Reactor* reactor;

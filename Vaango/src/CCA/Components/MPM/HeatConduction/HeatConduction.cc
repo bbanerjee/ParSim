@@ -200,8 +200,8 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
       cout_heat << " Patch = " << patch->getID() << endl;
 
     auto interpolator = d_flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3];
@@ -387,9 +387,9 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
       cout_heat << " Patch = " << patch->getID() << endl;
       
     auto interpolator = d_flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3];

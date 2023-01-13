@@ -48,8 +48,8 @@ GradientComputer::~GradientComputer()
 /*! Calculate gradient of a vector field for 8 noded interpolation */
 void 
 GradientComputer::computeGrad(Matrix3& grad,
-                              vector<IntVector>& ni,
-                              vector<Vector>& d_S,
+                              std::vector<IntVector>& ni,
+                              std::vector<Vector>& d_S,
                               const double* oodx, 
                               constNCVariable<Vector>& gVec)
 {
@@ -76,8 +76,8 @@ GradientComputer::computeGrad(Matrix3& grad,
     for Kmat and B matrix for Kgeo */
 void 
 GradientComputer::computeGradAndBmats(Matrix3& grad,
-                                      vector<IntVector>& ni,
-                                      vector<Vector>& d_S,
+                                      std::vector<IntVector>& ni,
+                                      std::vector<Vector>& d_S,
                                       const double* oodx, 
                                       constNCVariable<Vector>& gVec,
                                       const Array3<int>& l2g,
@@ -134,7 +134,7 @@ GradientComputer::computeGradAndBmats(Matrix3& grad,
     for Kmat and B matrix for Kgeo */
 void 
 GradientComputer::computeBmats(vector<IntVector>& ni,
-                               vector<Vector>& d_S,
+                               std::vector<Vector>& d_S,
                                const double* oodx, 
                                const Array3<int>& l2g,
                                double B[6][24],

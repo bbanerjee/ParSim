@@ -82,7 +82,7 @@ namespace Uintah {
       cerr << "Can't open output file " << casefilename << endl;
       abort();
     }
-    cout << "     " << casefilename << endl;
+    std::cout << "     " << casefilename << endl;
   
     // header
     casestrm_ << "FORMAT" << endl;
@@ -132,7 +132,7 @@ namespace Uintah {
     else
       return; // FIXME: dont dump particle data
     
-    list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, data_.fselect_);
+     std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, data_.fselect_);
     for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());
         diagit!=scalardiaggens.end();diagit++) {
       // NOTE: this must match the file name format used by the actual writer
@@ -198,11 +198,11 @@ namespace Uintah {
     vshape_ = (maxind-minind);
     
     /*
-    cout << "  " << goutname << endl;
-    cout << "   minind = " << minind_ << endl;
-    cout << "   maxind = " << maxind << endl;
-    cout << "   vshape = " << vshape_ << endl;
-    cout << endl;
+    std::cout << "  " << goutname << endl;
+    std::cout << "   minind = " << minind_ << endl;
+    std::cout << "   maxind = " << maxind << endl;
+    std::cout << "   vshape = " << vshape_ << endl;
+    std::cout << endl;
     */
     
     if(needmesh_) {
@@ -240,7 +240,7 @@ namespace Uintah {
   
     if(data_->withpart_) {
       // store particles   
-      cout << "  " << poutname << endl;
+      std::cout << "  " << poutname << endl;
     
       ofstream pstrm(poutname);
       pstrm << "particle description" << endl;
@@ -281,8 +281,8 @@ namespace Uintah {
       
         }
       }
-      cout << "   nparts = " << nparts << endl;
-      cout << endl;
+      std::cout << "   nparts = " << nparts << endl;
+      std::cout << endl;
   
       pstrm.seekp(nspot);
       pstrm << setw(8) << setfill(' ') << nparts;
@@ -308,7 +308,7 @@ namespace Uintah {
     GridP grid = data_->da_->queryGrid(index_);
     FldDumper * fd = data_->dumper_;
     
-    list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, data_->fselect_);
+     std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, data_->fselect_);
     
     for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());
         diagit!=scalardiaggens.end();diagit++) 
@@ -323,14 +323,14 @@ namespace Uintah {
                  data_->dir_.c_str(), nodots(fieldname).c_str(), 
                  diagname.c_str(), fileindex_);
         
-        cout << "  " << outname;
+        std::cout << "  " << outname;
         cout.flush();
       
         ofstream vstrm(outname);
         fd->setstrm(&vstrm);
         int icol(0); // pretty format the columns
         
-        ostringstream descb;
+         std::ostringstream descb;
         descb << "data field " << nodots(fieldname) << " at " << time_;
         fd->textfld(descb.str(),79,80); fd->endl();
         fd->textfld("part",     79,80); fd->endl();
@@ -346,11 +346,11 @@ namespace Uintah {
         for(Uintah::Array3<double>::iterator vit(vals.begin());vit!=vals.end();vit++)
           *vit = 0.;
         
-        cout << ", patch ";
+        std::cout << ", patch ";
         for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
           const Patch* patch = *iter;
           
-          cout << patch->getID() << " ";
+          std::cout << patch->getID() << " ";
           cout.flush();
           
           IntVector ilow, ihigh;
@@ -384,7 +384,7 @@ namespace Uintah {
             }
           if(icol!=0) fd->endl();
         }
-        cout << endl;
+        std::cout << endl;
         
         fd->unsetstrm();
         
@@ -394,7 +394,7 @@ namespace Uintah {
   void
   EnsightDumper::Step::storePartField(string /*fieldname*/, const Uintah::TypeDescription * /*td*/)
   {
-    cout << "no particles for you - i spit in your general direction" << endl;
+    std::cout << "no particles for you - i spit in your general direction" << endl;
   }
 
 }

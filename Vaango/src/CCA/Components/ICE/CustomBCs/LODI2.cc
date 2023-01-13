@@ -102,17 +102,17 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
   ProblemSpecP bc_ps  = grid_ps->findBlock("BoundaryConditions");
  
   bool usingLODI = false;
-  vector<int> matl_index;
+  std::vector<int> matl_index;
   
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
-    map<string,string> face;
+    std::map<string,string> face;
     face_ps->getAttributes(face);
     bool is_a_Lodi_face = false;
     
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      map<string,string> bc_type;
+      std::map<string,string> bc_type;
       bc_iter->getAttributes(bc_type);
       
       //__________________________________
@@ -168,10 +168,10 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
       
     //__________________________________
     //  bulletproofing
-    vector<int>::iterator iter;
+    std::vector<int>::iterator iter;
     for( iter  = matl_index.begin();iter != matl_index.end(); iter++){
       if(*iter != vb->iceMatl_indx){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:\n Inputs: LODI Boundary Conditions: One of the material indices is not the specified ice_material_index: "<< vb->iceMatl_indx;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -179,7 +179,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
     
     int numICEMatls = sharedState->getNumICEMatls();
     bool foundMatl = false;
-    ostringstream indicies;
+     std::ostringstream indicies;
     
     for(int m = 0; m < numICEMatls; m++){
       ICEMaterial* matl = sharedState->getICEMaterial( m );
@@ -191,7 +191,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
     }
     
     if(foundMatl==false){
-      ostringstream warn;                                                                                              
+       std::ostringstream warn;                                                                                              
       warn << "ERROR:\n Inputs: LODI Boundary Conditions: The ice_material_index: "<< vb->iceMatl_indx<< " is not "    
            << "\n an ICE material: " << indicies.str() << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -203,7 +203,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
     ProblemSpecP DA_ps = prob_spec->findBlock("DataArchiver");
     for (ProblemSpecP child = DA_ps->findBlock("save"); child != 0;
                       child = child->findNextBlock("save")) {
-      map<string,string> var_attr;
+      std::map<string,string> var_attr;
       child->getAttributes(var_attr);
       if( ( var_attr["label"] == "Li1" ||
             var_attr["label"] == "Li2" ||
@@ -324,7 +324,7 @@ void addRequires_Lodi(Task* t,
   if(setLODI_bcs){
   
     cout_doing<< "Doing addRequires_Lodi: \t\t" <<t->getName() << " " << where << endl;
-    vector<Patch::FaceType>::iterator f ;
+    std::vector<Patch::FaceType>::iterator f ;
     for( f = var_basket->LodiFaces.begin();
          f !=var_basket->LodiFaces.end(); ++f) {
       VarLabel* V_Label = getMaxMach_face_VarLabel(*f);
@@ -553,7 +553,7 @@ inline void characteristic_source_terms(const IntVector dir,
                                         const Vector grav,
                                         const double rho_CC,
                                         const double speedSound,
-                                        vector<double>& s)
+                                        std::vector<double>& s)
 {
   //__________________________________
   // x_dir:  dir = (0,1,2) 
@@ -610,8 +610,8 @@ void debugging_Li(const IntVector c,
   if( ( leftFace && normalVel >= 0 ) || ( rightFace && normalVel <= 0 ) ) {
     flowDir = "inFlow";
   }
-  cout << " \n ----------------- " << c << endl;
-  cout << " default values " << endl;
+  std::cout << " \n ----------------- " << c << endl;
+  std::cout << " default values " << endl;
   string s_A  = " A = rho * speedSound * dVel_dx[n_dir]; ";
   string s_L1 = " 0.5 * (normalVel - speedSound) * (dp_dx - A) ";
   string s_L2 = " normalVel * (drho_dx - dp_dx/speedSoundsqr) ";
@@ -619,32 +619,32 @@ void debugging_Li(const IntVector c,
   string s_L4 = " normalVel * dVel_dx[dir[2]];  ";
   string s_L5 = " 0.5 * (normalVel + speedSound) * (dp_dx + A); \n";
   
-  cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[P_dir] ) "<< endl;
-  cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << endl;
-  cout << "s[3] = "<< s[3] << "  s_mom[P_dir];                                          " << endl;
-  cout << "s[4] = "<< s[4] << "  s_mom[P_dir];                                          " << endl;
-  cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[P_dir] )  " << endl;
-  cout << "\n"<< endl;
+  std::cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[P_dir] ) "<< endl;
+  std::cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << endl;
+  std::cout << "s[3] = "<< s[3] << "  s_mom[P_dir];                                          " << endl;
+  std::cout << "s[4] = "<< s[4] << "  s_mom[P_dir];                                          " << endl;
+  std::cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[P_dir] )  " << endl;
+  std::cout << "\n"<< endl;
   //__________________________________
   //Subsonic non-reflective inflow
   if (flowDir == "inFlow" && Mach < 1.0){
-    cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< endl;
-    cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << endl;
-    cout << "L2 = s[2];                             " << L2 << endl;
-    cout << "L3 = s[3];                             " << L3 << endl;
-    cout << "L4 = s[4];                             " << L4 << endl;
-    cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << endl;
+    std::cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< endl;
+    std::cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << endl;
+    std::cout << "L2 = s[2];                             " << L2 << endl;
+    std::cout << "L3 = s[3];                             " << L3 << endl;
+    std::cout << "L4 = s[4];                             " << L4 << endl;
+    std::cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << endl;
   }
   //__________________________________
   // Subsonic non-reflective outflow
   if (flowDir == "outFlow" && Mach < 1.0){
-    cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << endl;
-    cout << "L1   "<< L1 
+    std::cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << endl;
+    std::cout << "L1   "<< L1 
          << "  rightFace *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[1]) + leftFace  * L1 " << endl;
-    cout << "L2   " << L2 <<" " << s_L2 << endl;
-    cout << "L3   " << L3 <<" " << s_L3 << endl;
-    cout << "L4   " << L4 <<" " << s_L4 << endl;
-    cout << "L5   " << L5
+    std::cout << "L2   " << L2 <<" " << s_L2 << endl;
+    std::cout << "L3   " << L3 <<" " << s_L3 << endl;
+    std::cout << "L4   " << L4 <<" " << s_L4 << endl;
+    std::cout << "L5   " << L5
          << "  leftFace  *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[5]) rightFace * L5 " << endl;
   }
   
@@ -652,12 +652,12 @@ void debugging_Li(const IntVector c,
   //Supersonic non-reflective inflow
   // see Thompson II pg 453
   if (flowDir == "inFlow" && Mach > 1.0){
-    cout << " SUPER SONIC inflow " << endl;
-    cout << " L1 = s[1] " << L1 << endl;
-    cout << " L2 = s[2] " << L2 << endl;
-    cout << " L3 = s[3] " << L3 << endl;
-    cout << " L4 = s[4] " << L4 << endl;
-    cout << " L5 = s[5] " << L5 << endl;
+    std::cout << " SUPER SONIC inflow " << endl;
+    std::cout << " L1 = s[1] " << L1 << endl;
+    std::cout << " L2 = s[2] " << L2 << endl;
+    std::cout << " L3 = s[3] " << L3 << endl;
+    std::cout << " L4 = s[4] " << L4 << endl;
+    std::cout << " L5 = s[5] " << L5 << endl;
   }
   //__________________________________
   // Supersonic non-reflective outflow
@@ -710,7 +710,7 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
   double L5 = 0.5 * (normalVel + speedSound) * (dp_dx + A);
   
   #if 0
-  cout << "    " << c << " default L1 " << L1 << " L5 " << L5
+  std::cout << "    " << c << " default L1 " << L1 << " L5 " << L5
        << " dVel_dx " << dVel_dx[n_dir]
        << " dp_dx " << dp_dx << endl;  
   #endif
@@ -788,14 +788,14 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
   if( cout_dbg.active() ) {
     //__________________________________
     //  debugging 
-    vector<IntVector> dbgCells;
+    std::vector<IntVector> dbgCells;
     dbgCells.push_back(IntVector(199,75,0));
     dbgCells.push_back(IntVector(199,74,0));
            
     for (int i = 0; i<(int) dbgCells.size(); i++) {
       if (c == dbgCells[i]) {
         debugging_Li(c, s, dir, face, speedSound, vel_CC, L1, L2, L3, L4, L5 );
-        cout << " press " << press << " p_infinity " << p_infinity
+        std::cout << " press " << press << " p_infinity " << p_infinity
            << " gradient " << (press - p_infinity)/domainLength[n_dir] << endl;
       }  // if(dbgCells)
     }  // dbgCells loop
@@ -835,8 +835,8 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
   
   //__________________________________
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType>::const_iterator iter;
-  vector<Patch::FaceType> bf;
+  std::vector<Patch::FaceType>::const_iterator iter;
+  std::vector<Patch::FaceType> bf;
   patch->getBoundaryFaces(bf);
   for (iter  = bf.begin(); iter != bf.end(); ++iter){
     Patch::FaceType face = *iter;
@@ -894,7 +894,7 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
 //        dVel_dx = user_inputs->Li_scale * dVel_dx; 
 /*===========TESTING==========`*/
         
-        vector<double> s(6);
+        std::vector<double> s(6);
         characteristic_source_terms(dir, grav, rho[c], speedSound[c], s);
 
         Li(L, dir, c, face, domainLength, user_inputs, maxMach, s, press[c],
@@ -913,7 +913,7 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
 ___________________________________________________________________*/  
 void getBoundaryEdges(const Patch* patch,
                       const Patch::FaceType face,
-                      vector<Patch::FaceType>& face0)
+                      std::vector<Patch::FaceType>& face0)
 {
   IntVector patchNeighborLow  = patch->noNeighborsLow();
   IntVector patchNeighborHigh = patch->noNeighborsHigh();
@@ -1024,9 +1024,9 @@ int FaceDensity_LODI(const Patch* patch,
     #endif
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    cout << "    " << c << "\t rho (gradient Calc): " << rho_CC[c];
+    std::cout << "    " << c << "\t rho (gradient Calc): " << rho_CC[c];
     rho_CC[c] = rho_old[c] - delT * (L[2][in][P_dir] + 0.5 * ( L[5][in][P_dir] + L[1][in][P_dir]))/(C*C);
-    cout << "    rho (delT Calc): " << rho_CC[c] <<  " rho_old " << rho_old[c] << endl;
+    std::cout << "    rho (delT Calc): " << rho_CC[c] <<  " rho_old " << rho_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1034,10 +1034,10 @@ int FaceDensity_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  vector<Patch::FaceType> b_faces;
+  std::vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  vector<Patch::FaceType>::const_iterator f;  
+  std::vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     
@@ -1055,9 +1055,9 @@ int FaceDensity_LODI(const Patch* patch,
 
   //__________________________________
   // C O R N E R S    
-  vector<IntVector> corner;
+  std::vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  vector<IntVector>::const_iterator itr;
+  std::vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1138,13 +1138,13 @@ int FaceVel_LODI(const Patch* patch,
     #endif         
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    cout << "    " << c << "\t vel (gradient calc): " << vel_CC[c][P_dir];
+    std::cout << "    " << c << "\t vel (gradient calc): " << vel_CC[c][P_dir];
 
     vel_CC[c][P_dir] = vel_old[c][P_dir] - delT * (0.5 * ( L[5][in][P_dir] - L[1][in][P_dir]))/(rho_CC[c] * C); 
     vel_CC[c][dir1]  = 0.0;
     vel_CC[c][dir2]  = 0.0;
     
-    cout << "    vel (delT calc): " << vel_CC[c][P_dir] <<  " vel_old " << vel_old[c][P_dir] << endl;
+    std::cout << "    vel (delT calc): " << vel_CC[c][P_dir] <<  " vel_old " << vel_old[c][P_dir] << endl;
 #endif
 /*===========TESTING==========`*/
              
@@ -1153,10 +1153,10 @@ int FaceVel_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  vector<Patch::FaceType> b_faces;
+  std::vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  vector<Patch::FaceType>::const_iterator f;  
+  std::vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++ f ) {
     Patch::FaceType face0 = *f;
    
@@ -1173,9 +1173,9 @@ int FaceVel_LODI(const Patch* patch,
   }  
   //________________________________________________________
   // C O R N E R S
-  vector<IntVector> corner;
+  std::vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  vector<IntVector>::const_iterator itr;
+  std::vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1251,11 +1251,11 @@ int FaceTemp_LODI(const Patch* patch,
 /*`==========TESTING==========*/
 
 #ifdef DELT_METHOD
-    cout << "    " << c << "\t temp (gradient calc): " << temp_CC[c];
+    std::cout << "    " << c << "\t temp (gradient calc): " << temp_CC[c];
     term1 = temp_CC[in]/(rho_CC[in] * C * C);
     
     temp_CC[c] = temp_old[c] - delT * term1 * ( -L[2][in][P_dir] + 0.5 * (gamma[in] - 1.0) * (L[5][in][P_dir] + L[1][in][P_dir]) ) ;
-    cout << "    temp (delT calc) " << temp_CC[c] <<  " temp_old " << temp_old[c] << endl;
+    std::cout << "    temp (delT calc) " << temp_CC[c] <<  " temp_old " << temp_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1263,10 +1263,10 @@ int FaceTemp_LODI(const Patch* patch,
 
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  vector<Patch::FaceType> b_faces;
+  std::vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  vector<Patch::FaceType>::const_iterator f;  
+  std::vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     IntVector offset = IntVector(0,0,0)  - patch->faceDirection(face) 
@@ -1283,9 +1283,9 @@ int FaceTemp_LODI(const Patch* patch,
  
   //________________________________________________________
   // C O R N E R S    
-  vector<IntVector> corner;
+  std::vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  vector<IntVector>::const_iterator itr;
+  std::vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1356,11 +1356,11 @@ int FacePress_LODI(const Patch* patch,
     #endif
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    cout << "    " << c << "\t press (gradient Calc): " << press_CC[c];
+    std::cout << "    " << c << "\t press (gradient Calc): " << press_CC[c];
     
     press_CC[c] = press_old[c] - delT * 0.5 * (L[5][in][P_dir] + L[1][in][P_dir]);
     
-    cout << "    press (delT calc): " << press_CC[c] <<  " press_old " << press_old[c] << endl;
+    std::cout << "    press (delT calc): " << press_CC[c] <<  " press_old " << press_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1368,10 +1368,10 @@ int FacePress_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  vector<Patch::FaceType> b_faces;
+  std::vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  vector<Patch::FaceType>::const_iterator f;  
+  std::vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     IntVector offset = IntVector(0,0,0)  - patch->faceDirection(face) 
@@ -1388,9 +1388,9 @@ int FacePress_LODI(const Patch* patch,
  
   //________________________________________________________
   // C O R N E R S    
-  vector<IntVector> corner;
+  std::vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  vector<IntVector>::const_iterator itr;
+  std::vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;

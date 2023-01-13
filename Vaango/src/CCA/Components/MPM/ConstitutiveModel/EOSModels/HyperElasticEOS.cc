@@ -168,7 +168,7 @@ HyperElasticEOS::computeDensity(const double& rho_orig, const double& pressure)
   double sqrtNumer = sqrt(numer1);
   double rho       = rho_orig / d_bulkModulus * (-pressure + sqrtNumer);
   if (rho < 0) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "Value of pressure (" << pressure
          << ") is beyond the range of validity of model"
          << "\n"

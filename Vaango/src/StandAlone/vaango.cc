@@ -401,7 +401,7 @@ main( int argc, char *argv[], char *env[] )
     }
 
 #if defined(MALLOC_TRACE)
-    ostringstream traceFilename;
+     std::ostringstream traceFilename;
     traceFilename << "mallocTrace-" << Uintah::Parallel::getMPIRank();
     MALLOC_TRACE_LOG_FILE( traceFilename.str().c_str() );
     //mallocTraceInfo.setTracingState( false );

@@ -77,14 +77,14 @@ void ProfileDriver::addContribution(const PatchSubset* patches, double cost)
         //add cost to current contribution
         costs[l][*iter].current+=average_cost;
         //if(d_myworld->myRank()==0)
-        //   cout << "level:" << l << " adding: " << average_cost << " to: " << *iter << " new total:" << costs[l][*iter].current << endl;
+        //   std::cout << "level:" << l << " adding: " << average_cost << " to: " << *iter << " new total:" << costs[l][*iter].current << endl;
       }
     }
   }
   else
   {
       //if(d_myworld->myRank()==0)
-      //   cout << "no patches\n";
+      //   std::cout << "no patches\n";
   }
 }
 
@@ -94,9 +94,9 @@ void ProfileDriver::outputError(const GridP currentGrid)
 {
   static int iter=0;
   iter++;
-  vector<double> proc_costsm(d_myworld->nRanks(),0);
-  vector<double> proc_costsp(d_myworld->nRanks(),0);
-  vector<vector<double> > predicted_sum(currentGrid->numLevels()), measured_sum(currentGrid->numLevels());
+  std::vector<double> proc_costsm(d_myworld->nRanks(),0);
+  std::vector<double> proc_costsp(d_myworld->nRanks(),0);
+  std::vector<vector<double> > predicted_sum(currentGrid->numLevels()), measured_sum(currentGrid->numLevels());
 
   double smape=0,max_error=0, smpe=0;
   int num_patches=0;
@@ -107,7 +107,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
   {
     LevelP level=currentGrid->getLevel(l);
     num_patches+=level->numPatches();
-    vector<Region> regions(level->numPatches());
+    std::vector<Region> regions(level->numPatches());
 
     predicted_sum[l].assign(level->numPatches(),0);
     measured_sum[l].assign(level->numPatches(),0);
@@ -117,7 +117,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
       regions[p] = Region(patch->getCellLowIndex(),patch->getCellHighIndex());
     }
 
-    vector<double>  predicted(regions.size(),0), measured(regions.size(),0);
+    std::vector<double>  predicted(regions.size(),0), measured(regions.size(),0);
 
     for(int r=0;r<(int)regions.size();r++)
     {
@@ -129,7 +129,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
       for(CellIterator iter(low,high); !iter.done(); iter++)
       {
         //search for point in the map
-        map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
+        std::map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
 
         //if in the map
         if(it!=costs[l].end())
@@ -203,7 +203,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
   smape/=num_patches;
 
   if(d_myworld->myRank()==0 && stats.active()){
-    cout << "SMPE: " << smpe << " sMAPE: " << smape << " MAXsPE: " << max_error << endl;
+    std::cout << "SMPE: " << smpe << " sMAPE: " << smape << " MAXsPE: " << max_error << endl;
   }
 
   double meanCostm = 0;
@@ -239,7 +239,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
 #if 0
   if(maxCostm/maxCostp>1.1)
   {
-    stringstream str;
+     std::stringstream str;
     if(d_myworld->myRank()==0)
     {
       stats << d_myworld->myRank() << " Error measured/predicted do not line up, patch cost processor " << maxLocm << " patches:\n";
@@ -249,7 +249,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
     for (int l=0; l<currentGrid->numLevels();l++)
     {
       LevelP level=currentGrid->getLevel(l);
-      vector<Region> regions(level->numPatches());
+      std::vector<Region> regions(level->numPatches());
 
       for(int p=0; p<level->numPatches();p++)
       {
@@ -291,7 +291,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
       for(CellIterator iter(low,high); !iter.done(); iter++)
       {
         //search for point in the map
-        map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
+        std::map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
 
         //if in the map
         if(it!=costs[l].end())
@@ -315,7 +315,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
 void ProfileDriver::finalizeContributions(const GridP currentGrid)
 {
   //if(d_myworld->myRank()==0)
-  //  cout << "Finalizing Contributions in cost profiler on timestep: " << d_timesteps << "\n";
+  //  std::cout << "Finalizing Contributions in cost profiler on timestep: " << d_timesteps << "\n";
 
   if(stats.active())
   {
@@ -330,7 +330,7 @@ void ProfileDriver::finalizeContributions(const GridP currentGrid)
     for(map<IntVector,Contribution>::iterator iter=costs[l].begin();iter!=costs[l].end();)
     {
       //copy the iterator (so it can be deleted if we need to)
-      map<IntVector,Contribution>::iterator it=iter;
+      std::map<IntVector,Contribution>::iterator it=iter;
 
       //create a reference to the data
       Contribution &data=it->second;
@@ -348,7 +348,7 @@ void ProfileDriver::finalizeContributions(const GridP currentGrid)
           //the first couple timesteps are not representative of the actual cost as extra things
           //are occuring.
         //if(data.current==0)
-        //  cout << d_myworld->myRank() << "WARNING current is equal to 0 at " << it->first << " weight: " << data.weight << " current: " << data.current << endl;
+        //  std::cout << d_myworld->myRank() << "WARNING current is equal to 0 at " << it->first << " weight: " << data.weight << " current: " << data.current << endl;
         data.weight=data.current;
         data.timestep=0;
       }
@@ -398,7 +398,7 @@ void ProfileDriver::getWeights(int l, const vector<Region> &regions, vector<doub
   }
 
   weights.resize(regions.size());
-  vector<double> partial_weights(regions.size(),0);
+  std::vector<double> partial_weights(regions.size(),0);
 
   for(int r=0;r<(int)regions.size();r++)
   {
@@ -411,7 +411,7 @@ void ProfileDriver::getWeights(int l, const vector<Region> &regions, vector<doub
     {
       //search for point in the map so we don't inadvertantly add it to the map.  If it doesn't exist on this processor
       //it should exist on another processor
-      map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
+      std::map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
 
       //if in the map
       if(it!=costs[l].end())
@@ -440,7 +440,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
   ////for each level
   for(int l=1;l<newgrid->numLevels();l++)
   {
-    vector<Region> old_level;
+    std::vector<Region> old_level;
 
     if(oldgrid && oldgrid->numLevels()>l)
     {
@@ -453,7 +453,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
     }
 
     //get weights on old_level
-    vector<double> weights;
+    std::vector<double> weights;
     getWeights(l,old_level,weights);
 
 #if 1
@@ -494,7 +494,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
 
     //compute regions in new level that are not in old
 
-    vector<Region> new_regions_partial, new_regions, dnew, dold(old_level.begin(),old_level.end());
+    std::vector<Region> new_regions_partial, new_regions, dnew, dold(old_level.begin(),old_level.end());
 
     //create dnew to contain a subset of the new patches
     for(int p=0; p<newgrid->getLevel(l)->numPatches(); p++)
@@ -511,7 +511,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
     //gather new regions onto each processor (needed to erase old data)
 
     int mysize=new_regions_partial.size();
-    vector<int> recvs(d_myworld->nRanks(),0), displs(d_myworld->nRanks(),0);
+    std::vector<int> recvs(d_myworld->nRanks(),0), displs(d_myworld->nRanks(),0);
 
     //gather new regions counts
     if(d_myworld->nRanks()>1)
@@ -546,24 +546,24 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
 #if 0
     if(d_myworld->myRank()==0)
     {
-      cout << " Old Regions: ";
+      std::cout << " Old Regions: ";
       for(vector<Region>::iterator it=old_level.begin();it!=old_level.end();it++)
       {
         IntVector low=it->getLow()/d_minPatchSize[l];
         IntVector high=it->getHigh()/d_minPatchSize[l];
         for(CellIterator iter(low,high); !iter.done(); iter++)
-          cout << *iter << " ";
+          std::cout << *iter << " ";
       }
-      cout << endl;
-      cout << " New Regions: ";
+      std::cout << endl;
+      std::cout << " New Regions: ";
       for(vector<Region>::iterator it=new_regions.begin();it!=new_regions.end();it++)
       {
         IntVector low=it->getLow()/d_minPatchSize[l];
         IntVector high=it->getHigh()/d_minPatchSize[l];
         for(CellIterator iter(low,high); !iter.done(); iter++)
-          cout << *iter << " ";
+          std::cout << *iter << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
 #endif
 
@@ -579,7 +579,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
       for(CellIterator iter(low,high); !iter.done(); iter++)
       {
 
-        map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
+        std::map<IntVector,Contribution>::iterator it=costs[l].find(*iter);
 
         //erase any old data in map
         if(it!=costs[l].end()){
@@ -591,7 +591,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
           //add cost to current contribution
           costs[l][*iter].weight=initial_cost;
 //          if(l==2)
-//            cout << " initializing " << *iter*d_minPatchSize[l] << " to " << initial_cost << endl;
+//            std::cout << " initializing " << *iter*d_minPatchSize[l] << " to " << initial_cost << endl;
         }
       } //end cell iteration
     } //end region iteration

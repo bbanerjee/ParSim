@@ -87,7 +87,7 @@ namespace Uintah {
     double sumVolFrac;
     double press_new;
     double delPress;
-    vector<EqPress_dbgMatl> matl;
+    std::vector<EqPress_dbgMatl> matl;
   };
 
     
@@ -853,7 +853,7 @@ namespace Uintah {
     // debugging variables
     int d_dbgVar1;
     int d_dbgVar2;
-    vector<IntVector>d_dbgIndices;
+    std::vector<IntVector>d_dbgIndices;
      
     // flags
     bool d_doAMR;
@@ -871,8 +871,8 @@ namespace Uintah {
     double d_outer_iter_tolerance;
       
     // ADD HEAT VARIABLES
-    vector<int>    d_add_heat_matls;
-    vector<double> d_add_heat_coeff;
+    std::vector<int>    d_add_heat_matls;
+    std::vector<double> d_add_heat_coeff;
     double         d_add_heat_t_start, d_add_heat_t_final;
     bool           d_add_heat;
       
@@ -1001,11 +1001,11 @@ namespace Uintah {
     bool   d_dbgGnuPlot;
     bool   d_dbgTime_to_printData;
     bool   d_dbgSymmetryTest;
-    vector<IntVector> d_dbgBeginIndx;
-    vector<IntVector> d_dbgEndIndx;
+    std::vector<IntVector> d_dbgBeginIndx;
+    std::vector<IntVector> d_dbgEndIndx;
     IntVector d_dbgSymPlanes;
-    vector<int> d_dbgMatls;
-    vector<int> d_dbgLevel; 
+    std::vector<int> d_dbgMatls;
+    std::vector<int> d_dbgLevel; 
     int d_dbgSigFigs;
       
     //__________________________________

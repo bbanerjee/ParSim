@@ -238,7 +238,7 @@ void FractureMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   int numALLMatls = d_sharedState->getNumMaterials();
   int numMPMMatls = d_sharedState->getNumMPMMatls();
   MaterialSubset* add_matl = scinew MaterialSubset();
-  cout << "Added Material = " << numALLMatls-1 << endl;
+  std::cout << "Added Material = " << numALLMatls-1 << endl;
   add_matl->add(numALLMatls-1);
   add_matl->addReference();
 
@@ -1283,7 +1283,7 @@ void FractureMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
 
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
-    cout << "num MPM Matls = " << numMPMMatls << endl;
+    std::cout << "num MPM Matls = " << numMPMMatls << endl;
     CCVariable<short int> cellNAPID;
     int m=numMPMMatls-1;
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
@@ -1318,8 +1318,8 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     int numMatls = d_sharedState->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
 
 
@@ -1605,8 +1605,8 @@ void FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
 
     int numMatls = d_sharedState->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
   
     for(int m = 0; m < numMatls; m++){
@@ -1791,9 +1791,9 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
     Id.Identity();
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
 
 
@@ -2299,8 +2299,8 @@ void FractureMPM::addNewParticles(const ProcessorGroup*,
 
       ParticleVariable<int> damage;
 #if 0
-      cout << "Current MPM Old_DW Labels in Add New Particles" << endl;
-      vector<const VarLabel*> mpm_label = 
+      std::cout << "Current MPM Old_DW Labels in Add New Particles" << endl;
+      std::vector<const VarLabel*> mpm_label = 
         mpm_matl->getParticleCreator()->returnParticleState();
       printParticleLabels(mpm_label,old_dw,dwi,patch);
 #endif
@@ -2561,9 +2561,9 @@ void FractureMPM::computeParticleTempFromGrid(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     int numMPMMatls=d_sharedState->getNumMPMMatls();
     for(int m = 0; m < numMPMMatls; m++){
@@ -2633,9 +2633,9 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
  
 
     // Performs the interpolation from the cell vertices of the grid
@@ -2873,10 +2873,10 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     new_dw->put(sumvec_vartype(CMX),         lb->CenterOfMassPositionLabel);
     new_dw->put(sumvec_vartype(totalMom),    lb->TotalMomentumLabel);
     
-    // cout << "Solid mass lost this timestep = " << massLost << endl;
-    // cout << "Solid momentum after advection = " << totalMom << endl;
+    // std::cout << "Solid mass lost this timestep = " << massLost << endl;
+    // std::cout << "Solid momentum after advection = " << totalMom << endl;
     
-    // cout << "THERMAL ENERGY " << thermal_energy << endl;
+    // std::cout << "THERMAL ENERGY " << thermal_energy << endl;
     
   }
 }    

@@ -83,7 +83,7 @@ planeExtract::~planeExtract()
   delete ps_lb;
   
   // delete each plane
-  vector<plane*>::iterator iter;
+  std::vector<plane*>::iterator iter;
   for( iter  = d_planes.begin();iter != d_planes.end(); iter++){
     delete *iter;
   }
@@ -140,12 +140,12 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  Read in the optional material index from the variables that may be different
   //  from the default index
-  vector<int> m;
+  std::vector<int> m;
   
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
   d_matl_set = scinew MaterialSet();
-  map<string,string> attribute;
+  std::map<string,string> attribute;
     
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze"); var_spec != 0; 
                     var_spec = var_spec->findNextBlock("analyze")) {
@@ -167,7 +167,7 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
   
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
+  std::vector<int>::iterator it;
   it = unique(m.begin(), m.end());
   m.erase(it, m.end());
 
@@ -225,7 +225,7 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
       throwException = true;
     } 
     if(throwException){       
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:AnalysisModule:planeExtact: ("<<label->getName() << " " 
            << td->getName() << " ) has not been implemented" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -285,7 +285,7 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
       planeType  = YZ;
     }
     if(validPlane == false){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:planeExtract: the plane that you've specified " << start 
            << " " << end << " is not parallel to the coordinate system. \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -300,14 +300,14 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
 
     if(start.x() < min.x() || start.y() < min.y() ||start.z() < min.z() ||
          end.x() > max.x() ||   end.y() > max.y() ||  end.z() > max.z() ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:planeExtract: the plane that you've specified " << start 
            << " " << end << " begins or ends outside of the computational domain. \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     
     if( start.x() > end.x() || start.y() > end.y() || start.z() > end.z() ) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:planeExtract: the plane that you've specified " << start 
            << " " << end << " the starting point is > than the ending point \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -320,13 +320,13 @@ void planeExtract::problemSetup(const ProblemSpecP& prob_spec,
     }
 
     if( p_startTime < d_startTime ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:planeExtract: Plane ("<< name<< ") startTime:"<< p_startTime <<" < master startTime:"<< d_startTime <<". \n";
       throw ProblemSetupException( warn.str(), __FILE__, __LINE__);
     }
     
     if( p_stopTime > d_stopTime ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:planeExtract: Plane ("<< name<< ") stopTime:"<< p_stopTime <<" > master stopTime:"<< d_stopTime <<". \n";
       throw ProblemSetupException( warn.str(), __FILE__, __LINE__);
     }
@@ -375,7 +375,7 @@ void planeExtract::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:planeExtract  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -484,11 +484,11 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
         string dirName = d_planes[p]->name;
         string planePath = udaDir + "/" + dirName;
         
-        ostringstream tname;
+         std::ostringstream tname;
         tname << "t" << std::setw(5) << std::setfill('0') << d_sharedState->getCurrentTopLevelTimeStep();
         string timestep = tname.str();
         
-        ostringstream li;
+         std::ostringstream li;
         li<<"L-"<<level->getIndex();
         string levelIndex = li.str();
         string path = planePath + "/" + timestep + "/" + levelIndex;
@@ -546,7 +546,7 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
                               + labelName , __FILE__, __LINE__);
             }
 
-            ostringstream fname;
+             std::ostringstream fname;
             fname<< path << "/" << patch->getID() << ":"<< labelName <<"_"<< matl<<".dat";
             string filename = fname.str();
 
@@ -673,7 +673,7 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
                 break;
               }
               default:
-                ostringstream warn;
+                 std::ostringstream warn;
                 warn << "ERROR:AnalysisModule:planeExtact: ("<< labelName << " " 
                      << td->getName() << " ) has not been implemented" << endl;
                 throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -753,7 +753,7 @@ planeExtract::createDirectory(string& planeName, string& timestep, const double 
 {
   DIR *check = opendir(planeName.c_str());
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << " planeExtract:Making directory " << planeName << endl;
+    std::cout << Parallel::getMPIRank() << " planeExtract:Making directory " << planeName << endl;
     MKDIR( planeName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -764,7 +764,7 @@ planeExtract::createDirectory(string& planeName, string& timestep, const double 
   check = opendir( path.c_str() );
   
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << " planeExtract:Making directory " << path << endl;
+    std::cout << Parallel::getMPIRank() << " planeExtract:Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
     
     // write out physical time
@@ -924,7 +924,7 @@ planeExtract::getIterator( const Uintah::TypeDescription* td,
       z = patch->getBCType(Patch::zplus) != Patch::Neighbor?1:0; 
       break;
     default:
-      ostringstream warn;
+       std::ostringstream warn;
       warn<< "ERROR:planeExtract::getIterator Don't know how to handle type: " << td->getName()<< endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
   }

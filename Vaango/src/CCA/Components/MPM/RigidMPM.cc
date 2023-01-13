@@ -86,11 +86,11 @@ void RigidMPM::problemSetup(const ProblemSpecP& prob_spec,
   SerialMPM::problemSetup(prob_spec, restart_prob_spec,grid, sharedState);
   ProblemSpecP cfd_ps = prob_spec->findBlock("CFD");
   if(cfd_ps && UintahParallelComponent::d_myworld->myRank() == 0){
-    cout << "\n__________________________________"<< endl;
-    cout << "  W A R N I N G :  " << endl;
-    cout << "  You must use stiff MPM material properties" << endl;
-    cout << "  to get the correct pressure solution in rmpmice" << endl;
-    cout << "__________________________________\n"<< endl;
+    std::cout << "\n__________________________________"<< endl;
+    std::cout << "  W A R N I N G :  " << endl;
+    std::cout << "  You must use stiff MPM material properties" << endl;
+    std::cout << "  to get the correct pressure solution in rmpmice" << endl;
+    std::cout << "__________________________________\n"<< endl;
   }
 }
 
@@ -287,9 +287,9 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     }
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
    
 
     // Performs the interpolation from the cell vertices of the grid

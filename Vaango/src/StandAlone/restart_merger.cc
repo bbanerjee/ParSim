@@ -201,6 +201,6 @@ main( int argc, char *argv[], char *env[] )
     usage( "", argv[0] );
   }
 
-  cout << "Successfully created " << new_uda_dir << "\n";
+  std::cout << "Successfully created " << new_uda_dir << "\n";
   return 0;
 }

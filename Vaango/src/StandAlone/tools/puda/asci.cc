@@ -71,22 +71,22 @@ Uintah::asci( DataArchive *   da,
               unsigned long & time_step_lower,
               unsigned long & time_step_upper )
 {
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
 
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
   int freq = 1; int ts=1;
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   if (index.size() == 1) {
-    cout << "There is only 1 timestep:\n"; 
+    std::cout << "There is only 1 timestep:\n"; 
   }
   else {
-    cout << "There are " << index.size() << " timesteps:\n";
+    std::cout << "There are " << index.size() << " timesteps:\n";
   }
       
   findTimestep_loopLimits(tslow_set, tsup_set,times, time_step_lower, time_step_upper);
@@ -96,13 +96,13 @@ Uintah::asci( DataArchive *   da,
     double time = times[t];
     int partnum = 1;
     int num_of_particles = 0;
-    cout << "timestep " << ts << " inprogress... ";
+    std::cout << "timestep " << ts << " inprogress... ";
 	
     if( ( ts % freq) == 0 ) {
    		
       // dumps header and variable info to file
       //int variable_count =0;
-      ostringstream fnum;
+       std::ostringstream fnum;
       string filename;
       int stepnum=ts/freq;
       fnum << setw(4) << setfill('0') << stepnum;
@@ -400,7 +400,7 @@ Uintah::asci( DataArchive *   da,
 
     //increments to next timestep
     ts++;
-    cout << " completed." << endl;
+    std::cout << " completed." << endl;
   } // end of loop over time
 
 } // end asci()

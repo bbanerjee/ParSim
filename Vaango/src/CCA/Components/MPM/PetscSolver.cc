@@ -79,7 +79,7 @@ MPMPetscSolver::~MPMPetscSolver()
 void MPMPetscSolver::initialize()
 {
   // store in a vector so we can customize the settings easily
-  vector<char*> args;
+  std::vector<char*> args;
 
   // Null argument ("") is needed as it normaly stores the command
   args.push_back(const_cast<char*>(""));
@@ -323,7 +323,7 @@ void MPMPetscSolver::solve(vector<double>& guess)
 #endif
 }
 void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
-                                  const map<int,int>& dof_diag)
+                                  const  std::map< int,int>& dof_diag)
 {
   //TAU_PROFILE("MPMPetscSolver::createMatrix", " ", TAU_USER);
   int me = d_myworld->myRank();
@@ -339,7 +339,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
   for (int i = 0; i < numlrows; i++)
     diag[i] = 1;
 
-  map<int,int>::const_iterator itr;
+  std::map<int,int>::const_iterator itr;
   for (itr=dof_diag.begin(); itr != dof_diag.end(); itr++) {
     ASSERTRANGE(itr->first,0,numlrows);
     ASSERT(itr->second>0);
@@ -448,7 +448,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
     flushMatrix();
 //    MatType type;
 //    MatGetType(d_A, &type);
-//    cout << "MatType = " << type << endl;
+//    std::cout << "MatType = " << type << endl;
 
     //set the initial stash size.
     //for now set it to be 1M
@@ -768,7 +768,7 @@ void MPMPetscSolver::removeFixedDOFHeat()
     for (set<int>::iterator iter = d_DOF.begin(); iter != d_DOF.end(); 
        iter++) {
       const int index = *iter;
-      vector<int>& neighbors = d_DOFNeighbors[index];
+      std::vector<int>& neighbors = d_DOFNeighbors[index];
 
       for (vector<int>::iterator n = neighbors.begin(); n != neighbors.end();
            n++) {
@@ -776,7 +776,7 @@ void MPMPetscSolver::removeFixedDOFHeat()
         // zero out the columns
         ierr = MatSetValue(d_A,*n,index,0,INSERT_VALUES);
         if (ierr)
-          cout << "MatSetValue error for " << index << "," << *n << endl;
+          std::cout << "MatSetValue error for " << index << "," << *n << endl;
       }
     }
   }
@@ -784,7 +784,7 @@ void MPMPetscSolver::removeFixedDOFHeat()
   finalizeMatrix();
 
   if (d_DOF.size() != 0) {
-    cout << "Zeroing out rows" << endl;
+    std::cout << "Zeroing out rows" << endl;
   }
   IS is;
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))

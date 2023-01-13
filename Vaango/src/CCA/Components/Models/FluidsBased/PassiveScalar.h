@@ -206,7 +206,7 @@ WARNING
       VarLabel* mag_grad_scalarLabel;
       VarLabel* diffusionCoefLabel;
       
-      vector<Region*> regions;
+      std::vector<Region*> regions;
       double diff_coeff;
       double refineCriteria;
       int  initialize_diffusion_knob;

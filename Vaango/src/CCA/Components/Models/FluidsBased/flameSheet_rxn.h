@@ -178,7 +178,7 @@ WARNING
       VarLabel* scalar_CCLabel;
       VarLabel* scalar_source_CCLabel;
       VarLabel* sum_scalar_fLabel;
-      vector<Region*> regions;
+      std::vector<Region*> regions;
     };
 
     Scalar* d_scalar;

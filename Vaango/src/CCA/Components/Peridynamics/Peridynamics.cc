@@ -231,13 +231,13 @@ Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec,
     id >> index_val;
 
     if( !id ) {
-      // stringstream parsing failed... on many (most) systems, the
+      //  std::stringstream parsing failed... on many (most) systems, the
       // original value assigned to index_val would be left
       // intact... but on some systems (redstorm) it inserts garbage,
       // so we have to manually restore the value.
       index_val = DEFAULT_VALUE;
     }
-    // cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
+    // std::cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
 
     //Create and register as an Peridynamics material
     PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, grid, d_sharedState, d_flags);

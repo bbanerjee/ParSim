@@ -141,7 +141,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
     initVars* initVar = scinew initVars;
     for( ProblemSpecP var = child->findBlock("init"); var != 0; var = var->findNextBlock("init") ) {
 
-      map<string,string> attributes;
+      std::map<string,string> attributes;
       var->getAttributes(attributes);
       
       // matlsetNames
@@ -149,7 +149,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
       initVar->matlSetNames.push_back(matls);
       
       // levels
-      stringstream s_level(attributes["levels"]);
+       std::stringstream s_level(attributes["levels"]);
       int levels = ALL_LEVELS;
       s_level >> levels;
       initVar->levels.push_back(levels);
@@ -210,7 +210,7 @@ Switcher::Switcher( const ProcessorGroup* myworld,
   //__________________________________
   // Get the vars that will need to be carried over 
   for( ProblemSpecP var = sim_block->findBlock("carry_over"); var != 0; var = var->findNextBlock("carry_over") ) {
-    map<string,string> attributes;
+    std::map<string,string> attributes;
     var->getAttributes(attributes);
     string name  = attributes["var"];
     string matls = attributes["matls"];
@@ -309,7 +309,7 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
   //   - determine the label from the string names
   //   - determine the MaterialSet from the string matlSetName
   //   - store this info to be used later
-  map<int,initVars*>::iterator it;
+  std::map<int,initVars*>::iterator it;
   for ( it=d_initVars.begin() ; it != d_initVars.end(); it++ ){ 
      
     int comp = it->first;
@@ -318,8 +318,8 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
  
  
     // Find the varLabel   
-    vector<string>& varNames    = tmp->varNames;
-    vector<VarLabel*> varLabels = tmp->varLabels;
+    std::vector<string>& varNames    = tmp->varNames;
+    std::vector<VarLabel*> varLabels = tmp->varLabels;
  
     for (unsigned j = 0; j < varNames.size(); j++) {
      
@@ -454,7 +454,7 @@ void Switcher::scheduleInitNewVars(const LevelP& level,
   
   initVars* initVar  = d_initVars.find(nextComp_indx)->second;
   
-  vector<const MaterialSet*> matlSet;
+  std::vector<const MaterialSet*> matlSet;
  
   for (unsigned i = 0; i < initVar->varLabels.size(); i++) {
     
@@ -549,9 +549,9 @@ void Switcher::scheduleCarryOverVars(const LevelP& level,
      
         if(UintahParallelComponent::d_myworld->myRank() == 0){
           if (matls)
-            cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tmatls: " << *matls << " on level " << L_indx << endl;
+            std::cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tmatls: " << *matls << " on level " << L_indx << endl;
           else
-            cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tAll matls on level " << L_indx << "\n";
+            std::cout << d_myworld->myRank() << "  Carry over " << *var << "\t\tAll matls on level " << L_indx << "\n";
         }
       }
     }  
@@ -634,7 +634,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
     // Bulletproofing
     if(l->typeDescription()->getType() == TypeDescription::Type::ParticleVariable &&
        relative_indx != -1){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << " \nERROR: switcher: subcomponent: init var: (" << l->getName() 
            << ") \n particle variables can only be initialized on the finest level \n"
            << " of a multilevel grid.  Add levels=\"-1\" to that variable" << endl;
@@ -906,7 +906,7 @@ Switcher::outputPS( Dir & dir )
     std::stringstream stream;
     stream << i;
     string inputname = dir.getName() + "/input.xml." + stream.str();
-    cout << "switcher:outputing file " << inputname << endl;
+    std::cout << "switcher:outputing file " << inputname << endl;
     d_master_ups->output(inputname.c_str());
   }
   
@@ -920,13 +920,13 @@ Switcher::outputPS( Dir & dir )
        
     ProblemSpecP in_file = child->findBlock("input_file");
     string nodeName = in_file->getNodeName();
-    cout << "nodeName = " << nodeName << endl;
+    std::cout << "nodeName = " << nodeName << endl;
     
     if (nodeName == "input_file") {
       std::stringstream stream;
       stream << count++;
       string inputname = "input.xml." + stream.str();
-      cout << "inputname = " << inputname << endl;
+      std::cout << "inputname = " << inputname << endl;
       child->appendElement("input_file",inputname);
     }
     child->removeChild(in_file);

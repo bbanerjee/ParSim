@@ -204,7 +204,7 @@ namespace Uintah {
     int           nsteps_;
     std::ofstream casestrm_;
     int           tscol_;
-    ostringstream tsstrm_;
+     std::ostringstream tsstrm_;
     FldDumper     flddumper_;
     Data          data_;
   };

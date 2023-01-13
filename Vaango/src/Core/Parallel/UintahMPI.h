@@ -432,7 +432,7 @@ Allreduce(MPICONST void* sendbuf, void* recvbuf, int count,
   Impl::SendVolumeStats(count, datatype);
   Impl::RecvVolumeStats(count, datatype);
   return Impl::mpi_check_err(
-    Uintah::MPI::Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
+    MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
 }
 
 inline int
@@ -1090,7 +1090,7 @@ Get_address(MPICONST void* location, MPI_Aint* address)
 inline int
 Get_count(MPICONST MPI_Status* status, MPI_Datatype datatype, int* count)
 {
-  return Impl::mpi_check_err(Uintah::MPI::Get_count(status, datatype, count));
+  return Impl::mpi_check_err(MPI_Get_count(status, datatype, count));
 }
 
 inline int
@@ -1616,7 +1616,7 @@ Irecv(void* buf, int count, MPI_Datatype datatype, int source, int tag,
   Impl::RecvTimer timer;
   Impl::RecvVolumeStats(count, datatype);
   return Impl::mpi_check_err(
-    Uintah::MPI::Irecv(buf, count, datatype, source, tag, comm, request));
+    MPI_Irecv(buf, count, datatype, source, tag, comm, request));
 }
 
 #if UINTAH_ENABLE_MPI3
@@ -1732,7 +1732,7 @@ Isend(MPICONST void* buf, int count, MPI_Datatype datatype, int dest, int tag,
   Impl::SendTimer timer;
   Impl::SendVolumeStats(count, datatype);
   return Impl::mpi_check_err(
-    Uintah::MPI::Isend(buf, count, datatype, dest, tag, comm, request));
+    MPI_Isend(buf, count, datatype, dest, tag, comm, request));
 }
 
 inline int
@@ -2538,7 +2538,7 @@ inline int
 Wait(MPI_Request* request, MPI_Status* status)
 {
   Impl::WaitTimer timer;
-  return Impl::mpi_check_err(Uintah::MPI::Wait(request, status));
+  return Impl::mpi_check_err(MPI_Wait(request, status));
 }
 
 inline int
@@ -2547,7 +2547,7 @@ Waitall(int count, MPI_Request array_of_requests[],
 {
   Impl::WaitTimer timer;
   return Impl::mpi_check_err(
-    Uintah::MPI::Waitall(count, array_of_requests, array_of_statuses));
+    MPI_Waitall(count, array_of_requests, array_of_statuses));
 }
 
 inline int
@@ -2556,7 +2556,7 @@ Waitany(int count, MPI_Request array_of_requests[], int* indx,
 {
   Impl::WaitTimer timer;
   return Impl::mpi_check_err(
-    Uintah::MPI::Waitany(count, array_of_requests, indx, status));
+    MPI_Waitany(count, array_of_requests, indx, status));
 }
 
 inline int
@@ -2564,7 +2564,7 @@ Waitsome(int incount, MPI_Request array_of_requests[], int* outcount,
          int array_of_indices[], MPI_Status array_of_statuses[])
 {
   Impl::WaitTimer timer;
-  return Impl::mpi_check_err(Uintah::MPI::Waitsome(incount, array_of_requests, outcount,
+  return Impl::mpi_check_err(MPI_Waitsome(incount, array_of_requests, outcount,
                                           array_of_indices, array_of_statuses));
 }
 

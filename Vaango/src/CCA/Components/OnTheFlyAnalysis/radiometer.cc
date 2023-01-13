@@ -127,7 +127,7 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
   const VarLabel* notUsed = 0;
   
   if( tempLabel == nullptr || cellTypeLabel == nullptr || abskgLabel == nullptr ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR OnTheFly_radiometer One of the VarLabels need to do the analysis does not exist\n"
          << "    temperature address: " << tempLabel << "\n"
          << "    celltype:             " << cellTypeLabel << "\n"
@@ -137,7 +137,7 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
 
    //__________________________________
    // using float or doubles for all-to-all variables
-   map<string,string> type;
+   std::map<string,string> type;
    rad_ps->getAttributes(type);
 
    string isFloat = type["type"];

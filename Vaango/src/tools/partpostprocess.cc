@@ -72,8 +72,8 @@ int main()
   double x,y,z,velx,vely,velz;
   int64_t pID;
 
-  vector<int64_t> pIDs;
-  vector<double>  xs,velxs,velys,velzs;
+  std::vector<int64_t> pIDs;
+  std::vector<double>  xs,velxs,velys,velzs;
 
   string fileroot = "partout";
   int filenum = 0;
@@ -92,7 +92,7 @@ int main()
   }
 
   for(int i=0;i<pIDs.size();i++){
-    cout << pIDs[i] << endl;
+    std::cout << pIDs[i] << endl;
   }
 
   int step_max=100;

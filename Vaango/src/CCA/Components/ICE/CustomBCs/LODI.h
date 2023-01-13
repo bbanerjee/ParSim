@@ -127,7 +127,7 @@ namespace Uintah {
                                                              
   void Lodi_maxMach_patchSubset(const LevelP& level,
                                  SimulationStateP& sharedState,
-                                 vector<PatchSubset*> &);
+                                 std::vector<PatchSubset*> &);
                                   
   bool is_LODI_face(const Patch* patch,
                   Patch::FaceType face,
@@ -155,7 +155,7 @@ namespace Uintah {
 
   void getBoundaryEdges(const Patch* patch,
                         const Patch::FaceType face,
-                        vector<Patch::FaceType>& face0);
+                        std::vector<Patch::FaceType>& face0);
                                  
   int remainingVectorComponent(int dir1, int dir2);
   

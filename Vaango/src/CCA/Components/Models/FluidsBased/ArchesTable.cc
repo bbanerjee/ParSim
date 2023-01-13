@@ -309,7 +309,7 @@ ArchesTable::setup(const bool cerrSwitch)
 
   if( gzFp == nullptr ) {
     // If errno is 0, then not enough memory to uncompress file.
-    cout << "Error: gz open failed for file: '" << filename_ << "'.  (Errno: " << errno << ")\n";
+    std::cout << "Error: gz open failed for file: '" << filename_ << "'.  (Errno: " << errno << ")\n";
     throw ProblemSetupException("Unable to open the given input file: " + filename_, __FILE__, __LINE__);
   }
 
@@ -317,8 +317,8 @@ ArchesTable::setup(const bool cerrSwitch)
   int nvars = getInt( gzFp );
   cerr_dbg << "Reading " << nvars << " variables : ";
 
-  vector<Ind*> in_inds(nvars);
-  vector<int> axis_sizes(nvars);
+  std::vector<Ind*> in_inds(nvars);
+  std::vector<int> axis_sizes(nvars);
 
   // Read the names.
   for( int i = 0; i < nvars; i++ ) {
@@ -343,7 +343,7 @@ ArchesTable::setup(const bool cerrSwitch)
   // Set up the axes.
   // The first variable may have different weights for each dependent
   // variable
-  vector<InterpAxis*> in_axes(nvars);
+  std::vector<InterpAxis*> in_axes(nvars);
   long stride = axis_sizes[0];
   in_axes[0] = 0;
   for( int i = nvars-1; i >= 1; i-- ) {
@@ -354,7 +354,7 @@ ArchesTable::setup(const bool cerrSwitch)
   long size = stride;
 
   int ndeps = getInt( gzFp );
-  vector<Dep*> in_deps(ndeps);
+  std::vector<Dep*> in_deps(ndeps);
   for(int j=0;j<ndeps;j++) {
     Dep* dep = scinew Dep(Dep::TableValue);
     
@@ -410,7 +410,7 @@ ArchesTable::setup(const bool cerrSwitch)
     in_deps[i]->axes[0]->finalize();
 
   // Map the desired variables to the input variables
-  vector<int> axis_map(inds.size(), -1);
+  std::vector<int> axis_map(inds.size(), -1);
   for(int i=0;i<static_cast<int>(inds.size());i++) {
     Ind* ind = inds[i];
     // Look in the alias map
@@ -427,7 +427,7 @@ ArchesTable::setup(const bool cerrSwitch)
   }
 
   // Create the new axes
-  vector<InterpAxis*> new_axes(inds.size());
+  std::vector<InterpAxis*> new_axes(inds.size());
   long newstride = 1;
   long firststride = 0;
   for(int i=0;i<static_cast<int>(inds.size());i++){
@@ -549,7 +549,7 @@ ArchesTable::setup(const bool cerrSwitch)
     }
 
     // Interpolate...
-    vector<int> n(inds.size(), 0);
+    std::vector<int> n(inds.size(), 0);
     for(int i=0;i<newsize;i++){
       double sum = 0;
       long iidx = 0;
@@ -604,7 +604,7 @@ ArchesTable::setup(const bool cerrSwitch)
 
     cerr_dbg << "Evaluating: " << dep->name << '\n';
     dep->data =scinew double[newsize];
-    vector<InterpAxis*> axes;
+    std::vector<InterpAxis*> axes;
     evaluate(dep->expression, axes, dep->data, newsize);
     for(int i=0;i<static_cast<int>(axes.size());i++)
       dep->addAxis(axes[i]);
@@ -617,7 +617,7 @@ ArchesTable::setup(const bool cerrSwitch)
 void
 ArchesTable::checkAxes( const vector<InterpAxis*> & a,
                         const vector<InterpAxis*> & b,
-                        vector<InterpAxis*> &       out_axes)
+                        std::vector<InterpAxis*> &       out_axes)
 {
   // If either of the axes are empty, use the ohter one...
   if(a.size() == 0) {
@@ -650,8 +650,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
   switch(expr->op) {
   case '+':
     {
-      vector<InterpAxis*> axes1;
-      vector<InterpAxis*> axes2;
+      std::vector<InterpAxis*> axes1;
+      std::vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -665,8 +665,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '-':
     {
-      vector<InterpAxis*> axes1;
-      vector<InterpAxis*> axes2;
+      std::vector<InterpAxis*> axes1;
+      std::vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -680,8 +680,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '*':
     {
-      vector<InterpAxis*> axes1;
-      vector<InterpAxis*> axes2;
+      std::vector<InterpAxis*> axes1;
+      std::vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -695,8 +695,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '/':
     {
-      vector<InterpAxis*> axes1;
-      vector<InterpAxis*> axes2;
+      std::vector<InterpAxis*> axes1;
+      std::vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -761,7 +761,7 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
 void
 ArchesTable::interpolate( int index, CCVariable<double>& result,
                           const CellIterator& in_iter,
-                          vector<constCCVariable<double> >& independents )
+                          std::vector<constCCVariable<double> >& independents )
 {
   Dep* dep = deps[index];
   switch(dep->type) {
@@ -1056,7 +1056,7 @@ void
 ArchesTable::Dep::outputProblemSpec(ProblemSpecP& ps)
 {
   if (type == Dep::ConstantValue) {
-    stringstream ss;
+     std::stringstream ss;
     ss << constantValue;
     ProblemSpecP cv_ps = ps->appendElement("constantValue",ss.str());
     cv_ps->setAttribute("name",name);

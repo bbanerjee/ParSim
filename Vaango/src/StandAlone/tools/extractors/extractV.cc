@@ -63,19 +63,19 @@ using namespace std;
 using namespace Uintah;
 
 typedef struct{
-  vector<Point> position;
-  vector<Vector> velocity;
-  vector<long64> id;
-  vector<double> time;
-  vector<int> patch;
-  vector<int> matl;
+  std::vector<Point> position;
+  std::vector<Vector> velocity;
+  std::vector<long64> id;
+  std::vector<double> time;
+  std::vector<int> patch;
+  std::vector<int> matl;
 } MaterialData;
 
 void usage(const std::string& badarg, const std::string& progname);
 
 void printVelocity(DataArchive* da, 
                    int matID,
-                   vector<long64>& partID,
+                   std::vector<long64>& partID,
                    string outFile,
                    bool timeFiles);
 
@@ -119,12 +119,12 @@ int main(int argc, char** argv)
   }
   if (argc < 9) usage( "", argv[0] );
 
-  cout << "Particle Variable to be extracted = p.velocity\n";
-  cout << "Material ID to be extracted = " << matID << endl;
+  std::cout << "Particle Variable to be extracted = p.velocity\n";
+  std::cout << "Material ID to be extracted = " << matID << endl;
 
   // Read the particle ID file
-  cout << "Particle ID File to be read = " << partIDFile << endl;
-  vector<long64> partID;
+  std::cout << "Particle ID File to be read = " << partIDFile << endl;
+  std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
     cerr << "Particle ID File " << partIDFile << " not found \n";
@@ -139,13 +139,13 @@ int main(int argc, char** argv)
     partID.push_back(id);
   } while (!pidFile.eof());
   
-  cout << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cout << "  Number of Particle IDs = " << partID.size() << endl;
   for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    cout << "    p"<< (ii+1) << " = " << partID[ii] << endl;
+    std::cout << "    p"<< (ii+1) << " = " << partID[ii] << endl;
   }
 
-  cout << "Output file name = " << outFile << endl;
-  cout << "UDA directory to be read = " << udaDir << endl;
+  std::cout << "Output file name = " << outFile << endl;
+  std::cout << "UDA directory to be read = " << udaDir << endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
     
@@ -179,14 +179,14 @@ void usage(const std::string& badarg, const std::string& progname)
 ////////////////////////////////////////////////////////////////////////////
 void printVelocity(DataArchive* da, 
                    int matID,
-                   vector<long64>& partID,
+                   std::vector<long64>& partID,
                    string outFile,
                    bool timeFiles)
 {
 
   // Check if the particle variable is available
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
   bool variableFound = false;
@@ -208,11 +208,11 @@ void printVelocity(DataArchive* da,
 
   // Now that the variable has been found, get the data for all 
   // available time steps from the data archive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
       
   // Loop thru all the variables 
   for(int v=0;v<(int)vars.size();v++){
@@ -264,7 +264,7 @@ void printVelocity(DataArchive* da,
 		if(pset->numParticles() > 0){
 		  ParticleVariable<long64> pid;
 		  da->query(pid, "p.particleID", matl, patch, t);
-		  vector<bool> found;
+		  std::vector<bool> found;
 		  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
 		    found.push_back(false);
 		  }
@@ -305,7 +305,7 @@ void printVelocity(DataArchive* da,
     ofstream file(outFile);
     file.setf(ios::scientific,ios::floatfield);
     file.precision(8);
-    cout << "Created output file " << outFile << endl;
+    std::cout << "Created output file " << outFile << endl;
     for (unsigned long jj = 0; jj < times.size(); jj++) {
       double time = times[jj];
       for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
@@ -324,12 +324,12 @@ void printVelocity(DataArchive* da,
   } else {
     // Create output files for each of the particle IDs
     for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-      ostringstream name;
+       std::ostringstream name;
       name << outFile << "_p" << setw(2) << setfill('0') << (ii+1);
       ofstream file(name.str().c_str());
       file.setf(ios::scientific,ios::floatfield);
       file.precision(8);
-      cout << "Created output file " << name.str() << " for particle ID "
+      std::cout << "Created output file " << name.str() << " for particle ID "
            << partID[ii] << endl;
       for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
         double time = matData[ii].time[jj];

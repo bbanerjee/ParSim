@@ -63,13 +63,13 @@ bool read_MicroSlip_BC_inputs(const ProblemSpecP& prob_spec,
   
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
-    map<string,string> face;
+    std::map<string,string> face;
     face_ps->getAttributes(face);
     bool is_a_MicroSlip_face = false;
     
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      map<string,string> bc_type;
+      std::map<string,string> bc_type;
       bc_iter->getAttributes(bc_type);
       
 
@@ -94,7 +94,7 @@ bool read_MicroSlip_BC_inputs(const ProblemSpecP& prob_spec,
   }
   
   if (usingSlip) {
-    cout << "\n WARNING:  Slip boundary conditions are "
+    std::cout << "\n WARNING:  Slip boundary conditions are "
          << " NOT set during the problem initialization \n " 
          << " THESE BOUNDARY CONDITIONS ONLY WORK FOR 1 MATL ICE PROBLEMS \n"
          << " (The material index has been hard coded in preprocess_MicroSlip_BCs)\n" <<endl;
@@ -169,7 +169,7 @@ void meanFreePath(DataWarehouse* new_dw,
   double R = 1.0;    // gas constant Need to do something with it
   //__________________________________
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> bf;
+  std::vector<Patch::FaceType> bf;
   patch->getBoundaryFaces(bf);
 
   for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){

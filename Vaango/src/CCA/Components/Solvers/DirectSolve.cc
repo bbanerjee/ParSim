@@ -240,7 +240,7 @@ public:
     double mflops = (double(flops)*1.e-6)/dt;
     double memrate = (double(memrefs)*1.e-9)/dt;
     if(pg->myRank() == 0){
-      cout << "Solve of " << X_label->getName() 
+      std::cout << "Solve of " << X_label->getName() 
 	   << " on level " << level->getIndex()
            << " completed in " << dt << " seconds (" 
 	   << mflops << " MFLOPS, " << memrate << " GB/sec)\n";

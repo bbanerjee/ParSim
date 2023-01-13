@@ -78,7 +78,7 @@ Turbulence* TurbulenceFactory::create(ProblemSpecP& ps, SimulationStateP& shared
     }else if (turbulence_model == "Germano"){ 
       return(scinew DynamicModel(turb_ps, sharedState));
     }else{
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR ICE: Unknown turbulence model ("<< turbulence_model << " )\n"
          << "Valid models are:\n" 
          << "Smagorinsky\n"

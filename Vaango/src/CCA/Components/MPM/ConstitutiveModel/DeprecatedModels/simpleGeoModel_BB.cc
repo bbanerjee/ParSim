@@ -290,9 +290,9 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
@@ -786,9 +786,9 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
@@ -896,11 +896,11 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       defGrad_new[idx] = (L_new * delT + Identity) * defGrad[idx];
       J = defGrad_new[idx].Determinant();
       if (J <= 0 || isnan(J)) {
-        cout << "ERROR, negative or nan J=det(F) in particle " << idx << endl;
-        cout << "J= " << J << endl;
-        cout << "L= " << L_new << endl;
+        std::cout << "ERROR, negative or nan J=det(F) in particle " << idx << endl;
+        std::cout << "J= " << J << endl;
+        std::cout << "L= " << L_new << endl;
         for (int k = 0; k < flag->d_8or27; k++) {
-          cout << "gvel[" << k << "] = " << gvelocity[ni[k]] << endl;
+          std::cout << "gvel[" << k << "] = " << gvelocity[ni[k]] << endl;
         }
         exit(1);
       }
@@ -1230,7 +1230,7 @@ simpleGeoModel_BB::computeStress(
       feclearexcept(FE_ALL_EXCEPT);
       int count = 1;
       while (abs(del_gamma) > gamma_tol && count <= max_iter) {
-        // cout << "Particle = " << idx << " return algo count = " << count
+        // std::cout << "Particle = " << idx << " return algo count = " << count
         //     << " del_gamma = " << del_gamma << endl;
         count = count + 1;
 
@@ -1902,7 +1902,7 @@ simpleGeoModel_BB::computePressEOSCM(double rho, double& pressure, double p_ref,
     //       endl;
     //}
   }
-  // cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simpleGeoModel_BB"
+  // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simpleGeoModel_BB"
   //     << endl;
 }
 
@@ -1912,7 +1912,7 @@ simpleGeoModel_BB::computePressEOSCM(double rho, double& pressure, double p_ref,
 double
 simpleGeoModel_BB::getCompressibility()
 {
-  cout << "NO VERSION OF getCompressibility EXISTS YET FOR simpleGeoModel_BB"
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR simpleGeoModel_BB"
        << endl;
   return 1.0;
 }

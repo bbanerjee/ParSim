@@ -70,14 +70,14 @@ using namespace std;
 using namespace Uintah;
 
 struct MaterialData {
-  vector<Point> position;
-  vector<Vector> velocity;
-  vector<double> volume;
-  vector<double> mass;
-  vector<long64> id;
-  vector<double> time;
-  vector<int> patch;
-  vector<int> matl;
+  std::vector<Point> position;
+  std::vector<Vector> velocity;
+  std::vector<double> volume;
+  std::vector<double> mass;
+  std::vector<long64> id;
+  std::vector<double> time;
+  std::vector<int> patch;
+  std::vector<int> matl;
 
   MaterialData(unsigned int size) {
     position.reserve(size);
@@ -96,7 +96,7 @@ void usage(const std::string& badarg, const std::string& progname);
 void printPosVelMassVol(DataArchive* da, 
                    int matID,
                    unsigned long timestep,
-                   vector<long64>& partID,
+                   std::vector<long64>& partID,
                    string outFile);
 
 int main(int argc, char** argv)
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 
   // Read the particle ID file
   cerr << "Particle ID File to be read = " << partIDFile << endl;
-  vector<long64> partID;
+  std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
     cerr << "Particle ID File " << partIDFile << " not found \n";
@@ -201,12 +201,12 @@ void usage(const std::string& badarg, const std::string& progname)
 void printPosVelMassVol(DataArchive* da, 
                    int matID,
                    unsigned long timeStep,
-                   vector<long64>& partID,
+                   std::vector<long64>& partID,
                    string outFile){
 
   // Check if the particle variable is available
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
 
@@ -225,8 +225,8 @@ void printPosVelMassVol(DataArchive* da,
 
   // Now that the variable has been found, get the data for the 
   // required time step from the data archive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   cerr << "There are " << index.size() << " timesteps:\n";
@@ -287,7 +287,7 @@ void printPosVelMassVol(DataArchive* da,
               if(pset->numParticles() > 0){
                 ParticleVariable<long64> pid;
                 da->query(pid, "p.particleID", matl, patch, t);
-                vector<bool> found;
+                std::vector<bool> found;
                 for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
                   found.push_back(false);
                 }
@@ -303,7 +303,7 @@ void printPosVelMassVol(DataArchive* da,
                       matData->time.push_back(time);
                       matData->patch.push_back(patchIndex);
                       matData->matl.push_back(matl);
-                      cout << time 
+                      std::cout << time 
                            << " " << position[*iter].x() << " " << position[*iter].y() 
                            << " " << position[*iter].z() 
                            << " " << velocity[*iter].x() << " " << velocity[*iter].y() 
@@ -331,7 +331,7 @@ void printPosVelMassVol(DataArchive* da,
   ofstream file(outFile.c_str());
   file.setf(ios::scientific,ios::floatfield);
   file.precision(8);
-  cout << "Created output file " << outFile << endl;
+  std::cout << "Created output file " << outFile << endl;
   for (unsigned int jj = 0; jj < matData->time.size() ; ++jj) {
     
     double time = matData->time[jj];

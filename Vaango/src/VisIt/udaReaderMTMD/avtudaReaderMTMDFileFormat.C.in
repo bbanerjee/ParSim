@@ -413,8 +413,8 @@ avtudaReaderMTMDFileFormat::ReadMetaData(avtDatabaseMetaData *md, int timeState)
     totalPatches +=  stepInfo->levelInfo[i].patchInfo.size();
   //debug5 << "avtudaReaderMTMDFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << endl;
 
-  vector<int> groupIds(totalPatches);
-  vector<string> pieceNames(totalPatches);
+  std::vector<int> groupIds(totalPatches);
+  std::vector<string> pieceNames(totalPatches);
 
   for (int i = 0; i < totalPatches; i++) {
     char tmpName[64];
@@ -805,7 +805,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
     //
     for (int level = 0 ; level < num_levels ; level++) {
       // SetLevelRefinementRatios requires data as a vector<int>
-      vector<int> rr(3);
+      std::vector<int> rr(3);
       for (int i=0; i<3; i++)
         rr[i] = stepInfo->levelInfo[level].refinementRatio[i];
 
@@ -819,7 +819,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
     // cases.  Although this routine has performed well for a previous 55K
     // patch run.
     //
-    vector< vector<int> > childPatches(totalPatches);
+    std::vector< vector<int> > childPatches(totalPatches);
     for (int level = num_levels-1 ; level > 0 ; level--) {
       int prev_level = level-1;
       LevelInfo &levelInfoParent = stepInfo->levelInfo[prev_level];
@@ -865,7 +865,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
       int low[3],high[3];
       patchInfo.getBounds(low,high,meshname);
 
-      vector<int> e(6);
+      std::vector<int> e(6);
       for (int i=0; i<3; i++) {
         e[i+0] = low[i];
         e[i+3] = high[i]-1;

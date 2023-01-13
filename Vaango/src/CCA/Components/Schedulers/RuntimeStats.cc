@@ -554,7 +554,7 @@ RuntimeStats::report(MPI_Comm comm)
     int i = 0;
     for (auto& group : g_report_values) {
 
-      // group.first Dout, group.second map< string, ReportValue>
+      // group.first Dout, group.second  std::map<  string, ReportValue>
       num_report_values += static_cast<int>(group.second.size());
 
       for (auto& value : group.second) {
@@ -571,7 +571,7 @@ RuntimeStats::report(MPI_Comm comm)
   // fill
   {
     for (auto& group : g_report_values) {
-      // group.first Dout, group.second map< string, ReportValue>
+      // group.first Dout, group.second  std::map<  string, ReportValue>
       for (auto& value : group.second) {
         int64_t i       = 4 * value.second.m_index;
         const int64_t v = value.second.m_get();
@@ -597,7 +597,7 @@ RuntimeStats::report(MPI_Comm comm)
   // histogram
   {
     for (auto& group : g_report_values) {
-      // group.first Dout, group.second map< string, ReportValue>
+      // group.first Dout, group.second  std::map<  string, ReportValue>
       for (auto& value : group.second) {
         const int64_t i   = 4 * value.second.m_index;
         const int64_t min = global_data[i + MIN];

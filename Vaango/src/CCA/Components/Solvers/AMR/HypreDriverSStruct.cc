@@ -228,7 +228,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
 
   // if my processor doesn't have patches on a given level, then we need to create
   // some bogus (irrelevent inexpensive) data so hypre doesn't crash.
-  vector<bool> useBogusLevelData(numLevels, true);
+  std::vector<bool> useBogusLevelData(numLevels, true);
 
   for (int p = 0 ; p < _patches->size(); p++) {
     HyprePatch_CC hpatch(_patches->get(p),matl);
@@ -547,9 +547,9 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
     for(int i = 0; i < finePatches.size(); i++){  
       const Patch* finePatch = finePatches[i];
 
-      vector<Patch::FaceType> cf;
+      std::vector<Patch::FaceType> cf;
       finePatch->getCoarseFaces(cf);
-      vector<Patch::FaceType>::const_iterator iter; 
+      std::vector<Patch::FaceType>::const_iterator iter; 
       for (iter  = cf.begin(); iter != cf.end(); ++iter) {
 
         Patch::FaceType face = *iter;                   
@@ -560,7 +560,7 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
         fineLevel_CFI_Iterator(face, coarsePatch, finePatch, f_iter, isRight_CP_FP_pair);
         if(isRight_CP_FP_pair){
 #ifdef DEBUG       // spew
-          cout << mpiRank << "-----------------Face " << finePatch->getFaceName(face) 
+          std::cout << mpiRank << "-----------------Face " << finePatch->getFaceName(face) 
                << " iter " << f_iter.begin() << " " << f_iter.end() 
                << " offset " << offset
                << " finePatch ID " << finePatch->getID() 
@@ -826,9 +826,9 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
         counter_coarse.initialize(stencilSize );
       } 
 
-      vector<Patch::FaceType> cf;
+      std::vector<Patch::FaceType> cf;
       finePatch->getCoarseFaces(cf);
-      vector<Patch::FaceType>::const_iterator iter; 
+      std::vector<Patch::FaceType>::const_iterator iter; 
       for (iter  = cf.begin(); iter != cf.end(); ++iter) {
 
         Patch::FaceType face = *iter;                   
@@ -843,7 +843,7 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
         
         if(isRight_CP_FP_pair){
 #ifdef DEBUG           
-          cout << mpiRank << "-----------------Face " << finePatch->getFaceName(face) 
+          std::cout << mpiRank << "-----------------Face " << finePatch->getFaceName(face) 
                << " iter " << f_iter.begin() << " " << f_iter.end() 
                << " offset " << offset
                << " finePatch ID " << finePatch->getID() 
@@ -877,7 +877,7 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
 
               counter_fine[fineCell]++;
         #ifdef DEBUG
-              cout << " looking Down: finePatch "<< fineCell
+              std::cout << " looking Down: finePatch "<< fineCell
                    << " f_index " << graphIndex_fine[0]
                    << " s_index " << stencilIndex_fine[0]
                    << " value " << graphValue[0] 
@@ -907,7 +907,7 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
               } 
               counter_coarse[coarseCell]++;
         #ifdef DEBUG
-              cout << " looking Up: finePatch "<< fineCell
+              std::cout << " looking Up: finePatch "<< fineCell
                    << " s_index " << stencilIndex_fine[0]
                    << " value " << graphValue[0] 
                    << " \t| Coarse " << coarseCell
@@ -958,9 +958,9 @@ HypreDriverSStruct::HyprePatch_CC::getSolution(HYPRE_SStructVector& HX,
 void printLine(const string& s, const unsigned int len)
 {
   for (unsigned int i = 0; i < len; i++) {
-    cout << s;
+    std::cout << s;
   }
-  cout << "\n";
+  std::cout << "\n";
 }
 
 

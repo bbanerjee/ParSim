@@ -66,11 +66,11 @@ using namespace Uintah;
 using namespace std;
 
 typedef struct {
-  vector<ShareAssignParticleVariable<double> > pv_double_list;
-  vector<ShareAssignParticleVariable<float> > pv_float_list;
-  vector<ShareAssignParticleVariable<Point> > pv_point_list;
-  vector<ShareAssignParticleVariable<Vector> > pv_vector_list;
-  vector<ShareAssignParticleVariable<Matrix3> > pv_matrix3_list;
+  std::vector<ShareAssignParticleVariable<double> > pv_double_list;
+  std::vector<ShareAssignParticleVariable<float> > pv_float_list;
+  std::vector<ShareAssignParticleVariable<Point> > pv_point_list;
+  std::vector<ShareAssignParticleVariable<Vector> > pv_vector_list;
+  std::vector<ShareAssignParticleVariable<Matrix3> > pv_matrix3_list;
   ShareAssignParticleVariable<Point> p_x;
 } MaterialData;
 
@@ -121,17 +121,17 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
     abort();
   }
 
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
 
   std::string time_file;
   std::string variable_file;
@@ -143,13 +143,13 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   // for all timesteps
   for( unsigned long t = clf.time_step_lower; t <= clf.time_step_upper; t++ ) {
     double time = times[t];
-    ostringstream tempstr_time;
+     std::ostringstream tempstr_time;
     tempstr_time << setprecision(17) << time;
     time_file = replaceChar(string(tempstr_time.str()),'.','_');
     GridP grid = da->queryGrid(t);
     fprintf(filelist,"<TIMESTEP>\n");
     if(clf.do_verbose) {
-      cout << "time = " << time << endl;
+      std::cout << "time = " << time << endl;
     }
     // Create a directory if it's not already there.
     // The exception occurs when the directory is already there
@@ -169,12 +169,12 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       for(Level::const_patchIterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
-        ostringstream tempstr_patch;
+         std::ostringstream tempstr_patch;
         tempstr_patch << patch->getID();
         patchID_file = tempstr_patch.str();
         fprintf(filelist,"<PATCH>\n");
 
-        vector<MaterialData> material_data_list; 
+        std::vector<MaterialData> material_data_list; 
                     
         // for all vars in one timestep in one patch
         for(int v=0;v<(int)vars.size();v++){
@@ -189,7 +189,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           for(ConsecutiveRangeSet::iterator matlIter = matls.begin();
               matlIter != matls.end(); matlIter++){
             int matl = *matlIter;
-            ostringstream tempstr_matl;
+             std::ostringstream tempstr_matl;
             tempstr_matl << matl;
             materialType_file = tempstr_matl.str();
 
@@ -492,7 +492,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           //--------------------------------------------------
           // set up the first min/max
           Point min, max;
-          vector<double> d_min,d_max,f_min,f_max,v_min,v_max,m_min,m_max;
+          std::vector<double> d_min,d_max,f_min,f_max,v_min,v_max,m_min,m_max;
           bool data_found = false;
           int total_particles = 0;
               

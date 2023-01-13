@@ -312,12 +312,12 @@ private:
   
   string d_name;
   // vector elements each represent a patch -- doesn't matter which
-  vector<ParticleVariableBase*> d_particleVars;
-  vector<ParticleSubset*> subsets_;
-  vector<const Patch*> d_patches;
+  std::vector<ParticleVariableBase*> d_particleVars;
+  std::vector<ParticleSubset*> subsets_;
+  std::vector<const Patch*> d_patches;
 
   MaterialParticleVarData* d_particleIDData;
-  map<long64, const Patch*>* d_patchMap;
+  std::map<long64, const Patch*>* d_patchMap;
 };
 
 class MaterialParticleData
@@ -355,14 +355,14 @@ private:
   void gather(ParticleSubset* gatherSubset);
   void sort();
   int matl_;
-  map<string, MaterialParticleVarData> vars_;
+  std::map<string, MaterialParticleVarData> vars_;
   MaterialParticleVarData* particleIDs_; // will point to one of vars_
 };
 
 //__________________________________
 MaterialParticleVarData::~MaterialParticleVarData()
 {
-  vector<ParticleVariableBase*>::iterator iter = d_particleVars.begin();
+  std::vector<ParticleVariableBase*>::iterator iter = d_particleVars.begin();
   for ( ; iter != d_particleVars.end(); iter++){
     delete *iter;
   }
@@ -377,7 +377,7 @@ void MaterialParticleData::createPatchMap()
   ASSERT(particleIDs_ != 0); // should check for this before this point
   particleIDs_->createPatchMap();
 
-  map<string, MaterialParticleVarData>::iterator varIter = vars_.begin();
+  std::map<string, MaterialParticleVarData>::iterator varIter = vars_.begin();
   for ( ; varIter != vars_.end(); varIter++){
     (*varIter).second.setParticleIDData(particleIDs_);
   }
@@ -390,7 +390,7 @@ void MaterialParticleVarData::createPatchMap()
   if (d_patchMap)
     delete d_patchMap;
   
-  d_patchMap = scinew map<long64, const Patch*>();
+  d_patchMap = scinew  std::map< long64, const Patch*>();
   
   for (unsigned int patch = 0; patch < d_particleVars.size(); patch++) {
     particleIndex count = d_particleVars[patch]->getParticleSubset()->numParticles();
@@ -432,8 +432,8 @@ void MaterialParticleData::compare(MaterialParticleData& data2,
     abort_uncomparable();
   }
   
-  map<string, MaterialParticleVarData>::iterator varIter  = vars_.begin();
-  map<string, MaterialParticleVarData>::iterator varIter2 = data2.vars_.begin();
+  std::map<string, MaterialParticleVarData>::iterator varIter  = vars_.begin();
+  std::map<string, MaterialParticleVarData>::iterator varIter2 = data2.vars_.begin();
   
   for ( ; (varIter != vars_.end()) && (varIter2 != data2.vars_.end()) ;
         varIter++, varIter2++) {
@@ -469,7 +469,7 @@ void MaterialParticleData::sort()
   // should have made this check earlier -- particleIDs not output
   ASSERT(particleIDs_->getParticleVars().size() != 0);
 
-  vector< ID_Index > idIndices;
+  std::vector< ID_Index > idIndices;
   particleIndex base = 0;
   
   for (unsigned int i = 0; i < particleIDs_->getParticleVars().size(); i++) {
@@ -493,7 +493,7 @@ void MaterialParticleData::sort()
   // sort by particle id and find out what happens to the particle indices.
   ::sort(idIndices.begin(), idIndices.end());
 
-  vector<particleIndex> subsetIndices(idIndices.size());
+  std::vector<particleIndex> subsetIndices(idIndices.size());
   for (particleIndex i = 0; i < (particleIndex)idIndices.size(); i++) {
     ASSERT(subsetIndices[idIndices[i].second] == 0);
     subsetIndices[idIndices[i].second] = i;
@@ -510,7 +510,7 @@ void MaterialParticleData::sort()
 //__________________________________
 void MaterialParticleData::gather(ParticleSubset* gatherSubset)
 {
-  map<string, MaterialParticleVarData>::iterator iter;
+  std::map<string, MaterialParticleVarData>::iterator iter;
   for (iter = vars_.begin(); iter != vars_.end(); iter++)
     (*iter).second.gather(gatherSubset);
 }
@@ -676,16 +676,16 @@ const Patch* MaterialParticleVarData::getPatch(particleIndex index)
 
 /*
   typedef struct{
-  vector<ParticleVariable<double> > pv_double_list;
-  vector<ParticleVariable<float> > pv_float_list;
-  vector<ParticleVariable<Point> > pv_point_list;
-  vector<ParticleVariable<Vector> > pv_vector_list;
-  vector<ParticleVariable<Matrix3> > pv_matrix3_list;
+  std::vector<ParticleVariable<double> > pv_double_list;
+  std::vector<ParticleVariable<float> > pv_float_list;
+  std::vector<ParticleVariable<Point> > pv_point_list;
+  std::vector<ParticleVariable<Vector> > pv_vector_list;
+  std::vector<ParticleVariable<Matrix3> > pv_matrix3_list;
   ParticleVariable<Point> p_x;
   } MaterialPatchParticleData;
 */
 
-typedef map<int, MaterialParticleData> MaterialParticleDataMap;
+typedef  std::map< int, MaterialParticleData> MaterialParticleDataMap;
 
 // replaceChar():
 //   Takes a string and replaces all occurrences of 'old' with 'newch'.
@@ -706,8 +706,8 @@ replaceChar( const string & s, char old, char newch )
 //__________________________________
 void addParticleData(MaterialParticleDataMap& matlParticleDataMap,
                      DataArchive* da, 
-                     vector<string> vars,
-                     vector<const Uintah::TypeDescription*> types,
+                     std::vector<string> vars,
+                     std::vector<const Uintah::TypeDescription*> types,
                      LevelP level, 
                      int timestep)
 {
@@ -1085,8 +1085,8 @@ SpecificFieldComparator<Field, Iterator>::compareFields( DataArchive            
     Field field;
     da1->query(field, var, matl, patch, timestep);
 
-    map<const Patch*, Field*> patch2FieldMap;
-    typename map<const Patch*, Field*>::iterator findIter;
+    std::map<const Patch*, Field*> patch2FieldMap;
+    typename  std::map< const Patch*, Field*>::iterator findIter;
     
     
     for( Iterator iter = d_begin ; !iter.done(); iter++ ) {
@@ -1126,7 +1126,7 @@ SpecificFieldComparator<Field, Iterator>::compareFields( DataArchive            
       }
     }
 
-    typename map<const Patch*, Field*>::iterator iter = patch2FieldMap.begin();
+    typename  std::map< const Patch*, Field*>::iterator iter = patch2FieldMap.begin();
     for ( ; iter != patch2FieldMap.end(); iter++) {
       delete (*iter).second;
     }
@@ -1293,19 +1293,19 @@ main(int argc, char** argv)
   // default to 16 digits of precision when using exact comparison (i.e. rel_tolerance = 0)
   int digits_precision = (rel_tolerance > 0 ) ? (int)ceil(-log10(rel_tolerance)) + 1 : 16;
   cerr << setprecision(digits_precision);
-  cout << setprecision(digits_precision);
+  std::cout << setprecision(digits_precision);
 
   try {
     DataArchive* da1 = scinew DataArchive(d_filebase1);
     DataArchive* da2 = scinew DataArchive(d_filebase2);
 
-    vector<string> vars;    
-    vector<const Uintah::TypeDescription*> types;
-    vector< pair<string, const Uintah::TypeDescription*> > vartypes1;
+    std::vector<string> vars;    
+    std::vector<const Uintah::TypeDescription*> types;
+    std::vector< pair<string, const Uintah::TypeDescription*> > vartypes1;
     
-    vector<string> vars2;
-    vector<const Uintah::TypeDescription*> types2;
-    vector< pair<string, const Uintah::TypeDescription*> > vartypes2;    
+    std::vector<string> vars2;
+    std::vector<const Uintah::TypeDescription*> types2;
+    std::vector< pair<string, const Uintah::TypeDescription*> > vartypes2;    
     
     da1->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
@@ -1326,12 +1326,12 @@ main(int argc, char** argv)
     //  eliminate the variable to be ignored
     // Create a list of ignored variables
     // uda 1
-    stringstream iV(ignoreVar);
-    vector<string> vs;
+     std::stringstream iV(ignoreVar);
+    std::vector<string> vs;
     copy(istream_iterator<string>(iV), istream_iterator<string>(), back_inserter(vs));
 
     for (unsigned int i = 0; i < vars.size(); i++) {
-      vector<string>::iterator fs = find(vs.begin(),vs.end(),vars[i]);
+      std::vector<string>::iterator fs = find(vs.begin(),vs.end(),vars[i]);
       // if vars[i] is NOT in the ignore Variables list make a pair
       if (fs == vs.end()){ 
         vartypes1[count] = make_pair(vars[i], types[i]); 
@@ -1344,7 +1344,7 @@ main(int argc, char** argv)
     // uda 2
     count =0;
     for (unsigned int i = 0; i < vars2.size(); i++) {
-      vector<string>::iterator fs = find(vs.begin(),vs.end(),vars2[i]);
+      std::vector<string>::iterator fs = find(vs.begin(),vs.end(),vars2[i]);
       // if vars[i] is NOT in the ignore Variables list make a pair
       if (fs == vs.end()){ 
         vartypes2[count] = make_pair(vars2[i], types2[i]); 
@@ -1391,10 +1391,10 @@ main(int argc, char** argv)
       } 
     }
       
-    vector<int>     index;
-    vector<double>  times;
-    vector<int>     index2;
-    vector<double>  times2;
+    std::vector<int>     index;
+    std::vector<double>  times;
+    std::vector<int>     index2;
+    std::vector<double>  times2;
     
     da1->queryTimesteps(index, times);
     ASSERTEQ(index.size(), times.size());
@@ -1669,7 +1669,7 @@ main(int argc, char** argv)
           LevelP level2 = grid2->getLevel(l);
          
           //check patch coverage
-          vector<Region> region1, region2, difference1, difference2;
+          std::vector<Region> region1, region2, difference1, difference2;
 
           for( int i=0; i < level->numPatches(); i++ ) {
             const Patch* patch=level->getPatch(i);

@@ -100,7 +100,7 @@ UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
@@ -161,7 +161,7 @@ UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag, bool plas, bool dam)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
@@ -592,9 +592,9 @@ UCNH::computeStressTensor(const PatchSubset* patches,
 
     // Get Interpolator
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Particle and grid data universal to model type
     // Old data containers
@@ -911,8 +911,8 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       }
     } else {
       auto interpolator = flag->d_interpolator->clone(patch);
-      vector<IntVector> ni(interpolator->size());
-      vector<Vector> d_S(interpolator->size());
+      std::vector<IntVector> ni(interpolator->size());
+      std::vector<Vector> d_S(interpolator->size());
 
       for (auto idx : *pset) {
 
@@ -1287,8 +1287,8 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     } else { /*if(!matl->getIsRigid()) */
       // Compute the displacement gradient and the deformation gradient
       auto interpolator = flag->d_interpolator->clone(patch);
-      vector<IntVector> ni(interpolator->size());
-      vector<Vector> d_S(interpolator->size());
+      std::vector<IntVector> ni(interpolator->size());
+      std::vector<Vector> d_S(interpolator->size());
 
       // Unused because no "active stress carried over from CNHImplicit
       // double time = d_sharedState->getElapsedTime();
@@ -2244,7 +2244,7 @@ UCNH::computeRhoMicroCM(double pressure,
       error = true;
     }
     if (error || rho_cur < 0.0 || std::isnan(rho_cur)) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "rho_cur = " << rho_cur << " pressure = " << -p_gauge
            << " p_ref = " << p_ref << " 1/sp_vol_CC = " << rho_guess << "\n";
       throw InvalidValue(desc.str(), __FILE__, __LINE__);

@@ -144,8 +144,8 @@ SparseRowMatrix::validate()
       {
         if (columns[j-1] >= columns[j])
         {
-          cout << i << " : " << columns[j-1] << " " << columns[j] << "\n";
-          cout << i << " : " << a[j-1] << " " << a[j] << "\n";
+          std::cout << i << " : " << columns[j-1] << " " << columns[j] << "\n";
+          std::cout << i << " : " << a[j-1] << " " << a[j] << "\n";
         }
         ASSERTMSG(columns[j-1] < columns[j], "Column out of order.");
       }
@@ -544,8 +544,8 @@ SparseRowMatrix::sparse_mult(const DenseMatrix& x, DenseMatrix& b) const
   ASSERT(b.nrows() == nrows_);
   ASSERT(x.ncols() == b.ncols());
   int i, j, k;
-  //  cout << "x size = " << x.nrows() << " " << x.ncols() << "\n";
-  //  cout << "b size = " << b.nrows() << " " << b.ncols() << "\n";
+  //  std::cout << "x size = " << x.nrows() << " " << x.ncols() << "\n";
+  //  std::cout << "b size = " << b.nrows() << " " << b.ncols() << "\n";
 
   for (j = 0; j < b.ncols(); j++)
   {
@@ -762,8 +762,8 @@ AddSparse(const SparseRowMatrix &a, const SparseRowMatrix &b)
   ASSERT(a.nrows() == b.nrows() && a.ncols() == b.ncols());
 
   int *rows = scinew int[a.nrows() + 1];
-  vector<int> cols;
-  vector<double> vals;
+  std::vector<int> cols;
+  std::vector<double> vals;
 
   int r, ca, cb;
 
@@ -841,8 +841,8 @@ SubSparse(const SparseRowMatrix &a, const SparseRowMatrix &b)
   ASSERT(a.nrows() == b.nrows() && a.ncols() == b.ncols());
 
   int *rows = scinew int[a.nrows() + 1];
-  vector<int> cols;
-  vector<double> vals;
+  std::vector<int> cols;
+  std::vector<double> vals;
 
   int r, ca, cb;
 
@@ -925,8 +925,8 @@ SparseRowMatrix::submatrix(int r1, int c1, int r2, int c2)
 
   int i, j;
   int *rs = scinew int[r2-r1+2];
-  vector<int> csv;
-  vector<double> valsv;
+  std::vector<int> csv;
+  std::vector<double> valsv;
 
   rs[0] = 0;
   for (i = r1; i <= r2; i++)

@@ -178,13 +178,13 @@ void momentumAnalysis::problemSetup(const ProblemSpecP&,
 
   d_matlIndx = matl->getDWIndex();
 
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);            // matl index for FileInfo label
   m.push_back( d_matlIndx );
   
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
+  std::vector<int>::iterator it;
   it = unique(m.begin(), m.end());
   m.erase(it, m.end());
   
@@ -219,7 +219,7 @@ void momentumAnalysis::problemSetup(const ProblemSpecP&,
   for (ProblemSpecP face_ps = ma_ps->findBlock("Face");
       face_ps != 0; face_ps=face_ps->findNextBlock("Face")) {
 
-    map<string,string> faceMap;
+    std::map<string,string> faceMap;
     face_ps->getAttributes(faceMap);
 
     string side = faceMap["side"];
@@ -300,7 +300,7 @@ void momentumAnalysis::initialize( const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:momentumAnalysis  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -466,7 +466,7 @@ void momentumAnalysis::integrateMomentumField(const ProcessorGroup* pg,
       //__________________________________
       // Sum the fluxes passing through control volume surface
       // and the pressure forces
-      vector<Patch::FaceType> bf;
+      std::vector<Patch::FaceType> bf;
       patch->getBoundaryFaces(bf);
 
       for( vector<Patch::FaceType>::const_iterator itr = bf.begin(); itr != bf.end(); ++itr ){
@@ -530,7 +530,7 @@ void momentumAnalysis::integrateMomentumField(const ProcessorGroup* pg,
     Vector net_viscous_flux = L_minus_R( faceQ->viscous_faceFlux );
 
     // net force on control volume due to pressure forces
-    map<int, double> pressForce = faceQ->pressForce_face;  // for readability
+    std::map<int, double> pressForce = faceQ->pressForce_face;  // for readability
     double pressForceX = pressForce[0] - pressForce[1];
     double pressForceY = pressForce[2] - pressForce[3];
     double pressForceZ = pressForce[4] - pressForce[5];
@@ -711,7 +711,7 @@ void momentumAnalysis::integrateOverFace( const std::string faceName,
   faceQ->viscous_faceFlux[f] = viscous_flux;
   faceQ->pressForce_face[f]  = pressForce;
 
-//  cout << "face: " << faceName << "\t dir: " << dir << " convect_Flux = " <<  convect_flux << " ViscousFlux " << viscous_flux << " pressForce " << pressForce << endl;
+//  std::cout << "face: " << faceName << "\t dir: " << dir << " convect_Flux = " <<  convect_flux << " ViscousFlux " << viscous_flux << " pressForce " << pressForce << endl;
 }
 
 //______________________________________________________________________
@@ -782,7 +782,7 @@ void momentumAnalysis::faceInfo( const std::string fc,
     return;
   }
 
-  ostringstream warn;
+   std::ostringstream warn;
   warn <<" ERROR:MomentumAnalysis face name (" << fc << ") unknown. ";
 
   throw InternalError( warn.str(), __FILE__, __LINE__ );
@@ -815,7 +815,7 @@ void momentumAnalysis::bulletProofing(GridP& grid,
    }
 
    if( validPlane == false ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:momentumAnalysis: the plane on face ("<< side
           << ") that you've specified " << start << " " << end
           << " is not parallel to the coordinate system. \n" << endl;
@@ -851,7 +851,7 @@ void momentumAnalysis::bulletProofing(GridP& grid,
      }
    }
    if( validPlane == false ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane on face ("<< side
           << ") that you've specified " << start << " to " << end
           << " is not at the edge of the computational domain. \n" << endl;
@@ -862,14 +862,14 @@ void momentumAnalysis::bulletProofing(GridP& grid,
    //the plane can't exceed computational domain
    if( start.x() < min.x() || start.y() < min.y() ||start.z() < min.z() ||
        end.x() > max.x()   || end.y() > max.y()   || end.z() > max.z() ){
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: a portion of plane that you've specified " << start
           << " " << end << " lies outside of the computational domain. \n" << endl;
      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
    }
 
    if( start.x() > end.x() || start.y() > end.y() || start.z() > end.z() ) {
-     ostringstream warn;
+      std::ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane that you've specified " << start
           << " " << end << " the starting point is > than the ending point \n" << endl;
      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -885,7 +885,7 @@ VarLabel* momentumAnalysis::assignLabel( const std::string& varName )
   VarLabel* myLabel  = VarLabel::find( varName );
 
   if( myLabel == nullptr ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR momentumAnalysis One of the VarLabels for the analysis does not exist or could not be found\n"
          << varName << "  address: " << myLabel << "\n";
     throw InternalError(warn.str(), __FILE__, __LINE__);

@@ -117,7 +117,7 @@ int main()
 
   mass_in_fit_jet*=M_PI;
 
-  cout << "mass_in_fit_jet  = " << mass_in_fit_jet << endl;
+  std::cout << "mass_in_fit_jet  = " << mass_in_fit_jet << endl;
 
   double T0=(x-L0)/v_tip; // Time at which tip is at x
   double t=T0; 
@@ -137,7 +137,7 @@ int main()
       rho=(ae*(x/F) + be)/F;
     }
     else{
-     cout << "SHOULDN'T GET HERE!  X = " << X << endl;
+     std::cout << "SHOULDN'T GET HERE!  X = " << X << endl;
     }
 
     double vel = v_tip*X/L0;
@@ -194,7 +194,7 @@ int main()
     dest << "    <color>" << n++ << "</color>\n";
     dest << "  </geom_object>\n\n";
   }
-  cout << "Total Mass in created jet = " << total_mass << endl;
+  std::cout << "Total Mass in created jet = " << total_mass << endl;
 
   dest << "</Uintah_Include>" << endl;
 }

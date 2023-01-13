@@ -57,8 +57,8 @@ axiCptiInterpolator::clone(const Patch* patch)
 }
     
 void axiCptiInterpolator::findCellAndWeights(const Point& pos,
-                                            vector<IntVector>& ni, 
-                                            vector<double>& S,
+                                            std::vector<IntVector>& ni, 
+                                            std::vector<double>& S,
                                             const Matrix3& size,
                                             const Matrix3& defgrad)
 {
@@ -69,7 +69,7 @@ void axiCptiInterpolator::findCellAndWeights(const Point& pos,
                            0.0,0.0,1);
 
   Matrix3 dsize=defgrad1*size;
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
+  std::vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1),
                                    -dsize(1,0)-dsize(1,1),-1.0)*0.5;
   relative_node_location[1]=Vector( dsize(0,0)-dsize(0,1),
@@ -84,7 +84,7 @@ void axiCptiInterpolator::findCellAndWeights(const Point& pos,
   int ix,iy;
 
   double one_over_8 = .125;
-  vector<double> phi(4);
+  std::vector<double> phi(4);
 
  // now  we will loop over each of these "nodes" or corners and use the deformation gradient to find the current location:
   for(int i=0;i<4;i++){
@@ -132,8 +132,8 @@ void axiCptiInterpolator::findCellAndWeights(const Point& pos,
 }
  
 void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                   vector<IntVector>& ni,
-                                                   vector<Vector>& d_S,
+                                                   std::vector<IntVector>& ni,
+                                                   std::vector<Vector>& d_S,
                                                    const Matrix3& size,
                                                    const Matrix3& defgrad)
 {
@@ -144,7 +144,7 @@ void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
                            0.0,0.0,1);
 
   Matrix3 dsize=defgrad1*size;
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
+  std::vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1),
                                    -dsize(1,0)-dsize(1,1),-1.0)*0.5;
   relative_node_location[1]=Vector( dsize(0,0)-dsize(0,1),
@@ -165,8 +165,8 @@ void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   double volume = dsize.Determinant();
 
   double one_over_4V = 1.0/(4.0*volume);
-  vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
-  vector<double> phi(4);
+  std::vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
+  std::vector<double> phi(4);
   // conw we construct the vectors necessary for the gradient calculation:
   alpha[0][0]   =  one_over_4V*(-r2[1]+r1[1]);
   alpha[0][1]   =  one_over_4V*(r2[0]-r1[0]);
@@ -247,9 +247,9 @@ void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
 
 void axiCptiInterpolator::findCellAndWeightsAndShapeDerivatives(
                                                          const Point& pos,
-                                                         vector<IntVector>& ni,
-                                                         vector<double>& S,
-                                                         vector<Vector>& d_S,
+                                                         std::vector<IntVector>& ni,
+                                                         std::vector<double>& S,
+                                                         std::vector<Vector>& d_S,
                                                          const Matrix3& size,
                                                          const Matrix3& defgrad)
 {
@@ -261,7 +261,7 @@ void axiCptiInterpolator::findCellAndWeightsAndShapeDerivatives(
 
   Matrix3 dsize=defgrad1*size;
 
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
+  std::vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1),
                                    -dsize(1,0)-dsize(1,1),-1.0)*0.5;
   relative_node_location[1]=Vector( dsize(0,0)-dsize(0,1),
@@ -281,8 +281,8 @@ void axiCptiInterpolator::findCellAndWeightsAndShapeDerivatives(
   double volume = dsize.Determinant();
   double one_over_4V = 1.0/(4.0*volume);
   double one_over_8 = 0.125;
-  vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
-  vector<double> phi(4);
+  std::vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
+  std::vector<double> phi(4);
 
   alpha[0][0]   =  one_over_4V*(-r2[1]+r1[1]);
   alpha[0][1]   =  one_over_4V*(r2[0]-r1[0]);

@@ -102,13 +102,13 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
     // Special case exception for SmoothGeomPieces and FileGeometryPieces
     SmoothGeomPiece* sgp         = dynamic_cast<SmoothGeomPiece*>(piece.get());
-    vector<double>* volumes      = 0;
-    vector<double>* temperatures = 0;
-    vector<double>* colors       = 0;
-    vector<Vector>* pforces      = 0;
-    vector<Vector>* pFiberDirs   = 0;
-    vector<Vector>* pvelocities  = 0; // gcd adds and new change name
-    vector<Matrix3>* pSizes      = 0;
+    std::vector<double>* volumes      = 0;
+    std::vector<double>* temperatures = 0;
+    std::vector<double>* colors       = 0;
+    std::vector<Vector>* pforces      = 0;
+    std::vector<Vector>* pFiberDirs   = 0;
+    std::vector<Vector>* pvelocities  = 0; // gcd adds and new change name
+    std::vector<Matrix3>* pSizes      = 0;
     if (sgp) {
 
       std::cout << "Created a special geometry with #particles = "
@@ -129,42 +129,42 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     }
 
     // For getting particle volumes (if they exist)
-    vector<double>::const_iterator voliter;
+    std::vector<double>::const_iterator voliter;
     if (volumes) {
       if (!volumes->empty())
         voliter = vars.d_object_vols[obj.get()].begin();
     }
 
     // For getting particle temps (if they exist)
-    vector<double>::const_iterator tempiter;
+    std::vector<double>::const_iterator tempiter;
     if (temperatures) {
       if (!temperatures->empty())
         tempiter = vars.d_object_temps[obj.get()].begin();
     }
 
     // For getting particle external forces (if they exist)
-    vector<Vector>::const_iterator forceiter;
+    std::vector<Vector>::const_iterator forceiter;
     if (pforces) {
       if (!pforces->empty())
         forceiter = vars.d_object_forces[obj.get()].begin();
     }
 
     // For getting particle fiber directions (if they exist)
-    vector<Vector>::const_iterator fiberiter;
+    std::vector<Vector>::const_iterator fiberiter;
     if (pFiberDirs) {
       if (!pFiberDirs->empty())
         fiberiter = vars.d_object_fibers[obj.get()].begin();
     }
 
     // For getting particle velocities (if they exist)   // gcd adds
-    vector<Vector>::const_iterator velocityiter;
+    std::vector<Vector>::const_iterator velocityiter;
     if (pvelocities) { // new change name
       if (!pvelocities->empty())
         velocityiter = vars.d_object_velocity[obj.get()].begin(); // new change name
     }                                                       // end gcd adds
 
     // For getting particle sizes (if they exist)
-    vector<Matrix3>::const_iterator sizeiter;
+    std::vector<Matrix3>::const_iterator sizeiter;
     if (pSizes) {
       if (!pSizes->empty())
         sizeiter = vars.d_object_size[obj.get()].begin();
@@ -175,7 +175,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     }
 
     // For getting particles colors (if they exist)
-    vector<double>::const_iterator coloriter;
+    std::vector<double>::const_iterator coloriter;
     if (colors) {
       if (!colors->empty())
         coloriter = vars.d_object_colors[obj.get()].begin();
@@ -781,14 +781,14 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       proc0cout << "Special Geom Piece: Number of points created = " << numPts
                 << std::endl;
     }
-    vector<Point>* points       = sgp->getPoints();
-    vector<double>* vols        = sgp->getVolume();
-    vector<double>* temps       = sgp->getTemperature();
-    vector<double>* colors      = sgp->getColors();
-    vector<Vector>* pforces     = sgp->getForces();
-    vector<Vector>* pFiberDirs  = sgp->getFiberDirs();
-    vector<Vector>* pvelocities = sgp->getVelocity();
-    vector<Matrix3>* pSizes     = sgp->getSize();
+    std::vector<Point>* points       = sgp->getPoints();
+    std::vector<double>* vols        = sgp->getVolume();
+    std::vector<double>* temps       = sgp->getTemperature();
+    std::vector<double>* colors      = sgp->getColors();
+    std::vector<Vector>* pforces     = sgp->getForces();
+    std::vector<Vector>* pFiberDirs  = sgp->getFiberDirs();
+    std::vector<Vector>* pvelocities = sgp->getVelocity();
+    std::vector<Matrix3>* pSizes     = sgp->getSize();
     Point p;
     IntVector cell_idx;
 

@@ -131,8 +131,8 @@ void UdaReducer::problemSetup(const ProblemSpecP& prob_spec,
 
   //__________________________________
   //  define the varLabels that will be saved
-  vector<string> varNames;
-  vector< const TypeDescription *> typeDescriptions;
+  std::vector<string> varNames;
+  std::vector< const TypeDescription *> typeDescriptions;
   d_dataArchive->queryVariables( varNames, typeDescriptions );
   
   proc0cout << "\nLabels discovered in the original uda\n";
@@ -238,7 +238,7 @@ void UdaReducer::sched_readDataArchive(const LevelP& level,
     } else {
      
       matlSet = scinew MaterialSet();
-      vector<int> matls_vec;
+      std::vector<int> matls_vec;
       matls_vec.reserve(matlsRangeSet.size());
       
       for (ConsecutiveRangeSet::iterator iter = matlsRangeSet.begin(); iter != matlsRangeSet.end(); iter++) {
@@ -360,7 +360,7 @@ UdaReducer::needRecompile( const double   /* time */,
   d_gridChanged = false;   // reset flag
   
   int numLevels = d_oldGrid->numLevels();
-  vector<int> level_numMatls( numLevels );
+  std::vector<int> level_numMatls( numLevels );
   
   for (int L = 0; L < numLevels; L++) {
     level_numMatls[L] = d_dataArchive->queryNumMaterials(*d_oldGrid->getLevel(L)->patchesBegin(), d_timeIndex);

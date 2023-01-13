@@ -90,7 +90,7 @@ void MPMPetscSolver::solve(vector<double>& guess)
 }
 
 void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
-                                  const map<int,int>& dof_diag)
+                                  const  std::map< int,int>& dof_diag)
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::createMatrix()!", __FILE__, __LINE__ );
 }

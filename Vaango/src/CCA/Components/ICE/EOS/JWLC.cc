@@ -129,7 +129,7 @@ double JWLC::computeRhoMicro(double press, double,
        rhoM+=delta;
        rhoM=fabs(rhoM);
        if(count>=150){
-         ostringstream warn;
+          std::ostringstream warn;
          warn << setprecision(15);
          warn << "ERROR:ICE:JWLC::computeRhoMicro not converging. \n";
          warn << "press= " << press << " temp=" << Temp << " cv=" << cv << "\n";
@@ -236,7 +236,7 @@ void JWLC::hydrostaticTempAdjustment(Patch::FaceType,
 //  The following is commented out because this EOS is not temperature
 //  dependent, so I'm not adjusting the temperature.
 
-//   vector<IntVector>::const_iterator iter;
+//   std::vector<IntVector>::const_iterator iter;
 //   for (iter=bound.begin(); iter != bound.end(); iter++) {
 //     IntVector c = *iter;
 //     Temp_CC[c] += plusMinusOne * dx_grav/( (gamma[c] - 1.0) * cv[c] );

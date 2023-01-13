@@ -76,7 +76,7 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
     }
   } else {  // axi-symmetric kinematics
     // Get the node indices that surround the cell
-    vector<double>    S(numInfluenceNodes);
+    std::vector<double>    S(numInfluenceNodes);
     interpolator->findCellAndWeightsAndShapeDerivatives(px, ni, S, d_S,
                                                         pSize,
                                                         pDefGrad_old);
@@ -104,9 +104,9 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
 //-------------------------------------------------------------------------
 void 
 VelocityGradientComputer::computeAxiSymVelocityGradient(Matrix3& velGrad,
-                                             vector<IntVector>& ni,
-                                             vector<Vector>& d_S,
-                                             vector<double>& S,
+                                             std::vector<IntVector>& ni,
+                                             std::vector<Vector>& d_S,
+                                             std::vector<double>& S,
                                              const double* oodx,
                                              constNCVariable<Vector>& gVelocity,
                                              const Point& px)
@@ -125,8 +125,8 @@ VelocityGradientComputer::computeAxiSymVelocityGradient(Matrix3& velGrad,
 
 void 
 VelocityGradientComputer::computeVelocityGradient(Matrix3& velGrad,
-                                        vector<IntVector>& ni,
-                                        vector<Vector>& d_S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<Vector>& d_S,
                                         const double* oodx, 
                                         const short pgFld[],
                                         constNCVariable<Vector>& gVelocity,

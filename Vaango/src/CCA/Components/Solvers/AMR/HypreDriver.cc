@@ -141,7 +141,7 @@ namespace Uintah {
                patchFace == Patch::zplus){
       return RightSide;
     } else {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "patchFaceSide() called with invalid Patch::FaceType "
           << patchFace;
       throw InternalError(msg.str(),__FILE__, __LINE__);

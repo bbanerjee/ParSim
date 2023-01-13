@@ -74,7 +74,7 @@ WARNING
     
     virtual void interpolate(int index, CCVariable<double>& result,
                              const CellIterator&,
-                             vector<constCCVariable<double> >& independents);
+                             std::vector<constCCVariable<double> >& independents);
     virtual double interpolate(int index, vector<double>& independents);
 
   private:
@@ -82,8 +82,8 @@ WARNING
     struct InterpAxis {
       InterpAxis(int size, int stride);
       InterpAxis(const InterpAxis* copy, int newStride);
-      vector<double> weights;
-      vector<long> offset;
+      std::vector<double> weights;
+      std::vector<long> offset;
       bool uniform;
       double dx;
       int useCount;
@@ -94,7 +94,7 @@ WARNING
     struct Ind {
       string name;
     };
-    vector<Ind*> inds;
+    std::vector<Ind*> inds;
 
     struct Expr {
       char op;
@@ -139,13 +139,13 @@ WARNING
       double* data;
       string expr_string;
       Expr* expression;
-      vector<Ind*> myinds;
-      vector<InterpAxis*> axes;
+      std::vector<Ind*> myinds;
+      std::vector<InterpAxis*> axes;
       Dep(Type type) : type(type) { data = 0; expression = 0; }
       ~Dep();
       void addAxis(InterpAxis*);
     };
-    vector<Dep*> deps;
+    std::vector<Dep*> deps;
 
     Expr* parse_addsub(string::iterator&  begin, string::iterator& end);
     Expr* parse_muldiv(string::iterator&  begin, string::iterator& end);
@@ -154,14 +154,14 @@ WARNING
     void evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
                   double* data, int size);
     void checkAxes(const vector<InterpAxis*>& a, const vector<InterpAxis*>& b,
-                   vector<InterpAxis*>& out_axes);
+                   std::vector<InterpAxis*>& out_axes);
 
     string filename_;
     bool   file_read_;
 
     struct DefaultValue {
       void outputProblemSpec(ProblemSpecP& ps) {
-        stringstream ss;
+         std::stringstream ss;
         ss << value;
         ProblemSpecP dv_ps = ps->appendElement("defaultValue",ss.str());
         dv_ps->setAttribute("name",name);
@@ -169,7 +169,7 @@ WARNING
       string name;
       double value;
     };
-    vector<DefaultValue*> defaults;
+    std::vector<DefaultValue*> defaults;
 
   };
 } // End namespace Uintah

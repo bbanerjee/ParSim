@@ -68,7 +68,7 @@ namespace Uintah {
     
     void solve(vector<double>& guess);
 
-    void createMatrix(const ProcessorGroup* pg, const map<int,int>& dof_diag);
+    void createMatrix(const ProcessorGroup* pg, const  std::map< int,int>& dof_diag);
 
     void destroyMatrix(bool recursion);
 
@@ -105,9 +105,9 @@ namespace Uintah {
     void assembleFluxVector();
 
     // Needed for the local to global mappings
-    map<const Patch*, int> d_petscGlobalStart;
-    map<const Patch*, Array3<int> > d_petscLocalToGlobal;
-    vector<int> d_numNodes,d_startIndex;
+    std::map<const Patch*, int> d_petscGlobalStart;
+    std::map<const Patch*, Array3<int> > d_petscLocalToGlobal;
+    std::vector<int> d_numNodes,d_startIndex;
     int d_totalNodes;
     int d_DOFsPerNode;
     int d_iteration;

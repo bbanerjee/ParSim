@@ -69,7 +69,7 @@ Advector* AdvectionFactory::create(ProblemSpecP& ps,
     throw ProblemSetupException("Cannot find advection tag", __FILE__, __LINE__);
   }
   
-  map<string,string> advect_options;
+  std::map<string,string> advect_options;
   advect_ps->getAttributes(advect_options);
   
   if(advect_options.find("type") == advect_options.end()){
@@ -87,7 +87,7 @@ Advector* AdvectionFactory::create(ProblemSpecP& ps,
      if(advect_options["useCompatibleFluxes"] == "false" ||
         advect_options["compatibleFluxes"]    == "false"){
         d_useCompatibleFluxes = false;
-        cout << "\n--------ICE::Warning:  You've turned off compatible fluxes.\n"<< endl;
+        std::cout << "\n--------ICE::Warning:  You've turned off compatible fluxes.\n"<< endl;
      }
   } 
   

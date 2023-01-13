@@ -199,7 +199,7 @@ AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   ProblemSpecP mpm_soln_ps = mat_ps->findBlock("MPM");
   if (!mpm_soln_ps) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR:MPM:\n missing MPM section in the AMRMPM input file\n";
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
@@ -235,14 +235,14 @@ AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
   if (refine_ps) {
     // Read in the refined regions geometry objects
     int piece_num = 0;
-    list<GeometryObject::DataItem> geom_obj_data;
+     std::list<GeometryObject::DataItem> geom_obj_data;
     geom_obj_data.push_back(GeometryObject::DataItem("level", GeometryObject::Integer));
 
     for (ProblemSpecP geom_obj_ps = refine_ps->findBlock("geom_object");
          geom_obj_ps != 0;
          geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
 
-      vector<GeometryPieceP> pieces;
+      std::vector<GeometryPieceP> pieces;
       GeometryPieceFactory::create(geom_obj_ps, pieces);
 
       GeometryPieceP mainpiece;
@@ -262,7 +262,7 @@ AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  bulletproofing
   if (!d_sharedState->isLockstepAMR()) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "\n ERROR: You must add \n"
         << " <useLockStep> true </useLockStep> \n"
         << " inside of the <AMR> section. \n";
@@ -1907,8 +1907,8 @@ AMRMPM::partitionOfUnity(const ProcessorGroup*,
 
     int numMatls      = d_sharedState->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
     const Matrix3 notUsed;
 
     for (int m = 0; m < numMatls; m++) {
@@ -1992,14 +1992,14 @@ AMRMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     int numMatls      = d_sharedState->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
 #ifdef CBDI_FLUXBCS
     LinearInterpolator* LPI;
     LPI = scinew LinearInterpolator(patch);
-    vector<IntVector> ni_LPI(LPI->size());
-    vector<double> S_LPI(LPI->size());
+    std::vector<IntVector> ni_LPI(LPI->size());
+    std::vector<double> S_LPI(LPI->size());
 #endif
 
     Ghost::GhostType gan = Ghost::AroundNodes;
@@ -2309,8 +2309,8 @@ AMRMPM::interpolateParticlesToGrid_CFI(const ProcessorGroup*,
           particleIndex idx = *iter;
 
           // Get the node indices that surround the fine patch cell
-          vector<IntVector> ni;
-          vector<double> S;
+          std::vector<IntVector> ni;
+          std::vector<double> S;
 
           interpolator->findCellAndWeights_CFI(pX_coarse[idx], ni, S, zoi_fine);
 
@@ -2475,11 +2475,11 @@ AMRMPM::coarsenNodalData_CFI(const ProcessorGroup*,
             }
           }
 
-          vector<Patch::FaceType> cf;
+          std::vector<Patch::FaceType> cf;
           finePatch->getCoarseFaces(cf);
 
           // Iterate over coarse/fine interface faces
-          vector<Patch::FaceType>::const_iterator iter;
+          std::vector<Patch::FaceType>::const_iterator iter;
           for (iter = cf.begin(); iter != cf.end(); ++iter) {
             Patch::FaceType patchFace = *iter;
 
@@ -2619,11 +2619,11 @@ AMRMPM::coarsenNodalData_CFI2(const ProcessorGroup*,
                               fl,
                               fh);
           }
-          vector<Patch::FaceType> cf;
+          std::vector<Patch::FaceType> cf;
           finePatch->getCoarseFaces(cf);
 
           // Iterate over coarse/fine interface faces
-          vector<Patch::FaceType>::const_iterator iter;
+          std::vector<Patch::FaceType>::const_iterator iter;
           for (iter = cf.begin(); iter != cf.end(); ++iter) {
             Patch::FaceType patchFace = *iter;
 
@@ -2658,7 +2658,7 @@ AMRMPM::coarsenNodalData_CFI2(const ProcessorGroup*,
 /*`==========TESTING==========*/
 #if 0
                   if( internalForce_coarse[c_node].length()  >1e-8){
-                    ostringstream warn;
+                     std::ostringstream warn;
                     warn << "Too Big: " << c_node << " f_node " << f_node 
                          << "    L-"<< fineLevel->getIndex()
                          <<" InternalForce_fine   " << internalForce_fine[f_node] 
@@ -2891,9 +2891,9 @@ AMRMPM::computeInternalForce(const ProcessorGroup*,
       Matrix3 stressvol;
       Matrix3 stresspress;
       int n8or27 = flags->d_8or27;
-      vector<IntVector> ni(interpolator->size());
-      vector<double> S(interpolator->size());
-      vector<Vector> d_S(interpolator->size());
+      std::vector<IntVector> ni(interpolator->size());
+      std::vector<double> S(interpolator->size());
+      std::vector<Vector> d_S(interpolator->size());
 
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
@@ -3074,9 +3074,9 @@ AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
                iter++) {
             particleIndex idx = *iter;
 
-            vector<IntVector> ni;
-            vector<double> S;
-            vector<Vector> div;
+            std::vector<IntVector> ni;
+            std::vector<double> S;
+            std::vector<Vector> div;
             interpolator->findCellAndWeightsAndShapeDerivatives_CFI(
               pX_coarse[idx], ni, S, div, zoi_fine);
 
@@ -3380,10 +3380,10 @@ AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
         //__________________________________
         // Iterate over coarsefine interface faces
         if (finePatch->hasCoarseFaces()) {
-          vector<Patch::FaceType> cf;
+          std::vector<Patch::FaceType> cf;
           finePatch->getCoarseFaces(cf);
 
-          vector<Patch::FaceType>::const_iterator iter;
+          std::vector<Patch::FaceType>::const_iterator iter;
           for (iter = cf.begin(); iter != cf.end(); ++iter) {
             Patch::FaceType patchFace = *iter;
 
@@ -3452,10 +3452,10 @@ AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
       //__________________________________
       // Iterate over coarsefine interface faces
       if (finePatch->hasCoarseFaces()) {
-        vector<Patch::FaceType> cf;
+        std::vector<Patch::FaceType> cf;
         finePatch->getCoarseFaces(cf);
 
-        vector<Patch::FaceType>::const_iterator iter;
+        std::vector<Patch::FaceType>::const_iterator iter;
         for (iter = cf.begin(); iter != cf.end(); ++iter) {
           Patch::FaceType patchFace = *iter;
           bool setFace              = false;
@@ -3497,7 +3497,7 @@ AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
 
           // bulletproofing
           if (!setFace) {
-            ostringstream warn;
+             std::ostringstream warn;
             warn << "\n ERROR: computeZoneOfInfluence:Fine Level: Did not find "
                     "node iterator! "
                  << "\n coarse: L-" << level->getIndex()
@@ -3529,9 +3529,9 @@ AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               "Doing AMRMPM::interpolateToParticlesAndUpdate");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
     // Vector dx = patch->dCell();
 
     // Performs the interpolation from the cell vertices of the grid
@@ -4059,7 +4059,7 @@ AMRMPM::addParticles(const ProcessorGroup*,
         if (pRef[idx] != pRefOld[idx]) {
           IntVector c_orig;
           patch->findCell(pX[idx], c_orig);
-          vector<Point> new_part_pos;
+          std::vector<Point> new_part_pos;
 
           Matrix3 dsize = (pF[idx] * pSize[idx] *
                            Matrix3(dx[0], 0, 0, 0, dx[1], 0, 0, 0, dx[2]));
@@ -4627,8 +4627,8 @@ AMRMPM::debug_CFI(const ProcessorGroup*,
     new_dw->allocateAndPut(pColor, lb->pColorLabel_preReloc, pset);
 
     auto interpolatorCoarse = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolatorCoarse->size());
-    vector<double> S(interpolatorCoarse->size());
+    std::vector<IntVector> ni(interpolatorCoarse->size());
+    std::vector<double> S(interpolatorCoarse->size());
 
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
          iter++) {
@@ -4716,8 +4716,8 @@ AMRMPM::debug_CFI(const ProcessorGroup*,
 
             if (pX[idx] == pX_CFI[idx2]) {
               pColor[idx] = 0;
-              vector<IntVector> ni;
-              vector<double> S;
+              std::vector<IntVector> ni;
+              std::vector<double> S;
               interpolatorFine->findCellAndWeights_CFI(pX[idx], ni, S, zoi);
               for (int k = 0; k < (int)ni.size(); k++) {
                 pColor[idx] += S[k];
@@ -4879,8 +4879,8 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
             particleIndex idx = *iter;
 
             // Get the node indices that surround the fine patch cell
-            vector<IntVector> ni;
-            vector<double> S;
+            std::vector<IntVector> ni;
+            std::vector<double> S;
             
             interpolator->findCellAndWeights_CFI(pXold_coarse[idx],ni,S,zoi_fine);
 

@@ -215,7 +215,7 @@ Arena::checkInputParameters()
 
   if (d_cm.consistency_bisection_tolerance < 1.0e-16 ||
       d_cm.consistency_bisection_tolerance > 1.0e-2) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
          << endl;
@@ -223,14 +223,14 @@ Arena::checkInputParameters()
   }
 
   if (d_cm.subcycling_characteristic_number < 1) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Subcycling characteristic number should be > 1. Default = 256"
          << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
   if (d_cm.yield_scale_fac < 1.0 || d_cm.yield_scale_fac > 1.0e6) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Yield surface scaling factor should be between 1 and 1.0e6. "
             "Default = 1."
          << endl;
@@ -239,7 +239,7 @@ Arena::checkInputParameters()
 
   /*
   if (d_cm.use_disaggregation_algorithm) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Disaggregation algorithm not currently supported with partial
   saturation model"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);

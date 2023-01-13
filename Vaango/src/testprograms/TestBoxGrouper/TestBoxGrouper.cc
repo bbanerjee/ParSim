@@ -116,14 +116,14 @@ void doSimpleExampleTests(Suite* suite, bool verbose)
 
 void doGridTests(Suite* suite, int n, int numTakeAway, bool verbose)
 {
-  list<int> takeAwayRands;
+   std::list<int> takeAwayRands;
   int i;
   for (i = 0; i < numTakeAway; i++) {
     takeAwayRands.push_back(rand() % (n*n*n - i));
   }
   takeAwayRands.sort();
   
-  list<int>::iterator takeAwayRandIter = takeAwayRands.begin();
+   std::list<int>::iterator takeAwayRandIter = takeAwayRands.begin();
   
   set<const Box*> boxes;
   i = 0;
@@ -201,7 +201,7 @@ void performStandardSuperBoxSetTests(Suite* suite,
 
   set<const Box*> superSetBoxes;
   int count = 0;
-  vector<SuperBox*>::const_iterator iter;
+  std::vector<SuperBox*>::const_iterator iter;
   for (iter = superBoxSet->getSuperBoxes().begin();
        iter != superBoxSet->getSuperBoxes().end(); iter++) {
     const vector<const Box*>& superBoxBoxes = (*iter)->getBoxes();

@@ -129,7 +129,7 @@ void ZeroOrder::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
   for (ProblemSpecP child = DA_ps->findBlock("save");
        child != 0;
        child = child->findNextBlock("save") ){
-    map<string,string> var_attr;
+    std::map<string,string> var_attr;
     child->getAttributes(var_attr);
     
     if (var_attr["label"] == "totalMassBurned"){
@@ -148,7 +148,7 @@ void ZeroOrder::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
     //  define the materialSet
     mymatls = scinew MaterialSet();
 
-    vector<int> m;
+    std::vector<int> m;
     m.push_back(0);                       // needed for the pressure and NC_CCWeight
     m.push_back(matl0->getDWIndex());
     m.push_back(matl1->getDWIndex());
@@ -189,7 +189,7 @@ void ZeroOrder::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*
   //  define the materialSet
   mymatls = scinew MaterialSet();
 
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);                       // needed for the pressure and NC_CCWeight
   m.push_back(matl0->getDWIndex());
   m.push_back(matl1->getDWIndex());

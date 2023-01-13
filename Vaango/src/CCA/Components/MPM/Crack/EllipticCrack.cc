@@ -90,23 +90,23 @@ void EllipticCrack::readCrack(ProblemSpecP& ellipse_ps)
 void EllipticCrack::outputInitialCrackPlane(int i)
 {
 
-  cout << "  * Ellipse " << i+1 << ": meshed by " << NCells
+  std::cout << "  * Ellipse " << i+1 << ": meshed by " << NCells
        << " cells on the circumference." << endl;
   if(CrkFrtSegID==-1)
-    cout << "    crack front: on the ellipse circumference" << endl;
+    std::cout << "    crack front: on the ellipse circumference" << endl;
   else    
-    cout << "    crack front segment ID: " << CrkFrtSegID
+    std::cout << "    crack front segment ID: " << CrkFrtSegID
          << endl;
-  cout << "    end point on axis1: " << vertices[0] << endl;
-  cout << "    end point on axis2: " << vertices[1] << endl;
-  cout << "    another end point on axis1: " << vertices[2]
+  std::cout << "    end point on axis1: " << vertices[0] << endl;
+  std::cout << "    end point on axis2: " << vertices[1] << endl;
+  std::cout << "    another end point on axis1: " << vertices[2]
        << endl;
 
 
 }
 
 void EllipticCrack::discretize(int& nstart0,vector<Point>& cx, 
-                           vector<IntVector>& ce,vector<int>& SegNodes)
+                           std::vector<IntVector>& ce,vector<int>& SegNodes)
 {
 }
 

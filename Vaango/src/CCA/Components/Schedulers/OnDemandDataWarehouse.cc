@@ -644,9 +644,9 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
 
   // need to be sized here, otherwise you risk reallocating the array after a
   // send/recv has been posted
-  vector<vector<int>> senddata(sends.size()), recvdata(recvs.size());
+  std::vector<vector<int>> senddata(sends.size()), recvdata(recvs.size());
 
-  vector<MPI_Request> sendrequests, recvrequests;
+  std::vector<MPI_Request> sendrequests, recvrequests;
 
   int data_index = 0;
   for (auto&& [proc_index, recv_set] : recvs) {
@@ -677,7 +677,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
   data_index = 0;
   for (auto&& [proc_index, send_set] : sends) {
     if (send_set.size() > 0) {
-      vector<int>& data = senddata[data_index];
+      std::vector<int>& data = senddata[data_index];
       data.resize(send_set.size());
       int i = 0;
       for (auto siter = send_set.begin(); siter != send_set.end();
@@ -781,7 +781,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
   data_index = 0;
   for (auto&& [proc_index, recv_set] : recvs) {
     if (recv_set.size() > 0) {
-      vector<int>& data = recvdata[data_index];
+      std::vector<int>& data = recvdata[data_index];
       int i             = 0;
       for (auto riter = recv_set.begin(); riter != recv_set.end();
            riter++, i++) {
@@ -1195,7 +1195,7 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
 
   int packsize;
   MPI_Pack_size(count, datatype, d_myworld->getGlobalComm(nComm), &packsize);
-  vector<char> sendbuf(packsize);
+  std::vector<char> sendbuf(packsize);
 
   int packindex = 0;
   for (int m = 0; m < nmatls; m++) {
@@ -1217,7 +1217,7 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
     var->getMPIData(sendbuf, packindex);
   }
 
-  vector<char> recvbuf(packsize);
+  std::vector<char> recvbuf(packsize);
 
   DOUTR(g_mpi_dbg,
         " allreduce, name " << label->getName() << " sendbuf.size() "
@@ -2033,7 +2033,7 @@ OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
     const vector<ParticleSubset*>& neighbor_subsets =
       pset->getNeighborSubsets();
 
-    vector<ParticleVariableBase*> neighborvars(neighborPatches.size());
+    std::vector<ParticleVariableBase*> neighborvars(neighborPatches.size());
 
     for (size_t i = 0; i < neighborPatches.size(); i++) {
       const Patch* neighborPatch = neighborPatches[i];
@@ -3112,7 +3112,7 @@ OnDemandDataWarehouse::emit(OutputContext& oc,
       case TypeDescription::Type::SFCZVariable:
         // get list
         {
-          vector<Variable*> varlist;
+          std::vector<Variable*> varlist;
           d_var_DB.getlist(label, matlIndex, patch, varlist);
 
           GridVariableBase* v = nullptr;
@@ -4017,7 +4017,7 @@ OnDemandDataWarehouse::logMemoryUse(ostream& out,
   for (psetDBType::iterator iter = d_pset_DB.begin(); iter != d_pset_DB.end();
        iter++) {
     ParticleSubset* pset = iter->second;
-    ostringstream elems;
+     std::ostringstream elems;
     elems << pset->numParticles();
     logMemory(out,
               total,
@@ -4291,7 +4291,7 @@ OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
 
 void
 OnDemandDataWarehouse::pushRunningTask(const Task* task,
-                                       vector<OnDemandDataWarehouseP>* dws)
+                                       std::vector<OnDemandDataWarehouseP>* dws)
 {
   std::lock_guard<Uintah::MasterLock> push_lock(g_running_tasks_lock);
 
@@ -4474,7 +4474,7 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
         const Patch* patch = patches->get(p);
 
         VarLabelMatl<Patch> key(label, matl, patch);
-        map<VarLabelMatl<Patch>, AccessInfo>::iterator find_iter;
+        std::map<VarLabelMatl<Patch>, AccessInfo>::iterator find_iter;
         find_iter = currentTaskAccesses.find(key);
         if (find_iter == currentTaskAccesses.end() ||
             (*find_iter).second.accessType != accessType) {
@@ -4543,7 +4543,7 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
 
           string has, needs;
           has = "task requires";
-          ostringstream ghost_str;
+           std::ostringstream ghost_str;
           ghost_str << " requesting " << dep->num_ghost_cells << " layer";
           if (dep->num_ghost_cells > 1) {
             ghost_str << "s";
@@ -4610,7 +4610,7 @@ OnDemandDataWarehouse::recomputeTimeStep()
 
 void
 OnDemandDataWarehouse::getVarLabelMatlLevelTriples(
-  vector<VarLabelMatl<Level>>& vars) const
+  std::vector<VarLabelMatl<Level>>& vars) const
 {
   d_level_DB.getVarLabelMatlTriples(vars);
 }

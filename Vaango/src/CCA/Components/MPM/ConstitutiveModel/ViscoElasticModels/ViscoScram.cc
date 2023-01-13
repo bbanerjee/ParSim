@@ -62,7 +62,7 @@ ViscoScram::ViscoScram(ProblemSpecP& ps, MPMFlags* Mflag)
 {
   ps->require("PR", d_initialData.PR);
   if (d_initialData.PR > 0.5 || d_initialData.PR < -1.0) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "ERROR: Poisson Ratio (ViscoSCRAM input parameter 'PR') must be "
            "greater than -1 and less than 0.5\n";
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
@@ -557,9 +557,9 @@ ViscoScram::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // initialize strain energy and wavespeed to zero
     double se = 0;
@@ -960,7 +960,7 @@ ViscoScram::computeStressTensor(const PatchSubset* patches,
                   (2. * Gmw[imw]) * RTau[imw];
         /*
         if (pTemperature[idx] > 450.0) {
-          cout << "\tidx = " << idx << " j = " << imw
+          std::cout << "\tidx = " << idx << " j = " << imw
                << "\n\t\t S_j:S_j = " <<
         pStatedata[idx].DevStress[imw].NormSquared()
                << " mu_j = " << Gmw[imw] << " tau_j = " << RTau[imw]
@@ -1006,7 +1006,7 @@ ViscoScram::computeStressTensor(const PatchSubset* patches,
         -pVolHeatRate_new[idx] + pVeHeatRate_new[idx] + pCrHeatRate_new[idx];
       /*
       if (pTemperature[idx] > 450.0) {
-      cout << "\t idx = " << idx << "\n\t\t qdot_v = " << pVolHeatRate_new[idx]
+      std::cout << "\t idx = " << idx << "\n\t\t qdot_v = " << pVolHeatRate_new[idx]
                        << " T = " << pTemperature[idx] << " Tr(edot) = " <<
       ekkdot
                        << "\n\t\t qdot_ve = " << pVeHeatRate_new[idx]
@@ -1295,7 +1295,7 @@ ViscoScram::computeRhoRef(const double rho_orig, const double p_ref,
       }
 
       if (iter >= 100) {
-        ostringstream warn;
+         std::ostringstream warn;
         warn << setprecision(15);
         warn << "ERROR:MPM:ViscoSCRAM:ComputingRho_ref. \n";
         warn << "press= " << pressure << " temp=" << temperature << "\n";
@@ -1404,7 +1404,7 @@ ViscoScram::computeRhoMicroCM(double pressure, const double p_ref,
         }
 
         if (iter >= 100) {
-          ostringstream warn;
+           std::ostringstream warn;
           warn << setprecision(15);
           warn
             << "ERROR:MPM:ViscoSCRAM:JWL::computeRhoMicro not converging. \n";
@@ -1497,7 +1497,7 @@ ViscoScram::computeRhoMicroCM(double pressure, const double p_ref,
           rhoM += delta;
           rhoM = fabs(rhoM);
           if (count >= 150) {
-            ostringstream warn;
+             std::ostringstream warn;
             warn << "ERROR:MPM:ViscoScram:JWLC::computeRhoMicro not "
                     "converging. \n";
             warn << "press= " << pressure << "\n";
@@ -1570,7 +1570,7 @@ ViscoScram::computeRhoMicroCM(double pressure, const double p_ref,
 
           // After 50 more iterations finally quit out
           if (count >= 150) {
-            ostringstream warn;
+             std::ostringstream warn;
             warn << std::setprecision(15);
             warn << "ERROR:ICE:BirchMurnaghan::computeRhoMicro(...) not "
                     "converging. \n";

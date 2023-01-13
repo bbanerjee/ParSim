@@ -104,13 +104,13 @@ printData(DataArchive* archive, string& variable_name,
           unsigned long time_step_lower, unsigned long time_step_upper,
           unsigned long output_precision, ostream& out) 
 {
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   // query time info from dataarchive
   archive->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  if (!quiet) cout << "There are " << index.size() << " timesteps:\n";
+  if (!quiet) std::cout << "There are " << index.size() << " timesteps:\n";
       
   //------------------------------
   // figure out the lower and upper bounds on the timesteps
@@ -122,7 +122,7 @@ printData(DataArchive* archive, string& variable_name,
   // set default max time value
   if (time_step_upper == (unsigned long)-1) {
     if (verbose)
-      cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
+      std::cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
     time_step_upper = times.size() - 1;
   }
 
@@ -133,7 +133,7 @@ printData(DataArchive* archive, string& variable_name,
   }
   
   if (!quiet){
-    cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << endl;
+    std::cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << endl;
   }
   
   // set defaults for output stream
@@ -142,7 +142,7 @@ printData(DataArchive* archive, string& variable_name,
   
   // for each type available, we need to query the values for the time range, 
   // variable name, and material
-  vector<T> values;
+  std::vector<T> values;
   try {
     archive->query(values, variable_name, material, var_id, times[time_step_lower], times[time_step_upper], levelIndex);
   } catch (const VariableNotFoundInGrid& exception) {
@@ -264,12 +264,12 @@ main(int argc, char** argv)
       archive->turnOffXMLCaching();
     }
     
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
+    std::vector<string> vars;
+    std::vector<const Uintah::TypeDescription*> types;
 
     archive->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
-    if (verbose) cout << "There are " << vars.size() << " variables:\n";
+    if (verbose) std::cout << "There are " << vars.size() << " variables:\n";
     bool var_found = false;
     unsigned int var_index = 0;
     for (;var_index < vars.size(); var_index++) {
@@ -288,7 +288,7 @@ main(int argc, char** argv)
       cerr << "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
       }
       cerr << "\n";
       cerr << "Goodbye!!\n";
@@ -300,8 +300,8 @@ main(int argc, char** argv)
     //__________________________________
     //  compute the cell index from the point
     if(findCellIndex){
-      vector<int> index;
-      vector<double> times;
+      std::vector<int> index;
+      std::vector<double> times;
       archive->queryTimesteps(index, times);
       ASSERTEQ(index.size(), times.size());
 
@@ -313,7 +313,7 @@ main(int argc, char** argv)
     }
       
     if (!quiet){
-      cout << vars[var_index] << ": " << types[var_index]->getName() << " being extracted for material "<<material<<" at index "<<var_id<<endl;
+      std::cout << vars[var_index] << ": " << types[var_index]->getName() << " being extracted for material "<<material<<" at index "<<var_id<<endl;
     }
     
     // get type and subtype of data
@@ -321,16 +321,16 @@ main(int argc, char** argv)
     const Uintah::TypeDescription* subtype = td->getSubType();
 
     if( subtype == nullptr ) {
-      cout << "\n";
-      cout << "An ERROR occurred.  Subtype is nullptr.  Most likely this means that the automatic\n";
-      cout << "type instantiation is not working... Are you running on a strange architecture?\n";
-      cout << "Types should be constructed when global static variables of each type are instantiated\n";
-      cout << "automatically when the program loads.  The registering of the types occurs in:\n";
-      cout << "src/Core/Disclosure/TypeDescription.cc in register_type() (called from the\n";
-      cout << "TypeDescription() constructor(s).  However, I'm not quite sure where the variables\n";
-      cout << "are initially (or in this case not initially) instantiated...  Need to track\n";
-      cout << "that down and force them to be created... Dd.\n";
-      cout << "\n";
+      std::cout << "\n";
+      std::cout << "An ERROR occurred.  Subtype is nullptr.  Most likely this means that the automatic\n";
+      std::cout << "type instantiation is not working... Are you running on a strange architecture?\n";
+      std::cout << "Types should be constructed when global static variables of each type are instantiated\n";
+      std::cout << "automatically when the program loads.  The registering of the types occurs in:\n";
+      std::cout << "src/Core/Disclosure/TypeDescription.cc in register_type() (called from the\n";
+      std::cout << "TypeDescription() constructor(s).  However, I'm not quite sure where the variables\n";
+      std::cout << "are initially (or in this case not initially) instantiated...  Need to track\n";
+      std::cout << "that down and force them to be created... Dd.\n";
+      std::cout << "\n";
       exit( 1 );
     }
 
@@ -338,7 +338,7 @@ main(int argc, char** argv)
     // if no output file, call with cout
     ostream *output_stream = &cout;
     if (output_file_name != "-") {
-      if (verbose) cout << "Opening \""<<output_file_name<<"\" for writing.\n";
+      if (verbose) std::cout << "Opening \""<<output_file_name<<"\" for writing.\n";
       ofstream *output = new ofstream();
       output->open(output_file_name.c_str());
       if (!(*output)) {

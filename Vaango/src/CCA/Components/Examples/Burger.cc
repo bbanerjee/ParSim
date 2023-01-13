@@ -218,8 +218,8 @@ void Burger::timeAdvance(const ProcessorGroup*,
     //__________________________________
     // Boundary conditions: Neumann
     // Iterate over the faces encompassing the domain
-    vector<Patch::FaceType>::const_iterator iter;
-    vector<Patch::FaceType> bf;
+    std::vector<Patch::FaceType>::const_iterator iter;
+    std::vector<Patch::FaceType> bf;
     patch->getBoundaryFaces(bf);
     for (iter  = bf.begin(); iter != bf.end(); ++iter){
       Patch::FaceType face = *iter;

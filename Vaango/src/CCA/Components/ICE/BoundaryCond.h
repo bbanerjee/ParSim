@@ -215,8 +215,8 @@ void setBC(T& vel_FC,
   
   //__________________________________
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType>::const_iterator iter;
-  vector<Patch::FaceType> bf;
+  std::vector<Patch::FaceType>::const_iterator iter;
+  std::vector<Patch::FaceType> bf;
 
   patch->getBoundaryFaces(bf);
 
@@ -312,7 +312,7 @@ void setBC(T& vel_FC,
       int nFaceCells = numFaceCells(patch,  type, face);
       
       if(nCells != nFaceCells && (bc_kind != "LODI" && bc_kind != "Neumann")){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR ICE: Boundary conditions were not set for ("<< whichVel << ", " 
              << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
              << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << ") " << endl;
@@ -339,9 +339,9 @@ void set_CFI_BC( CCVariable<T>& q_CC, const Patch* patch)
     BC_dbg << " BC at coarse/Fine interfaces " << endl;
     //__________________________________
     // Iterate over coarsefine interface faces
-    vector<Patch::FaceType> cf;
+    std::vector<Patch::FaceType> cf;
     patch->getCoarseFaces(cf);
-    vector<Patch::FaceType>::const_iterator iter;  
+    std::vector<Patch::FaceType>::const_iterator iter;  
     for (iter  = cf.begin(); iter != cf.end(); ++iter){
       Patch::FaceType face = *iter;
       

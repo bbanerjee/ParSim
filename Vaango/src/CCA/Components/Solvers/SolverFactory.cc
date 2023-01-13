@@ -67,7 +67,7 @@ SolverInterface* SolverFactory::create(       ProblemSpecP   & ps,
 #if HAVE_HYPRE
     solve = scinew HypreSolver2(world);
 #else
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Hypre solver not available, Hypre was not configured.\n";
     throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
 #endif
@@ -76,13 +76,13 @@ SolverInterface* SolverFactory::create(       ProblemSpecP   & ps,
 #if HAVE_HYPRE
     solve = scinew AMRSolver(world);
 #else
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Hypre 1.9.0b solver not available, Hypre not configured.\n";
     throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
 #endif
   }
   else {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "\nERROR: Unknown solver (" << solver
         << ") Valid Solvers: CGSolver, DirectSolver, HypreSolver, AMRSolver, hypreamr \n";
     throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );

@@ -138,30 +138,30 @@ main(int argc, char* argv[])
 
   // show suite tree summary
   bool allPassed;
-  cout << suites->composeSubSummary("", expandAll, allPassed) << endl;
+  std::cout << suites->composeSubSummary("", expandAll, allPassed) << endl;
   
   // report failed suites to itemized the tests the failed
   if (reportAll)
     suites->reportAllSuites();
   else if (!allPassed) {
-    list<Suite*> failedSuites;
+     std::list<Suite*> failedSuites;
     suites->appendFailedSuites(failedSuites);
     
-    cout << "Failed Suite Reports:" << endl << endl;
+    std::cout << "Failed Suite Reports:" << endl << endl;
     for (list<Suite*>::iterator it = failedSuites.begin();
 	 it != failedSuites.end(); it++) {
       (*it)->report();
-      cout << endl;
+      std::cout << endl;
     }
 
     if (failedSuites.size() == 1)
-      cout << "\n1 suite failed.\n";
+      std::cout << "\n1 suite failed.\n";
     else
-      cout << endl << failedSuites.size() << " suites failed.\n";
+      std::cout << endl << failedSuites.size() << " suites failed.\n";
   }
 
   if (allPassed) {
-    cout << "All tests passed!\n";
+    std::cout << "All tests passed!\n";
     return 1;
   }
 

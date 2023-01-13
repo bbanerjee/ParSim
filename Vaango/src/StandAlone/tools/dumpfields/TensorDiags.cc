@@ -252,7 +252,7 @@ namespace Uintah {
   
   
   typedef vector<TensorDiag *>     TDiagTable;
-  typedef map<string, TDiagTable > PreTDiagTable;
+  typedef  std::map< string, TDiagTable > PreTDiagTable;
   
   TDiagTable    _ttdiagtable;
   PreTDiagTable _ttprediagtable;
@@ -333,12 +333,12 @@ namespace Uintah {
     return res;
   }
   
-  list<const TensorDiag*> 
+   std::list<const TensorDiag*> 
   createTensorDiags(const Uintah::TypeDescription * fldtype, 
                     const FieldSelection & fldselection,
                     const TensorDiag * preop)
   {
-    list<TensorDiag const *>  res;
+     std::list<TensorDiag const *>  res;
     int ndiags = numberOfTensorDiags(fldtype);
     for(int idiag=0;idiag<ndiags;idiag++)
       {

@@ -167,8 +167,8 @@ double*
 getCycleTimes(DataArchive *archive) {
 
   // Get the times and indices.
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   // query time info from dataarchive
   archive->queryTimesteps(index, times);
@@ -188,8 +188,8 @@ getTimeStepInfo(DataArchive *archive, GridP *grid, int timestep, bool useExtraCe
   stepInfo->levelInfo.resize(numLevels);
 
   // get variable information
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
   stepInfo->varInfo.resize(vars.size());
 
@@ -357,8 +357,8 @@ getGridData(DataArchive *archive,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 
   const Uintah::TypeDescription* maintype = nullptr;
@@ -424,7 +424,7 @@ ParticleDataRaw* readParticleData(DataArchive *archive,
   }
 
   // first get all the particle subsets so that we know how many total particles we'll have
-  vector<ParticleVariable<T>*> particle_vars;
+  std::vector<ParticleVariable<T>*> particle_vars;
   for( ConsecutiveRangeSet::iterator matlIter = matlsForVar.begin(); matlIter != matlsForVar.end(); matlIter++ ) {
     int matl = *matlIter;
 
@@ -472,8 +472,8 @@ getParticleData(DataArchive *archive,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   archive->queryVariables(vars, types);
 
   const Uintah::TypeDescription* maintype = nullptr;

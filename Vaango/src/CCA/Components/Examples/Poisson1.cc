@@ -194,7 +194,7 @@ void Poisson1::initialize(const ProcessorGroup*,
  
       for(NodeIterator iter(l,h); !iter.done(); iter++){
         if (phi[*iter] != 1.0) {
-          cout << "phi_old[" << *iter << "]=" << phi[*iter] << endl;
+          std::cout << "phi_old[" << *iter << "]=" << phi[*iter] << endl;
         }
          phi[*iter]=1;
       }

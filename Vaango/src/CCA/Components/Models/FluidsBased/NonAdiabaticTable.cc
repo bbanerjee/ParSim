@@ -127,7 +127,7 @@ void NonAdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
   sharedState = in_state;
   d_matl = sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -172,7 +172,7 @@ void NonAdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
 #if 0
   ofstream out("graph.dat");
   int ng = 100;
-  vector<double> mm;
+  std::vector<double> mm;
   int nv;
   if(useVariance){
     mm.resize(2);
@@ -261,7 +261,7 @@ void NonAdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
   for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
     geom_obj_ps != 0;
     geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-    vector<GeometryPieceP> pieces;
+    std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     GeometryPieceP mainpiece;
@@ -287,7 +287,7 @@ void NonAdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
     probe_ps->require("probeSamplingFreq", d_probeFreq);
      
     Vector location = Vector(0,0,0);
-    map<string,string> attr;                    
+    std::map<string,string> attr;                    
     for (ProblemSpecP prob_spec = probe_ps->findBlock("location"); prob_spec != 0; 
                       prob_spec = prob_spec->findNextBlock("location")) {
                       
@@ -375,7 +375,7 @@ void NonAdiabaticTable::initialize(const ProcessorGroup*,
 
     //__________________________________
     // initialize other properties
-    vector<constCCVariable<double> > ind_vars;
+    std::vector<constCCVariable<double> > ind_vars;
     ind_vars.push_back(f);
     if(useVariance){
       // Variance is zero for initialization
@@ -501,7 +501,7 @@ void NonAdiabaticTable::modifyThermoTransportProperties(const ProcessorGroup*,
     
     old_dw->get(f_old,  d_scalar->scalar_CCLabel,  indx, patch, Ghost::None,0);
     
-    vector<constCCVariable<double> > ind_vars;
+    std::vector<constCCVariable<double> > ind_vars;
     ind_vars.push_back(f_old);
     CCVariable<double> scaledvariance;
     if(useVariance){
@@ -559,7 +559,7 @@ void NonAdiabaticTable::computeSpecificHeat(CCVariable<double>& cv_new,
   new_dw->get(f,  d_scalar->scalar_CCLabel,  indx, patch, Ghost::None,0);
   
   // interpolate cv
-  vector<constCCVariable<double> > ind_vars;
+  std::vector<constCCVariable<double> > ind_vars;
   ind_vars.push_back(f);
   CCVariable<double> scaledvariance;
   if(useVariance){
@@ -668,7 +668,7 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
       
       //__________________________________
       //  grab values from the tables
-      vector<constCCVariable<double> > ind_vars;
+      std::vector<constCCVariable<double> > ind_vars;
       ind_vars.push_back(f_old);
       CCVariable<double> scaledvariance;
       if(useVariance){
@@ -766,7 +766,7 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
       double mass = masssum/ncells;
       double e = esum/ncells;
       double atemp = e/(mass*cp);
-      vector<double> tmp(1);
+      std::vector<double> tmp(1);
       tmp[0]=fsum/masssum;
       cerr << "AverageTemp=" << atemp << ", AverageF=" << fsum/masssum << ", targetTemp=" << table->interpolate(d_temp_index, tmp) << '\n';
 #endif

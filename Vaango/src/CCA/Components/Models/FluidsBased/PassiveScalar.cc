@@ -136,7 +136,7 @@ void PassiveScalar::problemSetup(GridP& grid, SimulationStateP& in_state,
   d_sharedState = in_state;
   d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -201,7 +201,7 @@ void PassiveScalar::problemSetup(GridP& grid, SimulationStateP& in_state,
   for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
     geom_obj_ps != 0;
     geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-    vector<GeometryPieceP> pieces;
+    std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     GeometryPieceP mainpiece;
@@ -239,7 +239,7 @@ void PassiveScalar::outputProblemSpec(ProblemSpecP& ps)
   const_ps->appendElement("diffusivity",d_scalar->diff_coeff);
   const_ps->appendElement("AMR_Refinement_Criteria",d_scalar->refineCriteria);
 
-  vector<Region*>::const_iterator iter;
+  std::vector<Region*>::const_iterator iter;
   for ( iter = d_scalar->regions.begin(); iter != d_scalar->regions.end(); iter++) {
     ProblemSpecP geom_ps = scalar_ps->appendChild("geom_object");
     (*iter)->piece->outputProblemSpec(geom_ps);
@@ -616,7 +616,7 @@ void PassiveScalar::scheduleErrorEstimate(const LevelP& coarseLevel,
   // define the material set of 0 and whatever the passive scalar index is 
   // don't add matl 0 twice 
   MaterialSet* matl_set;
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);
   if(d_matl->getDWIndex() != 0){
     m.push_back(d_matl->getDWIndex());

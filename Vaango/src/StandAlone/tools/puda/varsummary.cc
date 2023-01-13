@@ -157,7 +157,7 @@ public:
   virtual void display();
 
 private:
-  vector<T> min_, max_; // One per level of the variable.
+  std::vector<T> min_, max_; // One per level of the variable.
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -167,9 +167,9 @@ template <class Type>
 void
 MinMaxInfo<Type>::display()
 {
-  cout << "\n";
+  std::cout << "\n";
   for (unsigned int level = 0; level < min_.size(); level++) {
-    cout << "   Level " << level << ": Min/Max: " << min_[level] << ", "
+    std::cout << "   Level " << level << ": Min/Max: " << min_[level] << ", "
          << max_[level] << "\n";
   }
 }
@@ -179,7 +179,7 @@ void
 MinMaxInfo<Matrix3>::display()
 {
   for (unsigned int level = 0; level < min_.size(); level++) {
-    cout << "Level " << level << ": Min/Max: " << min_[0].Norm() << ", "
+    std::cout << "Level " << level << ": Min/Max: " << min_[0].Norm() << ", "
          << max_[0].Norm() << "\n";
   }
 }
@@ -260,18 +260,18 @@ map<string, MinMaxInfoBase*> globalMinMax;
 static void
 displayGlobalMinMax()
 {
-  cout << "Global Min/Max are:\n\n";
+  std::cout << "Global Min/Max are:\n\n";
 
   for (map<string, MinMaxInfoBase*>::iterator iter = globalMinMax.begin();
        iter != globalMinMax.end(); iter++) {
 
-    cout << iter->first << ": ";
+    std::cout << iter->first << ": ";
     iter->second->display();
 
     delete iter->second; // Free up memory
   }
 
-  cout << "\n";
+  std::cout << "\n";
 
   globalMinMax
     .clear(); // Reset so we can find the global min/max for the next time step.
@@ -286,20 +286,20 @@ printMinMax(CommandLineFlags& clf, const string& var, int matl,
             Type* max, IntVector* c_min = nullptr, IntVector* c_max = nullptr,
             int minCnt = -1, int maxCnt = -1)
 {
-  stringstream ss;
+   std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
   MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
   MinMaxInfo<Type>* mmInfo = dynamic_cast<MinMaxInfo<Type>*>(mmBase);
   if (mmInfo == nullptr) {
-    // cout << "Creating new data store for " << var << ", malt: " << matl << "
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
     // for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Type>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
 
-  // cout << "Min max for '" << var << "' matl " << matl << " on level " <<
+  // std::cout << "Min max for '" << var << "' matl " << matl << " on level " <<
   // patch->getLevel()->getIndex() << " is:\n";
 
   // In order to print out the values in a type-unique way, we have
@@ -307,16 +307,16 @@ printMinMax(CommandLineFlags& clf, const string& var, int matl,
   // what they really are.
 
   if (!clf.be_brief) {
-    cout << "\t\t\t\tmin value: " << *min << "\n";
-    cout << "\t\t\t\tmax value: " << *max << "\n";
+    std::cout << "\t\t\t\tmin value: " << *min << "\n";
+    std::cout << "\t\t\t\tmax value: " << *max << "\n";
   }
   mmInfo->updateMinMax(patch->getLevel()->getIndex(), *min, *max);
   if (c_min != nullptr && !clf.be_brief) {
-    cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~" << minCnt
+    std::cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~" << minCnt
          << ")\n";
   }
   if (c_max != nullptr && !clf.be_brief) {
-    cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~" << maxCnt
+    std::cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~" << maxCnt
          << ")\n";
   }
 
@@ -329,20 +329,20 @@ printMinMax<Matrix3>(CommandLineFlags& clf, const string& var, int matl,
                      Matrix3* min, Matrix3* max, IntVector* c_min,
                      IntVector* c_max, int minCnt, int maxCnt)
 {
-  stringstream ss;
+   std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
   MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
   MinMaxInfo<Matrix3>* mmInfo = dynamic_cast<MinMaxInfo<Matrix3>*>(mmBase);
   if (mmInfo == nullptr) {
-    // cout << "Creating new data store for " << var << ", malt: " << matl << "
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
     // for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Matrix3>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
 
-  // cout << "Min max for '" << var << "' matl " << matl << " on level " <<
+  // std::cout << "Min max for '" << var << "' matl " << matl << " on level " <<
   // patch->getLevel()->getIndex() << " is:\n";
 
   // In order to print out the values in a type-unique way, we have
@@ -353,8 +353,8 @@ printMinMax<Matrix3>(CommandLineFlags& clf, const string& var, int matl,
   double patchMax = max->Norm();
 
   if (!clf.be_brief) {
-    cout << "\t\t\t\tMin Norm: " << patchMin << "\n";
-    cout << "\t\t\t\tMax Norm: " << patchMax << "\n";
+    std::cout << "\t\t\t\tMin Norm: " << patchMin << "\n";
+    std::cout << "\t\t\t\tMax Norm: " << patchMax << "\n";
   }
 
   // Have to cast to 'what it already is' so that compiler won't
@@ -373,20 +373,20 @@ printMinMax<Vector>(CommandLineFlags& clf, const string& var, int matl,
                     Vector* min, Vector* max, IntVector* c_min,
                     IntVector* c_max, int minCnt, int maxCnt)
 {
-  stringstream ss;
+   std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
   MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
   MinMaxInfo<Vector>* mmInfo = dynamic_cast<MinMaxInfo<Vector>*>(mmBase);
   if (mmInfo == nullptr) {
-    // cout << "Creating new data store for " << var << ", malt: " << matl << "
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
     // for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Vector>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
 
-  // cout << "Min max for '" << var << "' matl " << matl << " on level " <<
+  // std::cout << "Min max for '" << var << "' matl " << matl << " on level " <<
   // patch->getLevel()->getIndex() << " is:\n";
 
   // In order to print out the values in a type-unique way, we have
@@ -414,8 +414,8 @@ printMinMax<Vector>(CommandLineFlags& clf, const string& var, int matl,
     ->updateMinMax(patch->getLevel()->getIndex(), *min, *max);
 
   if (!clf.be_brief) {
-    cout << "\t\t\t\tmin magnitude: " << minMagnitude << "\n";
-    cout << "\t\t\t\tmax magnitude: " << maxMagnitude << "\n";
+    std::cout << "\t\t\t\tmin magnitude: " << minMagnitude << "\n";
+    std::cout << "\t\t\t\tmax magnitude: " << maxMagnitude << "\n";
   }
 } // end printMinMax()
 
@@ -438,7 +438,7 @@ getIterator(const Uintah::TypeDescription* td, const Patch* patch,
     case Uintah::TypeDescription::Type::SFCZVariable:
       return GridIterator(patch->getSFCZIterator());
     default:
-      cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
+      std::cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
       exit(1);
   }
 } // end getIterator()
@@ -461,7 +461,7 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
     da->query(value, var, matl, patch, timestep);
 
     if (!clf.be_brief) {
-      cout << "\t\t\t\t" << td->getName() << " over " << iter.begin()
+      std::cout << "\t\t\t\t" << td->getName() << " over " << iter.begin()
            << " (inclusive) to " << iter.end() << " (excluive)\n";
     }
 
@@ -530,7 +530,7 @@ findMinMaxPV(DataArchive* da, const string& var, int matl, const Patch* patch,
   da->query(value, var, matl, patch, timestep);
   ParticleSubset* pset = value.getParticleSubset();
   if (!clf.be_brief) {
-    cout << "\t\t\t\t" << td->getName() << " over " << pset->numParticles()
+    std::cout << "\t\t\t\t" << td->getName() << " over " << pset->numParticles()
          << " particles\n";
   }
   if (pset->numParticles() > 0) {
@@ -556,28 +556,28 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
   cout.setf(ios::scientific, ios::floatfield);
   cout.precision(16);
 
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
 
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   for (int i = 0; i < (int)vars.size(); i++)
-    cout << "  " << vars[i] << ": " << types[i]->getName() << endl;
-  cout << "\n";
+    std::cout << "  " << vars[i] << ": " << types[i]->getName() << endl;
+  std::cout << "\n";
 
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
 
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
 
   for (int i = 0; i < (int)index.size(); i++) {
-    cout << "  " << index[i] << ": " << times[i] << endl;
+    std::cout << "  " << index[i] << ": " << times[i] << endl;
   }
 
-  cout << "\n";
+  std::cout << "\n";
 
   findTimestep_loopLimits(clf.tslow_set, clf.tsup_set, times,
                           clf.time_step_lower, clf.time_step_upper);
@@ -585,29 +585,29 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
   for (unsigned long t = clf.time_step_lower; t <= clf.time_step_upper; t++) {
     double time = times[t];
 
-    cout << "------------------------------------------------------------------"
+    std::cout << "------------------------------------------------------------------"
             "----\n";
-    cout << "Time = " << time << endl;
-    cout << "\n";
+    std::cout << "Time = " << time << endl;
+    std::cout << "\n";
     GridP grid = da->queryGrid(t);
     for (int v = 0; v < (int)vars.size(); v++) {
       string var = vars[v];
       const Uintah::TypeDescription* td = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
       if (!clf.be_brief) {
-        cout << "\tVariable: " << var << ", type " << td->getName() << endl;
+        std::cout << "\tVariable: " << var << ", type " << td->getName() << endl;
       }
       for (int l = 0; l < grid->numLevels(); l++) {
         LevelP level = grid->getLevel(l);
         if (!clf.be_brief) {
-          cout << "\t    Level: " << level->getIndex() << ", id "
+          std::cout << "\t    Level: " << level->getIndex() << ", id "
                << level->getID() << endl;
         }
         for (Level::const_patchIterator iter = level->patchesBegin();
              iter != level->patchesEnd(); iter++) {
           const Patch* patch = *iter;
           if (!clf.be_brief) {
-            cout << "\t\tPatch: " << patch->getID() << endl;
+            std::cout << "\t\tPatch: " << patch->getID() << endl;
           }
           ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
           // loop over materials
@@ -617,7 +617,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
             if (mat != -1 && matl != mat)
               continue;
             if (!clf.be_brief) {
-              cout << "\t\t\tMaterial: " << matl << endl;
+              std::cout << "\t\t\tMaterial: " << matl << endl;
             }
             switch (td->getType()) {
                 //__________________________________
@@ -678,11 +678,11 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                                                          t, clf);
                   } break;
                   case Uintah::TypeDescription::Type::Point: {
-                    cout << "I don't think these type of variables exist... "
+                    std::cout << "I don't think these type of variables exist... "
                             "and I don't think the original\n";
-                    cout << "puda was handling them correctly... If we need "
+                    std::cout << "puda was handling them correctly... If we need "
                             "them, we will need to figure out\n";
-                    cout << "how to deal with them properly\n";
+                    std::cout << "how to deal with them properly\n";
                     exit(1);
                     // findMinMax<NCVariable<Point>,Point>( da, var, matl,
                     // patch, time, clf );
@@ -723,11 +723,11 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   case Uintah::TypeDescription::Type::Point: {
-                    cout << "I don't think these type of variables exist... "
+                    std::cout << "I don't think these type of variables exist... "
                             "and I don't think the original\n";
-                    cout << "puda was handling them correctly if they do... If "
+                    std::cout << "puda was handling them correctly if they do... If "
                             "we need them, we will need to\n";
-                    cout << "figure out how to deal with them properly\n";
+                    std::cout << "figure out how to deal with them properly\n";
                     exit(1);
                     // findMinMax<NCVariable<Point>,Point>( da, var, matl,
                     // patch, t, clf );

@@ -176,18 +176,18 @@ main(int argc, char** argv)
     string basedir      = args.getString("basename", "");
     
     if(args.getLogical("showdiags")) {
-      cout << "Valid diagnostics: " << endl;
+      std::cout << "Valid diagnostics: " << endl;
       describeScalarDiags(cout);
       describeVectorDiags(cout);
       describeTensorDiags(cout);
-      cout << endl;
+      std::cout << endl;
       exit(EXIT_SUCCESS);
     }
     
     if(args.getLogical("showtensorops")) {
-      cout << "Valid tensor operations: " << endl;
+      std::cout << "Valid tensor operations: " << endl;
       describeTensorDiags(cout);
-      cout << endl;
+      std::cout << endl;
       exit(EXIT_SUCCESS);
     }
     
@@ -198,22 +198,22 @@ main(int argc, char** argv)
     if(basedir=="")
       basedir = filebase.substr(0, filebase.find('.'));
     
-    cout << "filebase: " << filebase << endl;
+    std::cout << "filebase: " << filebase << endl;
     DataArchive* da = scinew DataArchive(filebase);
     
     // load list of possible variables from the data archive
-    vector<string> allvars;
-    vector<const Uintah::TypeDescription*> alltypes;
+    std::vector<string> allvars;
+    std::vector<const Uintah::TypeDescription*> alltypes;
     da->queryVariables(allvars, alltypes);
     ASSERTEQ(allvars.size(), alltypes.size());
     
     if(args.getLogical("showfields")) {
-      cout << "Valid field names are: " << endl;
+      std::cout << "Valid field names are: " << endl;
       for(vector<string>::const_iterator vit(allvars.begin());vit!=allvars.end();vit++) {
         if(*vit != "p.x") 
-          cout << "   " << *vit << endl;
+          std::cout << "   " << *vit << endl;
       }
-      cout << endl;
+      std::cout << endl;
       exit(EXIT_SUCCESS);
     }
     
@@ -243,7 +243,7 @@ main(int argc, char** argv)
     
     if(args.hasUnused()) {
       cerr << "Unused options detected" << endl;
-      vector<string> extraargs = args.unusedArgs();
+      std::vector<string> extraargs = args.unusedArgs();
       for(vector<string>::const_iterator ait(extraargs.begin());ait!=extraargs.end();ait++)
         {
           cerr << "    " << *ait << endl;
@@ -252,18 +252,18 @@ main(int argc, char** argv)
     }
     
     // load list of possible indices and times
-    vector<int>    index;
-    vector<double> times;
+    std::vector<int>    index;
+    std::vector<double> times;
     da->queryTimesteps(index, times);
     ASSERTEQ(index.size(), times.size());
-    cout << "There are " << index.size() << " timesteps:\n";
+    std::cout << "There are " << index.size() << " timesteps:\n";
     
     if(time_step_lower<0)                  time_step_lower = 0;
     if(time_step_upper>=(int)index.size()) time_step_upper = (int)index.size()-1;
     if(time_step_inc<=0)                   time_step_inc   = 1;
     
     // build list of (variable, type tuples) for any fields in use
-    list<typed_varname> dumpvars;
+     std::list<typed_varname> dumpvars;
     int nvars = (int)allvars.size();
     for(int i=0;i<nvars;i++) {
       if( fldselection.wantField(allvars[i]) )
@@ -278,7 +278,7 @@ main(int argc, char** argv)
     
     // loop over the times
     for(int i=time_step_lower;i<=time_step_upper;i+=time_step_inc) {
-      cout << index[i] << ": " << times[i] << endl;
+      std::cout << index[i] << ": " << times[i] << endl;
         
       FieldDumper::Step * step_dumper = dumper->addStep(index[i], times[i], i);
         
@@ -292,7 +292,7 @@ main(int argc, char** argv)
         
         step_dumper->storeField(fieldname, td);
       }
-      cout << endl;
+      std::cout << endl;
 	
       dumper->finishStep(step_dumper);
       

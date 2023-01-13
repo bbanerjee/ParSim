@@ -149,9 +149,9 @@ void bisect(const string& div, int num, int factor,
 
     levels_of_recursion++;
     for (int qq = 0; qq < levels_of_recursion*2; qq++) {
-      cout << ' ';
+      std::cout << ' ';
     }
-    cout << "Bisect: dir " << div[num] << " factor: " << factors[factor] << ' ' 
+    std::cout << "Bisect: dir " << div[num] << " factor: " << factors[factor] << ' ' 
          << low << '-' << high << endl;
 
     int number = static_cast<int>(factors[factor]);  // quiet the sgi compiler
@@ -161,7 +161,7 @@ void bisect(const string& div, int num, int factor,
 
     float total = 0;
 
-    vector<float> sums(h-l);
+    std::vector<float> sums(h-l);
     for(int i = l; i<h; i++){
       IntVector slab_low = low;
       slab_low[index] = i;
@@ -282,15 +282,15 @@ parseArgs( int argc, char *argv[],
 void
 usage( char *prog_name )
 {
-  cout << "Usage: " << prog_name << " weight num_patches infile outfile "
+  std::cout << "Usage: " << prog_name << " weight num_patches infile outfile "
        << "[-div <pattern>] [-sub <submult>] \n";
-  cout << "    weight: 0.0 - 1.0.  0.0 => all cells, 1.0 => all particles\n";
-  cout << "    num_patches: number of patches to divvy up domain into.\n";
-  cout << "    infile:      .ups file to read in.\n";
-  cout << "    outfile:     modified .ups file.\n";
-  cout << "    -div <pattern>:     OPTIONAL.  pattern is some combination\n"
+  std::cout << "    weight: 0.0 - 1.0.  0.0 => all cells, 1.0 => all particles\n";
+  std::cout << "    num_patches: number of patches to divvy up domain into.\n";
+  std::cout << "    infile:      .ups file to read in.\n";
+  std::cout << "    outfile:     modified .ups file.\n";
+  std::cout << "    -div <pattern>:     OPTIONAL.  pattern is some combination\n"
        << "        of x,y, and z, where the default is xyz\n";
-  cout << "    -sub <submult>:     divide original resolution by submult"
+  std::cout << "    -sub <submult>:     divide original resolution by submult"
        << "        for quicker estimation\n";
   exit( 1 );
 }
@@ -380,7 +380,7 @@ main(int argc, char *argv[])
         for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
              geom_obj_ps != 0;
              geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-          vector<GeometryPieceP> pieces;
+          std::vector<GeometryPieceP> pieces;
           GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
           
           GeometryPieceP mainpiece;
@@ -400,17 +400,17 @@ main(int argc, char *argv[])
         }
       }
 
-      //      cout << "FIRST OUTPUT OF CELLS" << low << '-' << high << '\n';
+      //      std::cout << "FIRST OUTPUT OF CELLS" << low << '-' << high << '\n';
       //      int blah = 0;
 //       for(CellIterator iter(low, high); !iter.done(); iter++){
 //         blah++;
-//         cout << weights[*iter] << ' ';
+//         std::cout << weights[*iter] << ' ';
 //         if (blah % 12 == 0)
-//           cout << '\n';
+//           std::cout << '\n';
 //         if (blah % 144 == 0)
-//           cout << '\n';
+//           std::cout << '\n';
 //       }
-//       cout << "\n\n";
+//       std::cout << "\n\n";
       
       int factor = n-1;
       

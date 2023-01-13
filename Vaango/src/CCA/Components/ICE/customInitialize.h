@@ -57,9 +57,9 @@ namespace Uintah {
   
  // multiple vortices
   struct vortices{   
-    vector<Point> origin;
-    vector<double> strength;
-    vector<double> radius;
+    std::vector<Point> origin;
+    std::vector<double> strength;
+    std::vector<double> radius;
     ~vortices() {};
   };
   

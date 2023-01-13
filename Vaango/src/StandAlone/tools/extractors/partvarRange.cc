@@ -97,23 +97,23 @@ int main(int argc, char** argv)
     
     //______________________________________________________________________
     //              V A R S U M M A R Y   O P T I O N
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
+    std::vector<string> vars;
+    std::vector<const Uintah::TypeDescription*> types;
     da->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
     //cout << "There are " << vars.size() << " variables:\n";
     //for(int i=0;i<(int)vars.size();i++) {
-    //  cout << vars[i] << ": " << types[i]->getName() << endl;
+    //  std::cout << vars[i] << ": " << types[i]->getName() << endl;
     //}
 
       
-    vector<int> index;
-    vector<double> times;
+    std::vector<int> index;
+    std::vector<double> times;
     da->queryTimesteps(index, times);
     ASSERTEQ(index.size(), times.size());
     //cout << "There are " << index.size() << " timesteps:\n";
     //for(int i=0;i<(int)index.size();i++)
-    //  cout << index[i] << ": " << times[i] << endl;
+    //  std::cout << index[i] << ": " << times[i] << endl;
       
     // Var loop
     for(int v=0;v<(int)vars.size();v++){
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
               } // end level loop
             } // end time loop
             numParticles /= numSteps;
-            cout << "# particles = " << numParticles << " " 
+            std::cout << "# particles = " << numParticles << " " 
                  << var << " min = " << min << " max = " << max << endl;
           } // end double case
         break;
@@ -227,7 +227,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << endl;
           } // end float case
         break;
 
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << endl;
           } // end int case
         break;
 
@@ -325,7 +325,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << sqrt(min) 
+            std::cout << var << " min = " << sqrt(min) 
                  << " max = " << sqrt(max) << endl;
           } // end Vector case
         break;
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << sqrt(min) 
+            std::cout << var << " min = " << sqrt(min) 
                  << " max = " << sqrt(max) << endl;
           } // end Matrix3 case
         break;

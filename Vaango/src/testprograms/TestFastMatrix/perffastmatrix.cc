@@ -72,12 +72,12 @@ int main(int argc, char* argv[])
     }
   }
   FastMatrix minv(size, size);
-  vector<double> b(size);
-  vector<double> b2(size);
+  std::vector<double> b(size);
+  std::vector<double> b2(size);
   for(int i=0;i<size;i++)
     b[i] = b2[i] = drand48();
-  vector<double> x(size);
-  vector<double> x2(size);
+  std::vector<double> x(size);
+  std::vector<double> x2(size);
   double start = Time::currentSeconds();
 #if 0
   for(int i=0;i<reps;i++){

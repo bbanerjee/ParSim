@@ -66,39 +66,39 @@ using namespace std;
 void
 Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
 {
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << endl;
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
 
-  ostringstream fnum;
+   std::ostringstream fnum;
   string filename("time_meanvel_KE.dat");
   ofstream outfile(filename.c_str());
 
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    cout << "time = " << time << endl;
+    std::cout << "time = " << time << endl;
     GridP grid = da->queryGrid(t);
 
     Vector mean_vel(0.,0.,0.);
     double KE = 0.;
     double total_mass=0.;
       LevelP level = grid->getLevel(grid->numLevels()-1);
-      cout << "Level: " << grid->numLevels() - 1 <<  endl;
+      std::cout << "Level: " << grid->numLevels() - 1 <<  endl;
       for(Level::const_patchIterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;

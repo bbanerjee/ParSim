@@ -89,7 +89,7 @@ lineExtract::~lineExtract()
   delete ps_lb;
   
   // delete each line
-  vector<line*>::iterator iter;
+  std::vector<line*>::iterator iter;
   for( iter  = d_lines.begin();iter != d_lines.end(); iter++){
     delete *iter;
   }
@@ -146,12 +146,12 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  Read in the optional material index from the variables that may be different
   //  from the default index
-  vector<int> m;
+  std::vector<int> m;
   
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
   d_matl_set = scinew MaterialSet();
-  map<string,string> attribute;
+  std::map<string,string> attribute;
     
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze"); var_spec != 0; 
                     var_spec = var_spec->findNextBlock("analyze")) {
@@ -173,7 +173,7 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
   
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
+  std::vector<int>::iterator it;
   it = unique(m.begin(), m.end());
   m.erase(it, m.end());
 
@@ -234,7 +234,7 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
       throwException = true;
     } 
     if(throwException){       
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:AnalysisModule:lineExtact: ("<<label->getName() << " " 
            << td->getName() << " ) has not been implemented" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -291,7 +291,7 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
       loopDir = 2;
     }
     if(validLine == false){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:lineExtract: the line that you've specified " << start 
            << " " << end << " is not parallel to the coordinate system. \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -306,14 +306,14 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
 
     if(start.x() < min.x() || start.y() < min.y() ||start.z() < min.z() ||
        end.x() > max.x()   ||end.y() > max.y()    || end.z() > max.z() ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:lineExtract: the line that you've specified " << start 
            << " " << end << " begins or ends outside of the computational domain. \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     
     if(start.x() > end.x() || start.y() > end.y() || start.z() > end.z() ) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n ERROR:lineExtract: the line that you've specified " << start 
            << " " << end << " the starting point is > than the ending point \n" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -376,7 +376,7 @@ void lineExtract::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:lineExtract  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -498,12 +498,12 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
       //__________________________________
       // loop over each of the variables
       // load them into the data vectors
-      vector< constCCVariable<int> >      CC_integer_data;
-      vector< constCCVariable<double> >   CC_double_data;
-      vector< constCCVariable<Vector> >   CC_Vector_data;
-      vector< constSFCXVariable<double> > SFCX_double_data;
-      vector< constSFCYVariable<double> > SFCY_double_data;
-      vector< constSFCZVariable<double> > SFCZ_double_data;
+      std::vector< constCCVariable<int> >      CC_integer_data;
+      std::vector< constCCVariable<double> >   CC_double_data;
+      std::vector< constCCVariable<Vector> >   CC_Vector_data;
+      std::vector< constSFCXVariable<double> > SFCX_double_data;
+      std::vector< constSFCYVariable<double> > SFCY_double_data;
+      std::vector< constSFCZVariable<double> > SFCZ_double_data;
       
       constCCVariable<int>    q_CC_integer;      
       constCCVariable<double> q_CC_double;
@@ -565,7 +565,7 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
             SFCZ_double_data.push_back(q_SFCZ_double);
             break;
           default:
-            ostringstream warn;
+             std::ostringstream warn;
             warn << "ERROR:AnalysisModule:lineExtact: ("<<d_varLabels[i]->getName() << " " 
                  << td->getName() << " ) has not been implemented" << endl;
             throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -581,7 +581,7 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
         string dirName = d_lines[l]->name;
         string linePath = udaDir + "/" + dirName;
         
-        ostringstream li;
+         std::ostringstream li;
         li<<"L-"<<level->getIndex();
         string levelIndex = li.str();
         string path = linePath + "/" + levelIndex;
@@ -632,7 +632,7 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
             continue;  // just in case - the point-to-cell logic might throw us off on patch boundaries...
             
           IntVector c = *iter;
-          ostringstream fname;
+           std::ostringstream fname;
           fname<<path<<"/i"<< c.x() << "_j" << c.y() << "_k"<< c.z();
           string filename = fname.str();
 
@@ -790,7 +790,7 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
   fprintf(fp,"\n");
   fflush(fp);
   
-  cout << Parallel::getMPIRank() << " lineExtract:Created file " << filename << endl;
+  std::cout << Parallel::getMPIRank() << " lineExtract:Created file " << filename << endl;
 }
 //______________________________________________________________________
 // create the directory structure   lineName/LevelIndex
@@ -800,7 +800,7 @@ lineExtract::createDirectory(string& lineName, string& levelIndex)
 {
   DIR *check = opendir(lineName.c_str());
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << "lineExtract:Making directory " << lineName << endl;
+    std::cout << Parallel::getMPIRank() << "lineExtract:Making directory " << lineName << endl;
     MKDIR( lineName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -810,7 +810,7 @@ lineExtract::createDirectory(string& lineName, string& levelIndex)
   string path = lineName + "/" + levelIndex;
   check = opendir(path.c_str());
   if ( check == nullptr ) {
-    cout << "lineExtract:Making directory " << path << endl;
+    std::cout << "lineExtract:Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);

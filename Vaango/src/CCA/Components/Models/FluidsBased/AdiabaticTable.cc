@@ -190,7 +190,7 @@ void AdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
   d_sharedState = in_state;
   d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -306,7 +306,7 @@ void AdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
   for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
     geom_obj_ps != 0;
     geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-    vector<GeometryPieceP> pieces;
+    std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     GeometryPieceP mainpiece;
@@ -332,7 +332,7 @@ void AdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
     probe_ps->require("probeSamplingFreq", d_probeFreq);
      
     Vector location = Vector(0,0,0);
-    map<string,string> attr;                    
+    std::map<string,string> attr;                    
     for (ProblemSpecP prob_spec = probe_ps->findBlock("location"); prob_spec != 0; 
                       prob_spec = prob_spec->findNextBlock("location")) {
                       
@@ -433,7 +433,7 @@ void AdiabaticTable::initialize(const ProcessorGroup*,
 
     //__________________________________
     // initialize other properties
-    vector<constCCVariable<double> > ind_vars;
+    std::vector<constCCVariable<double> > ind_vars;
     ind_vars.push_back(f);
     if(d_useVariance){
       // Variance is zero for initialization
@@ -561,7 +561,7 @@ void AdiabaticTable::modifyThermoTransportProperties(const ProcessorGroup*,
     
     old_dw->get(f_old,  d_scalar->scalar_CCLabel,  indx, patch, Ghost::None,0);
     
-    vector<constCCVariable<double> > ind_vars;
+    std::vector<constCCVariable<double> > ind_vars;
     ind_vars.push_back(f_old);
     if(d_useVariance){
       computeScaledVariance(patch, new_dw, indx, f_old, ind_vars);
@@ -598,7 +598,7 @@ void AdiabaticTable::computeSpecificHeat(CCVariable<double>& cv_new,
   new_dw->get(f,  d_scalar->scalar_CCLabel,  indx, patch, Ghost::None,0);
   
   // interpolate cv
-  vector<constCCVariable<double> > ind_vars;
+  std::vector<constCCVariable<double> > ind_vars;
   ind_vars.push_back(f);
   if(d_useVariance){
     computeScaledVariance(patch, new_dw, indx, f, ind_vars);
@@ -698,7 +698,7 @@ void AdiabaticTable::computeModelSources(const ProcessorGroup*,
       
       //__________________________________
       //  grab values from the tables
-      vector<constCCVariable<double> > ind_vars;
+      std::vector<constCCVariable<double> > ind_vars;
       ind_vars.push_back(f_old);
       if(d_useVariance){
         computeScaledVariance(patch, new_dw, matl, f_old, ind_vars);
@@ -764,13 +764,13 @@ void AdiabaticTable::computeModelSources(const ProcessorGroup*,
         cout.setf(ios::scientific,ios::floatfield);
         cout.precision(10);
     
-        cout << "                 MixtureFraction,                      temp_table,       gamma,             cv,             rho_table,      press_thermo,   (gamma-1)cv,   rho_table*temp_table,  co2,           h2o"<< endl;        
+        std::cout << "                 MixtureFraction,                      temp_table,       gamma,             cv,             rho_table,      press_thermo,   (gamma-1)cv,   rho_table*temp_table,  co2,           h2o"<< endl;        
         for(CellIterator iter = patch->getCellIterator(); !iter.done(); iter++){
           IntVector c = *iter;
           double press = (rho_table[c] * cv[c] * (gamma[c]-1) * flameTemp[c]);
           double thermo = cv[c] * (gamma[c]-1);
           double physical = rho_table[c] * flameTemp[c];
-          cout << level->getCellPosition(c) << " " << flameTemp[c] <<  " " << gamma[c] << " " << cv[c] << " "  << " " << rho_table[c] << " " << press << " " <<thermo << " " <<physical <<" " <<co2[c] << " " << h2o[c] <<endl;
+          std::cout << level->getCellPosition(c) << " " << flameTemp[c] <<  " " << gamma[c] << " " << cv[c] << " "  << " " << rho_table[c] << " " << press << " " <<thermo << " " <<physical <<" " <<co2[c] << " " << h2o[c] <<endl;
         }
         cout.setf(ios::scientific ,ios::floatfield);
       }
@@ -842,7 +842,7 @@ void AdiabaticTable::computeScaledVariance(const Patch* patch,
                                            DataWarehouse* new_dw,
                                            const int indx,
                                            constCCVariable<double> f,
-                                           vector<constCCVariable<double> >& ind_vars)
+                                           std::vector<constCCVariable<double> >& ind_vars)
 {
   CCVariable<double> scaledvariance;
   constCCVariable<double> variance;

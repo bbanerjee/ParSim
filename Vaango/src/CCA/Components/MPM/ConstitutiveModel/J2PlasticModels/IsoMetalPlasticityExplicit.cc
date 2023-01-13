@@ -118,7 +118,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPMEOSFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -128,7 +128,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "IsoMetalPlasticityExplicit::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -138,7 +138,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "IsoMetalPlasticityExplicit::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -150,7 +150,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the FlowStressModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -160,7 +160,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_kinematic = Vaango::KinematicHardeningModelFactory::create(ps);
   if (!d_kinematic) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the KinematicHardeningModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -170,7 +170,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
         << " default type is 'metal_internal_var'.\n";
@@ -178,7 +178,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   }
   d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
         << " model. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
@@ -187,7 +187,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_yield = Vaango::YieldConditionFactory::create(
     ps, d_intvar.get(), const_cast<const FlowStressModel*>(d_flow));
   if (!d_yield) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.\n";
@@ -196,7 +196,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -731,9 +731,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     const Patch* patch = patches->get(patchIndex);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Get grid size
     Vector dx = patch->dCell();

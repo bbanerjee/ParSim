@@ -183,14 +183,14 @@ int set_MMS_BCs_FC( const Patch* patch,
     cout.setf(ios::scientific,ios::floatfield);
     cout.precision(6);
     if (c.y() ==25 && c.z() == 0 && (face == 0 || face == 1)){
-      cout << "face " << face << " " << c 
+      std::cout << "face " << face << " " << c 
             <<  " x_CC " << x_CC << " x_FC " << x_FC
             <<  " y_CC " << y_CC << " y_FC " << y_FC 
             << " t " << t << " nu " << nu << " A " << A <<endl;
     }
 
     if (c.x() ==25 && c.z() == 0 && (face == 2 || face == 3)){
-      cout << "face " << face << " " << c 
+      std::cout << "face " << face << " " << c 
             <<  " x_CC " << x_CC << " x_FC " << x_FC
             <<  " y_CC " << y_CC << " y_FC " << y_FC
             << " t " << t << " nu " << nu << " A " << A <<endl;

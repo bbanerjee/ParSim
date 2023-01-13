@@ -122,7 +122,7 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
   ProblemSpecP cfd_ps = params->findBlock("CFD");
   ProblemSpecP iceps = cfd_ps->findBlock("ICE");
   ProblemSpecP advect_ps = iceps->findBlock("advection"); 
-  map<string,string> advect_options;
+  std::map<string,string> advect_options;
   advect_ps->getAttributes(advect_options);
   if (advect_options["type"] == "FirstOrder" && d_doRefluxing){
     throw ProblemSetupException("\n ICE: You cannot use AMR refluxing and the first order advection operator together."
@@ -136,22 +136,22 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
     thresholdVar data; 
     string name, value, matl;
         
-    map<string,string> input;
+    std::map<string,string> input;
     var_ps->getAttributes(input);
     name  = input["name"];
     value = input["value"];
     matl  = input["matl"];
   
-    stringstream n_ss(name);
-    stringstream v_ss(value);
-    stringstream m_ss(matl);
+     std::stringstream n_ss(name);
+     std::stringstream v_ss(value);
+     std::stringstream m_ss(matl);
     
     n_ss >> data.name;
     v_ss >> data.value;
     m_ss >> data.matl;
     
     if( !n_ss || !v_ss || (!m_ss && matl!="all") ) {
-      printf( "WARNING: AMRICE.cc: stringstream failed...\n" );
+      printf( "WARNING: AMRICE.cc:  std::stringstream failed...\n" );
     }
 
     int numMatls = d_sharedState->getNumMaterials();
@@ -168,19 +168,19 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
     if( data.name != "rho_CC"      && data.name != "temp_CC" && 
         data.name != "vol_frac_CC" && data.name != "vel_CC" &&
         data.name != "press_CC"){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"\n INPUT FILE ERROR:\n The threshold variable name ("<< name <<") is not valid\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
 
     if( data.value < 0){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"\n INPUT FILE ERROR:\n The threshold value ("<< value <<") cannot be negative\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     
     if( (data.matl < 0 || data.matl > numMatls) && matl != "all"){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"\n INPUT FILE ERROR:\n The threshold material ("<< matl <<") is not valid\n"
            << " select any material < total number of materials or 'all'";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -245,7 +245,7 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
   
   //__________________________________
   // MODELS
-  vector<AMR_refluxVariable*>::iterator iter;
+  std::vector<AMR_refluxVariable*>::iterator iter;
   for( iter  = d_modelSetup->d_reflux_vars.begin();
        iter != d_modelSetup->d_reflux_vars.end(); iter++){
     AMR_refluxVariable* rvar = *iter;
@@ -286,7 +286,7 @@ void AMRICE::scheduleRefineInterface_Variable(const LevelP& fineLevel,
   cout_doing << d_myworld->myRank() << " \t scheduleRefineInterface_Variable (" 
              << variable->getName() << ") matls: \t"<< *matls<< endl;
 
-  ostringstream taskName;
+   std::ostringstream taskName;
   taskName << "AMRICE::refineCoarseFineInterface("<<variable->getName()<<")";
   Task* t;
   
@@ -354,7 +354,7 @@ void AMRICE::scheduleRefineInterface(const LevelP& fineLevel,
     //__________________________________
     // Model Variables.
     if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-      vector<TransportedVariable*>::iterator iter;
+      std::vector<TransportedVariable*>::iterator iter;
 
       for(iter = d_modelSetup->tvars.begin();
          iter != d_modelSetup->tvars.end(); iter++){
@@ -505,7 +505,7 @@ void AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches,
     //__________________________________
     // Model Variables.
     if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-      vector<TransportedVariable*>::iterator iter;
+      std::vector<TransportedVariable*>::iterator iter;
 
       for(iter = d_modelSetup->tvars.begin();
          iter != d_modelSetup->tvars.end(); iter++){
@@ -574,8 +574,8 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
         int orderOfInterpolation = 0;
         //__________________________________
         // Iterate over fine level boundary faces
-        vector<Patch::FaceType>::const_iterator iter;  
-        vector<Patch::FaceType> bf;
+        std::vector<Patch::FaceType>::const_iterator iter;  
+        std::vector<Patch::FaceType> bf;
         patch->getBoundaryFaces(bf);
         
         for (iter  = bf.begin(); iter != bf.end(); ++iter){
@@ -633,7 +633,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
         //__________________________________
         //    Model Variables                     
         if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-          vector<TransportedVariable*>::iterator t_iter;
+          std::vector<TransportedVariable*>::iterator t_iter;
           for( t_iter  = d_modelSetup->tvars.begin();
                t_iter != d_modelSetup->tvars.end(); t_iter++){
             TransportedVariable* tvar = *t_iter;
@@ -655,7 +655,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
         //__________________________________
         //  Print Data 
         if(switchDebug_AMR_refine){
-          ostringstream desc;    
+           std::ostringstream desc;    
           desc << "BOT_setBC_FineLevel_Mat_" << indx << "_patch_"<< patch->getID();
           printData(indx, patch,   1, desc.str(), "rho_CC",    rho_CC);
           printData(indx, patch,   1, desc.str(), "sp_vol_CC", sp_vol_CC[m]);
@@ -676,7 +676,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
             d_customBC_var_basket);
       
       if(switchDebug_AMR_refine){
-        ostringstream desc;    
+         std::ostringstream desc;    
         desc << "BOT_setBC_FineLevel_Mat_" << 0 << "_patch_"<< patch->getID();
         printData(0, patch, 1, desc.str(), "press_CC", press_CC);
       }      
@@ -725,7 +725,7 @@ void AMRICE::scheduleRefine(const PatchSet* patches,
     //__________________________________
     // Model Variables.
     if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-      vector<TransportedVariable*>::iterator iter;
+      std::vector<TransportedVariable*>::iterator iter;
       
       for(iter = d_modelSetup->tvars.begin();
           iter != d_modelSetup->tvars.end(); iter++){
@@ -824,7 +824,7 @@ void AMRICE::refine(const ProcessorGroup*,
       //__________________________________
       //    Model Variables                     
       if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-        vector<TransportedVariable*>::iterator t_iter;
+        std::vector<TransportedVariable*>::iterator t_iter;
         for( t_iter  = d_modelSetup->tvars.begin();
              t_iter != d_modelSetup->tvars.end(); t_iter++){
           TransportedVariable* tvar = *t_iter;
@@ -839,7 +839,7 @@ void AMRICE::refine(const ProcessorGroup*,
                        invRefineRatio, finePatch, fineLevel, coarseLevel);
                        
             if(switchDebug_AMR_refine){
-              ostringstream desc; 
+               std::ostringstream desc; 
               string name = tvar->var->getName();
               printData(indx, finePatch, 1, "Refine_task", name, q_CC);
             }                 
@@ -850,7 +850,7 @@ void AMRICE::refine(const ProcessorGroup*,
       //__________________________________
       //  Print Data
       if(switchDebug_AMR_refine){ 
-      ostringstream desc;     
+       std::ostringstream desc;     
         desc << "BOT_Refine_Mat_" << indx << "_patch_"<< finePatch->getID();
         printData(indx, finePatch,   1, desc.str(), "press_CC",  press_CC); 
         printData(indx, finePatch,   1, desc.str(), "rho_CC",    rho_CC);
@@ -901,7 +901,7 @@ void AMRICE::iteratorTest(const Patch* finePatch,
       hitCells[c] = 1.0;
     }
 #if 0
-    cout << " coarsePatch.size() " << coarsePatches.size() 
+    std::cout << " coarsePatch.size() " << coarsePatches.size() 
          << " coarsePatch " << coarsePatch->getID()
          << " finePatch " << finePatch->getID() 
          << " fineLevel: fl " << fl << " fh " << fh
@@ -920,7 +920,7 @@ void AMRICE::iteratorTest(const Patch* finePatch,
     IntVector c_badCell = fineLevel->mapCellToCoarser(badCell);
     const Patch* patch = coarseLevel->selectPatchForCellIndex(c_badCell);
     
-    ostringstream warn;
+     std::ostringstream warn;
     warn <<"ERROR AMRICE::Refine Task:iteratorTest "
          << "detected an fine level cell that won't get initialized "
          << badCell << " Patch " << finePatch->getID() 
@@ -973,7 +973,7 @@ void AMRICE::scheduleCoarsen(const LevelP& coarseLevel,
   //__________________________________
   // Model Variables.
   if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-    vector<TransportedVariable*>::iterator iter;
+    std::vector<TransportedVariable*>::iterator iter;
 
     for(iter = d_modelSetup->tvars.begin();
        iter != d_modelSetup->tvars.end(); iter++){
@@ -1091,7 +1091,7 @@ void AMRICE::coarsen(const ProcessorGroup*,
       //__________________________________
       //    Model Variables                     
       if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-        vector<TransportedVariable*>::iterator t_iter;
+        std::vector<TransportedVariable*>::iterator t_iter;
         for( t_iter  = d_modelSetup->tvars.begin();
             t_iter != d_modelSetup->tvars.end(); t_iter++){
           TransportedVariable* tvar = *t_iter;
@@ -1116,7 +1116,7 @@ void AMRICE::coarsen(const ProcessorGroup*,
       //__________________________________
       //  Print Data 
       if(switchDebug_AMR_coarsen){
-        ostringstream desc;     
+         std::ostringstream desc;     
         desc << "BOT_coarsen_Mat_" << indx << "_patch_"<< coarsePatch->getID();
        // printData(indx, coarsePatch,   1, desc.str(), "press_CC",  press_CC);
         printData(indx, coarsePatch,   1, desc.str(), "mass_adv",    mass_adv);
@@ -1181,7 +1181,7 @@ void AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
   //__________________________________
   // Model Variables.
   if(d_modelSetup && d_modelSetup->d_reflux_vars.size() > 0){
-    vector<AMR_refluxVariable*>::iterator iter;
+    std::vector<AMR_refluxVariable*>::iterator iter;
     for( iter  = d_modelSetup->d_reflux_vars.begin();
          iter != d_modelSetup->d_reflux_vars.end(); iter++){
       AMR_refluxVariable* rvar = *iter;
@@ -1280,7 +1280,7 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
           //__________________________________
           //    Model Variables
           if(d_modelSetup && d_modelSetup->d_reflux_vars.size() > 0){
-            vector<AMR_refluxVariable*>::iterator iter;
+            std::vector<AMR_refluxVariable*>::iterator iter;
             for( iter  = d_modelSetup->d_reflux_vars.begin();
                  iter != d_modelSetup->d_reflux_vars.end(); iter++){
               AMR_refluxVariable* r_var = *iter;
@@ -1300,7 +1300,7 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
       //__________________________________
       //  Print Data
       if(switchDebug_AMR_reflux){ 
-        ostringstream desc;     
+         std::ostringstream desc;     
         desc << "RefluxComputeCorrectonFluxes_Mat_" << indx << "_patch_"<< coarsePatch->getID();
         // need to add something here
       }
@@ -1379,7 +1379,7 @@ void AMRICE::refluxCoarseLevelIterator(Patch::FaceType patchFace,
 /*`==========TESTING==========*/
 #if 0
   if(finePatch->getID() == 583){
-    cout << "\nrefluxCoarseLevelIterator " << name << " " << whichTask
+    std::cout << "\nrefluxCoarseLevelIterator " << name << " " << whichTask
          << "\n before      " << l << " " << h
          << "\n finePatch   " << *finePatch
          << "\n coarsePatch " << *coarsePatch
@@ -1422,7 +1422,7 @@ void AMRICE::refluxCoarseLevelIterator(Patch::FaceType patchFace,
  /*`==========TESTING==========*/
 #if 0
   if(finePatch->getID() == 583){
-    cout << " after " << l << " " << h 
+    std::cout << " after " << l << " " << h 
          << " coarse_FC_offset " << coarse_FC_offset
          << " isRight_CP_FP_pair " << isRight_CP_FP_pair 
          << "\ncoarsePatch->containsCell(l)                             " << coarsePatch->containsCell(l)
@@ -1439,7 +1439,7 @@ void AMRICE::refluxCoarseLevelIterator(Patch::FaceType patchFace,
   if (isRight_CP_FP_pair ){
     IntVector diff = Abs(l - h);
     if( ( l.x() >= h.x() || l.y() >= h.y() || l.z() >= h.z() ) || diff[p_dir] > 1) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "AMRICE:refluxCoarseLevelIterator : "<< l << " " << h << " "  << name
            << "\n  Error:Either l >= h OR l - h > 1"
            << "\n finelevel   " << fineLevel->getIndex()
@@ -1495,7 +1495,7 @@ void AMRICE::scheduleReflux_applyCorrection(const LevelP& coarseLevel,
   //__________________________________
   // Model Variables.
   if(d_modelSetup && d_modelSetup->d_reflux_vars.size() > 0){
-    vector<AMR_refluxVariable*>::iterator iter;
+    std::vector<AMR_refluxVariable*>::iterator iter;
     for( iter  = d_modelSetup->d_reflux_vars.begin();
          iter != d_modelSetup->d_reflux_vars.end(); iter++){
       AMR_refluxVariable* rvar = *iter;
@@ -1577,7 +1577,7 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
           //__________________________________
           //    Model Variables
           if(d_modelSetup && d_modelSetup->d_reflux_vars.size() > 0){
-            vector<AMR_refluxVariable*>::iterator iter;
+            std::vector<AMR_refluxVariable*>::iterator iter;
             for( iter  = d_modelSetup->d_reflux_vars.begin();
                  iter != d_modelSetup->d_reflux_vars.end(); iter++){
               AMR_refluxVariable* r_var = *iter;
@@ -1603,7 +1603,7 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
       //__________________________________
       //  Print Data
       if(switchDebug_AMR_reflux){ 
-        ostringstream desc;     
+         std::ostringstream desc;     
         desc << "Reflux_applyCorrection_Mat_" << indx << "_patch_"<< coarsePatch->getID();
         printData(indx, coarsePatch,   0, desc.str(), "mass_adv",   mass_adv);
         printData(indx, coarsePatch,   0, desc.str(), "sp_vol_adv", sp_vol_adv);
@@ -1643,9 +1643,9 @@ void AMRICE::reflux_BP_zero_CFI_cells(const ProcessorGroup*,
       const Patch* finePatch = finePatches[p];
     
 
-      vector<Patch::FaceType> cf;
+      std::vector<Patch::FaceType> cf;
       finePatch->getCoarseFaces(cf);
-      vector<Patch::FaceType>::const_iterator iter;  
+      std::vector<Patch::FaceType>::const_iterator iter;  
       for (iter  = cf.begin(); iter != cf.end(); ++iter){
         Patch::FaceType patchFace = *iter;
           
@@ -1685,9 +1685,9 @@ void AMRICE::reflux_BP_count_CFI_cells(const ProcessorGroup*,
       const Patch* finePatch = finePatches[p];
     
 
-      vector<Patch::FaceType> cf;
+      std::vector<Patch::FaceType> cf;
       finePatch->getCoarseFaces(cf);
-      vector<Patch::FaceType>::const_iterator iter;  
+      std::vector<Patch::FaceType>::const_iterator iter;  
       for (iter  = cf.begin(); iter != cf.end(); ++iter){
         Patch::FaceType patchFace = *iter;
             
@@ -1748,9 +1748,9 @@ void AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
          
       if(finePatch->hasCoarseFaces() ){
 
-        vector<Patch::FaceType> cf;
+        std::vector<Patch::FaceType> cf;
         finePatch->getCoarseFaces(cf);
-        vector<Patch::FaceType>::const_iterator iter;  
+        std::vector<Patch::FaceType>::const_iterator iter;  
         for (iter  = cf.begin(); iter != cf.end(); ++iter){
           Patch::FaceType patchFace = *iter;
           
@@ -1780,7 +1780,7 @@ void AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
               bool tsr = new_dw->timestepRestarted();
               
               if ( n_touched_cells != n_CFI_cells && !tsr){
-                ostringstream warn;
+                 std::ostringstream warn;
                 warn << d_myworld->myRank() << " AMRICE:refluxing_" << description
                      << " \n CFI face: "
                      << finePatch->getFaceName(patchFace)

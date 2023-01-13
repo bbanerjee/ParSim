@@ -528,7 +528,7 @@ void ICE::setupMatrix(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_setupMatrix ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "setupMatrix_Mat_" << indx << "_patch_"<< patch->getID(); 
         printData_FC( indx, patch,1, desc.str(), "vol_fracX_FC", vol_fracX_FC);
         printData_FC( indx, patch,1, desc.str(), "vol_fracY_FC", vol_fracY_FC);
@@ -567,7 +567,7 @@ void ICE::setupMatrix(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------   
     if (switchDebug_setupMatrix) {    
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_setupMatrix_patch_" << patch->getID();
       printStencil( 0, patch, 1, desc.str(), "A", A);
     }         
@@ -670,7 +670,7 @@ void ICE::setupRHS(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------  
       if (switchDebug_setupRHS) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "Top_setupRHS_Mat_"<<indx<<"_patch_"<<patch->getID();
         printData_FC( indx, patch,1, desc.str(), "uvel_FC",    uvel_FC);
         printData_FC( indx, patch,1, desc.str(), "vvel_FC",    vvel_FC);
@@ -771,7 +771,7 @@ void ICE::setupRHS(const ProcessorGroup*,
     
     //---- P R I N T   D A T A ------  
     if (switchDebug_setupRHS) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_setupRHS_patch_" << patch->getID();
       printData( 0, patch, 0,desc.str(), "rhs",              rhs);
       printData( 0, patch, 0,desc.str(), "sumAdvection",     sumAdvection);
@@ -780,7 +780,7 @@ void ICE::setupRHS(const ProcessorGroup*,
       printData( 0, patch, 0,desc.str(), "term1",            term1);
     }  
   }  // patches loop
-//  cout << " Level " << level->getIndex() << " rhs " 
+//  std::cout << " Level " << level->getIndex() << " rhs " 
 //       << rhs_max << " rhs * vol " << rhs_max * vol <<  endl;
 }
 
@@ -826,7 +826,7 @@ void ICE::compute_maxRHS(const ProcessorGroup*,
         }
         rhs_max = Max(rhs_max, Abs(rhs[c]/vol));
       }  
-      cout << " maxRHS: " << maxCell << " " << rhs_max << " \t L-" << level->getIndex() << endl;
+      std::cout << " maxRHS: " << maxCell << " " << rhs_max << " \t L-" << level->getIndex() << endl;
     }
   } // patch loop
 }
@@ -903,7 +903,7 @@ void ICE::updatePressure(const ProcessorGroup*,
     delete_CustomBCs(d_customBC_var_basket);
     //---- P R I N T   D A T A ------  
     if (switchDebug_updatePressure) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_updatePressure_patch_" << patch->getID();
       printData( 0, patch, 1,desc.str(), "imp_delP",      imp_delP); 
       printData( 0, patch, 1,desc.str(), "sum_imp_delP",  sum_imp_delP);
@@ -915,7 +915,7 @@ void ICE::updatePressure(const ProcessorGroup*,
     bool tsr = new_dw->timestepRestarted();
     
     if(!areAllValuesPositive(press_CC, neg_cell) && !tsr) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"ERROR ICE::updatePressure cell "
            << neg_cell << " negative pressure\n ";        
       throw InvalidValue(warn.str(), __FILE__, __LINE__);
@@ -987,7 +987,7 @@ void ICE::computeDel_P(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------  
     if (switchDebug_computeDelP) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_computeDelP_patch_" << patch->getID();
       printData( 0, patch, 1,desc.str(), "delP_Dilatate", delP_Dilatate);
       printData( 0, patch, 1,desc.str(), "sum_imp_delP",  sum_imp_delP);
@@ -1161,7 +1161,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
     // output files for debugging
     int timestep = d_sharedState->getCurrentTopLevelTimeStep();
     int proc = d_myworld->myRank();
-    ostringstream fname;
+     std::ostringstream fname;
     
     fname << "." << proc <<"." << timestep << "." << counter;
     d_solver_parameters->setOutputFileName(fname.str());
@@ -1201,7 +1201,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
   if ( (counter == d_max_iter_implicit)   && 
        (max_RHS > d_outer_iter_tolerance) &&
        counter > 1) {
-    ostringstream s;
+     std::ostringstream s;
     s <<"ERROR ICE::implicitPressureSolve, the maximum number of outer"
       <<" iterations was reached. \n " 
       << "Try either increasing the max_outer_iterations "

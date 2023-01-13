@@ -117,8 +117,8 @@ ReadUDA::getCycleTimes()
 {
 
   // Get the times and indices.
-  vector<int> index;
-  vector<double> d_cycleTimes;
+  std::vector<int> index;
+  std::vector<double> d_cycleTimes;
 
   // query time info from dataarchive
   d_archive->queryTimesteps(index, d_cycleTimes);
@@ -446,8 +446,8 @@ ReadUDA::setTimeStepInfo(int timestep)
   d_stepInfo->levelInfo.resize(numLevels);
 
   // get variable information
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
   d_stepInfo->varInfo.resize(vars.size());
 
@@ -572,8 +572,8 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
   const Uintah::TypeDescription* maintype = nullptr;
@@ -739,8 +739,8 @@ ReadUDA::getParticleData(int level_i,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
   const Uintah::TypeDescription* maintype = nullptr;
@@ -818,7 +818,7 @@ ReadUDA::ParticleDataRaw* readParticleData(const Patch* patch,
   }
 
   // first get all the particle subsets so that we know how many total particles we'll have
-  vector<ParticleVariable<T>*> particle_vars;
+  std::vector<ParticleVariable<T>*> particle_vars;
   for (auto matlIter = matlsForVar.begin(); matlIter != matlsForVar.end(); matlIter++ ) {
     int matl = *matlIter;
 

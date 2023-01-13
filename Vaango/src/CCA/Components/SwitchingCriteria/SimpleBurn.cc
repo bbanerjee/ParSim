@@ -172,7 +172,7 @@ void SimpleBurnCriteria::switchTest(const ProcessorGroup* group,
         if ( ratio > 0.4 && ratio < 1.0 &&  MaxMass > d_TINY_RHO){
           if(Temp_CC_mpm >= d_temperature){
            timeToSwitch=1;
-           cout << " \n"
+           std::cout << " \n"
                 << " The simpleBurn switching criteria is satisfied in cell " << c
                 << " (MaxMass-MinMass)/MaxMass = " << ratio
                 << ", temp_CC_mpm= " << Temp_CC_mpm << "\n"<< endl;

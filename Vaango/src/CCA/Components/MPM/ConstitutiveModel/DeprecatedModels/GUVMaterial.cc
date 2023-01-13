@@ -564,7 +564,7 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
         exit(1);
       }
       if (idx == 1)
-        cout << "GUVMaterial::compStress:: Particle = " << idx
+        std::cout << "GUVMaterial::compStress:: Particle = " << idx
              << " \n F = " << defGradCen_new << " \n sig = " << sigCen << endl;
       debug << "GUVMaterial::compStress:: Particle = " << idx
             << " sigCen = " << sigCen << endl;

@@ -294,7 +294,7 @@ namespace Uintah {
       int matl;
       double value;
     };
-    vector<thresholdVar> d_thresholdVars;
+    std::vector<thresholdVar> d_thresholdVars;
     
     int d_orderOfInterpolation;         // Order of interpolation for interior fine patch
     int d_orderOf_CFI_Interpolation;    // order of interpolation at CFI.
@@ -315,7 +315,7 @@ namespace Uintah {
         marks[5]=0;
       }
     };
-    map<const Patch*,faceMarks> faceMarks_map[2];
+    std::map<const Patch*,faceMarks> faceMarks_map[2];
   };
 
 static DebugStream cout_dbg("AMRICE_DBG", false);
@@ -360,9 +360,9 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
   
   //__________________________________
   // Iterate over coarsefine interface faces
-  vector<Patch::FaceType> cf;
+  std::vector<Patch::FaceType> cf;
   finePatch->getCoarseFaces(cf);
-  vector<Patch::FaceType>::const_iterator iter;  
+  std::vector<Patch::FaceType>::const_iterator iter;  
   for (iter  = cf.begin(); iter != cf.end(); ++iter){
     Patch::FaceType patchFace = *iter;
 
@@ -382,10 +382,10 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
       IntVector half  = (c_iter.end() - c_iter.begin() )/IntVector(2,2,2) + c_iter.begin();
   
       if(is_rightFace_variable(name,varLabel) ){
-        cout << " ------------ refluxOperator_applyCorrectionFluxes " << varLabel<< endl; 
-        cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
-        cout << finePatch->getFaceName(patchFace)<<  " coarsePatch " << *coarsePatch << endl;
-        cout << "      finePatch   " << *finePatch << endl;
+        std::cout << " ------------ refluxOperator_applyCorrectionFluxes " << varLabel<< endl; 
+        std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
+        std::cout << finePatch->getFaceName(patchFace)<<  " coarsePatch " << *coarsePatch << endl;
+        std::cout << "      finePatch   " << *finePatch << endl;
       }
 #endif 
 
@@ -409,11 +409,11 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
           
 #ifdef REFLUX_DBG
           if (c_CC.y() == half.y() && c_CC.z() == half.z() && is_rightFace_variable(name,varLabel) ) {
-            cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+            std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_X_coarse_corr[c_FC]
                  << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            cout << "" << endl;
+            std::cout << "" << endl;
           }
 #endif          
           
@@ -433,11 +433,11 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
           
 #ifdef REFLUX_DBG
           if (c_CC.x() == half.x() && c_CC.z() == half.z() && is_rightFace_variable(name,varLabel) ) {
-            cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+            std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_Y_coarse_corr[c_FC]
                  << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            cout << "" << endl;
+            std::cout << "" << endl;
           }
 #endif
         }
@@ -456,11 +456,11 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
           
 #ifdef REFLUX_DBG
           if (c_CC.x() == half.x() && c_CC.y() == half.y() && is_rightFace_variable(name,varLabel) ) {
-            cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+            std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_Z_coarse_corr[c_FC]
                  << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            cout << "" << endl;
+            std::cout << "" << endl;
           }
 #endif
         }
@@ -489,9 +489,9 @@ void AMRICE::refine_CF_interfaceOperator(const Patch* finePatch,
   IntVector refineRatio = fineLevel->getRefinementRatio();
   //__________________________________
   // Iterate over coarsefine interface faces
-  vector<Patch::FaceType> cf;
+  std::vector<Patch::FaceType> cf;
   finePatch->getCoarseFaces(cf);
-  vector<Patch::FaceType>::const_iterator iter;  
+  std::vector<Patch::FaceType>::const_iterator iter;  
   for (iter  = cf.begin(); iter != cf.end(); ++iter){
     Patch::FaceType face = *iter;
 
@@ -562,7 +562,7 @@ void AMRICE::refine_CF_interfaceOperator(const Patch* finePatch,
     IntVector badCell;
     CellIterator iter = finePatch->getExtraCellIterator();
     if( isEqual<varType>(varType(d_EVIL_NUM),iter,Q, badCell) ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"ERROR AMRICE::refine_CF_interfaceOperator "
            << "detected an uninitialized variable: "
            << label->getName() << ", cell " << badCell
@@ -618,7 +618,7 @@ void AMRICE::CoarseToFineOperator(CCVariable<T>& q_CC,
   IntVector badCell;
   CellIterator iter=finePatch->getCellIterator();
   if( isEqual<T>(T(d_EVIL_NUM),iter,q_CC, badCell) && !tsr ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn <<"ERROR AMRICE::Refine Task:CoarseToFineOperator "
          << "detected an uninitialized variable "<< varLabel->getName()
          << " " << badCell << " Patch " << finePatch->getID() 
@@ -741,9 +741,9 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 
   //__________________________________
   // Iterate over coarsefine interface faces
-  vector<Patch::FaceType> cf;
+  std::vector<Patch::FaceType> cf;
   finePatch->getCoarseFaces(cf);
-  vector<Patch::FaceType>::const_iterator iter;  
+  std::vector<Patch::FaceType>::const_iterator iter;  
   for (iter  = cf.begin(); iter != cf.end(); ++iter){
     Patch::FaceType patchFace = *iter;
     
@@ -790,11 +790,11 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 #ifdef REFLUX_DBG
   IntVector half  = (c_iter.end() - c_iter.begin() )/IntVector(2,2,2) + c_iter.begin();
   if(is_rightFace_variable(name,fineVarLabel)){
-    cout << " ------------ refluxOperator_computeCorrectionFluxes " << fineVarLabel<< endl;   
-    cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
-    cout <<name <<  " coarsePatch " << *coarsePatch << endl;
-    cout << "      finePatch   " << *finePatch << endl;
-    cout << "nSubCycles: " << nSubCycles << endl;
+    std::cout << " ------------ refluxOperator_computeCorrectionFluxes " << fineVarLabel<< endl;   
+    std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
+    std::cout <<name <<  " coarsePatch " << *coarsePatch << endl;
+    std::cout << "      finePatch   " << *finePatch << endl;
+    std::cout << "nSubCycles: " << nSubCycles << endl;
   }
 #endif 
 /*===========TESTING==========`*/
@@ -830,11 +830,11 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 /*`==========TESTING==========*/
 #ifdef REFLUX_DBG
         if (c_CC.y() == half.y() && c_CC.z() == half.z() && is_rightFace_variable(name,fineVarLabel) ) {
-          cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+          std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                << " coarseLevelFlux " << c_FaceNormal*Q_X_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
                << " correction " << Q_X_coarse_corr[c_FC]<< endl;
-          cout << "" << endl;
+          std::cout << "" << endl;
         }
 #endif 
 /*===========TESTING==========`*/
@@ -864,11 +864,11 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 /*`==========TESTING==========*/
 #ifdef REFLUX_DBG
         if (c_CC.x() == half.x() && c_CC.z() == half.z() && is_rightFace_variable(name,fineVarLabel)) {
-          cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+          std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                << " coarseLevelFlux " << c_FaceNormal*Q_Y_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
                << " correction " << Q_Y_coarse_corr[c_FC] << endl;
-          cout << "" << endl;
+          std::cout << "" << endl;
         }
 #endif 
 /*===========TESTING==========`*/
@@ -899,11 +899,11 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 /*`==========TESTING==========*/
 #ifdef REFLUX_DBG
         if (c_CC.x() == half.x() && c_CC.y() == half.y() && is_rightFace_variable(name,fineVarLabel)) {
-          cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
+          std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                 << " coarseLevelFlu " << c_FaceNormal*Q_Z_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
                << " correction " << Q_Z_coarse_corr[c_FC]<< endl;
-          cout << "" << endl;
+          std::cout << "" << endl;
         }
 #endif 
 /*===========TESTING==========`*/

@@ -364,7 +364,7 @@ HypoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 0
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR HypoElasticFortran"
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR HypoElasticFortran"
        << endl;
 #endif
 }
@@ -385,7 +385,7 @@ HypoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 0
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElasticFortran"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElasticFortran"
        << endl;
 #endif
 }

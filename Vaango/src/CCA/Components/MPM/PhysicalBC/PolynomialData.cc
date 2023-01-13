@@ -111,13 +111,13 @@ void PolynomialData::loadData()
 
     ifstream polyFile(d_fileNames[i].c_str());
     if (!polyFile) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: opening polynomial data file: "<< d_fileNames[i].c_str();
       throw ProblemSetupException(warn.str(),__FILE__, __LINE__);
     }
 
     double data;
-    vector<double> dataList;
+    std::vector<double> dataList;
    
     // Need to ignore the first  line of data.
     
@@ -144,7 +144,7 @@ void PolynomialData::loadData()
   if (d_endCapName != "") {
     ifstream endCapFile(d_endCapName.c_str());
     if (!endCapFile) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: opening polynomial data file: "<< d_endCapName.c_str();
       throw ProblemSetupException(warn.str(),__FILE__, __LINE__);
     }
@@ -153,7 +153,7 @@ void PolynomialData::loadData()
 
     //cout << "d_endCapLow = " << d_endCapLow << " d_endCapHigh = " << d_endCapHigh << endl;
 
-    vector<double> dataList;
+    std::vector<double> dataList;
     dataList.push_back(d_endCapLow);
     for (int i = 1; i < 5; i++)
       dataList.push_back(0.);
@@ -255,7 +255,7 @@ double PolynomialData::interpolateValue(const Point& test_pt)
 
 #if 1
   if (minValue < 0. || maxValue < 0.)
-    cout << "WARNING values less than 0" << endl;
+    std::cout << "WARNING values less than 0" << endl;
 #endif
 
 
@@ -267,10 +267,10 @@ double PolynomialData::interpolateValue(const Point& test_pt)
   double value = m * scaledVecLength + b;
 
   if (value > minValue && value > maxValue)
-    cout << "WARNING values computed incorrectly" << endl;
+    std::cout << "WARNING values computed incorrectly" << endl;
 
   if (value < minValue && value < maxValue)
-    cout << "WARNING values computed incorrectly" << endl;
+    std::cout << "WARNING values computed incorrectly" << endl;
     
 
   return value;

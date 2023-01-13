@@ -105,7 +105,7 @@ void MassMomEng_src::problemSetup(GridP&, SimulationStateP& sharedState,
   params->getWithDefault("mme_src_t_final",d_src->d_mme_src_t_final,9.e99);
 
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   mymatls = scinew MaterialSet();
   mymatls->addAll(m);
@@ -219,7 +219,7 @@ void MassMomEng_src::computeModelSources(const ProcessorGroup*,
       double usr_mass_src = d_src->mass_src_rate * dt * vol;
       Vector usr_mom_src  = d_src->mom_src_rate  * dt * vol;
     
-      vector<Region> regions;
+      std::vector<Region> regions;
       patch->getFinestRegionsOnPatch(regions);
 
       for(vector<Region>::iterator region=regions.begin();region!=regions.end();region++){

@@ -584,9 +584,9 @@ void printParticleID(DataArchive* da, int mat,
           // auto pidx = pidx;
           for (auto pidx : *pset) {
 	     if (selectionBox.contains(position[pidx])) {
-               cout << time << " " << patchIndex << " " << matl ;
-               cout << " " << pid[pidx];
-               cout << " " << position[pidx](0) 
+               std::cout << time << " " << patchIndex << " " << matl ;
+               std::cout << " " << pid[pidx];
+               std::cout << " " << position[pidx](0) 
                     << " " << position[pidx](1)
                     << " " << position[pidx](2) << endl;
 	     }

@@ -120,7 +120,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the FlowModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -130,7 +130,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -141,7 +141,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Jim.  "
@@ -151,7 +151,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -161,7 +161,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -169,7 +169,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_devStress = DevStressModelFactory::create(ps);
   if (!d_devStress) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error creating deviatoric stress model"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -177,7 +177,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
         << " default type is 'metal_internal_var'.\n";
@@ -185,7 +185,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   }
   d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
          << " model. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
@@ -194,7 +194,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
               const_cast<const FlowStressModel*>(d_flow));
   if (!d_yield) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.\n";
@@ -781,9 +781,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(patchIndex);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // std::cerr << getpid() << " patch = " << patch->getID() << "\n";
     // Get grid size
@@ -1809,8 +1809,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get the set of particles
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
@@ -2230,8 +2230,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
     // Get interpolation functions
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get patch indices for parallel solver
     IntVector lowIndex  = patch->getNodeLowIndex();

@@ -44,9 +44,9 @@ DependencyException::DependencyException(const Task* task,
   d_msg = makeMessage(d_task, d_label, d_mat_index, d_patch, has, needs);
 
 #ifdef EXCEPTIONS_CRASH
-  cout << "A DependencyException exception was thrown.\n";
-  cout << file << ":" << line << "\n";
-  cout << d_msg << "\n";
+  std::cout << "A DependencyException exception was thrown.\n";
+  std::cout << file << ":" << line << "\n";
+  std::cout << d_msg << "\n";
 #endif
 }
 

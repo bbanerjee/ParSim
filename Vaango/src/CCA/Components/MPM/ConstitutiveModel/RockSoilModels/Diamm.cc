@@ -119,7 +119,7 @@ Diamm::Diamm(ProblemSpecP& ps, MPMFlags* Mflag)
   DMMRXV(UI, UI, UI, nx, namea, keya, rinit, rdim, iadvct, itype);
 
   d_NINSV = nx;
-  //  cout << "d_NINSV = " << d_NINSV << endl;
+  //  std::cout << "d_NINSV = " << d_NINSV << endl;
 
   initializeLocalMPMLabels();
 }
@@ -231,7 +231,7 @@ Diamm::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
-  cout << "In initializeCMData" << endl;
+  std::cout << "In initializeCMData" << endl;
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
     ParticleSubset::iterator iter = pset->begin();
@@ -342,9 +342,9 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
@@ -494,7 +494,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       pstress_new[idx] = (tensorR * tensorSig) * (tensorR.Transpose());
 
 #if 0
-      cout << pstress_new[idx] << endl;
+      std::cout << pstress_new[idx] << endl;
 #endif
 
       c_dil = sqrt(USM / rho_cur);
@@ -582,7 +582,7 @@ Diamm::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
 
-  cout << "In add InitialComputesAnd" << endl;
+  std::cout << "In add InitialComputesAnd" << endl;
 
   // Other constitutive model and input dependent computes and requires
   for (int i = 0; i < d_NINSV; i++) {
@@ -628,7 +628,7 @@ Diamm::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << endl;
 #endif
 }
 
@@ -647,7 +647,7 @@ Diamm::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << endl;
 #endif
 }
 
@@ -716,7 +716,7 @@ Diamm::getInputParameters(ProblemSpecP& ps)
 void
 Diamm::initializeLocalMPMLabels()
 {
-  vector<string> ISVNames;
+  std::vector<string> ISVNames;
 
   ISVNames.push_back("EQDOT");
   ISVNames.push_back("I1");

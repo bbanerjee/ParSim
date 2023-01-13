@@ -404,8 +404,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     const Patch* patch = patches->get(pp);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     IntVector lowIndex = patch->getNodeLowIndex();
     IntVector highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
@@ -586,8 +586,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double onethird = (1.0 / 3.0);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     Identity.Identity();
 

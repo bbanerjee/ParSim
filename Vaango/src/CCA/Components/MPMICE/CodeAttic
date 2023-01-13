@@ -122,9 +122,9 @@ ______________________________________________________________________
       for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
         nodal_mom+=gvelocity[*iter]*gmass[*iter];
       }
-      cout << "Solid matl nodal momentum = " << nodal_mom << endl;
+      std::cout << "Solid matl nodal momentum = " << nodal_mom << endl;
       Vector cell_mom(0.,0.,0.);
-      cout << "In NCToCC_0" << endl;
+      std::cout << "In NCToCC_0" << endl;
   #endif
   
 ______________________________________________________________________
@@ -140,8 +140,8 @@ ______________________________________________________________________
        for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
           nodal_mom+=gvelocity[*iter]*gmass[*iter];
        }
-       cout << "In NCToCC" << endl;
-       cout << "Solid matl nodal momentum = " << nodal_mom << endl;
+       std::cout << "In NCToCC" << endl;
+       std::cout << "Solid matl nodal momentum = " << nodal_mom << endl;
   #endif
   
   
@@ -450,7 +450,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
                                                                                 
       //---- P R I N T   D A T A ------
       if(switchDebug_InterpolateCCToNC) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc<< "BOT_MPMICE::interpolateCCToNC_mat_"<< indx<<"_patch_"
             <<patch->getID();
         printData(    indx,patch, 1,desc.str(), "dTdt_NC",     dTdt_NC);
@@ -763,14 +763,14 @@ void MPMICE::computeRateFormPressure(const ProcessorGroup*,
     
    //---- P R I N T   D A T A ------   
     if (d_ice->switchDebug_equil_press) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_computeRFPress_patch_" << patch->getID();
       d_ice->printData( 0, patch, 1, desc.str(), "Press_CC_RF", press_new);
 
       for (int m = 0; m < numALLMatls; m++)  {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex(); 
-        ostringstream desc;
+         std::ostringstream desc;
         desc<< "BOT_computeRFPress_Mat_"<< indx << "_patch_"<<patch->getID();
     #if 0
         d_ice->printData(indx,patch,1,desc.str(),"matl_press",  matl_press[m]);         

@@ -70,17 +70,17 @@ using namespace Uintah;
 
 typedef struct
 {
-  vector<Point> position;
-  vector<long64> id;
-  vector<double> time;
-  vector<int> patch;
-  vector<int> matl;
+  std::vector<Point> position;
+  std::vector<long64> id;
+  std::vector<double> time;
+  std::vector<int> patch;
+  std::vector<int> matl;
 } MaterialData;
 
 void usage(const std::string& badarg, const std::string& progname);
 
 void printPosition(DataArchive* da, int matID, unsigned long timestep,
-                   vector<long64>& partID, string outFile);
+                   std::vector<long64>& partID, string outFile);
 
 int
 main(int argc, char** argv)
@@ -131,7 +131,7 @@ main(int argc, char** argv)
 
   // Read the particle ID file
   cerr << "Particle ID File to be read = " << partIDFile << endl;
-  vector<long64> partID;
+  std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
     cerr << "Particle ID File " << partIDFile << " not found \n";
@@ -186,12 +186,12 @@ usage(const std::string& badarg, const std::string& progname)
 ////////////////////////////////////////////////////////////////////////////
 void
 printPosition(DataArchive* da, int matID, unsigned long timeStep,
-              vector<long64>& partID, string outFile)
+              std::vector<long64>& partID, string outFile)
 {
 
   // Check if the particle variable is available
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
   bool variableFound = false;
@@ -208,8 +208,8 @@ printPosition(DataArchive* da, int matID, unsigned long timeStep,
 
   // Now that the variable has been found, get the data for the
   // required time step from the data archive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   cerr << "There are " << index.size() << " timesteps:\n";
@@ -281,7 +281,7 @@ printPosition(DataArchive* da, int matID, unsigned long timeStep,
               if (pset->numParticles() > 0) {
                 ParticleVariable<long64> pid;
                 da->query(pid, "p.particleID", matl, patch, t);
-                vector<bool> found;
+                std::vector<bool> found;
                 for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
                   found.push_back(false);
                 }
@@ -296,7 +296,7 @@ printPosition(DataArchive* da, int matID, unsigned long timeStep,
                     matData[ii].time.push_back(time);
                     matData[ii].patch.push_back(patchIndex);
                     matData[ii].matl.push_back(matl);
-                    // cout << time << " " << patchIndex << " " << matl << " "
+                    // std::cout << time << " " << patchIndex << " " << matl << " "
                     // << pid[*iter]
                     //     << " " << position[*iter].x() << " " <<
                     //     position[*iter].y()
@@ -330,19 +330,19 @@ printPosition(DataArchive* da, int matID, unsigned long timeStep,
       int matl = matData[ii].matl[jj];
       long64 pid = matData[ii].id[jj];
       Point pos = matData[ii].position[jj];
-      cout << time << " " << patchIndex << " " << matl << " " << pid << " "
+      std::cout << time << " " << patchIndex << " " << matl << " " << pid << " "
            << pos.x() << " " << pos.y() << " " << pos.z() << endl;
     }
   }
   // Create output files for each of the particle IDs
   /*
   for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    ostringstream name;
+     std::ostringstream name;
     name << outFile << "_p" << setw(2) << setfill('0') << (ii+1);
     ofstream file(name.str().c_str());
     file.setf(ios::scientific,ios::floatfield);
     file.precision(8);
-    cout << "Created output file " << name.str() << " for particle ID "
+    std::cout << "Created output file " << name.str() << " for particle ID "
          << partID[ii] << endl;
     for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
       double time = matData[ii].time[jj];

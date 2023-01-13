@@ -105,8 +105,8 @@ namespace Uintah {
     const VarLabel* pParticleIDLabel;
     const VarLabel* pParticleIDLabel_preReloc;
 
-    vector<vector<const VarLabel*> > d_particleState;
-    vector<vector<const VarLabel*> > d_particleState_preReloc;
+    std::vector<vector<const VarLabel*> > d_particleState;
+    std::vector<vector<const VarLabel*> > d_particleState_preReloc;
     ExamplesLabel();
     ~ExamplesLabel();
   };

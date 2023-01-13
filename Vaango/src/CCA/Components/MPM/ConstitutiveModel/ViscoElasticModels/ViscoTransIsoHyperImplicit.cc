@@ -409,8 +409,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     Vector deformed_fiber_vector;
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     Matrix3 Identity, Zero(0.);
     Identity.Identity();
@@ -906,8 +906,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     Vector deformed_fiber_vector;
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Vector dx = patch->dCell();
 

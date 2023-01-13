@@ -144,7 +144,7 @@ void LightTime::problemSetup(GridP&, SimulationStateP& sharedState,
   //  define the materialSet
   mymatls = scinew MaterialSet();
 
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);                   // needed for the pressure and NC_CCWeight
   m.push_back(matl0->getDWIndex());
   m.push_back(matl1->getDWIndex());

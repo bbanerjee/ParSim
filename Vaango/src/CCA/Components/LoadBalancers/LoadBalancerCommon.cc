@@ -103,7 +103,7 @@ LoadBalancerCommon::assignResources(DetailedTasks& graph)
         cerrLock.unlock();
       }
 #if SCI_ASSERTION_LEVEL > 0
-      ostringstream ostr;
+       std::ostringstream ostr;
       ostr << patch->getID() << ':' << idx;
 
       for (int i = 1; i < patches->size(); i++) {
@@ -224,8 +224,8 @@ LoadBalancerCommon::getOldProcessorAssignment(const Patch* patch)
 void
 LoadBalancerCommon::useSFC(const LevelP& level, int* order)
 {
-  vector<DistributedIndex> indices; // output
-  vector<double> positions;
+  std::vector<DistributedIndex> indices; // output
+  std::vector<double> positions;
 
   // this should be removed when dimensions in shared state is done
   int dim = d_sharedState->getNumDims();
@@ -237,7 +237,7 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
   IntVector high(INT_MIN, INT_MIN, INT_MIN);
   IntVector low(INT_MAX, INT_MAX, INT_MAX);
 #ifdef SFC_PARALLEL
-  vector<int> originalPatchCount(
+  std::vector<int> originalPatchCount(
     d_myworld->nRanks(), 0); // store how many patches each patch has originally
 #endif
   for (auto iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
@@ -280,7 +280,7 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
 
 #ifdef SFC_PARALLEL
   // compute patch starting locations
-  vector<int> originalPatchStart(d_myworld->nRanks(), 0);
+  std::vector<int> originalPatchStart(d_myworld->nRanks(), 0);
   for (int p = 1; p < d_myworld->nRanks(); p++) {
     originalPatchStart[p] =
       originalPatchStart[p - 1] + originalPatchCount[p - 1];
@@ -318,8 +318,8 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
 
 #ifdef SFC_PARALLEL
   if (d_myworld->nRanks() > 1) {
-    vector<int> recvcounts(d_myworld->nRanks(), 0);
-    vector<int> displs(d_myworld->nRanks(), 0);
+    std::vector<int> recvcounts(d_myworld->nRanks(), 0);
+    std::vector<int> displs(d_myworld->nRanks(), 0);
 
     for (unsigned i = 0; i < recvcounts.size(); i++) {
       displs[i] = originalPatchStart[i] * sizeof(DistributedIndex);
@@ -332,7 +332,7 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
       }
     }
 
-    vector<DistributedIndex> rbuf(level->numPatches());
+    std::vector<DistributedIndex> rbuf(level->numPatches());
 
     // Gather curve
     Uintah::MPI::Allgatherv(&indices[0], recvcounts[d_myworld->myRank()], MPI_BYTE,
@@ -355,21 +355,21 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
 #endif
 
 #if 0
-  cout << "SFC order: ";
+  std::cout << "SFC order: ";
   for (int i = 0; i < level->numPatches(); i++) {
-    cout << order[i] << " ";
+    std::cout << order[i] << " ";
   }
-  cout << endl;
+  std::cout << endl;
 #endif
 #if 0
   if(d_myworld->myRank()==0) {
-    cout << "Warning checking SFC correctness\n";
+    std::cout << "Warning checking SFC correctness\n";
   }
   for (int i = 0; i < level->numPatches(); i++) {
     for (int j = i+1; j < level->numPatches(); j++) {
       if (order[i] == order[j]) 
       {
-        cout << "Rank:" << d_myworld->myRank() <<  ":   ALERT!!!!!! index done twice: index " << i << " has the same value as index " << j << " " << order[i] << endl;
+        std::cout << "Rank:" << d_myworld->myRank() <<  ":   ALERT!!!!!! index done twice: index " << i << " has the same value as index " << j << " " << order[i] << endl;
         throw InternalError("SFC unsuccessful", __FILE__, __LINE__);
       }
     }
@@ -422,7 +422,7 @@ LoadBalancerCommon::restartInitialize(DataArchive* archive,
   }
   for (unsigned i = 0; i < d_processorAssignment.size(); i++) {
     if (d_processorAssignment[i] == -1) {
-      cout << "index " << i << " == -1\n";
+      std::cout << "index " << i << " == -1\n";
     }
     ASSERT(d_processorAssignment[i] != -1);
   }
@@ -782,17 +782,17 @@ LoadBalancerCommon::createNeighborhood(const GridP& grid, const GridP& oldGrid)
     }
   }
 #if 0
-  cout << d_myworld->myRank() << " np: ";
+  std::cout << d_myworld->myRank() << " np: ";
   for(set<int>::iterator iter=d_neighborProcessors.begin();iter!=d_neighborProcessors.end();iter++)
   {
-    cout << *iter << " ";
+    std::cout << *iter << " ";
   }
-  cout << endl;
+  std::cout << endl;
 #endif
 
   if (neiDebug.active()) {
     for (auto d_neighbor : d_neighbors) {
-      cout << d_myworld->myRank() << "  Neighborhood: " << d_neighbor->getID()
+      std::cout << d_myworld->myRank() << "  Neighborhood: " << d_neighbor->getID()
            << " Proc " << getPatchwiseProcessorAssignment(d_neighbor) << endl;
     }
   }

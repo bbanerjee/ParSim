@@ -82,7 +82,7 @@ namespace Uintah {
 
     void solve(vector<double>& guess);
 
-    void createMatrix(const ProcessorGroup* pg, const map<int,int>& diag);
+    void createMatrix(const ProcessorGroup* pg, const  std::map< int,int>& diag);
 
     void destroyMatrix(bool recursion);
 
@@ -118,13 +118,13 @@ namespace Uintah {
 
     void printRHS();
 
-    map<int,double> d_BC;
+    std::map<int,double> d_BC;
   private:
 
     // Needed for the local to global mappings
-    map<const Patch*, int> d_petscGlobalStart;
-    map<const Patch*, Array3<int> > d_petscLocalToGlobal;
-    vector<int> d_numNodes,d_startIndex;
+    std::map<const Patch*, int> d_petscGlobalStart;
+    std::map<const Patch*, Array3<int> > d_petscLocalToGlobal;
+    std::vector<int> d_numNodes,d_startIndex;
     int d_totalNodes;
     
     // Simple matrix and vectors

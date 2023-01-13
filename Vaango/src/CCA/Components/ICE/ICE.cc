@@ -166,7 +166,7 @@ ICE::~ICE()
   }
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
          iter != d_analysisModules.end(); iter++){
       delete *iter;
@@ -187,7 +187,7 @@ ICE::~ICE()
   cout_doing << d_myworld->myRank() << " Doing: destorying Model Machinery " << endl;
   if(d_modelSetup){
     // delete transported Lagrangian variables
-    vector<TransportedVariable*>::iterator t_iter;
+    std::vector<TransportedVariable*>::iterator t_iter;
     for( t_iter  = d_modelSetup->tvars.begin();
          t_iter != d_modelSetup->tvars.end(); t_iter++){
       TransportedVariable* tvar = *t_iter;
@@ -197,7 +197,7 @@ ICE::~ICE()
     }
     cout_doing << d_myworld->myRank() << " Doing: destorying refluxing variables " << endl;
     // delete refluxing variables
-    vector<AMR_refluxVariable*>::iterator iter;
+    std::vector<AMR_refluxVariable*>::iterator iter;
     for( iter  = d_modelSetup->d_reflux_vars.begin();
          iter != d_modelSetup->d_reflux_vars.end(); iter++){
       AMR_refluxVariable* rvar = *iter;
@@ -352,14 +352,14 @@ void ICE::problemSetup(const ProblemSpecP& prob_spec,
     ProblemSpecP p = impSolver->findBlock("Parameters");
     p->get("tolerance",tol);
     if(tol>= d_outer_iter_tolerance){
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "\n ERROR: implicit pressure: The <outer_iteration_tolerance>"
           << " must be greater than the solver tolerance <tolerance> \n";
       throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
     } 
 
     if(d_doAMR  && d_solver->getName() != "hypreamr"){
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "\n ERROR: " << d_solver->getName()
           << " cannot be used with an AMR grid \n";
       throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
@@ -408,7 +408,7 @@ void ICE::problemSetup(const ProblemSpecP& prob_spec,
     id >> index_val;
 
     if( !id ) {
-      // stringstream parsing failed... on many (most) systems, the
+      //  std::stringstream parsing failed... on many (most) systems, the
       // original value assigned to index_val would be left
       // intact... but on some systems (redstorm) it inserts garbage,
       // so we have to manually restore the value.
@@ -473,11 +473,11 @@ void ICE::problemSetup(const ProblemSpecP& prob_spec,
   // WARNINGS
   SimulationTime timeinfo(prob_spec); 
   if ( d_impICE &&  timeinfo.max_delt_increase  > 10 && d_myworld->myRank() == 0){
-    cout <<"\n \n W A R N I N G: " << endl;
-    cout << " When running implicit ICE you should specify "<<endl;
-    cout <<" \t \t <max_delt_increase>    2.0ish  "<<endl;
-    cout << " to a) prevent rapid fluctuations in the timestep and "<< endl;
-    cout << "    b) to prevent outflux Vol > cell volume \n \n" <<endl;
+    std::cout <<"\n \n W A R N I N G: " << endl;
+    std::cout << " When running implicit ICE you should specify "<<endl;
+    std::cout <<" \t \t <max_delt_increase>    2.0ish  "<<endl;
+    std::cout << " to a) prevent rapid fluctuations in the timestep and "<< endl;
+    std::cout << "    b) to prevent outflux Vol > cell volume \n \n" <<endl;
   } 
 
   //__________________________________
@@ -551,7 +551,7 @@ void ICE::problemSetup(const ProblemSpecP& prob_spec,
     d_analysisModules = AnalysisModuleFactory::create(prob_spec, sharedState, dataArchiver);
 
     if(d_analysisModules.size() != 0){
-      vector<AnalysisModule*>::iterator iter;
+      std::vector<AnalysisModule*>::iterator iter;
       for( iter  = d_analysisModules.begin();
            iter != d_analysisModules.end(); iter++){
         AnalysisModule* am = *iter;
@@ -604,7 +604,7 @@ void ICE::updateExchangeCoefficients(const ProblemSpecP& prob_spec,
                                      GridP& /*grid*/,
                                      SimulationStateP&  sharedState)
 {
-  cout << "Updating Ex Coefficients" << endl;
+  std::cout << "Updating Ex Coefficients" << endl;
   ProblemSpecP mat_ps  =  
     prob_spec->findBlockWithAttribute("MaterialProperties","add");
 
@@ -660,7 +660,7 @@ void ICE::scheduleInitializeAddedMaterial(const LevelP& level,SchedulerP& sched)
 
   int numALLMatls = d_sharedState->getNumMaterials();
   MaterialSubset* add_matl = scinew MaterialSubset();
-  cout << "Added Material = " << numALLMatls-1 << endl;
+  std::cout << "Added Material = " << numALLMatls-1 << endl;
   add_matl->add(numALLMatls-1);
   add_matl->addReference();
 
@@ -707,7 +707,7 @@ void ICE::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     int m = d_sharedState->getNumICEMatls() - 1;
     ICEMaterial* ice_matl = d_sharedState->getICEMaterial(m);
     int indx= ice_matl->getDWIndex();
-    cout << "Added Material Index = " << indx << endl;
+    std::cout << "Added Material Index = " << indx << endl;
     new_dw->allocateAndPut(viscosity,     lb->viscosityLabel,    indx,patch);
     new_dw->allocateAndPut(thermalCond,   lb->thermalCondLabel,  indx,patch);
     new_dw->allocateAndPut(cv,            lb->specific_heatLabel,indx,patch);
@@ -720,7 +720,7 @@ void ICE::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     new_dw->allocateAndPut(vol_frac_CC,   lb->vol_frac_CCLabel,  indx,patch); 
     new_dw->allocateAndPut(vel_CC,        lb->vel_CCLabel,       indx,patch);
     new_dw->allocateTemporary(dummy, patch);
-    cout << "Done allocateAndPut Index = " << indx << endl;
+    std::cout << "Done allocateAndPut Index = " << indx << endl;
 
     gamma.initialize(       ice_matl->getGamma());
     cv.initialize(          ice_matl->getSpecificHeat());    
@@ -802,7 +802,7 @@ void ICE::scheduleInitialize(const LevelP& level,SchedulerP& sched)
   //__________________________________
   // dataAnalysis 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
          iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -851,7 +851,7 @@ void ICE::restartInitialize()
   cout_doing << d_myworld->myRank() << " Doing restartInitialize "<< "\t\t\t ICE" << endl;
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
          iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -1072,7 +1072,7 @@ ICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
   //__________________________________
   //  on the fly analysis
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
          iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -1635,7 +1635,7 @@ void ICE::scheduleComputeLagrangian_Transported_Vars(SchedulerP& sched,
     t->requires(Task::NewDW,lb->mass_L_CCLabel, gn);
 
     // computes and requires for each transported variable
-    vector<TransportedVariable*>::iterator t_iter;
+    std::vector<TransportedVariable*>::iterator t_iter;
     for( t_iter = d_modelSetup->tvars.begin();
          t_iter != d_modelSetup->tvars.end(); t_iter++){
       TransportedVariable* tvar = *t_iter;
@@ -1722,7 +1722,7 @@ void ICE::scheduleMaxMach_on_Lodi_BC_Faces(SchedulerP& sched,
     //__________________________________
     // loop over the Lodi face
     //  add computes for maxMach
-    vector<Patch::FaceType>::iterator f ;
+    std::vector<Patch::FaceType>::iterator f ;
 
     for( f = d_customBC_var_basket->Lodi_var_basket->LodiFaces.begin();
          f!= d_customBC_var_basket->Lodi_var_basket->LodiFaces.end(); ++f) {
@@ -1761,7 +1761,7 @@ void ICE::computesRequires_AMR_Refluxing(Task* task,
   // just cause excess TG work.  The data will all get to the right place.
   //__________________________________
   // MODELS
-  vector<AMR_refluxVariable*>::iterator iter;
+  std::vector<AMR_refluxVariable*>::iterator iter;
   for( iter  = d_modelSetup->d_reflux_vars.begin();
        iter != d_modelSetup->d_reflux_vars.end(); iter++){
     AMR_refluxVariable* rvar = *iter;
@@ -1807,7 +1807,7 @@ void ICE::scheduleAdvectAndAdvanceInTime(SchedulerP& sched,
   //__________________________________
   // Model Variables.
   if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-    vector<TransportedVariable*>::iterator iter;
+    std::vector<TransportedVariable*>::iterator iter;
 
     for(iter = d_modelSetup->tvars.begin();
         iter != d_modelSetup->tvars.end(); iter++){
@@ -1885,7 +1885,7 @@ void ICE::scheduleConservedtoPrimitive_Vars(SchedulerP& sched,
   //__________________________________
   // Model Variables.
   if(d_modelSetup && d_modelSetup->tvars.size() > 0){
-    vector<TransportedVariable*>::iterator iter;
+    std::vector<TransportedVariable*>::iterator iter;
 
     for(iter = d_modelSetup->tvars.begin();
         iter != d_modelSetup->tvars.end(); iter++){
@@ -2027,10 +2027,10 @@ void ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
             if (badCell == IntVector(0,0,0)) {
               badCell = c;
             }
-            cout << d_myworld->myRank() << " Bad cell " << c << " (" << patch->getID() << "-" << level->getIndex() << "): " << vel_CC[c]<< endl;
+            std::cout << d_myworld->myRank() << " Bad cell " << c << " (" << patch->getID() << "-" << level->getIndex() << "): " << vel_CC[c]<< endl;
           }
         }
-        //      cout << " Aggressive delT Based on currant number "<< delt_CFL << endl;
+        //      std::cout << " Aggressive delT Based on currant number "<< delt_CFL << endl;
         //__________________________________
         // stability constraint due to diffusion
         //  I C E  O N L Y
@@ -2051,7 +2051,7 @@ void ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
             }
           }
         }  //
-        //      cout << "delT based on diffusion  "<< delt_diff<<endl;
+        //      std::cout << "delT based on diffusion  "<< delt_diff<<endl;
         delt = std::min(delt_CFL, delt_diff);
       } // aggressive Timestep 
 
@@ -2061,7 +2061,7 @@ void ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
         // Use a characteristic velocity
         // to compute a sweptvolume. The
         // swept volume can't exceed the cell volume
-        vector<IntVector> adj_offset(3);                   
+        std::vector<IntVector> adj_offset(3);                   
         adj_offset[0] = IntVector(1, 0, 0);    // X 
         adj_offset[1] = IntVector(0, 1, 0);    // Y 
         adj_offset[2] = IntVector(0, 0, 1);    // Z   
@@ -2131,7 +2131,7 @@ void ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
             badCell = c;
           }
         }  // iter loop
-        //      cout << " Conservative delT based on swept volumes "<< delt<<endl;
+        //      std::cout << " Conservative delT based on swept volumes "<< delt<<endl;
       }  
     }  // matl loop   
 
@@ -2139,7 +2139,7 @@ void ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
     //__________________________________
     //  Bullet proofing
     if(delt < 1e-20) { 
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR ICE:(L-"<< level->getIndex()
            << "):ComputeStableTimestep: delT < 1e-20 on cell " << badCell;
       throw InvalidValue(warn.str(), __FILE__, __LINE__);
@@ -2365,7 +2365,7 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
       }
       //____ B U L L E T   P R O O F I N G----
       IntVector neg_cell;
-      ostringstream warn, base;
+       std::ostringstream warn, base;
       base <<"ERROR ICE:(L-"<<L_indx<<"):actuallyInitialize, mat "<< indx <<" cell ";
 
       if( !areAllValuesPositive(press_CC, neg_cell) ) {
@@ -2392,7 +2392,7 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
       for (CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
         if(vol_frac_sum[*iter] > 1.0 + 1e-10 || vol_frac_sum[*iter] < 1.0 - 1e-10)
         {
-          ostringstream warn, base;
+           std::ostringstream warn, base;
           base <<"ERROR ICE:(L-"<<L_indx<<"):actuallyInitialize";
           warn << base.str() << "Cell: " << *iter << " Volume fractions did not sum to 1. Sum=" << vol_frac_sum[*iter] << "\n";
           throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
@@ -2402,13 +2402,13 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
 
 
     if (switchDebug_Initialize){     
-      ostringstream desc1;
+       std::ostringstream desc1;
       desc1 << "Initialization_patch_"<< patch->getID();
       printData(0, patch, 1, desc1.str(), "press_CC", press_CC);         
       for (int m = 0; m < numMatls; m++ ) { 
         ICEMaterial* ice_matl = d_sharedState->getICEMaterial(m);
         int indx = ice_matl->getDWIndex();
-        ostringstream desc;      
+         std::ostringstream desc;      
         desc << "Initialization_Mat_" << indx << "_patch_"<< patch->getID();
         printData(indx, patch,   1, desc.str(), "rho_CC",      rho_CC[indx]);
         printData(indx, patch,   1, desc.str(), "rho_micro_CC",rho_micro[indx]);
@@ -2471,7 +2471,7 @@ void ICE::initializeSubTask_hydrostaticAdj(const ProcessorGroup*,
       //__________________________________
       //  Print Data
       if (switchDebug_Initialize){     
-        ostringstream desc, desc1;
+         std::ostringstream desc, desc1;
         desc << "hydroStaticAdj_patch_"<< patch->getID();
         printData(0, patch, 1, desc.str(), "press_CC", press_CC);         
         for (int m = 0; m < numMatls; m++ ) { 
@@ -2666,13 +2666,13 @@ void ICE::computeEquilibrationPressure(const ProcessorGroup*,
     if (switchDebug_equil_press) {
 
       new_dw->allocateTemporary(n_iters_equil_press,  patch);
-      ostringstream desc1;
+       std::ostringstream desc1;
       desc1 << "TOP_equilibration_patch_" << patch->getID();
       printData( 0, patch, 1, desc1.str(), "Press_CC_top", press);
       for (int m = 0; m < numMatls; m++)  {
         ICEMaterial* matl = d_sharedState->getICEMaterial( m );
         int indx = matl->getDWIndex(); 
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "TOP_equilibration_Mat_" << indx << "_patch_"<<patch->getID();
         printData(indx, patch, 1, desc.str(), "rho_CC",       rho_CC[m]);    
         printData(indx, patch, 1, desc.str(), "rho_micro_CC", rho_micro[m]);  
@@ -2690,7 +2690,7 @@ void ICE::computeEquilibrationPressure(const ProcessorGroup*,
       double delPress = 0.;
       bool converged  = false;
       count           = 0;
-      vector<EqPress_dbg> dbgEqPress;
+      std::vector<EqPress_dbg> dbgEqPress;
 
       while ( count < d_max_iter_equilibration && converged == false) {
         count++;
@@ -2816,7 +2816,7 @@ void ICE::computeEquilibrationPressure(const ProcessorGroup*,
         }
       }
       if(allTestsPassed != true){  // throw an exception of there's a problem
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "\nICE::ComputeEquilibrationPressure: Cell "<< c << ", L-"<<L_indx <<"\n"
              << message
              <<"\nThis usually means that something much deeper has gone wrong with the simulation. "
@@ -2832,7 +2832,7 @@ void ICE::computeEquilibrationPressure(const ProcessorGroup*,
         }
         if(ds_EqPress.active()){
           warn << "\nDetails on iterations " << endl;
-          vector<EqPress_dbg>::iterator dbg_iter;
+          std::vector<EqPress_dbg>::iterator dbg_iter;
           for( dbg_iter  = dbgEqPress.begin(); dbg_iter != dbgEqPress.end(); dbg_iter++){
             EqPress_dbg & d = *dbg_iter;
             warn << "Iteration:   " << d.count
@@ -2918,14 +2918,14 @@ void ICE::computeEquilibrationPressure(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------   
     if (switchDebug_equil_press) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_equilibration_patch_" << patch->getID();
       printData( 0, patch, 1, desc.str(), "Press_CC_equil", press_new);
 
       for (int m = 0; m < numMatls; m++)  {
         ICEMaterial* matl = d_sharedState->getICEMaterial( m );
         int indx = matl->getDWIndex(); 
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "BOT_equilibration_Mat_"<< indx << "_patch_"<< patch->getID();
         printData( indx, patch, 1, desc.str(), "rho_CC",       rho_CC[m]);
         printData( indx, patch, 1, desc.str(), "sp_vol_CC",    sp_vol_new[m]); 
@@ -2988,7 +2988,7 @@ void ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------   
     if (switchDebug_equil_press) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "TOP_equilibration_patch_" << patch->getID();
       printData( indx, patch, 1, desc.str(), "temp",      Temp);
       printData( indx, patch, 1, desc.str(), "sp_vol_CC", sp_vol_CC);
@@ -3038,7 +3038,7 @@ void ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------   
     if (switchDebug_equil_press) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_equilibration_patch_" << patch->getID();
       printData( 0,    patch, 1, desc.str(), "Press_CC_equil", press_eq);
     }
@@ -3117,7 +3117,7 @@ void ICE::computeTempFC(const ProcessorGroup*,
       TempY_FC.initialize(0.0,lowIndex,patch->getExtraSFCYHighIndex()); 
       TempZ_FC.initialize(0.0,lowIndex,patch->getExtraSFCZHighIndex());
 
-      vector<IntVector> adj_offset(3);
+      std::vector<IntVector> adj_offset(3);
       adj_offset[0] = IntVector(-1, 0, 0);    // X faces
       adj_offset[1] = IntVector(0, -1, 0);    // Y faces
       adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -3149,7 +3149,7 @@ void ICE::computeTempFC(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_Temp_FC ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "BOT_computeTempFC_Mat_" << indx << "_patch_"<< patch->getID(); 
         printData_FC( indx, patch,1, desc.str(), "TempX_FC", TempX_FC);
         printData_FC( indx, patch,1, desc.str(), "TempY_FC", TempY_FC);
@@ -3191,7 +3191,7 @@ template<class T> void ICE::computeVelFace(int dir,
     double rho_FC = rho_CC[L] + rho_CC[R];
 #if SCI_ASSERTION_LEVEL >=2
     if (rho_FC <= 0.0) {
-      cout << d_myworld->myRank() << " rho_fc <= 0: " << rho_FC << " with L= " << L << " (" 
+      std::cout << d_myworld->myRank() << " rho_fc <= 0: " << rho_FC << " with L= " << L << " (" 
            << rho_CC[L] << ") R= " << R << " (" << rho_CC[R]<< ")\n";
     }
 #endif
@@ -3265,7 +3265,7 @@ void ICE::computeVel_FC(const ProcessorGroup*,
       //---- P R I N T   D A T A ------
 #if 1
       if (switchDebug_vel_FC ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "TOP_computeVel_FC_Mat_" << indx << "_patch_"<< patch->getID();
         printData(indx, patch, 1, desc.str(), "press_CC",    press_CC); 
         printData(indx, patch, 1, desc.str(), "rho_CC",      rho_CC);
@@ -3294,7 +3294,7 @@ void ICE::computeVel_FC(const ProcessorGroup*,
       grad_P_YFC.initialize(0.0);
       grad_P_ZFC.initialize(0.0);
 
-      vector<IntVector> adj_offset(3);
+      std::vector<IntVector> adj_offset(3);
       adj_offset[0] = IntVector(-1, 0, 0);    // X faces
       adj_offset[1] = IntVector(0, -1, 0);    // Y faces
       adj_offset[2] = IntVector(0,  0, -1);   // Z faces     
@@ -3331,7 +3331,7 @@ void ICE::computeVel_FC(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_vel_FC ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"BOT_computeVel_FC_Mat_" << indx << "_patch_"<< patch->getID();
         printData_FC( indx, patch,1, desc.str(), "uvel_FC",  uvel_FC);
         printData_FC( indx, patch,1, desc.str(), "vvel_FC",  vvel_FC);
@@ -3445,7 +3445,7 @@ void ICE::updateVel_FC(const ProcessorGroup*,
       vvel_FC.copy(vvel_FC_old);
       wvel_FC.copy(wvel_FC_old);
 
-      vector<IntVector> adj_offset(3);
+      std::vector<IntVector> adj_offset(3);
       adj_offset[0] = IntVector(-1, 0, 0);    // X faces
       adj_offset[1] = IntVector(0, -1, 0);    // Y faces
       adj_offset[2] = IntVector(0,  0, -1);   // Z faces     
@@ -3475,7 +3475,7 @@ void ICE::updateVel_FC(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_vel_FC ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"BOT_updateVel_FC_Mat_" << indx << "_patch_"<< patch->getID();
         printData_FC( indx, patch,1, desc.str(), "uvel_FC",  uvel_FC);
         printData_FC( indx, patch,1, desc.str(), "vvel_FC",  vvel_FC);
@@ -3655,7 +3655,7 @@ void ICE::addExchangeContributionToFCVel(const ProcessorGroup*,
       sp_vol_ZFC[m].initialize(0.0, lowIndex,patch->getExtraSFCZHighIndex());
     }   
 
-    vector<IntVector> adj_offset(3);
+    std::vector<IntVector> adj_offset(3);
     adj_offset[0] = IntVector(-1, 0, 0);    // X faces
     adj_offset[1] = IntVector(0, -1, 0);    // Y faces
     adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -3709,7 +3709,7 @@ void ICE::addExchangeContributionToFCVel(const ProcessorGroup*,
       for (int m = 0; m < numMatls; m++)  {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"Exchange_FC_after_BC_Mat_" << indx <<"_patch_"<<patch->getID();
         printData(    indx, patch,1, desc.str(), "sp_vol_CC", sp_vol_CC[m]);   
         printData_FC( indx, patch,1, desc.str(), "uvel_FCME", uvel_FCME[m]);
@@ -3815,7 +3815,7 @@ void ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------  
       if (switchDebug_explicit_press ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc<<"middle_explicit_Pressure_Mat_"<<indx<<"_patch_"<<patch->getID();
         printData(    indx, patch,1, desc.str(), "vol_frac",   vol_frac);
         printData(    indx, patch,1, desc.str(), "speedSound", speedSound);
@@ -3907,7 +3907,7 @@ void ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------  
     if (switchDebug_explicit_press) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_explicit_Pressure_patch_" << patch->getID();
       //    printData( 0, patch, 1,desc.str(), "term1",         term1);
       printData( 0, patch, 1,desc.str(), "term2",         term2);
@@ -3970,7 +3970,7 @@ void ICE::computePressFC(const ProcessorGroup*,
     new_dw->allocateAndPut(pressY_FC, lb->pressY_FCLabel, 0, patch);
     new_dw->allocateAndPut(pressZ_FC, lb->pressZ_FCLabel, 0, patch);
 
-    vector<IntVector> adj_offset(3);
+    std::vector<IntVector> adj_offset(3);
     adj_offset[0] = IntVector(-1, 0, 0);    // X faces
     adj_offset[1] = IntVector(0, -1, 0);    // Y faces
     adj_offset[2] = IntVector(0,  0, -1);   // Z faces
@@ -3990,7 +3990,7 @@ void ICE::computePressFC(const ProcessorGroup*,
                                             pressZ_FC); 
     //---- P R I N T   D A T A ------ 
     if (switchDebug_PressFC) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "press_FC_patch_" <<patch->getID();
       printData_FC( 0, patch,0,desc.str(), "press_FC_RIGHT", pressX_FC);
       printData_FC( 0, patch,0,desc.str(), "press_FC_TOP",   pressY_FC);
@@ -4271,7 +4271,7 @@ void ICE::accumulateMomentumSourceSinks(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_Source_Sink) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "sources_sinks_Mat_" << indx << "_patch_"<<  patch->getID();
         printVector(indx, patch, 1, desc.str(), "mom_source",  0, mom_source);
       }
@@ -4415,7 +4415,7 @@ void ICE::accumulateEnergySourceSinks(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_Source_Sink) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<  "sources_sinks_Mat_" << indx << "_patch_"<<  patch->getID();
         printData(indx, patch,1,desc.str(),"int_eng_source", int_eng_source);
       }
@@ -4564,7 +4564,7 @@ void ICE::computeLagrangianValues(const ProcessorGroup*,
           }
 #if 0
           if(massGain > 0.0){
-            cout << "Mass gained by the models this timestep = " 
+            std::cout << "Mass gained by the models this timestep = " 
                  << massGain << "\t L-" <<level->getIndex()<<endl;
           }
 #endif
@@ -4574,7 +4574,7 @@ void ICE::computeLagrangianValues(const ProcessorGroup*,
         // Dump out all the matls data
         //switchDebug_LagrangianValues = true;
         if (switchDebug_LagrangianValues ) {
-          ostringstream desc;
+           std::ostringstream desc;
           desc <<"BOT_Lagrangian_Values_Mat_"<<indx<< "_patch_"<<patch->getID();
           printData(  indx, patch,1, desc.str(), "mass_L_CC",    mass_L);
           printVector(indx, patch,1, desc.str(), "mom_L_CC", 0,  mom_L);
@@ -4588,7 +4588,7 @@ void ICE::computeLagrangianValues(const ProcessorGroup*,
         bool tsr = new_dw->timestepRestarted();
 
         if (!areAllValuesPositive(int_eng_L, neg_cell) && !tsr ) {
-          ostringstream warn;
+           std::ostringstream warn;
           int idx = level->getIndex();
           warn<<"ICE:(L-"<<idx<<"):computeLagrangianValues, mat "<<indx<<" cell "
               <<neg_cell<<" Negative int_eng_L: " << int_eng_L[neg_cell] <<  "\n";
@@ -4632,7 +4632,7 @@ void ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
     constCCVariable<double> delP, P;
     constCCVariable<double> TMV_CC;
     CCVariable<double> sum_therm_exp;
-    vector<double> if_mpm_matl_ignore(numALLMatls);
+    std::vector<double> if_mpm_matl_ignore(numALLMatls);
 
     new_dw->allocateTemporary(sum_therm_exp,patch);
     new_dw->get(delP, lb->delP_DilatateLabel, 0, patch,gn, 0);
@@ -4721,7 +4721,7 @@ void ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_LagrangianSpecificVol ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"TOP_Lagrangian_sp_vol_Mat_"<<indx<< "_patch_"<<patch->getID();
         printData( indx, patch,1, desc.str(), "rho_CC",     rho_CC);      
         printData( indx, patch,1, desc.str(), "sp_vol_CC",  sp_vol_CC);     
@@ -4773,7 +4773,7 @@ void ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if (switchDebug_LagrangianSpecificVol ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"BOT_Lagrangian_sp_vol_Mat_"<<indx<< "_patch_"<<patch->getID();
         printData( indx, patch,1, desc.str(), "sp_vol_L",   sp_vol_L);    
         printData( indx, patch,1, desc.str(), "sp_vol_src", sp_vol_src);  
@@ -4787,16 +4787,16 @@ void ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
       bool tsr = new_dw->timestepRestarted();
 
       if (!areAllValuesPositive(sp_vol_L, neg_cell) && !tsr) {
-        cout << "\nICE:WARNING......Negative specific Volume"<< endl;
-        cout << "cell              "<< neg_cell << " level " <<  level->getIndex() << endl;
-        cout << "matl              "<< indx << endl;
-        cout << "sum_thermal_exp   "<< sum_therm_exp[neg_cell] << endl;
-        cout << "sp_vol_src        "<< sp_vol_src[neg_cell] << endl;
-        cout << "mass sp_vol_L     "<< sp_vol_L[neg_cell] << endl;
-        cout << "mass sp_vol_L_old "
+        std::cout << "\nICE:WARNING......Negative specific Volume"<< endl;
+        std::cout << "cell              "<< neg_cell << " level " <<  level->getIndex() << endl;
+        std::cout << "matl              "<< indx << endl;
+        std::cout << "sum_thermal_exp   "<< sum_therm_exp[neg_cell] << endl;
+        std::cout << "sp_vol_src        "<< sp_vol_src[neg_cell] << endl;
+        std::cout << "mass sp_vol_L     "<< sp_vol_L[neg_cell] << endl;
+        std::cout << "mass sp_vol_L_old "
              << (rho_CC[neg_cell]*vol*sp_vol_CC[neg_cell]) << endl;
-        cout << "-----------------------------------"<<endl;
-        //        ostringstream warn;
+        std::cout << "-----------------------------------"<<endl;
+        //         std::ostringstream warn;
         //        int L = level->getIndex();
         //        warn<<"ERROR ICE:("<<L<<"):computeLagrangianSpecificVolumeRF, mat "<<indx
         //            << " cell " <<neg_cell << " sp_vol_L is negative\n";
@@ -4837,7 +4837,7 @@ void ICE::computeLagrangian_Transported_Vars(const ProcessorGroup*,
 
     //__________________________________
     //  hit all the transported variables
-    vector<TransportedVariable*>::iterator t_iter;
+    std::vector<TransportedVariable*>::iterator t_iter;
     for( t_iter  = d_modelSetup->tvars.begin();
          t_iter != d_modelSetup->tvars.end(); t_iter++){
       TransportedVariable* tvar = *t_iter;
@@ -4877,7 +4877,7 @@ void ICE::computeLagrangian_Transported_Vars(const ProcessorGroup*,
 
           //---- P R I N T   D A T A ------
           if (switchDebug_LagrangianTransportedVars ) {
-            ostringstream desc;
+             std::ostringstream desc;
             desc <<"BOT_LagrangianTransVars_BC_Mat_" <<indx<<"_patch_" 
                  <<patch->getID();
             printData(  indx, patch,1, desc.str(), tvar->var->getName(), q_old);
@@ -4964,7 +4964,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
 
     double b[MAX_MATLS];
     Vector bb[MAX_MATLS];
-    vector<double> sp_vol(numALLMatls);
+    std::vector<double> sp_vol(numALLMatls);
 
     double tmp;
     FastMatrix beta(numALLMatls, numALLMatls),acopy(numALLMatls, numALLMatls);
@@ -5027,7 +5027,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       for (int m = 0; m < numALLMatls; m++) {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
-        ostringstream desc;
+         std::ostringstream desc;
         desc<<"TOP_addExchangeToMomentumAndEnergy_"<<indx<<"_patch_"
             <<patch->getID();
         printData(   indx, patch,1, desc.str(),"Temp_CC",    Temp_CC[m]);
@@ -5339,7 +5339,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       for(int m = 0; m < numALLMatls; m++) {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
-        ostringstream desc;
+         std::ostringstream desc;
         desc<<"addExchangeToMomentumAndEnergy_"<<indx<<"_patch_"
             <<patch->getID();
         printVector(indx, patch,1, desc.str(), "mom_L_ME", 0,mom_L_ME[m]);
@@ -5389,7 +5389,7 @@ void ICE::maxMach_on_Lodi_BC_Faces(const ProcessorGroup*,
     // Every patch has to compute a maxMach
     // even if it isn't on a boundary.  We
     // can't do reduction variables with patch subsets yet.
-    vector<Patch::FaceType>::iterator f ;
+    std::vector<Patch::FaceType>::iterator f ;
 
     for( f = d_customBC_var_basket->Lodi_var_basket->LodiFaces.begin();
          f !=d_customBC_var_basket->Lodi_var_basket->LodiFaces.end(); ++f) {
@@ -5556,7 +5556,7 @@ void ICE::advectAndAdvanceInTime(const ProcessorGroup* /*pg*/,
       //__________________________________
       // Advect model variables 
       if(d_models.size() > 0 && d_modelSetup->tvars.size() > 0){
-        vector<TransportedVariable*>::iterator t_iter;
+        std::vector<TransportedVariable*>::iterator t_iter;
         for( t_iter  = d_modelSetup->tvars.begin();
              t_iter != d_modelSetup->tvars.end(); t_iter++){
           TransportedVariable* tvar = *t_iter;
@@ -5580,7 +5580,7 @@ void ICE::advectAndAdvanceInTime(const ProcessorGroup* /*pg*/,
 
             //---- P R I N T   D A T A ------   
             if (switchDebug_advance_advect ) {
-              ostringstream desc;
+               std::ostringstream desc;
               desc <<"BOT_Advection_after_BC_Mat_" <<indx<<"_patch_"
                    <<patch->getID();
               string Lag_labelName = tvar->var_Lagrangian->getName();
@@ -5593,7 +5593,7 @@ void ICE::advectAndAdvanceInTime(const ProcessorGroup* /*pg*/,
 
       //---- P R I N T   D A T A ------   
       if (switchDebug_advance_advect ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"BOT_Advection_Mat_" <<indx<<"_patch_"<<patch->getID();
         printData(   indx, patch,1, desc.str(), "mass_L",      mass_L); 
         printVector( indx, patch,1, desc.str(), "mom_L_CC", 0, mom_L_ME); 
@@ -5681,7 +5681,7 @@ void ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
       //__________________________________
       // model variables 
       if(d_models.size() > 0 && d_modelSetup->tvars.size() > 0){
-        vector<TransportedVariable*>::iterator t_iter;
+        std::vector<TransportedVariable*>::iterator t_iter;
         for( t_iter  = d_modelSetup->tvars.begin();
              t_iter != d_modelSetup->tvars.end(); t_iter++){
           TransportedVariable* tvar = *t_iter;
@@ -5704,7 +5704,7 @@ void ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
 
             //---- P R I N T   D A T A ------   
             if (switchDebug_conserved_primitive ) {
-              ostringstream desc;
+               std::ostringstream desc;
               desc <<"BOT_convertConservedtoPrimitive_Vars_Mat_" <<indx<<"_patch_"
                    <<patch->getID();
               string adv_LabelName = tvar->var_adv->getName();
@@ -5763,7 +5763,7 @@ void ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
       }
       //---- P R I N T   D A T A ------   
       if (switchDebug_conserved_primitive ) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"BOT_conservedtoPrimitive_Vars_Mat_" <<indx<<"_patch_"<<patch->getID();
         printData(   indx, patch,1, desc.str(), "mass_adv",    mass_adv);
         printVector( indx, patch,1, desc.str(), "mom_adv", 0,  mom_adv); 
@@ -5779,7 +5779,7 @@ void ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
       IntVector neg_cell;
       bool tsr = new_dw->timestepRestarted();
 
-      ostringstream base, warn;
+       std::ostringstream base, warn;
       base <<"ERROR ICE:(L-"<<L_indx<<"):conservedtoPrimitive_Vars, mat "<< indx <<" cell ";
       if (!areAllValuesPositive(rho_CC, neg_cell) && !tsr) {
         warn << base.str() << neg_cell << " negative rho_CC\n ";
@@ -6044,10 +6044,10 @@ void ICE::getConstantExchangeCoefficients( FastMatrix& K, FastMatrix& H  )
   // Check if the # of coefficients = # of upper triangular terms needed
   int num_coeff = ((numMatls)*(numMatls) - numMatls)/2;
 
-  vector<double> d_K_mom = d_exchCoeff->K_mom();
-  vector<double> d_K_heat = d_exchCoeff->K_heat();
-  vector<double>::iterator it_m=d_K_mom.begin();
-  vector<double>::iterator it_h=d_K_heat.begin();
+  std::vector<double> d_K_mom = d_exchCoeff->K_mom();
+  std::vector<double> d_K_heat = d_exchCoeff->K_heat();
+  std::vector<double>::iterator it_m=d_K_mom.begin();
+  std::vector<double>::iterator it_h=d_K_heat.begin();
 
   //__________________________________
   // bulletproofing
@@ -6064,7 +6064,7 @@ void ICE::getConstantExchangeCoefficients( FastMatrix& K, FastMatrix& H  )
   }
 
   if(test) {   
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "\nThe number of exchange coefficients (" << desc << ") is incorrect.\n";
     warn << "Here is the correct specification:\n";
     for (int i = 0; i < numMatls; i++ ){

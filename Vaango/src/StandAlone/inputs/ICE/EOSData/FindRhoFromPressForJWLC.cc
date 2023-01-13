@@ -124,9 +124,9 @@ int main()
     }
     count++;
   }
-  cout << setprecision(15);
-  cout << "rho = " <<  rhoM << '\n';
-  cout << "specific volume = " <<  1./rhoM << '\n';
-  cout << "relative specific volume = " <<  rho0/rhoM << '\n';
+  std::cout << setprecision(15);
+  std::cout << "rho = " <<  rhoM << '\n';
+  std::cout << "specific volume = " <<  1./rhoM << '\n';
+  std::cout << "relative specific volume = " <<  rho0/rhoM << '\n';
   
 }

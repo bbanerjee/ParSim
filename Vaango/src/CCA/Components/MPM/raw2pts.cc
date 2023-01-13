@@ -61,7 +61,7 @@ main(int argc, char *argv[])
   ofstream vesselfile("vessel.pts");
   ofstream collagenfile("collagen.pts");
 
-  cout << "argc = " << argc << endl;
+  std::cout << "argc = " << argc << endl;
 
   // number of pixels in x and y and number of slices in z
   int xsize_raw = atoi(argv[1]);

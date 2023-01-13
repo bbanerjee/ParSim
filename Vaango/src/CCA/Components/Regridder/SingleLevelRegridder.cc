@@ -128,7 +128,7 @@ Grid* SingleLevelRegridder::regrid(Grid* oldGrid)
 {
   MALLOC_TRACE_TAG_SCOPE("SingleLevelRegridder::regrid");
 
-  vector< vector<IntVector> > tiles(min(oldGrid->numLevels()+1,d_maxLevels));
+  std::vector< vector<IntVector> > tiles(min(oldGrid->numLevels()+1,d_maxLevels));
 
   //__________________________________
   //  compute tiles or patches based on user input 
@@ -141,7 +141,7 @@ Grid* SingleLevelRegridder::regrid(Grid* oldGrid)
 
       const LevelP level = oldGrid->getLevel(l);
       const PatchSubset *patchSS=lb_->getPerProcessorPatchSet(level)->getSubset(d_myworld->myRank());
-      vector<IntVector> mytiles;
+      std::vector<IntVector> mytiles;
 
       // For each patch I own
       for(int p=0; p<patchSS->size(); p++) {

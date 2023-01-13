@@ -173,11 +173,11 @@ class GUVSphereShellPiece : public ShellGeometryPiece {
   bool
   insideZone(const Point& p) const;
 
-  vector<Point> d_pos;
-  vector<double> d_vol;
-  vector<int> d_type;
-  vector<double> d_thick;
-  vector<Vector> d_norm;
+  std::vector<Point> d_pos;
+  std::vector<double> d_vol;
+  std::vector<int> d_type;
+  std::vector<double> d_thick;
+  std::vector<Vector> d_norm;
   double d_dx;
 
  private:
@@ -197,9 +197,9 @@ class GUVSphereShellPiece : public ShellGeometryPiece {
   double d_radius;
   double d_h_lipid;
   double d_h_cholesterol;
-  vector<double> d_theta_zone;
-  vector<double> d_phi_zone;
-  vector<double> d_radius_zone;
+  std::vector<double> d_theta_zone;
+  std::vector<double> d_phi_zone;
+  std::vector<double> d_radius_zone;
 };
 }  // End namespace Uintah
 

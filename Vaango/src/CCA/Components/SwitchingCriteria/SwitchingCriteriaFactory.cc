@@ -50,7 +50,7 @@ SwitchingCriteria* SwitchingCriteriaFactory::create(ProblemSpecP& ps,
   string criteria("");
   ProblemSpecP switch_ps = ps->findBlock("SwitchCriteria");
   if (switch_ps) {
-    map<string,string> attributes;
+    std::map<string,string> attributes;
     switch_ps->getAttributes(attributes);
     criteria = attributes["type"];
   } else {
@@ -72,7 +72,7 @@ SwitchingCriteria* SwitchingCriteriaFactory::create(ProblemSpecP& ps,
   } else if (criteria == "SteadyState" || criteria == "steadystate")  {
     switch_criteria = scinew SteadyState(switch_ps);
   } else {
-    ostringstream warn;
+     std::ostringstream warn;
     warn<<"\n ERROR:\n Unknown switching criteria (" << criteria << ")\n";
     throw ProblemSetupException(warn.str(),__FILE__, __LINE__);
   }

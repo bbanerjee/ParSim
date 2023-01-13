@@ -181,7 +181,7 @@ EllipseBCData::print()
 void
 EllipseBCData::determineIteratorLimits(Patch::FaceType face,
                                        const Patch* patch,
-                                       vector<Point>& test_pts)
+                                       std::vector<Point>& test_pts)
 {
 #if 0
   std::cout << "Ellipse determineIteratorLimits()" << std::endl;

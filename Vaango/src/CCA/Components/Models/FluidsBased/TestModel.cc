@@ -105,7 +105,7 @@ void TestModel::problemSetup(GridP&, SimulationStateP& sharedState,
   test_ps->require("rate", d_rate);
   test_ps->getWithDefault("startTime",   d_startTime, 0.0);
 
-  vector<int> m(2);
+  std::vector<int> m(2);
   m[0] = matl0->getDWIndex();
   m[1] = matl1->getDWIndex();
   mymatls = scinew MaterialSet();

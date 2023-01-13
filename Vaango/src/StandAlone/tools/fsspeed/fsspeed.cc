@@ -43,13 +43,13 @@ int main(int argc,char *argv[])
   {
     if(rank==0)
     {
-      cout << "Command Line Example: mpirun -np X fsspeed 16GB\n";
-      cout << "acceptable file sizes include B (bytes), MB (megabytes), GB (gigabytes)\n";
+      std::cout << "Command Line Example: mpirun -np X fsspeed 16GB\n";
+      std::cout << "acceptable file sizes include B (bytes), MB (megabytes), GB (gigabytes)\n";
     }
     MPI_Finalize();
     return 1;
   }
-  stringstream str;
+   std::stringstream str;
  
   //write argument into stringstream
   str << argv[1];
@@ -75,9 +75,9 @@ int main(int argc,char *argv[])
   {
     if(rank==0)
     {
-      cout << "Error invalid size type\n";
-      cout << "Command Line Example: mpirun -np X fsspeed 16GB\n";
-      cout << "acceptable file sizes include bytes (B), megabytes (MB), gigabytes (GB)\n";
+      std::cout << "Error invalid size type\n";
+      std::cout << "Command Line Example: mpirun -np X fsspeed 16GB\n";
+      std::cout << "acceptable file sizes include bytes (B), megabytes (MB), gigabytes (GB)\n";
     }
     MPI_Finalize();
     return 1;
@@ -100,7 +100,7 @@ int main(int argc,char *argv[])
 
   if(rank==0)
   {
-    cout << "Writing " << isize*processors/1048576.0 << " MB" << endl;
+    std::cout << "Writing " << isize*processors/1048576.0 << " MB" << endl;
   }
   MPI_Barrier(MPI_COMM_WORLD);
   start=MPI_Wtime();
@@ -122,10 +122,10 @@ int main(int argc,char *argv[])
   delete buff;
   if(rank==0)
   {
-    cout << "Writing Total Time: " << finish-start << " seconds" << endl;
-    cout << "Writing Throughput: " <<  (isize*processors/1048576.0)/(finish-start) << " MB/s" << endl;
+    std::cout << "Writing Total Time: " << finish-start << " seconds" << endl;
+    std::cout << "Writing Throughput: " <<  (isize*processors/1048576.0)/(finish-start) << " MB/s" << endl;
   
-    cout << "Cleaning up datafiles\n";
+    std::cout << "Cleaning up datafiles\n";
   }
   MPI_Barrier(MPI_COMM_WORLD);
   start=MPI_Wtime();
@@ -134,8 +134,8 @@ int main(int argc,char *argv[])
   finish=MPI_Wtime();
   if(rank==0)
   {
-    cout << "Deleting Total Time: " << finish-start << " seconds" << endl;
-    cout << "Deleting Throughput: " <<  (isize*processors/1048576.0)/(finish-start) << " MB/s" << endl;
+    std::cout << "Deleting Total Time: " << finish-start << " seconds" << endl;
+    std::cout << "Deleting Throughput: " <<  (isize*processors/1048576.0)/(finish-start) << " MB/s" << endl;
   }
   MPI_Finalize();
 

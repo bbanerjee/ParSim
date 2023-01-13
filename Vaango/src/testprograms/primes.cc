@@ -253,5 +253,5 @@ main(int argc, char* argv[])
     int nx, ny, nz;
     for(int i=0;i<niter;i++)
 	decompose(n, nnx, nny, nnz, nx, ny, nz);
-    cout << nx << "x" << ny << "x" << nz << "\n";
+    std::cout << nx << "x" << ny << "x" << nz << "\n";
 }

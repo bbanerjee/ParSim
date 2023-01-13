@@ -357,7 +357,7 @@ DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
   DOUT(g_scrubbing_dbg,
        "Rank-" << Parallel::getMPIRank() << " Begin initialize scrubs");
 
-  vector<bool> initialized(dws.size(), false);
+  std::vector<bool> initialized(dws.size(), false);
   for (std::size_t i = 0; i < Task::TotalDWs; i++) {
     if (dwmap[i] < 0) {
       continue;
@@ -435,7 +435,7 @@ void
 DetailedTasks::setScrubCount(const Task::Dependency* req,
                              int matl,
                              const Patch* patch,
-                             vector<OnDemandDataWarehouseP>& dws)
+                             std::vector<OnDemandDataWarehouseP>& dws)
 {
   ASSERT(!patch->isVirtual());
   DataWarehouse::ScrubMode scrubmode =

@@ -61,7 +61,7 @@ HypoViscoElasticDevStress::HypoViscoElasticDevStress(ProblemSpecP& ps)
 
   // create labels for each maxwell element
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
-    ostringstream name, name2;
+     std::ostringstream name, name2;
     name << "sigmaDev" << j;
     name2 << name.str() << "+";
 
@@ -257,7 +257,7 @@ HypoViscoElasticDevStress::computeDeviatoricStressInc(
   // bulletproofing
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     if (d_tau_MW[j] < delT) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: hypoViscoElastic:computeDevStessInc \n"
            << "tau [" << d_tau_MW[j] << "] < delT [" << delT << "] ";
       throw InternalError("warn.str()", __FILE__, __LINE__);
@@ -301,7 +301,7 @@ HypoViscoElasticDevStress::rotateInternalStresses(const particleIndex idx,
   for (auto& sigmaDev_new : d_sigmaDev_new) {
     (*sigmaDev_new)[idx] =
       tensorR.Transpose() * ((*sigmaDev_new)[idx] * tensorR);
-    // cout << "    d_sigmaDev_new " << ( *sigmaDev_new )[idx] << "
+    // std::cout << "    d_sigmaDev_new " << ( *sigmaDev_new )[idx] << "
     // d_sigmaDev " << ( *d_sigmaDev[j] )[idx] << endl;
     //++j;
   }

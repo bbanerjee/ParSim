@@ -92,7 +92,7 @@ void vorticity::problemSetup(const ProblemSpecP& prob_spec,
   // determine which material index to compute
   d_matl = d_sharedState->parseAndLookupMaterial(d_prob_spec, "material");
   
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);

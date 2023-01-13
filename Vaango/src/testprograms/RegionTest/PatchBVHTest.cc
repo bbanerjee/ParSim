@@ -96,7 +96,7 @@ int main()
   Grid grid;
 
   grid.addLevel(anchor,dcell);
-  vector<const Patch*> patches;
+  std::vector<const Patch*> patches;
 
   int i=0; 
   for(;!iter.done();iter++,i++)
@@ -123,19 +123,19 @@ int main()
   prt.query(low,high,q_old);
   if(!compareQueries(q_new,q_old))
   {
-    cout << "Error queries do not match(1)\n";
-    cout << "old:\n";
+    std::cout << "Error queries do not match(1)\n";
+    std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
-    cout << "new:\n";
+    std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
   }
-  cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -145,19 +145,19 @@ int main()
   prt.query(low,high,q_old);
   if(!compareQueries(q_new,q_old))
   {
-    cout << "Error queries do not match(2)\n";
-    cout << "old:\n";
+    std::cout << "Error queries do not match(2)\n";
+    std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
-    cout << "new:\n";
+    std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
   }
-  cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << endl;
   q_new.resize(0);
   q_old.resize(0);
       
@@ -167,19 +167,19 @@ int main()
   prt.query(low,high,q_old);
   if(!compareQueries(q_new,q_old))
   {
-    cout << "Error queries do not match(3)\n";
-    cout << "old:\n";
+    std::cout << "Error queries do not match(3)\n";
+    std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
-    cout << "new:\n";
+    std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
   }
-  cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -189,19 +189,19 @@ int main()
   prt.query(low,high,q_old);
   if(!compareQueries(q_new,q_old))
   {
-    cout << "Error queries do not match(4)\n";
-    cout << "old:\n";
+    std::cout << "Error queries do not match(4)\n";
+    std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
-    cout << "new:\n";
+    std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
   }
-  cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -211,22 +211,22 @@ int main()
   prt.query(low,high,q_old);
   if(!compareQueries(q_new,q_old))
   {
-    cout << "Error queries do not match(5)\n";
-    cout << "old:\n";
+    std::cout << "Error queries do not match(5)\n";
+    std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
-    cout << "new:\n";
+    std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      cout << **iter << endl;
+      std::cout << **iter << endl;
     }
   }
-  cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << endl;
   q_new.resize(0);
   q_old.resize(0);
   
-  cout << "All tests successfully passed\n";
+  std::cout << "All tests successfully passed\n";
   return 0;
 }

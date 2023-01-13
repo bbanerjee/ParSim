@@ -104,11 +104,11 @@ void TiledRegridder::ComputeTiles( vector<IntVector> &tiles,
 
 #if 0
       if(patch->getID() == 222082){
-          cout << "   Patch_ID  " << patch->getID() << endl;
-          cout << "   coarsePatch : "<< patch->getCellLowIndex() << " patchHigh: " << patch->getCellHighIndex() << endl;
-          cout << "   finePatch   : " << patchLow << " finePatchHigh: " << patchHigh << endl;
-          cout << "   tileIndex   : " << *ti << " tileLow:  " << tileLow << " tileHigh: " << tileHigh << endl;
-          cout << "   cellLow     : " << cellLow << " cellHigh: " << cellHigh << endl;
+          std::cout << "   Patch_ID  " << patch->getID() << endl;
+          std::cout << "   coarsePatch : "<< patch->getCellLowIndex() << " patchHigh: " << patch->getCellHighIndex() << endl;
+          std::cout << "   finePatch   : " << patchLow << " finePatchHigh: " << patchHigh << endl;
+          std::cout << "   tileIndex   : " << *ti << " tileLow:  " << tileLow << " tileHigh: " << tileHigh << endl;
+          std::cout << "   cellLow     : " << cellLow << " cellHigh: " << cellHigh << endl;
       } 
 #endif
 
@@ -166,7 +166,7 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
   }
   double start=Time::currentSeconds();
 
-  vector< vector<IntVector> > tiles(min(oldGrid->numLevels()+1,d_maxLevels));
+  std::vector< vector<IntVector> > tiles(min(oldGrid->numLevels()+1,d_maxLevels));
 
   //for each level fine to coarse 
   for(int l=min(oldGrid->numLevels()-1,d_maxLevels-2); l >= 0;l--) {
@@ -175,8 +175,8 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
     start=Time::currentSeconds();
     const LevelP level=oldGrid->getLevel(l);
 
-    vector<IntVector> mytiles;
-    vector<IntVector> myoldtiles;
+    std::vector<IntVector> mytiles;
+    std::vector<IntVector> myoldtiles;
 
     rtimes[0]+=Time::currentSeconds()-start;
     start=Time::currentSeconds();
@@ -250,21 +250,21 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
     double avg[20] = { 0 };
     Uintah::MPI::Reduce(&rtimes, &avg, 20, MPI_DOUBLE, MPI_SUM, 0, d_myworld->getComm());
     if (d_myworld->myRank() == 0) {
-      cout << "Regrid Avg Times: ";
+      std::cout << "Regrid Avg Times: ";
       for (int i = 0; i < 20; i++) {
         avg[i] /= d_myworld->nRanks();
-        cout << i << ":" << avg[i] << " ";
+        std::cout << i << ":" << avg[i] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
     double max[20] = { 0 };
     Uintah::MPI::Reduce(&rtimes, &max, 20, MPI_DOUBLE, MPI_MAX, 0, d_myworld->getComm());
     if (d_myworld->myRank() == 0) {
-      cout << "Regrid Max Times: ";
+      std::cout << "Regrid Max Times: ";
       for (int i = 0; i < 20; i++) {
-        cout << i << ":" << max[i] << " ";
+        std::cout << i << ":" << max[i] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
   }
 
@@ -316,7 +316,7 @@ void TiledRegridder::OutputGridStats(Grid* newGrid)
 {
   if (d_myworld->myRank() == 0) 
   {
-    cout << " Grid Statistics:\n";
+    std::cout << " Grid Statistics:\n";
     for (int l = 0; l < newGrid->numLevels(); l++) 
     {
       LevelP level=newGrid->getLevel(l);
@@ -347,7 +347,7 @@ void TiledRegridder::OutputGridStats(Grid* newGrid)
       double stdv = sqrt((sum_of_cells_squared-total_cells*total_cells/(double)num_patches)/(double)num_patches);
       IntVector refineRatio = level->getRefinementRatio();
       
-      cout << left << "  L" << setw(6)  << l+1 << " RefineRatio: "<<  refineRatio << setw(6)
+      std::cout << left << "  L" << setw(6)  << l+1 << " RefineRatio: "<<  refineRatio << setw(6)
            << " Patches: " << setw(6) << num_patches << " Total Cells: " << setw(6) << total_cells << " Mean Cells: " << setw(6) << mean << " stdv: " << setw(6) << stdv << " relative stdv: " << setw(8) << stdv/mean << " Volume: " << setw(8) << total_cells*factor << endl;
     }
   }
@@ -418,7 +418,7 @@ void TiledRegridder::problemSetup(const ProblemSpecP& params,
     regrid_spec->get("patches_per_level_per_proc",patches_per_proc);
     if ( patches_per_proc < 1 ) {
       if ( d_myworld->myRank() == 0 ) {
-        cout << "  Bounding patches_per_level_per_proc to [1,infinity]\n";
+        std::cout << "  Bounding patches_per_level_per_proc to [1,infinity]\n";
       }
       patches_per_proc=1;
     }
@@ -444,13 +444,13 @@ TiledRegridder::problemSetup_BulletProofing( const int L )
   for(int dir = 0; dir <3; dir++){
     if(d_cellRefinementRatio[L][dir]%2!=0 && d_cellRefinementRatio[L][dir]!=1)
     {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: The specified cell refinement ratio is not divisible by 2\n";
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
     
     if(L!=0 && d_cellNum[L][dir] == 1 && d_minTileSize[L][dir] != 1) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: The problem you're running is <3D. \n"
         << " The min Patch Size must be 1 in the other dimensions. \n"
         << "Grid Size: " << d_cellNum[L] 
@@ -460,7 +460,7 @@ TiledRegridder::problemSetup_BulletProofing( const int L )
     }
 
     if(L!=0 && d_cellNum[L][dir] != 1 && d_minTileSize[L][dir] < 4) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: Min Patch Size needs to be greater than 4 cells in each dimension \n"
         << "except for 1-cell-wide dimensions.\n"
         << "  Patch size on level " << L << ": " << d_minTileSize[L] << endl;
@@ -469,13 +469,13 @@ TiledRegridder::problemSetup_BulletProofing( const int L )
     }
     
     if( log(d_cellNum[L][dir]/d_minTileSize[L][dir] )>10) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: CompressedIntVector requires more than 10 bits, the size of the CompressedIntVector needs to be increased";
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
 
     if( L < d_maxLevels-1 && ( d_inputMinTileSize[L][dir]%d_cellRefinementRatio[L][dir] != 0 ) ) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder L-"<< L <<": The min_patch_size (" << d_inputMinTileSize[L] << ") is not divisible by the cell_refinement_ratio ("
           <<  d_cellRefinementRatio[L] << ")";
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
@@ -484,7 +484,7 @@ TiledRegridder::problemSetup_BulletProofing( const int L )
   
   
   if ( L!=0 && Mod( d_cellNum[L], d_minTileSize[L] ) != IntVector(0,0,0) ) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Problem Setup: Regridder: The overall number of cells on level " << L << "(" << d_cellNum[L] << ") is not divisible by the minimum patch size (" <<  d_minTileSize[L] << ")\n";
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
@@ -560,7 +560,7 @@ void TiledRegridder::CoarsenFlags(GridP oldGrid, int l, vector<IntVector> tiles)
       for (CellIterator iter(int_low, int_high); !iter.done(); iter++)
       {
         //if(flags[*iter]==false)
-        //  cout << d_myworld->myRank() << "                changing flag at:" << *iter << " to true\n";
+        //  std::cout << d_myworld->myRank() << "                changing flag at:" << *iter << " to true\n";
         //set the refinement flag to true
         flags[*iter]=true;
       }
@@ -575,9 +575,9 @@ bool TiledRegridder::verifyGrid(Grid *grid)
   if(d_myworld->nRanks()==1)
     return true;
 
-  vector<int> checksums;
-  vector<int> their_checksums;
-  vector<string> labels;
+  std::vector<int> checksums;
+  std::vector<int> their_checksums;
+  std::vector<string> labels;
 
   int num_levels=grid->numLevels();
   grid_dbg << d_myworld->myRank() << " Grid number of levels:" << num_levels << endl;
@@ -590,7 +590,7 @@ bool TiledRegridder::verifyGrid(Grid *grid)
     {
       if(num_levels!=their_checksums[i])
       {
-        cout << d_myworld->myRank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
+        std::cout << d_myworld->myRank() << " Error number of levels does not match on rank " << i << " my levels:" << num_levels << " their levels:" << their_checksums[i] << endl;
         return false;
       }
     }
@@ -633,14 +633,14 @@ bool TiledRegridder::verifyGrid(Grid *grid)
       {
         if(checksums[i]!=their_checksums[p*checksums.size()+i])
         {
-          cout << d_myworld->myRank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
+          std::cout << d_myworld->myRank() << " Error grid inconsistency: " << labels[i] << " does not match on rank:" << p << endl;
           return false;
         }
       }
     }
   }
   //if(d_myworld->myRank()==0)
-  //  cout << " GRIDS ARE CONSISTENT\n";
+  //  std::cout << " GRIDS ARE CONSISTENT\n";
   return true;
 }
 
@@ -697,9 +697,9 @@ void TiledRegridder::GatherTiles(vector<IntVector>& mytiles, vector<IntVector> &
   if(d_myworld->nRanks()>1)
   {
     unsigned int mycount=mytiles.size();
-    vector<unsigned int> counts(d_myworld->nRanks());
+    std::vector<unsigned int> counts(d_myworld->nRanks());
 
-    vector<CompressedIntVector> tiles(mytiles.size()), gtiles;
+    std::vector<CompressedIntVector> tiles(mytiles.size()), gtiles;
 
     //copy tiles into compressed data structure
     for(size_t i=0; i<tiles.size();i++)
@@ -713,8 +713,8 @@ void TiledRegridder::GatherTiles(vector<IntVector>& mytiles, vector<IntVector> &
     Uintah::MPI::Allgather(&mycount,1,MPI_UNSIGNED,&counts[0],1,MPI_UNSIGNED,d_myworld->getComm());
 
     //compute the displacements and recieve counts for a gatherv
-    vector<int> displs(d_myworld->nRanks());
-    vector<int> recvcounts(d_myworld->nRanks());
+    std::vector<int> displs(d_myworld->nRanks());
+    std::vector<int> recvcounts(d_myworld->nRanks());
 
     int pos=0;
     for(int p=0;p<d_myworld->nRanks();p++)

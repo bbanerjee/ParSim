@@ -215,7 +215,7 @@ ImplicitCM::computeStressTensorImplicit(const PatchSubset*, const MPMMaterial*,
 void
 ImplicitCM::loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
                           double Bnl[3][81], vector<Vector> d_S,
-                          vector<IntVector> ni, double* oodx) const
+                          std::vector<IntVector> ni, double* oodx) const
 {
   for (int k = 0; k < 27; k++) {
     // Need to loop over the neighboring patches l2g to get the right
@@ -262,7 +262,7 @@ ImplicitCM::loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
 void
 ImplicitCM::loadBMats(Array3<int> l2g, int dof[24], double B[6][24],
                       double Bnl[3][24], vector<Vector> d_S,
-                      vector<IntVector> ni, double* oodx) const
+                      std::vector<IntVector> ni, double* oodx) const
 {
   for (int k = 0; k < 8; k++) {
     // Need to loop over the neighboring patches l2g to get the right

@@ -70,30 +70,30 @@ void
 Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
 {
 
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << endl;
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
       
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    cout << "time = " << time << endl;
+    std::cout << "time = " << time << endl;
     GridP grid = da->queryGrid(t);
-    ostringstream fnum;
+     std::ostringstream fnum;
     string filename;
     fnum << cx << "." << cy << "." << cz << ".time." << setw(4) << setfill('0') << t/clf.time_step_inc;
     string partroot("partIds.index.");
@@ -111,7 +111,7 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
       const Patch * patch = level->getPatchFromIndex(cell, true);
       if(patch != nullptr)
       {
-        cout << "Cell found on patch: " << patch->getID() << " on level: " << level << endl;   
+        std::cout << "Cell found on patch: " << patch->getID() << " on level: " << level << endl;   
       } else {
          continue;
       }

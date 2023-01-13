@@ -300,9 +300,9 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     //
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Matrix3 deformationGradientInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;

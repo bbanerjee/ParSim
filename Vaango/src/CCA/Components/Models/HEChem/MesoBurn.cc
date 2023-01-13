@@ -170,7 +170,7 @@ void MesoBurn::problemSetup(GridP&,
   for (ProblemSpecP child = DA_ps->findBlock("save");
        child != 0;
        child = child->findNextBlock("save") ){
-    map<string,string> var_attr;
+    std::map<string,string> var_attr;
     child->getAttributes(var_attr);
     if (var_attr["label"] == "totalMassBurned"){
       d_saveConservedVars->mass  = true;
@@ -188,7 +188,7 @@ void MesoBurn::problemSetup(GridP&,
   //  define the materialSet
   mymatls = scinew MaterialSet();
 
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);                                 // needed for the pressure and NC_CCWeight
   m.push_back(matl0->getDWIndex());
   m.push_back(matl1->getDWIndex());

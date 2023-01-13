@@ -121,14 +121,14 @@ void
 TriangularCrack::outputInitialCrackPlane(int i)
 {
 
-  cout << "  * Triangle " << i + 1 << ": meshed by [" << NCells << ", "
+  std::cout << "  * Triangle " << i + 1 << ": meshed by [" << NCells << ", "
        << NCells << ", " << NCells << "]" << endl;
   for (int j = 0; j < 3; j++)
-    cout << "    p" << j + 1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j + 1 << ": " << vertices[j] << endl;
   for (int j = 0; j < 3; j++) {
     if (AtFront[j]) {
       int j2 = (j + 2 < 4 ? j + 2 : 1);
-      cout << "    side " << j + 1 << " (p" << j + 1 << "-"
+      std::cout << "    side " << j + 1 << " (p" << j + 1 << "-"
            << "p" << j2 << ") is a crack front." << endl;
     }
   }
@@ -136,9 +136,9 @@ TriangularCrack::outputInitialCrackPlane(int i)
 
 void
 TriangularCrack::discretize(int& nstart0,
-                            vector<Point>& cx,
-                            vector<IntVector>& ce,
-                            vector<int>& SegNodes)
+                            std::vector<Point>& cx,
+                            std::vector<IntVector>& ce,
+                            std::vector<int>& SegNodes)
 {
   int i, j;
   int nstart1, nstart2, n1, n2, n3;

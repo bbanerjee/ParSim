@@ -109,36 +109,36 @@ void
 usage( const string & prog, const string & badArg )
 {
   if( rank == 0 ) {
-    cout << "\n";
+    std::cout << "\n";
     if( badArg != "" ) {
-      cout << prog << ": Bad command line argument: '" << badArg << "'\n\n";
+      std::cout << prog << ": Bad command line argument: '" << badArg << "'\n\n";
     }
 
-    cout << "Usage: mpirun -np <number> mpi_test [options]\n";
-    cout << "\n";
-    cout << "       mpi_test runs a number of MPI calls attempting to verify\n";
-    cout << "       that all nodes are up and running.  These tests include\n";
-    cout << "       both synchronous and async point to point messages, broadcasts,\n";
-    cout << "       reductions, and gathers.  Additionally, mpi_test will attempt\n";
-    cout << "       to create and read files on the file system on each node\n";
-    cout << "       (once per proc per node) to verify that the filesystem appears\n";
-    cout << "       to be working on all nodes.\n";
-    cout << "\n";
-    cout << "       Note, on Inferno, if some of the tests fail and report the processor\n";
-    cout << "       rank, you can look in the $PBS_NODEFILE for a list of processors.\n";
-    cout << "       Rank corresponds to location in the file (ie, rank 0 is the first\n";
-    cout << "       entry, rank 1 is the second entry, etc).\n";
-    cout << "\n";
-    cout << "       Options:\n";
-    cout << "\n";
-    cout << "         -nofs - Don't check filesystem.\n";
-    cout << "         -v    - Be verbose!  (Warning, on a lot of processors this will\n";
-    cout << "                   produce a lot of output! Also, this will initiate a number\n";
-    cout << "                   of additional MPI calls (to send verbose information) which\n";
-    cout << "                   could possibly hang and/or cause the outcome to be somewhat\n";
-    cout << "                   different from the non-verbose execution.)\n";
-    cout << "         -vv   - Be very verbose... see -v warning...\n";
-    cout << "\n";
+    std::cout << "Usage: mpirun -np <number> mpi_test [options]\n";
+    std::cout << "\n";
+    std::cout << "       mpi_test runs a number of MPI calls attempting to verify\n";
+    std::cout << "       that all nodes are up and running.  These tests include\n";
+    std::cout << "       both synchronous and async point to point messages, broadcasts,\n";
+    std::cout << "       reductions, and gathers.  Additionally, mpi_test will attempt\n";
+    std::cout << "       to create and read files on the file system on each node\n";
+    std::cout << "       (once per proc per node) to verify that the filesystem appears\n";
+    std::cout << "       to be working on all nodes.\n";
+    std::cout << "\n";
+    std::cout << "       Note, on Inferno, if some of the tests fail and report the processor\n";
+    std::cout << "       rank, you can look in the $PBS_NODEFILE for a list of processors.\n";
+    std::cout << "       Rank corresponds to location in the file (ie, rank 0 is the first\n";
+    std::cout << "       entry, rank 1 is the second entry, etc).\n";
+    std::cout << "\n";
+    std::cout << "       Options:\n";
+    std::cout << "\n";
+    std::cout << "         -nofs - Don't check filesystem.\n";
+    std::cout << "         -v    - Be verbose!  (Warning, on a lot of processors this will\n";
+    std::cout << "                   produce a lot of output! Also, this will initiate a number\n";
+    std::cout << "                   of additional MPI calls (to send verbose information) which\n";
+    std::cout << "                   could possibly hang and/or cause the outcome to be somewhat\n";
+    std::cout << "                   different from the non-verbose execution.)\n";
+    std::cout << "         -vv   - Be very verbose... see -v warning...\n";
+    std::cout << "\n";
   }
   MPI_Finalize();
   exit(1);
@@ -184,7 +184,7 @@ main( int argc, char* argv[] )
 #endif
 
   if( rank == 0 ) {
-    cout << "Testing mpi communication on " << procs << " processors.\n";
+    std::cout << "Testing mpi communication on " << procs << " processors.\n";
   }
 
   if( args.verbose ) { // Create 'rank to processor name' mapping:
@@ -208,9 +208,9 @@ main( int argc, char* argv[] )
         hostnames[ proc ] = hnMessage;
       }
 
-      cout << "Machine rank to name mapping:\n";
+      std::cout << "Machine rank to name mapping:\n";
       for( int r = 0; r < procs; r++ ) {
-        cout << r << ": " << hostnames[ r ] << "\n";
+        std::cout << r << ": " << hostnames[ r ] << "\n";
       }
     }
     else {
@@ -242,7 +242,7 @@ int
 testme(int (*testfunc)(void),const char* name)
 {
   if( rank == 0 ) {
-    cout << "Testing '" << name << "': ";
+    std::cout << "Testing '" << name << "': ";
     cout.flush();
   }
 
@@ -264,18 +264,18 @@ testme(int (*testfunc)(void),const char* name)
   if( rank == 0) {
 
     if( all_pass ) {
-      cout << "Passed" ;
+      std::cout << "Passed" ;
     }
     else {
-      cout << "Failed" ;
+      std::cout << "Failed" ;
     }
-    cout << " (Test took " << endTime - startTime << " seconds.)\n";
+    std::cout << " (Test took " << endTime - startTime << " seconds.)\n";
   }
   
   if( !all_pass ) {
     // Sync processors so output is in sync
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << error_stream.str();
+    std::cout << error_stream.str();
     cout.flush();
     error_stream.str("");
     // Sync processors so output is in sync
@@ -343,7 +343,7 @@ int
 allgather_test()
 {
   int         pass = true;
-  vector<int> message(procs,0);
+  std::vector<int> message(procs,0);
   
   Uintah::MPI::Allgather(&rank,1,MPI_INT,&message[0],1,MPI_INT,MPI_COMM_WORLD);
 
@@ -363,7 +363,7 @@ gather_test()
   int pass = true;
   
   for( int p=0; p < procs; p++ ) {
-    vector<int> message(procs,0);
+    std::vector<int> message(procs,0);
     
     MPI_Gather(&rank,1,MPI_INT,&message[0],1,MPI_INT,p,MPI_COMM_WORLD);
 
@@ -404,12 +404,12 @@ fileSystem_test()
   if( args.verbose ) {
     if( rank == 0 ) { 
 
-      cout << "\n";
-      cout << "   Print outs in the form of '.name (rank).' correspond to processors that have successfully\n";
-      cout << "   completed the test.  '<name (-rank)>' correspond to processors that failed file system check.\n";
-      cout << "\n";
+      std::cout << "\n";
+      std::cout << "   Print outs in the form of '.name (rank).' correspond to processors that have successfully\n";
+      std::cout << "   completed the test.  '<name (-rank)>' correspond to processors that failed file system check.\n";
+      std::cout << "\n";
 
-      vector<int>    messages(procs-1);
+      std::vector<int>    messages(procs-1);
       MPI_Request  * rrequest = new MPI_Request[ procs-1 ];
 
       for( int proc = 1; proc < procs; proc++ ) {    
@@ -443,10 +443,10 @@ fileSystem_test()
         if( numCompleted > 0 ) {
           for( int pos = 0; pos < numCompleted; pos++ ) {
             if( messages[completedBuffer[ pos ]] > 0 ) {
-              cout << "." << hostnames[completedBuffer[pos]] << " (" << messages[completedBuffer[pos]] << ").";
+              std::cout << "." << hostnames[completedBuffer[pos]] << " (" << messages[completedBuffer[pos]] << ").";
               totalPassed++;
             } else { // failed
-              cout << "<" << hostnames[completedBuffer[pos]] << " (" << messages[completedBuffer[pos]] << ")>";
+              std::cout << "<" << hostnames[completedBuffer[pos]] << " (" << messages[completedBuffer[pos]] << ")>";
               totalFailed++;
             }
             cout.flush();
@@ -455,7 +455,7 @@ fileSystem_test()
         
         totalCompleted += numCompleted;
         if( totalCompleted == (procs-1) ) {
-          cout << "\n\n";
+          std::cout << "\n\n";
           done = true;
         }
         else {
@@ -464,7 +464,7 @@ fileSystem_test()
           
           if( curTime > (startTime + (secsToWait*generation)) ) { // Give it 'secsToWait' seconds, then print some info
             if( rank == 0 ) {
-              cout << "\nWarning: Some processors have not responded after " << generation * secsToWait << " seconds.\n"
+              std::cout << "\nWarning: Some processors have not responded after " << generation * secsToWait << " seconds.\n"
                    << "           Continuing to wait...  Number of processors that have responded: " 
                    << totalPassed + totalFailed << " of " << procs-1 << ".\n";
               generation++;
@@ -477,8 +477,8 @@ fileSystem_test()
       } // end while (!done)
 
       if( rank == 0 ) {
-        cout << "Total number of processors reporting FS check success: " << totalPassed << ".\n";
-        cout << "Total number of processors reporting FS check failure: " << totalFailed << ".\n";
+        std::cout << "Total number of processors reporting FS check success: " << totalPassed << ".\n";
+        std::cout << "Total number of processors reporting FS check failure: " << totalFailed << ".\n";
       }
 
       // Clean up memory
@@ -504,7 +504,7 @@ int
 point2pointasync_test()
 {
   int                 pass = true;
-  vector<int>         messages(procs);
+  std::vector<int>         messages(procs);
   MPI_Request * srequest, * rrequest;
   
   srequest = new MPI_Request[ procs ];
@@ -571,12 +571,12 @@ point2pointasync_test()
 
     double secsToWait = 100.0;
     if( curTime - lastTime > secsToWait ) { // Give it 'secsToWait' seconds to finish
-      cout << "Proc " << rank << ": No progress has been made in the last " << curTime - lastTime << " seconds.\n";
+      std::cout << "Proc " << rank << ": No progress has been made in the last " << curTime - lastTime << " seconds.\n";
  
       // Find out (and display) which processors did not successfully respond...
       for( int pos = 0; pos < procs; pos++ ) {
         if( completed[ pos ] == false ) {
-          cout << "Proc " << rank << ": failed to hear from processor " << pos << ".\n";
+          std::cout << "Proc " << rank << ": failed to hear from processor " << pos << ".\n";
           pass = false;
         }
       }
@@ -626,7 +626,7 @@ point2pointsync_test()
   int message;
 
   if( rank == 0 && ( args.verbose > 1 )) {
-    cout << "\nBeginning point 2 point sync tests...\n\n";
+    std::cout << "\nBeginning point 2 point sync tests...\n\n";
   }
 
   for( int pp = 0; pp < procs; pp++ ) {
@@ -635,7 +635,7 @@ point2pointsync_test()
         if( p != pp ) { // Don't send to our self...
           MPI_Send( &rank, 1, MPI_INT, p, p, MPI_COMM_WORLD );
           if( rank == 0 && ( args.verbose > 1 )) {
-            cout << "Proc 0 finished MPI_Send to rank: " << p << "\n";
+            std::cout << "Proc 0 finished MPI_Send to rank: " << p << "\n";
           }
         }
       }
@@ -645,7 +645,7 @@ point2pointsync_test()
       message=-1;
       MPI_Recv(&message,1,MPI_INT,pp,rank,MPI_COMM_WORLD,&status);
       if( rank == 0 && ( args.verbose > 1 ) ) {
-        cout << "Proc 0 just MPI_Recv'd from rank: " << pp << "\n";
+        std::cout << "Proc 0 just MPI_Recv'd from rank: " << pp << "\n";
       }
       if( message != pp ) {
         pass = false;

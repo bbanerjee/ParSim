@@ -176,7 +176,7 @@ is_BC_specified(const ProblemSpecP& prob_spec,
     }
 
     if (failed) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "\n__________________________________\n "
            << "ERROR: A periodic AND a normal boundary condition have been "
               "specifed for \n"

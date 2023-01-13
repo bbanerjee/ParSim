@@ -255,7 +255,7 @@ main( int argc, char *argv[] )
     }else if(whichMMS=="exp") {                                                                                          
       mms = new ExpMMS(A, dyVis, p_ref);                                                                                              
     }else {                                                                                                              
-      cout << "current MMS not supported\n";                                                                            
+      std::cout << "current MMS not supported\n";                                                                            
       exit(1);                                                                                                          
     }
   }
@@ -322,7 +322,7 @@ main( int argc, char *argv[] )
     }else if(whichMMS=="expMMS") { 
       mms = new ExpMMS(A, dyVis, p_ref);
     }else {  
-      cout << "current MMS not supported\n";
+      std::cout << "current MMS not supported\n";
       exit(1);
     }
   }
@@ -339,17 +339,17 @@ main( int argc, char *argv[] )
     exit(1);
   }
 
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da1->queryTimesteps(index, times);
   
-  cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
-  cout << "MMS Type (whichMMS)        :" << whichMMS << endl;
-  cout << "dynamic viscosity          :"<<dyVis<<endl;
-  cout << "A (amplitude)              :"<<A<<endl;
-  cout << "Reference Pressure (p_ref) :"<< p_ref <<endl;
-  cout << "Resolution                 :" << resolution << endl;
-  cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
+  std::cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
+  std::cout << "MMS Type (whichMMS)        :" << whichMMS << endl;
+  std::cout << "dynamic viscosity          :"<<dyVis<<endl;
+  std::cout << "A (amplitude)              :"<<A<<endl;
+  std::cout << "Reference Pressure (p_ref) :"<< p_ref <<endl;
+  std::cout << "Resolution                 :" << resolution << endl;
+  std::cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
 
   unsigned int loopLowerBound;
   
@@ -391,7 +391,7 @@ main( int argc, char *argv[] )
         const Patch* patch = *iter;
 
         printf( "Looking at patch:\n");
-        cout << *patch << "\n";
+        std::cout << *patch << "\n";
         CCVariable<double> scalarVar;
         CCVariable<Vector> vectorVar;
         
@@ -409,7 +409,7 @@ main( int argc, char *argv[] )
                                   
           Point pt = patch->cellPosition(c);
           if(d_verbose){
-            cout <<"Cell:     "<< c <<"  Position: "<< pt <<endl;
+            std::cout <<"Cell:     "<< c <<"  Position: "<< pt <<endl;
           }
           double x_pos = pt.x();
           double y_pos = pt.y();
@@ -470,21 +470,21 @@ main( int argc, char *argv[] )
       } // end patch iteration
 
       if(varName=="pressurePS"||varName=="press_CC" || varName=="press_equil_CC") {
-        cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_D << endl;
-        cout << " Min. Diff: " << c_minDiff << " "<< minDiff_D << endl;
+        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_D << endl;
+        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_D << endl;
       }
       if(varName=="vel_CC"||varName=="newCCVelocity") {
-        cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_V << endl;
-        cout << " Min. Diff: " << c_minDiff << " "<< minDiff_V << endl;
+        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_V << endl;
+        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_V << endl;
       }
       
       if (varName=="pressurePS"||varName=="press_CC"|| varName=="press_equil_CC") {
-        cout << "i= " << i << endl;
-        cout << "L2norm of error: " << sqrt(total_error_D/i) << endl;
+        std::cout << "i= " << i << endl;
+        std::cout << "L2norm of error: " << sqrt(total_error_D/i) << endl;
         fprintf(outFile, "%le\n",sqrt(total_error_D/double(i))) ;
       }
       if (varName=="vel_CC"||varName=="newCCVelocity") {
-        cout << "i= " << i << ", L2norm of error= " << sqrt(total_error_V.length()/double(i)) << "\n";
+        std::cout << "i= " << i << ", L2norm of error= " << sqrt(total_error_V.length()/double(i)) << "\n";
         fprintf(outFile,"%le\n", sqrt(total_error_V.length()/double(i)) );
       }
     } // end levels iteration

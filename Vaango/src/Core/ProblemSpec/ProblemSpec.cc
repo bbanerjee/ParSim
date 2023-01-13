@@ -282,7 +282,7 @@ ProblemSpec::get(const std::string& name, double& value)
     if (!ss) {
       ps = 0;
       //      std::cout << "WARNING: ProblemSpec.cc: get(%s, double):
-      //      stringstream failed..." << name << std::endl;
+      //       std::stringstream failed..." << name << std::endl;
     }
   }
 
@@ -304,7 +304,7 @@ ProblemSpec::get(const std::string& name, unsigned int& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, uint): stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, uint):  std::stringstream failed...\n",
              name.c_str());
       ps = 0;
     }
@@ -328,7 +328,7 @@ ProblemSpec::get(const std::string& name, int& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, int): stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, int):  std::stringstream failed...\n",
              name.c_str());
       ps = 0;
     }
@@ -352,7 +352,7 @@ ProblemSpec::get(const std::string& name, long& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, long): stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, long):  std::stringstream failed...\n",
              name.c_str());
       ps = 0;
     }
@@ -378,7 +378,7 @@ ProblemSpec::get(const std::string& name, bool& value)
     result_stream >> nospace_cmp;
 
     if (!result_stream) {
-      printf("WARNING: ProblemSpec.cc: get(%s, bool): stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream failed...\n",
              name.c_str());
     }
 
@@ -1315,7 +1315,7 @@ ProblemSpec::getAttribute(const std::string& name, double& value) const
   std::istringstream ss(stringValue);
   ss >> value;
   if (!ss) {
-    printf("WARNING: ProblemSpec.cc: getAttribute(%s, double): stringstream "
+    printf("WARNING: ProblemSpec.cc: getAttribute(%s, double):  std::stringstream "
            "failed...\n",
            name.c_str());
   }
@@ -1336,7 +1336,7 @@ ProblemSpec::getAttribute(const std::string& name, int& value) const
   std::istringstream ss(stringValue);
   ss >> value;
   if (!ss) {
-    printf("WARNING: ProblemSpec.cc: getAttribute(%s, int): stringstream "
+    printf("WARNING: ProblemSpec.cc: getAttribute(%s, int):  std::stringstream "
            "failed...\n",
            name.c_str());
   }
@@ -1358,7 +1358,7 @@ ProblemSpec::getAttribute(const std::string& name, bool& value) const
   std::string nospace_cmp;
   result_stream >> nospace_cmp;
   if (!result_stream) {
-    printf("WARNING: ProblemSpec.cc: get(%s, bool): stringstream failed...\n",
+    printf("WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream failed...\n",
            name.c_str());
   }
 

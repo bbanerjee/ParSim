@@ -227,7 +227,7 @@ ArchesHeatFluxBC::getSurfaceArea() const
 double
 ArchesHeatFluxBC::fluxPerParticle(double time) const
 {
-  // cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
+  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
   if (d_numMaterialPoints < 1)
     return 0.0;
 
@@ -238,8 +238,8 @@ ArchesHeatFluxBC::fluxPerParticle(double time) const
   // Get the initial heatflux that is applied ( t = 0.0 )
   double heatflx = heatflux(time);
 #if 0
-  cout << "heatflx = " << heatflx << endl;
-  cout << "area = " << area << endl;
+  std::cout << "heatflx = " << heatflx << endl;
+  std::cout << "area = " << area << endl;
 #endif
 
   // Calculate the heatflux per particle
@@ -260,9 +260,9 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
   } else if (d_surfaceType == "cylinder") {
     double new_flux = d_polyData->interpolateValue(px) * getSurfaceArea() /
                       static_cast<double>(d_numMaterialPoints);
-    // cout << "interpolated new_flux = " << new_flux << endl;
+    // std::cout << "interpolated new_flux = " << new_flux << endl;
 #if 0
-    cout << "FLUX PER PARTICLE = " << fluxPerParticle << endl;
+    std::cout << "FLUX PER PARTICLE = " << fluxPerParticle << endl;
 
     Vector normal = gp->radialDirection(px);
     double theta = atan(px.y()/px.x());
@@ -271,14 +271,14 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
     double flux_variation_mag = fluxPerParticle*max_min/2.;
     double offset = fluxPerParticle - flux_variation_mag;
     double flux_variation = flux_variation_mag*cos(theta) + offset;
-    cout << "theta = " << theta << " theta_n = " << theta_n << endl;
-    cout << "flux = " << fluxPerParticle  << " flux_variation = " 
+    std::cout << "theta = " << theta << " theta_n = " << theta_n << endl;
+    std::cout << "flux = " << fluxPerParticle  << " flux_variation = " 
          << flux_variation <<  endl;
 
     //    flux = fluxPerParticle;
 #endif
     flux = new_flux;
-    //    cout << "flux = " << flux << endl;
+    //    std::cout << "flux = " << flux << endl;
   } else if (d_surfaceType == "sphere") {
     // SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
     // Vector normal = gp->radialDirection(px);

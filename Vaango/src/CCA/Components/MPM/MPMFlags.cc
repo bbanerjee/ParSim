@@ -218,7 +218,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     if (!d_axisymmetric) {
       d_interpolator = std::make_unique<TOBSplineInterpolator>();
     } else {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
            << ") Can't be used with axisymmetry at this time \n\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -227,7 +227,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     if (!d_axisymmetric) {
       d_interpolator = std::make_unique<BSplineInterpolator>();
     } else {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
            << ") Can't be used with axisymmetry at this time \n\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -255,7 +255,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   }
 #endif
   else {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
          << ")"
          << "Valid options are: \n"
@@ -314,7 +314,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   }
   if (!d_artificialViscosity && d_artificialViscosityHeating) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR:MPM: You can't have heating due to artificial viscosity "
          << "if artificial_viscosity is not enabled."
          << "\n";
@@ -363,7 +363,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
     // Do checks
     if (!(d_coordRotationAxis.length2() > 0.0)) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:MPM: Rotation axis has zero length: "
            << d_coordRotationAxis << "\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -373,7 +373,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
 
     if (d_coordRotationSpeed < 0.0) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:MPM: Rotation speed " << d_coordRotationSpeed << " is < 0"
            << "\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -438,7 +438,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   if (DA_ps) {
     for (ProblemSpecP label_iter = DA_ps->findBlock("save"); label_iter != 0;
          label_iter              = label_iter->findNextBlock("save")) {
-      map<string, string> labelName;
+      std::map<string, string> labelName;
       label_iter->getAttributes(labelName);
       if (labelName["label"] == "g.heatflux") {
         d_computeNodalHeatFlux = true;
@@ -454,7 +454,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     for (ProblemSpecP module_ps = da_ps->findBlock("Module"); module_ps != 0;
          module_ps              = module_ps->findNextBlock("Module")) {
       if (module_ps) {
-        map<string, string> attributes;
+        std::map<string, string> attributes;
         module_ps->getAttributes(attributes);
         if (attributes["name"] == "flatPlate_heatFlux") {
           d_computeNodalHeatFlux = true;

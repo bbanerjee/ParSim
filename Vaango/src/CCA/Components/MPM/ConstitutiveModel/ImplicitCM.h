@@ -104,7 +104,7 @@ protected:
 
   void loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
                      double Bnl[3][81], vector<Vector> d_S,
-                     vector<IntVector> ni, double oodx[3]) const;
+                     std::vector<IntVector> ni, double oodx[3]) const;
 
   ///////////////////////////////////////////////////////////////////////
   /*! Initialize the common quantities that all the implicit constituive

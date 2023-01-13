@@ -176,7 +176,7 @@ void DDT0::problemSetup(GridP&, SimulationStateP& sharedState,
       
     pCrackRadiusLabel = VarLabel::find("p.crackRad");
     if(!pCrackRadiusLabel){
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "\n ERROR:Model:DDT0: The constitutive model for the MPM reactant must be visco_scram in order to burn in cracks. \n";
       msg << " No other constitutive models are currently supported "; 
       throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
@@ -187,7 +187,7 @@ void DDT0::problemSetup(GridP&, SimulationStateP& sharedState,
   //  define the materialSet
   d_mymatls = scinew MaterialSet();
 
-  vector<int> m;
+  std::vector<int> m;
   m.push_back(0);                                 // needed for the pressure and NC_CCWeight
   m.push_back(d_matl0->getDWIndex());
   m.push_back(d_matl1->getDWIndex());
@@ -204,7 +204,7 @@ void DDT0::problemSetup(GridP&, SimulationStateP& sharedState,
   ProblemSpecP DA_ps = d_prob_spec->findBlock("DataArchiver");
   for (ProblemSpecP child = DA_ps->findBlock("save"); child != 0;
                     child = child->findNextBlock("save")) {
-    map<string,string> var_attr;
+    std::map<string,string> var_attr;
     child->getAttributes(var_attr);
     if (var_attr["label"] == "totalMassBurned"){
       d_saveConservedVars->mass  = true;

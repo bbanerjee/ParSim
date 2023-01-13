@@ -88,7 +88,7 @@ public:
                                           CCVariable<short int>& cellNAPID,
                                           const Patch*, DataWarehouse* new_dw,
                                           MPMLabel* lb,
-                                          vector<GeometryObject*>&);
+                                          std::vector<GeometryObject*>&);
 
   /////////////////////////////////////////////////////////////////////////
   //
@@ -98,7 +98,7 @@ public:
                                                 GeometryObject* obj);
 
 protected:
-  typedef map<pair<const Patch*, GeometryObject*>, vector<int>> geomint;
+  typedef  std::map< pair<const Patch*, GeometryObject*>, vector<int>> geomint;
   geompoints d_pos;
   geomvols d_vol;
   geomint d_type;

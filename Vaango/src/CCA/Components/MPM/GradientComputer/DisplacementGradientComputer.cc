@@ -57,8 +57,8 @@ DisplacementGradientComputer::computeDispGrad(ParticleInterpolator* interp,
                                               Matrix3& dispGrad_new)
 {
   // Get the node indices that surround the cell
-  vector<IntVector> ni(interp->size());
-  vector<Vector> d_S(interp->size());
+  std::vector<IntVector> ni(interp->size());
+  std::vector<Vector> d_S(interp->size());
   interp->findCellAndShapeDerivatives(px, ni, d_S, psize, pDefGrad_old);
 
   // Compute the gradient

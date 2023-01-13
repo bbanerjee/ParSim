@@ -287,7 +287,7 @@ void Wave::timeAdvanceEuler(const ProcessorGroup*,
     for(int m = 0;m<matls->size();m++){
       int matl = matls->get(m);
 
-      // cout << " Doing Wave::timeAdvanceEuler on patch " << patch->getID() << ", matl " << matl << endl;
+      // std::cout << " Doing Wave::timeAdvanceEuler on patch " << patch->getID() << ", matl " << matl << endl;
       delt_vartype dt;
       old_dw->get(dt, sharedState_->get_delt_label(), level);
 

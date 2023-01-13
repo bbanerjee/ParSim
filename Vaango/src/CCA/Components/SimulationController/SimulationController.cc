@@ -151,7 +151,7 @@ SimulationController::preGridSetup( void )
   d_scheduler = sched;
     
   if ( !d_output ){
-    cout << "dynamic_cast of 'd_output' failed!\n";
+    std::cout << "dynamic_cast of 'd_output' failed!\n";
     throw InternalError("dynamic_cast of 'd_output' failed!", 
                         __FILE__, __LINE__);
   }
@@ -183,8 +183,8 @@ SimulationController::gridSetup( void )
     d_archive = scinew DataArchive(checkpointRestartDir.getName(),
                                    d_myworld->myRank(), d_myworld->nRanks());
 
-    vector<int> indices;
-    vector<double> times;
+    std::vector<int> indices;
+    std::vector<double> times;
 
     try {
       d_archive->queryTimesteps(indices, times);
@@ -222,7 +222,7 @@ SimulationController::gridSetup( void )
       
     if (d_restartIndex == (int) indices.size()) {
       // timestep not found
-      ostringstream message;
+       std::ostringstream message;
       message << "Timestep " << d_restartTimestep << " not found";
       throw InternalError(message.str(), __FILE__, __LINE__);
     }
@@ -347,17 +347,17 @@ void
 SimulationController::adjustDelT(double& delt, double prev_delt, bool first, double t) 
 {
 #if 0
-  cout << "maxTime = " << d_timeinfo->maxTime << "\n";
-  cout << "initTime = " << d_timeinfo->initTime << "\n";
-  cout << "delt_min = " << d_timeinfo->delt_min << "\n";
-  cout << "delt_max = " << d_timeinfo->delt_max << "\n";
-  cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
-  cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
-  cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
-  cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
-  cout << "first = " << first << "\n";
-  cout << "delt = " << delt << "\n";
-  cout << "prev_delt = " << prev_delt << "\n";
+  std::cout << "maxTime = " << d_timeinfo->maxTime << "\n";
+  std::cout << "initTime = " << d_timeinfo->initTime << "\n";
+  std::cout << "delt_min = " << d_timeinfo->delt_min << "\n";
+  std::cout << "delt_max = " << d_timeinfo->delt_max << "\n";
+  std::cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
+  std::cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
+  std::cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
+  std::cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
+  std::cout << "first = " << first << "\n";
+  std::cout << "delt = " << delt << "\n";
+  std::cout << "prev_delt = " << prev_delt << "\n";
 #endif
 
   delt *= d_timeinfo->delt_factor;
@@ -757,7 +757,7 @@ stdDev = stdDeviation(d_sumOfWallTimes, d_sumOfWallTimeSquares, d_n-2);
     else {
       sprintf(walltime, ", elap T = %.2lf", d_wallTime);
     }
-    ostringstream message;
+     std::ostringstream message;
 
     message << "Time="         << time
             << " (timestep "  << timestep 

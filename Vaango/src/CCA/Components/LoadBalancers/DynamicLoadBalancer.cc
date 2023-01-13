@@ -94,7 +94,7 @@ DynamicLoadBalancer::~DynamicLoadBalancer()
 void
 DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     * oldGrid,
                                                 const vector< vector<Region> > & newGridRegions,
-                                                vector< vector<int> >          & particles )
+                                                std::vector< vector<int> >          & particles )
 {
   // Collect particles from the old grid's patches onto processor 0 and then distribute them
   // (it's either this or do 2 consecutive load balances).  For now, it's safe to assume that
@@ -114,7 +114,7 @@ DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     *
     return;
   }
 
-  vector<int> recvcounts(num_procs,0); // init the counts to 0
+  std::vector<int> recvcounts(num_procs,0); // init the counts to 0
   int totalsize = 0;
 
   DataWarehouse* dw = d_scheduler->get_dw(0);
@@ -122,7 +122,7 @@ DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     *
     return;
   }
 
-  vector<PatchInfo> subpatchParticles;
+  std::vector<PatchInfo> subpatchParticles;
   unsigned grid_index = 0;
   for(unsigned l=0;l<newGridRegions.size();l++){
     const vector<Region>& level = newGridRegions[l];
@@ -187,7 +187,7 @@ DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     *
     }
   }
 
-  vector<int> num_particles(num_patches, 0);
+  std::vector<int> num_particles(num_patches, 0);
 
   if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
@@ -195,8 +195,8 @@ DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     *
     MPI_Type_contiguous(2, MPI_INT, &particletype);
     MPI_Type_commit(&particletype);
 
-    vector<PatchInfo> recvbuf(totalsize);
-    vector<int> displs(num_procs,0);
+    std::vector<PatchInfo> recvbuf(totalsize);
+    std::vector<int> displs(num_procs,0);
     for (unsigned i = 1; i < displs.size(); i++) {
       displs[i] = displs[i-1]+recvcounts[i-1];
     }
@@ -244,7 +244,7 @@ DynamicLoadBalancer::collectParticlesForRegrid( const Grid                     *
 //
 void
 DynamicLoadBalancer::collectParticles( const Grid                  * grid,
-                                             vector< vector<int> > & particles )
+                                             std::vector< vector<int> > & particles )
 {
   particles.resize(grid->numLevels());
   for(int l=0;l<grid->numLevels();l++) {
@@ -279,8 +279,8 @@ DynamicLoadBalancer::collectParticles( const Grid                  * grid,
     return;
   }
 
-  vector<PatchInfo> particleList;
-  vector<int> num_particles(num_patches, 0);
+  std::vector<PatchInfo> particleList;
+  std::vector<int> num_particles(num_patches, 0);
 
   // Find out how many particles per patch, and store that number
   // along with the patch number in particleList.
@@ -311,13 +311,13 @@ DynamicLoadBalancer::collectParticles( const Grid                  * grid,
 
   if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
-    vector<int> displs(num_procs, 0);
-    vector<int> recvcounts(num_procs,0); // init the counts to 0
+    std::vector<int> displs(num_procs, 0);
+    std::vector<int> recvcounts(num_procs,0); // init the counts to 0
 
     // order patches by processor #, to determine recvcounts easily
     //vector<int> sorted_processorAssignment = d_processorAssignment;
     //sort(sorted_processorAssignment.begin(), sorted_processorAssignment.end());
-    vector<PatchInfo> all_particles(num_patches);
+    std::vector<PatchInfo> all_particles(num_patches);
 
     for (int i = 0; i < (int)d_processorAssignment.size(); i++) {
       recvcounts[d_processorAssignment[i]]+=sizeof(PatchInfo);
@@ -364,7 +364,7 @@ bool
 DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
 {
   doing << d_myworld->myRank() << "   APF\n";
-  vector<vector<double> > patch_costs;
+  std::vector<vector<double> > patch_costs;
   double time = Time::currentSeconds();
   
   for(int i=0;i<5;i++){
@@ -389,9 +389,9 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
 
   int level_offset=0;
 
-  vector<double> totalProcCosts(num_procs,0);
-  vector<double> procCosts(num_procs,0);
-  vector<double> previousProcCosts(num_procs,0);
+  std::vector<double> totalProcCosts(num_procs,0);
+  std::vector<double> procCosts(num_procs,0);
+  std::vector<double> previousProcCosts(num_procs,0);
   
   double previous_total_cost=0;
   
@@ -401,7 +401,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
 
     const LevelP& level = grid->getLevel(l);
     int num_patches = level->numPatches();
-    vector<int> order(num_patches);
+    std::vector<int> order(num_patches);
     double total_cost = 0;
 
     for (unsigned i = 0; i < patch_costs[l].size(); i++){
@@ -426,7 +426,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     if(!force)  //use initial load balance to start the iteration
     {
       //compute costs of current load balance
-      vector<double> currentProcCosts(num_procs);
+      std::vector<double> currentProcCosts(num_procs);
 
       for(int p=0;p<(int)patch_costs[l].size();p++)
       {
@@ -450,8 +450,8 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     }
 
     //temperary vector to assign the load balance in
-    vector<int> temp_assignment(d_tempAssignment);
-    vector<int> maxList(num_procs);
+    std::vector<int> temp_assignment(d_tempAssignment);
+    std::vector<int> maxList(num_procs);
 
     //__________________________________
     //iterate the load balancing algorithm until the max can no longer be lowered
@@ -464,7 +464,7 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
       double avgCostPerProc = remainingCost / num_procs;
 
       int currentProc = 0;
-      vector<double> currentProcCosts(num_procs,0);
+      std::vector<double> currentProcCosts(num_procs,0);
       double currentMaxCost = 0;
 
       for (int p = 0; p < num_patches; p++) {
@@ -597,8 +597,8 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     {
       //calculate lb stats:
       double totalCost=0;
-      vector<double> procCosts(num_procs,0);
-      vector<int>  patchCounts(num_procs,0);
+      std::vector<double> procCosts(num_procs,0);
+      std::vector<int>  patchCounts(num_procs,0);
       
       for(int p=0;p<num_patches;p++){
         int me = d_tempAssignment[level_offset+p];
@@ -689,12 +689,12 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     Uintah::MPI::Reduce(&lbtimes,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
     
     if(d_myworld->myRank()==0) {
-      cout << "LoadBalance Avg Times: "; 
+      std::cout << "LoadBalance Avg Times: "; 
       for(int i=0;i<5;i++){
         avg[i]/=d_myworld->nRanks();
-        cout << avg[i] << " ";
+        std::cout << avg[i] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
     
     double max[5]={0};
@@ -702,11 +702,11 @@ DynamicLoadBalancer::assignPatchesFactor( const GridP & grid, bool force )
     Uintah::MPI::Reduce(&lbtimes,&max,5,MPI_DOUBLE,MPI_MAX,0,d_myworld->getComm());
     
     if(d_myworld->myRank()==0) {
-      cout << "LoadBalance Max Times: "; 
+      std::cout << "LoadBalance Max Times: "; 
       for(int i=0;i<5;i++){
-        cout << max[i] << " ";
+        std::cout << max[i] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
   }
   
@@ -735,8 +735,8 @@ DynamicLoadBalancer::thresholdExceeded( const vector< vector<double> >& patch_co
   int num_procs = d_myworld->nRanks();
   int num_levels = patch_costs.size();
   
-  vector<vector<double> > currentProcCosts(num_levels);
-  vector<vector<double> > tempProcCosts(num_levels);
+  std::vector<vector<double> > currentProcCosts(num_levels);
+  std::vector<vector<double> > tempProcCosts(num_levels);
 
   int i = 0;
   for( int l = 0; l < num_levels; l++ ) {
@@ -841,7 +841,7 @@ DynamicLoadBalancer::assignPatchesRandom( const GridP &, bool force )
   int num_procs = d_myworld->nRanks();
   int num_patches = (int)d_tempAssignment.size();
 
-  vector<int> proc_record(num_procs,0);
+  std::vector<int> proc_record(num_procs,0);
   int max_ppp = num_patches / num_procs;
 
   for (int i = 0; i < num_patches; i++) {
@@ -934,13 +934,13 @@ DynamicLoadBalancer::getCosts( const Grid * grid, vector< vector<double> > & cos
 {
   costs.clear();
     
-  vector<vector<int> > num_particles;
+  std::vector<vector<int> > num_particles;
 
   DataWarehouse* olddw = d_scheduler->get_dw(0);
   bool on_regrid = olddw != 0 && grid != olddw->getGrid();
 
   if( on_regrid ) {
-    vector<vector<Region> > regions;
+    std::vector<vector<Region> > regions;
     // prepare the list of regions
     for (int l = 0; l < grid->numLevels(); l++) {
       regions.push_back(vector<Region>());
@@ -1158,7 +1158,7 @@ DynamicLoadBalancer::problemSetup( ProblemSpecP & pspec, GridP & grid,  Simulati
 
 
   if(d_myworld->myRank()==0) {
-    cout << "Dynamic Algorithm: " << dynamicAlgo << endl;
+    std::cout << "Dynamic Algorithm: " << dynamicAlgo << endl;
   }
 
   if (dynamicAlgo == "cyclic") {
@@ -1177,7 +1177,7 @@ DynamicLoadBalancer::problemSetup( ProblemSpecP & pspec, GridP & grid,  Simulati
   }
   else {
     if (d_myworld->myRank() == 0) {
-      cout << "Invalid Load Balancer Algorithm: " << dynamicAlgo
+      std::cout << "Invalid Load Balancer Algorithm: " << dynamicAlgo
         << "\nPlease select 'cyclic', 'random', 'patchFactor' (default), or 'patchFactorParticles'\n"
         << "\nUsing 'patchFactor' load balancer\n";
     }
@@ -1205,7 +1205,7 @@ DynamicLoadBalancer::problemSetup( ProblemSpecP & pspec, GridP & grid,  Simulati
     // Query mps from a patch
     const Patch *patch=grid->getLevel(0)->getPatch(0);
 
-    vector<IntVector> mps;
+    std::vector<IntVector> mps;
     mps.push_back(patch->getCellHighIndex()-patch->getCellLowIndex());
 
     d_costForecaster->setMinPatchSize(mps);

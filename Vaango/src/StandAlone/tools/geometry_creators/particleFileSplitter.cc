@@ -180,12 +180,12 @@ main(int argc, char *argv[])
                   throw ProblemSetupException("Unexpected field variable of '"+next_var_name+"'", __FILE__, __LINE__);
               }
               
-              vector<vector<pair<Point,vector<double> > > > points(level->numPatches());
+              std::vector<vector<pair<Point,vector<double> > > > points(level->numPatches());
               Point min(1e30,1e30,1e30),max(-1e30,-1e30,-1e30);
               
               double x,y,z;
               while (source >> x >> y >> z) {
-                vector<double> cols;
+                std::vector<double> cols;
                 for(int ic=0;ic<ncols;ic++){
                   double v;
                   source >> v;
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
                 }
                 for (int I = 0; I < (int) points[pid].size(); I++) {
                   Point  p = points[pid][I].first;
-                  vector<double> r = points[pid][I].second;
+                  std::vector<double> r = points[pid][I].second;
                   
                   // FIXME: should have way of specifying endiness
                   if(binmode) {

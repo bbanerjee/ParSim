@@ -161,7 +161,7 @@ double BirchMurnaghan::computeRhoMicro(double press, double,
 
             // After 50 more iterations finally quit out
             if(count>=150){
-              ostringstream warn;
+               std::ostringstream warn;
               warn << std::setprecision(15);
               warn << "ERROR:ICE:BirchMurnaghan::computeRhoMicro(...) not converging. \n";
               warn << "press= " << press << " temp=" << temp << " cv=" << cv << "\n";

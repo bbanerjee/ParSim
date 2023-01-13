@@ -64,7 +64,7 @@
 string lineHeader(const Counter indent)
   // Print header for each output line printed using DebugStream
 {
-  ostringstream os;
+   std::ostringstream os;
   os << "P"
      << setw(2) << left << MYID << ": ";
   for (Counter i = 0; i < 2*indent; i++) os << " ";

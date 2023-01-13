@@ -128,7 +128,7 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
   sharedState = in_state;
   matl = sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = matl->getDWIndex();
   mymatls = scinew MaterialSet();
   mymatls->addAll(m);
@@ -180,7 +180,7 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
        child = child->findNextBlock("stream")) {
     string name;
     child->getAttribute("name", name);
-    map<string, Stream*>::iterator iter = names.find(name);
+    std::map<string, Stream*>::iterator iter = names.find(name);
     if(iter == names.end())
       throw ProblemSetupException("Stream "+name+" species not found", __FILE__, __LINE__);
     Stream* stream = iter->second;
@@ -188,7 +188,7 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
          geom_obj_ps != 0;
          geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
       
-      vector<GeometryPiece*> pieces;
+      std::vector<GeometryPiece*> pieces;
       GeometryPieceFactory::create(geom_obj_ps, pieces);
       
       GeometryPiece* mainpiece;
@@ -264,7 +264,7 @@ void Mixing3::initialize(const ProcessorGroup*,
       for(CellIterator iter = patch->getExtraCellIterator();
           !iter.done(); iter++){
         if(sum[*iter] != 1.0){
-          ostringstream msg;
+           std::ostringstream msg;
           msg << "Initial massFraction != 1.0: value=";
           msg << sum[*iter] << " at " << *iter;
           throw ProblemSetupException(msg.str(), __FILE__, __LINE__);

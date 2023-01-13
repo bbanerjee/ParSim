@@ -186,7 +186,7 @@ WARNING
       VarLabel* scalar_source_CCLabel;
       VarLabel* diffusionCoefLabel;
       
-      vector<Region*> regions;
+      std::vector<Region*> regions;
       double f_stoic;
       double diff_coeff;
       int  initialize_diffusion_knob;
@@ -214,8 +214,8 @@ WARNING
     
     SimulationStateP sharedState;
     Output* dataArchiver;
-    vector<Vector> d_probePts;
-    vector<string> d_probePtsNames;
+    std::vector<Vector> d_probePts;
+    std::vector<string> d_probePtsNames;
     bool d_usingProbePts;
     bool d_test_conservation;
     double d_probeFreq;

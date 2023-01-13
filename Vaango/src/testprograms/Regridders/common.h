@@ -107,13 +107,13 @@ void outputPatches(vector<Region> &patches, ostream& out)
 }
 void gatherFlags(vector<IntVector> &flags, vector<IntVector> &gflags)
 {
-  vector<int> num_flags(num_procs);
+  std::vector<int> num_flags(num_procs);
   int num=flags.size();
 
   Uintah::MPI::Allgather(&num,1,MPI_INT,&num_flags[0],1,MPI_INT,MPI_COMM_WORLD);
 
-  vector<int> counts(num_procs);
-  vector<int> displ(num_procs);
+  std::vector<int> counts(num_procs);
+  std::vector<int> displ(num_procs);
  
   int total=0;
   for(int i=0;i<num_procs;i++)
@@ -128,7 +128,7 @@ void gatherFlags(vector<IntVector> &flags, vector<IntVector> &gflags)
 }
 void outputFlags(vector<IntVector> &flags, ostream &out)
 {
-  vector<IntVector> global_flags;
+  std::vector<IntVector> global_flags;
   gatherFlags(flags,global_flags);
   
   if(rank==0)
@@ -143,13 +143,13 @@ void outputFlags(vector<IntVector> &flags, ostream &out)
 }
 void gatherPatches(vector<Region> &patches, vector<Region> &global_patches)
 {
-  vector<int> num_patches(num_procs);
+  std::vector<int> num_patches(num_procs);
   int num=patches.size();
 
   Uintah::MPI::Allgather(&num,1,MPI_INT,&num_patches[0],1,MPI_INT,MPI_COMM_WORLD);
 
-  vector<int> counts(num_procs);
-  vector<int> displ(num_procs);
+  std::vector<int> counts(num_procs);
+  std::vector<int> displ(num_procs);
  
   int total=0;
   for(int i=0;i<num_procs;i++)
@@ -165,7 +165,7 @@ void gatherPatches(vector<Region> &patches, vector<Region> &global_patches)
 
 void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double p)
 {
-  list<Region> to_split_patches(patches.begin(),patches.end());
+   std::list<Region> to_split_patches(patches.begin(),patches.end());
   split_patches.clear();
   long long vol=0;
   for(size_t i=0;i<patches.size();i++)
@@ -175,7 +175,7 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
   Uintah::MPI::Allreduce(&vol,&total_vol,1,MPI_LONG_LONG,MPI_SUM,MPI_COMM_WORLD);
 
   //if(rank==0)
-  //  cout << "local vol: " << vol << " total vol: " << total_vol << endl;
+  //  std::cout << "local vol: " << vol << " total vol: " << total_vol << endl;
 
   long long thresh=total_vol/num_procs*p;
 

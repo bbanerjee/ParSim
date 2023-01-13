@@ -105,7 +105,7 @@ SoilModelBrannon::SoilModelBrannon(ProblemSpecP& ps, MPMFlags* Mflag)
   auto intvar = Vaango::InternalVariableModelFactory::create(ps);
   d_intvar = dynamic_cast<Vaango::IntVar_SoilBrannon*>(intvar);
   if (!d_intvar) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "SoilModelBrannon->InternalVariableModelFactory."
          << endl;
@@ -366,9 +366,9 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
 
     // Declare the interpolator variables
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Get particle subset for the current patch
     int dwi = matl->getDWIndex();
@@ -704,13 +704,13 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         // there is an issue
         // with the yield surface, which should be reported.
         if (char_length_yield_surface < 0.0) {
-          cout << "ERROR! in char_length_yield_surface" << endl;
-          cout << "char_length_yield_surface=" << char_length_yield_surface
+          std::cout << "ERROR! in char_length_yield_surface" << endl;
+          std::cout << "char_length_yield_surface=" << char_length_yield_surface
                << endl;
-          cout << "pKappa_new[idx]=" << kappa_new << endl;
-          cout << "cap_radius=" << cap_radius << endl;
-          cout << "peakI1_hardening/fSlope=" << PI1_h_over_fSlope << endl;
-          cout << "idx=" << idx << endl;
+          std::cout << "pKappa_new[idx]=" << kappa_new << endl;
+          std::cout << "cap_radius=" << cap_radius << endl;
+          std::cout << "peakI1_hardening/fSlope=" << PI1_h_over_fSlope << endl;
+          std::cout << "idx=" << idx << endl;
           throw InvalidValue("**ERROR**:in char_length_yield_surface", __FILE__,
                              __LINE__);
         }
@@ -910,7 +910,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
             // Compute internal variable
             kappa_new = d_intvar->computeInternalVariable("dummy", nullptr, &state);
             // if (kappa_new > 0.0) {
-            //  cout << " kappa > 0 in particle " << idx << " kappa_new = " <<
+            //  std::cout << " kappa > 0 in particle " << idx << " kappa_new = " <<
             //  kappa_new
             //       << " kappa_temp = " << kappa_temp << " cap_radius = " <<
             //       cap_radius
@@ -1198,8 +1198,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                       // reported.
                       counter_I1_iteration2 = counter_I1_iteration2 + 1;
                       if (counter_I1_iteration2 > 1000) {
-                        cout << "ERROR! in fast return algorithm" << endl;
-                        cout << "idx=" << idx << endl;
+                        std::cout << "ERROR! in fast return algorithm" << endl;
+                        std::cout << "idx=" << idx << endl;
                         throw InvalidValue("**ERROR**:in fast return algorithm",
                                            __FILE__, __LINE__);
                       }
@@ -1422,8 +1422,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                 // be reported.
                 counter_gamma1 = counter_gamma1 + 1;
                 if (counter_gamma1 > 1000) {
-                  cout << "ERROR! in nested retuen algorithm" << endl;
-                  cout << "idx=" << idx << endl;
+                  std::cout << "ERROR! in nested retuen algorithm" << endl;
+                  std::cout << "idx=" << idx << endl;
                   throw InvalidValue("**ERROR**:in nested retuen algorithm",
                                      __FILE__, __LINE__);
                 }
@@ -1614,7 +1614,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
 
                 // Compute internal variable
                 // if (kappa_loop > 0.0) {
-                //  cout << " kappa > 0 in particle " << idx << " subcycle = "
+                //  std::cout << " kappa > 0 in particle " << idx << " subcycle = "
                 //  << subcycle_counter
                 //       << " kappa_loop = " << kappa_loop
                 //       << " kappa_loop_oldp = " << kappa_loop_old << "
@@ -2206,7 +2206,7 @@ SoilModelBrannon::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-//  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR
+//  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR
 //  SoilModelBrannon"<<endl;
 #endif
 }
@@ -2227,7 +2227,7 @@ SoilModelBrannon::computePressEOSCM(double rho_cur, double& pressure,
   tmp = (bulk + 4. * shear / 3.) / rho_cur; // speed of sound squared
 
 #if 1
-// cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
+// std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
 //      << endl;
 #endif
 }
@@ -2238,7 +2238,7 @@ SoilModelBrannon::getCompressibility()
   double bulk = d_cm.B0;
 
 #if 1
-// cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
+// std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
 //      << endl;
 #endif
 

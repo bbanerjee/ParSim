@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 
   // Read the particle ID file
   std::cout << "Particle ID File to be read = " << partIDFile << endl;
-  vector<long64> partID;
+  std::vector<long64> partID;
   std::ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
     std::cerr << "Particle ID File " << partIDFile << " not found \n";
@@ -339,7 +339,7 @@ void printScalarVariable(DataArchive* da,
     for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
       auto particleID = partID[ii];
       if (matData.find(particleID) != matData.end()) {
-        ostringstream name;
+         std::ostringstream name;
         name << outFile << "_p" << std::setw(2) << std::setfill('0') << (ii+1);
         std::ofstream file(name.str());
         file.setf(std::ios::scientific,std::ios::floatfield);

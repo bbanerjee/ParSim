@@ -98,7 +98,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
 
   // fill the list of post relocation variables
   for (size_t m = 0; m < otherLabels.size(); m++) {
-    vector<const VarLabel*> tmp;
+    std::vector<const VarLabel*> tmp;
     postRelocOtherLabels.push_back(tmp);
 
     for (size_t p = 0; p < otherLabels[m].size(); p++) {
@@ -977,8 +977,8 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
         int matl = matls->get(m);
 
         int numVars = (int)d_reloc_old_labels[m].size();
-        vector<const Patch*> fromPatches;
-        vector<ParticleSubset*> subsets;
+        std::vector<const Patch*> fromPatches;
+        std::vector<ParticleSubset*> subsets;
 
         ParticleSubset* keep_pset = keep_psets(p, m);
         ASSERT(keep_pset != 0);
@@ -1077,7 +1077,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
           //__________________________________
           // particle position
           // Merge local portion
-          vector<ParticleVariableBase*> invars(subsets.size());
+          std::vector<ParticleVariableBase*> invars(subsets.size());
           for (int i = 0; i < (int)numOldVariables; i++) {
             invars[i] = new_dw->getParticleVariable(d_reloc_old_pos_label,
                                                     matl,
@@ -1108,7 +1108,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
 
           //__________________________________
           // other particle variables
-          vector<ParticleVariableBase*> vars(numVars);
+          std::vector<ParticleVariableBase*> vars(numVars);
 
           for (int v = 0; v < numVars; v++) {
             const VarLabel* label = d_reloc_old_labels[m][v];
@@ -1458,8 +1458,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
         int matl = matls->get(m);
 
         int numVars = (int)d_reloc_old_labels[m].size();
-        vector<const Patch*> fromPatches;
-        vector<ParticleSubset*> subsets;
+        std::vector<const Patch*> fromPatches;
+        std::vector<ParticleSubset*> subsets;
 
         ParticleSubset* keep_pset = keep_psets(p, m);
         ASSERT(keep_pset != 0);
@@ -1565,7 +1565,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           //__________________________________
           // particle position
           // Merge local portion
-          vector<ParticleVariableBase*> invars(subsets.size());
+          std::vector<ParticleVariableBase*> invars(subsets.size());
           for (int i = 0; i < (int)numOldVariables; i++) {
             invars[i] = new_dw->getParticleVariable(d_reloc_old_pos_label,
                                                     matl,
@@ -1609,7 +1609,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 
           //__________________________________
           // other particle variables
-          vector<ParticleVariableBase*> vars(numVars);
+          std::vector<ParticleVariableBase*> vars(numVars);
 
           for (int v = 0; v < numVars; v++) {
             const VarLabel* label = d_reloc_old_labels[m][v];

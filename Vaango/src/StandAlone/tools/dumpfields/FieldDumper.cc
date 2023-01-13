@@ -68,14 +68,14 @@ namespace Uintah {
     string dirname = this->basedir_+"_"+this->directoryExt();
     Dir dumpdir;
     try {
-      cout << "creating " << dirname << endl;
+      std::cout << "creating " << dirname << endl;
       dumpdir.create(dirname);
     } catch (ErrnoException & e) {
-      cout << "creating failed for reason " << e.getErrno() << endl;
-      cout << "ignore on " << EEXIST << endl;
+      std::cout << "creating failed for reason " << e.getErrno() << endl;
+      std::cout << "ignore on " << EEXIST << endl;
       // only allow exists as a reason for failure
       if(e.getErrno()!= EEXIST) {
-        cout << "unknown error - rethrowing" << endl;
+        std::cout << "unknown error - rethrowing" << endl;
         throw;
       }
     }
@@ -85,7 +85,7 @@ namespace Uintah {
   string
   FieldDumper::time_string(double tval)
   {
-    ostringstream b;
+     std::ostringstream b;
     b.setf(ios::fixed,ios::floatfield);
     b.precision(8);
     b << setw(12) << setfill('0') << tval;
@@ -104,7 +104,7 @@ namespace Uintah {
   string
   FieldDumper::step_string(int istep)
   {
-    ostringstream b;
+     std::ostringstream b;
     b.setf(ios::fixed,ios::floatfield);
     b.precision(8);
     b << setw(8) << setfill('0') << istep;
@@ -114,7 +114,7 @@ namespace Uintah {
   string
   FieldDumper::mat_string(int mval)
   {
-    ostringstream b;
+     std::ostringstream b;
     b << setw(4) << setfill('0') << mval;
     return b.str();
   }

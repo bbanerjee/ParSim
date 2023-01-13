@@ -70,7 +70,7 @@ void Param::setDomain(const Counter baseResolution,
 {
   if (domain) delete domain;
   domain = scinew Level(numDims,1.0/baseResolution);
-  vector<int> lower(numDims,0), upper(numDims,baseResolution);
+  std::vector<int> lower(numDims,0), upper(numDims,baseResolution);
   Patch* box = scinew Patch(-1,-1,Box(lower,upper));
   box->setAllBC(bc);
   domain->_patchList.push_back(box);

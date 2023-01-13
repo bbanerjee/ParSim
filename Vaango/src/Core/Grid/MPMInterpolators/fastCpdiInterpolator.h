@@ -43,23 +43,23 @@ namespace Uintah {
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     
     virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
-                                    vector<double>& S, const Matrix3& size, const Matrix3& defgrad);
+                                    std::vector<double>& S, const Matrix3& size, const Matrix3& defgrad);
     virtual void findCellAndShapeDerivatives(const Point& pos,
-                                             vector<IntVector>& ni,
-                                             vector<Vector>& d_S,
+                                             std::vector<IntVector>& ni,
+                                             std::vector<Vector>& d_S,
                                              const Matrix3& size,
                                              const Matrix3& defgrad);
     virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       vector<IntVector>& ni,
-                                                       vector<double>& S,
-                                                       vector<Vector>& d_S,
+                                                       std::vector<IntVector>& ni,
+                                                       std::vector<double>& S,
+                                                       std::vector<Vector>& d_S,
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
    //__________________________________
    //  Needed for AMRMPM
     virtual void findCellAndWeights(const Point& pos,
-                                    vector<IntVector>& ni,
-                                    vector<double>& S,
+                                    std::vector<IntVector>& ni,
+                                    std::vector<double>& S,
                                     constNCVariable<Stencil7>& zoi,
                                     constNCVariable<Stencil7>& zoi_fine,
                                     const bool& getFiner,
@@ -68,15 +68,15 @@ namespace Uintah {
                                     const Patch* patch) {}
                                     
     virtual void findCellAndWeights_CFI(const Point& pos,
-                                        vector<IntVector>& ni,
-                                        vector<double>& S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<double>& S,
                                         constNCVariable<Stencil7>& zoi) {}
                                     
     virtual void findCellAndWeightsAndShapeDerivatives_CFI(
                                             const Point& pos,
-                                            vector<IntVector>& CFI_ni,
-                                            vector<double>& S,
-                                            vector<Vector>& d_S,
+                                            std::vector<IntVector>& CFI_ni,
+                                            std::vector<double>& S,
+                                            std::vector<Vector>& d_S,
                                             constNCVariable<Stencil7>& zoi) {}
     virtual int size();
     

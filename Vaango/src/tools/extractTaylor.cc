@@ -90,16 +90,16 @@ int main(int argc, char** argv)
 
    // Read in the initial particle location
    double rad, height;
-   cout << "\n Enter radius and height ";
+   std::cout << "\n Enter radius and height ";
    cin >> rad >> height;
-   cout << rad << " " << height << endl;
+   std::cout << rad << " " << height << endl;
    double dx;
-   cout << "\n Enter width of search box ";
+   std::cout << "\n Enter width of search box ";
    cin >> dx;
-   cout << dx << endl;
+   std::cout << dx << endl;
 
    // Create an array for storing the PIDs
-   vector<int64_t> pidVec;
+   std::vector<int64_t> pidVec;
 
    // Read the header 
    posFile.ignore(1000,'\n');

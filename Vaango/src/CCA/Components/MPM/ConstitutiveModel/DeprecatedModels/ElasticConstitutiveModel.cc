@@ -90,7 +90,7 @@ ElasticConstitutiveModel::~ElasticConstitutiveModel()
 {
   // Destructor
 
-  // cout << "Calling ElasticConstitutiveModel destructor . . . " << endl;
+  // std::cout << "Calling ElasticConstitutiveModel destructor . . . " << endl;
   VarLabel::destroy(p_cmdata_label);
   VarLabel::destroy(p_cmdata_label_preReloc);
 }

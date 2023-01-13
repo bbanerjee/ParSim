@@ -67,8 +67,8 @@ void CostModelForecaster::outputError(const GridP grid)
 {
   static int iter=0;
   iter++;
-  vector<vector<int> > num_particles;
-  vector<vector<double> > costs;
+  std::vector<vector<int> > num_particles;
+  std::vector<vector<double> > costs;
   
   d_lb->collectParticles(grid.get_rep(),num_particles);
   getWeights(grid.get_rep(), num_particles,costs);
@@ -97,14 +97,14 @@ void CostModelForecaster::outputError(const GridP grid)
       
       double error = (d_execTimes[patch->getID()] - costs[l][p])/(d_execTimes[patch->getID()] + costs[l][p]);
 
-//      cout << d_myworld->myRank() << " patch:" << patch->getID() << " exectTime: " << d_execTimes[patch->getID()] 
+//      std::cout << d_myworld->myRank() << " patch:" << patch->getID() << " exectTime: " << d_execTimes[patch->getID()] 
 //           << " cost: " << costs[l][p] << " error: " << error << endl;
      
       IntVector low(patch->getCellLowIndex());
       IntVector high(patch->getCellHighIndex());
       
       if(stats2.active()){
-        cout << "PROFILESTATS: " << iter << " " << fabs(error) << " " << l << " " 
+        std::cout << "PROFILESTATS: " << iter << " " << fabs(error) << " " << l << " " 
             << low[0] << " " << low[1] << " " << low[2] << " " << high[0] << " " << high[1] << " " << high[2] << endl;
       }
 
@@ -136,7 +136,7 @@ void CostModelForecaster::outputError(const GridP grid)
   if(d_myworld->myRank()==0 && stats.active()) {
     sum_error/=size;
     sum_aerror/=size;
-    cout << "sMPE: " << sum_error << " sMAPE: " << sum_aerror << " MAXsPE: " << max_error << endl;
+    std::cout << "sMPE: " << sum_error << " sMAPE: " << sum_aerror << " MAXsPE: " << max_error << endl;
   }
 }
 //______________________________________________________________________
@@ -144,11 +144,11 @@ void CostModelForecaster::outputError(const GridP grid)
 void CostModelForecaster::collectPatchInfo(const GridP grid, vector<PatchInfo> &patch_info) 
 {
 
-  vector<vector<int> > num_particles;
+  std::vector<vector<int> > num_particles;
   d_lb->collectParticles(grid.get_rep(),num_particles);
 
-  vector<PatchInfo> patchList;
-  vector<int> num_patches(d_myworld->nRanks(),0);
+  std::vector<PatchInfo> patchList;
+  std::vector<int> num_patches(d_myworld->nRanks(),0);
 
   int total_patches=0;
   
@@ -172,7 +172,7 @@ void CostModelForecaster::collectPatchInfo(const GridP grid, vector<PatchInfo> &
     }
   }
 
-  vector<int> displs(d_myworld->nRanks(),0), recvs(d_myworld->nRanks(),0);
+  std::vector<int> displs(d_myworld->nRanks(),0), recvs(d_myworld->nRanks(),0);
 
   //compute recvs and displs
   for(int i=0;i<d_myworld->nRanks();i++){
@@ -241,12 +241,12 @@ void min_norm_least_sq(vector<vector<double> > &A, vector<double> &b, vector<dou
   {
     for (int i=0;i<cols;i++)
     {
-      cout << "ATA " << i << ": ";
+      std::cout << "ATA " << i << ": ";
       for (int j=0;j<cols;j++)
       {
-        cout << ATA[i][j] << " ";
+        std::cout << ATA[i][j] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
   }
 #endif
@@ -261,10 +261,10 @@ void min_norm_least_sq(vector<vector<double> > &A, vector<double> &b, vector<dou
 #if 0
   if(Parallel::getMPIRank()==0)
   {
-    cout << " ATB: "; 
+    std::cout << " ATB: "; 
     for(int j=0;j<cols; j++)
-      cout << ATb[j] << " ";
-    cout << endl;
+      std::cout << ATb[j] << " ";
+    std::cout << endl;
   }
 #endif
 
@@ -296,12 +296,12 @@ void min_norm_least_sq(vector<vector<double> > &A, vector<double> &b, vector<dou
 #if 0
   for (int i=0;i<cols;i++)
   {
-    cout << "L " << i << ": ";
+    std::cout << "L " << i << ": ";
     for (int j=0;j<=i;j++)
     {
-      cout << L[i][j] << " ";
+      std::cout << L[i][j] << " ";
     }
-    cout << endl;
+    std::cout << endl;
   }
 #endif
 
@@ -347,7 +347,7 @@ CostModelForecaster::finalizeContributions( const GridP currentGrid )
 
 #else //serial
   //collect the patch information needed to compute the coefficients
-  vector<PatchInfo> patch_info;
+  std::vector<PatchInfo> patch_info;
   collectPatchInfo(currentGrid,patch_info);
 
 #if 0
@@ -367,7 +367,7 @@ CostModelForecaster::finalizeContributions( const GridP currentGrid )
 
   //__________________________________
   //  Forming linear system, Eq. 5.3
-  vector<int> fields;
+  std::vector<int> fields;
   for(int i=0;i<3;i++){
   
     //__________________________________
@@ -430,11 +430,11 @@ CostModelForecaster::finalizeContributions( const GridP currentGrid )
   
 #if 0
   if(d_myworld->myRank()==0){
-    cout << " Coefficients: ";
+    std::cout << " Coefficients: ";
     for(int i=0;i<cols;i++){
-      cout << "x["<<i<<"]: "<< x[i]<< "\n";
+      std::cout << "x["<<i<<"]: "<< x[i]<< "\n";
     }
-    cout << endl;
+    std::cout << endl;
   }
 #endif
 
@@ -456,7 +456,7 @@ CostModelForecaster::finalizeContributions( const GridP currentGrid )
   setCosts(d_x[3], d_x[0], d_x[1], d_x[2]);
   
   if(d_myworld->myRank()==0 && stats.active()){
-    cout << "Update: patchCost: " << d_patchCost << " cellCost: " << d_cellCost << " d_extraCellCost: " << d_extraCellCost << " particleCost: " << d_particleCost << endl;
+    std::cout << "Update: patchCost: " << d_patchCost << " cellCost: " << d_cellCost << " d_extraCellCost: " << d_extraCellCost << " particleCost: " << d_particleCost << endl;
   }
   
   d_execTimes.clear();

@@ -91,13 +91,13 @@ DESCRIPTION
    (about double in my experience) and storage space.
 
    Rectangular Query:
-   query(const TPoint& low, const TPoint& high, list<TPoint*>& found) 
+   query(const TPoint& low, const TPoint& high,  std::list<TPoint*>& found) 
    O([log(n)]^(d-1) + k) time where k is the number of "found" points
    in the query range.  This is the most efficient type of query -- what
    the RangeTree is made for.
 
    Sphere Query:
-   querySphere(const TPoint& p, TPointElem radius, list<TPoint*>& found)
+   querySphere(const TPoint& p, TPointElem radius,  std::list<TPoint*>& found)
    ... and variants
    O([log(n)]^(d-1) + k) time where k is at most that of a rectangular
    query encompassing the sphere and at the least the number of

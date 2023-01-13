@@ -75,7 +75,7 @@ flatPlate_heatFlux::~flatPlate_heatFlux()
   delete M_lb;
   
   // delete each plane
-  vector<plane*>::iterator iter;
+  std::vector<plane*>::iterator iter;
   for( iter  = d_plane.begin();iter != d_plane.end(); iter++){
     delete *iter;
   }
@@ -99,7 +99,7 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& prob_spec,
   // determine which material index to compute
   d_matl = d_sharedState->parseAndLookupMaterial(d_prob_spec, "material");
   
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -155,7 +155,7 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& prob_spec,
   }
    
   if(validPlane == false){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "\n ERROR:PlaneExtract: the plane that you've specified " << start 
          << " " << end << " is not parallel to the coordinate system. \n" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -170,14 +170,14 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& prob_spec,
 
   if(start.x() < min.x() || start.y() < min.y() ||start.z() < min.z() ||
      end.x() > max.x()   || end.y() > max.y()   || end.z() > max.z() ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "\n ERROR:flatPlat_heatFlux: a portion of plane that you've specified " << start 
          << " " << end << " lies outside of the computational domain. \n" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   
   if(start.x() > end.x() || start.y() > end.y() || start.z() > end.z() ) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "\n ERROR:flatPlate_heatFlux: the plane that you've specified " << start 
          << " " << end << " the starting point is > than the ending point \n" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -296,8 +296,8 @@ void flatPlate_heatFlux::doAnalysis(const ProcessorGroup* pg,
     
     //__________________________________
     // Hit the edges of the plane 
-    vector<Patch::FaceType>::const_iterator iter;
-    vector<Patch::FaceType> bf;
+    std::vector<Patch::FaceType>::const_iterator iter;
+    std::vector<Patch::FaceType> bf;
     patch->getBoundaryFaces(bf);
 
     double edgeSurfaceArea = 0.5 * delta.x() * delta.y() * delta.z();

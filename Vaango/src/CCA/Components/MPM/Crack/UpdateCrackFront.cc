@@ -175,8 +175,8 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
 
@@ -211,7 +211,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
               
         // Task 1: Detect if crack-front nodes are inside the material
         
-        vector<short> cfSegNodesInMat;
+        std::vector<short> cfSegNodesInMat;
         cfSegNodesInMat.resize(cfSegNodes[m].size());
         for(int i=0; i<(int)cfSegNodes[m].size();i++) {
           cfSegNodesInMat[i]=YES;
@@ -255,7 +255,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
         // Task 2: Detect if the centers of crack-front segments
         //         are inside the material
        
-        vector<short> cfSegCenterInMat;
+        std::vector<short> cfSegCenterInMat;
         cfSegCenterInMat.resize(cfSegNodes[m].size()/2);
         for(int i=0; i<(int)cfSegNodes[m].size()/2;i++) {
           cfSegCenterInMat[i]=YES;
@@ -376,7 +376,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
         else { // Crack has penetrated the material
           // If all crack-front segments dead, the material is broken.
           if(ce[m].size()>0) { // for the material with crack(s) initially              
-            if(pid==0) cout << "!!! Material " << m << " is broken." << endl;
+            if(pid==0) std::cout << "!!! Material " << m << " is broken." << endl;
           }  
         }
         
@@ -450,7 +450,7 @@ void Crack::OutputCrackGeometry(const int& m, const int& timestep)
       ofstream outputCF(cfFileName, ios::out);
 
       if(!outputCE || !outputCX || !outputCF) {
-        cout << "Error: failure to open files for storing crack geometry" << endl;
+        std::cout << "Error: failure to open files for storing crack geometry" << endl;
         exit(1);
       }
 

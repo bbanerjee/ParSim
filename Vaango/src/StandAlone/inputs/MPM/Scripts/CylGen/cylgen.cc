@@ -60,13 +60,13 @@ bool isCylCenterInsideRVE(double RVEsize,
 //
 bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
                             double &xCent, double &yCent,
-                            vector<vector<double> > xLocs, 
-                            vector<vector<double> > yLocs,
+                            std::vector<vector<double> > xLocs, 
+                            std::vector<vector<double> > yLocs,
                             int i_min, int i_max);
 //
 void printCylLocs(vector<vector<double> > xLocs,
-                     vector<vector<double> > yLocs,
-                     vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > yLocs,
+                     std::vector<vector<double> > diaLocs,
                      int n_bins, const double RVEsize, double diam_max);
 int main()
 {
@@ -97,7 +97,7 @@ int main()
 
   // Part of optimizing the search for intersections
   int n_bins = RVEsize/diam_max;
-  cout << "n_bins = " << n_bins << endl;
+  std::cout << "n_bins = " << n_bins << endl;
 
   double bin_width = RVEsize/((double) n_bins);
 
@@ -126,9 +126,9 @@ int main()
       area_of_one_of_each_size += 0.25*M_PI*(diam*diam);
     }
     int num_cyls_each_size = targetArea/area_of_one_of_each_size;
-    cout << "Number cylinders to be created of each size = "
+    std::cout << "Number cylinders to be created of each size = "
          << num_cyls_each_size << endl;
-//    cout << "Area of one of each size = "
+//    std::cout << "Area of one of each size = "
 //         << area_of_one_of_each_size << endl;
 
     // Grains will be created largest to smallest.  TVFS is the 
@@ -141,8 +141,8 @@ int main()
       vf += num_cyls_each_size*area_of_one_of_this_size/targetArea;
       TVFS[i]=vf;
       TVFS[i]*=targetVF;
-      cout << "TVFS[" << i << "] = " << TVFS[i] << ";" << endl;
-      cout << "sizes[" << i << "] = " << sizes[i] << ";" << endl;
+      std::cout << "TVFS[" << i << "] = " << TVFS[i] << ";" << endl;
+      std::cout << "sizes[" << i << "] = " << sizes[i] << ";" << endl;
     }
   }  // uniform_distribution
 
@@ -203,17 +203,17 @@ int main()
       double diam=sizes[i];
       double area_of_one_of_this_size = 0.25*M_PI*(diam*diam);
       double total_area_of_this_size = TVFS[i]*targetArea;
-      cout << "total_area_of_this_size = " << total_area_of_this_size << endl;
+      std::cout << "total_area_of_this_size = " << total_area_of_this_size << endl;
       num_cyls_this_size[i] = total_area_of_this_size/area_of_one_of_this_size;
       TVFS[i]*=targetVF;
-      cout << "num_cyls_this_size[" << i << "] = " << num_cyls_this_size[i] << endl;
-      cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
+      std::cout << "num_cyls_this_size[" << i << "] = " << num_cyls_this_size[i] << endl;
+      std::cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
     }
 
-    cout << "TVFS[0] = " << TVFS[0] << endl;
+    std::cout << "TVFS[0] = " << TVFS[0] << endl;
     for(int i=1;i<n_sizes;i++){
       TVFS[i]+=TVFS[i-1];
-      cout << "TVFS[ " << i << "] = " << TVFS[i] << endl;
+      std::cout << "TVFS[ " << i << "] = " << TVFS[i] << endl;
     }
   }  // specified_distribution
 
@@ -225,9 +225,9 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<vector<double> > xLocs(n_bins);
-  vector<vector<double> > yLocs(n_bins);
-  vector<vector<double> > diaLocs(n_bins);
+  std::vector<vector<double> > xLocs(n_bins);
+  std::vector<vector<double> > yLocs(n_bins);
+  std::vector<vector<double> > diaLocs(n_bins);
 
   double total_cyl_area = 0.0;
   double total_cyl_VF = 0.0;
@@ -238,7 +238,7 @@ int main()
     long int total_intersections = 0;
     double num_extra_bins_d = (sizes[i]+diam_max)/(2.0*bin_width);
     int num_extra_bins = (int) num_extra_bins_d + 1;
-    cout << "NEB = " << num_extra_bins_d << " " << num_extra_bins << endl;
+    std::cout << "NEB = " << num_extra_bins_d << " " << num_extra_bins << endl;
     while(total_cyl_VF < TVFS[i] && total_intersections < 20000000){
      // Get two random numbers for the x and y and scale by RVE size
      double xCent = drand48()*RVEsize;
@@ -275,11 +275,11 @@ int main()
           }
 
           if(!(num_cyls%1000)){
-            cout << "Created cyl # " << num_cyls << endl;
-            cout << "Total intersections so far = " 
+            std::cout << "Created cyl # " << num_cyls << endl;
+            std::cout << "Total intersections so far = " 
                  << total_intersections << endl;
-            cout << "total_cyl_VF = " << total_cyl_VF << endl;
-            cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
+            std::cout << "total_cyl_VF = " << total_cyl_VF << endl;
+            std::cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
             printCylLocs(xLocs, yLocs, diaLocs,n_bins,RVEsize,diam_max);
           } // end if
         }   // if index...
@@ -290,8 +290,8 @@ int main()
     for(int k = 0;k<n_bins;k++){
       numCyls+=xLocs[k].size();
     }
-    cout << numCyls << endl;
-    cout << total_cyl_area/RVE_area << endl;
+    std::cout << numCyls << endl;
+    std::cout << total_cyl_area/RVE_area << endl;
   }
 
   printCylLocs(xLocs, yLocs, diaLocs,n_bins,RVEsize,diam_max);
@@ -329,8 +329,8 @@ bool isCylCenterInsideRVE(double RVEsize,
 
 bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
                             double &xCent, double &yCent,
-                            vector<vector<double> > xLocs, 
-                            vector<vector<double> > yLocs,
+                            std::vector<vector<double> > xLocs, 
+                            std::vector<vector<double> > yLocs,
                             int i_min, int i_max)
 {
 #if 0
@@ -455,7 +455,7 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
 }
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, const double RVEsize, double diam_max)
 {
   //Open file to receive cyl descriptions

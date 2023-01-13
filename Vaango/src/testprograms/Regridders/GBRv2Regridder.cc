@@ -124,7 +124,7 @@ GBRv2Regridder::GBRv2Regridder(double tol, IntVector rr, int rank, int num_procs
 
 void GBRv2Regridder::regrid( const vector<IntVector> &flags, vector<Region> &patches)
 {
-  vector<IntVector> flags2(flags);
+  std::vector<IntVector> flags2(flags);
   patches.resize(0);
   RunBR(flags2,patches);
   for(size_t i=0;i<patches.size();i++)
@@ -136,7 +136,7 @@ void GBRv2Regridder::regrid( const vector<IntVector> &flags, vector<Region> &pat
 }
 void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
 {
-  vector<int> procs(numprocs);
+  std::vector<int> procs(numprocs);
   BNRTask *root=0;  
   //bound local flags
   Region patch;
@@ -160,7 +160,7 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
   //Calculate global bounds
   if(numprocs>1)
   {
-    vector<Region> bounds(numprocs);
+    std::vector<Region> bounds(numprocs);
     Uintah::MPI::Allgather(&patch,sizeof(Region),MPI_BYTE,&bounds[0],sizeof(Region),MPI_BYTE,MPI_COMM_WORLD);
 
     //calculate participating processor set
@@ -281,7 +281,7 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
         //no tasks on the immediate_q, tasks are on the taq_q
         if(tags_.size() + free_tag_end_ - free_tag_start_ < 2) //this if might not be needed 
         {
-          cout << "Error not enough tags\n";
+          std::cout << "Error not enough tags\n";
           exit(0);
         }
       }

@@ -396,7 +396,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
         */
 
         // Temporary crack-front segment nodes and velocity
-        vector<int> cfSegNodesT;
+        std::vector<int> cfSegNodesT;
         cfSegNodesT.clear();
         cfSegVel[m].clear();
 
@@ -766,7 +766,7 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
 
   // Make sure p1!=p2
   if (p1 == p2) {
-    cout << "Error: p1=p2=" << p1 << " in Crack::TrimLineSegmentWithBox(...)."
+    std::cout << "Error: p1=p2=" << p1 << " in Crack::TrimLineSegmentWithBox(...)."
          << " Program is terminated." << endl;
     exit(1);
   } else {
@@ -792,10 +792,10 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
     p1Outside = NO;
 
   if (p1Outside) {
-    cout << "Error: p1=" << p1
+    std::cout << "Error: p1=" << p1
          << " is outside of the box in Crack::TrimLineSegmentWithBox(): " << lp
          << "-->" << hp << ", where p2=" << p2 << endl;
-    cout << " Program terminated." << endl;
+    std::cout << " Program terminated." << endl;
     exit(1);
   }
 
@@ -852,7 +852,7 @@ Crack::PruneCrackFrontAfterPropagation(const int& m, const double& ca)
   // the mass center of the triangle
 
   int num = (int)cfSegNodes[m].size();
-  vector<Point> cfSegPtsPruned;
+  std::vector<Point> cfSegPtsPruned;
   cfSegPtsPruned.resize(num);
 
   for (int i = 0; i < num; i++) {

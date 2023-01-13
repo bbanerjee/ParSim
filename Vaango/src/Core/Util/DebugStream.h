@@ -140,7 +140,7 @@ namespace Uintah {
       ~DebugStream();
       bool active() {return isactive;};
       void setActive(bool active) { isactive = active; };
-      // the ostream that output should be redirected to. cout by default.
+      // the ostream that output should be redirected to. std::cout by default.
       ostream *outstream;
     };
     

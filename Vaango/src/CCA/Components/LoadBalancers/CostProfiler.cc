@@ -51,7 +51,7 @@ CostProfiler::addContribution( DetailedTask *task, double cost )
   {
     const Patch* patch=patches->get(p);
     if(d_lb->getPatchwiseProcessorAssignment(patch)!=d_myworld->myRank())
-      cout << d_myworld->myRank() << " error patch is owned by processor:" << d_lb->getPatchwiseProcessorAssignment(patch) << " for task:" << task->getName() << endl;
+      std::cout << d_myworld->myRank() << " error patch is owned by processor:" << d_lb->getPatchwiseProcessorAssignment(patch) << " for task:" << task->getName() << endl;
   }
 #endif
   d_profiler.addContribution( task->getPatches(), cost );
@@ -79,7 +79,7 @@ CostProfiler::getWeights(const Grid* grid, vector<vector<int> > num_particles, v
   for (int l=0; l<grid->numLevels();l++)
   {
     LevelP level=grid->getLevel(l);
-    vector<Region> regions(level->numPatches());
+    std::vector<Region> regions(level->numPatches());
 
     costs[l].resize(level->numPatches());
     for(int p=0; p<level->numPatches();p++)

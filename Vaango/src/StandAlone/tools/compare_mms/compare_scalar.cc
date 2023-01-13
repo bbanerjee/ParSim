@@ -211,8 +211,8 @@ main( int argc, char *argv[] )
   cout.setf(ios::scientific,ios::floatfield);
   cout.precision(16);
 
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da1->queryTimesteps(index, times);
 
   double t_final   = times[times.size()-1];
@@ -259,7 +259,7 @@ main( int argc, char *argv[] )
         if (!(is_int(offset.x()) && is_int(offset.y()) && is_int(offset.z()) ) ){
           cout<<"ERROR:Compare_scalar: The quantity (final timestep * velocity/dx) must be an integer:"
               << offset << "\n";
-          cout << "final timestep " << t_final << " velocity " << initial_vel[c] << " dx " << dx << endl;
+          std::cout << "final timestep " << t_final << " velocity " << initial_vel[c] << " dx " << dx << endl;
           exit(1);
         }
         
@@ -333,11 +333,11 @@ main( int argc, char *argv[] )
       }
     } // end patch iteration
     if(verbose){
-      cout << "\t\tTime Step: " << index[timeIndex] << " Physical Time: " << times[timeIndex] << " dx " << dx << endl;
-      cout << "\t\tMax diff: "<< maxDiff << " " << c_maxDiff << endl;
-      cout << "\t\tMin_diff: "<< minDiff << " " << c_minDiff << endl; 
-      cout << "\t\tNumber of cells:  " << i << " Number of cells the passive scalar moved " << offset << endl;
-      cout << "\t\tL2 norm of error: " << sqrt(total_error/i) << "\n";
+      std::cout << "\t\tTime Step: " << index[timeIndex] << " Physical Time: " << times[timeIndex] << " dx " << dx << endl;
+      std::cout << "\t\tMax diff: "<< maxDiff << " " << c_maxDiff << endl;
+      std::cout << "\t\tMin_diff: "<< minDiff << " " << c_minDiff << endl; 
+      std::cout << "\t\tNumber of cells:  " << i << " Number of cells the passive scalar moved " << offset << endl;
+      std::cout << "\t\tL2 norm of error: " << sqrt(total_error/i) << "\n";
     }
     fprintf(outFile, "%16.16le\n",sqrt(total_error/double(i)) );
   } // end levels iteration

@@ -81,7 +81,7 @@ namespace Uintah {
     virtual void solve(vector<double>& guess) = 0;
 
     virtual void createMatrix(const ProcessorGroup* pg, 
-                              const map<int,int>& diag) = 0;
+                              const  std::map< int,int>& diag) = 0;
 
     virtual void destroyMatrix(bool recursion) = 0;
     
@@ -114,7 +114,7 @@ namespace Uintah {
     virtual void applyBCSToRHS() = 0;
 
     set<int> d_DOF,d_DOFFlux,d_DOFZero;
-    map<int,vector<int> > d_DOFNeighbors;
+    std::map<int,vector<int> > d_DOFNeighbors;
   };
 
 }

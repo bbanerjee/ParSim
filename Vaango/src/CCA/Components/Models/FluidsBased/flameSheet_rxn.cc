@@ -105,7 +105,7 @@ void flameSheet_rxn::problemSetup(GridP& grid, SimulationStateP& in_state,
   d_sharedState = in_state;
   d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -159,7 +159,7 @@ void flameSheet_rxn::problemSetup(GridP& grid, SimulationStateP& in_state,
                             
   if( Floor(d_f_stoic) == -9        ||  Floor(d_del_h_comb) == -9 ||    // bulletproofing
       Floor(d_T_oxidizer_inf) == -9 ||  Floor(d_T_fuel_init) == -9 ) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << " ERROR FlameSheet_rxn: Input variable(s) not specified \n" 
          << "\n f_stoichometric        "<< d_f_stoic
          << "\n delta_H_combustion     "<< d_del_h_comb
@@ -174,7 +174,7 @@ void flameSheet_rxn::problemSetup(GridP& grid, SimulationStateP& in_state,
   for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
     geom_obj_ps != 0;
     geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-    vector<GeometryPieceP> pieces;
+    std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     GeometryPieceP mainpiece;
@@ -419,7 +419,7 @@ void flameSheet_rxn::computeModelSources(const ProcessorGroup*,
     //__________________________________
     //  bulletproofing
     if (sum != numCells) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: flameSheet_rxn Model: invalid value for f "
            << "somewhere in the scalar field: "<< sum
            << " cells were touched out of "<< numCells

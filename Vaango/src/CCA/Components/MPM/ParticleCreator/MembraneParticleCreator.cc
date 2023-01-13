@@ -81,11 +81,11 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
                                               CCVariable<short int>& cellNAPID,
                                               const Patch* patch,
                                               DataWarehouse* new_dw,
-                                              vector<GeometryObject*>& d_geom_objs)
+                                              std::vector<GeometryObject*>& d_geom_objs)
 {
   ObjectVars vars;
   particleIndex numParticles = 0;
-  vector<GeometryObject*>::const_iterator geom;
+  std::vector<GeometryObject*>::const_iterator geom;
   for (geom=d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
     numParticles += countAndCreateParticles(patch,*geom, vars);
   }
@@ -97,7 +97,7 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
   
   particleIndex start = 0;
 
-  vector<GeometryObject*>::const_iterator obj;
+  std::vector<GeometryObject*>::const_iterator obj;
   for (obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {  
     particleIndex count = 0;
     GeometryPieceP piece = (*obj)->getPiece();

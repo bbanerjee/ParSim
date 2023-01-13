@@ -62,7 +62,7 @@ Suite::Suite(const string& name)
 // delete all created tests and myName
 Suite::~Suite()
 { 
-  list<Test*>::iterator it = myOrderedTests.begin();
+   std::list<Test*>::iterator it = myOrderedTests.begin();
   for ( ; it != myOrderedTests.end(); it++) {
     delete *it;
   }
@@ -142,40 +142,40 @@ void Suite::report()
   int num_not_run = 0;
   Test* test = nullptr;
 
-  cout << "=============================\n";
-  cout << "Suite: " << myName << endl;
-  cout << "-----------------------------\n\n";
+  std::cout << "=============================\n";
+  std::cout << "Suite: " << myName << endl;
+  std::cout << "-----------------------------\n\n";
 
-  list<Test*>::iterator it = myOrderedTests.begin();
+   std::list<Test*>::iterator it = myOrderedTests.begin();
   for ( ; it != myOrderedTests.end(); it++) {
     test = (*it);
     if (test->hasBeenRun()) {
       if (test->hasPassed()) {
-        cout << "Passed\t";
+        std::cout << "Passed\t";
         num_passed++;
       }
       else {
-        cout << "Failed\t";
+        std::cout << "Failed\t";
         num_failed++;
       }
     }
     else {
-      cout << "Not Run\t";
+      std::cout << "Not Run\t";
       num_not_run++;
     }
-    cout << test->getName() << endl;
+    std::cout << test->getName() << endl;
   }
 
-  cout << "-----------------------------\n\n";
+  std::cout << "-----------------------------\n\n";
 
-  cout << num_passed << " Passed\n";
-  cout << num_failed << " Failed\n";
-  cout << num_not_run << " Not Run\n";
+  std::cout << num_passed << " Passed\n";
+  std::cout << num_failed << " Failed\n";
+  std::cout << num_not_run << " Not Run\n";
 }
 
 bool Suite::hasAllPassed()
 {
-  list<Test*>::iterator it = myOrderedTests.begin();
+   std::list<Test*>::iterator it = myOrderedTests.begin();
   for ( ; it != myOrderedTests.end(); it++) {
     if (!(*it)->hasPassed())
       return false;
@@ -185,7 +185,7 @@ bool Suite::hasAllPassed()
 
 bool Suite::hasAllBeenRun()
 {
-  list<Test*>::iterator it = myOrderedTests.begin();
+   std::list<Test*>::iterator it = myOrderedTests.begin();
   for ( ; it != myOrderedTests.end(); it++) {
     if (!(*it)->hasBeenRun())
       return false;

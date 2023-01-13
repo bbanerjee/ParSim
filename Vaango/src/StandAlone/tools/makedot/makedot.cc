@@ -132,21 +132,21 @@ main(int argc, char* argv[])
 
 bool load_timestep(int timestep, float prune_percent)
 {
-  ostringstream timedir;
+   std::ostringstream timedir;
   timedir << "/t" << setw(5) << setfill('0') << timestep;
-  cout << "Loading timestep " << timestep << "...\n";
+  std::cout << "Loading timestep " << timestep << "...\n";
 
   int process = 0;
   string xmlFileName;
   FILE* tstFile;
-  map<string, int> taskNumbers;
+  std::map<string, int> taskNumbers;
   int nextTask = 0;
-  ostringstream outname;
+   std::ostringstream outname;
   outname << "graph_" << timestep << ".dot";
   ofstream out(outname.str().c_str()); 
   out << "digraph G {\n";
   do {
-    ostringstream pname;
+     std::ostringstream pname;
     pname << "/taskgraph_" << setw(5) << setfill('0') << process << ".xml";
     xmlFileName = xmlDir + pname.str();
     

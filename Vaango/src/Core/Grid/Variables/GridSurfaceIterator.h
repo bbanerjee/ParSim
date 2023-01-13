@@ -108,7 +108,7 @@ WARNING
        d_done= d_curFace==nullptrFACE || d_iter.done();
 
        //if(!d_done)
-       // cout << " GSI face: " << d_curFace << " iter: " << d_iter << endl;
+       // std::cout << " GSI face: " << d_curFace << " iter: " << d_iter << endl;
        return *this;
      }
 

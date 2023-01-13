@@ -112,7 +112,7 @@ int main()
       rho=(ae*(x/F) + be)/F;
     }
     else{
-     cout << "SHOULDN'T GET HERE!  X = " << X << endl;
+     std::cout << "SHOULDN'T GET HERE!  X = " << X << endl;
     }
 
     double vel = v_tip*X/L0;
@@ -169,7 +169,7 @@ int main()
     dest << "    <color>" << n++ << "</color>\n";
     dest << "  </geom_object>\n\n";
   }
-  cout << "Total Mass = " << total_mass << endl;
+  std::cout << "Total Mass = " << total_mass << endl;
 
   dest << "</Uintah_Include>" << endl;
 }

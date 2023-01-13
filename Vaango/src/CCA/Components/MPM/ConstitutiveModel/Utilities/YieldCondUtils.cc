@@ -369,7 +369,7 @@ getClosestSegmentsKDTree(const Uintah::Point& pt,
  *  that are closest to an input point (using a binary search)
  *
  *  Modifies:
- *   vector<Point> : 
+ *   std::vector<Point> : 
  *      Point  : first_point
  *      Point  : second_point
  *      Point  : third_point

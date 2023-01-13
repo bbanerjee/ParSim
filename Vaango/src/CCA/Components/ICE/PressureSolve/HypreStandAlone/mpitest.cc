@@ -52,14 +52,14 @@
 int
 main( int argc, char *argv[] )
 {
-  cout << "hello\n";
+  std::cout << "hello\n";
 
   MPI_Init( &argc, &argv );
 
   int num_procs;
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-  cout << "goodbye\n";
+  std::cout << "goodbye\n";
 
   MPI_Finalize();
 

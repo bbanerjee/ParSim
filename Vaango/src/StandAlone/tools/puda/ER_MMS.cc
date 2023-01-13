@@ -44,25 +44,25 @@ using namespace std;
 void
 Uintah::ER_MMS( DataArchive * da, CommandLineFlags & clf )
 {
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
   
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   
   for(int i=0;i<(int)vars.size();i++)
-    cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << endl;
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   
   da->queryTimesteps(index, times);
   
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -91,11 +91,11 @@ Uintah::ER_MMS( DataArchive * da, CommandLineFlags & clf )
     IntVector worstCellAllLevels = IntVector(-9,-9,-9);
     
     int numLevels = grid->numLevels();
-    vector<double>    LinfLevel(numLevels);
-    vector<double>    L2normLevel(numLevels);
-    vector<Point>     worstPosLevel(numLevels);
-    vector<IntVector> worstCellLevel(numLevels);
-    vector<int>       numParticles(numLevels);
+    std::vector<double>    LinfLevel(numLevels);
+    std::vector<double>    L2normLevel(numLevels);
+    std::vector<Point>     worstPosLevel(numLevels);
+    std::vector<IntVector> worstCellLevel(numLevels);
+    std::vector<int>       numParticles(numLevels);
     
     //__________________________________
     //  Level loop
@@ -163,7 +163,7 @@ Uintah::ER_MMS( DataArchive * da, CommandLineFlags & clf )
         L2normLevel[l]    = 0.0;
       }
       
-      cout << "     Level: " << level->getIndex() << " L_inf Error: " << LinfLevel[l] << ", L2norm: " << L2normLevel[l] 
+      std::cout << "     Level: " << level->getIndex() << " L_inf Error: " << LinfLevel[l] << ", L2norm: " << L2normLevel[l] 
            << " numParticles: " << numParticles[l] << " , Worst particle: " << worstPos << ", " << worstCell << endl;
       
       TotalSumError     += sumError;
@@ -177,7 +177,7 @@ Uintah::ER_MMS( DataArchive * da, CommandLineFlags & clf )
     }   // for levels
     double L2norm = sqrt( TotalSumError /(double)TotalNumParticles );
     
-    cout << "time: " << time << " , L_inf Error: " << max_errorAllLevels << " , L2norm Error: "<< L2norm << " , Worst particle: " << worstPosAllLevels << " " << worstCellAllLevels << endl;
+    std::cout << "time: " << time << " , L_inf Error: " << max_errorAllLevels << " , L2norm Error: "<< L2norm << " , Worst particle: " << worstPosAllLevels << " " << worstCellAllLevels << endl;
     
     //__________________________________
     // write data to the files (L_norms & L_normsPerLevels)

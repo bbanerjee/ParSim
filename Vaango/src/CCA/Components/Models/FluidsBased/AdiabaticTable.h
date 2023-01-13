@@ -166,7 +166,7 @@ WARNING
                                DataWarehouse* new_dw,                                 
                                const int indx,                                        
                                constCCVariable<double> f_old,                         
-                               vector<constCCVariable<double> >& ind_vars); 
+                               std::vector<constCCVariable<double> >& ind_vars); 
                                
     void  errorEstimate(const ProcessorGroup*,
                            const PatchSubset* patches,
@@ -208,7 +208,7 @@ WARNING
       VarLabel* scaledVarianceLabel;
       VarLabel* sum_scalar_fLabel;
       
-      vector<Region*> regions;
+      std::vector<Region*> regions;
       double diff_coeff;
       double refineCriteria;
       bool d_test_conservation;
@@ -235,13 +235,13 @@ WARNING
       int index;
       VarLabel* label;
     };
-    vector<TableValue*> tablevalues;
+    std::vector<TableValue*> tablevalues;
     
     //__________________________________
     // global constants
     bool d_doAMR;
-    vector<Vector> d_probePts;
-    vector<string> d_probePtsNames;
+    std::vector<Vector> d_probePts;
+    std::vector<string> d_probePtsNames;
     bool d_usingProbePts;
     double d_probeFreq;
     

@@ -71,7 +71,7 @@ Triangle::makeTriangleList(std::vector<IntVector>& triangle_nodes,
         node_coords[node_1], node_coords[node_2], node_coords[node_3]);
   }
   /*
-  vector<IntVector>::const_iterator tri_itr;
+  std::vector<IntVector>::const_iterator tri_itr;
   for (tri_itr = tris.begin(); tri_itr != tris.end(); ++tri_itr) {
     Triangle triangle = Triangle(pts[(*tri_itr).x()],pts[(*tri_itr).y()],
                        pts[(*tri_itr).z()]);
@@ -214,15 +214,15 @@ UniformGrid::buildUniformGrid(TriangleList& polygons) {
     IntVector v2 = cellID(triangle.vertex(2));
 #if 0
     if (v0 > d_grid.getHighIndex())
-      cout << "v0 = " << v0 << endl;
+      std::cout << "v0 = " << v0 << endl;
     if (v1 > d_grid.getHighIndex())
-      cout << "v1 = " << v1 << endl;
+      std::cout << "v1 = " << v1 << endl;
     if (v2 > d_grid.getHighIndex())
-      cout << "v2 = " << v2 << endl;
+      std::cout << "v2 = " << v2 << endl;
 
-    cout << "Triangle = " << triangle.vertex(0) << " " << triangle.vertex(1) << " " 
+    std::cout << "Triangle = " << triangle.vertex(0) << " " << triangle.vertex(1) << " " 
 	 << triangle.vertex(2) << endl;
-    cout << "v0 " << v0 << " v1 " << v1 << " v2 " << v2 << endl;
+    std::cout << "v0 " << v0 << " v1 " << v1 << " v2 " << v2 << endl;
 #endif
     IntVector low = Min(v0, v1);
     low           = Min(low, v2);
@@ -232,7 +232,7 @@ UniformGrid::buildUniformGrid(TriangleList& polygons) {
       for (int j = low.y(); j <= hi.y(); j++) {
         for (int k = low.z(); k <= hi.z(); k++) {
           IntVector id(i, j, k);
-          //  cout << "Inserting into cellID = " << id << endl;
+          //  std::cout << "Inserting into cellID = " << id << endl;
           d_grid[id].push_back(triangle);
         }
       }
@@ -261,7 +261,7 @@ UniformGrid::countIntersections(const Point& pt, int& crossings) {
         if (cos_angle < 0.) continue;
         if (triangle.inside(hit)) {
 #if 0
-	  cout << "Inside_new hit = " << hit << "vertices: " 
+	  std::cout << "Inside_new hit = " << hit << "vertices: " 
 	       << triangle.vertex(0) << " " << triangle.vertex(1) <<  " "
 	       << triangle.vertex(2) << endl;
 #endif

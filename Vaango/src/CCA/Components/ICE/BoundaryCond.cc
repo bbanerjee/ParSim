@@ -78,7 +78,7 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
 { 
   cout_BC_CC << "ImplicitMatrixBC Patch: "<< patch->getID()<< endl;
   
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   for (auto face : boundaryFaces) {
     string bc_kind  = "NotSet";
@@ -186,7 +186,7 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
     int nFaceCells = numFaceCells(patch,  type, face);
     
     if(nCells != nFaceCells){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: ImplicitMatrixBC Boundary conditions were not set correctly (" 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
@@ -205,10 +205,10 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
   patch->printPatchBCs(BC_dbg);
 
   if(patch->hasCoarseFaces() ){  
-    cout << " Matrix BC at coarse/Fine interfaces " << endl;
+    std::cout << " Matrix BC at coarse/Fine interfaces " << endl;
     //__________________________________
     // Iterate over coarsefine interface faces
-    vector<Patch::FaceType> cf;
+    std::vector<Patch::FaceType> cf;
     patch->getCoarseFaces(cf);
     
     for( vector<Patch::FaceType>::const_iterator iter = cf.begin(); iter != cf.end(); ++iter ){
@@ -265,7 +265,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
                       DataWarehouse* new_dw)        
 { 
   cout_BC_CC << "set_imp_DelP_BC, Patch: "<< patch->getID()<< endl;
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   for (auto face : boundaryFaces) {
     
@@ -324,7 +324,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
     
               
     if( nCells != nFaceCells){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: set_imp_DelP_BC Boundary conditions were not set correctly ("
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
@@ -343,7 +343,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
     BC_dbg << " BC at coarse/Fine interfaces " << endl;
     //__________________________________
     // Iterate over coarsefine interface faces
-    vector<Patch::FaceType> cf;
+    std::vector<Patch::FaceType> cf;
     patch->getCoarseFaces(cf);
     for( vector<Patch::FaceType>::const_iterator iter = cf.begin(); iter != cf.end(); ++iter ){
       Patch::FaceType face = *iter;
@@ -374,7 +374,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
       
       int P_dir = patch->getFaceAxes(face)[0];  //principal dir.
       
-      cout << " using linear Interpolation for impDelP " << endl;;
+      std::cout << " using linear Interpolation for impDelP " << endl;;
      
       for(CellIterator cIter(fl,fh); !cIter.done(); cIter++){
         IntVector f_cell = *cIter;
@@ -427,7 +427,7 @@ void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
       
   //__________________________________
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   
   for (auto face : boundaryFaces) {
@@ -589,12 +589,12 @@ void setBC(CCVariable<double>& press_CC,
   //  -Ignore lodi bcs during intialization phase AND when
   //   lv->setLodiBcs = false              
   //__________________________________
-  vector<int> nCells_LODI(Patch::numFaces);
+  std::vector<int> nCells_LODI(Patch::numFaces);
   for (int f = 0; f < Patch::numFaces; f++) {
     nCells_LODI[f] = 0;  // bulletproofing
   }
   
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   // Iterate over the faces encompassing the domain  
   for (auto face : boundaryFaces) {
@@ -687,7 +687,7 @@ void setBC(CCVariable<double>& press_CC,
     int nFaceCells = numFaceCells(patch,  type, face);
     
     if(nCells != nFaceCells && (nCells_LODI[face] != nFaceCells && isNotInitialTimestep)){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(press_CC) Boundary conditions were not set correctly ("
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
@@ -724,13 +724,13 @@ void setBC(CCVariable<double>& var_CC,
   //  -Ignore lodi bcs during intialization phase and when
   //   lv->setLodiBcs = false
   //__________________________________
-  vector<int> nCells_LODI(Patch::numFaces);
+  std::vector<int> nCells_LODI(Patch::numFaces);
   for (int f = 0; f < Patch::numFaces; f++) {
     nCells_LODI[f] = 0;  // bulletproofing
   }
   
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   for (auto face : boundaryFaces) {
 
@@ -821,7 +821,7 @@ void setBC(CCVariable<double>& var_CC,
         //  debugging
         if( BC_dbg.active() ) {
           bound_ptr.reset();
-          cout  <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
+          std::cout  <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                 <<"\t child " << child  <<" NumChildren "<<numChildren 
                 <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
                 <<"\t bound_itr "<< bound_ptr << endl;
@@ -846,7 +846,7 @@ void setBC(CCVariable<double>& var_CC,
     }
    
     if(throwEx){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(double_CC) Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
@@ -881,13 +881,13 @@ void setBC(CCVariable<Vector>& var_CC,
   //  -Ignore lodi bcs during intialization phase and when
   //   lv->setLodiBcs = false
   //__________________________________
-  vector<int> nCells_LODI(Patch::numFaces);
+  std::vector<int> nCells_LODI(Patch::numFaces);
   for (int f = 0; f < Patch::numFaces; f++) {
     nCells_LODI[f] = 0;  // bulletproofing
   }
   
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   for (auto face : boundaryFaces) {
     bool is_velBC_lodi   = patch->haveBC(face,mat_id,"LODI","Velocity");
@@ -984,7 +984,7 @@ void setBC(CCVariable<Vector>& var_CC,
     }
    
     if(throwEx){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(Vector_CC) Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
@@ -1014,7 +1014,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
   double cellVol = dx.x() * dx.y() * dx.z();
                 
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> boundaryFaces;
+  std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   
   for (auto face : boundaryFaces) {
@@ -1091,7 +1091,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
     int nFaceCells = numFaceCells(patch,  type, face);
                         
     if(nCells != nFaceCells){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: ICE: setSpecificVolBC Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
            << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
@@ -1143,7 +1143,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   int numAllMatls = sharedState->getNumMaterials();
   
   // If a face is periodic then is_press_BC_set = true
-  map<string,bool> is_press_BC_set;
+  std::map<string,bool> is_press_BC_set;
   is_press_BC_set["x-"] = (periodic.x() ==1) ? true:false;
   is_press_BC_set["x+"] = (periodic.x() ==1) ? true:false;
   is_press_BC_set["y-"] = (periodic.y() ==1) ? true:false;
@@ -1155,14 +1155,14 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
                     face_ps=face_ps->findNextBlock("Face")) {
   
-    map<string,bool>isBC_set;
+    std::map<string,bool>isBC_set;
     isBC_set["Temperature"] =false;
     isBC_set["Density"]     =false;
     isBC_set["Velocity"]    =false;            
     isBC_set["SpecificVol"] =true;  
     isBC_set["Symmetric"]   =false;    
                       
-    map<string,string> face;
+    std::map<string,string> face;
     face_ps->getAttributes(face);
     
     // tag each face if it's been specified
@@ -1177,7 +1177,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
     // loop over all BCTypes for that face 
     for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
                      bc_iter = bc_iter->findNextBlock("BCType")){
-      map<string,string> bc_type;
+      std::map<string,string> bc_type;
       bc_iter->getAttributes(bc_type);
             
       // valid user input      
@@ -1185,7 +1185,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
           bc_type["label"] != "SpecificVol"   && bc_type["label"] != "Velocity" &&
           bc_type["label"] != "Density"       && bc_type["label"] != "Symmetric" &&
           bc_type["label"] != "scalar-f"      && bc_type["label"] != "cumulativeEnergyReleased"){
-        ostringstream warn;
+         std::ostringstream warn;
         warn <<"\n INPUT FILE ERROR:\n The boundary condition label ("<< bc_type["label"] <<") is not valid\n"
              << " Face:  " << face["side"] << " BCType " << bc_type["label"]<< endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -1193,7 +1193,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
       
       // specified "all" for a 1 matl problem
       if (bc_type["id"] == "all" && numAllMatls == 1){
-        ostringstream warn;
+         std::ostringstream warn;
         warn <<"\n__________________________________\n"   
              << "ERROR: This is a single material problem and you've specified 'BCType id = all' \n"
              << "The boundary condition infrastructure treats 'all' and '0' as two separate materials, \n"
@@ -1205,7 +1205,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
       // symmetric BCs
       if ( bc_type["label"] == "Symmetric"){
         if (numAllMatls > 1 &&  bc_type["id"] != "all") {
-          ostringstream warn;
+           std::ostringstream warn;
           warn <<"\n__________________________________\n"   
              << "ERROR: This is a multimaterial problem with a symmetric boundary condition\n"
              << "You must have the id = all instead of id = "<<bc_type["id"]<<"\n"
@@ -1223,13 +1223,13 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
     
     //__________________________________
     //Now check if all the variables on this face were set
-    for( map<string,bool>::iterator iter = isBC_set.begin();iter !=  isBC_set.end(); iter++ ){
+    for(  std::map< string,bool>::iterator iter = isBC_set.begin();iter !=  isBC_set.end(); iter++ ){
       string var = (*iter).first;
       bool isSet = (*iter).second;
       bool isSymmetric = isBC_set["Symmetric"];
       
       if(isSymmetric == false && isSet == false && var != "Symmetric"){
-        ostringstream warn;
+         std::ostringstream warn;
         warn <<"\n__________________________________\n"   
            << "INPUT FILE ERROR: \n"
            << "The "<<var<<" boundary condition for one of the materials has not been set \n"
@@ -1241,12 +1241,12 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
 
   //__________________________________
   //Has the pressure BC been set on faces that are not periodic
-  for( map<string,bool>::iterator iter  = is_press_BC_set.begin();iter !=  is_press_BC_set.end(); iter++ ){
+  for(  std::map< string,bool>::iterator iter  = is_press_BC_set.begin();iter !=  is_press_BC_set.end(); iter++ ){
     string face = (*iter).first;
     bool isSet  = (*iter).second;
     
     if(isSet == false){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"\n__________________________________\n"   
          << "INPUT FILE ERROR: \n"
          << "The pressure boundary condition has not been set \n"
@@ -1260,7 +1260,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   if (periodic.length() == 0){
     if( (tagFace_minus != Vector(1,1,1)) ||
         (tagFace_plus  != Vector(1,1,1)) ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn <<"\n__________________________________\n "
            << "ERROR: the boundary conditions on one of the faces of the computational domain has not been set \n"<<endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);  
@@ -1271,7 +1271,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   if(periodic.length() != 0){
     for(int dir = 0; dir<3; dir++){
       if( periodic[dir]==0 && ( tagFace_minus[dir] == 0 || tagFace_plus[dir] == 0)){
-        ostringstream warn;
+         std::ostringstream warn;
         warn <<"\n__________________________________\n "
              << "ERROR: You must specify a boundary condition in direction "<< dir << endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);   
@@ -1283,7 +1283,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
   if(periodic.length() != 0){
     for(int dir = 0; dir<3; dir++){
       if( periodic[dir]==1 && ( tagFace_minus[dir] == 1 || tagFace_plus[dir] == 1)){
-        ostringstream warn;
+         std::ostringstream warn;
         warn <<"\n__________________________________\n "
              << "ERROR: A periodic AND a normal boundary condition have been specifed for \n"
              << " direction: "<< dir << "  You can only have on or the other"<< endl;

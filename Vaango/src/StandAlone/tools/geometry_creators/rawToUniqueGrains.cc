@@ -167,7 +167,7 @@ GridP CreateGrid(ProblemSpecP ups);
 
 bool ReadImage(const char* szfile, unsigned int nPixels, pixel* pix, const string endianness);
 
-bool ReadAuxFile(const string auxfile, map<int,double>& data);
+bool ReadAuxFile(const string auxfile,  std::map< int,double>& data);
 
 inline Point CreatePoint(unsigned int n, vector<int>& res, double dx, double dy, double dz, Point domain_lo, Point domain_hi)
 {
@@ -181,7 +181,7 @@ inline Point CreatePoint(unsigned int n, vector<int>& res, double dx, double dy,
   if( here.x() < domain_lo.x() || here.x() > domain_hi.x() ||
       here.y() < domain_lo.y() || here.y() > domain_hi.y() ||
       here.z() < domain_lo.z() || here.z() > domain_hi.z() ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn<< " ERROR: you're trying to create a point outside of the computational domain \n"
         << " point:  " << here << "\n"
         << " domain: " << domain_lo << " -> " << domain_hi << "\n"
@@ -193,7 +193,7 @@ inline Point CreatePoint(unsigned int n, vector<int>& res, double dx, double dy,
 }
 
 struct intensityMatlMapping{
-  vector<int> threshold;
+  std::vector<int> threshold;
   unsigned int matlIndex;
 };
 
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
         usage( argv[0] );
       }
       else if ( s[0] == '-'){
-        cout << "\nERROR invalid input (" << s << ")" << endl;
+        std::cout << "\nERROR invalid input (" << s << ")" << endl;
         usage( argv[0] );
       }
     }
@@ -252,13 +252,13 @@ int main(int argc, char *argv[])
     //__________________________________
     //  Read in user specificatons
     string imgname;                   // raw image file name
-    vector<int> res;                  // image resolution
-    vector<int> ppc;                  // number of particles per cell
-    vector<int> UG_matlIndex;         // unique grain matl index
-    vector<int> UG_threshold;         // unique grain threshold
+    std::vector<int> res;                  // image resolution
+    std::vector<int> ppc;                  // number of particles per cell
+    std::vector<int> UG_matlIndex;         // unique grain matl index
+    std::vector<int> UG_threshold;         // unique grain threshold
     int UG_numMatls = 0;              // number of unique grain matls
-    map<int, int> intensityToMatl_map;// intensity to matl mapping
-    vector<int> specifiedMatls;       // matls that have been specified in the input file
+    std::map<int, int> intensityToMatl_map;// intensity to matl mapping
+    std::vector<int> specifiedMatls;       // matls that have been specified in the input file
 
     string f_name;                    // the base name of the output file
     bool hasUniqueGrains = false;
@@ -290,13 +290,13 @@ int main(int argc, char *argv[])
 
 
     // read in all non unique grain specs and put that in a vector
-    vector<intensityMatlMapping> intMatl_Vec;
+    std::vector<intensityMatlMapping> intMatl_Vec;
 
     for (ProblemSpecP child = raw_ps->findBlock("matl"); child != 0;
                       child = child->findNextBlock("matl")) {
 
-      vector<int> threshold;
-      map<string,string> matlIndex;
+      std::vector<int> threshold;
+      std::map<string,string> matlIndex;
 
       child->getAttributes(matlIndex);
       child->require("threshold", threshold);
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
       
       specifiedMatls.push_back(matl);  // keep a list of all matls that have been specified
 
-      cout << "matl index " << matl << " Threshold low: " << threshold[0] << " high: " <<threshold[1] <<endl;
+      std::cout << "matl index " << matl << " Threshold low: " << threshold[0] << " high: " <<threshold[1] <<endl;
     }
 
     // read in the unique grains
@@ -318,15 +318,15 @@ int main(int argc, char *argv[])
       ug_ps->require("matlIndex",      UG_matlIndex);
       ug_ps->require("threshold",      UG_threshold);
       UG_numMatls = UG_matlIndex.size();
-      cout << "Number of unique Grain Matls " << UG_numMatls << " {";
+      std::cout << "Number of unique Grain Matls " << UG_numMatls << " {";
       hasUniqueGrains = true;
       
       for (int m = 0; m< UG_numMatls; m++){
         int matl = UG_matlIndex[m];
         specifiedMatls.push_back(matl);  // keep a list of all matls that have been specified
-        cout << matl << ", ";        
+        std::cout << matl << ", ";        
       }
-      cout << "}\n";
+      std::cout << "}\n";
     }
 
 
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
     pixel* pimg = scinew pixel[nPixels];
 
     if (ReadImage(imgname.c_str(), nPixels, pimg, endianness) == false) {
-      cout << "FATAL ERROR : Failed reading image data" << endl;
+      std::cout << "FATAL ERROR : Failed reading image data" << endl;
       exit(0);
     }
 
@@ -363,11 +363,11 @@ int main(int argc, char *argv[])
       }
 
       if( maxI == 0 && minI == INT_MAX ){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "\n ERROR: No unique grains found in the threshold range "<< UG_threshold[0] << " and " << UG_threshold[1] << endl;
         throw ProblemSetupException(warn.str() , __FILE__, __LINE__);
       }
-      cout << "Unique grain intensity levels: "  << " min: " << minI << " max: " << maxI << endl;
+      std::cout << "Unique grain intensity levels: "  << " min: " << minI << " max: " << maxI << endl;
       //__________________________________
       //  create the intensity level to matl index map for the unique grains   
       int m = 0;
@@ -391,10 +391,10 @@ int main(int argc, char *argv[])
       }
     }
 
-    cout << "Intensity level to mpm matl mapping \n";
-    map<int,int>::iterator it;
+    std::cout << "Intensity level to mpm matl mapping \n";
+    std::map<int,int>::iterator it;
      for ( it=intensityToMatl_map.begin() ; it != intensityToMatl_map.end(); it++ ){
-      cout << " Intensity: " << it->first<< " = matl " << it->second << endl;
+      std::cout << " Intensity: " << it->first<< " = matl " << it->second << endl;
     }
 
 
@@ -402,7 +402,7 @@ int main(int argc, char *argv[])
     //  read in auxilary scalar file  
     //  The two column file contains
     //  intensity  scalar
-    map<int,double> intensityScalar_D_map;
+    std::map<int,double> intensityScalar_D_map;
     if ( auxFile != "notUsed" ) {
       ReadAuxFile(auxFile,intensityScalar_D_map);
       d_auxMap = true;
@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
         // these points define the extremas of the grid
         Point minP(1.e30,1.e30,1.e30),maxP(-1.e30,-1.e30,-1.e30);
 
-        map<int,vector<dataPoint*> > patch_dataPoints;
+        std::map<int,vector<dataPoint*> > patch_dataPoints;
         const Patch* curPatch;
         unsigned int n = 0;
         
@@ -503,16 +503,16 @@ int main(int argc, char *argv[])
           const Patch* patch = *iter;
 
           unsigned int patchID = patch->getID();
-          ostringstream of_name;
+           std::ostringstream of_name;
           of_name << f_name.c_str() << "_mat"<< matl <<"_pts."<<patchID;
 
           FILE* dest = fopen(of_name.str().c_str(), "wb");
           if(dest==0){
-            cout << "FATAL ERROR : Failed opening points file " << of_name.str()<<endl;
+            std::cout << "FATAL ERROR : Failed opening points file " << of_name.str()<<endl;
             exit(0);
           }
 
-          cout << " Writing file: " << of_name.str() << endl;
+          std::cout << " Writing file: " << of_name.str() << endl;
 
           // write the header
           double x[6];
@@ -527,7 +527,7 @@ int main(int argc, char *argv[])
 
           //__________________________________
           // write out the datapoints for this patch
-          vector<dataPoint*> dataPoints = patch_dataPoints[patchID];
+          std::vector<dataPoint*> dataPoints = patch_dataPoints[patchID];
           
           for ( unsigned int i= 0; i != dataPoints.size(); i++ ){ 
             dataPoint* dp = dataPoints[i];
@@ -610,21 +610,21 @@ GridP CreateGrid(ProblemSpecP ups)
 //
 void usage( char *prog_name )
 {
-  cout << "Usage: " << prog_name << " [options]  <ups file> \n";
-  cout << "options:" << endl;
-  cout << "-b, -binary:            binary output \n";
-  cout << "-l, -littleEndian:      input file contains little endian bytes  [default]\n";
-  cout << "-B, -bigEndian:         input file contains big endian bytes\n";
-  cout << "-auxScalarFile:         name of file that contains two columns of data (intensity scalar) \n";
-  cout << "       # case:  grains \n";
-  cout << "       # Number of blobs  75 \n";
-  cout << "       # max diameter (cm) 0.0365792455209 \n";
-  cout << "       # min diameter (cm) 0.00202786936452 \n";
-  cout << "       # average diameter (cm) 0.00990896874237 \n";
-  cout << "       # color    equivalent spherical diameter (cm) \n";
-  cout << "       1.0 0.0365792455209 \n"; 
-  cout << "       2.0 0.0031813408649 \n";
-  cout << "       3.0 0.0113385664577" << endl;
+  std::cout << "Usage: " << prog_name << " [options]  <ups file> \n";
+  std::cout << "options:" << endl;
+  std::cout << "-b, -binary:            binary output \n";
+  std::cout << "-l, -littleEndian:      input file contains little endian bytes  [default]\n";
+  std::cout << "-B, -bigEndian:         input file contains big endian bytes\n";
+  std::cout << "-auxScalarFile:         name of file that contains two columns of data (intensity scalar) \n";
+  std::cout << "       # case:  grains \n";
+  std::cout << "       # Number of blobs  75 \n";
+  std::cout << "       # max diameter (cm) 0.0365792455209 \n";
+  std::cout << "       # min diameter (cm) 0.00202786936452 \n";
+  std::cout << "       # average diameter (cm) 0.00990896874237 \n";
+  std::cout << "       # color    equivalent spherical diameter (cm) \n";
+  std::cout << "       1.0 0.0365792455209 \n"; 
+  std::cout << "       2.0 0.0031813408649 \n";
+  std::cout << "       3.0 0.0113385664577" << endl;
   
   
   exit( 1 );
@@ -642,7 +642,7 @@ bool ReadImage(const char* szfile, unsigned int nPixels, pixel* pb, const string
    
   unsigned int nread = fread(pb, sizeof(pixel), nPixels, fp);
   fclose(fp);
-  cout <<"Reading: " << szfile << ", Bytes per pixel " << sizeof(pixel) << ", number of pixels read " << nread << endl;
+  std::cout <<"Reading: " << szfile << ", Bytes per pixel " << sizeof(pixel) << ", number of pixels read " << nread << endl;
   
   //__________________________________
   //  Display what the max intensity
@@ -657,21 +657,21 @@ bool ReadImage(const char* szfile, unsigned int nPixels, pixel* pb, const string
       maxI = max(pb[i], maxI);
       minI = min(pb[i], minI);
     }
-    cout << "Big endian intensity: max (" << maxI << "), min(" << minI << " )"<< endl;
+    std::cout << "Big endian intensity: max (" << maxI << "), min(" << minI << " )"<< endl;
   } 
   else{
     for(unsigned int i = 0; i< nread;  i++ ){
       maxI = max(pb[i], maxI);
       minI = min(pb[i], minI);
     }
-    cout << "Little endian intensity: max (" << maxI << "), min(" << minI << " )"<< endl;
+    std::cout << "Little endian intensity: max (" << maxI << "), min(" << minI << " )"<< endl;
   }
   return (nread == nPixels);  
 }
 
 //-----------------------------------------------------------------------------------------------
 //
-bool ReadAuxFile(const string auxFileName, map<int,double>& data)
+bool ReadAuxFile(const string auxFileName,  std::map< int,double>& data)
 {
   ifstream auxFile(auxFileName.c_str());
   
@@ -684,7 +684,7 @@ bool ReadAuxFile(const string auxFileName, map<int,double>& data)
   double scalar;
   double tmp;
   
-  cout << "\nIntensity -> auxilary scalar mapping \n" << endl;
+  std::cout << "\nIntensity -> auxilary scalar mapping \n" << endl;
   
   while (getline(auxFile, line)) {
     
@@ -702,15 +702,15 @@ bool ReadAuxFile(const string auxFileName, map<int,double>& data)
     
     // bullet proofing
     if(isnormal(intensity) ==0 || isnormal(scalar == 0 ) ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: auxFile: either the intensity (" << intensity << ") or scalar (" << scalar << ") is not a number\n";
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
     
     data[intensity] = scalar;
-    cout << "Intensity: "<<intensity << " = scalar " << scalar << endl;
+    std::cout << "Intensity: "<<intensity << " = scalar " << scalar << endl;
   }
   
-  cout << " done reading auxfile " << endl;
+  std::cout << " done reading auxfile " << endl;
   return true; 
 }

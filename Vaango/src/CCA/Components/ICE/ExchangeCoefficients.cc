@@ -88,7 +88,7 @@ void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
     if(d_heatExchCoeffModel !="constant" &&
        d_heatExchCoeffModel !="variable" &&
        d_heatExchCoeffModel !="Variable"){
-       ostringstream warn;
+        std::ostringstream warn;
         warn<<"ERROR\n Heat exchange coefficient model (" << d_heatExchCoeffModel 
             <<") does not exist.\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -106,7 +106,7 @@ void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
     for (int i = 0; i<(int)d_K_mom.size(); i++) {
       cout_norm << "K_mom = " << d_K_mom[i] << endl;
       if( d_K_mom[i] < 0.0 || d_K_mom[i] > 1e20 ) {
-        ostringstream warn;
+         std::ostringstream warn;
         warn<<"ERROR\n Momentum exchange coef. is either too big or negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -121,7 +121,7 @@ void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
       for (int i = 0; i<(int)d_K_heat.size(); i++) {
         cout_norm << "K_heat = " << d_K_heat[i] << endl;
         if( d_K_heat[i] < 0.0 || d_K_heat[i] > 1e15 ) {
-          ostringstream warn;
+           std::ostringstream warn;
           warn<<"ERROR\n Heat exchange coef. is either too big or negative\n";
           throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
         }

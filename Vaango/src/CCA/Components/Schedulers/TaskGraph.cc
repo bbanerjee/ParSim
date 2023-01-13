@@ -221,7 +221,7 @@ TaskGraph::createDetailedTasks(bool useInternalDeps,
                                const GridP& oldGrid,
                                const bool hasDistalReqs /* = false */)
 {
-  vector<Task*> sorted_tasks;
+  std::vector<Task*> sorted_tasks;
 
   // TODO plz leave this commented line alone, APH 01/07/15
   // topologicalSort(sorted_tasks);
@@ -1358,11 +1358,11 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
                 // i.e., the task that requires data computed by a task on this
                 // processor needs to finish its task before this task, which
                 // modifies the data computed by the same task
-                list<DetailedTask*> requireBeforeModifiedTasks;
+                 std::list<DetailedTask*> requireBeforeModifiedTasks;
                 creator->findRequiringTasks(req->var,
                                             requireBeforeModifiedTasks);
 
-                list<DetailedTask*>::iterator reqTaskIter;
+                 std::list<DetailedTask*>::iterator reqTaskIter;
                 for (reqTaskIter = requireBeforeModifiedTasks.begin();
                      reqTaskIter != requireBeforeModifiedTasks.end();
                      ++reqTaskIter) {
@@ -1627,7 +1627,7 @@ TaskGraph::makeVarLabelMaterialMap(Scheduler::VarLabelMaterialMap* result)
          comp                   = comp->next) {
       // assume all patches will compute the same labels on the same materials
       const VarLabel* label         = comp->var;
-      list<int>& matls              = (*result)[label->getName()];
+       std::list<int>& matls              = (*result)[label->getName()];
       const MaterialSubset* msubset = comp->matls;
       if (msubset) {
         for (int mm = 0; mm < msubset->size(); mm++) {
@@ -1725,7 +1725,7 @@ TaskGraph::overlaps(const Task::Dependency* comp,
 void
 TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
 {
-  vector<Task*>::iterator iter;
+  std::vector<Task*>::iterator iter;
   // Initialize variables on the tasks
   for (iter = d_tasks.begin(); iter != d_tasks.end(); iter++) {
     sortinfo[*iter] = GraphSortInfo();
@@ -1791,7 +1791,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
                         << comp->var->getName() << " on level " << levelidx
                         << ", DW " << dw << "\n";
           }
-          ostringstream taskname;
+           std::ostringstream taskname;
           taskname << "Reduction: " << comp->var->getName()
                    << ", level: " << levelidx << ", dw: " << dw;
           Task* newtask = scinew Task(taskname.str(), Task::Reduction);
@@ -1884,7 +1884,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
     sortinfo.find(task)->second.visited = true;
     task->allChildTasks.clear();
     if (detaileddbg.active()) {
-      cout << d_proc_group->myRank()
+      std::cout << d_proc_group->myRank()
            << "   Looking at dependencies for task: " << *task
            << "child task num=" << task->childTasks.size() << "\n";
     }
@@ -2049,20 +2049,20 @@ TaskGraph::addDependencyEdges(Task* task,
 
           if (!sortinfo.find(edge->comp->task)->second.visited &&
               !edge->comp->task->isReductionTask()) {
-            cout << "\nWARNING: The task, '" << task->getName() << "', that ";
+            std::cout << "\nWARNING: The task, '" << task->getName() << "', that ";
             if (modifies) {
-              cout << "modifies '";
+              std::cout << "modifies '";
             } else {
-              cout << "requires '";
+              std::cout << "requires '";
             }
-            cout << req->var->getName()
+            std::cout << req->var->getName()
                  << "' was added before the computing task";
-            cout << ", '" << edge->comp->task->getName() << "'\n";
-            cout << "  Required/modified by: " << *task << "\n";
-            cout << "  req: " << *req << "\n";
-            cout << "  Computed by: " << *edge->comp->task << "\n";
-            cout << "  comp: " << *comp << "\n";
-            cout << "\n";
+            std::cout << ", '" << edge->comp->task->getName() << "'\n";
+            std::cout << "  Required/modified by: " << *task << "\n";
+            std::cout << "  req: " << *req << "\n";
+            std::cout << "  Computed by: " << *edge->comp->task << "\n";
+            std::cout << "  comp: " << *comp << "\n";
+            std::cout << "\n";
           }
           count++;
           task->childTasks.insert(comp->task);
@@ -2086,35 +2086,35 @@ TaskGraph::addDependencyEdges(Task* task,
         // another TG, we need to look in this TG first, but don't worry if you
         // don't find it
 
-        cout << "ERROR: Cannot find the task that computes the variable ("
+        std::cout << "ERROR: Cannot find the task that computes the variable ("
              << req->var->getName() << ")\n";
 
-        cout << "The task (" << task->getName()
+        std::cout << "The task (" << task->getName()
              << ") is requesting data from:\n";
-        cout << "  Level:           "
+        std::cout << "  Level:           "
              << getLevel(task->getPatchSet())->getIndex() << "\n";
-        cout << "  Task:PatchSet    " << *(task->getPatchSet()) << "\n";
-        cout << "  Task:MaterialSet " << *(task->getMaterialSet()) << "\n \n";
+        std::cout << "  Task:PatchSet    " << *(task->getPatchSet()) << "\n";
+        std::cout << "  Task:MaterialSet " << *(task->getMaterialSet()) << "\n \n";
 
-        cout << "The variable (" << req->var->getName()
+        std::cout << "The variable (" << req->var->getName()
              << ") is requiring data from:\n";
 
         if (req->patches) {
-          cout << "  Level: " << getLevel(req->patches)->getIndex() << "\n";
-          cout << "  Patches': " << *(req->patches) << "\n";
+          std::cout << "  Level: " << getLevel(req->patches)->getIndex() << "\n";
+          std::cout << "  Patches': " << *(req->patches) << "\n";
         } else {
-          cout << "  Patches:  All \n";
+          std::cout << "  Patches:  All \n";
         }
 
         if (req->matls) {
-          cout << "  Materials: " << *(req->matls) << "\n";
+          std::cout << "  Materials: " << *(req->matls) << "\n";
         } else {
-          cout << "  Materials:  All \n";
+          std::cout << "  Materials:  All \n";
         }
 
-        cout << "\nTask Details:\n";
+        std::cout << "\nTask Details:\n";
         task->display(cout);
-        cout << "\nRequirement Details:\n" << *req << "\n";
+        std::cout << "\nRequirement Details:\n" << *req << "\n";
 
         SCI_THROW(InternalError(
           "Scheduler could not find  production for variable: " +
@@ -2140,7 +2140,7 @@ TaskGraph::addDependencyEdges(Task* task,
 //
 void
 TaskGraph::processTask(Task* task,
-                       vector<Task*>& sortedTasks,
+                       std::vector<Task*>& sortedTasks,
                        GraphSortInfoMap& sortinfo) const
 {
   if (detaileddbg.active()) {
@@ -2172,7 +2172,7 @@ TaskGraph::processTask(Task* task,
 void
 TaskGraph::processDependencies(Task* task,
                                Task::Dependency* req,
-                               vector<Task*>& sortedTasks,
+                               std::vector<Task*>& sortedTasks,
                                GraphSortInfoMap& sortinfo) const
 
 {
@@ -2191,7 +2191,7 @@ TaskGraph::processDependencies(Task* task,
             // this try-catch mechanism will serve to print out the entire TG
             // cycle
             if (gsi.visited) {
-              cout << d_proc_group->myRank()
+              std::cout << d_proc_group->myRank()
                    << " Cycle detected in task graph\n";
               SCI_THROW(InternalError("Cycle detected in task graph",
                                       __FILE__,
@@ -2201,7 +2201,7 @@ TaskGraph::processDependencies(Task* task,
             // recursively process the dependencies of the computing task
             processTask(vtask, sortedTasks, sortinfo);
           } catch (InternalError& e) {
-            cout << d_proc_group->myRank() << "   Task " << task->getName()
+            std::cout << d_proc_group->myRank() << "   Task " << task->getName()
                  << " requires " << req->var->getName() << " from "
                  << vtask->getName() << "\n";
 

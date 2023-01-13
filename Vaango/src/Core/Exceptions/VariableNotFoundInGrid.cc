@@ -77,7 +77,7 @@ VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
   d_msg = s.str();
   
 #ifdef EXCEPTIONS_CRASH
-  cout << d_msg << "\n";
+  std::cout << d_msg << "\n";
 #endif
 }
 
@@ -125,9 +125,9 @@ VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
   d_msg = s.str();
 
 #ifdef EXCEPTIONS_CRASH
-  cout << "A VariableNotFoundInGrid exception was thrown.\n";
-  cout << file << ":" << line << "\n";
-  cout << d_msg;
+  std::cout << "A VariableNotFoundInGrid exception was thrown.\n";
+  std::cout << file << ":" << line << "\n";
+  std::cout << d_msg;
 #endif
 }
 

@@ -82,12 +82,12 @@ namespace Uintah {
     case PrecondAMG:       break; // Not implemented yet
     case PrecondFAC:       break; // Not implemented yet
     default:
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Unknown preconditionertype in newHyprePrecond: " << precondType;
       
       throw InternalError( msg.str(), __FILE__, __LINE__ );
     }
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Preconditioner not yet implemented in newHyprePrecond: " << precondType;
     throw InternalError( msg.str(), __FILE__, __LINE__ );
   } 

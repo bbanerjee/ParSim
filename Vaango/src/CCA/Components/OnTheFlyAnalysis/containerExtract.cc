@@ -107,12 +107,12 @@ containerExtract::~containerExtract()
   //delete the container cell list
   for (unsigned int i = 0; i < d_containers.size(); i++) {
     container* cnt = d_containers[i];
-    vector<extractVarLabel*>::iterator eity;
+    std::vector<extractVarLabel*>::iterator eity;
     for (eity = cnt->vls.begin(); eity != cnt->vls.end(); eity++) {
       delete *eity;
     }
 
-    vector<extractCell*>::iterator ity;
+    std::vector<extractCell*>::iterator ity;
     for( ity = cnt->extractCells.begin(); ity != cnt->extractCells.end(); ity++) {
       delete *ity;
     }
@@ -137,7 +137,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
     throw InternalError("containerExtract:couldn't get output port", __FILE__, __LINE__);
   }
   
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -155,7 +155,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
   
   //__________________________________
   //  Read in containers 
-  map<string,string> attribute;
+  std::map<string,string> attribute;
   ProblemSpecP objects_ps = d_prob_spec->findBlock("objects"); 
   if (!objects_ps){
     throw ProblemSetupException("\n ERROR:containerExtract: Couldn't find <objects> tag \n", __FILE__, __LINE__);    
@@ -219,7 +219,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
           throwException = true;
         } 
         if(throwException){       
-          ostringstream warn;
+           std::ostringstream warn;
           warn << "ERROR:AnalysisModule:containerExtract: ("<<label->getName() << " " 
             << td->getName() << " ) has not been implemented" << endl;
           throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -239,7 +239,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
         if(   td->getType() != TypeDescription::Type::SFCXVariable &&
             td->getType() != TypeDescription::Type::SFCYVariable &&
             td->getType() != TypeDescription::Type::SFCZVariable) {
-          ostringstream warn;
+           std::ostringstream warn;
           warn << "ERROR:AnalysisModule:containerExtract: only SFC X Y Z variables are allowed in 'surface' mode." 
             << " (You spefified "<<label->getName() << ", which is a " 
           << td->getName() << " )." << endl;
@@ -277,7 +277,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
     } /* foreach <variable> */
 
     //Construct a vector of geom_objs
-    vector<GeometryPieceP> geomObjs;
+    std::vector<GeometryPieceP> geomObjs;
     GeometryPieceFactory::create(object_spec, grid, geomObjs); 
     if (geomObjs.size() < 1) {
       throw ParameterNotFound("ContainerExtract: You didn't specify a proper geom_object.", __FILE__, __LINE__);
@@ -314,14 +314,14 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
 
       if (bl.x() < dl.x() || bl.y() < dl.y() || bl.z() < dl.z()
        || bu.x() > du.x() || bu.y() > du.y() || bu.z() > du.z() ) {
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "\n ERROR:containerExtract: the object that you've specified "  
           << " begins or ends outside of the computational domain. \n" << endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
 
       if(bbox.intersect(domainBox).degenerate() ) {
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "\n ERROR:containerExtract: the object that you've specified is degenerate" << endl; 
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -389,7 +389,7 @@ void containerExtract::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:containerExtract  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -407,7 +407,7 @@ void containerExtract::initialize(const ProcessorGroup*,
     for (unsigned int i = 0; i < d_containers.size(); i++) {
       container* cnt = d_containers[i];
 
-      vector<GeometryPieceP>::iterator ity; 
+      std::vector<GeometryPieceP>::iterator ity; 
       for(ity = cnt->geomObjs.begin(); ity!= cnt->geomObjs.end(); ity++) {
         GeometryPieceP piece = *ity;
         Box geomBox = piece->getBoundingBox();
@@ -569,7 +569,7 @@ void containerExtract::initialize(const ProcessorGroup*,
     string udaDir = d_dataArchiver->getOutputLocation();
     string dirPath = udaDir + "/" + cnt->name;
 
-    ostringstream l;
+     std::ostringstream l;
     const Patch* patch = patches->get(0);
     l << patch->getLevel()->getIndex();
     string levelNum = l.str();
@@ -577,9 +577,9 @@ void containerExtract::initialize(const ProcessorGroup*,
     createDirectory(dirPath, levelNum);
 
     extractCell c;
-    vector<extractCell*>::iterator ity;
+    std::vector<extractCell*>::iterator ity;
     for(unsigned int i =0; i < cnt->extractCells.size(); i++) { 
-      ostringstream fname;
+       std::ostringstream fname;
       fname << path << *(cnt->extractCells[i]);
       string filename = fname.str();
       createFile(filename, *(cnt->extractCells[i]));
@@ -661,21 +661,21 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
       //__________________________________
       // loop over each of the variables
       // load them into the data vectors
-      vector< constCCVariable<int> >      CC_integer_data;
-      vector< constCCVariable<double> >   CC_double_data;
-      vector< constCCVariable<Vector> >   CC_Vector_data;
-      vector< constSFCXVariable<double> > SFCX_double_data;
-      vector< constSFCYVariable<double> > SFCY_double_data;
-      vector< constSFCZVariable<double> > SFCZ_double_data;
+      std::vector< constCCVariable<int> >      CC_integer_data;
+      std::vector< constCCVariable<double> >   CC_double_data;
+      std::vector< constCCVariable<Vector> >   CC_Vector_data;
+      std::vector< constSFCXVariable<double> > SFCX_double_data;
+      std::vector< constSFCYVariable<double> > SFCY_double_data;
+      std::vector< constSFCZVariable<double> > SFCZ_double_data;
 
       /* We need to lookup VarLabels to compare them to fluxcells later.
          Since they're not stored in the variable vectors preserve them here. */
-      vector< VarLabel* >                  cci_var_labels;
-      vector< VarLabel* >                  ccd_var_labels;
-      vector< VarLabel* >                  ccv_var_labels;
-      vector< VarLabel* >                  sfcx_var_labels;
-      vector< VarLabel* >                  sfcy_var_labels;
-      vector< VarLabel* >                  sfcz_var_labels;
+      std::vector< VarLabel* >                  cci_var_labels;
+      std::vector< VarLabel* >                  ccd_var_labels;
+      std::vector< VarLabel* >                  ccv_var_labels;
+      std::vector< VarLabel* >                  sfcx_var_labels;
+      std::vector< VarLabel* >                  sfcy_var_labels;
+      std::vector< VarLabel* >                  sfcz_var_labels;
 
       constCCVariable<int>    q_CC_integer;      
       constCCVariable<double> q_CC_double;
@@ -750,7 +750,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
             sfcz_var_labels.push_back(d_varLabels[i]);
             break;
           default:
-            ostringstream warn;
+             std::ostringstream warn;
             warn << "ERROR:AnalysisModule:containerExtract: ("<<d_varLabels[i]->getName() << " " 
               << td->getName() << " ) has not been implemented" << endl;
             throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -768,12 +768,12 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
             continue;  // just in case - the point-to-cell logic might throw us off on patch boundaries...
 
           IntVector c = exc->c;
-          ostringstream fname;
+           std::ostringstream fname;
           // create the directory structure
           string udaDir = d_dataArchiver->getOutputLocation();
           string dirPath = udaDir + "/" + cnt->name; 
 
-          ostringstream l;
+           std::ostringstream l;
           l << patch->getLevel()->getIndex();
           string levelNum = l.str();
           string path = dirPath + "/" + levelNum + "/" ;
@@ -841,7 +841,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
                   fprintf(fp, "    %16E",SFCZ_double_data[i][c]);
               break;
             default:
-              ostringstream warn;
+               std::ostringstream warn;
               warn << "ERROR:AnalysisModule:containerExtract: ("<<exc->vl->getName() << " " 
                 << td->getName() << " ) has not been implemented" << endl;
               throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -870,7 +870,7 @@ void containerExtract::createFile(string& filename, extractCell& exc)
   
   fprintf(fp,"\n");
   fclose(fp);
-  cout << Parallel::getMPIRank() << " containerExtract:Created file " << filename << endl;
+  std::cout << Parallel::getMPIRank() << " containerExtract:Created file " << filename << endl;
 }
 //______________________________________________________________________
 // create the directory structure   lineName/LevelIndex
@@ -880,7 +880,7 @@ containerExtract::createDirectory(string& lineName, string& levelIndex)
 {
   DIR *check = opendir(lineName.c_str());
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << "containerExtract:Making directory " << lineName << endl;
+    std::cout << Parallel::getMPIRank() << "containerExtract:Making directory " << lineName << endl;
     MKDIR( lineName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -890,7 +890,7 @@ containerExtract::createDirectory(string& lineName, string& levelIndex)
   string path = lineName + "/" + levelIndex;
   check = opendir(path.c_str());
   if ( check == nullptr ) {
-    cout << "containerExtract:Making directory " << path << endl;
+    std::cout << "containerExtract:Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);

@@ -111,7 +111,7 @@ void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
   sharedState = in_state;
   d_matl = sharedState->parseAndLookupMaterial(params, "material");
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
   d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
@@ -174,7 +174,7 @@ void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
       d_rho_air   == -9  || d_rho_fuel == -9 ||    
       d_cv_air    == -9  || d_cv_fuel  == -9 ||  
       d_R_air     == -9  || d_R_fuel   == -9  ) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << " ERROR SimpleRxn: Input variable(s) not specified \n" 
          << "\n f_stoichometric  "<< d_scalar->f_stoic 
          << "\n diffusivity      "<< d_scalar->diff_coeff
@@ -190,7 +190,7 @@ void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
   for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
     geom_obj_ps != 0;
     geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-    vector<GeometryPieceP> pieces;
+    std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     GeometryPieceP mainpiece;
@@ -217,7 +217,7 @@ void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
     probe_ps->require("probeSamplingFreq", d_probeFreq);
      
     Vector location = Vector(0,0,0);
-    map<string,string> attr;                    
+    std::map<string,string> attr;                    
     for (ProblemSpecP prob_spec = probe_ps->findBlock("location"); prob_spec != 0; 
                       prob_spec = prob_spec->findNextBlock("location")) {
                       
@@ -544,7 +544,7 @@ void SimpleRxn::computeModelSources(const ProcessorGroup*,
     //__________________________________
     //  bulletproofing
     if (sum != numCells) {
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR: SimpleRxn Model: invalid value for f "
            << "somewhere in the scalar field: "<< sum
            << " cells were touched out of "<< numCells

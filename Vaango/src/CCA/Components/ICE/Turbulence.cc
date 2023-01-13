@@ -73,7 +73,7 @@ Turbulence::Turbulence(ProblemSpecP& ps, SimulationStateP& sharedState)
     child->get("name", s->name);
 
     s->matl = sharedState->parseAndLookupMaterial(child, "material");
-    vector<int> m(1);
+    std::vector<int> m(1);
     m[0] = s->matl->getDWIndex();
     s->matl_set = scinew MaterialSet();
     s->matl_set->addAll(m);

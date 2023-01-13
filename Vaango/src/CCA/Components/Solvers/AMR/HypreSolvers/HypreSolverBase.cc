@@ -147,7 +147,7 @@ HypreSolverBase::assertInterface(void)
   cout_dbg << "2. found = " << found << "\n";
 
   if (!found) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Solver does not support Hypre interface " << interface;
     throw InternalError(msg.str(),__FILE__, __LINE__); 
   }

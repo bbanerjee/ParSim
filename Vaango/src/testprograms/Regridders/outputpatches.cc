@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   if(argc!=5)
   {
     if(rank==0)
-      cout << "Usage: benchmark patch_size patches_in_each_dim flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
+      std::cout << "Usage: benchmark patch_size patches_in_each_dim flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
     MPI_Finalize();
     return 1;
   }
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
         if(p_assigned==to_assign)
         { 
           //if(rank==0)
-          //  cout << p << " assigned: " << to_assign << " patches\n"; 
+          //  std::cout << p << " assigned: " << to_assign << " patches\n"; 
           p++;
           p_assigned=0;
           to_assign=div+int(mod>p);
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
   }
 
   //for(unsigned int i=0;i<patches.size();i++)
-  //  cout << rank << " patch: " << patches[i] << endl;
+  //  std::cout << rank << " patch: " << patches[i] << endl;
 
   //create refinement flags
   flags.resize(patches.size());
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     vol=0;
     for(size_t i=0;i<global_patches.size();i++)
       vol+=global_patches[i].getVolume();
-    cout << "Tiled number of patches: " << global_patches.size() << " number of cells: " << vol << " Flags: " << fflags   << endl;
+    std::cout << "Tiled number of patches: " << global_patches.size() << " number of cells: " << vol << " Flags: " << fflags   << endl;
   }
 #endif
 
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
   
     for(size_t i=0;i<fine_patches.size();i++)
       vol+=fine_patches[i].getVolume();
-    cout << "BNR number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << (vol-fflags)/(double)fflags << endl;
+    std::cout << "BNR number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << (vol-fflags)/(double)fflags << endl;
   }
 #endif
 
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
     vol=0;
     for(size_t i=0;i<global_patches.size();i++)
       vol+=global_patches[i].getVolume();
-    cout << "LBNR number of patches: " << global_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
+    std::cout << "LBNR number of patches: " << global_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
   }
 #endif
 
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
     vol=0;
     for(size_t i=0;i<fine_patches.size();i++)
       vol+=fine_patches[i].getVolume();
-    cout << "GBRv1 number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
+    std::cout << "GBRv1 number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
   }
 #endif
 
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
     vol=0;
     for(size_t i=0;i<fine_patches.size();i++)
       vol+=fine_patches[i].getVolume();
-    cout << "GBRv2 number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
+    std::cout << "GBRv2 number of patches: " << fine_patches.size() << " number of cells: " << vol << " Flags: " << fflags << endl;
   }
 #endif
 

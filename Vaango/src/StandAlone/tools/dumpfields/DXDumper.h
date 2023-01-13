@@ -68,13 +68,13 @@ namespace Uintah {
     
       int      dxobj_;
       ofstream strm_;
-      list< pair<float,int> > timesteps_;
+       std::list< pair<float,int> > timesteps_;
     };
   
     class Step : public Dumper::Step {
     public:
       Step(DataArchive * da, string outdir, int timestep, double time, int index, int fileindex, 
-           const map<string,FldWriter*> & fldwriters, bool bin, bool onedim);
+           const  std::map< string,FldWriter*> & fldwriters, bool bin, bool onedim);
     
       void storeGrid ();
       void storeField(string filename, const Uintah::TypeDescription * type);
@@ -85,8 +85,8 @@ namespace Uintah {
       DataArchive*  da_;
       int           fileindex_;
       string        outdir_;
-      ostringstream dxstrm_, fldstrm_;
-      const map<string,FldWriter*> & fldwriters_;
+       std::ostringstream dxstrm_, fldstrm_;
+      const  std::map< string,FldWriter*> & fldwriters_;
       bool          bin_, onedim_;
     };
     friend class Step;
@@ -98,9 +98,9 @@ namespace Uintah {
   private:  
     int           nsteps_;
     int           dxobj_;
-    ostringstream timestrm_;
+     std::ostringstream timestrm_;
     ofstream      dxstrm_;
-    map<string,FldWriter*> fldwriters_;
+    std::map<string,FldWriter*> fldwriters_;
     bool          bin_;
     bool          onedim_;
     string        dirname_;

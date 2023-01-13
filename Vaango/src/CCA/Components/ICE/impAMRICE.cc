@@ -359,7 +359,7 @@ void impAMRICE::scheduleMultiLevelPressureSolve(  SchedulerP& sched,
   const PatchSet* perprocPatches = loadBal->getPerProcessorPatchSet(grid);
 
   sched->addTask(t, perprocPatches, all_matls);
-  cout << d_myworld->myRank() << " proc_patches are " << *perprocPatches << "\n";
+  std::cout << d_myworld->myRank() << " proc_patches are " << *perprocPatches << "\n";
 
 }
 /*___________________________________________________________________ 
@@ -538,7 +538,7 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
     subOldDW->get(max_RHS_old, lb->max_RHSLabel);
     
     if(pg->myRank() == 0) {
-      cout << "Outer iteration " << counter
+      std::cout << "Outer iteration " << counter
            << " max_rhs before solve "<< max_RHS_old
            << " after solve " << max_RHS<< endl;
     }
@@ -549,12 +549,12 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
     if (counter > d_iters_before_timestep_restart ){
       restart = true;
       if(pg->myRank() == 0)
-        cout <<"\nWARNING: max iterations befor timestep restart reached\n"<<endl;
+        std::cout <<"\nWARNING: max iterations befor timestep restart reached\n"<<endl;
     }
                                           //  solver has requested a restart
     if (d_subsched->get_dw(3)->timestepRestarted() ) {
       if(pg->myRank() == 0)
-        cout << "\nWARNING: Solver had requested a restart\n" <<endl;
+        std::cout << "\nWARNING: Solver had requested a restart\n" <<endl;
       restart = true;
     }
     
@@ -564,7 +564,7 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
     }
     if(((max_RHS - smallest_max_RHS_sofar) > 100.0*smallest_max_RHS_sofar) ){
       if(pg->myRank() == 0)
-        cout << "\nWARNING: outer interation is diverging now "
+        std::cout << "\nWARNING: outer interation is diverging now "
              << "restarting the timestep"
              << " Max_RHS " << max_RHS 
              << " smallest_max_RHS_sofar "<< smallest_max_RHS_sofar<< endl;
@@ -583,7 +583,7 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
   if ( (counter == d_max_iter_implicit)   && 
        (max_RHS > d_outer_iter_tolerance) &&
        counter > 1) {
-    ostringstream s;
+     std::ostringstream s;
     s <<"ERROR impAMRICE::implicitPressureSolve, the maximum number of outer"
       <<" iterations was reached. \n " 
       << "Try either increasing the max_outer_iterations "
@@ -814,7 +814,7 @@ void impAMRICE::apply_refluxFluxes_RHS(const ProcessorGroup*,
     //__________________________________
     //  Print Data
     if(switchDebug_setupRHS){ 
-      ostringstream desc;     
+       std::ostringstream desc;     
       desc << "apply_refluxFluxes_RHS"<< "_patch_"<< coarsePatch->getID();
       printData(0, coarsePatch,   1, desc.str(), "rhs",             rhs);
       printData(0, coarsePatch,   1, desc.str(), "refluxCorrection",sumRefluxCorrection);
@@ -934,7 +934,7 @@ void impAMRICE::coarsen_delP(const ProcessorGroup*,
 #endif
 
     if (switchDebug_updatePressure) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_coarsen_delP" << coarsePatch->getID();
       printData( 0, coarsePatch, 0,desc.str(), "delP",delP);
       printData( 0, coarsePatch, 0,desc.str(), "delP_old",delP_old);
@@ -1023,7 +1023,7 @@ void impAMRICE::zeroMatrix_UnderFinePatches(const ProcessorGroup*,
     //  Print Data
 #if 1
     if (switchDebug_setupMatrix) {    
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_zeroMatrix_UnderFinePatches_coarse_patch_" << coarsePatch->getID()
            <<  " L-" <<coarseLevel->getIndex()<< endl;
       printStencil( 0, coarsePatch, 1, desc.str(), "A", A);
@@ -1121,9 +1121,9 @@ void impAMRICE::matrixBC_CFI_coarsePatch(const ProcessorGroup*,
 
         //__________________________________
         // Iterate over coarsefine interface faces
-        vector<Patch::FaceType> cf;
+        std::vector<Patch::FaceType> cf;
         finePatch->getCoarseFaces(cf);
-        vector<Patch::FaceType>::const_iterator iter;  
+        std::vector<Patch::FaceType>::const_iterator iter;  
         for (iter  = cf.begin(); iter != cf.end(); ++iter){
           Patch::FaceType patchFace = *iter;
 
@@ -1189,7 +1189,7 @@ void impAMRICE::matrixBC_CFI_coarsePatch(const ProcessorGroup*,
     //  Print Data
 #if 1
     if (switchDebug_setupMatrix) {    
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "BOT_matrixBC_CFI_coarse_patch_" << coarsePatch->getID()
           <<  " L-" <<coarseLevel->getIndex()<< endl;
       printStencil( 0, coarsePatch, 1, desc.str(), "A_coarse", A_coarse);

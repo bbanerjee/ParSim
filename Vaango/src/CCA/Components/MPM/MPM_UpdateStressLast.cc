@@ -226,8 +226,8 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
     auto interpolator = flags->d_interpolator->clone(patch);
     auto num_influence_nodes = interpolator->size();
-    vector<IntVector> ni(num_influence_nodes);
-    vector<double> S(num_influence_nodes);
+    std::vector<IntVector> ni(num_influence_nodes);
+    std::vector<double> S(num_influence_nodes);
 
     // DON'T MOVE THESE!!!
     double thermal_energy = 0.0;

@@ -57,12 +57,12 @@ DruckerCheck::checkStability(const Matrix3&, const Matrix3& deformRate,
   Matrix3 stressRate(0.0);
   Cep.contract(deformRate, stressRate);
 
-  // cout << "Deform Rate = \n" << deformRate << endl;
-  // cout << "Cep = \n" << Cep ;
-  // cout << "Stress Rate = \n" << stressRate << endl;
+  // std::cout << "Deform Rate = \n" << deformRate << endl;
+  // std::cout << "Cep = \n" << Cep ;
+  // std::cout << "Stress Rate = \n" << stressRate << endl;
 
   double val = stressRate.Contract(deformRate);
-  // cout << "val = " << val << endl << endl;
+  // std::cout << "val = " << val << endl << endl;
   if (val > 0.0)
     return false;
   return true;
@@ -87,12 +87,12 @@ DruckerCheck::checkStability(const Matrix3& cauchyStress,
   auto d_vec = Vaango::Tensor::constructVector6Mandel(deformRate);
   Vaango::Tensor::Vector6Mandel stressRate = C_ep * d_vec;
 
-  // cout << "Deform Rate = \n" << d_vec << endl;
-  // cout << "Cep = \n" << Cep ;
-  // cout << "Stress Rate = \n" << stressRate << endl;
+  // std::cout << "Deform Rate = \n" << d_vec << endl;
+  // std::cout << "Cep = \n" << Cep ;
+  // std::cout << "Stress Rate = \n" << stressRate << endl;
 
   double val = stressRate.transpose() * d_vec;
-  // cout << "val = " << val << endl << endl;
+  // std::cout << "val = " << val << endl << endl;
   if (val > 0.0)
     return false;
   return true;

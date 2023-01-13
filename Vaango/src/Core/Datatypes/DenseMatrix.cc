@@ -421,7 +421,7 @@ DenseMatrix::solve(const ColumnMatrix& rhs, ColumnMatrix& lhs, int overwrite)
   // Back-substitution
   for (i=1; i<nrows_; i++)
   {
-    //  cout << "Solve: " << i << " of " << nr << endl;
+    //  std::cout << "Solve: " << i << " of " << nr << endl;
     //  ASSERT(Abs(A[i][i]) > 1.e-12);
     if (Abs(A[i][i]) < 1.e-12)
     {
@@ -445,7 +445,7 @@ DenseMatrix::solve(const ColumnMatrix& rhs, ColumnMatrix& lhs, int overwrite)
   // Normalize
   for (i=0; i<nrows_; i++)
   {
-    //  cout << "Solve: " << i << " of " << nr << endl;
+    //  std::cout << "Solve: " << i << " of " << nr << endl;
     //  ASSERT(Abs(A[i][i]) > 1.e-12);
     if (Abs(A[i][i]) < 1.e-12)
     {
@@ -466,7 +466,7 @@ DenseMatrix::solve(const ColumnMatrix& rhs, ColumnMatrix& lhs, int overwrite)
 int
 DenseMatrix::solve(vector<double>& sol, int overwrite)
 {
-  vector<double> b(sol);
+  std::vector<double> b(sol);
   return solve(b, sol, overwrite);
 }
 
@@ -488,7 +488,7 @@ DenseMatrix::solve(const vector<double>& rhs, vector<double>& lhs,
   int i;
   for (i=0; i<nrows_; i++)
   {
-    //  cout << "Solve: " << i << " of " << nr << endl;
+    //  std::cout << "Solve: " << i << " of " << nr << endl;
     double max=Abs(A[i][i]);
     int row=i;
     int j;
@@ -533,7 +533,7 @@ DenseMatrix::solve(const vector<double>& rhs, vector<double>& lhs,
   // Back-substitution
   for (i=1; i<nrows_; i++)
   {
-    //  cout << "Lhsve: " << i << " of " << nr << endl;
+    //  std::cout << "Lhsve: " << i << " of " << nr << endl;
     //  ASSERT(Abs(A[i][i]) > 1.e-12);
     if (Abs(A[i][i]) < 1.e-12)
     {
@@ -557,7 +557,7 @@ DenseMatrix::solve(const vector<double>& rhs, vector<double>& lhs,
   // Normalize
   for (i=0; i<nrows_; i++)
   {
-    //  cout << "Solve: " << i << " of " << nr << endl;
+    //  std::cout << "Solve: " << i << " of " << nr << endl;
     //  ASSERT(Abs(A[i][i]) > 1.e-12);
     if (Abs(A[i][i]) < 1.e-12)
     {

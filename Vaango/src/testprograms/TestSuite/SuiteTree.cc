@@ -125,6 +125,6 @@ void SuiteTreeLeaf::appendFailedSuites(list<Suite*>& failedSuiteList)
 void SuiteTreeLeaf::reportAllSuites()
 {
   mySuite->report();
-  cout << endl;
+  std::cout << endl;
 }
 

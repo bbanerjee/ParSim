@@ -198,18 +198,18 @@ double newtons_method(double b, double c, double d, double x)
 {
   // f(x) = x^3 + b*x^2 + c*x + d
   // f'(x) = 3*x^2 + 2*b*x + c
-  cout << "Newton's Method\n";
-  cout << "x = " << x << endl;;
+  std::cout << "Newton's Method\n";
+  std::cout << "x = " << x << endl;;
   double f = evaluate_cubic(b, c, d, x);
-  cout << "Error = " << f << endl;
+  std::cout << "Error = " << f << endl;
   while (fabs(f) > 1e-5) {
     double lastx = x;
     x = x - f / evaluate_quadratic(3, 2*b, c, x);
-    cout << "x = " << x << endl;
+    std::cout << "x = " << x << endl;
 
     f = evaluate_cubic(b, c, d, x);
 
-    cout << "Error = " << f << endl;
+    std::cout << "Error = " << f << endl;
     if (lastx - x < 1e-25) {
       break;
     }

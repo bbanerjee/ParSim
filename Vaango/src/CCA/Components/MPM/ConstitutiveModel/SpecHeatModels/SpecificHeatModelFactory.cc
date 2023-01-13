@@ -47,7 +47,7 @@ SpecificHeatModelFactory::create(ProblemSpecP& ps)
     proc0cout << "** WARNING ** Creating default (constant specific heat) model"
               << "\n";
     return (scinew ConstantCp());
-    // ostringstream desc;
+    //  std::ostringstream desc;
     // desc << "**Error in Input UPS File: "
     // << "MPM:SpecificHeatModel:  "
     // << "No specific_heat_model tag found in input file." << "\n";

@@ -66,8 +66,8 @@ cptiInterpolator::clone(const Patch* patch)
 }
     
 void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: physical coordinates of a particle
-                                            vector<IntVector>& ni,    //output: logic locations of corners
-                                            vector<double>& S,        //output: weighted node shape function value at corners (where weight = 1/ num particle corners)
+                                            std::vector<IntVector>& ni,    //output: logic locations of corners
+                                            std::vector<double>& S,        //output: weighted node shape function value at corners (where weight = 1/ num particle corners)
                                             const Matrix3& size,      //input: reference size r-vectors of the particle
                                             const Matrix3& defgrad)   //input: deformation gradient tensor
 {
@@ -198,8 +198,8 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
 }
  
 void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                   vector<IntVector>& ni,
-                                                   vector<Vector>& d_S,
+                                                   std::vector<IntVector>& ni,
+                                                   std::vector<Vector>& d_S,
                                                    const Matrix3& size,
                                                    const Matrix3& defgrad)
 {
@@ -376,9 +376,9 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
 }
 
 void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, //input: positions of particles
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
+                                                          std::vector<IntVector>& ni,
+                                                          std::vector<double>& S,
+                                                          std::vector<Vector>& d_S,
                                                           const Matrix3& size,
                                                           const Matrix3& defgrad)
 {

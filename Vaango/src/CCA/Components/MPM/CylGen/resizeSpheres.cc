@@ -41,14 +41,14 @@ bool isSphereCenterInsideRVE(double RVEsize,
 bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
                                double &gap,
                                double &xCent, double &yCent, double &zCent,
-                               vector<double> xLocs, 
-                               vector<double> yLocs,
-                               vector<double> zLocs,
+                               std::vector<double> xLocs, 
+                               std::vector<double> yLocs,
+                               std::vector<double> zLocs,
                                int &i_this);
 
 #if 1
 void printSphereLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                     vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
                      int n_bins, int RVEsize, double diam_max);
 #endif
 
@@ -68,10 +68,10 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<double> xLocs;
-  vector<double> yLocs;
-  vector<double> zLocs;
-  vector<double> diaLocs;
+  std::vector<double> xLocs;
+  std::vector<double> yLocs;
+  std::vector<double> zLocs;
+  std::vector<double> diaLocs;
 
   //Open file to receive sphere descriptions
   string infile_name = "Position_Radius.txt";
@@ -95,7 +95,7 @@ int main()
 
   double total_sphere_volume_orig = 0.0;
   double total_sphere_volume_new  = 0.0;
-  cout << xLocs.size() << endl;
+  std::cout << xLocs.size() << endl;
 
   int numInts=0;
   for(int i = 0;i<xLocs.size();i++){
@@ -109,13 +109,13 @@ int main()
 
     if(spheresIntersect){
       //cout << "spheres intersect" << endl;
-      cout << xLocs[i] << " " << yLocs[i] << " " << zLocs[i] << " " << diaLocs[i] << endl;
-      cout << xLocs[i_this] << " " << yLocs[i_this] << " " << zLocs[i_this] << " " << diaLocs[i_this] << endl;
+      std::cout << xLocs[i] << " " << yLocs[i] << " " << zLocs[i] << " " << diaLocs[i] << endl;
+      std::cout << xLocs[i_this] << " " << yLocs[i_this] << " " << zLocs[i_this] << " " << diaLocs[i_this] << endl;
       double rad1plusrad2 = 0.5*(diaLocs[i] + diaLocs[i_this]);
       double distCentSq = (xLocs[i_this]-xLocs[i])*(xLocs[i_this]-xLocs[i]) +
                           (yLocs[i_this]-yLocs[i])*(yLocs[i_this]-yLocs[i]) +
                           (zLocs[i_this]-zLocs[i])*(zLocs[i_this]-zLocs[i]);
-      cout << rad1plusrad2 << " " << sqrt(distCentSq) << endl;
+      std::cout << rad1plusrad2 << " " << sqrt(distCentSq) << endl;
       numInts++;
       //exit(1);
     }
@@ -127,15 +127,15 @@ int main()
     total_sphere_volume_new+=(1./6.)*M_PI*(d*d*d);
   }
 
-  cout << "numInts = " << numInts << endl;
-  cout << "Spheres out of RVE = " << outOfRVE << endl;
-  cout << "Total sphere volume orig = " << total_sphere_volume_orig << endl;
-  cout << "Total sphere volume new  = " << total_sphere_volume_new  << endl;
+  std::cout << "numInts = " << numInts << endl;
+  std::cout << "Spheres out of RVE = " << outOfRVE << endl;
+  std::cout << "Total sphere volume orig = " << total_sphere_volume_orig << endl;
+  std::cout << "Total sphere volume new  = " << total_sphere_volume_new  << endl;
 
-  vector<vector<double> > xbinLocs(n_bins);
-  vector<vector<double> > ybinLocs(n_bins);
-  vector<vector<double> > zbinLocs(n_bins);
-  vector<vector<double> > dbinLocs(n_bins);
+  std::vector<vector<double> > xbinLocs(n_bins);
+  std::vector<vector<double> > ybinLocs(n_bins);
+  std::vector<vector<double> > zbinLocs(n_bins);
+  std::vector<vector<double> > dbinLocs(n_bins);
 
   for(int i = 0; i<xLocs.size(); i++){
     int index = (xLocs[i]/RVEsize)*((double) n_bins);
@@ -187,9 +187,9 @@ bool isSphereCenterInsideRVE(double RVEsize,
 bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
                                double &gap,
                                double &xCent, double &yCent, double &zCent,
-                               vector<double> xLocs, 
-                               vector<double> yLocs,
-                               vector<double> zLocs,
+                               std::vector<double> xLocs, 
+                               std::vector<double> yLocs,
+                               std::vector<double> zLocs,
                                int &i_this)
 {
   for(unsigned int i = i_this+1; i<xLocs.size(); i++){
@@ -303,7 +303,7 @@ bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
 
 #if 1
 void printSphereLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                     vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
                      int n_bins, int RVEsize, double diam_max)
 {
   //Open file to receive sphere descriptions

@@ -140,8 +140,8 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
   int dwi              = matl->getDWIndex();
 
   auto interpolator = d_Mflag->d_interpolator->clone(patch);
-  vector<IntVector> ni(interpolator->size());
-  vector<Vector> d_S(interpolator->size());
+  std::vector<IntVector> ni(interpolator->size());
+  std::vector<Vector> d_S(interpolator->size());
 
   Vector dx = patch->dCell();
   double oodx[3];
@@ -297,7 +297,7 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
       //                        d_nPaddingCells_Coarse );
       IntVector nLayers(1, 1, 1);
       IntVector nPaddingCells = nLayers * (fineLevel->getRefinementRatio());
-      // cout << " nPaddingCells " << nPaddingCells << "nLayers " << nLayers <<
+      // std::cout << " nPaddingCells " << nPaddingCells << "nLayers " << nLayers <<
       // endl;
       /*===========TESTING==========`*/
 
@@ -363,9 +363,9 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
              iter++) {
           particleIndex idx = *iter;
 
-          vector<IntVector> ni;
-          vector<double> S;
-          vector<Vector> div;
+          std::vector<IntVector> ni;
+          std::vector<double> S;
+          std::vector<Vector> div;
           interpolator->findCellAndWeightsAndShapeDerivatives_CFI(
             px_coarse[idx], ni, S, div, zoi_fine);
 

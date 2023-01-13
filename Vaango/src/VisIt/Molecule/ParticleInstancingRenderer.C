@@ -51,7 +51,7 @@ static void gltutCheckErrors(const char* file, int line)
 
 static string FormatBytes(size_t bytes)
 {
-    stringstream str;
+     std::stringstream str;
 
     str << bytes << " B";
     if (bytes >= 1024 )

@@ -78,17 +78,17 @@ tecplot( DataArchive *   da,
 {
   string ccVariable;
   bool ccVarFound = false;
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   
   const Uintah::TypeDescription* td;
   const Uintah::TypeDescription* subtype;
   if(!do_all_ccvars) {
     for(int i=0;i<(int)vars.size();i++){
-      cout << vars[i] << ": " << types[i]->getName() << endl;
+      std::cout << vars[i] << ": " << types[i]->getName() << endl;
       if(vars[i] == ccVarInput) {
         ccVarFound = true;
       }
@@ -99,13 +99,13 @@ tecplot( DataArchive *   da,
     }
   } // end of (!do_all_ccvars)
 
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
   for(int i=0;i<(int)index.size();i++) {
-    cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << endl;
   }
   
   if (!tslow_set)
@@ -122,7 +122,7 @@ tecplot( DataArchive *   da,
   }
               
   for(int i=0;i<(int)vars.size();i++){ //for loop over all the variables: 2
-    cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << endl;
     if(do_all_ccvars || ((!do_all_ccvars) && (vars[i] == ccVarInput))){ // check if do all CCVariables 
       // or just do one variable: 3  
       td = types[i];
@@ -208,7 +208,7 @@ tecplot( DataArchive *   da,
           //loop over the time
           for(unsigned long t=time_step_lower;t<=time_step_upper;t=t+tskip){  //time loop: 6
             double time = times[t];
-            cout << "time = " << time << endl;
+            std::cout << "time = " << time << endl;
 	
             /////////////////////////////////////////////////////////////////
             // find index ranges for current grid level
@@ -217,7 +217,7 @@ tecplot( DataArchive *   da,
             GridP grid = da->queryGrid(t);
             for(int l=0;l<grid->numLevels();l++){  //level loop: 7
               LevelP level = grid->getLevel(l);
-              cout << "\t    Level: " << level->getIndex() << ", id " << level->getID() << endl;
+              std::cout << "\t    Level: " << level->getIndex() << ", id " << level->getID() << endl;
 
               //		  int numNode,numPatch;
               int numMatl;
@@ -240,7 +240,7 @@ tecplot( DataArchive *   da,
                 const Patch* patch = *iter;
                 lo = patch->getExtraCellLowIndex();
                 hi = patch->getExtraCellHighIndex();
-                cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
+                std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
                 int matlNum = da->queryNumMaterials(patch, t);
                 if(numMatl < matlNum) numMatl = matlNum;
                 if(Imax < hi.x()) Imax = hi.x();
@@ -290,7 +290,7 @@ tecplot( DataArchive *   da,
                     Vector dx = patch->dCell();
                     IntVector lo = patch->getExtraCellLowIndex();
                     IntVector hi = patch->getExtraCellHighIndex();
-                    cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
+                    std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
                     ConsecutiveRangeSet matls = da->queryMaterials(ccVariable, patch, t);
                     for(ConsecutiveRangeSet::iterator matlIter = matls.begin();
                         matlIter != matls.end(); matlIter++){ //material loop: 10

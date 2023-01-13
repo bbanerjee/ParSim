@@ -224,7 +224,7 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
 
     else if (flags->d_integratorType == "implicit") {
       if (!flags->d_doGridReset) {
-        ostringstream msg;
+         std::ostringstream msg;
         msg << "\n ERROR: One may not use HypoElastic along with \n"
             << " <do_grid_reset>false</do_grid_reset> \n";
         throw ProblemSetupException(msg.str(), __FILE__, __LINE__);

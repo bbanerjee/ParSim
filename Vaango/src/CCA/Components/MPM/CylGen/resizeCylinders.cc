@@ -64,12 +64,12 @@ bool isCylCenterInsideRVE(double RVEsize,
 bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
                             double &gap,
                             double &xCent, double &yCent,
-                            vector<double> xLocs,
-                            vector<double> yLocs, int &i_this);
+                            std::vector<double> xLocs,
+                            std::vector<double> yLocs, int &i_this);
 
 void printCylLocs(vector<vector<double> > xLocs,
-                     vector<vector<double> > yLocs,
-                     vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > yLocs,
+                     std::vector<vector<double> > diaLocs,
                      int n_bins, const double RVEsize, double diam_max);
 
 int main()
@@ -91,7 +91,7 @@ int main()
 
   // Part of optimizing the search for intersections
   int n_bins = RVEsize/diam_max;
-  cout << "n_bins = " << n_bins << endl;
+  std::cout << "n_bins = " << n_bins << endl;
 
   double bin_width = RVEsize/((double) n_bins);
 
@@ -99,9 +99,9 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<double> xLocs;
-  vector<double> yLocs;
-  vector<double> diaLocs;
+  std::vector<double> xLocs;
+  std::vector<double> yLocs;
+  std::vector<double> diaLocs;
 
   //Open file to receive cylinder descriptions
   string infile_name = "Position_Radius.txt";
@@ -125,7 +125,7 @@ int main()
 
   double total_cyl_area_orig = 0.0;
   double total_cyl_area_new  = 0.0;
-  cout << xLocs.size() << endl;
+  std::cout << xLocs.size() << endl;
 
   int numInts=0;
   for(int i = 0;i<xLocs.size();i++){
@@ -150,15 +150,15 @@ int main()
     total_cyl_area_new+= 0.25*M_PI*(d*d);;
   }
 
-  cout << "numInts = " << numInts << endl;
-  cout << "Cylinders out of RVE = " << outOfRVE << endl;
-  cout << "Total cylinder area orig = " << total_cyl_area_orig << endl;
-  cout << "Total cylinder area new  = " << total_cyl_area_new  << endl;
-  cout << "New Maximum Diameter = " << diam_max << endl;
+  std::cout << "numInts = " << numInts << endl;
+  std::cout << "Cylinders out of RVE = " << outOfRVE << endl;
+  std::cout << "Total cylinder area orig = " << total_cyl_area_orig << endl;
+  std::cout << "Total cylinder area new  = " << total_cyl_area_new  << endl;
+  std::cout << "New Maximum Diameter = " << diam_max << endl;
 
-  vector<vector<double> > xbinLocs(n_bins);
-  vector<vector<double> > ybinLocs(n_bins);
-  vector<vector<double> > dbinLocs(n_bins);
+  std::vector<vector<double> > xbinLocs(n_bins);
+  std::vector<vector<double> > ybinLocs(n_bins);
+  std::vector<vector<double> > dbinLocs(n_bins);
 
   for(int i = 0; i<xLocs.size(); i++){
     int index = (xLocs[i]/RVEsize)*((double) n_bins);
@@ -203,8 +203,8 @@ bool isCylCenterInsideRVE(double RVEsize,
 bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
                             double &gap,
                             double &xCent, double &yCent,
-                            vector<double> xLocs,
-                            vector<double> yLocs, int &i_this)
+                            std::vector<double> xLocs,
+                            std::vector<double> yLocs, int &i_this)
 {
   for(unsigned int i = 0; i<xLocs.size(); i++){
    if(i!=i_this){
@@ -228,7 +228,7 @@ bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
 }
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, const double RVEsize, double diam_max)
 {
   //Open file to receive cyl descriptions

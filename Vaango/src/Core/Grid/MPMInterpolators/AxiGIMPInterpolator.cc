@@ -56,8 +56,8 @@ AxiGIMPInterpolator::clone(const Patch* patch)
 }
 
 void AxiGIMPInterpolator::findCellAndWeights(const Point& pos,
-                                             vector<IntVector>& ni,
-                                             vector<double>& S,
+                                             std::vector<IntVector>& ni,
+                                             std::vector<double>& S,
                                              const Matrix3& size,
                                              const Matrix3& defgrad)
 {
@@ -200,8 +200,8 @@ void AxiGIMPInterpolator::findCellAndWeights(const Point& pos,
 }
  
 void AxiGIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                     vector<IntVector>& ni,
-                                                     vector<Vector>& d_S,
+                                                     std::vector<IntVector>& ni,
+                                                     std::vector<Vector>& d_S,
                                                      const Matrix3& size,
                                                      const Matrix3& defgrad)
 {
@@ -375,9 +375,9 @@ void AxiGIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
 
 void 
 AxiGIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                         vector<IntVector>& ni,
-                                                         vector<double>& S,
-                                                         vector<Vector>& d_S,
+                                                         std::vector<IntVector>& ni,
+                                                         std::vector<double>& S,
+                                                         std::vector<Vector>& d_S,
                                                          const Matrix3& size,
                                                          const Matrix3& defgrad)
 {

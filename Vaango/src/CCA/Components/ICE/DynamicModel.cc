@@ -265,7 +265,7 @@ void DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
   applyFilter(patch, SIJ,        SIJ_hat);  
   applyFilter(patch, beta,       beta_hat); 
 
-  vector<IntVector> vel_prod_comp(6);    // ignore the z component
+  std::vector<IntVector> vel_prod_comp(6);    // ignore the z component
   vel_prod_comp[0] = IntVector(0,0,0);   // UUvel_CC
   vel_prod_comp[1] = IntVector(1,1,0);   // VVvel_CC
   vel_prod_comp[2] = IntVector(2,2,0);   // WWvel_CC

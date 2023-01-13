@@ -28,7 +28,7 @@
 #include <strstream>
 
 namespace std {
-class ostringstream : public ostrstream {
+class  std::ostringstream : public ostrstream {
 public:
    ostringstream() {}
 // void append() { ((strstreambuf*)_strbuf)->padn('\0',1); }

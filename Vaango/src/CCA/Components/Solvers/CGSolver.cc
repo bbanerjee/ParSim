@@ -915,14 +915,14 @@ public:
     double memrate = (double(memrefs) * 1.e-9) / dt;
     if (pg->myRank() == 0) {
       if (niter < params->maxiterations) {
-        cout << "Solve of " << X_label->getName() << " on level "
+        std::cout << "Solve of " << X_label->getName() << " on level "
              << level->getIndex() << " completed in " << dt << " seconds ("
              << niter << " iterations, " << e << " residual, " << mflops
              << " MFLOPS, " << memrate << " GB/sec)\n";
       } else {
         if (params->getRestartTimestepOnFailure()) {
-          cout << "CGSolver not converging, requesting smaller timestep\n";
-          cout << "    niters:   " << niter << "\n"
+          std::cout << "CGSolver not converging, requesting smaller timestep\n";
+          std::cout << "    niters:   " << niter << "\n"
                << "    residual: " << e << endl;
           new_dw->abortTimestep();
           new_dw->restartTimestep();

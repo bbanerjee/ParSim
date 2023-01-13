@@ -782,7 +782,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
                                       double& p_new) const
 {
   // Initialize matrices
-  vector<double> G(2); // The vector [F_n+1 P_n+1]^T = 0
+  std::vector<double> G(2); // The vector [F_n+1 P_n+1]^T = 0
   FastMatrix JacobianG(2, 2);
 
   // Initial values of f and p
@@ -798,7 +798,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
 
   // Do Newton iterations
   FastMatrix Jinv(2, 2);
-  vector<double> Finc(2);
+  std::vector<double> Finc(2);
   do {
 
     // Compute Jacobian of G
@@ -877,7 +877,7 @@ JWLppMPM::computeG(const double& J,
                    const double& pM,
                    const double& pJWL,
                    const double& delT,
-                   vector<double>& G) const
+                   std::vector<double>& G) const
 {
   double dfdt_new = computeBurnRate(f_new, p_new);
   double f_func   = f_new - f_old - dfdt_new * delT;

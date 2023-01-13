@@ -100,12 +100,12 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
     throw InternalError("particleExtract:couldn't get output port", __FILE__, __LINE__);
   }
   
-  vector<int> m;
+  std::vector<int> m;
   m.push_back( d_matl->getDWIndex() );
   
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
+  std::vector<int>::iterator it;
   it = unique(m.begin(), m.end());
   m.erase(it, m.end());
   
@@ -134,7 +134,7 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
   if (!vars_ps){
     throw ProblemSetupException("particleExtract: Couldn't find <Variables> tag", __FILE__, __LINE__);    
   } 
-  map<string,string> attribute;                    
+  std::map<string,string> attribute;                    
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze"); var_spec != 0; 
                     var_spec = var_spec->findNextBlock("analyze")) {
     var_spec->getAttributes(attribute);
@@ -161,7 +161,7 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
       throwException = true;
     }
     if( throwException ){       
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:AnalysisModule:particleExtact: ("<<label->getName() << " " 
            << td->getName() << " ) is either not a particle variable "
            << "or a valid type (int double, Vector)" << endl;
@@ -240,7 +240,7 @@ void particleExtract::initialize(const ProcessorGroup*,
     //__________________________________
     //bullet proofing
     if( ! new_dw->exists(M_lb->pColorLabel, indx, patch ) ){
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR:particleExtract  In order to use the DataAnalysis Module particleExtract "
            << "you must 'color' least one MPM geom_object.";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -253,7 +253,7 @@ void particleExtract::initialize(const ProcessorGroup*,
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
       if ( check == nullptr){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "ERROR:particleExtract  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
@@ -411,10 +411,10 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
       //__________________________________
       // loop over each of the variables
       // load them into the data vectors
-      vector< constParticleVariable<int> >      integer_data;
-      vector< constParticleVariable<double> >   double_data;
-      vector< constParticleVariable<Vector> >   Vector_data;
-      vector< constParticleVariable<Matrix3> >  Matrix3_data;
+      std::vector< constParticleVariable<int> >      integer_data;
+      std::vector< constParticleVariable<double> >   double_data;
+      std::vector< constParticleVariable<Vector> >   Vector_data;
+      std::vector< constParticleVariable<Matrix3> >  Matrix3_data;
       
       constParticleVariable<int>    p_integer;      
       constParticleVariable<double> p_double;
@@ -482,7 +482,7 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
             }
             break;
         default:
-          ostringstream warn;
+           std::ostringstream warn;
           warn << "ERROR:AnalysisModule:lineExtact: ("<<d_varLabels[i]->getName() << " " 
                << td->getName() << " ) has not been implemented" << endl;
           throw InternalError(warn.str(), __FILE__, __LINE__);
@@ -493,7 +493,7 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
       string udaDir = d_dataArchiver->getOutputLocation();
       string pPath = udaDir + "/particleExtract";
 
-      ostringstream li;
+       std::ostringstream li;
       li<<"L-"<<level->getIndex();
       string levelIndex = li.str();
       string path = pPath + "/" + levelIndex;
@@ -511,7 +511,7 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
 
         if (pColor[idx] > d_colorThreshold){
         
-          ostringstream fname;
+           std::ostringstream fname;
           fname<<path<<"/"<<pid[idx];
           string filename = fname.str();
           
@@ -525,7 +525,7 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
 #if 0          
           if( myFiles[idx] ){           // if the filepointer has been previously stored.
             fp = myFiles[idx];
-            cout << Parallel::getMPIRank() << " I think this pointer is valid " << idx << " fp " << fp << " patch " << patch->getID() << endl;
+            std::cout << Parallel::getMPIRank() << " I think this pointer is valid " << idx << " fp " << fp << " patch " << patch->getID() << endl;
           } else {
             createFile(filename, fp);
             myFiles[idx] = fp;
@@ -645,7 +645,7 @@ void particleExtract::createFile(string& filename, FILE*& fp)
   fprintf(fp,"\n");
   fflush(fp);
 
-  cout << Parallel::getMPIRank() << " particleExtract:Created file " << filename << endl;
+  std::cout << Parallel::getMPIRank() << " particleExtract:Created file " << filename << endl;
 }
 //______________________________________________________________________
 // create the directory structure   dirName/LevelIndex
@@ -655,7 +655,7 @@ particleExtract::createDirectory(string& dirName, string& levelIndex)
 {
   DIR *check = opendir(dirName.c_str());
   if ( check == nullptr ) {
-    cout << Parallel::getMPIRank() << "particleExtract:Making directory " << dirName << endl;
+    std::cout << Parallel::getMPIRank() << "particleExtract:Making directory " << dirName << endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -665,7 +665,7 @@ particleExtract::createDirectory(string& dirName, string& levelIndex)
   string path = dirName + "/" + levelIndex;
   check = opendir(path.c_str());
   if ( check == nullptr ) {
-    cout << "particleExtract:Making directory " << path << endl;
+    std::cout << "particleExtract:Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);

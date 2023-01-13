@@ -183,7 +183,7 @@ printStackTrace( char * filename )
     exit( 1 );
   }
 
-  vector< string > stacktrace;
+  std::vector< string > stacktrace;
 
   printf("stack trace (raw):\n\n");
 
@@ -296,7 +296,7 @@ void
 test() 
 {
   printf( "\n\n" );
-  vector<int> addresses;
+  std::vector<int> addresses;
   
   addresses.push_back( 0x400bbf );
   addresses.push_back( 0x400bc0 );

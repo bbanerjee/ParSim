@@ -109,7 +109,7 @@ void HierarchicalRegridder::problemSetup(const ProblemSpecP& params,
 
 {
   if(d_myworld->myRank()==0)
-    cout << " WARNING: The Hierarchical regridder has major performance issues and has been superseeded by the tiled regridder\n";
+    std::cout << " WARNING: The Hierarchical regridder has major performance issues and has been superseeded by the tiled regridder\n";
   rdbg << "HierarchicalRegridder::problemSetup() BGN" << endl;
   RegridderCommon::problemSetup(params, oldGrid, state);
   d_sharedState = state;
@@ -202,7 +202,7 @@ void HierarchicalRegridder::problemSetup_BulletProofing(const int k)
 
   for(int dir = 0; dir <3; dir++){
    if(d_latticeRefinementRatio[k][dir] < 1 || d_cellRefinementRatio[k][dir] < 1){
-       ostringstream msg;
+        std::ostringstream msg;
        msg << "Problem Setup: Regridder:"
        << " The lattice refinement ratio AND the cell refinement ration must be at least 1 in any direction. \n"
        << " lattice refinement ratio: " << d_latticeRefinementRatio[k] 
@@ -215,7 +215,7 @@ void HierarchicalRegridder::problemSetup_BulletProofing(const int k)
   // and the cell refinement ratio must be 1 in that plane
   for(int dir = 0; dir <3; dir++){
     if(d_cellNum[k][dir] == 1 && (d_latticeRefinementRatio[k][dir] != 1 || d_cellRefinementRatio[k][dir] != 1) ){
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: The problem you're running is 2D. \n"
           << " The lattice refinement ratio AND the cell refinement ration must be 1 in that direction. \n"
           << "Grid Size: " << d_cellNum[k] 
@@ -226,7 +226,7 @@ void HierarchicalRegridder::problemSetup_BulletProofing(const int k)
     }
 
     if(d_cellNum[k][dir] != 1 && d_patchSize[k][dir] < 4) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "Problem Setup: Regridder: Patches need to be at least 4 cells in each dimension \n"
           << "except for 1-cell-wide dimensions.\n"
           << "  Patch size on level " << k << ": " << d_patchSize[k] << endl;
@@ -236,7 +236,7 @@ void HierarchicalRegridder::problemSetup_BulletProofing(const int k)
   }
 
   if ( Mod( d_patchSize[k], d_latticeRefinementRatio[k] ) != IntVector(0,0,0) ) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Problem Setup: Regridder: you've specified a patch size (interiorCellHighIndex() - interiorCellLowIndex()) on a patch that is not divisible by the lattice ratio on level 0 \n"
         << " patch size " <<  d_patchSize[k] << " lattice refinement ratio " << d_latticeRefinementRatio[k] << endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
@@ -432,14 +432,14 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
     int numSubpatches = d_patchNum[i+1].x() * d_patchNum[i+1].y() * d_patchNum[i+1].z();
   
     // place to end up with all subpatches
-    vector<SubPatchFlagP> allSubpatches(l->numPatches());
-    vector<int> recvbuf(numSubpatches); // buffer to recv data (and hold pointers from allSubpatches)
+    std::vector<SubPatchFlagP> allSubpatches(l->numPatches());
+    std::vector<int> recvbuf(numSubpatches); // buffer to recv data (and hold pointers from allSubpatches)
     if (d_myworld->nRanks() > 1) {
 
       // num subpatches per patch - this is dynamic per patch, as on the regrid before
       // we could have combined several patches together
-      vector<int> nsppp(l->numPatches());
-      vector<int> recvcounts(d_myworld->nRanks(),0);
+      std::vector<int> nsppp(l->numPatches());
+      std::vector<int> recvcounts(d_myworld->nRanks(),0);
       for (Level::const_patchIterator iter = l->patchesBegin(); iter != l->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         IntVector patchRefinement = 
@@ -450,14 +450,14 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
         recvcounts[lb->getPatchwiseProcessorAssignment(patch)] += nsp;
       }
       
-      vector<int> displs(d_myworld->nRanks(),0);
+      std::vector<int> displs(d_myworld->nRanks(),0);
       
       for (int p = 1; p < (int)displs.size(); p++) {
         displs[p] = displs[p-1]+recvcounts[p-1];
       }
     
       // create the buffers to send the data
-      vector<int> sendbuf(recvcounts[d_myworld->myRank()]);
+      std::vector<int> sendbuf(recvcounts[d_myworld->myRank()]);
 
       int sendbufindex = 0;
 
@@ -466,7 +466,7 @@ void HierarchicalRegridder::GatherSubPatches(const GridP& oldGrid, SchedulerP& s
       // item of each processor.  So use this to put allSubPatchBuffer in the right
       // order, by referencing it, and then the next item for that processor will
       // go in that value + nsppp.
-      vector<int> subpatchSorter = displs;
+      std::vector<int> subpatchSorter = displs;
       
       // for this mpi communication, we're going to Gather all subpatch information to allprocessors.
       // We're going to get what data we have from the DW and put its pointer data in sendbuf.  While
@@ -715,7 +715,7 @@ Grid* HierarchicalRegridder::CreateGrid2(Grid* oldGrid)
     // do the second pass if we did the superpatch pass
     if (d_maxPatchSize[levelIdx] != d_patchSize[levelIdx]) {
       int size;
-      vector<PatchShell> finalPatches;
+      std::vector<PatchShell> finalPatches;
 #if 1
       if (d_myworld->myRank() == 0) {
 #endif
@@ -826,7 +826,7 @@ IntVector HierarchicalRegridder::calculateNumberOfPatches(IntVector& cellNum, In
   IntVector remainder = Mod(cellNum, patchSize);
 
   if (remainder.x() || remainder.y() || remainder.z()) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "  HierarchicalRegridder: The domain (" << cellNum[0] << "x" << cellNum[1] << "x" << cellNum[2] 
         << " cells) is not divisible by the number of patches (" << patchSize[0] << "x" << patchSize[1] << "x" << patchSize[2] 
         << " patches)\n";

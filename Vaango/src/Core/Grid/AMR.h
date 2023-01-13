@@ -181,18 +181,18 @@ linearInterpolation(constCCVariable<T>& q_CL, // course level
       if ((f_cell.y() == half.y() && f_cell.z() == half.z())){
        cout.setf(ios::scientific,ios::floatfield);
        cout.precision(5);
-       cout << " f_cell " << f_cell << " c_cell "<< c_cell << " offset ["<<i<<","<<j<<","<<k<<"]  " << endl;
-       cout << " relative indx " << relativeIndx  << endl;
-       cout << "dist "<< dist << " dir " << dir <<  endl;
-       cout << " q_CL[c_cell]                       "                           << q_CL[c_cell]                       << " w0 " << w0 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( " << i << ", 0, 0)] "                 << q_CL[c_cell + Uintah::IntVector( i, 0, 0)] << " w1 " << w1 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( 0, " << j << ", 0)] "                 << q_CL[c_cell + Uintah::IntVector( 0, j, 0)] << " w2 " << w2 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", 0)] "        << q_CL[c_cell + Uintah::IntVector( i, j, 0)] << " w3 " << w3 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( 0, 0, "<<k<<")] "                     << q_CL[c_cell + Uintah::IntVector( 0, 0, k)] << " w0 " << w0 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", 0, "<<k<<")] "            << q_CL[c_cell + Uintah::IntVector( i, 0, k)] << " w1 " << w1 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( 0, "<< j <<", "<<k<<")] "             << q_CL[c_cell + Uintah::IntVector( 0, j, k)] << " w2 " << w2 << endl;
-       cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", "<< k <<")] " << q_CL[c_cell + Uintah::IntVector( i, j, k)] << " w3 " << w3 <<endl;
-       cout << " q_XY_Plane_1 " << q_XY_Plane_1 << " q_XY_Plane_2 " << q_XY_Plane_2 << " q_FineLevel[f_cell] "<< q_FineLevel[f_cell] << endl;
+       std::cout << " f_cell " << f_cell << " c_cell "<< c_cell << " offset ["<<i<<","<<j<<","<<k<<"]  " << endl;
+       std::cout << " relative indx " << relativeIndx  << endl;
+       std::cout << "dist "<< dist << " dir " << dir <<  endl;
+       std::cout << " q_CL[c_cell]                       "                           << q_CL[c_cell]                       << " w0 " << w0 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( " << i << ", 0, 0)] "                 << q_CL[c_cell + Uintah::IntVector( i, 0, 0)] << " w1 " << w1 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, " << j << ", 0)] "                 << q_CL[c_cell + Uintah::IntVector( 0, j, 0)] << " w2 " << w2 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", 0)] "        << q_CL[c_cell + Uintah::IntVector( i, j, 0)] << " w3 " << w3 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, 0, "<<k<<")] "                     << q_CL[c_cell + Uintah::IntVector( 0, 0, k)] << " w0 " << w0 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", 0, "<<k<<")] "            << q_CL[c_cell + Uintah::IntVector( i, 0, k)] << " w1 " << w1 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, "<< j <<", "<<k<<")] "             << q_CL[c_cell + Uintah::IntVector( 0, j, k)] << " w2 " << w2 << endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", "<< k <<")] " << q_CL[c_cell + Uintah::IntVector( i, j, k)] << " w3 " << w3 <<endl;
+       std::cout << " q_XY_Plane_1 " << q_XY_Plane_1 << " q_XY_Plane_2 " << q_XY_Plane_2 << " q_FineLevel[f_cell] "<< q_FineLevel[f_cell] << endl;
     }
 #endif
   }

@@ -197,9 +197,9 @@ void HeatEquation::timeAdvance(const ProcessorGroup* pg,
       
       double k = .5;
 
-      cout << "dx = " << dx << endl;
+      std::cout << "dx = " << dx << endl;
       diffusion_number = diffusion_number* k*dt;
-      cout << "diffusion_number = " << diffusion_number << endl;
+      std::cout << "diffusion_number = " << diffusion_number << endl;
 
       for(NodeIterator iter(l, h);!iter.done(); iter++){
 	newtemperature[*iter]=(1./6)*(

@@ -663,7 +663,7 @@ void BNRTask::BoundSignatures()
     patch_=Region(low,high);
     if(low[0]>high[0] || low[1]>high[1] || low[2]>high[2])
     {
-      cout << "Error negative bounds\n";
+      std::cout << "Error negative bounds\n";
       exit(0);
     }
 }

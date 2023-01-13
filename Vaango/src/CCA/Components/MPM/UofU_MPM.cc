@@ -165,7 +165,7 @@ UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
 
   ProblemSpecP mpm_soln_ps = mat_ps->findBlock("MPM");
   if (!mpm_soln_ps) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "**ERROR**: MPM:\n missing MPM section in the input file\n";
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
@@ -494,7 +494,7 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
                 ((num_extra_cells + periodic) != IntVector(1, 1, 1) &&
                  ((num_extra_cells + periodic) != IntVector(1, 1, 0) &&
                   d_flags->d_axisymmetric)))) {
-      ostringstream msg;
+       std::ostringstream msg;
       msg << "\n ERROR: When using <interpolator>gimp</interpolator> \n"
           << " or <interpolator>3rdorderBS</interpolator> \n"
           << " or <interpolator>cpdi</interpolator> \n"
@@ -511,7 +511,7 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
       IntVector patchHighNode = patch->getNodeHighIndex();
       int num_cells_in_theta = (patchHighNode.z() - patchLowNode.z()) - 1;
       if (num_cells_in_theta > 1) {
-        ostringstream msg;
+         std::ostringstream msg;
         msg << "\n ERROR: When using <axisymmetric>true</axisymmetric> \n"
             << "the grid can only have one cell in the circumferential "
                "direction.\n";
@@ -1457,8 +1457,8 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
     auto num_influence_nodes = interpolator->size();
     auto num_linear_influence_nodes = linear_interpolator->size();
 
-    vector<IntVector> influenceNodes(num_influence_nodes);
-    vector<double> S_ip_av(num_influence_nodes);
+    std::vector<IntVector> influenceNodes(num_influence_nodes);
+    std::vector<double> S_ip_av(num_influence_nodes);
     string interp_type = d_flags->d_interpolatorType;
 
     NCVariable<double> gMassglobal, gVolumeglobal;
@@ -1574,14 +1574,14 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
           }
         }
         if (d_flags->d_useLoadCurves && d_flags->d_useCBDI) {
-          vector<IntVector> influenceNodesCorner1(num_linear_influence_nodes);
-          vector<IntVector> influenceNodesCorner2(num_linear_influence_nodes);
-          vector<IntVector> influenceNodesCorner3(num_linear_influence_nodes);
-          vector<IntVector> influenceNodesCorner4(num_linear_influence_nodes);
-          vector<double> S_ip_av_Corner1(num_linear_influence_nodes);
-          vector<double> S_ip_av_Corner2(num_linear_influence_nodes);
-          vector<double> S_ip_av_Corner3(num_linear_influence_nodes);
-          vector<double> S_ip_av_Corner4(num_linear_influence_nodes);
+          std::vector<IntVector> influenceNodesCorner1(num_linear_influence_nodes);
+          std::vector<IntVector> influenceNodesCorner2(num_linear_influence_nodes);
+          std::vector<IntVector> influenceNodesCorner3(num_linear_influence_nodes);
+          std::vector<IntVector> influenceNodesCorner4(num_linear_influence_nodes);
+          std::vector<double> S_ip_av_Corner1(num_linear_influence_nodes);
+          std::vector<double> S_ip_av_Corner2(num_linear_influence_nodes);
+          std::vector<double> S_ip_av_Corner3(num_linear_influence_nodes);
+          std::vector<double> S_ip_av_Corner4(num_linear_influence_nodes);
           linear_interpolator->findCellAndWeights(
             pExternalForceCorner1[particle], influenceNodesCorner1,
             S_ip_av_Corner1, pSize[particle], pDefGrad_old[particle]);
@@ -1835,9 +1835,9 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
 
     auto interpolator = d_flags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
-    vector<IntVector> influenceNodes(numInfluenceNodes);
-    vector<double> S_ip_av(numInfluenceNodes);
-    vector<Vector> d_S_ip_av(numInfluenceNodes);
+    std::vector<IntVector> influenceNodes(numInfluenceNodes);
+    std::vector<double> S_ip_av(numInfluenceNodes);
+    std::vector<Vector> d_S_ip_av(numInfluenceNodes);
     string interp_type = d_flags->d_interpolatorType;
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
@@ -3609,8 +3609,8 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
     auto interpolator = d_flags->d_interpolator->clone(patch);
     auto num_influence_nodes = interpolator->size();
-    vector<IntVector> influenceNodes(num_influence_nodes);
-    vector<double> S_ip_av(num_influence_nodes);
+    std::vector<IntVector> influenceNodes(num_influence_nodes);
+    std::vector<double> S_ip_av(num_influence_nodes);
 
     double totalmass = 0;
     double partvoldef = 0.;
@@ -3808,7 +3808,7 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->put(sumvec_vartype(centerOfMass), d_labels->CenterOfMassPositionLabel);
     }
 
-    // cout << "Solid momentum after advection = " << totalMom << endl;
+    // std::cout << "Solid momentum after advection = " << totalMom << endl;
   }
 }
 

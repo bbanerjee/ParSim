@@ -123,19 +123,19 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
 
 {
   // query time info from dataarchive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   archive->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   if (!quiet){
-    cout << "There are " << index.size() << " timesteps\n";
+    std::cout << "There are " << index.size() << " timesteps\n";
   }
   
   // set default max time value
   if (time_end == (unsigned long)-1) {
     if (verbose) {
-      cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
+      std::cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
     }
     time_end = times.size() - 1;
   }      
@@ -208,7 +208,7 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
         }
 
         // query all the data up front
-        vector<Variable*> vars(patches.size());
+        std::vector<Variable*> vars(patches.size());
         for (int p = 0; p < patches.size(); p++) {
           if (patches[p]->isVirtual()) continue;
           switch (variable_type->getType()) {
@@ -320,7 +320,7 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
       if(use_cellIndex_file) {
         for (int i = 0; i<(int) cells.size(); i++) {
           IntVector c = cells[i];
-          vector<T> values;
+          std::vector<T> values;
           try {
             archive->query(values, variable_name, material, c, 
 			   times[time_step], times[time_step], levelIndex);
@@ -385,19 +385,19 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
 
 {
   // query time info from dataarchive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   archive->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   if (!quiet){
-    cout << "There are " << index.size() << " timesteps\n";
+    std::cout << "There are " << index.size() << " timesteps\n";
   }
   
   // set default max time value
   if (time_end == (unsigned long)-1) {
     if (verbose) {
-      cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
+      std::cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
     }
     time_end = times.size() - 1;
   }      
@@ -467,8 +467,8 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
       }
 
       // query all the data and compute the average up front
-      vector<Variable*> vars(patches.size());
-      vector<Variable*> ave(patches.size());
+      std::vector<Variable*> vars(patches.size());
+      std::vector<Variable*> ave(patches.size());
       for (int p = 0; p < patches.size(); p++) {
         vars[p] = scinew ParticleVariable<T>;
         ave[p]  = scinew CCVariable<T>;
@@ -579,7 +579,7 @@ void readCellIndicies(const string& filename, vector<IntVector>& cells)
   }
   // We should do some bullet proofing here
   //for (int i = 0; i<(int) cells.size(); i++) {
-  //  cout << cells[i] << endl;
+  //  std::cout << cells[i] << endl;
   //}
 }
 
@@ -612,7 +612,7 @@ int main(int argc, char** argv)
   Point     start_pt(-9,-9,-9);
   Point     end_pt(-9,-9,-9);
   int levelIndex = 0;
-  vector<IntVector> cells;
+  std::vector<IntVector> cells;
   string variable_name;
 
   int material = 0;
@@ -695,12 +695,12 @@ int main(int argc, char** argv)
   try {
     DataArchive* archive = scinew DataArchive(input_uda_name);
     
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
+    std::vector<string> vars;
+    std::vector<const Uintah::TypeDescription*> types;
 
     archive->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
-    if (verbose) cout << "There are " << vars.size() << " variables:\n";
+    if (verbose) std::cout << "There are " << vars.size() << " variables:\n";
     bool var_found = false;
     unsigned int var_index = 0;
     for (;var_index < vars.size(); var_index++) {
@@ -717,7 +717,7 @@ int main(int argc, char** argv)
       cerr << "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
       }
       cerr << "Aborting!!\n";
       exit(-1);
@@ -733,7 +733,7 @@ int main(int argc, char** argv)
     // if no output file, call with cout
     ostream *output_stream = &cout;
     if (output_file_name != "-") {
-      if (verbose) cout << "Opening \""<<output_file_name<<"\" for writing.\n";
+      if (verbose) std::cout << "Opening \""<<output_file_name<<"\" for writing.\n";
       ofstream *output = new ofstream();
       output->open(output_file_name.c_str());
       
@@ -749,8 +749,8 @@ int main(int argc, char** argv)
     //__________________________________
     //  find the cell index
     if(findCellIndices){
-      vector<int> index;
-      vector<double> times;
+      std::vector<int> index;
+      std::vector<double> times;
       archive->queryTimesteps(index, times);
       ASSERTEQ(index.size(), times.size());
 
@@ -763,7 +763,7 @@ int main(int argc, char** argv)
     }                                  
 
     if (!quiet) {
-      cout << vars[var_index] << ": " << types[var_index]->getName() 
+      std::cout << vars[var_index] << ": " << types[var_index]->getName() 
            << " being extracted for material "<<material
            <<" at index "<<var_start << " to " << var_end <<endl;
     }    

@@ -76,7 +76,7 @@ Args::trailing()
 vector<string>
 Args::trailing(int num)
 {
-  vector<string> res;
+  std::vector<string> res;
   int nargs = args.size();
   if(nargs<num)
     throw ProblemSetupException("Not enough arguments",__FILE__,__LINE__);
@@ -92,7 +92,7 @@ Args::trailing(int num)
 vector<string> 
 Args::allTrailing(unsigned int minnumber)
 {
-  vector<string> res;
+  std::vector<string> res;
   unsigned int nargs = args.size();
   if(nargs<minnumber)
     throw ProblemSetupException("Not enough arguments",__FILE__,__LINE__);
@@ -120,7 +120,7 @@ Args::hasUnused() const
 vector<string> 
 Args::unusedArgs() const
 {
-  vector<string> res;
+  std::vector<string> res;
   for(int iarg=0;iarg<(int)args.size();iarg++)
     if (!argused[iarg]) res.push_back( args[iarg] );
   return res;

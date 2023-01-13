@@ -289,7 +289,7 @@ BoundCondReader::createCircleBC(
   std::stringstream origin_stream(origin);
   std::stringstream radius_stream(radius);
   if (!radius_stream || !origin_stream) {
-    std::cout << "WARNING: BoundCondReader.cc: stringstream failed..."
+    std::cout << "WARNING: BoundCondReader.cc:  std::stringstream failed..."
               << std::endl;
   }
 
@@ -687,7 +687,7 @@ BoundCondReader::createInteriorBndBoundaryConditionFace(
                                                        plusMinusFaces,
                                                        p0);
     if (!radius_stream || !origin_stream) {
-      std::cout << "WARNING: BoundCondReader.cc: stringstream failed..."
+      std::cout << "WARNING: BoundCondReader.cc:  std::stringstream failed..."
                 << std::endl;
     }
     bcGeom = scinew CircleBCData(p, r);
@@ -973,7 +973,7 @@ BoundCondReader::readDomainBCs(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
            bc_geom_itr != d_BCReaderData[face].d_BCDataArray.end();
            bc_geom_itr++) {
         if (bc_geom_itr != mat_all_itr) {
-          vector<BCGeomBase*>::const_iterator itr;
+          std::vector<BCGeomBase*>::const_iterator itr;
           for (itr = mat_all_itr->second.begin();
                itr != mat_all_itr->second.end();
                ++itr) {

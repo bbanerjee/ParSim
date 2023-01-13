@@ -77,24 +77,24 @@ using namespace std;
 void
 Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, int ortho2, bool average = true, bool stresses = false)
 {
-  cout << "Attempting to extract down axis: " << axis << " at point: (" << ortho1 << "," << ortho2 << ") for variable: " << clf.particleVariable << endl;
+  std::cout << "Attempting to extract down axis: " << axis << " at point: (" << ortho1 << "," << ortho2 << ") for variable: " << clf.particleVariable << endl;
   // Print out all the variables to console
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << endl;
      
   // Print the timesteps to console
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << endl;
   }
   
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -115,12 +115,12 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.y() || ortho1 < 0)
     {
-      cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
     if(ortho2 > domainHi.z() || ortho2 < 0)
     {
-      cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
   } else if(axis == 'y') 
@@ -129,12 +129,12 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.x() || ortho1 < 0)
     {
-      cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
     if(ortho2 > domainHi.z() || ortho2 < 0)
     {
-      cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
   } else if(axis == 'z')
@@ -143,16 +143,16 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.x() || ortho1 < 0)
     {
-      cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
     if(ortho2 > domainHi.y() || ortho2 < 0)
     {
-      cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
       exit(1);
     }
   } else {
-    cout << "ERROR: Incorrect axis specified in 'pol' option: " << axis << ".  Must be x, y or z." << endl;
+    std::cout << "ERROR: Incorrect axis specified in 'pol' option: " << axis << ".  Must be x, y or z." << endl;
     exit(1);
   } 
 
@@ -161,9 +161,9 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
     double time = times[t];
     
     // set up the output file
-    cout << "time = " << time << endl;
+    std::cout << "time = " << time << endl;
     GridP grid = da->queryGrid(t);
-    ostringstream fnum;
+     std::ostringstream fnum;
     string filename;
     fnum << "axis." << axis << ".at." << ortho1 << "." << ortho2 << ".time." << setw(4) << setfill('0') << t/clf.time_step_inc;
     string partroot;
@@ -211,7 +211,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
         ParticleVariable<Matrix3> valueMatrix;
         da->query(value_pos,       "p.x",          matl, patch, t);
         // find all or just the first particle on that patch
-        vector<long64> particlesToGrab;
+        std::vector<long64> particlesToGrab;
         ParticleSubset* pset = value_pos.getParticleSubset();
         if(pset->numParticles() > 0){
           ParticleSubset::iterator iter = pset->begin();
@@ -226,7 +226,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
                   // save all the particles
                   particlesToGrab.push_back(*iter);
                } else {
-                  cout << "Adding particle: " << *iter << endl;
+                  std::cout << "Adding particle: " << *iter << endl;
                   particlesToGrab.push_back(*iter);
                   break;
                }

@@ -61,12 +61,12 @@ using namespace Uintah;
 
 typedef struct
 {
-  vector<Matrix3> stress;
-  vector<Point> px;
-  vector<long64> id;
-  vector<double> time;
-  vector<int> patch;
-  vector<int> matl;
+  std::vector<Matrix3> stress;
+  std::vector<Point> px;
+  std::vector<long64> id;
+  std::vector<double> time;
+  std::vector<int> patch;
+  std::vector<int> matl;
 } MaterialData;
 
 void usage(const std::string& badarg, const std::string& progname);
@@ -117,12 +117,12 @@ main(int argc, char** argv)
   if (argc < 9)
     usage("", argv[0]);
 
-  cout << "Particle Variable to be extracted = p.stress\n";
-  cout << "Material ID to be extracted = " << matID << endl;
+  std::cout << "Particle Variable to be extracted = p.stress\n";
+  std::cout << "Material ID to be extracted = " << matID << endl;
 
   // Read the particle ID file
-  cout << "Particle ID File to be read = " << partIDFile << endl;
-  vector<long64> partID;
+  std::cout << "Particle ID File to be read = " << partIDFile << endl;
+  std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
     cerr << "Particle ID File " << partIDFile << " not found \n";
@@ -137,13 +137,13 @@ main(int argc, char** argv)
     partID.push_back(id);
   } while (!pidFile.eof());
 
-  cout << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cout << "  Number of Particle IDs = " << partID.size() << endl;
   for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
-    cout << "    p" << (ii + 1) << " = " << partID[ii] << endl;
+    std::cout << "    p" << (ii + 1) << " = " << partID[ii] << endl;
   }
 
-  cout << "Output file name = " << outFile << endl;
-  cout << "UDA directory to be read = " << udaDir << endl;
+  std::cout << "Output file name = " << outFile << endl;
+  std::cout << "UDA directory to be read = " << udaDir << endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
 
@@ -185,8 +185,8 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
 {
 
   // Check if the particle variable is available
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
   ASSERTEQ(vars.size(), types.size());
   bool variableFound = false;
@@ -209,11 +209,11 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
 
   // Now that the variable has been found, get the data for all
   // available time steps from the data archive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
 
   // Loop thru all the variables
   for (int v = 0; v < (int)vars.size(); v++) {
@@ -269,7 +269,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
                   da->query(pid, "p.particleID", matl, patch, t);
                   ParticleVariable<Point> px;
                   da->query(px, "p.x", matl, patch, t);
-                  vector<bool> found;
+                  std::vector<bool> found;
                   for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
                     found.push_back(false);
                   }
@@ -312,12 +312,12 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
     // Create output files for each of the timesteps
     for (unsigned long jj = 0; jj < times.size(); jj++) {
       double time = times[jj];
-      ostringstream name;
+       std::ostringstream name;
       name << outFile << "_t" << setw(2) << setfill('0') << (jj + 1);
       ofstream file(name.str().c_str());
       file.setf(ios::scientific, ios::floatfield);
       file.precision(8);
-      cout << "Created output file " << name.str() << " for time " << time
+      std::cout << "Created output file " << name.str() << " for time " << time
            << endl;
       for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
         int patchIndex = matData[ii].patch[jj];
@@ -336,12 +336,12 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
   } else {
     // Create output files for each of the particle IDs
     for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
-      ostringstream name;
+       std::ostringstream name;
       name << outFile << "_p" << setw(2) << setfill('0') << (ii + 1);
       ofstream file(name.str().c_str());
       file.setf(ios::scientific, ios::floatfield);
       file.precision(8);
-      cout << "Created output file " << name.str() << " for particle ID "
+      std::cout << "Created output file " << name.str() << " for particle ID "
            << partID[ii] << endl;
       for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
         double time = matData[ii].time[jj];

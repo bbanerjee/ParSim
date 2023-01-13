@@ -178,7 +178,7 @@ DataArchiver::problemSetup( const ProblemSpecP    & params,
    
   // get the variables to save
   d_saveLabelNames.clear(); // we can problemSetup multiple times on a component Switch, clear the old ones.
-  map<string, string> attributes;
+  std::map<string, string> attributes;
   SaveNameItem saveItem;
   ProblemSpecP save = p->findBlock("save");
 
@@ -373,7 +373,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
       char hostname[MAXHOSTNAMELEN];
       if(gethostname(hostname, MAXHOSTNAMELEN) != 0)
         strcpy(hostname, "unknown???");
-      ostringstream ts;
+       std::ostringstream ts;
       ts << base << "-" << hostname << "-" << getpid();
       if (*base)
         free(base);
@@ -396,7 +396,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
       delete[] inbuf;       
     }
     // Create a file, of the name p0_hostname-p0_pid-processor_number
-    ostringstream myname;
+     std::ostringstream myname;
     myname << basename << "-" << d_myworld->myRank() << ".tmp";
     string fname = myname.str();
 
@@ -418,7 +418,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     d_writeMeta=true;
     int i;
     for(i=0;i<d_myworld->myRank();i++){
-      ostringstream name;
+       std::ostringstream name;
       name << basename << "-" << i << ".tmp";
       struct stat st;
       int s=stat(name.str().c_str(), &st);
@@ -460,7 +460,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     }
     MPI_Barrier(d_myworld->getComm());
     if(!d_writeMeta){
-      ostringstream name;
+       std::ostringstream name;
       name << basename << "-" << i << ".tmp";
       ifstream in(name.str().c_str()); 
       if (!in) {
@@ -493,18 +493,18 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
 
     string git_diff_file = string( sci_getenv("SCIRUN_OBJDIR") ) + "/git_diff.txt";
     if( !validFile( git_diff_file ) ) {
-      cout << "\n";
-      cout << "WARNING: 'git diff' file '" << git_diff_file << "' does not appear to exist!\n";
-      cout << "\n";
+      std::cout << "\n";
+      std::cout << "WARNING: 'git diff' file '" << git_diff_file << "' does not appear to exist!\n";
+      std::cout << "\n";
     } 
     else {
       string git_diff_out = d_dir.getName() + "/git_diff.txt";
       string git_diff_on = string( sci_getenv("SCIRUN_OBJDIR") ) + "/.do_git_diff";
       if( !validFile( git_diff_on ) ) {
-        cout << "\n";
-        cout << "WARNING: Adding 'git diff' file to UDA, but AUTO DIFF TEXT CREATION is OFF!\n";
-        cout << "         git_diff.txt may be out of date!  Saving as 'possible_git_diff.txt'.\n";
-        cout << "\n";
+        std::cout << "\n";
+        std::cout << "WARNING: Adding 'git diff' file to UDA, but AUTO DIFF TEXT CREATION is OFF!\n";
+        std::cout << "         git_diff.txt may be out of date!  Saving as 'possible_git_diff.txt'.\n";
+        std::cout << "\n";
         git_diff_out = d_dir.getName() + "/possible_git_diff.txt";
       }
       copyFile( git_diff_file, git_diff_out );
@@ -522,7 +522,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
     //     If so, we will need to write our own (simple) file reader and writer
     //     routine.
 
-    cout << "Saving original .ups file in UDA...\n";
+    std::cout << "Saving original .ups file in UDA...\n";
     basename = params->getFile();
     Dir ups_location( pathname(basename ) );
     ups_location.copy( basename, d_dir );
@@ -581,10 +581,10 @@ DataArchiver::restartSetup(Dir& restartFromDir, int startTimestep,
       // Try to remove the old dir...
       if( !Dir::removeDir( restartFromDir.getName().c_str() ) ) {
         // Something strange happened... let's test the filesystem...
-        stringstream error_stream;          
+         std::stringstream error_stream;          
         if( !testFilesystem( restartFromDir.getName(), error_stream, Parallel::getMPIRank() ) ) {
 
-          cout << error_stream.str();
+          std::cout << error_stream.str();
           cout.flush();
 
           // The file system just gave us some problems...
@@ -672,7 +672,7 @@ DataArchiver::reduceUdaSetup(Dir& fromDir)
     }
     
     // copy the original ups file if it exists
-    vector<string> ups;
+    std::vector<string> ups;
     fromDir.getFilenamesBySuffix( "ups", ups );
     
     if ( ups.size() != 0 ){
@@ -699,7 +699,7 @@ DataArchiver::reduceUdaSetup(Dir& fromDir)
 
       // this isn't the most efficient, but i don't think it matters
       // to much for this initialization code
-      list<SaveNameItem>::iterator it = d_saveLabelNames.begin();
+       std::list<SaveNameItem>::iterator it = d_saveLabelNames.begin();
       while (it != d_saveLabelNames.end()) {
         if ((*it).labelName == varname) {
           it = d_saveLabelNames.erase(it);
@@ -789,7 +789,7 @@ DataArchiver::addRestartStamp(ProblemSpecP indexDoc, Dir& fromDir,
   ProblemSpecP restartInfo = restarts->appendChild("restart");
   restartInfo->setAttribute("from", fromDir.getName().c_str());
    
-  ostringstream timestep_str;
+   std::ostringstream timestep_str;
   timestep_str << timestep;
 
   restartInfo->setAttribute("timestep", timestep_str.str().c_str());   
@@ -830,7 +830,7 @@ DataArchiver::copyTimesteps(Dir& fromDir, Dir& toDir, int startTimestep,
     if (timestep >= startTimestep &&
         (timestep <= maxTimestep || maxTimestep < 0)) {
       // copy the timestep directory over
-      map<string,string> attributes;
+      std::map<string,string> attributes;
       ts->getAttributes(attributes);
 
       string hrefNode = attributes["href"];
@@ -854,7 +854,7 @@ DataArchiver::copyTimesteps(Dir& fromDir, Dir& toDir, int startTimestep,
         d_checkpointTimestepDirs.push_back(toDir.getSubdir(href).getName());
          
       // add the timestep to the index.xml
-      ostringstream timestep_str;
+       std::ostringstream timestep_str;
       timestep_str << timestep;
       ProblemSpecP newTS = timesteps->appendElement("timestep", timestep_str.str().c_str());
 
@@ -893,7 +893,7 @@ DataArchiver::copyDatFiles(Dir& fromDir, Dir& toDir, int startTimestep,
     ProblemSpecP variable = globals->findBlock("variable");
     // copy data file associated with each variable
     while (variable != 0) {
-      map<string,string> attributes;
+      std::map<string,string> attributes;
       variable->getAttributes(attributes);
 
       string hrefNode = attributes["href"];
@@ -1183,9 +1183,9 @@ DataArchiver::beginOutputTimestep( double time, double delt,
         // Try to remove the expired checkpoint directory...
         if( !Dir::removeDir( expiredDir.getName().c_str() ) ) {
           // Something strange happened... let's test the filesystem...
-          stringstream error_stream;          
+           std::stringstream error_stream;          
           if( !testFilesystem( expiredDir.getName(), error_stream, Parallel::getMPIRank() ) ) {
-            cout << error_stream.str();
+            std::cout << error_stream.str();
             cout.flush();
             // The file system just gave us some problems...
               printf( "WARNING: Filesystem check failed on processor %d\n", Parallel::getMPIRank() );
@@ -1207,7 +1207,7 @@ DataArchiver::beginOutputTimestep( double time, double delt,
 //
 void
 DataArchiver::makeTimestepDirs(Dir& baseDir,
-                               vector<DataArchiver::SaveItem>& saveLabels,
+                               std::vector<DataArchiver::SaveItem>& saveLabels,
                                const GridP& grid,
                                string* pTimestepDir /* passed back */)
 {
@@ -1220,7 +1220,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
   
   dbg << "      makeTimestepDirs for timestep: " << timestep << " dir_timestep: " << dir_timestep<< "\n";
 
-  ostringstream tname;
+   std::ostringstream tname;
   tname << "t" << setw(5) << setfill('0') << dir_timestep;
   *pTimestepDir = baseDir.getName() + "/" + tname.str();
 
@@ -1257,14 +1257,14 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
   }
 
   if( tries > 1 ) {
-    cout << d_myworld->myRank() << " - tries: " << tries << "\n";
+    std::cout << d_myworld->myRank() << " - tries: " << tries << "\n";
   }
     
   // Create the directory for this level, if necessary
   for (int l = 0; l < numLevels; l++) {
 
     tries = 0;
-    ostringstream lname;
+     std::ostringstream lname;
     lname << "l" << l;
     Dir ldir;
 
@@ -1274,7 +1274,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
         tries++;
 
         if( tries > 500 ) {
-          cout << "2) Tries is " << tries << "\n";
+          std::cout << "2) Tries is " << tries << "\n";
           throw InternalError( "DataArchiver::outputTimstep(): 2) Unable to create timestep directory!", __FILE__, __LINE__ );
         }
 
@@ -1288,7 +1288,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
       }
     }
     if( tries > 1 ) {
-      cout << d_myworld->myRank() << ": " << l << " - tries: " << tries << "\n";
+      std::cout << d_myworld->myRank() << ": " << l << " - tries: " << tries << "\n";
     }
     
   } // end for( int l = 0 )
@@ -1389,7 +1389,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
   int dir_timestep = getTimestepTopLevel();  
 
   // start dumping files to disk
-  vector<Dir*> baseDirs;
+  std::vector<Dir*> baseDirs;
   if (d_isOutputTimestep) {
     baseDirs.push_back(&d_dir);
   }
@@ -1397,12 +1397,12 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
     baseDirs.push_back(&d_checkpointsDir);
   }
 
-  ostringstream tname;
+   std::ostringstream tname;
   tname << "t" << setw(5) << setfill('0') << dir_timestep;
 
   for (int i = 0; i < static_cast<int>(baseDirs.size()); i++) {
     // to save the list of vars. up to 2, since in checkpoints, there are two types of vars
-    vector<vector<SaveItem>*> savelist; 
+    std::vector<vector<SaveItem>*> savelist; 
     
     // Reference this timestep in index.xml
     if(d_writeMeta){
@@ -1441,7 +1441,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
           bool found=false;
           for(ProblemSpecP n = vs->getFirstChild(); n != 0; n=n->getNextSibling()){
             if(n->getNodeName() == "variable") {
-              map<string,string> attributes;
+              std::map<string,string> attributes;
               n->getAttributes(attributes);
               string varname = attributes["name"];
               if(varname == "")
@@ -1487,7 +1487,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
         // add timestep info
         string timestepindex = tname.str()+"/timestep.xml";      
         
-        ostringstream value, timeVal, deltVal;
+         std::ostringstream value, timeVal, deltVal;
         value << dir_timestep;
         ProblemSpecP newElem = ts->appendElement("timestep",value.str().c_str());
         newElem->setAttribute("href", timestepindex.c_str());
@@ -1520,7 +1520,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
       
       // in amr, we're not guaranteed that a proc do work on a given level
       //   quick check to see that, so we don't create a node that points to no data
-      vector<vector<int> > procOnLevel(numLevels);
+      std::vector<vector<int> > procOnLevel(numLevels);
 
       ProblemSpecP gridElem = rootElem->appendChild("Grid");
       gridElem->appendElement("numLevels", numLevels);
@@ -1541,7 +1541,7 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
         }
         else {
           for (int axis = 0; axis < 3; axis++) {
-            ostringstream axisstr, lowstr, highstr;
+             std::ostringstream axisstr, lowstr, highstr;
             axisstr << axis;
             ProblemSpecP stretch = levelElem->appendChild("StretchPositions");
             stretch->setAttribute("axis", axisstr.str());
@@ -1589,25 +1589,25 @@ DataArchiver::writeto_xml_files(double delt, const GridP& grid)
       
       ProblemSpecP dataElem = rootElem->appendChild("Data");
       for(int l=0;l<numLevels;l++){
-        ostringstream lname;
+         std::ostringstream lname;
         lname << "l" << l;
 
         // create a pxxxxx.xml file for each proc doing the outputting
         for(int i=0;i<d_myworld->nRanks();i++){
           if (i % lb->getNthProc() != 0 || procOnLevel[l][i] == 0)
             continue;
-          ostringstream pname;
+           std::ostringstream pname;
           pname << lname.str() << "/p" << setw(5) << setfill('0') << i 
                 << ".xml";
 
           ProblemSpecP df = dataElem->appendChild("Datafile");
           df->setAttribute("href",pname.str());
           
-          ostringstream procID;
+           std::ostringstream procID;
           procID << i;
           df->setAttribute("proc",procID.str());
           
-          ostringstream labeltext;
+           std::ostringstream labeltext;
           labeltext << "Processor " << i << " of " << d_myworld->nRanks();
         }
       }
@@ -1677,7 +1677,7 @@ DataArchiver::scheduleOutputTimestep(vector<DataArchiver::SaveItem>& saveLabels,
   
   for(int i=0;i<grid->numLevels();i++){
     const LevelP& level = grid->getLevel(i);
-    vector< SaveItem >::iterator saveIter;
+    std::vector< SaveItem >::iterator saveIter;
     const PatchSet* patches = lb->getOutputPerProcessorPatchSet(level);
     
     
@@ -1692,7 +1692,7 @@ DataArchiver::scheduleOutputTimestep(vector<DataArchiver::SaveItem>& saveLabels,
         saveIter++) {
       // check to see if the input file requested to save on this level.
       // check is done by absolute level, or relative to end of levels (-1 finest, -2 second finest,...)
-      map<int, MaterialSetP>::iterator iter;
+      std::map<int, MaterialSetP>::iterator iter;
 
       iter = saveIter->matlSet_.find(level->getIndex());
       if (iter == saveIter->matlSet_.end())
@@ -1755,7 +1755,7 @@ DataArchiver::indexAddGlobals()
       const MaterialSubset* matls = saveItem.getMaterialSet(ALL_LEVELS)->getUnion();
       for (int m = 0; m < matls->size(); m++) {
         int matlIndex = matls->get(m);
-        ostringstream href;
+         std::ostringstream href;
         href << var->getName();
         if (matlIndex < 0)
           href << ".dat\0";
@@ -1800,7 +1800,7 @@ DataArchiver::outputReductionVars(const ProcessorGroup*,
     for (int m = 0; m < matls->size(); m++) {
       int matlIndex = matls->get(m);
       dbg << "    Reduction " << var->getName() << " matl: " << matlIndex << endl;
-      ostringstream filename;
+       std::ostringstream filename;
       filename << d_dir.getName() << "/" << var->getName();
       if (matlIndex < 0)
         filename << ".dat\0";
@@ -1868,7 +1868,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
   }
 #endif
 
-  vector< SaveItem >& saveLabels = (type == OUTPUT ? d_saveLabels :
+  std::vector< SaveItem >& saveLabels = (type == OUTPUT ? d_saveLabels :
                                     type == CHECKPOINT ? d_checkpointLabels : 
                                     d_checkpointReductionLabels);
 
@@ -1903,7 +1903,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
   else
     dir = d_checkpointsDir;
 
-  ostringstream tname;
+   std::ostringstream tname;
   tname << "t" << setw(5) << setfill('0') << getTimestepTopLevel();    // could be modified by reduceUda
   
   Dir tdir = dir.getSubdir(tname.str());
@@ -1919,7 +1919,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
   // reductions call this function, and we handle them differently.
   if (type != CHECKPOINT_REDUCTION) {
     // find the level and level number associated with this patch
-    ostringstream lname;
+     std::ostringstream lname;
     ASSERT(patches->size() != 0);
     ASSERT(patches->get(0) != 0);
 
@@ -1932,7 +1932,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
     lname << "l" << level->getIndex(); // Hard coded - steve
     Dir ldir = tdir.getSubdir(lname.str());
     
-    ostringstream pname;
+     std::ostringstream pname;
     pname << "p" << setw(5) << setfill('0') << d_myworld->myRank();
     xmlFilename = ldir.getName() + "/" + pname.str() + ".xml";
     dataFilebase = pname.str() + ".data";
@@ -2004,7 +2004,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
       while ( fd == -1 ) {
 
         if( tries >= 50 ) {
-          ostringstream msg;
+           std::ostringstream msg;
           msg << "DataArchiver::output(): Failed to open file '" << dataFilename << "' (after 50 tries).";
           cerr << msg.str() << "\n";
           throw ErrnoException( msg.str(), errno, __FILE__, __LINE__ );
@@ -2020,13 +2020,13 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
       }
 
       // loop over variables
-      vector<SaveItem>::iterator saveIter;
+      std::vector<SaveItem>::iterator saveIter;
       for(saveIter = saveLabels.begin(); saveIter!= saveLabels.end(); saveIter++) {
         const VarLabel* var = saveIter->label_;
         // check to see if we need to save on this level
         // check is done by absolute level, or relative to end of levels (-1 finest, -2 second finest,...)
         // find the materials to output on that level
-        map<int, MaterialSetP>::iterator iter = saveIter->matlSet_.end();
+        std::map<int, MaterialSetP>::iterator iter = saveIter->matlSet_.end();
         const MaterialSubset* var_matls = 0;
 
         if (level) {
@@ -2040,7 +2040,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
           }
         }
         else { // checkpoint reductions
-          map<int, MaterialSetP>::iterator liter;
+          std::map<int, MaterialSetP>::iterator liter;
           for (liter = saveIter->matlSet_.begin(); liter != saveIter->matlSet_.end(); liter++) {
             var_matls = saveIter->getMaterialSet(liter->first)->getUnion();
             break;
@@ -2192,7 +2192,7 @@ DataArchiver::makeVersionedDir()
   // makes a valid uda dir
 
   if (d_udaSuffix != -1) {
-    ostringstream name;
+     std::ostringstream name;
     name << d_filebase << "." << setw(3) << setfill('0') << d_udaSuffix;
     dirName = name.str();
     
@@ -2210,7 +2210,7 @@ DataArchiver::makeVersionedDir()
   // if that didn't work, go ahead with the real algorithm
 
   while (!dirCreated) {
-    ostringstream name;
+     std::ostringstream name;
     name << d_filebase << "." << setw(3) << setfill('0') << dirNum;
     dirName = name.str();
       
@@ -2263,7 +2263,7 @@ DataArchiver::makeVersionedDir()
   }
 #endif
 
-  cout << "DataArchiver created " << dirName << endl;
+  std::cout << "DataArchiver created " << dirName << endl;
   d_dir = Dir(dirName);
    
 } // end makeVersionedDir()
@@ -2368,7 +2368,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   // label -> level -> matls
   // we can't store them in two different maps, since we need to know 
   // which levels depend on which materials
-  typedef map<string, map<int, ConsecutiveRangeSet> > label_type;
+  typedef  std::map< string,  std::map< int, ConsecutiveRangeSet> > label_type;
   label_type label_map;
 
   for (dep_vector::const_iterator iter = initreqs.begin();
@@ -2414,7 +2414,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
      
     saveItem.label_ = var;
     saveItem.matlSet_.clear();
-    map<int, ConsecutiveRangeSet>::iterator liter;
+    std::map<int, ConsecutiveRangeSet>::iterator liter;
     for (liter = mapIter->second.begin(); liter != mapIter->second.end(); liter++) {
        
       saveItem.setMaterials(liter->first, liter->second, d_prevMatls, d_prevMatlSet);
@@ -2467,7 +2467,7 @@ DataArchiver::SaveItem::setMaterials(int level, const ConsecutiveRangeSet& matls
   else {
     MaterialSetP& m = matlSet_[level];
     m = scinew MaterialSet();
-    vector<int> matlVec;
+    std::vector<int> matlVec;
     matlVec.reserve(matls.size());
     for (ConsecutiveRangeSet::iterator iter = matls.begin();
          iter != matls.end(); iter++) {
@@ -2591,7 +2591,7 @@ DataArchiver::copy_outputProblemSpec( Dir & fromDir, Dir & toDir )
 {
   int dir_timestep = getTimestepTopLevel();     // could be modified by reduceUda
   
-  ostringstream tname;
+   std::ostringstream tname;
   tname << "t" << setw(5) << setfill('0') << dir_timestep;
   
   // define the from/to directories & files
@@ -2614,7 +2614,7 @@ DataArchiver::copy_outputProblemSpec( Dir & fromDir, Dir & toDir )
     if (nodeName == "Meta" || nodeName == "Time" || nodeName == "Grid" || nodeName == "Data") {
       continue;
     }
-    cout << "   Now copying the XML node (" << setw(20) << nodeName << ")" << " from: " << fromFile << " to: " << toFile << endl;
+    std::cout << "   Now copying the XML node (" << setw(20) << nodeName << ")" << " from: " << fromFile << " to: " << toFile << endl;
     copySection( myFromDir,  myToDir, "timestep.xml", nodeName );
   }
 } 

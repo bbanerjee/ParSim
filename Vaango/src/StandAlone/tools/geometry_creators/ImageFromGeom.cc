@@ -50,13 +50,13 @@ generate geometry for FileGeometryPiece.
 int main(int argc, char *argv[])
 {
   // Establish physical size of the image
-  vector<double> X(3);
+  std::vector<double> X(3);
   X[0]=1.;
   X[1]=1.;
   X[2]=1.;
 
   // image resolution
-  vector<int> res(3);
+  std::vector<int> res(3);
   res[0]=256;
   res[1]=256;
   res[2]=256;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
   // Read data from file
   double xc, yc, zc, r;
-  vector<double> xcen,ycen,zcen,rad;
+  std::vector<double> xcen,ycen,zcen,rad;
   while(fp >> xc >> yc >> zc >> r){
    xcen.push_back(xc);
    ycen.push_back(yc);

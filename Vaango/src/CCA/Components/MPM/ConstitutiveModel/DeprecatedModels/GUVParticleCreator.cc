@@ -95,7 +95,7 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
                                     CCVariable<short int>& cellNAPID,
                                     const Patch* patch, DataWarehouse* new_dw,
                                     MPMLabel* lb,
-                                    vector<GeometryObject*>& d_geom_objs)
+                                    std::vector<GeometryObject*>& d_geom_objs)
 {
   // Constants
   Vector zero(0.0, 0.0, 0.0);
@@ -123,7 +123,7 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
   particleIndex start = 0;
 
   // Loop thru the geometry objects
-  vector<GeometryObject*>::const_iterator obj;
+  std::vector<GeometryObject*>::const_iterator obj;
   for (obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
 
     // Initialize the per geometryObject particle count
@@ -154,35 +154,35 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
     // Get the GUV data
     if (guv) {
 
-      vector<double>* vol = guv->getVolume();
+      std::vector<double>* vol = guv->getVolume();
       debug << "GUVPartCreator::create::vol = " << vol
             << " size = " << vol->size() << endl;
       geomvols::key_type volkey(patch, *obj);
-      vector<double>::const_iterator voliter = d_vol[volkey].begin();
+      std::vector<double>::const_iterator voliter = d_vol[volkey].begin();
 
-      vector<int>* type = guv->getType();
+      std::vector<int>* type = guv->getType();
       debug << "GUVPartCreator::create::type = " << type
             << " size = " << type->size() << endl;
       geomint::key_type typekey(patch, *obj);
-      vector<int>::const_iterator typeiter = d_type[typekey].begin();
+      std::vector<int>::const_iterator typeiter = d_type[typekey].begin();
 
-      vector<double>* thick = guv->getThickness();
+      std::vector<double>* thick = guv->getThickness();
       debug << "GUVPartCreator::create::thick = " << thick
             << " size = " << thick->size() << endl;
       geomvols::key_type thickkey(patch, *obj);
-      vector<double>::const_iterator thickiter = d_thick[thickkey].begin();
+      std::vector<double>::const_iterator thickiter = d_thick[thickkey].begin();
 
-      vector<Vector>* norm = guv->getNormal();
+      std::vector<Vector>* norm = guv->getNormal();
       debug << "GUVPartCreator::create::norm = " << norm
             << " size = " << norm->size() << endl;
       geomvecs::key_type normkey(patch, *obj);
-      vector<Vector>::const_iterator normiter = d_norm[normkey].begin();
+      std::vector<Vector>::const_iterator normiter = d_norm[normkey].begin();
 
-      vector<Point>* pos = guv->get_position();
+      std::vector<Point>* pos = guv->get_position();
       debug << "GUVPartCreator::create::pos = " << pos
             << " size = " << pos->size() << endl;
       geompoints::key_type poskey(patch, *obj);
-      vector<Point>::const_iterator positer = d_pos[poskey].begin();
+      std::vector<Point>::const_iterator positer = d_pos[poskey].begin();
 
       debug_other << "GUVPartCreator::create:: patch = " << patch
                   << " obj = " << *obj << endl;
@@ -259,7 +259,7 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
       }
 
     } else {
-      cout << "**WARNING** GUV materials cannot interact with other materials."
+      std::cout << "**WARNING** GUV materials cannot interact with other materials."
            << endl;
     }
     start += count;
@@ -303,11 +303,11 @@ GUVParticleCreator::countAndCreateParticles(const Patch* patch,
     int numPts = guv->createPoints();
     debug << "GUVPartCreator::count:: numPts = " << numPts << endl;
 
-    vector<Point>* pos = guv->get_position();
-    vector<double>* vol = guv->getVolume();
-    vector<int>* type = guv->getType();
-    vector<double>* thick = guv->getThickness();
-    vector<Vector>* norm = guv->getNormal();
+    std::vector<Point>* pos = guv->get_position();
+    std::vector<double>* vol = guv->getVolume();
+    std::vector<int>* type = guv->getType();
+    std::vector<double>* thick = guv->getThickness();
+    std::vector<Vector>* norm = guv->getNormal();
     debug << "GUVPartCreator::count::pos = " << pos << " size = " << pos->size()
           << endl;
     debug << "GUVPartCreator::count::vol = " << vol << " size = " << vol->size()
@@ -343,7 +343,7 @@ GUVParticleCreator::countAndCreateParticles(const Patch* patch,
 
   debug_other << "GUVPartCreator::count:: patch = " << patch << " obj = " << obj
               << endl;
-  vector<Point>::const_iterator positer = d_pos[poskey].begin();
+  std::vector<Point>::const_iterator positer = d_pos[poskey].begin();
   IntVector cell(0, 0, 0);
   for (int ct = 0; positer != d_pos[poskey].end(); ++positer, ++ct) {
     patch->findCell(*positer, cell);

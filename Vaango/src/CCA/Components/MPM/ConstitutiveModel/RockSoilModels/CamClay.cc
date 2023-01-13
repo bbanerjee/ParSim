@@ -77,7 +77,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 {
   d_eos = MPMEquationOfStateFactory::create(ps);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->MPMEquationOfStatFactory."
          << endl;
@@ -86,7 +86,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->ShearModulusModelFactory."
          << endl;
@@ -95,7 +95,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'camclay' block in the input .ups file.  The\n"
         << " default type is 'borja_consolidation_pressure'.\n";
@@ -103,7 +103,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
   }
   d_intvar = std::make_shared<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear);
   if (!d_intvar) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
          << " model for CamClay. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
@@ -111,7 +111,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get());
   if (!d_yield) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->YieldConditionFactory."
          << endl;
@@ -372,9 +372,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(patchIndex);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Get grid size
     Vector dx = patch->dCell();
@@ -541,7 +541,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       state.q = q;
 
       if (std::isnan(q)) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state.epse_v
              << " epse_s = " << state.epse_s << " q = " << q << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -553,7 +553,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       state.p = p;
 
       if (std::isnan(p)) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state.epse_v
              << " epse_s = " << state.epse_s << " p = " << p << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -654,7 +654,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
           inv_A_MAT.destructiveInvert(A_MAT);
 
-          vector<double> B_MAT(2), C_MAT(2), AinvB(2), rvs_vec(2), Ainvrvs(2);
+          std::vector<double> B_MAT(2), C_MAT(2), AinvB(2), rvs_vec(2), Ainvrvs(2);
           B_MAT[0] = dr1_dx3;
           B_MAT[1] = dr2_dx3;
 
@@ -675,7 +675,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
               (-C_MAT[0] * Ainvrvs[0] - C_MAT[1] * Ainvrvs[1] + rf) / denom;
           }
 
-          vector<double> delvoldev(2);
+          std::vector<double> delvoldev(2);
           delvoldev[0] = -Ainvrvs[0] - AinvB[0] * deldelgamma;
           delvoldev[1] = -Ainvrvs[1] - AinvB[1] * deldelgamma;
 
@@ -706,7 +706,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             pc = d_intvar->computeInternalVariable("dummy", nullptr, &state);
 
             if (std::isnan(p)) {
-              ostringstream desc;
+               std::ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
@@ -717,7 +717,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(q)) {
-              ostringstream desc;
+               std::ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
@@ -728,7 +728,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(pc)) {
-              ostringstream desc;
+               std::ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
@@ -811,7 +811,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
           // Check max iters
           if (klocal == iter_break) {
-            ostringstream desc;
+             std::ostringstream desc;
             desc << "**ERROR** Newton iterations did not converge" << endl
                  << " idx = " << idx << " rtolv = " << rtolv
                  << " rtols = " << rtols << " rtolf = " << rtolf
@@ -849,7 +849,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         } // End of Newton-Raphson while
 
         if ((delgamma < 0.0) && (fabs(delgamma) > 1.0e-10)) {
-          ostringstream desc;
+           std::ostringstream desc;
           desc
             << "**ERROR** delgamma less than 0.0 in local converged solution."
             << endl;
@@ -1060,7 +1060,7 @@ CamClay::computeRhoMicroCM(double pressure, const double p_ref,
   double rho_cur = d_eos->computeDensity(rho_orig, pressure);
 
   if (std::isnan(rho_cur)) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "rho_cur = " << rho_cur << " pressure = " << pressure
          << " p_ref = " << p_ref << " rho_orig = " << rho_orig << endl;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -1079,7 +1079,7 @@ CamClay::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   pressure += p_ref;
 
   if (std::isnan(pressure)) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "rho_cur = " << rho_cur << " pressure = " << pressure
          << " p_ref = " << p_ref << " dp_drho = " << dp_drho << endl;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);

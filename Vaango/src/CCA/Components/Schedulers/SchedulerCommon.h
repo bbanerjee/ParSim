@@ -55,7 +55,7 @@ class LocallyComputedPatchVarMap;
 
 using mm               = VarLabelMatl<Level, DataWarehouse>;
 using LabelMaterialMap = std::
-    map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
+    std::map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
 using VarLabelMaterialListMap = std::map<std::string, std::list<int>>;
 using ReductionTasksMap =
     std::map<VarLabelMatl<Level, DataWarehouse>, std::unique_ptr<Task>>;

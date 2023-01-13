@@ -170,15 +170,15 @@ main(int argc, char* argv[])
     return 1;
   }
  
-  cout << HELP_MSG << endl;
+  std::cout << HELP_MSG << endl;
    
   while (!gQuit) {
     while (!gEventQueue.empty()) {
       Event event = gEventQueue.front();
       gEventQueue.pop();
       
-      cout << "Handling event (type=" << event.type() << ")\n";
-      cout << endl;
+      std::cout << "Handling event (type=" << event.type() << ")\n";
+      std::cout << endl;
       handle_event(event);
     }
     
@@ -196,7 +196,7 @@ main(int argc, char* argv[])
     FD_SET(dv_fd, &inputs);
     FD_SET(dv_fd, &errors);
 	
-    cout << endl << "? " << flush;
+    std::cout << endl << "? " << flush;
     
     while ((select(dv_fd + 1, &inputs, 0, &errors, 0) == -1) &&
 	   (errno == EINTR))
@@ -226,32 +226,32 @@ handle_event(const Event& event)
 
   case DaVinci::EVT_DV_SELECT_NODE:
     {
-      list<string> selected_nodes = gDavinci->getSelectedNodes();
+       std::list<string> selected_nodes = gDavinci->getSelectedNodes();
       if (selected_nodes.size() == 1) {
 	cout << selected_nodes.front() << endl;
 	GV_Task* pTask = gGraph->findTask(selected_nodes.front());
 	if (pTask != nullptr) {
-	  cout << "\tCost (duration): " << pTask->getDuration() << endl;
-	  cout << "\tMax Path Cost: " << pTask->getMaxInclusivePathCost()
+	  std::cout << "\tCost (duration): " << pTask->getDuration() << endl;
+	  std::cout << "\tMax Path Cost: " << pTask->getMaxInclusivePathCost()
 	       << endl;
-	  cout << "\tMax Path Percent: " << pTask->getMaxPathPercent()
+	  std::cout << "\tMax Path Percent: " << pTask->getMaxPathPercent()
 	       << endl;
 	}
 	else {
-	  cout << "\tError, task not found\n"; 
+	  std::cout << "\tError, task not found\n"; 
 	}
       }
       else if (selected_nodes.size() > 1) {
 	double total_cost = 0;
 	for (list<string>::iterator iter = selected_nodes.begin();
 	     iter != selected_nodes.end(); iter++) {
-	  cout << *iter;
+	  std::cout << *iter;
 	  GV_Task* pTask = gGraph->findTask(*iter);
 	  if (pTask == nullptr) {
-	    cout << "\n\tError, task not found\n";
+	    std::cout << "\n\tError, task not found\n";
 	    return;
 	  }
-	  cout << "\t(" << pTask->getDuration() << ")\n";
+	  std::cout << "\t(" << pTask->getDuration() << ")\n";
 	  total_cost += pTask->getDuration();
 	}
 	cout << "\nTotal cost (duration): " << total_cost << endl;
@@ -261,15 +261,15 @@ handle_event(const Event& event)
     break;
 
   case DaVinci::EVT_DV_SELECT_EDGE:
-    cout << gDavinci->getSelectedEdge() << endl;
+    std::cout << gDavinci->getSelectedEdge() << endl;
     Edge* pEdge = gGraph->findEdge(gDavinci->getSelectedEdge());
     if (pEdge != nullptr) {
-      cout << "\tMax Path: " << pEdge->getMaxInclusivePathCost() << endl;
-      cout << "\tMax Path Percent: " << pEdge->getMaxPathPercent()
+      std::cout << "\tMax Path: " << pEdge->getMaxInclusivePathCost() << endl;
+      std::cout << "\tMax Path Percent: " << pEdge->getMaxPathPercent()
 	   << endl;
     }
     else {
-      cout << "\tError, edge not found\n"; 
+      std::cout << "\tError, edge not found\n"; 
     }
     break;
   }
@@ -277,17 +277,17 @@ handle_event(const Event& event)
 
 bool load_timestep(int timestep, float prune_percent)
 {
-  ostringstream timedir;
+   std::ostringstream timedir;
   timedir << "/t" << setw(5) << setfill('0') << timestep;
-  cout << "Loading timestep " << timestep << "...\n";
+  std::cout << "Loading timestep " << timestep << "...\n";
   GV_TaskGraph* oldGraph = gGraph;
   gGraph = GV_TaskGraph::inflate(udaDir + timedir.str());
 
   if (gGraph != nullptr) {
     gGraph->setThresholdPercent(prune_percent);
-    cout << "Sending graph to daVinci...\n";
+    std::cout << "Sending graph to daVinci...\n";
     gDavinci->setGraph(gGraph);
-    cout << "Graph sent.\n";
+    std::cout << "Graph sent.\n";
     delete oldGraph;
     return true;
   }
@@ -304,7 +304,7 @@ static void handle_console_input()
 
   switch (tolower(cmd.c_str()[0])) {
   case 'h':	// help
-    cout << HELP_MSG << endl;
+    std::cout << HELP_MSG << endl;
     break;
 
   case 'p': { 	// prune
@@ -313,7 +313,7 @@ static void handle_console_input()
     if (percent < 0) percent = 0;
     if (percent > 1) percent = 1;
     if (gGraph != nullptr && gDavinci != nullptr) {
-      cout << "\nSetting threshold... " << percent << endl << endl;
+      std::cout << "\nSetting threshold... " << percent << endl << endl;
       gGraph->setThresholdPercent(percent);
       gDavinci->setGraph(gGraph); // refresh graph
     }
@@ -322,7 +322,7 @@ static void handle_console_input()
   case 'x':
     // turn exclusion on or off
     DaVinci::doExclusion = !DaVinci::doExclusion;
-    cout << "Exclusion " << (DaVinci::doExclusion ? "on\n" : "off\n");
+    std::cout << "Exclusion " << (DaVinci::doExclusion ? "on\n" : "off\n");
     gDavinci->setGraph(gGraph);
 
     break;
@@ -338,14 +338,14 @@ static void handle_console_input()
     cin >> timestep;
 
     if (!load_timestep(timestep, gGraph->getThresholdPercent()))
-      cout << "Use the 'List' command to get a list of timestep directories\n";
+      std::cout << "Use the 'List' command to get a list of timestep directories\n";
   } break;
 
   case 'f': {
     // set the fontsize in daVinci
     int font_size;
     cin >> font_size;
-    cout << "Setting font size to " << font_size << "...\n";
+    std::cout << "Setting font size to " << font_size << "...\n";
     gDavinci->setFontSize(font_size);
     
   } break;
@@ -356,9 +356,9 @@ static void handle_console_input()
     std::vector<double> times;
     dataArchive.queryTimesteps(timeindices, times);
     
-    cout << "\nTimesteps:\n";
+    std::cout << "\nTimesteps:\n";
     for (int i = 0; i < (int)timeindices.size(); i++) {
-      cout << timeindices[i] << endl;
+      std::cout << timeindices[i] << endl;
     }
 
     //system((string("find ") +  udaDir + " -name 'taskgraph_00000.xml' | sed -e \"s/\\/taskgraph_00000\\.xml//g\" | sed -e \"s/.*\\///g\"").c_str());

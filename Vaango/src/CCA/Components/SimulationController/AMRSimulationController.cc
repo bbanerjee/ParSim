@@ -267,7 +267,7 @@ AMRSimulationController::run()
       // Remember, this isn't logged if DISABLE_SCI_MALLOC is set
       // (So usually in optimized mode this will not be run.)
       d_scheduler->logMemoryUse();
-      ostringstream fn;
+       std::ostringstream fn;
       fn << "alloc." << std::setw(5) << std::setfill('0') << d_myworld->myRank() << ".out";
       string filename(fn.str());
 #if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
@@ -1038,7 +1038,7 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
      
       // bulletproofing
       if(new_delt < d_timeinfo->delt_min || new_delt <= 0 ){
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "The new delT (" << new_delt << ") is either less than delT_min (" << d_timeinfo->delt_min
              << ") or equal to 0";
         proc0cout << warn.str() << "\n";

@@ -89,7 +89,7 @@ void usage(const std::string& badarg, const std::string& progname)
   if(badarg != ""){
     cerr << "\nError parsing argument: " << badarg << "\n\n";
   }
-  cout << " \n compute_Lnorm_uda:  Computes the L(1,2,inf) norm for each variable in two udas.  Each variable in uda1 \n"
+  std::cout << " \n compute_Lnorm_uda:  Computes the L(1,2,inf) norm for each variable in two udas.  Each variable in uda1 \n"
        << " is examined at each level and timestep.  You can compare udas that have different computational domains\n"
        << " and different patch distributions.  The uda with the small compuational domain should always be specified first.\n \n"
        << " Output is sent to the terminal in addition to a directory named 'Lnorm'.  The structure of 'Lnorm' is:\n"
@@ -101,11 +101,11 @@ void usage(const std::string& badarg, const std::string& progname)
        << "    |-- press_equil_CC_0 \n"
        << "In each file is the physical time, L1, L2, Linf norms.\n";
        
-  cout << "\nNote only CC, NC, SFCX, SFCY, SFCZ variables are supported.\n";      
-  cout << "\nUsage: "
+  std::cout << "\nNote only CC, NC, SFCX, SFCY, SFCZ variables are supported.\n";      
+  std::cout << "\nUsage: "
        << " [options] <uda1> <uda2>\n\n";
-  cout << "Valid options are:\n";
-  cout << "  -h[elp]\n";
+  std::cout << "Valid options are:\n";
+  std::cout << "  -h[elp]\n";
   Thread::exitAll(1);
 }
 //__________________________________
@@ -149,7 +149,7 @@ class Norms{
     {
       d_L1   = d_L1/((T)d_n);
       d_L2   = Sqrt( d_L2/((T)d_n) );
-      cout << " \t norms: L1 " << d_L1 << " L2: " << d_L2 << " Linf: " << d_Linf<< " n_cells: " << d_n<<endl;
+      std::cout << " \t norms: L1 " << d_L1 << " L2: " << d_L2 << " Linf: " << d_Linf<< " n_cells: " << d_n<<endl;
     }
     
     void outputNorms(const double& time,const string& filename) 
@@ -185,7 +185,7 @@ getIterator( const Uintah::TypeDescription * td, const Patch * patch, bool use_e
     case Uintah::TypeDescription::Type::SFCYVariable :  return GridIterator( patch->getSFCYIterator() );
     case Uintah::TypeDescription::Type::SFCZVariable :  return GridIterator( patch->getSFCZIterator() );
     default:
-      cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
+      std::cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
       exit( 1 );
   }
 } // end getIterator()
@@ -217,8 +217,8 @@ void compareFields(Norms<subtype>* norms,
   
   da1->query(field1, var, matl, patch, timestep);
 
-  map<const Patch*, Field*> patch_FieldMap;
-  typename map<const Patch*, Field*>::iterator findIter;
+  std::map<const Patch*, Field*> patch_FieldMap;
+  typename  std::map< const Patch*, Field*>::iterator findIter;
   
   //__________________________________
   //  Loop over the cells of patch1
@@ -248,7 +248,7 @@ void compareFields(Norms<subtype>* norms,
     if (p1.x() != p2.x()   ||
        (p1.y() != p2.y() ) ||
        (p1.z() != p2.z() ) ){
-      cout <<"\n__________________________________\n "
+      std::cout <<"\n__________________________________\n "
             << "You can't compare data at different physical locations  \n"
             << " uda1 data location: " << p1 << "\n uda2 data location: " << p2 << endl;
       abort_uncomparable();
@@ -265,7 +265,7 @@ void compareFields(Norms<subtype>* norms,
   norms->setNorms(L1, L2, Linf, n);
   
   // now cleanup memory.
-  typename map<const Patch*, Field*>::iterator itr = patch_FieldMap.begin();
+  typename  std::map< const Patch*, Field*>::iterator itr = patch_FieldMap.begin();
   for ( ; itr != patch_FieldMap.end(); itr++) {
     delete (*itr).second;
   }
@@ -351,7 +351,7 @@ createDirectory(string& levelIndex, string& path)
   string dirName = "./Lnorm";
   DIR *check = opendir(dirName.c_str());
   if ( check == nullptr ) {
-    cout << "Making directory "<< dirName<<endl;
+    std::cout << "Making directory "<< dirName<<endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -361,7 +361,7 @@ createDirectory(string& levelIndex, string& path)
   path = dirName + "/" + levelIndex;
   check = opendir(path.c_str());
   if ( check == nullptr ) {
-    cout << "Making directory " << path << endl;
+    std::cout << "Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);
@@ -377,7 +377,7 @@ void createFile(string& filename, const int timestep)
       cerr << " could not open output file: " << filename << endl;
       abort_uncomparable();
     }
-    cout << " Now creating the file: "<< filename << endl;
+    std::cout << " Now creating the file: "<< filename << endl;
     out << "#Time \t\t\t L1 \t\t L2 \t\t Linf" <<endl;
     out.close();
   }
@@ -428,9 +428,9 @@ main(int argc, char** argv)
   DataArchive* da1 = scinew DataArchive(filebase1);
   DataArchive* da2 = scinew DataArchive(filebase2);
 
-  vector<string> vars, vars2;
-  vector<const Uintah::TypeDescription*> types, types2;
-  vector< pair<string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
+  std::vector<string> vars, vars2;
+  std::vector<const Uintah::TypeDescription*> types, types2;
+  std::vector< pair<string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
   da1->queryVariables(vars,  types);
   da2->queryVariables(vars2, types2);
 
@@ -460,8 +460,8 @@ main(int argc, char** argv)
     } 
   }
 
-  vector<int> index, index2;
-  vector<double> times, times2;
+  std::vector<int> index, index2;
+  std::vector<double> times, times2;
 
   da1->queryTimesteps(index,  times);
   da2->queryTimesteps(index2, times2);
@@ -475,7 +475,7 @@ main(int argc, char** argv)
   int numLevels  = g->numLevels();
   string path;
   for(int l=0;l<numLevels;l++){
-    ostringstream li;
+     std::ostringstream li;
     li << "L-" << l;
     string levelIndex = li.str();
     createDirectory(levelIndex, path);
@@ -487,7 +487,7 @@ main(int argc, char** argv)
 
     double time1 = times[t];
     double time2 = times2[t];
-    cout << "time = " << time1 << "\n";
+    std::cout << "time = " << time1 << "\n";
     GridP grid1  = da1->queryGrid(t);
     GridP grid2  = da2->queryGrid(t);
 
@@ -498,8 +498,8 @@ main(int argc, char** argv)
     // warn the user that the computational domains are different
     if ((b1.min() != b2.min() ) ||
         (b1.max() != b2.max() ) ){
-      cout << " The compuational domains of uda1 & uda2 are different" << endl;
-      cout << " uda1: " << b1 << "\n uda2: " << b2 << endl;
+      std::cout << " The compuational domains of uda1 & uda2 are different" << endl;
+      std::cout << " uda1: " << b1 << "\n uda2: " << b2 << endl;
     }
     
     // bullet proofing
@@ -522,18 +522,18 @@ main(int argc, char** argv)
       const Uintah::TypeDescription* td = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
 
-      cout << "\t" << var << "\n";
+      std::cout << "\t" << var << "\n";
 
       Patch::VariableBasis basis=Patch::translateTypeToBasis(td->getType(),false);
       //__________________________________
       //  loop over levels
       for(int l=0;l<grid1->numLevels();l++){
-        cout << " \t\t L-" << l;
+        std::cout << " \t\t L-" << l;
         LevelP level1  = grid1->getLevel(l);
         LevelP level2  = grid2->getLevel(l);
 
         //check patch coverage
-        vector<Region> region1, region2, difference1, difference2;
+        std::vector<Region> region1, region2, difference1, difference2;
 
         for(int i=0;i<level1->numPatches();i++){
           const Patch* patch=level1->getPatch(i);
@@ -590,12 +590,12 @@ main(int argc, char** argv)
         for (ConsecutiveRangeSet::iterator matlIter = matls.begin();matlIter != matls.end(); matlIter++){
           int matl = *matlIter;
           
-          cout << "\t";  // output formatting
+          std::cout << "\t";  // output formatting
           if(matl> 0 ){
-            cout << "\t\t";
+            std::cout << "\t\t";
           }
-          cout << " Matl-"<<matl;
-          ostringstream fname;
+          std::cout << " Matl-"<<matl;
+           std::ostringstream fname;
           fname<< path << "/" << var << "_" << matl;
           string filename = fname.str();
           createFile(filename, t);
@@ -631,7 +631,7 @@ main(int argc, char** argv)
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
@@ -651,7 +651,7 @@ main(int argc, char** argv)
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
@@ -667,7 +667,7 @@ main(int argc, char** argv)
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break; 
               //__________________________________
@@ -683,7 +683,7 @@ main(int argc, char** argv)
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
@@ -699,11 +699,11 @@ main(int argc, char** argv)
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               default:
-                cout << " Data type not yet supported: " << td->getName() << endl;
+                std::cout << " Data type not yet supported: " << td->getName() << endl;
               break;
             }
           }  // patches
@@ -731,9 +731,9 @@ main(int argc, char** argv)
   }
 
   if (times.size() != times2.size()) {
-    cout << endl;
-    cout << filebase1 << " has " << times.size() << " timesteps\n";
-    cout << filebase2 << " has " << times2.size() << " timesteps\n";
+    std::cout << endl;
+    std::cout << filebase1 << " has " << times.size() << " timesteps\n";
+    std::cout << filebase2 << " has " << times2.size() << " timesteps\n";
     abort_uncomparable();
   }
   delete da1;

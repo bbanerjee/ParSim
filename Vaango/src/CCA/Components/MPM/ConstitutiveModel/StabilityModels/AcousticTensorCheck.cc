@@ -147,7 +147,7 @@ AcousticTensorCheck::isLocalized(const TangentModulusTensor& C, Vector& normal)
   findApproxLocalMins(detA, localMin, C);
 
   // Create a vector to store the set of normals
-  vector<Vector> normalSet;
+  std::vector<Vector> normalSet;
 
   // Newton iteration to determine minima
   normal = zero;
@@ -332,7 +332,7 @@ AcousticTensorCheck::chooseNewNormal(Vector& prevNormal, Matrix3& J) const
   double maxInner = 0.0;
   Vector normal(0.0, 0.0, 0.0);
   for (int ii = 0; ii < numEV; ii++) {
-    vector<Vector> eigVec = J.getEigenVectors(eigVal[ii], eigVal[0]);
+    std::vector<Vector> eigVec = J.getEigenVectors(eigVal[ii], eigVal[0]);
     Vector trialNormal = eigVec[0] / eigVec[0].length();
     double inner = std::abs(Dot(trialNormal, prevNormal));
 
@@ -354,7 +354,7 @@ AcousticTensorCheck::chooseNormalFromNormalSet(vector<Vector>& normalSet,
                                                const TangentModulusTensor& C)
 {
   // First item
-  vector<Vector>::iterator iter = normalSet.begin();
+  std::vector<Vector>::iterator iter = normalSet.begin();
   Matrix3 A(0.0);
   formAcousticTensor(*iter, C, A);
   double detA = A.Determinant();
@@ -419,7 +419,7 @@ AcousticTensorCheck::isLocalized(const Vaango::Tensor::Matrix6Mandel& C_e,
   findApproxLocalMins(detA, localMin, C_e, P_vec, N_vec, H);
 
   // Create a vector to store the set of normals
-  vector<Vector> normalSet;
+  std::vector<Vector> normalSet;
 
   // Newton iteration to determine minima
   normal = zero;

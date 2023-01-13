@@ -85,7 +85,7 @@ ImplicitHeatConduction::~ImplicitHeatConduction()
     
     if(d_perproc_patches && d_perproc_patches->removeReference()) {
       delete d_perproc_patches;
-      cout << "Freeing patches!!\n";
+      std::cout << "Freeing patches!!\n";
     }
   }
 }
@@ -282,7 +282,7 @@ void ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
 {
   int numMatls = d_sharedState->getNumMPMMatls();
 
-  map<int,int> dof_diag;
+  std::map<int,int> dof_diag;
   d_HC_solver->createLocalToGlobalMapping(pg,d_perproc_patches,
                                             patches,1,d_flag->d_8or27);
   int global_offset=0; 
@@ -329,7 +329,7 @@ void ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
         if (visited[cell] == 0 ) {
           visited[cell] = 1;
           patch->findNodesFromCell(cell,ni);
-          vector<int> dof(0);
+          std::vector<int> dof(0);
           int l2g_node_num;
           for (int k = 0; k < 8; k++) {
             if (patch->containsNode(ni[k]) ) {
@@ -369,7 +369,7 @@ void ImplicitHeatConduction::findNeighbors(IntVector n,vector<int>& neigh,
           int dof_neighbor = l2g[neighbor];
           if (dof_neighbor > 0 && dof_neighbor != dof) {
 #if 0
-            cout << "neighbor: " << neighbor << " dof: " 
+            std::cout << "neighbor: " << neighbor << " dof: " 
                  << dof_neighbor << endl;
 #endif
             neigh.push_back(dof_neighbor);
@@ -438,7 +438,7 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
               for(NodeIterator it(l,h); !it.done(); it++) {
                 IntVector n = *it;
                 int dof = l2g[n];
-                vector<int> neigh;
+                std::vector<int> neigh;
                 // Find the neighbors for this DOF
                 findNeighbors(n,neigh,l2g);
                 d_HC_solver->d_DOFNeighbors[dof] = neigh;
@@ -519,7 +519,7 @@ void ImplicitHeatConduction::findFixedHCDOF(const ProcessorGroup*,
       int dof = l2g[n];
       if (compare(GMASS[n],0.)){
 #if 0
-        vector<int> neigh;
+        std::vector<int> neigh;
         findNeighbors(n,neigh,l2g);
         d_HC_solver->d_DOFNeighbors[dof] = neigh;
 #endif
@@ -586,9 +586,9 @@ void ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
                                    iter != pset->end(); iter++){
         particleIndex idx = *iter;
         // Get the node indices that surround the cell
-        vector<IntVector> ni(8);
-        vector<double> S(8);
-        vector<Vector> d_S(8);
+        std::vector<IntVector> ni(8);
+        std::vector<double> S(8);
+        std::vector<Vector> d_S(8);
 
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S);
                                                                                
@@ -660,7 +660,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
 #if 0
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++){
       IntVector n = *iter;
-      cout << "temperature[" << n << "]= " << temperature[n] << endl;
+      std::cout << "temperature[" << n << "]= " << temperature[n] << endl;
     }
 #endif
 
@@ -690,8 +690,8 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
       double Cp = mpm_matl->getSpecificHeat();
       double rho = mpm_matl->getInitialDensity();
 
-      vector<IntVector> ni(8);
-      vector<double> S(8);
+      std::vector<IntVector> ni(8);
+      std::vector<double> S(8);
       
       for(ParticleSubset::iterator iter = pset->begin();
                                    iter != pset->end(); iter++){
@@ -703,7 +703,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
         bool add = true;
 
         for(int ii = 0;ii<8;ii++){
-          //  cout << "ni = " << ni[ii] << endl;
+          //  std::cout << "ni = " << ni[ii] << endl;
           int l2g_node_num = l2g[ni[ii]];
           double v = 0;
           dof[ii]=l2g_node_num;
@@ -714,7 +714,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
                 gextheatrate[ni[ii]];
             }
           }
-          // cout << "v[" << l2g_node_num << "]= " << v << endl;
+          // std::cout << "v[" << l2g_node_num << "]= " << v << endl;
           d_HC_solver->fillVector(dof[ii],v,add);
         }
       }
@@ -778,7 +778,7 @@ void ImplicitHeatConduction::solveForTemp(const ProcessorGroup*,
                                           DataWarehouse* old_dw,
                                           DataWarehouse* new_dw)
 {
-  vector<double> guess;
+  std::vector<double> guess;
   for(int p = 0; p<patches->size();p++) {
     const Patch* patch = patches->get(p);
     if (cout_doing.active()) {
@@ -844,7 +844,7 @@ void ImplicitHeatConduction::getTemperatureIncrement(const ProcessorGroup*,
 
     d_HC_solver->copyL2G(l2g,patch);
 
-    vector<double> x;
+    std::vector<double> x;
     int begin = d_HC_solver->getSolution(x);
 
     for (NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){

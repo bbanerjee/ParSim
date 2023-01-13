@@ -146,8 +146,8 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     solver->copyL2G(l2g, patch);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     constParticleVariable<Point> pX;
     constParticleVariable<double> pVolume_new, pMass, pFail_old;

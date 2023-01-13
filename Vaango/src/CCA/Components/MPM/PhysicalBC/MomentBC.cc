@@ -91,7 +91,7 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
       lower[2] = gp->getBoundingBox().lower().z();
     }
     else {
-      cout << "error" << endl; // TODO error.
+      std::cout << "error" << endl; // TODO error.
     }
 
     // Compute L1 and L2, distance from normal plane to either side of the boundary.
@@ -100,13 +100,13 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
     d_norm_L1L2 = pow(abs(d_norm_L1),3) + pow(abs(d_norm_L2),3);
 
     // TODO DC comment
-    /* cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << endl;
-       cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << endl;
-       cout << "box: [" << gp->getBoundingBox().lower().x() << ", " << gp->getBoundingBox().lower().y() << ", " << gp->getBoundingBox().lower().z() <<
+    /* std::cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << endl;
+       std::cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << endl;
+       std::cout << "box: [" << gp->getBoundingBox().lower().x() << ", " << gp->getBoundingBox().lower().y() << ", " << gp->getBoundingBox().lower().z() <<
        "], [" << gp->getBoundingBox().upper().x() << ", " << gp->getBoundingBox().upper().y() << ", " << gp->getBoundingBox().upper().z() << "]" << endl;
-       cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << endl;
-       cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << endl;
-       cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << endl; */
+       std::cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << endl;
+       std::cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << endl;
+       std::cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << endl; */
 
   } else {
     throw ParameterNotFound("** ERROR ** No surface specified for moment BC.",
@@ -235,11 +235,11 @@ MomentBC::getForceVector(const Point& px,
     force = normalRefConfig*force_m;
 
     // TODO DC comment
-    /* cout << "px_dist: " << px_dist << endl;
-       cout << "force_m: " << force_m << endl;
-       cout << "force: " << force.x() << " " << force.y() << " " << force.z() << endl;
-       cout << "L1^3+L2^3: " << d_norm_L1L2 << endl;
-       cout << "forcePerParticle: " << forcePerParticle << endl; */
+    /* std::cout << "px_dist: " << px_dist << endl;
+       std::cout << "force_m: " << force_m << endl;
+       std::cout << "force: " << force.x() << " " << force.y() << " " << force.z() << endl;
+       std::cout << "L1^3+L2^3: " << d_norm_L1L2 << endl;
+       std::cout << "forcePerParticle: " << forcePerParticle << endl; */
 
   } else {
     throw ParameterNotFound("ERROR: Unknown surface specified for moment BC",

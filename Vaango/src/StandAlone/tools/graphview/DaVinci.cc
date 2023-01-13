@@ -155,7 +155,7 @@ DaVinci::~DaVinci()
 {
   try {
 
-    ostringstream quit_cmd;
+     std::ostringstream quit_cmd;
     quit_cmd << "menu(file(quit))" << endl;
     string cmdbuf = quit_cmd.str();
 
@@ -180,12 +180,12 @@ DaVinci::setGraph(const GV_TaskGraph* graph)
   if (graph == nullptr)
     return;
 
-  ostringstream graph_str;
+   std::ostringstream graph_str;
 
   graph_str << "graph(new_placed([";
 
   bool first_node = true;
-  const list<GV_Task*> tasks = graph->getTasks();
+  const  std::list<GV_Task*> tasks = graph->getTasks();
   for (list<GV_Task*>::const_iterator task_iter = tasks.begin();
        task_iter != tasks.end(); task_iter++) {
 
@@ -202,7 +202,7 @@ DaVinci::setGraph(const GV_TaskGraph* graph)
   }
   graph_str << "]))\n";
 
-  // cout << graph_str.str() << endl;
+  // std::cout << graph_str.str() << endl;
 
   writeline(m_toDV, graph_str.str());
   string response = readline(m_fromDV);
@@ -213,7 +213,7 @@ DaVinci::setGraph(const GV_TaskGraph* graph)
 void
 DaVinci::setOrientation(Orientation orientation)
 {
-  ostringstream cmd;
+   std::ostringstream cmd;
   cmd << "menu(layout(orientation(";
   switch (orientation) {
     case TOP_DOWN:
@@ -234,18 +234,18 @@ DaVinci::setOrientation(Orientation orientation)
   writeline(m_toDV, cmd.str());
   string response = readline(m_fromDV);
   if (response != "ok")
-    cout << "daVinci said: " << response << endl;
+    std::cout << "daVinci said: " << response << endl;
 }
 
 void
 DaVinci::setFontSize(int font_size)
 {
-  ostringstream cmd;
+   std::ostringstream cmd;
   cmd << "set(font_size(" << font_size << "))\n";
   writeline(m_toDV, cmd.str());
   string response = readline(m_fromDV);
   if (response != "ok")
-    cout << "daVinci said: " << response << endl;
+    std::cout << "daVinci said: " << response << endl;
 }
 
 void
@@ -261,11 +261,11 @@ DaVinci::handleInput()
   parseAnswer(cmd, args);
 
   /* can uncomment when debugging
-  cout << cmd << endl;
+  std::cout << cmd << endl;
   int i = 0;
   for (std::list<char*>::iterator iter = args.begin(); iter != args.end();
        iter++) {
-    cout << i++ << ": " << *iter << endl;
+    std::cout << i++ << ": " << *iter << endl;
   }
   */
 
@@ -352,7 +352,7 @@ operator<<(ostream& out, const GV_Task* task)
   out << "],[";
 
   bool first_edge = true;
-  const list<Edge*> dependency_edges = task->getDependencyEdges();
+  const  std::list<Edge*> dependency_edges = task->getDependencyEdges();
   for (list<Edge*>::const_iterator dep_edge_iter = dependency_edges.begin();
        dep_edge_iter != dependency_edges.end(); dep_edge_iter++) {
     if (DaVinci::doExclusion &&
@@ -386,7 +386,7 @@ readline(int fd)
   // be included with this line, and won't be seen on the next read.
   // So far it doesn't look like daVinci does this.
 
-  ostringstream line;
+   std::ostringstream line;
   ssize_t len;
   char buf[BUFSIZ + 1];
   bool need_more;

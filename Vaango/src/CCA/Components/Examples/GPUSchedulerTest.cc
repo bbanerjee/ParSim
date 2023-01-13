@@ -271,12 +271,12 @@ void GPUSchedulerTest::timeAdvance1DP(const ProcessorGroup*,
     int ystride = yhigh + numGhostCells;
     int xstride = xhigh + numGhostCells;
 
-//    cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
 
     for (int k = l.z(); k < zhigh; k++) {
       for (int j = l.y(); j < yhigh; j++) {
         for (int i = l.x(); i < xhigh; i++) {
-          cout << "(x,y,z): " << k << "," << j << "," << i << endl;
+          std::cout << "(x,y,z): " << k << "," << j << "," << i << endl;
           // For an array of [ A ][ B ][ C ], we can index it thus:
           // (a * B * C) + (b * C) + (c * 1)
           int idx = i + (j * xstride) + (k * xstride * ystride);
@@ -343,7 +343,7 @@ void GPUSchedulerTest::timeAdvance3DP(const ProcessorGroup*,
     int yhigh = h.y();
     int xhigh = h.x();
 
-//    cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
 
     for (int i = l.z(); i < zhigh; i++) {
       for (int j = l.y(); j < yhigh; j++) {

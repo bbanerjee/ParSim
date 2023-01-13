@@ -89,7 +89,7 @@ namespace Uintah {
 
     void copyAndDeleteForConvert(DataWarehouse* new_dw,
                                  ParticleSubset* addset,
-                                 map<const VarLabel*,
+                                 std::map<const VarLabel*,
                                  ParticleVariableBase*>* newState,
                                  ParticleSubset* delset,
                                  DataWarehouse* old_dw );

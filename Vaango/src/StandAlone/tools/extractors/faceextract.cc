@@ -139,13 +139,13 @@ void printData(DataArchive* archive, string& variable_name,
 
 {
   // query time info from dataarchive
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   archive->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   if (verbose){
-    cout << "There are " << index.size() << " timesteps\n";
+    std::cout << "There are " << index.size() << " timesteps\n";
   }
   
   //__________________________________
@@ -163,7 +163,7 @@ void printData(DataArchive* archive, string& variable_name,
   //__________________________________
   
   if (verbose)
-    cout << "Outputting for time["<<timestep<<"] = " << times[timestep]<< endl;
+    std::cout << "Outputting for time["<<timestep<<"] = " << times[timestep]<< endl;
 
   //__________________________________
   //  does the requested level exist
@@ -197,7 +197,7 @@ void printData(DataArchive* archive, string& variable_name,
       var_end = high - IntVector(2,2,2);
     }
     if (verbose) {
-      cout <<" Search index from "<<var_start << " to " << var_end <<endl;
+      std::cout <<" Search index from "<<var_start << " to " << var_end <<endl;
     }
           
     // find the corresponding patches
@@ -211,7 +211,7 @@ void printData(DataArchive* archive, string& variable_name,
     }
 
     // query all the data up front
-    vector<Variable*> vars(patches.size());
+    std::vector<Variable*> vars(patches.size());
     for (int p = 0; p < patches.size(); p++) {
       switch (variable_type->getType()) {
       case Uintah::TypeDescription::Type::CCVariable:
@@ -599,17 +599,17 @@ int main(int argc, char** argv)
   // ---------------------------
   // Bullet proofing
   if (d_donetheatflux && d_dovelocity){
-    cout << "Error!  You can only specify heat flux or velocity, not both\n";
-    cout << "Aborting.\n";
+    std::cout << "Error!  You can only specify heat flux or velocity, not both\n";
+    std::cout << "Aborting.\n";
     exit(-1);
   } else if (d_donetheatflux && d_doincheatflux) {
 	cerr << "Error!  You can only specify incident or net heat flux (see help)\n";
 	cerr << "Aborting.\n";
 	exit(-1);
   }  else if (d_donetheatflux) {
-    cout << "face extract for net heat flux \n";
+    std::cout << "face extract for net heat flux \n";
   }  else if (d_dovelocity) {
-    cout << "face extract for velocity \n";
+    std::cout << "face extract for velocity \n";
   }  else if (d_doincheatflux) {
 	cout << "face extract for incident heat flux \n";	  
   } else if (!(d_donetheatflux) && !(d_doincheatflux) && !(d_dovelocity)) {
@@ -621,12 +621,12 @@ int main(int argc, char** argv)
   try {
     DataArchive* archive = scinew DataArchive(input_uda_name);
     
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
+    std::vector<string> vars;
+    std::vector<const Uintah::TypeDescription*> types;
 
     archive->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
-    if (verbose) cout << "There are " << vars.size() << " variables:\n";
+    if (verbose) std::cout << "There are " << vars.size() << " variables:\n";
     bool var_found = false;
     unsigned int var_index = 0;
     for (;var_index < vars.size(); var_index++) {
@@ -643,14 +643,14 @@ int main(int argc, char** argv)
       cerr << "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
       }
       cerr << "Aborting!!\n";
       exit(-1);
     }
 
     if (verbose) {
-      cout << vars[var_index] << ": " << types[var_index]->getName() 
+      std::cout << vars[var_index] << ": " << types[var_index]->getName() 
            << " being extracted for material "<<material << endl;
     }
     //__________________________________
@@ -663,7 +663,7 @@ int main(int argc, char** argv)
     // if no output file, call with cout
     ostream *output_stream = &cout;
     if (output_file_name != "-") {
-      if (verbose) cout << "Opening \""<<output_file_name<<"\" for writing.\n";
+      if (verbose) std::cout << "Opening \""<<output_file_name<<"\" for writing.\n";
       ofstream *output = new ofstream();
       output->open(output_file_name.c_str());
       

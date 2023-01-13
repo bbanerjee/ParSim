@@ -166,7 +166,7 @@ void AMRWave::errorEstimate(const ProcessorGroup*,
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
-    //if (patch->getLevel()->getIndex() > 0) cout << "  Doing errorEstimate on patch " << patch->getID() 
+    //if (patch->getLevel()->getIndex() > 0) std::cout << "  Doing errorEstimate on patch " << patch->getID() 
     //                                           << " low " << patch->getCellLowIndex() << " hi " << patch->getCellHighIndex() 
     //                                           << endl;
     CCVariable<int> refineFlag;

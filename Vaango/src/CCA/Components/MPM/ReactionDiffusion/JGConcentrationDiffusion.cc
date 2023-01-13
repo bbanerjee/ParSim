@@ -62,8 +62,8 @@ JGConcentrationDiffusion::computeFlux(const Patch* patch,
                                       DataWarehouse* new_dw)
 {
   auto interpolator = d_Mflag->d_interpolator->clone(patch);
-  vector<IntVector> ni(interpolator->size());
-  vector<Vector> d_S(interpolator->size());
+  std::vector<IntVector> ni(interpolator->size());
+  std::vector<Vector> d_S(interpolator->size());
 
   Vector dx = patch->dCell();
   int dwi   = matl->getDWIndex();
@@ -82,7 +82,7 @@ JGConcentrationDiffusion::computeFlux(const Patch* patch,
     timestep = std::min(timestep, computeStableTimeStep(diffusivity, dx));
   } // End of Particle Loop
 
-  // cout << "Time Step: " << timestep << endl;
+  // std::cout << "Time Step: " << timestep << endl;
 
   // new_dw->put(delt_vartype(timestep), d_lb->delTLabel, patch->getLevel());
   // delete interpolator;

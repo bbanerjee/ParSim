@@ -127,8 +127,8 @@ ParticleTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   lb_->d_particleState.clear();
   lb_->d_particleState_preReloc.clear();
   for (int m = 0; m < matls->size(); m++) {
-    vector<const VarLabel*> vars;
-    vector<const VarLabel*> vars_preReloc;
+    std::vector<const VarLabel*> vars;
+    std::vector<const VarLabel*> vars_preReloc;
 
     vars.push_back(lb_->pMassLabel);
     vars.push_back(lb_->pParticleIDLabel);
@@ -226,7 +226,7 @@ void ParticleTest1::timeAdvance(const ProcessorGroup*,
         pidsnew[i] = pids[i];
         pmassnew[i] = pmass[i] *.9;
         if (doOutput_)
-          cout << " Patch " << patch->getID() << ": ID " 
+          std::cout << " Patch " << patch->getID() << ": ID " 
                << pidsnew[i] << ", pos " << pxnew[i] 
                << ", mass " << pmassnew[i] << endl;
       }

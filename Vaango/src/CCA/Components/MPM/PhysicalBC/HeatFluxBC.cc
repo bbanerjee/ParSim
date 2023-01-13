@@ -230,7 +230,7 @@ HeatFluxBC::getSurfaceArea() const
 double
 HeatFluxBC::fluxPerParticle(double time) const
 {
-  // cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
+  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
   if (d_numMaterialPoints < 1)
     return 0.0;
 
@@ -261,8 +261,8 @@ HeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
     // dynamic_cast<CylinderGeometryPiece*>(d_surface); Vector normal =
     // gp->radialDirection(px);
 #if 0
-    cout << "theta = " << theta << " theta_n = " << theta_n << endl;
-    cout << "flux = " << fluxPerParticle  << " flux_variation = " 
+    std::cout << "theta = " << theta << " theta_n = " << theta_n << endl;
+    std::cout << "flux = " << fluxPerParticle  << " flux_variation = " 
          << flux_variation <<  endl;
 #endif
 

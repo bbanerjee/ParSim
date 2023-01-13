@@ -53,8 +53,8 @@ namespace Uintah {
 //  This version of findCellAndWeights is only used
 //  by MPM/HeatConduction/ImplicitHeatConduction.cc
     virtual void findCellAndWeights(const Point& pos,
-                                   vector<IntVector>& ni, 
-                                   vector<double>& S)
+                                   std::vector<IntVector>& ni, 
+                                   std::vector<double>& S)
       {
         Point cellpos = d_patch->getLevel()->positionToIndex(pos);
         int ix = Floor(cellpos.x());
@@ -86,8 +86,8 @@ namespace Uintah {
     //__________________________________
 
     virtual void findCellAndWeights(const Point& p,
-                                    vector<IntVector>& ni, 
-				         vector<double>& S,
+                                    std::vector<IntVector>& ni, 
+				         std::vector<double>& S,
                                      const Matrix3& size, 
                                      const Matrix3& defgrad);
                                 
@@ -95,22 +95,22 @@ namespace Uintah {
     //__________________________________
     //  AMRMPM                                
     virtual void findCellAndWeights_CFI(const Point& pos,
-                                        vector<IntVector>& ni,
-                                        vector<double>& S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<double>& S,
                                         constNCVariable<Stencil7>& zoi);
                                         
     virtual void findCellAndWeightsAndShapeDerivatives_CFI(
                                             const Point& pos,
-                                            vector<IntVector>& CFI_ni,
-                                            vector<double>& S,
-                                            vector<Vector>& d_S,
+                                            std::vector<IntVector>& CFI_ni,
+                                            std::vector<double>& S,
+                                            std::vector<Vector>& d_S,
                                             constNCVariable<Stencil7>& zoi);
     //__________________________________ 
     
     
     inline void findCellAndShapeDerivatives(const Point& pos,
-                                            vector<IntVector>& ni,
-                                            vector<Vector>& d_S)
+                                            std::vector<IntVector>& ni,
+                                            std::vector<Vector>& d_S)
       {
         Point cellpos = d_patch->getLevel()->positionToIndex(pos);
         int ix = Floor(cellpos.x());
@@ -140,16 +140,16 @@ namespace Uintah {
         d_S[7] = Vector(  fy  * fz,   fx  * fz,   fx  * fy);
       };
     virtual void findCellAndShapeDerivatives(const Point& pos,
-					          vector<IntVector>& ni,
-					          vector<Vector>& d_S,
+					          std::vector<IntVector>& ni,
+					          std::vector<Vector>& d_S,
 					          const Matrix3& size, 
                                              const Matrix3& defgrad);
                                         
 
     inline void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                      vector<IntVector>& ni,
-                                                      vector<double>& S,
-                                                      vector<Vector>& d_S) 
+                                                      std::vector<IntVector>& ni,
+                                                      std::vector<double>& S,
+                                                      std::vector<Vector>& d_S) 
       {
         Point cellpos = d_patch->getLevel()->positionToIndex(pos);
         int ix = Floor(cellpos.x());
@@ -188,7 +188,7 @@ namespace Uintah {
       };
 
     inline void findNodes(const Point& pos,
-                          vector<IntVector>& cur,
+                          std::vector<IntVector>& cur,
                           const Level* level)
       {
         Point cellpos = level->positionToIndex(pos);
@@ -207,16 +207,16 @@ namespace Uintah {
       };
 
     virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       vector<IntVector>& ni,
-                                                       vector<double>& S,
-                                                       vector<Vector>& d_S,
+                                                       std::vector<IntVector>& ni,
+                                                       std::vector<double>& S,
+                                                       std::vector<Vector>& d_S,
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
     virtual int size();
 
     void findCellAndWeights(const Point& pos,
-                                    vector<IntVector>& ni,
-                                    vector<double>& S,
+                                    std::vector<IntVector>& ni,
+                                    std::vector<double>& S,
                                     constNCVariable<Stencil7>& zoi,
                                     constNCVariable<Stencil7>& zoi_fine,
                                     const bool& getFiner,

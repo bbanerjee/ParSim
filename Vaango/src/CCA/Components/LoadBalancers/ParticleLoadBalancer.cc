@@ -95,14 +95,14 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
     num_patches += newGridRegions[i].size();
   }
   
-  vector<int> recvcounts(numProcs,0); // init the counts to 0
+  std::vector<int> recvcounts(numProcs,0); // init the counts to 0
   int totalsize = 0;
 
   DataWarehouse* dw = d_scheduler->get_dw(0);
   if (dw == 0)
     return;
 
-  vector<PatchInfo> subpatchParticles;
+  std::vector<PatchInfo> subpatchParticles;
   unsigned grid_index = 0;
   for(unsigned l=0;l<newGridRegions.size();l++){
     const vector<Region>& level = newGridRegions[l];
@@ -167,7 +167,7 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
     }
   }
 
-  vector<int> num_particles(num_patches, 0);
+  std::vector<int> num_particles(num_patches, 0);
 
   if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
@@ -175,8 +175,8 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
     MPI_Type_contiguous(2, MPI_INT, &particletype);
     MPI_Type_commit(&particletype);
 
-    vector<PatchInfo> recvbuf(totalsize);
-    vector<int> displs(numProcs,0);
+    std::vector<PatchInfo> recvbuf(totalsize);
+    std::vector<int> displs(numProcs,0);
     for (unsigned i = 1; i < displs.size(); i++) {
       displs[i] = displs[i-1]+recvcounts[i-1];
     }
@@ -248,8 +248,8 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
   if (dw == 0)
     return;
 
-  vector<PatchInfo> particleList;
-  vector<int> num_particles(num_patches, 0);
+  std::vector<PatchInfo> particleList;
+  std::vector<int> num_particles(num_patches, 0);
 
   // find out how many particles per patch, and store that number
   // along with the patch number in particleList
@@ -280,13 +280,13 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
 
   if (d_myworld->nRanks() > 1) {
     //construct a mpi datatype for the PatchInfo
-    vector<int> displs(numProcs, 0);
-    vector<int> recvcounts(numProcs,0); // init the counts to 0
+    std::vector<int> displs(numProcs, 0);
+    std::vector<int> recvcounts(numProcs,0); // init the counts to 0
 
     // order patches by processor #, to determine recvcounts easily
     //vector<int> sorted_processorAssignment = d_processorAssignment;
     //sort(sorted_processorAssignment.begin(), sorted_processorAssignment.end());
-    vector<PatchInfo> all_particles(num_patches);
+    std::vector<PatchInfo> all_particles(num_patches);
 
     for (int i = 0; i < (int)d_processorAssignment.size(); i++) {
       recvcounts[d_processorAssignment[i]]+=sizeof(PatchInfo);
@@ -354,7 +354,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
   double myStoredMax=DBL_MAX;
   double improvement; //how much the max was improrved from the last iteration
 
-  vector<int> tempAssignments(patches.size(),0);
+  std::vector<int> tempAssignments(patches.size(),0);
   assignments.resize(patches.size());
   do
   {
@@ -362,7 +362,7 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
     //give each processor a different max to try to achieve
     double myMaxCost =bestMaxCost-(bestMaxCost-avgCostPerProc)/d_myworld->nRanks()*(double)d_myworld->myRank();
     
-    vector<double> currentProcCosts(numProcs,0);
+    std::vector<double> currentProcCosts(numProcs,0);
     double remainingCost=totalCost;
     int currentProc=0;
 
@@ -450,12 +450,12 @@ ParticleLoadBalancer::assignPatches( const vector<double> &previousProcCosts, co
 #if 0
   if(d_myworld->myRank()==0)
   {
-    cout << " Assignments in function: ";
+    std::cout << " Assignments in function: ";
     for(int p=0;p<assignments.size();p++)
     {
-      cout << assignments[p] << " ";
+      std::cout << assignments[p] << " ";
     }
-    cout << endl;
+    std::cout << endl;
   }
 #endif
 }
@@ -464,8 +464,8 @@ bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 {
   MALLOC_TRACE_TAG_SCOPE("ParticleLoadBalancer::loadBalanceGrid");
   doing << d_myworld->myRank() << "   APF\n";
-  vector<vector<double> > cellCosts;
-  vector<vector<double> > particleCosts;
+  std::vector<vector<double> > cellCosts;
+  std::vector<vector<double> > particleCosts;
 
   int numProcs = d_myworld->nRanks();
 
@@ -478,10 +478,10 @@ bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
     int num_patches = level->numPatches();
 
     //sort the patches in SFC order
-    vector<int> order(num_patches);
+    std::vector<int> order(num_patches);
     useSFC(level, &order[0]);
 
-    vector<int> cellPatches, particlePatches;
+    std::vector<int> cellPatches, particlePatches;
 
     //split patches into particle/cell patches
     for(int p=0;p<num_patches;p++)
@@ -494,8 +494,8 @@ bool ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 
     proc0cout << "ParticleLoadBalancer: ParticlePatches: " << particlePatches.size() << " cellPatches: " << cellPatches.size() << endl;
 
-    vector<double> procCosts(numProcs);
-    vector<int> assignments;
+    std::vector<double> procCosts(numProcs);
+    std::vector<int> assignments;
     
     //assign particlePatches
     assignPatches( procCosts, particleCosts[l], particlePatches,assignments);
@@ -548,7 +548,7 @@ double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& cos
 {
   int numProcs = d_myworld->nRanks();
   int numLevels = costs.size();
-  vector<vector<double> > tempProcCosts(numLevels);
+  std::vector<vector<double> > tempProcCosts(numLevels);
   
   //compute the assignment costs
   int i=0;
@@ -567,10 +567,10 @@ double ParticleLoadBalancer::computeImbalance(const vector<vector<double> >& cos
   {
     for(int l=0;l<numLevels;l++)
     {
-      cout << "ProcCosts: level: " << l << ", ";
+      std::cout << "ProcCosts: level: " << l << ", ";
       for(int p=0;p<numProcs;p++)
-        cout << tempProcCosts[l][p] << " ";
-      cout << endl;
+        std::cout << tempProcCosts[l][p] << " ";
+      std::cout << endl;
     }
   }
 #endif
@@ -597,8 +597,8 @@ double ParticleLoadBalancer::computePercentImprovement(const vector<vector<doubl
   int numProcs = d_myworld->nRanks();
   int numLevels = costs.size();
 
-  vector<vector<double> > currentProcCosts(numLevels);
-  vector<vector<double> > tempProcCosts(numLevels);
+  std::vector<vector<double> > currentProcCosts(numLevels);
+  std::vector<vector<double> > tempProcCosts(numLevels);
   
   //compute the assignment costs
   int i=0;
@@ -713,7 +713,7 @@ void ParticleLoadBalancer::getCosts(const Grid* grid, vector<vector<double> >&pa
   particle_costs.clear();
   cell_costs.clear();
     
-  vector<vector<int> > num_particles;
+  std::vector<vector<int> > num_particles;
 
   DataWarehouse* olddw = d_scheduler->get_dw(0);
   bool on_regrid = olddw != 0 && grid != olddw->getGrid();
@@ -721,7 +721,7 @@ void ParticleLoadBalancer::getCosts(const Grid* grid, vector<vector<double> >&pa
   //collect the number of particles on each processor into num_particles
   if(on_regrid)
   {
-    vector<vector<Region> > regions;
+    std::vector<vector<Region> > regions;
     // prepare the list of regions
     for (int l = 0; l < grid->numLevels(); l++) {
       regions.push_back(vector<Region>());
@@ -751,18 +751,18 @@ void ParticleLoadBalancer::getCosts(const Grid* grid, vector<vector<double> >&pa
 #if 0
     if(d_myworld->myRank()==0)
     {
-      cout << " Level: " << l << " cellCosts: ";
+      std::cout << " Level: " << l << " cellCosts: ";
       for (int p = 0; p < grid->getLevel(l)->numPatches(); p++) 
       {
-        cout << cell_costs[l][p] << " ";
+        std::cout << cell_costs[l][p] << " ";
       }
-      cout << endl;
-      cout << " Level: " << l << " particleCosts: ";
+      std::cout << endl;
+      std::cout << " Level: " << l << " particleCosts: ";
       for (int p = 0; p < grid->getLevel(l)->numPatches(); p++) 
       {
-        cout << particle_costs[l][p] << " ";
+        std::cout << particle_costs[l][p] << " ";
       }
-      cout << endl;
+      std::cout << endl;
     }
 #endif
   }

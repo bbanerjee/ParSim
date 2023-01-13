@@ -83,7 +83,7 @@ class ParticleInstancingRenderer {
     GLuint tex_color_batches[2];
     
     int quality_level;
-    vector<class SphereGeometryVBO*> sphere_geometry_vbos;
+    std::vector<class SphereGeometryVBO*> sphere_geometry_vbos;
 
     std::vector<float> particle_position_radius;
     std::vector<unsigned char> particle_color;

@@ -163,7 +163,7 @@ void SimpleSolver::solve(vector<double>& guess)
   for (int i = 0; i < (int)Q.size(); i++){
     Qtot += fabs(Q[i]);
   }
-  cout << "Qtot = " << Qtot << endl;
+  std::cout << "Qtot = " << Qtot << endl;
 
   d_x.resize(Q.size());
 
@@ -178,12 +178,12 @@ void SimpleSolver::solve(vector<double>& guess)
   }
 #if 0
   for (int i=0;i< d_x.size();i++)
-    cout << "T[" << i << "]= " << d_x[i] << endl;
+    std::cout << "T[" << i << "]= " << d_x[i] << endl;
 #endif
 }
 
 void SimpleSolver::createMatrix(const ProcessorGroup* d_myworld,
-                                const map<int,int>& diag)
+                                const  std::map< int,int>& diag)
 {
   int globalrows = (int)d_totalNodes;
   int globalcolumns = (int)d_totalNodes;
@@ -398,12 +398,12 @@ int SimpleSolver::getRHS(vector<double>& QSimple)
 void SimpleSolver::printMatrix()
 {
   for (int i = 0; i < d_totalNodes; i++) {
-    cout << "row " << i << ":";
+    std::cout << "row " << i << ":";
     for (int j = 0; j < d_totalNodes; j++) {
       if (KK[i][j] != 0.)
-        cout << " (" << j << ", " << KK[i][j] << ") ";
+        std::cout << " (" << j << ", " << KK[i][j] << ") ";
     }
-    cout << endl;
+    std::cout << endl;
   }
 
 }
@@ -412,5 +412,5 @@ void SimpleSolver::printMatrix()
 void SimpleSolver::printRHS()
 {
   for (int i = 0; i < (int)Q.size(); i++)
-    cout << Q[i] << endl;;
+    std::cout << Q[i] << endl;;
 }

@@ -89,7 +89,7 @@ ImplicitParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 
 {
 #if 0
-  vector<const VarLabel*>::iterator r3,r4;
+  std::vector<const VarLabel*>::iterator r3,r4;
 
   if(d_useLoadCurves){
     r3 = find(particle_state.begin(), particle_state.end(),

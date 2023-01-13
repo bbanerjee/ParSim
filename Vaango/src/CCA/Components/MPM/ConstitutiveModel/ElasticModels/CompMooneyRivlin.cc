@@ -351,7 +351,7 @@ CompMooneyRivlin::computeRhoMicroCM(double /*pressure*/, const double /*p_ref*/,
   rho_cur = rho_orig*(p_gauge/bulk + sqrt((p_gauge/bulk)*(p_gauge/bulk) +1));
 #endif
 
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR CompMooneyRivlin"
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR CompMooneyRivlin"
        << endl;
 
   double rho_cur = 0.;
@@ -377,14 +377,14 @@ CompMooneyRivlin::computePressEOSCM(double /*rho_cur*/, double& /*pressure*/,
   tmp = (bulk + 4.*shear/3.)/rho_cur;  // speed of sound squared
 #endif
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
        << endl;
 }
 
 double
 CompMooneyRivlin::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
        << endl;
   return 1.0;
 }

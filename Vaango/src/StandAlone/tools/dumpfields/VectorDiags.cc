@@ -236,8 +236,8 @@ namespace Uintah {
   };
   // --------------------------------------------------------------------------
   
-  typedef map<Uintah::TypeDescription::Type, vector<VectorDiag *> >     VDiagMap;
-  typedef map<string, map<Uintah::TypeDescription::Type, VectorDiag*> > PreVDiagMap;
+  typedef  std::map< Uintah::TypeDescription::Type, vector<VectorDiag *> >     VDiagMap;
+  typedef  std::map< string,  std::map< Uintah::TypeDescription::Type, VectorDiag*> > PreVDiagMap;
   
   VDiagMap    _vdiagtable;
   PreVDiagMap _vprediagtable;
@@ -314,12 +314,12 @@ namespace Uintah {
     }
   }
   
-  list<Uintah::VectorDiag const *> 
+   std::list<Uintah::VectorDiag const *> 
   createVectorDiags(const Uintah::TypeDescription * fldtype, 
                     const Uintah::FieldSelection & fldselection,
                     const Uintah::TensorDiag * preop)
   {
-    list<VectorDiag const *>  res;
+     std::list<VectorDiag const *>  res;
     int ndiags = numberOfVectorDiags(fldtype);
     for(int idiag=0;idiag<ndiags;idiag++)
       {

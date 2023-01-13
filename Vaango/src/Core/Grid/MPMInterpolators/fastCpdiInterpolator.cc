@@ -57,8 +57,8 @@ fastCpdiInterpolator::clone(const Patch* patch)
 }
     
 void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
-                                            vector<IntVector>& ni, 
-                                            vector<double>& S,
+                                            std::vector<IntVector>& ni, 
+                                            std::vector<double>& S,
                                             const Matrix3& size,
                                             const Matrix3& defgrad)
 {
@@ -67,7 +67,7 @@ void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
   double ly = size(1,1)/2.0;
   double lz = size(2,2)/2.0;
 
-  vector<Vector> relative_node_reference_location(8,Vector(0.0,0.0,0.0));
+  std::vector<Vector> relative_node_reference_location(8,Vector(0.0,0.0,0.0));
   // constuct the position vectors to each node in the reference configuration relative to the particle center:
   relative_node_reference_location[0]=Vector(-lx,-ly,-lz); // x1    , y1    , z1
   relative_node_reference_location[1]=Vector( lx,-ly,-lz); // x1+r1x, y1    , z1
@@ -207,8 +207,8 @@ void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
 }
  
 void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                     vector<IntVector>& ni,
-                                                     vector<Vector>& d_S,
+                                                     std::vector<IntVector>& ni,
+                                                     std::vector<Vector>& d_S,
                                                      const Matrix3& size,
                                                      const Matrix3& defgrad)
 {
@@ -217,7 +217,7 @@ void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   double ly = size(1,1)/2.0;
   double lz = size(2,2)/2.0;
   Vector zero = Vector(0.0,0.0,0.0);
-  vector<Vector> relative_node_reference_location(8,zero);
+  std::vector<Vector> relative_node_reference_location(8,zero);
   // constuct the position vectors to each node/corner of the particle in the reference configuration relative to the particle center:
   relative_node_reference_location[0]=Vector(-lx,-ly,-lz); // x1    , y1    , z1
   relative_node_reference_location[1]=Vector( lx,-ly,-lz); // x1+r1x, y1    , z1
@@ -254,7 +254,7 @@ void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   r3 = defgrad*r3;
   double volume = Dot( Cross(r1,r2),r3);
   double one_over_4V = 1.0/(4.0*volume);
-  vector<Vector> alpha(8,zero);
+  std::vector<Vector> alpha(8,zero);
   
   // now we construct the vectors necessary for the gradient calculation:
   alpha[0][0]   =  one_over_4V* (-r2[1]*r3[2]+r2[2]*r3[1]+r1[1]*r3[2]-r1[2]*r3[1]-r1[1]*r2[2]+r1[2]*r2[1]);
@@ -394,9 +394,9 @@ void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
 }
 
 void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
+                                                          std::vector<IntVector>& ni,
+                                                          std::vector<double>& S,
+                                                          std::vector<Vector>& d_S,
                                                           const Matrix3& size,
                                                           const Matrix3& defgrad)
 {
@@ -406,7 +406,7 @@ void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& po
   double lz = size(2,2)/2.0;
 
   Vector zero = Vector(0.0,0.0,0.0);
-  vector<Vector> relative_node_reference_location(8,zero);
+  std::vector<Vector> relative_node_reference_location(8,zero);
   // constuct the position vectors to each node in the reference configuration relative to the particle center:
   relative_node_reference_location[0]=Vector(-lx,-ly,-lz); // x1    , y1    , z1
   relative_node_reference_location[1]=Vector( lx,-ly,-lz); // x1+r1x, y1    , z1
@@ -445,7 +445,7 @@ void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& po
   //deformed volume:
   double volume = Dot( Cross(r1,r2),r3);
   double one_over_4V = 1.0/(4.0*volume);
-  vector<Vector> alpha(8,zero);
+  std::vector<Vector> alpha(8,zero);
   // now we construct the vectors necessary for the gradient calculation:
   alpha[0][0]   =  one_over_4V* (-r2[1]*r3[2]+r2[2]*r3[1]+r1[1]*r3[2]-r1[2]*r3[1]-r1[1]*r2[2]+r1[2]*r2[1]);
   alpha[0][1]   =  one_over_4V*(r2[0]*r3[2]-r2[2]*r3[0]-r1[0]*r3[2]+r1[2]*r3[0]+r1[0]*r2[2]-r1[2]*r2[0]);

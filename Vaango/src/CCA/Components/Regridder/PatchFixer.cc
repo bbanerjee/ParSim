@@ -212,8 +212,8 @@ PatchFixer::FixUp(vector<Region> &patches)
   //allgather patchset sizes
   if(d_myworld->nRanks()>1)
     {
-      vector<int> patch_sizes(d_myworld->nRanks());
-      vector<int> displacements(d_myworld->nRanks());
+      std::vector<int> patch_sizes(d_myworld->nRanks());
+      std::vector<int> displacements(d_myworld->nRanks());
       Uintah::MPI::Allgather(&my_patch_size,1,MPI_INT,&patch_sizes[0],1,MPI_INT,d_myworld->getComm());   
 
       int total_size=patch_sizes[0];
@@ -225,7 +225,7 @@ PatchFixer::FixUp(vector<Region> &patches)
           total_size+=patch_sizes[p];
           patch_sizes[p]*=sizeof(Region);
         }
-      vector<Region> mypatches(patches);
+      std::vector<Region> mypatches(patches);
       patches.resize(total_size);
       //allgatherv patchsets
       Uintah::MPI::Allgatherv(&mypatches[0],my_patch_size*sizeof(Region),MPI_BYTE,&patches[0],&patch_sizes[0],&displacements[0],MPI_BYTE,d_myworld->getComm());
@@ -258,7 +258,7 @@ PatchFixer::FixFace(vector<Region> &patches,Region patch, int dim, int side)
       zdim=1;Zm=Y;
       break;
     default:
-      cout << "Invalid dimension in FixFace\n";
+      std::cout << "Invalid dimension in FixFace\n";
       exit(0);
     }
   if(side==-1)
@@ -271,7 +271,7 @@ PatchFixer::FixFace(vector<Region> &patches,Region patch, int dim, int side)
     }
   else
     {
-      cout << "error invalid side in fixup\n";
+      std::cout << "error invalid side in fixup\n";
       exit(0);
     }
   if(x>=0 && x<lsize_[xdim])    //only search if i'm not beyond the bounds_

@@ -166,7 +166,7 @@ void q_flux_allFaces(DataWarehouse* new_dw,
                      SFCZVariable<double>& q_Z_FC)
 {
   Vector dx = patch->dCell();
-  vector<IntVector> adj_offset(3);
+  std::vector<IntVector> adj_offset(3);
   adj_offset[0] = IntVector(-1, 0, 0);    // X faces
   adj_offset[1] = IntVector(0, -1, 0);    // Y faces
   adj_offset[2] = IntVector(0,  0, -1);   // Z faces

@@ -104,7 +104,7 @@ CohesiveZone::createCohesiveZones(CZMaterial* matl,
     }
 
     // needed for bulletproofing
-    vector<int> mpmMatlIndex;
+    std::vector<int> mpmMatlIndex;
     int numMPM = d_sharedState->getNumMPMMatls();
     
     for(int m = 0; m < numMPM; m++){
@@ -127,7 +127,7 @@ CohesiveZone::createCohesiveZones(CZMaterial* matl,
       int test2 = count (mpmMatlIndex.begin(), mpmMatlIndex.end(), mt);
       
       if(test1 == 0 || test2 == 0 ){
-        ostringstream warn;
+         std::ostringstream warn;
         warn<<"ERROR:MPM:createCohesiveZones\n In the cohesive zone file ("+filename+ ") either the top/bottom material";
         warn<< "(top: " << mt << " bottom: " << mb<< ") is not a MPM material ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -302,7 +302,7 @@ void CohesiveZone::scheduleInitialize(const LevelP& level,
   t->computes(d_lb->czIDLabel);
   t->computes(d_lb->pCellNACZIDLabel,zeroth_matl);
 
-  vector<int> m(1);
+  std::vector<int> m(1);
   m[0] = czmat->getDWIndex();
   MaterialSet* cz_matl_set = scinew MaterialSet();
   cz_matl_set->addAll(m);
@@ -339,7 +339,7 @@ void CohesiveZone::initialize(const ProcessorGroup*,
       particleIndex numCZs = countCohesiveZones(patch,filename);
       totalCZs+=numCZs;
 
-      cout << "Total CZs " << totalCZs << endl;
+      std::cout << "Total CZs " << totalCZs << endl;
 
       createCohesiveZones(cz_matl, numCZs, cellNACZID, patch, new_dw,filename);
     }

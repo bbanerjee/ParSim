@@ -122,14 +122,14 @@ void ICE::printData_problemSetup( const ProblemSpecP& prob_spec)
     
     if(d_dbgSymPlanes.x()>0 || d_dbgSymPlanes.y()>0 || d_dbgSymPlanes.z() > 0){
       d_dbgSymmetryTest = true;
-      cout << "Perform Symmetry test:  Planes of symmetry " << d_dbgSymPlanes
+      std::cout << "Perform Symmetry test:  Planes of symmetry " << d_dbgSymPlanes
            << " absolute Tolerance: " << d_dbgSym_absolute_tol
            << " relative Tolerance: " << d_dbgSym_relative_tol << endl;
     }
 
     for (ProblemSpecP child = debug_ps->findBlock("debug"); child != 0;
         child = child->findNextBlock("debug")) {
-      map<string,string> debug_attr;
+      std::map<string,string> debug_attr;
       child->getAttributes(debug_attr);
       if (debug_attr["label"]      == "switchDebug_Initialize")
        switchDebug_Initialize            = true;
@@ -569,7 +569,7 @@ void    ICE::symmetryTest_driver( int matl,
   if((nCells.x() % 2 !=0 && d_dbgSymPlanes.x()) ||
      (nCells.y() % 2 !=0 && d_dbgSymPlanes.y()) ||
      (nCells.z() % 2 !=0 && d_dbgSymPlanes.z())){
-      cout << " number of interior cells " << nCells << endl;
+      std::cout << " number of interior cells " << nCells << endl;
       throw ProblemSetupException("PRINT_DATA: symmetryTest_driver:  "
              "Only works if the number of interior cells is even ", __FILE__, __LINE__);
   }
@@ -713,7 +713,7 @@ void    ICE::symmetryTest_Vector( int matl,
   if((nCells.x() % 2 !=0 && d_dbgSymPlanes.x()) ||
      (nCells.y() % 2 !=0 && d_dbgSymPlanes.y()) ||
      (nCells.z() % 2 !=0 && d_dbgSymPlanes.z())){
-      cout << " number of interior cells " << nCells << endl;
+      std::cout << " number of interior cells " << nCells << endl;
       throw ProblemSetupException("PRINT_DATA: symmetryTest_driver:  "
              "Only works if the number of interior cells is even ",
                                   __FILE__, __LINE__);
@@ -910,7 +910,7 @@ void  ICE::adjust_dbg_indices(  const int include_EC,
       endIndx.x()   > L_highIndex.x() ||
       endIndx.y()   > L_highIndex.y() ||
       endIndx.z()   > L_highIndex.z()  ){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "WARNING:PRINT_DATA: You've specified an index range "
          << beginIndx << " " << endIndx
          << " that is outside the range of this level "
@@ -1067,7 +1067,7 @@ void ICE::createDirs( const Patch* patch,
   // bullet proofing
   DIR *check = opendir(udaDir.c_str());
   if ( check == nullptr){
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ICE:printData:Dumping GnuPlot Data:  The main uda directory does not exist. "
          << " Make sure you're dumping out at least one timestep in the input file";
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -1075,14 +1075,14 @@ void ICE::createDirs( const Patch* patch,
   closedir(check);
   
   if (pos2 == string::npos){
-    ostringstream warn;
+     std::ostringstream warn;
     warn<< "\n \nICE:PrintData:GNUPLOT the printData description isn't properly formatted"
         << " you must have _patch_ at the end of the description \n\n";
     throw InternalError(warn.str(), __FILE__, __LINE__);
   }
   
   
-  ostringstream DW, levelIndex;
+   std::ostringstream DW, levelIndex;
   DW << dataArchiver->getCurrentTimestep();
   
   const Level* level = patch->getLevel();
@@ -1099,12 +1099,12 @@ void ICE::createDirs( const Patch* patch,
   string patchDir  = desc.substr(pos2);
   
   if (patchDir == ""||dirName == "") {
-    ostringstream warn;
+     std::ostringstream warn;
     warn<< "\n \nICE:PrintData:GNUPLOT the printData description isn't properly formatted"
         << " you must have _patch_ at the end of the description \n\n";
     throw InternalError(warn.str(), __FILE__, __LINE__);
   }
-  //  cout << desc << " dirName "<< dirName << " matDir "<< matDir 
+  //  std::cout << desc << " dirName "<< dirName << " matDir "<< matDir 
   //        << " patchDir "<< patchDir<<endl;
 
   //__________________________________
@@ -1189,7 +1189,7 @@ void ICE::find_gnuplot_origin_And_dx(const string variableType,
   }
   
   if (test !=1) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "\n PrintDebug:GNUPLOT: you have more that one principal dir. specified \n" << 
          " or you haven't specified one.  Double check dbg_BeginIndex or \n" <<
          " dbg_EndIndex\n" <<
@@ -1207,6 +1207,6 @@ void ICE::find_gnuplot_origin_And_dx(const string variableType,
   *dx = dx_org[principalDir];
   Vector pos = patch->cellPosition(low).asVector();
   *origin = pos[principalDir] - offset;
-  // cout << " dx " << *dx  << " *origin " << *origin << " offset " << offset << endl;
+  // std::cout << " dx " << *dx  << " *origin " << *origin << " offset " << offset << endl;
 }
 

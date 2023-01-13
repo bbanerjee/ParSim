@@ -484,8 +484,8 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     ParticleSubset* pset =
       old_dw->getParticleSubset(dwi, patch, gan, NGN, lb->pXLabel);
@@ -603,8 +603,8 @@ ShellMaterial::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(pp);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Read the datawarehouse
     int dwi = matl->getDWIndex();
@@ -931,9 +931,9 @@ ShellMaterial::computeRotInternalMoment(const PatchSubset* patches,
       old_dw->getParticleSubset(dwi, patch, gan, NGN, lb->pXLabel);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get stuff from datawarehouse
     constParticleVariable<Point> pX;
@@ -1018,9 +1018,9 @@ ShellMaterial::computeRotAcceleration(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get stuff from datawarehouse
     constParticleVariable<Point> pX;

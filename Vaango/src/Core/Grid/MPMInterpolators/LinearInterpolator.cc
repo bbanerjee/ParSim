@@ -53,8 +53,8 @@ LinearInterpolator::clone(const Patch* patch)
     
 //__________________________________
 void LinearInterpolator::findCellAndWeights(const Point& pos,
-                                           vector<IntVector>& ni, 
-                                           vector<double>& S,
+                                           std::vector<IntVector>& ni, 
+                                           std::vector<double>& S,
                                            const Matrix3& size,
                                            const Matrix3& defgrad)
 {
@@ -95,8 +95,8 @@ void LinearInterpolator::findCellAndWeights(const Point& pos,
 //  extra cells are interpolating information to the CFI nodes.
 
 void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
-                                                vector<IntVector>& CFI_ni,
-                                                vector<double>& S,
+                                                std::vector<IntVector>& CFI_ni,
+                                                std::vector<double>& S,
                                                 constNCVariable<Stencil7>& zoi)
 {
   const Level* level = d_patch->getLevel();
@@ -172,34 +172,34 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
 /*`==========TESTING==========*/
 #if 0
   if(ni[i].x() == 100 && (ni[i].z() == 1 || ni[i].z() == 2)){
-    cout << "  findCellAndWeights " << ni[i] << endl;
-    cout << "    dx " << dx << " L.w " << L.w << " L.e " << L.e << endl;
-    cout << "    dy " << dy << " L.n " << L.n << " L.s " << L.s << endl;
+    std::cout << "  findCellAndWeights " << ni[i] << endl;
+    std::cout << "    dx " << dx << " L.w " << L.w << " L.e " << L.e << endl;
+    std::cout << "    dy " << dy << " L.n " << L.n << " L.s " << L.s << endl;
     
    if(dx <= -L.w){                       // Lx-
-      cout << "     fx = 0;" << endl; 
+      std::cout << "     fx = 0;" << endl; 
     }
     else if ( -L.w <= dx && dx <= 0 ){   // Lx-
-     cout << "     fx = 1 + dx/L.w; " << endl;
+     std::cout << "     fx = 1 + dx/L.w; " << endl;
     }
     else if ( 0 <= dx  && dx <= L.e ){    // Lx+
-      cout << "     fx = 1 - dx/L.e; " << endl;
+      std::cout << "     fx = 1 - dx/L.e; " << endl;
     }
     else if (L.e <= dx){                  // Lx+
-      cout << "     fx = 0; " << endl;
+      std::cout << "     fx = 0; " << endl;
     }
     
     if(dy <= -L.s){                       // Ly-
-      cout << "     fy = 0; " << endl;
+      std::cout << "     fy = 0; " << endl;
     }
     else if ( -L.s <= dy && dy <= 0 ){    // Ly-
-      cout << "     fy = 1 + dy/L.s; " << endl;
+      std::cout << "     fy = 1 + dy/L.s; " << endl;
     }
     else if ( 0 <= dy && dy <= L.n ){    // Ly+
-      cout << "     fy = 1 - dy/L.n; " << endl;
+      std::cout << "     fy = 1 - dy/L.n; " << endl;
     }
     else if (L.n <= dy){                 // Ly+
-      cout << "     fy = 0; " << endl;
+      std::cout << "     fy = 0; " << endl;
     } 
   } 
 #endif
@@ -251,7 +251,7 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
 /*`==========TESTING==========*/
 #if 0
     if(s < 0 ) {
-      cout << CFI_ni[i] << "  fx " << fx << " fy " << fy <<  " fz " << fz << "    S[i] "<< s<< endl;
+      std::cout << CFI_ni[i] << "  fx " << fx << " fy " << fy <<  " fz " << fz << "    S[i] "<< s<< endl;
     }
 #endif 
 /*===========TESTING==========`*/
@@ -270,9 +270,9 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
 
 void LinearInterpolator::findCellAndWeightsAndShapeDerivatives_CFI(
                                             const Point& pos,
-                                            vector<IntVector>& CFI_ni,
-                                            vector<double>& S,
-                                            vector<Vector>& d_S,
+                                            std::vector<IntVector>& CFI_ni,
+                                            std::vector<double>& S,
+                                            std::vector<Vector>& d_S,
                                             constNCVariable<Stencil7>& zoi)
 {
   const Level* level = d_patch->getLevel();
@@ -418,8 +418,8 @@ void LinearInterpolator::findCellAndWeightsAndShapeDerivatives_CFI(
 //______________________________________________________________________
 // 
 void LinearInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                     vector<IntVector>& ni,
-                                                     vector<Vector>& d_S,
+                                                     std::vector<IntVector>& ni,
+                                                     std::vector<Vector>& d_S,
                                                      const Matrix3& size,
                                                const Matrix3& defgrad)
 {
@@ -453,9 +453,9 @@ void LinearInterpolator::findCellAndShapeDerivatives(const Point& pos,
 
 void 
 LinearInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
+                                                          std::vector<IntVector>& ni,
+                                                          std::vector<double>& S,
+                                                          std::vector<Vector>& d_S,
                                                           const Matrix3& size,
                                                    const Matrix3& defgrad)
 {

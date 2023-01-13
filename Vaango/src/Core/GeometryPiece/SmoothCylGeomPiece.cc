@@ -304,7 +304,7 @@ SmoothCylGeomPiece::createEndCapPoints() {
           d_rvec1.push_back(r1);
           d_rvec2.push_back(r2);
           d_rvec3.push_back(r3);
-          // cout << "Point["<<count<<"]="<<p<<"\n";
+          // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
       }
@@ -374,7 +374,7 @@ SmoothCylGeomPiece::createEndCapPoints() {
           d_rvec1.push_back(r1);
           d_rvec2.push_back(r2);
           d_rvec3.push_back(r3);
-          // cout << "Point["<<count<<"]="<<p<<"\n";
+          // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
       }
@@ -464,7 +464,7 @@ SmoothCylGeomPiece::createSolidCylPoints() {
           d_rvec1.push_back(r1);
           d_rvec2.push_back(r2);
           d_rvec3.push_back(r3);
-          // cout << "Point["<<count<<"]="<<p<<"\n";
+          // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
       }
@@ -554,7 +554,7 @@ SmoothCylGeomPiece::createHollowCylPoints() {
           d_rvec1.push_back(r1);
           d_rvec2.push_back(r2);
           d_rvec3.push_back(r3);
-          // cout << "Point["<<count<<"]="<<p<<"\n";
+          // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
       }

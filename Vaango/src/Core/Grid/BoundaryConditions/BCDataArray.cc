@@ -56,7 +56,7 @@ namespace Uintah {
 
 BCDataArray::~BCDataArray()
 {
-  // cout << "Calling BCDataArray destructor" << std::endl;
+  // std::cout << "Calling BCDataArray destructor" << std::endl;
   for ([[maybe_unused]] auto& [matid, vec] : d_BCDataArray) {
     for (auto bcd_itr = vec.begin(); bcd_itr != vec.end(); ++bcd_itr) {
       delete *bcd_itr;
@@ -374,7 +374,7 @@ BCDataArray::combineBCGeometryTypes_NEW(int mat_id)
 const BoundCondBaseP
 BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
 {
-  //  cout << "type = " << type << std::endl;
+  //  std::cout << "type = " << type << std::endl;
   BCData new_bc, new_bc_all;
   // Need to check two scenarios -- the given mat_id and the all mat_id (-1)
   // Check the given mat_id

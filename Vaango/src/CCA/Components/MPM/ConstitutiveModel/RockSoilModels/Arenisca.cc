@@ -116,7 +116,7 @@ Arenisca::Arenisca(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
   proc0cout << "In_Arenisca_version=" << JC_ARENISCA_VERSION;
-// cout << endl
+// std::cout << endl
 //     << "                                        ;1BB@B@B@@@B@8u: " << endl
 //     << "                                   .Y@@@B@B@BB8GZMB@B@B@B@Mr
 //     " << endl
@@ -1090,7 +1090,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
           stress_new_step = trial_stress_step;
 #ifdef JC_DEBUG_PARTICLE // print characteristic length of yeild surface
           if (pParticleID[idx] == JC_DEBUG_PARTICLE) {
-            cout << " elastic step";
+            std::cout << " elastic step";
           }
 #endif
         } else { // plastic
@@ -1129,7 +1129,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
 #ifdef JC_DEBUG_PARTICLE // print characteristic length of yeild surface
           if (pParticleID[idx] == JC_DEBUG_PARTICLE) {
-            cout << " clen=" << clen << ", B0e-3=" << B0 / 1000
+            std::cout << " clen=" << clen << ", B0e-3=" << B0 / 1000
                  << ", PEAKI1Dist-p0=" << PEAKI1Dist - p0
                  << ", 2G0e-3=" << 2 * G0 / 1000
                  << ", FSLOPE*(PEAKI1Dist-p0)=" << FSLOPE * (PEAKI1Dist - p0);
@@ -1155,7 +1155,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
 #ifdef JC_DEBUG_PARTICLE // print characteristic length of yield surface
           if (pParticleID[idx] == JC_DEBUG_PARTICLE) {
-            cout << ", num_steps=" << num_steps
+            std::cout << ", num_steps=" << num_steps
                  << ", stress_diff_step.Norm()=" << stress_diff_step.Norm();
           }
 #endif
@@ -1191,7 +1191,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
             if (num_substeps >
                 100) { // T2D: this might change, but keep high for node success
-              cout << "WARNING: $num_subcycles=" << num_substeps
+              std::cout << "WARNING: $num_subcycles=" << num_substeps
                    << " exceeds 100 maximum for pID=" << pParticleID[idx]
                    << endl;
               //#ifndef CSM_FORCE_MASSIVE_SUBCYCLING
@@ -1225,7 +1225,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
 #ifdef JC_DEBUG_PARTICLE // Print number of subcycles
               if (pParticleID[idx] == JC_DEBUG_PARTICLE)
-                cout << endl
+                std::cout << endl
                      << "  SCc=" << substep_counter << "/" << num_substeps - 1;
 #endif
               ///////////////////////////////////////
@@ -1258,7 +1258,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
               massive_subcycling_counter++;
 
               // report warning
-              cout << "WARNING: massive subcycling needed with flag_substep="
+              std::cout << "WARNING: massive subcycling needed with flag_substep="
                    << flag_substep << endl;
             }
           } // end while loop
@@ -1464,7 +1464,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
       se += e;
 #ifdef JC_DEBUG_PARTICLE
       if (pParticleID[idx] == JC_DEBUG_PARTICLE)
-        cout << endl;
+        std::cout << endl;
 #endif
 
     } // End of particle iterations
@@ -1479,22 +1479,22 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 // computeStableTimestep(patch,pset,matl,new_dw);
 
 #ifdef JC_DEBUG_SMALL_TIMESTEP
-    // cout <<"delT_new="<<delT_new;
-    // cout <<"dx="<<dx<<endl;
+    // std::cout <<"delT_new="<<delT_new;
+    // std::cout <<"dx="<<dx<<endl;
     if (delT_new == WaveSpeed.x()) {
-      cout << "pvel.x=" << pvelocity[idvel.x()].x()
+      std::cout << "pvel.x=" << pvelocity[idvel.x()].x()
            << ",wavespeed.x=" << WaveSpeed.x() << ",bulk=" << vbulk.x()
            << ",rho=" << rho_cur[idvel.x()] << endl;
     } else if (delT_new == WaveSpeed.y()) {
-      cout << "pvel.y: " << pvelocity[idvel.y()].y()
+      std::cout << "pvel.y: " << pvelocity[idvel.y()].y()
            << ",wavespeed.y=" << WaveSpeed.y() << ",bulk=" << vbulk.y()
            << ",rho=" << rho_cur[idvel.y()] << endl;
     } else if (delT_new == WaveSpeed.z()) {
-      cout << "pvel.z: " << pvelocity[idvel.z()].z()
+      std::cout << "pvel.z: " << pvelocity[idvel.z()].z()
            << ",wavespeed.z=" << WaveSpeed.z() << ",bulk=" << vbulk.z()
            << ",rho=" << rho_cur[idvel.z()] << endl;
     } else
-      cout << "ERROR in JC_DEBUG_SMALL_TIMESTEP" << endl;
+      std::cout << "ERROR in JC_DEBUG_SMALL_TIMESTEP" << endl;
 #endif
 
     // Put the stable timestep and total strain enrgy
@@ -1711,7 +1711,7 @@ Arenisca::computeStressTensorStep(
           // Sign(dgdz(r_trial,z_trial,X_new,Beta))
           Sign(z_trial - z_new0) != Sign(z_trial - z_new)) {
         /*
-        cout << "BAD step, n = " << n
+        std::cout << "BAD step, n = " << n
         << ", eta_in = " << eta_in
         << ", eta_out = " << eta_out
         << ", eps_eta = " << eps_eta
@@ -1765,7 +1765,7 @@ Arenisca::computeStressTensorStep(
         eps_eta = eta_out - eta_in; // Only allow convergence in a good step.
 
         /*
-        cout << "GOOD step, n = " << n
+        std::cout << "GOOD step, n = " << n
              << ", eta_in = " << eta_in
              << ", eta_out = " << eta_out
              << ", eps_eta = " << eps_eta
@@ -1799,24 +1799,24 @@ Arenisca::computeStressTensorStep(
       << "@line:" << __LINE__;
     return 1;
   } else if (evp_new <= -d_cm.p3_crush_curve) {
-    cout << "(2) exceeded max allowable volumetric plastic strain"
+    std::cout << "(2) exceeded max allowable volumetric plastic strain"
          << "@line:" << __LINE__;
     return 2;
   } else if (std::isnan(sigma_new.Norm()) || std::isnan(ep_new.Norm()) ||
              std::isnan(evp_new) || std::isnan(eve_new) || std::isnan(X_new) ||
              std::isnan(Kappa_new) || std::isnan(Zeta_new)) {
-    cout << "(3) NAN in output"
+    std::cout << "(3) NAN in output"
          << "@line:" << __LINE__;
     return 3;
   }
   /*
   else if(delta > delta_TOL){
-    cout << "(4) magnitude difference of hardening and non-hardening returns
+    std::cout << "(4) magnitude difference of hardening and non-hardening returns
   exceeds allowable"<< "@line:" << __LINE__;
     return 4;
    }
   else if(theta > theta_TOL){
-    cout << "(5) angle between of hardening and non-hardening returns exceeds
+    std::cout << "(5) angle between of hardening and non-hardening returns exceeds
   allowable"<< "@line:" << __LINE__;
     return 5;
    }
@@ -1884,7 +1884,7 @@ Arenisca::YieldFunction(const double& I1,   // Unshifted
 #endif
   f = TransformedYieldFunction(R, Z, X, Beta, PEAKI1);
 
-  // cout << " YieldFxn:I1="<<I1<<", J2="<<J2<<", X="<<X
+  // std::cout << " YieldFxn:I1="<<I1<<", J2="<<J2<<", X="<<X
   //     <<", Zeta="<<Zeta<<", threeKby2G="<<threeKby2G
   //     <<", R="<<R<<", Z="<<Z<<", Beta="<<Beta
   //     <<",transf="<< f
@@ -2284,7 +2284,7 @@ Arenisca::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
   //#if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca" << endl;
   //#endif
 }
 
@@ -2304,14 +2304,14 @@ Arenisca::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   dp_drho = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
   tmp = (bulk + 4. * shear / 3.) / rho_cur; // speed of sound squared
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca" << endl;
 }
 
 // T2D: Throw exception that this is not supported
 double
 Arenisca::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca" << endl;
   return 1.0;
 }
 

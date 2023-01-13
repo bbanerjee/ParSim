@@ -399,8 +399,8 @@ namespace Uintah {
   
   // --------------------------------------------------------------------------
   
-  typedef map<Uintah::TypeDescription::Type, vector<ScalarDiag *> >     SDiagMap;
-  typedef map<string, map<Uintah::TypeDescription::Type, ScalarDiag*> > PreSDiagMap;
+  typedef  std::map< Uintah::TypeDescription::Type, vector<ScalarDiag *> >     SDiagMap;
+  typedef  std::map< string,  std::map< Uintah::TypeDescription::Type, ScalarDiag*> > PreSDiagMap;
   
   SDiagMap    _sdiagtable;
   PreSDiagMap _sprediagtable;
@@ -514,12 +514,12 @@ namespace Uintah {
     }
   }
     
-  list<ScalarDiag const *> 
+   std::list<ScalarDiag const *> 
   createScalarDiags(const Uintah::TypeDescription * fldtype, 
                     const FieldSelection & fldselection,
                     const class TensorDiag * tensorpreop)
   {
-    list<ScalarDiag const *>  res;
+     std::list<ScalarDiag const *>  res;
     int ndiags = numberOfScalarDiags(fldtype);
     for(int idiag=0;idiag<ndiags;idiag++)
       {

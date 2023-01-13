@@ -48,7 +48,7 @@
 
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, double RVEsize, double diam_max, int matl_num);
 
 int main()
@@ -68,9 +68,9 @@ int main()
 
   double x,y,r;
 
-  vector<double> xpos;
-  vector<double> ypos;
-  vector<double> radius;
+  std::vector<double> xpos;
+  std::vector<double> ypos;
+  std::vector<double> radius;
 
   // Read in the cylinders
   int num_cyls=0;
@@ -81,9 +81,9 @@ int main()
      radius.push_back(r);
   }
 
-  vector<vector<double> > xmatlLocs(n_matls);
-  vector<vector<double> > ymatlLocs(n_matls);
-  vector<vector<double> > rmatlLocs(n_matls);
+  std::vector<vector<double> > xmatlLocs(n_matls);
+  std::vector<vector<double> > ymatlLocs(n_matls);
+  std::vector<vector<double> > rmatlLocs(n_matls);
   
   // Distribute the cylinders to the appropriate materials based on
   for(int n = 0; n<num_cyls; n++){
@@ -96,9 +96,9 @@ int main()
   // Bin the cylinders according to their x-position.  No real good reason
   // to do this other than compatibility with an existing print function
   for(int i = 0; i<n_matls; i++){
-    vector<vector<double> > xbinLocs(n_bins);
-    vector<vector<double> > ybinLocs(n_bins);
-    vector<vector<double> > rbinLocs(n_bins);
+    std::vector<vector<double> > xbinLocs(n_bins);
+    std::vector<vector<double> > ybinLocs(n_bins);
+    std::vector<vector<double> > rbinLocs(n_bins);
 
     for(int k = 0; k<xmatlLocs[i].size(); k++){
       int index = (xmatlLocs[i][k]/RVEsize)*((double) n_bins);
@@ -113,11 +113,11 @@ int main()
 }
 
 void printCylLocs(vector<vector<double> > xLocs,
-                  vector<vector<double> > yLocs,
-                  vector<vector<double> > radLocs, int n_bins,
+                  std::vector<vector<double> > yLocs,
+                  std::vector<vector<double> > radLocs, int n_bins,
                   double RVEsize, double diam_max, int matl_num)
 {
-    stringstream out;
+     std::stringstream out;
     string s;
 
     out << matl_num;

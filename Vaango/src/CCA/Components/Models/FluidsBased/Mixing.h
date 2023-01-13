@@ -163,7 +163,7 @@ WARNING
       MaterialProperties props;
       VarLabel* massFraction_CCLabel;
       VarLabel* massFraction_source_CCLabel;
-      vector<Region*> regions;
+      std::vector<Region*> regions;
     };
 
     class Reaction {
@@ -174,8 +174,8 @@ WARNING
       double rate;
     };
 
-    vector<Stream*> streams;
-    vector<Reaction*> reactions;
+    std::vector<Stream*> streams;
+    std::vector<Reaction*> reactions;
   };
 }
 

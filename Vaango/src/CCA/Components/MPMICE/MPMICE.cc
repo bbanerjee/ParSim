@@ -136,7 +136,7 @@ MPMICE::~MPMICE()
   delete d_ice;
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       delete *iter;
@@ -228,7 +228,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   if (debug_ps) {   
     for (ProblemSpecP child = debug_ps->findBlock("debug"); child != 0;
 	 child = child->findNextBlock("debug")) {
-      map<string,string> debug_attr;
+      std::map<string,string> debug_attr;
       child->getAttributes(debug_attr);
       if (debug_attr["label"]      == "switchDebug_InterpolateNCToCC_0")
         switchDebug_InterpolateNCToCC_0 = true;
@@ -272,7 +272,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  bulletproofing
   if(d_doAMR && !d_sharedState->isLockstepAMR()){
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "\n ERROR: You must add \n"
 	<< " <useLockStep> true </useLockStep> \n"
 	<< " inside of the <AMR> section for MPMICE and AMR. \n"; 
@@ -289,7 +289,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   d_analysisModules = AnalysisModuleFactory::create(prob_spec, sharedState, dataArchiver);
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -357,7 +357,7 @@ void MPMICE::scheduleInitialize(const LevelP& level,
   //__________________________________
   // dataAnalysis 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -379,7 +379,7 @@ void MPMICE::restartInitialize()
   d_ice->restartInitialize();
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -691,7 +691,7 @@ MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
 					  all_matls);
 
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -710,7 +710,7 @@ MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
   //__________________________________
   //  on the fly analysis
   if(d_analysisModules.size() != 0){
-    vector<AnalysisModule*>::iterator iter;
+    std::vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
 	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
@@ -1093,16 +1093,16 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     //__________________________________
     //output material indices
     if(patch->getID() == 0){
-      cout << "Materials Indicies:   MPM ["<< *(d_sharedState->allMPMMaterials())  << "] " 
+      std::cout << "Materials Indicies:   MPM ["<< *(d_sharedState->allMPMMaterials())  << "] " 
 	   << "ICE["<< *(d_sharedState->allICEMaterials()) << "]" << endl;
 
-      cout << "Material Names:";
+      std::cout << "Material Names:";
       int numAllMatls = d_sharedState->getNumMaterials();
       for (int m = 0; m < numAllMatls; m++) {
         Material* matl = d_sharedState->getMaterial( m );
-        cout <<" " << matl->getDWIndex() << ") " << matl->getName();
+        std::cout <<" " << matl->getDWIndex() << ") " << matl->getName();
       }
-      cout << "\n";
+      std::cout << "\n";
     }
 
     // Sum variable for testing that the volume fractions sum to 1
@@ -1192,7 +1192,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       //__________________________________
       //    B U L L E T   P R O O F I N G
       IntVector neg_cell;
-      ostringstream warn;
+       std::ostringstream warn;
       if( !areAllValuesPositive(rho_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
 	    <<neg_cell << " rho_CC is negative\n";
@@ -1218,7 +1218,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------        
       if (d_ice->switchDebug_Initialize){      
-        ostringstream desc;
+         std::ostringstream desc;
         desc << "MPMICE_Initialization_Mat_" << indx << "_patch_"
 	     << patch->getID();
         d_ice->printData(indx, patch,  1, desc.str(), "rho_CC",      rho_CC);
@@ -1336,7 +1336,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
 
         double totalVolFrac = vol_frac_sum_mpm[c] + vol_frac_sum_ice[c];
         if(!(totalVolFrac <= errorThresholdTop && totalVolFrac >= errorThresholdBottom)){\
-          ostringstream warn;
+           std::ostringstream warn;
           warn << "ERROR MPMICE::actuallyInitialize cell " << *iter << "\n\n"
 	       << "volume fraction ("<< std::setprecision(13)<< totalVolFrac << ") does not sum to 1.0 +- 1e-10.\n"
 	       << "Verify that this region of the domain contains at least 1 geometry object.  If you're using the optional\n"
@@ -1397,8 +1397,8 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
     printTask(patches,patch,cout_doing,"Doing interpolatePressureToParticles");
 
     auto interpolator = d_mpm->flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     double p_ref = d_ice->getRefPress();
     constNCVariable<double>   pressNC;    
@@ -1493,7 +1493,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       //---- P R I N T   D A T A ------ 
 #if 0
       if(switchDebug_InterpolateNCToCC_0) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc<< "TOP_MPMICE::interpolateNCToCC_0_mat_"<<indx<<"_patch_"
 	    <<  patch->getID();
         printData(     indx, patch, 1,desc.str(), "gmass",       gmass);
@@ -1552,7 +1552,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------
       if(switchDebug_InterpolateNCToCC_0) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc<< "BOT_MPMICE::interpolateNCToCC_0_Mat_"<< indx <<"_patch_"
 	    <<  patch->getID();
         d_ice->printData(   indx, patch, 1,desc.str(), "sp_vol",    sp_vol_CC); 
@@ -1564,7 +1564,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       //---- B U L L E T   P R O O F I N G------
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
-      ostringstream warn;
+       std::ostringstream warn;
       bool tsr = new_dw->timestepRestarted();
 
       int L = getLevel(patches)->getIndex();
@@ -1645,7 +1645,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if(d_ice->switchDebug_LagrangianValues) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc <<"TOP_MPMICE::computeLagrangianValuesMPM_mat_"<<indx<<"_patch_"
 	     <<  indx<<patch->getID();
         d_ice->printData(indx, patch,1,desc.str(), "cmass",    cmass);
@@ -1761,7 +1761,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
 
       //---- P R I N T   D A T A ------ 
       if(d_ice->switchDebug_LagrangianValues) {
-        ostringstream desc;
+         std::ostringstream desc;
         desc<<"BOT_MPMICE::computeLagrangianValuesMPM_mat_"<<indx<<"_patch_"
 	    <<  patch->getID();
         d_ice->printData(  indx,patch, 1,desc.str(), "mass_L",       mass_L);
@@ -1772,7 +1772,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
       //---- B U L L E T   P R O O F I N G------
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
-      ostringstream warn;
+       std::ostringstream warn;
       bool tsr = new_dw->timestepRestarted();
 
       if(d_testForNegTemps_mpm){
@@ -2100,14 +2100,14 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------
     if(d_ice -> switchDebug_equil_press)  {
-      ostringstream desc1;
+       std::ostringstream desc1;
       desc1<< "TOP_equilibration_patch_"<< patch->getID();
       d_ice->printData( 0, patch, 1, desc1.str(), "Press_CC_top", press); 
 
       for (int m = 0; m < numALLMatls; m++)  {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
-        ostringstream desc;
+         std::ostringstream desc;
         desc<<"TOP_equilibration_Mat_"<< indx<<"_patch_"<<patch->getID();
         d_ice->printData( indx,patch,1,desc.str(),"rho_CC_new",rho_CC_new[m]);
         d_ice->printData( indx,patch,1,desc.str(),"rho_micro", rho_micro[m]);
@@ -2126,7 +2126,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       bool converged  = false;
       double sum;
       count           = 0;
-      vector<EqPress_dbg> dbgEqPress;
+      std::vector<EqPress_dbg> dbgEqPress;
 
       if (d_useSimpleEquilibrationPressure) { 
 
@@ -2242,7 +2242,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 //____ BB : B U L L E T   P R O O F I N G----
                 // catch inf and nan speed sound values
                 if (std::isnan(speedSound[m][c]) || c_2 == 0.0) {
-                  ostringstream warn;
+                   std::ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
 		      << c << " p = " << p_new << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
@@ -2277,7 +2277,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
               // Warn large pressure values
               /*
 		if (press_eos[m] > 1.0e10) {
-                ostringstream warn;
+                 std::ostringstream warn;
                 warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
 		<< c << " pressure is very large.\n";
                 warn << " press_eos = " << press_eos[m]
@@ -2337,7 +2337,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
             //____ BB : B U L L E T   P R O O F I N G----
             // Warn large pressure values
             if (!(press_new[c] > 0.0 && press_new[c] < 1.0e10)) {
-	    ostringstream warn;
+	     std::ostringstream warn;
 	    warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
 	    << c << " pressure is very large or zero.\n";
 	    warn << " press_new = " << press_new[c]
@@ -2366,7 +2366,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
               //____ BB : B U L L E T   P R O O F I N G----
               // catch negative or large density values
               if (rho_micro[m][c] < 0.0) {
-	      ostringstream warn;
+	       std::ostringstream warn;
 	      warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
 	      << c << " density is negative.\n";
 	      warn << " press_new = " << press_new[c]
@@ -2387,7 +2387,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
               //____ BB : B U L L E T   P R O O F I N G----
               // catch negative density values
               if (rho_micro[m][c] < 0.0) {
-	      ostringstream warn;
+	       std::ostringstream warn;
 	      warn << "ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
 	      << c << " density is negative.\n";
 	      warn << " press_new = " << press_new[c]
@@ -2425,7 +2425,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 //____ BB : B U L L E T   P R O O F I N G----
                 // catch inf and nan speed sound values
                 if (fetestexcept(FE_INVALID) != 0 || c_2 == 0.0) {
-                  ostringstream warn;
+                   std::ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
 		      << c << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
@@ -2446,7 +2446,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 //____ BB : B U L L E T   P R O O F I N G----
                 // catch inf and nan speed sound values
                 if (fetestexcept(FE_INVALID) != 0 || c_2 == 0.0) {
-                  ostringstream warn;
+                   std::ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
 		      << c << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
@@ -2539,7 +2539,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
         }
       }
       if(allTestsPassed != true){  // throw an exception of there's a problem
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "\nMPMICE::ComputeEquilibrationPressure: Cell "<< c << ", L-"<<L_indx <<"\n"
 	     << message
 	     <<"\nThis usually means that something much deeper has gone wrong with the simulation. "
@@ -2555,7 +2555,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
         }
         if(ds_EqPress.active()){
           warn << "\nDetails on iterations " << endl;
-          vector<EqPress_dbg>::iterator dbg_iter;
+          std::vector<EqPress_dbg>::iterator dbg_iter;
           for( dbg_iter  = dbgEqPress.begin(); dbg_iter != dbgEqPress.end(); dbg_iter++){
             EqPress_dbg & d = *dbg_iter;
             warn << "Iteration:   " << d.count
@@ -2634,7 +2634,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       int indx = matl->getDWIndex();
       for(CellIterator iter = patch->getCellIterator(); !iter.done(); iter++){
         if (std::isnan(kappa[m][*iter]) || std::isinf(kappa[m][*iter])) {
-          ostringstream warn;
+           std::ostringstream warn;
           warn<<"MPMICE:(L-"<<m<<"):computeEquilibrationPressure, mat "<<indx<<" cell "
 	      << *iter << " kappa = " << kappa[m][*iter] 
 	      << " vol_frac = " << vol_frac[m][*iter] 
@@ -2668,7 +2668,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 
     //---- P R I N T   D A T A ------
     if(d_ice -> switchDebug_equil_press)  { 
-      ostringstream desc1;
+       std::ostringstream desc1;
       desc1<< "BOT_equilibration_patch_"<<patch->getID();
 
       d_ice->printData( 0, patch, 1, desc1.str(),"Press_CC_equil",press_new);
@@ -2676,7 +2676,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       for (int m = 0; m < numALLMatls; m++)  {
         Material* matl = d_sharedState->getMaterial( m );
         int indx = matl->getDWIndex();
-        ostringstream desc; 
+         std::ostringstream desc; 
         desc<< "BOT_equilibration_Mat_"<<indx<<"_patch_"<< patch->getID();
         d_ice->printData(indx,patch,1,desc.str(),"rho_CC",      rho_CC_new[m]);
         d_ice->printData(indx,patch,1,desc.str(),"rho_micro_CC",rho_micro[m]);
@@ -2712,7 +2712,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
 				    IntVector c )
 {
   // Start over for this cell using a binary search
-  //  cout << " cell " << c << " Starting binary pressure search "<< endl;
+  //  std::cout << " cell " << c << " Starting binary pressure search "<< endl;
   count = 0;
   bool converged = false;
   double c_2;
@@ -2775,7 +2775,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
         //____ BB : B U L L E T   P R O O F I N G----
         // catch inf and nan speed sound values
         //if (fetestexcept(FE_INVALID) != 0 || c_2 == 0.0) {
-        //  ostringstream warn;
+        //   std::ostringstream warn;
         //  warn<<"ERROR MPMICE::binaryPressSearch, mat= "<< m << " cell= "
         //      << c << " sound speed is imaginary.\n";
         //  warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
@@ -2819,12 +2819,12 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
       sumR += vfR[m];
       sumL += vfL[m];
 
-      //      cout << "matl: " << m << " vol_frac_L: " << vfL[m] << " vol_frac_R: " << vfR[m] 
+      //      std::cout << "matl: " << m << " vol_frac_L: " << vfL[m] << " vol_frac_R: " << vfR[m] 
       //           << " rho_CC: " << rho_CC_new[m][c] << " rho_micro_L: " << rhoMicroL << " rhoMicroR: " << rhoMicroR << endl;
     }  // all matls
 
 
-    //    cout << "Pm = " << Pm << "\t P_L: " << Pleft << "\t P_R: " << Pright << "\t 1.-sum " << residual << " \t sumR: " << sumR << " \t sumL " << sumL << endl;
+    //    std::cout << "Pm = " << Pm << "\t P_L: " << Pleft << "\t P_R: " << Pright << "\t 1.-sum " << residual << " \t sumR: " << sumR << " \t sumL " << sumL << endl;
 
     //__________________________________
     //  come up with a new guess
@@ -2838,23 +2838,23 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
       Pleft  = 0.5 * (Pleft + Pright);
     }
     Pm = .5*(Pleft + Pright);
-    //   cout << setprecision(15);
+    //   std::cout << setprecision(15);
 
   }   // end of converged
 
 #ifdef D_STRICT
   if (count >= d_ice->d_max_iter_equilibration) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Binary pressure search failed to converge in cell" << c << endl;
     throw ConvergenceFailure(desc.str(), d_ice->d_max_iter_equilibration,
 			     fabs(residual), convergence_crit, __FILE__, __LINE__);
   }
 #else
   if (count >= d_ice->d_max_iter_equilibration) {
-    cout << "**WARNING** Binary pressure search failed to converge in cell " << c << " after "
+    std::cout << "**WARNING** Binary pressure search failed to converge in cell " << c << " after "
 	 << d_ice->d_max_iter_equilibration << " iterations.  Final residual is "
 	 << fabs(residual) << " and convergence tolerance is " << convergence_crit << endl;
-    cout << "  Continuing with unconverged value of pressure = " << Pm << endl;
+    std::cout << "  Continuing with unconverged value of pressure = " << Pm << endl;
     press_new[c] = Pm;
     //__________________________________
     // Find the speed of sound at ijk
@@ -2878,7 +2878,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
       }
       speedSound[m][c] = sqrt(c_2);     // Isentropic speed of sound
       if (std::isnan(vol_frac[m][c])) {
-        ostringstream warn;
+         std::ostringstream warn;
         warn << "    Material " << m << " vol. frac = " << vol_frac[m][c]
 	     << " rho = " << rho_micro[m][c] << " press = " << press_eos[m] 
 	     << " dp_drho = " << dp_drho[m] << " c^2 = " << c_2 << endl;
@@ -2906,12 +2906,12 @@ void MPMICE::addMaterial(const ProblemSpecP& prob_spec, GridP& grid,
   d_recompile = true;
   if(d_sharedState->needAddMaterial() > 0){
     d_ice->addMaterial(prob_spec, grid, d_sharedState);
-    cout << "Adding an ICE material" << endl;
+    std::cout << "Adding an ICE material" << endl;
   }
   if(d_sharedState->needAddMaterial() < 0){
     d_mpm->addMaterial(prob_spec, grid, d_sharedState);
     d_ice->updateExchangeCoefficients(prob_spec, grid, d_sharedState);
-    cout << "Adding an MPM material" << endl;
+    std::cout << "Adding an MPM material" << endl;
   }
 }
 //______________________________________________________________________
@@ -3053,8 +3053,8 @@ void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
       // - Initialize NC_CCweight = 0.125
       // - Find the walls with symmetry BC and double NC_CCweight
       NC_CCweight.initialize(0.125);
-      vector<Patch::FaceType>::const_iterator iter;
-      vector<Patch::FaceType> bf;
+      std::vector<Patch::FaceType>::const_iterator iter;
+      std::vector<Patch::FaceType> bf;
       patch->getBoundaryFaces(bf);
 
       for (iter  = bf.begin(); iter != bf.end(); ++iter){
@@ -3118,7 +3118,7 @@ void MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
 				      const MaterialSet* matls,
 				      const VarLabel* variable)
 {
-  ostringstream taskName;
+   std::ostringstream taskName;
   taskName << "MPMICE::refineVariable(" << variable->getName() << ")";
   Task* t;
 
@@ -3162,7 +3162,7 @@ void MPMICE::scheduleCoarsenVariableCC(SchedulerP& sched,
 		       const MaterialSubset*, DataWarehouse*, DataWarehouse*, 
 		       const VarLabel*, T, bool, string);
   func = &MPMICE::coarsenVariableCC<T>;
-  ostringstream taskName;
+   std::ostringstream taskName;
 
   taskName << "MPMICE::coarsenVariableCC(" << variable->getName() 
 	   << (modifies?" modified":"") << ")";
@@ -3205,7 +3205,7 @@ void MPMICE::scheduleCoarsenVariableNC(SchedulerP& sched,
 		       const MaterialSubset*, DataWarehouse*, DataWarehouse*,
 		       const VarLabel*, T, bool, string);
   func = &MPMICE::coarsenVariableNC<T>;
-  ostringstream taskName;
+   std::ostringstream taskName;
 
   taskName << "MPMICE::coarsenVariableNC(" << variable->getName() 
 	   << (modifies?" modified":"") << ")";
@@ -3285,7 +3285,7 @@ MPMICE::refine(const ProcessorGroup*,
       //__________________________________
       //    B U L L E T   P R O O F I N G
       IntVector neg_cell;
-      ostringstream warn;
+       std::ostringstream warn;
       if( !areAllValuesPositive(rho_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<dwi<< " cell "
 	    <<neg_cell << " rho_CC is negative\n";
@@ -3321,7 +3321,7 @@ void MPMICE::refineVariableCC(const ProcessorGroup*,
 
   for(int p=0;p<patches->size();p++){
     const Patch* finePatch = patches->get(p);
-    ostringstream message;
+     std::ostringstream message;
     message<<"Doing refineVariableCC (" << variable->getName() << ")\t\t\t";
     printTask(patches,finePatch,cout_doing,message.str());    
 
@@ -3423,7 +3423,7 @@ void MPMICE::coarsenVariableCC(const ProcessorGroup*,
 
   for(int p=0;p<patches->size();p++){
     const Patch* coarsePatch = patches->get(p);
-    ostringstream message;
+     std::ostringstream message;
     message<<"Doing CoarsenVariableCC (" << variable->getName() << ")\t\t\t";
     printTask(patches,coarsePatch,cout_doing,message.str());
 
@@ -3514,7 +3514,7 @@ void MPMICE::coarsenVariableNC(const ProcessorGroup*,
 
   for(int p=0;p<patches->size();p++){  
     const Patch* coarsePatch = patches->get(p);
-    ostringstream message;
+     std::ostringstream message;
     message<<"Doing CoarsenVariableNC (" << variable->getName() << ")\t\t\t";
     printTask(patches,coarsePatch,cout_doing,message.str());
 
