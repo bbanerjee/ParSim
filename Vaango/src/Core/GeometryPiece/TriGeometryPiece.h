@@ -24,15 +24,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __TRI_GEOMETRY_OBJECT_H__
-#define __TRI_GEOMETRY_OBJECT_H__
+#ifndef __VAANGO_CORE_GEOMPIECE_TRI_GEOMETRYPIECE_H__
+#define __VAANGO_CORE_GEOMPIECE_TRI_GEOMETRYPIECE_H__
+
+#include <Core/GeometryPiece/GeometryPiece.h>
+#include <Core/GeometryPiece/UniformGrid.h>
+#include <Core/Grid/Box.h>
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Plane.h>
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/GeometryPiece/UniformGrid.h>
-#include <Core/Grid/Box.h>
 
 #include <memory>
 #include <vector>
@@ -71,27 +72,47 @@ DESCRIPTION
 
 ****************************************/
 
-class TriGeometryPiece : public GeometryPiece {
- public:
+class TriGeometryPiece : public GeometryPiece
+{
+public:
+  inline static const std::string TYPE_NAME{ "tri" };
+
+public:
   TriGeometryPiece(ProblemSpecP&);
-  TriGeometryPiece(const TriGeometryPiece&);
-  TriGeometryPiece&
-  operator=(const TriGeometryPiece&);
   virtual ~TriGeometryPiece() = default;
 
-  static const std::string TYPE_NAME;
+  TriGeometryPiece(const TriGeometryPiece&);
+
+  TriGeometryPiece&
+  operator=(const TriGeometryPiece&);
+
   virtual std::string
-  getType() const {
+  getType() const
+  {
     return TYPE_NAME;
   }
 
   virtual GeometryPieceP
   clone() const;
 
+  // Find if a point is inside the triangulated surface
   virtual bool
-  inside(const Point& p) const;
+  inside(const Point& p) const override;
+
+  bool
+  inside(const Point& p, bool use_x_crossing) const;
+
+  bool
+  inside(const Point& p, int& crossings) const;
+
+  // A relatively newer version of the inside test that uses three
+  // nearly orthogonal rays and counts intersections in each of those
+  // directions
+  bool
+  inside(const Point& p, int& crossings, bool allDirections) const;
+
   virtual Box
-  getBoundingBox() const;
+  getBoundingBox() const override;
 
   void
   scale(const double factor);
@@ -99,37 +120,81 @@ class TriGeometryPiece : public GeometryPiece {
   double
   surfaceArea() const;
 
- private:
+  inline int
+  getNumIntersections(const Point& start,
+                      const Point& end,
+                      double& min_distance)
+  {
+    int intersections = 0;
+
+    d_grid->countIntersections(start, end, intersections, min_distance);
+    return intersections;
+  }
+
+  inline int
+  getNumIntersections(const Point& start)
+  {
+    int intersections = 0;
+    d_grid->countIntersections(start, intersections);
+    return intersections;
+  }
+
+  inline std::vector<IntVector>
+  getTriangles()
+  {
+    return d_triangles;
+  }
+
+  inline std::vector<Point>
+  getPoints()
+  {
+    return d_points;
+  }
+
+private:
+
   void
   checkInput() const;
+
   virtual void
   outputHelper(ProblemSpecP& ps) const;
 
   void
   readPoints(const std::string& file);
+
   void
   readTriangles(const std::string& file);
+
   void
   readPLYMesh();
+
   void
   readOBJMesh();
+
   void
   readSTLMesh();
+
   void
   readMeshFromAsciiStlFile(std::ifstream& in);
+
   void
   readMeshFromBinaryStlFile(std::ifstream in);
+
   void
   mergeIdenticalVertices();
+
   void
   scaleTranslateReflect();
+
   void
   findBoundingBox();
 
   void
   makePlanes();
+
   void
   makeTriangleBoxes();
+
   void
   insideTriangle(Point& p, int i, int& NCS, int& NES) const;
 
@@ -149,6 +214,6 @@ class TriGeometryPiece : public GeometryPiece {
   std::unique_ptr<UniformGrid> d_grid;
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  // __TRI_GEOMETRY_PIECE_H__
+#endif //__VAANGO_CORE_GEOMPIECE_TRI_GEOMETRYPIECE_H__

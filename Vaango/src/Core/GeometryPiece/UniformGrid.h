@@ -24,14 +24,15 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __UNIFORM_GRID_H__
-#define __UNIFORM_GRID_H__
+#ifndef __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__
+#define __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__
+
+#include <Core/GeometryPiece/GeometryPiece.h>
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Plane.h>
 #include <Core/Geometry/Point.h>
-#include <Core/Geometry/Ray.h>
-#include <Core/GeometryPiece/GeometryPiece.h>
+
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Variables/Array3.h>
 
@@ -40,29 +41,23 @@
 
 namespace Uintah {
 
-/**************************************
-CLASS
-   UniformGrid
-
-GENERAL INFORMATION
-
-   UniformGrid.h
-
-   John A. Schmidt
-   Department of Mechanical Engineering
-   University of Utah
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-****************************************/
-
-class Triangle {
- public:
-  enum class Coord { X = 0, Y = 1, Z = 2 };
+class Triangle
+{
+public:
+  enum class Coord
+  {
+    X = 0,
+    Y = 1,
+    Z = 2
+  };
 
   Triangle(Point& p1, Point& p2, Point& p3);
   Triangle()  = default;
   ~Triangle() = default;
+
   Point
   centroid();
+
   Point
   vertex(int i);
 
@@ -71,22 +66,50 @@ class Triangle {
   makeTriangleList(std::vector<IntVector>& connectivity,
                    std::vector<Point>& coordinates);
   bool
-  inside(Point& p);
-  Plane
-  plane();
+  inside(Point& p) const;
 
- private:
+  Plane
+  plane() const;
+
+private:
   Point d_points[3];
   Plane d_plane;
 };
 
-class UniformGrid {
- public:
+class LineSeg
+{
+
+public:
+  enum coord
+  {
+    X = 0,
+    Y = 1,
+    Z = 2
+  };
+
+  LineSeg(Point& p1, Point& p2);
+  LineSeg();
+  ~LineSeg();
+
+  Point
+  centroid();
+
+  Point
+  vertex(int i);
+
+private:
+  Point d_points[2];
+};
+
+class UniformGrid
+{
+public:
   UniformGrid(Box& bound_box);
+  ~UniformGrid() = default;
+
   UniformGrid&
   operator=(const UniformGrid&);
   UniformGrid(const UniformGrid&);
-  ~UniformGrid() = default;
 
   IntVector
   cellID(Point point);
@@ -94,15 +117,35 @@ class UniformGrid {
   using TriangleList = std::list<Triangle>;
   void
   buildUniformGrid(TriangleList& polygons);
+
+  /** @brief Assume the ray goes to infinity **/
   void
   countIntersections(const Point& ray, int& crossings);
 
- private:
+  void
+  countIntersectionsx(const Point& pt, int& crossings);
+
+  void
+  countIntersectionsy(const Point& pt, int& crossings);
+
+  void
+  countIntersectionsz(const Point& pt, int& crossings);
+
+  /** @brief Let the user specify the second point to define the ray (pt ->
+     pt_away). This returns the total number of crossing and the min distance
+     from pt **/
+  void
+  countIntersections(const Point& pt,
+                     const Point& pt_away,
+                     int& crossings,
+                     double& min_distance);
+
+private:
   Array3<TriangleList> d_grid;
   Box d_bound_box;
   Vector d_max_min;
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  // __UNIFORM_GRID_H__
+#endif // __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__

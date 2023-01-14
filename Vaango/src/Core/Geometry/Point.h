@@ -445,4 +445,22 @@ get_type_description(Point*);
 
 } // End namespace Uintah
 
+// Adding a hash function for Point.  Needed by TriGeometryPice.
+namespace std {
+template<>
+struct hash<Uintah::Point>
+{
+  std::size_t
+  operator()(const Uintah::Point& v) const;
+};
+
+inline std::size_t
+std::hash<Uintah::Point>::operator()(const Uintah::Point& p) const
+{
+  return std::hash<double>{}(p.x()) ^
+         (std::hash<double>{}(p.y()) + (std::hash<double>{}(p.y()) << 2)) ^
+         (std::hash<double>{}(p.z()) + (std::hash<double>{}(p.z()) << 4));
+}
+} // end namespace std
+
 #endif // __CORE_GEOMETRY_POINT_H__

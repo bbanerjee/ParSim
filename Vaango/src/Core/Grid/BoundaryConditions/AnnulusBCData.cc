@@ -34,9 +34,9 @@
 
 namespace {
 
-Uintah::Dout bc_dbg{ "BC_dbg",
+Uintah::Dout bc_dbg{ "AnnulusBC_dbg",
                      "Grid_BoundaryConditions",
-                     "Grid BC debufg info",
+                     "Grid Annulus BC debug info",
                      false };
 
 }

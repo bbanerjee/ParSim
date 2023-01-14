@@ -257,7 +257,7 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseP>& dws)
                                           high);
           }
 
-          for (auto i = 0; i < neighbors.size(); i++) {
+          for (size_t i = 0; i < neighbors.size(); i++) {
             const Patch* neighbor = neighbors[i];
 
             if (req->patches_dom == Task::ThisLevel && patch != neighbor) {

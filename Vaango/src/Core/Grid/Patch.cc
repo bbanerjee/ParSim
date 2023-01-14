@@ -52,9 +52,6 @@ namespace Uintah {
 static std::atomic<int32_t> ids{ 0 };
 static Uintah::MasterLock ids_init{};
 
-// Used to sync std::cout when output by multiple ranks
-extern Uintah::MasterLock coutLock;
-
 Patch::Patch(const Level* level,
              const IntVector& lowIndex,
              const IntVector& highIndex,
@@ -325,13 +322,14 @@ Patch::findNodesFromCell(const IntVector& cellIndex, IntVector nodeIndex[8])
 std::ostream&
 operator<<(std::ostream& out, const Patch& r)
 {
-  coutLock.lock(); // needed to eliminate threadsanitizer warnings
+  Uintah::MasterLock lock;
+  lock.lock(); // needed to eliminate threadsanitizer warnings
   out.setf(std::ios::scientific, std::ios::floatfield);
   out.precision(4);
   out << "(Patch " << r.getID() << ", lowIndex=" << r.getExtraCellLowIndex()
       << ", highIndex=" << r.getExtraCellHighIndex() << ")";
   out.setf(std::ios::scientific, std::ios::floatfield);
-  coutLock.unlock();
+  lock.unlock();
   return out;
 }
 

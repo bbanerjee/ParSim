@@ -71,7 +71,6 @@ ADD_LIBRARY(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
 
 TARGET_LINK_LIBRARIES(Vaango_Core_Grid
   Vaango_Core_Exceptions
-  
   Vaango_Core_Util
   Vaango_Core_Containers
   Vaango_Core_Parallel

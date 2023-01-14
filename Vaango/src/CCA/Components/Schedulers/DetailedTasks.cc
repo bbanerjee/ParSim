@@ -517,7 +517,7 @@ DetailedTasks::createScrubCounts()
                                         neighbors,
                                         low,
                                         high);
-          for (auto i = 0; i < neighbors.size(); i++) {
+          for (size_t i = 0; i < neighbors.size(); i++) {
             const Patch* neighbor = neighbors[i];
             for (int m = 0; m < matls->size(); m++) {
               addScrubCount(req->var, matls->get(m), neighbor, whichdw);

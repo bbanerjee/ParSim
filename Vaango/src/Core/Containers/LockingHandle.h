@@ -38,6 +38,8 @@
 #ifndef __CORE_CONTAINERS_LOCKINGHANDLE_H__
 #define __CORE_CONTAINERS_LOCKINGHANDLE_H__ 1
 
+#include <Core/Util/Assert.h>
+
 namespace Uintah {
 
 template<class T>

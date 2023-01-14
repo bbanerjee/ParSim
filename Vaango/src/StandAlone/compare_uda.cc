@@ -355,7 +355,7 @@ private:
   void gather(ParticleSubset* gatherSubset);
   void sort();
   int matl_;
-  std::map<string, MaterialParticleVarData> vars_;
+  std::map<std::string, MaterialParticleVarData> vars_;
   MaterialParticleVarData* particleIDs_; // will point to one of vars_
 };
 
@@ -377,7 +377,7 @@ void MaterialParticleData::createPatchMap()
   ASSERT(particleIDs_ != 0); // should check for this before this point
   particleIDs_->createPatchMap();
 
-  std::map<string, MaterialParticleVarData>::iterator varIter = vars_.begin();
+  std::map<std::string, MaterialParticleVarData>::iterator varIter = vars_.begin();
   for ( ; varIter != vars_.end(); varIter++){
     (*varIter).second.setParticleIDData(particleIDs_);
   }
@@ -432,8 +432,8 @@ void MaterialParticleData::compare(MaterialParticleData& data2,
     abort_uncomparable();
   }
   
-  std::map<string, MaterialParticleVarData>::iterator varIter  = vars_.begin();
-  std::map<string, MaterialParticleVarData>::iterator varIter2 = data2.vars_.begin();
+  std::map<std::string, MaterialParticleVarData>::iterator varIter  = vars_.begin();
+  std::map<std::string, MaterialParticleVarData>::iterator varIter2 = data2.vars_.begin();
   
   for ( ; (varIter != vars_.end()) && (varIter2 != data2.vars_.end()) ;
         varIter++, varIter2++) {
@@ -510,7 +510,7 @@ void MaterialParticleData::sort()
 //__________________________________
 void MaterialParticleData::gather(ParticleSubset* gatherSubset)
 {
-  std::map<string, MaterialParticleVarData>::iterator iter;
+  std::map<std::string, MaterialParticleVarData>::iterator iter;
   for (iter = vars_.begin(); iter != vars_.end(); iter++)
     (*iter).second.gather(gatherSubset);
 }
@@ -706,7 +706,7 @@ replaceChar( const string & s, char old, char newch )
 //__________________________________
 void addParticleData(MaterialParticleDataMap& matlParticleDataMap,
                      DataArchive* da, 
-                     std::vector<string> vars,
+                     std::vector<std::string> vars,
                      std::vector<const Uintah::TypeDescription*> types,
                      LevelP level, 
                      int timestep)
@@ -1299,13 +1299,13 @@ main(int argc, char** argv)
     DataArchive* da1 = scinew DataArchive(d_filebase1);
     DataArchive* da2 = scinew DataArchive(d_filebase2);
 
-    std::vector<string> vars;    
+    std::vector<std::string> vars;    
     std::vector<const Uintah::TypeDescription*> types;
-    std::vector< pair<string, const Uintah::TypeDescription*> > vartypes1;
+    std::vector< pair<std::string, const Uintah::TypeDescription*> > vartypes1;
     
-    std::vector<string> vars2;
+    std::vector<std::string> vars2;
     std::vector<const Uintah::TypeDescription*> types2;
-    std::vector< pair<string, const Uintah::TypeDescription*> > vartypes2;    
+    std::vector< pair<std::string, const Uintah::TypeDescription*> > vartypes2;    
     
     da1->queryVariables(vars, types);
     ASSERTEQ(vars.size(), types.size());
@@ -1327,11 +1327,11 @@ main(int argc, char** argv)
     // Create a list of ignored variables
     // uda 1
      std::stringstream iV(ignoreVar);
-    std::vector<string> vs;
+    std::vector<std::string> vs;
     copy(istream_iterator<string>(iV), istream_iterator<string>(), back_inserter(vs));
 
     for (unsigned int i = 0; i < vars.size(); i++) {
-      std::vector<string>::iterator fs = find(vs.begin(),vs.end(),vars[i]);
+      std::vector<std::string>::iterator fs = find(vs.begin(),vs.end(),vars[i]);
       // if vars[i] is NOT in the ignore Variables list make a pair
       if (fs == vs.end()){ 
         vartypes1[count] = make_pair(vars[i], types[i]); 
@@ -1344,7 +1344,7 @@ main(int argc, char** argv)
     // uda 2
     count =0;
     for (unsigned int i = 0; i < vars2.size(); i++) {
-      std::vector<string>::iterator fs = find(vs.begin(),vs.end(),vars2[i]);
+      std::vector<std::string>::iterator fs = find(vs.begin(),vs.end(),vars2[i]);
       // if vars[i] is NOT in the ignore Variables list make a pair
       if (fs == vs.end()){ 
         vartypes2[count] = make_pair(vars2[i], types2[i]); 

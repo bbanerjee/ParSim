@@ -35,8 +35,8 @@
 
 namespace {
 
-// Usage: export SCI_DEBUG="BC_dbg:+"
-Uintah::Dout bc_dbg{ "BC_dbg",
+// Usage: export SCI_DEBUG="EllipseBC_dbg:+"
+Uintah::Dout bc_dbg{ "EllipseBC_dbg",
                      "Grid_BoundaryConditions",
                      "Ellipse BC debug info",
                      false };

@@ -31,8 +31,8 @@
 
 namespace {
 
-// Usage: export SCI_DEBUG="BC_dbg:+"
-Uintah::Dout bc_dbg{ "BC_dbg",
+// Usage: export SCI_DEBUG="CircleBC_dbg:+"
+Uintah::Dout bc_dbg{ "CircleBC_dbg",
                      "Grid_BoundaryConditions",
                      "Grid Circle BC debug info",
                      false };

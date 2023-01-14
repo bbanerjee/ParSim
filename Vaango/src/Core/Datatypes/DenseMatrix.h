@@ -39,15 +39,14 @@
 #define SCI_project_DenseMatrix_h 1
 
 #include <Core/Datatypes/Matrix.h>
-#include <Core/Geometry/Transform.h>
+
+#include <Core/Containers/Array1.h>
 #include <Core/Math/MiscMath.h>
+
 #include <vector>
 
-#include <Core/Datatypes/share.h>
 
 namespace Uintah {
-
-using std::vector;
 
 class DenseMatrix : public Matrix
 {
@@ -59,7 +58,7 @@ public:
   DenseMatrix();
   DenseMatrix(int r, int c);
   DenseMatrix(const DenseMatrix&);
-  DenseMatrix(const Transform& t);
+
   //! Destructor
   virtual ~DenseMatrix();
 
@@ -136,9 +135,9 @@ public:
   int
   solve(const ColumnMatrix& rhs, ColumnMatrix& lhs, int overwrite = 0);
   int
-  solve(vector<double>& sol, int overwrite = 0);
+  solve(std::vector<double>& sol, int overwrite = 0);
   int
-  solve(const vector<double>& rhs, vector<double>& lhs, int overwrite = 0);
+  solve(const std::vector<double>& rhs, std::vector<double>& lhs, int overwrite = 0);
 
   //! fast accessors
   inline double*
@@ -190,9 +189,6 @@ public:
   {
     return "DenseMatrix";
   }
-  virtual void
-  io(Piostream&);
-  static PersistentTypeID type_id;
 
   //! Friend functions
 };

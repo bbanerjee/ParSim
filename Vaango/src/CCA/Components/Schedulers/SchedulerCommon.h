@@ -41,6 +41,7 @@
 
 #include <iosfwd>
 #include <list>
+#include <map>
 #include <set>
 
 namespace Uintah {
@@ -53,20 +54,23 @@ class DetailedTasks;
 class TaskGraph;
 class LocallyComputedPatchVarMap;
 
-using mm               = VarLabelMatl<Level, DataWarehouse>;
-using LabelMaterialMap = std::
-    std::map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
+using mm = VarLabelMatl<Level, DataWarehouse>;
+using LabelMaterialMap =
+  std::map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
 using VarLabelMaterialListMap = std::map<std::string, std::list<int>>;
 using ReductionTasksMap =
-    std::map<VarLabelMatl<Level, DataWarehouse>, std::unique_ptr<Task>>;
+  std::map<VarLabelMatl<Level, DataWarehouse>, std::unique_ptr<Task>>;
 using VarLabelList = std::vector<std::vector<const VarLabel*>>;
 
-class SchedulerCommon : public Scheduler, public UintahParallelComponent {
- public:
+class SchedulerCommon
+  : public Scheduler
+  , public UintahParallelComponent
+{
+public:
   // For calculating memory usage when sci-malloc is disabled...
-  inline static char* s_start_addr{nullptr};
+  inline static char* s_start_addr{ nullptr };
 
- public:
+public:
   SchedulerCommon(const ProcessorGroup* myworld);
   virtual ~SchedulerCommon();
 
@@ -85,15 +89,18 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   releaseComponents();
 
   virtual SimulationInterface*
-  getSimulator() {
+  getSimulator()
+  {
     return d_simulator;
   };
   virtual LoadBalancer*
-  getLoadBalancer() {
+  getLoadBalancer()
+  {
     return d_load_balancer;
   };
   virtual Output*
-  getOutput() {
+  getOutput()
+  {
     return d_output;
   }
 
@@ -111,11 +118,13 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
   // sbrk memory start location (for memory tracking)
   virtual void
-  setStartAddr(char* start) {
+  setStartAddr(char* start)
+  {
     s_start_addr = start;
   }
   virtual char*
-  getStartAddr() {
+  getStartAddr()
+  {
     return s_start_addr;
   }
   virtual void
@@ -141,13 +150,15 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   addTaskGraph(Scheduler::tgType type, int index /* = -1 */);
 
   virtual TaskGraph*
-  getTaskGraph(unsigned int index) {
+  getTaskGraph(unsigned int index)
+  {
     ASSERT(0 <= index && index < d_task_graphs.size());
     return d_task_graphs[index];
   }
 
   virtual int
-  getNumTaskGraphs() {
+  getNumTaskGraphs()
+  {
     return d_task_graphs.size();
   }
 
@@ -155,7 +166,8 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   // will be used for all time steps excdept the initial time step,
   // where there is only one task graph.
   virtual void
-  setNumTaskGraphs(const int num_task_graphs) {
+  setNumTaskGraphs(const int num_task_graphs)
+  {
     ASSERT(num_task_graphs >= 1);
     d_num_task_graphs = num_task_graphs;
   }
@@ -167,22 +179,26 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
           const int tg_num = -1);
 
   virtual bool
-  useSmallMessages() {
+  useSmallMessages()
+  {
     return d_use_small_messages;
   }
 
   /// Get all of the requires needed from the old data warehouse
   /// (carried forward).
   virtual const std::vector<const Task::Dependency*>&
-  getInitialRequires() const {
+  getInitialRequires() const
+  {
     return d_init_requires;
   }
   virtual const std::set<const VarLabel*, VarLabel::Compare>&
-  getInitialRequiredVars() const {
+  getInitialRequiredVars() const
+  {
     return d_init_required_vars;
   }
   virtual const std::set<const VarLabel*, VarLabel::Compare>&
-  getComputedVars() const {
+  getComputedVars() const
+  {
     return d_computed_vars;
   }
 
@@ -237,7 +253,8 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   // Only called by the SimulationController, and only once, and only
   // if the simulation has been "restarted."
   virtual void
-  setGeneration(int id) {
+  setGeneration(int id)
+  {
     d_generation = id;
   }
 
@@ -254,23 +271,24 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   // variables. Use with caution until as this requires further testing (tsaad).
   virtual void
   scheduleParticleRelocation(
-      const LevelP& coarsest_level_with_particles,
-      const VarLabel* position_label,
-      const std::vector<std::vector<const VarLabel*>>& other_labels,
-      const MaterialSet* materials);
+    const LevelP& coarsest_level_with_particles,
+    const VarLabel* position_label,
+    const std::vector<std::vector<const VarLabel*>>& other_labels,
+    const MaterialSet* materials);
 
   virtual void
   scheduleParticleRelocation(
-      const LevelP& coarsest_level_with_particles,
-      const VarLabel* old_position_label,
-      const std::vector<std::vector<const VarLabel*>>& old_other_labels,
-      const VarLabel* new_postion_label,
-      const std::vector<std::vector<const VarLabel*>>& new_other_labels,
-      const VarLabel* particle_id_label,
-      const MaterialSet* materials);
+    const LevelP& coarsest_level_with_particles,
+    const VarLabel* old_position_label,
+    const std::vector<std::vector<const VarLabel*>>& old_other_labels,
+    const VarLabel* new_postion_label,
+    const std::vector<std::vector<const VarLabel*>>& new_other_labels,
+    const VarLabel* particle_id_label,
+    const MaterialSet* materials);
 
   virtual void
-  setPositionVar(const VarLabel* pos_label) {
+  setPositionVar(const VarLabel* pos_label)
+  {
     d_reloc_new_pos_label = pos_label;
   }
 
@@ -305,22 +323,26 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
                            bool not_checkpoint = false);
 
   const std::set<std::string>&
-  getNoScrubVars() {
+  getNoScrubVars()
+  {
     return d_no_scrub_vars;
   }
 
   const std::set<std::string>&
-  getCopyDataVars() {
+  getCopyDataVars()
+  {
     return d_copy_data_vars;
   }
 
   const std::set<std::string>&
-  getNotCopyDataVars() {
+  getNotCopyDataVars()
+  {
     return d_not_copy_data_vars;
   }
 
   virtual const std::set<std::string>&
-  getNotCheckPointVars() const {
+  getNotCheckPointVars() const
+  {
     return d_not_checkpoint_vars;
   }
 
@@ -328,58 +350,66 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   useInternalDeps();
 
   int
-  getMaxGhost() const {
+  getMaxGhost() const
+  {
     return d_max_ghost_cells;
   }
 
   int
-  getMaxDistalGhost() const {
+  getMaxDistalGhost() const
+  {
     return d_max_distal_ghost_cells;
   }
 
   int
-  getMaxLevelOffset() const {
+  getMaxLevelOffset() const
+  {
     return d_max_level_offset;
   }
 
   bool
-  isCopyDataTimestep() const {
+  isCopyDataTimestep() const
+  {
     return d_is_copy_data_timestep;
   }
 
   bool
-  copyTimestep() const {
+  copyTimestep() const
+  {
     return (d_is_copy_data_timestep || d_is_init_timestep);
   }
 
   void
-  setInitTimestep(bool is_init_timestep) {
+  setInitTimestep(bool is_init_timestep)
+  {
     d_is_init_timestep = is_init_timestep;
   }
 
   void
-  setRestartInitTimestep(bool is_restart_init_timestep) {
+  setRestartInitTimestep(bool is_restart_init_timestep)
+  {
     d_is_restart_init_timestep = is_restart_init_timestep;
   }
 
   virtual bool
-  isRestartInitTimestep() const {
+  isRestartInitTimestep() const
+  {
     return d_is_restart_init_timestep;
   }
 
   void
-  setRuntimeStats(
-      ReductionInfoMapper<RuntimeStatsEnum, double>* runtime_stats) {
+  setRuntimeStats(ReductionInfoMapper<RuntimeStatsEnum, double>* runtime_stats)
+  {
     d_runtime_stats = runtime_stats;
   };
 
- public:
-  const VarLabel* d_reloc_new_pos_label{nullptr};
+public:
+  const VarLabel* d_reloc_new_pos_label{ nullptr };
 
   // number of schedulers and subschedulers
-  int m_num_schedulers{0};
+  int m_num_schedulers{ 0 };
 
- protected:
+protected:
   void
   finalizeTimestep();
 
@@ -395,7 +425,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   void
   finalizeNodes(int process = 0);
 
-  template <class T>
+  template<class T>
   void
   printTrackedValues(GridVariable<T>* var,
                      const IntVector& start,
@@ -411,36 +441,41 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   void
   sumTaskMonitoringValues(DetailedTask* dtask);
 
- protected:
-  enum { PRINT_BEFORE_COMM = 1, PRINT_BEFORE_EXEC = 2, PRINT_AFTER_EXEC = 4 };
+protected:
+  enum
+  {
+    PRINT_BEFORE_COMM = 1,
+    PRINT_BEFORE_EXEC = 2,
+    PRINT_AFTER_EXEC  = 4
+  };
 
   // Some places need to know if this is a copy data timestep or
   // a normal timestep.  (A copy data timestep is AMR's current
   // method of getting data from an old to a new grid).
-  bool d_is_copy_data_timestep{false};
-  bool d_is_init_timestep{false};
-  bool d_is_restart_init_timestep{false};
-  int d_current_task_graph{-1};
-  int d_generation{0};
+  bool d_is_copy_data_timestep{ false };
+  bool d_is_init_timestep{ false };
+  bool d_is_restart_init_timestep{ false };
+  int d_current_task_graph{ -1 };
+  int d_generation{ 0 };
   int d_dw_map[Task::TotalDWs];
 
-  SimulationInterface* d_simulator{nullptr};
-  LoadBalancer* d_load_balancer{nullptr};
-  Output* d_output{nullptr};
+  SimulationInterface* d_simulator{ nullptr };
+  LoadBalancer* d_load_balancer{ nullptr };
+  Output* d_output{ nullptr };
 
-  MaterialManagerP d_material_manager{nullptr};
+  MaterialManagerP d_material_manager{ nullptr };
   std::vector<OnDemandDataWarehouseP> d_dws;
   std::vector<TaskGraph*> d_task_graphs;
 
   //! These are so we can track certain variables over the taskgraph's
   //! execution.
-  int d_tracking_vars_print_location{0};
-  int d_tracking_patch_id{-1};
-  int d_tracking_level{-1};
-  double d_tracking_start_time{1.0};
-  double d_tracking_end_time{0.0};
-  IntVector d_tracking_start_index{IntVector(-9, -9, -9)};
-  IntVector d_tracking_end_index{IntVector(-9, -9, -9)};
+  int d_tracking_vars_print_location{ 0 };
+  int d_tracking_patch_id{ -1 };
+  int d_tracking_level{ -1 };
+  double d_tracking_start_time{ 1.0 };
+  double d_tracking_end_time{ 0.0 };
+  IntVector d_tracking_start_index{ IntVector(-9, -9, -9) };
+  IntVector d_tracking_end_index{ IntVector(-9, -9, -9) };
   std::vector<std::string> d_tracking_vars;
   std::vector<std::string> d_tracking_tasks;
   std::vector<Task::WhichDW> d_tracking_dws;
@@ -448,10 +483,10 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   // Optional task monitoring.
   std::unique_ptr<MaterialSubset> d_dummy_matl{ nullptr };
 
-  bool d_monitoring{false};           // Monitoring on/off.
-  bool d_monitoring_per_cell{false};  // Record the task runtime attributes
-                                      // on a per cell basis rather than a
-                                      // per patch basis.
+  bool d_monitoring{ false };          // Monitoring on/off.
+  bool d_monitoring_per_cell{ false }; // Record the task runtime attributes
+                                       // on a per cell basis rather than a
+                                       // per patch basis.
 
   // Maps for the global or local tasks to be monitored.
   std::map<std::string, const VarLabel*> d_monitoring_tasks[2];
@@ -474,9 +509,9 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   // do not checkpoint these variables
   std::set<std::string> d_not_checkpoint_vars;
 
-  ReductionInfoMapper<RuntimeStatsEnum, double>* d_runtime_stats{nullptr};
+  ReductionInfoMapper<RuntimeStatsEnum, double>* d_runtime_stats{ nullptr };
 
- private:
+private:
   // problem setup for var tracking
   void
   setupVarTracker(const ProblemSpecP& params);
@@ -492,21 +527,21 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
           const MaterialSet* matls,
           const int tg_num);
 
- private:
-  ProblemSpecP d_graph_doc{nullptr};
-  ProblemSpecP d_graph_nodes{nullptr};
+private:
+  ProblemSpecP d_graph_doc{ nullptr };
+  ProblemSpecP d_graph_nodes{ nullptr };
 
-  std::unique_ptr<std::ofstream> d_mem_log_file{nullptr};
+  std::unique_ptr<std::ofstream> d_mem_log_file{ nullptr };
 
   Relocate d_relocate_1;
 
   // whether or not to send a small message (takes more work to organize)
   // or a larger one (more communication time)
-  bool d_use_small_messages{true};
-  bool d_emit_task_graph{false};
-  int d_num_task_graphs{1};
-  int d_num_tasks{0};
-  int d_num_old_dws{0};
+  bool d_use_small_messages{ true };
+  bool d_emit_task_graph{ false };
+  int d_num_task_graphs{ 1 };
+  int d_num_tasks{ 0 };
+  int d_num_old_dws{ 0 };
 
   //! These are to store which vars we have to copy to the new grid
   //! in a copy data task.  Set in scheduleDataCopy and used in
@@ -515,7 +550,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
   ReductionTasksMap d_reduction_tasks;
 
-  std::unique_ptr<LocallyComputedPatchVarMap> d_local_patch_var_map{nullptr};
+  std::unique_ptr<LocallyComputedPatchVarMap> d_local_patch_var_map{ nullptr };
 
   //! set in addTask - can be used until initialize is called...
   std::vector<const Task::Dependency*> d_init_requires;
@@ -523,23 +558,23 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   std::set<const VarLabel*, VarLabel::Compare> d_computed_vars;
 
   // Maximum memory used as sampled across a given timestep.
-  unsigned long d_max_mem_used{0};
+  unsigned long d_max_mem_used{ 0 };
 
   // max ghost cells of standard tasks - will be used for loadbalancer to create
   // neighborhood
-  int d_max_ghost_cells{0};
+  int d_max_ghost_cells{ 0 };
 
   // max ghost cells for tasks with distal requirements (e.g. RMCRT) - will be
   // used for loadbalancer to create neighborhood
-  int d_max_distal_ghost_cells{0};
+  int d_max_distal_ghost_cells{ 0 };
 
   // max level offset of all tasks - will be used for loadbalancer to create
   // neighborhood
-  int d_max_level_offset{0};
+  int d_max_level_offset{ 0 };
 
   // task-graph needs access to reduction task map, etc
   friend class TaskGraph;
 };
-}  // End namespace Uintah
+} // End namespace Uintah
 
 #endif

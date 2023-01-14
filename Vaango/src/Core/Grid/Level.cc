@@ -1440,16 +1440,18 @@ getLevel(const PatchSet* set)
   return getLevel(set->getSubset(0));
 }
 
-//    We may need to put coutLocks around this?
 std::ostream&
 operator<<(std::ostream& out, const Level& level)
 {
+  MasterLock lock;
+  lock.lock();
   IntVector lo, hi;
   level.findCellIndexRange(lo, hi);
 
   out << "(Level " << level.getIndex() << ", numPatches: " << level.numPatches()
       << ", cellIndexRange: " << lo << ", " << hi << ", "
       << *(level.allPatches()) << ")";
+  lock.unlock();
   return out;
 }
 

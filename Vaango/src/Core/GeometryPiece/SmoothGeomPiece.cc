@@ -36,87 +36,101 @@ namespace Uintah {
 
 const std::string SmoothGeomPiece::TYPE_NAME = "smooth_geom";
 
-SmoothGeomPiece::SmoothGeomPiece() { d_dx = 1.0; }
+SmoothGeomPiece::SmoothGeomPiece()
+{
+  d_dx = 1.0;
+}
 
 SmoothGeomPiece::~SmoothGeomPiece() {}
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle locations */
 //////////////////////////////////////////////////////////////////////
-vector<Point>*
-SmoothGeomPiece::getPoints() {
+std::vector<Point>*
+SmoothGeomPiece::getPoints()
+{
   return &d_points;
 }
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle volumes */
 //////////////////////////////////////////////////////////////////////
-vector<double>*
-SmoothGeomPiece::getVolume() {
+std::vector<double>*
+SmoothGeomPiece::getVolume()
+{
   return &d_volume;
 }
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle temperatures */
 //////////////////////////////////////////////////////////////////////
-vector<double>*
-SmoothGeomPiece::getTemperature() {
+std::vector<double>*
+SmoothGeomPiece::getTemperature()
+{
   return &d_temperature;
 }
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle color*/
 //////////////////////////////////////////////////////////////////////
-vector<double>*
-SmoothGeomPiece::getColors() {
+std::vector<double>*
+SmoothGeomPiece::getColors()
+{
   return &d_color;
 }
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle forces */
 //////////////////////////////////////////////////////////////////////
-vector<Vector>*
-SmoothGeomPiece::getForces() {
+std::vector<Vector>*
+SmoothGeomPiece::getForces()
+{
   return &d_forces;
 }
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle fiber directions */
 //////////////////////////////////////////////////////////////////////
-vector<Vector>*
-SmoothGeomPiece::getFiberDirs() {
+std::vector<Vector>*
+SmoothGeomPiece::getFiberDirs()
+{
   return &d_fiberdirs;
 }
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vectors containing the CPDI or CPTI R-vectors        */
 //////////////////////////////////////////////////////////////////////
-vector<Vector>*
-SmoothGeomPiece::getRvec1() {
+std::vector<Vector>*
+SmoothGeomPiece::getRvec1()
+{
   return &d_rvec1;
 }
-vector<Vector>*
-SmoothGeomPiece::getRvec2() {
+std::vector<Vector>*
+SmoothGeomPiece::getRvec2()
+{
   return &d_rvec2;
 }
-vector<Vector>*
-SmoothGeomPiece::getRvec3() {
+std::vector<Vector>*
+SmoothGeomPiece::getRvec3()
+{
   return &d_rvec3;
 }
 
 ////////////////////////////////////////////////////////////////////// // gcd
-///adds
+/// adds
 /* Returns the vector containing the set of particle velocity components */
 //////////////////////////////////////////////////////////////////////
-vector<Vector>*
-SmoothGeomPiece::getVelocity() {
+std::vector<Vector>*
+SmoothGeomPiece::getVelocity()
+{
   return &d_velocity;
-}  // end gcd add
+} // end gcd add
 
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set ofparticle size tensors    */
 //////////////////////////////////////////////////////////////////////
-vector<Matrix3>*
-SmoothGeomPiece::getSize() {
+std::vector<Matrix3>*
+SmoothGeomPiece::getSize()
+{
   return &d_size;
 }
 
@@ -124,7 +138,8 @@ SmoothGeomPiece::getSize() {
 /* Deletes the vector containing the set of particle locations */
 //////////////////////////////////////////////////////////////////////
 void
-SmoothGeomPiece::deletePoints() {
+SmoothGeomPiece::deletePoints()
+{
   d_points.clear();
 }
 
@@ -132,7 +147,8 @@ SmoothGeomPiece::deletePoints() {
 /* Deletes the vector containing the set of particle volumes */
 //////////////////////////////////////////////////////////////////////
 void
-SmoothGeomPiece::deleteVolume() {
+SmoothGeomPiece::deleteVolume()
+{
   d_volume.clear();
 }
 
@@ -140,7 +156,8 @@ SmoothGeomPiece::deleteVolume() {
 /* Deletes the vector containing the set of particle sizes          */
 //////////////////////////////////////////////////////////////////////
 void
-SmoothGeomPiece::deleteSizes() {
+SmoothGeomPiece::deleteSizes()
+{
   d_size.clear();
 }
 
@@ -148,13 +165,14 @@ SmoothGeomPiece::deleteSizes() {
 /* Deletes the vector containing the set of particle temperatures */
 //////////////////////////////////////////////////////////////////////
 void
-SmoothGeomPiece::deleteTemperature() {
+SmoothGeomPiece::deleteTemperature()
+{
   d_temperature.clear();
 }
 
 void
-SmoothGeomPiece::writePoints(const std::string& f_name,
-                             const std::string& var) {
+SmoothGeomPiece::writePoints(const std::string& f_name, const std::string& var)
+{
   if (var == "vol") {
     std::ofstream file(f_name.c_str());
     file.setf(std::ios::scientific, std::ios::floatfield);
@@ -174,17 +192,20 @@ SmoothGeomPiece::writePoints(const std::string& f_name,
 }
 
 int
-SmoothGeomPiece::returnPointCount() const {
+SmoothGeomPiece::returnPointCount() const
+{
   return d_points.size();
 }
 
 void
-SmoothGeomPiece::setParticleSpacing(double dx) {
+SmoothGeomPiece::setParticleSpacing(double dx)
+{
   d_dx = dx;
 }
 
 void
-SmoothGeomPiece::setCellSize(Vector DX) {
+SmoothGeomPiece::setCellSize(Vector DX)
+{
   d_DX = DX;
 }
 

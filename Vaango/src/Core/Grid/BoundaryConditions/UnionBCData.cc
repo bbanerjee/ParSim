@@ -37,8 +37,8 @@
 
 namespace {
 
-// Usage: export SCI_DEBUG="BC_dbg:+"
-Uintah::Dout bc_dbg{ "BC_dbg",
+// Usage: export SCI_DEBUG="UnionBC_dbg:+"
+Uintah::Dout bc_dbg{ "UnionBC_dbg",
                      "Grid_BoundaryConditions",
                      "Grid Union BC debug info",
                      false };

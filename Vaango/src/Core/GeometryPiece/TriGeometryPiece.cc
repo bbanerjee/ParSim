@@ -24,11 +24,11 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/GeometryPiece/TriGeometryPiece.h>
+
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/Plane.h>
-#include <Core/Geometry/Ray.h>
-#include <Core/GeometryPiece/TriGeometryPiece.h>
 #include <Core/GeometryPiece/happly.h>
 #include <Core/Grid/Box.h>
 #include <Core/Malloc/Allocator.h>
@@ -43,9 +43,8 @@ namespace Uintah {
 
 using TriangleList = std::list<Triangle>;
 
-const std::string TriGeometryPiece::TYPE_NAME = "tri";
-
-TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps) {
+TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps)
+{
   d_name = "Unnamed Tri";
 
   ps->require("file_name_prefix", d_file);
@@ -90,7 +89,8 @@ TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps) {
 }
 
 void
-TriGeometryPiece::checkInput() const {
+TriGeometryPiece::checkInput() const
+{
   if (d_fileType == "default") {
     std::string f = d_file + ".pts";
     std::ifstream source(f.c_str());
@@ -202,7 +202,8 @@ TriGeometryPiece::checkInput() const {
   }
 }
 
-TriGeometryPiece::TriGeometryPiece(const TriGeometryPiece& copy) {
+TriGeometryPiece::TriGeometryPiece(const TriGeometryPiece& copy)
+{
   d_box       = copy.d_box;
   d_points    = copy.d_points;
   d_triangles = copy.d_triangles;
@@ -212,8 +213,11 @@ TriGeometryPiece::TriGeometryPiece(const TriGeometryPiece& copy) {
 }
 
 TriGeometryPiece&
-TriGeometryPiece::operator=(const TriGeometryPiece& rhs) {
-  if (this == &rhs) return *this;
+TriGeometryPiece::operator=(const TriGeometryPiece& rhs)
+{
+  if (this == &rhs) {
+    return *this;
+  }
 
   // Clean out lhs
   d_points.clear();
@@ -232,7 +236,8 @@ TriGeometryPiece::operator=(const TriGeometryPiece& rhs) {
 }
 
 void
-TriGeometryPiece::outputHelper(ProblemSpecP& ps) const {
+TriGeometryPiece::outputHelper(ProblemSpecP& ps) const
+{
   ps->appendElement("file_name_prefix", d_file);
   ps->appendElement("file_type", d_fileType);
   ps->appendElement("scaling_factor", d_scale_factor);
@@ -242,37 +247,111 @@ TriGeometryPiece::outputHelper(ProblemSpecP& ps) const {
 }
 
 GeometryPieceP
-TriGeometryPiece::clone() const {
+TriGeometryPiece::clone() const
+{
   return std::make_shared<TriGeometryPiece>(*this);
 }
 
 bool
-TriGeometryPiece::inside(const Point& p) const {
+TriGeometryPiece::inside(const Point& p) const
+{
+  // use crossings in all three directions
+  return inside(p, false);
+}
+
+bool
+TriGeometryPiece::inside(const Point& p, bool use_x_crossing) const
+{
   // Count the number of times a ray from the point p
   // intersects the triangular surface.  If the number
   // of crossings is odd, the point is inside, else it
   // is outside.
 
   // Check if Point p is outside the bounding box
-  if (!(p == Max(p, d_box.lower()) && p == Min(p, d_box.upper()))) return false;
+  if (!(p == Max(p, d_box.lower()) && p == Min(p, d_box.upper()))) {
+    return false;
+  }
 
   int cross = 0;
-  d_grid->countIntersections(p, cross);
+  bool is_inside;
 
-  // std::cout << "Point " << p << " has " << cross << " crossings " << "\n";
-  if (cross % 2)
-    return true;
-  else
+  if (use_x_crossing) {
+    is_inside = inside(p, cross);
+  } else {
+    is_inside = inside(p, cross, true);
+  }
+
+  return is_inside;
+}
+
+bool
+TriGeometryPiece::inside(const Point& p, int& cross) const
+{
+  // Count the number of times a ray from the point p
+  // intersects the triangular surface.  If the number
+  // of crossings is odd, the point is inside, else it
+  // is outside.
+
+  // This version only tests by casting a ray in the x-direction
+
+  // Check if Point p is outside the bounding box
+  if (!(p == Max(p, d_box.lower()) && p == Min(p, d_box.upper()))) {
     return false;
+  }
+
+  d_grid->countIntersections(p, cross);
+  //  cout << "Point " << p << " has " << cross << " crossings " << endl;
+  if (cross % 2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool
+TriGeometryPiece::inside(const Point& p, int& cross, bool all_directions) const
+{
+  // Count the number of times a ray from the point p
+  // intersects the triangular surface.  If the number
+  // of crossings is odd, the point is inside, else it
+  // is outside.
+
+  // This version checks using three roughly orthogonal rays  that are
+  // nearly, but not exactly, cast in the 3 ordinal directions.
+  // It returns the answer that two or more of those tests agree upon
+
+  // Check if Point p is outside the bounding box
+  if (!(p == Max(p, d_box.lower()) && p == Min(p, d_box.upper()))) {
+    return false;
+  }
+
+  int crossx = 0;
+  int crossy = 0;
+  int crossz = 0;
+
+  d_grid->countIntersectionsx(p, crossx);
+  d_grid->countIntersectionsy(p, crossy);
+  d_grid->countIntersectionsz(p, crossz);
+
+  //  cout << "Point " << p << " has " << cross << " crossings " << endl;
+  if ((crossx % 2 == 1 && crossy % 2 == 1) ||
+      (crossx % 2 == 1 && crossz % 2 == 1) ||
+      (crossy % 2 == 1 && crossz % 2 == 1)) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 Box
-TriGeometryPiece::getBoundingBox() const {
+TriGeometryPiece::getBoundingBox() const
+{
   return d_box;
 }
 
 void
-TriGeometryPiece::readPoints(const string& file) {
+TriGeometryPiece::readPoints(const string& file)
+{
   std::string f = file + ".pts";
   std::ifstream source(f.c_str());
   if (!source) {
@@ -288,7 +367,7 @@ TriGeometryPiece::readPoints(const string& file) {
   int first        = d_axis_sequence.x() - 1;
   int second       = d_axis_sequence.y() - 1;
   int third        = d_axis_sequence.z() - 1;
-  double coords[3] = {0.0, 0.0, 0.0};
+  double coords[3] = { 0.0, 0.0, 0.0 };
   double x, y, z;
   while (source >> x >> y >> z) {
     coords[first]  = x;
@@ -308,7 +387,8 @@ TriGeometryPiece::readPoints(const string& file) {
 }
 
 void
-TriGeometryPiece::readTriangles(const string& file) {
+TriGeometryPiece::readTriangles(const string& file)
+{
   std::string f = file + ".tri";
   std::ifstream source(f.c_str());
   if (!source) {
@@ -330,7 +410,8 @@ TriGeometryPiece::readTriangles(const string& file) {
 }
 
 void
-TriGeometryPiece::readPLYMesh() {
+TriGeometryPiece::readPLYMesh()
+{
   // Allow both lowercase and uppercase extensions
   std::string inFile = d_file + ".ply";
   std::ifstream source(inFile.c_str());
@@ -349,7 +430,7 @@ TriGeometryPiece::readPLYMesh() {
   int first        = d_axis_sequence.x() - 1;
   int second       = d_axis_sequence.y() - 1;
   int third        = d_axis_sequence.z() - 1;
-  double coords[3] = {0.0, 0.0, 0.0};
+  double coords[3] = { 0.0, 0.0, 0.0 };
   for (auto point : points) {
     coords[first]  = point[0];
     coords[second] = point[1];
@@ -368,7 +449,8 @@ TriGeometryPiece::readPLYMesh() {
 }
 
 void
-TriGeometryPiece::readOBJMesh() {
+TriGeometryPiece::readOBJMesh()
+{
   // Allow both lowercase and uppercase extensions
   std::string inFile = d_file + ".obj";
   std::ifstream source;
@@ -389,20 +471,26 @@ TriGeometryPiece::readOBJMesh() {
                             std::not1(std::ptr_fun<int, int>(std::isspace))));
 
     // Ignore empty lines
-    if (line.empty()) continue;
+    if (line.empty()) {
+      continue;
+    }
 
     // Skip comment lines
-    if (line[0] == '#') continue;
+    if (line[0] == '#') {
+      continue;
+    }
 
     // Ignore lines containing texture information
-    if (line[0] == 'v' && line[1] == 't') continue;
+    if (line[0] == 'v' && line[1] == 't') {
+      continue;
+    }
 
     // Read the vertices
     if (line[0] == 'v') {
       int first        = d_axis_sequence.x() - 1;
       int second       = d_axis_sequence.y() - 1;
       int third        = d_axis_sequence.z() - 1;
-      double coords[3] = {0.0, 0.0, 0.0};
+      double coords[3] = { 0.0, 0.0, 0.0 };
 
       std::istringstream data_stream(line);
       char data_id;
@@ -481,7 +569,8 @@ TriGeometryPiece::readOBJMesh() {
  * May 23, 2020
  */
 void
-TriGeometryPiece::readSTLMesh() {
+TriGeometryPiece::readSTLMesh()
+{
   // Allow both lowercase and uppercase extensions
   std::string inFile = d_file + ".stl";
   std::ifstream source;
@@ -502,7 +591,7 @@ TriGeometryPiece::readSTLMesh() {
     readMeshFromAsciiStlFile(source);
   } else {
     readMeshFromBinaryStlFile(
-        std::ifstream(inFile, std::ios::in | std::ios::binary));
+      std::ifstream(inFile, std::ios::in | std::ios::binary));
   }
   mergeIdenticalVertices();
 }
@@ -514,7 +603,8 @@ TriGeometryPiece::readSTLMesh() {
  */
 // Assumes that first line has already been consumed
 void
-TriGeometryPiece::readMeshFromAsciiStlFile(std::ifstream& in) {
+TriGeometryPiece::readMeshFromAsciiStlFile(std::ifstream& in)
+{
   std::string line;
   std::stringstream ss;
   size_t lineNum = 1;
@@ -555,7 +645,7 @@ TriGeometryPiece::readMeshFromAsciiStlFile(std::ifstream& in) {
   int first        = d_axis_sequence.x() - 1;
   int second       = d_axis_sequence.y() - 1;
   int third        = d_axis_sequence.z() - 1;
-  double coords[3] = {0.0, 0.0, 0.0};
+  double coords[3] = { 0.0, 0.0, 0.0 };
 
   // Parse STL file
   while (nextLine() && !startsWithToken(line, "endsolid")) {
@@ -611,12 +701,13 @@ TriGeometryPiece::readMeshFromAsciiStlFile(std::ifstream& in) {
  * May 23, 2020
  */
 void
-TriGeometryPiece::readMeshFromBinaryStlFile(std::ifstream in) {
+TriGeometryPiece::readMeshFromBinaryStlFile(std::ifstream in)
+{
   auto parseVector3 = [&](std::ifstream& in) {
     char buffer[3 * sizeof(float)];
     in.read(buffer, 3 * sizeof(float));
     float* fVec = (float*)buffer;
-    return Vector{fVec[0], fVec[1], fVec[2]};
+    return Vector{ fVec[0], fVec[1], fVec[2] };
   };
 
   char header[80];
@@ -629,7 +720,7 @@ TriGeometryPiece::readMeshFromBinaryStlFile(std::ifstream in) {
   int first        = d_axis_sequence.x() - 1;
   int second       = d_axis_sequence.y() - 1;
   int third        = d_axis_sequence.z() - 1;
-  double coords[3] = {0.0, 0.0, 0.0};
+  double coords[3] = { 0.0, 0.0, 0.0 };
 
   for (size_t iT = 0; iT < nTriangles; ++iT) {
     Vector normal = parseVector3(in);
@@ -672,7 +763,8 @@ TriGeometryPiece::readMeshFromBinaryStlFile(std::ifstream in) {
 // Useful for loading .stl files, which don't contain information about which
 // triangle corners meet at vertices.
 void
-TriGeometryPiece::mergeIdenticalVertices() {
+TriGeometryPiece::mergeIdenticalVertices()
+{
   std::vector<Point> compressedPositions;
   // Store mapping from original vertex index to merged vertex index
   std::vector<size_t> compressVertex;
@@ -707,7 +799,8 @@ TriGeometryPiece::mergeIdenticalVertices() {
 }
 
 void
-TriGeometryPiece::scaleTranslateReflect() {
+TriGeometryPiece::scaleTranslateReflect()
+{
   // Scale, translate, and reflect
   std::for_each(d_points.begin(), d_points.end(), [&](Point& p) {
     p *= d_scale_factor;
@@ -717,7 +810,8 @@ TriGeometryPiece::scaleTranslateReflect() {
 }
 
 void
-TriGeometryPiece::findBoundingBox() {
+TriGeometryPiece::findBoundingBox()
+{
   // Find the min and max points so that the bounding box can be determined.
   Point min(1e30, 1e30, 1e30), max(-1e30, -1e30, -1e30);
   for (auto point : d_points) {
@@ -737,7 +831,8 @@ TriGeometryPiece::findBoundingBox() {
 }
 
 void
-TriGeometryPiece::makePlanes() {
+TriGeometryPiece::makePlanes()
+{
   for (auto triangle : d_triangles) {
     Point pt[3];
     pt[0] = d_points[triangle.x()];
@@ -749,7 +844,8 @@ TriGeometryPiece::makePlanes() {
 }
 
 void
-TriGeometryPiece::makeTriangleBoxes() {
+TriGeometryPiece::makeTriangleBoxes()
+{
   for (auto triangle : d_triangles) {
     Point pt[3];
     pt[0]     = d_points[triangle.x()];
@@ -763,7 +859,8 @@ TriGeometryPiece::makeTriangleBoxes() {
 }
 
 void
-TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const {
+TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const
+{
   // Pulled from makemesh.77.c
   //  Now we have to do the pt_in_pgon test to determine if ri is
   //  inside or outside the triangle.  Use Eric Haines idea in
@@ -833,83 +930,97 @@ TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const {
 
   // Now translate the intersecting point to the origin and the vertices
   // as well.
-  for (int i = 0; i < 3; i++) trans_vt[i] -= trans_pt.asVector();
+  for (int i = 0; i < 3; i++) {
+    trans_vt[i] -= trans_pt.asVector();
+  }
 
   int SH = 0, NSH = 0;
   double out_edge = 0.;
 
-  if (trans_vt[0].y() < 0.0)
+  if (trans_vt[0].y() < 0.0) {
     SH = -1;
-  else
+  } else {
     SH = 1;
+  }
 
-  if (trans_vt[1].y() < 0.0)
+  if (trans_vt[1].y() < 0.0) {
     NSH = -1;
-  else
+  } else {
     NSH = 1;
+  }
 
   if (SH != NSH) {
-    if ((trans_vt[0].x() > 0.0) && (trans_vt[1].x() > 0.0))
+    if ((trans_vt[0].x() > 0.0) && (trans_vt[1].x() > 0.0)) {
       NCS += 1;
-    else if ((trans_vt[0].x() > 0.0) || (trans_vt[1].x() > 0.0)) {
+    } else if ((trans_vt[0].x() > 0.0) || (trans_vt[1].x() > 0.0)) {
       out_edge = (trans_vt[0].x() - trans_vt[0].y() *
-                                        (trans_vt[1].x() - trans_vt[0].x()) /
-                                        (trans_vt[1].y() - trans_vt[0].y()));
+                                      (trans_vt[1].x() - trans_vt[0].x()) /
+                                      (trans_vt[1].y() - trans_vt[0].y()));
       if (out_edge == 0.0) {
         NES += 1;
         NCS += 1;
       }
-      if (out_edge > 0.0) NCS += 1;
+      if (out_edge > 0.0) {
+        NCS += 1;
+      }
     }
     SH = NSH;
   }
 
-  if (trans_vt[2].y() < 0.0)
+  if (trans_vt[2].y() < 0.0) {
     NSH = -1;
-  else
+  } else {
     NSH = 1;
+  }
 
   if (SH != NSH) {
-    if ((trans_vt[1].x() > 0.0) && (trans_vt[2].x() > 0.0))
+    if ((trans_vt[1].x() > 0.0) && (trans_vt[2].x() > 0.0)) {
       NCS += 1;
-    else if ((trans_vt[1].x() > 0.0) || (trans_vt[2].x() > 0.0)) {
+    } else if ((trans_vt[1].x() > 0.0) || (trans_vt[2].x() > 0.0)) {
       out_edge = (trans_vt[1].x() - trans_vt[1].y() *
-                                        (trans_vt[2].x() - trans_vt[1].x()) /
-                                        (trans_vt[2].y() - trans_vt[1].y()));
+                                      (trans_vt[2].x() - trans_vt[1].x()) /
+                                      (trans_vt[2].y() - trans_vt[1].y()));
       if (out_edge == 0.0) {
         NES += 1;
         NCS += 1;
       }
-      if (out_edge > 0.0) NCS += 1;
+      if (out_edge > 0.0) {
+        NCS += 1;
+      }
     }
     SH = NSH;
   }
 
-  if (trans_vt[0].y() < 0.0)
+  if (trans_vt[0].y() < 0.0) {
     NSH = -1;
-  else
+  } else {
     NSH = 1;
+  }
 
   if (SH != NSH) {
-    if ((trans_vt[2].x() > 0.0) && (trans_vt[0].x() > 0.0))
+    if ((trans_vt[2].x() > 0.0) && (trans_vt[0].x() > 0.0)) {
       NCS += 1;
+    }
 
     else if ((trans_vt[2].x() > 0.0) || (trans_vt[0].x() > 0.0)) {
       out_edge = (trans_vt[2].x() - trans_vt[2].y() *
-                                        (trans_vt[0].x() - trans_vt[2].x()) /
-                                        (trans_vt[0].y() - trans_vt[2].y()));
+                                      (trans_vt[0].x() - trans_vt[2].x()) /
+                                      (trans_vt[0].y() - trans_vt[2].y()));
       if (out_edge == 0.0) {
         NES += 1;
         NCS += 1;
       }
-      if (out_edge > 0.0) NCS += 1;
+      if (out_edge > 0.0) {
+        NCS += 1;
+      }
     }
     SH = NSH;
   }
 }
 
 void
-TriGeometryPiece::scale(const double factor) {
+TriGeometryPiece::scale(const double factor)
+{
   Vector origin(0., 0., 0.);
   for (auto point : d_points) {
     origin = origin + point.asVector();
@@ -921,7 +1032,8 @@ TriGeometryPiece::scale(const double factor) {
 }
 
 double
-TriGeometryPiece::surfaceArea() const {
+TriGeometryPiece::surfaceArea() const
+{
   double surfaceArea = 0.;
   for (auto triangle : d_triangles) {
     Point pt[3];
@@ -938,4 +1050,4 @@ TriGeometryPiece::surfaceArea() const {
   return surfaceArea;
 }
 
-}  // end namespace Uintah
+} // end namespace Uintah

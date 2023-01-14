@@ -27,6 +27,7 @@ include(GoogleTest)
 
 SET(VAANGO_LIBS
     Vaango_Core_Grid
+    Vaango_Core_Util
     )
 
 #------------------------
