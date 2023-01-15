@@ -70,7 +70,7 @@ class KeyDatabase
 public:
   KeyDatabase(){};
 
-  ~KeyDatabase(){};
+  ~KeyDatabase() noexcept(false) {};
 
   void
   clear();
@@ -205,7 +205,7 @@ private:
   {
     DataItem() = default;
 
-    ~DataItem()
+    ~DataItem() noexcept(false)
     {
       if (next) {
         delete next;

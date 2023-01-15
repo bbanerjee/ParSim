@@ -522,7 +522,7 @@ public:
   virtual void
   refinalize();
 
-  virtual void
+  virtual size_t
   emit(OutputContext& out,
        const VarLabel* label,
        int matlIndex,
