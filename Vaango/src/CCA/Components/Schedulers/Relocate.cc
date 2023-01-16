@@ -74,7 +74,7 @@ Relocate::~Relocate()
 void
 Relocate::scheduleParticleRelocation(Scheduler* sched,
                                      const ProcessorGroup* pg,
-                                     LoadBalancer* lb,
+                                     LoadBalancer* load_balancer,
                                      const LevelP& coarsestLevelwithParticles,
                                      const VarLabel* posLabel,
                                      const VarLabel2DVector& otherLabels,
@@ -152,7 +152,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
                         &Relocate::relocateParticlesModifies,
                         coarsestLevelwithParticles.get_rep());
 
-  if (lb) {
+  if (load_balancer) {
     t->usesMPI(true);
   }
 
@@ -176,7 +176,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
   if (!coarsestLevelwithParticles->hasFinerLevel()) {
     // only case since the below version isn't const
     patches = const_cast<PatchSet*>(
-      lb->getPerProcessorPatchSet(coarsestLevelwithParticles));
+      load_balancer->getPerProcessorPatchSet(coarsestLevelwithParticles));
   } else {
     GridP grid = coarsestLevelwithParticles->getGrid();
     // make per-proc patch set of each level >= level
@@ -186,12 +186,12 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     for (int i = coarsestLevelwithParticles->getIndex(); i < grid->numLevels();
          i++) {
 
-      const PatchSet* p = lb->getPerProcessorPatchSet(grid->getLevel(i));
+      const PatchSet* p = load_balancer->getPerProcessorPatchSet(grid->getLevel(i));
 
       for (int proc = 0; proc < pg->nRanks(); proc++) {
         for (int j = 0; j < p->getSubset(proc)->size(); j++) {
           const Patch* patch = p->getSubset(proc)->get(j);
-          patches->getSubset(lb->getPatchwiseProcessorAssignment(patch))
+          patches->getSubset(load_balancer->getPatchwiseProcessorAssignment(patch))
             ->add(patch);
         }
       }
@@ -202,7 +202,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
-  d_load_balancer = lb;
+  d_load_balancer = load_balancer;
 }
 
 // All variables that will be relocated must exist on the same levels.
@@ -210,7 +210,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
 void
 Relocate::scheduleParticleRelocation(Scheduler* sched,
                                      const ProcessorGroup* pg,
-                                     LoadBalancer* lb,
+                                     LoadBalancer* load_balancer,
                                      const LevelP& coarsestLevelwithParticles,
                                      const VarLabel* old_posLabel,
                                      const VarLabel2DVector& old_labels,
@@ -251,7 +251,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
                         &Relocate::relocateParticles,
                         coarsestLevelwithParticles.get_rep());
 
-  if (lb) {
+  if (load_balancer) {
     t->usesMPI(true);
   }
 
@@ -275,7 +275,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
   if (!coarsestLevelwithParticles->hasFinerLevel()) {
     // only case since the below version isn't const
     patches = const_cast<PatchSet*>(
-      lb->getPerProcessorPatchSet(coarsestLevelwithParticles));
+      load_balancer->getPerProcessorPatchSet(coarsestLevelwithParticles));
   } else {
     GridP grid = coarsestLevelwithParticles->getGrid();
 
@@ -286,12 +286,12 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     for (int i = coarsestLevelwithParticles->getIndex(); i < grid->numLevels();
          i++) {
 
-      const PatchSet* p = lb->getPerProcessorPatchSet(grid->getLevel(i));
+      const PatchSet* p = load_balancer->getPerProcessorPatchSet(grid->getLevel(i));
 
       for (int proc = 0; proc < pg->nRanks(); proc++) {
         for (int j = 0; j < p->getSubset(proc)->size(); j++) {
           const Patch* patch = p->getSubset(proc)->get(j);
-          patches->getSubset(lb->getPatchwiseProcessorAssignment(patch))
+          patches->getSubset(load_balancer->getPatchwiseProcessorAssignment(patch))
             ->add(patch);
         }
       }
@@ -302,7 +302,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
-  this->d_load_balancer = lb;
+  this->d_load_balancer = load_balancer;
 }
 
 void
@@ -631,7 +631,7 @@ Relocate::finalizeCommunication()
   // Wait to make sure that all of the sends completed
   int numsends = (int)d_send_requests.size();
   std::vector<MPI_Status> statii(numsends);
-  Uintah::MPi::Waitall(numsends, &d_send_requests[0], &statii[0]);
+  Uintah::MPI::Waitall(numsends, &d_send_requests[0], &statii[0]);
 
   // delete the buffers
   for (int i = 0; i < (int)d_send_buffers.size(); i++) {
@@ -708,7 +708,7 @@ Relocate::findNeighboringPatches(const Patch* patch,
   IntVector h = patch->getExtraCellHighIndex() + IntVector(1, 1, 1);
 
   level->selectPatches(l, h, neighborPatches);
-  for (int i = 0; i < neighborPatches.size(); i++) {
+  for (size_t i = 0; i < neighborPatches.size(); i++) {
     const Patch* neighbor = neighborPatches[i];
     neighborSet.insert(neighbor);
   }
@@ -728,7 +728,7 @@ Relocate::findNeighboringPatches(const Patch* patch,
 
     ASSERT(coarsePatches.size() != 0);
 
-    for (int i = 0; i < coarsePatches.size(); i++) {
+    for (size_t i = 0; i < coarsePatches.size(); i++) {
       const Patch* neighbor = coarsePatches[i];
       neighborSet.insert(neighbor);
     }
@@ -747,7 +747,7 @@ Relocate::findNeighboringPatches(const Patch* patch,
     Patch::selectType finePatches;
     fineLevel->selectPatches(fl, fh, finePatches);
 
-    for (int i = 0; i < finePatches.size(); i++) {
+    for (size_t i = 0; i < finePatches.size(); i++) {
       const Patch* finePatch = finePatches[i];
       neighborSet.insert(finePatch);
     } // fine patches loop
@@ -808,9 +808,9 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
                              neighborPatches);
 
       // Find all of the neighborPatches, and add them to a set
-      for (int i = 0; i < neighborPatches.size(); i++) {
+      for (size_t i = 0; i < neighborPatches.size(); i++) {
         const Patch* neighbor = neighborPatches[i];
-        scatter_records.addNeighbor(lb, pg, neighbor);
+        scatter_records.addNeighbor(d_load_balancer, pg, neighbor);
       }
 
       for (int m = 0; m < matls->size(); m++) {
@@ -1279,9 +1279,9 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
                              neighborPatches);
 
       // Find all of the neighborPatches, and add them to a set
-      for (int i = 0; i < neighborPatches.size(); i++) {
+      for (size_t i = 0; i < neighborPatches.size(); i++) {
         const Patch* neighbor = neighborPatches[i];
-        scatter_records.addNeighbor(lb, pg, neighbor);
+        scatter_records.addNeighbor(d_load_balancer, pg, neighbor);
       }
 
       for (int m = 0; m < matls->size(); m++) {

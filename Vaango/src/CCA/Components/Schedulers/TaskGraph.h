@@ -102,7 +102,7 @@ public:
 
   ~TaskGraph();
 
-  // eliminate copy, assignment and move
+  // eliminate copy, assignment, and move
   TaskGraph(const TaskGraph&) = delete;
   TaskGraph&
   operator=(const TaskGraph&) = delete;
@@ -313,9 +313,9 @@ public:
     bool m_sorted;
   };
 
-  using CompMap           = std::multimap<const VarLabel*, Task::Dependency*>;
-  using GraphSortInfoMap  = std::map<Task*, GraphSortInfo>;
-  using ReductionTasksMap = std::map<VarLabelMatl<Level>, Task*>;
+  using CompMap          = std::multimap<const VarLabel*, Task::Dependency*>;
+  using GraphSortInfoMap = std::map<Task*, GraphSortInfo>;
+  using LevelReductionTasksMap = std::map<VarLabelMatl<Level>, Task*>;
 
 private:
   /// Helper function for setupTaskConnections, adding dependency edges
@@ -327,7 +327,7 @@ private:
                      GraphSortInfoMap& sortinfo,
                      Task::Dependency* req,
                      CompMap& comps,
-                     ReductionTasksMap& reductionTasks,
+                     LevelReductionTasksMap& reductionTasks,
                      bool modifies);
 
   bool

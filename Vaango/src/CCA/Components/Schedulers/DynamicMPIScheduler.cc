@@ -140,7 +140,7 @@ DynamicMPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   RuntimeStats::initialize_timestep(m_num_schedulers, d_task_graphs);
 
   ASSERTRANGE(tgnum, 0, (int)d_task_graphs.size());
-  TaskGraph* tg = d_task_graphs[tgnum];
+  TaskGraph* tg = d_task_graphs[tgnum].get();
   tg->setIteration(iteration);
   d_current_task_graph = tgnum;
 
@@ -368,7 +368,7 @@ DynamicMPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     }
 
     // ARS - FIXME CHECK THE WAREHOUSE
-    OnDemandDataWarehouseP dw = d_dws[d_dws.size() - 1];
+    OnDemandDataWarehouse* dw = d_dws[d_dws.size() - 1].get();
     if (!abort && dw && dw->abortTimeStep()) {
       // TODO - abort might not work with external queue...
       abort       = true;

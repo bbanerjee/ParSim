@@ -77,7 +77,7 @@ public:
   // by the parent scheduler
   static void
   initialize_timestep(const int num_schedulers,
-                      std::vector<TaskGraph*> const& graphs);
+                      std::vector<std::unique_ptr<TaskGraph>> const& graphs);
 
   // NOT THREAD SAFE -- should only be called from the master thread
   // by the parent scheduler

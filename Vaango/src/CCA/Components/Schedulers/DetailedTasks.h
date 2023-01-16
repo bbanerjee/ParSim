@@ -152,7 +152,7 @@ public:
   computeLocalTasks();
 
   void
-  initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws, int dwmap[]);
+  initializeScrubs(std::vector<OnDemandDataWarehouseUP>& dws, int dwmap[]);
 
   void
   possiblyCreateDependency(DetailedTask* from,
@@ -227,7 +227,7 @@ public:
   setScrubCount(const Task::Dependency* req,
                 int matl,
                 const Patch* patch,
-                std::vector<OnDemandDataWarehouseP>& dws);
+                std::vector<OnDemandDataWarehouseUP>& dws);
 
   int
   getExtraCommunication()

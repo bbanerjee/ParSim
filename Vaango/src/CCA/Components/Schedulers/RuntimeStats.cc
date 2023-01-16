@@ -24,7 +24,7 @@
  */
 
 #include <CCA/Components/Schedulers/DetailedTasks.h>
-#include <CCA/Components/Schedulers/RuntimeStats.hpp>
+#include <CCA/Components/Schedulers/RuntimeStats.h>
 #include <CCA/Components/Schedulers/TaskGraph.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -148,8 +148,9 @@ RuntimeStats::get_atomic_wait_ptr(DetailedTask const* t)
 //______________________________________________________________________
 //
 void
-RuntimeStats::initialize_timestep(const int num_schedulers,
-                                  std::vector<TaskGraph*> const& graphs)
+RuntimeStats::initialize_timestep(
+  const int num_schedulers,
+  const std::vector<std::unique_ptr<TaskGraph>>& graphs)
 {
   if (exec_times || wait_times || task_stats) {
 
@@ -169,7 +170,7 @@ RuntimeStats::initialize_timestep(const int num_schedulers,
     std::unique_lock<Uintah::MasterLock> lock(g_report_lock);
 
     std::set<std::string> task_names;
-    for (auto const tg : graphs) {
+    for (const auto& tg : graphs) {
       const int tg_size = tg->getNumTasks();
       for (int i = 0; i < tg_size; ++i) {
         Task* t = tg->getTask(i);

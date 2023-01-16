@@ -136,7 +136,7 @@ TaskGraph::nullSort(std::vector<Task*>& tasks)
     mesg << "      " << std::left << std::setw(50) << task->getName();
 
     // For all reduction tasks filtering out the one that is not in
-    // ReductionTasksMap
+    // LevelReductionTasksMap
     if (task->getType() == Task::Reduction) {
 
       for (auto&& [varlabel_matl, reduction_task] :
@@ -1739,7 +1739,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
   // special.  Create a fake task that performs the reduction
   // While we are at it, ensure that we aren't producing anything
   // into an "old" data warehouse
-  ReductionTasksMap reductionTasks;
+  LevelReductionTasksMap reductionTasks;
   for (iter = d_tasks.begin(); iter != d_tasks.end(); iter++) {
     Task* task = *iter;
     if (task->isReductionTask()) {
@@ -1782,7 +1782,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
         const MaterialSet* ms = task->getMaterialSet();
         const Level* level    = comp->reductionLevel;
 
-        ReductionTasksMap::iterator it = reductionTasks.find(key);
+        LevelReductionTasksMap::iterator it = reductionTasks.find(key);
         if (it == reductionTasks.end()) {
           // No reduction task yet, create one
           if (detaileddbg.active()) {
@@ -1834,7 +1834,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
   }
 
   // Add the new reduction tasks to the list of tasks
-  for (ReductionTasksMap::iterator it = reductionTasks.begin();
+  for (LevelReductionTasksMap::iterator it = reductionTasks.begin();
        it != reductionTasks.end();
        it++) {
     addTask(it->second, 0, 0);
@@ -1936,7 +1936,7 @@ TaskGraph::addDependencyEdges(Task* task,
                               GraphSortInfoMap& sortinfo,
                               Task::Dependency* req,
                               CompMap& comps,
-                              ReductionTasksMap& reductionTasks,
+                              LevelReductionTasksMap& reductionTasks,
                               bool modifies)
 {
   for (; req != 0; req = req->next) {

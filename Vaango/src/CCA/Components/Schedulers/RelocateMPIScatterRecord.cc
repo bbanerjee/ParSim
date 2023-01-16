@@ -26,6 +26,8 @@
 
 #include <CCA/Components/Schedulers/RelocateMPIScatterRecord.h>
 
+#include <Core/Util/FancyAssert.h>
+
 namespace Uintah {
 
 static bool
@@ -39,23 +41,6 @@ MPIScatterProcessorRecord::sortPatches()
 {
   sort(patches.begin(), patches.end(), ComparePatches);
 }
-
-using procmap_type = std::map<int, MPIScatterProcessorRecord*>;
-
-struct MPIRecvBuffer
-{
-  MPIRecvBuffer* next;
-  char* databuf;
-  int bufsize;
-  int numParticles;
-  MPIRecvBuffer(char* databuf, int bufsize, int numParticles)
-    : next(0)
-    , databuf(databuf)
-    , bufsize(bufsize)
-    , numParticles(numParticles)
-  {
-  }
-};
 
 void
 MPIScatterRecords::saveRecv(const Patch* to,
@@ -79,7 +64,7 @@ MPIScatterRecords::saveRecv(const Patch* to,
 MPIRecvBuffer*
 MPIScatterRecords::findRecv(const Patch* to, int matl)
 {
-  recvmap_type::iterator iter = recvs.find(make_pair(to, matl));
+  recvmap_type::iterator iter = recvs.find(std::make_pair(to, matl));
   if (iter == recvs.end()) {
     return 0;
   } else {
@@ -99,17 +84,17 @@ MPIScatterRecords::findOrInsertRecord(const Patch* fromPatch,
     toPatch->getExtraCellLowIndex() - fromPatch->getExtraCellLowIndex();
   const Patch* realToPatch = toPatch->getRealPatch();
 
-  pair<map_type::iterator, map_type::iterator> pr =
-    records.equal_range(make_pair(realToPatch, matl));
+  std::pair<map_type::iterator, map_type::iterator> pr =
+    records.equal_range(std::make_pair(realToPatch, matl));
 
   // loop over all scatter records
   // Does this record exist if so return.
   for (; pr.first != pr.second; pr.first++) {
     ScatterRecord* sr = pr.first->second;
 
-    if ((realToPatch == sr->toPatch->getRealPatch()) &&
-        (curLevelIndex == sr->levelIndex) &&
-        (vectorToNeighbor == sr->vectorToNeighbor)) {
+    if ((realToPatch == sr->to_patch->getRealPatch()) &&
+        (curLevelIndex == sr->level_index) &&
+        (vectorToNeighbor == sr->vector_to_neighbor)) {
       return sr;
     }
   }
@@ -119,7 +104,7 @@ MPIScatterRecords::findOrInsertRecord(const Patch* fromPatch,
   ScatterRecord* rec =
     scinew ScatterRecord(fromPatch, toPatch, matl, curLevelIndex);
   rec->send_pset = scinew ParticleSubset(0, -1, 0);
-  records.insert(map_type::value_type(make_pair(realToPatch, matl), rec));
+  records.insert(map_type::value_type(std::make_pair(realToPatch, matl), rec));
   return rec;
 }
 
@@ -136,18 +121,18 @@ MPIScatterRecords::findRecord(const Patch* fromPatch,
   const Patch* realToPatch   = toPatch->getRealPatch();
   const Patch* realFromPatch = fromPatch->getRealPatch();
 
-  pair<map_type::iterator, map_type::iterator> pr =
-    records.equal_range(make_pair(realToPatch, matl));
+  std::pair<map_type::iterator, map_type::iterator> pr =
+    records.equal_range(std::make_pair(realToPatch, matl));
 
   // loop over all scatter records
   // Does this record exist if so return.
   for (; pr.first != pr.second; pr.first++) {
     ScatterRecord* sr = pr.first->second;
 
-    if ((realToPatch == sr->toPatch->getRealPatch()) &&
-        (curLevelIndex == sr->levelIndex) && (matl == sr->matl) &&
-        (vectorToNeighbor == sr->vectorToNeighbor) &&
-        (realFromPatch == sr->fromPatch->getRealPatch()) &&
+    if ((realToPatch == sr->to_patch->getRealPatch()) &&
+        (curLevelIndex == sr->level_index) && (matl == sr->matl) &&
+        (vectorToNeighbor == sr->vector_to_neighbor) &&
+        (realFromPatch == sr->from_patch->getRealPatch()) &&
         (fromPatch != toPatch)) {
       return sr;
     }
@@ -157,12 +142,12 @@ MPIScatterRecords::findRecord(const Patch* fromPatch,
 }
 
 void
-MPIScatterRecords::addNeighbor(LoadBalancer* lb,
+MPIScatterRecords::addNeighbor(LoadBalancer* load_balancer,
                                const ProcessorGroup* pg,
                                const Patch* neighbor)
 {
   neighbor   = neighbor->getRealPatch();
-  int toProc = d_load_balancer->getPatchwiseProcessorAssignment(neighbor);
+  int toProc = load_balancer->getPatchwiseProcessorAssignment(neighbor);
   ASSERTRANGE(toProc, 0, pg->nRanks());
 
   procmap_type::iterator iter = procs.find(toProc);
@@ -213,5 +198,3 @@ MPIScatterRecords::~MPIScatterRecords()
 }
 
 } // namespace Uintah
-
-#endif //__CCA_COMPONENTS_SCHEDULERS_RELOCATE_MPI_SCATTER_RECORD_H__

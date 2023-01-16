@@ -187,19 +187,13 @@ public:
                      bool exact             = false) = 0;
 
   virtual ParticleSubset*
+  getParticleSubset(int matlIndex, const Patch* patch) = 0;
+
+  virtual ParticleSubset*
   getParticleSubset(int matlIndex,
                     const Patch* patch,
                     Uintah::IntVector low,
                     Uintah::IntVector high) = 0;
-
-  virtual ParticleSubset*
-  getParticleSubset(int matlIndex, const Patch* patch) = 0;
-
-  virtual ParticleSubset*
-  getDeleteSubset(int matlIndex, const Patch* patch) = 0;
-
-  virtual ParticleLabelVariableMap*
-  getNewParticleState(int matlIndex, const Patch* patch) = 0;
 
   virtual ParticleSubset*
   getParticleSubset(int matlIndex,
@@ -216,25 +210,11 @@ public:
                     const VarLabel* posvar,
                     const Level* level = 0) = 0;
 
-  /* Create a particle subset for a subset of a patch and its
-     neighboring patches defined by a local lowIndex and a local highIndex.
-     If the particles are contained outside the current patch, use the
-     numGhostCells to get the outside particles */
   virtual ParticleSubset*
-  getParticleSubset(int matlIndex,
-                    const Patch* patch,
-                    IntVector localLowIndex,
-                    IntVector localHighIndex,
-                    Ghost::GhostType,
-                    int numGhostCells,
-                    const VarLabel* posvar) = 0;
+  getDeleteSubset(int matlIndex, const Patch* patch) = 0;
 
-  // Get the particle index values of a set of ParticleIDs
-  virtual void
-  getParticleIndex(ParticleSubset* pset,
-                   const VarLabel* partIDLabel,
-                   const std::vector<long64>& partIDList,
-                   std::vector<particleIndex>& partIndexList) = 0;
+  virtual ParticleLabelVariableMap*
+  getNewParticleState(int matlIndex, const Patch* patch) = 0;
 
   // Create a map between the long64 particleIDs and the particle indices in a
   // ParticleSubset
@@ -242,6 +222,13 @@ public:
   createParticleIDMap(ParticleSubset* pset,
                       const VarLabel* partIDLabel,
                       ParticleIDMap& partIDMap) = 0;
+
+  // Get the particle index values of a set of ParticleIDs
+  virtual void
+  getParticleIndex(ParticleSubset* pset,
+                   const VarLabel* partIDLabel,
+                   const std::vector<long64>& partIDList,
+                   std::vector<particleIndex>& partIndexList) = 0;
 
   // Get the particle index value of a ParticleID after the partIDMap
   // has been created
@@ -457,13 +444,9 @@ public:
 
   // For timestep abort/restart
   virtual bool
-  timestepAborted() = 0;
+  abortTimeStep() = 0;
   virtual bool
-  timestepRestarted() = 0;
-  virtual void
-  abortTimestep() = 0;
-  virtual void
-  restartTimestep() = 0;
+  recomputeTimeStep() = 0;
 
   virtual void
   reduceMPI(const VarLabel* label,

@@ -27,10 +27,14 @@
 #ifndef __CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__
 #define __CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__
 
+#include <memory>
+
 namespace Uintah {
   class OnDemandDataWarehouse;
   template<class T> class Handle;
-  typedef Handle<OnDemandDataWarehouse> OnDemandDataWarehouseP;
+  using OnDemandDataWarehouseP = Handle<OnDemandDataWarehouse>;
+  using OnDemandDataWarehouseUP = std::unique_ptr<OnDemandDataWarehouse>;
+  using OnDemandDataWarehouseSP = std::shared_ptr<OnDemandDataWarehouse>;
 }
 
 #endif //__CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__

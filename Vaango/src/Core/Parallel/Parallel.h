@@ -64,62 +64,80 @@ public:
   };
 
   // Initializes MPI if necessary.
-  static void initializeManager(int& argc, char**& arg);
+  static void
+  initializeManager(int& argc, char**& arg);
 
   // Check to see whether initializeManager has been called
-  static bool isInitialized();
+  static bool
+  isInitialized();
 
   // Shut down MPI gracefully
-  static void finalizeManager(Circumstances cirumstances = NormalShutdown);
+  static void
+  finalizeManager(Circumstances cirumstances = NormalShutdown);
 
   // Return root context processorgroup
-  static ProcessorGroup* getRootProcessorGroup();
+  static ProcessorGroup*
+  getRootProcessorGroup();
 
   // Return the MPI Rank of this process.  If this is not running
   // under MPI, then 0 is returned.  Rank value is set after call to
   // initializeManager();
-  static int getMPIRank();
+  static int
+  getMPIRank();
 
   // Return the size of MPI_Comm
-  static int getMPISize();
+  static int
+  getMPISize();
 
   // Return true if this process is to use GPUs, false otherwise
-  static bool usingDevice();
+  static bool
+  usingDevice();
 
   // Set whether or not to use available GPUs
-  static void setUsingDevice(bool state);
+  static void
+  setUsingDevice(bool state);
 
   // Return the number of threads that a processing element is
   // allowed to use to compute its tasks.
-  static int getNumThreads();
+  static int
+  getNumThreads();
 
   // Return the number of thread partitions that a processing element is
   // allowed to use to compute its tasks.
-  static int getNumPartitions();
+  static int
+  getNumPartitions();
 
   // Return the number of threads per partition.
-  static int getThreadsPerPartition();
+  static int
+  getThreadsPerPartition();
 
   // Return the ID of the main thread, via std::this_thread::get_id()
-  static std::thread::id getMainThreadID();
+  static std::thread::id
+  getMainThreadID();
 
   // Set the number of task runner threads to the value specified
-  static void setNumThreads(int num);
+  static void
+  setNumThreads(int num);
 
   // Set the number of task runner OMP thread partitions to the value specified
-  static void setNumPartitions(int num);
+  static void
+  setNumPartitions(int num);
 
   // Set the number of threads per OMP partition
-  static void setThreadsPerPartition(int num);
+  static void
+  setThreadsPerPartition(int num);
 
   // Pass the specified exit code to std::exit()
-  static void exitAll(int code);
+  static void
+  exitAll(int code);
 
 public:
   Parallel(const Parallel&) = delete;
-  Parallel& operator=(const Parallel&) = delete;
-  Parallel(Parallel&&) = delete;
-  Parallel& operator=(Parallel&&) = delete;
+  Parallel&
+  operator=(const Parallel&) = delete;
+  Parallel(Parallel&&)       = delete;
+  Parallel&
+  operator=(Parallel&&) = delete;
 
 private:
   Parallel();

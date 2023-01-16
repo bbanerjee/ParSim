@@ -28,6 +28,7 @@
 #define __CCA_COMPONENTS_SCHEDULERS_RELOCATE_SCATTER_RECORD_H__
 
 #include <Core/Grid/Patch.h>
+#include <Core/Grid/Variables/ParticleSubset.h>
 
 namespace Uintah {
 

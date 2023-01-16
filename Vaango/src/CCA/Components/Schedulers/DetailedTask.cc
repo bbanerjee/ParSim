@@ -107,7 +107,7 @@ DetailedTask::~DetailedTask()
 
 void
 DetailedTask::doit(const ProcessorGroup* pg,
-                   std::vector<OnDemandDataWarehouseP>& oddws,
+                   std::vector<OnDemandDataWarehouseUP>& oddws,
                    std::vector<DataWarehouseP>& dws,
                    Task::CallBackEvent event /* = Task::CPU */
 )
@@ -203,7 +203,7 @@ DetailedTask::doit(const ProcessorGroup* pg,
 }
 
 void
-DetailedTask::scrub(std::vector<OnDemandDataWarehouseP>& dws)
+DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
 {
   DOUTR(g_scrubbing_dbg,
         "  DetailedTask::Scrub, Starting scrub after task: " << *this);
@@ -574,7 +574,7 @@ DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
 }
 
 void
-DetailedTask::done(std::vector<OnDemandDataWarehouseP>& dws)
+DetailedTask::done(std::vector<OnDemandDataWarehouseUP>& dws)
 {
   // Important to scrub first, before dealing with the internal dependencies
   scrub(dws);

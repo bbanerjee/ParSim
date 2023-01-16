@@ -351,7 +351,7 @@ DetailedTasks::computeLocalTasks()
 }
 
 void
-DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
+DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseUP>& dws,
                                 int dwmap[])
 {
   DOUT(g_scrubbing_dbg,
@@ -363,7 +363,7 @@ DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
       continue;
     }
 
-    OnDemandDataWarehouse* dw = dws[dwmap[i]].get_rep();
+    OnDemandDataWarehouse* dw = dws[dwmap[i]].get();
     if (dw != nullptr && dw->getScrubMode() == DataWarehouse::ScrubComplete) {
 
       // only a OldDW or a CoarseOldDW will have scrubComplete
@@ -387,7 +387,7 @@ DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
           dwmap[Task::NewDW] - dwmap[Task::OldDW] > 1) {
         // add the CoarseOldDW's scrubs to the OldDW, so we keep it around for
         // future task graphs
-        OnDemandDataWarehouse* olddw = dws[dwmap[Task::OldDW]].get_rep();
+        OnDemandDataWarehouse* olddw = dws[dwmap[Task::OldDW]].get();
         DOUT(g_scrubbing_dbg,
              "Rank-" << Parallel::getMPIRank() << " Initializing scrubs on dw: "
                      << olddw->getID() << " for DW type " << i << " ADD=" << 1);
@@ -435,7 +435,7 @@ void
 DetailedTasks::setScrubCount(const Task::Dependency* req,
                              int matl,
                              const Patch* patch,
-                             std::vector<OnDemandDataWarehouseP>& dws)
+                             std::vector<OnDemandDataWarehouseUP>& dws)
 {
   ASSERT(!patch->isVirtual());
   DataWarehouse::ScrubMode scrubmode =

@@ -110,13 +110,13 @@ public:
   ProfileType getProfileType() { return m_profile_type; }
 
   void doit(const ProcessorGroup* pg,
-            std::vector<OnDemandDataWarehouseP>& oddws,
+            std::vector<OnDemandDataWarehouseUP>& oddws,
             std::vector<DataWarehouseP>& dws,
             Task::CallBackEvent event = Task::CPU);
 
   // Called after doit and MPI data sent (packed in buffers) finishes.
   // Handles internal dependencies and scrubbing. Called after doit finishes.
-  void done(std::vector<OnDemandDataWarehouseP>& dws);
+  void done(std::vector<OnDemandDataWarehouseUP>& dws);
 
   std::string getName() const;
 
@@ -251,7 +251,7 @@ protected:
 
 private:
   // called by done()
-  void scrub(std::vector<OnDemandDataWarehouseP>& dws);
+  void scrub(std::vector<OnDemandDataWarehouseUP>& dws);
 
   // Called when prerequisite tasks (dependencies) call done.
   void dependencySatisfied(InternalDependency* dep);

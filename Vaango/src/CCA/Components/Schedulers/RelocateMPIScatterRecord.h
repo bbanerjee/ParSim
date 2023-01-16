@@ -31,7 +31,7 @@
 
 namespace Uintah {
 
-using map_type     = std::multimap<pair<const Patch*, int>, ScatterRecord*>;
+using map_type     = std::multimap<std::pair<const Patch*, int>, ScatterRecord*>;
 using patches_type = std::vector<const Patch*>;
 
 struct MPIScatterProcessorRecord
@@ -58,7 +58,7 @@ struct MPIRecvBuffer
   }
 };
 
-using recvmap_type = std::map<pair<const Patch*, int>, MPIRecvBuffer*>;
+using recvmap_type = std::map<std::pair<const Patch*, int>, MPIRecvBuffer*>;
 
 class MPIScatterRecords
 {

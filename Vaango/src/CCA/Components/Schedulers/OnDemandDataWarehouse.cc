@@ -4302,7 +4302,7 @@ OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
 
 void
 OnDemandDataWarehouse::pushRunningTask(const Task* task,
-                                       std::vector<OnDemandDataWarehouseP>* dws)
+                                       std::vector<OnDemandDataWarehouseUP>* dws)
 {
   std::lock_guard<Uintah::MasterLock> push_lock(g_running_tasks_lock);
 
@@ -4380,7 +4380,7 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw,
                                              RunningTaskInfo* info)
 {
   int dwindex           = info->d_task->mapDataWarehouse(dw);
-  DataWarehouse* result = (*info->d_dws)[dwindex].get_rep();
+  DataWarehouse* result = (*info->d_dws)[dwindex].get();
   return result;
 }
 
@@ -4389,7 +4389,7 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw)
 {
   RunningTaskInfo* info = getCurrentTaskInfo();
   int dwindex           = info->d_task->mapDataWarehouse(dw);
-  DataWarehouse* result = (*info->d_dws)[dwindex].get_rep();
+  DataWarehouse* result = (*info->d_dws)[dwindex].get();
   return result;
 }
 

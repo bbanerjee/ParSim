@@ -59,7 +59,7 @@ using LabelMaterialMap =
   std::map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
 using VarLabelMaterialListMap = std::map<std::string, std::list<int>>;
 using ReductionTasksMap =
-  std::map<VarLabelMatl<Level, DataWarehouse>, std::unique_ptr<Task>>;
+  std::map<VarLabelMatl<Level, DataWarehouse>, std::shared_ptr<Task>>;
 using VarLabelList = std::vector<std::vector<const VarLabel*>>;
 
 class SchedulerCommon
@@ -153,7 +153,7 @@ public:
   getTaskGraph(unsigned int index)
   {
     ASSERT(0 <= index && index < d_task_graphs.size());
-    return d_task_graphs[index];
+    return d_task_graphs[index].get();
   }
 
   virtual int
@@ -464,8 +464,8 @@ protected:
   Output* d_output{ nullptr };
 
   MaterialManagerP d_material_manager{ nullptr };
-  std::vector<OnDemandDataWarehouseP> d_dws;
-  std::vector<TaskGraph*> d_task_graphs;
+  std::vector<OnDemandDataWarehouseUP> d_dws;
+  std::vector<std::unique_ptr<TaskGraph>> d_task_graphs;
 
   //! These are so we can track certain variables over the taskgraph's
   //! execution.

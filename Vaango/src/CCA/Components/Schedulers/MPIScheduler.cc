@@ -296,7 +296,7 @@ MPIScheduler::runTask(DetailedTask* dtask, int iteration)
 
   std::vector<DataWarehouseP> plain_old_dws(d_dws.size());
   for (size_t i = 0; i < d_dws.size(); i++) {
-    plain_old_dws[i] = d_dws[i].get_rep();
+    plain_old_dws[i] = d_dws[i].get();
   }
 
   DOUTR(g_task_run, " Running task:   " << *dtask);
@@ -368,7 +368,7 @@ MPIScheduler::runReductionTask(DetailedTask* task)
   const Task::Dependency* mod = task->getTask()->getModifies();
   ASSERT(!mod->next);
 
-  OnDemandDataWarehouse* dw = d_dws[mod->mapDataWarehouse()].get_rep();
+  OnDemandDataWarehouse* dw = d_dws[mod->mapDataWarehouse()].get();
   ASSERT(task->getTask()->m_comm >= 0);
   dw->reduceMPI(mod->var,
                 mod->reduction_level,
@@ -435,7 +435,7 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
         continue;
       }
 
-      OnDemandDataWarehouse* dw = d_dws[req->m_req->mapDataWarehouse()].get_rep();
+      OnDemandDataWarehouse* dw = d_dws[req->m_req->mapDataWarehouse()].get();
 
       DOUTR(g_dbg, " --> sending " << *req);
       DOUTR(g_dbg, "     From task: " << batch->from_task->getName());
@@ -457,17 +457,17 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
 
       if (!d_reloc_new_pos_label && d_parent_scheduler) {
         posDW =
-          d_dws[req->m_req->task->mapDataWarehouse(Task::ParentOldDW)].get_rep();
+          d_dws[req->m_req->task->mapDataWarehouse(Task::ParentOldDW)].get();
         posLabel = d_parent_scheduler->d_reloc_new_pos_label;
       } else {
         // on an output task (and only on one) we require particle variables
         // from the NewDW
         if (req->m_to_tasks.front()->getTask()->getType() == Task::Output) {
           posDW =
-            d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get_rep();
+            d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get();
         } else {
           posDW =
-            d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get_rep();
+            d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get();
         }
         posLabel = d_reloc_new_pos_label;
       }
@@ -629,7 +629,7 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
       for (DetailedDep* req = batch->head; req != 0; req = req->m_next) {
 
         OnDemandDataWarehouse* dw =
-          d_dws[req->m_req->mapDataWarehouse()].get_rep();
+          d_dws[req->m_req->mapDataWarehouse()].get();
         if ((req->m_comm_condition == DetailedDep::FirstIteration && iteration > 0) ||
             (req->m_comm_condition == DetailedDep::SubsequentIterations &&
              iteration == 0) ||
@@ -678,16 +678,16 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
         // on the prev timestep pass it in if the particle data is on the old dw
         if (!d_reloc_new_pos_label && d_parent_scheduler) {
           posDW = d_dws[req->m_req->task->mapDataWarehouse(Task::ParentOldDW)]
-                    .get_rep();
+                    .get();
         } else {
           // on an output task (and only on one) we require particle variables
           // from the NewDW
           if (req->m_to_tasks.front()->getTask()->getType() == Task::Output) {
             posDW =
-              d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get_rep();
+              d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get();
           } else {
             posDW =
-              d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get_rep();
+              d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get();
           }
         }
 
@@ -857,7 +857,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   RuntimeStats::initialize_timestep(m_num_schedulers, d_task_graphs);
 
   ASSERTRANGE(tgnum, 0, (int)d_task_graphs.size());
-  TaskGraph* tg = d_task_graphs[tgnum];
+  TaskGraph* tg = d_task_graphs[tgnum].get();
   tg->setIteration(iteration);
   d_current_task_graph = tgnum;
 
@@ -952,7 +952,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     }
 
     // ARS - FIXME CHECK THE WAREHOUSE
-    OnDemandDataWarehouseP dw = d_dws[d_dws.size() - 1];
+    OnDemandDataWarehouse* dw = d_dws[d_dws.size() - 1].get();
     if (!abort && dw && dw->abortTimeStep()) {
       // TODO - abort might not work with external queue...
       abort       = true;
@@ -999,7 +999,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     // They are reported in outputTimingStats.
     if (d_runtime_stats) {
       int numCells = 0, numParticles = 0;
-      OnDemandDataWarehouseP dw = d_dws[d_dws.size() - 1];
+      OnDemandDataWarehouse* dw = d_dws[d_dws.size() - 1].get();
       const GridP grid(const_cast<Grid*>(dw->getGrid()));
       const PatchSubset* myPatches =
         d_load_balancer->getPerProcessorPatchSet(grid)->getSubset(my_rank);
