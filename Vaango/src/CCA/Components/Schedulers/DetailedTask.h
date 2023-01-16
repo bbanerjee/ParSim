@@ -80,7 +80,11 @@ struct InternalDependency
     addVarLabel(var);
   }
 
-  void addVarLabel(const VarLabel* var) { m_vars.insert(var); }
+  void
+  addVarLabel(const VarLabel* var)
+  {
+    m_vars.insert(var);
+  }
 
   DetailedTask* m_prerequisite_task;
   DetailedTask* m_dependent_task;
@@ -100,149 +104,256 @@ public:
 
   // eliminate copy, assignment and move
   DetailedTask(const DetailedTask&) = delete;
-  DetailedTask& operator=(const DetailedTask&) = delete;
-  DetailedTask(DetailedTask&&) = delete;
-  DetailedTask& operator=(DetailedTask&&) = delete;
+  DetailedTask&
+  operator=(const DetailedTask&) = delete;
+  DetailedTask(DetailedTask&&)   = delete;
+  DetailedTask&
+  operator=(DetailedTask&&) = delete;
 
+  void
+  setProfileType(ProfileType type)
+  {
+    m_profile_type = type;
+  }
 
-  void setProfileType(ProfileType type) { m_profile_type = type; }
+  ProfileType
+  getProfileType()
+  {
+    return m_profile_type;
+  }
 
-  ProfileType getProfileType() { return m_profile_type; }
-
-  void doit(const ProcessorGroup* pg,
-            std::vector<OnDemandDataWarehouseUP>& oddws,
-            std::vector<DataWarehouseP>& dws,
-            Task::CallBackEvent event = Task::CPU);
+  void
+  doit(const ProcessorGroup* pg,
+       std::vector<OnDemandDataWarehouseUP>& oddws,
+       std::vector<DataWarehouseP>& dws,
+       Task::CallBackEvent event = Task::CPU);
 
   // Called after doit and MPI data sent (packed in buffers) finishes.
   // Handles internal dependencies and scrubbing. Called after doit finishes.
-  void done(std::vector<OnDemandDataWarehouseUP>& dws);
+  void
+  done(std::vector<OnDemandDataWarehouseUP>& dws);
 
-  std::string getName() const;
+  std::string
+  getName() const;
 
-  const Task* getTask() const { return m_task; }
-  const PatchSubset* getPatches() const { return m_patches; }
-  const MaterialSubset* getMaterials() const { return m_matls; }
+  const Task*
+  getTask() const
+  {
+    return m_task;
+  }
+  const PatchSubset*
+  getPatches() const
+  {
+    return m_patches;
+  }
+  const MaterialSubset*
+  getMaterials() const
+  {
+    return m_matls;
+  }
 
-  void assignResource(int idx) { m_resource_index = idx; }
-  int getAssignedResourceIndex() const { return m_resource_index; }
+  void
+  assignResource(int idx)
+  {
+    m_resource_index = idx;
+  }
+  int
+  getAssignedResourceIndex() const
+  {
+    return m_resource_index;
+  }
 
-  void assignStaticOrder(int i) { m_static_order = i; }
-  int getStaticOrder() const { return m_static_order; }
+  void
+  assignStaticOrder(int i)
+  {
+    m_static_order = i;
+  }
+  int
+  getStaticOrder() const
+  {
+    return m_static_order;
+  }
 
-  DetailedTasks* getTaskGroup() const { return m_task_group; }
+  DetailedTasks*
+  getTaskGroup() const
+  {
+    return m_task_group;
+  }
 
-  std::map<DependencyBatch*, DependencyBatch*>& getRequires() { return m_reqs; }
-  std::map<DependencyBatch*, DependencyBatch*>& getInternalRequires()
+  std::map<DependencyBatch*, DependencyBatch*>&
+  getRequires()
+  {
+    return m_reqs;
+  }
+  std::map<DependencyBatch*, DependencyBatch*>&
+  getInternalRequires()
   {
     return m_internal_reqs;
   }
 
-  DependencyBatch* getComputes() const { return m_comp_head; }
-  DependencyBatch* getInternalComputes() const { return m_internal_comp_head; }
+  DependencyBatch*
+  getComputes() const
+  {
+    return m_comp_head;
+  }
+  DependencyBatch*
+  getInternalComputes() const
+  {
+    return m_internal_comp_head;
+  }
 
-  void findRequiringTasks(const VarLabel* var,
-                          std::list<DetailedTask*>& requiringTasks);
+  void
+  findRequiringTasks(const VarLabel* var,
+                     std::list<DetailedTask*>& requiringTasks);
 
-  void emitEdges(ProblemSpecP edgesElement);
+  void
+  emitEdges(ProblemSpecP edgesElement);
 
-  bool addInternalRequires(DependencyBatch* req);
+  bool
+  addInternalRequires(DependencyBatch* req);
 
-  void addInternalComputes(DependencyBatch* comp);
+  void
+  addInternalComputes(DependencyBatch* comp);
 
-  bool addRequires(DependencyBatch* req);
+  bool
+  addRequires(DependencyBatch* req);
 
-  void addComputes(DependencyBatch* comp);
+  void
+  addComputes(DependencyBatch* comp);
 
-  void addInternalDependency(DetailedTask* prerequisiteTask,
-                             const VarLabel* var);
+  void
+  addInternalDependency(DetailedTask* prerequisiteTask, const VarLabel* var);
 
   // external dependencies will count how many messages this task is waiting
   // for. When it hits 0, we can add it to the  DetailedTasks::mpiCompletedTasks
   // list.
-  void resetDependencyCounts();
+  void
+  resetDependencyCounts();
 
-  void markInitiated()
+  void
+  markInitiated()
   {
     m_wait_timer.start();
     m_initiated.store(true, std::memory_order_seq_cst);
   }
 
-  void incrementExternalDepCount()
+  void
+  incrementExternalDepCount()
   {
     m_external_dependency_count.fetch_add(1, std::memory_order_seq_cst);
   }
-  void decrementExternalDepCount()
+  void
+  decrementExternalDepCount()
   {
     m_external_dependency_count.fetch_sub(1, std::memory_order_seq_cst);
   }
 
-  void checkExternalDepCount();
-  int getExternalDepCount()
+  void
+  checkExternalDepCount();
+  int
+  getExternalDepCount()
   {
     return m_external_dependency_count.load(std::memory_order_seq_cst);
   }
 
-  bool areInternalDependenciesSatisfied()
+  bool
+  areInternalDependenciesSatisfied()
   {
     return (m_num_pending_internal_dependencies == 0);
   }
 
-  double task_wait_time() const { return m_wait_timer().seconds(); }
-  double task_exec_time() const { return m_exec_timer().seconds(); }
+  double
+  task_wait_time() const
+  {
+    return m_wait_timer().seconds();
+  }
+  double
+  task_exec_time() const
+  {
+    return m_exec_timer().seconds();
+  }
 
 #ifdef HAVE_CUDA
 
-  void assignDevice(unsigned int device);
+  void
+  assignDevice(unsigned int device);
 
   // Most tasks will only run on one device.
   // But some, such as the data archiver task or send_old_data could run on
   // multiple devices. This is not a good idea.  A task should only run on one
   // device.  But the capability for a task to run on multiple nodes exists.
-  std::set<unsigned int> getDeviceNums() const;
+  std::set<unsigned int>
+  getDeviceNums() const;
 
   std::map<unsigned int, TaskGpuDataWarehouses> TaskGpuDWs;
 
-  void setCudaStreamForThisTask(unsigned int deviceNum, cudaStream_t* s);
+  void
+  setCudaStreamForThisTask(unsigned int deviceNum, cudaStream_t* s);
 
-  void clearCudaStreamsForThisTask();
+  void
+  clearCudaStreamsForThisTask();
 
-  bool checkCudaStreamDoneForThisTask(unsigned int deviceNum) const;
+  bool
+  checkCudaStreamDoneForThisTask(unsigned int deviceNum) const;
 
-  bool checkAllCudaStreamsDoneForThisTask() const;
+  bool
+  checkAllCudaStreamsDoneForThisTask() const;
 
-  void setTaskGpuDataWarehouse(unsigned int deviceNum,
-                               Task::WhichDW DW,
-                               GPUDataWarehouse* TaskDW);
+  void
+  setTaskGpuDataWarehouse(unsigned int deviceNum,
+                          Task::WhichDW DW,
+                          GPUDataWarehouse* TaskDW);
 
-  GPUDataWarehouse* getTaskGpuDataWarehouse(unsigned int deviceNum,
-                                            Task::WhichDW DW);
+  GPUDataWarehouse*
+  getTaskGpuDataWarehouse(unsigned int deviceNum, Task::WhichDW DW);
 
-  void deleteTaskGpuDataWarehouses();
+  void
+  deleteTaskGpuDataWarehouses();
 
-  cudaStream_t* getCudaStreamForThisTask(unsigned int deviceNum) const;
+  cudaStream_t*
+  getCudaStreamForThisTask(unsigned int deviceNum) const;
 
-  DeviceGridVariables& getDeviceVars() { return deviceVars; }
+  DeviceGridVariables&
+  getDeviceVars()
+  {
+    return deviceVars;
+  }
 
-  DeviceGridVariables& getTaskVars() { return taskVars; }
+  DeviceGridVariables&
+  getTaskVars()
+  {
+    return taskVars;
+  }
 
-  DeviceGhostCells& getGhostVars() { return ghostVars; }
+  DeviceGhostCells&
+  getGhostVars()
+  {
+    return ghostVars;
+  }
 
-  DeviceGridVariables& getVarsToBeGhostReady() { return varsToBeGhostReady; }
+  DeviceGridVariables&
+  getVarsToBeGhostReady()
+  {
+    return varsToBeGhostReady;
+  }
 
-  DeviceGridVariables& getVarsBeingCopiedByTask()
+  DeviceGridVariables&
+  getVarsBeingCopiedByTask()
   {
     return varsBeingCopiedByTask;
   }
 
-  void clearPreparationCollections();
+  void
+  clearPreparationCollections();
 
-  void addTempHostMemoryToBeFreedOnCompletion(void* ptr);
+  void
+  addTempHostMemoryToBeFreedOnCompletion(void* ptr);
 
-  void addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_ptr,
-                                              void* ptr);
+  void
+  addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_ptr, void* ptr);
 
-  void deleteTemporaryTaskVars();
+  void
+  deleteTemporaryTaskVars();
 
 #endif
 
@@ -251,10 +362,12 @@ protected:
 
 private:
   // called by done()
-  void scrub(std::vector<OnDemandDataWarehouseUP>& dws);
+  void
+  scrub(std::vector<OnDemandDataWarehouseUP>& dws);
 
   // Called when prerequisite tasks (dependencies) call done.
-  void dependencySatisfied(InternalDependency* dep);
+  void
+  dependencySatisfied(InternalDependency* dep);
 
   Task* m_task{ nullptr };
   const PatchSubset* m_patches{ nullptr };
@@ -292,7 +405,8 @@ private:
   RuntimeStats::TaskExecTimer m_exec_timer{ this };
   RuntimeStats::TaskWaitTimer m_wait_timer{ this };
 
-  bool operator<(const DetailedTask& other);
+  bool
+  operator<(const DetailedTask& other);
 
 #ifdef HAVE_CUDA
 
@@ -338,11 +452,12 @@ private:
     gpuMemoryPoolDevicePtrItem(unsigned int device_id, void* ptr)
     {
       this->device_id = device_id;
-      this->ptr = ptr;
+      this->ptr       = ptr;
     }
 
     // This so it can be used in an STL map
-    bool operator<(const gpuMemoryPoolDevicePtrItem& right) const
+    bool
+    operator<(const gpuMemoryPoolDevicePtrItem& right) const
     {
       if (this->device_id < right.device_id) {
         return true;
@@ -364,6 +479,7 @@ private:
 
 std::ostream&
 operator<<(std::ostream& out, const Uintah::DetailedTask& task);
+
 
 } // namespace Uintah
 

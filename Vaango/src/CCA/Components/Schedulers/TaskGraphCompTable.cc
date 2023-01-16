@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,11 +24,18 @@
 
 #include <CCA/Components/Schedulers/TaskGraphCompTable.h>
 
+#include <CCA/Components/Schedulers/DetailedTask.h>
+
 namespace {
-Uintah::Dout g_detailed_deps_dbg("TaskGraphDetailedDeps",
-                         "TaskGraph",
-                         "detailed dep info for each DetailedTask",
-                         false);
+Uintah::Dout g_find_computes_dbg(
+  "ComputeTableFindComputes",
+  "ComputeTable",
+  "info on computing task for particular requires",
+  false);
+Uintah::Dout g_detailed_deps_dbg("ComputeTableDetailedDeps",
+                                 "ComputeTable",
+                                 "detailed dep info for each DetailedTask",
+                                 false);
 }
 
 namespace Uintah {
@@ -82,7 +88,7 @@ CompTable::remembercomp(Data* newData, const ProcessorGroup* pg)
   }
 
   TypeDescription::Type vartype =
-    newData->m_comp->m_var->typeDescription()->getType();
+    newData->m_comp->var->typeDescription()->getType();
 
   // can't have two computes for the same variable (need modifies)
 
@@ -93,9 +99,9 @@ CompTable::remembercomp(Data* newData, const ProcessorGroup* pg)
   // label to skip.
 
   // ARS - Treat sole vars the same as reduction vars??
-  if (newData->m_comp->m_dep_type != Task::Modifies &&
-      vartype != TypeDescription::ReductionVariable &&
-      vartype != TypeDescription::SoleVariable) {
+  if (newData->m_comp->dep_type != Task::Modifies &&
+      vartype != TypeDescription::Type::ReductionVariable &&
+      vartype != TypeDescription::Type::SoleVariable) {
     if (m_data.lookup(newData)) {
       std::cout << "Multiple compute found:\n";
       std::cout << "  matl: " << newData->m_matl << "\n";
@@ -108,10 +114,10 @@ CompTable::remembercomp(Data* newData, const ProcessorGroup* pg)
       for (Data* old = m_data.lookup(newData); old != nullptr;
            old       = m_data.nextMatch(newData, old)) {
         std::cout << "  " << *old->m_dtask << std::endl;
-        old->m_comp->m_task->displayAll(std::cout);
+        old->m_comp->task->displayAll(std::cout);
       }
       SCI_THROW(InternalError("Multiple computes for variable: " +
-                                newData->m_comp->m_var->getName(),
+                                newData->m_comp->var->getName(),
                               __FILE__,
                               __LINE__));
     }
@@ -129,7 +135,7 @@ CompTable::findcomp(Task::Dependency* req,
 {
   DOUTR(g_find_computes_dbg,
         "Rank-" << pg->myRank() << ": Finding comp of req: " << *req
-                << " for task: " << *req->m_task << "/");
+                << " for task: " << *req->task << "/");
 
   Data key(nullptr, req, patch, matlIndex);
   Data* result = nullptr;
@@ -138,25 +144,25 @@ CompTable::findcomp(Task::Dependency* req,
 
     DOUT(g_find_computes_dbg,
          "Rank-" << pg->myRank()
-                 << ": Examining comp from: " << p->m_comp->m_task->getName()
-                 << ", order=" << p->m_comp->m_task->getSortedOrder());
+                 << ": Examining comp from: " << p->m_comp->task->getName()
+                 << ", order=" << p->m_comp->task->getSortedOrder());
 
     // TODO - fix why this assert is tripped when the gold standard,
     // MPM/ARL/NanoPillar2D_FBC_sym.ups is run using a non-optimized build.
     // On a debug, inputs/MPMdisks_complex.ups also hits this.
     // Clue: This assertion is tripped if there are two modifies() in a single
     // task.
-    // ASSERT(!result || p->m_comp->m_task->getSortedOrder() !=
-    // result->m_comp->m_task->getSortedOrder());
+    // ASSERT(!result || p->m_comp->task->getSortedOrder() !=
+    // result->m_comp->task->getSortedOrder());
 
-    if (p->m_comp->m_task->getSortedOrder() < req->m_task->getSortedOrder()) {
-      if (!result || p->m_comp->m_task->getSortedOrder() >
-                       result->m_comp->m_task->getSortedOrder()) {
+    if (p->m_comp->task->getSortedOrder() < req->task->getSortedOrder()) {
+      if (!result || p->m_comp->task->getSortedOrder() >
+                       result->m_comp->task->getSortedOrder()) {
 
         DOUT(g_find_computes_dbg,
              "Rank-" << pg->myRank() << ": New best is comp from: "
-                     << p->m_comp->m_task->getName()
-                     << ", order=" << p->m_comp->m_task->getSortedOrder());
+                     << p->m_comp->task->getName()
+                     << ", order=" << p->m_comp->task->getSortedOrder());
 
         result = p;
       }
@@ -167,8 +173,8 @@ CompTable::findcomp(Task::Dependency* req,
 
     DOUT(g_find_computes_dbg,
          "Rank-" << pg->myRank()
-                 << ": Found comp at: " << result->m_comp->m_task->getName()
-                 << ", order=" << result->m_comp->m_task->getSortedOrder());
+                 << ": Found comp at: " << result->m_comp->task->getName()
+                 << ", order=" << result->m_comp->task->getSortedOrder());
 
     dt   = result->m_dtask;
     comp = result->m_comp;
@@ -194,26 +200,28 @@ CompTable::findReductionComps(Task::Dependency* req,
        p       = m_data.nextMatch(&key, p)) {
     DOUT(g_detailed_deps_dbg,
          "Rank-" << pg->myRank()
-                 << " Examining comp from: " << p->m_comp->m_task->getName()
-                 << ", order=" << p->m_comp->m_task->getSortedOrder() << " ("
-                 << req->m_task->getName()
-                 << " order: " << req->m_task->getSortedOrder() << ")");
+                 << " Examining comp from: " << p->m_comp->task->getName()
+                 << ", order=" << p->m_comp->task->getSortedOrder() << " ("
+                 << req->task->getName()
+                 << " order: " << req->task->getSortedOrder() << ")");
 
-    if (p->m_comp->m_task->getSortedOrder() < req->m_task->getSortedOrder() &&
-        p->m_comp->m_task->getSortedOrder() >= bestSortedOrder) {
-      if (p->m_comp->m_task->getSortedOrder() > bestSortedOrder) {
+    if (p->m_comp->task->getSortedOrder() < req->task->getSortedOrder() &&
+        p->m_comp->task->getSortedOrder() >= bestSortedOrder) {
+      if (p->m_comp->task->getSortedOrder() > bestSortedOrder) {
         creators.clear();
-        bestSortedOrder = p->m_comp->m_task->getSortedOrder();
+        bestSortedOrder = p->m_comp->task->getSortedOrder();
         DOUT(g_detailed_deps_dbg,
              "Rank-" << pg->myRank()
                      << "    New best sorted order: " << bestSortedOrder);
       }
       DOUT(g_detailed_deps_dbg,
            "Rank-" << pg->myRank()
-                   << " Adding comp from: " << p->m_comp->m_task->getName()
-                   << ", order=" << p->m_comp->m_task->getSortedOrder());
+                   << " Adding comp from: " << p->m_comp->task->getName()
+                   << ", order=" << p->m_comp->task->getSortedOrder());
       creators.push_back(p->m_dtask);
     }
   }
   return (creators.size() > 0);
 }
+
+} // namespace Uintah

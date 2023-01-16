@@ -119,7 +119,7 @@ public:
   virtual bool
   useInternalDeps()
   {
-    return !m_is_copy_data_timestep;
+    return !d_is_copy_data_timestep;
   }
 
   void

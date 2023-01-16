@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,6 +26,7 @@
 #define __CCA_COMPONENTS_SCHEDULERS_TASKGRAPH_COMPTABLE_H__
 
 #include <Core/Grid/Task.h>
+#include <Core/Containers/FastHashTable.h>
 
 namespace Uintah {
 
@@ -57,11 +57,11 @@ class CompTable
       , m_patch(patch)
       , m_matl(matl)
     {
-      m_hash =
+      hash =
         (unsigned int)(((unsigned int)comp->mapDataWarehouse() << 3) ^
-                       (string_hash(comp->m_var->getName().c_str())) ^ matl);
+                       (string_hash(comp->var->getName().c_str())) ^ matl);
       if (patch) {
-        m_hash ^= (unsigned int)(patch->getID() << 4);
+        hash ^= (unsigned int)(patch->getID() << 4);
       }
     }
 
@@ -71,17 +71,17 @@ class CompTable
     operator==(const Data& c)
     {
       return m_matl == c.m_matl && m_patch == c.m_patch &&
-             m_comp->m_reduction_level == c.m_comp->m_reduction_level &&
+             m_comp->reduction_level == c.m_comp->reduction_level &&
              m_comp->mapDataWarehouse() == c.m_comp->mapDataWarehouse() &&
-             m_comp->m_var->equals(c.m_comp->m_var);
+             m_comp->var->equals(c.m_comp->var);
     }
 
-    Data* m_next{ nullptr };
+    Data* next{ nullptr };
     DetailedTask* m_dtask{ nullptr };
     Task::Dependency* m_comp{ nullptr };
     const Patch* m_patch{ nullptr };
     int m_matl{};
-    unsigned int m_hash{};
+    unsigned int hash{};
   };
 
   FastHashTable<Data> m_data{};
@@ -120,5 +120,7 @@ private:
   void
   remembercomp(Data* newData, const ProcessorGroup* pg);
 }; // class CompTable
+
+} // namespace Uintah
 
 #endif //__CCA_COMPONENTS_SCHEDULERS_TASKGRAPH_COMPTABLE_H__

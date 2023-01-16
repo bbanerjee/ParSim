@@ -23,10 +23,12 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
-#include <CCA/Components/Schedulers/RuntimeStats.hpp>
-#include <CCA/Components/Schedulers/TaskGraph.h>
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
+
+#include <CCA/Components/Schedulers/CommunicationList.h>
+#include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
+#include <CCA/Components/Schedulers/RuntimeStats.h>
+#include <CCA/Components/Schedulers/TaskGraph.h>
 #include <CCA/Ports/Output.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -35,7 +37,6 @@
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Parallel/CommunicationList.hpp>
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Util/DOUT.hpp>
 #include <Core/Util/Timers/Timers.hpp>
@@ -1952,7 +1953,7 @@ UnifiedScheduler::turnIntoASuperPatch(GPUDataWarehouse* const gpudw,
   // accomplished by claiming patches in *sorted* order, and no scheduler thread
   // can attempt to claim any later patch if it hasn't yet claimed a former
   // patch.  The first thread to claim all will have claimed the "superpatch"
-  //region.
+  // region.
 
   // Superpatches essentially are just windows into a shared variable, it uses
   // shared_ptrs behind the scenes With this later only one alloaction or H2D
@@ -3494,14 +3495,14 @@ UnifiedScheduler::prepareDeviceVars(DetailedTask* dtask)
                         // temporary variable to live long enough to perform a
                         // device-to-host copy.
                         //* In one scenario with no ghost cells, you get back
-                        //the same window/data just with refcounts incremented
-                        //by 1.
+                        // the same window/data just with refcounts incremented
+                        // by 1.
                         //* In another scenario with ghost cells, the ref counts
-                        //are at least 2, so deleting the gridVar won't
-                        //automatically deallocate it
+                        // are at least 2, so deleting the gridVar won't
+                        // automatically deallocate it
                         //* In another scenario with ghost cells, you get back a
-                        //gridvar holding different window/data, their refcounts
-                        //are 1
+                        // gridvar holding different window/data, their
+                        // refcounts are 1
                         //   and so so deleting the gridVar will invoke
                         //   deallocation.  That would be bad if an async
                         //   device-to-host copy is needed.
@@ -3653,8 +3654,8 @@ UnifiedScheduler::prepareDeviceVars(DetailedTask* dtask)
     isStaging = !isStaging;
   }
   //} end for (std::set<unsigned int>::const_iterator deviceNums_it =
-  //deviceNums.begin() - this is commented out for now until multi-device
-  //support is added
+  // deviceNums.begin() - this is commented out for now until multi-device
+  // support is added
 }
 
 //______________________________________________________________________
