@@ -26,6 +26,9 @@
 
 #include <CCA/Components/Schedulers/RelocateMPIScatterRecord.h>
 
+#include <CCA/Components/Schedulers/RelocateScatterRecord.h>
+
+#include <Core/Grid/Patch.h>
 #include <Core/Util/FancyAssert.h>
 
 namespace Uintah {

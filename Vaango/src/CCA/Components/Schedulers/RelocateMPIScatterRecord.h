@@ -29,6 +29,9 @@
 
 #include <CCA/Components/Schedulers/RelocateScatterRecord.h>
 
+#include <map>
+#include <vector>
+
 namespace Uintah {
 
 using map_type     = std::multimap<std::pair<const Patch*, int>, ScatterRecord*>;

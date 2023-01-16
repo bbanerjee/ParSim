@@ -70,18 +70,7 @@ struct ScatterRecord
 };
 
 std::ostream&
-operator<<(std::ostream& out, const ScatterRecord& r)
-{
-  out.setf(std::ios::scientific, std::ios::floatfield);
-  out.precision(4);
-  out << " Scatter Record, matl: " << r.matl << " Level: " << r.level_index
-      << " numParticles " << r.send_pset->numParticles()
-      << " (Particle moving from Patch " << r.from_patch->getID()
-      << ", to Patch " << r.to_patch->getID() << ")"
-      << " vectorToNeighbor " << r.vector_to_neighbor;
-  out.setf(std::ios::scientific, std::ios::floatfield);
-  return out;
-}
+operator<<(std::ostream& out, const ScatterRecord& r);
 
 } // namespace Uintah
 

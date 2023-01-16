@@ -35,6 +35,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   MPIScheduler.cc 
   OnDemandDataWarehouse.cc 
   Relocate.cc 
+  RelocateScatterRecord.cc 
   RelocateMPIScatterRecord.cc 
   RuntimeStats.cc 
   SchedulerCommon.cc 

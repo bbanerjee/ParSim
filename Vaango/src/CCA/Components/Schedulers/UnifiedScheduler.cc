@@ -67,20 +67,20 @@ extern Dout do_task_exec_stats;
 
 namespace {
 
-Dout g_dbg("Unified_DBG",
+Uintah::Dout g_dbg("Unified_DBG",
            "UnifiedScheduler",
            "general debugging info for the UnifiedScheduler",
            false);
-Dout g_queuelength("Unified_QueueLength",
+Uintah::Dout g_queuelength("Unified_QueueLength",
                    "UnifiedScheduler",
                    "report the task queue length for the UnifiedScheduler",
                    false);
 
-Dout g_thread_stats("Unified_ThreadStats",
+Uintah::Dout g_thread_stats("Unified_ThreadStats",
                     "UnifiedScheduler",
                     "Aggregated MPI thread stats for the UnifiedScheduler",
                     false);
-Dout g_thread_indv_stats("Unified_IndvThreadStats",
+Uintah::Dout g_thread_indv_stats("Unified_IndvThreadStats",
                          "UnifiedScheduler",
                          "Individual MPI thread stats for the UnifiedScheduler",
                          false);
@@ -265,6 +265,8 @@ init_threads(UnifiedScheduler* sched, int num_threads)
 } // namespace
 }
 } // namespace Uintah::Impl
+
+namespace Uintah {
 
 //______________________________________________________________________
 //
@@ -528,20 +530,20 @@ UnifiedScheduler::runTask(DetailedTask* dtask,
   // Only execute CPU or GPU tasks.  Don't execute postGPU tasks a second time.
   if (event == Task::CPU || event == Task::GPU) {
 
-    if (m_tracking_vars_print_location & SchedulerCommon::PRINT_BEFORE_EXEC) {
+    if (d_tracking_vars_print_location & SchedulerCommon::PRINT_BEFORE_EXEC) {
       printTrackedVars(dtask, SchedulerCommon::PRINT_BEFORE_EXEC);
     }
 
-    std::vector<DataWarehouseP> plain_old_dws(m_dws.size());
-    for (int i = 0; i < static_cast<int>(m_dws.size()); i++) {
-      plain_old_dws[i] = m_dws[i].get_rep();
+    std::vector<DataWarehouseP> plain_old_dws(d_dws.size());
+    for (int i = 0; i < static_cast<int>(d_dws.size()); i++) {
+      plain_old_dws[i] = d_dws[i].get();
     }
 
     DOUT(g_task_run, myRankThread() << " Running task:   " << *dtask);
 
-    dtask->doit(d_myworld, m_dws, plain_old_dws, event);
+    dtask->doit(d_myworld, d_dws, plain_old_dws, event);
 
-    if (m_tracking_vars_print_location & SchedulerCommon::PRINT_AFTER_EXEC) {
+    if (d_tracking_vars_print_location & SchedulerCommon::PRINT_AFTER_EXEC) {
       printTrackedVars(dtask, SchedulerCommon::PRINT_AFTER_EXEC);
     }
   }
@@ -604,7 +606,7 @@ UnifiedScheduler::runTask(DetailedTask* dtask,
     }
 #endif
 
-    dtask->done(m_dws);
+    dtask->done(d_dws);
 
     g_lb_mutex.lock();
     {
@@ -613,20 +615,20 @@ UnifiedScheduler::runTask(DetailedTask* dtask,
 
       double total_task_time = dtask->task_exec_time();
       if (g_exec_out || do_task_exec_stats) {
-        m_task_info[dtask->getTask()->getName()][TaskStatsEnum::ExecTime] +=
+        d_task_info[dtask->getTask()->getName()][TaskStatsEnum::ExecTime] +=
           total_task_time;
-        m_task_info[dtask->getTask()->getName()][TaskStatsEnum::WaitTime] +=
+        d_task_info[dtask->getTask()->getName()][TaskStatsEnum::WaitTime] +=
           dtask->task_wait_time();
       }
 
       // if I do not have a sub scheduler
       if (!dtask->getTask()->getHasSubScheduler()) {
         // add my task time to the total time
-        m_mpi_info[TotalTask] += total_task_time;
-        if (!m_is_copy_data_timestep &&
+        d_mpi_info[TotalTask] += total_task_time;
+        if (!d_is_copy_data_timestep &&
             dtask->getTask()->getType() != Task::Output) {
           // add contribution for patchlist
-          m_loadBalancer->addContribution(dtask, total_task_time);
+          d_load_balancer->addContribution(dtask, total_task_time);
         }
       }
     }
@@ -639,23 +641,23 @@ UnifiedScheduler::runTask(DetailedTask* dtask,
     // test a pending request
     auto ready_request = [](CommRequest const& r) -> bool { return r.test(); };
     CommRequestPool::handle find_handle;
-    CommRequestPool::iterator comm_sends_iter =
-      m_sends.find_any(find_handle, ready_request);
-    if (comm_sends_iter) {
+    CommRequestPool::iterator comd_sends_iter =
+      d_sends.find_any(find_handle, ready_request);
+    if (comd_sends_iter) {
       MPI_Status status;
-      comm_sends_iter->finishedCommunication(d_myworld, status);
-      find_handle = comm_sends_iter;
-      m_sends.erase(comm_sends_iter);
+      comd_sends_iter->finishedCommunication(d_myworld, status);
+      find_handle = comd_sends_iter;
+      d_sends.erase(comd_sends_iter);
     }
     //---------------------------------------------------------------------------
 
     // Add subscheduler timings to the parent scheduler and reset subscheduler
     // timings
-    if (m_parent_scheduler != nullptr) {
-      for (size_t i = 0; i < m_mpi_info.size(); ++i) {
-        m_parent_scheduler->m_mpi_info[i] += m_mpi_info[i];
+    if (d_parent_scheduler != nullptr) {
+      for (size_t i = 0; i < d_mpi_info.size(); ++i) {
+        d_parent_scheduler->d_mpi_info[i] += d_mpi_info[i];
       }
-      m_mpi_info.reset(0);
+      d_mpi_info.reset(0);
       m_thread_info.reset(0);
     }
   }
@@ -677,31 +679,31 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
 {
   // copy data timestep must be single threaded for now and
   //  also needs to run deterministically, in a static order
-  if (m_is_copy_data_timestep) {
+  if (d_is_copy_data_timestep) {
     MPIScheduler::execute(tgnum, iteration);
     return;
   }
 
   // track total scheduler execution time across timesteps
-  m_exec_timer.reset(true);
+  d_exec_timer.reset(true);
 
   // If doing in situ monitoring clear the times before each time step
   // otherwise the times are accumulated over N time steps.
   if (do_task_exec_stats) {
-    m_task_info.reset(0);
+    d_task_info.reset(0);
   }
 
-  RuntimeStats::initialize_timestep(m_num_schedulers, m_task_graphs);
+  RuntimeStats::initialize_timestep(m_num_schedulers, d_task_graphs);
 
-  ASSERTRANGE(tgnum, 0, static_cast<int>(m_task_graphs.size()));
-  TaskGraph* tg = m_task_graphs[tgnum];
+  ASSERTRANGE(tgnum, 0, static_cast<int>(d_task_graphs.size()));
+  TaskGraph* tg = d_task_graphs[tgnum].get();
   tg->setIteration(iteration);
-  m_current_task_graph = tgnum;
+  d_current_task_graph = tgnum;
 
-  if (m_task_graphs.size() > 1) {
+  if (d_task_graphs.size() > 1) {
     // tg model is the multi TG model, where each graph is going to need to
     // have its dwmap reset here (even with the same tgnum)
-    tg->remapTaskDWs(m_dwmap);
+    tg->remapTaskDWs(d_dw_map);
   }
 
   m_detailed_tasks = tg->getDetailedTasks();
@@ -711,13 +713,13 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
     return;
   }
 
-  m_detailed_tasks->initializeScrubs(m_dws, m_dwmap);
+  m_detailed_tasks->initializeScrubs(d_dws, d_dw_map);
   m_detailed_tasks->initTimestep();
 
   m_num_tasks = m_detailed_tasks->numLocalTasks();
 
-  if (m_runtimeStats) {
-    (*m_runtimeStats)[RuntimeStatsEnum::NumTasks] += m_num_tasks;
+  if (d_runtime_stats) {
+    (*d_runtime_stats)[RuntimeStatsEnum::NumTasks] += m_num_tasks;
   }
 
   for (int i = 0; i < m_num_tasks; i++) {
@@ -729,18 +731,18 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
   // This only happens if "-emit_taskgraphs" is passed to sus
   makeTaskGraphDoc(m_detailed_tasks, my_rank);
 
-  m_mpi_info.reset(0);
+  d_mpi_info.reset(0);
   m_thread_info.reset(0);
 
   m_num_tasks_done = 0;
   m_abort          = false;
   m_abort_point    = 987654;
 
-  if (m_reloc_new_pos_label && m_dws[m_dwmap[Task::OldDW]] != nullptr) {
-    m_dws[m_dwmap[Task::OldDW]]->exchangeParticleQuantities(
+  if (d_reloc_new_pos_label && d_dws[d_dw_map[Task::OldDW]] != nullptr) {
+    d_dws[d_dw_map[Task::OldDW]]->exchangeParticleQuantities(
       m_detailed_tasks,
-      m_loadBalancer,
-      m_reloc_new_pos_label,
+      d_load_balancer,
+      d_reloc_new_pos_label,
       iteration);
   }
 
@@ -779,7 +781,7 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
   //------------------------------------------------------------------------------------------------
   // activate TaskRunners
   //------------------------------------------------------------------------------------------------
-  if (!m_is_copy_data_timestep) {
+  if (!d_is_copy_data_timestep) {
     Impl::g_run_tasks.store(1, std::memory_order_relaxed);
     for (int i = 1; i < Impl::g_num_threads; ++i) {
       Impl::g_thread_states[i] = Impl::ThreadState::Active;
@@ -793,7 +795,7 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
   //------------------------------------------------------------------------------------------------
   // deactivate TaskRunners
   //------------------------------------------------------------------------------------------------
-  if (!m_is_copy_data_timestep) {
+  if (!d_is_copy_data_timestep) {
     Impl::g_run_tasks.store(0, std::memory_order_relaxed);
 
     Impl::thread_fence();
@@ -811,19 +813,19 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
   // wait on all pending requests
   auto ready_request = [](CommRequest const& r) -> bool { return r.wait(); };
   CommRequestPool::handle find_handle;
-  while (m_sends.size() != 0u) {
-    CommRequestPool::iterator comm_sends_iter;
-    if ((comm_sends_iter = m_sends.find_any(find_handle, ready_request))) {
-      find_handle = comm_sends_iter;
-      m_sends.erase(comm_sends_iter);
+  while (d_sends.size() != 0u) {
+    CommRequestPool::iterator comd_sends_iter;
+    if ((comd_sends_iter = d_sends.find_any(find_handle, ready_request))) {
+      find_handle = comd_sends_iter;
+      d_sends.erase(comd_sends_iter);
     } else {
       // TODO - make this a sleep? APH 07/20/16
     }
   }
   //---------------------------------------------------------------------------
 
-  ASSERT(m_sends.size() == 0u);
-  ASSERT(m_recvs.size() == 0u);
+  ASSERT(d_sends.size() == 0u);
+  ASSERT(d_recvs.size() == 0u);
 
   if (g_queuelength) {
     float lengthsum = 0;
@@ -848,15 +850,15 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
 
   finalizeTimestep();
 
-  m_exec_timer.stop();
+  d_exec_timer.stop();
 
   // compute the net timings
-  if (m_runtimeStats) {
+  if (d_runtime_stats) {
 
     // Stats specific to this threaded scheduler - TaskRunner threads start at
     // g_runners[1]
     for (int i = 1; i < Impl::g_num_threads; ++i) {
-      (*m_runtimeStats)[TaskWaitThreadTime] +=
+      (*d_runtime_stats)[TaskWaitThreadTime] +=
         Impl::g_runners[i]->getWaitTime();
 
       //      DOUT(true, "ThreadID: " << Impl::g_runners[i]->getLocalTID() << ",
@@ -880,8 +882,8 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
                                      "",
                                      d_myworld->myRank(),
                                      d_myworld->nRanks(),
-                                     m_application->getTimeStep(),
-                                     m_application->getSimTime(),
+                                     d_simulator->getTimeStep(),
+                                     d_simulator->getSimTime(),
                                      BaseInfoMapper::Dout,
                                      false);
   }
@@ -892,13 +894,13 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
                                         "",
                                         d_myworld->myRank(),
                                         d_myworld->nRanks(),
-                                        m_application->getTimeStep(),
-                                        m_application->getSimTime(),
+                                        d_simulator->getTimeStep(),
+                                        d_simulator->getSimTime(),
                                         BaseInfoMapper::Dout);
   }
 
   // only do on toplevel scheduler
-  if (m_parent_scheduler == nullptr) {
+  if (d_parent_scheduler == nullptr) {
     MPIScheduler::outputTimingStats("UnifiedScheduler");
   }
 
@@ -1269,7 +1271,7 @@ UnifiedScheduler::runTasks(int thread_id)
        * Otherwise there's nothing to do but process MPI recvs.
        */
       if (!havework) {
-        if (m_recvs.size() != 0u) {
+        if (d_recvs.size() != 0u) {
           havework = true;
           break;
         }
@@ -1483,7 +1485,7 @@ UnifiedScheduler::runTasks(int thread_id)
 #endif
       }
     } else {
-      if (m_recvs.size() != 0u) {
+      if (d_recvs.size() != 0u) {
         MPIScheduler::processMPIRecvs(TEST);
       }
     }
@@ -2210,7 +2212,7 @@ UnifiedScheduler::initiateH2DCopies(DetailedTask* dtask)
 
       // For this dependency, get its CPU Data Warehouse and GPU Datawarehouse.
       const int dwIndex         = curDependency->mapDataWarehouse();
-      OnDemandDataWarehouseP dw = m_dws[dwIndex];
+      OnDemandDataWarehouseP dw = d_dws[dwIndex];
       GPUDataWarehouse* gpudw   = dw->getGPUDW(deviceIndex);
 
       // a fix for when INF ghost cells are requested such as in RMCRT e.g.
@@ -3193,7 +3195,7 @@ UnifiedScheduler::prepareDeviceVars(DetailedTask* dtask)
       int whichGPU = it->second.m_whichGPU;
       int dwIndex  = it->second.m_dep->mapDataWarehouse();
 
-      OnDemandDataWarehouseP dw = m_dws[dwIndex];
+      OnDemandDataWarehouseP dw = d_dws[dwIndex];
       GPUDataWarehouse* gpudw   = dw->getGPUDW(whichGPU);
       if (!gpudw) {
         if (gpu_stats.active()) {
@@ -3694,7 +3696,7 @@ UnifiedScheduler::prepareTaskVarsIntoTaskDW(DetailedTask* dtask)
 
             int dwIndex = it->second.m_dep->mapDataWarehouse();
             GPUDataWarehouse* gpudw =
-              m_dws[dwIndex]->getGPUDW(it->second.m_whichGPU);
+              d_dws[dwIndex]->getGPUDW(it->second.m_whichGPU);
             int patchID   = it->first.m_patchID;
             int matlIndx  = it->first.m_matlIndx;
             int levelIndx = it->first.m_levelIndx;
@@ -3893,7 +3895,7 @@ UnifiedScheduler::ghostCellsProcessingReady(DetailedTask* dtask)
     it;
   for (it = ghostVarMap.begin(); it != ghostVarMap.end(); ++it) {
 
-    GPUDataWarehouse* gpudw = m_dws[it->first.m_dataWarehouse]->getGPUDW(
+    GPUDataWarehouse* gpudw = d_dws[it->first.m_dataWarehouse]->getGPUDW(
       GpuUtilities::getGpuIndexForPatch(it->second.m_sourcePatchPointer));
 
     // Check the source
@@ -4023,7 +4025,7 @@ UnifiedScheduler::allHostVarsProcessingReady(DetailedTask* dtask)
     }
     const int matlID          = varIter->first.m_matlIndex;
     const int dwIndex         = curDependency->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = m_dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
     GPUDataWarehouse* gpudw =
       dw->getGPUDW(GpuUtilities::getGpuIndexForPatch(patch));
     if (curDependency->m_dep_type == Task::Requires) {
@@ -4138,7 +4140,7 @@ UnifiedScheduler::allGPUVarsProcessingReady(DetailedTask* dtask)
 
     const int matlID          = varIter->first.m_matlIndex;
     const int dwIndex         = curDependency->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = m_dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
     GPUDataWarehouse* gpudw =
       dw->getGPUDW(GpuUtilities::getGpuIndexForPatch(patch));
     if (curDependency->m_dep_type == Task::Requires) {
@@ -4226,7 +4228,7 @@ UnifiedScheduler::markDeviceRequiresDataAsValid(DetailedTask* dtask)
        ++it) {
     int whichGPU            = it->second.m_whichGPU;
     int dwIndex             = it->second.m_dep->mapDataWarehouse();
-    GPUDataWarehouse* gpudw = m_dws[dwIndex]->getGPUDW(whichGPU);
+    GPUDataWarehouse* gpudw = d_dws[dwIndex]->getGPUDW(whichGPU);
     if (it->second.m_dep->m_dep_type == Task::Requires) {
       if (!it->second.m_staging) {
         if (gpu_stats.active()) {
@@ -4296,7 +4298,7 @@ UnifiedScheduler::markDeviceGhostsAsValid(DetailedTask* dtask)
   for (auto it = varMap.begin(); it != varMap.end(); ++it) {
     int whichGPU            = it->second.m_whichGPU;
     int dwIndex             = it->second.m_dep->mapDataWarehouse();
-    GPUDataWarehouse* gpudw = m_dws[dwIndex]->getGPUDW(whichGPU);
+    GPUDataWarehouse* gpudw = d_dws[dwIndex]->getGPUDW(whichGPU);
 
     if (gpu_stats.active()) {
       cerrLock.lock();
@@ -4341,7 +4343,7 @@ UnifiedScheduler::markDeviceComputesDataAsValid(DetailedTask* dtask)
     int numPatches            = patches->size();
     int numMatls              = matls->size();
     int dwIndex               = comp->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = m_dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
     for (int i = 0; i < numPatches; i++) {
       GPUDataWarehouse* gpudw =
@@ -4385,7 +4387,7 @@ UnifiedScheduler::markHostRequiresDataAsValid(DetailedTask* dtask)
        ++it) {
     int whichGPU            = it->second.m_whichGPU;
     int dwIndex             = it->second.m_dep->mapDataWarehouse();
-    GPUDataWarehouse* gpudw = m_dws[dwIndex]->getGPUDW(whichGPU);
+    GPUDataWarehouse* gpudw = d_dws[dwIndex]->getGPUDW(whichGPU);
     if (it->second.m_dep->m_dep_type == Task::Requires) {
       if (!it->second.m_staging) {
         if (gpu_stats.active()) {
@@ -4437,7 +4439,7 @@ UnifiedScheduler::initiateD2HForHugeGhostCells(DetailedTask* dtask)
         comp->getMaterialsUnderDomain(dtask->getMaterials());
 
       int dwIndex               = comp->mapDataWarehouse();
-      OnDemandDataWarehouseP dw = m_dws[dwIndex];
+      OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
       void* host_ptr    = nullptr; // host base pointer to raw data
       void* device_ptr  = nullptr; // device base pointer to raw data
@@ -4522,7 +4524,7 @@ UnifiedScheduler::initiateD2HForHugeGhostCells(DetailedTask* dtask)
                       host_highOffset, host_offset, host_size, host_strides;
                     level->computeVariableExtents(type, host_low, host_high);
                     int dwIndex               = comp->mapDataWarehouse();
-                    OnDemandDataWarehouseP dw = m_dws[dwIndex];
+                    OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
                     // It's possible the computes data may contain ghost cells.
                     // But a task needing to get the data out of the GPU may not
@@ -4813,7 +4815,7 @@ UnifiedScheduler::initiateD2H(DetailedTask* dtask)
 
     int numPatches            = patches->size();
     int dwIndex               = dependantVar->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = m_dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
     // Find the patch and level objects associated with the patchID
     const int patchID  = varIter->first.m_patchID;
@@ -4987,7 +4989,7 @@ UnifiedScheduler::initiateD2H(DetailedTask* dtask)
               }
               host_size                 = host_high - host_low;
               int dwIndex               = dependantVar->mapDataWarehouse();
-              OnDemandDataWarehouseP dw = m_dws[dwIndex];
+              OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
               // Get/make the host var
               if (gpu_stats.active()) {
@@ -5711,7 +5713,7 @@ UnifiedScheduler::findIntAndExtGpuDependencies(DetailedTask* dtask,
           continue;
         }
         OnDemandDataWarehouse* dw =
-          m_dws[req->m_req->mapDataWarehouse()].get_rep();
+          d_dws[req->m_req->mapDataWarehouse()].get_rep();
 
         if (gpu_stats.active()) {
           cerrLock.lock();
@@ -5732,21 +5734,21 @@ UnifiedScheduler::findIntAndExtGpuDependencies(DetailedTask* dtask,
         // the old dw on the prev timestep - pass it in if the
         // particle data is on the old dw
 
-        if (!m_reloc_new_pos_label && m_parent_scheduler) {
-          posDW = m_dws[req->m_req->m_task->mapDataWarehouse(Task::ParentOldDW)]
+        if (!d_reloc_new_pos_label && d_parent_scheduler) {
+          posDW = d_dws[req->m_req->m_task->mapDataWarehouse(Task::ParentOldDW)]
                     .get_rep();
-          posLabel = m_parent_scheduler->m_reloc_new_pos_label;
+          posLabel = d_parent_scheduler->d_reloc_new_pos_label;
         } else {
           // on an output task (and only on one) we require particle
           // variables from the NewDW
           if (req->m_to_tasks.front()->getTask()->getType() == Task::Output) {
-            posDW = m_dws[req->m_req->m_task->mapDataWarehouse(Task::NewDW)]
+            posDW = d_dws[req->m_req->m_task->mapDataWarehouse(Task::NewDW)]
                       .get_rep();
           } else {
-            posDW = m_dws[req->m_req->m_task->mapDataWarehouse(Task::OldDW)]
+            posDW = d_dws[req->m_req->m_task->mapDataWarehouse(Task::OldDW)]
                       .get_rep();
           }
-          posLabel = m_reloc_new_pos_label;
+          posLabel = d_reloc_new_pos_label;
         }
         // Load information which will be used to later invoke a
         // kernel to copy this range out of the GPU.
@@ -5874,7 +5876,7 @@ UnifiedScheduler::copyAllGpuToGpuDependences(DetailedTask* dtask)
         ghostSize.x() * ghostSize.y() * ghostSize.z() * elementDataSize;
       GPUGridVariableBase* device_source_var =
         OnDemandDataWarehouse::createGPUGridVariable(it->second.m_datatype);
-      OnDemandDataWarehouseP dw = m_dws[it->first.m_dataWarehouse];
+      OnDemandDataWarehouseP dw = d_dws[it->first.m_dataWarehouse];
       GPUDataWarehouse* gpudw   = dw->getGPUDW(it->second.m_sourceDeviceNum);
       gpudw->getStagingVar(
         *device_source_var,
@@ -6017,7 +6019,7 @@ UnifiedScheduler::copyAllExtGpuDependenciesToHost(DetailedTask* dtask)
 
       GPUGridVariableBase* device_var =
         OnDemandDataWarehouse::createGPUGridVariable(it->second.m_datatype);
-      OnDemandDataWarehouseP dw = m_dws[it->first.m_dataWarehouse];
+      OnDemandDataWarehouseP dw = d_dws[it->first.m_dataWarehouse];
       GPUDataWarehouse* gpudw   = dw->getGPUDW(it->second.m_sourceDeviceNum);
       gpudw->getStagingVar(
         *device_var,
@@ -6101,7 +6103,7 @@ UnifiedScheduler::copyAllExtGpuDependenciesToHost(DetailedTask* dtask)
       if (it->second.m_dest == GpuUtilities::anotherMpiRank) {
         // TODO: Needs a particle section
         IntVector host_low, host_high, host_offset, host_size, host_strides;
-        OnDemandDataWarehouseP dw = m_dws[(const int)it->first.m_dataWarehouse];
+        OnDemandDataWarehouseP dw = d_dws[(const int)it->first.m_dataWarehouse];
 
         // We created a temporary host variable for this earlier,
         // and the deviceVars collection knows about it.
@@ -6298,3 +6300,5 @@ UnifiedSchedulerWorker::getLocalTID() const
 {
   return m_tid;
 }
+
+} // namespace Uintah
