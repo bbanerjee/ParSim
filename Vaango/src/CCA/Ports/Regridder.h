@@ -119,7 +119,7 @@ public:
 
   //! Schedules task to dilate existing error flags
   virtual void
-  scheduleDilation(const LevelP& level) = 0;
+  scheduleDilation(const LevelP& level, bool isLockstepAMR) = 0;
 
   //! Asks if we are going to do regridding
   virtual bool

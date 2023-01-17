@@ -93,7 +93,7 @@ public:
   //! Asks if we need to recompile the task graph.
   //! Will return true if we did a regrid
   virtual bool
-  needRecompile(double time, double delt, const GridP& grid);
+  needRecompile(const GridP& grid);
 
   //! Do we need to regrid this timestep?
   virtual bool

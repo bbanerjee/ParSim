@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,46 +23,56 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_SINGLELEVELREGRIDDER_H
-#define UINTAH_SINGLELEVELREGRIDDER_H
+#ifndef __CCA_COMPOENTS_REGRIDDER_SINGLELEVELREGRIDDER_H__
+#define __CCA_COMPOENTS_REGRIDDER_SINGLELEVELREGRIDDER_H__
+
 #include <CCA/Components/Regridder/RegridderCommon.h>
 #include <CCA/Components/Regridder/TiledRegridder.h>
 
-#include <vector> 
+#include <vector>
 
 namespace Uintah {
 
 /**************************************
-
 CLASS
    SingleLevelRegridder
-  
-DESCRIPTION 
+
+DESCRIPTION
     This regridder was designed to allow the user to alter a single level's
     patch configuration.  This is useful when restarting a single level uda
     and use more processors than the original patch configuration
     would allow.
-     
 ****************************************/
-  class SingleLevelRegridder : public TiledRegridder {
-  public:
-    SingleLevelRegridder(const ProcessorGroup* pg);
-    virtual ~SingleLevelRegridder();
-    
-    virtual Grid* regrid( Grid* oldGrid );
-		
-    virtual void problemSetup(const ProblemSpecP& params,
-			         const GridP& grid,
-			         const MaterialManagerP& mat_manager);
 
-    std::vector<IntVector> getMinPatchSize() {return d_tileSize;}
+class SingleLevelRegridder : public TiledRegridder
+{
+public:
+  SingleLevelRegridder(const ProcessorGroup* pg);
+  virtual ~SingleLevelRegridder() = default;
 
-  protected:
-    void problemSetup_BulletProofing(const int l);
-    int d_level_index;              // perform regrid on this level index
+  virtual std::string getName() { return std::string("Single Level"); }
 
-  };
+  virtual Grid*
+  regrid(Grid* oldGrid, int timeStep);
+
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const GridP& grid,
+               const MaterialManagerP& mat_manager);
+
+  std::vector<IntVector>
+  getMinPatchSize()
+  {
+    return d_tileSize;
+  }
+
+protected:
+  void
+  problemSetup_BulletProofing(const int l);
+
+  int d_level_index; // perform regrid on this level index
+};
 
 } // End namespace Uintah
 
-#endif
+#endif //__CCA_COMPOENTS_REGRIDDER_SINGLELEVELREGRIDDER_H__

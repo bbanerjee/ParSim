@@ -31,7 +31,7 @@
 
 //-- Uintah framework includes --//
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Parallel/Parallel.h
+#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 using namespace Uintah;

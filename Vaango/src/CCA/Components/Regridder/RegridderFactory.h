@@ -49,9 +49,6 @@ class RegridderFactory
 {
 
 public:
-  static RegridderCommon* sole; ///< Pointer to the single simulation Regridder>
-                                ///< instance>
-
   /**
    * @brief Create a simulation Regridder . Type is
    * based on what the ProblemSpec is provided from the
@@ -61,6 +58,9 @@ public:
    * @param world the MPI communicator used. To date
    * this is normally MPI_COMM_WORLD.
    */
+
+  ///< Pointer to the single simulation Regridder instance>
+  static RegridderCommon*
   create(ProblemSpecP& ps, const ProcessorGroup* world);
 };
 
