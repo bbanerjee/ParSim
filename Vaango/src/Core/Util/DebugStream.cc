@@ -24,33 +24,14 @@
  * IN THE SOFTWARE.
  */
 
-// DebugStream.cc - An ostream used for debug messages
-// Written by:
-// Eric Kuehne
-// Department of Computer Science
-// University of Utah
-// Feb. 2000
-// DebugStream is an ostream that is useful for outputing debug messages.
-// When an instance is created, it is given a name.  An environment variable,
-// SCI_DEBUG, is inspected to see if a particular instance should be
-// active, and if so where to send the output.  The syntax for the
-// environment variable is:
-// SCI_DEBUG = ([name]:[-|+|+FILENAME])(,[name]:[-|+|+FILENAME])*
-// The + or - specifies whether the named object is on or off.  If a file is
-// specified it is opened in ios::out mode.  If no file is specified,
-// the stream is directed to cout.  The : and , characters are
-// restricted to deliminators.
-// Example:
-// SCI_DEBUG = modules.meshgen.warning:+meshgen.out,util.debugstream.error:-
-// Future Additions:
-// o Possible additions to constructor:
-//   - Default file to output to
-//   - Mode that the file will be opened in (append, out, etc.) (usefulness??)
-// o Allow DEFAULT specification in the env variable which would override
-//   all default settings. (usefulness??)
-// o Time stamp option
-
 #include <Core/Util/DebugStream.h>
+
+#include <Core/Exceptions/InternalError.h>
+
+#include <sci_defs/compile_defs.h> // for STATIC_BUILD
+
+#include <algorithm>
+#include <cstdlib> // for getenv()
 #include <fstream>
 #include <iostream>
 
@@ -58,36 +39,62 @@ namespace Uintah {
 
 static const char* ENV_VAR = "SCI_DEBUG";
 
-DebugBuf::DebugBuf() {}
-
-DebugBuf::~DebugBuf() {}
-
 int
 DebugBuf::overflow(int ch)
 {
   if (owner == nullptr) {
-    std::cout << "DebugBuf: owner not initialized? Maybe static object init order "
-            "error."
-         << std::endl;
+    std::cout
+      << "DebugBuf: owner not initialized? Maybe static object init order "
+         "error."
+      << std::endl;
   } else if (owner->active()) {
     return (*(owner->outstream) << (char)ch ? 0 : EOF);
   }
   return 0;
 }
 
-DebugStream::DebugStream(const string& iname, bool defaulton)
-  : std::ostream(&dbgbuf)
-  , outstream(0)
+DebugStream::DebugStream(const std::string& name, bool defaulton)
+  : std::ostream(&d_dbgbuf)
+  , outstream(&std::cout)
+  , d_name(name)
+  , d_active(defaulton)
+
 {
-  name         = iname;
-  dbgbuf.owner = this;
-  // set default values
-  isactive = defaulton;
-  if (isactive) {
-    outstream = &std::cout;
-  }
-  // check SCI_DEBUG to see if this instance is mentioned
-  checkenv(iname);
+#ifdef STATIC_BUILD
+  instantiate_map();
+#endif
+
+  d_dbgbuf.owner = this;
+
+  // Check to see if the name has been used before.
+  checkName();
+
+  // Check SCI_DEBUG to see if this instance is mentioned.
+  checkEnv();
+}
+
+DebugStream::DebugStream(const std::string& name,
+                         const std::string& component,
+                         const std::string& description,
+                         bool defaulton)
+  : std::ostream(&d_dbgbuf)
+  , outstream(&std::cout)
+  , d_name(name)
+  , d_component(component)
+  , d_description(description)
+  , d_active(defaulton)
+{
+#ifdef STATIC_BUILD
+  instantiate_map();
+#endif
+
+  d_dbgbuf.owner = this;
+
+  // Check to see if the name has been used before.
+  checkName();
+
+  // Check SCI_DEBUG to see if this instance is mentioned.
+  checkEnv();
 }
 
 DebugStream::~DebugStream()
@@ -98,55 +105,104 @@ DebugStream::~DebugStream()
 }
 
 void
-DebugStream::checkenv(string iname)
+DebugStream::checkName()
 {
+  // Comment out this if statement and the SCI_THROW to see all name conflicts.
+  if (d_component != "" && d_component != "Unknown") {
+
+    // See if the name has already been registered.
+    auto iter = s_all_debug_streams.find(d_name);
+    if (iter != s_all_debug_streams.end()) {
+
+      printf("These two debugStreams are for the same component and have the "
+             "same name. \n");
+      (*iter).second->print();
+      print();
+
+      // Two debugStreams for the same compent with the same name.
+      SCI_THROW(
+        InternalError(std::string("Multiple DebugStreams for component " +
+                                  d_component + " with name " + d_name),
+                      __FILE__,
+                      __LINE__));
+    } else {
+      s_all_debug_streams[d_name] = this;
+    }
+  }
+}
+void
+DebugStream::checkEnv()
+{
+  // Set the input name to all lowercase as we are going to be doing
+  // case-insensitive checks.
+  std::string temp = d_name;
+  std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
+  const std::string name_lower = temp;
+
   char* vars = getenv(ENV_VAR);
   if (!vars) {
     return;
   }
-  string var(vars);
-  // if SCI_DEBUG was defined, parse the string and store appropriate
-  // values in onstreams and offstreams
-  if (!var.empty()) {
-    string name, file;
+  std::string var(vars);
 
-    unsigned long oldcomma     = 0;
-    string::size_type commapos = var.find(',', 0);
-    string::size_type colonpos = var.find(':', 0);
-    if (commapos == string::npos) {
+  // If SCI_DEBUG was defined, parse the string and store appropriate
+  // values in onstreams and offstreams
+
+  if (!var.empty()) {
+    std::string name, file;
+
+    unsigned long oldcomma          = 0;
+    std::string::size_type commapos = var.find(',', 0);
+    std::string::size_type colonpos = var.find(':', 0);
+    if (commapos == std::string::npos) {
       commapos = var.size();
     }
-    while (colonpos != string::npos) {
+    while (colonpos != std::string::npos) {
       name.assign(var, oldcomma, colonpos - oldcomma);
-      if (name == iname) {
+
+      // Doing case-insensitive test... so lower the name.
+      std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+      if (name == name_lower) {
         file.assign(var, colonpos + 1, commapos - colonpos - 1);
         if (file[0] == '-') {
-          isactive = false;
-          return;
+          d_active = false;
         } else if (file[0] == '+') {
-          isactive = true;
-          // if no output file was specified, set to cout
-          if (file.length() == 1) {
-            outstream = &std::cout;
-          } else {
-            outstream = new std::ofstream(file.substr(1, file.size() - 1).c_str());
-          }
+          d_active = true;
         } else {
-          // houston, we have a problem: SCI_DEBUG was not correctly
-          // set.  Ignore and set all to default value
+          // Houston, we have a problem: SCI_DEBUG was not correctly set. Ignore
+          // and set all to default values...
+          return;
+        }
+
+        // if no output file was specified, set to cout
+        if (file.length() == 1) {
+          d_filename  = std::string("cout");
+          outstream = &std::cout;
+        } else if (file.length() > 1) {
+          d_filename  = file.substr(1, file.size() - 1).c_str();
+          outstream = new std::ofstream(d_filename);
         }
         return;
       }
       oldcomma = commapos + 1;
       commapos = var.find(',', oldcomma + 1);
       colonpos = var.find(':', oldcomma + 1);
-      if (commapos == string::npos) {
+      if (commapos == std::string::npos) {
         commapos = var.size();
       }
     }
   } else {
-    // SCI_DEBUG was not defined,
-    // all objects will be set to default
+    // SCI_DEBUG was not defined, all objects will be set to default
+  }
+}
+
+void
+DebugStream::instantiate_map()
+{
+  if (!s_all_dbg_streams_initialized) {
+    s_all_dbg_streams_initialized = true;
+    s_all_debug_streams           = std::map<std::string, DebugStream*>();
   }
 }
 

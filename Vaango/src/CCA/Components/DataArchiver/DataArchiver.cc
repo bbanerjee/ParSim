@@ -1109,7 +1109,7 @@ DataArchiver::beginOutputTimestep( double time, double delt,
 {
   // time should be currentTime+delt
   double currentTime = d_sharedState->getElapsedTime();
-  int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+  int timestep = d_simulator->getTimeStep();
   dbg << "beginOutputTimestep called at time=" << currentTime
       << " (" << d_nextOutputTime << "), " << d_outputTimestepInterval 
       << " (" << d_nextOutputTimestep << ")\n";
@@ -1215,7 +1215,7 @@ DataArchiver::makeTimestepDirs(Dir& baseDir,
 
   int numLevels = grid->numLevels();
   // time should be currentTime+delt
-  int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+  int timestep = d_simulator->getTimeStep();
   int dir_timestep = getTimestepTopLevel();  // could be modified by reduceUda
   
   dbg << "      makeTimestepDirs for timestep: " << timestep << " dir_timestep: " << dir_timestep<< "\n";
@@ -1335,7 +1335,7 @@ DataArchiver::findNext_OutputCheckPoint_Timestep(double delt, const GridP& grid)
 {
   dbg << "  findNext_OutputCheckPoint_Timestep() begin\n";
   // double time = d_sharedState->getElapsedTime();
-  int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+  int timestep = d_simulator->getTimeStep();
   // if this was an output/checkpoint timestep,
   // determine when the next one will be.
 
@@ -1892,7 +1892,7 @@ DataArchiver::outputVariables(const ProcessorGroup * /*world*/,
           dbg << patches->get(p)->getID();
       }
     }
-    dbg << " on timestep: " << d_sharedState->getCurrentTopLevelTimeStep() << "\n";
+    dbg << " on timestep: " << d_simulator->getTimeStep() << "\n";
   }
     
   
@@ -2624,7 +2624,7 @@ DataArchiver::copy_outputProblemSpec( Dir & fromDir, Dir & toDir )
 int
 DataArchiver::getTimestepTopLevel()
 {
-  int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+  int timestep = d_simulator->getTimeStep();
   
   if ( d_usingReduceUda ) {
     return d_restartTimestepIndicies[timestep];

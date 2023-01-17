@@ -36,7 +36,7 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>

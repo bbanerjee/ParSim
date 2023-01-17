@@ -137,7 +137,8 @@ WARNING
     double d_stopTime;
     double d_colorThreshold;
     std::vector<VarLabel*> d_varLabels;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     Output* d_dataArchiver;
     ProblemSpecP d_prob_spec;
     const Material* d_matl;

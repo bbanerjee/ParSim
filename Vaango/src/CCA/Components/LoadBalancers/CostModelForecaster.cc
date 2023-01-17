@@ -472,7 +472,7 @@ CostModelForecaster::getWeights(const Grid* grid, vector<vector<int> > num_parti
 
 //______________________________________________________________________
 // 
-ostream& operator<<(ostream& out, const CostModelForecaster::PatchInfo &pi)
+ostream& operator<<(std::ostream& out, const CostModelForecaster::PatchInfo &pi)
 {
   out << "NumCells: " << pi.num_cells << " NumExtraCells: " << pi.num_extraCells << " NumParticles: " << pi.num_particles << " ExecTime: " << pi.execTime ;
   return out;

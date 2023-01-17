@@ -155,7 +155,8 @@ WARNING
        
     //__________________________________
     // global constants
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     Output* d_dataArchiver;
     ProblemSpecP d_prob_spec;
     

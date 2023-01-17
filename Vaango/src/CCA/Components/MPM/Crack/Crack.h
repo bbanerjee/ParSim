@@ -186,7 +186,8 @@ class Crack
 
     // PRIVATE DATA MEMBERS
     MPI_Comm mpi_crack_comm;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     MPMFlags* flag;
     int n8or27;
     int NGP;

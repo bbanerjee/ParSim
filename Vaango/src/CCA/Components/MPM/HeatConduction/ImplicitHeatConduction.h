@@ -175,7 +175,8 @@ namespace Uintah {
 
     Solver* d_HC_solver;
 
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     int NGP, NGN;
 
     ImplicitHeatConduction(const ImplicitHeatConduction&);

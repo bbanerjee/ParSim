@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,8 +23,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_TILEDREGRIDDER_H
-#define UINTAH_HOMEBREW_TILEDREGRIDDER_H
+#ifndef __CCA_COMPONENTS_REGRIDDER_TILEDREGRIDDER_H__
+#define __CCA_COMPONENTS_REGRIDDER_TILEDREGRIDDER_H__
+
 #include <CCA/Components/Regridder/RegridderCommon.h>
 
 #include <vector> 
@@ -68,7 +70,7 @@ WARNING
 		
     virtual void problemSetup(const ProblemSpecP& params,
 			         const GridP& grid,
-			         const SimulationStateP& state);
+			         const MaterialManagerP& mat_manager);
 
     std::vector<IntVector> getMinPatchSize() {return d_minTileSize;}
 
@@ -109,4 +111,4 @@ WARNING
 
 } // End namespace Uintah
 
-#endif
+#endif //__CCA_COMPONENTS_REGRIDDER_TILEDREGRIDDER_H__

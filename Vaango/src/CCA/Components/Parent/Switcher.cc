@@ -45,7 +45,7 @@
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -939,7 +939,7 @@ Switcher::outputPS( Dir & dir )
 //______________________________________________________________________
 //
 void
-Switcher::readSwitcherState(const ProblemSpecP& spec,SimulationStateP& state)
+Switcher::readSwitcherState(const ProblemSpecP& spec,MaterialManagerP& mat_manager)
 {
   ProblemSpecP ps = (ProblemSpecP) spec;
   
@@ -971,7 +971,7 @@ Switcher::readSwitcherState(const ProblemSpecP& spec,SimulationStateP& state)
 //______________________________________________________________________
 //
 void Switcher::addMaterial(const ProblemSpecP& params, GridP& grid,
-                           SimulationStateP& state)
+                           MaterialManagerP& mat_manager)
 {
   d_sim->addMaterial(params, grid, state);
 }

@@ -139,7 +139,7 @@ ParticleVariable<Point>::gather(ParticleSubset* pset,
 
 template<>
 void
-ParticleVariable<double>::emitNormal(ostream& out,
+ParticleVariable<double>::emitNormal(std::ostream& out,
                                      const IntVector&,
                                      const IntVector&,
                                      ProblemSpecP varnode,

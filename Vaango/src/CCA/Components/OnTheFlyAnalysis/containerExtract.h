@@ -140,7 +140,8 @@ namespace Uintah {
       double d_startTime;
       double d_stopTime;
       std::vector<VarLabel*> d_varLabels;
-      SimulationStateP d_sharedState;
+      MaterialManagerP 
+ d_mat_manager;
       std::vector<container*> d_containers;
       Output* d_dataArchiver;
       ProblemSpecP d_prob_spec;

@@ -50,7 +50,8 @@ private:
   ApproachContact(const ApproachContact& con);
   ApproachContact& operator=(const ApproachContact& con);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
   // Coefficient of friction
   double d_mu;

@@ -3272,7 +3272,7 @@ OnDemandDataWarehouse::emitPIDX(PIDXOutputContext& pc,
 #endif
 
 void
-OnDemandDataWarehouse::print(ostream& intout,
+OnDemandDataWarehouse::print(std::ostream& intout,
                              const VarLabel* label,
                              const Level* level,
                              int matlIndex /* = -1 */)
@@ -4017,7 +4017,7 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
 }
 
 void
-OnDemandDataWarehouse::logMemoryUse(ostream& out,
+OnDemandDataWarehouse::logMemoryUse(std::ostream& out,
                                     unsigned long& total,
                                     const std::string& tag)
 {

@@ -573,7 +573,8 @@ private:
   ImpMPM(const ImpMPM&);
   ImpMPM& operator=(const ImpMPM&);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
   MPMLabel* lb;
   ImpMPMFlags* flags;
   DeformationGradientComputer* d_defGradComputer;

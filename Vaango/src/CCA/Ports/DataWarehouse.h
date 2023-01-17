@@ -131,7 +131,7 @@ public:
            int matlIndex      = -1) = 0;
 
   virtual void
-  print(ostream& intout,
+  print(std::ostream& intout,
         const VarLabel* label,
         const Level* level,
         int matlIndex = -1) = 0;

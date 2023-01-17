@@ -52,9 +52,9 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/PerPatch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <CCA/Ports/Scheduler.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <Core/Util/DebugStream.h>
 
 // TODO:

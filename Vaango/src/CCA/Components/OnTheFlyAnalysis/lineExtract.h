@@ -138,7 +138,8 @@ WARNING
     double d_stopTime;
     std::vector<VarLabel*> d_varLabels;
     std::vector<int> d_varMatl;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     std::vector<line*> d_lines;
     Output* d_dataArchiver;
     ProblemSpecP d_prob_spec;

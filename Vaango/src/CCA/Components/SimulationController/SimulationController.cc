@@ -30,7 +30,7 @@
 #include <CCA/Components/SimulationController/SimulationController.h>
 #include <CCA/Components/SimulationController/SimulationControllerUtils.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/SimulationTime.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Variables/VarTypes.h>

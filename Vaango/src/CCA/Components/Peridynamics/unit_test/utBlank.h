@@ -73,7 +73,7 @@ namespace Vaango {
     virtual void problemSetup(const Uintah::ProblemSpecP& params, 
                               const Uintah::ProblemSpecP& restart_prob_spec, 
                               Uintah::GridP& grid, 
-                              Uintah::SimulationStateP& state);
+                              Uintah::MaterialManagerP& mat_manager);
     virtual void scheduleInitialize(const Uintah::LevelP& level,
 				                    Uintah::SchedulerP& sched);
     virtual void scheduleComputeStableTimestep(const Uintah::LevelP& level,
@@ -100,7 +100,8 @@ namespace Vaango {
 		             Uintah::DataWarehouse* old_dw, 
                      Uintah::DataWarehouse* new_dw);
 
-    Uintah::SimulationStateP d_sharedState;
+    Uintah::MaterialManagerP 
+ d_mat_manager;
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
     Uintah::EmptyMaterial* d_mymat;

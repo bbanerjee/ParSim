@@ -28,7 +28,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 #include <Core/Util/DebugStream.h>

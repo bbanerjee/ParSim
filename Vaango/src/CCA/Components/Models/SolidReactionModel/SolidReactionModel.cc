@@ -55,7 +55,7 @@
 #include <Core/Grid/Material.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/ICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>

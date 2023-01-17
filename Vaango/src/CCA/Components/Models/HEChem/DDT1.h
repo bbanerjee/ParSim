@@ -214,7 +214,8 @@ WARNING
     const Material* d_matl0;
     const Material* d_matl1;
     const Material* d_matl2;
-    SimulationStateP d_sharedState;   
+    MaterialManagerP 
+ d_mat_manager;   
 
     ICELabel* Ilb;
     MPMICELabel* MIlb;

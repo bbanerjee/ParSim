@@ -30,7 +30,7 @@
 #include <Core/Parallel/CrowdMonitor.h>
 
 #include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/CCVariable.h>

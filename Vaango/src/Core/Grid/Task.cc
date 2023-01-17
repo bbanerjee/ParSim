@@ -957,7 +957,7 @@ Task::doit(DetailedTask* dtask,
 }
 
 void
-Task::display(ostream& out) const
+Task::display(std::ostream& out) const
 {
   out << Parallel::getMPIRank() << " " << getName() << " (" << m_tasktype
       << "): [";
@@ -1122,14 +1122,14 @@ operator<<(std::ostream& out, const Uintah::Task::Dependency& dep)
 }
 
 ostream&
-operator<<(ostream& out, const Task& task)
+operator<<(std::ostream& out, const Task& task)
 {
   task.display(out);
   return out;
 }
 
 ostream&
-operator<<(ostream& out, const Task::TaskType& tt)
+operator<<(std::ostream& out, const Task::TaskType& tt)
 {
   switch (tt) {
     case Task::Normal:
@@ -1171,7 +1171,7 @@ Task::displayAll_DOUT(Uintah::Dout& dbg) const
 }
 
 void
-Task::displayAll(ostream& out) const
+Task::displayAll(std::ostream& out) const
 {
   display(out);
   out << '\n';

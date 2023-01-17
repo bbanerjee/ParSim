@@ -41,7 +41,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -1250,7 +1250,7 @@ Crack::OutputCrackFrontResults(const int& m)
     std::ofstream outCrkFrt2(outFileName2, std::ios::app);
 
     double time  = d_sharedState->getElapsedTime();
-    int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+    int timestep = d_simulator->getTimeStep();
 
     int num          = (int)cfSegNodes[m].size();
     int numSubCracks = 0;

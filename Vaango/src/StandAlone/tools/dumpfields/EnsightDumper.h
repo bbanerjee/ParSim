@@ -87,7 +87,7 @@ namespace Uintah {
       // to have this all in one place
       FldDumper(bool bin) : bin_(bin), os_(0) {}
     
-      void setstrm(ostream * os) { os_ = os; }
+      void setstrm(std::ostream * os) { os_ = os; }
       void unsetstrm() { os_ = 0; }
     
       void textfld(string v, int width=80) {

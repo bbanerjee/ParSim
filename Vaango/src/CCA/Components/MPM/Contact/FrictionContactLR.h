@@ -111,7 +111,8 @@ private:
    int NGP;
    int NGN;
 
-   SimulationStateP d_sharedState;
+   MaterialManagerP 
+ d_mat_manager;
 
    void exMomInterpolated(const ProcessorGroup*,
                           const PatchSubset* patches,

@@ -111,7 +111,8 @@ public:
   //  };
 
   // Inherit this from the SerialMPM base class
-  // SimulationStateP d_sharedState;
+  // MaterialManagerP 
+ d_mat_manager;
 
 protected:
   enum coarsenFlag

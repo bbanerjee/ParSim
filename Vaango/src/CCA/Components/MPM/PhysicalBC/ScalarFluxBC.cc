@@ -416,7 +416,7 @@ ScalarFluxBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
 namespace Uintah {
 // A method to print out the scalar flux bcs
 ostream&
-operator<<(ostream& out, const ScalarFluxBC& bc)
+operator<<(std::ostream& out, const ScalarFluxBC& bc)
 {
   out << "Begin MPM ScalarFlux BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();

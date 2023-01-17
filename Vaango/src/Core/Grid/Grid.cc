@@ -1149,7 +1149,7 @@ Grid::problemSetup(const ProblemSpecP& params,
 
 namespace Uintah {
 ostream&
-operator<<(ostream& out, const Grid& grid)
+operator<<(std::ostream& out, const Grid& grid)
 {
   out.setf(std::ios::floatfield);
   out.precision(6);

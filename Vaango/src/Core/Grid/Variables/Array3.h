@@ -360,7 +360,7 @@ namespace Uintah {
         return d_window->get3DPointer();
       }
 
-      inline void write(ostream& out, const IntVector& l, const IntVector& h, bool /*outputDoubleAsFloat*/ )
+      inline void write(std::ostream& out, const IntVector& l, const IntVector& h, bool /*outputDoubleAsFloat*/ )
       {
         // This could be optimized...
         ssize_t linesize = (ssize_t)(sizeof(T)*(h.x()-l.x()));
@@ -494,7 +494,7 @@ namespace Uintah {
 
   // return true iff no reallocation is needed
   template <>
-    inline void Array3<double>::write(ostream& out, const IntVector& l, const IntVector& h, bool outputDoubleAsFloat)
+    inline void Array3<double>::write(std::ostream& out, const IntVector& l, const IntVector& h, bool outputDoubleAsFloat)
     {
       // This could be optimized...
       if (outputDoubleAsFloat) {

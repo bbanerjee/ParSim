@@ -976,7 +976,8 @@ namespace Uintah {
                                  
     ICELabel* lb; 
     MPMICELabel* MIlb;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     Output* dataArchiver;
     SchedulerP d_subsched;
     bool d_recompileSubsched;

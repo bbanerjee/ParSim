@@ -323,7 +323,7 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
 
 namespace Uintah {
 // A method to print out the moment bcs
-  ostream& operator<<(ostream& out, const MomentBC& bc)
+  ostream& operator<<(std::ostream& out, const MomentBC& bc)
   {
     out << "Begin MPM Moment BC # = " << bc.loadCurveID() << endl;
     std::string surfType = bc.getSurfaceType();

@@ -41,7 +41,7 @@ Interface:
     ~clString();
 
     // I/O
-    friend ostream& operator<<(ostream& s, const clString&);
+    friend ostream& operator<<(std::ostream& s, const clString&);
     friend istream& operator>>(istream& s, clString&);
 
     // Comparison

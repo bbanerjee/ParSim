@@ -1142,7 +1142,7 @@ private:
 //______________________________________________________________________
 SolverParameters*
 HypreSolver2::readParameters(ProblemSpecP& params, const string& varname,
-                             SimulationStateP& state)
+                             MaterialManagerP& mat_manager)
 {
   HypreSolver2Params* p = scinew HypreSolver2Params();
   p->state = state;

@@ -29,7 +29,7 @@
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <CCA/Components/ICE/Diffusion.h>
 #include <CCA/Components/Models/FluidsBased/PassiveScalar.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -41,7 +41,7 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/PerPatch.h>
 
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Parallel/ProcessorGroup.h>

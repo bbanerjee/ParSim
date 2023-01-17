@@ -29,7 +29,7 @@
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/MaterialSetP.h>
 #include <Core/Grid/Variables/VarTypes.h>
@@ -66,7 +66,7 @@ UdaReducer::~UdaReducer()
 void UdaReducer::problemSetup(const ProblemSpecP& prob_spec, 
                               const ProblemSpecP& restart_ps, 
                               GridP& grid, 
-                              SimulationStateP& state)
+                              MaterialManagerP& mat_manager)
 {
 
   //__________________________________

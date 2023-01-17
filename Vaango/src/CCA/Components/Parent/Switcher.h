@@ -95,7 +95,7 @@ namespace Uintah {
     // direct component to add a new material
     virtual void addMaterial( const ProblemSpecP& params, 
                               GridP& grid,
-                              SimulationStateP& state );
+                              MaterialManagerP& mat_manager );
 
     virtual void scheduleInitializeAddedMaterial( const LevelP & level,
                                                   SchedulerP   & scheduler );
@@ -136,7 +136,7 @@ namespace Uintah {
                     DataWarehouse* old_dw, DataWarehouse* new_dw);
                     
     void readSwitcherState( const ProblemSpecP&, 
-                            SimulationStateP& state );
+                            MaterialManagerP& mat_manager );
 
     ProblemSpecP d_master_ups;
 
@@ -151,7 +151,8 @@ namespace Uintah {
 
     SimulationInterface* d_sim;
 
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     unsigned int d_numComponents;
     unsigned int d_componentIndex;
     

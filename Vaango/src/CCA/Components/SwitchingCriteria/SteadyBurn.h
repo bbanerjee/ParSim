@@ -52,7 +52,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/SwitchingCriteria.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Labels/MPMICELabel.h>
 #include <Core/Labels/ICELabel.h>
@@ -84,7 +84,8 @@ namespace Uintah {
       double d_temperature;   
       double d_BP;              // Number of Particles at Boundary
       
-      SimulationStateP d_sharedState; 
+      MaterialManagerP 
+ d_mat_manager; 
       MPMLabel* Mlb;
       MPMICELabel* MIlb;
       ICELabel* Ilb;

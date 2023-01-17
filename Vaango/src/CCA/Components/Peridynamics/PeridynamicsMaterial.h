@@ -33,7 +33,7 @@
 
 #include <Core/Grid/Material.h>
 #include <Core/Grid/GridP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

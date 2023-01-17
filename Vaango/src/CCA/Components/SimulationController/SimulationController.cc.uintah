@@ -27,7 +27,7 @@
 #include <Core/DataArchive/DataArchive.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/OS/Dir.h>
 #include <Core/OS/ProcessInfo.h>

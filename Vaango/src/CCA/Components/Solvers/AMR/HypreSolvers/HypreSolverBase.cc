@@ -247,7 +247,7 @@ namespace Uintah {
   } // end solverFromTitle()
 
   ostream&
-  operator << (ostream& os, const SolverType& solverType)
+  operator << (std::ostream& os, const SolverType& solverType)
     // Write a solver type (enum) to the stream os.
   {
     switch (solverType) {

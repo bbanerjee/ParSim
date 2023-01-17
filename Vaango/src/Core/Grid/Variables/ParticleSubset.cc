@@ -238,7 +238,7 @@ ParticleSubset::addParticles(unsigned int count)
 namespace Uintah {
 
 ostream&
-operator<<(ostream& out, ParticleSubset& pset)
+operator<<(std::ostream& out, ParticleSubset& pset)
 {
   out << "pset (patch: " << *(pset.getPatch()) << " ("
       << (pset.getPatch() ? pset.getPatch()->getID() : 0) << "), matl "

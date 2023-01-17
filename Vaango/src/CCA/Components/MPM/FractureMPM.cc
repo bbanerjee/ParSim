@@ -46,7 +46,7 @@
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/SoleVariable.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/VarTypes.h>
@@ -56,7 +56,7 @@
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/MPMBoundCond.h>
 #include <CCA/Components/MPM/HeatConduction/HeatConduction.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>

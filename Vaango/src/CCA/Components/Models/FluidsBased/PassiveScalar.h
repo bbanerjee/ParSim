@@ -220,7 +220,8 @@ WARNING
     
     PassiveScalarLabel* Slb;
     Scalar* d_scalar;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     
     //__________________________________
     // global constants

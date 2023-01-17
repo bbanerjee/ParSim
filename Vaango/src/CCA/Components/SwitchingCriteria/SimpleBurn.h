@@ -52,7 +52,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/SwitchingCriteria.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Labels/MPMICELabel.h>
 
@@ -82,7 +82,8 @@ namespace Uintah {
       unsigned int d_material;
       double d_temperature;
       
-      SimulationStateP d_sharedState; 
+      MaterialManagerP 
+ d_mat_manager; 
       MPMLabel* Mlb;
       MPMICELabel* MIlb;
       #define d_SMALL_NUM 1e-100

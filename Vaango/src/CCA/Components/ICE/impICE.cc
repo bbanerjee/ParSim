@@ -54,7 +54,7 @@
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Grid/AMR.h>
 #include <Core/Grid/Task.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/Utils.h>
@@ -1159,7 +1159,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
               << " after solve " << max_RHS<< endl;
     
     // output files for debugging
-    int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+    int timestep = d_simulator->getTimeStep();
     int proc = d_myworld->myRank();
      std::ostringstream fname;
     

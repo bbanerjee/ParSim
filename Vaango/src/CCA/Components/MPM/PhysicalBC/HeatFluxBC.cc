@@ -283,7 +283,7 @@ HeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
 namespace Uintah {
 // A method to print out the heatflux bcs
 ostream&
-operator<<(ostream& out, const HeatFluxBC& bc)
+operator<<(std::ostream& out, const HeatFluxBC& bc)
 {
   out << "Begin MPM HeatFlux BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();

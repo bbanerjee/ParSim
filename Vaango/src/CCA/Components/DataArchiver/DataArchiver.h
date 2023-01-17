@@ -30,7 +30,7 @@
 #include <CCA/Ports/Output.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/Grid/Variables/MaterialSetP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Util/Assert.h>
 #include <Core/OS/Dir.h>
@@ -163,7 +163,7 @@ namespace Uintah {
 
     //! Recommended to use sharedState directly if you can.
     virtual int getCurrentTimestep() const
-      { return d_sharedState->getCurrentTopLevelTimeStep(); }
+      { return d_simulator->getTimeStep(); }
 
     //! Recommended to use sharedState directly if you can.
     virtual double getCurrentTime() const
@@ -288,7 +288,8 @@ namespace Uintah {
     std::string d_filebase;
 
     //! pointer to simulation state, to get timestep and time info
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
 
     //! set in finalizeTimestep for output tasks to see how far the 
     //! next timestep will go.  Stored as temp in case of a

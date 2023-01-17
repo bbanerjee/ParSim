@@ -27,7 +27,7 @@
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Util/DebugStream.h>

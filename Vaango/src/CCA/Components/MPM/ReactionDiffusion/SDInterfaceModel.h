@@ -26,7 +26,7 @@
 #define __SDINTERFACEMODEL_H__
 
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
@@ -63,7 +63,8 @@ namespace Uintah {
   protected:
     MPMLabel* d_lb;
     MPMFlags* d_Mflag;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
 
     int NGP, NGN;
     int numMPMmatls;

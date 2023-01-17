@@ -221,7 +221,8 @@ WARNING
     VarLabel* cumulativeEnergyReleased_CCLabel;
     VarLabel* cumulativeEnergyReleased_src_CCLabel;
     
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     Output* dataArchiver;
 
     TableInterface* table;

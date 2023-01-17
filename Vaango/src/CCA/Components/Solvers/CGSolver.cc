@@ -967,7 +967,7 @@ private:
 //
 SolverParameters*
 CGSolver::readParameters(ProblemSpecP& params, const string& varname,
-                         SimulationStateP& state)
+                         MaterialManagerP& mat_manager)
 {
 
   CGSolverParams* p = new CGSolverParams();

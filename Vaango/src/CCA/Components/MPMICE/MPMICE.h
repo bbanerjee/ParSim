@@ -418,7 +418,8 @@ private:
 protected:
   MPMICE(const MPMICE&);
   MPMICE& operator=(const MPMICE&);
-  SimulationStateP d_sharedState; 
+  MaterialManagerP 
+ d_mat_manager; 
   Output* dataArchiver;
   MPMLabel* Mlb;
   ICELabel* Ilb;

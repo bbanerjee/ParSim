@@ -87,7 +87,8 @@ private:
   NodalSVFContact(const NodalSVFContact& con);
   NodalSVFContact& operator=(const NodalSVFContact& con);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
   // PARAMETERS UNIQUE TO THIS MODEL FROM UPS FILE
   double d_myu;

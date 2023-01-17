@@ -99,7 +99,8 @@ namespace Uintah {
                  CCVariable<double>& tot_viscosity);
   protected:
 
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     double d_filter_width;
     
     

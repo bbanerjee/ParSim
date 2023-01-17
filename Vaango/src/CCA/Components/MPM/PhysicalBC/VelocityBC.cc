@@ -246,7 +246,7 @@ VelocityBC::updateLoadCurve(const std::vector<double>& time,
 namespace Uintah {
 // A method to print out the velocity bcs
 ostream&
-operator<<(ostream& out, const VelocityBC& bc)
+operator<<(std::ostream& out, const VelocityBC& bc)
 {
   out << "Begin MPM Velocity BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();

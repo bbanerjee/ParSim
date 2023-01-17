@@ -55,7 +55,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <CCA/Ports/Scheduler.h>
 #include <vector>
 #include <map>
@@ -118,7 +118,8 @@ namespace Uintah {
 
     MPMLabel* d_lb;
     MPMFlags* d_flags;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
 
     std::vector<const VarLabel* > d_cz_state, d_cz_state_preReloc;
   };

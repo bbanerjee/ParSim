@@ -27,7 +27,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Parallel/ProcessorGroup.h>

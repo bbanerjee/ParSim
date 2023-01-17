@@ -105,7 +105,8 @@ namespace Uintah {
   private:
     MPMLabel* d_lb;
     MPMFlags* d_flag;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     int NGP, NGN;
 
     HeatConduction(const HeatConduction&);

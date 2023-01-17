@@ -68,7 +68,7 @@
 using namespace std;
 using namespace Uintah;
 
-static ostream& operator<<(ostream& out, const GV_Task* task);
+static ostream& operator<<(std::ostream& out, const GV_Task* task);
 static string readline(int fd);
 static void writeline(int fd, string str);
 
@@ -344,7 +344,7 @@ DaVinci::parseAnswer(char* cmd, std::list<char*>& args)
 }
 
 static ostream&
-operator<<(ostream& out, const GV_Task* task)
+operator<<(std::ostream& out, const GV_Task* task)
 {
   out << "l(\"" << task->getName() << "\",n(\"\",[a(\"OBJECT\",\""
       << task->getName() << "\"),";
@@ -436,7 +436,7 @@ writeline(int fd, string str)
 }
 
 static void
-displayAttributes(ostream& out, const GV_Task* task)
+displayAttributes(std::ostream& out, const GV_Task* task)
 {
   float thresholdPercent = task->getGraph()->getThresholdPercent();
   float maxPathPercent = task->getMaxPathPercent();
@@ -447,7 +447,7 @@ displayAttributes(ostream& out, const GV_Task* task)
 }
 
 static void
-displayAttributes(ostream& out, const Edge* edge)
+displayAttributes(std::ostream& out, const Edge* edge)
 {
   float thresholdPercent = edge->getGraph()->getThresholdPercent();
   float maxPathPercent = edge->getMaxPathPercent();

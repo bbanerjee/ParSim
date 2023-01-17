@@ -152,7 +152,8 @@ WARNING
     const VarLabel* totalMass_srcLabel;
     const VarLabel* totalMom_srcLabel;
     const VarLabel* totalEng_srcLabel;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
   };
 }
 

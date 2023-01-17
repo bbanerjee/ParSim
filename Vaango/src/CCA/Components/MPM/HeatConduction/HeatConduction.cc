@@ -35,7 +35,7 @@
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Grid/Task.h>
 #include <CCA/Ports/Scheduler.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Util/DebugStream.h>
 
 using namespace Uintah;

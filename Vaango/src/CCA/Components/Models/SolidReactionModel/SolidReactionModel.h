@@ -179,7 +179,8 @@ namespace Uintah {
         // Some Uintah Necessities
         ProblemSpecP d_params;
         ProblemSpecP d_prob_spec;
-        SimulationStateP d_sharedState;
+        MaterialManagerP 
+ d_mat_manager;
 
 
 

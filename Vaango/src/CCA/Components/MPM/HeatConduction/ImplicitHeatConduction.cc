@@ -40,7 +40,7 @@
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Util/DebugStream.h>

@@ -33,7 +33,7 @@
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/GeometryPiece/GeometryObject.h>

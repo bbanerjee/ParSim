@@ -49,7 +49,7 @@
 
 #include <CCA/Components/ICE/CustomBCs/C_BC_driver.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 
 using namespace Uintah;

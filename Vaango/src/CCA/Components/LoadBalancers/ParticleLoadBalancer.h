@@ -69,7 +69,7 @@ namespace Uintah {
     ParticleLoadBalancer(const ProcessorGroup* myworld);
     ~ParticleLoadBalancer();
 
-    virtual void problemSetup(ProblemSpecP& pspec, GridP& grid, SimulationStateP& state);
+    virtual void problemSetup(ProblemSpecP& pspec, GridP& grid, MaterialManagerP& mat_manager);
     virtual bool needRecompile(double time, double delt, const GridP& grid); 
 
     /// call one of the assignPatches functions.

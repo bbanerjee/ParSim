@@ -226,7 +226,7 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
   start=Time::currentSeconds();
 
   d_newGrid = true;
-  d_lastRegridTimestep = d_sharedState->getCurrentTopLevelTimeStep();
+  d_lastRegridTimestep = d_simulator->getTimeStep();
 
   OutputGridStats(newGrid);
 
@@ -356,7 +356,7 @@ void TiledRegridder::OutputGridStats(Grid* newGrid)
 //
 void TiledRegridder::problemSetup(const ProblemSpecP& params, 
                                   const GridP& oldGrid,
-                                  const SimulationStateP& state)
+                                  const MaterialManagerP& mat_manager)
 {
   RegridderCommon::problemSetup(params, oldGrid, state);
   d_sharedState = state;

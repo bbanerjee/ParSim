@@ -192,7 +192,7 @@ public:
                    bool add);
 
   void
-  logMemoryUse(ostream& out,
+  logMemoryUse(std::ostream& out,
                unsigned long& total,
                const std::string& tag,
                int dwid);
@@ -699,7 +699,7 @@ DWDatabase<DomainType>::print(int rank) const
 
 template<class DomainType>
 void
-DWDatabase<DomainType>::logMemoryUse(ostream& out,
+DWDatabase<DomainType>::logMemoryUse(std::ostream& out,
                                      unsigned long& total,
                                      const std::string& tag,
                                      int dwid)

@@ -64,7 +64,7 @@
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
@@ -385,7 +385,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
       // Save crack elements, crack nodes and crack-front nodes
       // for crack geometry visualization
       if(saveCrackGeometry) {
-        int curTimeStep=d_sharedState->getCurrentTopLevelTimeStep();
+        int curTimeStep=d_simulator->getTimeStep();
         if(pid==0) OutputCrackGeometry(m,curTimeStep);
       }
 

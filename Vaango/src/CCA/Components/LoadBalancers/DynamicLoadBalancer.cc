@@ -38,7 +38,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/Timers/Timers.hpp>
@@ -889,7 +889,7 @@ DynamicLoadBalancer::needRecompile(       double /*time*/,
                                     const GridP & grid )
 {
   double time = d_sharedState->getElapsedTime();
-  int timestep = d_sharedState->getCurrentTopLevelTimeStep();
+  int timestep = d_simulator->getTimeStep();
 
   bool do_check = false;
 #if 1
@@ -996,7 +996,7 @@ DynamicLoadBalancer::possiblyDynamicallyReallocate( const GridP & grid, int stat
     if (state != LoadBalancer::check) {
       force = true;
       if (d_lbTimestepInterval != 0) {
-        d_lastLbTimestep = d_sharedState->getCurrentTopLevelTimeStep();
+        d_lastLbTimestep = d_simulator->getTimeStep();
       }
       else if (d_lbInterval != 0) {
         d_lastLbTime = d_sharedState->getElapsedTime();

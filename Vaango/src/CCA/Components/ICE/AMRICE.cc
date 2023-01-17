@@ -49,7 +49,7 @@
 
 #include <CCA/Components/ICE/AMRICE.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/SolverInterface.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -60,7 +60,7 @@
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Rand48.h>
@@ -1823,7 +1823,7 @@ void AMRICE::scheduleErrorEstimate(const LevelP& coarseLevel,
              << " AMRICE::scheduleErrorEstimate \t\t\tL-" 
              << coarseLevel->getIndex() << '\n';
   bool initial = false;             
-  if(d_sharedState->getCurrentTopLevelTimeStep() == 0){
+  if(d_simulator->getTimeStep() == 0){
     initial = true;  // during initialization 
   }
   Task* t = scinew Task("AMRICE::errorEstimate", 

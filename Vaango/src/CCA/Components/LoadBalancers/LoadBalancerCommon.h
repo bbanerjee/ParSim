@@ -138,7 +138,7 @@ public:
   /// Reads the problem spec file for the LoadBalancer section, and looks
   /// for entries such as outputNthProc, dynamicAlgorithm, and interval.
   virtual void problemSetup(ProblemSpecP& pspec, GridP& grid,
-                            SimulationStateP& state);
+                            MaterialManagerP& mat_manager);
 
   // for DynamicLoadBalancer mostly, but if we're called then it also means the
   // grid might have changed and need to create a new perProcessorPatchSet
@@ -237,7 +237,8 @@ protected:
   virtual const PatchSet* createPerProcessorPatchSet(const GridP& grid);
   virtual const PatchSet* createOutputPatchSet(const LevelP& level);
 
-  SimulationStateP d_sharedState; ///< to keep track of timesteps
+  MaterialManagerP 
+ d_mat_manager; ///< to keep track of timesteps
   Scheduler*
     d_scheduler; ///< store the scheduler to not have to keep passing it in
   std::set<const Patch*>

@@ -190,7 +190,8 @@ WARNING
     double d_diffusivity;
     int  d_smear_initialDistribution_knob;
     bool d_test_conservation;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
   };
 }
 

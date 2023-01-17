@@ -50,7 +50,7 @@
 #include <CCA/Components/Models/ModelFactory.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <CCA/Ports/ModelInterface.h>
 #include <CCA/Components/Models/FluidsBased/Mixing.h>
 #include <CCA/Components/Models/FluidsBased/AdiabaticTable.h>

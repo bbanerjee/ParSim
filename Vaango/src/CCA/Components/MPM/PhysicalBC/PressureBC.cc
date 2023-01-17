@@ -629,7 +629,7 @@ PressureBC::updateLoadCurve(const std::vector<double>& time,
 namespace Uintah {
 // A method to print out the pressure bcs
 ostream&
-operator<<(ostream& out, const PressureBC& bc)
+operator<<(std::ostream& out, const PressureBC& bc)
 {
   out << "Begin MPM Pressure BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();

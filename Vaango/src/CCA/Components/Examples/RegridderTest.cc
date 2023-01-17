@@ -48,7 +48,7 @@
 
 #include <CCA/Components/Examples/RegridderTest.h>
 #include <CCA/Components/Examples/ExamplesLabel.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <Core/Parallel/ProcessorGroup.h>
@@ -62,7 +62,7 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/EmptyMaterial.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Geometry/BBox.h>
 #include <Core/Geometry/Point.h>
@@ -95,7 +95,7 @@ namespace Uintah
   // Interface inherited from Simulation Interface
   void RegridderTest::problemSetup(const ProblemSpecP& params, 
                                    const ProblemSpecP& restart_prob_spec, 
-                                   GridP& grid, SimulationStateP& state )
+                                   GridP& grid, MaterialManagerP& mat_manager )
   {
     d_sharedState = state;
     d_material = scinew EmptyMaterial();

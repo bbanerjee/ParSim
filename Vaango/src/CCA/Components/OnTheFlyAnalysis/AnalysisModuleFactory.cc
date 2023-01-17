@@ -34,7 +34,7 @@
 //#include <CCA/Components/OnTheFlyAnalysis/radiometer.h>
 #include <CCA/Components/OnTheFlyAnalysis/vorticity.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 
 
 using namespace Uintah;

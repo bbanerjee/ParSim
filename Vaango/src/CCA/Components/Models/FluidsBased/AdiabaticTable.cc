@@ -36,7 +36,7 @@
 #include <CCA/Components/Models/FluidsBased/AdiabaticTable.h>
 #include <CCA/Components/Models/FluidsBased/TableFactory.h>
 #include <CCA/Components/Models/FluidsBased/TableInterface.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -45,7 +45,7 @@
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>

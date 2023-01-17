@@ -37,7 +37,7 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

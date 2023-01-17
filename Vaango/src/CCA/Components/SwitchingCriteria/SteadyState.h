@@ -52,7 +52,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/SwitchingCriteria.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 
 
 namespace Uintah {
@@ -97,7 +97,8 @@ namespace Uintah {
       const VarLabel* heatRate_CCLabel;
       const VarLabel* heatFluxSumLabel;
       const VarLabel* heatFluxSumTimeDerivativeLabel;
-      SimulationStateP d_sharedState; 
+      MaterialManagerP 
+ d_mat_manager; 
     };
 } // End namespace Uintah
 

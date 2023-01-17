@@ -183,7 +183,8 @@ namespace Uintah {
     MPMFlags* flag;
     int NGP;
     int NGN;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
 
     static const Matrix3 Identity;
     static const Matrix3 Zero;

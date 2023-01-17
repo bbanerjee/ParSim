@@ -157,7 +157,8 @@ public:
                               const VarLabel* label) override;
 private:
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
   double d_stop_time;
   double d_vol_const;
   Vector d_vel_after_stop;

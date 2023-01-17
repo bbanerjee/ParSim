@@ -95,7 +95,7 @@ WARNING
     // Interface inherited from Simulation Interface
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, SimulationStateP& state );
+                              GridP& grid, MaterialManagerP& mat_manager );
     virtual void scheduleInitialize            ( const LevelP& level, SchedulerP& scheduler );
     virtual void scheduleRestartInitialize(const LevelP& level,
 			   	           SchedulerP& sched) {}
@@ -138,7 +138,8 @@ WARNING
 		  DataWarehouse*, DataWarehouse* new_dw);
 
     ExamplesLabel*   d_examplesLabel;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     EmptyMaterial*  d_material;
 
     VarLabel* d_oldDensityLabel;

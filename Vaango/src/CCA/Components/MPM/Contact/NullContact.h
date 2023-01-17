@@ -33,7 +33,7 @@
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -49,7 +49,8 @@ private:
   NullContact(const NullContact& con);
   NullContact& operator=(const NullContact& con);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
 public:
   // Constructor

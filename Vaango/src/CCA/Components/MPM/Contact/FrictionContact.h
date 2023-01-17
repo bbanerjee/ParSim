@@ -52,7 +52,8 @@ private:
   FrictionContact(const FrictionContact& con);
   FrictionContact& operator=(const FrictionContact& con);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
   // Coefficient of friction
   double d_mu;

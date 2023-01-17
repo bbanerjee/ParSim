@@ -27,7 +27,7 @@
 
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -57,7 +57,8 @@ namespace Uintah {
   protected:
     MPMLabel* d_lb;
     MPMFlags* d_Mflag;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
 
     int NGP, NGN;
     std::string diffusion_type;

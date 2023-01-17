@@ -159,7 +159,8 @@ WARNING
     ProblemSpecP d_prob_spec;
     const Material* matl0;
     const Material* matl1;
-    SimulationStateP d_sharedState;   
+    MaterialManagerP 
+ d_mat_manager;   
 
     ICELabel* Ilb;
     MaterialSet* mymatls;

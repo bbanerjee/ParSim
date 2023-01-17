@@ -212,7 +212,7 @@ WARNING
        d_done= d_curFace==nullptrFACE || d_iter.done();
      }
 
-     ostream& limits(ostream& out) const
+     ostream& limits(std::ostream& out) const
      {
        out << begin() << " " << end() - IntVector(1,1,1);
        return out;

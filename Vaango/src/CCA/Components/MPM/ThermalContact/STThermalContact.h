@@ -51,7 +51,7 @@
 
 #include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -123,7 +123,8 @@ WARNING
     virtual void outputProblemSpec(ProblemSpecP& ps);
 
     private:
-      SimulationStateP d_sharedState;
+      MaterialManagerP 
+ d_mat_manager;
       MPMLabel* lb;
       // Prevent copying of this class
       // copy constructor

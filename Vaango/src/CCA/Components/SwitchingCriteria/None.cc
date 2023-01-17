@@ -66,7 +66,7 @@ None::~None()
 
 void None::problemSetup(const ProblemSpecP& ps, 
                         const ProblemSpecP& restart_prob_spec, 
-                        SimulationStateP& state)
+                        MaterialManagerP& mat_manager)
 {
   d_sharedState = state;
 }

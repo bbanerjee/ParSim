@@ -51,7 +51,7 @@ TimestepNumber::~TimestepNumber()
 
 void TimestepNumber::problemSetup(const ProblemSpecP& ps, 
                                   const ProblemSpecP& restart_prob_spec, 
-                                  SimulationStateP& state)
+                                  MaterialManagerP& mat_manager)
 {
   d_sharedState = state;
 }
@@ -75,7 +75,7 @@ void TimestepNumber::switchTest(const ProcessorGroup* group,
   dbg << "Doing Switch Criteria:TimestepNumber";
   double sw = 0;
 
-  unsigned int time_step = d_sharedState->getCurrentTopLevelTimeStep();
+  unsigned int time_step = d_simulator->getTimeStep();
   if (time_step == d_timestep)
     sw = 1;
   else

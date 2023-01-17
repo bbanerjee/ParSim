@@ -54,7 +54,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <CCA/Components/ICE/ICE.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 
 //#define REFLUX_DBG 
 #undef REFLUX_DBG

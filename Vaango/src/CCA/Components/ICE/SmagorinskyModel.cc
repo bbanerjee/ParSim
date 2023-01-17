@@ -52,7 +52,7 @@
 #include <CCA/Ports/Scheduler.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Math/CubeRoot.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Patch.h>

@@ -69,7 +69,7 @@ AMRSolver::~AMRSolver() {}
 SolverParameters*
 AMRSolver::readParameters(ProblemSpecP& params,
                           const string& varname,
-                          SimulationStateP& state)
+                          MaterialManagerP& mat_manager)
   
 {
   HypreSolverParams* p = new HypreSolverParams();

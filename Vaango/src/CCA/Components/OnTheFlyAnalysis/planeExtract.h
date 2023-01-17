@@ -193,7 +193,8 @@ WARNING
     std::vector<VarLabel*> d_varLabels;
     std::vector<int> d_varMatl;
     
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
     std::vector<plane*>   d_planes;
     Output*          d_dataArchiver;
     ProblemSpecP     d_prob_spec;

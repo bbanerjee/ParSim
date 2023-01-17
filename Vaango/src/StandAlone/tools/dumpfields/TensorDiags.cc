@@ -274,7 +274,7 @@ namespace Uintah {
     _ttdiagtable.clear();
   }
   
-  void describeTensorDiags(ostream & os)
+  void describeTensorDiags(std::ostream & os)
   {
     createTensorDiags();
     os << "  Tensor -> Tensor" << endl;

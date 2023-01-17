@@ -24,13 +24,13 @@
 
 #include <CCA/Components/OnTheFlyAnalysis/planeExtract.h>
 
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Parallel/Parallel.h>
@@ -485,7 +485,7 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
         string planePath = udaDir + "/" + dirName;
         
          std::ostringstream tname;
-        tname << "t" << std::setw(5) << std::setfill('0') << d_sharedState->getCurrentTopLevelTimeStep();
+        tname << "t" << std::setw(5) << std::setfill('0') << d_simulator->getTimeStep();
         string timestep = tname.str();
         
          std::ostringstream li;

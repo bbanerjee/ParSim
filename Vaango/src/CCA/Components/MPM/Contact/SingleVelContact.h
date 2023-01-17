@@ -61,7 +61,8 @@ private:
   SingleVelContact(const SingleVelContact& con);
   SingleVelContact& operator=(const SingleVelContact& con);
 
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
 public:
   // Constructor

@@ -44,7 +44,7 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/SimulationTime.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Variables/ReductionVariable.h>
 #include <Core/Grid/Variables/SoleVariable.h>
@@ -57,7 +57,7 @@
 #include <Core/Tracker/TrackerClient.h>
 
 #include <CCA/Components/ReduceUda/UdaReducer.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Output.h>
@@ -176,7 +176,7 @@ AMRSimulationController::run()
   setStartSimTime( time );
   initSimulationStatsVars();
 #ifndef DISABLE_SCI_MALLOC
-  AllocatorSetDefaultTagLineNumber(d_sharedState->getCurrentTopLevelTimeStep());
+  AllocatorSetDefaultTagLineNumber(d_simulator->getTimeStep());
 #endif
 
   // If VisIt has been included into the build, initialize the lib sim
@@ -196,7 +196,7 @@ AMRSimulationController::run()
   ////////////////////////////////////////////////////////////////////////////
   // The main time loop; here the specified problem is actually getting solved
    
-  int    iterations = d_sharedState->getCurrentTopLevelTimeStep();
+  int    iterations = d_simulator->getTimeStep();
   double delt = 0;
 
   double start;
@@ -323,7 +323,7 @@ AMRSimulationController::run()
     d_sharedState->setElapsedTime( time );
     d_sharedState->incrementCurrentTopLevelTimeStep();
 #ifndef DISABLE_SCI_MALLOC
-    AllocatorSetDefaultTagLineNumber(d_sharedState->getCurrentTopLevelTimeStep());
+    AllocatorSetDefaultTagLineNumber(d_simulator->getTimeStep());
 #endif
     // Each component has their own init_delt specified.  On a switch
     // from one component to the next, we need to adjust the delt to
@@ -416,7 +416,7 @@ AMRSimulationController::run()
     }
 
     calcWallTime();
-    printSimulationStats( d_sharedState->getCurrentTopLevelTimeStep()-1, delt, time );
+    printSimulationStats( d_simulator->getTimeStep()-1, delt, time );
 
     // Execute the current timestep, restarting if necessary
     d_sharedState->d_current_delt = delt;
@@ -466,7 +466,7 @@ AMRSimulationController::run()
       d_visit_simulation_data.schedulerP = d_scheduler;
       d_visit_simulation_data.gridP = currentGrid;
       d_visit_simulation_data.time  = time;
-      d_visit_simulation_data.cycle = d_sharedState->getCurrentTopLevelTimeStep();
+      d_visit_simulation_data.cycle = d_simulator->getTimeStep();
 
       visit_CheckState( &d_visit_simulation_data );
     }
@@ -487,9 +487,9 @@ AMRSimulationController::run()
   delt_vartype delt_var;
   d_scheduler->getLastDW()->get(delt_var, d_sharedState->get_delt_label());
   delt = delt_var;
-  adjustDelT( delt, d_sharedState->d_prev_delt, d_sharedState->getCurrentTopLevelTimeStep(), time );
+  adjustDelT( delt, d_sharedState->d_prev_delt, d_simulator->getTimeStep(), time );
   calcWallTime();
-  printSimulationStats( d_sharedState->getCurrentTopLevelTimeStep(), delt, time );
+  printSimulationStats( d_simulator->getTimeStep(), delt, time );
 
 #ifdef USE_GPERFTOOLS
   if (gprofile.active()){
@@ -640,7 +640,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
     d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
 
     // iteration only matters if it's zero or greater than 0
-    int iteration = curDW + (d_lastRecompileTimestep == d_sharedState->getCurrentTopLevelTimeStep() ? 0 : 1);
+    int iteration = curDW + (d_lastRecompileTimestep == d_simulator->getTimeStep() ? 0 : 1);
     if (dbg.active())
       dbg << d_myworld->myRank() << "   Executing TG on level " << levelNum << " with old DW " 
           << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
@@ -908,7 +908,7 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::Recompile()");
 
   proc0cout << "Compiling taskgraph...\n";
-  d_lastRecompileTimestep = d_sharedState->getCurrentTopLevelTimeStep();
+  d_lastRecompileTimestep = d_simulator->getTimeStep();
   double start = Time::currentSeconds();
   
   d_scheduler->initialize(1, totalFine);
@@ -1020,7 +1020,7 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
     }
     
     if (d_scheduler->getNumTaskGraphs() == 1)
-      d_scheduler->execute(0, d_lastRecompileTimestep == d_sharedState->getCurrentTopLevelTimeStep() ? 0 : 1);
+      d_scheduler->execute(0, d_lastRecompileTimestep == d_simulator->getTimeStep() ? 0 : 1);
     else {
       subCycleExecute(currentGrid, 0, totalFine, 0, true);
     }

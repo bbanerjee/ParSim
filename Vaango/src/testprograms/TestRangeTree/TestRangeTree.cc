@@ -83,7 +83,7 @@ void doNearestQueryAtPointsTest(Suite* suite,
 
 void printList(list<Point*>& points);
 
-void display_time_diff(ostream& out, timeval start, timeval end,
+void display_time_diff(std::ostream& out, timeval start, timeval end,
 		       unsigned long divisor = 1)
 {
   if ((start.tv_sec - end.tv_sec) / divisor == 0) {

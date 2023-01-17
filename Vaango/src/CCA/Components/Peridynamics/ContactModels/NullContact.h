@@ -32,7 +32,7 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 
 namespace Vaango {
@@ -81,7 +81,8 @@ namespace Vaango {
 
   private:
       
-    Uintah::SimulationStateP d_sharedState;
+    Uintah::MaterialManagerP 
+ d_mat_manager;
 
     // Prevent copying 
     NullContact(const NullContact &con);

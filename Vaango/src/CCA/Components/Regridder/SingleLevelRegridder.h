@@ -52,7 +52,7 @@ DESCRIPTION
 		
     virtual void problemSetup(const ProblemSpecP& params,
 			         const GridP& grid,
-			         const SimulationStateP& state);
+			         const MaterialManagerP& mat_manager);
 
     std::vector<IntVector> getMinPatchSize() {return d_tileSize;}
 

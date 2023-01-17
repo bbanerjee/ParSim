@@ -97,7 +97,8 @@ private:
   double d_sepFac;
   int NGP;
   int NGN;
-  SimulationStateP d_sharedState;
+  MaterialManagerP 
+ d_mat_manager;
 
   void exMomIntegrated(const ProcessorGroup*,
                        const PatchSubset* patches,

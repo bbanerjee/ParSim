@@ -96,7 +96,8 @@ _____________________________________________________________________*/
     int d_radiometerCalc_freq;
     ProblemSpecP d_module_ps;
     Output* d_dataArchiver;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
   };
 }
 

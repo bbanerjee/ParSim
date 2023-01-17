@@ -147,7 +147,8 @@ WARNING
     
     const VarLabel* totalMassXLabel;
     const VarLabel* totalIntEngXLabel;
-    SimulationStateP d_sharedState;
+    MaterialManagerP 
+ d_mat_manager;
   };
 }
 

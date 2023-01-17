@@ -76,7 +76,7 @@ static DebugStream inc_dbg("ProblemSpecReaderIncludes", false);
 
 // Prints out 2 spaces for each level of indentation.
 static void
-indent(ostream& out, unsigned int depth)
+indent(std::ostream& out, unsigned int depth)
 {
   // out << depth << " ";
   for (unsigned int pos = 0; pos < depth; pos++) {
@@ -154,8 +154,8 @@ enum type_e
   INVALID_TYPE
 };
 
-ostream&
-operator<<(ostream& out, const need_e& need)
+std::ostream&
+operator<<(std::ostream& out, const need_e& need)
 {
   if (need == REQUIRED) {
     out << "REQUIRED";
@@ -172,8 +172,8 @@ operator<<(ostream& out, const need_e& need)
   return out;
 }
 
-ostream&
-operator<<(ostream& out, const type_e& type)
+std::ostream&
+operator<<(std::ostream& out, const type_e& type)
 {
   if (type == DOUBLE) {
     out << "DOUBLE";
@@ -275,8 +275,8 @@ struct ChildRequirement : public RefCounted
   std::vector<std::string> childrenList; // used for ONE_OF and ALL_OR_NONE_OF
 };
 
-ostream&
-operator<<(ostream& out, const ChildRequirement::Req& req)
+std::ostream&
+operator<<(std::ostream& out, const ChildRequirement::Req& req)
 {
   if (req == ChildRequirement::ONE_OF) {
     out << "ONE_OF";
@@ -289,8 +289,8 @@ operator<<(ostream& out, const ChildRequirement::Req& req)
   return out;
 }
 
-ostream&
-operator<<(ostream& out, const ChildRequirement& chreq)
+std::ostream&
+operator<<(std::ostream& out, const ChildRequirement& chreq)
 {
   if (chreq.typeOfRequirement == ChildRequirement::ALL_OR_NONE_OF) {
     out << "ALL_OR_NONE_OF( ";

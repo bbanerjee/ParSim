@@ -458,7 +458,7 @@ namespace Uintah {
     _sdiagtable.clear();
   }
   
-  void describeScalarDiags(ostream & os)
+  void describeScalarDiags(std::ostream & os)
   {
     createScalarDiags();
     if(_sdiagtable[Uintah::TypeDescription::Type::double_type].size())

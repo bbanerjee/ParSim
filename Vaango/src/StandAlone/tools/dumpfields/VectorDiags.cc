@@ -265,7 +265,7 @@ namespace Uintah {
     _vdiagtable.clear();
   }
   
-  void describeVectorDiags(ostream & os)
+  void describeVectorDiags(std::ostream & os)
   {
     createVectorDiags();
     if(_vdiagtable[Uintah::TypeDescription::Type::Vector].size())

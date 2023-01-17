@@ -42,7 +42,7 @@
 
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/OnTheFlyAnalysis/containerExtract.h>
-#include <CCA/Components/Regridder/PerPatchVars.h>
+
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
@@ -51,7 +51,7 @@
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
