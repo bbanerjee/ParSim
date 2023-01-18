@@ -27,6 +27,7 @@
 
 #include <Core/Exceptions/ErrnoException.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Util/FileUtils.h>
 
 #include <filesystem>
@@ -151,6 +152,47 @@ Dir::createSubdir(const std::string& sub)
   return create(d_name + "/" + sub);
 }
 
+// This version of createSubdir tries multiple times and
+// throws an exception if it fails.
+Dir
+Dir::createSubdirPlus(const std::string& sub)
+{
+  Dir myDir;
+
+  bool done = false;
+  int tries = 0;
+
+  while (!done) {
+
+    try {
+      tries++;
+
+      if (tries > 500) {
+        std::ostringstream warn;
+        warn
+          << " ERROR: Dir::createSubdirPlus() failed to create the directory ("
+          << sub << ") after " << tries << " attempts.";
+        throw InternalError(warn.str(), __FILE__, __LINE__);
+      }
+
+      myDir = createSubdir(sub);
+      done  = true;
+    } catch (ErrnoException& e) {
+      if (e.getErrno() == EEXIST) {
+        done  = true;
+        myDir = getSubdir(sub);
+      }
+    }
+  }
+
+  if (tries > 1) {
+    std::cout << Uintah::Parallel::getMPIRank()
+              << " - WARNING:  Dir::createSubdirPlus() created the directory ("
+              << sub << ") after " << tries << " attempts.\n";
+  }
+  return myDir;
+}
+
 Dir
 Dir::getSubdir(const std::string& sub)
 {
@@ -231,7 +273,7 @@ Dir::getFilenamesBySuffix(const std::string& suffix,
 }
 
 bool
-Dir::exists()
+Dir::exists() const
 {
   if (fs::exists(d_name)) {
     return true;

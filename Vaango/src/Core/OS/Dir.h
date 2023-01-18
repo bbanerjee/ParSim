@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+#include <sys/stat.h>
+
 namespace Uintah {
 
 class Dir
@@ -69,10 +71,15 @@ public:
 
   Dir
   createSubdir(const std::string& name);
+
+  // tries 500 times to create a subdir
+  Dir
+  createSubdirPlus(const std::string& sub);
+
   Dir
   getSubdir(const std::string& name);
   bool
-  exists();
+  exists() const;
 
   void
   getFilenamesBySuffix(const std::string& suffix,
@@ -93,5 +100,8 @@ private:
 };
 
 } // End namespace Uintah
+
+#define MKDIR(dir, perm) mkdir(dir, perm)
+#define LSTAT(file, buf) lstat(file, buf)
 
 #endif // Core_OS_Dir_H

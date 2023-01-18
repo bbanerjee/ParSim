@@ -30,7 +30,7 @@
 #include <CCA/Components/SwitchingCriteria/None.h>
 #include <CCA/Components/SwitchingCriteria/SwitchingCriteriaFactory.h>
 #include <CCA/Ports/LoadBalancer.h>
-#include <CCA/Ports/ModelMaker.h>
+
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/Regridder.h>
 #include <CCA/Ports/Scheduler.h>

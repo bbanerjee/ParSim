@@ -51,7 +51,7 @@
 #define Packages_Uintah_CCA_Components_Examples_ModelFactory_h
 
 #include <Core/Parallel/UintahParallelComponent.h>
-#include <CCA/Ports/ModelMaker.h>
+
 
 namespace Uintah {
 

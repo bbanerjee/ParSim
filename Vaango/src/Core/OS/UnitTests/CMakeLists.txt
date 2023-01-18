@@ -28,6 +28,7 @@ include(GoogleTest)
 SET(VAANGO_LIBS
     Vaango_Core_OS
     Vaango_Core_Exceptions
+    Vaango_Core_Parallel
     )
 
 #------------------------

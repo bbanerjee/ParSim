@@ -45,7 +45,7 @@
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModuleFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
-#include <CCA/Ports/ModelMaker.h>
+
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/MaterialManager.h>

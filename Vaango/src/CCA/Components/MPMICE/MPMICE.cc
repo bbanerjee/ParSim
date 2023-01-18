@@ -37,7 +37,7 @@
 #include <CCA/Components/MPM/ShellMPM.h>
 #include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModuleFactory.h>
-#include <CCA/Ports/ModelMaker.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
