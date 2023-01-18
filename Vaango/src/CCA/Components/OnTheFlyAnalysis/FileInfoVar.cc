@@ -22,29 +22,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef Packages_Uintah_CCA_Components_OnTheFlyAnalysis_Factory_h
-#define Packages_Uintah_CCA_Components_OnTheFlyAnalysis_Factory_h
-
-#include <CCA/Ports/Output.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-
+#include <CCA/Components/OnTheFlyAnalysis/FileInfoVar.h>
 
 namespace Uintah {
-  class AnalysisModule;
 
-  class AnalysisModuleFactory {
+  void swapbytes( Uintah::FileInfoP& ) {
+    SCI_THROW(InternalError("Swap bytes for FileInfoP is not implemented", __FILE__, __LINE__));
+  }
 
-  private:
-    AnalysisModuleFactory();
-    ~AnalysisModuleFactory();
-
-  public:
-    static
-    std::vector< AnalysisModule*> create( const ProcessorGroup* myworld,
-                                          const MaterialManagerP materialManager,
-                                          const ProblemSpecP& prob_spec );
-  };
-}
-
-#endif
+} // End namespace Uintah

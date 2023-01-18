@@ -23,13 +23,15 @@
 # IN THE SOFTWARE.
 #
 
-SET(Vaango_CCA_Components_ReduceUda_SRCS
-  UdaReducer.cc
+SET(Vaango_CCA_Components_PostProcessUda_SRCS
+  Module.cc
+  ModuleFactory.cc
+  PostProcessUda.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_ReduceUda ${Vaango_CCA_Components_ReduceUda_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_PostProcessUda ${Vaango_CCA_Components_PostProcessUda_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ReduceUda
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_PostProcessUda
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
@@ -40,13 +42,10 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ReduceUda
   Vaango_Core_Util
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
-  Vaango_CCA_Components_DataArchiver
-  
-  Vaango_Core_Tracker
   ${XML2_LIBRARY}
   ${M_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_ReduceUda)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_PostProcessUda)
 ENDIF(BUILD_SHARED_LIBS)

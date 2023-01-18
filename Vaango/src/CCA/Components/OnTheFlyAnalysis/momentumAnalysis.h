@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,6 +26,7 @@
 #ifndef MOMENTUM_ANALYSIS_H
 #define MOMENTUM_ANALYSIS_H
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
+#include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Output.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/GridP.h>
@@ -64,9 +65,9 @@ WARNING
 ****************************************/
   class momentumAnalysis : public AnalysisModule {
   public:
-    momentumAnalysis(ProblemSpecP& prob_spec,
-                     SimulationStateP& sharedState,
-		       Output* dataArchiver);
+    momentumAnalysis(const ProcessorGroup* myworld,
+                     const MaterialManagerP materialManager,
+                     const ProblemSpecP& module_spec);
 
     momentumAnalysis();
 
@@ -75,13 +76,16 @@ WARNING
     virtual void problemSetup(const ProblemSpecP& prob_spec,
                               const ProblemSpecP& restart_prob_spec,
                               GridP& grid,
-                              SimulationStateP& sharedState);
+                              std::vector<std::vector<const VarLabel* > > &PState,
+                              std::vector<std::vector<const VarLabel* > > &PState_preReloc);
 
+    virtual void outputProblemSpec(ProblemSpecP& ps){};
 
     virtual void scheduleInitialize(SchedulerP& sched,
                                     const LevelP& level);
 
-    virtual void restartInitialize();
+    virtual void scheduleRestartInitialize(SchedulerP& sched,
+                                           const LevelP& level);
 
     virtual void scheduleDoAnalysis(SchedulerP& sched,
                                     const LevelP& level);
@@ -121,9 +125,6 @@ WARNING
                          const Point& start,
                          const Point& end );
 
-    VarLabel* assignLabel( const std::string& desc );
-
-
 
     struct faceQuantities{
       std::map< int, Vector > convect_faceFlux;      // convective momentum flux across control volume faces
@@ -153,7 +154,6 @@ WARNING
     // VarLabels
     class MA_Labels {
       public:
-        const VarLabel* delT;
         VarLabel* lastCompTime;
         VarLabel* fileVarsStruct;
 
@@ -195,27 +195,17 @@ WARNING
     };
 
     std::map< int, cv_face* > d_cv_faces;
-    
+
 
     //__________________________________
     // global constants
-    MaterialManagerP 
- d_mat_manager;
-    Output* d_dataArchiver;
-    ProblemSpecP d_prob_spec;
-
-    MaterialSubset* d_zeroMatl;
-    MaterialSubset* d_pressMatl;
-    MaterialSet* d_zeroMatlSet;
-    PatchSet* d_zeroPatch;
-
-    double d_analysisFreq;
-    double d_StartTime;
-    double d_StopTime;
+    MaterialSet    * d_matl_set     {nullptr};
+    MaterialSubset * d_pressMatl    {nullptr};
+    PatchSet       * d_zeroPatch    {nullptr};
 
     int d_matlIndx;                      // material index.
     int d_pressIndx;                     // pressure matl index
-    MaterialSet* d_matl_set;
+
 
   };
 }

@@ -107,6 +107,63 @@ ProblemSpec::findBlock(const std::string& name) const
   return 0;
 }
 
+//  This function recursively searches through the xml tree for xmlNodes
+//  with the tagname and returns a vector of them.
+std::vector<xmlNode*>
+ProblemSpec::recursiveFind_xmlNodes(std::vector<xmlNode*> nodesFound,
+                                    xmlNode* a_node,
+                                    const string& tagname,
+                                    const bool isTopLevelNode) const
+{
+  for (xmlNode* cur_node = a_node; cur_node; cur_node = cur_node->next) {
+
+    string nodeName((const char*)(cur_node->name));
+    bool isElementNode = (cur_node->type == XML_ELEMENT_NODE);
+    bool isTagName     = (nodeName == tagname);
+
+    if (isElementNode && isTagName) {
+      nodesFound.push_back(cur_node);
+    }
+
+    xmlNode* child = cur_node->children;
+    if (child != 0) {
+      if (child->type == XML_ELEMENT_NODE) {
+        nodesFound = recursiveFind_xmlNodes(nodesFound, child, tagname, false);
+      }
+    }
+
+    // Avoid looping over the siblings of top level node
+    if (isTopLevelNode) {
+      break;
+    }
+  }
+  return nodesFound;
+}
+
+//______________________________________________________________________
+//  This function recursively searches through the xml tree for xmlNodes
+//  with the tagname and returns a vector ProblemSpecs.
+std::vector<ProblemSpecP>
+ProblemSpec::findBlocksRecursive(const string& tagname) const
+{
+  std::vector<ProblemSpecP> results;
+  if (d_node == 0) {
+    return results;
+  }
+
+  std::vector<xmlNode*> xmlNodeResults;
+  xmlNode* cur_node = d_node;
+
+  xmlNodeResults =
+    recursiveFind_xmlNodes(xmlNodeResults, cur_node, tagname, true);
+
+  for (size_t i = 0; i < xmlNodeResults.size(); i++) {
+    ProblemSpecP ps = scinew ProblemSpec(xmlNodeResults[i], false);
+    results.push_back(ps);
+  }
+  return results;
+}
+
 ProblemSpecP
 ProblemSpec::findBlockWithAttribute(const std::string& name,
                                     const std::string& attribute) const
@@ -304,7 +361,8 @@ ProblemSpec::get(const std::string& name, unsigned int& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, uint):  std::stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, uint):  std::stringstream "
+             "failed...\n",
              name.c_str());
       ps = 0;
     }
@@ -328,8 +386,9 @@ ProblemSpec::get(const std::string& name, int& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, int):  std::stringstream failed...\n",
-             name.c_str());
+      printf(
+        "WARNING: ProblemSpec.cc: get(%s, int):  std::stringstream failed...\n",
+        name.c_str());
       ps = 0;
     }
   }
@@ -352,7 +411,8 @@ ProblemSpec::get(const std::string& name, long& value)
     std::istringstream ss(stringValue);
     ss >> value;
     if (!ss) {
-      printf("WARNING: ProblemSpec.cc: get(%s, long):  std::stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, long):  std::stringstream "
+             "failed...\n",
              name.c_str());
       ps = 0;
     }
@@ -378,7 +438,8 @@ ProblemSpec::get(const std::string& name, bool& value)
     result_stream >> nospace_cmp;
 
     if (!result_stream) {
-      printf("WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream failed...\n",
+      printf("WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream "
+             "failed...\n",
              name.c_str());
     }
 
@@ -415,7 +476,8 @@ ProblemSpec::get(const std::string& name, std::string& value)
          std::istream_iterator<std::string>(),
          back_inserter(vs));
     std::string out_string;
-    for (std::vector<std::string>::const_iterator it = vs.begin(); it != vs.end();
+    for (std::vector<std::string>::const_iterator it = vs.begin();
+         it != vs.end();
          ++it) {
       out_string += *it + ' ';
     }
@@ -1004,8 +1066,9 @@ ProblemSpec::appendElement(const char* name, const Point& value)
 {
 
   std::ostringstream val;
-  val << '[' << std::setprecision(17) << value.x() << ", " << std::setprecision(17)
-      << value.y() << ", " << std::setprecision(17) << value.z() << ']';
+  val << '[' << std::setprecision(17) << value.x() << ", "
+      << std::setprecision(17) << value.y() << ", " << std::setprecision(17)
+      << value.z() << ']';
   return appendElement(name, val.str());
 }
 
@@ -1013,8 +1076,9 @@ ProblemSpecP
 ProblemSpec::appendElement(const char* name, const Vector& value)
 {
   std::ostringstream val;
-  val << '[' << std::setprecision(17) << value.x() << ", " << std::setprecision(17)
-      << value.y() << ", " << std::setprecision(17) << value.z() << ']';
+  val << '[' << std::setprecision(17) << value.x() << ", "
+      << std::setprecision(17) << value.y() << ", " << std::setprecision(17)
+      << value.z() << ']';
   return appendElement(name, val.str());
 }
 
@@ -1057,7 +1121,8 @@ ProblemSpec::appendElement(const char* name, const std::vector<int>& value)
 }
 
 ProblemSpecP
-ProblemSpec::appendElement(const char* name, const std::vector<std::string>& value)
+ProblemSpec::appendElement(const char* name,
+                           const std::vector<std::string>& value)
 {
   std::ostringstream val;
   val << '[';
@@ -1257,7 +1322,8 @@ ProblemSpec::getAttribute(const std::string& attribute,
 //______________________________________________________________________
 //
 bool
-ProblemSpec::getAttribute(const std::string& name, std::vector<double>& value) const
+ProblemSpec::getAttribute(const std::string& name,
+                          std::vector<double>& value) const
 {
   std::vector<std::string> stringValues;
   if (!getAttribute(name, stringValues)) {
@@ -1315,9 +1381,10 @@ ProblemSpec::getAttribute(const std::string& name, double& value) const
   std::istringstream ss(stringValue);
   ss >> value;
   if (!ss) {
-    printf("WARNING: ProblemSpec.cc: getAttribute(%s, double):  std::stringstream "
-           "failed...\n",
-           name.c_str());
+    printf(
+      "WARNING: ProblemSpec.cc: getAttribute(%s, double):  std::stringstream "
+      "failed...\n",
+      name.c_str());
   }
 
   return true;
@@ -1358,8 +1425,9 @@ ProblemSpec::getAttribute(const std::string& name, bool& value) const
   std::string nospace_cmp;
   result_stream >> nospace_cmp;
   if (!result_stream) {
-    printf("WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream failed...\n",
-           name.c_str());
+    printf(
+      "WARNING: ProblemSpec.cc: get(%s, bool):  std::stringstream failed...\n",
+      name.c_str());
   }
 
   if (nospace_cmp == "false") {

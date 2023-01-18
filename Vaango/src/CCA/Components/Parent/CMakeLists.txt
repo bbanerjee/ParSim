@@ -35,7 +35,7 @@ ADD_LIBRARY(Vaango_CCA_Components_Parent ${Vaango_CCA_Components_Parent_SRCS})
 
 SET(LIBS
   Vaango_CCA_Ports
-  Vaango_CCA_Components_ReduceUda
+  Vaango_CCA_Components_PostProcessUda
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Math

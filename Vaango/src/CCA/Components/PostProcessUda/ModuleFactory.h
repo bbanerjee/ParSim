@@ -22,29 +22,30 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef Packages_Uintah_CCA_Components_OnTheFlyAnalysis_Factory_h
-#define Packages_Uintah_CCA_Components_OnTheFlyAnalysis_Factory_h
+#ifndef Packages_Uintah_CCA_Components_PostProcessUda_Factory_h
+#define Packages_Uintah_CCA_Components_PostProcessUda_Factory_h
 
-#include <CCA/Ports/Output.h>
-#include <Core/Grid/MaterialManagerP.h>
+#include <Core/DataArchive/DataArchive.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Grid/MaterialManagerP.h>
+#include <CCA/Ports/Output.h>
 
 
 namespace Uintah {
-  class AnalysisModule;
-
-  class AnalysisModuleFactory {
-
-  private:
-    AnalysisModuleFactory();
-    ~AnalysisModuleFactory();
-
-  public:
-    static
-    std::vector< AnalysisModule*> create( const ProcessorGroup* myworld,
-                                          const MaterialManagerP materialManager,
-                                          const ProblemSpecP& prob_spec );
+  class Module;
+  
+  class ModuleFactory{
+    private:
+      ModuleFactory();
+      ~ModuleFactory();
+          
+    public:      
+      static
+       std::vector< Module*>  create(const ProblemSpecP& prob_spec,
+                                     MaterialManagerP  & materialManager,
+                                     Output            * dataArchiever,
+                                     DataArchive       * dataArchive);
   };
 }
 
-#endif
+#endif 
