@@ -87,7 +87,7 @@ void Burger::problemSetup(const ProblemSpecP& params,
   ProblemSpecP burger = params->findBlock("Burger");
   burger->require("delt", delt_);
   mymat_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
  
 //______________________________________________________________________
@@ -98,7 +98,7 @@ void Burger::scheduleInitialize(const LevelP& level,
   Task* task = scinew Task("Burger::initialize",
                      this, &Burger::initialize);
   task->computes(u_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 // 
@@ -108,8 +108,8 @@ void Burger::scheduleComputeStableTimestep(const LevelP& level,
   Task* task = scinew Task("Burger::computeStableTimestep",
                      this, &Burger::computeStableTimestep);
                      
-  task->computes(sharedState_->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -120,10 +120,10 @@ void  Burger::scheduleTimeAdvance( const LevelP& level,
                      this, &Burger::timeAdvance);
                      
   task->requires(Task::OldDW, u_label, Ghost::AroundNodes, 1);
-  task->requires(Task::OldDW, sharedState_->get_delt_label());
+  task->requires(Task::OldDW, getDelTLabel());
   
   task->computes(u_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -134,7 +134,7 @@ void Burger::computeStableTimestep(const ProcessorGroup*,
                                    DataWarehouse*, 
                                    DataWarehouse* new_dw)
 {
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(),getLevel(patches));
 }
 
 //______________________________________________________________________
@@ -186,7 +186,7 @@ void Burger::timeAdvance(const ProcessorGroup*,
     // dt, dx
     Vector dx = patch->getLevel()->dCell();
     delt_vartype dt;
-    old_dw->get(dt, sharedState_->get_delt_label());
+    old_dw->get(dt, getDelTLabel());
     
     // allocate memory
     NCVariable<double> new_u;

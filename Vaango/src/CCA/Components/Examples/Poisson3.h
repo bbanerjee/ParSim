@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,123 +24,131 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_Examples_Poisson3_h
 #define Packages_Uintah_CCA_Components_Examples_Poisson3_h
 
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+
 #include <CCA/Components/Examples/Interpolator.h>
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <CCA/Ports/SimulationInterface.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class EmptyMaterial;
 
+class EmptyMaterial;
 
 /**************************************
-
 CLASS
    Poisson3
-   
    Poisson3 simulation
-
-GENERAL INFORMATION
-
-   Poisson3.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
-KEYWORDS
-   Poisson3
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
 ****************************************/
 
+class Poisson3
+  : public SimulationCommon
+{
+public:
+  Poisson3(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
 
+  virtual ~Poisson3();
 
+  Poisson3(const Poisson3&) = delete;
+  Poisson3(Poisson3&&) = delete;
+  Poisson3&
+  operator=(const Poisson3&) = delete;
+  Poisson3&
+  operator=(Poisson3&&) = delete;
 
-  class Poisson3 : public UintahParallelComponent, public SimulationInterface {
-  public:
-    Poisson3(const ProcessorGroup* myworld);
-    virtual ~Poisson3();
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid);
 
-    virtual void problemSetup(const ProblemSpecP& params, 
-                              const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, MaterialManagerP&);
-    virtual void scheduleInitialize(const LevelP& level,
-				    SchedulerP& sched);
-    virtual void scheduleComputeStableTimestep(const LevelP& level,
-					       SchedulerP&);
-    virtual void scheduleTimeAdvance( const LevelP& level, 
-				      SchedulerP&);
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
-    virtual void scheduleRestartInitialize(const LevelP& level,
-			   	           SchedulerP& sched) {}
-    // New functions
-    virtual void scheduleRefine(const PatchSet*, SchedulerP& sched) {}
-    void refine(const ProcessorGroup* pg,
-                const PatchSubset* finePatches, 
-		const MaterialSubset* matls,
-                DataWarehouse*, 
-                DataWarehouse* newDW);
+  virtual void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleRefine(const LevelP& fineLevel,
-				SchedulerP& scheduler);
-    virtual void scheduleRefineInterface(const LevelP& fineLevel,
-					 SchedulerP& scheduler,
-					 bool needCoarseOld, bool needCoarseNew);
-    void refineInterface(const ProcessorGroup*,
-			 const PatchSubset* finePatches, 
-			 const MaterialSubset* matls,
-			 DataWarehouse* fineDW, 
-			 DataWarehouse* coarseDW);
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
-    void coarsen(const ProcessorGroup* pg,
-	         const PatchSubset* finePatches, 
-		 const MaterialSubset* matls,
-                 DataWarehouse* coarseDW, 
-                 DataWarehouse* fineDW);
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  {
+  }
 
-  private:
-    void initialize(const ProcessorGroup*,
-		    const PatchSubset* patches, const MaterialSubset* matls,
-		    DataWarehouse* old_dw, DataWarehouse* new_dw);
-    void computeStableTimestep(const ProcessorGroup*,
-			       const PatchSubset* patches,
-			       const MaterialSubset* matls,
-			       DataWarehouse* old_dw, DataWarehouse* new_dw);
-    void timeAdvance(const ProcessorGroup*,
-		     const PatchSubset* patches,
-		     const MaterialSubset* matls,
-		     DataWarehouse* old_dw, DataWarehouse* new_dw,
-		     bool modify);
+  // New functions
+  virtual void
+  scheduleRefine(const PatchSet*, SchedulerP& sched)
+  {
+  }
 
-    const VarLabel* phi_label;
-    const VarLabel* residual_label;
-    MaterialManagerP sharedState_;
-    double delt_;
-    EmptyMaterial* mymat_;
-    Interpolator interpolator_;
-    int max_int_support_;
+  void
+  refine(const ProcessorGroup* pg,
+         const PatchSubset* finePatches,
+         const MaterialSubset* matls,
+         DataWarehouse*,
+         DataWarehouse* newDW);
 
-    Poisson3(const Poisson3&);
-    Poisson3& operator=(const Poisson3&);
-	 
-  };
+  virtual void
+  scheduleRefine(const LevelP& fineLevel, SchedulerP& scheduler);
+
+  virtual void
+  scheduleRefineInterface(const LevelP& fineLevel,
+                          SchedulerP& scheduler,
+                          bool needCoarseOld,
+                          bool needCoarseNew);
+
+  void
+  refineInterface(const ProcessorGroup*,
+                  const PatchSubset* finePatches,
+                  const MaterialSubset* matls,
+                  DataWarehouse* fineDW,
+                  DataWarehouse* coarseDW);
+
+  virtual void
+  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
+
+  void
+  coarsen(const ProcessorGroup* pg,
+          const PatchSubset* finePatches,
+          const MaterialSubset* matls,
+          DataWarehouse* coarseDW,
+          DataWarehouse* fineDW);
+
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw);
+
+  void
+  computeStableTimestep(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
+
+  void
+  timeAdvance(const ProcessorGroup*,
+              const PatchSubset* patches,
+              const MaterialSubset* matls,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw,
+              bool modify);
+
+  const VarLabel* d_phi_label;
+  const VarLabel* d_residual_label;
+  double d_delT;
+  std::shared_ptr<EmptyMaterial> d_mymat;
+  Interpolator d_interpolator;
+  int d_max_int_support;
+
+};
 }
-
-
 
 #endif

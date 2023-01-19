@@ -95,7 +95,7 @@ void Benchmark::problemSetup(const ProblemSpecP& params,
   
   mymat_ = scinew EmptyMaterial();
   
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
 //______________________________________________________________________
 //
@@ -107,7 +107,7 @@ void Benchmark::scheduleInitialize(const LevelP& level,
                      
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -118,8 +118,8 @@ void Benchmark::scheduleComputeStableTimestep(const LevelP& level,
                      this, &Benchmark::computeStableTimestep);
                      
   task->requires(Task::NewDW, residual_label);
-  task->computes(sharedState_->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -133,7 +133,7 @@ Benchmark::scheduleTimeAdvance( const LevelP& level,
   task->requires(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -148,7 +148,7 @@ void Benchmark::computeStableTimestep(const ProcessorGroup* pg,
     new_dw->get(residual, residual_label);
     cerr << "Residual=" << residual << '\n';
   }
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(),getLevel(patches));
 }
 
 //______________________________________________________________________

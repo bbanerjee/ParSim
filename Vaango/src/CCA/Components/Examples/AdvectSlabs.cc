@@ -108,7 +108,7 @@ void AdvectSlabs::problemSetup(const ProblemSpecP& params,
   ProblemSpecP ps = params->findBlock("AdvectSlabs");
   ps->require("delt", delt_);
   mymat_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
  
 void AdvectSlabs::scheduleInitialize(const LevelP& level,
@@ -118,7 +118,7 @@ void AdvectSlabs::scheduleInitialize(const LevelP& level,
 			   this, &AdvectSlabs::initialize);
   task->computes(mass_label);
   task->computes(massAdvected_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
  
 void AdvectSlabs::scheduleComputeStableTimestep(const LevelP& level,
@@ -126,8 +126,8 @@ void AdvectSlabs::scheduleComputeStableTimestep(const LevelP& level,
 {
   Task* task = scinew Task("computeStableTimestep",
 			   this, &AdvectSlabs::computeStableTimestep);
-  task->computes(sharedState_->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -139,7 +139,7 @@ AdvectSlabs::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   task->requires(Task::OldDW, mass_label, Ghost::AroundCells, 2);
   task->computes(mass_label);
   task->computes(massAdvected_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 
 }
 
@@ -148,7 +148,7 @@ void AdvectSlabs::computeStableTimestep(const ProcessorGroup*,
 				  const MaterialSubset*,
 				  DataWarehouse*, DataWarehouse* new_dw)
 {
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(),getLevel(patches));
 }
 
 void AdvectSlabs::initialize(const ProcessorGroup*,

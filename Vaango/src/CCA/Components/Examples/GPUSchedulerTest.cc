@@ -89,7 +89,7 @@ void GPUSchedulerTest::problemSetup(const ProblemSpecP& params,
   ProblemSpecP gpuSchedTest = params->findBlock("GPUSchedulerTest");
   gpuSchedTest->require("delt", delt_);
   simpleMaterial_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(simpleMaterial_);
+  d_materialManager->registerEmptyMaterial(simpleMaterial_);
 }
 //______________________________________________________________________
 //
@@ -98,7 +98,7 @@ void GPUSchedulerTest::scheduleInitialize(const LevelP& level, SchedulerP& sched
 
   multiTask->computes(phi_label);
   multiTask->computes(residual_label);
-  sched->addTask(multiTask, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(multiTask, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -106,8 +106,8 @@ void GPUSchedulerTest::scheduleComputeStableTimestep(const LevelP& level, Schedu
   Task* task = scinew Task("GPUSchedulerTest::computeStableTimestep", this, &GPUSchedulerTest::computeStableTimestep);
 
   task->requires(Task::NewDW, residual_label);
-  task->computes(sharedState_->get_delt_label(), level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(), level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -121,7 +121,7 @@ void GPUSchedulerTest::scheduleTimeAdvance(const LevelP& level, SchedulerP& sche
   task->requires(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -136,7 +136,7 @@ void GPUSchedulerTest::computeStableTimestep(const ProcessorGroup* pg,
     new_dw->get(residual, residual_label);
     cerr << "Residual=" << residual << '\n';
   }
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(), getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
 }
 
 //______________________________________________________________________

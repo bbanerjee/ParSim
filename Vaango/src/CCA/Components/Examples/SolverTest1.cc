@@ -118,14 +118,14 @@ void SolverTest1::problemSetup(const ProblemSpecP& prob_spec,
     throw ProblemSetupException("SolverTest: Must specify one of X_Laplacian, Y_Laplacian, or Z_Laplacian",
                                 __FILE__, __LINE__);
   mymat_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
 //__________________________________
 // 
 void SolverTest1::scheduleInitialize(const LevelP& level,
 			       SchedulerP& sched)
 {
-  solver->scheduleInitialize(level,sched,sharedState_->allMaterials());
+  solver->scheduleInitialize(level,sched,d_materialManager->allMaterials());
 }
 //__________________________________
 // 
@@ -134,8 +134,8 @@ void SolverTest1::scheduleComputeStableTimestep(const LevelP& level,
 {
   Task* task = scinew Task("computeStableTimestep",this, 
                            &SolverTest1::computeStableTimestep);
-  task->computes(sharedState_->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //__________________________________
 //
@@ -148,9 +148,9 @@ SolverTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   task->computes(lb_->pressure_matrix);
   task->computes(lb_->pressure_rhs);
 
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 
-  solver->scheduleSolve(level, sched, sharedState_->allMaterials(), 
+  solver->scheduleSolve(level, sched, d_materialManager->allMaterials(), 
                         lb_->pressure_matrix, Task::NewDW, lb_->pressure, 
                         false, lb_->pressure_rhs, Task::NewDW, 0, Task::OldDW, 
                         solver_parameters,false);
@@ -163,7 +163,7 @@ void SolverTest1::computeStableTimestep(const ProcessorGroup*,
 				  const MaterialSubset*,
 				  DataWarehouse*, DataWarehouse* new_dw)
 {
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(pss));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(),getLevel(pss));
 }
 //__________________________________
 //

@@ -91,7 +91,7 @@ void PoissonGPU1::problemSetup(const ProblemSpecP& params,
   poisson->require("delt", delt_);
 
   mymat_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
 //______________________________________________________________________
 //
@@ -101,7 +101,7 @@ void PoissonGPU1::scheduleInitialize(const LevelP& level, SchedulerP& sched) {
 
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -110,8 +110,8 @@ void PoissonGPU1::scheduleComputeStableTimestep(const LevelP& level, SchedulerP&
   Task * task = scinew Task("PoissonGPU1::computeStableTimestep", this, &PoissonGPU1::computeStableTimestep);
 
   task->requires(Task::NewDW, residual_label);
-  task->computes(sharedState_->get_delt_label(), level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(), level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -122,7 +122,7 @@ void PoissonGPU1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched) {
   task->requires(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -138,7 +138,7 @@ void PoissonGPU1::computeStableTimestep(const ProcessorGroup* pg,
     cerr << "Residual=" << residual << endl;
   }
 
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(), getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
 }
 //______________________________________________________________________
 //

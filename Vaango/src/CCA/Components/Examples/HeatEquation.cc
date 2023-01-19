@@ -90,7 +90,7 @@ void HeatEquation::problemSetup(const ProblemSpecP& params,
   heateqn->require("delt", delt_);
   heateqn->require("maxresidual", maxresidual_);
   mymat_ = scinew EmptyMaterial();
-  sharedState->registerEmptyMaterial(mymat_);
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
  
 void HeatEquation::scheduleInitialize(const LevelP& level,
@@ -99,7 +99,7 @@ void HeatEquation::scheduleInitialize(const LevelP& level,
   Task* task = scinew Task("initialize",
 			   this, &HeatEquation::initialize);
   task->computes(temperature_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
  
 void HeatEquation::scheduleComputeStableTimestep(const LevelP& level,
@@ -107,8 +107,8 @@ void HeatEquation::scheduleComputeStableTimestep(const LevelP& level,
 {
   Task* task = scinew Task("computeStableTimestep",
 			   this, &HeatEquation::computeStableTimestep);
-  task->computes(sharedState_->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -120,7 +120,7 @@ HeatEquation::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   task->requires(Task::OldDW, temperature_label, Ghost::AroundNodes, 1);
   task->computes(temperature_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 
 }
 
@@ -129,7 +129,7 @@ void HeatEquation::computeStableTimestep(const ProcessorGroup*,
 				  const MaterialSubset*,
 				  DataWarehouse*, DataWarehouse* new_dw)
 {
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(),getLevel(patches));
 }
 
 void HeatEquation::initialize(const ProcessorGroup*,
@@ -190,7 +190,7 @@ void HeatEquation::timeAdvance(const ProcessorGroup* pg,
 		     patch->getBCType(Patch::zplus) == Patch::Neighbor?0:1);
 
       delt_vartype dt;
-      old_dw->get(dt, sharedState_->get_delt_label());
+      old_dw->get(dt, getDelTLabel());
       Vector dx = patch->getLevel()->dCell();
       Vector diffusion_number(1./(dx.x()*dx.x()), 1./(dx.y()*dx.y()),
                               1./(dx.z()*dx.z()));
