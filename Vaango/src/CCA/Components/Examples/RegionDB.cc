@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,35 +24,32 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/Examples/RegionDB.h>
+
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/BoxGeometryPiece.h>
 #include <Core/GeometryPiece/DifferenceGeometryPiece.h>
+#include <Core/GeometryPiece/GeometryPiece.h>
+#include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <iostream>
 
 using namespace Uintah;
 
-
-RegionDB::RegionDB()
-{
-}
+RegionDB::RegionDB() {}
 
 void
 RegionDB::problemSetup(ProblemSpecP& ps, const GridP& grid)
 {
   ProblemSpecP regions = ps->findBlock("Regions");
-  if(!regions)
+  if (!regions) {
     throw ProblemSetupException("Regions block not found", __FILE__, __LINE__);
+  }
   std::vector<GeometryPieceP> pieces;
-  GeometryPieceFactory::create(regions, grid, pieces);
-  for(vector<GeometryPieceP>::iterator iter = pieces.begin();
-      iter != pieces.end(); iter++){
-    addRegion(*iter);
+  GeometryPieceFactory::create(regions, pieces);
+  for (auto& geom : pieces) {
+    addRegion(geom);
   }
 
   // Create regions for x+, x-, y+, ...
@@ -59,47 +57,62 @@ RegionDB::problemSetup(ProblemSpecP& ps, const GridP& grid)
   IntVector low, high;
   level->findCellIndexRange(low, high);
   IntVector ec(level->getExtraCells());
-  Vector dx = level->dCell();
-  Vector dx4 = dx*0.25;
-  Point inner_lower = level->getNodePosition(low)+dx4;
-  Point outer_lower = level->getNodePosition(low)-dx4;
-  Point inner_upper = level->getNodePosition(high)-dx4;
-  Point outer_upper = level->getNodePosition(high)+dx4;
-  addRegion(new BoxGeometryPiece(outer_lower, outer_upper), "entire_domain");
-  addRegion(new BoxGeometryPiece(inner_lower, inner_upper), "interior");
-  addRegion(new DifferenceGeometryPiece(new BoxGeometryPiece(outer_lower, outer_upper),
-					new BoxGeometryPiece(inner_lower, inner_upper)),
-	    "allfaces");
-  addRegion(new BoxGeometryPiece(outer_lower,
-				 Point(inner_lower.x(), outer_upper.y(), outer_upper.z())),
-	    "x-");
-  addRegion(new BoxGeometryPiece(Point(inner_upper.x(), outer_lower.y(), outer_lower.z()),
-				 Point(outer_upper)),
-	    "x+");
-  addRegion(new BoxGeometryPiece(outer_lower,
-				 Point(outer_upper.x(), inner_lower.y(), outer_upper.z())),
-	    "y-");
-  addRegion(new BoxGeometryPiece(Point(outer_lower.x(), inner_upper.y(), outer_lower.z()),
-				 Point(outer_upper)),
-	    "y+");
-  addRegion(new BoxGeometryPiece(outer_lower,
-				 Point(inner_lower.x(), outer_upper.y(), inner_lower.z())),
-	    "z-");
-  addRegion(new BoxGeometryPiece(Point(outer_lower.x(), outer_lower.y(), inner_upper.z()),
-				 Point(outer_upper)),
-	    "z+");
-  addRegion(new DifferenceGeometryPiece(new BoxGeometryPiece(outer_lower, outer_upper),
-					new BoxGeometryPiece(Point(inner_lower.x(), outer_lower.y(), outer_lower.z()),
-							     Point(inner_upper.x(), outer_upper.y(), outer_upper.z()))),
-	    "xfaces");
-  addRegion(new DifferenceGeometryPiece(new BoxGeometryPiece(outer_lower, outer_upper),
-					new BoxGeometryPiece(Point(outer_lower.x(), inner_lower.y(), outer_lower.z()),
-						Point(outer_upper.x(), inner_upper.y(), outer_upper.z()))),
-	    "yfaces");
-  addRegion(new DifferenceGeometryPiece(new BoxGeometryPiece(outer_lower, outer_upper),
-					new BoxGeometryPiece(Point(outer_lower.x(), outer_lower.y(), inner_lower.z()),
-						Point(outer_upper.x(), outer_upper.y(), inner_upper.z()))),
-	    "zfaces");
+  Vector dx         = level->dCell();
+  Vector dx4        = dx * 0.25;
+  Point inner_lower = level->getNodePosition(low) + dx4;
+  Point outer_lower = level->getNodePosition(low) - dx4;
+  Point inner_upper = level->getNodePosition(high) - dx4;
+  Point outer_upper = level->getNodePosition(high) + dx4;
+  addRegion(std::make_shared<BoxGeometryPiece>(outer_lower, outer_upper),
+            "entire_domain");
+  addRegion(std::make_shared<BoxGeometryPiece>(inner_lower, inner_upper),
+            "interior");
+  addRegion(std::make_shared<DifferenceGeometryPiece>(
+              std::make_shared<BoxGeometryPiece>(outer_lower, outer_upper),
+              std::make_shared<BoxGeometryPiece>(inner_lower, inner_upper)),
+            "allfaces");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              outer_lower,
+              Point(inner_lower.x(), outer_upper.y(), outer_upper.z())),
+            "x-");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              Point(inner_upper.x(), outer_lower.y(), outer_lower.z()),
+              Point(outer_upper)),
+            "x+");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              outer_lower,
+              Point(outer_upper.x(), inner_lower.y(), outer_upper.z())),
+            "y-");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              Point(outer_lower.x(), inner_upper.y(), outer_lower.z()),
+              Point(outer_upper)),
+            "y+");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              outer_lower,
+              Point(inner_lower.x(), outer_upper.y(), inner_lower.z())),
+            "z-");
+  addRegion(std::make_shared<BoxGeometryPiece>(
+              Point(outer_lower.x(), outer_lower.y(), inner_upper.z()),
+              Point(outer_upper)),
+            "z+");
+  addRegion(std::make_shared<DifferenceGeometryPiece>(
+              std::make_shared<BoxGeometryPiece>(outer_lower, outer_upper),
+              std::make_shared<BoxGeometryPiece>(
+                Point(inner_lower.x(), outer_lower.y(), outer_lower.z()),
+                Point(inner_upper.x(), outer_upper.y(), outer_upper.z()))),
+            "xfaces");
+  addRegion(std::make_shared<DifferenceGeometryPiece>(
+              std::make_shared<BoxGeometryPiece>(outer_lower, outer_upper),
+              std::make_shared<BoxGeometryPiece>(
+                Point(outer_lower.x(), inner_lower.y(), outer_lower.z()),
+                Point(outer_upper.x(), inner_upper.y(), outer_upper.z()))),
+            "yfaces");
+  addRegion(std::make_shared<DifferenceGeometryPiece>(
+              std::make_shared<BoxGeometryPiece>(outer_lower, outer_upper),
+              std::make_shared<BoxGeometryPiece>(
+                Point(outer_lower.x(), outer_lower.y(), inner_lower.z()),
+                Point(outer_upper.x(), outer_upper.y(), inner_upper.z()))),
+            "zfaces");
 }
 
 void
@@ -112,11 +125,18 @@ RegionDB::addRegion(GeometryPieceP piece, const string& name)
 void
 RegionDB::addRegion(GeometryPieceP piece)
 {
-  if(piece->getName().length() == 0)
-    throw ProblemSetupException("Geometry pieces in <Region> must be named", __FILE__, __LINE__);
+  if (piece->getName().length() == 0) {
+    throw ProblemSetupException("Geometry pieces in <Region> must be named",
+                                __FILE__,
+                                __LINE__);
+  }
 
-  if(db.find(piece->getName()) != db.end())
-    throw ProblemSetupException("Duplicate name of geometry piece: "+piece->getName(), __FILE__, __LINE__);
+  if (db.find(piece->getName()) != db.end()) {
+    throw ProblemSetupException("Duplicate name of geometry piece: " +
+                                  piece->getName(),
+                                __FILE__,
+                                __LINE__);
+  }
 
   db[piece->getName()] = piece;
 }
@@ -125,8 +145,9 @@ GeometryPieceP
 RegionDB::getObject(const string& name) const
 {
   MapType::const_iterator iter = db.find(name);
-  if(iter == db.end())
+  if (iter == db.end()) {
     return 0;
-  else
+  } else {
     return iter->second;
+  }
 }

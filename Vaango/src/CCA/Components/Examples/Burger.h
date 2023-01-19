@@ -46,23 +46,23 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_Examples_Burger_h
 #define Packages_Uintah_CCA_Components_Examples_Burger_h
 
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class EmptyMaterial;
+
+class EmptyMaterial;
 
 /**************************************
 
 CLASS
    Burger
-   
+
    Burger simulation
 
 GENERAL INFORMATION
@@ -74,58 +74,79 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
+
+
 KEYWORDS
    Burger
 
 DESCRIPTION
    2D implementation of Burger's Algorithm using Euler's method.
    Independent study for CS3200
-  
+
 WARNING
-  
+
 ****************************************/
 
+class Burger
+  : public SimulationCommon
+{
+public:
+  Burger(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
+  virtual ~Burger();
 
-  class Burger : public UintahParallelComponent, public SimulationInterface {
-  public:
-    Burger(const ProcessorGroup* myworld);
-    virtual ~Burger();
+  Burger(const Burger&) = delete;
+  Burger(Burger&&) = delete;
+  Burger&
+  operator=(const Burger&) = delete;
+  Burger&
+  operator=(Burger&&) = delete;
 
-    virtual void problemSetup(const ProblemSpecP& params, 
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid, MaterialManagerP&);
-    virtual void scheduleInitialize(const LevelP& level,
-				    SchedulerP& sched);
-    virtual void scheduleComputeStableTimestep(const LevelP& level,
-					       SchedulerP&);
-    virtual void scheduleTimeAdvance( const LevelP& level, 
-				      SchedulerP&);
-    virtual void scheduleRestartInitialize(const LevelP& level,
-			   	           SchedulerP& sched) {}
-  private:
-    void initialize(const ProcessorGroup*,
-		    const PatchSubset* patches, const MaterialSubset* matls,
-		    DataWarehouse* old_dw, DataWarehouse* new_dw);
-    void computeStableTimestep(const ProcessorGroup*,
-			       const PatchSubset* patches,
-			       const MaterialSubset* matls,
-			       DataWarehouse* old_dw, DataWarehouse* new_dw);
-    void timeAdvance(const ProcessorGroup*,
-		     const PatchSubset* patches,
-		     const MaterialSubset* matls,
-		     DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid);
 
-    const VarLabel* u_label;
-    MaterialManagerP sharedState_;
-    double delt_;
-    EmptyMaterial* mymat_;
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
-    Burger(const Burger&);
-    Burger& operator=(const Burger&);
-	 
-  };
+  virtual void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
+
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  {
+  }
+
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw);
+
+  void
+  computeStableTimestep(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
+
+  void
+  timeAdvance(const ProcessorGroup*,
+              const PatchSubset* patches,
+              const MaterialSubset* matls,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw);
+
+  const VarLabel* d_u_label;
+  double d_delT;
+  std::shared_ptr<EmptyMaterial> d_mymat;
+
+};
 }
 
 #endif
