@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,49 +28,45 @@
 #include <CCA/Components/LoadBalancers/ParticleLoadBalancer.h>
 #include <CCA/Components/LoadBalancers/RoundRobinLoadBalancer.h>
 #include <CCA/Components/LoadBalancers/SimpleLoadBalancer.h>
-#include <CCA/Components/LoadBalancers/SingleProcessorLoadBalancer.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
 
-
 using namespace Uintah;
 
-LoadBalancerCommon*
+std::unique_ptr<LoadBalancerCommon>
 LoadBalancerFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
 {
-  LoadBalancerCommon* bal = 0;
   string loadbalancer = "";
   IntVector layout(1, 1, 1);
 
   ProblemSpecP lb_ps = ps->findBlock("LoadBalancer");
-  if (lb_ps)
+  if (lb_ps) {
     lb_ps->getAttribute("type", loadbalancer);
+  }
 
   // Default settings
-    if (loadbalancer == "")
-      loadbalancer = "SimpleLoadBalancer";
+  if (loadbalancer == "") {
+    loadbalancer = "simple";
+  }
 
-  if (world->myRank() == 0)
-    std::cout << "Load Balancer: \t\t" << loadbalancer << endl;
+  if (world->myRank() == 0) {
+    std::cout << "Load Balancer: \t\t" << loadbalancer << std::endl;
+  }
 
-  if (loadbalancer == "SingleProcessorLoadBalancer") {
-    bal = scinew SingleProcessorLoadBalancer(world);
-  } else if (loadbalancer == "RoundRobinLoadBalancer" ||
-             loadbalancer == "RoundRobin" || loadbalancer == "roundrobin") {
-    bal = scinew RoundRobinLoadBalancer(world);
-  } else if (loadbalancer == "SimpleLoadBalancer") {
-    bal = scinew SimpleLoadBalancer(world);
-  } else if (loadbalancer == "DLB") {
-    bal = scinew DynamicLoadBalancer(world);
-  } else if (loadbalancer == "PLB") {
-    bal = scinew ParticleLoadBalancer(world);
+  if (loadbalancer == "roundrobin") {
+    return std::make_unique<RoundRobinLoadBalancer>(world);
+  } else if (loadbalancer == "simple") {
+    return std::make_unique<SimpleLoadBalancer>(world);
+  } else if (loadbalancer == "dynamic") {
+    return std::make_unique<DynamicLoadBalancer>(world);
+  } else if (loadbalancer == "particle") {
+    return std::make_unique<ParticleLoadBalancer>(world);
   } else {
-    bal = 0;
     throw ProblemSetupException("Unknown load balancer", __FILE__, __LINE__);
   }
 
-  return bal;
+  return nullptr;
 }

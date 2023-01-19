@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,37 +24,30 @@
  */
 
 #include <CCA/Components/LoadBalancers/RoundRobinLoadBalancer.h>
-#include <Core/Grid/Grid.h>
-#include <CCA/Ports/DataWarehouse.h>
+
 #include <CCA/Components/Schedulers/DetailedTasks.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Parallel/Parallel.h>
-#include <Core/Grid/Patch.h>
+#include <CCA/Ports/DataWarehouse.h>
+
+#include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/FancyAssert.h>
 
 #include <iostream> // debug only
 
 using namespace Uintah;
 
-using std::cerr;
-
-#define DAV_DEBUG 0
-
 RoundRobinLoadBalancer::RoundRobinLoadBalancer(const ProcessorGroup* myworld)
-   : LoadBalancerCommon(myworld)
-{
-}
-
-RoundRobinLoadBalancer::~RoundRobinLoadBalancer()
+  : LoadBalancerCommon(myworld)
 {
 }
 
 int
 RoundRobinLoadBalancer::getPatchwiseProcessorAssignment(const Patch* patch)
 {
-  int proc = patch->getID()%d_myworld->nRanks();
+  int proc = patch->getID() % d_myworld->nRanks();
   ASSERTRANGE(proc, 0, d_myworld->nRanks());
   return proc;
 }
-

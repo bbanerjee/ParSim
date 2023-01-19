@@ -32,7 +32,7 @@ SET(Vaango_CCA_Ports_SRCS
   ProblemSpecInterface.cc 
   Scheduler.cc 
   SolverInterface.cc 
-  SFC.cc
+  SpaceFillingCurve.cc
 )
 
 ADD_LIBRARY(Vaango_CCA_Ports ${Vaango_CCA_Ports_SRCS})

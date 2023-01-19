@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,6 +29,8 @@
 #include <CCA/Components/LoadBalancers/LoadBalancerCommon.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
+
 namespace Uintah {
 
 class ProcessorGroup;
@@ -37,8 +40,8 @@ class LoadBalancerFactory
 public:
   // this function has a switch for all known load balancers
 
-  static LoadBalancerCommon* create(ProblemSpecP& ps,
-                                    const ProcessorGroup* world);
+  static std::unique_ptr<LoadBalancerCommon>
+  create(ProblemSpecP& ps, const ProcessorGroup* world);
 };
 } // End namespace Uintah
 

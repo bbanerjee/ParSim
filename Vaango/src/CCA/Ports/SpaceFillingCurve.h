@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VAANGO_CCA_PORTS_SFC__
-#define __VAANGO_CCA_PORTS_SFC__
+#ifndef __VAANGO_CCA_PORTS_SpaceFillingCurve__
+#define __VAANGO_CCA_PORTS_SpaceFillingCurve__
 
 #include <algorithm>
 #include <climits>
@@ -42,7 +42,7 @@
 
 namespace Uintah {
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
 double start, finish;
 const int TIMERS      = 7;
 double timers[TIMERS] = { 0 };
@@ -246,10 +246,12 @@ struct Binner<3, LOCS>
 
 /********************************************************************/
 template<class LOCS>
-class SFC
+class SpaceFillingCurve
 {
 public:
-  SFC(const ProcessorGroup* d_myworld, int dim = 0, Curve curve = HILBERT)
+  SpaceFillingCurve(const ProcessorGroup* d_myworld,
+                    int dim     = 0,
+                    Curve curve = HILBERT)
     : curve(curve)
     , n(INT_MAX)
     , refinements(-1)
@@ -274,7 +276,7 @@ public:
     SetNumDimensions(dim);
   }
 
-  ~SFC() {}
+  ~SpaceFillingCurve() {}
 
   void
   SetCurve(Curve curve);
@@ -402,33 +404,34 @@ protected:
     bool retval = true;
 
     if (dim < 1 || dim > 3) {
-      std::cout << "SFC curve: invalid number of dimensions (" << dim << ")\n";
+      std::cout << "SpaceFillingCurve curve: invalid number of dimensions ("
+                << dim << ")\n";
       retval = false;
     }
     if (locsv == 0) {
-      std::cout << "SFC curve: location vector not set\n";
+      std::cout << "SpaceFillingCurve curve: location vector not set\n";
       retval = false;
     }
     if (orders == 0) {
-      std::cout << "SFC curve: orders not set\n";
+      std::cout << "SpaceFillingCurve curve: orders not set\n";
       retval = false;
     }
     if (center[0] == INT_MAX && center[1] == INT_MAX && center[2] == INT_MAX) {
-      std::cout << "SFC curve: center not set\n";
+      std::cout << "SpaceFillingCurve curve: center not set\n";
       retval = false;
     }
     if (dimensions[0] == INT_MAX && dimensions[1] == INT_MAX &&
         dimensions[2] == INT_MAX) {
-      std::cout << "SFC curve: dimensions not set\n";
+      std::cout << "SpaceFillingCurve curve: dimensions not set\n";
       retval = false;
     }
     if ((P > 1 && mode == PARALLEL) && n == INT_MAX) {
       if (n == INT_MAX) {
-        std::cout << "SFC curve: Local size not set\n";
+        std::cout << "SpaceFillingCurve curve: Local size not set\n";
         retval = false;
       }
       if (refinements == INT_MAX) {
-        std::cout << "SFC curve: Refinements not set\n";
+        std::cout << "SpaceFillingCurve curve: Refinements not set\n";
         retval = false;
       }
     }
@@ -442,7 +445,8 @@ protected:
     for (unsigned int i = 0; i < n; i++) {
       for (int d = 0; d < dim; d++) {
         if (locs[i * dim + d] < low[d] || locs[i * dim + d] > high[d]) {
-          std::cout << "SFC curve: Points are not bounded by dimensions\n";
+          std::cout << "SpaceFillingCurve curve: Points are not bounded by "
+                       "dimensions\n";
           return false;
         }
       }
@@ -566,11 +570,11 @@ protected:
          std::vector<History<BITS>>& mbuf);
 };
 
-/***********SFC**************************/
+/***********SpaceFillingCurve**************************/
 template<class LOCS>
 template<int DIM>
 void
-SFC<LOCS>::ProfileMergeParameters(int repeat)
+SpaceFillingCurve<LOCS>::ProfileMergeParameters(int repeat)
 {
 #if SCI_ASSERTION_LEVEL >= 3
   ASSERT(BulletProof(PARALLEL));
@@ -621,7 +625,7 @@ SFC<LOCS>::ProfileMergeParameters(int repeat)
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::ProfileMergeParametersT(int repeat)
+SpaceFillingCurve<LOCS>::ProfileMergeParametersT(int repeat)
 {
   float sig    = .01;
   int max_iter = 20;
@@ -824,7 +828,7 @@ SFC<LOCS>::ProfileMergeParametersT(int repeat)
 
 template<class LOCS>
 void
-SFC<LOCS>::GenerateCurve(int mode)
+SpaceFillingCurve<LOCS>::GenerateCurve(int mode)
 {
   P = d_myworld->nRanks();
   ASSERT(BulletProof(mode));
@@ -845,7 +849,7 @@ SFC<LOCS>::GenerateCurve(int mode)
 template<class LOCS>
 template<int DIM>
 void
-SFC<LOCS>::GenerateDim(int mode)
+SpaceFillingCurve<LOCS>::GenerateDim(int mode)
 {
   if (mode == SERIAL) {
     Serial<DIM>();
@@ -871,7 +875,8 @@ SFC<LOCS>::GenerateDim(int mode)
       if ((int)refinements * DIM > (int)sizeof(unsigned long long) * 8) {
         refinements = sizeof(unsigned long long) * 8 / DIM;
         if (rank == 0) {
-          std::cerr << "Warning: Not enough bits to form full SFC lowering "
+          std::cerr << "Warning: Not enough bits to form full "
+                       "SpaceFillingCurve lowering "
                        "refinements to: "
                     << refinements << std::endl;
         }
@@ -884,7 +889,7 @@ SFC<LOCS>::GenerateDim(int mode)
 template<class LOCS>
 template<int DIM>
 void
-SFC<LOCS>::Serial()
+SpaceFillingCurve<LOCS>::Serial()
 {
   if (n != 0) {
     orders->resize(n);
@@ -907,7 +912,7 @@ SFC<LOCS>::Serial()
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::SerialH(History<BITS>* histories)
+SpaceFillingCurve<LOCS>::SerialH(History<BITS>* histories)
 {
   if (n != 0) {
     orders->resize(n);
@@ -930,12 +935,12 @@ SFC<LOCS>::SerialH(History<BITS>* histories)
 template<class LOCS>
 template<int DIM>
 void
-SFC<LOCS>::SerialR(DistributedIndex* orders,
-                   std::vector<DistributedIndex>* bin,
-                   unsigned int n,
-                   LOCS* center,
-                   LOCS* dimension,
-                   unsigned int o)
+SpaceFillingCurve<LOCS>::SerialR(DistributedIndex* orders,
+                                 std::vector<DistributedIndex>* bin,
+                                 unsigned int n,
+                                 LOCS* center,
+                                 LOCS* dimension,
+                                 unsigned int o)
 {
   LOCS newcenter[BINS][DIM], newdimension[DIM];
   unsigned int size[BINS];
@@ -1013,15 +1018,15 @@ SFC<LOCS>::SerialR(DistributedIndex* orders,
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::SerialHR(DistributedIndex* orders,
-                    History<BITS>* corders,
-                    std::vector<DistributedIndex>* bin,
-                    unsigned int n,
-                    LOCS* center,
-                    LOCS* dimension,
-                    unsigned int o,
-                    int r,
-                    BITS history)
+SpaceFillingCurve<LOCS>::SerialHR(DistributedIndex* orders,
+                                  History<BITS>* corders,
+                                  std::vector<DistributedIndex>* bin,
+                                  unsigned int n,
+                                  LOCS* center,
+                                  LOCS* dimension,
+                                  unsigned int o,
+                                  int r,
+                                  BITS history)
 {
   LOCS newcenter[BINS][DIM], newdimension[DIM];
   unsigned int size[BINS];
@@ -1116,8 +1121,9 @@ SFC<LOCS>::SerialHR(DistributedIndex* orders,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::ComputeLocalHistogram(BITS* histogram,
-                                 std::vector<History<BITS>>& histories)
+SpaceFillingCurve<LOCS>::ComputeLocalHistogram(
+  BITS* histogram,
+  std::vector<History<BITS>>& histories)
 {
   // initialize to zero
   for (unsigned int i = 0; i < buckets; i++) {
@@ -1141,9 +1147,10 @@ SFC<LOCS>::ComputeLocalHistogram(BITS* histogram,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::CalculateHistogramsAndCuts(std::vector<BITS>& histograms,
-                                      std::vector<BITS>& cuts,
-                                      std::vector<History<BITS>>& histories)
+SpaceFillingCurve<LOCS>::CalculateHistogramsAndCuts(
+  std::vector<BITS>& histograms,
+  std::vector<BITS>& cuts,
+  std::vector<History<BITS>>& histories)
 {
   float max_imbalance;
   // calculate b
@@ -1165,12 +1172,12 @@ SFC<LOCS>::CalculateHistogramsAndCuts(std::vector<BITS>& histograms,
 
     // all gather histograms
     Uintah::MPI::Allgather(&histograms[rank * (buckets)],
-                  buckets * sizeof(BITS),
-                  MPI_BYTE,
-                  &histograms[0],
-                  buckets * sizeof(BITS),
-                  MPI_BYTE,
-                  Comm);
+                           buckets * sizeof(BITS),
+                           MPI_BYTE,
+                           &histograms[0],
+                           buckets * sizeof(BITS),
+                           MPI_BYTE,
+                           Comm);
 
     // sum histogram
     BITS* sum = &histograms[P * buckets];
@@ -1231,11 +1238,11 @@ SFC<LOCS>::CalculateHistogramsAndCuts(std::vector<BITS>& histograms,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::BlockedMerge(History<BITS>* start1,
-                        History<BITS>* end1,
-                        History<BITS>* start2,
-                        History<BITS>* end2,
-                        History<BITS>* out)
+SpaceFillingCurve<LOCS>::BlockedMerge(History<BITS>* start1,
+                                      History<BITS>* end1,
+                                      History<BITS>* start2,
+                                      History<BITS>* end2,
+                                      History<BITS>* out)
 {
   History<BITS>* outend = out + (end1 - start1) + (end2 - start2);
   // merge
@@ -1282,7 +1289,7 @@ SFC<LOCS>::BlockedMerge(History<BITS>* start1,
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::Parallel()
+SpaceFillingCurve<LOCS>::Parallel()
 {
   switch (mergemode) {
     case 0:
@@ -1323,12 +1330,12 @@ struct Comm_Partner
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::Parallel3()
+SpaceFillingCurve<LOCS>::Parallel3()
 {
   std::vector<Comm_Partner<BITS>> spartners(4), rpartners(4);
   std::vector<MPI_Request> rreqs(rpartners.size()), sreqs(spartners.size());
   std::vector<int> rindices(rreqs.size()), sindices(sreqs.size());
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   Timers::Simple timer;
   timer.start();
 #endif
@@ -1338,7 +1345,7 @@ SFC<LOCS>::Parallel3()
   // calculate local curves
   SerialH<DIM, BITS>(&myhistories[0]); // Saves results in sendbuf
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[0] += timer().seconds();
   timer.reset(true);
@@ -1376,7 +1383,7 @@ SFC<LOCS>::Parallel3()
   ComputeLocalHistogram<BITS>(&histogram[0], myhistories);
   // std::cout << rank << ": done creating histogram\n";
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[6] += timer().seconds();
   timer.reset(true);
@@ -1432,7 +1439,7 @@ SFC<LOCS>::Parallel3()
   // place histgram into sum_histogram
   histogram.swap(sum_histogram);
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[1] += timer().seconds();
   timer.reset(true);
@@ -1457,22 +1464,23 @@ SFC<LOCS>::Parallel3()
 
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  0,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           0,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
         // start recv
         // start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  0,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           0,
+                           Comm,
+                           &rreq);
       } else {
         // partner doesn't exist
         // no send needed
@@ -1481,12 +1489,13 @@ SFC<LOCS>::Parallel3()
         // std::cout << rank << ": recieving from: " <<
         // next_partner_group.start_rank << std::endl; start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank,
-                  0,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank,
+                           0,
+                           Comm,
+                           &rreq);
       }
 
       if (next_group.size < next_partner_group.size && next_local_rank == 0) {
@@ -1496,17 +1505,18 @@ SFC<LOCS>::Parallel3()
         // next_partner_group.start_rank+next_partner_group.size-1 << std::endl;
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank + next_partner_group.size - 1,
-                  0,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank +
+                             next_partner_group.size - 1,
+                           0,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
       }
     }
   }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[3] += timer().seconds();
   timer.reset(true);
@@ -1543,7 +1553,7 @@ SFC<LOCS>::Parallel3()
     // " next_partner_rank:" << next_partner_rank <<std::endl;
 
     if (group.partner_group != -1) {
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[1] += timer().seconds();
       timer.reset(true);
@@ -1553,7 +1563,7 @@ SFC<LOCS>::Parallel3()
       Uintah::MPI::Waitall(hsreqs.size(), &hsreqs[0], MPI_STATUSES_IGNORE);
       hsreqs.clear();
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[3] += timer().seconds();
       timer.reset(true);
@@ -1618,7 +1628,7 @@ SFC<LOCS>::Parallel3()
       sum_histogram[buckets + p] = buckets;
     }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[2] += timer().seconds();
     timer.reset(true);
@@ -1632,21 +1642,22 @@ SFC<LOCS>::Parallel3()
 
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  0,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           0,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
         // start recv
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  0,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           0,
+                           Comm,
+                           &rreq);
       } else {
         // partner doesn't exist
         // no send needed
@@ -1655,12 +1666,13 @@ SFC<LOCS>::Parallel3()
         // std::cout << rank << ": recieving from: " <<
         // next_partner_group.start_rank << std::endl; start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank,
-                  0,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank,
+                           0,
+                           Comm,
+                           &rreq);
       }
 
       if (next_group.size < next_partner_group.size && next_local_rank == 0) {
@@ -1670,16 +1682,17 @@ SFC<LOCS>::Parallel3()
         // next_partner_group.start_rank+next_partner_group.size-1 << std::endl;
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank + next_partner_group.size - 1,
-                  0,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank +
+                             next_partner_group.size - 1,
+                           0,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
       }
     }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[3] += timer().seconds();
     timer.reset(true);
@@ -1815,7 +1828,7 @@ SFC<LOCS>::Parallel3()
           rpartners.push_back(partner);
         }
       }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[2] += timer().seconds();
       timer.reset(true);
@@ -1837,12 +1850,12 @@ SFC<LOCS>::Parallel3()
 
           // start send
           Uintah::MPI::Isend(msg.buffer,
-                    msg.size * sizeof(History<BITS>),
-                    MPI_BYTE,
-                    spartners[i].rank,
-                    1,
-                    Comm,
-                    &msg.request);
+                             msg.size * sizeof(History<BITS>),
+                             MPI_BYTE,
+                             spartners[i].rank,
+                             1,
+                             Comm,
+                             &msg.request);
 
           // add msg to in transit queue
           spartners[i].in_transit.push(msg);
@@ -1867,12 +1880,12 @@ SFC<LOCS>::Parallel3()
 
           // start send
           Uintah::MPI::Irecv(msg.buffer,
-                    msg.size * sizeof(History<BITS>),
-                    MPI_BYTE,
-                    rpartners[i].rank,
-                    1,
-                    Comm,
-                    &msg.request);
+                             msg.size * sizeof(History<BITS>),
+                             MPI_BYTE,
+                             rpartners[i].rank,
+                             1,
+                             Comm,
+                             &msg.request);
 
           // add msg to in transit queue
           rpartners[i].in_transit.push(msg);
@@ -1881,7 +1894,7 @@ SFC<LOCS>::Parallel3()
           // msg.size << " from " << rpartners[i].rank << std::endl;
         }
       }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[5] += timer().seconds();
       timer.reset(true);
@@ -1919,18 +1932,18 @@ SFC<LOCS>::Parallel3()
         if (sdone < sreqs.size()) {
           int completed;
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
           timer.stop();
           timers[4] += timer().seconds();
           timer.reset(true);
 #endif
           // testsome on sends
           Uintah::MPI::Testsome(sreqs.size(),
-                       &sreqs[0],
-                       &completed,
-                       &sindices[0],
-                       MPI_STATUSES_IGNORE);
-#ifdef _TIMESFC_
+                                &sreqs[0],
+                                &completed,
+                                &sindices[0],
+                                MPI_STATUSES_IGNORE);
+#ifdef _TIMESpaceFillingCurve_
           timer.stop();
           timers[5] += timer().seconds();
           timer.reset(true);
@@ -1955,12 +1968,12 @@ SFC<LOCS>::Parallel3()
 
               // start send
               Uintah::MPI::Isend(new_msg.buffer,
-                        new_msg.size * sizeof(History<BITS>),
-                        MPI_BYTE,
-                        partner.rank,
-                        1,
-                        Comm,
-                        &new_msg.request);
+                                 new_msg.size * sizeof(History<BITS>),
+                                 MPI_BYTE,
+                                 partner.rank,
+                                 1,
+                                 Comm,
+                                 &new_msg.request);
 
               // add msg to in transit queue
               partner.in_transit.push(new_msg);
@@ -1981,18 +1994,18 @@ SFC<LOCS>::Parallel3()
 
         if (rdone < rreqs.size()) {
           int completed;
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
           timer.stop();
           timers[4] += timer().seconds();
           timer.reset(true);
 #endif
           // testsome on recvs
           Uintah::MPI::Testsome(rreqs.size(),
-                       &rreqs[0],
-                       &completed,
-                       &rindices[0],
-                       MPI_STATUSES_IGNORE);
-#ifdef _TIMESFC_
+                                &rreqs[0],
+                                &completed,
+                                &rindices[0],
+                                MPI_STATUSES_IGNORE);
+#ifdef _TIMESpaceFillingCurve_
           timer.stop();
           timers[5] += timer().seconds();
           timer.reset(true);
@@ -2019,12 +2032,12 @@ SFC<LOCS>::Parallel3()
 
               // start recv
               Uintah::MPI::Irecv(new_msg.buffer,
-                        new_msg.size * sizeof(History<BITS>),
-                        MPI_BYTE,
-                        partner.rank,
-                        1,
-                        Comm,
-                        &new_msg.request);
+                                 new_msg.size * sizeof(History<BITS>),
+                                 MPI_BYTE,
+                                 partner.rank,
+                                 1,
+                                 Comm,
+                                 &new_msg.request);
 
               // add msg to in transit queue
               partner.in_transit.push(new_msg);
@@ -2083,7 +2096,7 @@ SFC<LOCS>::Parallel3()
             }
 
           } // end for completed
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
           timer.stop();
           timers[4] += timer().seconds();
           timer.reset(true);
@@ -2091,7 +2104,7 @@ SFC<LOCS>::Parallel3()
         } // end if rdone!=rsize
       }   // end while rdone!=rsize && sdone!=ssize
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[5] += timer().seconds();
       timer.reset(true);
@@ -2113,7 +2126,7 @@ SFC<LOCS>::Parallel3()
   }
   std::cout << std::endl;
   */
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[1] += timer().seconds();
   timer.reset(true);
@@ -2135,11 +2148,11 @@ SFC<LOCS>::Parallel3()
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::Parallel2()
+SpaceFillingCurve<LOCS>::Parallel2()
 {
   int total_recvs = 0;
   int num_recvs   = 0;
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.start();
 #endif
   std::vector<History<BITS>> myhistories(
@@ -2148,7 +2161,7 @@ SFC<LOCS>::Parallel2()
   // calculate local curves
   SerialH<DIM, BITS>(&myhistories[0]); // Saves results in sendbuf
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[0] += timer().seconds();
   timer.reset(true);
@@ -2186,7 +2199,7 @@ SFC<LOCS>::Parallel2()
   ComputeLocalHistogram<BITS>(&histogram[0], myhistories);
   // std::cout << rank << ": done creating histogram\n";
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[6] += timer().seconds();
   timer.reset(true);
@@ -2242,7 +2255,7 @@ SFC<LOCS>::Parallel2()
   // place histgram into sum_histogram
   histogram.swap(sum_histogram);
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[1] += timer().seconds();
   timer.reset(true);
@@ -2267,22 +2280,23 @@ SFC<LOCS>::Parallel2()
 
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  stages,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           stages,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
         // start recv
         // start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  stages,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           stages,
+                           Comm,
+                           &rreq);
       } else {
         // partner doesn't exist
         // no send needed
@@ -2291,12 +2305,13 @@ SFC<LOCS>::Parallel2()
         // std::cout << rank << ": recieving from: " <<
         // next_partner_group.start_rank << std::endl; start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank,
-                  stages,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank,
+                           stages,
+                           Comm,
+                           &rreq);
       }
 
       if (next_group.size < next_partner_group.size && next_local_rank == 0) {
@@ -2306,17 +2321,18 @@ SFC<LOCS>::Parallel2()
         // next_partner_group.start_rank+next_partner_group.size-1 << std::endl;
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank + next_partner_group.size - 1,
-                  stages,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank +
+                             next_partner_group.size - 1,
+                           stages,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
       }
     }
   }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[3] += timer().seconds();
   timer.reset(true);
@@ -2352,7 +2368,7 @@ SFC<LOCS>::Parallel2()
     // " next_partner_rank:" << next_partner_rank <<std::endl;
 
     if (group.partner_group != -1) {
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[1] += timer().seconds();
       timer.reset(true);
@@ -2362,7 +2378,7 @@ SFC<LOCS>::Parallel2()
       Uintah::MPI::Waitall(hsreqs.size(), &hsreqs[0], MPI_STATUSES_IGNORE);
       hsreqs.clear();
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[3] += timer().seconds();
       timer.reset(true);
@@ -2427,7 +2443,7 @@ SFC<LOCS>::Parallel2()
       sum_histogram[buckets + p] = buckets;
     }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[2] += timer().seconds();
     timer.reset(true);
@@ -2441,21 +2457,22 @@ SFC<LOCS>::Parallel2()
 
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  stage - 1,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           stage - 1,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
         // start recv
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_rank,
-                  stage - 1,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_rank,
+                           stage - 1,
+                           Comm,
+                           &rreq);
       } else {
         // partner doesn't exist
         // no send needed
@@ -2464,12 +2481,13 @@ SFC<LOCS>::Parallel2()
         // std::cout << rank << ": recieving from: " <<
         // next_partner_group.start_rank << std::endl; start send
         Uintah::MPI::Irecv(&next_recv_histogram[0],
-                  (buckets + next_partner_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank,
-                  stage - 1,
-                  Comm,
-                  &rreq);
+                           (buckets + next_partner_group.size + 1) *
+                             sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank,
+                           stage - 1,
+                           Comm,
+                           &rreq);
       }
 
       if (next_group.size < next_partner_group.size && next_local_rank == 0) {
@@ -2479,16 +2497,17 @@ SFC<LOCS>::Parallel2()
         // next_partner_group.start_rank+next_partner_group.size-1 << std::endl;
         // start send
         Uintah::MPI::Isend(&sum_histogram[0],
-                  (buckets + next_group.size + 1) * sizeof(BITS),
-                  MPI_BYTE,
-                  next_partner_group.start_rank + next_partner_group.size - 1,
-                  stage - 1,
-                  Comm,
-                  &request);
+                           (buckets + next_group.size + 1) * sizeof(BITS),
+                           MPI_BYTE,
+                           next_partner_group.start_rank +
+                             next_partner_group.size - 1,
+                           stage - 1,
+                           Comm,
+                           &request);
         hsreqs.push_back(request);
       }
     }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[3] += timer().seconds();
     timer.reset(true);
@@ -2599,7 +2618,7 @@ SFC<LOCS>::Parallel2()
       // redistribute keys
       std::vector<MPI_Request> rreqs, sreqs;
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[2] += timer().seconds();
       timer.reset(true);
@@ -2621,12 +2640,12 @@ SFC<LOCS>::Parallel2()
                       << ": error sending, send size is bigger than buffer\n";
           }
           Uintah::MPI::Isend(&myhistories[senddisp[p]],
-                    sendcounts[p] * sizeof(History<BITS>),
-                    MPI_BYTE,
-                    parent_group.start_rank + p,
-                    2 * stages + stage,
-                    Comm,
-                    &request);
+                             sendcounts[p] * sizeof(History<BITS>),
+                             MPI_BYTE,
+                             parent_group.start_rank + p,
+                             2 * stages + stage,
+                             Comm,
+                             &request);
           sreqs.push_back(request);
         }
 
@@ -2640,16 +2659,16 @@ SFC<LOCS>::Parallel2()
               << ": error reciving, recieve size is bigger than buffer\n";
           }
           Uintah::MPI::Irecv(&recv_histories[recvdisp[p]],
-                    recvcounts[p] * sizeof(History<BITS>),
-                    MPI_BYTE,
-                    parent_group.start_rank + p,
-                    2 * stages + stage,
-                    Comm,
-                    &request);
+                             recvcounts[p] * sizeof(History<BITS>),
+                             MPI_BYTE,
+                             parent_group.start_rank + p,
+                             2 * stages + stage,
+                             Comm,
+                             &request);
           rreqs.push_back(request);
         }
       }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[5] += timer().seconds();
       timer.reset(true);
@@ -2673,14 +2692,14 @@ SFC<LOCS>::Parallel2()
         MPI_Status status;
         int index;
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[4] += timer().seconds();
         timer.reset(true);
 #endif
         // wait any
         Uintah::MPI::Waitany(rreqs.size(), &rreqs[0], &index, &status);
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[5] += timer().seconds();
         timer.reset(true);
@@ -2703,7 +2722,7 @@ SFC<LOCS>::Parallel2()
         // MPI_Status status;
         // int index;
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[4] += timer().seconds();
         timer.reset(true);
@@ -2711,11 +2730,11 @@ SFC<LOCS>::Parallel2()
         // wait any
         //  Uintah::MPI::Waitany(rreqs.size(),&rreqs[0],&index,&status);
         Uintah::MPI::Waitsome(rreqs.size(),
-                     &rreqs[0],
-                     &completed,
-                     &indices[0],
-                     &statuses[0]);
-#ifdef _TIMESFC_
+                              &rreqs[0],
+                              &completed,
+                              &indices[0],
+                              &statuses[0]);
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[5] += timer().seconds();
         timer.reset(true);
@@ -2760,7 +2779,7 @@ SFC<LOCS>::Parallel2()
         }
       }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[4] += timer().seconds();
       timer.reset(true);
@@ -2771,7 +2790,7 @@ SFC<LOCS>::Parallel2()
         Uintah::MPI::Waitall(sreqs.size(), &sreqs[0], MPI_STATUSES_IGNORE);
       }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
       timer.stop();
       timers[5] += timer().seconds();
       timer.reset(true);
@@ -2793,7 +2812,7 @@ SFC<LOCS>::Parallel2()
   }
   std::cout << std::endl;
   */
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[1] += timer().seconds();
   timer.reset(true);
@@ -2815,10 +2834,10 @@ SFC<LOCS>::Parallel2()
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::Parallel1()
+SpaceFillingCurve<LOCS>::Parallel1()
 {
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.start();
 #endif
   std::vector<History<BITS>> myhistories(n), mergefrom(n), mergeto(n);
@@ -2826,7 +2845,7 @@ SFC<LOCS>::Parallel1()
   // calculate local curves
   SerialH<DIM, BITS>(&myhistories[0]);
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[0] += timer().seconds();
   timer.reset(true);
@@ -2866,7 +2885,7 @@ SFC<LOCS>::Parallel1()
   // delete histograms
   histograms.resize(0);
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[1] += timer().seconds();
   timer.reset(true);
@@ -2905,15 +2924,15 @@ SFC<LOCS>::Parallel1()
     }
     // std::cout << rank << ": all to all\n";
     Uintah::MPI::Alltoallv(&myhistories[0],
-                  &sendcounts[0],
-                  &senddisp[0],
-                  MPI_BYTE,
-                  &mergefrom[0],
-                  &recvcounts[0],
-                  &recvdisp[0],
-                  MPI_BYTE,
-                  Comm);
-#ifdef _TIMESFC_
+                           &sendcounts[0],
+                           &senddisp[0],
+                           MPI_BYTE,
+                           &mergefrom[0],
+                           &recvcounts[0],
+                           &recvdisp[0],
+                           MPI_BYTE,
+                           Comm);
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[2] += timer().seconds();
     timer.reset(true);
@@ -3016,12 +3035,12 @@ SFC<LOCS>::Parallel1()
         // << std::endl;
         sreqs.push_back(empty);
         Uintah::MPI::Isend(&myhistories[senddisp[p]],
-                  sendcounts[p] * sizeof(History<BITS>),
-                  MPI_BYTE,
-                  p,
-                  0,
-                  Comm,
-                  &sreqs.back());
+                           sendcounts[p] * sizeof(History<BITS>),
+                           MPI_BYTE,
+                           p,
+                           0,
+                           Comm,
+                           &sreqs.back());
       }
     }
     // start recieves
@@ -3031,15 +3050,15 @@ SFC<LOCS>::Parallel1()
         // p << std::endl;
         rreqs.push_back(empty);
         Uintah::MPI::Irecv(&recvbuf[recvdisp[p]],
-                  recvcounts[p] * sizeof(History<BITS>),
-                  MPI_BYTE,
-                  p,
-                  0,
-                  Comm,
-                  &rreqs.back());
+                           recvcounts[p] * sizeof(History<BITS>),
+                           MPI_BYTE,
+                           p,
+                           0,
+                           Comm,
+                           &rreqs.back());
       }
     }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[3] += timer().seconds();
     timer.reset(true);
@@ -3055,13 +3074,13 @@ SFC<LOCS>::Parallel1()
         int index;
         // std::cout << "doing waitany\n";
         // wait any
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[2] += timer().seconds();
         timer.reset(true);
 #endif
         Uintah::MPI::Waitany(rreqs.size(), &rreqs[0], &index, &status);
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[3] += timer().seconds();
         timer.reset(true);
@@ -3108,14 +3127,14 @@ SFC<LOCS>::Parallel1()
         MPI_Status status;
         int index;
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[2] += timer().seconds();
         timer.reset(true);
 #endif
         // wait any
         Uintah::MPI::Waitany(rreqs.size(), &rreqs[0], &index, &status);
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
         timer.stop();
         timers[3] += timer().seconds();
         timer.reset(true);
@@ -3185,7 +3204,7 @@ SFC<LOCS>::Parallel1()
       mergefrom.assign(done.back().back().begin(), done.back().back().end());
     }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[3] += timer().seconds();
     timer.reset(true);
@@ -3196,7 +3215,7 @@ SFC<LOCS>::Parallel1()
       Uintah::MPI::Wait(&sreqs[i], &status);
     }
   }
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[2] += timer().seconds();
   timer.reset(true);
@@ -3214,7 +3233,7 @@ SFC<LOCS>::Parallel1()
    }
     std::cout << std::endl;
   */
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[3] += timer().seconds();
 #endif
@@ -3222,9 +3241,9 @@ SFC<LOCS>::Parallel1()
 template<class LOCS>
 template<int DIM, class BITS>
 void
-SFC<LOCS>::Parallel0()
+SpaceFillingCurve<LOCS>::Parallel0()
 {
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.reset(true);
 #endif
   std::vector<History<BITS>> histories(n);
@@ -3232,28 +3251,28 @@ SFC<LOCS>::Parallel0()
 
   SerialH<DIM, BITS>(&histories[0]); // Saves results in sendbuf
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[0] += timer().seconds();
 #endif
   std::vector<History<BITS>> rbuf, mbuf(n);
 
   if (mergemode == 0) {
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.reset(true);
 #endif
     PrimaryMerge<BITS>(histories, rbuf, mbuf);
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
     timer.stop();
     timers[1] += timer().seconds();
 #endif
   }
 
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.reset(true);
 #endif
   Cleanup<BITS>(histories, rbuf, mbuf);
-#ifdef _TIMESFC_
+#ifdef _TIMESpaceFillingCurve_
   timer.stop();
   timers[2] += timer().seconds();
 #endif
@@ -3301,10 +3320,10 @@ struct MergeInfo
 template<class LOCS>
 template<class BITS>
 int
-SFC<LOCS>::MergeExchange(int to,
-                         std::vector<History<BITS>>& sendbuf,
-                         std::vector<History<BITS>>& recievebuf,
-                         std::vector<History<BITS>>& mergebuf)
+SpaceFillingCurve<LOCS>::MergeExchange(int to,
+                                       std::vector<History<BITS>>& sendbuf,
+                                       std::vector<History<BITS>>& recievebuf,
+                                       std::vector<History<BITS>>& mergebuf)
 {
   // std::cout << rank <<  ": Merge Exchange started with " << to << std::endl;
   int direction = (int)(rank > to);
@@ -3320,14 +3339,20 @@ SFC<LOCS>::MergeExchange(int to,
     myinfo.max = sendbuf[n - 1].bits;
   }
 
-  Uintah::MPI::Isend(&myinfo, sizeof(MergeInfo<BITS>), MPI_BYTE, to, 0, Comm, &srequest);
+  Uintah::MPI::Isend(&myinfo,
+                     sizeof(MergeInfo<BITS>),
+                     MPI_BYTE,
+                     to,
+                     0,
+                     Comm,
+                     &srequest);
   Uintah::MPI::Irecv(&theirinfo,
-            sizeof(MergeInfo<BITS>),
-            MPI_BYTE,
-            to,
-            0,
-            Comm,
-            &rrequest);
+                     sizeof(MergeInfo<BITS>),
+                     MPI_BYTE,
+                     to,
+                     0,
+                     Comm,
+                     &rrequest);
   Uintah::MPI::Wait(&rrequest, &status);
   Uintah::MPI::Wait(&srequest, &status);
 
@@ -3360,20 +3385,20 @@ SFC<LOCS>::MergeExchange(int to,
 
       // send the elements to be merged
       Uintah::MPI::Isend(&sendbuf[send_offset],
-                sendn * sizeof(History<BITS>),
-                MPI_BYTE,
-                to,
-                0,
-                Comm,
-                &srequest);
+                         sendn * sizeof(History<BITS>),
+                         MPI_BYTE,
+                         to,
+                         0,
+                         Comm,
+                         &srequest);
       // recv the elements to be merged
       Uintah::MPI::Irecv(&mergebuf[0],
-                sendn * sizeof(History<BITS>),
-                MPI_BYTE,
-                to,
-                0,
-                Comm,
-                &rrequest);
+                         sendn * sizeof(History<BITS>),
+                         MPI_BYTE,
+                         to,
+                         0,
+                         Comm,
+                         &rrequest);
       Uintah::MPI::Wait(&rrequest, &status);
       Uintah::MPI::Wait(&srequest, &status);
       sendbuf.swap(mergebuf);
@@ -3406,20 +3431,20 @@ SFC<LOCS>::MergeExchange(int to,
 
       // send the elements to be merged
       Uintah::MPI::Isend(&sendbuf[0],
-                sendn * sizeof(History<BITS>),
-                MPI_BYTE,
-                to,
-                0,
-                Comm,
-                &srequest);
+                         sendn * sizeof(History<BITS>),
+                         MPI_BYTE,
+                         to,
+                         0,
+                         Comm,
+                         &srequest);
       // recv the elements to be merged
       Uintah::MPI::Irecv(&mergebuf[send_offset],
-                sendn * sizeof(History<BITS>),
-                MPI_BYTE,
-                to,
-                0,
-                Comm,
-                &rrequest);
+                         sendn * sizeof(History<BITS>),
+                         MPI_BYTE,
+                         to,
+                         0,
+                         Comm,
+                         &rrequest);
       Uintah::MPI::Wait(&rrequest, &status);
       Uintah::MPI::Wait(&srequest, &status);
       sendbuf.swap(mergebuf);
@@ -3449,19 +3474,19 @@ SFC<LOCS>::MergeExchange(int to,
 
     // communicate lists
     Uintah::MPI::Irecv(rbuf,
-              nrecv * sizeof(History<BITS>),
-              MPI_BYTE,
-              to,
-              1,
-              Comm,
-              &rrequest);
+                       nrecv * sizeof(History<BITS>),
+                       MPI_BYTE,
+                       to,
+                       1,
+                       Comm,
+                       &rrequest);
     Uintah::MPI::Isend(sbuf,
-              nsend * sizeof(History<BITS>),
-              MPI_BYTE,
-              to,
-              1,
-              Comm,
-              &srequest);
+                       nsend * sizeof(History<BITS>),
+                       MPI_BYTE,
+                       to,
+                       1,
+                       Comm,
+                       &srequest);
 
     // wait for recieve
     Uintah::MPI::Wait(&rrequest, &status);
@@ -3495,19 +3520,19 @@ SFC<LOCS>::MergeExchange(int to,
 
     // communicate lists
     Uintah::MPI::Irecv(rbuf,
-              nrecv * sizeof(History<BITS>),
-              MPI_BYTE,
-              to,
-              1,
-              Comm,
-              &rrequest);
+                       nrecv * sizeof(History<BITS>),
+                       MPI_BYTE,
+                       to,
+                       1,
+                       Comm,
+                       &rrequest);
     Uintah::MPI::Isend(sbuf,
-              nsend * sizeof(History<BITS>),
-              MPI_BYTE,
-              to,
-              1,
-              Comm,
-              &srequest);
+                       nsend * sizeof(History<BITS>),
+                       MPI_BYTE,
+                       to,
+                       1,
+                       Comm,
+                       &srequest);
 
     // wait for recieve
     Uintah::MPI::Wait(&rrequest, &status);
@@ -3550,7 +3575,7 @@ SFC<LOCS>::MergeExchange(int to,
 #endif
 #if 0
 template<class LOCS> template<class BITS>
-int SFC<LOCS>::MergeExchange(int to,std::vector<History<BITS> > &sendbuf, std::vector<History<BITS> >&recievebuf, std::vector<History<BITS> > &mergebuf)
+int SpaceFillingCurve<LOCS>::MergeExchange(int to,std::vector<History<BITS> > &sendbuf, std::vector<History<BITS> >&recievebuf, std::vector<History<BITS> > &mergebuf)
 {
   float inv_denom=1.0/sizeof(History<BITS>);
   //std::cout << rank <<  ": Merge Exchange started with " << to << std::endl;
@@ -3975,9 +4000,9 @@ struct HC_MERGE
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::PrimaryMerge(std::vector<History<BITS>>& histories,
-                        std::vector<History<BITS>>& rbuf,
-                        std::vector<History<BITS>>& mbuf)
+SpaceFillingCurve<LOCS>::PrimaryMerge(std::vector<History<BITS>>& histories,
+                                      std::vector<History<BITS>>& rbuf,
+                                      std::vector<History<BITS>>& mbuf)
 {
   std::queue<HC_MERGE> q;
   HC_MERGE cur;
@@ -4041,11 +4066,11 @@ SFC<LOCS>::PrimaryMerge(std::vector<History<BITS>>& histories,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::PrimaryMerge2(std::vector<History<BITS>>& histories,
-                         std::vector<History<BITS>>& rbuf,
-                         std::vector<History<BITS>>& mbuf,
-                         int P,
-                         int base)
+SpaceFillingCurve<LOCS>::PrimaryMerge2(std::vector<History<BITS>>& histories,
+                                       std::vector<History<BITS>>& rbuf,
+                                       std::vector<History<BITS>>& mbuf,
+                                       int P,
+                                       int base)
 {
   if (P == 1) {
     return;
@@ -4069,9 +4094,9 @@ SFC<LOCS>::PrimaryMerge2(std::vector<History<BITS>>& histories,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::Cleanup(std::vector<History<BITS>>& histories,
-                   std::vector<History<BITS>>& rbuf,
-                   std::vector<History<BITS>>& mbuf)
+SpaceFillingCurve<LOCS>::Cleanup(std::vector<History<BITS>>& histories,
+                                 std::vector<History<BITS>>& rbuf,
+                                 std::vector<History<BITS>>& mbuf)
 {
   switch (cleanup) {
     case BATCHERS:
@@ -4085,9 +4110,9 @@ SFC<LOCS>::Cleanup(std::vector<History<BITS>>& histories,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::Batchers(std::vector<History<BITS>>& histories,
-                    std::vector<History<BITS>>& rbuf,
-                    std::vector<History<BITS>>& mbuf)
+SpaceFillingCurve<LOCS>::Batchers(std::vector<History<BITS>>& histories,
+                                  std::vector<History<BITS>>& rbuf,
+                                  std::vector<History<BITS>>& mbuf)
 {
   int p, r, t, q, d;
 
@@ -4124,9 +4149,9 @@ SFC<LOCS>::Batchers(std::vector<History<BITS>>& histories,
 template<class LOCS>
 template<class BITS>
 void
-SFC<LOCS>::Linear(std::vector<History<BITS>>& histories,
-                  std::vector<History<BITS>>& rbuf,
-                  std::vector<History<BITS>>& mbuf)
+SpaceFillingCurve<LOCS>::Linear(std::vector<History<BITS>>& histories,
+                                std::vector<History<BITS>>& rbuf,
+                                std::vector<History<BITS>>& mbuf)
 {
   unsigned int i = 1, c = 1, val = 0, iter = 0;
   int mod = (int)ceil(log((float)P) / log(3.0f));
@@ -4162,10 +4187,10 @@ SFC<LOCS>::Linear(std::vector<History<BITS>>& histories,
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetMergeParameters(unsigned int comm_block_size,
-                              unsigned int merge_block_size,
-                              unsigned int blocks_in_transit,
-                              float sample_percent)
+SpaceFillingCurve<LOCS>::SetMergeParameters(unsigned int comm_block_size,
+                                            unsigned int merge_block_size,
+                                            unsigned int blocks_in_transit,
+                                            float sample_percent)
 {
   this->comm_block_size   = comm_block_size;
   this->blocks_in_transit = blocks_in_transit;
@@ -4175,7 +4200,7 @@ SFC<LOCS>::SetMergeParameters(unsigned int comm_block_size,
 
 template<class LOCS>
 void
-SFC<LOCS>::SetLocations(std::vector<LOCS>* locsv)
+SpaceFillingCurve<LOCS>::SetLocations(std::vector<LOCS>* locsv)
 {
   if (locsv != 0) {
     this->locsv = locsv;
@@ -4185,7 +4210,7 @@ SFC<LOCS>::SetLocations(std::vector<LOCS>* locsv)
 
 template<class LOCS>
 void
-SFC<LOCS>::SetOutputVector(std::vector<DistributedIndex>* orders)
+SpaceFillingCurve<LOCS>::SetOutputVector(std::vector<DistributedIndex>* orders)
 {
   if (orders != 0) {
     this->orders = orders;
@@ -4193,13 +4218,13 @@ SFC<LOCS>::SetOutputVector(std::vector<DistributedIndex>* orders)
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetLocalSize(unsigned int n)
+SpaceFillingCurve<LOCS>::SetLocalSize(unsigned int n)
 {
   this->n = n;
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetDimensions(LOCS* dimensions)
+SpaceFillingCurve<LOCS>::SetDimensions(LOCS* dimensions)
 {
   for (int d = 0; d < dim; d++) {
     this->dimensions[d] = dimensions[d];
@@ -4207,7 +4232,7 @@ SFC<LOCS>::SetDimensions(LOCS* dimensions)
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetCenter(LOCS* center)
+SpaceFillingCurve<LOCS>::SetCenter(LOCS* center)
 {
   for (int d = 0; d < dim; d++) {
     this->center[d] = center[d];
@@ -4215,17 +4240,19 @@ SFC<LOCS>::SetCenter(LOCS* center)
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetRefinements(int refinements)
+SpaceFillingCurve<LOCS>::SetRefinements(int refinements)
 {
   this->refinements = refinements;
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetRefinementsByDelta(LOCS* delta)
+SpaceFillingCurve<LOCS>::SetRefinementsByDelta(LOCS* delta)
 {
   if (dimensions[0] == INT_MAX && dimensions[1] == INT_MAX &&
       dimensions[2] == INT_MAX) {
-    throw Uintah::InternalError("SFC Dimensions not set", __FILE__, __LINE__);
+    throw Uintah::InternalError("SpaceFillingCurve Dimensions not set",
+                                __FILE__,
+                                __LINE__);
   }
   refinements = (int)ceil(log(dimensions[0] / delta[0]) / log(2.0));
   for (int d = 1; d < dim; d++) {
@@ -4235,7 +4262,7 @@ SFC<LOCS>::SetRefinementsByDelta(LOCS* delta)
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetNumDimensions(int dimensions)
+SpaceFillingCurve<LOCS>::SetNumDimensions(int dimensions)
 {
   dim = dimensions;
   switch (dim) {
@@ -4253,7 +4280,7 @@ SFC<LOCS>::SetNumDimensions(int dimensions)
 }
 template<class LOCS>
 void
-SFC<LOCS>::SetCurve(Curve curve)
+SpaceFillingCurve<LOCS>::SetCurve(Curve curve)
 {
   switch (dim) {
     case 1:
@@ -4303,4 +4330,4 @@ SFC<LOCS>::SetCurve(Curve curve)
 }
 } // End Namespace Uintah
 
-#endif //__VAANGO_CCA_PORTS_SFC__
+#endif //__VAANGO_CCA_PORTS_SpaceFillingCurve__

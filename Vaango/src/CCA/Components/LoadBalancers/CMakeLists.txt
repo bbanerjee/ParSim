@@ -30,7 +30,6 @@ SET(Vaango_CCA_Components_LoadBalancers_SRCS
   RoundRobinLoadBalancer.cc 
   DynamicLoadBalancer.cc 
   SimpleLoadBalancer.cc 
-  SingleProcessorLoadBalancer.cc 
   CostProfiler.cc 
   ProfileDriver.cc 
   CostModelForecaster.cc 

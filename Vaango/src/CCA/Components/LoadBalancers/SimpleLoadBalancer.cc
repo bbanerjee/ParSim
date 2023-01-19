@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,42 +24,31 @@
  */
 
 #include <CCA/Components/LoadBalancers/SimpleLoadBalancer.h>
-#include <CCA/Components/Schedulers/DetailedTasks.h>
+
+#include <Core/Grid/Grid.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Grid/Grid.h>
-#include <Core/Grid/Patch.h>
-#include <Core/Grid/Level.h>
-
 #include <Core/Util/FancyAssert.h>
-#include <Core/Util/DebugStream.h>
-
 
 using namespace Uintah;
 
-// Debug: Used to sync cerr so it is readable (when output by
-// multiple threads at the same time)  From sus.cc:
-extern Uintah::Mutex cerrLock;
-extern Uintah::DebugStream lbDebug;
-
-SimpleLoadBalancer::SimpleLoadBalancer( const ProcessorGroup * myworld ) :
-  LoadBalancerCommon( myworld )
-{
-}
-
-SimpleLoadBalancer::~SimpleLoadBalancer()
+SimpleLoadBalancer::SimpleLoadBalancer(const ProcessorGroup* myworld)
+  : LoadBalancerCommon(myworld)
 {
 }
 
 int
-SimpleLoadBalancer::getPatchwiseProcessorAssignment( const Patch * patch )
+SimpleLoadBalancer::getPatchwiseProcessorAssignment(const Patch* patch)
 {
-  long long     numProcs  = d_myworld->nRanks();
-  const Patch * realPatch = patch->getRealPatch();
-  int           proc      = (realPatch->getLevelIndex()*numProcs)/(long long)realPatch->getLevel()->numPatches();
+  long long numProcs     = d_myworld->nRanks();
+  const Patch* realPatch = patch->getRealPatch();
 
-  ASSERTRANGE( proc, 0, d_myworld->nRanks() );
+  int proc = (realPatch->getLevelIndex() * numProcs) /
+             (long long)realPatch->getLevel()->numPatches();
+
+  ASSERTRANGE(proc, 0, d_myworld->nRanks());
 
   return proc;
 }
-

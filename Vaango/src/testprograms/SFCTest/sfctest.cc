@@ -49,7 +49,7 @@
 #include <iostream>
 
 
-#include <CCA/Ports/SFC.h>
+#include <CCA/Ports/SpaceFillingCurve>
 #include <Core/Parallel/Parallel.h>
 #include<Core/Thread/Time.h>
 using namespace Uintah;
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 	int rank=d_myworld->myRank();
 	LOCS xx,yy;
 
-  SFC<LOCS> mycurve(d_myworld);
+  SpaceFillingCurve<LOCS> mycurve(d_myworld);
   
 
 

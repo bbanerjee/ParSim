@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,24 +26,24 @@
 #include <CCA/Components/LoadBalancers/CostProfiler.h>
 #include <CCA/Components/Schedulers/DetailedTasks.h>
 #include <Core/Util/DebugStream.h>
-using namespace Uintah;
+
 using namespace Uintah;
 
 //______________________________________________________________________
 //
 void
-CostProfiler::setMinPatchSize( const vector<IntVector> & min_patch_size )
+CostProfiler::setMinPatchSize(const std::vector<IntVector>& min_patch_size)
 {
-  d_lb = nullptr;
+  d_lb      = nullptr;
   d_myworld = nullptr;
   d_profiler.setMinPatchSize(min_patch_size);
 }
 //______________________________________________________________________
 //
 void
-CostProfiler::addContribution( DetailedTask *task, double cost )
+CostProfiler::addContribution(DetailedTask* task, double cost)
 {
-  if( task->getPatches() == 0 ) {
+  if (task->getPatches() == 0) {
     return;
   }
 #if 0  
@@ -54,48 +55,48 @@ CostProfiler::addContribution( DetailedTask *task, double cost )
       std::cout << d_myworld->myRank() << " error patch is owned by processor:" << d_lb->getPatchwiseProcessorAssignment(patch) << " for task:" << task->getName() << endl;
   }
 #endif
-  d_profiler.addContribution( task->getPatches(), cost );
+  d_profiler.addContribution(task->getPatches(), cost);
 }
 //______________________________________________________________________
 //
 void
-CostProfiler::outputError( const GridP currentGrid )
+CostProfiler::outputError(const GridP currentGrid)
 {
-  d_profiler.outputError( currentGrid );
+  d_profiler.outputError(currentGrid);
 }
 
 void
-CostProfiler::finalizeContributions( const GridP currentGrid )
+CostProfiler::finalizeContributions(const GridP currentGrid)
 {
-  d_profiler.finalizeContributions( currentGrid );  
+  d_profiler.finalizeContributions(currentGrid);
 }
 //______________________________________________________________________
 //
 void
-CostProfiler::getWeights(const Grid* grid, vector<vector<int> > num_particles, vector<vector<double> >&costs)
+CostProfiler::getWeights(const Grid* grid,
+                         std::vector<std::vector<int>> num_particles,
+                         std::vector<std::vector<double>>& costs)
 {
   costs.resize(grid->numLevels());
-  //for each level
-  for (int l=0; l<grid->numLevels();l++)
-  {
-    LevelP level=grid->getLevel(l);
+  // for each level
+  for (int l = 0; l < grid->numLevels(); l++) {
+    LevelP level = grid->getLevel(l);
     std::vector<Region> regions(level->numPatches());
 
     costs[l].resize(level->numPatches());
-    for(int p=0; p<level->numPatches();p++)
-    {
-      const Patch *patch=level->getPatch(p);
-      regions[p]=Region(patch->getCellLowIndex(),patch->getCellHighIndex());
+    for (int p = 0; p < level->numPatches(); p++) {
+      const Patch* patch = level->getPatch(p);
+      regions[p] = Region(patch->getCellLowIndex(), patch->getCellHighIndex());
     }
-    d_profiler.getWeights(l,regions,costs[l]);
+    d_profiler.getWeights(l, regions, costs[l]);
   }
 }
 //______________________________________________________________________
 //
 void
-CostProfiler::initializeWeights( const Grid * oldgrid, const Grid * newgrid )
+CostProfiler::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
 {
-  d_profiler.initializeWeights( oldgrid, newgrid );
+  d_profiler.initializeWeights(oldgrid, newgrid);
 }
 
 void
