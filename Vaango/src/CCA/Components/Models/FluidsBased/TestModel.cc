@@ -57,7 +57,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMICELabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <iostream>
@@ -90,7 +90,7 @@ TestModel::~TestModel()
 
 
 //______________________________________________________________________
-void TestModel::problemSetup(GridP&, SimulationStateP& sharedState,
+void TestModel::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup* )
 {
   d_sharedState = sharedState;

@@ -96,11 +96,6 @@ public:
   }
 
   virtual void
-  scheduleCheckNeedAddMaterial(SchedulerP&, const LevelP& level)
-  {
-  }
-
-  virtual void
   setAMR(bool val)
   {
     d_AMR = val;

@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/MMS/MMS.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
@@ -46,7 +46,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <fstream>
 #include <iostream>
 #include <memory>

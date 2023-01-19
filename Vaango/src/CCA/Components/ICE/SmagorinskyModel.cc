@@ -62,7 +62,7 @@ using namespace Uintah;
 static DebugStream cout_doing("ICE_DOING_COUT", false);
 
 Smagorinsky_Model::Smagorinsky_Model(ProblemSpecP& ps,
-                                     SimulationStateP& sharedState)
+                                     MaterialManagerP& mat_manager)
   : Turbulence(ps, sharedState)
 {
   //__________________________________

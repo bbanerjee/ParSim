@@ -54,7 +54,7 @@
 ********************************************************************************/
 
 #include "Crack.h"
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/Geometry/Vector.h>

@@ -82,7 +82,7 @@ static DebugStream cout_dbg("CONTAINEREXTRACT_DBG_COUT", false);
 
 //______________________________________________________________________              
 containerExtract::containerExtract(ProblemSpecP& module_spec,
-                         SimulationStateP& sharedState,
+                         MaterialManagerP& mat_manager,
                          Output* dataArchiver)
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
@@ -127,7 +127,7 @@ containerExtract::~containerExtract()
 void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
                                const ProblemSpecP& restart_prob_spec,
                                GridP& grid,
-                               SimulationStateP& sharedState)
+                               MaterialManagerP& mat_manager)
 {
   cout_doing << "Doing problemSetup \t\t\t\tcontainerExtract" << endl;
 

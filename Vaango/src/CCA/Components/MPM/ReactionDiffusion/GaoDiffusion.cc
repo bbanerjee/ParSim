@@ -25,11 +25,11 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/MPMBoundCond.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <iostream>
 

@@ -30,7 +30,7 @@
 
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>

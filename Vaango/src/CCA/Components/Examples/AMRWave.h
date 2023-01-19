@@ -91,7 +91,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, SimulationStateP& sharedState);
+                              GridP& grid, MaterialManagerP& mat_manager);
     virtual void scheduleRefineInterface(const LevelP& fineLevel,
 					 SchedulerP& scheduler,
 					 bool needCoarseOld, bool needCoarseNew);

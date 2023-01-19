@@ -34,7 +34,7 @@
 #include <CCA/Components/MPM/Contact/NullContact.h>
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
 #include <CCA/Components/MPM/Contact/SpecifiedBodyContact.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>

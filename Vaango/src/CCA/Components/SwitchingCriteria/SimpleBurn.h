@@ -53,8 +53,8 @@
 #include <CCA/Ports/SwitchingCriteria.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/MaterialManager.h>
-#include <Core/Labels/MPMLabel.h>
-#include <Core/Labels/MPMICELabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 
 namespace Uintah {
 
@@ -69,7 +69,7 @@ namespace Uintah {
       
       virtual void problemSetup(const ProblemSpecP& ps, 
                                 const ProblemSpecP& restart_prob_spec, 
-                                SimulationStateP& sharedState);
+                                MaterialManagerP& mat_manager);
 
       virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
 

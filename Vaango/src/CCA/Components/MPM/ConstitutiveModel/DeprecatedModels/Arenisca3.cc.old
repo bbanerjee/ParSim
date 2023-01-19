@@ -73,7 +73,7 @@ Software is furnished to do so, subject to the following conditions:
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Math/MinMax.h>

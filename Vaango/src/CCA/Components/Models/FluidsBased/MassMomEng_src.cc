@@ -55,7 +55,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <iostream>
 
@@ -92,7 +92,7 @@ MassMomEng_src::~MassMomEng_src()
 }
 
 //______________________________________________________________________
-void MassMomEng_src::problemSetup(GridP&, SimulationStateP& sharedState,
+void MassMomEng_src::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup* )
 {
   d_sharedState = sharedState;

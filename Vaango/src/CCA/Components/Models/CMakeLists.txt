@@ -65,7 +65,7 @@ SET(LIBS
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_GeometryPiece
-  Vaango_Core_Labels
+  
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_IO

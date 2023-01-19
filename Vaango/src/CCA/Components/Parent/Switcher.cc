@@ -265,7 +265,7 @@ void
 Switcher::problemSetup( const ProblemSpecP& /*params*/, 
                         const ProblemSpecP& restart_prob_spec, 
                         GridP& grid,
-                        SimulationStateP& sharedState )
+                        MaterialManagerP& mat_manager )
 {  
   dbg << "Doing ProblemSetup \t\t\t\tSwitcher"<< endl;
   if (restart_prob_spec){

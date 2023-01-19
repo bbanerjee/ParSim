@@ -47,7 +47,7 @@
  */
 
 
-#include <Core/Labels/MPMICELabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/CCVariable.h>

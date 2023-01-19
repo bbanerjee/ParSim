@@ -60,7 +60,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 
 #include <iostream>
 #include <Core/Util/DebugStream.h>
@@ -117,7 +117,7 @@ void LightTime::outputProblemSpec(ProblemSpecP& ps)
   lt_ps->appendElement("react_mixed_cells",    d_react_mixed_cells);
 }
 //__________________________________
-void LightTime::problemSetup(GridP&, SimulationStateP& sharedState,
+void LightTime::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup*)
 {
   d_sharedState = sharedState;

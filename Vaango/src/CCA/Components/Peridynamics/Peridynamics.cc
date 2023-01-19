@@ -163,7 +163,7 @@ void
 Peridynamics::problemSetup(const ProblemSpecP& prob_spec, 
                            const ProblemSpecP& restart_prob_spec,
                            Uintah::GridP& grid,
-                           Uintah::SimulationStateP& sharedState)
+                           Uintah::MaterialManagerP& mat_manager)
 {
   cout_doing << "Doing problemSetup: Peridynamics " 
              << __FILE__ << ":" << __LINE__ << std::endl;

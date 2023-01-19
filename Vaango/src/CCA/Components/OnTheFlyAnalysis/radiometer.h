@@ -52,7 +52,7 @@ _____________________________________________________________________*/
   class OnTheFly_radiometer : public AnalysisModule {
   public:
     OnTheFly_radiometer(ProblemSpecP& prob_spec,
-                        SimulationStateP& sharedState,
+                        MaterialManagerP& mat_manager,
 		          Output* dataArchiver);
 
     OnTheFly_radiometer();
@@ -62,7 +62,7 @@ _____________________________________________________________________*/
     virtual void problemSetup(const ProblemSpecP& prob_spec,
                               const ProblemSpecP& restart_prob_spec,
                               GridP& grid,
-                              SimulationStateP& sharedState);
+                              MaterialManagerP& mat_manager);
 
 
     virtual void scheduleInitialize(SchedulerP& sched,

@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Patch.h>
@@ -34,7 +34,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Matrix3.h>

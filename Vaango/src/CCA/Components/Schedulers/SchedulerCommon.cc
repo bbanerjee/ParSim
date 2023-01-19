@@ -176,8 +176,8 @@ SchedulerCommon::checkMemoryUse(unsigned long& mem_used,
   high_water = 0;
   mem_used   = 0;
 
-  if (ProcessInfo::IsSupported(ProcessInfo::MEM_SIZE)) {
-    mem_used = ProcessInfo::GetMemoryResident();
+  if (ProcessInfo::isSupported(ProcessInfo::MEM_SIZE)) {
+    mem_used = ProcessInfo::getMemoryResident();
     // printf("1) memuse is %ld (on proc %d)\n", mem_used,
     // Uintah::Parallel::getMPIRank() );
   } else {

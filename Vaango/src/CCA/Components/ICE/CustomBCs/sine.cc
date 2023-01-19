@@ -206,7 +206,7 @@ int  set_Sine_Velocity_BC(const Patch* patch,
                           const string& var_desc,
                           Iterator& bound_ptr,
                           const string& bc_kind,
-                          SimulationStateP& sharedState,
+                          MaterialManagerP& mat_manager,
                           sine_variable_basket* sine_var_basket,
                           sine_vars* sine_v)                     
 
@@ -286,7 +286,7 @@ int set_Sine_press_BC(const Patch* patch,
                       CCVariable<double>& press_CC,
                       Iterator& bound_ptr,
                       const string& bc_kind,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       sine_variable_basket* sine_var_basket,
                       sine_vars* sine_v)  
 {

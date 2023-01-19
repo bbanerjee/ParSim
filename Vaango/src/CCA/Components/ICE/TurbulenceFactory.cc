@@ -64,7 +64,7 @@ TurbulenceFactory::~TurbulenceFactory()
 {
 }
 
-Turbulence* TurbulenceFactory::create(ProblemSpecP& ps, SimulationStateP& sharedState)
+Turbulence* TurbulenceFactory::create(ProblemSpecP& ps, MaterialManagerP& mat_manager)
 {
   ProblemSpecP turb_ps = ps->findBlock("turbulence");
   

@@ -40,9 +40,9 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/DbgOutput.h>
-#include <Core/Labels/ICELabel.h>
-#include <Core/Labels/MPMICELabel.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
@@ -151,7 +151,7 @@ DDT1::~DDT1()
     delete d_one_matl;
 }
 
-void DDT1::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
+void DDT1::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
 {
   d_sharedState = sharedState;
   

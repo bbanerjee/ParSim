@@ -31,7 +31,7 @@
 // (#includes of other MPM files is ok.  However, if you #include'd ARCHES
 // or something, then a circular dependency would be created.)
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Material.h>

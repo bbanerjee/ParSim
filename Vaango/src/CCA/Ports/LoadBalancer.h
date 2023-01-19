@@ -106,10 +106,7 @@ public:
   //! Determines if the Load Balancer requests a taskgraph recompile.
   //! Only possible for Dynamic Load Balancers.
   virtual bool
-  needRecompile(double, double, const GridP&)
-  {
-    return false;
-  }
+  needRecompile(const GridP&) = 0;
 
   //! Reads the problem spec file for the LoadBalancer section, and looks
   //! for entries such as outputNthProc, dynamicAlgorithm, and interval.

@@ -35,7 +35,7 @@ SET(VAANGO_LIBS
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
+              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  

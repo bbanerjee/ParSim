@@ -50,7 +50,7 @@
 #define Packages_Uintah_CCA_Components_Ice_CustomBCs_MMS_BC_h
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MaterialManagerP.h>
@@ -107,7 +107,7 @@ namespace Uintah {
                            const string& var_desc,
                            Iterator& bound_ptr,
                            const string& bc_kind,
-                           SimulationStateP& sharedState,
+                           MaterialManagerP& mat_manager,
                            mms_variable_basket* mms_var_basket,
                            mms_vars* mms_v);
                            
@@ -124,7 +124,7 @@ namespace Uintah {
                         CCVariable<double>& press_CC,
                         Iterator& bound_ptr,
                         const string& bc_kind,
-                        SimulationStateP& sharedState,
+                        MaterialManagerP& mat_manager,
                         mms_variable_basket* mms_var_basket,
                         mms_vars* mms_v);  
                         
@@ -139,7 +139,7 @@ int set_MMS_BCs_FC( const Patch* patch,
                       T& vel_FC,
                       Iterator& bound_ptr,
                       const Vector& dx,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       mms_variable_basket* mms_var_basket,
                       mms_vars* mms_v)
 {

@@ -26,10 +26,12 @@
 #ifndef __CCA_COMPONENTS_SIMULATIONCOMMON_H__
 #define __CCA_COMPONENTS_SIMULATIONCOMMON_H__
 
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Ports/SimulationInterface.h>
+
 #include <CCA/Components/SimulationCommon/SimulationReductionVariable.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/SchedulerP.h>
-#include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Ports/SolverInterface.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
@@ -37,7 +39,6 @@
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/OS/Dir.h>
-#include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Util/Handle.h>
 

@@ -27,13 +27,14 @@
 #ifndef VAANGO_CCA_PORTS_SimulationInterface_H
 #define VAANGO_CCA_PORTS_SimulationInterface_H
 
+#include <Core/Parallel/UintahParallelPort.h>
+
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Parallel/UintahParallelPort.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Util/InfoMapper.h>
 
@@ -173,6 +174,10 @@ class SimulationInterface : public UintahParallelPort {
   // scheduleTimeAdvance.
   virtual void
   scheduleFinalizeTimestep(const LevelP& level, SchedulerP& scheduler) = 0;
+
+  // Optionally schedule analysis tasks.
+  virtual void
+  scheduleAnalysis(const LevelP& level, SchedulerP& scheduler) = 0;
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP& scheduler) = 0;
@@ -395,6 +400,11 @@ class SimulationInterface : public UintahParallelPort {
   setTimeStepsMax(int val) = 0;
   virtual int
   getTimeStepsMax() const = 0;
+
+  virtual void
+  setWallTimeMax(double val)  = 0;
+  virtual double
+  getWallTimeMax() const  = 0;
 
  private:
   // Flag for outputting or checkpointing if the next delta is invalid

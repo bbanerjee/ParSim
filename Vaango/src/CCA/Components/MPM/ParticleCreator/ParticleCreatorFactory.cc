@@ -24,14 +24,14 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ImplicitParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/MembraneParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/MPM/ParticleCreator/ShellParticleCreator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 namespace Uintah {
 

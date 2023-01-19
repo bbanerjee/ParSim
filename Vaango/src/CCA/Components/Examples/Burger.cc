@@ -81,7 +81,7 @@ Burger::~Burger()
 void Burger::problemSetup(const ProblemSpecP& params, 
                           const ProblemSpecP& restart_prob_spec, 
                           GridP& /*grid*/,  
-                          SimulationStateP& sharedState)
+                          MaterialManagerP& mat_manager)
 {
   sharedState_ = sharedState;
   ProblemSpecP burger = params->findBlock("Burger");

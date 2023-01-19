@@ -45,7 +45,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Parallel
-  Vaango_Core_Labels
+  
   Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec

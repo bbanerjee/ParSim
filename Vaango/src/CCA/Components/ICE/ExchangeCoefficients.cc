@@ -71,7 +71,7 @@ ExchangeCoefficients::~ExchangeCoefficients()
 
 
 void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
-                                        SimulationStateP& sharedState)
+                                        MaterialManagerP& mat_manager)
 {
   if(sharedState->getNumMaterials() >1){
     //__________________________________

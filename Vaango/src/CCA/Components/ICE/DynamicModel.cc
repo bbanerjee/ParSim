@@ -57,7 +57,7 @@
 using namespace Uintah;
 static DebugStream cout_doing("ICE_DOING_COUT", false);
 
-DynamicModel::DynamicModel(ProblemSpecP& ps, SimulationStateP& sharedState)
+DynamicModel::DynamicModel(ProblemSpecP& ps, MaterialManagerP& mat_manager)
   : Turbulence(ps, sharedState), d_smag() 
 { 
   //__________________________________ 

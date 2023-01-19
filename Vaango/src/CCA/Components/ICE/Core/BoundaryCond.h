@@ -54,7 +54,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
 
   class DataWarehouse;
  
-  void BC_bulletproofing(const ProblemSpecP& prob_spec,SimulationStateP& sharedState );
+  void BC_bulletproofing(const ProblemSpecP& prob_spec,MaterialManagerP& mat_manager );
   
   //__________________________________
   //  Temperature, pressure and other CCVariables
@@ -63,7 +63,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const CCVariable<double>&gamma,
                       const CCVariable<double>&cv, 
                       const Patch* patch,  
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id,
                       DataWarehouse* new_dw,
                       customBC_var_basket* C_BC_basket);
@@ -71,7 +71,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
    void setBC(CCVariable<double>& var,     
                       const std::string& type,     // stub function
                       const Patch* patch,  
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id,
                       DataWarehouse* new_dw); 
   //__________________________________
@@ -83,7 +83,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const std::string& whichVar, 
                       const std::string& kind, 
                       const Patch* p, 
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id, 
                       DataWarehouse* new_dw,
                       customBC_var_basket* C_BC_basket);
@@ -95,7 +95,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const std::string& whichVar, 
                       const std::string& kind,       // stub function 
                       const Patch* p, 
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id, 
                       DataWarehouse* new_dw);
              
@@ -104,7 +104,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
    void setBC(CCVariable<Vector>& variable,
                       const std::string& type,
                       const Patch* patch,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id,
                       DataWarehouse* new_dw, 
                       customBC_var_basket* C_BC_basket);
@@ -112,7 +112,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
    void setBC(CCVariable<Vector>& variable,  // stub function
                       const std::string& type,
                       const Patch* patch,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id,
                       DataWarehouse* new_dw);
 
@@ -124,7 +124,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                                  constCCVariable<double> rho_CC,
                                  constCCVariable<double> vol_frac,
                                  const Patch* patch,
-                                 SimulationStateP& sharedState,
+                                 MaterialManagerP& mat_manager,
                                  const int mat_id);
   
 
@@ -206,7 +206,7 @@ void setBC(T& vel_FC,
            const string& desc,
            const Patch* patch,    
            const int mat_id,
-           SimulationStateP& sharedState,
+           MaterialManagerP& mat_manager,
            customBC_var_basket* custom_BC_basket)      
 {
   cout_BC_FC << "setBCFC (SFCVariable) "<< desc<< " mat_id = " << mat_id <<endl;

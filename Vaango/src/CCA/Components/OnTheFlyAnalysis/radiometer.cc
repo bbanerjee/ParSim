@@ -47,7 +47,7 @@ ______________________________________________________________________*/
 static DebugStream cout_doing("radiometer", false);
 
 OnTheFly_radiometer::OnTheFly_radiometer(ProblemSpecP& module_spec,
-                                         SimulationStateP& sharedState,
+                                         MaterialManagerP& mat_manager,
                                          Output* dataArchiver)
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
@@ -71,7 +71,7 @@ OnTheFly_radiometer::~OnTheFly_radiometer()
 void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
                                        const ProblemSpecP& ,
                                        GridP& grid,
-                                       SimulationStateP& sharedState)
+                                       MaterialManagerP& mat_manager)
 {
 
 #ifdef USE_RADIOMETER

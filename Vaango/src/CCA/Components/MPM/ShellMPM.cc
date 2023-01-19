@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ShellMPM.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -84,7 +84,7 @@ ShellMPM::~ShellMPM()
 void 
 ShellMPM::problemSetup(const ProblemSpecP& prob_spec, 
                        const ProblemSpecP& restart_prob_spec, 
-                       GridP& grid, SimulationStateP& sharedState)
+                       GridP& grid, MaterialManagerP& mat_manager)
 {
   SerialMPM::problemSetup(prob_spec, restart_prob_spec,grid, sharedState);
 }
@@ -97,7 +97,7 @@ ShellMPM::problemSetup(const ProblemSpecP& prob_spec,
 /*
 void 
 ShellMPM::materialProblemSetup(const ProblemSpecP& prob_spec, 
-                               SimulationStateP& sharedState,
+                               MaterialManagerP& mat_manager,
                                MPMLabel* lb, 
                                MPMFlags* flags)
 {

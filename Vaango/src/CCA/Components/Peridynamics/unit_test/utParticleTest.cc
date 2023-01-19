@@ -96,7 +96,7 @@ utParticleTest::~utParticleTest()
 void utParticleTest::problemSetup(const ProblemSpecP& params, 
                                   const ProblemSpecP& restart_prob_spec, 
                                   Uintah::GridP& /*grid*/,
-                                  Uintah::SimulationStateP& sharedState)
+                                  Uintah::MaterialManagerP& mat_manager)
 {
   BOOST_CHECK_CLOSE(1.0, 1.0, 1.0e-12);
   BOOST_CHECK_CLOSE(1.0, 0.0, 1.0e-12);

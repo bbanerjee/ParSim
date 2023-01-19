@@ -36,10 +36,10 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 // put here to avoid template problems
 #include <CCA/Components/MPM/MPMCommon.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 

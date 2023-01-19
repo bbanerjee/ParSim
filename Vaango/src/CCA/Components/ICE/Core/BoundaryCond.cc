@@ -404,7 +404,7 @@ void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
                    std::vector<constCCVariable<double> >& sp_vol_CC,
                    const Patch* patch,
                    const string& which_Var,
-                   SimulationStateP& sharedState,
+                   MaterialManagerP& mat_manager,
                    DataWarehouse* new_dw,
                    customBC_var_basket* custom_BC_basket)
 {
@@ -559,7 +559,7 @@ void setBC(CCVariable<double>& press_CC,
            const string& which_Var,
            const string& kind, 
            const Patch* patch,
-           SimulationStateP& sharedState, 
+           MaterialManagerP& mat_manager, 
            const int mat_id,
            DataWarehouse* new_dw,
            customBC_var_basket* custom_BC_basket)
@@ -704,7 +704,7 @@ void setBC(CCVariable<double>& var_CC,
            const CCVariable<double>& gamma,
            const CCVariable<double>& cv,
            const Patch* patch,
-           SimulationStateP& sharedState, 
+           MaterialManagerP& mat_manager, 
            const int mat_id,
            DataWarehouse*,
            customBC_var_basket* custom_BC_basket)    // NG hack
@@ -862,7 +862,7 @@ void setBC(CCVariable<double>& var_CC,
 void setBC(CCVariable<Vector>& var_CC,
            const string& desc,
            const Patch* patch,
-           SimulationStateP& sharedState, 
+           MaterialManagerP& mat_manager, 
            const int mat_id,
            DataWarehouse* ,
            customBC_var_basket* custom_BC_basket)
@@ -1001,7 +1001,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
                       constCCVariable<double> rho_CC,
                       constCCVariable<double> vol_frac,
                       const Patch* patch,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       const int mat_id)
 {
   if(patch->hasBoundaryFaces() == false){
@@ -1129,7 +1129,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
  Function~  BC_bulletproofing--  
  ---------------------------------------------------------------------  */
 void BC_bulletproofing(const ProblemSpecP& prob_spec,
-                       SimulationStateP& sharedState )
+                       MaterialManagerP& mat_manager )
 {
   Vector periodic;
   ProblemSpecP grid_ps  = prob_spec->findBlock("Grid");
@@ -1312,7 +1312,7 @@ int numFaceCells(const Patch* patch,
 void setBC(CCVariable<double>& var,     
           const std::string& type,     // so gcc compiles
           const Patch* patch,  
-          SimulationStateP& sharedState,
+          MaterialManagerP& mat_manager,
           const int mat_id,
           DataWarehouse* new_dw)
 {
@@ -1337,7 +1337,7 @@ void setBC(CCVariable<double>& press_CC,
          const std::string& whichVar, 
          const std::string& kind, 
          const Patch* p, 
-         SimulationStateP& sharedState,
+         MaterialManagerP& mat_manager,
          const int mat_id, 
          DataWarehouse* new_dw) {
          
@@ -1356,7 +1356,7 @@ void setBC(CCVariable<double>& press_CC,
 void setBC(CCVariable<Vector>& variable,
           const std::string& type,
           const Patch* p,
-          SimulationStateP& sharedState,
+          MaterialManagerP& mat_manager,
           const int mat_id,
           DataWarehouse* new_dw)
 { 

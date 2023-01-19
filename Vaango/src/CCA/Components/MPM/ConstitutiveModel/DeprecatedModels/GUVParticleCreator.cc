@@ -48,7 +48,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/GeometrySpecification/GeometryObject.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ParticleCreator/GUVParticleCreator.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/GeometryPiece/GUVSphereShellPiece.h>
@@ -57,7 +57,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Util/DebugStream.h>
 #include <iostream>
 using namespace Uintah;

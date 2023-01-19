@@ -54,9 +54,9 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
-#include <Core/Labels/ICELabel.h>
-#include <Core/Labels/MPMICELabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 #include <Core/Grid/DbgOutput.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
@@ -118,7 +118,7 @@ Steady_Burn::~Steady_Burn(){
 }
 
 //______________________________________________________________________
-void Steady_Burn::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*){
+void Steady_Burn::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*){
   d_sharedState = sharedState;
   matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
   matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");  

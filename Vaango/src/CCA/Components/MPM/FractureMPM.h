@@ -37,10 +37,10 @@
 // put here to avoid template problems
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <Core/Geometry/Vector.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/SerialMPM.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
@@ -132,7 +132,7 @@ protected:
 
   virtual void materialProblemSetup(const ProblemSpecP& prob_spec,
                                     const GridP grid,
-                                    SimulationStateP& sharedState,
+                                    MaterialManagerP& mat_manager,
                                     MPMFlags* flags);
 
   virtual void actuallyInitialize(const ProcessorGroup*,

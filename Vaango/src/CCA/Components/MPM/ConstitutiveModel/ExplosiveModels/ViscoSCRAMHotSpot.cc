@@ -29,7 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/SymmMatrix3.h>
 
 #include <Core/Util/DebugStream.h>

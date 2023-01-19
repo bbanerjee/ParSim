@@ -38,7 +38,7 @@
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ImpMPMFlags.h>
 #include <CCA/Components/MPM/MPMCommon.h>
 #include <CCA/Components/MPM/Solver.h>

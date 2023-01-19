@@ -159,7 +159,7 @@ void addRequires_MicroSlip(Task* t,
 ____________________________________________________________________*/
 void meanFreePath(DataWarehouse* new_dw,
                   const Patch* patch,
-                  SimulationStateP& sharedState,
+                  MaterialManagerP& mat_manager,
                   Slip_vars* sv)                              
 {
   cout_doing << "meanFreePath" << endl;
@@ -199,7 +199,7 @@ void  preprocess_MicroSlip_BCs(DataWarehouse* old_dw,
                                const Patch* patch,
                                const string& where,
                                const int /*indx*/,
-                               SimulationStateP& sharedState,
+                               MaterialManagerP& mat_manager,
                                bool& setMicroSlipBcs,
                                Slip_vars* sv,
                                Slip_variable_basket* var_basket)
@@ -260,7 +260,7 @@ void  preprocess_MicroSlip_BCs(DataWarehouse* old_dw,
  ______________________________________________________________________  */
 bool is_MicroSlip_face(const Patch* patch,
                        Patch::FaceType face,
-                       SimulationStateP& sharedState)
+                       MaterialManagerP& mat_manager)
 {
   bool is_MicroSlip_face = false;
   int numMatls = sharedState->getNumICEMatls();

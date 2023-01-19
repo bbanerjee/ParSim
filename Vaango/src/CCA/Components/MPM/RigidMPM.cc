@@ -25,7 +25,7 @@
 
 #include <CCA/Components/MPM/RigidMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
@@ -80,7 +80,7 @@ RigidMPM::~RigidMPM()
 
 void RigidMPM::problemSetup(const ProblemSpecP& prob_spec, 
                             const ProblemSpecP& restart_prob_spec, 
-                            GridP& grid, SimulationStateP& sharedState)
+                            GridP& grid, MaterialManagerP& mat_manager)
 {
 
   SerialMPM::problemSetup(prob_spec, restart_prob_spec,grid, sharedState);

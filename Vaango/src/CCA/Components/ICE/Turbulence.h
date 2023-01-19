@@ -71,7 +71,7 @@ namespace Uintah {
 
   public:
     Turbulence();
-    Turbulence(ProblemSpecP& ps, SimulationStateP& sharedState);
+    Turbulence(ProblemSpecP& ps, MaterialManagerP& mat_manager);
     virtual ~Turbulence(); 
 
     virtual void computeTurbViscosity(DataWarehouse* new_dw,

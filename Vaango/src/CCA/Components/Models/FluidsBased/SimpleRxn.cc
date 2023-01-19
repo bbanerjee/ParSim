@@ -41,7 +41,7 @@
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Exceptions/ParameterNotFound.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <vector>

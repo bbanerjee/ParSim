@@ -126,7 +126,7 @@ Wave::~Wave()
 //
 void Wave::problemSetup(const ProblemSpecP& params, 
                         const ProblemSpecP& restart_prob_spec, 
-                        GridP& /*grid*/,  SimulationStateP& sharedState)
+                        GridP& /*grid*/,  MaterialManagerP& mat_manager)
 {
   sharedState_ = sharedState;
   ProblemSpecP wave = params->findBlock("Wave");

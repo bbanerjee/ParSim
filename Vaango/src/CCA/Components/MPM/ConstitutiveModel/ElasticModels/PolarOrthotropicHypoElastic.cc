@@ -27,8 +27,8 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/Labels/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InternalError.h>

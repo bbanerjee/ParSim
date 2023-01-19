@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManager.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {

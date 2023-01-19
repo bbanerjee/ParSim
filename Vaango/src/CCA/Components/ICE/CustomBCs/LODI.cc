@@ -140,7 +140,7 @@ VarLabel* getMaxMach_face_VarLabel( Patch::FaceType face)
             need a patchSubset for each face.
  ---------------------------------------------------------------------  */
 void Lodi_maxMach_patchSubset(const LevelP& level,
-                               SimulationStateP& sharedState,
+                               MaterialManagerP& mat_manager,
                                std::vector<PatchSubset*> & maxMach_patchSubset)
 {
   cout_doing << "Lodi_maxMach_patchSubset "<< endl;
@@ -181,7 +181,7 @@ void Lodi_maxMach_patchSubset(const LevelP& level,
  ---------------------------------------------------------------------  */
 bool is_LODI_face(const Patch* patch,
                   Patch::FaceType face,
-                  SimulationStateP& sharedState)
+                  MaterialManagerP& mat_manager)
 {
   bool is_lodi_face = false;
   int numMatls = sharedState->getNumICEMatls();
@@ -557,7 +557,7 @@ void computeDi(std::vector<CCVariable<Vector> >& d,
                constCCVariable<double>& speedSound,              
                const Patch* patch,
                DataWarehouse* new_dw,
-               SimulationStateP& sharedState,
+               MaterialManagerP& mat_manager,
                const Lodi_variable_basket* user_inputs)                              
 {
   cout_doing << "LODI computeDi "<< endl;
@@ -641,7 +641,7 @@ __________________________________________________________________*/
 void computeNu(CCVariable<Vector>& nu,
                const CCVariable<double>& p, 
                const Patch* patch,
-               SimulationStateP& sharedState)
+               MaterialManagerP& mat_manager)
 {
   cout_doing << "LODI computeNu "<< endl;
   double d_SMALL_NUM = 1.0e-100;
@@ -764,7 +764,7 @@ void  lodi_bc_preprocess( const Patch* patch,
                           const int indx,
                           DataWarehouse* old_dw,
                           DataWarehouse* new_dw,
-                          SimulationStateP& sharedState)
+                          MaterialManagerP& mat_manager)
 {
   cout_doing << "lodi_bc_preprocess on patch "<<patch->getID()<< endl;
   
@@ -1100,7 +1100,7 @@ void FaceVel_LODI(const Patch* patch,
                  CCVariable<Vector>& vel_CC,                 
                  Lodi_vars* lv,
                  const Vector& dx,
-                 SimulationStateP& sharedState)                     
+                 MaterialManagerP& mat_manager)                     
 
 {
   cout_doing << "Setting FaceVel_LODI on face " << face << endl;
@@ -1389,7 +1389,7 @@ void FaceTemp_LODI(const Patch* patch,
              CCVariable<double>& temp_CC,
              Lodi_vars* lv, 
              const Vector& dx,
-             SimulationStateP& sharedState)
+             MaterialManagerP& mat_manager)
 {
   cout_doing << "Setting FaceTemp_LODI on face " <<face<< endl; 
   
@@ -1603,7 +1603,7 @@ void FaceTemp_LODI(const Patch* patch,
 void FacePress_LODI(const Patch* patch,
                     CCVariable<double>& press_CC,
                     std::vector<CCVariable<double> >& rho_micro,
-                    SimulationStateP& sharedState, 
+                    MaterialManagerP& mat_manager, 
                     Patch::FaceType face,
                     Lodi_vars_pressBC* lv)
 {

@@ -29,7 +29,7 @@
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Variables/MPMIntVarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <cmath>
 #include <iomanip>
 #include <iostream>

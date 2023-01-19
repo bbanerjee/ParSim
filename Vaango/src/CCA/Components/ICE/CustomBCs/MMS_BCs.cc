@@ -200,7 +200,7 @@ int set_MMS_Velocity_BC(const Patch* patch,
                          const string& var_desc,
                          Iterator& bound_ptr,
                          const string& bc_kind,
-                         SimulationStateP& sharedState,
+                         MaterialManagerP& mat_manager,
                          mms_variable_basket* mms_var_basket,
                          mms_vars* mms_v)                     
 
@@ -280,7 +280,7 @@ int set_MMS_press_BC(const Patch* patch,
                       CCVariable<double>& press_CC,
                       Iterator& bound_ptr,
                       const string& bc_kind,
-                      SimulationStateP& sharedState,
+                      MaterialManagerP& mat_manager,
                       mms_variable_basket* mms_var_basket,
                       mms_vars* mms_v)  
 {

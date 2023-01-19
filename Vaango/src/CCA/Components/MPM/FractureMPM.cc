@@ -110,7 +110,7 @@ FractureMPM::~FractureMPM()
 
 void FractureMPM::problemSetup(const ProblemSpecP& prob_spec, 
                                const ProblemSpecP& restart_prob_spec,GridP& grid,
-                               SimulationStateP& sharedState)
+                               MaterialManagerP& mat_manager)
 {
   SerialMPM::problemSetup(prob_spec,restart_prob_spec,grid,sharedState);
 
@@ -123,7 +123,7 @@ void FractureMPM::problemSetup(const ProblemSpecP& prob_spec,
 void
 FractureMPM::materialProblemSetup(const ProblemSpecP& prob_spec,
                                   const GridP grid,
-                                  SimulationStateP& sharedState,
+                                  MaterialManagerP& mat_manager,
                                   MPMFlags* flags)
 {
   //Search for the MaterialProperties block and then get the MPM section
@@ -350,16 +350,6 @@ FractureMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleDoCrackPropagation(             sched, patches, matls);//for FractureMPM
   scheduleMoveCracks(                     sched, patches, matls);//for FractureMPM
   scheduleUpdateCrackFront(               sched, patches, matls);//for FractureMPM
-
-  if(flags->d_canAddMPMMaterial){
-    //  This checks to see if the model on THIS patch says that it's
-    //  time to add a new material
-    scheduleCheckNeedAddMPMMaterial(         sched, patches, matls);
-
-    //  This one checks to see if the model on ANY patch says that it's
-    //  time to add a new material
-    scheduleSetNeedAddMaterialFlag(         sched, level,   matls);
-  }
 
   sched->scheduleParticleRelocation(level, lb->pXLabel_preReloc,
                                     d_sharedState->d_particleState_preReloc,

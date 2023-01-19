@@ -57,7 +57,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <iostream>
@@ -134,7 +134,7 @@ void SolidReactionModel::outputProblemSpec(ProblemSpecP& ps)
     rateModel->outputProblemSpec(model_ps); 
 }
 
-void SolidReactionModel::problemSetup(GridP& grid, SimulationStateP& sharedState,
+void SolidReactionModel::problemSetup(GridP& grid, MaterialManagerP& mat_manager,
                                       ModelSetup* setup)
 {  
     d_sharedState = sharedState;
@@ -217,7 +217,7 @@ void SolidReactionModel::problemSetup(GridP& grid, SimulationStateP& sharedState
     }
 }
 
-void SolidReactionModel::activateModel(GridP& grid, SimulationStateP& sharedState,
+void SolidReactionModel::activateModel(GridP& grid, MaterialManagerP& mat_manager,
                                        ModelSetup* setup)
 {
     d_active=true;
@@ -454,13 +454,6 @@ void SolidReactionModel::scheduleErrorEstimate(const LevelP& coarseLevel,
                                                SchedulerP& sched)
 {
     // Nothing implemented 
-}
-
-void SolidReactionModel::scheduleCheckNeedAddMaterial(SchedulerP&,
-                                                      const LevelP& level,
-                                                      const ModelInfo*)
-{
-    // Nothing implemented
 }
 
 void SolidReactionModel::scheduleTestConservation(SchedulerP&,

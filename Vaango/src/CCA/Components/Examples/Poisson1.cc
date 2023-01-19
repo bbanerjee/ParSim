@@ -86,7 +86,7 @@ Poisson1::~Poisson1()
 void Poisson1::problemSetup(const ProblemSpecP& params, 
                             const ProblemSpecP& restart_prob_spec, 
                             GridP& /*grid*/, 
-                            SimulationStateP& sharedState)
+                            MaterialManagerP& mat_manager)
 {
   sharedState_ = sharedState;
   ProblemSpecP poisson = params->findBlock("Poisson");

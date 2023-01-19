@@ -1,12 +1,8 @@
-#
-#  For more information, please see: http://software.sci.utah.edu
 # 
 #  The MIT License
 # 
-#  Copyright (c) 2004 Scientific Computing and Imaging Institute,
-#  University of Utah.
-# Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2023 Biswajit Banerjee
+#  Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+#  Copyright (c) 2015-2023 Biswajit Banerjee
 # 
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,13 +26,17 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/ICE
 
+SET(Vaango_ICE_Core_SRCS
+  BoundaryCond.cc 
+  Diffusion.cc 
+  ICELabel.cc
+)
+
 SET(Vaango_CCA_Components_ICE_SRCS
   ICE.cc 
   AMRICE.cc 
   ICEDebug.cc 
   ICEMaterial.cc 
-  Diffusion.cc 
-  BoundaryCond.cc 
   Turbulence.cc 
   SmagorinskyModel.cc 
   DynamicModel.cc 
@@ -45,6 +45,7 @@ SET(Vaango_CCA_Components_ICE_SRCS
   impAMRICE.cc 
   customInitialize.cc   
   ExchangeCoefficients.cc     
+  ${VAANGO_ICE_Core_SRCS}
 )
 
 add_subdirectory(EOS)
@@ -65,7 +66,6 @@ SET(LIBS
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_Math
-  Vaango_Core_Labels
   ${XML2_LIBRARY}
   ${MPI_LIBRARY}
   ${M_LIBRARY}

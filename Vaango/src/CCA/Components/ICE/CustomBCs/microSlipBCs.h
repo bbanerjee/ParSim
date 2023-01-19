@@ -50,7 +50,7 @@
 #define Packages_Uintah_CCA_Components_Ice_Slip_h
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MaterialManagerP.h>
@@ -97,14 +97,14 @@ namespace Uintah {
                                 const Patch* patch,
                                 const string& where,
                                 const int indx,
-                                SimulationStateP& sharedState,
+                                MaterialManagerP& mat_manager,
                                 bool& setSlipBcs,
                                 Slip_vars* sv,
                                 Slip_variable_basket* svb);
                                   
   bool is_MicroSlip_face(const Patch* patch,
                          Patch::FaceType face,
-                         SimulationStateP& sharedState);
+                         MaterialManagerP& mat_manager);
                   
   int set_MicroSlipVelocity_BC(const Patch* patch,
                               const Patch::FaceType face,

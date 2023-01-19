@@ -89,7 +89,7 @@ AMRICE::~AMRICE()
 //___________________________________________________________________
 void AMRICE::problemSetup(const ProblemSpecP& params, 
                           const ProblemSpecP& restart_prob_spec, 
-                          GridP& grid, SimulationStateP& sharedState)
+                          GridP& grid, MaterialManagerP& mat_manager)
 {
   cout_doing << d_myworld->myRank() 
              << " Doing problemSetup  \t\t\t AMRICE" << '\n';

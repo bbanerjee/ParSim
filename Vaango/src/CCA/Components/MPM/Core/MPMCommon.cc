@@ -26,8 +26,8 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/MPMCommon.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/Labels/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Patch.h>

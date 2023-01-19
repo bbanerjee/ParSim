@@ -83,7 +83,7 @@ HeatEquation::~HeatEquation()
 
 void HeatEquation::problemSetup(const ProblemSpecP& params,
                             const ProblemSpecP& restart_prob_spec,
-                            GridP&, SimulationStateP& sharedState)
+                            GridP&, MaterialManagerP& mat_manager)
 {
   sharedState_ = sharedState;
   ProblemSpecP heateqn = params->findBlock("HeatEquation");

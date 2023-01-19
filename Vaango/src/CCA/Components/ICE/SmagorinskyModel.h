@@ -59,7 +59,7 @@ namespace Uintah {
 
   public:
     //----- constructors
-    Smagorinsky_Model(ProblemSpecP& ps, SimulationStateP& sharedState);
+    Smagorinsky_Model(ProblemSpecP& ps, MaterialManagerP& mat_manager);
     Smagorinsky_Model();
     
     //----- destructor

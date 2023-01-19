@@ -50,7 +50,7 @@
 #define Packages_Uintah_CCA_Components_Ice_CustomBCs_Sine_h
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MaterialManagerP.h>
@@ -106,7 +106,7 @@ namespace Uintah {
                             const string& var_desc,
                             Iterator& bound_ptr,
                             const string& bc_kind,
-                            SimulationStateP& sharedState,
+                            MaterialManagerP& mat_manager,
                             sine_variable_basket* sine_var_basket,
                             sine_vars* sine_v);
                            
@@ -123,7 +123,7 @@ namespace Uintah {
                          CCVariable<double>& press_CC,
                          Iterator& bound_ptr,
                          const string& bc_kind,
-                         SimulationStateP& sharedState,
+                         MaterialManagerP& mat_manager,
                          sine_variable_basket* sine_var_basket,
                          sine_vars* sine_v);  
                         
@@ -137,7 +137,7 @@ namespace Uintah {
                        const Patch::FaceType face,
                        T& vel_FC,
                        Iterator& bound_ptr,
-                       SimulationStateP& sharedState,
+                       MaterialManagerP& mat_manager,
                        sine_variable_basket* sine_var_basket,
                        sine_vars* sine_v)
 {

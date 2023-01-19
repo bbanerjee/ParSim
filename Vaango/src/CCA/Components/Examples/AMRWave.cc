@@ -79,7 +79,7 @@ AMRWave::~AMRWave()
 //
 void AMRWave::problemSetup(const ProblemSpecP& params, 
                            const ProblemSpecP& restart_prob_spec, 
-                           GridP& grid, SimulationStateP& sharedState)
+                           GridP& grid, MaterialManagerP& mat_manager)
 {
   Wave::problemSetup(params, restart_prob_spec,grid, sharedState);
   ProblemSpecP wave = params->findBlock("Wave");

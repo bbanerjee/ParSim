@@ -55,7 +55,7 @@
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Geometry/IntVector.h>
 
 using namespace Uintah;
@@ -64,7 +64,7 @@ Turbulence::Turbulence()
 {
 }
 
-Turbulence::Turbulence(ProblemSpecP& ps, SimulationStateP& sharedState)
+Turbulence::Turbulence(ProblemSpecP& ps, MaterialManagerP& mat_manager)
   : d_sharedState(sharedState)
 {
   for (ProblemSpecP child = ps->findBlock("FilterScalar"); child != 0;

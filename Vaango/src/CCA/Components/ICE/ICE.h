@@ -49,8 +49,8 @@
 #include <Core/Grid/Variables/SFCZVariable.h>
 #include <Core/Grid/Variables/SoleVariable.h>
 #include <Core/Grid/Variables/Utils.h>
-#include <Core/Labels/ICELabel.h>
-#include <Core/Labels/MPMICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
+#include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Math/FastMatrix.h>
@@ -235,13 +235,6 @@ namespace Uintah {
                                   const MaterialSubset*,
                                   const MaterialSet*);
                                        
-    void scheduleCheckNeedAddMaterial(SchedulerP&, 
-                                      const LevelP& level,
-                                      const MaterialSet*);
-
-    void scheduleSetNeedAddMaterialFlag(SchedulerP&, 
-                                        const LevelP& level,
-                                        const MaterialSet*);
 //__________________________________ 
 //__________________________________ 
 //  I M P L I C I T   I C E
@@ -715,12 +708,6 @@ namespace Uintah {
                               const MaterialSubset* matls,
                               DataWarehouse*,
                               DataWarehouse*);
-                                
-    void setNeedAddMaterialFlag(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* matls,
-                                DataWarehouse*,
-                                DataWarehouse*);
                                 
     void computeLagrangian_Transported_Vars(const ProcessorGroup*,  
                                             const PatchSubset* patches,

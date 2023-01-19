@@ -73,7 +73,7 @@ to the equations in the following three references:
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MinMax.h>

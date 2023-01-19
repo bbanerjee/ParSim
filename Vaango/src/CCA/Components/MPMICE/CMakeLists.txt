@@ -23,9 +23,14 @@
 # IN THE SOFTWARE.
 #
 
+SET(Vaango_MPMICE_Core_SRCS
+    Core/MPMICELabel.cc
+   )
+
 SET(Vaango_CCA_Components_MPMICE_SRCS
   MPMICE.cc
   MPMICEDebug.cc
+  ${Vaango_MPMICE_Core_SRCS}
 )
 
 ADD_LIBRARY(Vaango_CCA_Components_MPMICE ${Vaango_CCA_Components_MPMICE_SRCS})
@@ -34,7 +39,6 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_MPMICE
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  Vaango_Core_Labels
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions

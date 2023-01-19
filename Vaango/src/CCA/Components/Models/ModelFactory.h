@@ -93,7 +93,7 @@ WARNING
     virtual void makeModels(const ProblemSpecP& orig_or_restart_ps, 
                             const ProblemSpecP& prob_spec,
                             GridP& grid,
-                            SimulationStateP& sharedState,
+                            MaterialManagerP& mat_manager,
                             const bool doAMR);
 
     virtual void outputProblemSpec(ProblemSpecP& ps);

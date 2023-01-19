@@ -94,10 +94,10 @@ namespace Uintah {
         
         virtual void outputProblemSpec(ProblemSpecP& ps);
         
-        virtual void problemSetup(GridP& grid, SimulationStateP& sharedState,
+        virtual void problemSetup(GridP& grid, MaterialManagerP& mat_manager,
                                   ModelSetup* setup);
         
-        virtual void activateModel(GridP& grid, SimulationStateP& sharedState,
+        virtual void activateModel(GridP& grid, MaterialManagerP& mat_manager,
                                    ModelSetup* setup);
         
         virtual void scheduleInitialize(SchedulerP&,
@@ -125,10 +125,6 @@ namespace Uintah {
         
         virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
                                            SchedulerP& sched);                                  
-        
-        virtual void scheduleCheckNeedAddMaterial(SchedulerP&,
-                                                  const LevelP& level,
-                                                  const ModelInfo*);
         
         virtual void scheduleTestConservation(SchedulerP&,
                                               const PatchSet* patches,

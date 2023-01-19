@@ -25,6 +25,7 @@
 
 SET(Vaango_CCA_Components_SwitchingCriteria_SRCS
   SwitchingCriteriaFactory.cc
+  DDT1Criterion.cc
   None.cc
   TimestepNumber.cc
   SimpleBurn.cc
@@ -39,7 +40,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SwitchingCriteria
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Parallel
-  Vaango_Core_Labels
+  
   Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec

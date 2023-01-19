@@ -84,7 +84,7 @@ GPUSchedulerTest::~GPUSchedulerTest() {
 void GPUSchedulerTest::problemSetup(const ProblemSpecP& params,
                                     const ProblemSpecP& restart_prob_spec,
                                     GridP& grid,
-                                    SimulationStateP& sharedState) {
+                                    MaterialManagerP& mat_manager) {
   sharedState_ = sharedState;
   ProblemSpecP gpuSchedTest = params->findBlock("GPUSchedulerTest");
   gpuSchedTest->require("delt", delt_);

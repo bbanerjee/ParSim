@@ -182,7 +182,7 @@ void
 SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
                         const ProblemSpecP& restart_prob_spec,
                         GridP& grid,
-                        SimulationStateP& sharedState)
+                        MaterialManagerP& mat_manager)
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
              << "\n";
@@ -1398,16 +1398,6 @@ SerialMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   }
   if (flags->d_computeScaleFactor) {
     scheduleComputeParticleScaleFactor(sched, patches, matls);
-  }
-
-  if (flags->d_canAddMPMMaterial) {
-    //  This checks to see if the model on THIS patch says that it's
-    //  time to add a new material
-    scheduleCheckNeedAddMPMMaterial(sched, patches, matls);
-
-    //  This one checks to see if the model on ANY patch says that it's
-    //  time to add a new material
-    scheduleSetNeedAddMaterialFlag(sched, level, matls);
   }
 
   if (d_analysisModules.size() != 0) {
@@ -7470,46 +7460,6 @@ SerialMPM::checkNeedAddMPMMaterial(const ProcessorGroup*,
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->checkNeedAddMPMMaterial(patches, mpm_matl, old_dw, new_dw);
-  }
-}
-
-/*!----------------------------------------------------------------------
- * scheduleSetNeedAddMaterialFlag
- *-----------------------------------------------------------------------*/
-void
-SerialMPM::scheduleSetNeedAddMaterialFlag(SchedulerP& sched,
-                                          const LevelP& level,
-                                          const MaterialSet* all_matls)
-{
-  printSchedule(level, cout_doing, "MPM::scheduleSetNeedAddMaterialFlag");
-
-  Task* t = scinew Task("SerialMPM::setNeedAddMaterialFlag",
-                        this,
-                        &SerialMPM::setNeedAddMaterialFlag);
-  t->requires(Task::NewDW, lb->NeedAddMPMMaterialLabel);
-  sched->addTask(t, level->eachPatch(), all_matls);
-}
-
-/*!----------------------------------------------------------------------
- * setNeedAddMaterialFlag
- *-----------------------------------------------------------------------*/
-void
-SerialMPM::setNeedAddMaterialFlag(const ProcessorGroup*,
-                                  const PatchSubset*,
-                                  const MaterialSubset*,
-                                  DataWarehouse*,
-                                  DataWarehouse* new_dw)
-{
-  sum_vartype need_add_flag;
-  new_dw->get(need_add_flag, lb->NeedAddMPMMaterialLabel);
-
-  if (need_add_flag < -0.1) {
-    d_sharedState->setNeedAddMaterial(-99);
-    flags->d_canAddMPMMaterial = false;
-    std::cout << "MPM setting NAM to -99"
-              << "\n";
-  } else {
-    d_sharedState->setNeedAddMaterial(0);
   }
 }
 

@@ -99,7 +99,7 @@ protected:
   ///////////////////////////////////////////////////////////////////////////
   /*
   virtual void materialProblemSetup(const ProblemSpecP& prob_spec, 
-                                    SimulationStateP& sharedState,
+                                    MaterialManagerP& mat_manager,
                                     MPMLabel* lb, MPMFlags* flags);
   */
          

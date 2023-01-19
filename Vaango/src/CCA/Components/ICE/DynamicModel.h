@@ -62,7 +62,7 @@ namespace Uintah {
   public:
   
     // ------ constructors
-    DynamicModel(ProblemSpecP& ps, SimulationStateP& sharedState);
+    DynamicModel(ProblemSpecP& ps, MaterialManagerP& mat_manager);
     
     // ------ destructor
     virtual ~DynamicModel();

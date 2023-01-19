@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
 #include <Core/Grid/MPMInterpolators/AxiLinearInterpolator.h>

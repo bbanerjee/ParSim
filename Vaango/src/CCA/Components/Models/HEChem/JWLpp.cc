@@ -36,7 +36,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <iostream>
@@ -86,7 +86,7 @@ JWLpp::~JWLpp()
 }
 //______________________________________________________________________
 //
-void JWLpp::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
+void JWLpp::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
 {
   d_sharedState = sharedState;
   bool defaultActive=true;
@@ -156,7 +156,7 @@ void JWLpp::outputProblemSpec(ProblemSpecP& ps)
 
 //______________________________________________________________________
 //
-void JWLpp::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*)
+void JWLpp::activateModel(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
 {
   d_active=true;
 #if 0
@@ -250,76 +250,6 @@ void JWLpp::scheduleComputeModelSources(SchedulerP& sched,
 
     if (one_matl->removeReference())
       delete one_matl;
-  }
-}
-//______________________________________________________________________
-//
-void JWLpp::scheduleCheckNeedAddMaterial(SchedulerP& sched,
-                                         const LevelP& level,
-                                         const ModelInfo* mi)
-{
-    Task* t = scinew Task("JWLpp::checkNeedAddMaterial", this, 
-                          &JWLpp::checkNeedAddMaterial, mi);
-    cout_doing << "JWLpp::scheduleCheckNeedAddMaterial "<<  endl;  
-
-    Ghost::GhostType  gn  = Ghost::None;
-
-    MaterialSet* one_matl     = scinew MaterialSet();
-    one_matl->add(0);
-    one_matl->addReference();
-
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, one_matl->getUnion(),gn);
-    t->computes(Ilb->NeedAddIceMaterialLabel);
-
-    sched->addTask(t, level->eachPatch(), one_matl);
-
-    if (one_matl->removeReference())
-      delete one_matl;
-}
-
-//______________________________________________________________________
-//
-void
-JWLpp::checkNeedAddMaterial(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset*,
-                            DataWarehouse* /*old_dw*/,
-                            DataWarehouse* new_dw,
-                            const ModelInfo* /*mi*/)
-{
-  for(int p=0;p<patches->size();p++){
-    const Patch* patch = patches->get(p);  
-    
-    cout_doing << "Doing checkNeedAddMaterial on patch "<< patch->getID()
-               <<"\t\t\t\t  JWLpp" << endl;
-
-    Ghost::GhostType  gn  = Ghost::None;
-
-    constCCVariable<double> press_CC;
-    new_dw->get(press_CC,   Ilb->press_equil_CCLabel,0,  patch,gn, 0);
-
-    double need_add=0.;
-
-    if(!d_active){
-      bool add = false;
-      for (CellIterator iter = patch->getCellIterator();!iter.done();iter++){
-        IntVector c = *iter;
-        if (press_CC[c] > .9*d_threshold_pressure){
-          add = true;
-        }
-      }
-
-      if(add){
-        need_add=1.;
-      }
-      else{
-        need_add=0.;
-      }
-    }  //only add a new material once
-    else{
-      need_add=0.;
-    }
-    new_dw->put(sum_vartype(need_add),     Ilb->NeedAddIceMaterialLabel);
   }
 }
 //______________________________________________________________________

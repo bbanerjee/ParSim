@@ -105,7 +105,7 @@ void Mixing::outputProblemSpec(ProblemSpecP& ps)
 
 }
 
-void Mixing::problemSetup(GridP& grid, SimulationStateP& sharedState,
+void Mixing::problemSetup(GridP& grid, MaterialManagerP& mat_manager,
                           ModelSetup* setup)
 {
   matl = sharedState->parseAndLookupMaterial(params, "material");

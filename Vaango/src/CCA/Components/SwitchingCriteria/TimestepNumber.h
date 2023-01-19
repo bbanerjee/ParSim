@@ -69,7 +69,7 @@ namespace Uintah {
       
       virtual void problemSetup(const ProblemSpecP& ps, 
                                 const ProblemSpecP& restart_prob_spec, 
-                                SimulationStateP& sharedState);
+                                MaterialManagerP& mat_manager);
 
       virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
 

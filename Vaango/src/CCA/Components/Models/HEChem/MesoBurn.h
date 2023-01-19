@@ -116,7 +116,7 @@ WARNING
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
     
-    virtual void problemSetup(GridP& grid, SimulationStateP& sharedState,
+    virtual void problemSetup(GridP& grid, MaterialManagerP& mat_manager,
                               ModelSetup* setup);
     
     virtual void scheduleInitialize(SchedulerP&,

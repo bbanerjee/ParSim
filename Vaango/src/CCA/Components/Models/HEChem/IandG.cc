@@ -55,7 +55,7 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
+#include<CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <iostream>
@@ -100,7 +100,7 @@ IandG::~IandG()
     delete mymatls;
 }
 
-void IandG::problemSetup(GridP&, SimulationStateP& sharedState,
+void IandG::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup*)
 {
   ProblemSpecP IG_ps = params->findBlock("IandG");

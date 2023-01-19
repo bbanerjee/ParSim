@@ -31,13 +31,13 @@
 #include <Core/Grid/Variables/ParticleSubset.h>
 #include <Core/Grid/Variables/ParticleVariableBase.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <vector>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <vector>
 

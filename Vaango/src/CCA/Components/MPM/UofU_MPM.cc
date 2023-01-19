@@ -146,7 +146,7 @@ UofU_MPM::~UofU_MPM()
 void
 UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
                        const ProblemSpecP& restart_prob_spec, GridP& grid,
-                       SimulationStateP& sharedState)
+                       MaterialManagerP& mat_manager)
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM" << endl;
   d_sharedState = sharedState;

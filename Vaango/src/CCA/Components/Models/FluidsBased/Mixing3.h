@@ -98,7 +98,7 @@ WARNING
     Mixing3(const ProcessorGroup* myworld, ProblemSpecP& params);
     virtual ~Mixing3();
     
-    virtual void problemSetup(GridP& grid, SimulationStateP& sharedState,
+    virtual void problemSetup(GridP& grid, MaterialManagerP& mat_manager,
                               ModelSetup* setup);
     
     virtual void scheduleInitialize(SchedulerP&,

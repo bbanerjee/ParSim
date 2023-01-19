@@ -27,7 +27,7 @@
 #ifndef __CONSTITUTIVE_MODEL_H__
 #define __CONSTITUTIVE_MODEL_H__
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/MaterialManagerP.h>

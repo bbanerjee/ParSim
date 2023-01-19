@@ -162,7 +162,7 @@ void
 ImpMPM::problemSetup(const ProblemSpecP& prob_spec, 
                      const ProblemSpecP& restart_prob_spec,
                      GridP& grid,
-                     SimulationStateP& sharedState)
+                     MaterialManagerP& mat_manager)
 {
   cout_doing << " Doing ImpMPM::problemSetup " << endl;
   d_sharedState = sharedState;

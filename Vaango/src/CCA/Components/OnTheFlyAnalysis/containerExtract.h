@@ -59,7 +59,7 @@ namespace Uintah {
   class containerExtract : public AnalysisModule {
     public:
       containerExtract(ProblemSpecP& prob_spec,
-          SimulationStateP& sharedState,
+          MaterialManagerP& mat_manager,
           Output* dataArchiver);
       containerExtract();
 
@@ -68,7 +68,7 @@ namespace Uintah {
       virtual void problemSetup(const ProblemSpecP& prob_spec,
                                 const ProblemSpecP& restart_prob_spec,
                                 GridP& grid,
-                                SimulationStateP& sharedState);
+                                MaterialManagerP& mat_manager);
           
 
       virtual void scheduleInitialize(SchedulerP& sched,

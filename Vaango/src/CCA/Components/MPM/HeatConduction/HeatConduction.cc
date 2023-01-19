@@ -30,9 +30,9 @@
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <CCA/Components/MPM/MPMBoundCond.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Task.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Grid/MaterialManager.h>

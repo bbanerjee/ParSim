@@ -58,7 +58,7 @@ ParticleTest1::~ParticleTest1()
 
 void ParticleTest1::problemSetup(const ProblemSpecP& params, 
                                  const ProblemSpecP& restart_prob_spec, 
-                                 GridP& /*grid*/,SimulationStateP& sharedState)
+                                 GridP& /*grid*/,MaterialManagerP& mat_manager)
 {
   sharedState_ = sharedState;
   dynamic_cast<Scheduler*>(getPort("scheduler"))->setPositionVar(lb_->pXLabel);

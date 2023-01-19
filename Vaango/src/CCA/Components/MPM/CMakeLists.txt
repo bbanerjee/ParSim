@@ -22,8 +22,33 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
+
+SET(Vaango_MPM_Core_SRCS
+  Core/MPMBoundCond.cc 
+  Core/MPMCommon.cc
+  Core/MPMFlags.cc	  
+  Core/MPMLabel.cc
+  Core/ImpMPMFlags.cc
+)
+
+SET(Vaango_MPM_Solvers_SRCS
+  ImpMPMSolvers/SimpleSolver.cc 
+  ImpMPMSolvers/Solver.cc       
+)
+
+IF (PETSC)
+  SET(Vaango_MPM_Solvers_SRCS 
+      ${Vaango_MPM_Solvers_SRCS} 
+      ImpMPMSolvers/PetscSolver.cc)
+  SET(LIBS ${LIBS} ${PETSC_LIBRARIES})
+ELSE ()
+  SET(Vaango_MPM_Solvers_SRCS 
+      ${Vaango_MPM_Solvers_SRCS} 
+      ImpMPMSolvers/FakePetscSolver.cc)
+ENDIF ()
+
+
 SET(Vaango_CCA_Components_MPM_SRCS
-  MPMCommon.cc
   SerialMPM.cc    
   MPM_UpdateStressLast.cc    
   RigidMPM.cc     
@@ -31,12 +56,9 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ImpMPM.cc       
   ShellMPM.cc     
   AMRMPM.cc       
-  SimpleSolver.cc 
-  Solver.cc       
-  MPMBoundCond.cc 
-  MPMFlags.cc	  
-  ImpMPMFlags.cc
   UofU_MPM.cc    
+  ${Vaango_MPM_Core_SRCS}
+  ${Vaango_MPM_Solvers_SRCS}
 )
 
 add_subdirectory(ConstitutiveModel)
@@ -52,10 +74,10 @@ add_subdirectory(GradientComputer)
 add_subdirectory(ReactionDiffusion)
 
 SET(LIBS
+  ${LIBS}
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  Vaango_Core_Labels
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
@@ -72,13 +94,6 @@ SET(LIBS
   ${M_LIBRARY}
   ${MPI_LIBRARY}
 )
-
-IF (PETSC)
-  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} PetscSolver.cc)
-  SET(LIBS ${LIBS} ${PETSC_LIBRARIES})
-ELSE ()
-  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} FakePetscSolver.cc)
-ENDIF ()
 
 
 ADD_LIBRARY(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})

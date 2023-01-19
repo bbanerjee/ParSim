@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/MPMBoundCond.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Ghost.h>
 

@@ -62,7 +62,7 @@ namespace Uintah {
     ~ExchangeCoefficients();
 
     void problemSetup(ProblemSpecP& ps,
-                      SimulationStateP& sharedState);
+                      MaterialManagerP& mat_manager);
     void outputProblemSpec(ProblemSpecP& ps);
     
     
