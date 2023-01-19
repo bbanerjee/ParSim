@@ -588,7 +588,7 @@ UCNH::computeStressTensor(const PatchSubset* patches,
     int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     Vector dx            = patch->dCell();
-    // double time = d_sharedState->getElapsedTime();
+    // double time = d_mat_manager->getElapsedTime();
 
     // Get Interpolator
     auto interpolator = flag->d_interpolator->clone(patch);
@@ -1291,7 +1291,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       std::vector<Vector> d_S(interpolator->size());
 
       // Unused because no "active stress carried over from CNHImplicit
-      // double time = d_sharedState->getElapsedTime();
+      // double time = d_mat_manager->getElapsedTime();
 
       for (iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;

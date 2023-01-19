@@ -109,11 +109,11 @@ WARNING
    CZMaterial();
 
    // Standard CZ Material Constructor
-   CZMaterial(ProblemSpecP&, SimulationStateP& ss, MPMFlags* flags);
+   CZMaterial(ProblemSpecP&, MaterialManagerP& ss, MPMFlags* flags);
          
    ~CZMaterial();
 
-   virtual void registerParticleState(SimulationState* ss);
+   virtual void registerParticleState(MaterialManager* ss);
 
    virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
 

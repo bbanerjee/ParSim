@@ -183,12 +183,12 @@ void AdiabaticTable::outputProblemSpec(ProblemSpecP& ps)
 
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
-void AdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
+void AdiabaticTable::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
   cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << endl;
-  d_sharedState = in_state;
-  d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
+  d_mat_manager = in_state;
+  d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
   std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
@@ -429,7 +429,7 @@ void AdiabaticTable::initialize(const ProcessorGroup*,
       }
     }
     
-    setBC(f,"scalar-f", patch, d_sharedState,indx, new_dw); 
+    setBC(f,"scalar-f", patch, d_mat_manager,indx, new_dw); 
 
     //__________________________________
     // initialize other properties
@@ -486,7 +486,7 @@ void AdiabaticTable::initialize(const ProcessorGroup*,
       else
         eReleased[c] = temp[c] * cp - ref_temp[c] * icp;
     }
-    setBC(eReleased,"cumulativeEnergyReleased", patch, d_sharedState,indx, new_dw); 
+    setBC(eReleased,"cumulativeEnergyReleased", patch, d_mat_manager,indx, new_dw); 
 
     //__________________________________
     //  Dump out a header for the probe point files
@@ -966,10 +966,10 @@ void AdiabaticTable::scheduleErrorEstimate(const LevelP& coarseLevel,
   t->requires(Task::NewDW, d_scalar->scalar_CCLabel,  gac, 1);
   
   t->computes(d_scalar->mag_grad_scalarLabel);
-  t->modifies(d_sharedState->get_refineFlag_label(),      d_sharedState->refineFlagMaterials(), Task::OutOfDomain);
-  t->modifies(d_sharedState->get_refinePatchFlag_label(), d_sharedState->refineFlagMaterials(), Task::OutOfDomain);
+  t->modifies(d_mat_manager->get_refineFlag_label(),      d_mat_manager->refineFlagMaterials(), Task::OutOfDomain);
+  t->modifies(d_mat_manager->get_refinePatchFlag_label(), d_mat_manager->refineFlagMaterials(), Task::OutOfDomain);
   
-  sched->addTask(t, coarseLevel->eachPatch(), d_sharedState->allICEMaterials());
+  sched->addTask(t, coarseLevel->eachPatch(), d_mat_manager->allICEMaterials());
 }
 /*_____________________________________________________________________
  Function~  AdiabaticTable::errorEstimate--
@@ -986,8 +986,8 @@ void AdiabaticTable::errorEstimate(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     
     Ghost::GhostType  gac  = Ghost::AroundCells;
-    const VarLabel* refineFlagLabel = d_sharedState->get_refineFlag_label();
-    const VarLabel* refinePatchLabel= d_sharedState->get_refinePatchFlag_label();
+    const VarLabel* refineFlagLabel = d_mat_manager->get_refineFlag_label();
+    const VarLabel* refinePatchLabel= d_mat_manager->get_refinePatchFlag_label();
     
     CCVariable<int> refineFlag;
     new_dw->getModifiable(refineFlag, refineFlagLabel, 0, patch);      

@@ -95,7 +95,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec,
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
     virtual void scheduleInitialize(const LevelP& level,
 				    SchedulerP& sched);
     virtual void scheduleRestartInitialize(const LevelP& level,
@@ -153,7 +153,7 @@ WARNING
     double r0;
     string initial_condition;
     string integration;
-    SimulationStateP sharedState_;
+    MaterialManagerP sharedState_;
     EmptyMaterial* mymat_;
     Step rk4steps[4];
 

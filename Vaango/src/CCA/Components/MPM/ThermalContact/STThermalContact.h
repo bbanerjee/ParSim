@@ -100,7 +100,7 @@ WARNING
   class STThermalContact : public ThermalContact {
     public:
     // Constructor
-    STThermalContact(ProblemSpecP& ps,SimulationStateP& d_sS, MPMLabel* lb,
+    STThermalContact(ProblemSpecP& ps,MaterialManagerP& d_sS, MPMLabel* lb,
                      MPMFlags* flag);
 
     // Destructor

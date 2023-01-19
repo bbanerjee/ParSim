@@ -66,7 +66,7 @@ namespace Uintah {
  
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, GridP&,
-                              SimulationStateP&);
+                              MaterialManagerP&);
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
 
@@ -396,7 +396,7 @@ namespace Uintah {
   
   
     Contact*                     d_contactModel;
-    SimulationStateP             d_sharedState;
+    MaterialManagerP             d_mat_manager;
     MPMLabel*                    d_labels;
     MPMFlags*                    d_flags;
     Output*                      d_dataArchiver;

@@ -174,7 +174,7 @@ void FractureMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pSizeLabel);
   t->computes(lb->pDispGradsLabel);
   t->computes(lb->pStrainEnergyDensityLabel);
-  t->computes(d_sharedState->get_delt_label(),level.get_rep());
+  t->computes(d_mat_manager->get_delt_label(),level.get_rep());
   t->computes(lb->pCellNAPIDLabel,zeroth_matl);
 
   // Debugging Scalar
@@ -197,15 +197,15 @@ void FractureMPM::scheduleInitialize(const LevelP& level,
     cout_doing << "Artificial Damping Coeff = " << flags->d_artificialDampCoeff 
                << " 8 or 27 = " << flags->d_8or27 << endl;
 
-  int numMPM = d_sharedState->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMPMMatls();
   const PatchSet* patches = level->eachPatch();
   for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
 
-  sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
+  sched->addTask(t, level->eachPatch(), d_mat_manager->allMPMMaterials());
 
   schedulePrintParticleCount(level,sched);
     
@@ -213,8 +213,8 @@ void FractureMPM::scheduleInitialize(const LevelP& level,
   t = scinew Task("Crack:CrackDiscretization",
                    crackModel, &Crack::CrackDiscretization);
   crackModel->addComputesAndRequiresCrackDiscretization(t,
-                  level->eachPatch(), d_sharedState->allMPMMaterials());
-  sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
+                  level->eachPatch(), d_mat_manager->allMPMMaterials());
+  sched->addTask(t, level->eachPatch(), d_mat_manager->allMPMMaterials());
 
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference())
@@ -235,8 +235,8 @@ void FractureMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   Task* t = scinew Task("FractureMPM::actuallyInitializeAddedMaterial",
                   this, &FractureMPM::actuallyInitializeAddedMaterial);
 
-  int numALLMatls = d_sharedState->getNumMaterials();
-  int numMPMMatls = d_sharedState->getNumMPMMatls();
+  int numALLMatls = d_mat_manager->getNumMaterials();
+  int numMPMMatls = d_mat_manager->getNumMPMMatls();
   MaterialSubset* add_matl = scinew MaterialSubset();
   std::cout << "Added Material = " << numALLMatls-1 << endl;
   add_matl->add(numALLMatls-1);
@@ -264,11 +264,11 @@ void FractureMPM::scheduleInitializeAddedMaterial(const LevelP& level,
 
   const PatchSet* patches = level->eachPatch();
 
-  MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(numMPMMatls-1);
+  MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(numMPMMatls-1);
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
-  sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
+  sched->addTask(t, level->eachPatch(), d_mat_manager->allMPMMaterials());
 
   // The task will have a reference to add_matl
   if (add_matl->removeReference())
@@ -293,7 +293,7 @@ void FractureMPM::scheduleInitializePressureBCs(const LevelP& level,
     t->requires(Task::NewDW, lb->pLoadCurveIDLabel, Ghost::None);
     t->computes(lb->materialPointsPerLoadCurveLabel, loadCurveIndex,
                 Task::OutOfDomain);
-    sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
+    sched->addTask(t, level->eachPatch(), d_mat_manager->allMPMMaterials());
 
     // Create a task that calculates the force to be associated with
     // each particle based on the pressure BCs
@@ -303,7 +303,7 @@ void FractureMPM::scheduleInitializePressureBCs(const LevelP& level,
     t->requires(Task::NewDW, lb->pLoadCurveIDLabel, Ghost::None);
     t->requires(Task::NewDW, lb->materialPointsPerLoadCurveLabel, loadCurveIndex, Task::OutOfDomain, Ghost::None);
     t->modifies(lb->pExternalForceLabel);
-    sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
+    sched->addTask(t, level->eachPatch(), d_mat_manager->allMPMMaterials());
   }
 }
 
@@ -322,7 +322,7 @@ FractureMPM::scheduleTimeAdvance(const LevelP & level,
     return;
 
   const PatchSet* patches = level->eachPatch();
-  const MaterialSet* matls = d_sharedState->allMPMMaterials();
+  const MaterialSet* matls = d_mat_manager->allMPMMaterials();
 
   scheduleApplyExternalLoads(             sched, patches, matls);
   scheduleParticleVelocityField(          sched, patches, matls);//for FractureMPM 
@@ -352,9 +352,9 @@ FractureMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleUpdateCrackFront(               sched, patches, matls);//for FractureMPM
 
   sched->scheduleParticleRelocation(level, lb->pXLabel_preReloc,
-                                    d_sharedState->d_particleState_preReloc,
+                                    d_mat_manager->d_particleState_preReloc,
                                     lb->pXLabel, 
-                                    d_sharedState->d_particleState,
+                                    d_mat_manager->d_particleState,
                                     lb->pParticleIDLabel, matls);
 }
 
@@ -423,13 +423,13 @@ void FractureMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
 
   t->computes(lb->gMassLabel);
-  t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMaterial(),
+  t->computes(lb->gMassLabel,        d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gTemperatureLabel, d_sharedState->getAllInOneMaterial(),
+  t->computes(lb->gTemperatureLabel, d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain);
-  t->computes(lb->gVolumeLabel, d_sharedState->getAllInOneMaterial(),
+  t->computes(lb->gVolumeLabel, d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain);  
-  t->computes(lb->gVelocityLabel,    d_sharedState->getAllInOneMaterial(),
+  t->computes(lb->gVelocityLabel,    d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain);
   t->computes(lb->gSp_volLabel);
   t->computes(lb->gVolumeLabel);
@@ -513,18 +513,18 @@ void FractureMPM::scheduleComputeStressTensor(SchedulerP& sched,
   // for thermal stress analysis
   scheduleComputeParticleTempFromGrid(sched, patches, matls);
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   Task* t = scinew Task("FractureMPM::computeStressTensor",
                     this, &FractureMPM::computeStressTensor);
   for(int m = 0; m < numMatls; m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addComputesAndRequires(t, mpm_matl, patches);
     const MaterialSubset* matlset = mpm_matl->thisMaterial();
     t->computes(lb->p_qLabel_preReloc, matlset);
   }
 
-  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
+  t->computes(d_mat_manager->get_delt_label(),getLevel(patches));
   t->computes(lb->StrainEnergyLabel);
 
   sched->addTask(t, patches, matls);
@@ -631,7 +631,7 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
   Ghost::GhostType  gan   = Ghost::AroundNodes;
   Ghost::GhostType  gnone = Ghost::None;
   t->requires(Task::NewDW,lb->gMassLabel, gnone);
-  t->requires(Task::NewDW,lb->gMassLabel, d_sharedState->getAllInOneMaterial(),
+  t->requires(Task::NewDW,lb->gMassLabel, d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain, gnone);
   t->requires(Task::OldDW,lb->pStressLabel,               gan,NGP);
   t->requires(Task::OldDW,lb->pVolumeLabel,               gan,NGP);
@@ -667,7 +667,7 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
   }
 
   t->computes(lb->gStressForSavingLabel);
-  t->computes(lb->gStressForSavingLabel, d_sharedState->getAllInOneMaterial(),
+  t->computes(lb->gStressForSavingLabel, d_mat_manager->getAllInOneMaterial(),
               Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
@@ -700,7 +700,7 @@ void FractureMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
   Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
                         this, &FractureMPM::computeAndIntegrateAcceleration);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   t->requires(Task::NewDW, lb->gMassLabel,          Ghost::None);
   t->requires(Task::NewDW, lb->gInternalForceLabel, Ghost::None);
@@ -757,7 +757,7 @@ void FractureMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                     this, &FractureMPM::setGridBoundaryConditions);
                   
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
   
   t->modifies(             lb->gAccelerationLabel,     mss);
   t->modifies(             lb->gVelocityStarLabel,     mss);
@@ -784,10 +784,10 @@ void FractureMPM::scheduleAddNewParticles(SchedulerP& sched,
   Task* t=scinew Task("FractureMPM::addNewParticles", this,
                       &FractureMPM::addNewParticles);
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
   for(int m = 0; m < numMatls; m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     mpm_matl->getParticleCreator()->allocateVariablesAddRequires(t, mpm_matl,
                                                                  patches);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -811,7 +811,7 @@ void FractureMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
   Task* t=scinew Task("FractureMPM::convertLocalizedParticles", this,
                       &FractureMPM::convertLocalizedParticles);
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
 
   if (cout_convert.active())
@@ -819,7 +819,7 @@ void FractureMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
 
   for(int m = 0; m < numMatls; m+=2){
 
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     if (cout_convert.active())
       cout_convert << " Material = " << m << " mpm_matl = " <<mpm_matl<< endl;
 
@@ -864,7 +864,7 @@ void FractureMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
 
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   Ghost::GhostType   gac = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
@@ -1009,7 +1009,7 @@ void FractureMPM::scheduleRefine(const PatchSet* patches,
                                  SchedulerP& sched)
 {
   Task* task = scinew Task("FractureMPM::refine", this, &FractureMPM::refine);
-  sched->addTask(task, patches, d_sharedState->allMPMMaterials());
+  sched->addTask(task, patches, d_mat_manager->allMPMMaterials());
   // do nothing for now
 }
 
@@ -1048,13 +1048,13 @@ void FractureMPM::scheduleErrorEstimate(const LevelP& coarseLevel,
     task->requires(Task::NewDW, lb->pXLabel,     gac, 0);
   }
   else {
-    task->requires(Task::NewDW, d_sharedState->get_refineFlag_label(),
-                   0, Task::FineLevel, d_sharedState->refineFlagMaterials(),
+    task->requires(Task::NewDW, d_mat_manager->get_refineFlag_label(),
+                   0, Task::FineLevel, d_mat_manager->refineFlagMaterials(),
                    Task::NormalDomain, Ghost::None, 0);
   }
-  task->modifies(d_sharedState->get_refineFlag_label(), d_sharedState->refineFlagMaterials());
-  task->modifies(d_sharedState->get_refinePatchFlag_label(), d_sharedState->refineFlagMaterials());
-  sched->addTask(task, coarseLevel->eachPatch(), d_sharedState->allMPMMaterials());
+  task->modifies(d_mat_manager->get_refineFlag_label(), d_mat_manager->refineFlagMaterials());
+  task->modifies(d_mat_manager->get_refinePatchFlag_label(), d_mat_manager->refineFlagMaterials());
+  sched->addTask(task, coarseLevel->eachPatch(), d_mat_manager->allMPMMaterials());
 
 }
 
@@ -1072,9 +1072,9 @@ void FractureMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
   Task* task = scinew Task("errorEstimate", this, &FractureMPM::initialErrorEstimate);
   task->requires(Task::NewDW, lb->pXLabel,     gac, 0);
 
-  task->modifies(d_sharedState->get_refineFlag_label(), d_sharedState->refineFlagMaterials());
-  task->modifies(d_sharedState->get_refinePatchFlag_label(), d_sharedState->refineFlagMaterials());
-  sched->addTask(task, coarseLevel->eachPatch(), d_sharedState->allMPMMaterials());
+  task->modifies(d_mat_manager->get_refineFlag_label(), d_mat_manager->refineFlagMaterials());
+  task->modifies(d_mat_manager->get_refinePatchFlag_label(), d_mat_manager->refineFlagMaterials());
+  sched->addTask(task, coarseLevel->eachPatch(), d_mat_manager->allMPMMaterials());
 }
 
 
@@ -1115,10 +1115,10 @@ void FractureMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
       // Loop through the patches and count
       for(int p=0;p<patches->size();p++){
         const Patch* patch = patches->get(p);
-        int numMPMMatls=d_sharedState->getNumMPMMatls();
+        int numMPMMatls=d_mat_manager->getNumMPMMatls();
         int numPts = 0;
         for(int m = 0; m < numMPMMatls; m++){
-          MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+          MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
           int dwi = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
@@ -1179,9 +1179,9 @@ void FractureMPM::initializePressureBC(const ProcessorGroup*,
       // at each particle
       for(int p=0;p<patches->size();p++){
         const Patch* patch = patches->get(p);
-        int numMPMMatls=d_sharedState->getNumMPMMatls();
+        int numMPMMatls=d_mat_manager->getNumMPMMatls();
         for(int m = 0; m < numMPMMatls; m++){
-          MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+          MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
           int dwi = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
@@ -1233,7 +1233,7 @@ void FractureMPM::actuallyInitialize(const ProcessorGroup*,
       //cerrLock.lock();
       //NOT_FINISHED("not quite right - mapping of matls, use matls->get()");
       //cerrLock.unlock();
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       particleIndex numParticles = 
         mpm_matl->createParticles(cellNAPID, patch, new_dw);
       totalParticles+=numParticles;
@@ -1272,11 +1272,11 @@ void FractureMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
       cout_doing <<"Doing actuallyInitializeAddedMaterial on patch " << patch->getID() <<"\t\t\t MPM"<< endl;
 
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
     std::cout << "num MPM Matls = " << numMPMMatls << endl;
     CCVariable<short int> cellNAPID;
     int m=numMPMMatls-1;
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
     new_dw->unfinalize();
     mpm_matl->createParticles(cellNAPID, patch, new_dw);
 
@@ -1306,7 +1306,7 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     if (cout_doing.active())
       cout_doing <<"Doing interpolateParticlesToGrid on patch " << patch->getID()<<"\t\t MPM"<< endl;
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
@@ -1316,13 +1316,13 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     NCVariable<double> gmassglobal,gtempglobal,gvolumeglobal;
     NCVariable<Vector> gvelglobal;
     new_dw->allocateAndPut(gmassglobal, lb->gMassLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gtempglobal, lb->gTemperatureLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     new_dw->allocateAndPut(gvolumeglobal, lb->gVolumeLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);    
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);    
     new_dw->allocateAndPut(gvelglobal, lb->gVelocityLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     gmassglobal.initialize(d_SMALL_NUM_MPM);
     gvolumeglobal.initialize(d_SMALL_NUM_MPM);
     gtempglobal.initialize(0.0);
@@ -1330,7 +1330,7 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     Ghost::GhostType  gan = Ghost::AroundNodes;
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       // Create arrays for the particle data
@@ -1545,14 +1545,14 @@ void FractureMPM::computeStressTensor(const ProcessorGroup*,
   if (cout_doing.active())
       cout_doing <<"Doing computeStressTensor:FractureMPM: \n" ;          
 
-  for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
+  for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
 
     if (cout_dbg.active()) {
       cout_dbg << " Patch = " << (patches->get(0))->getID();
       cout_dbg << " Mat = " << m;
     }
     
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
 
     if (cout_dbg.active())
       cout_dbg << " MPM_Mat = " << mpm_matl;
@@ -1593,14 +1593,14 @@ void FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
     
     Ghost::GhostType  gac   = Ghost::AroundCells;
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
     std::vector<Vector> d_S(interpolator->size());
 
   
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
@@ -1693,10 +1693,10 @@ void FractureMPM::computeContactArea(const ProcessorGroup*,
     Vector dx = patch->dCell();
     double cellvol = dx.x()*dx.y()*dx.z();
         
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
         
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       constNCVariable<double> gvolume,Gvolume;
         
@@ -1787,18 +1787,18 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
 
 
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
 
     NCVariable<Matrix3>       gstressglobal;
     constNCVariable<double>   gmassglobal;
     new_dw->get(gmassglobal,  lb->gMassLabel,
-                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
+                d_mat_manager->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
     new_dw->allocateAndPut(gstressglobal, lb->gStressForSavingLabel, 
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     //gstressglobal.initialize(Matrix3(0.));
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       // Create arrays for the particle position, volume
       // and the constitutive model
@@ -2007,11 +2007,11 @@ void FractureMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
     
     Ghost::GhostType  gnone = Ghost::None;
     Vector gravity = flags->d_gravity;
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       delt_vartype delT;
-      old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches));
+      old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
       // Get required variables for this patch
       constNCVariable<Vector>  velocity;
@@ -2082,13 +2082,13 @@ void FractureMPM::setGridBoundaryConditions(const ProcessorGroup*,
                  <<"\t\t MPM"<< endl;
 
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     
     delt_vartype delT;            
-    old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+    old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
                       
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       NCVariable<Vector> gvelocity_star, gacceleration;
       constNCVariable<Vector> gvelocity;
@@ -2132,7 +2132,7 @@ void FractureMPM::applyExternalLoads(const ProcessorGroup* ,
                                      DataWarehouse* new_dw)
 {
   // Get the current time
-  double time = d_sharedState->getElapsedTime();
+  double time = d_mat_manager->getElapsedTime();
 
   if (cout_doing.active())
     cout_doing << "Current Time (applyExternalLoads) = " << time << endl;
@@ -2170,10 +2170,10 @@ void FractureMPM::applyExternalLoads(const ProcessorGroup* ,
     // Place for user defined loading scenarios to be defined,
     // otherwise pExternalForce is just carried forward.
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
@@ -2264,25 +2264,25 @@ void FractureMPM::addNewParticles(const ProcessorGroup*,
     if (cout_doing.active())
       cout_doing <<"Doing addNewParticles on patch "  << patch->getID() << "\t MPM"<< endl;
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     // Find the mpm material that the void particles are going to change
     // into.
     MPMMaterial* null_matl = 0;
     int null_dwi = -1;
     for (int void_matl = 0; void_matl < numMPMMatls; void_matl++) {
-      null_dwi = d_sharedState->getMPMMaterial(void_matl)->nullGeomObject();
+      null_dwi = d_mat_manager->getMPMMaterial(void_matl)->nullGeomObject();
 
       if (cout_dbg.active())
         cout_dbg << "Null DWI = " << null_dwi << endl;
 
       if (null_dwi != -1) {
-        null_matl = d_sharedState->getMPMMaterial(void_matl);
+        null_matl = d_mat_manager->getMPMMaterial(void_matl);
         null_dwi = null_matl->getDWIndex();
         break;
       }
     }
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       if (dwi == null_dwi)
         continue;
@@ -2413,7 +2413,7 @@ void FractureMPM::convertLocalizedParticles(const ProcessorGroup*,
       cout_doing <<"Doing convertLocalizedParticles on patch " << patch->getID() << "\t MPM"<< endl;
         
         
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
         
     if (cout_convert.active()) {
       cout_convert << "FractureMPM::convertLocalizeParticles:: on patch"
@@ -2427,7 +2427,7 @@ void FractureMPM::convertLocalizedParticles(const ProcessorGroup*,
         cout_convert << " material # = " << m << endl;
         
         
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
         
@@ -2485,7 +2485,7 @@ void FractureMPM::convertLocalizedParticles(const ProcessorGroup*,
         }
 
 
-        MPMMaterial* conv_matl = d_sharedState->getMPMMaterial(m+1);
+        MPMMaterial* conv_matl = d_mat_manager->getMPMMaterial(m+1);
         int conv_dwi = conv_matl->getDWIndex();
 
         ParticleCreator* particle_creator = conv_matl->getParticleCreator();
@@ -2555,9 +2555,9 @@ void FractureMPM::computeParticleTempFromGrid(const ProcessorGroup*,
     std::vector<double> S(interpolator->size());
     std::vector<Vector> d_S(interpolator->size());
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
@@ -2637,13 +2637,13 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     Vector CMX(0.0,0.0,0.0);
     Vector totalMom(0.0,0.0,0.0);
     double ke=0;
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     delt_vartype delT;
-    old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+    old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
     /*
     Material* reactant;
-    reactant = d_sharedState->getMaterialByName("reactant");
+    reactant = d_mat_manager->getMaterialByName("reactant");
 
     bool combustion_problem=false;
     int RMI = -99;
@@ -2659,7 +2659,7 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     }    
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;
@@ -2886,16 +2886,16 @@ FractureMPM::initialErrorEstimate(const ProcessorGroup*,
 
     CCVariable<int> refineFlag;
     PerPatch<PatchFlagP> refinePatchFlag;
-    new_dw->getModifiable(refineFlag, d_sharedState->get_refineFlag_label(),
+    new_dw->getModifiable(refineFlag, d_mat_manager->get_refineFlag_label(),
                           0, patch);
-    new_dw->get(refinePatchFlag, d_sharedState->get_refinePatchFlag_label(),
+    new_dw->get(refinePatchFlag, d_mat_manager->get_refinePatchFlag_label(),
                 0, patch);
 
     PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
 
 
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       // Loop over particles
       ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
@@ -2942,9 +2942,9 @@ FractureMPM::errorEstimate(const ProcessorGroup* group,
       CCVariable<int> refineFlag;
       PerPatch<PatchFlagP> refinePatchFlag;
 
-      new_dw->getModifiable(refineFlag, d_sharedState->get_refineFlag_label(),
+      new_dw->getModifiable(refineFlag, d_mat_manager->get_refineFlag_label(),
                             0, coarsePatch);
-      new_dw->get(refinePatchFlag, d_sharedState->get_refinePatchFlag_label(),
+      new_dw->get(refinePatchFlag, d_mat_manager->get_refinePatchFlag_label(),
                   0, coarsePatch);
         
       PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
@@ -2957,7 +2957,7 @@ FractureMPM::errorEstimate(const ProcessorGroup* group,
 
         // Get the particle data
         constCCVariable<int> fineErrorFlag;
-        new_dw->get(fineErrorFlag, d_sharedState->get_refineFlag_label(), 0,
+        new_dw->get(fineErrorFlag, d_mat_manager->get_refineFlag_label(), 0,
                     finePatch, Ghost::None, 0);
 
         IntVector fl(finePatch->getExtraCellLowIndex());
@@ -2994,9 +2994,9 @@ FractureMPM::refine(const ProcessorGroup*,
   for (int p = 0; p<patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
         
       if (cout_doing.active()) {

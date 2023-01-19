@@ -123,7 +123,7 @@ Simple_Burn::~Simple_Burn()
 void Simple_Burn::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup*)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   bool defaultActive=true;
   d_params->getWithDefault("Active",    d_active, defaultActive);
   d_params->require("ThresholdTemp",    d_thresholdTemp);
@@ -247,7 +247,7 @@ void Simple_Burn::scheduleComputeModelSources(SchedulerP& sched,
 
   // Used for getting temperature and volume fraction for all materials for
   //  for burning criteria
-  const MaterialSet* all_matls = d_sharedState->allMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();
   const MaterialSubset* all_matls_sub = all_matls->getUnion();  
   Task::MaterialDomainSpec oms = Task::OutOfDomain;  //outside of mymatl set.
   t->requires(Task::OldDW, Ilb->temp_CCLabel,      all_matls_sub, oms, gac,1);
@@ -371,16 +371,16 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
  
     IntVector nodeIdx[8];
     
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m0);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m0);
     double cv_solid = mpm_matl->getSpecificHeat();
    
 
     // Get all Temperatures for burning check
-    int numAllMatls = d_sharedState->getNumMaterials();
+    int numAllMatls = d_mat_manager->getNumMaterials();
     std::vector<constCCVariable<double> >  vol_frac_CC(numAllMatls);
     std::vector<constCCVariable<double> >  temp_CC(numAllMatls);
     for (int m = 0; m < numAllMatls; m++) {
-      Material* matl = d_sharedState->getMaterial(m);
+      Material* matl = d_mat_manager->getMaterial(m);
       int indx = matl->getDWIndex();
       old_dw->get(temp_CC[m],       MIlb->temp_CCLabel,    indx, patch, gac, 1);
       new_dw->get(vol_frac_CC[m],   Ilb->vol_frac_CCLabel, indx, patch, gac, 1);
@@ -465,8 +465,8 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
    
   }
   //__________________________________

@@ -102,17 +102,17 @@ namespace Uintah {
       
     virtual void problemSetup(const ProblemSpecP& params,
                               const ProblemSpecP& restart_prob_spec,
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
       
     virtual void addMaterial(const ProblemSpecP& params, 
                              GridP& grid,
-                             SimulationStateP&);
+                             MaterialManagerP&);
       
     virtual void updateExchangeCoefficients(const ProblemSpecP& params, 
                                             GridP& grid,
-                                            SimulationStateP&);
+                                            MaterialManagerP&);
       
     virtual void scheduleInitialize(const LevelP& level, 
                                     SchedulerP&);

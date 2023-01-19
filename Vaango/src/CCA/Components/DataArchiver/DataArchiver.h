@@ -83,7 +83,7 @@ public:
   //! Sets up when the DataArchiver will output and what data, according
   //! to params.  Also stores state to keep track of time and timesteps
   //! in the simulation.  (If you only need to use DataArchiver to copy
-  //! data, then you can pass a nullptr SimulationState
+  //! data, then you can pass a nullptr MaterialManager
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_ps,

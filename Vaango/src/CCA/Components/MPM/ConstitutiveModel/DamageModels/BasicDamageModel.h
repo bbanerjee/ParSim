@@ -59,9 +59,9 @@ public:
     d_materialManager = manager;
   }
   inline void
-  setSharedState(Uintah::SimulationState* sharedState)
+  setSharedState(Uintah::MaterialManager* sharedState)
   {
-    d_sharedState = sharedState;
+    d_mat_manager = sharedState;
   }
 
   virtual std::unique_ptr<BasicDamageModel>
@@ -188,7 +188,7 @@ private:
 
 protected:
   Uintah::MPMFlags* flag;
-  Uintah::SimulationState* d_sharedState;
+  Uintah::MaterialManager* d_mat_manager;
   Uintah::MaterialManagerP d_materialManager;
 
   // Damage Requirements //

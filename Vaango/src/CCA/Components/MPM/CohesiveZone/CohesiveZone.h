@@ -76,7 +76,7 @@ namespace Uintah {
   class CohesiveZone {
   public:
     
-    CohesiveZone(CZMaterial* czmat, MPMFlags* flags,  SimulationStateP& ss);
+    CohesiveZone(CZMaterial* czmat, MPMFlags* flags,  MaterialManagerP& ss);
 
     virtual ~CohesiveZone();
 

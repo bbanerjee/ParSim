@@ -60,10 +60,10 @@
 
 using namespace Uintah;
 
-STThermalContact::STThermalContact(ProblemSpecP&,SimulationStateP& d_sS,
+STThermalContact::STThermalContact(ProblemSpecP&,MaterialManagerP& d_sS,
                                    MPMLabel* Mlb,MPMFlags* MFlag)
 {
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   lb = Mlb;
   flag = MFlag;
 }
@@ -86,7 +86,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
 
     std::vector<constNCVariable<double> > gmass(numMatls);
     std::vector<constNCVariable<double> > gTemp(numMatls);
@@ -101,7 +101,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
   
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       new_dw->get(gmass[dwi], lb->gMassLabel,        dwi, patch, Ghost::None,0);
       new_dw->get(gTemp[dwi], lb->gTemperatureLabel, dwi, patch, Ghost::None,0);
@@ -125,7 +125,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
       double denominator=0.0;
       IntVector c = *iter;
       for(int m = 0; m < numMatls; m++) {
-        MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+        MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
         int n = mpm_matl->getDWIndex();
         numerator   += (gTemp[n][c] * gmass[n][c]  * Cp[m]);
         denominator += (gmass[n][c]  * Cp[m]);

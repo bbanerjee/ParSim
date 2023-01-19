@@ -56,7 +56,7 @@ using namespace Uintah;
 
 SpecifiedBodyContact::SpecifiedBodyContact(const ProcessorGroup* myworld,
                                            ProblemSpecP& ps,
-                                           SimulationStateP& d_sS,
+                                           MaterialManagerP& d_sS,
                                            MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
@@ -92,7 +92,7 @@ SpecifiedBodyContact::SpecifiedBodyContact(const ProcessorGroup* myworld,
                      std::numeric_limits<double>::max());
   ps->getWithDefault("velocity_after_stop", d_vel_after_stop, Vector(0, 0, 0));
 
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   lb = Mlb;
   flag = MFlag;
   if (flag->d_8or27 == 8) {
@@ -198,13 +198,13 @@ SpecifiedBodyContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
   Vector imposed_velocity(0.0, 0.0, 0.0);
-  const double tcurr = d_sharedState->getElapsedTime(); // FIXME: + dt ?
+  const double tcurr = d_mat_manager->getElapsedTime(); // FIXME: + dt ?
   if (tcurr > d_stop_time) {
     imposed_velocity = d_vel_after_stop;
   } else if (d_vel_profile.size() > 0) {
@@ -246,7 +246,7 @@ SpecifiedBodyContact::computeNormalBasedExchange(const Patch* patch,
                                                  NCVectorArray& gVelocity_star)
 {
   Ghost::GhostType gnone = Ghost::None;
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
   Vector dx = patch->dCell();
   double cell_vol = dx.x() * dx.y() * dx.z();
@@ -307,7 +307,7 @@ SpecifiedBodyContact::computeDirectionBasedExchange(const Patch* patch,
                                                     NCVectorArray& gVelocity_star)
 {
   Ghost::GhostType gnone = Ghost::None;
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
   Vector dx = patch->dCell();
   double cell_vol = dx.x() * dx.y() * dx.z();

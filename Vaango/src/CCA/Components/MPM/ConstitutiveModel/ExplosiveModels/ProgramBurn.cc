@@ -264,7 +264,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-  double time = d_sharedState->getElapsedTime() - d_cm.d_T0;
+  double time = d_mat_manager->getElapsedTime() - d_cm.d_T0;
 
   double K    = d_cm.d_K;
   double n    = d_cm.d_n;

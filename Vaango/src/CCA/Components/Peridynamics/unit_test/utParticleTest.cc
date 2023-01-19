@@ -101,13 +101,13 @@ void utParticleTest::problemSetup(const ProblemSpecP& params,
   BOOST_CHECK_CLOSE(1.0, 1.0, 1.0e-12);
   BOOST_CHECK_CLOSE(1.0, 0.0, 1.0e-12);
 
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   dynamic_cast<Uintah::Scheduler*>(getPort("scheduler"))->setPositionVar(d_labels->pPositionLabel);
   ProblemSpecP pt1 = params->findBlock("ParticleTest1");
   pt1->getWithDefault("doOutput", d_doOutput, 0);
   pt1->getWithDefault("doGhostCells", d_numGhostCells , 0);
   d_mymat = scinew Uintah::EmptyMaterial();
-  d_sharedState->registerEmptyMaterial(d_mymat);
+  d_mat_manager->registerEmptyMaterial(d_mymat);
 }
  
 void utParticleTest::scheduleInitialize(const Uintah::LevelP& level,
@@ -117,7 +117,7 @@ void utParticleTest::scheduleInitialize(const Uintah::LevelP& level,
   task->computes(d_labels->pPositionLabel);
   task->computes(d_labels->pMassLabel);
   task->computes(d_labels->pParticleIDLabel);
-  sched->addTask(task, level->eachPatch(), d_sharedState->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_mat_manager->allMaterials());
 }
  
 void utParticleTest::scheduleComputeStableTimestep(const Uintah::LevelP& level,
@@ -125,14 +125,14 @@ void utParticleTest::scheduleComputeStableTimestep(const Uintah::LevelP& level,
 {
   Task* task = scinew Task("computeStableTimestep",
 			   this, &utParticleTest::computeStableTimestep);
-  task->computes(d_sharedState->get_delt_label(),level.get_rep());
-  sched->addTask(task, level->eachPatch(), d_sharedState->allMaterials());
+  task->computes(d_mat_manager->get_delt_label(),level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_mat_manager->allMaterials());
 }
 
 void
 utParticleTest::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::SchedulerP& sched)
 {
-  const Uintah::MaterialSet* matls = d_sharedState->allMaterials();
+  const Uintah::MaterialSet* matls = d_mat_manager->allMaterials();
   Task* task = scinew Task("timeAdvance", this, &utParticleTest::timeAdvance);
 
   // set this in problemSetup.  0 is no ghost cells, 1 is all with 1 ghost
@@ -157,10 +157,10 @@ utParticleTest::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::Schedu
   task->computes(d_labels->pPositionLabel_preReloc);
   task->computes(d_labels->pMassLabel_preReloc);
   task->computes(d_labels->pParticleIDLabel_preReloc);
-  sched->addTask(task, level->eachPatch(), d_sharedState->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_mat_manager->allMaterials());
   
-  d_sharedState->d_particleState.clear();
-  d_sharedState->d_particleState_preReloc.clear();
+  d_mat_manager->d_particleState.clear();
+  d_mat_manager->d_particleState_preReloc.clear();
   for (int m = 0; m < matls->size(); m++) {
     std::vector<const Uintah::VarLabel*> vars;
     std::vector<const Uintah::VarLabel*> vars_preReloc;
@@ -171,14 +171,14 @@ utParticleTest::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::Schedu
     vars_preReloc.push_back(d_labels->pMassLabel_preReloc);
     vars_preReloc.push_back(d_labels->pParticleIDLabel_preReloc);
 
-    d_sharedState->d_particleState.push_back(vars);
-    d_sharedState->d_particleState_preReloc.push_back(vars_preReloc);
+    d_mat_manager->d_particleState.push_back(vars);
+    d_mat_manager->d_particleState_preReloc.push_back(vars_preReloc);
   }
   sched->scheduleParticleRelocation(level, 
                                     d_labels->pPositionLabel_preReloc,
-                				    d_sharedState->d_particleState_preReloc,
+                				    d_mat_manager->d_particleState_preReloc,
 				                    d_labels->pPositionLabel, 
-                                    d_sharedState->d_particleState,
+                                    d_mat_manager->d_particleState,
                 				    d_labels->pParticleIDLabel, 
                                     matls);
 }
@@ -190,7 +190,7 @@ void utParticleTest::computeStableTimestep(const ProcessorGroup* /*pg*/,
 				     DataWarehouse* new_dw)
 {
   const Uintah::Level* level = getLevel(patches);
-  new_dw->put(Uintah::delt_vartype(1), d_sharedState->get_delt_label(), level);
+  new_dw->put(Uintah::delt_vartype(1), d_mat_manager->get_delt_label(), level);
 }
 
 void utParticleTest::initialize(const ProcessorGroup*,

@@ -103,8 +103,8 @@ void RigidMPM::computeStressTensor(const ProcessorGroup*,
   if (cout_doing.active())
     cout_doing <<"Doing computeStressTensor " <<"\t\t\t\t RigidMPM"<< endl;
 
-  for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+  for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->carryForward(patches, mpm_matl, old_dw, new_dw);
   }
@@ -156,7 +156,7 @@ void RigidMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
   Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
                         this, &RigidMPM::computeAndIntegrateAcceleration);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   t->requires(Task::NewDW, lb->gVelocityLabel,          Ghost::None);
 
@@ -177,8 +177,8 @@ void RigidMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,"Doing computeAndIntegrateAcceleration");
 
     Ghost::GhostType  gnone = Ghost::None;
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       // Get required variables for this patch
@@ -214,7 +214,7 @@ void RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
                       this, &RigidMPM::interpolateToParticlesAndUpdate);
 
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
 
 
@@ -301,9 +301,9 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     Vector CMX(0.0,0.0,0.0);
     Vector total_mom(0.0,0.0,0.0);
     double ke=0;
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     delt_vartype delT;
-    old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+    old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
     /*
     double move_particles=1.;
@@ -313,7 +313,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     */
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;

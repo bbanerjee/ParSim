@@ -90,16 +90,16 @@ DDT1Criterion::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
   Ghost::GhostType gan = Ghost::AroundNodes;
 
   if (level->hasFinerLevel() == false) { // only on the finest level
-    t->requires(Task::OldDW, ice_labels->vol_frac_CCLabel, mpm_matls, gac, 1);
-    t->requires(Task::NewDW, mpm_labels->gMassLabel, mpm_matls, gan, 2);
-    t->requires(Task::OldDW, mpm_labels->pXLabel, mpm_matls, gan, 1);
+    t->requires(Task::OldDW, d_ice_labels->vol_frac_CCLabel, mpm_matls, gac, 1);
+    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, mpm_matls, gan, 2);
+    t->requires(Task::OldDW, d_mpm_labels->pXLabel, mpm_matls, gan, 1);
     t->requires(Task::NewDW,
-                mpm_labels->gTemperatureLabel,
+                d_mpm_labels->gTemperatureLabel,
                 one_matl.get(),
                 gan,
                 2);
     t->requires(Task::OldDW,
-                mpm_labels->NC_CCweightLabel,
+                d_mpm_labels->NC_CCweightLabel,
                 one_matl.get(),
                 gan,
                 2);
@@ -137,8 +137,8 @@ DDT1Criterion::switchTest(const ProcessorGroup* group,
         (MPMMaterial*)d_materialManager->getMaterial("MPM", d_material);
       int d_indx = mpm_matl->getDWIndex();
 
-      int numAllMatls = d_materialManager->getNumMatls();
-      int numMPMMatls = d_materialManager->getNumMatls("MPM");
+      int numAllMatls = d_materialManager->getNumMaterials();
+      int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
       // mpm matls
       constNCVariable<double> NC_CCweight;
@@ -152,9 +152,9 @@ DDT1Criterion::switchTest(const ProcessorGroup* group,
       for (int m = 0; m < numMPMMatls; m++) {
         Material* matl = d_materialManager->getMaterial(m);
         int indx       = matl->getDWIndex();
-        new_dw->get(gmass[m], mpm_labels->gMassLabel, indx, patch, gan, 2);
+        new_dw->get(gmass[m], d_mpm_labels->gMassLabel, indx, patch, gan, 2);
         old_dw->get(vol_frac_mpm[m],
-                    ice_labels->vol_frac_CCLabel,
+                    d_ice_labels->vol_frac_CCLabel,
                     indx,
                     patch,
                     gac,
@@ -163,13 +163,13 @@ DDT1Criterion::switchTest(const ProcessorGroup* group,
         temp_CC_mpm[m].initialize(0.0);
       }
       new_dw
-        ->get(gTempAllMatls, mpm_labels->gTemperatureLabel, 0, patch, gan, 2);
-      old_dw->get(NC_CCweight, mpm_labels->NC_CCweightLabel, 0, patch, gan, 2);
+        ->get(gTempAllMatls, d_mpm_labels->gTemperatureLabel, 0, patch, gan, 2);
+      old_dw->get(NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gan, 2);
 
       constParticleVariable<Point> px;
       ParticleSubset* pset =
-        old_dw->getParticleSubset(d_indx, patch, gan, 1, mpm_labels->pXLabel);
-      old_dw->get(px, mpm_labels->pXLabel, pset);
+        old_dw->getParticleSubset(d_indx, patch, gan, 1, d_mpm_labels->pXLabel);
+      old_dw->get(px, d_mpm_labels->pXLabel, pset);
 
       // Which cells contain particles
       CCVariable<double> pFlag;

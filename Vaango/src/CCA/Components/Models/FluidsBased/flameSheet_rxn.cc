@@ -98,12 +98,12 @@ flameSheet_rxn::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 }
 //______________________________________________________________________
 //    Problem Setup
-void flameSheet_rxn::problemSetup(GridP& grid, SimulationStateP& in_state,
+void flameSheet_rxn::problemSetup(GridP& grid, MaterialManagerP& in_state,
                            ModelSetup* setup)
 {
   cout_doing << "Doing problemSetup \t\t\t\tFLAMESHEET" << endl;
-  d_sharedState = in_state;
-  d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
+  d_mat_manager = in_state;
+  d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
   std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
@@ -112,7 +112,7 @@ void flameSheet_rxn::problemSetup(GridP& grid, SimulationStateP& in_state,
   d_matl_set->addReference();
 
   // determine the specific heat of that matl.
-  Material* matl = d_sharedState->getMaterial( m[0] );
+  Material* matl = d_mat_manager->getMaterial( m[0] );
   ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
   if (ice_matl){
     d_cp = ice_matl->getSpecificHeat();

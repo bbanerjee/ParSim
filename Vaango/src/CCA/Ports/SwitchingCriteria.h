@@ -42,8 +42,16 @@ class SwitchingCriteria : public UintahParallelPort
 {
 
 public:
-  SwitchingCriteria();
-  virtual ~SwitchingCriteria();
+  SwitchingCriteria() = default;
+  virtual ~SwitchingCriteria() = default;
+
+  // Disallow copy and move
+  SwitchingCriteria(const SwitchingCriteria&) = delete;
+  SwitchingCriteria(SwitchingCriteria&&)      = delete;
+  SwitchingCriteria&
+  operator=(const SwitchingCriteria&) = delete;
+  SwitchingCriteria&
+  operator=(SwitchingCriteria&&) = delete;
 
   virtual void
   problemSetup(const ProblemSpecP& params,
@@ -55,13 +63,14 @@ public:
   virtual void
   scheduleSwitchTest(const LevelP& level, SchedulerP& sched){};
 
-  SwitchingCriteria(const SwitchingCriteria&) = delete;
-  SwitchingCriteria(SwitchingCriteria&&) = delete;
+  virtual void
+  setSwitchLabel(const VarLabel* switch_label)
+  {
+    d_switch_label = switch_label;
+  }
 
-  SwitchingCriteria&
-  operator=(const SwitchingCriteria&) = delete;
-  SwitchingCriteria&
-  operator=(SwitchingCriteria&&) = delete;
+protected:
+  const VarLabel* d_switch_label;
 };
 }
 

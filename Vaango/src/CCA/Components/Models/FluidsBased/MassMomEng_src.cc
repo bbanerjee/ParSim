@@ -95,7 +95,7 @@ MassMomEng_src::~MassMomEng_src()
 void MassMomEng_src::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup* )
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
 
   d_matl = sharedState->parseAndLookupMaterial(params, "material");
   params->require("momentum_src", d_src->mom_src_rate);
@@ -187,7 +187,7 @@ void MassMomEng_src::computeModelSources(const ProcessorGroup*,
   double totalEng_src = 0.0;
   Vector totalMom_src(0,0,0);
 
-  double time= d_sharedState->getElapsedTime();
+  double time= d_mat_manager->getElapsedTime();
 
   
   for(int p=0;p<patches->size();p++){

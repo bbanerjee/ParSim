@@ -57,10 +57,10 @@
 
 using namespace Uintah;
 
-NullThermalContact::NullThermalContact(ProblemSpecP&,SimulationStateP& d_sS,
+NullThermalContact::NullThermalContact(ProblemSpecP&,MaterialManagerP& d_sS,
                                        MPMLabel* Mlb,MPMFlags* MFlag)
 {
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   lb = Mlb;
   flag = MFlag;
 }
@@ -83,10 +83,10 @@ void NullThermalContact::computeHeatExchange(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
 
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwindex = mpm_matl->getDWIndex();
 
       NCVariable<double> thermalContactTemperatureRate;

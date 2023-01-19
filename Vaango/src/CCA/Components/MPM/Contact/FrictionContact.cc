@@ -53,12 +53,12 @@ using std::vector;
 using std::string;
 
 FrictionContact::FrictionContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, SimulationStateP& d_sS,
+                                 ProblemSpecP& ps, MaterialManagerP& d_sS,
                                  MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
   // Constructor
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   d_vol_const = 0.;
 
   ps->require("mu", d_mu);
@@ -167,7 +167,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
@@ -352,7 +352,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 
     // This converts frictional work into a temperature rate
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
 
       if (!d_matls.requested(m)) {
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();

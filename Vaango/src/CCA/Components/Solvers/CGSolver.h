@@ -38,7 +38,7 @@ namespace Uintah {
 
     virtual SolverParameters* readParameters(       ProblemSpecP     & params,
                                               const std::string      & name,
-                                                    SimulationStateP & state );
+                                                    MaterialManagerP & state );
 
     virtual void scheduleSolve( const LevelP           & level,
                                       SchedulerP       & sched,

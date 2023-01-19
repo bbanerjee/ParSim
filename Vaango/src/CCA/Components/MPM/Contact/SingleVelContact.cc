@@ -56,12 +56,12 @@ using namespace Uintah;
 using std::vector;
 
 SingleVelContact::SingleVelContact(const ProcessorGroup* myworld,
-                                   ProblemSpecP& ps, SimulationStateP& d_sS,
+                                   ProblemSpecP& ps, MaterialManagerP& d_sS,
                                    MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
   // Constructor
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   lb = Mlb;
   flag = MFlag;
 }
@@ -85,7 +85,7 @@ SingleVelContact::exchangeMomentum(const ProcessorGroup*,
                                    DataWarehouse* old_dw, DataWarehouse* new_dw,
                                    const VarLabel* gVelocity_label)
 {
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   for (int p = 0; p < patches->size(); p++) {

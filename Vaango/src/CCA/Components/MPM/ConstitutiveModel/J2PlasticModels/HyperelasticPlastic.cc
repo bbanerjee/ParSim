@@ -1270,7 +1270,7 @@ HyperelasticPlastic::computeStressTensor(const PatchSubset* patches,
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     Vector dx = patch->dCell();
-    double time = d_sharedState->getElapsedTime();
+    double time = d_mat_manager->getElapsedTime();
 
     // Get Interpolator
     auto interpolator = flag->d_interpolator->clone(patch);
@@ -2105,7 +2105,7 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     } else { /*if(!matl->getIsRigid()) */
 
       // Unused because no "active stress carried over from CNHImplicit
-      double time = d_sharedState->getElapsedTime();
+      double time = d_mat_manager->getElapsedTime();
 
       for (iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;

@@ -32,7 +32,6 @@ SET(Vaango_CCA_Ports_SRCS
   ProblemSpecInterface.cc 
   Scheduler.cc 
   SolverInterface.cc 
-  SwitchingCriteria.cc 
   SFC.cc
 )
 

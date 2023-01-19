@@ -86,7 +86,7 @@ containerExtract::containerExtract(ProblemSpecP& module_spec,
                          Output* dataArchiver)
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   d_prob_spec = module_spec;
   d_dataArchiver = dataArchiver;
   d_matl_set = 0;
@@ -131,7 +131,7 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
 {
   cout_doing << "Doing problemSetup \t\t\t\tcontainerExtract" << endl;
 
-  d_matl = d_sharedState->parseAndLookupMaterial(d_prob_spec, "material");
+  d_matl = d_mat_manager->parseAndLookupMaterial(d_prob_spec, "material");
   
   if(!d_dataArchiver){
     throw InternalError("containerExtract:couldn't get output port", __FILE__, __LINE__);

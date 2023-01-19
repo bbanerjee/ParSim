@@ -100,7 +100,7 @@ WARNING
   class NullThermalContact : public ThermalContact {
     public:
     // Constructor
-    NullThermalContact(ProblemSpecP& ps,SimulationStateP& d_sS, MPMLabel* lb,
+    NullThermalContact(ProblemSpecP& ps,MaterialManagerP& d_sS, MPMLabel* lb,
                        MPMFlags* MFlag);
 
     // Destructor

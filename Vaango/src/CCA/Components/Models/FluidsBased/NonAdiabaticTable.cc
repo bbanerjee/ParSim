@@ -120,7 +120,7 @@ NonAdiabaticTable::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 }
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
-void NonAdiabaticTable::problemSetup(GridP& grid, SimulationStateP& in_state,
+void NonAdiabaticTable::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
   cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << endl;

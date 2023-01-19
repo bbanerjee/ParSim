@@ -476,7 +476,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
-  double time = d_sharedState->getElapsedTime();
+  double time = d_mat_manager->getElapsedTime();
   double rho_0 = matl->getInitialDensity();
   Matrix3 Identity, zero(0.), One(1.);
   Identity.Identity();

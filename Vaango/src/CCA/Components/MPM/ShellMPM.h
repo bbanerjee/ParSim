@@ -88,7 +88,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   virtual void problemSetup(const ProblemSpecP& params, 
                             const ProblemSpecP& restart_prob_spec, 
-                            GridP& grid,SimulationStateP&);
+                            GridP& grid,MaterialManagerP&);
          
 protected:
 

@@ -66,11 +66,11 @@ using namespace Uintah;
 using std::vector;
 
 NodalSVFContact::NodalSVFContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, SimulationStateP& d_sS,
+                                 ProblemSpecP& ps, MaterialManagerP& d_sS,
                                  MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 { // Constructor
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
 
   ps->require("myu", d_myu);
   ps->require("use_svf", b_svf);

@@ -116,7 +116,7 @@ namespace Uintah {
   void lodi_getVars_pressBC( const Patch* patch,
                              Lodi_vars_pressBC* lodi_vars,
                              ICELabel* lb,
-                             SimulationStateP sharedState,
+                             MaterialManagerP sharedState,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw);
 

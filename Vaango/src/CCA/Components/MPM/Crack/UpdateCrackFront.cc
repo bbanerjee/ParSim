@@ -104,7 +104,7 @@ void Crack::CrackFrontNodeSubset(const ProcessorGroup*,
     MPI_Comm_rank(mpi_crack_comm, &pid);
     MPI_Comm_size(mpi_crack_comm, &patch_size);
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     for(int m=0; m<numMPMMatls; m++) {
       if(d_calFractParameters || d_doCrackPropagation) {
         // cfnset - subset of crack-front nodes in each patch
@@ -184,9 +184,9 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
     MPI_Comm_rank(mpi_crack_comm, &pid);
     MPI_Comm_size(mpi_crack_comm, &patch_size);
 
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     for(int m=0; m<numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
 
       // Cell mass of the material
       double d_cell_mass=mpm_matl->getInitialDensity()*dx.x()*dx.y()*dx.z();

@@ -96,7 +96,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params,
                               const ProblemSpecP& restart_prob_spec,
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
     virtual void scheduleInitialize(const LevelP& level,
 				    SchedulerP& sched);
     virtual void scheduleRestartInitialize(const LevelP& level,
@@ -121,7 +121,7 @@ WARNING
 
 
     ExamplesLabel* lb_;
-    SimulationStateP sharedState_;
+    MaterialManagerP sharedState_;
     double delt_;
     EmptyMaterial* mymat_;
     SolverInterface* solver;

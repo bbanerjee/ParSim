@@ -75,7 +75,7 @@ namespace Uintah {
                                             const SFCZVariable<double>& wvel_FC,
                                             const CCVariable<double>& rho_CC,
                                             const int indx,
-                                            SimulationStateP&  d_sharedState,
+                                            MaterialManagerP&  d_mat_manager,
                                             CCVariable<double>& turb_viscosity);
              
     virtual void scheduleComputeVariance(SchedulerP& sched, 
@@ -91,7 +91,7 @@ namespace Uintah {
                                          const SFCYVariable<double>& vvel_FC,
                                          const SFCZVariable<double>& wvel_FC,
                                          const int indx,
-                                         SimulationStateP&  d_sharedState,
+                                         MaterialManagerP&  d_mat_manager,
                                          CCVariable<double>& term,
                                          CCVariable<double>& meanSIJ);
        

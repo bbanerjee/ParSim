@@ -67,7 +67,7 @@ static DebugStream cout_dbg("PDMatDebug", false);
 
 PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
                                            const Uintah::GridP grid,
-                                           Uintah::SimulationStateP& ss,
+                                           Uintah::MaterialManagerP& ss,
                                            PeridynamicsFlags* flags)
   : Uintah::Material(ps), d_materialModel(0), d_particle_creator(0)
 {
@@ -154,7 +154,7 @@ PeridynamicsMaterial::~PeridynamicsMaterial()
 
 /*
 */
-void PeridynamicsMaterial::registerParticleState(Uintah::SimulationState* sharedState)
+void PeridynamicsMaterial::registerParticleState(Uintah::MaterialManager* sharedState)
 {
   sharedState->d_particleState.push_back(d_particle_creator->returnParticleState());
   sharedState->d_particleState_preReloc.push_back(d_particle_creator->returnParticleStatePreReloc());

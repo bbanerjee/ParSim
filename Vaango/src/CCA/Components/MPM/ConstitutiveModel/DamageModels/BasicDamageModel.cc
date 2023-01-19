@@ -655,7 +655,7 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
     // Get particle info and patch info
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    double time = d_sharedState->getElapsedTime();
+    double time = d_mat_manager->getElapsedTime();
 
     // Particle and grid data universal to model type
     // Old data containers

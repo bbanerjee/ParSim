@@ -104,7 +104,7 @@ void IandG::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup*)
 {
   ProblemSpecP IG_ps = params->findBlock("IandG");
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   matl0 = sharedState->parseAndLookupMaterial(IG_ps, "fromMaterial");
   matl1 = sharedState->parseAndLookupMaterial(IG_ps, "toMaterial");
   IG_ps->require("I",  d_I);
@@ -352,12 +352,12 @@ void IandG::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
-    setBC(term1, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(term2, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(term3, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(Fr,    "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
+    setBC(term1, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(term2, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(term3, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(Fr,    "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
   }
 }
 //______________________________________________________________________

@@ -94,7 +94,7 @@ void Smagorinsky_Model::computeTurbViscosity(DataWarehouse* new_dw,
                                             const SFCZVariable<double>& wvel_FC,
                                             const CCVariable<double>& rho_CC,
                                             const int indx,
-                                            SimulationStateP&  d_sharedState,
+                                            MaterialManagerP&  d_mat_manager,
                                             CCVariable<double>& turb_viscosity)
 {
   //__________________________________
@@ -113,7 +113,7 @@ void Smagorinsky_Model::computeTurbViscosity(DataWarehouse* new_dw,
     SIJ[comp].initialize(0.0);
   }
    
-  computeStrainRate(patch, uvel_FC, vvel_FC, wvel_FC, indx, d_sharedState, new_dw,
+  computeStrainRate(patch, uvel_FC, vvel_FC, wvel_FC, indx, d_mat_manager, new_dw,
                     SIJ);
 
   //__________________________________
@@ -140,7 +140,7 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
                                     const SFCYVariable<double>& vvel_FC,
                                     const SFCZVariable<double>& wvel_FC,
                                     const int indx,
-                                    SimulationStateP&  d_sharedState,
+                                    MaterialManagerP&  d_mat_manager,
                                     DataWarehouse* new_dw,
                                     std::vector<CCVariable<double> >& SIJ)
 {
@@ -177,7 +177,7 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
   }
   
   for (int comp = 0; comp < 6; comp ++ ) {
-    setBC(SIJ[comp],"zeroNeumann",patch, d_sharedState, indx, new_dw);
+    setBC(SIJ[comp],"zeroNeumann",patch, d_mat_manager, indx, new_dw);
   } 
  
 }
@@ -241,7 +241,7 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
         df *= inv_dx;
         fvar[c] = scale * df.length2();
       }
-      setBC(fvar,s->scalarVariance->getName(),patch, d_sharedState, matl, new_dw);
+      setBC(fvar,s->scalarVariance->getName(),patch, d_mat_manager, matl, new_dw);
     }
   }
 }

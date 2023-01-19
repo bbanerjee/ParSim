@@ -104,7 +104,7 @@ SimpleRxn::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 }
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
-void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
+void SimpleRxn::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
   cout_doing << "Doing problemSetup \t\t\t\tSIMPLE_RXN" << endl;

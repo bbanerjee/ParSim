@@ -63,7 +63,7 @@ namespace Uintah {
   class HeatConduction {
   public:
     
-    HeatConduction(SimulationStateP& ss,MPMLabel* lb, MPMFlags* mflags);
+    HeatConduction(MaterialManagerP& ss,MPMLabel* lb, MPMFlags* mflags);
     ~HeatConduction();
 
     void scheduleComputeInternalHeatRate(SchedulerP&, const PatchSet*,

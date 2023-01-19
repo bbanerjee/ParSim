@@ -44,7 +44,7 @@ public:
   // and calls the proper class' readParameters()
   // addMaterial() calls this
   static Contact* create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
-                         SimulationStateP& ss, MPMLabel* lb, MPMFlags* MFlag);
+                         MaterialManagerP& ss, MPMLabel* lb, MPMFlags* MFlag);
 };
 } // End namespace Uintah
 

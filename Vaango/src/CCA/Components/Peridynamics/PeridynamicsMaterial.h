@@ -62,12 +62,12 @@ namespace Vaango
     // Standard Peridynamics Material Constructor
     PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
                          const Uintah::GridP grid,
-                         Uintah::SimulationStateP& ss, 
+                         Uintah::MaterialManagerP& ss, 
                          PeridynamicsFlags* flags);
          
    ~PeridynamicsMaterial();
 
-   virtual void registerParticleState(Uintah::SimulationState* ss);
+   virtual void registerParticleState(Uintah::MaterialManager* ss);
 
    virtual Uintah::ProblemSpecP outputProblemSpec(Uintah::ProblemSpecP& ps);
 

@@ -95,9 +95,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
 
     MPI_Datatype MPI_POINT = fun_getTypeDescription((Point*)0)->getMPIType();
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       // Cell mass of the material
@@ -359,7 +359,7 @@ Crack::addComputesAndRequiresConstructNewCrackFrontElems(
   const MaterialSet* /*matls*/) const
 {
   // delT will be used to calculate crack propagation velocity
-  t->requires(Task::OldDW, d_sharedState->get_delt_label());
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label());
 }
 
 void
@@ -373,7 +373,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     Vector dx          = patch->dCell();
     double dx_bar      = (dx.x() + dx.y() + dx.z()) / 3.;
-    int numMPMMatls    = d_sharedState->getNumMPMMatls();
+    int numMPMMatls    = d_mat_manager->getNumMPMMatls();
 
     for (int m = 0; m < numMPMMatls; m++) {
       if (doCrackPropagation) {
@@ -447,9 +447,9 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
           // Calculate crack propagation velocity
           double vc1 = 0., vc2 = 0., vcc = 0.;
           /*
-          double time=d_sharedState->getElapsedTime();
+          double time=d_mat_manager->getElapsedTime();
           delt_vartype delT;
-          old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches)
+          old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches)
           );
           if(sp) { // Record crack incremental and time instant
             cfSegDis[m][2*i]=(p1p-p1).length();

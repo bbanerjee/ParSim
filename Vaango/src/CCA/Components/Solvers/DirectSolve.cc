@@ -262,7 +262,7 @@ private:
 SolverParameters *
 DirectSolve::readParameters(       ProblemSpecP     & params, 
                              const string           & varname,
-                                   SimulationStateP & state )
+                                   MaterialManagerP & state )
 {
   DirectSolveParams* p = scinew DirectSolveParams();
   return p;

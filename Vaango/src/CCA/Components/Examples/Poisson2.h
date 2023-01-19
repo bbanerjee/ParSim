@@ -94,7 +94,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
     virtual void scheduleInitialize(const LevelP& level,
 				    SchedulerP& sched);
     virtual void scheduleComputeStableTimestep(const LevelP& level,
@@ -123,7 +123,7 @@ WARNING
 
     const VarLabel* phi_label;
     const VarLabel* residual_label;
-    SimulationStateP sharedState_;
+    MaterialManagerP sharedState_;
     double delt_;
     double maxresidual_;
     EmptyMaterial* mymat_;

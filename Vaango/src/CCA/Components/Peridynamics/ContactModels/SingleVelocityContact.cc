@@ -57,7 +57,7 @@ using Uintah::MaterialSubset;
 using Uintah::PatchSet;
 using Uintah::MaterialSet;
 using Uintah::DataWarehouse;
-using Uintah::SimulationStateP;
+using Uintah::MaterialManagerP;
 
 using Uintah::Task;
 using Uintah::Patch;
@@ -72,12 +72,12 @@ using Uintah::Vector;
 
 SingleVelocityContact::SingleVelocityContact(const ProcessorGroup* myworld,
                                              ProblemSpecP& ps, 
-                                             SimulationStateP& ss, 
+                                             MaterialManagerP& ss, 
                                              PeridynamicsLabel* labels,
                                              PeridynamicsFlags* flags)
   : ContactModelBase(myworld, labels, flags, ps)
 {
-  d_sharedState = ss;
+  d_mat_manager = ss;
 }
 
 SingleVelocityContact::~SingleVelocityContact()
@@ -119,7 +119,7 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
 
   // Check that only peridynamics bodies are being considered in this simulation
   // **TODO** Add the possibility of MPM and Peridynamics materials interacting
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   ASSERTEQ(numBodies, matls->size());
 
   for (int p=0; p<patches->size(); p++) {
@@ -191,7 +191,7 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
                                                   DataWarehouse* old_dw,
                                                   DataWarehouse* new_dw)
 {
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   ASSERTEQ(numBodies, matls->size());
 
   for (int p = 0; p < patches->size(); p++) {

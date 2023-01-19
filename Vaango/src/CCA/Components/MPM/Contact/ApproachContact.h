@@ -64,7 +64,7 @@ private:
 public:
   // Constructor
   ApproachContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  SimulationStateP& sS, MPMLabel* lb, MPMFlags* Mflag);
+                  MaterialManagerP& sS, MPMLabel* lb, MPMFlags* Mflag);
 
   // Destructor
   virtual ~ApproachContact();

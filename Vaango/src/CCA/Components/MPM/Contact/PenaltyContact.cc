@@ -46,7 +46,7 @@ using std::string;
 
 PenaltyContact::PenaltyContact(const ProcessorGroup* myworld,
                                ProblemSpecP& ps,
-                               SimulationStateP& d_sS,
+                               MaterialManagerP& d_sS,
                                MPMLabel* Mlb,
                                MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
@@ -56,7 +56,7 @@ PenaltyContact::PenaltyContact(const ProcessorGroup* myworld,
 
   ps->require("mu",d_mu);
 
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
 
   if (flag->d_8or27 == 8) {
     NGP = 1; NGN = 1;
@@ -119,7 +119,7 @@ PenaltyContact::exMomIntegrated(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   delt_vartype delT;

@@ -95,9 +95,9 @@ namespace Vaango {
         d_world = myworld;
       }
 
-    inline void setSharedState(Uintah::SimulationState* sharedState)
+    inline void setSharedState(Uintah::MaterialManager* sharedState)
       {
-        d_sharedState = sharedState;
+        d_mat_manager = sharedState;
       }
 
     // Make a clone of the constitutive model
@@ -111,9 +111,9 @@ namespace Vaango {
 
     const Uintah::ProcessorGroup* d_world;
 
-    // don't store SimulationStateP or it will add a reference 
+    // don't store MaterialManagerP or it will add a reference 
     // that will never be removed
-    Uintah::SimulationState* d_sharedState;
+    Uintah::MaterialManager* d_mat_manager;
 
   };
 

@@ -129,12 +129,12 @@ PassiveScalar::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 }
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
-void PassiveScalar::problemSetup(GridP& grid, SimulationStateP& in_state,
+void PassiveScalar::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
   cout_doing << "Doing problemSetup \t\t\t\tPASSIVE_SCALAR" << endl;
-  d_sharedState = in_state;
-  d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
+  d_mat_manager = in_state;
+  d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
   std::vector<int> m(1);
   m[0] = d_matl->getDWIndex();
@@ -407,7 +407,7 @@ void PassiveScalar::initialize(const ProcessorGroup*,
         }
       }  // sinusoidal Initialize  
     } // regions
-    setBC(f,"scalar-f", patch, d_sharedState,indx, new_dw);
+    setBC(f,"scalar-f", patch, d_mat_manager,indx, new_dw);
   }  // patches
 }
 
@@ -610,8 +610,8 @@ void PassiveScalar::scheduleErrorEstimate(const LevelP& coarseLevel,
   t->requires(Task::NewDW, d_scalar->scalar_CCLabel,  d_matl_sub, gac,1);
   
   t->computes(d_scalar->mag_grad_scalarLabel, d_matl_sub);
-  t->modifies(d_sharedState->get_refineFlag_label(),      d_sharedState->refineFlagMaterials());
-  t->modifies(d_sharedState->get_refinePatchFlag_label(), d_sharedState->refineFlagMaterials());
+  t->modifies(d_mat_manager->get_refineFlag_label(),      d_mat_manager->refineFlagMaterials());
+  t->modifies(d_mat_manager->get_refinePatchFlag_label(), d_mat_manager->refineFlagMaterials());
  
   // define the material set of 0 and whatever the passive scalar index is 
   // don't add matl 0 twice 
@@ -642,8 +642,8 @@ void PassiveScalar::errorEstimate(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     
     Ghost::GhostType  gac  = Ghost::AroundCells;
-    const VarLabel* refineFlagLabel = d_sharedState->get_refineFlag_label();
-    const VarLabel* refinePatchLabel= d_sharedState->get_refinePatchFlag_label();
+    const VarLabel* refineFlagLabel = d_mat_manager->get_refineFlag_label();
+    const VarLabel* refinePatchLabel= d_mat_manager->get_refinePatchFlag_label();
     
     CCVariable<int> refineFlag;
     new_dw->getModifiable(refineFlag, refineFlagLabel, 0, patch);      

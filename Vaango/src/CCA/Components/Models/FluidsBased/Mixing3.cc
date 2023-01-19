@@ -122,7 +122,7 @@ Mixing3::Region::Region(GeometryPiece* piece, ProblemSpecP& ps)
   ps->require("massFraction", initialMassFraction);
 }
 
-void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
+void Mixing3::problemSetup(GridP&, MaterialManagerP& in_state,
                            ModelSetup* setup)
 {
   sharedState = in_state;

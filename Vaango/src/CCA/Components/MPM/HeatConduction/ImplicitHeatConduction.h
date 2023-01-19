@@ -73,7 +73,7 @@ namespace Uintah {
   class ImplicitHeatConduction {
   public:
     
-    ImplicitHeatConduction(SimulationStateP& ss,MPMLabel* lb, MPMFlags* mflags);
+    ImplicitHeatConduction(MaterialManagerP& ss,MPMLabel* lb, MPMFlags* mflags);
     ~ImplicitHeatConduction();
 
     void problemSetup(std::string solver_type);

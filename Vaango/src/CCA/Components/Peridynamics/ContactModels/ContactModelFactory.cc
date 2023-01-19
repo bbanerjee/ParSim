@@ -40,7 +40,7 @@ using namespace Vaango;
 ContactModelBase* 
 ContactModelFactory::create(const Uintah::ProcessorGroup* myworld,
                             const Uintah::ProblemSpecP& ps, 
-                            Uintah::SimulationStateP &ss,
+                            Uintah::MaterialManagerP &ss,
                             PeridynamicsLabel* labels, 
                             PeridynamicsFlags* flags)
 {

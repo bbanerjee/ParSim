@@ -58,7 +58,7 @@ namespace Uintah {
 
   public:
          
-    DeformationGradientComputer(MPMFlags* MFlag, SimulationStateP& ss);
+    DeformationGradientComputer(MPMFlags* MFlag, MaterialManagerP& ss);
     DeformationGradientComputer(const DeformationGradientComputer* gc);
     virtual ~DeformationGradientComputer();
 

@@ -124,7 +124,7 @@ MesoBurn::~MesoBurn(){
 void MesoBurn::problemSetup(GridP&, 
                             MaterialManagerP& mat_manager, 
                             ModelSetup*){
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
   matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");  
   
@@ -340,7 +340,7 @@ void MesoBurn::scheduleComputeModelSources(SchedulerP& sched,
   t->requires( Task::OldDW, mi->delT_Label, level.get_rep());
   
   // define material subsets  
-  const MaterialSet* all_matls = d_sharedState->allMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();
   const MaterialSubset* all_matls_sub = all_matls->getUnion();
   
   MaterialSubset* one_matl     = scinew MaterialSubset();
@@ -484,7 +484,7 @@ void MesoBurn::computeParticleVariables(const ProcessorGroup*,
         inducedMass[c] += pMass[idx];
       }
     }    
-    setBC(pFlag, "zeroNeumann", patch, d_sharedState, m0, new_dw);
+    setBC(pFlag, "zeroNeumann", patch, d_mat_manager, m0, new_dw);
   }
  
 }
@@ -511,7 +511,7 @@ void MesoBurn::computeModelSources(const ProcessorGroup*,
   Ghost::GhostType  gac = Ghost::AroundCells;
   Ghost::GhostType  gp;
   int ngc_p;
-  d_sharedState->getParticleGhostLayer(gp, ngc_p);
+  d_mat_manager->getParticleGhostLayer(gp, ngc_p);
   
   /* Patch Iteration */
   for(int p=0;p<patches->size();p++){
@@ -564,11 +564,11 @@ void MesoBurn::computeModelSources(const ProcessorGroup*,
     surfTemp.initialize(0.0);
 
     /* All Material Data */
-    int numAllMatls = d_sharedState->getNumMaterials();
+    int numAllMatls = d_mat_manager->getNumMaterials();
     std::vector<constCCVariable<double> >  vol_frac_CC(numAllMatls);
     std::vector<constCCVariable<double> >  temp_CC(numAllMatls);
     for (int m = 0; m < numAllMatls; m++) {
-      Material* matl = d_sharedState->getMaterial(m);
+      Material* matl = d_mat_manager->getMaterial(m);
       int indx = matl->getDWIndex();
       old_dw->get(temp_CC[m],       MIlb->temp_CCLabel,    indx, patch, gac, 1);
       new_dw->get(vol_frac_CC[m],   Ilb->vol_frac_CCLabel, indx, patch, gac, 1);
@@ -673,8 +673,8 @@ void MesoBurn::computeModelSources(const ProcessorGroup*,
     }  // cell iterator
 
     /*  set symetric BC  */
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw); 
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw); 
   }
   //__________________________________
   //save total quantities

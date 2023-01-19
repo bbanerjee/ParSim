@@ -88,7 +88,7 @@ void DynamicModel::computeTurbViscosity(DataWarehouse* new_dw,
                                         const SFCZVariable<double>& wvel_FC,
                                         const CCVariable<double>& rho_CC,
                                         const int indx,
-                                        SimulationStateP&  d_sharedState,
+                                        MaterialManagerP&  d_mat_manager,
                                         CCVariable<double>& turb_viscosity)
 {
   //-------- implicit filter, filter_width=(dx*dy*dz)**(1.0/3.0), 
@@ -104,7 +104,7 @@ void DynamicModel::computeTurbViscosity(DataWarehouse* new_dw,
   term.initialize(0.0);
  
   computeSmagCoeff(new_dw, patch, vel_CC, uvel_FC, vvel_FC, wvel_FC, 
-                   indx, d_sharedState, term, meanSIJ);
+                   indx, d_mat_manager, term, meanSIJ);
   
   int NGC =1;  // number of ghostCells
   for(CellIterator iter = patch->getCellIterator(NGC); !iter.done(); iter++) {
@@ -205,7 +205,7 @@ void DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
                                     const SFCYVariable<double>& vvel_FC,
                                     const SFCZVariable<double>& wvel_FC,
                                     const int indx,
-                                    SimulationStateP&  d_sharedState,
+                                    MaterialManagerP&  d_mat_manager,
                                     CCVariable<double>& term,
                                     CCVariable<double>& meanSIJ)
 {  
@@ -238,7 +238,7 @@ void DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
   vel_CC_hat.initialize(Vector(0.0,0.0,0.0));   
  
   d_smag.computeStrainRate(patch, uvel_FC, vvel_FC, wvel_FC, 
-                           indx, d_sharedState, new_dw, SIJ);
+                           indx, d_mat_manager, new_dw, SIJ);
     
   int NGC =2;  // number of ghostCells
   for(CellIterator iter = patch->getCellIterator(NGC); !iter.done(); iter++) { 
@@ -255,10 +255,10 @@ void DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
     }
   }
    
-  setBC(vel_CC_tmp,"Velocity", patch, d_sharedState, indx, new_dw);
+  setBC(vel_CC_tmp,"Velocity", patch, d_mat_manager, indx, new_dw);
 
   for (int comp = 0; comp < 6; comp++ ) {
-    setBC(beta[comp],"zeroNeumann",patch, d_sharedState, indx, new_dw);
+    setBC(beta[comp],"zeroNeumann",patch, d_mat_manager, indx, new_dw);
   } 
 
   applyFilter(patch, vel_CC_tmp, vel_CC_hat); //need vel_CC_tmp for the template function
@@ -286,7 +286,7 @@ void DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
       vel_prod[c] = vel_CC[c][comp0] * vel_CC[c][comp1];
     }
     
-    setBC(vel_prod,"zeroNeumann",patch, d_sharedState, indx, new_dw);
+    setBC(vel_prod,"zeroNeumann",patch, d_mat_manager, indx, new_dw);
     
     vel_prod_hat.initialize(0.0);
     
@@ -410,7 +410,7 @@ void DynamicModel::computeVariance(const ProcessorGroup*,
         }
         fvar[c] = sum_fsquared - sum_f*sum_f;
       }
-      setBC(fvar,s->scalarVariance->getName(),patch, d_sharedState, matl, new_dw);
+      setBC(fvar,s->scalarVariance->getName(),patch, d_mat_manager, matl, new_dw);
     }
   }
 }

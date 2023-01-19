@@ -52,9 +52,9 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
     return;
 
   const PatchSet* patches = level->eachPatch();
-  const MaterialSet* matls = d_sharedState->allMPMMaterials();
-  const MaterialSet* cz_matls = d_sharedState->allCZMaterials();
-  const MaterialSet* all_matls = d_sharedState->allMaterials();
+  const MaterialSet* matls = d_mat_manager->allMPMMaterials();
+  const MaterialSet* cz_matls = d_mat_manager->allCZMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();
 
   const MaterialSubset* mpm_matls_sub = (matls ? matls->getUnion() : nullptr);
   const MaterialSubset* cz_matls_sub =
@@ -105,13 +105,13 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
   }
 
   sched->scheduleParticleRelocation(
-    level, lb->pXLabel_preReloc, d_sharedState->d_particleState_preReloc, lb->pXLabel,
-    d_sharedState->d_particleState, lb->pParticleIDLabel, matls, 1);
+    level, lb->pXLabel_preReloc, d_mat_manager->d_particleState_preReloc, lb->pXLabel,
+    d_mat_manager->d_particleState, lb->pParticleIDLabel, matls, 1);
 
   if (flags->d_useCohesiveZones) {
     sched->scheduleParticleRelocation(
-      level, lb->pXLabel_preReloc, d_sharedState->d_cohesiveZoneState_preReloc, lb->pXLabel,
-      d_sharedState->d_cohesiveZoneState, lb->czIDLabel, cz_matls, 2);
+      level, lb->pXLabel_preReloc, d_mat_manager->d_cohesiveZoneState_preReloc, lb->pXLabel,
+      d_mat_manager->d_cohesiveZoneState, lb->czIDLabel, cz_matls, 2);
   }
 }
 
@@ -130,7 +130,7 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   Task* t=scinew Task("MPM_USL::interpolateToParticlesAndUpdate",
                       this, &MPM_UpdateStressLast::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
@@ -238,11 +238,11 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     double ke=0;
 
     delt_vartype delT;
-    old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+    old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
     /*
     Material* reactant;
-    reactant = d_sharedState->getMaterialByName("reactant");
+    reactant = d_mat_manager->getMaterialByName("reactant");
     bool combustion_problem=false;
     int RMI = -99;
     if(reactant != 0){
@@ -263,9 +263,9 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     new_dw->allocateAndPut(NC_CCweight_new, lb->NC_CCweightLabel, 0, patch);
     NC_CCweight_new.copyData(NC_CCweight);
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
@@ -456,7 +456,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         if (do_VelocityBCs) {
 
           // Get the current time
-          double time = d_sharedState->getElapsedTime();
+          double time = d_mat_manager->getElapsedTime();
 
           // Get the load curve data
           constParticleVariable<int> pLoadCurveID;

@@ -47,12 +47,12 @@
 
 using namespace Uintah;
 
-NullContact::NullContact(const ProcessorGroup* myworld, SimulationStateP& d_sS,
+NullContact::NullContact(const ProcessorGroup* myworld, MaterialManagerP& d_sS,
                          MPMLabel* Mlb, MPMFlags* MFlags)
   : Contact(myworld, Mlb, MFlags, 0)
 {
   // Constructor
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   lb = Mlb;
   flag = MFlags;
 }

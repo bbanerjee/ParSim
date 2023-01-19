@@ -275,7 +275,7 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
   proc0cout << "\n------------ Switching to component (" << d_componentIndex <<") \n";
   proc0cout << "  Reading input file: " << d_in_file[d_componentIndex] << "\n";
   
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   d_sim =                         dynamic_cast<SimulationInterface*>(     getPort("sim",d_componentIndex) );
   UintahParallelComponent* comp = dynamic_cast<UintahParallelComponent*>( getPort("sim",d_componentIndex) );
   Scheduler* sched              = dynamic_cast<Scheduler*>(               getPort("scheduler") );
@@ -289,7 +289,7 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
   //Read the ups file for the first subcomponent   
   ProblemSpecP subCompUps = ProblemSpecReader().readInputFile(d_in_file[d_componentIndex]);  
   
-  dataArchiver->problemSetup( subCompUps, d_sharedState.get_rep() );
+  dataArchiver->problemSetup( subCompUps, d_mat_manager.get_rep() );
   
   d_sim->problemSetup(subCompUps, restart_prob_spec, grid, sharedState );
   
@@ -302,7 +302,7 @@ Switcher::problemSetup( const ProblemSpecP& /*params*/,
   
   
   // read in <Time> block from ups file
-  d_sharedState->d_simTime->problemSetup( subCompUps );    
+  d_mat_manager->d_simTime->problemSetup( subCompUps );    
     
   //__________________________________
   // init Variables:
@@ -433,8 +433,8 @@ void Switcher::scheduleSwitchTest(const LevelP& level,
   t->setType(Task::OncePerProc);
   
   // the component is responsible for determining when it is to switch.
-  t->requires(Task::NewDW,d_sharedState->get_switch_label());
-  sched->addTask(t,sched->getLoadBalancer()->getPerProcessorPatchSet(level),d_sharedState->allMaterials());
+  t->requires(Task::NewDW,d_mat_manager->get_switch_label());
+  sched->addTask(t,sched->getLoadBalancer()->getPerProcessorPatchSet(level),d_mat_manager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -466,13 +466,13 @@ void Switcher::scheduleInitNewVars(const LevelP& level,
 
     string nextComp_matls = initVar->matlSetNames[i];
     if (     nextComp_matls == "ice_matls" ){
-      matls = d_sharedState->allICEMaterials();
+      matls = d_mat_manager->allICEMaterials();
     }
     else if (nextComp_matls == "mpm_matls" ) {
-      matls = d_sharedState->allMPMMaterials();
+      matls = d_mat_manager->allMPMMaterials();
     }
     else if (nextComp_matls == "all_matls") {
-      matls = d_sharedState->allMaterials();
+      matls = d_mat_manager->allMaterials();
     }
     else {
       throw ProblemSetupException("Bad material set", __FILE__, __LINE__);
@@ -489,8 +489,8 @@ void Switcher::scheduleInitNewVars(const LevelP& level,
 
   d_initVars[nextComp_indx]->matls = matlSet;
 
-  t->requires(Task::NewDW,d_sharedState->get_switch_label());
-  sched->addTask(t,level->eachPatch(),d_sharedState->allMaterials());
+  t->requires(Task::NewDW,d_mat_manager->get_switch_label());
+  sched->addTask(t,level->eachPatch(),d_mat_manager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -556,7 +556,7 @@ void Switcher::scheduleCarryOverVars(const LevelP& level,
       }
     }  
   }
-  sched->addTask(t,level->eachPatch(),d_sharedState->originalAllMaterials());
+  sched->addTask(t,level->eachPatch(),d_mat_manager->originalAllMaterials());
 }
 //______________________________________________________________________
 //  Set the flag if switch criteria has been satisfied.
@@ -566,7 +566,7 @@ void Switcher::switchTest(const ProcessorGroup*,
                           DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
   max_vartype switch_condition;
-  new_dw->get(switch_condition,d_sharedState->get_switch_label(),0);
+  new_dw->get(switch_condition,d_mat_manager->get_switch_label(),0);
 
   if (switch_condition) {
     // actually PERFORM the switch during the next needRecompile; set back to idle then
@@ -585,7 +585,7 @@ void Switcher::initNewVars(const ProcessorGroup*,
                            DataWarehouse* new_dw)
 {
   max_vartype switch_condition;
-  new_dw->get(switch_condition, d_sharedState->get_switch_label(), 0);
+  new_dw->get(switch_condition, d_mat_manager->get_switch_label(), 0);
 
   /*
   // Print out labels contained in the data warehouses
@@ -824,8 +824,8 @@ Switcher::needRecompile( double time,
     d_computedVars.clear();
 
     d_componentIndex++;
-    d_sharedState->clearMaterials();
-    d_sharedState->d_switchState = true;
+    d_mat_manager->clearMaterials();
+    d_mat_manager->d_switchState = true;
     
     // Reseting the GeometryPieceFactory only (I believe) will ever need to be done
     // by the Switcher component...
@@ -855,18 +855,18 @@ Switcher::needRecompile( double time,
     ProblemSpecP subCompUps = ProblemSpecReader().readInputFile(d_in_file[d_componentIndex]);  
     
      // read in <Time> block from ups file
-    d_sharedState->d_simTime->problemSetup( subCompUps );   
+    d_mat_manager->d_simTime->problemSetup( subCompUps );   
     
     // execute the subcomponent ProblemSetup
-    d_sim->problemSetup(subCompUps, restart_prob_spec,const_cast<GridP&>(grid), d_sharedState );
+    d_sim->problemSetup(subCompUps, restart_prob_spec,const_cast<GridP&>(grid), d_mat_manager );
     
     // read in <DataArchiver> section
-    dataArchiver->problemSetup( subCompUps, d_sharedState.get_rep() );
+    dataArchiver->problemSetup( subCompUps, d_mat_manager.get_rep() );
  //   dataArchiver->initializeOutput(subCompUps);
     
     // we need this to get the "ICE surrounding matl"
     d_sim->restartInitialize();
-    d_sharedState->finalizeMaterials();
+    d_mat_manager->finalizeMaterials();
 
     // read in the grid adaptivity flag from the ups file
     Regridder* regridder = dynamic_cast<Regridder*>(getPort("regridder"));
@@ -878,7 +878,7 @@ Switcher::needRecompile( double time,
     proc0cout << "__________________________________\n\n";
   } 
   else {
-    d_sharedState->d_switchState = false;
+    d_mat_manager->d_switchState = false;
   }
   retval |= d_sim->needRecompile(time, delt, grid);
   return retval;
@@ -890,7 +890,7 @@ Switcher::outputProblemSpec(ProblemSpecP& ps)
 {
   ps->appendElement( "switcherComponentIndex", (int) d_componentIndex );
   ps->appendElement( "switcherState",          (int) d_switchState );
-  ps->appendElement( "switcherCarryOverMatls", d_sharedState->originalAllMaterials()->getUnion()->size());
+  ps->appendElement( "switcherCarryOverMatls", d_mat_manager->originalAllMaterials()->getUnion()->size());
   d_sim->outputProblemSpec( ps );
 }
 //______________________________________________________________________

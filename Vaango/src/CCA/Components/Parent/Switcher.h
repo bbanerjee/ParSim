@@ -68,7 +68,7 @@ namespace Uintah {
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
                               GridP& grid,
-                              SimulationStateP&);
+                              MaterialManagerP&);
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
     virtual void outputPS(Dir& dir);

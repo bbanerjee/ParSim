@@ -511,7 +511,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         pstress[idx] = Matrix3(0.0);
       }
     } else {
-      double time = d_sharedState->getElapsedTime();
+      double time = d_mat_manager->getElapsedTime();
 
       for (int idx : *pset) {
         // Get the node indices that surround the cell
@@ -998,7 +998,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         pstress[idx] = Matrix3(0.0);
       }
     } else {
-      double time = d_sharedState->getElapsedTime();
+      double time = d_mat_manager->getElapsedTime();
       for (int idx : *pset) {
         // get the volumetric part of the deformation
         double J = deformationGradient_new[idx].Determinant();

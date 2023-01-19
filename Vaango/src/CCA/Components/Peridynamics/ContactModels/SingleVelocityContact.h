@@ -55,7 +55,7 @@ namespace Vaango {
 
     SingleVelocityContact(const Uintah::ProcessorGroup* myworld,
                           Uintah::ProblemSpecP& ps,
-                          Uintah::SimulationStateP& d_sS,
+                          Uintah::MaterialManagerP& d_sS,
                           PeridynamicsLabel* labels,
                           PeridynamicsFlags* flags);
          
@@ -84,7 +84,7 @@ namespace Vaango {
                                                   const Uintah::MaterialSet* matls);
   protected:
 
-    Uintah::SimulationStateP    d_sharedState;
+    Uintah::MaterialManagerP    d_mat_manager;
 
   private:
          

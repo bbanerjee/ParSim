@@ -52,15 +52,15 @@ using Uintah::PatchSet;
 using Uintah::MaterialSet;
 using Uintah::Task;
 using Uintah::DataWarehouse;
-using Uintah::SimulationStateP;
+using Uintah::MaterialManagerP;
 
 NullContact::NullContact(const ProcessorGroup* myworld,
-                         SimulationStateP& ss,
+                         MaterialManagerP& ss,
                          PeridynamicsLabel* labels,
                          PeridynamicsFlags* flags)
   : ContactModelBase(myworld, labels, flags, 0)
 {
-  d_sharedState = ss;
+  d_mat_manager = ss;
 }
 
 NullContact::~NullContact()

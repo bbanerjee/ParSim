@@ -386,7 +386,7 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
         p              = Ku * (1. - rho_max / rhoM);
       }
 
-      //      double etime = d_sharedState->getElapsedTime();
+      //      double etime = d_mat_manager->getElapsedTime();
       //      std::cout << "12345 " << " " << etime << " " << alpha << " " <<
       //      pTemperature[idx] << " " << p << endl;
 

@@ -54,7 +54,7 @@ private:
 
 public:
   // Constructor
-  NullContact(const ProcessorGroup* myworld, SimulationStateP& ss, MPMLabel* lb,
+  NullContact(const ProcessorGroup* myworld, MaterialManagerP& ss, MPMLabel* lb,
               MPMFlags* MFlag);
 
   // Destructor

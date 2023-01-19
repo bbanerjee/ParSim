@@ -91,9 +91,9 @@ impAMRICE::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   GridP grid = level->getGrid();
   int maxLevel = grid->numLevels();
 
-  const MaterialSet* ice_matls = d_sharedState->allICEMaterials();
-  const MaterialSet* mpm_matls = d_sharedState->allMPMMaterials();
-  const MaterialSet* all_matls = d_sharedState->allMaterials();  
+  const MaterialSet* ice_matls = d_mat_manager->allICEMaterials();
+  const MaterialSet* mpm_matls = d_mat_manager->allMPMMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();  
 
   MaterialSubset* one_matl = d_press_matl;
   const MaterialSubset* ice_matls_sub = ice_matls->getUnion();
@@ -380,7 +380,7 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
   cout_doing << d_myworld->myRank() << " impAMRICE::MultiLevelPressureSolve on patch " << *patches << endl;
   //__________________________________
   // define Matl sets and subsets
-  const MaterialSet* all_matls = d_sharedState->allMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();
   MaterialSubset* one_matl    = d_press_matl;
   
   //__________________________________
@@ -402,8 +402,8 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
   // on all the levels
   delt_vartype dt;
   subNewDW = d_subsched->get_dw(3);
-  ParentOldDW->get(dt, d_sharedState->get_delt_label());
-  subNewDW->put(dt, d_sharedState->get_delt_label());
+  ParentOldDW->get(dt, d_mat_manager->get_delt_label());
+  subNewDW->put(dt, d_mat_manager->get_delt_label());
    
   max_vartype max_RHS_old;
   ParentNewDW->get(max_RHS_old, lb->max_RHSLabel);
@@ -848,7 +848,7 @@ void impAMRICE::scheduleCoarsen_delP(SchedulerP& sched,
 
   t->modifies(variable, d_press_matl, oims);        
 
-  sched->addTask(t, coarseLevel->eachPatch(), d_sharedState->allICEMaterials());
+  sched->addTask(t, coarseLevel->eachPatch(), d_mat_manager->allICEMaterials());
 }
 
 /* _____________________________________________________________________
@@ -963,7 +963,7 @@ void impAMRICE::scheduleZeroMatrix_UnderFinePatches(SchedulerP& sched,
   if(coarseLevel->hasFinerLevel()){                                                                      
     t->modifies(lb->matrixLabel, one_matl, oims);
   }   
-  sched->addTask(t, coarseLevel->eachPatch(), d_sharedState->allICEMaterials());
+  sched->addTask(t, coarseLevel->eachPatch(), d_mat_manager->allICEMaterials());
 }
 /* _____________________________________________________________________
  Function~  impAMRICE::zeroMatrix_UnderFinePatches

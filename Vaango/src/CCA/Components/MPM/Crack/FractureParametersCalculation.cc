@@ -115,15 +115,15 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
-    double time = d_sharedState->getElapsedTime();
+    double time = d_mat_manager->getElapsedTime();
 
     // Detect if calculating fracture parameters or
     // doing crack propagation at this time step
     DetectIfDoingFractureAnalysisAtThisTimeStep(time);
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMPMMatls();
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       int dwi               = mpm_matl->getDWIndex();
 
       // Get particle's solutions
@@ -299,9 +299,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
     MPI_Comm_rank(mpi_crack_comm, &pid);
     MPI_Datatype MPI_VECTOR = fun_getTypeDescription((Vector*)0)->getMPIType();
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     for (int m = 0; m < numMatls; m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       int dwi              = matls->get(m);
@@ -1249,7 +1249,7 @@ Crack::OutputCrackFrontResults(const int& m)
     std::ofstream outCrkFrt1(outFileName1, std::ios::app);
     std::ofstream outCrkFrt2(outFileName2, std::ios::app);
 
-    double time  = d_sharedState->getElapsedTime();
+    double time  = d_mat_manager->getElapsedTime();
     int timestep = d_simulator->getTimeStep();
 
     int num          = (int)cfSegNodes[m].size();

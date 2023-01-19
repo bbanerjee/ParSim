@@ -67,7 +67,7 @@ private:
 public:
   // Constructor
   SingleVelContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                   SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
+                   MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
 
   // Destructor
   virtual ~SingleVelContact();

@@ -65,7 +65,7 @@ class Crack
 {
  public:
     // Constructor
-    Crack(const ProblemSpecP& ps, SimulationStateP& d_sS,
+    Crack(const ProblemSpecP& ps, MaterialManagerP& d_sS,
           Output* dataArchiver,
           MPMLabel* lb,MPMFlags* MFlag);
 

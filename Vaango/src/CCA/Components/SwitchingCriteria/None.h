@@ -41,10 +41,9 @@ class DataWarehouse;
 class None : public SwitchingCriteria
 {
 public:
-  // this function has a switch for all known SwitchingCriteria
 
-  None();
-  virtual ~None();
+  None() = default;
+  virtual ~None() = default;
 
   virtual void
   problemSetup(const ProblemSpecP& ps,

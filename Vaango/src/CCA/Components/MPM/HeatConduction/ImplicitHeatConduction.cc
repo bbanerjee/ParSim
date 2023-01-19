@@ -52,12 +52,12 @@ using namespace Uintah;
 
 static DebugStream cout_doing("ImplicitHeatConduction", false);
 
-ImplicitHeatConduction::ImplicitHeatConduction(SimulationStateP& sS,
+ImplicitHeatConduction::ImplicitHeatConduction(MaterialManagerP& sS,
                                                MPMLabel* labels,MPMFlags* flags)
 {
   lb = labels;
   d_flag = flags;
-  d_sharedState = sS;
+  d_mat_manager = sS;
   d_perproc_patches=0;
   do_IHC=d_flag->d_doImplicitHeatConduction;
   d_HC_transient=d_flag->d_doTransientImplicitHeatConduction;
@@ -173,7 +173,7 @@ void ImplicitHeatConduction::scheduleFormHCStiffnessMatrix(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::formHCStiffnessMatrix",this,
                         &ImplicitHeatConduction::formHCStiffnessMatrix);
 
-  t->requires(Task::OldDW,d_sharedState->get_delt_label());
+  t->requires(Task::OldDW,d_mat_manager->get_delt_label());
   t->requires(Task::OldDW,lb->pXLabel,                    Ghost::AroundNodes,1);
   t->requires(Task::OldDW,lb->pVolumeLabel,               Ghost::AroundNodes,1);
   t->requires(Task::OldDW,lb->pTemperatureLabel,          Ghost::AroundNodes,1);
@@ -190,7 +190,7 @@ void ImplicitHeatConduction::scheduleFormHCQ(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::formHCQ", this,
                         &ImplicitHeatConduction::formHCQ);
                                                                                 
-  t->requires(Task::OldDW,      d_sharedState->get_delt_label());
+  t->requires(Task::OldDW,      d_mat_manager->get_delt_label());
   t->requires(Task::NewDW,lb->gTemperatureLabel, one_matl,Ghost::AroundCells,1);
   t->requires(Task::NewDW,lb->gExternalHeatRateLabel,     Ghost::AroundCells,1);
   t->requires(Task::OldDW,lb->pXLabel,                    Ghost::AroundNodes,1);
@@ -244,7 +244,7 @@ void ImplicitHeatConduction::scheduleGetTemperatureIncrement(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::getTemperatureIncrement", this,
                         &ImplicitHeatConduction::getTemperatureIncrement);
 
-  t->requires(Task::OldDW,      d_sharedState->get_delt_label());
+  t->requires(Task::OldDW,      d_mat_manager->get_delt_label());
   t->requires(Task::NewDW, lb->gTemperatureLabel,one_matl,Ghost::None,0);
   t->computes(lb->gTemperatureRateLabel,one_matl);
 
@@ -280,7 +280,7 @@ void ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw)
 {
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
 
   std::map<int,int> dof_diag;
   d_HC_solver->createLocalToGlobalMapping(pg,d_perproc_patches,
@@ -312,7 +312,7 @@ void ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
     visited.initialize(0);
     
     for (int m = 0; m < numMatls; m++){                                                                                
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       constParticleVariable<Point> px;
       ParticleSubset* pset;
@@ -451,8 +451,8 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
         continue;
     }  // faces
 
-    for (int m = 0; m < d_sharedState->getNumMPMMatls();m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    for (int m = 0; m < d_mat_manager->getNumMPMMatls();m++) {
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       int matlindex = mpm_matl->getDWIndex();
       
       constNCVariable<double> gheatflux;
@@ -496,14 +496,14 @@ void ImplicitHeatConduction::findFixedHCDOF(const ProcessorGroup*,
     }
     Array3<int> l2g(lowIndex,highIndex);
                                                                                 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     d_HC_solver->copyL2G(l2g,patch);
     NCVariable<double> GMASS;
     new_dw->allocateTemporary(GMASS,     patch,Ghost::None,0);
     GMASS.initialize(0.);
 
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int matlindex = mpm_matl->getDWIndex();
       constNCVariable<double> gmass;
       new_dw->get(gmass,   lb->gMassLabel,matlindex,patch,Ghost::None,0);
@@ -557,13 +557,13 @@ void ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
     LinearInterpolator* interpolator = scinew LinearInterpolator(patch);
 
     d_HC_solver->copyL2G(l2g,patch);
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int matlindex = mpm_matl->getDWIndex();
                                                                                
       delt_vartype dt;
-      old_dw->get(dt,d_sharedState->get_delt_label(), patch->getLevel());
+      old_dw->get(dt,d_mat_manager->get_delt_label(), patch->getLevel());
                                                                                 
       ParticleSubset* pset;
       pset = old_dw->getParticleSubset(matlindex, patch);
@@ -664,16 +664,16 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
     }
 #endif
 
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
                                                                                
       delt_vartype dt;
                                                                                
       constNCVariable<double> gextheatrate;
                                                                                
-      old_dw->get(dt,d_sharedState->get_delt_label(), patch->getLevel());
+      old_dw->get(dt,d_mat_manager->get_delt_label(), patch->getLevel());
 
       new_dw->get(gextheatrate,lb->gExternalHeatRateLabel, dwi,patch,
                   Ghost::AroundCells,1);
@@ -820,7 +820,7 @@ void ImplicitHeatConduction::getTemperatureIncrement(const ProcessorGroup*,
     }
 
     delt_vartype dt;
-    old_dw->get(dt, d_sharedState->get_delt_label(),patch->getLevel());
+    old_dw->get(dt, d_mat_manager->get_delt_label(),patch->getLevel());
                                                                                 
     IntVector lowIndex,highIndex;
     if(d_flag->d_8or27==8){

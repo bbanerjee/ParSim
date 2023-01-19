@@ -94,7 +94,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
     virtual void scheduleInitialize(const LevelP& level,SchedulerP& sched);
                                     
     virtual void scheduleComputeStableTimestep(const LevelP& level,
@@ -137,7 +137,7 @@ WARNING
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw);
                      
-    SimulationStateP sharedState_;
+    MaterialManagerP sharedState_;
     double delt_;
     EmptyMaterial* mymat_;
     const VarLabel* phi_label;

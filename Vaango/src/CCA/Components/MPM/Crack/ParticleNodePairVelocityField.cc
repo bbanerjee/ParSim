@@ -103,13 +103,13 @@ void Crack::ParticleVelocityField(const ProcessorGroup*,
 {       
   for(int p=0; p<patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int numMatls = d_sharedState->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMPMMatls();
 
     enum {SAMESIDE=0,ABOVE_CRACK,BELOW_CRACK};
         
     Vector dx = patch->dCell(); 
     for(int m=0; m<numMatls; m++) {
-      MPMMaterial* mpm_matl=d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl=d_mat_manager->getMPMMaterial(m);
       int dwi = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
       constParticleVariable<Point> px;

@@ -45,7 +45,7 @@ public:
   create(ProblemSpecP& ps, MaterialManagerP& matManager, MPMFlags* flags);
 
   //static std::unique_ptr<ScalarDiffusionModel>
-  //create(ProblemSpecP& ps, SimulationStateP& ss, MPMFlags* flags);
+  //create(ProblemSpecP& ps, MaterialManagerP& ss, MPMFlags* flags);
 
 };
 } // End namespace Uintah

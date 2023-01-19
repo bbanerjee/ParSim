@@ -168,7 +168,7 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   cout_doing << "Doing problemSetup: Peridynamics " 
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   dynamic_cast<Uintah::Scheduler*>(getPort("scheduler"))->setPositionVar(d_labels->pPositionLabel);
   
   d_dataArchiver = dynamic_cast<Uintah::Output*>(getPort("output"));
@@ -183,7 +183,7 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   // Read all Peridynamics <SimulationFlags> d_flags (look in PeridynamicsFlags.cc)
   // Also set up <PhysicalConstants>
   d_flags->readPeridynamicsFlags(restart_mat_ps, d_dataArchiver);
-  d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  d_mat_manager->setParticleGhostLayer(Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
 
   // Set up load bcs on particles, if any
   ParticleLoadBCFactory::create(restart_mat_ps);
@@ -240,7 +240,7 @@ Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec,
     // std::cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
 
     //Create and register as an Peridynamics material
-    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, grid, d_sharedState, d_flags);
+    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, grid, d_mat_manager, d_flags);
 
     // When doing restart, we need to make sure that we load the materials
     // in the same order that they were initially created.  Restarts will
@@ -248,10 +248,10 @@ Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec,
     // Index_val = -1 means that we don't register the material by its 
     // index number.
     if (index_val > -1){
-      d_sharedState->registerPeridynamicsMaterial(mat, index_val);
+      d_mat_manager->registerPeridynamicsMaterial(mat, index_val);
     }
     else{
-      d_sharedState->registerPeridynamicsMaterial(mat);
+      d_mat_manager->registerPeridynamicsMaterial(mat);
     }
   }
 }
@@ -274,8 +274,8 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     mat_ps = root->appendChild("MaterialProperties");
     
   ProblemSpecP peridynamic_ps = mat_ps->appendChild("Peridynamics");
-  for (int i = 0; i < d_sharedState->getNumPeridynamicsMatls();i++) {
-    PeridynamicsMaterial* mat = d_sharedState->getPeridynamicsMaterial(i);
+  for (int i = 0; i < d_mat_manager->getNumPeridynamicsMatls();i++) {
+    PeridynamicsMaterial* mat = d_mat_manager->getPeridynamicsMaterial(i);
     ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
@@ -330,13 +330,13 @@ Peridynamics::scheduleInitialize(const LevelP& level,
   t->computes(d_labels->pSizeLabel);
   t->computes(d_labels->pVelocityLabel);
   t->computes(d_labels->pExternalForceLabel);
-  t->computes(d_sharedState->get_delt_label(),level.get_rep());
+  t->computes(d_mat_manager->get_delt_label(),level.get_rep());
   t->computes(d_labels->pCellNAPIDLabel,zeroth_matl);
   t->computes(d_labels->pLoadCurveIDLabel);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for(int body = 0; body < numBodies; body++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     // Add deformation gradient initial computes
     d_defGradComputer->addInitialComputesAndRequires(t, peridynamic_matl, patches);
@@ -350,7 +350,7 @@ Peridynamics::scheduleInitialize(const LevelP& level,
     fm->addInitialComputesAndRequires(t, peridynamic_matl, patches);
   }
 
-  sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+  sched->addTask(t, patches, d_mat_manager->allPeridynamicsMaterials());
 
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference()) delete zeroth_matl; // shouln't happen, but...
@@ -371,13 +371,13 @@ Peridynamics::scheduleInitialize(const LevelP& level,
                                       this, &Peridynamics::findNeighborsInHorizon);
 
   for(int body = 0; body < numBodies; body++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     // Add family computer requires and computes
     d_familyComputer->addInitialComputesAndRequires(neighborFinderTask, peridynamic_matl, patches);
   }
 
-  sched->addTask(neighborFinderTask, patches, d_sharedState->allPeridynamicsMaterials());
+  sched->addTask(neighborFinderTask, patches, d_mat_manager->allPeridynamicsMaterials());
 }
 
 /*----------------------------------------------------------------------------------------
@@ -412,7 +412,7 @@ Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
     t->requires(Task::NewDW, d_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_labels->surfaceParticlesPerLoadCurveLabel, d_loadCurveIndex,
                 Task::OutOfDomain);
-    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+    sched->addTask(t, patches, d_mat_manager->allPeridynamicsMaterials());
 
     // Create a task that calculates the force to be associated with
     // each particle based on the pressure BCs
@@ -426,7 +426,7 @@ Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
                              d_loadCurveIndex, Task::OutOfDomain,      Ghost::None);
     t->modifies(d_labels->pExternalForceLabel);
 
-    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+    sched->addTask(t, patches, d_mat_manager->allPeridynamicsMaterials());
   }
 
   if (d_loadCurveIndex->removeReference()) {
@@ -457,7 +457,7 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
     cellNAPID.initialize(0);
 
     for(int body=0 ; body < matls->size(); body++){
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       //int indx = peridynamic_matl->getDWIndex();
 
       // Create particles
@@ -504,12 +504,12 @@ Peridynamics::countSurfaceParticlesPerLoadCurve(const ProcessorGroup*,
     for (int p=0; p < patches->size(); p++) {
 
       const Patch* patch = patches->get(p);
-      int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+      int numPeridynamicsMatls = d_mat_manager->getNumPeridynamicsMatls();
 
       int numPts = 0;
       for (int m = 0; m < numPeridynamicsMatls; m++) {
 
-        PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+        PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial( m );
         int matlIndex = matl->getDWIndex();
         ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
 
@@ -565,11 +565,11 @@ Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
     // at each particle
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
-      int numPeridynamicsMatls=d_sharedState->getNumPeridynamicsMatls();
+      int numPeridynamicsMatls=d_mat_manager->getNumPeridynamicsMatls();
       for(int m = 0; m < numPeridynamicsMatls; m++){
 
         // Get the particle set for this material
-        PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+        PeridynamicsMaterial* mpm_matl = d_mat_manager->getPeridynamicsMaterial( m );
         int matlIndex = mpm_matl->getDWIndex();
         ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
 
@@ -666,7 +666,7 @@ Peridynamics::findNeighborsInHorizon(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     for(int body=0; body < matls->size(); body++){
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
       // Create neighbor list
       d_familyComputer->createNeighborList(peridynamic_matl, patch, new_dw);
@@ -711,8 +711,8 @@ Peridynamics::scheduleComputeStableTimestep(const LevelP& level,
   t = scinew   Task("Peridynamics::actuallyComputeStableTimestep",
                     this, &Peridynamics::actuallyComputeStableTimestep);
 
-  const MaterialSet* peridynamic_matls = d_sharedState->allPeridynamicsMaterials();
-  t->computes(d_sharedState->get_delt_label(),level.get_rep());
+  const MaterialSet* peridynamic_matls = d_mat_manager->allPeridynamicsMaterials();
+  t->computes(d_mat_manager->get_delt_label(),level.get_rep());
   sched->addTask(t,level->eachPatch(), peridynamic_matls);
 }
 
@@ -753,7 +753,7 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   const PatchSet* patches = level->eachPatch();
-  const MaterialSet* matls = d_sharedState->allPeridynamicsMaterials();
+  const MaterialSet* matls = d_mat_manager->allPeridynamicsMaterials();
 
   // Apply any external loads that may have been prescribed
   scheduleApplyExternalLoads(sched, patches, matls);
@@ -808,9 +808,9 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
   // **NOTE** The <>Label_preReloc data are copied into <>Label variables
   sched->scheduleParticleRelocation(level, 
                                     d_labels->pPositionLabel_preReloc,
-                                    d_sharedState->d_particleState_preReloc,
+                                    d_mat_manager->d_particleState_preReloc,
                                     d_labels->pPositionLabel,
-                                    d_sharedState->d_particleState,
+                                    d_mat_manager->d_particleState,
                                     d_labels->pParticleIDLabel,
                                     matls, 1);
 }
@@ -860,7 +860,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   // Get the current time
-  double time = d_sharedState->getElapsedTime();
+  double time = d_mat_manager->getElapsedTime();
   cout_doing << "Current Time (applyExternalLoads) = " << time << std::endl;
 
   // Loop thru patches to update external force vector
@@ -868,11 +868,11 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
 
     const Patch* patch = patches->get(p);
     
-    int numBodies=d_sharedState->getNumPeridynamicsMatls();
+    int numBodies=d_mat_manager->getNumPeridynamicsMatls();
     
     for(int body = 0; body < numBodies; body++){
 
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
       int matlIndex = peridynamic_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
@@ -1008,9 +1008,9 @@ Peridynamics::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(d_labels->gVolumeLabel);
   t->computes(d_labels->gVelocityLabel);
   t->computes(d_labels->gExternalForceLabel);
-  t->computes(d_labels->gMassLabel,     d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
-  t->computes(d_labels->gVolumeLabel,   d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
-  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
+  t->computes(d_labels->gMassLabel,     d_mat_manager->getAllInOneMaterial(), Task::OutOfDomain);
+  t->computes(d_labels->gVolumeLabel,   d_mat_manager->getAllInOneMaterial(), Task::OutOfDomain);
+  t->computes(d_labels->gVelocityLabel, d_mat_manager->getAllInOneMaterial(), Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
 }
@@ -1046,24 +1046,24 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
     // Allocate and initialize global data
     NCVariable<double> gMassGlobal;
     new_dw->allocateAndPut(gMassGlobal, d_labels->gMassLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     gMassGlobal.initialize(std::numeric_limits<double>::epsilon());
 
     NCVariable<double> gVolGlobal;
     new_dw->allocateAndPut(gVolGlobal, d_labels->gVolumeLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     gVolGlobal.initialize(std::numeric_limits<double>::epsilon());
 
     NCVariable<Vector> gVelGlobal;
     new_dw->allocateAndPut(gVelGlobal, d_labels->gVelocityLabel,
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
     gVelGlobal.initialize(Vector(0.0));
 
     // Loop through peridynamics objects
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
     for(int body = 0; body < numBodies; body++){
 
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get the particle subset
@@ -1203,9 +1203,9 @@ Peridynamics::scheduleComputeDeformationGradient(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeDeformationGradient",
                         this, &Peridynamics::computeDeformationGradient);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
     d_defGradComputer->addComputesAndRequires(t, matl, patches);
   }
 
@@ -1231,9 +1231,9 @@ Peridynamics::computeDeformationGradient(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
     for (int body = 0; body < numBodies; body++) {
-      PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
       d_defGradComputer->computeDeformationGradient(patch, matl, old_dw, new_dw);
     } // end matl loop
   } // end patch loop
@@ -1257,16 +1257,16 @@ Peridynamics::scheduleComputeStressTensor(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeStressTensor",
                         this, &Peridynamics::computeStressTensor);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     // Add computes and requires specific to the material model
     PeridynamicsMaterialModel* cm = matl->getMaterialModel();
     cm->addComputesAndRequires(t, matl, patches);
   }
 
-  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
+  t->computes(d_mat_manager->get_delt_label(),getLevel(patches));
 
   sched->addTask(t, patches, matls);
 }
@@ -1288,10 +1288,10 @@ Peridynamics::computeStressTensor(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
 
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     PeridynamicsMaterialModel* cm = matl->getMaterialModel();
     cm->computeStressTensor(patches, matl, old_dw, new_dw);
@@ -1325,7 +1325,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
 
   int numGhostCells = 1;  // Linear interpolation
   task1->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
-  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMaterial(), 
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_mat_manager->getAllInOneMaterial(), 
                   Task::OutOfDomain, Ghost::None);
   task1->requires(Task::OldDW, d_labels->pStressLabel, Ghost::AroundNodes, numGhostCells);
   task1->requires(Task::OldDW, d_labels->pVolumeLabel, Ghost::AroundNodes, numGhostCells);
@@ -1335,7 +1335,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
 
   task1->computes(d_labels->gInternalForceLabel);
   task1->computes(d_labels->gStressLabel);
-  task1->computes(d_labels->gStressLabel, d_sharedState->getAllInOneMaterial(), Task::OutOfDomain);
+  task1->computes(d_labels->gStressLabel, d_mat_manager->getAllInOneMaterial(), Task::OutOfDomain);
   
   sched->addTask(task1, patches, matls);
 
@@ -1345,9 +1345,9 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
   Task* task2 = scinew Task("Peridynamics::computeBondInternalForce",
                             this, &Peridynamics::computeBondInternalForce);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
     d_bondIntForceComputer->addComputesAndRequires(task2, matl, patches);
   }
 
@@ -1360,7 +1360,7 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
                             this, &Peridynamics::computeParticleInternalForce);
 
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
     d_intForceComputer->addComputesAndRequires(task3, matl, patches);
   }
 
@@ -1395,20 +1395,20 @@ Peridynamics::computeGridInternalForce(const ProcessorGroup*,
     std::vector<double> shapeFunction(interpolator->size());
     std::vector<Vector> shapeGradient(interpolator->size());
 
-    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+    int numPeridynamicsMatls = d_mat_manager->getNumPeridynamicsMatls();
 
     constNCVariable<double>   gVolumeGlobal;
     new_dw->get(gVolumeGlobal,  d_labels->gVolumeLabel,
-                d_sharedState->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
+                d_mat_manager->getAllInOneMaterial()->get(0), patch, Ghost::None,0);
 
     NCVariable<Matrix3> gStressGlobal;
     new_dw->allocateAndPut(gStressGlobal, d_labels->gStressLabel, 
-                           d_sharedState->getAllInOneMaterial()->get(0), patch);
+                           d_mat_manager->getAllInOneMaterial()->get(0), patch);
 
     int numGhostCells = 1;
     for(int m = 0; m < numPeridynamicsMatls; m++){
 
-      PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+      PeridynamicsMaterial* mpm_matl = d_mat_manager->getPeridynamicsMaterial( m );
       int matlIndex = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch,
@@ -1497,9 +1497,9 @@ Peridynamics::computeBondInternalForce(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
     d_bondIntForceComputer->computeInternalForce(patches, matl, old_dw, new_dw);
   } // end matl loop
 }
@@ -1521,9 +1521,9 @@ Peridynamics::computeParticleInternalForce(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial(body);
     d_intForceComputer->computeInternalForce(patches, matl, old_dw, new_dw);
   } // end matl loop
 }
@@ -1544,7 +1544,7 @@ Peridynamics::scheduleComputeAndIntegrateGridAcceleration(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeAndIntegrateGridAcceleration",
                         this, &Peridynamics::computeAndIntegrateGridAcceleration);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   t->requires(Task::NewDW, d_labels->gMassLabel,          Ghost::None);
   t->requires(Task::NewDW, d_labels->gInternalForceLabel, Ghost::None);
@@ -1575,8 +1575,8 @@ Peridynamics::computeAndIntegrateGridAcceleration(const ProcessorGroup*,
     Ghost::GhostType gnone = Ghost::None;
     Vector gravity = d_flags->d_gravity;
 
-    for(int m = 0; m < d_sharedState->getNumPeridynamicsMatls(); m++){
-      PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumPeridynamicsMatls(); m++){
+      PeridynamicsMaterial* matl = d_mat_manager->getPeridynamicsMaterial( m );
       int matlIndex = matl->getDWIndex();
 
       // Get required variables for this patch
@@ -1584,7 +1584,7 @@ Peridynamics::computeAndIntegrateGridAcceleration(const ProcessorGroup*,
       constNCVariable<double> mass;
 
       Uintah::delt_vartype delT;
-      old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+      old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
  
       new_dw->get(internalforce,d_labels->gInternalForceLabel, matlIndex, patch, gnone, 0);
       new_dw->get(externalforce,d_labels->gExternalForceLabel, matlIndex, patch, gnone, 0);
@@ -1632,7 +1632,7 @@ Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeAndIntegrateParticleAcceleration",
                         this, &Peridynamics::computeAndIntegrateParticleAcceleration);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
   t->requires(Task::NewDW, d_labels->pVolumeLabel_preReloc,        Ghost::None);
   t->requires(Task::OldDW, d_labels->pPositionLabel,               Ghost::None);
@@ -1641,9 +1641,9 @@ Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
   t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
   t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, Ghost::None);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for(int body = 0; body < numBodies; body++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
     const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
 
     t->computes(d_labels->pPositionStarLabel, matlset);
@@ -1672,16 +1672,16 @@ Peridynamics::computeAndIntegrateParticleAcceleration(const ProcessorGroup*,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;
-  old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
  
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
     Vector gravity = d_flags->d_gravity;
 
-    for(int body = 0; body < d_sharedState->getNumPeridynamicsMatls(); body++){
+    for(int body = 0; body < d_mat_manager->getNumPeridynamicsMatls(); body++){
 
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get particle set
@@ -1829,7 +1829,7 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
 
     const Patch* patch = patches->get(p);
 
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
 
     // Create a copy of the LinearInterpolator
     auto interpolator = d_interpolator->clone(patch);
@@ -1837,7 +1837,7 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
     std::vector<double> shapeFunction(interpolator->size());
 
     for(int body = 0; body < numBodies; body++){
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get the particle subset needed for projection to the grid
@@ -1934,7 +1934,7 @@ Peridynamics::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                         this, &Peridynamics::setGridBoundaryConditions);
                   
   const MaterialSubset* all_materials = matls->getUnion();
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
   
   t->requires(Task::NewDW, d_labels->gVelocityLabel, Ghost::None);
 
@@ -1963,15 +1963,15 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;            
-  old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
 
     for(int body = 0; body < numBodies; body++){
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       int numGhostCells = 0;
@@ -2020,7 +2020,7 @@ Peridynamics::scheduleUpdateParticleKinematics(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::updateParticleKinematics",
                         this, &Peridynamics::updateParticleKinematics);
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   t->requires(Task::OldDW, d_labels->pPositionLabel,     Ghost::None);
   t->requires(Task::OldDW, d_labels->pVelocityLabel,     Ghost::None);
@@ -2062,7 +2062,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
   Matrix3 dummyMatrix(0.0);
 
   Uintah::delt_vartype delT;
-  old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
   for (int p=0; p<patches->size(); p++) {
 
@@ -2076,10 +2076,10 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
     // Performs the interpolation from the cell vertices of the grid
     // acceleration and velocity to the particles to update their
     // velocity and position respectively
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
     for(int body = 0; body < numBodies; body++) {
 
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get the particle set for this patch
@@ -2183,9 +2183,9 @@ Peridynamics::scheduleComputeDamage(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeDamage",
                         this, &Peridynamics::computeDamage);
 
-  int numBodies = d_sharedState->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
   for(int body = 0; body < numBodies; body++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     PeridynamicsDamageModel* d_damageModel = peridynamic_matl->getDamageModel();
     d_damageModel->addComputesAndRequires(t, peridynamic_matl, patches);
@@ -2210,9 +2210,9 @@ Peridynamics::computeDamage(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myRank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  for(int body = 0; body < d_sharedState->getNumPeridynamicsMatls(); body++){
+  for(int body = 0; body < d_mat_manager->getNumPeridynamicsMatls(); body++){
 
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+    PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
 
     PeridynamicsDamageModel* damageModel = peridynamic_matl->getDamageModel();
     damageModel->computeDamageTensor(patches, peridynamic_matl, old_dw, new_dw);
@@ -2291,10 +2291,10 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
     Vector centerOfMassPosition(0.0,0.0,0.0);
     Vector totalMomentum(0.0,0.0,0.0);
 
-    int numBodies = d_sharedState->getNumPeridynamicsMatls();
+    int numBodies = d_mat_manager->getNumPeridynamicsMatls();
     for (int body = 0; body < numBodies; body++) {
 
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
+      PeridynamicsMaterial* peridynamic_matl = d_mat_manager->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Not populating the delset, but we need this to satisfy Relocate

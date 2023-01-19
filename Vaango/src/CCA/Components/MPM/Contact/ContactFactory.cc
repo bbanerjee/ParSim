@@ -45,7 +45,7 @@ using namespace Uintah;
 
 Contact*
 ContactFactory::create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
-                       SimulationStateP& ss, MPMLabel* lb, MPMFlags* flag)
+                       MaterialManagerP& ss, MPMLabel* lb, MPMFlags* flag)
 {
 
   ProblemSpecP mpm_ps =

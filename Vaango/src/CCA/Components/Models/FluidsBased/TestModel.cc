@@ -93,7 +93,7 @@ TestModel::~TestModel()
 void TestModel::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup* )
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   ProblemSpecP test_ps = params->findBlock("Test");
   if (!test_ps){
      throw ProblemSetupException("TestModel: Couldn't find <Test> tag", __FILE__, __LINE__);    
@@ -278,7 +278,7 @@ void TestModel::computeModelSources(const ProcessorGroup*,
     //__________________________________
     //  Do some work
     
-    double t  = d_sharedState->getElapsedTime();
+    double t  = d_mat_manager->getElapsedTime();
     if (t >= d_startTime){
       for(CellIterator iter = patch->getExtraCellIterator(); !iter.done(); iter++){
         IntVector c = *iter;

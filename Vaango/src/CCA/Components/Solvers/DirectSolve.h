@@ -38,7 +38,7 @@ public:
 
   virtual SolverParameters* readParameters(       ProblemSpecP     & params,
                                             const std::string      & name,
-                                                  SimulationStateP & state );
+                                                  MaterialManagerP & state );
 
   virtual SolverParameters* readParameters(       ProblemSpecP & params,
                                             const std::string  & name );

@@ -85,14 +85,14 @@ using std::string;
 
 #define MAX_BASIS 27
 
-Crack::Crack(const ProblemSpecP& ps,SimulationStateP& d_sS,
+Crack::Crack(const ProblemSpecP& ps,MaterialManagerP& d_sS,
              Output* d_dataArchiver, MPMLabel* Mlb,MPMFlags* MFlag)
 { 
   MPI_Comm_dup( MPI_COMM_WORLD, & mpi_crack_comm );
 
   // Task 1: Initialization of fracture analysis  
   
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   dataArchiver  = d_dataArchiver;
   lb            = Mlb;
   flag          = MFlag;
@@ -451,7 +451,7 @@ Crack::CrackDiscretization(const ProcessorGroup*,
     }  
        
     // Allocate memories for crack mesh
-    int numMPMMatls=d_sharedState->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMPMMatls();
     css.resize(numMPMMatls);
     csa.resize(numMPMMatls);
     cx.resize(numMPMMatls);

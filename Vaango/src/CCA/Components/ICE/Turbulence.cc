@@ -65,7 +65,7 @@ Turbulence::Turbulence()
 }
 
 Turbulence::Turbulence(ProblemSpecP& ps, MaterialManagerP& mat_manager)
-  : d_sharedState(sharedState)
+  : d_mat_manager(sharedState)
 {
   for (ProblemSpecP child = ps->findBlock("FilterScalar"); child != 0;
        child = child->findNextBlock("FilterScalar")) {
@@ -106,7 +106,7 @@ void Turbulence::callTurb(DataWarehouse* new_dw,
                           const CCVariable<double>& rho_CC,
                           const int indx,
                           ICELabel* lb,
-                          SimulationStateP&  d_sharedState,
+                          MaterialManagerP&  d_mat_manager,
                           CCVariable<double>& tot_viscosity)
 {
   Ghost::GhostType  gac = Ghost::AroundCells;
@@ -126,9 +126,9 @@ void Turbulence::callTurb(DataWarehouse* new_dw,
   new_dw->get(wvel_FC,     lb->wvel_FCMELabel,            indx,patch,gac,3);
     
   computeTurbViscosity(new_dw,patch,vel_CC,uvel_FC,vvel_FC,
-                       wvel_FC,rho_CC,indx,d_sharedState,turb_viscosity);
+                       wvel_FC,rho_CC,indx,d_mat_manager,turb_viscosity);
     
-  setBC(turb_viscosity, "zeroNeumann",  patch, d_sharedState, indx, new_dw);
+  setBC(turb_viscosity, "zeroNeumann",  patch, d_mat_manager, indx, new_dw);
   // make copy of turb_viscosity for visualization.
   for(CellIterator iter = patch->getExtraCellIterator(); !iter.done();iter++){
     IntVector c = *iter;    

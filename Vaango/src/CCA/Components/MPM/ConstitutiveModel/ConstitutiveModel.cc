@@ -76,7 +76,7 @@ ConstitutiveModel::ConstitutiveModel(const ConstitutiveModel* cm)
   flag = cm->flag;
   NGN = cm->NGN;
   NGP = cm->NGP;
-  d_sharedState = cm->d_sharedState;
+  d_mat_manager = cm->d_mat_manager;
 }
 
 ConstitutiveModel::~ConstitutiveModel()

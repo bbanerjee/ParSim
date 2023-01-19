@@ -67,13 +67,13 @@ using namespace Uintah;
 // point (GIMP) method," Int J. Fract, 2007, 143:79-102
 //______________________________________________________________________
 CohesiveZone::CohesiveZone(CZMaterial* czmat, MPMFlags* flags,
-                           SimulationStateP& ss)
+                           MaterialManagerP& ss)
 {
   d_lb = scinew MPMLabel();
 
   d_flags = flags;
 
-  d_sharedState = ss;
+  d_mat_manager = ss;
 
   registerPermanentCohesiveZoneState(czmat);
 }
@@ -105,10 +105,10 @@ CohesiveZone::createCohesiveZones(CZMaterial* matl,
 
     // needed for bulletproofing
     std::vector<int> mpmMatlIndex;
-    int numMPM = d_sharedState->getNumMPMMatls();
+    int numMPM = d_mat_manager->getNumMPMMatls();
     
     for(int m = 0; m < numMPM; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       mpmMatlIndex.push_back(dwi);
     }
@@ -334,7 +334,7 @@ void CohesiveZone::initialize(const ProcessorGroup*,
     cellNACZID.initialize(0);
 
     for(int m=0;m<cz_matls->size();m++){
-      CZMaterial* cz_matl = d_sharedState->getCZMaterial( m );
+      CZMaterial* cz_matl = d_mat_manager->getCZMaterial( m );
       string filename = cz_matl->getCohesiveFilename();
       particleIndex numCZs = countCohesiveZones(patch,filename);
       totalCZs+=numCZs;

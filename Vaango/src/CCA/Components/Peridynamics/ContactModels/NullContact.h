@@ -51,7 +51,7 @@ namespace Vaango {
   public:
 
     NullContact(const Uintah::ProcessorGroup* myworld,
-                Uintah::SimulationStateP& ss, 
+                Uintah::MaterialManagerP& ss, 
                 PeridynamicsLabel* labels,
                 PeridynamicsFlags* flags);
       

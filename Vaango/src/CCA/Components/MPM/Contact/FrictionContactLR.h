@@ -78,7 +78,7 @@ class FrictionContactLR : public Contact {
 public:
 
    FrictionContactLR(const ProcessorGroup* myworld,
-                   ProblemSpecP& ps, SimulationStateP& d_sS,MPMLabel* lb,
+                   ProblemSpecP& ps, MaterialManagerP& d_sS,MPMLabel* lb,
                    MPMFlags* MFlag);
    
    FrictionContactLR(const FrictionContactLR &con) = delete;

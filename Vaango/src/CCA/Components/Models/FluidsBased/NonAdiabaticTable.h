@@ -195,7 +195,7 @@ WARNING
     VarLabel* cumulativeEnergyReleased_CCLabel;
     VarLabel* cumulativeEnergyReleased_src_CCLabel;
     
-    SimulationStateP sharedState;
+    MaterialManagerP sharedState;
     Output* dataArchiver;
     std::vector<Vector> d_probePts;
     std::vector<std::string> d_probePtsNames;

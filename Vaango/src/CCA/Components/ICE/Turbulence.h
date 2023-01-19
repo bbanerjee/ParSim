@@ -82,7 +82,7 @@ namespace Uintah {
                                       const SFCZVariable<double>& wvel_FC,
                                       const CCVariable<double>& rho_CC,
                                       const int indx,
-                                      SimulationStateP&  d_sharedState,
+                                      MaterialManagerP&  d_mat_manager,
                                       CCVariable<double>& turb_viscosity) = 0;
 
     virtual void scheduleComputeVariance(SchedulerP& sched, 
@@ -95,7 +95,7 @@ namespace Uintah {
                  const CCVariable<double>& rho_CC,
                  const int indx,
                  ICELabel* lb,
-                 SimulationStateP&  d_sharedState,
+                 MaterialManagerP&  d_mat_manager,
                  CCVariable<double>& tot_viscosity);
   protected:
 

@@ -110,7 +110,7 @@ ZeroOrder::~ZeroOrder()
 //
 void ZeroOrder::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   bool defaultActive=true;
   d_params->getWithDefault("Active",          d_active, defaultActive);
   d_params->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
@@ -338,8 +338,8 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
 
     // Get the specific heat, this is the value from the input file
     double cv_rct = -1.0; 
-    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_sharedState->getMaterial(m0));
-    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_sharedState->getMaterial(m0));
+    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_mat_manager->getMaterial(m0));
+    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_mat_manager->getMaterial(m0));
     if(mpm_matl) {
       cv_rct = mpm_matl->getSpecificHeat();
     } else if(ice_matl){
@@ -388,10 +388,10 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
-    setBC(delF,       "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(Fr,         "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
+    setBC(delF,       "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(Fr,         "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
   }
   //__________________________________
   //save total quantities

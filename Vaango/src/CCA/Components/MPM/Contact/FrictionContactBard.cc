@@ -44,7 +44,7 @@ using namespace Uintah;
 
 FrictionContactBard::FrictionContactBard(const ProcessorGroup* myworld,
                                          ProblemSpecP& ps, 
-                                         SimulationStateP& d_sS,
+                                         MaterialManagerP& d_sS,
                                          MPMLabel* Mlb,
                                          MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
@@ -53,7 +53,7 @@ FrictionContactBard::FrictionContactBard(const ProcessorGroup* myworld,
   d_sepFac       = 9.9e99;  // Default to large number to provide no constraint
   d_oneOrTwoStep = 2;
   d_needNormals  = true;
-  d_sharedState  = d_sS;
+  d_mat_manager  = d_sS;
 
   ps->require("mu",d_mu);
   ps->get("volume_constraint", d_vol_const);
@@ -147,7 +147,7 @@ FrictionContactBard::exMomInterpolated(const ProcessorGroup*,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once
@@ -336,7 +336,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
 {
   Ghost::GhostType  gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
@@ -525,7 +525,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
 
     // This converts frictional work into a temperature rate
     for (int mat = 0; mat < matls->size(); mat++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
       if (!d_matls.requested(mat)) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           gFrictionWork[mat][*iter] = 0;

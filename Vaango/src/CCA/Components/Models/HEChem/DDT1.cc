@@ -153,7 +153,7 @@ DDT1::~DDT1()
 
 void DDT1::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   
   // Required for JWL++
   d_params->require("ThresholdPressureJWL",   d_threshold_press_JWL);
@@ -322,7 +322,7 @@ void DDT1::initialize(const ProcessorGroup*,
                       DataWarehouse* new_dw){
   int m0 = d_matl0->getDWIndex();
   
-  SimulationTime* simTime = d_sharedState->d_simTime;
+  SimulationTime* simTime = d_mat_manager->d_simTime;
   double initTimestep = simTime->max_initial_delt;
   
  
@@ -383,9 +383,9 @@ void DDT1::scheduleComputeModelSources(SchedulerP& sched,
   const MaterialSubset* prod_matl  = d_matl1->thisMaterial();
   const MaterialSubset* prod_matl2 = d_matl2->thisMaterial();
 
-  const MaterialSubset* all_matls = d_sharedState->allMaterials()->getUnion();
-  const MaterialSubset* ice_matls = d_sharedState->allICEMaterials()->getUnion();
-  const MaterialSubset* mpm_matls = d_sharedState->allMPMMaterials()->getUnion();
+  const MaterialSubset* all_matls = d_mat_manager->allMaterials()->getUnion();
+  const MaterialSubset* ice_matls = d_mat_manager->allICEMaterials()->getUnion();
+  const MaterialSubset* mpm_matls = d_mat_manager->allMPMMaterials()->getUnion();
   Task::MaterialDomainSpec oms = Task::OutOfDomain;
 
   proc0cout << "\nDDT1:scheduleComputeModelSources oneMatl " << *d_one_matl<< " react_matl " << *react_matl 
@@ -589,7 +589,7 @@ void DDT1::computeNumPPC(const ProcessorGroup*,
             }
           } 
         }    
-        setBC(numPPC, "zeroNeumann", patch, d_sharedState, m0, new_dw);
+        setBC(numPPC, "zeroNeumann", patch, d_mat_manager, m0, new_dw);
     }
 }
 
@@ -609,7 +609,7 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
  
   int m0 = d_matl0->getDWIndex();
   int m1 = d_matl1->getDWIndex();
-  int numAllMatls = d_sharedState->getNumMaterials();
+  int numAllMatls = d_mat_manager->getNumMaterials();
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch   = patches->get(p);  
@@ -672,7 +672,7 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
    
     // Temperature and Vol_frac 
     for(int m = 0; m < numAllMatls; m++) {
-      Material*    matl     = d_sharedState->getMaterial(m);
+      Material*    matl     = d_mat_manager->getMaterial(m);
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       int indx = matl->getDWIndex();
       if(ice_matl){
@@ -912,7 +912,7 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
               inductionTime_new =  (delta_x*A)/S_f_new ;
               inductionTime[c] = inductionTime_new ;
 
-              SimulationTime* simTime = d_sharedState->d_simTime;
+              SimulationTime* simTime = d_mat_manager->d_simTime;
               double initTimestep = simTime->max_initial_delt;
 
               if(inductionTimeOld[c] != ( initTimestep + 1e-20)){ //initializes induction time to the calculated indcutiontime on the first timestep. 
@@ -978,7 +978,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
   int m2 = d_matl2->getDWIndex();
   double totalBurnedMass   = 0;
   double totalHeatReleased = 0;
-  int numAllMatls = d_sharedState->getNumMaterials();
+  int numAllMatls = d_mat_manager->getNumMaterials();
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch   = patches->get(p);
@@ -1046,7 +1046,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
    
     // Temperature and Vol_frac 
     for(int m = 0; m < numAllMatls; m++) {
-      Material*    matl     = d_sharedState->getMaterial(m);
+      Material*    matl     = d_mat_manager->getMaterial(m);
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       int indx = matl->getDWIndex();
       if(ice_matl){
@@ -1087,7 +1087,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
     surfTemp.initialize(0.);
    
 
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m0);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m0);
     double cv_rct = mpm_matl->getSpecificHeat();
    
     double cell_vol = dx.x()*dx.y()*dx.z();
@@ -1280,11 +1280,11 @@ void DDT1::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
-    setBC(mass_src_2, "set_if_sym_BC",patch, d_sharedState, m2, new_dw);
-    setBC(delF,       "set_if_sym_BC",patch, d_sharedState, m0, new_dw);  // I'm not sure you need these???? Todd
-    setBC(Fr,         "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
+    setBC(mass_src_2, "set_if_sym_BC",patch, d_mat_manager, m2, new_dw);
+    setBC(delF,       "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);  // I'm not sure you need these???? Todd
+    setBC(Fr,         "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
   }
   //__________________________________
   //save total quantities

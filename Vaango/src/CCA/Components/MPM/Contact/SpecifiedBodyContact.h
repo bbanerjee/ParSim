@@ -141,7 +141,7 @@ class SpecifiedBodyContact : public Contact
 public:
 
   SpecifiedBodyContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                       SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* flag);
+                       MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* flag);
   SpecifiedBodyContact(const SpecifiedBodyContact& con) = delete;
   SpecifiedBodyContact& operator=(const SpecifiedBodyContact& con) = delete;
   virtual ~SpecifiedBodyContact() = default;

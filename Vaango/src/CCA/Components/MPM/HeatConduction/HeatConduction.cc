@@ -46,12 +46,12 @@ using namespace Uintah;
 static DebugStream cout_doing("HeatConduction", false);
 static DebugStream cout_heat("MPMHeat", false);
 
-HeatConduction::HeatConduction(SimulationStateP& sS,MPMLabel* labels, 
+HeatConduction::HeatConduction(MaterialManagerP& sS,MPMLabel* labels, 
                                MPMFlags* flags)
 {
   d_lb = labels;
   d_flag = flags;
-  d_sharedState = sS;
+  d_mat_manager = sS;
 
   if(d_flag->d_8or27==8){
     NGP=1;
@@ -168,7 +168,7 @@ void HeatConduction::scheduleIntegrateTemperatureRate(SchedulerP& sched,
 
   const MaterialSubset* mss = matls->getUnion();
 
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
 
   t->requires(Task::NewDW, d_lb->gTemperatureLabel,     Ghost::None);
   t->requires(Task::NewDW, d_lb->gTemperatureNoBCLabel, Ghost::None);
@@ -211,8 +211,8 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
 
     Ghost::GhostType  gac   = Ghost::AroundCells;
     Ghost::GhostType  gnone = Ghost::None;
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
 
       if (cout_heat.active())
         cout_heat << "  Material = " << m << endl;
@@ -400,8 +400,8 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
     Ghost::GhostType  gac   = Ghost::AroundCells;
     Ghost::GhostType  gnone = Ghost::None;
     
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
 
       if (cout_heat.active())
         cout_heat << "  Material = " << m << endl;
@@ -498,8 +498,8 @@ void HeatConduction::solveHeatEquations(const ProcessorGroup*,
 
 
     string interp_type = d_flag->d_interpolatorType;
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
       double Cv = mpm_matl->getSpecificHeat();
      
@@ -572,14 +572,14 @@ void HeatConduction::integrateTemperatureRate(const ProcessorGroup*,
 
     Ghost::GhostType  gnone = Ghost::None;
     string interp_type = d_flag->d_interpolatorType;
-    for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       constNCVariable<double> temp_old,temp_oldNoBC;
       NCVariable<double> temp_rate,tempStar;
       delt_vartype delT;
-      old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+      old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
  
       new_dw->get(temp_old,    d_lb->gTemperatureLabel,     dwi,patch,gnone,0);
       new_dw->get(temp_oldNoBC,d_lb->gTemperatureNoBCLabel, dwi,patch,gnone,0);

@@ -38,12 +38,12 @@
 using namespace Uintah;
 
 
-CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag)
+CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag)
                  : SDInterfaceModel(ps, sS, Mflag){
 
 
   d_Mflag = Mflag;
-  d_sharedState = sS;
+  d_mat_manager = sS;
 
   d_lb = scinew MPMLabel;
 
@@ -73,9 +73,9 @@ CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, SimulationStateP& sS, MPMFl
   }
 
   if(include_hydrostress){
-    int numMPM = d_sharedState->getNumMPMMatls();
+    int numMPM = d_mat_manager->getNumMPMMatls();
     for(int m = 0; m < numMPM; m++){
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
       diffusion_type = sdm->getDiffusionType();
       if(diffusion_type == "jg"){
@@ -96,9 +96,9 @@ CommonIFConcDiff::~CommonIFConcDiff(){
 #if 0
 void CommonIFConcDiff::initializeSDMData(const Patch* patch, DataWarehouse* new_dw)
 {
-  int numMPM = d_sharedState->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMPMMatls();
   for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->initializeSDMData(patch, mpm_matl, new_dw);
   }
@@ -109,10 +109,10 @@ void CommonIFConcDiff::computeDivergence(const Patch* patch,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
-  int numMPM = d_sharedState->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMPMMatls();
 
   for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->computeDivergence(patch, mpm_matl, old_dw, new_dw);
   }
@@ -129,7 +129,7 @@ void CommonIFConcDiff::computeDivergence(const Patch* patch,
   globalmass.initialize(0);
 
   for(int m = 0; m < numMPM; m++){
-    int dwi = d_sharedState->getMPMMaterial(m)->getDWIndex();
+    int dwi = d_mat_manager->getMPMMaterial(m)->getDWIndex();
 
     new_dw->get(gmass,     d_lb->gMassLabel,               dwi, patch, gnone,0);
     new_dw->get(gConcRate, d_lb->gConcentrationRateLabel,dwi, patch, gnone,0);
@@ -143,7 +143,7 @@ void CommonIFConcDiff::computeDivergence(const Patch* patch,
   }
 
   for(int m = 0; m < numMPM; m++){
-    int dwi = d_sharedState->getMPMMaterial(m)->getDWIndex();
+    int dwi = d_mat_manager->getMPMMaterial(m)->getDWIndex();
 	  NCVariable<double> gConcRate;
 
     new_dw->getModifiable(gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);

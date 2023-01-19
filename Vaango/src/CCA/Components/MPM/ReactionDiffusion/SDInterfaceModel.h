@@ -42,7 +42,7 @@ namespace Uintah {
   class SDInterfaceModel {
   public:
     
-    SDInterfaceModel(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag);
+    SDInterfaceModel(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag);
     virtual ~SDInterfaceModel();
 
 #if 0

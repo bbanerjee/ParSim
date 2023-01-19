@@ -46,7 +46,7 @@ using std::string;
 
 FrictionContactLR::FrictionContactLR(const ProcessorGroup* myworld,
                                      ProblemSpecP& ps, 
-                                     SimulationStateP& d_sS,
+                                     MaterialManagerP& d_sS,
                                      MPMLabel* Mlb,
                                      MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
@@ -59,7 +59,7 @@ FrictionContactLR::FrictionContactLR(const ProcessorGroup* myworld,
   ps->get("volume_constraint", d_vol_const);
   ps->get("one_or_two_step",   d_oneOrTwoStep);
 
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
 
   if (flag->d_8or27 == 8) {
     NGP = 1; NGN = 1;
@@ -140,7 +140,7 @@ FrictionContactLR::exMomInterpolated(const ProcessorGroup*,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw)
 {
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   std::vector<constNCdouble>  gMass(numMatls);
@@ -263,7 +263,7 @@ FrictionContactLR::exMomIntegrated(const ProcessorGroup*,
 {
   Ghost::GhostType  gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in

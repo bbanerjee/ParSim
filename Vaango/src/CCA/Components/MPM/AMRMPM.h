@@ -60,7 +60,7 @@ public:
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP&,
-               SimulationStateP&);
+               MaterialManagerP&);
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);

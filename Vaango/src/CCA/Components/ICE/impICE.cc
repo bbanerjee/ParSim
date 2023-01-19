@@ -461,9 +461,9 @@ void ICE::setupMatrix(const ProcessorGroup*,
           new_dw->getOtherDataWarehouse(Task::ParentNewDW);
             
     delt_vartype delT;
-    parent_old_dw->get(delT, d_sharedState->get_delt_label(),level);
+    parent_old_dw->get(delT, d_mat_manager->get_delt_label(),level);
     Vector dx     = patch->dCell();
-    int numMatls  = d_sharedState->getNumMaterials();
+    int numMatls  = d_mat_manager->getNumMaterials();
     CCVariable<Stencil7> A; 
     CCVariable<double> imp_delP;
     constCCVariable<double> sumKappa;
@@ -490,7 +490,7 @@ void ICE::setupMatrix(const ProcessorGroup*,
     } 
   
     for(int m = 0; m < numMatls; m++) {
-      Material* matl = d_sharedState->getMaterial( m );
+      Material* matl = d_mat_manager->getMaterial( m );
       int indx = matl->getDWIndex();
       constSFCXVariable<double> sp_volX_FC, vol_fracX_FC;
       constSFCYVariable<double> sp_volY_FC, vol_fracY_FC;
@@ -606,11 +606,11 @@ void ICE::setupRHS(const ProcessorGroup*,
       pOldDW  = old_dw;
     }
            
-    int numMatls  = d_sharedState->getNumMaterials();
+    int numMatls  = d_mat_manager->getNumMaterials();
     delt_vartype delT;
-    pOldDW->get(delT, d_sharedState->get_delt_label(), level);
+    pOldDW->get(delT, d_mat_manager->get_delt_label(), level);
     
-    bool newGrid = d_sharedState->isRegridTimestep();
+    bool newGrid = d_mat_manager->isRegridTimestep();
     Advector* advector = d_advector->clone(new_dw,patch,newGrid );
     
     CCVariable<double> q_advected, rhs;
@@ -641,7 +641,7 @@ void ICE::setupRHS(const ProcessorGroup*,
 
     
     for(int m = 0; m < numMatls; m++) {
-      Material* matl = d_sharedState->getMaterial( m );
+      Material* matl = d_mat_manager->getMaterial( m );
       int indx = matl->getDWIndex();
       constSFCXVariable<double> uvel_FC;
       constSFCYVariable<double> vvel_FC;
@@ -857,7 +857,7 @@ void ICE::updatePressure(const ProcessorGroup*,
     DataWarehouse* parent_old_dw = 
           new_dw->getOtherDataWarehouse(Task::ParentOldDW);
                     
-    int numMatls  = d_sharedState->getNumMaterials(); 
+    int numMatls  = d_mat_manager->getNumMaterials(); 
     Ghost::GhostType  gn = Ghost::None;
           
     CCVariable<double> press_CC;     
@@ -876,7 +876,7 @@ void ICE::updatePressure(const ProcessorGroup*,
     press_CC.initialize(d_EVIL_NUM);
     
     for(int m = 0; m < numMatls; m++) {
-      Material* matl = d_sharedState->getMaterial( m );
+      Material* matl = d_mat_manager->getMaterial( m );
       int indx = matl->getDWIndex();
       parent_new_dw->get(sp_vol_CC[m],lb->sp_vol_CCLabel, indx,patch,gn,0);
     }             
@@ -897,7 +897,7 @@ void ICE::updatePressure(const ProcessorGroup*,
                             lb,  patch, 999,d_customBC_var_basket);
 
     setBC(press_CC, placeHolder, sp_vol_CC, d_surroundingMatl_indx,
-          "sp_vol", "Pressure", patch ,d_sharedState, 0, new_dw, 
+          "sp_vol", "Pressure", patch ,d_mat_manager, 0, new_dw, 
            d_customBC_var_basket);
            
     delete_CustomBCs(d_customBC_var_basket);
@@ -940,7 +940,7 @@ void ICE::computeDel_P(const ProcessorGroup*,
               << patch->getID() <<"\t\t\t\t ICE \tL-" 
               << level->getIndex()<<endl;
             
-    int numMatls  = d_sharedState->getNumMaterials(); 
+    int numMatls  = d_mat_manager->getNumMaterials(); 
       
     CCVariable<double> delP_Dilatate;
     CCVariable<double> delP_MassX;
@@ -966,7 +966,7 @@ void ICE::computeDel_P(const ProcessorGroup*,
     delP_MassX.initialize(0.0); 
          
     for(int m = 0; m < numMatls; m++) {
-      Material* matl = d_sharedState->getMaterial( m );
+      Material* matl = d_mat_manager->getMaterial( m );
       int indx = matl->getDWIndex();
       new_dw->get(rho_CC,      lb->rho_CCLabel,    indx,patch,gn,0);
       //__________________________________
@@ -1013,7 +1013,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
 
   //__________________________________
   // define Matl sets and subsets
-  const MaterialSet* all_matls = d_sharedState->allMaterials();
+  const MaterialSet* all_matls = d_mat_manager->allMaterials();
   const MaterialSubset* all_matls_sub = all_matls->getUnion();
   MaterialSubset* one_matl    = d_press_matl;
   
@@ -1041,8 +1041,8 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
   //  Move data from parentOldDW to subSchedNewDW.
   delt_vartype dt;
   subNewDW = d_subsched->get_dw(3);
-  ParentOldDW->get(dt, d_sharedState->get_delt_label(),level.get_rep());
-  subNewDW->put(dt, d_sharedState->get_delt_label(),level.get_rep());
+  ParentOldDW->get(dt, d_mat_manager->get_delt_label(),level.get_rep());
+  subNewDW->put(dt, d_mat_manager->get_delt_label(),level.get_rep());
    
   max_vartype max_RHS_old;
   ParentNewDW->get(max_RHS_old, lb->max_RHSLabel);

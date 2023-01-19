@@ -66,7 +66,7 @@ class PenaltyContact : public Contact {
 public:
   PenaltyContact(const ProcessorGroup* myworld,
                  ProblemSpecP& ps, 
-                 SimulationStateP& d_sS,
+                 MaterialManagerP& d_sS,
                  MPMLabel* lb,
                  MPMFlags* MFlag);
   PenaltyContact(const PenaltyContact &con) = delete;

@@ -51,7 +51,7 @@ OnTheFly_radiometer::OnTheFly_radiometer(ProblemSpecP& module_spec,
                                          Output* dataArchiver)
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   d_module_ps   = module_spec;
   d_dataArchiver = dataArchiver;
 }
@@ -86,13 +86,13 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
   Material* matl;
  
   if( d_module_ps->findBlock("material") ){
-    matl = d_sharedState->parseAndLookupMaterial( d_module_ps, "material" );
+    matl = d_mat_manager->parseAndLookupMaterial( d_module_ps, "material" );
   } else if ( d_module_ps->findBlock("materialIndex") ){
     int indx;
     d_module_ps->get("materialIndex", indx);
-    matl = d_sharedState->getMaterial(indx);
+    matl = d_mat_manager->getMaterial(indx);
   } else {
-    matl = d_sharedState->getMaterial(0);
+    matl = d_mat_manager->getMaterial(0);
   }
 
   int matl_index = matl->getDWIndex();
@@ -158,7 +158,7 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
 
   d_module_ps->getWithDefault( "radiometerCalc_freq", d_radiometerCalc_freq, 1 );
   bool getExtraInputs = true;
-  d_radiometer->problemSetup(rad_ps, rad_ps, grid, d_sharedState, getExtraInputs);
+  d_radiometer->problemSetup(rad_ps, rad_ps, grid, d_mat_manager, getExtraInputs);
   
   if(!d_dataArchiver->isLabelSaved( "VRFlux" ) ){
     throw ProblemSetupException("\nERROR:  You've activated the radiometer but your not saving the variable (VRFlux)\n",__FILE__, __LINE__);

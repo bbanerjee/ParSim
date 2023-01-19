@@ -41,7 +41,7 @@ namespace Vaango {
         
     static ContactModelBase* create(const Uintah::ProcessorGroup* myworld,
                                     const Uintah::ProblemSpecP& ps,
-                                    Uintah::SimulationStateP& ss,
+                                    Uintah::MaterialManagerP& ss,
                                     PeridynamicsLabel* labels, 
                                     PeridynamicsFlags* flags);
   };

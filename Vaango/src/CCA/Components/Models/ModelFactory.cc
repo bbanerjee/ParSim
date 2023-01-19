@@ -110,7 +110,7 @@ void
 ModelFactory::makeModels( const ProblemSpecP& restart_prob_spec,
                           const ProblemSpecP& prob_spec,
                           GridP&,
-                          SimulationStateP&,
+                          MaterialManagerP&,
                           const bool doAMR )
 {
   ProblemSpecP m = restart_prob_spec->findBlock("Models");

@@ -81,7 +81,7 @@ namespace Uintah {
     // SparseMSG parameters
     int    jump;               // Hypre Sparse MSG parameter
     
-    SimulationStateP state;    // simulation state
+    MaterialManagerP state;    // simulation state
     
     void setSetupFrequency(const int freq) {
       setupFrequency = freq;
@@ -216,7 +216,7 @@ namespace Uintah {
 
     virtual SolverParameters* readParameters(       ProblemSpecP     & params,
                                               const std::string      & name,
-                                                    SimulationStateP & state );
+                                                    MaterialManagerP & state );
 
     /**
      *  @brief Schedules the solution of the linear system \[ \mathbf{A} \mathbf{x} = \mathbf{b}\].

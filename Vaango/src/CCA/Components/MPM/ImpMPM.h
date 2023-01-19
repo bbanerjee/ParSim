@@ -107,7 +107,7 @@ public:
   // Insert Documentation Here:
   virtual void problemSetup(const ProblemSpecP& params, 
                             const ProblemSpecP& mat_ps,
-                            GridP& grid, SimulationStateP&);
+                            GridP& grid, MaterialManagerP&);
 
   virtual void outputProblemSpec(ProblemSpecP& ps);
 
@@ -146,7 +146,7 @@ public:
 
   void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
   
-  void setSharedState(SimulationStateP& ssp);
+  void setSharedState(MaterialManagerP& ssp);
 
   void setMPMLabel(MPMLabel* Mlb)
   {

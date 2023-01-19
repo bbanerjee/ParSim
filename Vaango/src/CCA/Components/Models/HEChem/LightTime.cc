@@ -120,7 +120,7 @@ void LightTime::outputProblemSpec(ProblemSpecP& ps)
 void LightTime::problemSetup(GridP&, MaterialManagerP& mat_manager,
                              ModelSetup*)
 {
-  d_sharedState = sharedState;
+  d_mat_manager = sharedState;
   
   ProblemSpecP lt_ps = params->findBlock("LightTime");
   if (!lt_ps){
@@ -300,7 +300,7 @@ void LightTime::computeModelSources(const ProcessorGroup*,
     new_dw->get(vol_frac_prd,  Ilb->vol_frac_CCLabel,  m1,patch,gn, 0);
 
     const Level* level = patch->getLevel();
-    double time = d_sharedState->getElapsedTime();
+    double time = d_mat_manager->getElapsedTime();
     double delta_L = 1.5*pow(cell_vol,1./3.)/d_D;
 //    double delta_L = 1.5*dx.x()/d_D;
     double A=d_direction.x();
@@ -376,10 +376,10 @@ void LightTime::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
-    setBC(delF,       "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(Fr,         "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
+    setBC(delF,       "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(Fr,         "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
   }
 }
 //______________________________________________________________________
@@ -400,8 +400,8 @@ void LightTime::scheduleErrorEstimate(const LevelP& coarseLevel,
   t->requires(Task::NewDW, reactedFractionLabel,   react_matl, gac, 1);
   
   t->computes(mag_grad_Fr_Label, react_matl);
-  t->modifies(d_sharedState->get_refineFlag_label(),      d_sharedState->refineFlagMaterials());
-  t->modifies(d_sharedState->get_refinePatchFlag_label(), d_sharedState->refineFlagMaterials());
+  t->modifies(d_mat_manager->get_refineFlag_label(),      d_mat_manager->refineFlagMaterials());
+  t->modifies(d_mat_manager->get_refinePatchFlag_label(), d_mat_manager->refineFlagMaterials());
   
   sched->addTask(t, coarseLevel->eachPatch(), mymatls);
 }
@@ -419,8 +419,8 @@ void LightTime::errorEstimate(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     
     Ghost::GhostType  gac  = Ghost::AroundCells;
-    const VarLabel* refineFlagLabel = d_sharedState->get_refineFlag_label();
-    const VarLabel* refinePatchLabel= d_sharedState->get_refinePatchFlag_label();
+    const VarLabel* refineFlagLabel = d_mat_manager->get_refineFlag_label();
+    const VarLabel* refinePatchLabel= d_mat_manager->get_refinePatchFlag_label();
     
     CCVariable<int> refineFlag;
     new_dw->getModifiable(refineFlag, refineFlagLabel, 0, patch);      

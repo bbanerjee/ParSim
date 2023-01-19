@@ -178,7 +178,7 @@ LoadBalancerCommon::getPatchwiseProcessorAssignment(const Patch* patch)
 {
   // If on a copy-data timestep and we ask about an old patch, that could cause
   // problems.
-  if (d_sharedState->isCopyDataTimestep() &&
+  if (d_mat_manager->isCopyDataTimestep() &&
       patch->getRealPatch()->getID() < d_assignmentBasePatch) {
     return -patch->getID();
   }
@@ -228,8 +228,8 @@ LoadBalancerCommon::useSFC(const LevelP& level, int* order)
   std::vector<double> positions;
 
   // this should be removed when dimensions in shared state is done
-  int dim = d_sharedState->getNumDims();
-  int* dimensions = d_sharedState->getActiveDims();
+  int dim = d_mat_manager->getNumDims();
+  int* dimensions = d_mat_manager->getActiveDims();
 
   IntVector min_patch_size(INT_MAX, INT_MAX, INT_MAX);
 
@@ -633,7 +633,7 @@ LoadBalancerCommon::createNeighborhood(const GridP& grid, const GridP& oldGrid)
           }
         }
 
-        if (d_sharedState->isCopyDataTimestep() && proc == me) {
+        if (d_mat_manager->isCopyDataTimestep() && proc == me) {
           if (oldGrid->numLevels() > l) {
             // on copy data timestep we need old patches that line up with this
             // proc's patches,
@@ -661,7 +661,7 @@ LoadBalancerCommon::createNeighborhood(const GridP& grid, const GridP& oldGrid)
 
         // add amr stuff - so the patch will know about coarsening and refining
         if (l > 0 && (proc == me || (oldproc == me &&
-                                     !d_sharedState->isCopyDataTimestep()))) {
+                                     !d_mat_manager->isCopyDataTimestep()))) {
           LevelP coarseLevel = level;
 
           // TODO replace after Mira DDT problem is debugged (APH - 03/24/15)
@@ -697,7 +697,7 @@ LoadBalancerCommon::createNeighborhood(const GridP& grid, const GridP& oldGrid)
         }
         if (l < grid->numLevels() - 1 &&
             (proc == me ||
-             (oldproc == me && !d_sharedState->isCopyDataTimestep()))) {
+             (oldproc == me && !d_mat_manager->isCopyDataTimestep()))) {
 
           // TODO replace after Mira DDT problem is debugged (APH - 03/24/15)
           IntVector ghost(maxGhost, maxGhost, maxGhost);
@@ -722,7 +722,7 @@ LoadBalancerCommon::createNeighborhood(const GridP& grid, const GridP& oldGrid)
     }
   }
 
-  if (d_sharedState->isCopyDataTimestep()) {
+  if (d_mat_manager->isCopyDataTimestep()) {
     // Regrid timestep postprocess
     // 1)- go through the old grid and
     //     find which patches used to be on this proc
@@ -829,7 +829,7 @@ void
 LoadBalancerCommon::problemSetup(ProblemSpecP& pspec, GridP& grid,
                                  MaterialManagerP& mat_manager)
 {
-  d_sharedState = state;
+  d_mat_manager = state;
   d_scheduler = dynamic_cast<Scheduler*>(getPort("scheduler"));
   ProblemSpecP p = pspec->findBlock("LoadBalancer");
   d_outputNthProc = 1;

@@ -168,7 +168,7 @@ WARNING
 
     Cantera::IdealGasMix* gas;
     Cantera::Reactor* reactor;
-    SimulationStateP sharedState;
+    MaterialManagerP sharedState;
 
     double dtemp;
     double dpress;

@@ -56,7 +56,7 @@ using std::cerr;
 using namespace Uintah;
 
 ThermalContact* ThermalContactFactory::create(const ProblemSpecP& ps,
-                                              SimulationStateP& d_sS, 
+                                              MaterialManagerP& d_sS, 
                                               MPMLabel* lb,MPMFlags* flag)
 {
    ProblemSpecP mpm_ps = 

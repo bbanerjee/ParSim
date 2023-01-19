@@ -82,7 +82,7 @@ public:
   MPMMaterial&
   operator=(const MPMMaterial& mpmm) = delete;
 
-  // void registerParticleState(SimulationState* ss) override;
+  // void registerParticleState(MaterialManager* ss) override;
   using VarLabelVector = std::vector<const VarLabel*>;
   void
   registerParticleState(std::vector<VarLabelVector>& state,

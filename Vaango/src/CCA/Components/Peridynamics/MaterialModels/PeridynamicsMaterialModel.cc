@@ -55,7 +55,7 @@ PeridynamicsMaterialModel::PeridynamicsMaterialModel(const PeridynamicsMaterialM
   d_label = scinew PeridynamicsLabel();
   d_flag = cm->d_flag;
   d_numGhostNodes = cm->d_numGhostNodes;
-  d_sharedState = cm->d_sharedState;
+  d_mat_manager = cm->d_mat_manager;
 }
 
 PeridynamicsMaterialModel::~PeridynamicsMaterialModel()

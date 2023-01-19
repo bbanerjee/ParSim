@@ -44,7 +44,7 @@ namespace Uintah {
   class CommonIFConcDiff : public SDInterfaceModel {
   public:
     
-    CommonIFConcDiff(ProblemSpecP& ps, SimulationStateP& sS, MPMFlags* Mflag);
+    CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag);
     ~CommonIFConcDiff();
 
 //    virtual void initializeSDMData(const Patch* patch, DataWarehouse* new_dw);

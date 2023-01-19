@@ -51,7 +51,7 @@ using std::vector;
 using std::string;
 
 ApproachContact::ApproachContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, SimulationStateP& d_sS,
+                                 ProblemSpecP& ps, MaterialManagerP& d_sS,
                                  MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
@@ -60,7 +60,7 @@ ApproachContact::ApproachContact(const ProcessorGroup* myworld,
   ps->require("mu", d_mu);
   ps->get("volume_constraint", d_vol_const);
 
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   d_needNormals = true;
 
   if (flag->d_8or27 == 8) {
@@ -96,7 +96,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMPMMatls();
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
@@ -274,7 +274,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
     for (int m = 0; m < matls->size(); m++) {
       if (!d_matls.requested(m))
         continue;
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
       double c_v = mpm_matl->getSpecificHeat();
       for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
         IntVector c = *iter;

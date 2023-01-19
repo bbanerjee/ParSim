@@ -113,7 +113,7 @@ namespace Uintah {
       virtual void problemSetup(const ProblemSpecP& params,
                                 const ProblemSpecP& restart_prob_spec,
                                 GridP& grid,
-                                SimulationStateP& simState);
+                                MaterialManagerP& simState);
 
       virtual void scheduleInitialize(const LevelP& level,
                                       SchedulerP& sched);
@@ -127,7 +127,7 @@ namespace Uintah {
                                        SchedulerP& sched);
 
     private:
-      SimulationStateP sharedState_;
+      MaterialManagerP sharedState_;
       double delt_;
       EmptyMaterial* simpleMaterial_;
       const VarLabel* phi_label;

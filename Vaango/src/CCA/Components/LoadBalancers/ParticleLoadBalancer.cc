@@ -152,7 +152,7 @@ ParticleLoadBalancer::collectParticlesForRegrid( const Grid* oldGrid, const vect
           if (dw) {
             //loop through the materials and add up the particles
             //   go through all materials since getting an MPMMaterial correctly would depend on MPM
-            for (int m = 0; m < d_sharedState->getNumMaterials(); m++) {
+            for (int m = 0; m < d_mat_manager->getNumMaterials(); m++) {
               ParticleSubset* psubset = 0;
               if (dw->haveParticleSubset(m, oldPatch, low, high))
                 psubset = dw->getParticleSubset(m, oldPatch, low, high);
@@ -266,7 +266,7 @@ void ParticleLoadBalancer::collectParticles(const Grid* grid, vector<vector<int>
       if (dw) {
         //loop through the materials and add up the particles
         //   go through all materials since getting an MPMMaterial correctly would depend on MPM
-        for (int m = 0; m < d_sharedState->getNumMaterials(); m++) {
+        for (int m = 0; m < d_mat_manager->getNumMaterials(); m++) {
           if (dw->haveParticleSubset(m, patch))
             thisPatchParticles += dw->getParticleSubset(m, patch)->numParticles();
         }
@@ -670,7 +670,7 @@ bool
 ParticleLoadBalancer::needRecompile(double /*time*/, double /*delt*/, 
                                     const GridP& grid)
 {
-  double time = d_sharedState->getElapsedTime();
+  double time = d_mat_manager->getElapsedTime();
   int timestep = d_simulator->getTimeStep();
 
   bool do_check = false;
@@ -789,7 +789,7 @@ bool ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int 
         d_lastLbTimestep = d_simulator->getTimeStep();
       }
       else if (d_lbInterval != 0) {
-        d_lastLbTime = d_sharedState->getElapsedTime();
+        d_lastLbTime = d_mat_manager->getElapsedTime();
       }
     }
     d_oldAssignment = d_processorAssignment;
@@ -855,7 +855,7 @@ bool ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int 
   
   // this must be called here (it creates the new per-proc patch sets) even if DLB does nothing.  Don't move or return earlier.
   LoadBalancerCommon::possiblyDynamicallyReallocate( grid, flag );
-  d_sharedState->loadbalancerTime += Time::currentSeconds() - start;
+  d_mat_manager->loadbalancerTime += Time::currentSeconds() - start;
   return changed;
 }
 
@@ -889,9 +889,9 @@ ParticleLoadBalancer::problemSetup(ProblemSpecP& pspec, GridP& grid,  MaterialMa
   d_doSpaceCurve = spaceCurve;
   d_lbThreshold = threshold;
 
-  ASSERT(d_sharedState->getNumDims()>0 || d_sharedState->getNumDims()<4);
+  ASSERT(d_mat_manager->getNumDims()>0 || d_mat_manager->getNumDims()<4);
   //set curve parameters that do not change between timesteps
-  d_sfc.SetNumDimensions(d_sharedState->getNumDims());
+  d_sfc.SetNumDimensions(d_mat_manager->getNumDims());
   d_sfc.SetMergeMode(1);
   d_sfc.SetCleanup(BATCHERS);
   d_sfc.SetMergeParameters(3000,500,2,.15);  //Should do this by profiling

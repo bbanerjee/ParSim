@@ -39,7 +39,7 @@
 using namespace Uintah;
 
 SDInterfaceModel* SDInterfaceModelFactory::create(ProblemSpecP& ps,
-                                                          SimulationStateP& ss,
+                                                          MaterialManagerP& ss,
                                                           MPMFlags* flags)
 {
   ProblemSpecP mpm_ps = 

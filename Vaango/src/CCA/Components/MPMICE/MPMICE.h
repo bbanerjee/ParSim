@@ -95,7 +95,7 @@ public:
           
   virtual void problemSetup(const ProblemSpecP& params, 
                             const ProblemSpecP& restart_prob_spec, 
-                            GridP& grid, SimulationStateP&);
+                            GridP& grid, MaterialManagerP&);
 
   virtual void outputProblemSpec(ProblemSpecP& ps);
          
@@ -309,7 +309,7 @@ public:
 
   virtual void addMaterial(const ProblemSpecP& params,
                            GridP& grid,
-                           SimulationStateP&);
+                           MaterialManagerP&);
 
   virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
 
