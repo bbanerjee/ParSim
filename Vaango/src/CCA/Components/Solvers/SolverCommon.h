@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,31 +23,35 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef Packages_Uintah_CCA_Components_Solvers_CGSolver_h
-#define Packages_Uintah_CCA_Components_Solvers_CGSolver_h
+#ifndef Packages_Uintah_CCA_Components_Solvers_SolverCommon_h
+#define Packages_Uintah_CCA_Components_Solvers_SolverCommon_h
 
-#include <CCA/Components/Solvers/SolverCommon.h>
-#include <CCA/Components/Solvers/CGSolverParams.h>
-
-#include <memory>
+#include <CCA/Ports/SolverInterface.h>
+#include <Core/Parallel/UintahParallelComponent.h>
 
 namespace Uintah {
 
-class CGSolver : public SolverCommon
+class SimulationInterface;
+
+class SolverCommon
+  : public UintahParallelComponent
+  , public SolverInterface
 {
 
 public:
-  CGSolver(const ProcessorGroup* myworld);
-  virtual ~CGSolver() = default;
+  SolverCommon(const ProcessorGroup* myworld);
+  virtual ~SolverCommon() = default;
+
+  // Methods for managing the components attached via the ports.
+  virtual void
+  setComponents(UintahParallelComponent* comp){};
+  virtual void
+  getComponents();
+  virtual void
+  releaseComponents();
 
   virtual void
-  readParameters(ProblemSpecP& params, const std::string& name);
-
-  virtual SolverParameters*
-  getParameters()
-  {
-    return d_params.get();
-  }
+  readParameters(ProblemSpecP& params, const std::string& name) = 0;
 
   virtual void
   scheduleSolve(const LevelP& level,
@@ -61,31 +65,29 @@ public:
                 Task::WhichDW which_b_dw,
                 const VarLabel* guess,
                 Task::WhichDW which_guess_dw,
-                bool isFirstSolve = true);
+                bool isFirstSolve = true) = 0;
 
   virtual std::string
-  getName();
+  getName() = 0;
 
-  // CGSolver does not require initialization... but we need an empty
+  // SolverCommon does not require initialization... but we need an empty
   // routine to satisfy inheritance.
   virtual void
   scheduleInitialize(const LevelP& level,
                      SchedulerP& sched,
-                     const MaterialSet* matls)
-  {
-  }
+                     const MaterialSet* matls) = 0;
 
   virtual void
   scheduleRestartInitialize(const LevelP& level,
                             SchedulerP& sched,
-                            const MaterialSet* matls)
-  {
-  }
+                            const MaterialSet* matls) = 0;
 
-private:
-  std::unique_ptr<CGSolverParams> d_params{ nullptr };
+protected:
+  SimulationInterface* d_simulator{ nullptr };
+
+  const ProcessorGroup* d_myworld;
 };
 
 } // end namespace Uintah
 
-#endif // Packages_Uintah_CCA_Components_Solvers_CGSolver_h
+#endif // Packages_Uintah_CCA_Components_Solvers_SolverCommon_h

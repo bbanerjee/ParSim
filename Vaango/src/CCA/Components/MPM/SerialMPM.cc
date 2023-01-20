@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Components/MPM/HeatConduction/HeatConduction.h>
 #include <CCA/Components/MPM/MMS/MMS.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
@@ -427,8 +427,8 @@ SerialMPM::outputProblemSpec(ProblemSpecP& root_ps)
     mat_ps = root->appendChild("MaterialProperties");
 
   ProblemSpecP mpm_ps = mat_ps->appendChild("MPM");
-  for (int i = 0; i < d_mat_manager->getNumMPMMatls(); i++) {
-    MPMMaterial* mat   = d_mat_manager->getMPMMaterial(i);
+  for (int i = 0; i < d_mat_manager->getNumMaterials("MPM")); i++) {
+    MPMMaterial* mat   = d_mat_manager->getMaterial("MPM", i);
     ProblemSpecP cm_ps = mat->outputProblemSpec(mpm_ps);
   }
 
@@ -512,9 +512,9 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     cout_dbg << "Artificial Damping Coeff = " << flags->d_artificialDampCoeff
              << " 8 or 27 = " << flags->d_8or27 << "\n";
 
-  int numMPM = d_mat_manager->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMPM; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
     // For velocity gradinet and deformation gradient
@@ -633,7 +633,7 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
     }
 
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int indx              = mpm_matl->getDWIndex();
       if (!flags->d_doGridReset) {
         NCVariable<Vector> gDisplacement;
@@ -801,11 +801,11 @@ SerialMPM::initializeBodyForce(const ProcessorGroup*,
     printTask(patches, patch, cout_doing, "Doing initializeBodyForce");
 
     // Loop thru materials
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
 
       // Get the material ID
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       // Get the particle subset
@@ -869,7 +869,7 @@ SerialMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
 
     // Loop over materials
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
       // Compute the stress and deformation gradient only for selected
       // constitutive models that have a "initializeWithBodyForce" flag as true.
@@ -966,10 +966,10 @@ SerialMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
       // Loop through the patches and count
       for (int p = 0; p < patches->size(); p++) {
         const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_mat_manager->getNumMPMMatls();
+        int numMPMMatls    = d_mat_manager->getNumMaterials("MPM"));
         int numPts         = 0;
         for (int m = 0; m < numMPMMatls; m++) {
-          MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+          MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
           int matID             = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
@@ -1037,9 +1037,9 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
       // at each particle
       for (int p = 0; p < patches->size(); p++) {
         const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_mat_manager->getNumMPMMatls();
+        int numMPMMatls    = d_mat_manager->getNumMaterials("MPM"));
         for (int m = 0; m < numMPMMatls; m++) {
-          MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+          MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
           int matID             = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
@@ -1214,9 +1214,9 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
       // at each particle
       for (int p = 0; p < patches->size(); p++) {
         const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_mat_manager->getNumMPMMatls();
+        int numMPMMatls    = d_mat_manager->getNumMaterials("MPM"));
         for (int m = 0; m < numMPMMatls; m++) {
-          MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+          MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
           int matID             = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
@@ -1502,11 +1502,11 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup*,
     printTask(patches, patch, cout_doing, "Doing computeParticleBodyForce");
 
     // Loop thru materials
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
 
       // Get the material ID
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       // Get the particle subset
@@ -1705,10 +1705,10 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
     // Place for user defined loading scenarios to be defined,
     // otherwise pExternalForce is just carried forward.
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -1961,7 +1961,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     printTask(patches, patch, cout_doing, "Doing interpolateParticlesToGrid");
 
-    int numMatls             = d_mat_manager->getNumMPMMatls();
+    int numMatls             = d_mat_manager->getNumMaterials("MPM"));
     auto interpolator        = flags->d_interpolator->clone(patch);
     auto linear_interpolator = std::make_unique<LinearInterpolator>(patch);
 
@@ -1994,7 +1994,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     gVelglobal.initialize(Vector(0.0));
     Ghost::GhostType gan = Ghost::AroundNodes;
     for (int m = 0; m < numMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       // Create arrays for the particle data
@@ -2286,7 +2286,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
   Ghost::GhostType gan = Ghost::AroundNodes;
   // Ghost::GhostType  gnone = Ghost::None;
 
-  auto numMPMMatls = d_mat_manager->getNumMPMMatls();
+  auto numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
   std::vector<constNCVariable<double>> gMass(numMPMMatls);
   std::vector<NCVariable<Point>> gPosition(numMPMMatls);
   std::vector<NCVariable<Vector>> gvelocity(numMPMMatls);
@@ -2317,7 +2317,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
 
     // Find surface normal at each material based on a gradient of nodal mass
     for (auto m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       new_dw->get(gMass[m], lb->gMassLabel, matID, patch, gan, 1);
 
@@ -2412,7 +2412,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
 
     // Make traditional norms unit length, compute gNormTraction
     for (auto m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       MPMBoundCond bc;
       bc.setBoundaryCondition(
@@ -2461,7 +2461,7 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
                                 DataWarehouse* old_dw,
                                 DataWarehouse* new_dw)
 {
-  auto numMPMMatls = d_mat_manager->getNumMPMMatls();
+  auto numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -2469,7 +2469,7 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
     printTask(patches, patch, cout_doing, "Doing findSurfaceParticles");
 
     for (int mat = 0; mat < numMPMMatls; mat++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", mat);
       int matID             = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
@@ -2549,7 +2549,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
 
-  auto numMPMMatls = d_mat_manager->getNumMPMMatls();
+  auto numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
   std::vector<constNCVariable<double>> gMass(numMPMMatls);
   std::vector<constParticleVariable<Point>> pX(numMPMMatls);
 
@@ -2595,7 +2595,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     // store a list of particle indices for each material at each node and
     // use those to point into the particle set to get the particle positions
     for (int mat = 0; mat < numMPMMatls; mat++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", mat);
       int matID             = mpm_matl->getDWIndex();
       new_dw->get(gMass[mat], lb->gMassLabel, matID, patch, gnone, 0);
       new_dw->allocateTemporary(gParticleList[mat], patch);
@@ -2630,7 +2630,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     // the last element in the array holds the number of entries in the
     // array.  I don't yet know how to allocate an STL container on the nodes.
     for (int mat = 0; mat < numMPMMatls; mat++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", mat);
       int matID             = mpm_matl->getDWIndex();
 
       ParticleSubset* pset =
@@ -2813,7 +2813,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     std::vector<NCVariable<double>> d_x_p_dot_n(numMPMMatls);
 
     for (int mat = 0; mat < numMPMMatls; mat++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", mat);
       int matID             = mpm_matl->getDWIndex();
 
       ParticleSubset* pset =
@@ -3066,13 +3066,13 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     std::vector<constNCVariable<Vector>> gVelocity(numMPMMatls);
     std::vector<constNCVariable<double>> gMass(numMPMMatls);
     // double rho_init[numMPMMatls];
     Vector dx = patch->dCell();
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // rho_init[m]=mpm_matl->getInitialDensity();
       Ghost::GhostType gac = Ghost::AroundCells;
@@ -3354,10 +3354,10 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
     std::vector<IntVector> ni(numInfluenceNodes);
     std::vector<double> S(numInfluenceNodes);
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     std::vector<NCVariable<Vector>> gext_force(numMPMMatls);
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* cz_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* cz_matl = d_mat_manager->getMaterial("MPM", m);
       int matID            = cz_matl->getDWIndex();
 
       new_dw->getModifiable(
@@ -3466,10 +3466,10 @@ SerialMPM::computeContactArea(const ProcessorGroup*,
 
     Vector dx = patch->dCell();
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       constNCVariable<double> gVolume;
 
@@ -3625,7 +3625,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
     std::vector<Vector> d_S(numInfluenceNodes);
     std::string interp_type = flags->d_interpolatorType;
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     NCVariable<Matrix3> gStressglobal;
     constNCVariable<double> gVolumeglobal;
@@ -3641,7 +3641,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
                            patch);
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // Create arrays for the particle position, volume
       // and the constitutive model
@@ -3975,8 +3975,8 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
     Ghost::GhostType gnone = Ghost::None;
     // Vector gravity = flags->d_gravity;
-    for (int m = 0; m < d_mat_manager->getNumMPMMatls(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    for (int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++) {
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       // Get required variables for this patch
@@ -4114,14 +4114,14 @@ SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing setGridBoundaryConditions");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
     std::string interp_type = flags->d_interpolatorType;
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       NCVariable<Vector> gVelocity_star, gAcceleration;
       constNCVariable<Vector> gVelocity;
@@ -4220,10 +4220,10 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matlID            = mpm_matl->getDWIndex();
       NCVariable<Vector> gVelocity_star, gAcceleration;
 
@@ -4572,12 +4572,12 @@ SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
   /* Create a task for computing the deformation gradient */
   printSchedule(patches, cout_doing, "MPM::scheduleComputeDeformationGradient");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task("MPM::computeDeformationGradient",
                         this,
                         &SerialMPM::computeDeformationGradient);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     // Add requires and computes for vel grad/def grad
     d_defGradComputer->addComputesAndRequires(t, mpm_matl, patches);
@@ -4612,9 +4612,9 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
     new_dw->print();
   }
   /*
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     int matID = mpm_matl->getDWIndex();
     for (int p = 0; p < patches->size(); p++) {
       const Patch* patch = patches->get(p);
@@ -4653,11 +4653,11 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
   /* Create a task for computing the stress tensor */
   printSchedule(patches, cout_doing, "MPM::scheduleComputeStressTensor");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task(
     "MPM::computeStressTensor", this, &SerialMPM::computeStressTensor);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     // Add requires and computes for constitutive model
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -4693,12 +4693,12 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
   printSchedule(
     patches, cout_doing, "MPM::scheduleUnrotateStressAndDeformationRate");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task("MPM::computeUnrotatedStressAndDeformationRate",
                         this,
                         &SerialMPM::computeUnrotatedStressAndDeformationRate);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -4732,9 +4732,9 @@ SerialMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
 {
   printTask(patches, patches->get(0), cout_doing, "Doing computeUnrotate");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -4785,14 +4785,14 @@ SerialMPM::computeStressTensor(const ProcessorGroup*,
 
   printTask(patches, patches->get(0), cout_doing, "Doing computeStressTensor");
 
-  for (int m = 0; m < d_mat_manager->getNumMPMMatls(); m++) {
+  for (int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++) {
 
     if (cout_dbg.active()) {
       cout_dbg << " Patch = " << (patches->get(0))->getID();
       cout_dbg << " Mat = " << m;
     }
 
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     if (cout_dbg.active())
       cout_dbg << " MPM_Mat = " << mpm_matl;
@@ -4834,11 +4834,11 @@ SerialMPM::scheduleRotateStress(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleRotateStress");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task(
     "MPM::computeRotatedStress", this, &SerialMPM::computeRotatedStress);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -4868,9 +4868,9 @@ SerialMPM::computeRotatedStress(const ProcessorGroup*,
 {
   printTask(patches, patches->get(0), cout_doing, "Doing computeRotate");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -4911,11 +4911,11 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
   /* Create a task for computing the damage variables */
   printSchedule(patches, cout_doing, "MPM::scheduleComputeBasicDamage");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task(
     "MPM::computeBasicDamage", this, &SerialMPM::computeBasicDamage);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     // Add requires and computes for vel grad/def grad
     if (mpm_matl->doBasicDamage()) {
@@ -4941,12 +4941,12 @@ SerialMPM::computeBasicDamage(const ProcessorGroup*,
 
   printTask(patches, patches->get(0), cout_doing, "Doing computeBasicDamage");
 
-  for (int m = 0; m < d_mat_manager->getNumMPMMatls(); m++) {
+  for (int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++) {
 
     if (cout_dbg.active())
       cout_dbg << " Patch = " << (patches->get(0))->getID() << " Mat = " << m;
 
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     if (cout_dbg.active())
       cout_dbg << " MPM_Mat = " << mpm_matl;
 
@@ -4981,9 +4981,9 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
 
   Task* t = scinew Task(
     "MPM::updateErosionParameter", this, &SerialMPM::updateErosionParameter);
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* d_basicDamageModel =
@@ -5022,13 +5022,13 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing updateErosionParameter");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
 
       if (cout_dbg.active())
         cout_dbg << "updateErosionParameter:: material # = " << m << "\n";
 
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -5150,10 +5150,10 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing findRogueParticles");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
 
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -5369,10 +5369,10 @@ SerialMPM::scheduleAddNewParticles(SchedulerP& sched,
   Task* t =
     scinew Task("MPM::addNewParticles", this, &SerialMPM::addNewParticles);
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     mpm_matl->getParticleCreator()->allocateVariablesAddRequires(
       t, mpm_matl, patches);
 
@@ -5411,25 +5411,25 @@ SerialMPM::addNewParticles(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing addNewParticles");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     // Find the mpm material that the void particles are going to change
     // into.
     MPMMaterial* null_matl = 0;
     int null_matID         = -1;
     for (int void_matl = 0; void_matl < numMPMMatls; void_matl++) {
-      null_matID = d_mat_manager->getMPMMaterial(void_matl)->nullGeomObject();
+      null_matID = d_mat_manager->getMaterial("MPM", void_matl)->nullGeomObject();
 
       if (cout_dbg.active())
         cout_dbg << "Null DWI = " << null_matID << "\n";
 
       if (null_matID != -1) {
-        null_matl  = d_mat_manager->getMPMMaterial(void_matl);
+        null_matl  = d_mat_manager->getMaterial("MPM", void_matl);
         null_matID = null_matl->getDWIndex();
         break;
       }
     }
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       if (matID == null_matID)
         continue;
@@ -5575,7 +5575,7 @@ SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
                         this,
                         &SerialMPM::convertLocalizedParticles);
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   if (cout_convert.active())
     cout_convert << "MPM:scheduleConvertLocalizedParticles : numMatls = "
@@ -5583,7 +5583,7 @@ SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
 
   for (int m = 0; m < numMatls; m += 2) {
 
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     if (cout_convert.active())
       cout_convert << " Material = " << m << " mpm_matl = " << mpm_matl << "\n";
 
@@ -5643,7 +5643,7 @@ SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing convertLocalizedParticles");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     if (cout_convert.active()) {
       cout_convert << "MPM::convertLocalizeParticles:: on patch"
@@ -5656,7 +5656,7 @@ SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
       if (cout_convert.active())
         cout_convert << " material # = " << m << "\n";
 
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -5718,7 +5718,7 @@ SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
                        << " in patch " << p << "\n";
         }
 
-        MPMMaterial* conv_matl = d_mat_manager->getMPMMaterial(m + 1);
+        MPMMaterial* conv_matl = d_mat_manager->getMaterial("MPM", m + 1);
         int conv_matID         = conv_matl->getDWIndex();
 
         ParticleCreator* particle_creator = conv_matl->getParticleCreator();
@@ -5957,7 +5957,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     Vector CMX(0.0, 0.0, 0.0);
     Vector totalMom(0.0, 0.0, 0.0);
     double ke       = 0;
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
     // bool combustion_problem=false;
@@ -5982,7 +5982,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     NC_CCweight_new.copyData(NC_CCweight);
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -6452,7 +6452,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
     Vector totalMom(0.0, 0.0, 0.0);
     double ke = 0;
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
@@ -6461,7 +6461,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       move_particles = 0.;
     }
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> pX;
@@ -6617,7 +6617,7 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
     printTask(
       patches, patch, cout_doing, "Doing interpolateParticleVelToGridMom");
 
-    int numMatls           = d_mat_manager->getNumMPMMatls();
+    int numMatls           = d_mat_manager->getNumMaterials("MPM"));
     auto interpolator      = flags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
     std::vector<IntVector> ni(numInfluenceNodes);
@@ -6626,7 +6626,7 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
     Ghost::GhostType gan   = Ghost::AroundNodes;
     Ghost::GhostType gnone = Ghost::None;
     for (int m = 0; m < numMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       // Create arrays for the particle data
@@ -6793,7 +6793,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
     double thermal_energy = 0.0;
     double totalmass      = 0;
     double partvoldef     = 0.;
-    int numMPMMatls       = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls       = d_mat_manager->getNumMaterials("MPM"));
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
     // bool combustion_problem=false;
@@ -6807,7 +6807,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
     //}
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> pX;
@@ -7052,9 +7052,9 @@ SerialMPM::insertParticles(const ProcessorGroup*,
     }
 
     if (index >= 0) {
-      int numMPMMatls = d_mat_manager->getNumMPMMatls();
+      int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
       for (int m = 0; m < numMPMMatls; m++) {
-        MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+        MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
         int matID             = mpm_matl->getDWIndex();
         ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -7139,7 +7139,7 @@ SerialMPM::addParticles(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing addParticles");
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     // Carry forward CellNAPID
     constCCVariable<short int> NAPID;
@@ -7150,7 +7150,7 @@ SerialMPM::addParticles(const ProcessorGroup*,
     NAPID_new.copyData(NAPID);
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -7383,9 +7383,9 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing computeParticleScaleFactor");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       ParticleSubset* pset  = old_dw->getParticleSubset(matID, patch);
 
@@ -7432,11 +7432,11 @@ SerialMPM::scheduleCheckNeedAddMPMMaterial(SchedulerP& sched,
 {
   printSchedule(patches, cout_doing, "MPM::scheduleCheckNeedAddMPMMaterial");
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   Task* t      = scinew Task(
     "MPM::checkNeedAddMPMMaterial", this, &SerialMPM::checkNeedAddMPMMaterial);
   for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->scheduleCheckNeedAddMPMMaterial(t, mpm_matl, patches);
   }
@@ -7456,8 +7456,8 @@ SerialMPM::checkNeedAddMPMMaterial(const ProcessorGroup*,
 {
   // printSchedule(patches, cout_doing, "MPM::checkNeedAddMPMMaterial");
 
-  for (int m = 0; m < d_mat_manager->getNumMPMMatls(); m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+  for (int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++) {
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->checkNeedAddMPMMaterial(patches, mpm_matl, old_dw, new_dw);
   }
@@ -7510,9 +7510,9 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches));
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<int> pLocalized;
@@ -7592,9 +7592,9 @@ SerialMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     t->computes(lb->AccStrainEnergyLabel);
   }
 
-  int numMPM = d_mat_manager->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMaterials("MPM"));
   for (int m = 0; m < numMPM; m++) {
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
     // For deformation gradient computer
     d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
@@ -7631,7 +7631,7 @@ SerialMPM::refine(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing refine");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     // First do NC_CCweight
     NCVariable<double> NC_CCweight;
@@ -7659,7 +7659,7 @@ SerialMPM::refine(const ProcessorGroup*,
     }
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       if (cout_doing.active()) {
@@ -7889,8 +7889,8 @@ SerialMPM::initialErrorEstimate(const ProcessorGroup*,
 
     PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
 
-    for (int m = 0; m < d_mat_manager->getNumMPMMatls(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    for (int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++) {
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
       // Loop over particles
       ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
@@ -7953,7 +7953,7 @@ SerialMPM::totalParticleCount(const ProcessorGroup*,
     long int totalParticles = 0;
 
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID             = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
@@ -8008,7 +8008,7 @@ SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
                         &SerialMPM::actuallyInitializeAddedMaterial);
 
   int numALLMatls          = d_mat_manager->getNumMaterials();
-  int numMPMMatls          = d_mat_manager->getNumMPMMatls();
+  int numMPMMatls          = d_mat_manager->getNumMaterials("MPM"));
   MaterialSubset* add_matl = scinew MaterialSubset();
   std::cout << "Added Material = " << numALLMatls - 1 << "\n";
   add_matl->add(numALLMatls - 1);
@@ -8045,7 +8045,7 @@ SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
     t->computes(lb->AccStrainEnergyLabel);
   }
 
-  MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(numMPMMatls - 1);
+  MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", numMPMMatls - 1);
 
   // Add vel grad/def grad computes
   d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
@@ -8084,11 +8084,11 @@ SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     printTask(
       patches, patch, cout_doing, "Doing actuallyInitializeAddedMaterial");
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     std::cout << "num MPM Matls = " << numMPMMatls << "\n";
     CCVariable<short int> cellNAPID;
     int m                 = numMPMMatls - 1;
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     new_dw->unfinalize();
     // particleIndex numParticles =
     mpm_matl->createParticles(cellNAPID, patch, new_dw);

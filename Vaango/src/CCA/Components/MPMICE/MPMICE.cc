@@ -31,7 +31,7 @@
 #include <CCA/Components/ICE/ICE.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPMICE/MPMICE.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/RigidMPM.h>
 #include <CCA/Components/MPM/SerialMPM.h>
 #include <CCA/Components/MPM/ShellMPM.h>
@@ -1095,12 +1095,12 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     //  Even if mass = 0 in a cell you still need
     //  CC Variables defined.
     double junk=-9, tmp;
-    int numMPM_matls = d_mat_manager->getNumMPMMatls();
+    int numMPM_matls = d_mat_manager->getNumMaterials("MPM"));
     double p_ref = d_ice->getRefPress();
     for (int m = 0; m < numMPM_matls; m++ ) {
       CCVariable<double> rho_micro, sp_vol_CC, rho_CC, Temp_CC, speedSound, vol_frac_CC;
       CCVariable<Vector> vel_CC;
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int indx= mpm_matl->getDWIndex();
       new_dw->allocateTemporary(rho_micro, patch);
       // Allocate volume fraction for use in intializeCCVariables
@@ -1382,8 +1382,8 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
     Ghost::GhostType  gac = Ghost::AroundCells;
     new_dw->get(pressNC, MIlb->press_NCLabel,  0, patch, gac, NGN);
 
-    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(indx, patch);
@@ -1428,7 +1428,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches,patch,cout_doing,"Doing interpolateNCToCC_0");
 
-    int numMatls = d_mat_manager->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMaterials("MPM"));
     Vector dx = patch->dCell();
     double cell_vol = dx.x()*dx.y()*dx.z(); 
     Ghost::GhostType  gac = Ghost::AroundCells;
@@ -1438,7 +1438,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
     old_dw->get(NC_CCweight, Mlb->NC_CCweightLabel,  0, patch, gac, 1);
 
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
       // Create arrays for the grid data
       constNCVariable<double> gmass, gvolume, gtemperature, gSp_vol;
@@ -1580,7 +1580,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches,patch,cout_doing,"Doing computeLagrangianValuesMPM");
 
-    int numMatls = d_mat_manager->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMaterials("MPM"));
     Vector dx = patch->dCell();
     double cellVol = dx.x()*dx.y()*dx.z();
     double very_small_mass = d_TINY_RHO * cellVol; 
@@ -1590,7 +1590,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
     constNCVariable<double> NC_CCweight;
     old_dw->get(NC_CCweight,       Mlb->NC_CCweightLabel, 0,patch, gac, 1);
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
 
       // Create arrays for the grid data
@@ -1780,13 +1780,13 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
     //__________________________________
     // This is where I interpolate the CC 
     // changes to NCs for the MPMMatls
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label());
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
       CCVariable<double> dTdt_CC,heatRate;
       CCVariable<Vector> dVdt_CC;
@@ -1867,13 +1867,13 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     //__________________________________
     // This is where I interpolate the CC 
     // changes to NCs for the MPMMatls
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
 
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label());
 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
       NCVariable<Vector> gacceleration, gvelocity;
       NCVariable<double> dTdt_NC,massBurnFraction;
@@ -1971,7 +1971,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
     double    c_2;
     double press_ref= d_ice->getRefPress();
     int numICEMatls = d_mat_manager->getNumICEMatls();
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     int numALLMatls = numICEMatls + numMPMMatls;
 
     Vector dx       = patch->dCell(); 
@@ -3121,10 +3121,10 @@ MPMICE::refine(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches,patch,cout_doing,"Doing refine");
 
-    int numMPMMatls=d_mat_manager->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int dwi = mpm_matl->getDWIndex();
 
       cout_doing << d_myworld->myRank() << " Doing refine on patch "

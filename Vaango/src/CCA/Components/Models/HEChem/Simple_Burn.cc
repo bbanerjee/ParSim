@@ -371,7 +371,7 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
  
     IntVector nodeIdx[8];
     
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m0);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m0);
     double cv_solid = mpm_matl->getSpecificHeat();
    
 

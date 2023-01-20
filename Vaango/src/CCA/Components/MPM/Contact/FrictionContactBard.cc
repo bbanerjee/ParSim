@@ -147,7 +147,7 @@ FrictionContactBard::exMomInterpolated(const ProcessorGroup*,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once
@@ -336,7 +336,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
 {
   Ghost::GhostType  gnone = Ghost::None;
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
@@ -525,7 +525,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
 
     // This converts frictional work into a temperature rate
     for (int mat = 0; mat < matls->size(); mat++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(mat);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", mat);
       if (!d_matls.requested(mat)) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           gFrictionWork[mat][*iter] = 0;

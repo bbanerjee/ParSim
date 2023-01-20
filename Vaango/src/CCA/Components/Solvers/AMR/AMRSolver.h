@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +29,7 @@
 /*--------------------------------------------------------------------------
 CLASS
    AMRSolver
-   
+
    A Hypre solver component for AMR grids.
 
 GENERAL INFORMATION
@@ -40,16 +41,16 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
   AMRSolver, HypreDriver, HypreSolverParams, HypreSolverBase.
 
-DESCRIPTION 
+DESCRIPTION
    Class AMRSolver is the main solver component that
    interfaces to Hypre's structured and semi-structured system
    interfaces.
-  
+
 WARNING
    * This interface is written for Hypre 1.9.0b (released 2005).
    --------------------------------------------------------------------------*/
@@ -59,47 +60,52 @@ WARNING
 
 namespace Uintah {
 
-  class AMRSolver :
-    public SolverInterface, public UintahParallelComponent { 
+class AMRSolver
+  : public SolverInterface
+  , public UintahParallelComponent
+{
 
-   
-  public:
+public:
+  AMRSolver(const ProcessorGroup* myworld);
+  virtual ~AMRSolver();
 
-    AMRSolver(const ProcessorGroup* myworld);
-    virtual ~AMRSolver();
+  virtual void
+  readParameters(ProblemSpecP& params,
+                 const std::string& name,
+                 MaterialManagerP& mat_manager);
 
-    virtual SolverParameters* readParameters(ProblemSpecP& params,
-                                             const std::string& name,
-                                             MaterialManagerP& mat_manager);
+  virtual void
+  readParameters(ProblemSpecP& params, const std::string& name);
 
-    virtual SolverParameters* readParameters(ProblemSpecP& params,
-                                             const std::string& name);
+  virtual void
+  scheduleSolve(const LevelP& level,
+                SchedulerP& sched,
+                const MaterialSet* matls,
+                const VarLabel* A,
+                Task::WhichDW which_A_dw,
+                const VarLabel* x,
+                bool modifies_x,
+                const VarLabel* b,
+                Task::WhichDW which_b_dw,
+                const VarLabel* guess,
+                Task::WhichDW which_guess_dw,
+                const SolverParameters* params,
+                bool modifies_hypre = false);
 
-    virtual void scheduleSolve( const LevelP           & level,
-                                      SchedulerP       & sched,
-                                const MaterialSet      * matls,
-                                const VarLabel         * A,    
-                                      Task::WhichDW      which_A_dw,  
-                                const VarLabel         * x,
-                                      bool               modifies_x,
-                                const VarLabel         * b,    
-                                      Task::WhichDW      which_b_dw,  
-                                const VarLabel         * guess,
-                                      Task::WhichDW      which_guess_dw,
-                                const SolverParameters * params,
-                                      bool               modifies_hypre = false );
-                               
-    virtual std::string getName();
-    
-    // AMRSolver does not require initialization... but we need an empty
-   // routine to satisfy inheritance.
-    virtual void scheduleInitialize( const LevelP      & level,
-                                           SchedulerP  & sched,
-                                     const MaterialSet * matls ) {}
+  virtual std::string
+  getName();
 
-  private:
+  // AMRSolver does not require initialization... but we need an empty
+  // routine to satisfy inheritance.
+  virtual void
+  scheduleInitialize(const LevelP& level,
+                     SchedulerP& sched,
+                     const MaterialSet* matls)
+  {
+  }
 
-  };
-}
+private:
+};
+} // namespace Uintah
 
-#endif 
+#endif

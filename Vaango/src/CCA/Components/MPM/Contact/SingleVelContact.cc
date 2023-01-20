@@ -33,7 +33,7 @@
 // contact as can be gotten using "automatic" contact.
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
@@ -85,7 +85,7 @@ SingleVelContact::exchangeMomentum(const ProcessorGroup*,
                                    DataWarehouse* old_dw, DataWarehouse* new_dw,
                                    const VarLabel* gVelocity_label)
 {
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   ASSERTEQ(numMatls, matls->size());
 
   for (int p = 0; p < patches->size(); p++) {

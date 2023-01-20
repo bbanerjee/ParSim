@@ -47,7 +47,7 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
@@ -103,8 +103,8 @@ void RigidMPM::computeStressTensor(const ProcessorGroup*,
   if (cout_doing.active())
     cout_doing <<"Doing computeStressTensor " <<"\t\t\t\t RigidMPM"<< endl;
 
-  for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+  for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->carryForward(patches, mpm_matl, old_dw, new_dw);
   }
@@ -177,8 +177,8 @@ void RigidMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,"Doing computeAndIntegrateAcceleration");
 
     Ghost::GhostType  gnone = Ghost::None;
-    for(int m = 0; m < d_mat_manager->getNumMPMMatls(); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int dwi = mpm_matl->getDWIndex();
 
       // Get required variables for this patch
@@ -301,7 +301,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     Vector CMX(0.0,0.0,0.0);
     Vector total_mom(0.0,0.0,0.0);
     double ke=0;
-    int numMPMMatls=d_mat_manager->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
 
@@ -313,7 +313,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     */
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int dwi = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;

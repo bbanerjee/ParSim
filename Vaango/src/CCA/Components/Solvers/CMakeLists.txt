@@ -24,8 +24,8 @@
 #
 
 SET(Vaango_CCA_Components_Solvers_SRCS
+  SolverCommon.cc
   CGSolver.cc
-  DirectSolve.cc
   SolverFactory.cc
 )
 

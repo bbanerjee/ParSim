@@ -24,7 +24,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
 #include <Core/Grid/AMR.h>

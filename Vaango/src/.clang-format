@@ -14,4 +14,7 @@ BinPackArguments: false
 
 BinPackParameters: false
 
+FixNamespaceComments: true
+
 InsertBraces: true
+

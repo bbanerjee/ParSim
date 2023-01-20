@@ -502,7 +502,7 @@ void DDT0::computeModelSources(const ProcessorGroup*,
       }
     }
     
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m0);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m0);
     double cv_rct = mpm_matl->getSpecificHeat();
          
     //__________________________________

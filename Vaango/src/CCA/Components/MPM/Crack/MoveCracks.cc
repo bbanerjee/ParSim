@@ -111,7 +111,7 @@ Crack::CrackPointSubset(const ProcessorGroup*,
     MPI_Comm_rank(mpi_crack_comm, &pid);
     MPI_Comm_size(mpi_crack_comm, &patch_size);
 
-    int numMPMMatls=d_mat_manager->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
     for(int m=0; m<numMPMMatls; m++) {
       cnset[m][pid].clear();
       
@@ -183,7 +183,7 @@ Crack::MoveCracks(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label(),getLevel(patches) );
 
-    int numMPMMatls=d_mat_manager->getNumMPMMatls();
+    int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
     for(int m = 0; m < numMPMMatls; m++){ 
       if((int)ce[m].size()==0) // for materials with no cracks
         continue;
@@ -192,7 +192,7 @@ Crack::MoveCracks(const ProcessorGroup*,
       // Task 1: Move crack nodes (cx)
      
       // Get the necessary information
-      MPMMaterial* mpm_matl=d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl=d_mat_manager->getMaterial("MPM", m);
       int dwi=mpm_matl->getDWIndex();
 
       ParticleSubset* pset=old_dw->getParticleSubset(dwi,patch);

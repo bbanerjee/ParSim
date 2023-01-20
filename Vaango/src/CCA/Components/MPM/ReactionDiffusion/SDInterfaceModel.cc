@@ -54,9 +54,9 @@ SDInterfaceModel::~SDInterfaceModel(){
 void SDInterfaceModel::addInitialComputesAndRequires(Task* task,
                                                      const PatchSet* patches) const
 {
-  int numMPM = d_mat_manager->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMaterials("MPM"));
   for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->addInitialComputesAndRequires(task, mpm_matl, patches);
   }
@@ -65,9 +65,9 @@ void SDInterfaceModel::addInitialComputesAndRequires(Task* task,
 void SDInterfaceModel::initializeSDMData(const Patch* patch,
                                          DataWarehouse* new_dw)
 {
-  int numMPM = d_mat_manager->getNumMPMMatls();
+  int numMPM = d_mat_manager->getNumMaterials("MPM"));
   for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->initializeSDMData(patch, mpm_matl, new_dw);
   }
@@ -78,10 +78,10 @@ void SDInterfaceModel::computeDivergence(const Patch* patch,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   for(int m = 0; m < numMatls; m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->computeDivergence(patch, mpm_matl, old_dw, new_dw);
   }

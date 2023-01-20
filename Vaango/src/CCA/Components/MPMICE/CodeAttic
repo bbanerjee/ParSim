@@ -54,7 +54,7 @@ void MPMICE::interpolateVelIncFCToNC(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    int numMatls = d_mat_manager->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMaterials("MPM"));
     Vector zero(0.0,0.0,0.);
     SFCXVariable<double> uvel_FC, uvel_FCME;
     SFCYVariable<double> vvel_FC, vvel_FCME;
@@ -64,7 +64,7 @@ void MPMICE::interpolateVelIncFCToNC(const ProcessorGroup*,
     NCVariable<Vector> gvelocity;
 
     for(int m = 0; m < numMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int dwindex = mpm_matl->getDWIndex();
       new_dw->get(uvel_FC,   Ilb->uvel_FCLabel,   dwindex, patch,Ghost::None,0);
       new_dw->get(vvel_FC,   Ilb->vvel_FCLabel,   dwindex, patch,Ghost::None,0);
@@ -357,7 +357,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     //__________________________________
     // This is where I interpolate the CC
     // changes to NCs for the MPMMatls
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
                                                                                 
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label());
@@ -365,7 +365,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     Ghost::GhostType  gn  = Ghost::None;
                                                                                 
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       int indx = mpm_matl->getDWIndex();
       NCVariable<Vector> gacceleration, gvelocity;
       NCVariable<double> dTdt_NC;
@@ -528,7 +528,7 @@ void MPMICE::computeRateFormPressure(const ProcessorGroup*,
     double tmp;
     double press_ref= d_mat_manager->getRefPress();
     int numICEMatls = d_mat_manager->getNumICEMatls();
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     int numALLMatls = numICEMatls + numMPMMatls;
 
     Vector dx       = patch->dCell(); 

@@ -95,9 +95,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
 
     MPI_Datatype MPI_POINT = fun_getTypeDescription((Point*)0)->getMPIType();
 
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       // Cell mass of the material
@@ -373,7 +373,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     Vector dx          = patch->dCell();
     double dx_bar      = (dx.x() + dx.y() + dx.z()) / 3.;
-    int numMPMMatls    = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls    = d_mat_manager->getNumMaterials("MPM"));
 
     for (int m = 0; m < numMPMMatls; m++) {
       if (doCrackPropagation) {

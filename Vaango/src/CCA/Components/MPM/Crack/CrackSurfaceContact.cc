@@ -121,7 +121,7 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
     double ma,mb,dvan,dvbn,dvat,dvbt,ratioa,ratiob;
     Vector va,vb,vc,dva,dvb,ta,tb,na,nb,norm;
 
-    int numMatls = d_mat_manager->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMaterials("MPM"));
     ASSERTEQ(numMatls, matls->size());
 
     // Nodal solutions above crack
@@ -302,7 +302,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
     double ma,mb,dvan,dvbn,dvat,dvbt,ratioa,ratiob;
     Vector aa,ab,va0,va,vb0,vb,vc,dva,dvb,ta,tb,na,nb,norm;
 
-    int numMatls = d_mat_manager->getNumMPMMatls();
+    int numMatls = d_mat_manager->getNumMaterials("MPM"));
     ASSERTEQ(numMatls, matls->size());
 
     // Nodal solutions above crack

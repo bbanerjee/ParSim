@@ -306,11 +306,11 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
     for (int pp = 0; pp < patches->size(); pp++) {
       const Patch* patch = patches->get(pp);
 
-      int numMPMMatls=d_mat_manager->getNumMPMMatls();
+      int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
       for(int m = 0; m < numMPMMatls; m++){
 
         // Get particle info and patch info
-        MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+        MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
 
         // Compute deformation gradient
         computeDeformationGradientImplicit(patch, mpm_matl, delT, old_dw, new_dw);
@@ -330,11 +330,11 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
       const Patch* patch = patches->get(pp);
 
       //std::cout << "Compute def grad .. 1 .. pp = " << pp << " patch = " << patch << "\n"; 
-      int numMPMMatls=d_mat_manager->getNumMPMMatls();
+      int numMPMMatls=d_mat_manager->getNumMaterials("MPM"));
       for(int m = 0; m < numMPMMatls; m++){
 
         // Get particle info and patch info
-        MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+        MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
         //std::cout << "Compute def grad .. 2 .. pp = " << pp << " m = " << m << " mpm_matl = " << mpm_matl << "\n"; 
 
         // Compute deformation gradient
@@ -366,9 +366,9 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
 
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial( m );
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
       computeDeformationGradientImplicit(patch, mpm_matl, delT, old_dw, parent_old_dw, new_dw);
     }
   }
@@ -1120,7 +1120,7 @@ void DeformationGradientComputer::copyAndDeleteForConvert(DataWarehouse* new_dw,
   // For example:
   //    auto matID_add = addset->getMatlIndex();
   //    auto matID_del = delset->getMatlIndex();
-  //    MPMMaterial* mpm_matl_add = d_mat_manager->getMPMMaterial(matID_add);
+  //    MPMMaterial* mpm_matl_add = d_mat_manager->getMaterial("MPM", matID_add);
   //    ConstitutiveModel* cm_add = mpm_matl_add->getConstitutiveModel();
   //    .....
 

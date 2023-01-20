@@ -797,7 +797,7 @@ Crack::CrackDiscretization(const ProcessorGroup*,
     }
 
     // Allocate memories for crack mesh
-    int numMPMMatls = d_mat_manager->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
     css.resize(numMPMMatls);
     csa.resize(numMPMMatls);
     cx.resize(numMPMMatls);

@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/FrictionContact.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/IntVector.h>
@@ -167,7 +167,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
@@ -352,7 +352,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 
     // This converts frictional work into a temperature rate
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
 
       if (!d_matls.requested(m)) {
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();

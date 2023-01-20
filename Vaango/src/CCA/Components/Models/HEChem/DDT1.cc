@@ -1087,7 +1087,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
     surfTemp.initialize(0.);
    
 
-    MPMMaterial* mpm_matl = d_mat_manager->getMPMMaterial(m0);
+    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m0);
     double cv_rct = mpm_matl->getSpecificHeat();
    
     double cell_vol = dx.x()*dx.y()*dx.z();

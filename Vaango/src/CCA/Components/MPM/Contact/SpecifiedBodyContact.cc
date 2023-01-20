@@ -27,7 +27,7 @@
 // SpecifiedBodyContact.cc
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/SpecifiedBodyContact.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -198,7 +198,7 @@ SpecifiedBodyContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -246,7 +246,7 @@ SpecifiedBodyContact::computeNormalBasedExchange(const Patch* patch,
                                                  NCVectorArray& gVelocity_star)
 {
   Ghost::GhostType gnone = Ghost::None;
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   Vector dx = patch->dCell();
   double cell_vol = dx.x() * dx.y() * dx.z();
@@ -307,7 +307,7 @@ SpecifiedBodyContact::computeDirectionBasedExchange(const Patch* patch,
                                                     NCVectorArray& gVelocity_star)
 {
   Ghost::GhostType gnone = Ghost::None;
-  int numMatls = d_mat_manager->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM"));
 
   Vector dx = patch->dCell();
   double cell_vol = dx.x() * dx.y() * dx.z();
