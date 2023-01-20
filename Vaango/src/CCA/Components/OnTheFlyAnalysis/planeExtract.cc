@@ -79,7 +79,7 @@ void planeExtract::problemSetup(const ProblemSpecP& ,
 {
   DOUTR(dbg_OTF_PE , "Doing problemSetup \t\t\t\tplaneExtract" );
 
-  int numMatls  = m_materialManager->getNumMatls();
+  int numMatls  = m_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -159,26 +159,26 @@ void planeExtract::problemSetup(const ProblemSpecP& ,
     bool throwException = false;
 
     // only CC, SFCX, SFCY, SFCZ variables
-    if(td->getType() != TypeDescription::CCVariable   &&
-       td->getType() != TypeDescription::SFCXVariable &&
-       td->getType() != TypeDescription::SFCYVariable &&
-       td->getType() != TypeDescription::SFCZVariable ){
+    if(td->getType() != TypeDescription::Type::CCVariable   &&
+       td->getType() != TypeDescription::Type::SFCXVariable &&
+       td->getType() != TypeDescription::Type::SFCYVariable &&
+       td->getType() != TypeDescription::Type::SFCZVariable ){
        throwException = true;
     }
     // CC Variables, only Doubles, int Vectors and Stencil7
-    if(td->getType() != TypeDescription::CCVariable       &&
-       subtype->getType() != TypeDescription::double_type &&
-       subtype->getType() != TypeDescription::int_type    &&
-       subtype->getType() != TypeDescription::Vector      &&
-       subtype->getType() != TypeDescription::Stencil7 ){
+    if(td->getType() != TypeDescription::Type::CCVariable       &&
+       subtype->getType() != TypeDescription::Type::double_type &&
+       subtype->getType() != TypeDescription::Type::int_type    &&
+       subtype->getType() != TypeDescription::Type::Vector      &&
+       subtype->getType() != TypeDescription::Type::Stencil7 ){
       throwException = true;
     }
     // Face Centered Vars, only Doubles & Vectors
-    if( (td->getType() == TypeDescription::SFCXVariable ||
-         td->getType() == TypeDescription::SFCYVariable ||
-         td->getType() == TypeDescription::SFCZVariable)    &&
-         subtype->getType() != TypeDescription::double_type &&
-         subtype->getType() != TypeDescription::Vector ){
+    if( (td->getType() == TypeDescription::Type::SFCXVariable ||
+         td->getType() == TypeDescription::Type::SFCYVariable ||
+         td->getType() == TypeDescription::Type::SFCZVariable)    &&
+         subtype->getType() != TypeDescription::Type::double_type &&
+         subtype->getType() != TypeDescription::Type::Vector ){
       throwException = true;
     }
     if(throwException){
@@ -447,24 +447,24 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
             switch( td->getType() ){
               //__________________________________
               //            CC Variables
-              case Uintah::TypeDescription::CCVariable: {
+              case Uintah::TypeDescription::Type::CCVariable: {
                 offset = Vector(0,0,0);
 
                 switch( subtype->getType( )) {
 
-                  case Uintah::TypeDescription::double_type:
+                  case Uintah::TypeDescription::Type::double_type:
                     writeDataD< constCCVariable<double> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::Vector:
+                  case Uintah::TypeDescription::Type::Vector:
                     writeDataV< constCCVariable<Vector> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::int_type:
+                  case Uintah::TypeDescription::Type::int_type:
                     writeDataI< constCCVariable<int> >(      new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::Stencil7:
+                  case Uintah::TypeDescription::Type::Stencil7:
                     writeDataS7< constCCVariable<Stencil7> >(new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
                   default:
@@ -476,20 +476,20 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
 
               //__________________________________
               //            SFCXVariables
-              case Uintah::TypeDescription::SFCXVariable: {
+              case Uintah::TypeDescription::Type::SFCXVariable: {
                 offset.x( -dx.x()/2 );
 
                 switch( subtype->getType( )) {
 
-                  case Uintah::TypeDescription::double_type:
+                  case Uintah::TypeDescription::Type::double_type:
                     writeDataD< constSFCXVariable<double> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::Vector:
+                  case Uintah::TypeDescription::Type::Vector:
                     writeDataV< constSFCXVariable<Vector> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::int_type:
+                  case Uintah::TypeDescription::Type::int_type:
                     writeDataI< constSFCXVariable<int> >(      new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
@@ -502,20 +502,20 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
 
               //__________________________________
               //            SFCYVariables
-              case Uintah::TypeDescription::SFCYVariable: {
+              case Uintah::TypeDescription::Type::SFCYVariable: {
                 offset.y( -dx.y()/2 );
 
                 switch( subtype->getType( )) {
 
-                  case Uintah::TypeDescription::double_type:
+                  case Uintah::TypeDescription::Type::double_type:
                     writeDataD< constSFCYVariable<double> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::Vector:
+                  case Uintah::TypeDescription::Type::Vector:
                     writeDataV< constSFCYVariable<Vector> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::int_type:
+                  case Uintah::TypeDescription::Type::int_type:
                     writeDataI< constSFCYVariable<int> >(      new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
@@ -528,20 +528,20 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
 
               //__________________________________
               //            SFCZVariables
-              case Uintah::TypeDescription::SFCZVariable: {
+              case Uintah::TypeDescription::Type::SFCZVariable: {
                 offset.z( -dx.z()/2 );
 
                 switch( subtype->getType( )) {
 
-                  case Uintah::TypeDescription::double_type:
+                  case Uintah::TypeDescription::Type::double_type:
                     writeDataD< constSFCZVariable<double> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::Vector:
+                  case Uintah::TypeDescription::Type::Vector:
                     writeDataV< constSFCZVariable<Vector> >(   new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
-                  case Uintah::TypeDescription::int_type:
+                  case Uintah::TypeDescription::Type::int_type:
                     writeDataI< constSFCZVariable<int> >(      new_dw, varLabel, matl, patch, offset, iterLim, fp );
                     break;
 
@@ -598,19 +598,19 @@ void planeExtract::createFile(const string& filename,
 
   switch( subtype->getType( )) {
 
-    case Uintah::TypeDescription::double_type:
+    case Uintah::TypeDescription::Type::double_type:
       fprintf(fp,"                       %s(%i)", labelName.c_str(), matl);
       break;
 
-    case Uintah::TypeDescription::Vector:
+    case Uintah::TypeDescription::Type::Vector:
       fprintf(fp,"                       %s(%i).x      %s(%i).y      %s(%i).z", labelName.c_str(), matl, labelName.c_str(), matl, labelName.c_str(), matl);
       break;
 
-    case Uintah::TypeDescription::int_type:
+    case Uintah::TypeDescription::Type::int_type:
       fprintf(fp,"                       %s(%i)", labelName.c_str(), matl);
       break;
 
-    case Uintah::TypeDescription::Stencil7:
+    case Uintah::TypeDescription::Type::Stencil7:
       fprintf(fp,"                       %s(%i).n      s      e      w      t      b      p", labelName.c_str(), matl );
       break;
     default:
@@ -729,15 +729,15 @@ planeExtract::getIterator( const Uintah::TypeDescription* td,
   int y=0;
   int z=0;
   switch( td->getType() ){
-    case Uintah::TypeDescription::CCVariable:
+    case Uintah::TypeDescription::Type::CCVariable:
       break;
-    case Uintah::TypeDescription::SFCXVariable:
+    case Uintah::TypeDescription::Type::SFCXVariable:
       x = patch->getBCType(Patch::xplus) != Patch::Neighbor?1:0;
       break;
-    case Uintah::TypeDescription::SFCYVariable:
+    case Uintah::TypeDescription::Type::SFCYVariable:
       y = patch->getBCType(Patch::yplus) != Patch::Neighbor?1:0;
       break;
-    case Uintah::TypeDescription::SFCZVariable:
+    case Uintah::TypeDescription::Type::SFCZVariable:
       z = patch->getBCType(Patch::zplus) != Patch::Neighbor?1:0;
       break;
     default:

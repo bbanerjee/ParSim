@@ -3204,11 +3204,11 @@ OnDemandDataWarehouse::emitPIDX(PIDXOutputContext& pc,
                                   h);
 
     switch (label->typeDescription()->getType()) {
-      case TypeDescription::NCVariable:
-      case TypeDescription::CCVariable:
-      case TypeDescription::SFCXVariable:
-      case TypeDescription::SFCYVariable:
-      case TypeDescription::SFCZVariable:
+      case TypeDescription::Type::NCVariable:
+      case TypeDescription::Type::CCVariable:
+      case TypeDescription::Type::SFCXVariable:
+      case TypeDescription::Type::SFCYVariable:
+      case TypeDescription::Type::SFCZVariable:
         // get list
         {
           std::vector<Variable*> varlist;
@@ -3233,7 +3233,7 @@ OnDemandDataWarehouse::emitPIDX(PIDXOutputContext& pc,
           var = v;
         }
         break;
-      case TypeDescription::ParticleVariable:
+      case TypeDescription::Type::ParticleVariable:
       case TypeDescription::PerPatch:
       default:
         if (m_var_DB.exists(label, matlIndex, patch)) {

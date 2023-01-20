@@ -1884,7 +1884,7 @@ DataArchive::restartInitialize(int index,
               const IntVector bl(0, 0, 0);
 
               if (label->typeDescription()->getType() ==
-                  TypeDescription::ParticleVariable) {
+                  TypeDescription::Type::ParticleVariable) {
 
                 int matlIndex = vmp.matlIndex_;
 

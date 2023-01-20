@@ -233,23 +233,23 @@ void planeAverage::problemSetup(const ProblemSpecP&,
       const TypeDescription::Type subType  = subtype->getType();
 
       // only CC, SFCX, SFCY, SFCZ variables
-      if(baseType != TypeDescription::CCVariable &&
-         baseType != TypeDescription::SFCXVariable &&
-         baseType != TypeDescription::SFCYVariable &&
-         baseType != TypeDescription::SFCZVariable ){
+      if(baseType != TypeDescription::Type::CCVariable &&
+         baseType != TypeDescription::Type::SFCXVariable &&
+         baseType != TypeDescription::Type::SFCYVariable &&
+         baseType != TypeDescription::Type::SFCZVariable ){
          throwException = true;
       }
       // CC Variables, only Doubles and Vectors
-      if(baseType != TypeDescription::CCVariable &&
-         subType  != TypeDescription::double_type &&
-         subType  != TypeDescription::Vector  ){
+      if(baseType != TypeDescription::Type::CCVariable &&
+         subType  != TypeDescription::Type::double_type &&
+         subType  != TypeDescription::Type::Vector  ){
         throwException = true;
       }
       // Face Centered Vars, only Doubles
-      if( (baseType == TypeDescription::SFCXVariable ||
-           baseType == TypeDescription::SFCYVariable ||
-           baseType == TypeDescription::SFCZVariable) &&
-           subType != TypeDescription::double_type) {
+      if( (baseType == TypeDescription::Type::SFCXVariable ||
+           baseType == TypeDescription::Type::SFCYVariable ||
+           baseType == TypeDescription::Type::SFCZVariable) &&
+           subType != TypeDescription::Type::double_type) {
         throwException = true;
       }
 
@@ -263,7 +263,7 @@ void planeAverage::problemSetup(const ProblemSpecP&,
       //__________________________________
       //  populate the vector of averages
       // double
-      if( subType == TypeDescription::double_type ) {
+      if( subType == TypeDescription::Type::double_type ) {
         planarVar_double* me = new planarVar_double();
         me->label      = label;
         me->matl       = matl;
@@ -276,7 +276,7 @@ void planeAverage::problemSetup(const ProblemSpecP&,
 
       }
       // Vectors
-      if( subType == TypeDescription::Vector ) {
+      if( subType == TypeDescription::Type::Vector ) {
         planarVar_Vector* me = new planarVar_Vector();
         me->label      = label;
         me->matl       = matl;
@@ -602,15 +602,15 @@ void planeAverage::computePlanarSums(const ProcessorGroup * pg,
       switch( type ){
 
         // CC Variables
-        case TypeDescription::CCVariable: {
+        case TypeDescription::Type::CCVariable: {
 
           GridIterator iter=patch->getCellIterator();
           switch( subType ) {
-            case TypeDescription::double_type:{         // CC double
+            case TypeDescription::Type::double_type:{         // CC double
               planarSum_Q <constCCVariable<double>, double > ( new_dw, analyzeVar, patch, iter );
               break;
             }
-            case TypeDescription::Vector: {             // CC Vector
+            case TypeDescription::Type::Vector: {             // CC Vector
               planarSum_Q< constCCVariable<Vector>, Vector > ( new_dw, analyzeVar, patch, iter );
               break;
             }
@@ -620,17 +620,17 @@ void planeAverage::computePlanarSums(const ProcessorGroup * pg,
           break;
         }
 
-        case TypeDescription::SFCXVariable: {         // SFCX double
+        case TypeDescription::Type::SFCXVariable: {         // SFCX double
           GridIterator iter=patch->getSFCXIterator();
           planarSum_Q <constSFCXVariable<double>, double > ( new_dw, analyzeVar, patch, iter );
           break;
         }
-        case TypeDescription::SFCYVariable: {         // SFCY double
+        case TypeDescription::Type::SFCYVariable: {         // SFCY double
           GridIterator iter=patch->getSFCYIterator();
           planarSum_Q <constSFCYVariable<double>, double > ( new_dw, analyzeVar, patch, iter );
           break;
         }
-        case TypeDescription::SFCZVariable: {         // SFCZ double
+        case TypeDescription::Type::SFCZVariable: {         // SFCZ double
           GridIterator iter=patch->getSFCZIterator();
           planarSum_Q <constSFCZVariable<double>, double > ( new_dw, analyzeVar, patch, iter );
           break;

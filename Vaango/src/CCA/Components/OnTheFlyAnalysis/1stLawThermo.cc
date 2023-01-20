@@ -25,7 +25,7 @@
 #include <CCA/Components/OnTheFlyAnalysis/1stLawThermo.h>
 #include <CCA/Components/OnTheFlyAnalysis/FileInfoVar.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Materials/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/Scheduler.h>
 
 #include <Core/Grid/Box.h>

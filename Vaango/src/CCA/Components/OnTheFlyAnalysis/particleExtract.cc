@@ -128,11 +128,11 @@ void particleExtract::problemSetup(const ProblemSpecP& ,
     bool throwException = false;
 
     // only certain particle types can be extracted
-    if( td->getType() != TypeDescription::ParticleVariable ||
-        ( subtype->getType() != TypeDescription::double_type &&
-          subtype->getType() != TypeDescription::int_type    &&
-          subtype->getType() != TypeDescription::Vector      &&
-          subtype->getType() != TypeDescription::Matrix3 ) ) {
+    if( td->getType() != TypeDescription::Type::ParticleVariable ||
+        ( subtype->getType() != TypeDescription::Type::double_type &&
+          subtype->getType() != TypeDescription::Type::int_type    &&
+          subtype->getType() != TypeDescription::Type::Vector      &&
+          subtype->getType() != TypeDescription::Type::Matrix3 ) ) {
       throwException = true;
     }
     if( throwException ){
@@ -430,25 +430,25 @@ particleExtract::doAnalysis( const ProcessorGroup * pg,
         const TypeDescription* subtype = td->getSubType();
 
         switch(td->getType()){
-          case TypeDescription::ParticleVariable:
+          case TypeDescription::Type::ParticleVariable:
             switch(subtype->getType()) {
 
-            case TypeDescription::double_type:
+            case TypeDescription::Type::double_type:
               new_dw->get(p_double, d_varLabels[i], pset);
               double_data.push_back(p_double);
               break;
 
-            case TypeDescription::Vector:
+            case TypeDescription::Type::Vector:
               new_dw->get(p_Vector, d_varLabels[i], pset);
               Vector_data.push_back(p_Vector);
               break;
 
-            case TypeDescription::int_type:
+            case TypeDescription::Type::int_type:
               new_dw->get(p_integer, d_varLabels[i], pset);
               integer_data.push_back(p_integer);
               break;
 
-            case TypeDescription::Matrix3:
+            case TypeDescription::Type::Matrix3:
               new_dw->get(p_Matrix3, d_varLabels[i], pset);
               Matrix3_data.push_back(p_Matrix3);
               break;
@@ -563,17 +563,17 @@ void particleExtract::createFile(string& filename, FILE*& fp)
     const TypeDescription* subtype = td->getSubType();
     const string name = d_varLabels[i]->getName();
 
-    if( subtype->getType() == TypeDescription::int_type    ||
-        subtype->getType() == TypeDescription::double_type ){
+    if( subtype->getType() == TypeDescription::Type::int_type    ||
+        subtype->getType() == TypeDescription::Type::double_type ){
       fprintf(fp,"     %s", name.c_str());
     }
 
-    if(subtype->getType() == TypeDescription::Vector){
+    if(subtype->getType() == TypeDescription::Type::Vector){
       string name = d_varLabels[i]->getName();
       fprintf(fp,"     %s.x      %s.y      %s.z", name.c_str(),name.c_str(),name.c_str());
     }
 
-    if(subtype->getType() == TypeDescription::Matrix3){
+    if(subtype->getType() == TypeDescription::Type::Matrix3){
       string name = d_varLabels[i]->getName();
       for (int row = 0; row<3; row++){
         fprintf(fp,"     %s(%i,0)      %s(%i,1)      %s(%i,2)", name.c_str(),row,name.c_str(),row,name.c_str(),row);

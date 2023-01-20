@@ -109,7 +109,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
   DOUTR(dout_OTF_spatialAvg, "Doing spatialAvg::problemSetup");
 
 
-  int numMatls  = m_materialManager->getNumMatls();
+  int numMatls  = m_materialManager->getNumMaterials();
 
   proc0cout << "__________________________________Data Analysis module: spatialAvg" << endl;
   proc0cout << "         Computing spatial average for all of the variables listed"<< endl;
@@ -202,10 +202,10 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
     const Uintah::TypeDescription* td = label->typeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if( td->getType() != TypeDescription::CCVariable  ||
-        ( subtype->getType() != TypeDescription::double_type &&
+    if( td->getType() != TypeDescription::Type::CCVariable  ||
+        ( subtype->getType() != TypeDescription::Type::double_type &&
           subtype->getType() != TypeDescription::float_type &&
-          subtype->getType() != TypeDescription::Vector ) ) {
+          subtype->getType() != TypeDescription::Type::Vector ) ) {
       ostringstream warn;
       warn << "ERROR:Module:spatialAvg: ("<<label->getName() << " " << td->getName() << " ) has not been implemented\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -283,7 +283,7 @@ void spatialAvg::initialize(const ProcessorGroup  *,
 
       switch(Q.subtype->getType()) {
 
-        case TypeDescription::double_type:{         // double
+        case TypeDescription::Type::double_type:{         // double
           allocateAndZeroLabels<double>( new_dw,  patch,  Q );
           break;
         }
@@ -291,7 +291,7 @@ void spatialAvg::initialize(const ProcessorGroup  *,
           allocateAndZeroLabels<float>( new_dw,  patch,  Q );
           break;
         }
-        case TypeDescription::Vector: {             // Vector
+        case TypeDescription::Type::Vector: {             // Vector
           allocateAndZeroLabels<Vector>( new_dw,  patch,  Q );
           break;
         }
@@ -356,7 +356,7 @@ void spatialAvg::doAnalysis(const ProcessorGroup * pg,
 
       switch(Q.subtype->getType()) {
 
-        case TypeDescription::double_type:{         // double
+        case TypeDescription::Type::double_type:{         // double
           computeAvgWrapper<double>(old_dw, new_dw, patches, patch, Q);
           break;
         }
@@ -364,7 +364,7 @@ void spatialAvg::doAnalysis(const ProcessorGroup * pg,
           computeAvgWrapper<float>(old_dw, new_dw, patches, patch, Q);
           break;
         }
-        case TypeDescription::Vector: {             // Vector
+        case TypeDescription::Type::Vector: {             // Vector
           computeAvgWrapper<Vector>(old_dw, new_dw, patches,  patch, Q);
           break;
         }

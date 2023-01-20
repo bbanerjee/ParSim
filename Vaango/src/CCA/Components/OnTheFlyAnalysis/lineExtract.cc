@@ -94,7 +94,7 @@ void lineExtract::problemSetup(const ProblemSpecP& ,
 {
   DOUTR( dout_OTF_LE, "Doing lineExtract::problemSetup" );
 
-  int numMatls  = m_materialManager->getNumMatls();
+  int numMatls  = m_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -170,25 +170,25 @@ void lineExtract::problemSetup(const ProblemSpecP& ,
     bool throwException = false;
 
     // only CC, SFCX, SFCY, SFCZ variables
-    if(td->getType() != TypeDescription::CCVariable   &&
-       td->getType() != TypeDescription::SFCXVariable &&
-       td->getType() != TypeDescription::SFCYVariable &&
-       td->getType() != TypeDescription::SFCZVariable ){
+    if(td->getType() != TypeDescription::Type::CCVariable   &&
+       td->getType() != TypeDescription::Type::SFCXVariable &&
+       td->getType() != TypeDescription::Type::SFCYVariable &&
+       td->getType() != TypeDescription::Type::SFCZVariable ){
        throwException = true;
     }
     // CC Variables, only Doubles and Vectors
-    if(td->getType() != TypeDescription::CCVariable       &&
-       subtype->getType() != TypeDescription::double_type &&
-       subtype->getType() != TypeDescription::int_type    &&
-       subtype->getType() != TypeDescription::Vector  ){
+    if(td->getType() != TypeDescription::Type::CCVariable       &&
+       subtype->getType() != TypeDescription::Type::double_type &&
+       subtype->getType() != TypeDescription::Type::int_type    &&
+       subtype->getType() != TypeDescription::Type::Vector  ){
       throwException = true;
     }
     // Face Centered Vars, only Doubles
-    if( (td->getType() == TypeDescription::SFCXVariable ||
-         td->getType() == TypeDescription::SFCYVariable ||
-         td->getType() == TypeDescription::SFCZVariable)    &&
-        (subtype->getType() != TypeDescription::double_type &&
-         subtype->getType() != TypeDescription::Vector) ) {
+    if( (td->getType() == TypeDescription::Type::SFCXVariable ||
+         td->getType() == TypeDescription::Type::SFCYVariable ||
+         td->getType() == TypeDescription::Type::SFCZVariable)    &&
+        (subtype->getType() != TypeDescription::Type::double_type &&
+         subtype->getType() != TypeDescription::Type::Vector) ) {
       throwException = true;
     }
     if(throwException){
@@ -457,20 +457,20 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
 
         int indx = d_varMatl[i];
         switch(td->getType()){
-          case Uintah::TypeDescription::CCVariable:      // CC Variables
+          case Uintah::TypeDescription::Type::CCVariable:      // CC Variables
             switch(subtype->getType()) {
 
-            case Uintah::TypeDescription::double_type:
+            case Uintah::TypeDescription::Type::double_type:
               new_dw->get(q_CC_double, d_varLabels[i], indx, patch, gac, 1);
               CC_double_data.push_back(q_CC_double);
               break;
 
-            case Uintah::TypeDescription::Vector:
+            case Uintah::TypeDescription::Type::Vector:
               new_dw->get(q_CC_Vector, d_varLabels[i], indx, patch, gac, 1);
               CC_Vector_data.push_back(q_CC_Vector);
               break;
 
-            case Uintah::TypeDescription::int_type:
+            case Uintah::TypeDescription::Type::int_type:
               new_dw->get(q_CC_integer, d_varLabels[i], indx, patch, gac, 1);
               CC_integer_data.push_back(q_CC_integer);
               break;
@@ -478,15 +478,15 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
               throw InternalError("LineExtract: invalid data type", __FILE__, __LINE__);
             }
             break;
-          case Uintah::TypeDescription::SFCXVariable:   // SFCX Variables
+          case Uintah::TypeDescription::Type::SFCXVariable:   // SFCX Variables
 
             switch( subtype->getType() ) {
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 new_dw->get( q_SFCX_double, d_varLabels[i], indx, patch, gac, 1 );
                 SFCX_double_data.push_back( q_SFCX_double );
                 break;
 
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 new_dw->get( q_SFCX_Vector, d_varLabels[i], indx, patch, gac, 1 );
                 SFCX_Vector_data.push_back( q_SFCX_Vector );
                 break;
@@ -494,14 +494,14 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
                 throw InternalError("LineExtract: invalid data type", __FILE__, __LINE__);
             }
             break;
-          case Uintah::TypeDescription::SFCYVariable:    // SFCY Variables
+          case Uintah::TypeDescription::Type::SFCYVariable:    // SFCY Variables
             switch( subtype->getType() ) {
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 new_dw->get( q_SFCY_double, d_varLabels[i], indx, patch, gac, 1 );
                 SFCY_double_data.push_back( q_SFCY_double );
                 break;
 
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 new_dw->get( q_SFCY_Vector, d_varLabels[i], indx, patch, gac, 1 );
                 SFCY_Vector_data.push_back( q_SFCY_Vector );
                 break;
@@ -509,14 +509,14 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
                 throw InternalError("LineExtract: invalid data type", __FILE__, __LINE__);
             }
             break;
-          case Uintah::TypeDescription::SFCZVariable:   // SFCZ Variables
+          case Uintah::TypeDescription::Type::SFCZVariable:   // SFCZ Variables
             switch( subtype->getType() ) {
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 new_dw->get( q_SFCZ_double, d_varLabels[i], indx, patch, gac, 1 );
                 SFCZ_double_data.push_back( q_SFCZ_double );
                 break;
 
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 new_dw->get( q_SFCZ_Vector, d_varLabels[i], indx, patch, gac, 1 );
                 SFCZ_Vector_data.push_back( q_SFCZ_Vector );
                 break;
@@ -662,10 +662,10 @@ void lineExtract::createFile( const string& filename,
                                     d_col_width,"Z_CC",
                                     d_col_width,"Time [s]");
 
-  printHeader( fp,TypeDescription::CCVariable);
-  printHeader( fp,TypeDescription::SFCXVariable);
-  printHeader( fp,TypeDescription::SFCYVariable);
-  printHeader( fp,TypeDescription::SFCZVariable);
+  printHeader( fp,TypeDescription::Type::CCVariable);
+  printHeader( fp,TypeDescription::Type::SFCXVariable);
+  printHeader( fp,TypeDescription::Type::SFCYVariable);
+  printHeader( fp,TypeDescription::Type::SFCZVariable);
 
   fprintf(fp,"\n");
   fflush(fp);
@@ -687,8 +687,8 @@ lineExtract::printHeader( FILE*& fp,
     const Uintah::TypeDescription* subtype = td->getSubType();
 
     if(td->getType()      == myType &&
-       (subtype->getType() == TypeDescription::double_type ||
-        subtype->getType() == TypeDescription::int_type ) ){
+       (subtype->getType() == TypeDescription::Type::double_type ||
+        subtype->getType() == TypeDescription::Type::int_type ) ){
       string name = d_varLabels[i]->getName();
 
       ostringstream colDesc;
@@ -706,7 +706,7 @@ lineExtract::printHeader( FILE*& fp,
     const Uintah::TypeDescription* subtype = td->getSubType();
 
     if( td->getType()      == myType  &&
-        subtype->getType() == TypeDescription::Vector ){
+        subtype->getType() == TypeDescription::Type::Vector ){
       string name = d_varLabels[i]->getName();
 
       ostringstream colDescX;

@@ -110,7 +110,7 @@ void vorticity::problemSetup(const ProblemSpecP& ,
 #ifdef HAVE_VISIT
   static bool initialized = false;
 
-  if( m_application->getVisIt() && !initialized ) {
+  if( d_simulator->getVisIt() && !initialized ) {
     required = true;
 
     initialized = true;

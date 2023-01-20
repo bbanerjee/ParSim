@@ -167,14 +167,14 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& ,
 #ifdef HAVE_VISIT
   static bool initialized = false;
 
-  if( m_application->getVisIt() && !initialized ) {
+  if( d_simulator->getVisIt() && !initialized ) {
     ApplicationInterface::analysisVar aVar;
     aVar.component = "Analysis-FlatPlate";
     aVar.name      = M_lb->gHeatFluxLabel->getName();
     aVar.matl      = d_matl->getDWIndex();
     aVar.level     = -1;
     aVar.labels.push_back( v_lb->total_heatRateLabel );
-    m_application->getAnalysisVars().push_back(aVar);
+    d_simulator->getAnalysisVars().push_back(aVar);
 
     initialized = true;
   }

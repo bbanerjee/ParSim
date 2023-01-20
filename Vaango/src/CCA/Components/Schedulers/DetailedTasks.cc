@@ -1765,7 +1765,7 @@ DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
 
     // erase particle sends/recvs
     if (req->m_var->typeDescription()->getType() ==
-          TypeDescription::ParticleVariable &&
+          TypeDescription::Type::ParticleVariable &&
         req->m_whichdw == Task::OldDW) {
       PSPatchMatlGhostRange pmg(fromPatch,
                                 matl,
@@ -1857,7 +1857,7 @@ DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
   //  these are to post all the particle quantities up front - sort them in
   //  TG::createDetailedDepenedencies
   if (req->m_var->typeDescription()->getType() ==
-        TypeDescription::ParticleVariable &&
+        TypeDescription::Type::ParticleVariable &&
       req->m_whichdw == Task::OldDW) {
     PSPatchMatlGhostRange pmg = PSPatchMatlGhostRange(fromPatch,
                                                       matl,

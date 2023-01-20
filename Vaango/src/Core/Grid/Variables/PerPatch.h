@@ -37,6 +37,7 @@
 #include <cstring>
 #include <iosfwd>
 #include <memory>
+#include <iostream>
 
 namespace Uintah {
 

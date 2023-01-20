@@ -64,7 +64,7 @@ AnalysisModule::AnalysisModule(const ProcessorGroup* myworld,
   // Delta t
   VarLabel* nonconstDelT =
     VarLabel::create(delT_name, delt_vartype::getTypeDescription());
-  nonconstDelT->schedReductionTask(false);
+  nonconstDelT->isReductionTask(false);
   m_delTLabel = nonconstDelT;
 }
 //______________________________________________________________________
@@ -130,11 +130,11 @@ AnalysisModule::getComponents()
 void
 AnalysisModule::releaseComponents()
 {
-  releasePort("application");
+  releasePort("simulator");
   releasePort("scheduler");
   releasePort("output");
 
-  m_application = nullptr;
+  m_simulator = nullptr;
   m_scheduler   = nullptr;
   m_output      = nullptr;
 }

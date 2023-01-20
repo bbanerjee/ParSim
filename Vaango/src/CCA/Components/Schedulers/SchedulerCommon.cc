@@ -213,7 +213,7 @@ SchedulerCommon::makeTaskGraphDoc([[maybe_unused]] const DetailedTasks* dtasks,
   // before the task graph execution.  As such, one should also be
   // checking:
 
-  // m_application->activeReductionVariable( "outputInterval" );
+  // d_simulator->activeReductionVariable( "outputInterval" );
 
   // However, if active, the code below would be called regardless if
   // an output or checkpoint time step or not. That is probably not

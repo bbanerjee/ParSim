@@ -1421,8 +1421,8 @@ UnifiedScheduler::runTasks(int thread_id)
           // than turned on before the task graph execution.  As such,
           // one should also be checking:
 
-          // m_application->activeReductionVariable( "outputInterval" );
-          // m_application->activeReductionVariable( "checkpointInterval" );
+          // d_simulator->activeReductionVariable( "outputInterval" );
+          // d_simulator->activeReductionVariable( "checkpointInterval" );
 
           // However, if active the code below would be called regardless
           // if an output or checkpoint time step or not. Not sure that is
@@ -1583,13 +1583,13 @@ UnifiedScheduler::prepareGpuDependencies(DetailedTask* dtask,
       }
 
       switch (label->typeDescription()->getType()) {
-        case TypeDescription::ParticleVariable: {
+        case TypeDescription::Type::ParticleVariable: {
         } break;
-        case TypeDescription::NCVariable:
-        case TypeDescription::CCVariable:
-        case TypeDescription::SFCXVariable:
-        case TypeDescription::SFCYVariable:
-        case TypeDescription::SFCZVariable: {
+        case TypeDescription::Type::NCVariable:
+        case TypeDescription::Type::CCVariable:
+        case TypeDescription::Type::SFCXVariable:
+        case TypeDescription::Type::SFCYVariable:
+        case TypeDescription::Type::SFCZVariable: {
 
           // TODO, This compiles a list of regions we need to copy into
           // contiguous arrays. We don't yet handle a scenario where the ghost
@@ -2170,11 +2170,11 @@ UnifiedScheduler::initiateH2DCopies(DetailedTask* dtask)
       curDependency->m_var->typeDescription()->getType();
 
     // make sure we're dealing with a variable we support
-    if (type == TypeDescription::CCVariable ||
-        type == TypeDescription::NCVariable ||
-        type == TypeDescription::SFCXVariable ||
-        type == TypeDescription::SFCYVariable ||
-        type == TypeDescription::SFCZVariable ||
+    if (type == TypeDescription::Type::CCVariable ||
+        type == TypeDescription::Type::NCVariable ||
+        type == TypeDescription::Type::SFCXVariable ||
+        type == TypeDescription::Type::SFCYVariable ||
+        type == TypeDescription::Type::SFCZVariable ||
         type == TypeDescription::PerPatch ||
         type == TypeDescription::ReductionVariable) {
 
@@ -2967,11 +2967,11 @@ UnifiedScheduler::initiateH2DCopies(DetailedTask* dtask)
           // upcoming allocateAndPut will notice that and simply configure it to
           // reuse the pointer.
 
-          if (type == TypeDescription::CCVariable ||
-              type == TypeDescription::NCVariable ||
-              type == TypeDescription::SFCXVariable ||
-              type == TypeDescription::SFCYVariable ||
-              type == TypeDescription::SFCZVariable) {
+          if (type == TypeDescription::Type::CCVariable ||
+              type == TypeDescription::Type::NCVariable ||
+              type == TypeDescription::Type::SFCXVariable ||
+              type == TypeDescription::Type::SFCYVariable ||
+              type == TypeDescription::Type::SFCZVariable) {
 
             // Queue this CPU var to go into the host-side GPU DW.
             // Also queue that this GPU DW var should also be found in this
@@ -3109,11 +3109,11 @@ UnifiedScheduler::initiateH2DCopies(DetailedTask* dtask)
                                                curDependency,
                                                deviceIndex);
 
-        } else if (type == TypeDescription::CCVariable ||
-                   type == TypeDescription::NCVariable ||
-                   type == TypeDescription::SFCXVariable ||
-                   type == TypeDescription::SFCYVariable ||
-                   type == TypeDescription::SFCZVariable) {
+        } else if (type == TypeDescription::Type::CCVariable ||
+                   type == TypeDescription::Type::NCVariable ||
+                   type == TypeDescription::Type::SFCXVariable ||
+                   type == TypeDescription::Type::SFCYVariable ||
+                   type == TypeDescription::Type::SFCZVariable) {
 
           dtask->getDeviceVars().add(patch,
                                      matlID,
@@ -3271,11 +3271,11 @@ UnifiedScheduler::prepareDeviceVars(DetailedTask* dtask)
               delete reductionVar;
               break;
             }
-            case TypeDescription::CCVariable:
-            case TypeDescription::NCVariable:
-            case TypeDescription::SFCXVariable:
-            case TypeDescription::SFCYVariable:
-            case TypeDescription::SFCZVariable: {
+            case TypeDescription::Type::CCVariable:
+            case TypeDescription::Type::NCVariable:
+            case TypeDescription::Type::SFCXVariable:
+            case TypeDescription::Type::SFCYVariable:
+            case TypeDescription::Type::SFCZVariable: {
               GPUGridVariableBase* device_var =
                 OnDemandDataWarehouse::createGPUGridVariable(subtype);
 
@@ -3388,11 +3388,11 @@ UnifiedScheduler::prepareDeviceVars(DetailedTask* dtask)
                 // The variable exists in host memory.  We just have to get one
                 // and copy it on in.
                 switch (type) {
-                  case TypeDescription::CCVariable:
-                  case TypeDescription::NCVariable:
-                  case TypeDescription::SFCXVariable:
-                  case TypeDescription::SFCYVariable:
-                  case TypeDescription::SFCZVariable: {
+                  case TypeDescription::Type::CCVariable:
+                  case TypeDescription::Type::NCVariable:
+                  case TypeDescription::Type::SFCXVariable:
+                  case TypeDescription::Type::SFCYVariable:
+                  case TypeDescription::Type::SFCZVariable: {
 
                     // The var on the host could either be a regular var or a
                     // foreign var.
@@ -3688,11 +3688,11 @@ UnifiedScheduler::prepareTaskVarsIntoTaskDW(DetailedTask* dtask)
         switch (it->second.m_dep->m_var->typeDescription()->getType()) {
           case TypeDescription::PerPatch:
           case TypeDescription::ReductionVariable:
-          case TypeDescription::CCVariable:
-          case TypeDescription::NCVariable:
-          case TypeDescription::SFCXVariable:
-          case TypeDescription::SFCYVariable:
-          case TypeDescription::SFCZVariable: {
+          case TypeDescription::Type::CCVariable:
+          case TypeDescription::Type::NCVariable:
+          case TypeDescription::Type::SFCXVariable:
+          case TypeDescription::Type::SFCYVariable:
+          case TypeDescription::Type::SFCZVariable: {
 
             int dwIndex = it->second.m_dep->mapDataWarehouse();
             GPUDataWarehouse* gpudw =
@@ -4495,11 +4495,11 @@ UnifiedScheduler::initiateD2HForHugeGhostCells(DetailedTask* dtask)
               const TypeDescription::Type datatype =
                 comp->m_var->typeDescription()->getSubType()->getType();
               switch (type) {
-                case TypeDescription::CCVariable:
-                case TypeDescription::NCVariable:
-                case TypeDescription::SFCXVariable:
-                case TypeDescription::SFCYVariable:
-                case TypeDescription::SFCZVariable: {
+                case TypeDescription::Type::CCVariable:
+                case TypeDescription::Type::NCVariable:
+                case TypeDescription::Type::SFCXVariable:
+                case TypeDescription::Type::SFCYVariable:
+                case TypeDescription::Type::SFCZVariable: {
 
                   if (gpu_stats.active()) {
                     cerrLock.lock();
@@ -4882,11 +4882,11 @@ UnifiedScheduler::initiateD2H(DetailedTask* dtask)
         const TypeDescription::Type datatype =
           dependantVar->m_var->typeDescription()->getSubType()->getType();
         switch (type) {
-          case TypeDescription::CCVariable:
-          case TypeDescription::NCVariable:
-          case TypeDescription::SFCXVariable:
-          case TypeDescription::SFCYVariable:
-          case TypeDescription::SFCZVariable: {
+          case TypeDescription::Type::CCVariable:
+          case TypeDescription::Type::NCVariable:
+          case TypeDescription::Type::SFCXVariable:
+          case TypeDescription::Type::SFCYVariable:
+          case TypeDescription::Type::SFCZVariable: {
 
             if (gpu_stats.active()) {
               cerrLock.lock();
@@ -5689,8 +5689,8 @@ UnifiedScheduler::findIntAndExtGpuDependencies(DetailedTask* dtask,
         // turned on before the task graph execution.  As such, one
         // should also be checking:
 
-        // m_application->activeReductionVariable( "outputInterval" );
-        // m_application->activeReductionVariable( "checkpointInterval" );
+        // d_simulator->activeReductionVariable( "outputInterval" );
+        // d_simulator->activeReductionVariable( "checkpointInterval" );
 
         // However, if active the code below would be called regardless
         // if an output or checkpoint time step or not. Not sure that is

@@ -111,11 +111,11 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
 {
   DOUTR(dbg_OTF_TF, "turbulentFluxes::problemSetup" );
 
-  int numMatls  = m_materialManager->getNumMatls();
+  int numMatls  = m_materialManager->getNumMaterials();
 
   //__________________________________
   //  Bulletproofing, no adaptivity
-  bool amr = m_application->isDynamicRegridding();
+  bool amr = m_simulator->isDynamicRegridding();
 
   if( amr){
     std::string err;
@@ -204,9 +204,9 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
     const TypeDescription * td_V   = CCVariable<Vector>::getTypeDescription();
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if( td->getType() != TypeDescription::CCVariable  ||
-        ( subtype->getType() != TypeDescription::double_type &&
-          subtype->getType() != TypeDescription::Vector ) ) {
+    if( td->getType() != TypeDescription::Type::CCVariable  ||
+        ( subtype->getType() != TypeDescription::Type::double_type &&
+          subtype->getType() != TypeDescription::Type::Vector ) ) {
       ostringstream warn;
       warn << "ERROR:AnalysisModule:turbulentFluxes: ("<<label->getName() << " " << td->getName() << " ) has not been implemented\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -367,11 +367,11 @@ void turbulentFluxes::initialize( const ProcessorGroup *,
 
       switch(Q->subtype->getType()) {
 
-        case TypeDescription::double_type:{         // double
+        case TypeDescription::Type::double_type:{         // double
           allocateAndZeroAll<double>(  new_dw, patch, Q);
           break;
         }
-        case TypeDescription::Vector: {             // Vector
+        case TypeDescription::Type::Vector: {             // Vector
           allocateAndZeroAll<Vector>(  new_dw, patch, Q);
           break;
         }
@@ -513,11 +513,11 @@ void turbulentFluxes::task_Q_mean( const ProcessorGroup * ,
 
       switch(Q->subtype->getType()) {
 
-        case TypeDescription::double_type:{         // double
+        case TypeDescription::Type::double_type:{         // double
           Q_mean< double >( old_dw, new_dw, patch, Q, vel, curr_timestep );
           break;
         }
-        case TypeDescription::Vector: {             // Vector
+        case TypeDescription::Type::Vector: {             // Vector
           Q_mean< Vector >( old_dw, new_dw, patch, Q, vel, curr_timestep );
 
           break;
@@ -683,11 +683,11 @@ void turbulentFluxes::task_turbFluxes( const ProcessorGroup  * ,
 
         switch(Q->subtype->getType()) {
 
-        case TypeDescription::double_type:{         // double
+        case TypeDescription::Type::double_type:{         // double
           turbFluxes< double >( new_dw, patch, Q, velMean );
           break;
         }
-        case TypeDescription::Vector: {             // Vector
+        case TypeDescription::Type::Vector: {             // Vector
           turbFluxes< Vector >( new_dw, patch, Q, velMean );
 
           break;

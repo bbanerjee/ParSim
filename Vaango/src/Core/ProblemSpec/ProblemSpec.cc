@@ -185,6 +185,28 @@ ProblemSpec::findBlockWithAttribute(const std::string& name,
   return 0;
 }
 
+//  Finds:  <Block attribute = "value">
+ProblemSpecP
+ProblemSpec::findBlockWithAttributeValue(const string& name,
+                                         const string& attribute,
+                                         const string& value) const
+{
+  for (ProblemSpecP ps = this->findBlock(name); ps != nullptr;
+       ps              = ps->findNextBlock(name)) {
+
+    string attr = "";
+    ps->getAttribute(attribute, attr);
+
+    if (attr == value) {
+      return ps;
+    } else {
+      continue;
+    }
+  }
+
+  return nullptr;
+}
+
 ProblemSpecP
 ProblemSpec::findBlockWithOutAttribute(const std::string& name) const
 

@@ -27,15 +27,18 @@
 SET(Vaango_CCA_Components_OnTheFlyAnalysis_SRCS
   AnalysisModuleFactory.cc 
   AnalysisModule.cc         
+  controlVolume.cc
+  controlVolFluxes.cc
+  FileInfoVar.cc
   lineExtract.cc         
-  planeExtract.cc         
-  flatPlate_heatFlux.cc  
-  particleExtract.cc  
-  containerExtract.cc  
-  momentumAnalysis.cc
-  vorticity.cc
-  1stLawThermo.cc
+  meanTurbFluxes.cc
   MinMax.cc
+  momentumAnalysis.cc
+  planeAverage.cc         
+  planeExtract.cc         
+  particleExtract.cc  
+  statistics.cc
+  turbulentFluxes.cc
 )
 
 ADD_LIBRARY(Vaango_CCA_Components_OnTheFlyAnalysis ${Vaango_CCA_Components_OnTheFlyAnalysis_SRCS})

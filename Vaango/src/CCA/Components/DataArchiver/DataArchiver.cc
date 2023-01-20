@@ -2670,7 +2670,7 @@ DataArchiver::outputGlobalVars(const ProcessorGroup*,
     double walltime(0);
 
     // The wall time is not available here
-    // if (m_application->getWallTimeMax() > 0) {
+    // if (d_simulator->getWallTimeMax() > 0) {
     //   walltime = m_wall_timers.GetWallTime();
     // }
     // else {
@@ -3409,7 +3409,7 @@ DataArchiver::saveLabels_PIDX(const ProcessorGroup* pg,
       var_mat_name = label->getName() + "_m" + s.str();
 
       bool isParticle = (label->typeDescription()->getType() ==
-                         Uintah::TypeDescription::ParticleVariable);
+                         Uintah::TypeDescription::Type::ParticleVariable);
 
       rc = PIDX_variable_create((char*)var_mat_name.c_str(),
                                 /* isParticle, <- Add this to PIDX spec*/
