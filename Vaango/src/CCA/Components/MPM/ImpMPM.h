@@ -40,7 +40,7 @@
 #include <Core/Grid/Patch.h>
 #include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ImpMPMFlags.h>
-#include <CCA/Components/MPM/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <CCA/Components/MPM/Solver.h>
 #include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
 #include <Core/Grid/Variables/ComputeSet.h>

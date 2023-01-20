@@ -24,10 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __PARTICLE_CREATOR_H__
-#define __PARTICLE_CREATOR_H__
-
-#include <Core/Parallel/CrowdMonitor.h>
+#ifndef ____CCA_COMPONENTS_MPM_PARTICLE_CREATOR_PARTICLECREATOR_H____
+#define ____CCA_COMPONENTS_MPM_PARTICLE_CREATOR_PARTICLECREATOR_H____
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/MaterialManager.h>
@@ -35,6 +33,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
+
 #include <map>
 #include <vector>
 
@@ -49,6 +48,8 @@ class DataWarehouse;
 class MPMFlags;
 class MPMMaterial;
 class MPMLabel;
+class AMRMPMLabel;
+class HydroMPMLabel;
 class ParticleSubset;
 class VarLabel;
 
@@ -71,6 +72,7 @@ public:
 
   std::vector<const VarLabel*>
   returnParticleState();
+
   std::vector<const VarLabel*>
   returnParticleStatePreReloc();
 
@@ -85,9 +87,14 @@ public:
     GeomReal d_object_vols;
     GeomReal d_object_temps;
     GeomReal d_object_colors;
+    GeomReal d_object_concentration;
+    GeomReal d_object_poscharge;
+    GeomReal d_object_negcharge;
+    GeomReal d_object_permittivity;
     GeomVector d_object_forces;
     GeomVector d_object_fibers;
     GeomVector d_object_velocity; // gcd add
+    GeomVector d_object_area;
     GeomMatrix3 d_object_size;
   };
 
@@ -102,13 +109,18 @@ public:
     ParticleVariable<long64> pParticleID;
     ParticleVariable<Vector> pFiberDir;
     ParticleVariable<int> pLoadCurveID;
+    ParticleVariable<IntVector> pLoadCurveIDVector;
+
     // Body forces
     ParticleVariable<Vector> pBodyForceAcc;
     ParticleVariable<double> pCoriolisImportance;
+
     // ImplicitParticleCreator
     ParticleVariable<double> pVolumeold;
+
     // MembraneParticleCreator
     ParticleVariable<Vector> pTang1, pTang2, pNorm;
+
     // AMR
     ParticleVariable<int> pRefined;
     ParticleVariable<int> pLastLevel;
@@ -118,6 +130,23 @@ public:
 
     // For friction contact
     ParticleVariable<double> pSurface;
+    ParticleVariable<double> pSurfaceGrad;
+
+    // Scalar Diffusion
+    ParticleVariable<double> pConcentration;
+    ParticleVariable<double> pConcPrevious;
+    ParticleVariable<Vector> pConcGrad;
+    ParticleVariable<double> pExternalScalarFlux;
+    ParticleVariable<double> pPosCharge;
+    ParticleVariable<double> pNegCharge;
+    ParticleVariable<Vector> pPosChargeGrad;
+    ParticleVariable<Vector> pNegChargeGrad;
+    ParticleVariable<double> pPermittivity;
+
+    // Hydro-mechanical coupling MPM
+    ParticleVariable<double> pFluidMass, pSolidMass, pPorePressure, pPorosity;
+    ParticleVariable<Vector> pFluidVelocity, pFluidAcceleration;
+    ParticleVariable<Vector> pPrescribedPorePressure;
   };
 
 protected:
@@ -136,7 +165,7 @@ protected:
 
   virtual void
   initializeParticle(const Patch* patch,
-                     GeometryObject* obj,
+                     const std::vector<GeometryObject*>& obj,
                      MPMMaterial* matl,
                      Point p,
                      IntVector cell_idx,
@@ -149,6 +178,12 @@ protected:
   //////////////////////////////////////////////////////////////////////////
   int
   getLoadCurveID(const Point& pp, const Vector& dxpp);
+
+  IntVector
+  getLoadCurveID(const Point& pp,
+                 const Vector& dxpp,
+                 Vector& areacomps,
+                 int mat_id);
 
   //////////////////////////////////////////////////////////////////////////
   /*! Print MPM physical boundary condition information */
@@ -167,12 +202,15 @@ protected:
 
   int
   checkForSurface(const GeometryPieceP piece, const Point p, const Vector dxpp);
+
   double
   checkForSurface2(const GeometryPieceP piece,
                    const Point p,
                    const Vector dxpp);
 
-  std::unique_ptr<MPMLabel> d_lb;
+  std::unique_ptr<MPMLabel> d_mpm_labels;
+  std::unique_ptr<AMRMPMLabel> d_amrmpm_labels;
+  std::unique_ptr<HydroMPMLabel> d_hydrompm_labels;
   MPMFlags* d_flags;
 
   bool d_useLoadCurves;
@@ -181,27 +219,12 @@ protected:
   bool d_artificialViscosity;
   bool d_computeScaleFactor;
   bool d_useCPTI;
+  bool d_withGaussSolver;
+  bool d_coupledFlow;
 
   std::vector<const VarLabel*> particle_state, particle_state_preReloc;
-
-  mutable CrowdMonitor d_lock;
-
-public:
-  /*! For material addition capability */
-  virtual void
-  allocateVariablesAddRequires(Task* task,
-                               const MPMMaterial* matl,
-                               const PatchSet* patch) const;
-
-  /*! For material addition capability */
-  virtual void
-  allocateVariablesAdd(DataWarehouse* new_dw,
-                       ParticleSubset* addset,
-                       std::map<const VarLabel*, ParticleVariableBase*>* newState,
-                       ParticleSubset* delset,
-                       DataWarehouse* old_dw);
 };
 
 } // End of namespace Uintah
 
-#endif // __PARTICLE_CREATOR_H__
+#endif // ____CCA_COMPONENTS_MPM_PARTICLE_CREATOR_PARTICLECREATOR_H____

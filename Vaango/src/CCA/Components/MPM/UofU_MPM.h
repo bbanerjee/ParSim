@@ -39,7 +39,7 @@
 #include <Core/Math/Short27.h>
 #include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <Core/Geometry/Vector.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>

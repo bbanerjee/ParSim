@@ -167,7 +167,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in

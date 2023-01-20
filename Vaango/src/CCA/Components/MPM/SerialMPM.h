@@ -27,7 +27,7 @@
 #ifndef VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 #define VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 
-#include <CCA/Components/MPM/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <CCA/Components/SimulationCommon/SimulationCommon.h>
 #include <Core/Grid/MaterialManagerP.h>
 

@@ -4926,7 +4926,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() << " Doing doCCMomExchange on patch "<< patch->getID()
                <<"\t\t\t ICE \tL-" <<level->getIndex()<< endl;
 
-    int numMPMMatls = d_mat_manager->getNumMaterials("MPM"));
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     int numICEMatls = d_mat_manager->getNumICEMatls();
     int numALLMatls = numMPMMatls + numICEMatls;
     Ghost::GhostType  gn = Ghost::None;

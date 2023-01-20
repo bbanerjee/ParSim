@@ -142,7 +142,7 @@ ShellMPM::schedInterpolateParticleRotToGrid(SchedulerP& sched,
 {
   Task* t = scinew Task("ShellMPM::interpolateParticleRotToGrid",
                         this,&ShellMPM::interpolateParticleRotToGrid);
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -165,7 +165,7 @@ ShellMPM::interpolateParticleRotToGrid(const ProcessorGroup*,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -202,7 +202,7 @@ ShellMPM::schedComputeRotInternalMoment(SchedulerP& sched,
 {
   Task* t = scinew Task("MPM::computeRotInternalMoment",
                         this, &ShellMPM::computeRotInternalMoment);
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -224,7 +224,7 @@ ShellMPM::computeRotInternalMoment(const ProcessorGroup*,
                                    DataWarehouse* new_dw)
 {
   // Loop over materials
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -260,7 +260,7 @@ ShellMPM::schedComputeRotAcceleration(SchedulerP& sched,
   Task* t = scinew Task("MPM::computeRotAcceleration",
                         this, &ShellMPM::computeRotAcceleration);
 
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -283,7 +283,7 @@ ShellMPM::computeRotAcceleration(const ProcessorGroup*,
                                  DataWarehouse* new_dw)
 {
   // Loop over materials
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -320,7 +320,7 @@ ShellMPM::schedParticleNormalRotRateUpdate(SchedulerP& sched,
   Task* t=scinew Task("ShellMPM::schedParticleNormalRotRateUpdate",
                       this, &ShellMPM::particleNormalRotRateUpdate);
 
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -348,7 +348,7 @@ ShellMPM::particleNormalRotRateUpdate(const ProcessorGroup*,
                                       DataWarehouse* new_dw)
 {
   // Loop over materials
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();

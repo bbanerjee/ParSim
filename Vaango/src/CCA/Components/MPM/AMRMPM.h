@@ -35,7 +35,7 @@
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 // put here to avoid template problems
-#include <CCA/Components/MPM/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Variables/ParticleVariable.h>

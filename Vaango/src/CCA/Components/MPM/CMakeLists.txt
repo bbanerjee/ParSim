@@ -26,9 +26,15 @@
 SET(Vaango_MPM_Core_SRCS
   Core/MPMBoundCond.cc 
   Core/MPMCommon.cc
+  Core/MPMDiffusionLabel.cc
   Core/MPMFlags.cc	  
   Core/MPMLabel.cc
+  Core/ImpMPMLabel.cc
   Core/ImpMPMFlags.cc
+  Core/AMRMPMLabel.cc
+  Core/HydroMPMLabel.cc
+  Core/CZLabel.cc
+  Core/ShellMPMLabel.cc
 )
 
 SET(Vaango_MPM_Solvers_SRCS

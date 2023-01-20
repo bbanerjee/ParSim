@@ -83,10 +83,10 @@ void NullThermalContact::computeHeatExchange(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    int numMatls = d_mat_manager->getNumMaterials("MPM"));
+    int numMatls = d_mat_manager->getNumMaterials("MPM");
 
     for(int m = 0; m < numMatls; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int dwindex = mpm_matl->getDWIndex();
 
       NCVariable<double> thermalContactTemperatureRate;

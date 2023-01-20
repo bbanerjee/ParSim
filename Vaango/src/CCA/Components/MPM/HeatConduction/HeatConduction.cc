@@ -211,8 +211,8 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
 
     Ghost::GhostType  gac   = Ghost::AroundCells;
     Ghost::GhostType  gnone = Ghost::None;
-    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM"); m++){
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
 
       if (cout_heat.active())
         cout_heat << "  Material = " << m << endl;
@@ -400,8 +400,8 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
     Ghost::GhostType  gac   = Ghost::AroundCells;
     Ghost::GhostType  gnone = Ghost::None;
     
-    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM"); m++){
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
 
       if (cout_heat.active())
         cout_heat << "  Material = " << m << endl;
@@ -498,8 +498,8 @@ void HeatConduction::solveHeatEquations(const ProcessorGroup*,
 
 
     string interp_type = d_flag->d_interpolatorType;
-    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM"); m++){
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int dwi = mpm_matl->getDWIndex();
       double Cv = mpm_matl->getSpecificHeat();
      
@@ -572,8 +572,8 @@ void HeatConduction::integrateTemperatureRate(const ProcessorGroup*,
 
     Ghost::GhostType  gnone = Ghost::None;
     string interp_type = d_flag->d_interpolatorType;
-    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM")); m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+    for(int m = 0; m < d_mat_manager->getNumMaterials("MPM"); m++){
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int dwi = mpm_matl->getDWIndex();
 
       constNCVariable<double> temp_old,temp_oldNoBC;

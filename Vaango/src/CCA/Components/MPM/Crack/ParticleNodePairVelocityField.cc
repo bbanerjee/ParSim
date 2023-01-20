@@ -103,7 +103,7 @@ void Crack::ParticleVelocityField(const ProcessorGroup*,
 {       
   for(int p=0; p<patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int numMatls = d_mat_manager->getNumMaterials("MPM"));
+    int numMatls = d_mat_manager->getNumMaterials("MPM");
 
     enum {SAMESIDE=0,ABOVE_CRACK,BELOW_CRACK};
         

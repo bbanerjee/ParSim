@@ -23,80 +23,89 @@
  */
 
 #include <CCA/Components/MPM/ReactionDiffusion/CommonIFConcDiff.h>
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+
+#include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
 #include <CCA/Components/MPM/ReactionDiffusion/JGConcentrationDiffusion.h>
 #include <CCA/Components/MPM/ReactionDiffusion/RFConcDiffusion1MPM.h>
-#include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
+#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
-#include <Core/Grid/Task.h>
 #include <Core/Grid/Ghost.h>
+#include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 using namespace Uintah;
 
+CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps,
+                                   MaterialManagerP& sS,
+                                   MPMFlags* Mflag)
+  : SDInterfaceModel(ps, sS, Mflag)
+{
 
-CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag)
-                 : SDInterfaceModel(ps, sS, Mflag){
-
-
-  d_Mflag = Mflag;
+  d_Mflag       = Mflag;
   d_mat_manager = sS;
 
   d_lb = scinew MPMLabel;
 
-  if(d_Mflag->d_8or27==8){
-    NGP=1;
-    NGN=1;
+  if (d_Mflag->d_8or27 == 8) {
+    NGP = 1;
+    NGN = 1;
   } else {
-    NGP=2;
-    NGN=2;
+    NGP = 2;
+    NGN = 2;
   }
 
   include_hydrostress = false;
 
   for (ProblemSpecP mat_ps = ps->findBlock("material"); mat_ps != 0;
-       mat_ps = mat_ps->findNextBlock("material") ) {
+       mat_ps              = mat_ps->findNextBlock("material")) {
     ProblemSpecP child = mat_ps->findBlock("diffusion_model");
-    if(!child)
-      throw ProblemSetupException("Cannot find diffusion_model tag", __FILE__, __LINE__);
+    if (!child)
+      throw ProblemSetupException(
+        "Cannot find diffusion_model tag", __FILE__, __LINE__);
     string mat_type;
-    if(!child->getAttribute("type", mat_type))
-      throw ProblemSetupException("No type for diffusion_model", __FILE__, __LINE__);
-    if(mat_type == "rf1"){
+    if (!child->getAttribute("type", mat_type))
+      throw ProblemSetupException(
+        "No type for diffusion_model", __FILE__, __LINE__);
+    if (mat_type == "rf1") {
       include_hydrostress = true;
-    }else if(mat_type == "gao_diffusion"){
+    } else if (mat_type == "gao_diffusion") {
       include_hydrostress = true;
     }
   }
 
-  if(include_hydrostress){
-    int numMPM = d_mat_manager->getNumMaterials("MPM"));
-    for(int m = 0; m < numMPM; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+  if (include_hydrostress) {
+    int numMPM = d_mat_manager->getNumMaterials("MPM");
+    for (int m = 0; m < numMPM; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
-      diffusion_type = sdm->getDiffusionType();
-      if(diffusion_type == "jg"){
-        dynamic_cast<JGConcentrationDiffusion*>(sdm)->setIncludeHydroStress(true);
-      }else if( diffusion_type == "rf1"){
+      diffusion_type            = sdm->getDiffusionType();
+      if (diffusion_type == "jg") {
+        dynamic_cast<JGConcentrationDiffusion*>(sdm)->setIncludeHydroStress(
+          true);
+      } else if (diffusion_type == "rf1") {
         dynamic_cast<RFConcDiffusion1MPM*>(sdm)->setIncludeHydroStress(true);
-      }else if( diffusion_type == "gao_diffusion"){
+      } else if (diffusion_type == "gao_diffusion") {
         dynamic_cast<GaoDiffusion*>(sdm)->setIncludeHydroStress(true);
       }
     }
   }
 }
 
-CommonIFConcDiff::~CommonIFConcDiff(){
-  delete(d_lb);
+CommonIFConcDiff::~CommonIFConcDiff()
+{
+  delete (d_lb);
 }
 
 #if 0
 void CommonIFConcDiff::initializeSDMData(const Patch* patch, DataWarehouse* new_dw)
 {
-  int numMPM = d_mat_manager->getNumMaterials("MPM"));
+  int numMPM = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
@@ -105,62 +114,66 @@ void CommonIFConcDiff::initializeSDMData(const Patch* patch, DataWarehouse* new_
 }
 #endif
 
-void CommonIFConcDiff::computeDivergence(const Patch* patch,
-                                         DataWarehouse* old_dw,
-                                         DataWarehouse* new_dw)
+void
+CommonIFConcDiff::computeDivergence(const Patch* patch,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw)
 {
-  int numMPM = d_mat_manager->getNumMaterials("MPM"));
+  int numMPM = d_mat_manager->getNumMaterials("MPM");
 
-  for(int m = 0; m < numMPM; m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+  for (int m = 0; m < numMPM; m++) {
+    MPMMaterial* mpm_matl =
+      static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->computeDivergence(patch, mpm_matl, old_dw, new_dw);
   }
 
-  Ghost::GhostType  gnone = Ghost::None;
+  Ghost::GhostType gnone = Ghost::None;
 
   constNCVariable<double> gmass;
   constNCVariable<double> gConcRate;
   NCVariable<double> globalConcRate;
   NCVariable<double> globalmass;
   new_dw->allocateTemporary(globalConcRate, patch, gnone, 0);
-  new_dw->allocateTemporary(globalmass,     patch, gnone, 0);
+  new_dw->allocateTemporary(globalmass, patch, gnone, 0);
   globalConcRate.initialize(0);
   globalmass.initialize(0);
 
-  for(int m = 0; m < numMPM; m++){
+  for (int m = 0; m < numMPM; m++) {
     int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
 
-    new_dw->get(gmass,     d_lb->gMassLabel,               dwi, patch, gnone,0);
-    new_dw->get(gConcRate, d_lb->gConcentrationRateLabel,dwi, patch, gnone,0);
+    new_dw->get(gmass, d_lb->gMassLabel, dwi, patch, gnone, 0);
+    new_dw->get(gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);
 
-    for(NodeIterator iter=patch->getExtraNodeIterator();
-                     !iter.done();iter++){
-      IntVector c = *iter; 
+    for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+         iter++) {
+      IntVector c = *iter;
       globalConcRate[c] += gmass[c] * gConcRate[c];
-      globalmass[c]     += gmass[c];
+      globalmass[c] += gmass[c];
     }
   }
 
-  for(int m = 0; m < numMPM; m++){
+  for (int m = 0; m < numMPM; m++) {
     int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
-	  NCVariable<double> gConcRate;
+    NCVariable<double> gConcRate;
 
-    new_dw->getModifiable(gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);
-    for(NodeIterator iter=patch->getExtraNodeIterator();
-                     !iter.done();iter++){
-      IntVector c = *iter; 
-      gConcRate[c] = globalConcRate[c]/globalmass[c];
+    new_dw->getModifiable(
+      gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);
+    for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+         iter++) {
+      IntVector c  = *iter;
+      gConcRate[c] = globalConcRate[c] / globalmass[c];
     }
   }
 }
 
-void CommonIFConcDiff::outputProblemSpec(ProblemSpecP& ps, bool output_sdim_tag)
+void
+CommonIFConcDiff::outputProblemSpec(ProblemSpecP& ps, bool output_sdim_tag)
 {
 
   ProblemSpecP sdim_ps = ps;
   if (output_sdim_tag) {
     sdim_ps = ps->appendChild("diffusion_interface");
-    sdim_ps->appendElement("type","common");
+    sdim_ps->appendElement("type", "common");
   }
 }

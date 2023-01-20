@@ -105,10 +105,10 @@ CohesiveZone::createCohesiveZones(CZMaterial* matl,
 
     // needed for bulletproofing
     std::vector<int> mpmMatlIndex;
-    int numMPM = d_mat_manager->getNumMaterials("MPM"));
+    int numMPM = d_mat_manager->getNumMaterials("MPM");
     
     for(int m = 0; m < numMPM; m++){
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM",  m );
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int dwi = mpm_matl->getDWIndex();
       mpmMatlIndex.push_back(dwi);
     }

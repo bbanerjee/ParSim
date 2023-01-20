@@ -422,7 +422,7 @@ void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
 //  have access to sp_vol_mpm.
 //
 //  if (timestep > 0 ) {
-//    numMatls += sharedState->getNumMaterials("MPM"));
+//    numMatls += sharedState->getNumMaterials("MPM");
 //  }
       
   //__________________________________

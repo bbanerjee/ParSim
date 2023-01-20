@@ -85,7 +85,7 @@ SingleVelContact::exchangeMomentum(const ProcessorGroup*,
                                    DataWarehouse* old_dw, DataWarehouse* new_dw,
                                    const VarLabel* gVelocity_label)
 {
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   ASSERTEQ(numMatls, matls->size());
 
   for (int p = 0; p < patches->size(); p++) {

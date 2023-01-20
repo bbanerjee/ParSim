@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,38 +24,44 @@
  */
 
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
+
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Task.h>
 
 using namespace Uintah;
 
-SDInterfaceModel::SDInterfaceModel(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag){
+SDInterfaceModel::SDInterfaceModel(ProblemSpecP& ps,
+                                   MaterialManagerP& sS,
+                                   MPMFlags* Mflag)
+{
 
-  d_Mflag = Mflag;
+  d_Mflag       = Mflag;
   d_mat_manager = sS;
 
   d_lb = scinew MPMLabel;
 
-  if(d_Mflag->d_8or27==8){
-    NGP=1;
-    NGN=1;
+  if (d_Mflag->d_8or27 == 8) {
+    NGP = 1;
+    NGN = 1;
   } else {
-    NGP=2;
-    NGN=2;
+    NGP = 2;
+    NGN = 2;
   }
 }
 
-SDInterfaceModel::~SDInterfaceModel(){
-  delete(d_lb);
+SDInterfaceModel::~SDInterfaceModel()
+{
+  delete (d_lb);
 }
 
 #if 0
 void SDInterfaceModel::addInitialComputesAndRequires(Task* task,
                                                      const PatchSet* patches) const
 {
-  int numMPM = d_mat_manager->getNumMaterials("MPM"));
+  int numMPM = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
@@ -65,7 +72,7 @@ void SDInterfaceModel::addInitialComputesAndRequires(Task* task,
 void SDInterfaceModel::initializeSDMData(const Patch* patch,
                                          DataWarehouse* new_dw)
 {
-  int numMPM = d_mat_manager->getNumMaterials("MPM"));
+  int numMPM = d_mat_manager->getNumMaterials("MPM");
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
@@ -74,25 +81,28 @@ void SDInterfaceModel::initializeSDMData(const Patch* patch,
 }
 #endif
 
-void SDInterfaceModel::computeDivergence(const Patch* patch,
-                                         DataWarehouse* old_dw,
-                                         DataWarehouse* new_dw)
+void
+SDInterfaceModel::computeDivergence(const Patch* patch,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw)
 {
-  int numMatls = d_mat_manager->getNumMaterials("MPM"));
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
 
-  for(int m = 0; m < numMatls; m++){
-    MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl =
+      static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
     sdm->computeDivergence(patch, mpm_matl, old_dw, new_dw);
   }
 }
 
-void SDInterfaceModel::outputProblemSpec(ProblemSpecP& ps, bool output_sdim_tag)
+void
+SDInterfaceModel::outputProblemSpec(ProblemSpecP& ps, bool output_sdim_tag)
 {
 
   ProblemSpecP sdim_ps = ps;
   if (output_sdim_tag) {
     sdim_ps = ps->appendChild("diffusion_interface");
-    sdim_ps->appendElement("type","paired");
+    sdim_ps->appendElement("type", "paired");
   }
 }
