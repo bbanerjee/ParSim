@@ -254,14 +254,14 @@ ArenaMixture::checkInputParameters()
      std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
   if (d_cm.subcycling_characteristic_number < 1) {
      std::ostringstream warn;
     warn << "Subcycling characteristic number should be > 1. Default = 256"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -269,7 +269,7 @@ ArenaMixture::checkInputParameters()
      std::ostringstream warn;
     warn << "Yield surface scaling factor should be between 1 and 1.0e6. "
             "Default = 1."
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -3017,7 +3017,7 @@ ArenaMixture::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 {
   std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR "
                "ArenaMixture"
-            << endl;
+            << std::endl;
 }
 
 /*!
@@ -3099,7 +3099,7 @@ double
 ArenaMixture::getCompressibility()
 {
   std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR ArenaMixture"
-            << endl;
+            << std::endl;
   double one_over_K_mix = d_volfrac[0] / d_mpmiceEOSParam[0].K0_Murnaghan_EOS +
                           d_volfrac[1] / d_mpmiceEOSParam[1].K0_Murnaghan_EOS;
   return one_over_K_mix;

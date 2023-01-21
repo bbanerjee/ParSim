@@ -80,7 +80,7 @@ namespace Uintah {
   
     filelist_ = fopen(filelistname.c_str(),"w");
     if (!filelist_) {
-      cerr << "Can't open output file " << filelistname << endl;
+      std::cerr <<  "Can't open output file " << filelistname << endl;
       abort();
     }
   }
@@ -458,7 +458,7 @@ namespace Uintah {
             }
           
           if (no_match)
-            cerr << "WARNING: Unexpected type for " << td->getName() << " of " << subtype->getName() << endl;
+            std::cerr <<  "WARNING: Unexpected type for " << td->getName() << " of " << subtype->getName() << endl;
         
         } // materials
       } // patches

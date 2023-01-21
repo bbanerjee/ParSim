@@ -56,7 +56,7 @@ DDT1Criterion::DDT1Criterion(ProblemSpecP& ps)
 
   proc0cout << "Switching criteria:  \tDDT1, reactant matl: " << d_material
             << " Threshold tempterature " << d_temperature
-            << ", Boundary Particles " << d_BP << endl;
+            << ", Boundary Particles " << d_BP << std::endl;
 
   d_mpm_labels     = std::make_unique<MPMLabel>();
   d_ice_labels     = std::make_unique<ICELabel>();
@@ -237,7 +237,7 @@ DDT1Criterion::switchTest(const ProcessorGroup* group,
                       //      << " vol_frac_mpm " << vol_frac_mpm[m][cell]
                       //      << " temp_CC_mpm " << temp_CC_mpm[m][cell]
                       //      << " matl " << m
-                      //      << " main cell " << c << endl;
+                      //      << " main cell " << c << std::endl;
                       timeToSwitch = 1;
                       break;
                     }

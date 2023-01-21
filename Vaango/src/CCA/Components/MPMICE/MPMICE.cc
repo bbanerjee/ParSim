@@ -162,7 +162,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
 			  const ProblemSpecP& restart_prob_spec, 
 			  GridP& grid, MaterialManagerP& mat_manager)
 {
-  cout_doing << "Doing MPMICE::problemSetup " << endl;
+  cout_doing << "Doing MPMICE::problemSetup " << std::endl;
   d_mat_manager = sharedState;
   dataArchiver = dynamic_cast<Output*>(getPort("output"));
   Scheduler* sched = dynamic_cast<Scheduler*>(getPort("scheduler"));
@@ -373,7 +373,7 @@ void MPMICE::scheduleInitialize(const LevelP& level,
 void MPMICE::restartInitialize()
 {
   if (cout_doing.active())
-    cout_doing <<"Doing restartInitialize \t\t\t MPMICE" << endl;
+    cout_doing <<"Doing restartInitialize \t\t\t MPMICE" << std::endl;
 
   d_mpm->restartInitialize();
   d_ice->restartInitialize();
@@ -427,9 +427,9 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
   const MaterialSubset* mpm_matls_sub = mpm_matls->getUnion();
   cout_doing << "---------------------------------------------------------Level ";
   if(do_mlmpmice){
-    cout_doing << inlevel->getIndex() << " (ICE) " << mpm_level->getIndex() << " (MPM)"<< endl;;
+    cout_doing << inlevel->getIndex() << " (ICE) " << mpm_level->getIndex() << " (MPM)"<< std::endl;;
   } else {
-    cout_doing << inlevel->getIndex()<< endl;
+    cout_doing << inlevel->getIndex()<< std::endl;
   }
 
   //__________________________________
@@ -652,7 +652,7 @@ void
 MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
 {
   cout_doing << "----------------------------"<<endl;
-  cout_doing << d_myworld->myRank() << " MPMICE::scheduleFinalizeTimestep\t\t\t\tL-" <<level->getIndex()<< endl;
+  cout_doing << d_myworld->myRank() << " MPMICE::scheduleFinalizeTimestep\t\t\t\tL-" <<level->getIndex()<< std::endl;
 
   const PatchSet* ice_patches = level->eachPatch();
   const MaterialSet* ice_matls = d_mat_manager->allICEMaterials();
@@ -1071,7 +1071,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     //output material indices
     if(patch->getID() == 0){
       std::cout << "Materials Indicies:   MPM ["<< *(d_mat_manager->allMPMMaterials())  << "] " 
-	   << "ICE["<< *(d_mat_manager->allICEMaterials()) << "]" << endl;
+	   << "ICE["<< *(d_mat_manager->allICEMaterials()) << "]" << std::endl;
 
       std::cout << "Material Names:";
       int numAllMatls = d_mat_manager->getNumMaterials();
@@ -1189,7 +1189,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
 	    <<neg_cell << " speedSound is nan\n";
         warn << "speedSound = " << speedSound[neg_cell] << " sp_vol_CC = " << sp_vol_CC[neg_cell]
-	     << " rho_micro = " << rho_micro[neg_cell] << " Temp_CC = " << Temp_CC[neg_cell] << endl;
+	     << " rho_micro = " << rho_micro[neg_cell] << " Temp_CC = " << Temp_CC[neg_cell] << std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
 
@@ -2226,7 +2226,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 		       << " press_eos = " << press_eos[m]
 		       << " dp_drho = " << dp_drho[m]
 		       << " dp_de = " << dp_de[m]
-		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << std::endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
               }
@@ -2350,7 +2350,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 	      << " gamma = " << gamma[m][c]
 	      << " cv = " << cv[m][c]
 	      << " Temp = " << Temp[m][c]
-	      << " rho_micro = " << rho_micro[m][c] << endl;
+	      << " rho_micro = " << rho_micro[m][c] << std::endl;
 	      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
               }
               */
@@ -2371,7 +2371,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 	      << " press_ref = " << press_ref
 	      << " mpm_matl = " << mpm_matl[m]
 	      << " Temp = " << Temp[m][c]
-	      << " rho_micro = " << rho_micro[m][c] << endl;
+	      << " rho_micro = " << rho_micro[m][c] << std::endl;
 	      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
               }
               */
@@ -2409,7 +2409,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 		       << " press_eos = " << press_eos[m]
 		       << " dp_drho = " << dp_drho[m]
 		       << " dp_de = " << dp_de[m]
-		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << std::endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
 
@@ -2430,7 +2430,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 		       << " press_eos = " << press_eos[m]
 		       << " dp_drho = " << dp_drho[m]
 		       << " dp_de = " << dp_de[m]
-		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << std::endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
 
@@ -2473,7 +2473,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
         //int lev = patch->getLevel()->getIndex();
         //cout << "WARNING:MPMICE:ComputeEquilibrationPressure "
         //     << " Cell : " << c << " on level " << lev << " having a difficult time converging. \n"
-        //    << " Now performing a binary pressure search " << endl;
+        //    << " Now performing a binary pressure search " << std::endl;
 
         binaryPressureSearch( Temp, rho_micro, vol_frac, rho_CC_new,
 			      speedSound,  dp_drho,  dp_de, 
@@ -2531,7 +2531,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 	      << "   Temperature:   "<< Temp[m][c] << "\n";
         }
         if(ds_EqPress.active()){
-          warn << "\nDetails on iterations " << endl;
+          warn << "\nDetails on iterations " << std::endl;
           std::vector<EqPress_dbg>::iterator dbg_iter;
           for( dbg_iter  = dbgEqPress.begin(); dbg_iter != dbgEqPress.end(); dbg_iter++){
             EqPress_dbg & d = *dbg_iter;
@@ -2616,7 +2616,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 	      << *iter << " kappa = " << kappa[m][*iter] 
 	      << " vol_frac = " << vol_frac[m][*iter] 
 	      << " sp_vol_new = " << sp_vol_new[m][*iter] 
-	      << " speedSound = " << speedSound[m][*iter] << endl;
+	      << " speedSound = " << speedSound[m][*iter] << std::endl;
           throw InvalidValue(warn.str(), __FILE__, __LINE__);
         }
       }
@@ -2689,7 +2689,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
 				    IntVector c )
 {
   // Start over for this cell using a binary search
-  //  std::cout << " cell " << c << " Starting binary pressure search "<< endl;
+  //  std::cout << " cell " << c << " Starting binary pressure search "<< std::endl;
   count = 0;
   bool converged = false;
   double c_2;
@@ -2759,7 +2759,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
         //       << " press_eos = " << press_eos[m]
         //       << " dp_drho = " << dp_drho[m]
         //       << " dp_de = " << dp_de[m]
-        //       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+        //       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << std::endl;
         //  throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
         //}
       }
@@ -2797,11 +2797,11 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
       sumL += vfL[m];
 
       //      std::cout << "matl: " << m << " vol_frac_L: " << vfL[m] << " vol_frac_R: " << vfR[m] 
-      //           << " rho_CC: " << rho_CC_new[m][c] << " rho_micro_L: " << rhoMicroL << " rhoMicroR: " << rhoMicroR << endl;
+      //           << " rho_CC: " << rho_CC_new[m][c] << " rho_micro_L: " << rhoMicroL << " rhoMicroR: " << rhoMicroR << std::endl;
     }  // all matls
 
 
-    //    std::cout << "Pm = " << Pm << "\t P_L: " << Pleft << "\t P_R: " << Pright << "\t 1.-sum " << residual << " \t sumR: " << sumR << " \t sumL " << sumL << endl;
+    //    std::cout << "Pm = " << Pm << "\t P_L: " << Pleft << "\t P_R: " << Pright << "\t 1.-sum " << residual << " \t sumR: " << sumR << " \t sumL " << sumL << std::endl;
 
     //__________________________________
     //  come up with a new guess
@@ -2822,7 +2822,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
 #ifdef D_STRICT
   if (count >= d_ice->d_max_iter_equilibration) {
      std::ostringstream desc;
-    desc << "**ERROR** Binary pressure search failed to converge in cell" << c << endl;
+    desc << "**ERROR** Binary pressure search failed to converge in cell" << c << std::endl;
     throw ConvergenceFailure(desc.str(), d_ice->d_max_iter_equilibration,
 			     fabs(residual), convergence_crit, __FILE__, __LINE__);
   }
@@ -2830,8 +2830,8 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
   if (count >= d_ice->d_max_iter_equilibration) {
     std::cout << "**WARNING** Binary pressure search failed to converge in cell " << c << " after "
 	 << d_ice->d_max_iter_equilibration << " iterations.  Final residual is "
-	 << fabs(residual) << " and convergence tolerance is " << convergence_crit << endl;
-    std::cout << "  Continuing with unconverged value of pressure = " << Pm << endl;
+	 << fabs(residual) << " and convergence tolerance is " << convergence_crit << std::endl;
+    std::cout << "  Continuing with unconverged value of pressure = " << Pm << std::endl;
     press_new[c] = Pm;
     //__________________________________
     // Find the speed of sound at ijk
@@ -2858,7 +2858,7 @@ void MPMICE::binaryPressureSearch(  std::vector<constCCVariable<double> >& Temp,
          std::ostringstream warn;
         warn << "    Material " << m << " vol. frac = " << vol_frac[m][c]
 	     << " rho = " << rho_micro[m][c] << " press = " << press_eos[m] 
-	     << " dp_drho = " << dp_drho[m] << " c^2 = " << c_2 << endl;
+	     << " dp_drho = " << dp_drho[m] << " c^2 = " << c_2 << std::endl;
         throw InvalidValue(warn.str(), __FILE__, __LINE__);
       }
     }
@@ -2890,7 +2890,7 @@ void MPMICE::scheduleRefineInterface(const LevelP& fineLevel,
 				fineLevel->getGrid()->numLevels())) {
     cout_doing << d_myworld->myRank() 
 	       << " MPMICE::scheduleRefineInterface \t\t\tL-"
-	       << fineLevel->getIndex() << endl;
+	       << fineLevel->getIndex() << std::endl;
 
     Task* task = scinew Task("MPMICE::refineCoarseFineInterface",
 			     this, &MPMICE::refineCoarseFineInterface);
@@ -2918,7 +2918,7 @@ void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
   if(level->getIndex() > 0){
     cout_doing << d_myworld->myRank()
 	       << " Doing refineCoarseFineInterface"<< "\t\t\t MPMICE L-"
-	       << level->getIndex() << " Patches: " << *patches << endl;
+	       << level->getIndex() << " Patches: " << *patches << std::endl;
 
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
@@ -3128,7 +3128,7 @@ MPMICE::refine(const ProcessorGroup*,
       int dwi = mpm_matl->getDWIndex();
 
       cout_doing << d_myworld->myRank() << " Doing refine on patch "
-		 << patch->getID() << " material # = " << dwi << endl;
+		 << patch->getID() << " material # = " << dwi << std::endl;
 
       // for now, create 0 heat flux
       CCVariable<double> heatFlux;

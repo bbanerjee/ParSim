@@ -101,7 +101,7 @@ void outputPatches(vector<Region> &patches, ostream& out)
       IntVector l=p.getLow();
       IntVector h=p.getHigh();
 
-      out << l[0] << " " << l[1] << " " << l[2] << " " << h[0] << " " << h[1] << " " << h[2] << endl;
+      out << l[0] << " " << l[1] << " " << l[2] << " " << h[0] << " " << h[1] << " " << h[2] << std::endl;
     }
   }
 }
@@ -175,7 +175,7 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
   Uintah::MPI::Allreduce(&vol,&total_vol,1,MPI_LONG_LONG,MPI_SUM,MPI_COMM_WORLD);
 
   //if(rank==0)
-  //  std::cout << "local vol: " << vol << " total vol: " << total_vol << endl;
+  //  std::cout << "local vol: " << vol << " total vol: " << total_vol << std::endl;
 
   long long thresh=total_vol/num_procs*p;
 
@@ -187,7 +187,7 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
   {
     Region patch=to_split_patches.back();
     to_split_patches.pop_back();
-    //cout << "thresh: " << thresh << " vol: " << patch.getVolume() << endl;
+    //cout << "thresh: " << thresh << " vol: " << patch.getVolume() << std::endl;
     if( patch.getVolume()>thresh)
     {
       IntVector low=patch.getLow(), high=patch.getHigh();
@@ -201,8 +201,8 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
       
       Region left(low,high), right(low,high);
       left.high()[max_d]=right.low()[max_d]=mid;
-      //cout << "low: " << low << " high: " << high << " max_d: " << max_d << " mid: " << mid << endl;
-      //cout << "Patch: " << patch << " left: " << left << " right: " << right << endl;
+      //cout << "low: " << low << " high: " << high << " max_d: " << max_d << " mid: " << mid << std::endl;
+      //cout << "Patch: " << patch << " left: " << left << " right: " << right << std::endl;
       to_split_patches.push_back(left);
       to_split_patches.push_back(right);
     }
@@ -211,7 +211,7 @@ void splitPatches(vector<Region> &patches, vector<Region> &split_patches, double
       split_patches.push_back(patch);
     }
   }
-  //cout << "Patches before: " << patches.size() << " patches after: " << split_patches.size() << endl;
+  //cout << "Patches before: " << patches.size() << " patches after: " << split_patches.size() << std::endl;
 }
 
 #endif

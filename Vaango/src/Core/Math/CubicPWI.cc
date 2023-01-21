@@ -147,10 +147,10 @@ set_tangents( const Array1<double>& pts, const Array1<double>& vals, Array1<doub
     return false;
   }
 
-  // std::cout << "Low-diag before solving: " << lrow << endl; 
-  // std::cout << "Diag-diag before solving: " << diag << endl;
-  // std::cout << "High-diag before solving: " << hrow << endl;
-  // std::cout << "Res before solving : " << r << endl;
+  // std::cout << "Low-diag before solving: " << lrow << std::endl; 
+  // std::cout << "Diag-diag before solving: " << diag << std::endl;
+  // std::cout << "High-diag before solving: " << hrow << std::endl;
+  // std::cout << "Res before solving : " << r << std::endl;
   
   // ---------------------------------------------------------------------------
   // solving the tridiagonal system:
@@ -164,10 +164,10 @@ set_tangents( const Array1<double>& pts, const Array1<double>& vals, Array1<doub
   for(i=psz-2;i>=0;i--){
     r[i] = (r[i]-hrow[i]*r[i+1])/diag[i];
   }
-  // std::cout << "Low-diag after solving: " << lrow << endl; 
-  // std::cout << "Diag-diag after solving: " << diag << endl;
-  // std::cout << "High-diag after solving: " << hrow << endl;
-  // std::cout << "Res after solving : " << r << endl;
+  // std::cout << "Low-diag after solving: " << lrow << std::endl; 
+  // std::cout << "Diag-diag after solving: " << diag << std::endl;
+  // std::cout << "High-diag after solving: " << hrow << std::endl;
+  // std::cout << "Res after solving : " << r << std::endl;
   
   return true;
 }
@@ -176,18 +176,18 @@ set_tangents( const Array1<double>& pts, const Array1<double>& vals, Array1<doub
 bool
 CubicPWI::set_data( const Array1<double>& pts, const Array1<double>& vals ) {
 
-  // std::cout << "About to fill in data in set_data (1D)!!!" << endl;
-  // std::cout << "pts-array:" << endl;
+  // std::cout << "About to fill in data in set_data (1D)!!!" << std::endl;
+  // std::cout << "pts-array:" << std::endl;
   // std::cout << pts;
 
-  // std::cout << "vals-array:" << endl;
+  // std::cout << "vals-array:" << std::endl;
   // std::cout << pts;
 
   reset();
   int sz;
 
   if( fill_data(pts) && (sz = points.size()) > 1 && sz == vals.size()){
-    // std::cout << "Inside set_data!!!" << endl;
+    // std::cout << "Inside set_data!!!" << std::endl;
 
     p.resize(sz);
     Array1<double> ders;
@@ -212,8 +212,8 @@ CubicPWI::set_data( const Array1<double>& pts, const Array1<double>& vals ) {
 	  p[i].b=b;
 	  p[i].c=c;
 	  p[i].d=d;
-	  // std::cout << "Interval: " << points[i] << ", " << points[i+1] << endl;
-	  // std::cout << "Coeff. are: " << p[i].a << endl << p[i].b << endl << p[i].c << endl << p[i].d << endl;	  
+	  // std::cout << "Interval: " << points[i] << ", " << points[i+1] << std::endl;
+	  // std::cout << "Coeff. are: " << p[i].a << std::endl << p[i].b << std::endl << p[i].c << std::endl << p[i].d << std::endl;	  
 	}
 	else {
 	  reset();

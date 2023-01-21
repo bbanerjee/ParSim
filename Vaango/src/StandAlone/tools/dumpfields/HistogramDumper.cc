@@ -87,7 +87,7 @@ namespace Uintah {
     string filelistname = outdir + string("/") + string("timelist");
     filelist_ = fopen(filelistname.c_str(),"w");
     if (!filelist_) {
-      cerr << "Can't open output file " << filelistname << endl;
+      std::cerr <<  "Can't open output file " << filelistname << std::endl;
       abort();
     }
   }
@@ -152,19 +152,19 @@ namespace Uintah {
     
     if(scalardiaggens.size())
       {
-        std::cout << "   " << fieldname << endl;
+        std::cout << "   " << fieldname << std::endl;
       }
     else
       {
         static int noisecount = 0;
         if(++noisecount<=20)
           {
-            std::cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << endl;
-            std::cout << "            You probably want a '-diagnostic magnitude' option for vectors" << endl;
-            std::cout << "            or the '-diagnostic norm' option for tensors." << endl;
-            std::cout << endl;
-            std::cout << "            Try running with '-showdiags' to get the available diagnostics" << endl;
-            std::cout << endl;
+            std::cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << std::endl;
+            std::cout << "            You probably want a '-diagnostic magnitude' option for vectors" << std::endl;
+            std::cout << "            or the '-diagnostic norm' option for tensors." << std::endl;
+            std::cout << std::endl;
+            std::cout << "            Try running with '-showdiags' to get the available diagnostics" << std::endl;
+            std::cout << std::endl;
           }
       }
     
@@ -247,7 +247,7 @@ namespace Uintah {
                 {
                   if(fabs(minval)<2.e-16)
                     {
-                      std::cout << "   WARNING: all your data seems to be at zero, adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at zero, adjusting the range" << std::endl;
                       // both zero
                       minval = -1;
                       maxval =  1;
@@ -255,7 +255,7 @@ namespace Uintah {
                   else
                     {
                       double midval = (minval+maxval)/2; 
-                      std::cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << std::endl;
                       minval = 0.9 * midval;
                       maxval = 1.1 * midval;
                     }
@@ -267,15 +267,15 @@ namespace Uintah {
         string ext = (*diagit)->name();
         if(ext=="norm" || ext=="value") ext = "";
         string fname = this->fileName(fieldname+ext, "hist");
-        std::cout << "     " << fname << endl;
+        std::cout << "     " << fname << std::endl;
         std::cout << "     range = " << minval << "," << maxval
-             << endl;
+             << std::endl;
         
         ofstream os(fname.c_str());
         os << "# time = " << time_ << ", field = " 
-           << fieldname << endl;
-        os << "# min = " << minval << endl;
-        os << "# max = " << maxval << endl;
+           << fieldname << std::endl;
+        os << "# min = " << minval << std::endl;
+        os << "# max = " << maxval << std::endl;
         
         double totcount = 1.;
         if(opts_.normalize_by_bins) {
@@ -287,7 +287,7 @@ namespace Uintah {
         
         for(int ibin=0;ibin<opts_.nbins;ibin++) {
           double xmid = minval+(ibin+0.5)*(maxval-minval)/opts_.nbins;
-          os << xmid*opts_.xscale << " " << bins[ibin]/totcount << endl;
+          os << xmid*opts_.xscale << " " << bins[ibin]/totcount << std::endl;
         }
         
         if(!os)

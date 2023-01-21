@@ -40,7 +40,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScram.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <vector>
 

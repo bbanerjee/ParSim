@@ -195,9 +195,9 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     if (cout_doing.active())
-      cout_doing <<"Doing computeInternalHeatRate on patch " << patch->getID()<<"\t\t MPM"<< endl;
+      cout_doing <<"Doing computeInternalHeatRate on patch " << patch->getID()<<"\t\t MPM"<< std::endl;
     if (cout_heat.active())
-      cout_heat << " Patch = " << patch->getID() << endl;
+      cout_heat << " Patch = " << patch->getID() << std::endl;
 
     auto interpolator = d_flag->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
@@ -215,7 +215,7 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
 
       if (cout_heat.active())
-        cout_heat << "  Material = " << m << endl;
+        cout_heat << "  Material = " << m << std::endl;
 
       int dwi = mpm_matl->getDWIndex();
       double kappa = mpm_matl->getThermalConductivity();
@@ -278,7 +278,7 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
                         << " gTemp = " << gTemperature[ni[k]]
                         << " idx = " << idx
                         << " pTempGrad = " << pTemperatureGradient[idx][j]
-                        << endl;
+                        << std::endl;
             }
           }
           // Project the mass weighted particle plastic work temperature
@@ -339,7 +339,7 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
                         << " dT_dx = " << dT_dx << " alpha = " << alpha*Cv 
                         << " Tdot_cond = " << Tdot_cond*Cv*gMass[node]
                         << " gdTdt = " << gdTdt[node] 
-                        << endl;
+                        << std::endl;
            } // cout_heat
           } // if patch contains node
         } // Loop over local nodes
@@ -382,9 +382,9 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
     // which is not used in any of the subsequent calculations
 
     if (cout_doing.active())
-      cout_doing <<"Doing computeNodalHeatFlux on patch " << patch->getID()<<"\t\t MPM"<< endl;
+      cout_doing <<"Doing computeNodalHeatFlux on patch " << patch->getID()<<"\t\t MPM"<< std::endl;
     if (cout_heat.active())
-      cout_heat << " Patch = " << patch->getID() << endl;
+      cout_heat << " Patch = " << patch->getID() << std::endl;
       
     auto interpolator = d_flag->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
@@ -404,7 +404,7 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
 
       if (cout_heat.active())
-        cout_heat << "  Material = " << m << endl;
+        cout_heat << "  Material = " << m << std::endl;
 
       int dwi = mpm_matl->getDWIndex();
       double kappa = mpm_matl->getThermalConductivity();
@@ -494,7 +494,7 @@ void HeatConduction::solveHeatEquations(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     if (cout_doing.active())
-      cout_doing <<"Doing solveHeatEquations on patch " << patch->getID() <<"\t\t\t MPM"<< endl;
+      cout_doing <<"Doing solveHeatEquations on patch " << patch->getID() <<"\t\t\t MPM"<< std::endl;
 
 
     string interp_type = d_flag->d_interpolatorType;
@@ -567,7 +567,7 @@ void HeatConduction::integrateTemperatureRate(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     if (cout_doing.active())
-      cout_doing <<"Doing integrateTemperatureRate on patch " << patch->getID()<< "\t\t MPM"<< endl;
+      cout_doing <<"Doing integrateTemperatureRate on patch " << patch->getID()<< "\t\t MPM"<< std::endl;
 
 
     Ghost::GhostType  gnone = Ghost::None;

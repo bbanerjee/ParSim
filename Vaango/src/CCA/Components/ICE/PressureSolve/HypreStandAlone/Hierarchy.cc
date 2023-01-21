@@ -158,7 +158,7 @@ Hierarchy::make()
           }
         default:
           {
-            cerr << "\n\nError, unsupported level=" << level 
+            std::cerr <<  "\n\nError, unsupported level=" << level 
                  << " in Hierarchy::make()" << "\n";
             clean();
             exit(1);

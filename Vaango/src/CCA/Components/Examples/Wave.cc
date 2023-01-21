@@ -304,7 +304,7 @@ Wave::timeAdvanceEuler(const ProcessorGroup*,
       int matl = matls->get(m);
 
       // std::cout << " Doing Wave::timeAdvanceEuler on patch " <<
-      // patch->getID() << ", matl " << matl << endl;
+      // patch->getID() << ", matl " << matl << std::endl;
       delt_vartype dt;
       old_dw->get(dt, getDelTLabel(), level);
 
@@ -356,7 +356,7 @@ Wave::timeAdvanceEuler(const ProcessorGroup*,
         newPi[c]  = oldPi[c] + curlPhi * delt;
 
         wave << "Index: " << c << " Phi " << newPhi[c] << " Pi " << newPi[c]
-             << endl;
+             << std::endl;
 
         sumPhi += newPhi[c];
         if (newPhi[c] > maxphi) {
@@ -449,7 +449,7 @@ Wave::timeAdvanceRK4(const ProcessorGroup*,
       int matl = matls->get(m);
 
       // cout << " Doing Wave::timeAdvanceRK4 on patch " << patch->getID() << ",
-      // matl " << matl << endl;
+      // matl " << matl << std::endl;
       delt_vartype dt;
       old_dw->get(dt, getDelTLabel(), level);
 
@@ -525,12 +525,12 @@ Wave::timeAdvanceRK4(const ProcessorGroup*,
         totalPhi[c] += curPi[c] * dttotal;
         totalPi[c] += curlPhi * dttotal;
 
-        // cerr << c << "rhs phi=" << curPi[c] << ", rhs pi=" << curlPhi << ",
+        // std::cerr <<  c << "rhs phi=" << curPi[c] << ", rhs pi=" << curlPhi << ",
         // phi=" << newPhi[c] << ", pi=" << newPi[c] << ", total phi=" <<
         // totalPhi[c] << ", total pi=" << totalPi[c] << ", dt=" << dt << ", "
         // << dtstep << ", " << dttotal << '\n'; sumPhi += newPhi[c];
       }
-      // cerr << "sumPhi=" << sumPhi << '\n';
+      // std::cerr <<  "sumPhi=" << sumPhi << '\n';
     }
   }
 }

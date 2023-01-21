@@ -145,9 +145,9 @@ void Mixing3::problemSetup(GridP&, MaterialManagerP& in_state,
     if(d_myworld->myRank() == 0){
 #if 0
       cerr.precision(17);
-      cerr << "Using ideal gas " << id << "(from " << fname << ") with " << nel << " elements and " << nsp << " species\n";
+      std::cerr <<  "Using ideal gas " << id << "(from " << fname << ") with " << nel << " elements and " << nsp << " species\n";
       gas->setState_TPY(300., 101325., "CH4:0.1, O2:0.2, N2:0.7");
-      cerr << *gas;
+      std::cerr <<  *gas;
 #endif
     }
     for (int k = 0; k < nsp; k++) {
@@ -169,7 +169,7 @@ void Mixing3::problemSetup(GridP&, MaterialManagerP& in_state,
   }
   catch (CanteraError) {
     showErrors(cerr);
-    cerr << "test failed." << endl;
+    std::cerr <<  "test failed." << std::endl;
     throw InternalError("Cantera failed", __FILE__, __LINE__);
   }
 
@@ -365,12 +365,12 @@ double Mixing3::lookup(int nsp, int idt, int itemp, int ipress, int* imf,
     double temp = itemp*dtemp;
     double press = ipress*dpress;
 
-    cerr << "dt=" << approx_dt << "(" << idt << "), t=" << temp << ", p=" << press << ", mf=";
+    std::cerr <<  "dt=" << approx_dt << "(" << idt << "), t=" << temp << ", p=" << press << ", mf=";
     for(int i=0;i<nsp;i++){
       if(imf[i])
-        cerr << " " << gas->speciesName(i) << ":" << newmf[i];
+        std::cerr <<  " " << gas->speciesName(i) << ":" << newmf[i];
     }
-    cerr << " create\n";
+    std::cerr <<  " create\n";
 
     double dtemp;
     try {
@@ -384,19 +384,19 @@ double Mixing3::lookup(int nsp, int idt, int itemp, int ipress, int* imf,
       gas->getMassFractions(newmf);
     }   catch (CanteraError) {
       showErrors(cerr);
-      cerr << "test failed." << endl;
+      std::cerr <<  "test failed." << std::endl;
       throw InternalError("Cantera failed", __FILE__, __LINE__);
     }
-    cerr << "After: t=" << gas->temperature() << ", p=" << gas->pressure() << ", mf=";
+    std::cerr <<  "After: t=" << gas->temperature() << ", p=" << gas->pressure() << ", mf=";
     for(int i=0;i<nsp;i++){
       if(newmf[i] > dmf)
-        cerr << " " << gas->speciesName(i) << ":" << newmf[i];
+        std::cerr <<  " " << gas->speciesName(i) << ":" << newmf[i];
     }
 
     r = scinew M3Key(nsp, idt, itemp, ipress, imfcopy, dtemp, newmf);
     table.insert(r);
     double hitrate = (double)nmiss/(double)nlook;
-    cerr << "temp: " << temp << " += " << dtemp << ", hitrate=" << hitrate*100 << "%\n";
+    std::cerr <<  "temp: " << temp << " += " << dtemp << ", hitrate=" << hitrate*100 << "%\n";
   }
   for(int i=0;i<nsp;i++)
     outmf[i] = r->mf[i];
@@ -465,7 +465,7 @@ void Mixing3::computeModelSources(const ProcessorGroup*,
       double dtscale = dt/approx_dt;
       if(dtscale < 1 || dtscale > 1.1)
         throw InternalError("Approximation messed!", __FILE__, __LINE__);
-      cerr << "dtscale=" << dtscale << '\n';
+      std::cerr <<  "dtscale=" << dtscale << '\n';
 
       double etotal = 0;
       for(CellIterator iter = patch->getCellIterator(); !iter.done(); iter++){
@@ -490,7 +490,7 @@ void Mixing3::computeModelSources(const ProcessorGroup*,
         for(int i = 0; i< numSpecies; i++)
           mfsource[i][*iter] += new_mf[i]-tmp_mf[i];
       }
-      cerr << "Mixing3 total energy: " << etotal << ", release rate=" << etotal/dt << '\n';
+      std::cerr <<  "Mixing3 total energy: " << etotal << ", release rate=" << etotal/dt << '\n';
       delete[] tmp_mf;
       delete[] new_mf;
     }

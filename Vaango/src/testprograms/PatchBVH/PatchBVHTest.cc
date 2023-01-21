@@ -127,15 +127,15 @@ int main()
     std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
     std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
   }
-  std::cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << std::endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -149,15 +149,15 @@ int main()
     std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
     std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
   }
-  std::cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << std::endl;
   q_new.resize(0);
   q_old.resize(0);
       
@@ -171,15 +171,15 @@ int main()
     std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
     std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
   }
-  std::cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << std::endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -193,15 +193,15 @@ int main()
     std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
     std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
   }
-  std::cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << std::endl;
   q_new.resize(0);
   q_old.resize(0);
   
@@ -215,15 +215,15 @@ int main()
     std::cout << "old:\n";
     for(Level::selectType::iterator iter=q_old.begin(); iter!=q_old.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
     std::cout << "new:\n";
     for(Level::selectType::iterator iter=q_new.begin(); iter!=q_new.end(); iter++)
     {
-      std::cout << **iter << endl;
+      std::cout << **iter << std::endl;
     }
   }
-  std::cout << "Query returned size:" << q_new.size() << endl;
+  std::cout << "Query returned size:" << q_new.size() << std::endl;
   q_new.resize(0);
   q_old.resize(0);
   

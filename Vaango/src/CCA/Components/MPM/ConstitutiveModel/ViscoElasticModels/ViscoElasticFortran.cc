@@ -756,7 +756,7 @@ ViscoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
 
 #if 0
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR ViscoElasticFortran"
-       << endl;
+       << std::endl;
 #endif
 }
 
@@ -776,7 +776,7 @@ ViscoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
 
 #if 0
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR ViscoElasticFortran"
-       << endl;
+       << std::endl;
 #endif
 }
 

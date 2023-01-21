@@ -165,8 +165,8 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
   vector<int> m;
   m.push_back( defaultMatl );
 
-  proc0cout << "__________________________________ Data Analysis module: turbulentFluxes" << endl;
-  proc0cout << "         Computing the turbulentFluxes and intermediate values:"<< endl;
+  proc0cout << "__________________________________ Data Analysis module: turbulentFluxes" << std::endl;
+  proc0cout << "         Computing the turbulentFluxes and intermediate values:"<< std::endl;
 
   //__________________________________
   //  Read in variables label names
@@ -295,7 +295,7 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
   if( warn.str() != "" ){
     warn << "WARNING:  You've activated the DataAnalysis:turbulentFluxes module but your not saving the variable(s) (\n"
          << warn.str() << ")";
-    proc0cout << warn.str() << endl;
+    proc0cout << warn.str() << std::endl;
   }
 
 
@@ -310,7 +310,7 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
   m_matlSet = scinew MaterialSet();
   m_matlSet->addAll_unique(m);
   m_matlSet->addReference();
-  proc0cout << "__________________________________ Data Analysis module: turbulentFluxes" << endl;
+  proc0cout << "__________________________________ Data Analysis module: turbulentFluxes" << std::endl;
 }
 
 //______________________________________________________________________
@@ -606,7 +606,7 @@ void turbulentFluxes::Q_mean( DataWarehouse * old_dw,
            <<"\t Qsum: "  << Qsum[c]
            <<"\t Qmean: " << Qmean[c]
            <<"\t Q2sum: " << Q2sum[c]
-           <<"\t Q2mean: " << Q2mean[c]<< endl;
+           <<"\t Q2mean: " << Q2mean[c]<< std::endl;
     }
 #endif
 
@@ -765,7 +765,7 @@ void turbulentFluxes::turbFluxes( DataWarehouse * new_dw,
            <<  " L-" << L << "  " << setw(10)
            << Q->Label->getName()
            <<"\t variance: "  << variance[c]
-           <<"\t covariance: " << covariance[c] << endl;
+           <<"\t covariance: " << covariance[c] << std::endl;
     }
 #endif
   }

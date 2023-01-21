@@ -22,52 +22,66 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/Variables/MPMIntVarTypes.h>
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Util/Endian.h>
+#include <Core/Grid/Variables/MPMIntVarTypes.h>
 #include <Core/Util/Assert.h>
+#include <Core/Util/Endian.h>
 #include <Core/Util/FancyAssert.h>
-
 
 namespace Uintah {
 
-void swapbytes(MetalIntVar& mp) 
+void
+swapbytes(MetalIntVar& mp)
 {
-  double *p = (double *)(&mp);
+  double* p = (double*)(&mp);
   SWAP_8(*p);
   SWAP_8(*++p);
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(MetalIntVar* mp)
 {
-  static const std::string name="MetalIntVar";
+  static const std::string name = "MetalIntVar";
   return name;
 }
 
-void swapbytes(DStressDMetalIntVar& mp) 
+void
+swapbytes(DStressDMetalIntVar& mp)
 {
-  double *p = (double *)(&mp);
-  SWAP_8(*p); SWAP_8(*++p); SWAP_8(*++p);
-  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
-  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
-  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
-  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
-  SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
+  double* p = (double*)(&mp);
+  SWAP_8(*p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(DStressDMetalIntVar* mp)
 {
-  static const std::string name="DStressDMetalIntVar";
+  static const std::string name = "DStressDMetalIntVar";
   return name;
 }
 
-void swapbytes(ArenaIntVar& mp) 
+void
+swapbytes(ArenaIntVar& mp)
 {
-  double *p = (double *)(&mp);
+  double* p = (double*)(&mp);
   SWAP_8(*p);
   SWAP_8(*++p);
   SWAP_8(*++p);
@@ -77,53 +91,56 @@ void swapbytes(ArenaIntVar& mp)
   }
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(ArenaIntVar* mp)
 {
-  static const std::string name="ArenaIntVar";
+  static const std::string name = "ArenaIntVar";
   return name;
 }
 
-void swapbytes(BorjaIntVar& mp) 
+void
+swapbytes(BorjaIntVar& mp)
 {
-  double *p = (double *)(&mp);
+  double* p = (double*)(&mp);
   SWAP_8(*p);
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(BorjaIntVar* mp)
 {
-  static const std::string name="BorjaIntVar";
+  static const std::string name = "BorjaIntVar";
   return name;
 }
 
-void swapbytes(SoilBrannonIntVar& mp) 
+void
+swapbytes(SoilBrannonIntVar& mp)
 {
-  double *p = (double *)(&mp);
+  double* p = (double*)(&mp);
   SWAP_8(*p);
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(SoilBrannonIntVar* mp)
 {
-  static const std::string name="SoilBrannonIntVar";
+  static const std::string name = "SoilBrannonIntVar";
   return name;
 }
 
-void swapbytes(TabularCapIntVar& mp) 
+void
+swapbytes(TabularCapIntVar& mp)
 {
-  double *p = (double *)(&mp);
+  double* p = (double*)(&mp);
   SWAP_8(*p);
 }
 
-template <>
-const std::string 
+template<>
+const std::string
 find_type_name(TabularCapIntVar* mp)
 {
-  static const std::string name="TabularCapIntVar";
+  static const std::string name = "TabularCapIntVar";
   return name;
 }
 
@@ -131,143 +148,171 @@ find_type_name(TabularCapIntVar* mp)
 
 namespace Uintah {
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_MetalIntVar()
 {
   int num_var = 2;
-  ASSERTEQ(sizeof(MetalIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(MetalIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(MetalIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "MetalIntVar", true,
+                                "MetalIntVar",
+                                true,
                                 &makeMPI_MetalIntVar);
   }
   return td;
 }
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_DStressDMetalIntVar()
 {
   int num_var = 18;
-  ASSERTEQ(sizeof(DStressDMetalIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(DStressDMetalIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(DStressDMetalIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "DStressDMetalIntVar", true,
+                                "DStressDMetalIntVar",
+                                true,
                                 &makeMPI_DStressDMetalIntVar);
   }
   return td;
 }
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_ArenaIntVar()
 {
   int num_var = 13;
-  ASSERTEQ(sizeof(ArenaIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(ArenaIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(ArenaIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "ArenaIntVar", true,
+                                "ArenaIntVar",
+                                true,
                                 &makeMPI_ArenaIntVar);
   }
   return td;
 }
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_BorjaIntVar()
 {
   int num_var = 1;
-  ASSERTEQ(sizeof(BorjaIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(BorjaIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(BorjaIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "BorjaIntVar", true,
+                                "BorjaIntVar",
+                                true,
                                 &makeMPI_BorjaIntVar);
   }
   return td;
 }
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_SoilBrannonIntVar()
 {
   int num_var = 1;
-  ASSERTEQ(sizeof(SoilBrannonIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(SoilBrannonIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(SoilBrannonIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "SoilBrannonIntVar", true,
+                                "SoilBrannonIntVar",
+                                true,
                                 &makeMPI_SoilBrannonIntVar);
   }
   return td;
 }
 
-static MPI_Datatype 
+static MPI_Datatype
 makeMPI_TabularCapIntVar()
 {
   int num_var = 1;
-  ASSERTEQ(sizeof(TabularCapIntVar), sizeof(double)*num_var);
+  ASSERTEQ(sizeof(TabularCapIntVar), sizeof(double) * num_var);
   MPI_Datatype mpitype;
   MPI_Type_vector(1, num_var, num_var, MPI_DOUBLE, &mpitype);
   MPI_Type_commit(&mpitype);
   return mpitype;
 }
 
-const TypeDescription* 
+const TypeDescription*
 fun_getTypeDescription(TabularCapIntVar*)
 {
   static TypeDescription* td;
   if (!td) {
     td = scinew TypeDescription(TypeDescription::Type::Other,
-                                "TabularCapIntVar", true,
+                                "TabularCapIntVar",
+                                true,
                                 &makeMPI_TabularCapIntVar);
   }
   return td;
 }
+
+static MPI_Datatype
+makeMPI_ViscoScramStateData()
+{
+  ASSERTEQ(sizeof(ViscoScramStateData), sizeof(double) * 45);
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, 45, 45, MPI_DOUBLE, &mpitype);
+  MPI_Type_commit(&mpitype);
+  return mpitype;
+}
+
+const Uintah::TypeDescription*
+fun_getTypeDescription(ViscoScramStateData*)
+{
+  static Uintah::TypeDescription* td = nullptr;
+  if (!td) {
+    td = scinew Uintah::TypeDescription(TypeDescription::Type::Other,
+                                        "ViscoScramStateData",
+                                        true,
+                                        &makeMPI_ViscoScramStateData);
+  }
+  return td;
+}
+
 } // end namespace Uintah
-
-

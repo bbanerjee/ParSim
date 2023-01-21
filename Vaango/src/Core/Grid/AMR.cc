@@ -85,9 +85,9 @@ getFineLevelRangeNodes(const Patch* coarsePatch,
     fl = fh;
   }
 #if 0
-  std::cout << "getFineLevelRangeNodes: Padding " << padding << endl;
-  std::cout << "    fl: " << fl << " fh " << fh << endl;
-  std::cout << "    cl: " << cl << " ch " << ch << endl;
+  std::cout << "getFineLevelRangeNodes: Padding " << padding << std::endl;
+  std::cout << "    fl: " << fl << " fh " << fh << std::endl;
+  std::cout << "    cl: " << cl << " ch " << ch << std::endl;
 #endif
 }
 
@@ -145,7 +145,7 @@ getCoarseLevelRange(const Patch* finePatch,
   fl = finePatch->getCellLowIndex();
   fh = finePatch->getCellHighIndex();
   // std::cout << "getCoarseLevelRange: cl " << cl << " ch " << ch << " fl " << fl <<
-  // " fh " << fh << " finePatch " << *finePatch << endl;
+  // " fh " << fh << " finePatch " << *finePatch << std::endl;
 }
 
 //______________________________________________________________________
@@ -409,11 +409,11 @@ fineLevel_CFI_Iterator(Patch::FaceType patchFace,
 #if 0
   // debugging
   if (l != f_lo_face || h != f_hi_face || isRight_CP_FP_pair){
-    std::cout << "\nface " << finePatch->getFaceName(patchFace) << " l " << l << " h " << h << endl;
-    std::cout << "f_iter:           " << f_iter << endl;
+    std::cout << "\nface " << finePatch->getFaceName(patchFace) << " l " << l << " h " << h << std::endl;
+    std::cout << "f_iter:           " << f_iter << std::endl;
     std::cout << "fine              " << f_lo_face << " " << f_hi_face 
          << "\ncoarse          " << *coarsePatch
-         << "\ncoarse remapped " << c_lo_patch << " " << c_hi_patch<< endl;
+         << "\ncoarse remapped " << c_lo_patch << " " << c_hi_patch<< std::endl;
   }
 #endif
 }
@@ -472,7 +472,7 @@ fineLevel_CFI_NodeIterator(Patch::FaceType patchFace,
 
     finePatch->getFaceNodes(patchFace, offset, l, h);
     iter = NodeIterator(l, h);
-    // std::cout << " l:" << l << " h: " << h<< endl;
+    // std::cout << " l:" << l << " h: " << h<< std::endl;
   }
 }
 

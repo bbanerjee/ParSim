@@ -233,7 +233,7 @@ AMRWave::errorEstimate(const ProcessorGroup*,
           refineFlag[c] = true;
         }
       }
-      // cerr << "numFlag=" << numFlag << '\n';
+      // std::cerr <<  "numFlag=" << numFlag << '\n';
       if (numFlag != 0) {
         refinePatch->set();
       }
@@ -280,7 +280,7 @@ AMRWave::refineCell(CCVariable<double>& finevar,
           << IntVector(coarseStart.x() + i,
                        coarseStart.y() + j,
                        coarseStart.z() + k)
-          << endl;
+          << std::endl;
 
   // weights of each cell
   double w0 = (1. - dist.x()) * (1. - dist.y()) * (1. - dist.z());
@@ -299,7 +299,7 @@ AMRWave::refineCell(CCVariable<double>& finevar,
           << coarsevar[coarseStart + IntVector(0, 0, k)] << " "
           << coarsevar[coarseStart + IntVector(i, 0, k)] << " "
           << coarsevar[coarseStart + IntVector(0, j, k)] << " "
-          << coarsevar[coarseStart + IntVector(i, j, k)] << endl;
+          << coarsevar[coarseStart + IntVector(i, j, k)] << std::endl;
 
   // add up the weighted values
   finevar[fineIndex] = w0 * coarsevar[coarseStart] +
@@ -311,7 +311,7 @@ AMRWave::refineCell(CCVariable<double>& finevar,
                        w6 * coarsevar[coarseStart + IntVector(0, j, k)] +
                        w7 * coarsevar[coarseStart + IntVector(i, j, k)];
 
-  // amrwave << ": " << finevar[fineIndex] << endl;
+  // amrwave << ": " << finevar[fineIndex] << std::endl;
 }
 
 void
@@ -331,7 +331,7 @@ AMRWave::coarsenCell(CCVariable<double>& coarsevar,
   // amrwave << "coarsenCell on level " << coarseLevel->getIndex() << " coarse
   // Index " << coarseIndex << " " << coarseLevel->getCellPosition(coarseIndex)
   // << " fine range = "
-  //        << fineStart << " " << fineStart+crr << endl << "  FVs: ";
+  //        << fineStart << " " << fineStart+crr << std::endl << "  FVs: ";
 
   // find all the fine cells, average the values; no need to weight, as they are
   // equidistant
@@ -341,7 +341,7 @@ AMRWave::coarsenCell(CCVariable<double>& coarsevar,
   }
 
   coarsevar[coarseIndex] = tmp / (crr.x() * crr.y() * crr.z());
-  // amrwave << ": " << coarsevar[coarseIndex] << endl;
+  // amrwave << ": " << coarsevar[coarseIndex] << std::endl;
 }
 
 void
@@ -389,7 +389,7 @@ AMRWave::refine(const ProcessorGroup*,
         IntVector(1, 1, 1);
 
       // amrwave << "   Calling getRegion for Phi: " << coarsePhiLow << " " <<
-      // coarsePhiHigh << endl;
+      // coarsePhiHigh << std::endl;
       new_dw->getRegion(coarse_phi,
                         d_phi_label,
                         matl,
@@ -397,7 +397,7 @@ AMRWave::refine(const ProcessorGroup*,
                         coarsePhiLow,
                         coarsePhiHigh);
       // amrwave << "   Calling getRegion for Pi: " << coarsePiLow << " " <<
-      // coarsePiHigh << endl;
+      // coarsePiHigh << std::endl;
       new_dw->getRegion(coarse_pi,
                         d_pi_label,
                         matl,
@@ -441,7 +441,7 @@ AMRWave::coarsen(const ProcessorGroup*,
     const Patch* coarsePatch = patches->get(p);
     // amrwave << "    DOING AMRWave::coarsen on patch " << coarsePatch->getID()
     // << ": " << coarsePatch->getLowIndex() << " " <<
-    // coarsePatch->getHighIndex() << endl ;
+    // coarsePatch->getHighIndex() << std::endl ;
 
     for (int m = 0; m < matls->size(); m++) {
       int matl = matls->get(m);
@@ -556,7 +556,7 @@ AMRWave::refineFaces(const Patch* finePatch,
       amrwave << "    DOING AMRWave::RefineFaces on patch "
               << finePatch->getID() << ": " << finePatch->getCellLowIndex()
               << " " << finePatch->getCellHighIndex() << " face: " << fineLow
-              << " " << fineHigh << endl;
+              << " " << fineHigh << std::endl;
 
       constCCVariable<double> coarse_old_var;
       constCCVariable<double> coarse_new_var;
@@ -597,7 +597,7 @@ AMRWave::refineFaces(const Patch* finePatch,
         finevar[*iter] = x0 * w0 + x1 * w1;
         amrwave << "Index " << *iter << " SubCycle: " << subCycleProgress
                 << " X0 " << x0 << " X1 " << x1 << " final " << finevar[*iter]
-                << endl;
+                << std::endl;
       }
     } // if (finePatch->getBCType(face) == Patch::Coarse) {
   }   // for (Patch::FaceType face = 0; face < Patch::numFaces; face++) {

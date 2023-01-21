@@ -77,12 +77,12 @@ void BNRRegridder::brsplit(std::list<IntVector> &flags, std::vector<Region> &pat
   Region bounds=computeBounds(flags);
   unsigned int num_flags=computeNumFlags(flags);
 
-  //cout << getpid() << " Bounds: " << bounds << " flags: " << flags.size() << endl;
-  //cout << getpid() << " thresh: " << num_flags/(double)bounds.getVolume() << endl;
+  //cout << getpid() << " Bounds: " << bounds << " flags: " << flags.size() << std::endl;
+  //cout << getpid() << " thresh: " << num_flags/(double)bounds.getVolume() << std::endl;
   //check tolerance
   if(num_flags/(double)bounds.getVolume()>=tol)
   {
-    //cout << getpid() << " adding patch: " << bounds << endl;
+    //cout << getpid() << " adding patch: " << bounds << std::endl;
     patches.push_back(Region(bounds.getLow()*rr,bounds.getHigh()*rr));
     return;
   }
@@ -95,7 +95,7 @@ void BNRRegridder::brsplit(std::list<IntVector> &flags, std::vector<Region> &pat
   Split s=findSplit(hist);
   s.i+=bounds.getLow()[s.d];
 
-  //cout << getpid() << " Split: d:" << s.d << " i:" << s.i << endl;  
+  //cout << getpid() << " Split: d:" << s.d << " i:" << s.i << std::endl;  
 
   std::list<IntVector> left,right;
   split(flags,s,left,right);
@@ -114,7 +114,7 @@ Region BNRRegridder::computeBounds(std::list<IntVector> &flags)
   for(std::list<IntVector>::iterator iter=flags.begin();iter!=flags.end();iter++)
   {
     bounds.extend(*iter);
-    //cout << "Extending bounds to: " << *iter << " new bounds: " << bounds << endl;
+    //cout << "Extending bounds to: " << *iter << " new bounds: " << bounds << std::endl;
   }
   return bounds;
 }
@@ -145,7 +145,7 @@ void BNRRegridder::computeHistogram(std::list<IntVector> &flags, const Region &b
   for(std::list<IntVector>::iterator iter=flags.begin();iter!=flags.end();iter++)
   {
     IntVector p=(*iter)-bounds.getLow();
-    //cout << "adding to hist at: " << p << endl;
+    //cout << "adding to hist at: " << p << std::endl;
     hist[0][p.x()]++;
     hist[1][p.y()]++;
     hist[2][p.z()]++;
@@ -155,7 +155,7 @@ void BNRRegridder::computeHistogram(std::list<IntVector> &flags, const Region &b
   {
     for(size_t i=0;i<hist[d].size();i++)
     {
-      std::cout << "Hist[" << d << "][" << i << "]: " << hist[d][i] << endl; 
+      std::cout << "Hist[" << d << "][" << i << "]: " << hist[d][i] << std::endl; 
     }
   }
 #endif
@@ -174,7 +174,7 @@ Split BNRRegridder::findSplit(std::vector<std::vector<unsigned int> > &hist)
   
   //search for zero split in each dimension
 
-  //cout << "dimension order: " << dims[0] << " " << dims[1] << " " << dims[2] << endl;
+  //cout << "dimension order: " << dims[0] << " " << dims[1] << " " << dims[2] << std::endl;
 
   //search for a zero
   for(size_t dim=0;dim<hist.size();dim++)
@@ -184,7 +184,7 @@ Split BNRRegridder::findSplit(std::vector<std::vector<unsigned int> > &hist)
     {
       if(hist[d][i]==0)
       {
-        //cout << "Zero split found at: " << d << " : " << i << endl;
+        //cout << "Zero split found at: " << d << " : " << i << std::endl;
         return Split(d,i);
       }
     }
@@ -204,7 +204,7 @@ Split BNRRegridder::findSplit(std::vector<std::vector<unsigned int> > &hist)
     {
       int d2=hist[d][i-1]+hist[d][i+1]-2*hist[d][i];
       int change=abs(last_d2-d2);
-      //cout << "d: " << d << " i: " << i << " last_d2: " << last_d2 << " d2: " << d2 << endl;
+      //cout << "d: " << d << " i: " << i << " last_d2: " << last_d2 << " d2: " << d2 << std::endl;
       if(sign(last_d2)!=sign(d2))
       { 
         if(change>max_change )
@@ -230,7 +230,7 @@ Split BNRRegridder::findSplit(std::vector<std::vector<unsigned int> > &hist)
     }
   }
 
-  //cout << "max_change: " << max_change << endl;
+  //cout << "max_change: " << max_change << std::endl;
   //could not find a good split, just split in half
   if(max_change<=0)
   {
@@ -264,16 +264,16 @@ void BNRRegridder::split(std::list<IntVector> &flags, const Split &split, std::l
   }
 
 #if 0
-  std::cout << "Left flags: " << endl;
+  std::cout << "Left flags: " << std::endl;
   for(std::list<IntVector>::iterator iter=left.begin();iter!=left.end();iter++)
   {
-    std::cout << "  " << *iter << endl;
+    std::cout << "  " << *iter << std::endl;
   }
   
-  std::cout << "Right flags: " << endl;
+  std::cout << "Right flags: " << std::endl;
   for(std::list<IntVector>::iterator iter=right.begin();iter!=right.end();iter++)
   {
-    std::cout << "  " << *iter << endl;
+    std::cout << "  " << *iter << std::endl;
   }
 #endif 
 }

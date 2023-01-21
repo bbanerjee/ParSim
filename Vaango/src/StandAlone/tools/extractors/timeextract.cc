@@ -73,23 +73,23 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
     if(badarg != "")
-        cerr << "Error parsing argument: " << badarg << endl;
-    cerr << "Usage: " << progname << " [options] "
+        std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+    std::cerr <<  "Usage: " << progname << " [options] "
          << "-uda <archive file>\n\n";
-    cerr << "Valid options are:\n";
-    cerr << "  -h,      --help\n";
-    cerr << "  -v,      --variable          <variable name>\n";
-    cerr << "  -m,      --material          <material number> [defaults to 0]\n";
-    //    cerr << "  -binary (prints out the data in binary)\n";
-    cerr << "  -tlow,   --timesteplow       [int] (only outputs timestep from int) [defaults to 0]\n";
-    cerr << "  -thigh,  --timestephigh      [int] (only outputs timesteps up to int) [defaults to last timestep]\n";
-    cerr << "  -i,      --index             <i> <j> <k> [intx] cell index [defaults to 0,0,0]\n";
-    cerr << "  -p,      --point             <x> <y> <z> [doubles] point location in physical coordinates \n";
-    cerr << "  -l,      --level             [int] (level index to query range from) [defaults to 0]\n";
-    cerr << "  -o,      --out               <outputfilename> [defaults to stdout]\n";
-    cerr << "  -vv,     --verbose           (prints status of output)\n";
-    cerr << "  -q,      --quiet             (only print data values)\n";
-    cerr << "  -noxml,  --xml-cache-off (turn off XML caching in DataArchive)\n";
+    std::cerr <<  "Valid options are:\n";
+    std::cerr <<  "  -h,      --help\n";
+    std::cerr <<  "  -v,      --variable          <variable name>\n";
+    std::cerr <<  "  -m,      --material          <material number> [defaults to 0]\n";
+    //    std::cerr <<  "  -binary (prints out the data in binary)\n";
+    std::cerr <<  "  -tlow,   --timesteplow       [int] (only outputs timestep from int) [defaults to 0]\n";
+    std::cerr <<  "  -thigh,  --timestephigh      [int] (only outputs timesteps up to int) [defaults to last timestep]\n";
+    std::cerr <<  "  -i,      --index             <i> <j> <k> [intx] cell index [defaults to 0,0,0]\n";
+    std::cerr <<  "  -p,      --point             <x> <y> <z> [doubles] point location in physical coordinates \n";
+    std::cerr <<  "  -l,      --level             [int] (level index to query range from) [defaults to 0]\n";
+    std::cerr <<  "  -o,      --out               <outputfilename> [defaults to stdout]\n";
+    std::cerr <<  "  -vv,     --verbose           (prints status of output)\n";
+    std::cerr <<  "  -q,      --quiet             (only print data values)\n";
+    std::cerr <<  "  -noxml,  --xml-cache-off (turn off XML caching in DataArchive)\n";
     exit(1);
 }
 
@@ -115,7 +115,7 @@ printData(DataArchive* archive, string& variable_name,
   //------------------------------
   // figure out the lower and upper bounds on the timesteps
   if (time_step_lower >= times.size()) {
-    cerr << "timesteplow must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timesteplow must be between 0 and " << times.size()-1 << std::endl;
     exit(1);
   }
 
@@ -127,13 +127,13 @@ printData(DataArchive* archive, string& variable_name,
   }
 
   if (time_step_upper >= times.size() || time_step_upper < time_step_lower) {
-    cerr << "timestephigh("<<time_step_upper<<") must be greater than " << time_step_lower 
-         << " and less than " << times.size()-1 << endl;
+    std::cerr <<  "timestephigh("<<time_step_upper<<") must be greater than " << time_step_lower 
+         << " and less than " << times.size()-1 << std::endl;
     exit(1);
   }
   
   if (!quiet){
-    std::cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << endl;
+    std::cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << std::endl;
   }
   
   // set defaults for output stream
@@ -146,7 +146,7 @@ printData(DataArchive* archive, string& variable_name,
   try {
     archive->query(values, variable_name, material, var_id, times[time_step_lower], times[time_step_upper], levelIndex);
   } catch (const VariableNotFoundInGrid& exception) {
-    cerr << "Caught VariableNotFoundInGrid Exception: " << exception.message() << endl;
+    std::cerr <<  "Caught VariableNotFoundInGrid Exception: " << exception.message() << std::endl;
     exit(1);
   }
 
@@ -161,7 +161,7 @@ printData(DataArchive* archive, string& variable_name,
   // Print out data
   for(unsigned int i = 0; i < values.size(); i++) {
     out << times[time_step_lower + i] << "  " << values[i] 
-        << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+        << " " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
   }
 } 
 
@@ -253,7 +253,7 @@ main(int argc, char** argv)
   }
   
   if(input_uda_name == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -282,17 +282,17 @@ main(int argc, char** argv)
     //__________________________________
     //  Bullet proofing
     if (!var_found) {
-      cerr << "\n\n";
-      cerr << "ERROR: Variable \"" << variable_name << "\" was not found.\n";
-      cerr << "If a variable name was not specified try -v [name].\n";
-      cerr << "Possible variable names are:\n";
+      std::cerr <<  "\n\n";
+      std::cerr <<  "ERROR: Variable \"" << variable_name << "\" was not found.\n";
+      std::cerr <<  "If a variable name was not specified try -v [name].\n";
+      std::cerr <<  "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << std::endl;
       }
-      cerr << "\n";
-      cerr << "Goodbye!!\n";
-      cerr << "\n";
+      std::cerr <<  "\n";
+      std::cerr <<  "Goodbye!!\n";
+      std::cerr <<  "\n";
       exit(-1);
       //      var = vars[0];
     }
@@ -343,7 +343,7 @@ main(int argc, char** argv)
       output->open(output_file_name.c_str());
       if (!(*output)) {
         // Error!!
-        cerr << "Could not open "<<output_file_name<<" for writing.\n";
+        std::cerr <<  "Could not open "<<output_file_name<<" for writing.\n";
         exit(1);
       }
       output_stream = output;
@@ -375,11 +375,11 @@ main(int argc, char** argv)
   case Uintah::TypeDescription::Type::short_int_type:
   case Uintah::TypeDescription::Type::long_type:
   case Uintah::TypeDescription::Type::long64_type:
-    cerr << "Subtype is not implemented\n";
+    std::cerr <<  "Subtype is not implemented\n";
     exit(1);
     break;
   default:
-    cerr << "Unknown subtype\n";
+    std::cerr <<  "Unknown subtype\n";
     exit(1);
   }
 
@@ -389,10 +389,10 @@ main(int argc, char** argv)
   }
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     exit(1);
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     exit(1);
   }
 } // end main

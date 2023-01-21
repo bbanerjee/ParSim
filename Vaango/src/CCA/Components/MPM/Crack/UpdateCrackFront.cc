@@ -376,7 +376,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
         else { // Crack has penetrated the material
           // If all crack-front segments dead, the material is broken.
           if(ce[m].size()>0) { // for the material with crack(s) initially              
-            if(pid==0) std::cout << "!!! Material " << m << " is broken." << endl;
+            if(pid==0) std::cout << "!!! Material " << m << " is broken." << std::endl;
           }  
         }
         
@@ -450,26 +450,26 @@ void Crack::OutputCrackGeometry(const int& m, const int& timestep)
       ofstream outputCF(cfFileName, ios::out);
 
       if(!outputCE || !outputCX || !outputCF) {
-        std::cout << "Error: failure to open files for storing crack geometry" << endl;
+        std::cout << "Error: failure to open files for storing crack geometry" << std::endl;
         exit(1);
       }
 
       // Output crack elems
       for(int i=0; i<(int)ce[m].size(); i++) {
         outputCE << ce[m][i].x() << " " << ce[m][i].y() << " "
-                 << ce[m][i].z() << endl;
+                 << ce[m][i].z() << std::endl;
       }
 
       // Output crack nodes
       for(int i=0; i<(int)cx[m].size(); i++) {
         outputCX << cx[m][i].x() << " " << cx[m][i].y() << " "
-                 << cx[m][i].z() << endl;
+                 << cx[m][i].z() << std::endl;
       }
 
       // Output crack-front nodes
       for(int i=0; i<(int)cfSegNodes[m].size()/2; i++) {
         outputCF << cfSegNodes[m][2*i] << " "
-                 << cfSegNodes[m][2*i+1] << endl;
+                 << cfSegNodes[m][2*i+1] << std::endl;
       }
     }
   } // End if(ce[m].size()>0)

@@ -148,7 +148,7 @@ UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
                        const ProblemSpecP& restart_prob_spec, GridP& grid,
                        MaterialManagerP& mat_manager)
 {
-  cout_doing << "Doing problemSetup\t\t\t\t\t MPM" << endl;
+  cout_doing << "Doing problemSetup\t\t\t\t\t MPM" << std::endl;
   d_mat_manager = sharedState;
   dynamic_cast<Scheduler*>(getPort("scheduler"))
     ->setPositionVar(d_labels->pXLabel);
@@ -808,7 +808,7 @@ UofU_MPM::initializePressureBC(const ProcessorGroup*,
   double time = 0.0;
   printTask(patches, patches->get(0), cout_doing, "Doing initializePressureBC");
   if (cout_dbg.active())
-    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << endl;
+    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << std::endl;
 
   // Calculate the force vector at each particle
   int pressureBCId = 0;
@@ -831,7 +831,7 @@ UofU_MPM::initializePressureBC(const ProcessorGroup*,
 
     if (cout_dbg.active())
       cout_dbg << "    Load Curve = " << pressureBCId
-               << " Num Particles = " << numPart << endl;
+               << " Num Particles = " << numPart << std::endl;
 
     // Calculate the force per particle at t = 0.0
     double forcePerPart = pbc->forcePerParticle(time);
@@ -923,7 +923,7 @@ UofU_MPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
   Task* t = 0;
   cout_doing << UintahParallelComponent::d_myworld->myRank()
              << " MPM::scheduleComputeStableTimestep \t\t\t\tL-"
-             << level->getIndex() << endl;
+             << level->getIndex() << std::endl;
 
   t = scinew Task("UofU_MPM::actuallyComputeStableTimestep", this,
                   &UofU_MPM::actuallyComputeStableTimestep);
@@ -1205,7 +1205,7 @@ UofU_MPM::applyExternalLoads(const ProcessorGroup*, const PatchSubset* patches,
   double time = d_mat_manager->getElapsedTime();
 
   if (cout_doing.active()) {
-    cout_doing << "Current Time (applyExternalLoads) = " << time << endl;
+    cout_doing << "Current Time (applyExternalLoads) = " << time << std::endl;
   }
 
   // Calculate the force vector at each particle for each pressure bc
@@ -1908,7 +1908,7 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
             pDefGrad_old[particle]);
           stressvol = pStress[particle] * pVol[particle];
           stresspress = pStress[particle] - Identity * p_q[particle];
-          // cerr << " particle = " << particle << " pStress = " << pStress[particle] << endl;
+          // std::cerr <<  " particle = " << particle << " pStress = " << pStress[particle] << std::endl;
 
           for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = influenceNodes[k];
@@ -3294,7 +3294,7 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
       if (cout_dbg.active())
-        cout_dbg << "updateErosionParameter:: material # = " << m << endl;
+        cout_dbg << "updateErosionParameter:: material # = " << m << std::endl;
 
       MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
       int matID = mpm_matl->getDWIndex();
@@ -3302,7 +3302,7 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
 
       if (cout_dbg.active()) {
         cout_dbg << "updateErosionParameter:: mpm_matl* = " << mpm_matl
-                 << " matID = " << matID << " pset* = " << pset << endl;
+                 << " matID = " << matID << " pset* = " << pset << std::endl;
       }
 
       // Get the localization info
@@ -3326,7 +3326,7 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
       //}
 
       if (cout_dbg.active())
-        cout_dbg << "updateErosionParameter:: Got Damage Parameter" << endl;
+        cout_dbg << "updateErosionParameter:: Got Damage Parameter" << std::endl;
 
       if (d_flags->d_deleteRogueParticles) {
         // The following looks for localized particles that are isolated
@@ -3354,12 +3354,12 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
       } // if d_deleteRogueParticles
 
       if (cout_dbg.active())
-        cout_dbg << "updateErosionParameter:: Updated Erosion " << endl;
+        cout_dbg << "updateErosionParameter:: Updated Erosion " << std::endl;
     }
 
     if (cout_dbg.active())
       cout_dbg << "Done updateErosionParamter on patch " << patch->getID()
-               << "\t MPM" << endl;
+               << "\t MPM" << std::endl;
   }
 }
 
@@ -3808,7 +3808,7 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->put(sumvec_vartype(centerOfMass), d_labels->CenterOfMassPositionLabel);
     }
 
-    // std::cout << "Solid momentum after advection = " << totalMom << endl;
+    // std::cout << "Solid momentum after advection = " << totalMom << std::endl;
   }
 }
 

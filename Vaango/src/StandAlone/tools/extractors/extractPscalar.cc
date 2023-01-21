@@ -124,10 +124,10 @@ int main(int argc, char** argv)
   if (argc < 11) usage( "", argv[0] );
 
   std::cout << "Particle Variable to be extracted = " << particleVariable << "\n";
-  std::cout << "Material ID to be extracted = " << matID << endl;
+  std::cout << "Material ID to be extracted = " << matID << std::endl;
 
   // Read the particle ID file
-  std::cout << "Particle ID File to be read = " << partIDFile << endl;
+  std::cout << "Particle ID File to be read = " << partIDFile << std::endl;
   std::vector<long64> partID;
   std::ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
@@ -145,20 +145,20 @@ int main(int argc, char** argv)
     }
   } while (!pidFile.eof());
   
-  std::cout << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cout << "  Number of Particle IDs = " << partID.size() << std::endl;
   for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
-    std::cout << "    p"<< (ii+1) << " = " << partID[ii] << endl;
+    std::cout << "    p"<< (ii+1) << " = " << partID[ii] << std::endl;
   }
 
-  std::cout << "Output file name = " << outFile << endl;
-  std::cout << "UDA directory to be read = " << udaDir << endl;
+  std::cout << "Output file name = " << outFile << std::endl;
+  std::cout << "UDA directory to be read = " << udaDir << std::endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
     
     // Print a particular particle variable
     printScalarVariable(da, particleVariable, matID, partID, outFile, timeFiles);
   } catch (Exception& e) {
-    std::cerr << "Caught exception: " << e.message() << endl;
+    std::cerr << "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
     std::cerr << "Caught unknown exception\n";
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
 
 void usage(const std::string& badarg, const std::string& progname)
 {
-  if(badarg != "") std::cerr << "Error parsing argument: " << badarg << endl;
+  if(badarg != "") std::cerr << "Error parsing argument: " << badarg << std::endl;
   std::cerr << "Usage: " << progname 
        << " -partvar <scalar particle variable>"
        << " -m <material id> "
@@ -294,7 +294,7 @@ void printScalarVariable(DataArchive* da,
         auto timetaken = end - start;
         std::cerr << " CPU Time = " 
                   << std::chrono::duration_cast<std::chrono::milliseconds>(timetaken).count() 
-                  << " ms" << " found " << numFound << endl;
+                  << " ms" << " found " << numFound << std::endl;
       } // end of time step loop
     } // end of var compare if
   } // end of variable loop
@@ -305,7 +305,7 @@ void printScalarVariable(DataArchive* da,
     std::ofstream file(outFile);
     file.setf(std::ios::scientific, std::ios::floatfield);
     file.precision(8);
-    std::cout << "Created output file " << outFile << endl;
+    std::cout << "Created output file " << outFile << std::endl;
     //std::cout << "Data size = " << matData.size() << std::endl;
     for (auto jj = 0ul; jj < times.size(); ++jj) {
       double time = times[jj];
@@ -323,7 +323,7 @@ void printScalarVariable(DataArchive* da,
             file << time << " " << patchIndex << " " << matl ;
             file << " " << pid;
             file << " " << var;
-            file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+            file << " " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
           } else {
             std::cerr << "**WARNING** Data not found for all timesteps for particle "
                       << particleID << std::endl;
@@ -333,7 +333,7 @@ void printScalarVariable(DataArchive* da,
       //std::cout << "num found = " << numFound << std::endl;
     }
     file.close();
-    std::cout << "Closed output file " << outFile << endl;
+    std::cout << "Closed output file " << outFile << std::endl;
   } else {
     // Create output files for each of the particle IDs
     for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
@@ -345,7 +345,7 @@ void printScalarVariable(DataArchive* da,
         file.setf(std::ios::scientific,std::ios::floatfield);
         file.precision(8);
         std::cout << "Created output file " << name.str() << " for particle ID "
-             << particleID << endl;
+             << particleID << std::endl;
         for (unsigned int jj = 0; jj < matData[particleID].time.size(); ++jj) {
           auto time = matData[particleID].time[jj];
           auto patchIndex = matData[particleID].patch[jj];
@@ -356,10 +356,10 @@ void printScalarVariable(DataArchive* da,
           file << time << " " << patchIndex << " " << matl ;
           file << " " << pid;
           file << " " << var;
-          file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+          file << " " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
         }
         file.close();
-        std::cout << "Closed output file " << outFile << endl;
+        std::cout << "Closed output file " << outFile << std::endl;
       }
     }
   }

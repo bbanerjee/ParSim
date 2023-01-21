@@ -447,7 +447,7 @@ ViscoElasticDamage::writeRestartParameters(ofstream& out) const
       << (getDeformationMeasure())(2, 3) << " "
       << (getDeformationMeasure())(3, 1) << " "
       << (getDeformationMeasure())(3, 2) << " "
-      << (getDeformationMeasure())(3, 3) << endl;
+      << (getDeformationMeasure())(3, 3) << std::endl;
 }
 
 ConstitutiveModel*
@@ -495,13 +495,13 @@ ViscoElasticDamage::getNumParameters() const
 void
 ViscoElasticDamage::printParameterNames(ofstream& out) const
 {
-  out << "bulk" << endl
-      << "shear" << endl
-      << "d_Alpha" << endl
-      << "d_Beta" << endl
-      << "d_Tau" << endl
-      << "d_Gamma" << endl
-      << "maxEquivStrain" << endl;
+  out << "bulk" << std::endl
+      << "shear" << std::endl
+      << "d_Alpha" << std::endl
+      << "d_Beta" << std::endl
+      << "d_Tau" << std::endl
+      << "d_Gamma" << std::endl
+      << "maxEquivStrain" << std::endl;
 }
 
 void
@@ -509,7 +509,7 @@ ViscoElasticDamage::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet* patches) const
 
 {
-  cerr << "ViscoElasticDamage::addComputesAndRequires needs to be filled in\n";
+  std::cerr <<  "ViscoElasticDamage::addComputesAndRequires needs to be filled in\n";
 }
 
 ConstitutiveModel*

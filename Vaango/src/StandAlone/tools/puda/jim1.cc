@@ -53,7 +53,7 @@ Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(vars.size(), types.size());
   std::cout << "#There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       
   std::vector<int> index;
   std::vector<double> times;
@@ -61,14 +61,14 @@ Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(index.size(), times.size());
   std::cout << "#There are " << index.size() << " timesteps:\n";
 //  for( int i = 0; i < (int)index.size(); i++ ) {
-//    std::cout << index[i] << ": " << times[i] << endl;
+//    std::cout << index[i] << ": " << times[i] << std::endl;
 //  }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
       
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    //cout << "time = " << time << endl;
+    //cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
      std::ostringstream fnum;
     string filename;
@@ -109,6 +109,6 @@ Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
         }  //if
       }  // for patches
     }   // for levels
-    std::cout << time << " " << tail_pos << " " << toe_pos << endl;
+    std::cout << time << " " << tail_pos << " " << toe_pos << std::endl;
   }
 } // end jim1()

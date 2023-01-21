@@ -80,7 +80,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
      std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->MPMEquationOfStatFactory."
-         << endl;
+         << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
@@ -89,7 +89,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
      std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->ShearModulusModelFactory."
-         << endl;
+         << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
@@ -114,7 +114,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
      std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->YieldConditionFactory."
-         << endl;
+         << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
@@ -496,7 +496,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       if (cout_CC_Eps.active()) {
         cout_CC_Eps << "CamClay: idx = " << idx
                     << " t_n: eps_v_e = " << strain_elast_v_n
-                    << " eps_s_e = " << strain_elast_s_n << endl;
+                    << " eps_s_e = " << strain_elast_s_n << std::endl;
       }
 
       // Compute strain increment from rotationally corrected rate of
@@ -543,7 +543,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       if (std::isnan(q)) {
          std::ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state.epse_v
-             << " epse_s = " << state.epse_s << " q = " << q << endl;
+             << " epse_s = " << state.epse_s << " q = " << q << std::endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
 
@@ -555,7 +555,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       if (std::isnan(p)) {
          std::ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state.epse_v
-             << " epse_s = " << state.epse_s << " p = " << p << endl;
+             << " epse_s = " << state.epse_s << " p = " << p << std::endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
 
@@ -681,7 +681,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
           // std::cout << "deldelgamma = " << deldelgamma
           //          << " delvoldev = " << delvoldev[0] << " , " <<
-          //          delvoldev[1] << endl;
+          //          delvoldev[1] << std::endl;
 
           // Allow for line search step
           double delgamma = 0.0;
@@ -711,9 +711,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
                    << " q = " << q << " pc = " << pc << " f = " << fyield
-                   << endl;
+                   << std::endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
-                   << endl;
+                   << std::endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(q)) {
@@ -722,9 +722,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
                    << " q = " << q << " pc = " << pc << " f = " << fyield
-                   << endl;
+                   << std::endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
-                   << endl;
+                   << std::endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(pc)) {
@@ -733,9 +733,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                    << " epse_v = " << state.epse_v
                    << " epse_s = " << state.epse_s << " p = " << p
                    << " q = " << q << " pc = " << pc << " f = " << fyield
-                   << endl;
+                   << std::endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
-                   << endl;
+                   << std::endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
 
@@ -771,24 +771,24 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                 cout_CC_Conv << "idx = " << idx << " k = " << klocal
                              << " rv = " << rv << " rs = " << rs
                              << " rf = " << rf << " rf_old = " << rf_old
-                             << " fmax = " << fmax << endl;
+                             << " fmax = " << fmax << std::endl;
                 cout_CC_Conv << " rtolv = " << rtolv << " rtols = " << rtols
                              << " rtolf = " << rtolf << " tolr = " << tolr
-                             << " tolf = " << tolf << endl;
+                             << " tolf = " << tolf << std::endl;
                 cout_CC_Conv << " pqpc = [" << p << " " << q << " " << pc << "]"
                              << " pqpc_old = [" << p_old << " " << q_old << " "
                              << pc_old << "]"
-                             << " fold = " << f_old << endl;
+                             << " fold = " << f_old << std::endl;
                 cout_CC_Conv << " epsv = " << strain_elast_v
                              << " epss = " << strain_elast_s
-                             << " f = " << fyield << endl;
+                             << " f = " << fyield << std::endl;
               }
             }
             if (fabs(rf / rf_old) > 1.0e-2) {
               if ((fabs(rf) > fabs(rf_old)) ||
                   (rf < 0.0 && fabs(rf - rf_old) > fmax)) {
                 // std::cout << "idx = " << idx << " rf = " << rf << " rf_old =
-                // " << rf_old << endl;
+                // " << rf_old << std::endl;
                 do_line_search = true;
                 delvoldev[0] *= 0.5;
                 delvoldev[1] *= 0.5;
@@ -812,21 +812,21 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           // Check max iters
           if (klocal == iter_break) {
              std::ostringstream desc;
-            desc << "**ERROR** Newton iterations did not converge" << endl
+            desc << "**ERROR** Newton iterations did not converge" << std::endl
                  << " idx = " << idx << " rtolv = " << rtolv
                  << " rtols = " << rtols << " rtolf = " << rtolf
-                 << " klocal = " << klocal << endl;
+                 << " klocal = " << klocal << std::endl;
             // desc << " p_old = " << p << " q_old = " << q << " pc_old = " <<
-            // pc_n << " f_old = " << ftrial << endl;
+            // pc_n << " f_old = " << ftrial << std::endl;
             desc << " p = " << p << " q = " << q << " pc = " << pc
-                 << " f = " << fyield << endl
+                 << " f = " << fyield << std::endl
                  << " eps_v_e = " << strain_elast_v
-                 << " eps_s_e = " << strain_elast_s << endl;
-            desc << "L = " << velGrad_new << endl;
-            desc << "F_old = " << pDefGrad_old[idx] << endl;
-            desc << "F_new = " << defGrad_new << endl;
-            desc << "J_old = " << pDefGrad_old[idx].Determinant() << endl;
-            desc << "J_new = " << J_new << endl;
+                 << " eps_s_e = " << strain_elast_s << std::endl;
+            desc << "L = " << velGrad_new << std::endl;
+            desc << "F_old = " << pDefGrad_old[idx] << std::endl;
+            desc << "F_new = " << defGrad_new << std::endl;
+            desc << "J_old = " << pDefGrad_old[idx].Determinant() << std::endl;
+            desc << "J_new = " << J_new << std::endl;
             throw ConvergenceFailure(desc.str(), iter_break, rtolf, tolf,
                                      __FILE__, __LINE__);
           }
@@ -836,13 +836,13 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                               one * (strain_elast_v / 3.0);
               Matrix3 eps_p = strain_elast_tr - eps_e;
               double eps_v_p = eps_p.Trace();
-              cout_CC_Eps << "idx = " << idx << " k = " << klocal << endl
+              cout_CC_Eps << "idx = " << idx << " k = " << klocal << std::endl
                           << " eps_v_e = " << strain_elast_v
                           << " eps_v_p = " << eps_v_p
-                          << " eps_s_e = " << strain_elast_s << endl
+                          << " eps_s_e = " << strain_elast_s << std::endl
                           << " f_n+1 = " << fyield << " pqpc = [" << p << " "
                           << q << " " << pc << "]"
-                          << " rtolf = " << rtolf << " tolf = " << tolf << endl;
+                          << " rtolf = " << rtolf << " tolf = " << tolf << std::endl;
             }
           }
 
@@ -852,7 +852,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
            std::ostringstream desc;
           desc
             << "**ERROR** delgamma less than 0.0 in local converged solution."
-            << endl;
+            << std::endl;
           throw ConvergenceFailure(desc.str(), klocal, rtolf, delgamma,
                                    __FILE__, __LINE__);
         }
@@ -934,7 +934,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
   }
 
   if (cout_CC.active())
-    cout_CC << getpid() << "... End." << endl;
+    cout_CC << getpid() << "... End." << std::endl;
 }
 
 void
@@ -1062,7 +1062,7 @@ CamClay::computeRhoMicroCM(double pressure, const double p_ref,
   if (std::isnan(rho_cur)) {
      std::ostringstream desc;
     desc << "rho_cur = " << rho_cur << " pressure = " << pressure
-         << " p_ref = " << p_ref << " rho_orig = " << rho_orig << endl;
+         << " p_ref = " << p_ref << " rho_orig = " << rho_orig << std::endl;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
 
@@ -1081,7 +1081,7 @@ CamClay::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   if (std::isnan(pressure)) {
      std::ostringstream desc;
     desc << "rho_cur = " << rho_cur << " pressure = " << pressure
-         << " p_ref = " << p_ref << " dp_drho = " << dp_drho << endl;
+         << " p_ref = " << p_ref << " dp_drho = " << dp_drho << std::endl;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
 }

@@ -110,7 +110,7 @@ Uintah::asci( DataArchive *   da,
       filename = partroot+ fnum.str();
       ofstream partfile(filename.c_str());
 
-      partfile << "TITLE = \"Time Step # " << time <<"\"," << endl;
+      partfile << "TITLE = \"Time Step # " << time <<"\"," << std::endl;
                 
       // Code to print out a list of Variables
       partfile << "VARIABLES = ";
@@ -211,7 +211,7 @@ Uintah::asci( DataArchive *   da,
               }
             break;
             default:
-              cerr << "Particle Variable of unknown type: " << subtype->getName() << endl;
+              std::cerr <<  "Particle Variable of unknown type: " << subtype->getName() << std::endl;
               break;
             }
             break;
@@ -228,7 +228,7 @@ Uintah::asci( DataArchive *   da,
 	       
       } // end of for loop over variables
 		
-      partfile << endl << "ZONE I=" << partnum << ", F=BLOCK" << endl;	
+      partfile << std::endl << "ZONE I=" << partnum << ", F=BLOCK" << std::endl;	
 		
       // Loop to print values for specific timestep
       // Because header has already been printed
@@ -263,9 +263,9 @@ Uintah::asci( DataArchive *   da,
                 if(pset->numParticles() > 0){
                   ParticleSubset::iterator iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter] << " " << endl;
+                    partfile << value[*iter] << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                 }
               }
             break;
@@ -277,9 +277,9 @@ Uintah::asci( DataArchive *   da,
                 if(pset->numParticles() > 0){
                   ParticleSubset::iterator iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter] << " " << endl;
+                    partfile << value[*iter] << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                 }
               }
             break;
@@ -291,19 +291,19 @@ Uintah::asci( DataArchive *   da,
                 if(pset->numParticles() > 0){
                   ParticleSubset::iterator iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].x() << " " << endl;
+                    partfile << value[*iter].x() << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].y() << " " << endl;
+                    partfile << value[*iter].y() << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].z() << " " << endl;
+                    partfile << value[*iter].z() << " " << std::endl;
                   }  
-                  partfile << endl;  
+                  partfile << std::endl;  
                 }
               }
             break;
@@ -315,19 +315,19 @@ Uintah::asci( DataArchive *   da,
                 if(pset->numParticles() > 0){
                   ParticleSubset::iterator iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].x() << " " << endl;
+                    partfile << value[*iter].x() << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].y() << " " << endl;
+                    partfile << value[*iter].y() << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << value[*iter].z() << " " << endl;
+                    partfile << value[*iter].z() << " " << std::endl;
                   }  
-                  partfile << endl; 
+                  partfile << std::endl; 
                 }
               }
             break;
@@ -339,54 +339,54 @@ Uintah::asci( DataArchive *   da,
                 if(pset->numParticles() > 0){
                   ParticleSubset::iterator iter = pset->begin();
                   for(;iter != pset->end(); iter++){
-                    partfile << (value[*iter])(0,0) << " " << endl;
+                    partfile << (value[*iter])(0,0) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(0,1) << " " << endl;
+                    partfile << (value[*iter])(0,1) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(0,2) << " " << endl;
+                    partfile << (value[*iter])(0,2) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(1,0) << " " << endl;
+                    partfile << (value[*iter])(1,0) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(1,1) << " " << endl;
+                    partfile << (value[*iter])(1,1) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(1,2) << " " << endl;
+                    partfile << (value[*iter])(1,2) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(2,0) << " " << endl;
+                    partfile << (value[*iter])(2,0) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(2,1) << " " << endl;
+                    partfile << (value[*iter])(2,1) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                   iter = pset->begin();
                   for(;iter !=pset->end(); iter++){
-                    partfile << (value[*iter])(2,2) << " " << endl;
+                    partfile << (value[*iter])(2,2) << " " << std::endl;
                   }
-                  partfile << endl;
+                  partfile << std::endl;
                 }
               }
             break;
             default:
-              cerr << "Particle Variable of unknown type: " << subtype->getName() << endl;
+              std::cerr <<  "Particle Variable of unknown type: " << subtype->getName() << std::endl;
               break;
             }
             break;
@@ -400,7 +400,7 @@ Uintah::asci( DataArchive *   da,
 
     //increments to next timestep
     ts++;
-    std::cout << " completed." << endl;
+    std::cout << " completed." << std::endl;
   } // end of loop over time
 
 } // end asci()

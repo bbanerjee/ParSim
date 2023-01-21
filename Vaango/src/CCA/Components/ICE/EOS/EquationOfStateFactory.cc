@@ -95,7 +95,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
           << "  Run the octave script: \n"
           << "    src/CCA/Components/ICE/Matlab/Murnahan.m \n"
           << "  to see the issue. \n"
-          << "______________________________________________________\n" << endl;
+          << "______________________________________________________\n" << std::endl;
   }
   
   
@@ -133,7 +133,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
          << "Gruneisen\n"
          << "Tillotson\n"
          << "KnaussSeaWater\n"
-         << "Thomsen_Hartka_water" << endl;
+         << "Thomsen_Hartka_water" << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 

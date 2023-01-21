@@ -113,7 +113,7 @@ void addRequires_MicroSlip(Task* t,
                            Slip_variable_basket* var_basket)
 {
   cout_doing<< "Doing addRequires_microSlip: \t\t" <<t->getName()
-            << " " << where << endl;
+            << " " << where << std::endl;
   
   Ghost::GhostType  gn  = Ghost::None;
   Task::MaterialDomainSpec oims = Task::OutOfDomain;  //outside of ice matlSet.
@@ -162,7 +162,7 @@ void meanFreePath(DataWarehouse* new_dw,
                   MaterialManagerP& mat_manager,
                   Slip_vars* sv)                              
 {
-  cout_doing << "meanFreePath" << endl;
+  cout_doing << "meanFreePath" << std::endl;
    new_dw->allocateTemporary(sv->lamda,patch);
    sv->lamda.initialize(-9e99);
   
@@ -248,7 +248,7 @@ void  preprocess_MicroSlip_BCs(DataWarehouse* old_dw,
   //__________________________________
   //  compute the mean free path
   if(setMicroSlipBcs) {
-    cout_doing << "preprocess_microSlip_BCs on patch "<<patch->getID()<< endl;
+    cout_doing << "preprocess_microSlip_BCs on patch "<<patch->getID()<< std::endl;
     sv->alpha_momentum    = var_basket->alpha_momentum;
     sv->alpha_temperature = var_basket->alpha_temperature;
     meanFreePath(new_dw, patch, sharedState, sv);
@@ -298,7 +298,7 @@ int set_MicroSlipVelocity_BC(const Patch* patch,
   if (var_desc == "Velocity" && (bc_kind == "slip" || bc_kind == "creep")) {
   
     cout_doing << "Setting FaceVel_MicroSlip on face " << face 
-               << " wall Velocity " << wall_vel << endl;
+               << " wall Velocity " << wall_vel << std::endl;
     
     // bulletproofing
     if (!sv){
@@ -327,7 +327,7 @@ int set_MicroSlipVelocity_BC(const Patch* patch,
     //__________________________________
     //   SLIP 
     if(bc_kind == "slip") {
-      cout_dbg << " SLIP"<< endl;
+      cout_dbg << " SLIP"<< std::endl;
       
       for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
         IntVector c = *bound_ptr;
@@ -346,7 +346,7 @@ int set_MicroSlipVelocity_BC(const Patch* patch,
     //__________________________________
     //   CREEP 
     if(bc_kind == "creep") {
-      cout_dbg << " CREEP"<< endl;
+      cout_dbg << " CREEP"<< std::endl;
       
       for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
         IntVector c = *bound_ptr;
@@ -382,7 +382,7 @@ int  set_MicroSlipTemperature_BC(const Patch* patch,
   int nCells = 0;
   if (bc_kind == "slip") {
     cout_doing << "Setting FaceTemp_MicroSlip on face " <<face
-               << " wall Temperature " << wall_temp << endl; 
+               << " wall Temperature " << wall_temp << std::endl; 
 
     // bulletproofing
     if (!sv){
@@ -401,7 +401,7 @@ int  set_MicroSlipTemperature_BC(const Patch* patch,
     //double alpha_temperature = sv->alpha_temperature;
     //double gas_constant = 1.0;   // Need to do something here
     IntVector offset = patch->faceDirection(face);
-    cout_dbg << "\n____________________Temp"<< endl;
+    cout_dbg << "\n____________________Temp"<< std::endl;
 
     //__________________________________
     //    S I D E     

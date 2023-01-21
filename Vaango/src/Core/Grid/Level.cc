@@ -956,7 +956,7 @@ Level::setBCTypes()
   // for each of my patches
   for (iter = startpatch, idx = 0; iter != endpatch; iter++, idx++) {
     auto patch = *iter;
-    // std::cout << "Patch bounding box = " << patch->getExtraBox() << endl;
+    // std::cout << "Patch bounding box = " << patch->getExtraBox() << std::endl;
     //  See if there are any neighbors on the 6 faces
     int bitfield = 0;
 

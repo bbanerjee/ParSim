@@ -114,7 +114,7 @@ int main(int argc, char** argv)
   /*
    * Parse arguments
    */
-  cerr << "Particle Variable to be extracted = p.x, p.velocity, p.mass, p.volume\n";
+  std::cerr <<  "Particle Variable to be extracted = p.x, p.velocity, p.mass, p.volume\n";
   for(int i=1;i<argc;i++){
     string s=argv[i];
     if (s == "-m") {
@@ -138,18 +138,18 @@ int main(int argc, char** argv)
         usage("-o <output file>", argv[0]);
     } 
   }
-  cerr << "Number of arguments = " << argc << std::endl;
+  std::cerr <<  "Number of arguments = " << argc << std::endl;
   if (argc != 11) usage( "", argv[0] );
 
-  cerr << "Material ID to be extracted = " << matID << endl;
-  cerr << "Timestep to be extracted = " << timeStep << endl;
+  std::cerr <<  "Material ID to be extracted = " << matID << std::endl;
+  std::cerr <<  "Timestep to be extracted = " << timeStep << std::endl;
 
   // Read the particle ID file
-  cerr << "Particle ID File to be read = " << partIDFile << endl;
+  std::cerr <<  "Particle ID File to be read = " << partIDFile << std::endl;
   std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
-    cerr << "Particle ID File " << partIDFile << " not found \n";
+    std::cerr <<  "Particle ID File " << partIDFile << " not found \n";
     exit(1);
   }
   do {
@@ -161,30 +161,30 @@ int main(int argc, char** argv)
     partID.push_back(id);
   } while (!pidFile.eof());
   
-  cerr << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cerr <<  "  Number of Particle IDs = " << partID.size() << std::endl;
   for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    cerr << "    p"<< (ii+1) << " = " << partID[ii] << endl;
+    std::cerr <<  "    p"<< (ii+1) << " = " << partID[ii] << std::endl;
   }
 
-  cerr << "Output file name = " << outFile << endl;
-  cerr << "UDA directory to be read = " << udaDir << endl;
+  std::cerr <<  "Output file name = " << outFile << std::endl;
+  std::cerr <<  "UDA directory to be read = " << udaDir << std::endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
     
     // Print a particular particle variable
     printPosVelMassVol(da, matID, timeStep, partID, outFile);
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 }
 void usage(const std::string& badarg, const std::string& progname)
 {
-  if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname 
+  if(badarg != "") std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname 
        << " -m <material id>"
        << " -p <particle id file>"
        << " -timestep <timestep #>"
@@ -219,7 +219,7 @@ void printPosVelMassVol(DataArchive* da,
     if (var == "p.mass") variableFound++;
   }
   if (variableFound != 4) {
-    cerr << "Some or all of the needed variables, p.x, p.velocity, p.volume, p.mass, not found\n"; 
+    std::cerr <<  "Some or all of the needed variables, p.x, p.velocity, p.volume, p.mass, not found\n"; 
     exit(1);
   }
 
@@ -229,7 +229,7 @@ void printPosVelMassVol(DataArchive* da,
   std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cerr << "There are " << index.size() << " timesteps:\n";
+  std::cerr <<  "There are " << index.size() << " timesteps:\n";
 
   // Check that the input timestep exists else quit
   if (timeStep > times.size()-1) {
@@ -245,7 +245,7 @@ void printPosVelMassVol(DataArchive* da,
   int startPatch = 1;
   unsigned long t = timeStep;
   double time = times[t];
-  cerr << "t = " << time ;
+  std::cerr <<  "t = " << time ;
   clock_t start = clock();
   GridP grid = da->queryGrid(t);
 
@@ -309,7 +309,7 @@ void printPosVelMassVol(DataArchive* da,
                            << " " << velocity[*iter].x() << " " << velocity[*iter].y() 
                            << " " << velocity[*iter].z() 
                            << " " << mass[*iter] << " " << volume[*iter] 
-                           << endl;
+                           << std::endl;
                       found[ii] = true;
                       ++numFound;
                       break;
@@ -325,13 +325,13 @@ void printPosVelMassVol(DataArchive* da,
 
   clock_t end = clock();
   double timetaken = (double) (end - start)/(double) CLOCKS_PER_SEC;
-  cerr << " CPU Time = " << timetaken << " s" << " found " << numFound << endl;
+  std::cerr <<  " CPU Time = " << timetaken << " s" << " found " << numFound << std::endl;
 
   // Create output files
   ofstream file(outFile.c_str());
   file.setf(ios::scientific,ios::floatfield);
   file.precision(8);
-  std::cout << "Created output file " << outFile << endl;
+  std::cout << "Created output file " << outFile << std::endl;
   for (unsigned int jj = 0; jj < matData->time.size() ; ++jj) {
     
     double time = matData->time[jj];
@@ -348,7 +348,7 @@ void printPosVelMassVol(DataArchive* da,
          << " " << vel.x() << " " << vel.y() 
          << " " << vel.z() 
          << " " << mass << " " << volume 
-         << endl;
+         << std::endl;
   }
   file.close();
 

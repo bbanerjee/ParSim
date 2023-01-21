@@ -122,14 +122,14 @@ TriangularCrack::outputInitialCrackPlane(int i)
 {
 
   std::cout << "  * Triangle " << i + 1 << ": meshed by [" << NCells << ", "
-       << NCells << ", " << NCells << "]" << endl;
+       << NCells << ", " << NCells << "]" << std::endl;
   for (int j = 0; j < 3; j++)
-    std::cout << "    p" << j + 1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j + 1 << ": " << vertices[j] << std::endl;
   for (int j = 0; j < 3; j++) {
     if (AtFront[j]) {
       int j2 = (j + 2 < 4 ? j + 2 : 1);
       std::cout << "    side " << j + 1 << " (p" << j + 1 << "-"
-           << "p" << j2 << ") is a crack front." << endl;
+           << "p" << j2 << ") is a crack front." << std::endl;
     }
   }
 }

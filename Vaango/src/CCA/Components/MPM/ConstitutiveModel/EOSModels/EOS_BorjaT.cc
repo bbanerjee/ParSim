@@ -199,7 +199,7 @@ EOS_BorjaT::l_computePressure(const double& rho_orig,
 
   pressure = evalPressure(epse_v, 0.0);
   // std::cout << "J = " << J << " epse_v = " << epse_v << " pressure = " <<
-  // pressure << endl;
+  // pressure << std::endl;
   double K = computeBulkModulus(rho_orig, rho_cur);
   csquared = K / rho_cur;
   dp_drho  = -J * csquared;
@@ -225,7 +225,7 @@ EOS_BorjaT::l_computeDensity(const double& rho_orig, const double& pressure)
     return rho_orig;
   double denom = 1.0 + d_epse_v0 - d_kappatilde * log(pressure / d_p0);
   // std::cout << "rho_orig = " << rho_orig << " pressure = " << pressure << "
-  // denom = " << denom << endl;
+  // denom = " << denom << std::endl;
   double rho = rho_orig / denom;
   return rho;
 }

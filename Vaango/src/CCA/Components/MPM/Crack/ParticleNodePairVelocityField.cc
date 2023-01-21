@@ -376,7 +376,7 @@ void Crack::ParticleVelocityField(const ProcessorGroup*,
                else {
                  std::cout << "Error: more than two velocity fields found in "
                       << "Crack::ParticleVeloccityField for node: "
-                      << ni[k] << endl;
+                      << ni[k] << std::endl;
                  exit(1);
                }
              }
@@ -412,35 +412,35 @@ void Crack::ParticleVelocityField(const ProcessorGroup*,
 #if 0 
       // Output particle velocity field code
       std::cout << "\n*** Particle velocity field generated "
-           << "in Crack::ParticleVelocityField ***" << endl;
-      std::cout << "--patch: " << patch->getID() << endl;
-      std::cout << "--matreial: " << m << endl;
+           << "in Crack::ParticleVelocityField ***" << std::endl;
+      std::cout << "--patch: " << patch->getID() << std::endl;
+      std::cout << "--matreial: " << m << std::endl;
       for(ParticleSubset::iterator iter=pset->begin();
                         iter!=pset->end();iter++) {
         particleIndex idx=*iter;
-        std::cout << "p["<< idx << "]: " << px[idx]<< endl;
+        std::cout << "p["<< idx << "]: " << px[idx]<< std::endl;
         for(int k=0; k<n8or27; k++) {
           if(pgCode[idx][k]==1)
              std::cout << setw(10) << "Node: " << k
-                  << ",\tvfld: " << pgCode[idx][k] << endl;
+                  << ",\tvfld: " << pgCode[idx][k] << std::endl;
           else if(pgCode[idx][k]==2)
              std::cout << setw(10) << "Node: " << k
-                  << ",\tvfld: " << pgCode[idx][k] << " ***" << endl;
+                  << ",\tvfld: " << pgCode[idx][k] << " ***" << std::endl;
           else {
              std::cout << "Error: unknown particle velocity code in "
-                  << "Crack::ParticleVelocityField" << endl;
+                  << "Crack::ParticleVelocityField" << std::endl;
              exit(1);
           }
         }  // End of loop over nodes (k)
       }  // End of loop over particles
       std::cout << "\nNumber of particles around nodes:\n"
            << setw(18) << "node" << setw(20) << "gNumPatls"
-           << setw(20) << "GNumPatls" << endl;
+           << setw(20) << "GNumPatls" << std::endl;
       for(NodeIterator iter=patch->getNodeIterator();!iter.done();iter++) {
         IntVector c = *iter;
         if(gNumPatls[c]+GNumPatls[c]!=0){
         std::cout << setw(10) << c << setw(20) << gNumPatls[c]
-             << setw(20) << GNumPatls[c] << endl;}
+             << setw(20) << GNumPatls[c] << std::endl;}
       }
 #endif
 

@@ -59,12 +59,12 @@ PlaneShellPiece::PlaneShellPiece(ProblemSpecP& ps) {
     SCI_THROW(ProblemSetupException(
         "PlaneShell: Incorrect subdivision of plane.", __FILE__, __LINE__));
 
-  std::cout << "Creating a plane shell" << endl;
-  std::cout << "   Center = " << d_center << endl;
-  std::cout << "   Normal = " << d_normal << endl;
-  std::cout << "   Radius = " << d_radius << endl;
-  std::cout << "   Thickness = " << d_thickness << endl;
-  std::cout << "   Particles in radial direction = " << d_numRadius << endl;
+  std::cout << "Creating a plane shell" << std::endl;
+  std::cout << "   Center = " << d_center << std::endl;
+  std::cout << "   Normal = " << d_normal << std::endl;
+  std::cout << "   Radius = " << d_radius << std::endl;
+  std::cout << "   Thickness = " << d_thickness << std::endl;
+  std::cout << "   Particles in radial direction = " << d_numRadius << std::endl;
 }
 
 void
@@ -178,7 +178,7 @@ PlaneShellPiece::createParticles(const Patch* patch,
                                  ParticleVariable<Vector>& pNormal,
                                  ParticleVariable<Matrix3>& psiz,
                                  particleIndex start) {
-  std::cout << "Calling plane shell particle creator" << endl;
+  std::cout << "Calling plane shell particle creator" << std::endl;
 
   // Get the bounding patch box
   Box b = patch->getExtraBox();

@@ -109,7 +109,7 @@ def recurse_macro(n, orig_num, ind, out) :
     if f == meshes[len(meshes) -1] : 
       out.append(indent(ind) + '} else if (mdisp_error) {\\\n')
       ind = ind + 1
-      out.append(indent(ind) + 'cerr << "Error: " << mdisp_msg << endl;\\\n')
+      out.append(indent(ind) + 'cerr << "Error: " << mdisp_msg << std::endl;\\\n')
       ind = ind - 1
       out.append(indent(ind) + '}\\\n')
     else :

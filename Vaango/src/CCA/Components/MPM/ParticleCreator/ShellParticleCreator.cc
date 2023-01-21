@@ -229,12 +229,12 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
           }
           pvars.position[pidx] = Point(x, y, z);
           if (!patch->findCell(pvars.position[pidx], cell_idx)) {
-            cerr << "Pidx = " << pidx << " Pos = " << pvars.position[pidx]
+            std::cerr <<  "Pidx = " << pidx << " Pos = " << pvars.position[pidx]
                  << " patch BBox = " << patch->getExtraBox()
                  << " cell_idx = " << cell_idx
                  << " low = " << patch->getExtraCellLowIndex()
                  << " high = " << patch->getExtraCellHighIndex()
-                 << " : Particle not in any cell." << endl;
+                 << " : Particle not in any cell." << std::endl;
             pvars.pParticleID[pidx] = 0;
           } else {
             long64 cellID = ((long64)cell_idx.x() << 16) |

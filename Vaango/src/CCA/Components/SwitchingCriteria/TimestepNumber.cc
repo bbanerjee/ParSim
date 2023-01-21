@@ -44,7 +44,7 @@ TimestepNumber::TimestepNumber(ProblemSpecP& ps)
   ps->require("timestep", d_timestep);
   proc0cout
     << "Switching criteria: \tTimestep Number: switch components on timestep "
-    << d_timestep << endl;
+    << d_timestep << std::endl;
 
   d_timestep_label =
     VarLabel::create(timeStep_name, timeStep_vartype::getTypeDescription());

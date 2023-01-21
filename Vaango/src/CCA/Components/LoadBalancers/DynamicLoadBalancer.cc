@@ -231,7 +231,7 @@ DynamicLoadBalancer::collectParticlesForRegrid(
   if (dbg.active() && d_myworld->myRank() == 0) {
     for (unsigned i = 0; i < num_particles.size(); i++) {
       dbg << d_myworld->myRank() << "  Post gather index " << i << ": "
-          << " numP : " << num_particles[i] << endl;
+          << " numP : " << num_particles[i] << std::endl;
     }
   }
 }
@@ -303,7 +303,7 @@ DynamicLoadBalancer::collectParticles(const Grid* grid,
       // add to particle list
       PatchInfo p(id, thisPatchParticles);
       particleList.push_back(p);
-      dbg << "  Pre gather " << id << " part: " << thisPatchParticles << endl;
+      dbg << "  Pre gather " << id << " part: " << thisPatchParticles << std::endl;
     }
   }
 
@@ -339,7 +339,7 @@ DynamicLoadBalancer::collectParticles(const Grid* grid,
       for (unsigned i = 0; i < all_particles.size(); i++) {
         PatchInfo& pi = all_particles[i];
         dbg << d_myworld->myRank() << "  Post gather index " << i << ": "
-            << pi.id << " numP : " << pi.numParticles << endl;
+            << pi.id << " numP : " << pi.numParticles << std::endl;
       }
     }
     for (int i = 0; i < num_patches; i++) {
@@ -411,7 +411,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
     }
 
     if (d_do_space_curve) {
-      // cout << d_myworld->myRank() << "   Doing SFC level " << l << endl;
+      // cout << d_myworld->myRank() << "   Doing SFC level " << l << std::endl;
       useSpaceFillingCurve(level, &order[0]);
     }
 
@@ -649,7 +649,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
       stats << "\nLoadBalance Stats level(" << l << "):"
             << " Mean: " << meanCost << " Min: " << minCost
             << " Max: " << maxCost << " Imbalance:" << 1 - meanCost / maxCost
-            << " max on:" << maxProc << endl;
+            << " max on:" << maxProc << std::endl;
     }
 
     if (lbout.active() && d_myworld->myRank() == 0) {
@@ -670,7 +670,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
         lbout << lbiter << " " << l << " " << index << " "
               << d_temp_assignment[level_offset + index] << " "
               << patch_costs[l][index] << " " << loc.x() << " " << loc.y()
-              << " " << loc.z() << endl;
+              << " " << loc.z() << std::endl;
       }
     }
 
@@ -703,7 +703,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
     stats << "LoadBalance Stats total:"
           << " Mean: " << meanCost << " Min: " << minCost << " Max: " << maxCost
           << " Imbalance: " << 1 - meanCost / maxCost
-          << " max proc on: " << maxProc << endl;
+          << " max proc on: " << maxProc << std::endl;
   }
 
   //__________________________________
@@ -725,7 +725,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
         avg[i] /= d_myworld->nRanks();
         std::cout << avg[i] << " ";
       }
-      std::cout << endl;
+      std::cout << std::endl;
     }
 
     double max[5] = { 0 };
@@ -743,7 +743,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
       for (int i = 0; i < 5; i++) {
         std::cout << max[i] << " ";
       }
-      std::cout << endl;
+      std::cout << std::endl;
     }
   }
 
@@ -752,7 +752,7 @@ DynamicLoadBalancer::assignPatchesFactor(const GridP& grid, bool force)
   bool doLoadBalancing = force || thresholdExceeded(patch_costs);
 
   if (d_myworld->myRank() == 0) {
-    dbg << " Time to LB: " << timer().seconds() << endl;
+    dbg << " Time to LB: " << timer().seconds() << std::endl;
   }
   doing << d_myworld->myRank() << "   APF END\n";
 
@@ -844,7 +844,7 @@ DynamicLoadBalancer::thresholdExceeded(
     stats << "Total:"
           << " maxCur:" << total_max_current << " maxTemp:" << total_max_temp
           << " avgCur:" << total_avg_current << " avgTemp:" << total_avg_temp
-          << endl;
+          << std::endl;
   }
 
   // if tmp - cur is positive, it is an improvement
@@ -1013,7 +1013,7 @@ DynamicLoadBalancer::getCosts(const Grid* grid,
     for (unsigned l = 0; l < costs.size(); l++) {
       for (unsigned p = 0; p < costs[l].size(); p++) {
         dbg << "  DLB:getCosts  L: " << l << " P: " << p << " cost "
-            << costs[l][p] << endl;
+            << costs[l][p] << std::endl;
       }
     }
   }
@@ -1023,7 +1023,7 @@ bool
 DynamicLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int state)
 {
   if (d_myworld->myRank() == 0) {
-    dbg << d_myworld->myRank() << " In DLB, state " << state << endl;
+    dbg << d_myworld->myRank() << " In DLB, state " << state << std::endl;
   }
 
   Timers::Simple timer;
@@ -1238,7 +1238,7 @@ DynamicLoadBalancer::problemSetup(ProblemSpecP& pspec,
   }
 
   if (d_myworld->myRank() == 0) {
-    std::cout << "Dynamic Algorithm: " << dynamicAlgo << endl;
+    std::cout << "Dynamic Algorithm: " << dynamicAlgo << std::endl;
   }
 
   if (dynamicAlgo == "cyclic") {

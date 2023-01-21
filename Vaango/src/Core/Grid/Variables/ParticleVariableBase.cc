@@ -75,9 +75,9 @@ ParticleVariableBase::getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset)
 {
   const TypeDescription* td = virtualGetTypeDescription()->getSubType();
 
-  //  cerr << "ParticleVariableBase::getMPIBuffer for a " <<  td->getName()
-  //       << endl;
-  //  cerr << "   buffer: " << &buffer << ", sendset: " << sendset << "\n";
+  //  std::cerr <<  "ParticleVariableBase::getMPIBuffer for a " <<  td->getName()
+  //       << std::endl;
+  //  std::cerr <<  "   buffer: " << &buffer << ", sendset: " << sendset << "\n";
 
   bool linear                   = true;
   ParticleSubset::iterator iter = sendset->begin();
@@ -99,7 +99,7 @@ ParticleVariableBase::getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset)
     std::vector<int> blocklens(count, 1);
     MPI_Datatype datatype;
 
-    //    cerr << "cnt: " << count << ", buf: " << buf << "\n";
+    //    std::cerr <<  "cnt: " << count << ", buf: " << buf << "\n";
     Uintah::MPI::Type_indexed(count,
                               &blocklens[0],
                               sendset->getPointer(),

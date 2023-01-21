@@ -263,7 +263,7 @@ SecondOrderAdvector::inFluxOutFluxVolume( const SFCXVariable<double>& uvel_FC,
      std::ostringstream mesg;
     std::cout << " WARNING: ICE Advection operator Influx/Outflux volume error:"
          << " Patch " << patch->getID()
-         << ", Level " << patch->getLevel()->getIndex()<< endl;
+         << ", Level " << patch->getLevel()->getIndex()<< std::endl;
   }
 }
 /*_____________________________________________________________________
@@ -329,7 +329,7 @@ void SecondOrderAdvector::advectQ( const CCVariable<double>& A_CC,
   d_smokeOnOff = false;
 #if 0
   if(varBasket->desc == "scalar-f"){
-    std::cout << " SCALAR-F--------------------------------- L-" <<patch->getLevel()->getIndex()<< endl;
+    std::cout << " SCALAR-F--------------------------------- L-" <<patch->getLevel()->getIndex()<< std::endl;
     d_smokeOnOff = true;
   }
 #endif
@@ -785,9 +785,9 @@ void SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
 
 
       if(is_rightFace_variable(name,desc)){
-        std::cout << " ------------ SecondOrderAdvector::q_FC_fluxes " << desc<< endl;
+        std::cout << " ------------ SecondOrderAdvector::q_FC_fluxes " << desc<< std::endl;
         std::cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
-              << " Patch " << patch->getGridIndex()<< endl;
+              << " Patch " << patch->getGridIndex()<< std::endl;
         std::cout <<" patchFace " << name << " " ;
 
         IntVector shift = patch->faceDirection(patchFace);

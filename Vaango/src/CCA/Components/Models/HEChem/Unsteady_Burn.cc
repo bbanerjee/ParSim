@@ -229,7 +229,7 @@ void Unsteady_Burn::initialize(const ProcessorGroup*,
   int m0 = matl0->getDWIndex();
   for(int p=0;p<patches->size();p++) {
     const Patch* patch = patches->get(p);
-    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t UNSTEADY_BURN" << endl; 
+    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t UNSTEADY_BURN" << std::endl; 
 
     CCVariable<double> BurningCell; // buring flag for cells
     new_dw->allocateAndPut(BurningCell, BurningCellLabel, m0, patch);

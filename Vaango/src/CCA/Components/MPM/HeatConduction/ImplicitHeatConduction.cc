@@ -370,7 +370,7 @@ void ImplicitHeatConduction::findNeighbors(IntVector n,vector<int>& neigh,
           if (dof_neighbor > 0 && dof_neighbor != dof) {
 #if 0
             std::cout << "neighbor: " << neighbor << " dof: " 
-                 << dof_neighbor << endl;
+                 << dof_neighbor << std::endl;
 #endif
             neigh.push_back(dof_neighbor);
           }
@@ -429,7 +429,7 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
           BoundCond<double>::BoundCondP bc =
             std::dynamic_pointer_cast<BoundCond<double> >(temp_bcs);
           if (bc != 0) {
-            if (bc->getBCType__NEW() == "Dirichlet") {
+            if (bc->getBCType() == "Dirichlet") {
               for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
                 gtemp[*nbound_ptr] = bc->getValue();
               }
@@ -660,7 +660,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
 #if 0
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++){
       IntVector n = *iter;
-      std::cout << "temperature[" << n << "]= " << temperature[n] << endl;
+      std::cout << "temperature[" << n << "]= " << temperature[n] << std::endl;
     }
 #endif
 
@@ -703,7 +703,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
         bool add = true;
 
         for(int ii = 0;ii<8;ii++){
-          //  std::cout << "ni = " << ni[ii] << endl;
+          //  std::cout << "ni = " << ni[ii] << std::endl;
           int l2g_node_num = l2g[ni[ii]];
           double v = 0;
           dof[ii]=l2g_node_num;
@@ -714,7 +714,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
                 gextheatrate[ni[ii]];
             }
           }
-          // std::cout << "v[" << l2g_node_num << "]= " << v << endl;
+          // std::cout << "v[" << l2g_node_num << "]= " << v << std::endl;
           d_HC_solver->fillVector(dof[ii],v,add);
         }
       }

@@ -51,15 +51,15 @@ void TiledRegridder::regrid(const std::vector<Region> &cp, const std::vector<CCV
   Vector inv_factor=mps.asVector()/rr.asVector();
   for(unsigned int patch=0;patch<cp.size();patch++)
   {
-    //cout << "Coarse Patch: " << cp[patch].getLow() << " " << cp[patch].getHigh() << endl;
+    //cout << "Coarse Patch: " << cp[patch].getLow() << " " << cp[patch].getHigh() << std::endl;
     //compute patch extents
     //compute possible tile index's
     
     IntVector tileLow(cp[patch].getLow()*rr/mps);
     IntVector tileHigh(cp[patch].getHigh()*rr/mps);
 
-    //cout << "Tiles: " << tileLow << " " << tileHigh << endl; 
-    //cout << "window: " << (*flags[patch]).getWindow()->getLowIndex() << " " << (*flags[patch]).getWindow()->getHighIndex()  << endl;
+    //cout << "Tiles: " << tileLow << " " << tileHigh << std::endl; 
+    //cout << "window: " << (*flags[patch]).getWindow()->getLowIndex() << " " << (*flags[patch]).getWindow()->getHighIndex()  << std::endl;
 
     for (CellIterator ti(tileLow,tileHigh); !ti.done(); ti++)
     {
@@ -78,16 +78,16 @@ void TiledRegridder::regrid(const std::vector<Region> &cp, const std::vector<CCV
       IntVector plow=searchLow*rr;
       
       IntVector phigh=searchHigh*rr;
-      //cout << "  Coarse Search: " << searchLow << " " << searchHigh << endl;
+      //cout << "  Coarse Search: " << searchLow << " " << searchHigh << std::endl;
       for(CellIterator c_it(searchLow,searchHigh);!c_it.done();c_it++)
       {
         if( (*flags[patch])[*c_it]==1)
         {
-          //cout << "Adding Patch: " << plow << " " << phigh << endl;
+          //cout << "Adding Patch: " << plow << " " << phigh << std::endl;
           patches.push_back(Region(plow,phigh));
           break;
         }
-        //cout << "    no flag f_it: " << *f_it << endl;
+        //cout << "    no flag f_it: " << *f_it << std::endl;
       }
     }
   }

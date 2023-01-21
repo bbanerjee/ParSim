@@ -87,7 +87,7 @@ Advector* AdvectionFactory::create(ProblemSpecP& ps,
      if(advect_options["useCompatibleFluxes"] == "false" ||
         advect_options["compatibleFluxes"]    == "false"){
         d_useCompatibleFluxes = false;
-        std::cout << "\n--------ICE::Warning:  You've turned off compatible fluxes.\n"<< endl;
+        std::cout << "\n--------ICE::Warning:  You've turned off compatible fluxes.\n"<< std::endl;
      }
   } 
   

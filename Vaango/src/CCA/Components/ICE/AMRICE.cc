@@ -284,7 +284,7 @@ void AMRICE::scheduleRefineInterface_Variable(const LevelP& fineLevel,
                                               bool needCoarseNew)
 {
   cout_doing << d_myworld->myRank() << " \t scheduleRefineInterface_Variable (" 
-             << variable->getName() << ") matls: \t"<< *matls<< endl;
+             << variable->getName() << ") matls: \t"<< *matls<< std::endl;
 
    std::ostringstream taskName;
   taskName << "AMRICE::refineCoarseFineInterface("<<variable->getName()<<")";
@@ -338,7 +338,7 @@ void AMRICE::scheduleRefineInterface(const LevelP& fineLevel,
     cout_doing << d_myworld->myRank() << " AMRICE::scheduleRefineInterface \t\t\tL-" 
                << fineLevel->getIndex() 
                << " coarseOld: " << needCoarseOld 
-               << " coarseNew: " << needCoarseNew << endl;
+               << " coarseNew: " << needCoarseNew << std::endl;
   
     Task::MaterialDomainSpec ND   = Task::NormalDomain;
     Task::MaterialDomainSpec oims = Task::OutOfDomain;  //outside of ice matlSet.
@@ -384,7 +384,7 @@ void AMRICE::refineCoarseFineInterface(const ProcessorGroup*,
     cout_doing << d_myworld->myRank() 
                << " Doing refineCoarseFineInterface("<< variable->getName() <<")\t\t\t AMRICE L-" 
                << fineLevel->getIndex() << " Patches: " << *patches << " progressVar " << subCycleProgress
-               << endl;
+               << std::endl;
     
     for(int p=0;p<patches->size();p++){
       const Patch* finePatch = patches->get(p);
@@ -580,7 +580,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
         
         for (iter  = bf.begin(); iter != bf.end(); ++iter){
           Patch::FaceType face = *iter;
-          cout_dbg << " Setting BC on Face " << face << " patch " << patch->getGridIndex() << " Level " << fineLevel->getIndex() << endl;
+          cout_dbg << " Setting BC on Face " << face << " patch " << patch->getGridIndex() << " Level " << fineLevel->getIndex() << std::endl;
           //__________________________________
           // fine level hi & lo cell iter limits
           // coarselevel hi and low index
@@ -769,7 +769,7 @@ void AMRICE::refine(const ProcessorGroup*,
   
   for(int p=0;p<patches->size();p++){  
     const Patch* finePatch = patches->get(p);
-    cout_doing << "  patch " << finePatch->getID()<< endl;
+    cout_doing << "  patch " << finePatch->getID()<< std::endl;
     
     Level::selectType coarsePatches;
     finePatch->getCoarseLevelPatches(coarsePatches);
@@ -906,7 +906,7 @@ void AMRICE::iteratorTest(const Patch* finePatch,
          << " finePatch " << finePatch->getID() 
          << " fineLevel: fl " << fl << " fh " << fh
          << " coarseLevel: cl " << cl << " ch " << ch 
-         << " final Iterator: " << lo << " " << hi << endl;
+         << " final Iterator: " << lo << " " << hi << std::endl;
 #endif    
     
   }
@@ -1043,7 +1043,7 @@ void AMRICE::coarsen(const ProcessorGroup*,
   
   for(int p=0;p<patches->size();p++){  
     const Patch* coarsePatch = patches->get(p);
-    cout_doing <<"  patch " << coarsePatch->getID()<< endl;
+    cout_doing <<"  patch " << coarsePatch->getID()<< std::endl;
     
     for(int m = 0;m<matls->size();m++){
       int indx = matls->get(m);
@@ -1137,7 +1137,7 @@ void AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
   const Level* fineLevel = coarseLevel->getFinerLevel().get_rep(); 
   cout_doing << d_myworld->myRank() 
              << " AMRICE::scheduleReflux_computeCorrectionFluxes\tL-" 
-             << fineLevel->getIndex() << "->"<< coarseLevel->getIndex()<< endl;
+             << fineLevel->getIndex() << "->"<< coarseLevel->getIndex()<< std::endl;
              
   Task* task = scinew Task("AMRICE::reflux_computeCorrectionFluxes",
                            this, &AMRICE::reflux_computeCorrectionFluxes);
@@ -1239,7 +1239,7 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
   for(int c_p=0;c_p<coarsePatches->size();c_p++){  
     const Patch* coarsePatch = coarsePatches->get(c_p);
     
-    cout_doing <<"  coarsePatches " << *coarsePatches << endl;
+    cout_doing <<"  coarsePatches " << *coarsePatches << std::endl;
     
     for(int m = 0;m<matls->size();m++){
       int indx = matls->get(m);
@@ -1258,7 +1258,7 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
         if(finePatch->hasCoarseFaces() ){
           cout_doing << d_myworld->myRank()
                      << "  coarsePatch " << coarsePatch->getID()
-                     <<" finepatch " << finePatch->getID()<< endl;
+                     <<" finepatch " << finePatch->getID()<< std::endl;
 
           int one_zero = 1;
           refluxOperator_computeCorrectionFluxes<double>("mass",   indx, 
@@ -1384,7 +1384,7 @@ void AMRICE::refluxCoarseLevelIterator(Patch::FaceType patchFace,
          << "\n finePatch   " << *finePatch
          << "\n coarsePatch " << *coarsePatch
          << "\n coarseLevel " << coarsePatch->getLevel()->getIndex()
-         << "\n coarse_Lo   " << coarse_Lo << " coarse_Hi " << coarse_Hi << endl;
+         << "\n coarse_Lo   " << coarse_Lo << " coarse_Hi " << coarse_Hi << std::endl;
   }
 #endif
 /*===========TESTING==========`*/  
@@ -1429,7 +1429,7 @@ void AMRICE::refluxCoarseLevelIterator(Patch::FaceType patchFace,
          << "\ncoarsePatch->containsCell(h_minusOne)                    " << coarsePatch->containsCell(h_minusOne)
          << "\ncoarsePatch->containsCell(l + coarse_FC_offset)          "<< coarsePatch->containsCell(l + coarse_FC_offset)
          << "\ncoarsePatch->containsCell(h_minusOne + coarse_FC_offset) " << coarsePatch->containsCell(h_minusOne + coarse_FC_offset)
-         << " \nl[y] != h[y] && l[z] != h[z]                            " << (l[y] != h[y] && l[z] != h[z])<< endl;
+         << " \nl[y] != h[y] && l[z] != h[z]                            " << (l[y] != h[y] && l[z] != h[z])<< std::endl;
   }
 #endif
 /*===========TESTING==========`*/  
@@ -1464,7 +1464,7 @@ void AMRICE::scheduleReflux_applyCorrection(const LevelP& coarseLevel,
   const Level* fineLevel = coarseLevel->getFinerLevel().get_rep();
   cout_doing << d_myworld->myRank() 
              << " AMRICE::scheduleReflux_applyCorrectionFluxes\t\tL-" 
-             << fineLevel->getIndex() << "->"<< coarseLevel->getIndex()<< endl;
+             << fineLevel->getIndex() << "->"<< coarseLevel->getIndex()<< std::endl;
              
   Task* task = scinew Task("AMRICE::reflux_applyCorrectionFluxes",
                           this, &AMRICE::reflux_applyCorrectionFluxes);
@@ -1534,7 +1534,7 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
   
   for(int c_p=0;c_p<coarsePatches->size();c_p++){  
     const Patch* coarsePatch = coarsePatches->get(c_p);
-    cout_doing << "  patch " << coarsePatch->getID()<< endl;
+    cout_doing << "  patch " << coarsePatch->getID()<< std::endl;
     
     for(int m = 0;m<matls->size();m++){
       int indx = matls->get(m);     
@@ -1552,7 +1552,7 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
       
       for(int i=0; i < finePatches.size();i++){  
         const Patch* finePatch = finePatches[i];        
-        //cout_doing << d_myworld->myRank() << "  coarsePatch " << coarsePatch->getID() <<" finepatch " << finePatch->getID()<< endl;
+        //cout_doing << d_myworld->myRank() << "  coarsePatch " << coarsePatch->getID() <<" finepatch " << finePatch->getID()<< std::endl;
         //__________________________________
         // Apply the correction
         // one_zero:  used to increment the CFI counter.
@@ -1741,7 +1741,7 @@ void AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
 
     cout_doing << d_myworld->myRank() 
              << " Doing reflux_BP_check_CFI_cells \t\t\t AMRICE L-"
-             <<fineLevel->getIndex()<< "->"<< coarseLevel->getIndex() << endl;
+             <<fineLevel->getIndex()<< "->"<< coarseLevel->getIndex() << std::endl;
              
     for(int p=0;p<finePatches.size();p++){  
       const Patch* finePatch = finePatches[p]; 
@@ -1787,8 +1787,8 @@ void AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
                      << " cells were 'touched' "<< n_touched_cells << " times"
                      << " it should have been 'touched' " << n_CFI_cells << " times "
                      << "\n patch " << *finePatch 
-                     << "\n finePatchLevel " << finePatch->getLevel()->getIndex()<< endl;
-                //cout << warn.str() << endl;
+                     << "\n finePatchLevel " << finePatch->getLevel()->getIndex()<< std::endl;
+                //cout << warn.str() << std::endl;
                 throw InternalError(warn.str(), __FILE__, __LINE__ );
               }
             }
@@ -1911,7 +1911,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     
-    cout_doing << " patch " << patch->getID()<< endl;
+    cout_doing << " patch " << patch->getID()<< std::endl;
     Ghost::GhostType  gac  = Ghost::AroundCells;
     const VarLabel* refineFlagLabel = d_mat_manager->get_refineFlag_label();
     const VarLabel* refinePatchLabel= d_mat_manager->get_refinePatchFlag_label();

@@ -300,7 +300,7 @@ TriGeometryPiece::inside(const Point& p, int& cross) const
   }
 
   d_grid->countIntersections(p, cross);
-  //  cout << "Point " << p << " has " << cross << " crossings " << endl;
+  //  cout << "Point " << p << " has " << cross << " crossings " << std::endl;
   if (cross % 2) {
     return true;
   } else {
@@ -333,7 +333,7 @@ TriGeometryPiece::inside(const Point& p, int& cross, bool all_directions) const
   d_grid->countIntersectionsy(p, crossy);
   d_grid->countIntersectionsz(p, crossz);
 
-  //  cout << "Point " << p << " has " << cross << " crossings " << endl;
+  //  cout << "Point " << p << " has " << cross << " crossings " << std::endl;
   if ((crossx % 2 == 1 && crossy % 2 == 1) ||
       (crossx % 2 == 1 && crossz % 2 == 1) ||
       (crossy % 2 == 1 && crossz % 2 == 1)) {
@@ -887,7 +887,7 @@ TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const
   }
 
   if (dominant_coord == -1) {
-    std::cout << " dominant coordinate not found " << endl;
+    std::cout << " dominant coordinate not found " << std::endl;
     throw InternalError("Dominant coordinate not found", __FILE__, __LINE__);
   }
   Point p[3];
@@ -897,7 +897,7 @@ TriGeometryPiece::insideTriangle(Point& q, int num, int& NCS, int& NES) const
 
   Triangle tri(p[0], p[1], p[2]);
   // bool inside = tri.inside(q);
-  //   std::cout << "inside = " << inside << endl;
+  //   std::cout << "inside = " << inside << std::endl;
 
   // Now translate the points that make up the vertices of the triangle.
   Point trans_pt(0., 0., 0.), trans_vt[3];

@@ -49,8 +49,8 @@ SteadyState::SteadyState(ProblemSpecP& ps)
   ps->require("material", d_material);
   ps->require("num_steps", d_numSteps);
 
-  proc0cout << "material = " << d_material << endl;
-  proc0cout << "num_steps  = " << d_numSteps << endl;
+  proc0cout << "material = " << d_material << std::endl;
+  proc0cout << "num_steps  = " << d_numSteps << std::endl;
 
   d_heatRateCCLabel =
     VarLabel::create("heatRate_CC", CCVariable<double>::getTypeDescription());
@@ -107,7 +107,7 @@ SteadyState::initialize(const ProcessorGroup*,
                         DataWarehouse*,
                         DataWarehouse* new_dw)
 {
-  proc0cout << "Initializing heatFluxSum and heatFluxSumTimeDerivative" << endl;
+  proc0cout << "Initializing heatFluxSum and heatFluxSumTimeDerivative" << std::endl;
 
   new_dw->put(max_vartype(0.0), d_heatFluxSumLabel);
   new_dw->put(max_vartype(0.0), d_heatFluxSumTimeDerivativeLabel);
@@ -168,11 +168,11 @@ SteadyState::switchTest(const ProcessorGroup* group,
   }
 
   new_dw->put(max_vartype(heatFluxSum), d_heatFluxSumLabel);
-  proc0cout << "heatFluxSum = " << heatFluxSum << endl;
+  proc0cout << "heatFluxSum = " << heatFluxSum << std::endl;
 
   max_vartype oldHeatFluxSum;
   old_dw->get(oldHeatFluxSum, d_heatFluxSumLabel);
-  proc0cout << "oldHeatFluxSum = " << oldHeatFluxSum << endl;
+  proc0cout << "oldHeatFluxSum = " << oldHeatFluxSum << std::endl;
 
   delt_vartype delT;
   old_dw->get(delT, d_delTLabel, getLevel(patches));

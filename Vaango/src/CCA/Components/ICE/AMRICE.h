@@ -382,10 +382,10 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
       IntVector half  = (c_iter.end() - c_iter.begin() )/IntVector(2,2,2) + c_iter.begin();
   
       if(is_rightFace_variable(name,varLabel) ){
-        std::cout << " ------------ refluxOperator_applyCorrectionFluxes " << varLabel<< endl; 
-        std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
-        std::cout << finePatch->getFaceName(patchFace)<<  " coarsePatch " << *coarsePatch << endl;
-        std::cout << "      finePatch   " << *finePatch << endl;
+        std::cout << " ------------ refluxOperator_applyCorrectionFluxes " << varLabel<< std::endl; 
+        std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << std::endl;
+        std::cout << finePatch->getFaceName(patchFace)<<  " coarsePatch " << *coarsePatch << std::endl;
+        std::cout << "      finePatch   " << *finePatch << std::endl;
       }
 #endif 
 
@@ -412,8 +412,8 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
             std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_X_coarse_corr[c_FC]
-                 << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            std::cout << "" << endl;
+                 << " q_CC_corrected " << q_CC_coarse[c_CC] << std::endl;
+            std::cout << "" << std::endl;
           }
 #endif          
           
@@ -436,8 +436,8 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
             std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_Y_coarse_corr[c_FC]
-                 << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            std::cout << "" << endl;
+                 << " q_CC_corrected " << q_CC_coarse[c_CC] << std::endl;
+            std::cout << "" << std::endl;
           }
 #endif
         }
@@ -459,8 +459,8 @@ void AMRICE::refluxOperator_applyCorrectionFluxes(
             std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                  << " q_CC_org " << q_CC_coarse_org
                  << " correction " << Q_Z_coarse_corr[c_FC]
-                 << " q_CC_corrected " << q_CC_coarse[c_CC] << endl;
-            std::cout << "" << endl;
+                 << " q_CC_corrected " << q_CC_coarse[c_CC] << std::endl;
+            std::cout << "" << std::endl;
           }
 #endif
         }
@@ -790,11 +790,11 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
 #ifdef REFLUX_DBG
   IntVector half  = (c_iter.end() - c_iter.begin() )/IntVector(2,2,2) + c_iter.begin();
   if(is_rightFace_variable(name,fineVarLabel)){
-    std::cout << " ------------ refluxOperator_computeCorrectionFluxes " << fineVarLabel<< endl;   
-    std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << endl;
-    std::cout <<name <<  " coarsePatch " << *coarsePatch << endl;
-    std::cout << "      finePatch   " << *finePatch << endl;
-    std::cout << "nSubCycles: " << nSubCycles << endl;
+    std::cout << " ------------ refluxOperator_computeCorrectionFluxes " << fineVarLabel<< std::endl;   
+    std::cout << "coarseLevel iterator " << c_iter.begin() << " " << c_iter.end() << std::endl;
+    std::cout <<name <<  " coarsePatch " << *coarsePatch << std::endl;
+    std::cout << "      finePatch   " << *finePatch << std::endl;
+    std::cout << "nSubCycles: " << nSubCycles << std::endl;
   }
 #endif 
 /*===========TESTING==========`*/
@@ -833,8 +833,8 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
           std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                << " coarseLevelFlux " << c_FaceNormal*Q_X_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
-               << " correction " << Q_X_coarse_corr[c_FC]<< endl;
-          std::cout << "" << endl;
+               << " correction " << Q_X_coarse_corr[c_FC]<< std::endl;
+          std::cout << "" << std::endl;
         }
 #endif 
 /*===========TESTING==========`*/
@@ -867,8 +867,8 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
           std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                << " coarseLevelFlux " << c_FaceNormal*Q_Y_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
-               << " correction " << Q_Y_coarse_corr[c_FC] << endl;
-          std::cout << "" << endl;
+               << " correction " << Q_Y_coarse_corr[c_FC] << std::endl;
+          std::cout << "" << std::endl;
         }
 #endif 
 /*===========TESTING==========`*/
@@ -902,8 +902,8 @@ void AMRICE::refluxOperator_computeCorrectionFluxes(
           std::cout << " \t c_CC " << c_CC  << " c_FC " << c_FC 
                 << " coarseLevelFlu " << c_FaceNormal*Q_Z_coarse_flux[c_FC]
                << " sum_fineLevelflux " << (f_FaceNormal *sum_fineLevelFlux)/nSubCycles
-               << " correction " << Q_Z_coarse_corr[c_FC]<< endl;
-          std::cout << "" << endl;
+               << " correction " << Q_Z_coarse_corr[c_FC]<< std::endl;
+          std::cout << "" << std::endl;
         }
 #endif 
 /*===========TESTING==========`*/

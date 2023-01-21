@@ -99,6 +99,7 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
   // Ghost::GhostType  gac   = Ghost::AroundCells;
 
   task->requires(Task::OldDW, d_lb->delTLabel);
+  task->requires(Task::OldDW, d_lb->simulationTimeLabel);
   task->requires(Task::OldDW, d_lb->pXLabel, matlset, gnone);
   task->requires(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
   task->requires(Task::OldDW, d_lb->pMassLabel, matlset, gnone);

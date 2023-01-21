@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
   }
 #endif
   double dt = Time::currentSeconds()-start;
-  cerr << reps << " in " << dt << " seconds, " << dt/reps*1000000 << " us/rep\n";
+  std::cerr <<  reps << " in " << dt << " seconds, " << dt/reps*1000000 << " us/rep\n";
   exit(0);
 }
 

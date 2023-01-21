@@ -567,11 +567,11 @@ int main(int argc, char *argv[])
     // delete image data
     delete [] pimg;
   } catch (Exception& e) {
-    cerr << "\nCaught exception: " << e.message() << '\n';
+    std::cerr <<  "\nCaught exception: " << e.message() << '\n';
     if(e.stackTrace())
-      cerr << "Stack trace: " << e.stackTrace() << '\n';
+      std::cerr <<  "Stack trace: " << e.stackTrace() << '\n';
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
   }
 }
 

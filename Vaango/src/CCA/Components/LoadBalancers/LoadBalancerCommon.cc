@@ -391,7 +391,7 @@ LoadBalancerCommon::useSpaceFillingCurve(const LevelP& level, int* order)
     for (int j = i+1; j < level->numPatches(); j++) {
       if (order[i] == order[j]) 
       {
-        std::cout << "Rank:" << d_myworld->myRank() <<  ":   ALERT!!!!!! index done twice: index " << i << " has the same value as index " << j << " " << order[i] << endl;
+        std::cout << "Rank:" << d_myworld->myRank() <<  ":   ALERT!!!!!! index done twice: index " << i << " has the same value as index " << j << " " << order[i] << std::endl;
         throw InternalError("SFC unsuccessful", __FILE__, __LINE__);
       }
     }

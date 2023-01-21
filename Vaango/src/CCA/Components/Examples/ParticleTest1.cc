@@ -232,7 +232,7 @@ ParticleTest1::timeAdvance(const ProcessorGroup*,
         pmassnew[i] = pmass[i] * .9;
         if (d_doOutput) {
           std::cout << " Patch " << patch->getID() << ": ID " << pidsnew[i]
-                    << ", pos " << pxnew[i] << ", mass " << pmassnew[i] << endl;
+                    << ", pos " << pxnew[i] << ", mass " << pmassnew[i] << std::endl;
         }
       }
       new_dw->deleteParticles(delset);

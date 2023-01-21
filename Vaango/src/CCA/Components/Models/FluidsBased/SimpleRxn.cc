@@ -107,7 +107,7 @@ SimpleRxn::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 void SimpleRxn::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tSIMPLE_RXN" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tSIMPLE_RXN" << std::endl;
   sharedState = in_state;
   d_matl = sharedState->parseAndLookupMaterial(params, "material");
 
@@ -237,7 +237,7 @@ void SimpleRxn::scheduleInitialize(SchedulerP& sched,
                                    const LevelP& level,
                                    const ModelInfo*)
 {
-  cout_doing << "SIMPLERXN::scheduleInitialize " << endl;
+  cout_doing << "SIMPLERXN::scheduleInitialize " << std::endl;
   Task* t = scinew Task("SimpleRxn::initialize", this, &SimpleRxn::initialize);
 
   t->modifies(lb->sp_vol_CCLabel);
@@ -262,7 +262,7 @@ void SimpleRxn::initialize(const ProcessorGroup*,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tSIMPLE_RXN" << endl;
+  cout_doing << "Doing Initialize \t\t\t\t\tSIMPLE_RXN" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int indx = d_matl->getDWIndex();
@@ -359,7 +359,7 @@ void SimpleRxn::scheduleModifyThermoTransportProperties(SchedulerP& sched,
                                                    const MaterialSet* /*ice_matls*/)
 {
 
-  cout_doing << "SIMPLE_RXN::scheduleModifyThermoTransportProperties" << endl;
+  cout_doing << "SIMPLE_RXN::scheduleModifyThermoTransportProperties" << std::endl;
 
   Task* t = scinew Task("SimpleRxn::modifyThermoTransportProperties", 
                    this,&SimpleRxn::modifyThermoTransportProperties);
@@ -384,7 +384,7 @@ void SimpleRxn::modifyThermoTransportProperties(const ProcessorGroup*,
 { 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
-    cout_doing << "Doing modifyThermoTransportProperties on patch "<<patch->getID()<< "\t SIMPLERXN" << endl;
+    cout_doing << "Doing modifyThermoTransportProperties on patch "<<patch->getID()<< "\t SIMPLERXN" << std::endl;
    
     int indx = d_matl->getDWIndex();
     CCVariable<double> diffusionCoeff, gamma, cv, thermalCond, viscosity;
@@ -424,7 +424,7 @@ void SimpleRxn::computeSpecificHeat(CCVariable<double>& cv_new,
                                     DataWarehouse* new_dw,
                                     const int indx)
 { 
-  cout_doing << "Doing computeSpecificHeat on patch "<<patch->getID()<< "\t SIMPLERXN" << endl;
+  cout_doing << "Doing computeSpecificHeat on patch "<<patch->getID()<< "\t SIMPLERXN" << std::endl;
 
   int test_indx = d_matl->getDWIndex();
   //__________________________________
@@ -445,7 +445,7 @@ void SimpleRxn::scheduleComputeModelSources(SchedulerP& sched,
                                             const LevelP& level,
                                             const ModelInfo* mi)
 {
-  cout_doing << "SIMPLE_RXN::scheduleComputeModelSources " << endl;
+  cout_doing << "SIMPLE_RXN::scheduleComputeModelSources " << std::endl;
   Task* t = scinew Task("SimpleRxn::computeModelSources", 
                    this,&SimpleRxn::computeModelSources, mi);
                      
@@ -487,7 +487,7 @@ void SimpleRxn::computeModelSources(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing computeModelSources... on patch "<<patch->getID()
-               << "\t\tSIMPLERXN" << endl;
+               << "\t\tSIMPLERXN" << std::endl;
 
     double new_f;
     constCCVariable<double> rho_CC_old,f_old, diff_coeff;
@@ -601,7 +601,7 @@ void SimpleRxn::scheduleTestConservation(SchedulerP& sched,
                                          const ModelInfo* mi)
 {
   if(d_test_conservation){
-    cout_doing << "SIMPLE_RXN::scheduleTestConservation " << endl;
+    cout_doing << "SIMPLE_RXN::scheduleTestConservation " << std::endl;
     Task* t = scinew Task("SimpleRxn::testConservation", 
                      this,&SimpleRxn::testConservation, mi);
 
@@ -634,7 +634,7 @@ void SimpleRxn::testConservation(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing testConservation on patch "<<patch->getID()
-               << "\t\t\t SimpleRxn" << endl;
+               << "\t\t\t SimpleRxn" << std::endl;
                
     //__________________________________
     //  conservation of f test

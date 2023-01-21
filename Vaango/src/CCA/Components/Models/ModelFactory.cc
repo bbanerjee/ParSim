@@ -96,13 +96,13 @@ ModelFactory::~ModelFactory()
 
 vector<ModelInterface*> ModelFactory::getModels()
 {
-  //cout << "calling getModels: " << d_models.size() << " models returned" << endl;
+  //cout << "calling getModels: " << d_models.size() << " models returned" << std::endl;
   return d_models;
 }
 
 void ModelFactory::clearModels()
 {
-  //cout << "clean up " << d_models.size() << " models" << endl;
+  //cout << "clean up " << d_models.size() << " models" << std::endl;
   d_models.clear();
 }
 

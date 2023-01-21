@@ -36,7 +36,7 @@ static void gltutCheckErrors(const char* file, int line)
     bool errs = false;
     GLenum ret = glGetError();
     if(GL_NO_ERROR != ret)
-        cerr << file << "(" << line << ") : " << /*gluErrorString(ret) << */endl;
+        std::cerr <<  file << "(" << line << ") : " << /*gluErrorString(ret) << */endl;
 }
 
 // #ifdef _DEBUG
@@ -66,7 +66,7 @@ static string FormatBytes(size_t bytes)
 
 static string LoadFile(const string& shader_file)
 {
-    debug1 << "loading file " << shader_file << endl;
+    debug1 << "loading file " << shader_file << std::endl;
     std::ifstream file(shader_file.c_str());
     std::stringstream str;
 
@@ -77,14 +77,14 @@ static string LoadFile(const string& shader_file)
         }
     else
         {
-            debug1 << "error opening " <<  shader_file << endl;
+            debug1 << "error opening " <<  shader_file << std::endl;
             return "error";
         }
 }
 
 static GLuint LoadShader(const std::string& shader_file, GLenum type)
 {
-    debug1 << "loading shader " << shader_file << endl;
+    debug1 << "loading shader " << shader_file << std::endl;
     GLuint shader = glCreateShader(type);
     CheckOpenGLError();
     std::vector<const char*> source_strings;
@@ -93,7 +93,7 @@ static GLuint LoadShader(const std::string& shader_file, GLenum type)
     glShaderSource(shader,GLsizei(source_strings.size()), &source_strings[0], 0);
     CheckOpenGLError();
 
-    debug1 << "compiling" << endl;
+    debug1 << "compiling" << std::endl;
     glCompileShader(shader);
     CheckOpenGLError();
     GLint compile_status;
@@ -105,7 +105,7 @@ static GLuint LoadShader(const std::string& shader_file, GLenum type)
 
     if(!compile_status )
         {
-            debug1 << "error" << endl;
+            debug1 << "error" << std::endl;
         }
 
     if(info_log_length > 0)
@@ -114,7 +114,7 @@ static GLuint LoadShader(const std::string& shader_file, GLenum type)
 
             glGetShaderInfoLog(shader, info_log_length, 0, &info_log[0]);
             CheckOpenGLError();
-            debug1 << info_log << endl;
+            debug1 << info_log << std::endl;
         }
 
     if(!compile_status )
@@ -162,7 +162,7 @@ static GLuint LoadProgram(const std::string& vertex_shader_file, \
             CheckOpenGLError();
         }
 
-    debug1 << "linking" << endl;
+    debug1 << "linking" << std::endl;
     glLinkProgram(program);
     CheckOpenGLError();
     GLint link_status;
@@ -175,7 +175,7 @@ static GLuint LoadProgram(const std::string& vertex_shader_file, \
 
     if(!link_status)
         {
-            debug1 << "error" << endl;
+            debug1 << "error" << std::endl;
         }
 
     if(info_log_length > 0)
@@ -183,7 +183,7 @@ static GLuint LoadProgram(const std::string& vertex_shader_file, \
             std::string info_log(size_t(info_log_length),' ');
             glGetProgramInfoLog(program, info_log_length, 0, &info_log[0]);
             CheckOpenGLError();
-            debug1 << info_log << endl;
+            debug1 << info_log << std::endl;
         }
 
     if(!link_status)
@@ -365,7 +365,7 @@ ParticleInstancingRenderer::~ParticleInstancingRenderer() {
 
 
 void ParticleInstancingRenderer::BuildShaders() {
-    debug1 << "building shaders" << endl;
+    debug1 << "building shaders" << std::endl;
     // program_instancing = LoadProgram("/home/collab/sshankar/visit_shigeru/src_nvd2/plots/Molecule/Instancing.Vertex.glsl", "/home/collab/sshankar/visit_shigeru/src_nvd2/plots/Molecule/Instancing.Fragment.glsl");
     program_instancing = LoadProgram("./Instancing.Vertex.glsl", "./Instancing.Fragment.glsl");
 }
@@ -390,27 +390,27 @@ void ParticleInstancingRenderer::Initialize() {
     // check for the extensions that are required
     GLboolean shader4_supported = CheckExtension("GL_EXT_gpu_shader4");
     if (shader4_supported)
-        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_gpu_shader4 supported" << endl;
+        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_gpu_shader4 supported" << std::endl;
     else
-        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_gpu_shader4 not supported" << endl;
+        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_gpu_shader4 not supported" << std::endl;
 
 	
     GLboolean tbo_supported = CheckExtension("GL_EXT_texture_buffer_object");
     if (tbo_supported)
-        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_texture_buffer_object supported" << endl;
+        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_texture_buffer_object supported" << std::endl;
     else
-        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_texture_buffer_object not supported" << endl;
+        debug2 << "ParticleInstancingRenderer: Extension GL_EXT_texture_buffer_object not supported" << std::endl;
 
 
     extensions_supported = (shader4_supported && tbo_supported);
 	if (extensions_supported) {
 	    debug1 << "ParticleInstancingRenderer: Necessary extensions supported, "
-               << "using the new Molecule plot implementation." << endl;
+               << "using the new Molecule plot implementation." << std::endl;
 	}
 	else
     {
 	    debug1 << "ParticleInstancingRenderer: Necessary extensions not supported, "
-               << "using the old Molecule plot implementation." << endl;
+               << "using the old Molecule plot implementation." << std::endl;
 	}
 
     // don't do any more if the extensions aren't supported
@@ -422,7 +422,7 @@ void ParticleInstancingRenderer::Initialize() {
     // 
     GLint max_texture_buffer_size;
     glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE_EXT, &max_texture_buffer_size);
-    debug1 << "maximal texture buffer size " << FormatBytes(max_texture_buffer_size) << endl;
+    debug1 << "maximal texture buffer size " << FormatBytes(max_texture_buffer_size) << std::endl;
 
     size_t instances_position_radius = size_t(max_texture_buffer_size) / (4*sizeof(float));
     size_t instances_color  = size_t(max_texture_buffer_size) / (4*sizeof(unsigned char));
@@ -431,7 +431,7 @@ void ParticleInstancingRenderer::Initialize() {
 
     debug1 << "ParticleInstancingRenderer: Max number of instances " 
            << instanced_batch_size << " = "
-           << instanced_batch_size / 1000000.0f << " million" << endl;
+           << instanced_batch_size / 1000000.0f << " million" << std::endl;
 
     GenerateAndBuildTBO();
     BuildSphereGeometryVBOs();
@@ -446,7 +446,7 @@ void ParticleInstancingRenderer::SetQualityLevel(int level) {
 
 
 void ParticleInstancingRenderer::GenerateAndBuildTBO() {
-    debug1 << "building buffers for batched instancing" << endl;
+    debug1 << "building buffers for batched instancing" << std::endl;
 
     glGenBuffers(2, tbo_position_radius_batches);
     CheckOpenGLError();
@@ -491,7 +491,7 @@ void ParticleInstancingRenderer::BuildSphereGeometryVBOs() {
 void ParticleInstancingRenderer::BuildTBO(const GLuint tbo, const GLuint tex, size_t tbo_size,  \
                                           GLenum usage, GLenum internal_format)
 {
-    debug1 << "\tbuilding texture buffer for instance data of size " << FormatBytes(tbo_size) << endl;
+    debug1 << "\tbuilding texture buffer for instance data of size " << FormatBytes(tbo_size) << std::endl;
 
     glBindBufferARB(GL_TEXTURE_BUFFER_ARB, tbo);
     CheckOpenGLError();
@@ -543,7 +543,7 @@ GLboolean ParticleInstancingRenderer::CopyParticleDataToGpuBuffers(size_t start,
     CheckOpenGLError();
 
     if(!mapped_position_radius)
-        cerr << " mapped_position_radius null " << endl;
+        std::cerr <<  " mapped_position_radius null " << std::endl;
 #else
     glBufferData(GL_TEXTURE_BUFFER_ARB, count*4*sizeof(float), &particle_position_radius[start], GL_DYNAMIC_DRAW);
     CheckOpenGLError();
@@ -569,7 +569,7 @@ GLboolean ParticleInstancingRenderer::CopyParticleDataToGpuBuffers(size_t start,
     CheckOpenGLError();
 
     if(!mapped_color)
-        cerr << "mapping failed: mapped_color null" << endl;
+        std::cerr <<  "mapping failed: mapped_color null" << std::endl;
 #else
     glBufferData(GL_TEXTURE_BUFFER_ARB, count*4*sizeof(unsigned char), &particle_color[start], GL_DYNAMIC_DRAW);
     CheckOpenGLError();
@@ -610,7 +610,7 @@ GLboolean ParticleInstancingRenderer::CopyParticleDataToGpuBuffers(size_t start,
 
     /*
     if(!(unmapped_color==GL_TRUE &&  unmapped_position_radius==GL_TRUE))
-        cerr << "unmapping failed: unmapped_color" << static_cast<unsigned int>(unmapped_color) << " unmapped_position_radius" << static_cast<unsigned int>(unmapped_position_radius) << endl;
+        std::cerr <<  "unmapping failed: unmapped_color" << static_cast<unsigned int>(unmapped_color) << " unmapped_position_radius" << static_cast<unsigned int>(unmapped_position_radius) << std::endl;
 
     return unmapped_color &&  unmapped_position_radius;
     */

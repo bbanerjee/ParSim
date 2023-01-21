@@ -86,11 +86,11 @@ void RigidMPM::problemSetup(const ProblemSpecP& prob_spec,
   SerialMPM::problemSetup(prob_spec, restart_prob_spec,grid, sharedState);
   ProblemSpecP cfd_ps = prob_spec->findBlock("CFD");
   if(cfd_ps && UintahParallelComponent::d_myworld->myRank() == 0){
-    std::cout << "\n__________________________________"<< endl;
-    std::cout << "  W A R N I N G :  " << endl;
-    std::cout << "  You must use stiff MPM material properties" << endl;
-    std::cout << "  to get the correct pressure solution in rmpmice" << endl;
-    std::cout << "__________________________________\n"<< endl;
+    std::cout << "\n__________________________________"<< std::endl;
+    std::cout << "  W A R N I N G :  " << std::endl;
+    std::cout << "  You must use stiff MPM material properties" << std::endl;
+    std::cout << "  to get the correct pressure solution in rmpmice" << std::endl;
+    std::cout << "__________________________________\n"<< std::endl;
   }
 }
 
@@ -101,7 +101,7 @@ void RigidMPM::computeStressTensor(const ProcessorGroup*,
                                    DataWarehouse* new_dw)
 {
   if (cout_doing.active())
-    cout_doing <<"Doing computeStressTensor " <<"\t\t\t\t RigidMPM"<< endl;
+    cout_doing <<"Doing computeStressTensor " <<"\t\t\t\t RigidMPM"<< std::endl;
 
   for(int m = 0; m < d_mat_manager->getNumMaterials("MPM"); m++){
     MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
@@ -137,7 +137,7 @@ void RigidMPM::computeInternalForce(const ProcessorGroup*,
 
     if (cout_doing.active()) {
       cout_doing <<"Doing computeInternalForce on patch " << patch->getID()
-                 <<"\t\t\t RigidMPM"<< endl;
+                 <<"\t\t\t RigidMPM"<< std::endl;
     }
 
   }
@@ -283,7 +283,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
     if (cout_doing.active()) {
       cout_doing <<"Doing interpolateToParticlesAndUpdate on patch " 
-                 << patch->getID() << "\t MPM"<< endl;
+                 << patch->getID() << "\t MPM"<< std::endl;
     }
 
     auto interpolator = flags->d_interpolator->clone(patch);

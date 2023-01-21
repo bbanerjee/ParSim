@@ -90,7 +90,7 @@ ElasticConstitutiveModel::~ElasticConstitutiveModel()
 {
   // Destructor
 
-  // std::cout << "Calling ElasticConstitutiveModel destructor . . . " << endl;
+  // std::cout << "Calling ElasticConstitutiveModel destructor . . . " << std::endl;
   VarLabel::destroy(p_cmdata_label);
   VarLabel::destroy(p_cmdata_label_preReloc);
 }
@@ -317,7 +317,7 @@ ElasticConstitutiveModel::computeStressTensor(const PatchSubset* /*patches*/,
                                               DataWarehouse* /*new_dw*/,
                                               DataWarehouse* /*old_dw*/)
 {
-  cerr << "computeStressTensor not finished\n";
+  std::cerr <<  "computeStressTensor not finished\n";
 }
 
 double
@@ -325,7 +325,7 @@ ElasticConstitutiveModel::computeStrainEnergy(const Patch* /*patch*/,
                                               const MPMMaterial* /*matl*/,
                                               DataWarehouse* /*new_dw*/)
 {
-  cerr << "computeStrainEnergy not finished\n";
+  std::cerr <<  "computeStrainEnergy not finished\n";
   return -1;
 }
 
@@ -406,7 +406,7 @@ ElasticConstitutiveModel::addComputesAndRequires(Task* task,
                                                  const MPMMaterial* /*matl*/,
                                                  const PatchSet* patches) const
 {
-  cerr << "ElasticConsitutive::addComputesAndRequires needs to be filled in\n";
+  std::cerr <<  "ElasticConsitutive::addComputesAndRequires needs to be filled in\n";
 }
 
 void
@@ -442,7 +442,7 @@ ElasticConstitutiveModel::writeRestartParameters(ofstream& out) const
       << (getStressTensor())(1,3) << " "
       << (getStressTensor())(2,2) << " "
       << (getStressTensor())(2,3) << " "
-      << (getStressTensor())(3,3) << endl;
+      << (getStressTensor())(3,3) << std::endl;
 #endif
 }
 
@@ -497,7 +497,7 @@ ElasticConstitutiveModel::getNumParameters() const
 void
 ElasticConstitutiveModel::printParameterNames(ofstream& out) const
 {
-  out << "Yng's Mod" << endl << "Pois. Rat" << endl;
+  out << "Yng's Mod" << std::endl << "Pois. Rat" << std::endl;
 }
 
 namespace Uintah {

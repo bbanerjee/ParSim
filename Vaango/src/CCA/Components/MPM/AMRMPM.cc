@@ -180,7 +180,7 @@ AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
                      GridP& grid,
                      MaterialManagerP& mat_manager)
 {
-  cout_doing << "Doing problemSetup\t\t\t\t\t AMRMPM" << endl;
+  cout_doing << "Doing problemSetup\t\t\t\t\t AMRMPM" << std::endl;
 
   d_mat_manager = sharedState;
   dynamic_cast<Scheduler*>(getPort("scheduler"))->setPositionVar(lb->pXLabel);
@@ -345,9 +345,9 @@ AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 {
 
   if (flags->doMPMOnLevel(level->getIndex(), level->getGrid()->numLevels())) {
-    proc0cout << "doMPMOnLevel = " << level->getIndex() << endl;
+    proc0cout << "doMPMOnLevel = " << level->getIndex() << std::endl;
   } else {
-    proc0cout << "DontDoMPMOnLevel = " << level->getIndex() << endl;
+    proc0cout << "DontDoMPMOnLevel = " << level->getIndex() << std::endl;
   }
 
   if (!flags->doMPMOnLevel(level->getIndex(), level->getGrid()->numLevels()))
@@ -435,13 +435,13 @@ AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   if (flags->d_useLoadCurves && !flags->d_doScalarDiffusion) {
     // Schedule the initialization of pressure BCs per particle
-    std::cout << "Pressure load curves are untested for multiple levels" << endl;
+    std::cout << "Pressure load curves are untested for multiple levels" << std::endl;
     scheduleInitializePressureBCs(level, sched);
   }
 
   if (flags->d_useLoadCurves && flags->d_doScalarDiffusion) {
     // Schedule the initialization of scalar fluxBCs per particle
-    std::cout << "Scalar load curves are untested for multiple levels" << endl;
+    std::cout << "Scalar load curves are untested for multiple levels" << std::endl;
     scheduleInitializeScalarFluxBCs(level, sched);
   }
 }
@@ -1673,7 +1673,7 @@ AMRMPM::coarsen(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* coarsePatch = patches->get(p);
-    cout_doing << "  patch " << coarsePatch->getID() << endl;
+    cout_doing << "  patch " << coarsePatch->getID() << std::endl;
 
     CCVariable<double> refineCell;
     new_dw->getModifiable(refineCell, lb->MPMRefineCellLabel, 0, coarsePatch);
@@ -1689,7 +1689,7 @@ AMRMPM::coarsen(const ProcessorGroup*,
                                  fineLevel);
 
     if (coarseLevel->getIndex() == numLevels - 2) {
-      //    std::cout << "coarseLevelIndex = " << coarseLevel->getIndex() << endl;
+      //    std::cout << "coarseLevelIndex = " << coarseLevel->getIndex() << std::endl;
       max_vartype xmax, ymax, zmax;
       min_vartype xmin, ymin, zmin;
       new_dw->get(xmax, RefineFlagXMaxLabel);
@@ -1699,12 +1699,12 @@ AMRMPM::coarsen(const ProcessorGroup*,
       new_dw->get(ymin, RefineFlagYMinLabel);
       new_dw->get(zmin, RefineFlagZMinLabel);
 
-      //    std::cout << "xmax = " << xmax << endl;
-      //    std::cout << "ymax = " << ymax << endl;
-      //    std::cout << "zmax = " << zmax << endl;
-      //    std::cout << "xmin = " << xmin << endl;
-      //    std::cout << "ymin = " << ymin << endl;
-      //    std::cout << "zmin = " << zmin << endl;
+      //    std::cout << "xmax = " << xmax << std::endl;
+      //    std::cout << "ymax = " << ymax << std::endl;
+      //    std::cout << "zmax = " << zmax << std::endl;
+      //    std::cout << "xmin = " << xmin << std::endl;
+      //    std::cout << "ymin = " << ymin << std::endl;
+      //    std::cout << "zmin = " << zmin << std::endl;
 
       IntVector fineXYZMaxMin(xmax, ymax, zmax);
       IntVector fineXYZMinMax(xmin, ymin, zmin);
@@ -1747,7 +1747,7 @@ AMRMPM::coarsen(const ProcessorGroup*,
 void
 AMRMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 {
-  //  std::cout << "scheduleErrorEstimate" << endl;
+  //  std::cout << "scheduleErrorEstimate" << std::endl;
   printSchedule(coarseLevel, cout_doing, "AMRMPM::scheduleErrorEstimate");
 
   Task* task =
@@ -1768,8 +1768,8 @@ void
 AMRMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
                                      SchedulerP& sched)
 {
-  //  std::cout << "scheduleInitialErrorEstimate" << endl;
-  //  std::cout << "Doing nothing for now" << endl;
+  //  std::cout << "scheduleInitialErrorEstimate" << std::endl;
+  //  std::cout << "Doing nothing for now" << std::endl;
 
   //  scheduleErrorEstimate(coarseLevel, sched);
 }
@@ -2287,10 +2287,10 @@ AMRMPM::interpolateParticlesToGrid_CFI(const ProcessorGroup*,
 
         pset = old_dw->getParticleSubset(dwi, cl, ch, coarsePatch, lb->pXLabel);
 #if 0
-        std::cout << "  coarseLevel: " << coarseLevel->getIndex() << endl;
-        std::cout << " cl_tmp: "<< cl_tmp << " ch_tmp: " << ch_tmp << endl;
-        std::cout << " cl:     " << cl    << " ch:     " << ch<< " fl: " << fl << " fh " << fh << endl;
-        std::cout << "  " << *pset << endl;
+        std::cout << "  coarseLevel: " << coarseLevel->getIndex() << std::endl;
+        std::cout << " cl_tmp: "<< cl_tmp << " ch_tmp: " << ch_tmp << std::endl;
+        std::cout << " cl:     " << cl    << " ch:     " << ch<< " fl: " << fl << " fh " << fh << std::endl;
+        std::cout << "  " << *pset << std::endl;
 #endif
         old_dw->get(pX_coarse, lb->pXLabel, pset);
         old_dw->get(pMass_coarse, lb->pMassLabel, pset);
@@ -2662,7 +2662,7 @@ AMRMPM::coarsenNodalData_CFI2(const ProcessorGroup*,
                     warn << "Too Big: " << c_node << " f_node " << f_node 
                          << "    L-"<< fineLevel->getIndex()
                          <<" InternalForce_fine   " << internalForce_fine[f_node] 
-                         <<" InternalForce_coarse " << internalForce_coarse[c_node] << endl;
+                         <<" InternalForce_coarse " << internalForce_coarse[c_node] << std::endl;
                      
                     throw InternalError(warn.str(), __FILE__, __LINE__);
                   }
@@ -2914,7 +2914,7 @@ AMRMPM::computeInternalForce(const ProcessorGroup*,
             gIntForce[ni[k]] -= (div * stresspress) * pVol[idx];
 
             // std::cout << " CIF: ni: " << ni[k] << " div " << div << "\t
-            // internalForce " << gIntForce[ni[k]] << endl;
+            // internalForce " << gIntForce[ni[k]] << std::endl;
             // std::cout << " div " << div[k] << " stressPress: " << stresspress  <<
             // endl;
 
@@ -2922,7 +2922,7 @@ AMRMPM::computeInternalForce(const ProcessorGroup*,
                 std::isnan(gIntForce[ni[k]].length())) {
               std::cout << "INF: " << ni[k] << " " << gIntForce[ni[k]]
                    << " div: " << div << " stressPress: " << stresspress
-                   << " pVol " << pVol[idx] << endl;
+                   << " pVol " << pVol[idx] << std::endl;
             }
             /*`==========TESTING==========*/
             gSumS[ni[k]] += S[k];
@@ -3041,10 +3041,10 @@ AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
             old_dw->getParticleSubset(dwi, cl, ch, coarsePatch, lb->pXLabel);
 
 #if 0
-          std::cout << " fine patch : " << finePatch->getGridIndex() << endl;
-          std::cout << " cl_tmp: "<< cl_tmp << " ch_tmp: " << ch_tmp << endl;
-          std::cout << " cl:     " << cl    << " ch:     " << ch<< " fl: " << fl << " fh " << fh << endl;                                                     
-          std::cout << "  " << *pset_coarse << endl;
+          std::cout << " fine patch : " << finePatch->getGridIndex() << std::endl;
+          std::cout << " cl_tmp: "<< cl_tmp << " ch_tmp: " << ch_tmp << std::endl;
+          std::cout << " cl:     " << cl    << " ch:     " << ch<< " fl: " << fl << " fh " << fh << std::endl;                                                     
+          std::cout << "  " << *pset_coarse << std::endl;
 #endif
 
           // coarse level data
@@ -3096,11 +3096,11 @@ AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
                 gIntForce[fineNode] -= Increment;
 
                 //  std::cout << " CIF_CFI: ni: " << ni[k] << " div " << div[k] <<
-                //  "\t internalForce " << gIntForce[fineNode] << endl;
+                //  "\t internalForce " << gIntForce[fineNode] << std::endl;
                 //  std::cout << "    before " << Before << " After " << After << "
-                //  Increment " << Increment << endl;
+                //  Increment " << Increment << std::endl;
                 //  std::cout << "    div " << div[k] << " stressPress: " <<
-                //  stresspress << " pVol_coarse " << pVol_coarse[idx] << endl;
+                //  stresspress << " pVol_coarse " << pVol_coarse[idx] << std::endl;
 
                 /*`==========TESTING==========*/
                 if (std::isinf(gIntForce[fineNode].length()) ||
@@ -3108,15 +3108,15 @@ AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
                   std::cout << "INF: " << fineNode << " " << gIntForce[fineNode]
                        << " div[k]:" << div[k]
                        << " stressPress: " << stresspress << " pVol "
-                       << pVol_coarse[idx] << endl;
+                       << pVol_coarse[idx] << std::endl;
                 }
 #if 0             
                 if( gIntForce[fineNode].length()  >1e-10){
                   std::cout << "CIF_CFI: " << fineNode
                        << "    L-"<< getLevel(finePatches)->getIndex()
                        <<" InternalForce " << gIntForce[fineNode] << " div[k]: " << div[k] << " stressPress: " << stresspress 
-                       << " pVol " << pVol_coarse[idx] << endl;
-                  std::cout << "          Before: " << Before << " Increment " << Increment << endl;
+                       << " pVol " << pVol_coarse[idx] << std::endl;
+                  std::cout << "          Before: " << Before << " Increment " << Increment << std::endl;
                 }
 #endif
                 /*===========TESTING==========`*/
@@ -3221,7 +3221,7 @@ AMRMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                << " gAcceleration: " << gAcceleration[n]
                << " gExtForce: " << gExtForce[n]
                << " gIntForce: " << gIntForce[n] << " diff: " << diff
-               << " gMass: " << gMass[n] << " gravity: " << gravity << endl;
+               << " gMass: " << gMass[n] << " gravity: " << gravity << std::endl;
         }
 #endif
         /*===========TESTING==========`*/
@@ -3423,7 +3423,7 @@ AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
               //                   finePatch->getFaceName(patchFace)
               //                   << ", isRight_CP_FP_pair: " <<
               //                   isRight_CP_FP_pair  << " n_iter: " << n_iter
-              //                   << endl;
+              //                   << std::endl;
 
               for (; !n_iter.done(); n_iter++) {
                 IntVector c     = *n_iter;
@@ -3486,7 +3486,7 @@ AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
               //                   finePatch->getFaceName(patchFace)
               //                   << " isRight_CP_FP_pair: " <<
               //                   isRight_CP_FP_pair  << " n_iter: " << n_iter
-              //                   << endl;
+              //                   << std::endl;
 
               for (; !n_iter.done(); n_iter++) {
                 IntVector c          = *n_iter;
@@ -3703,7 +3703,7 @@ AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           std::cout << "    L-" << getLevel(patches)->getIndex()
                << " pX: " << pXnew[idx]
                << " pVelocitynew: " << pVelocitynew[idx] << " pVelocity "
-               << pVelocity[idx] << " diff " << diff << endl;
+               << pVelocity[idx] << " diff " << diff << std::endl;
         }
 #endif
 #ifdef DEBUG_ACC
@@ -3737,7 +3737,7 @@ AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 //             << " tempold = " << pTemperature[idx] 
 //             << " tempnew = " << pTempNew[idx]
 //             << " pLocalized = " << pLocalized[idx]
-//             << " volnew = " << pVolume[idx] << endl;
+//             << " volnew = " << pVolume[idx] << std::endl;
         }
         if(pVelocitynew[idx].length() > flags->d_max_vel){
           if(pVelocitynew[idx].length() >= pVelocity[idx].length()){
@@ -4093,9 +4093,9 @@ AMRMPM::addParticles(const ProcessorGroup*,
           new_part_pos.push_back(pX[idx] - r[2]);
           new_part_pos.push_back(pX[idx] - r[3]);
 
-          std::cout << "OPP = " << pX[idx] << endl;
+          std::cout << "OPP = " << pX[idx] << std::endl;
           for (int i = 0; i < 8; i++) {
-            //        std::cout << "NPP = " << new_part_pos[i] << endl;
+            //        std::cout << "NPP = " << new_part_pos[i] << std::endl;
             if (!level->containsPoint(new_part_pos[i])) {
               Point anchor    = level->getAnchor();
               Point orig      = new_part_pos[i];
@@ -4115,7 +4115,7 @@ AMRMPM::addParticles(const ProcessorGroup*,
             } else {
               new_index = oldNumPar + 7 * numRefPar + i;
             }
-            //          std::cout << "new_index = " << new_index << endl;
+            //          std::cout << "new_index = " << new_index << std::endl;
             pIDstmp[new_index]  = (cellID | (long64)myCellNAPID);
             pXtmp[new_index]    = new_part_pos[i];
             pVoltmp[new_index]  = .125 * pVolume[idx];
@@ -4216,8 +4216,8 @@ AMRMPM::reduceFlagsExtents(const ProcessorGroup*,
     RR_RelToFinest = RR_thisLevel * (numLevels - levelIndex - 1);
   }
 
-  //  std::cout << "rFE levelIndex = " << levelIndex << endl;
-  //  std::cout << "RR_RelToFinest = " << RR_RelToFinest << endl;
+  //  std::cout << "rFE levelIndex = " << levelIndex << std::endl;
+  //  std::cout << "RR_RelToFinest = " << RR_RelToFinest << std::endl;
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -4258,12 +4258,12 @@ AMRMPM::reduceFlagsExtents(const ProcessorGroup*,
 
     /*
       if (print==1){
-      std::cout << "Xmax = " << xmax << endl;
-      std::cout << "Ymax = " << ymax << endl;
-      std::cout << "Zmax = " << zmax << endl;
-      std::cout << "Xmin = " << xmin << endl;
-      std::cout << "Ymin = " << ymin << endl;
-      std::cout << "Zmin = " << zmin << endl;
+      std::cout << "Xmax = " << xmax << std::endl;
+      std::cout << "Ymax = " << ymax << std::endl;
+      std::cout << "Zmax = " << zmax << std::endl;
+      std::cout << "Xmin = " << xmin << std::endl;
+      std::cout << "Ymin = " << ymin << std::endl;
+      std::cout << "Zmin = " << zmin << std::endl;
       }
     */
 
@@ -4416,7 +4416,7 @@ AMRMPM::errorEstimate(const ProcessorGroup*,
         if(pRefined[*iter]==1){
           IntVector c = level->getCellIndex(pX[*iter]);
           refineFlag[c] = true;
-          std::cout << "refineFlag Cell = " << c << endl;
+          std::cout << "refineFlag Cell = " << c << std::endl;
           refinePatch->set();
         }
       }
@@ -4450,7 +4450,7 @@ AMRMPM::refineGrid(const ProcessorGroup*,
 
       if (cout_doing.active()) {
         cout_doing << "Doing refine on patch " << patch->getID()
-                   << " material # = " << dwi << endl;
+                   << " material # = " << dwi << std::endl;
       }
 
       // this is a new patch, so create empty particle variables.
@@ -4537,7 +4537,7 @@ AMRMPM::countParticles(const ProcessorGroup*,
 
   //  const Level* level = getLevel(patches);
   //  std::cout << "Level " << level->getIndex() << " has " << level->numPatches() <<
-  //  " patches" << endl;
+  //  " patches" << std::endl;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
@@ -4551,7 +4551,7 @@ AMRMPM::countParticles(const ProcessorGroup*,
       totalParticles += pset->end() - pset->begin();
     }
     //    std::cout << "patch = " << patch->getID()
-    //         << ", numParticles = " << totalParticles << endl;
+    //         << ", numParticles = " << totalParticles << std::endl;
   }
   new_dw->put(sumlong_vartype(totalParticles), lb->partCountLabel);
 }
@@ -4669,7 +4669,7 @@ AMRMPM::debug_CFI(const ProcessorGroup*,
                           d_nPaddingCells_Coarse);
         IntVector nPaddingCells = nLayers * (refineRatio);
         // std::cout << " nPaddingCells " << nPaddingCells << "nLayers " << nLayers
-        // << endl;
+        // << std::endl;
         /*===========TESTING==========`*/
 
         int nGhostCells           = 0;
@@ -4866,7 +4866,7 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
           // allow you to get a pset with a high/low index that does not match
           // the patch low high index  
           pset = old_dw->getParticleSubset(dwi, coarsePatch);
-          //std::cout << *pset << endl; 
+          //std::cout << *pset << std::endl; 
 /*===========TESTING==========`*/
           old_dw->get(pXold_coarse,                  lb->pXLabel,                 pset);
           new_dw->getModifiable(pXnew_coarse,        lb->pXLabel_preReloc,        pset);
@@ -4901,7 +4901,7 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
               if( abs(acc.length() - d_acc_ans.length() > d_acc_tol ) ) {
                 const Level* fineLevel = coarseLevel->getFinerLevel().get_rep();
                 std::cout << "    L-"<< fineLevel->getIndex() << " node: "<< fineNode << " gAcceleration: " << gAcceleration_fine[fineNode] 
-                     << "  diff " << diff << endl;
+                     << "  diff " << diff << std::endl;
               }
 #endif 
 /*===========TESTING==========`*/
@@ -5174,7 +5174,7 @@ AMRMPM::initializeScalarFluxBC(const ProcessorGroup*,
   printTask(
     patches, patches->get(0), cout_doing, "Doing initialize ScalarFluxBC");
   if (cout_doing.active())
-    cout_doing << "Current Time (Initialize ScalarFlux BC) = " << time << endl;
+    cout_doing << "Current Time (Initialize ScalarFlux BC) = " << time << std::endl;
 
   // Calculate the scalar flux at each particle
   for (int p = 0; p < patches->size(); p++) {
@@ -5228,7 +5228,7 @@ AMRMPM::initializeScalarFluxBC(const ProcessorGroup*,
 
           if (cout_doing.active()) {
             cout_doing << "    Load Curve = " << nofSFBCs
-                       << " Num Particles = " << numPart << endl;
+                       << " Num Particles = " << numPart << std::endl;
           }
 // Calculate the force per particle at t = 0.0
 // double fluxPerPart = pbc->fluxPerParticle(time);
@@ -5302,7 +5302,7 @@ AMRMPM::applyExternalScalarFlux(const ProcessorGroup*,
   double time = d_mat_manager->getElapsedTime();
 
   if (cout_doing.active())
-    cout_doing << "Current Time (applyExternalScalarFlux) = " << time << endl;
+    cout_doing << "Current Time (applyExternalScalarFlux) = " << time << std::endl;
 
   // Calculate the force vector at each particle for each pressure bc
   std::vector<double> fluxPerPart;

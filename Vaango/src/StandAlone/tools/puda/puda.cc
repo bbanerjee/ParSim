@@ -117,73 +117,73 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
   if (badarg != "")
-    cerr << "Error parsing argument: " << badarg << "\n";
-  cerr << "Usage: " << progname << " [options] <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  -h[elp]\n";
-  cerr << "  -timesteps\n";
-  cerr << "  -gridstats\n";
-  cerr << "  -listvariables\n";
-  cerr << "  -varsummary\n";
-  cerr << "  -brief               (Makes varsummary print out a subset of "
+    std::cerr <<  "Error parsing argument: " << badarg << "\n";
+  std::cerr <<  "Usage: " << progname << " [options] <archive file>\n\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  -h[elp]\n";
+  std::cerr <<  "  -timesteps\n";
+  std::cerr <<  "  -gridstats\n";
+  std::cerr <<  "  -listvariables\n";
+  std::cerr <<  "  -varsummary\n";
+  std::cerr <<  "  -brief               (Makes varsummary print out a subset of "
           "information.)\n";
-  cerr << "  -jim1\n";
-  cerr << "  -jim2\n";
-  cerr << "  -jacquie              (finds burn rate vs pressure)\n";
+  std::cerr <<  "  -jim1\n";
+  std::cerr <<  "  -jim2\n";
+  std::cerr <<  "  -jacquie              (finds burn rate vs pressure)\n";
   cerr
     << "  -monica1             (Finds the maximum pressure in the domain.)\n";
-  cerr << "  -monica2             (Finds the sum of the cell centered kinetic "
+  std::cerr <<  "  -monica2             (Finds the sum of the cell centered kinetic "
           "energy in the domain.)\n";
-  cerr << "  -AA_MMS_1            (1D periodic bar MMS)\n";
-  cerr << "  -AA_MMS_2            (3D Axis aligned MMS)\n";
-  cerr << "  -GV_MMS              (GeneralizedVortex MMS)\n"; // MMS
-  cerr << "  -ER_MMS              (Expanding Ring MMS)\n";
-  cerr << "  -US_MMS              (Uniaxial strain MMS)\n";
-  cerr << "  -partvar <variable name>\n";
-  cerr << "  -asci\n";
-  cerr << "  -tecplot <variable name>\n";
-  cerr << "  -no_extra_cells      (Excludes extra cells when iterating over "
+  std::cerr <<  "  -AA_MMS_1            (1D periodic bar MMS)\n";
+  std::cerr <<  "  -AA_MMS_2            (3D Axis aligned MMS)\n";
+  std::cerr <<  "  -GV_MMS              (GeneralizedVortex MMS)\n"; // MMS
+  std::cerr <<  "  -ER_MMS              (Expanding Ring MMS)\n";
+  std::cerr <<  "  -US_MMS              (Uniaxial strain MMS)\n";
+  std::cerr <<  "  -partvar <variable name>\n";
+  std::cerr <<  "  -asci\n";
+  std::cerr <<  "  -tecplot <variable name>\n";
+  std::cerr <<  "  -no_extra_cells      (Excludes extra cells when iterating over "
           "cells.\n";
-  cerr << "                        Default is to include extra cells.)\n";
-  cerr << "  -cell_stresses\n";
-  cerr << "  -rtdata <output directory>\n";
-  cerr << "  -PTvar\n";
-  cerr << "  -ptonly              (prints out only the point location)\n";
-  cerr << "  -patch               (outputs patch id with data)\n";
-  cerr << "  -material            (outputs material number with data)\n";
-  cerr << "  -NCvar               (double | float | point | vector)\n";
-  cerr << "  -CCvar               (double | float | point | vector)\n";
-  cerr << "  -verbose             (prints status of output)\n";
-  cerr << "  -timesteplow <int>   (only outputs timestep from int)\n";
-  cerr << "  -timestephigh <int>  (only outputs timesteps upto int)\n";
-  cerr << "  -matl,mat <int>      (only outputs data for matl)\n";
-  cerr << "  -pic                 (prints particle ids of all particles  in "
+  std::cerr <<  "                        Default is to include extra cells.)\n";
+  std::cerr <<  "  -cell_stresses\n";
+  std::cerr <<  "  -rtdata <output directory>\n";
+  std::cerr <<  "  -PTvar\n";
+  std::cerr <<  "  -ptonly              (prints out only the point location)\n";
+  std::cerr <<  "  -patch               (outputs patch id with data)\n";
+  std::cerr <<  "  -material            (outputs material number with data)\n";
+  std::cerr <<  "  -NCvar               (double | float | point | vector)\n";
+  std::cerr <<  "  -CCvar               (double | float | point | vector)\n";
+  std::cerr <<  "  -verbose             (prints status of output)\n";
+  std::cerr <<  "  -timesteplow <int>   (only outputs timestep from int)\n";
+  std::cerr <<  "  -timestephigh <int>  (only outputs timesteps upto int)\n";
+  std::cerr <<  "  -matl,mat <int>      (only outputs data for matl)\n";
+  std::cerr <<  "  -pic                 (prints particle ids of all particles  in "
           "cell\n";
-  cerr << "                        <i> <j> <k> [ints] on the specified "
+  std::cerr <<  "                        <i> <j> <k> [ints] on the specified "
           "timesteps)\n";
-  cerr << "  -pol                 (prints out average of all particles in a "
+  std::cerr <<  "  -pol                 (prints out average of all particles in a "
           "cell over an\n";
-  cerr << "                       entire line on a line of cells and is called "
+  std::cerr <<  "                       entire line on a line of cells and is called "
           "with:\n";
-  cerr << "                       <axis: [x,y,z]> <ortho1> <ortho2> <average; "
+  std::cerr <<  "                       <axis: [x,y,z]> <ortho1> <ortho2> <average; "
           "default=true>\n";
-  cerr << "                       <stressSplitting; default=false>\n";
-  cerr << "                       'ortho1' and 'ortho2' inidicate the "
+  std::cerr <<  "                       <stressSplitting; default=false>\n";
+  std::cerr <<  "                       'ortho1' and 'ortho2' inidicate the "
           "coordinates in the plane\n";
-  cerr << "                       orthogonal to 'axis'.  'average' tells "
+  std::cerr <<  "                       orthogonal to 'axis'.  'average' tells "
           "whether to average\n";
-  cerr << "                       over all particles in the cell, or just to "
+  std::cerr <<  "                       over all particles in the cell, or just to "
           "use the first\n";
-  cerr << "                       particle encountered.  'stressSplitting' "
+  std::cerr <<  "                       particle encountered.  'stressSplitting' "
           "only takes affect\n";
-  cerr << "                       if the particle variable is p.stress, and "
+  std::cerr <<  "                       if the particle variable is p.stress, and "
           "splits the stress\n";
-  cerr << "                       into hydrostatic and deviatoric parts.)\n";
-  cerr << "*NOTE* to use -PTvar or -NVvar -rtdata must be used\n";
-  cerr << "*NOTE* ptonly, patch, material, timesteplow, timestephigh "
+  std::cerr <<  "                       into hydrostatic and deviatoric parts.)\n";
+  std::cerr <<  "*NOTE* to use -PTvar or -NVvar -rtdata must be used\n";
+  std::cerr <<  "*NOTE* ptonly, patch, material, timesteplow, timestephigh "
        << "are used in conjuntion with -PTvar.\n\n";
 
-  cerr << "USAGE IS NOT FINISHED\n\n";
+  std::cerr <<  "USAGE IS NOT FINISHED\n\n";
   exit(1);
 }
 
@@ -485,7 +485,7 @@ main(int argc, char** argv)
   }
 
   if (clf.filebase == "") {
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -537,14 +537,14 @@ main(int argc, char** argv)
       if (!clf.tslow_set) {
         clf.time_step_lower = 0;
       } else if (clf.time_step_lower >= times.size()) {
-        cerr << "timesteplow must be between 0 and " << times.size() - 1
+        std::cerr <<  "timesteplow must be between 0 and " << times.size() - 1
              << "\n";
         abort();
       }
       if (!clf.tsup_set) {
         clf.time_step_upper = times.size() - 1;
       } else if (clf.time_step_upper >= times.size()) {
-        cerr << "timestephigh must be between 0 and " << times.size() - 1
+        std::cerr <<  "timestephigh must be between 0 and " << times.size() - 1
              << "\n";
         abort();
       }
@@ -723,7 +723,7 @@ main(int argc, char** argv)
                           }
                         } break;
                         default:
-                          cerr << "No Matrix3 Subclass available."
+                          std::cerr <<  "No Matrix3 Subclass available."
                                << static_cast<std::underlying_type<
                                     TypeDescription::Type>::type>(
                                     subtype->getType())
@@ -757,10 +757,10 @@ main(int argc, char** argv)
       rtdata(da, clf);
     }
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << "\n";
+    std::cerr <<  "Caught exception: " << e.message() << "\n";
     abort();
   } catch (...) {
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 } // end main()
@@ -786,7 +786,7 @@ printParticleVariable(DataArchive* da, string particleVariable,
       variableFound = true;
   }
   if (!variableFound) {
-    cerr << "Variable " << particleVariable << " not found\n";
+    std::cerr <<  "Variable " << particleVariable << " not found\n";
     exit(1);
   }
 

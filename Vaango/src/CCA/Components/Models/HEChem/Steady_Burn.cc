@@ -215,7 +215,7 @@ void Steady_Burn::initialize(const ProcessorGroup*,
   int m0 = matl0->getDWIndex();
   for(int p=0;p<patches->size();p++) {
     const Patch* patch = patches->get(p);
-    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << endl; 
+    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << std::endl; 
     
     CCVariable<double> Ts;
     new_dw->allocateAndPut(Ts, TsLabel, m0, patch);

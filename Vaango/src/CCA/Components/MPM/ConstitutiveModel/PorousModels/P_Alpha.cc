@@ -365,7 +365,7 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
           double denom = 1.0 / zeta - (S_alpha - 1.0);
           if (denom == 0.0) {
             std::cout << "rho_0 = " << rhoS << " zeta = " << zeta
-                      << " numer = " << numer << endl;
+                      << " numer = " << numer << std::endl;
             denom = 1.0e-5;
           }
           p += numer / (denom * denom);
@@ -388,7 +388,7 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
 
       //      double etime = d_mat_manager->getElapsedTime();
       //      std::cout << "12345 " << " " << etime << " " << alpha << " " <<
-      //      pTemperature[idx] << " " << p << endl;
+      //      pTemperature[idx] << " " << p << std::endl;
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {

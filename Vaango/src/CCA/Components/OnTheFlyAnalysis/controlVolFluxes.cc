@@ -678,7 +678,7 @@ void controlVolFluxes::createFile(string& filename,
                                                 w, "z-",
                                                 w, "z+" );
 
-  proc0cout << Parallel::getMPIRank() << " controlVolFluxes:Created file " << filename << endl;
+  proc0cout << Parallel::getMPIRank() << " controlVolFluxes:Created file " << filename << std::endl;
 }
 
 //______________________________________________________________________

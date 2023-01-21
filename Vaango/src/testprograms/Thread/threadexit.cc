@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
   group->detach();
 #else
    group->join();
-   std::cout << "Threads exited" << endl;
+   std::cout << "Threads exited" << std::endl;
 #endif
    
   return 0;

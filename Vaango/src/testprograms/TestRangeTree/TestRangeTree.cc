@@ -108,7 +108,7 @@ SuiteTree* RangeTreeTestTree(bool verbose /*= false*/, int n /* = 100000 */,
   srand(randomSeed);
 
   if (verbose)
-    std::cout << "Using random number seed " << randomSeed << endl;
+    std::cout << "Using random number seed " << randomSeed << std::endl;
   
    std::list<Point*> points;
   points = getRandomPoints(n);
@@ -161,16 +161,16 @@ SuiteTree* RangeTreeTestTree(bool verbose /*= false*/, int n /* = 100000 */,
     std::cout << ".\n\n";
     //rangeTree->topLevelDump();
     //rangeTree->bottomLevelDump();
-    //cout << endl;
+    //cout << std::endl;
   }
 
   
   doRangeQueryTests(topSuite->addSuite("Range Query"), rangeTree, points,
 		    low, high, verbose);
-  if (verbose) std::cout << endl;
+  if (verbose) std::cout << std::endl;
   doSphereRangeQueryTests(topSuite->addSuite("Sphere Range Query"), rangeTree,
 			  points, p, radius, verbose); 
-  if (verbose) std::cout << endl;
+  if (verbose) std::cout << std::endl;
 
 
   delete rangeTree;
@@ -187,7 +187,7 @@ SuiteTree* RangeTreeTestTree(bool verbose /*= false*/, int n /* = 100000 */,
     std::cout << ".\n\n";
     //rangeTree->topLevelDump();
     //rangeTree->bottomLevelDump();
-    //cout << endl;
+    //cout << std::endl;
   }
 
   Point p_out[8];
@@ -209,15 +209,15 @@ SuiteTree* RangeTreeTestTree(bool verbose /*= false*/, int n /* = 100000 */,
     outerSuiteName[12] = '0' + i;
     doNearestQueryTests(nearestSuite->addSuite(outerSuiteName),
 			nearestCapabableRangeTree, points, p_out[i], verbose);
-    if (verbose) std::cout << endl;
+    if (verbose) std::cout << std::endl;
   }
   Suite* innerPointNearestSuite = nearestSuite->addSuite("Inner point");
   doNearestQueryTests(innerPointNearestSuite, nearestCapabableRangeTree,
 		      points, p_in, verbose);
-  if (verbose) std::cout << endl;
+  if (verbose) std::cout << std::endl;
   doNearestQueryAtPointsTest(innerPointNearestSuite, nearestCapabableRangeTree,
 			     points, verbose); 
-  if (verbose) std::cout << endl;
+  if (verbose) std::cout << std::endl;
   delete rangeTree;
   
   // clean up 
@@ -286,9 +286,9 @@ void doRangeQueryTests(Suite* suite, RangeTree<Point, int>* rangeTree,
     suite->addTest("Range query", same);    
   }
   else if (verbose && points.size() < 50) {
-    std::cout << "Range Tree query results: " << endl;
+    std::cout << "Range Tree query results: " << std::endl;
     printList(treeQuery);
-    std::cout << "Linear query results: " << endl;
+    std::cout << "Linear query results: " << std::endl;
     printList(linearQuery);    
   }
 }
@@ -353,9 +353,9 @@ void doSphereRangeQueryTests(Suite* suite, RangeTree<Point, int>* rangeTree,
     suite->addTest("Range query", same);    
   }
   else if (verbose && points.size() < 50) {
-    std::cout << "Range Tree sphere query results: " << endl;
+    std::cout << "Range Tree sphere query results: " << std::endl;
     printList(treeQuery);
-    std::cout << "Linear sphere query results: " << endl;
+    std::cout << "Linear sphere query results: " << std::endl;
     printList(linearQuery);    
   }
 }
@@ -417,7 +417,7 @@ void doNearestQueryTests(Suite* suite, RangeTree<Point, int, true>* rangeTree,
   int rangeDistL1 = p.distanceL1(*nearestL1);
   int linearDistL1 = p.distanceL1(*linearNearestL1);
   if (verbose && (rangeDistL1 != linearDistL1)) 
-    std::cout << "Failed Nearest L1: " << rangeDistL1 << " != " << linearDistL1 << endl;
+    std::cout << "Failed Nearest L1: " << rangeDistL1 << " != " << linearDistL1 << std::endl;
   suite->addTest("Nearest L1 query", rangeDistL1 == linearDistL1);
   int rangeDistSqrd = p.distanceSquared(*nearest);
   int linearDistSqrd = p.distanceSquared(*linearNearest);
@@ -438,7 +438,7 @@ void doNearestQueryAtPointsTest(Suite* suite,
     Point* nearest = rangeTree->queryNearest(*(*pIter), INT_MAX/2);
     if (nearest->distanceL1(*(*pIter)) != 0) {
       passed = false;
-      std::cout << nearest->getId() << " not @ " << (*pIter)->getId() << endl;
+      std::cout << nearest->getId() << " not @ " << (*pIter)->getId() << std::endl;
     }
   }
   gettimeofday(&end, 0);
@@ -533,6 +533,6 @@ Point* doLinearNearestQuery(list<Point*> points, const Point& p)
 void printList(list<Point*>& points)
 {
   for (list<Point*>::iterator it = points.begin(); it != points.end(); it++)
-    std::cout << (**it)[0] << ", " << (**it)[1] << ", " << (**it)[2] << endl;
+    std::cout << (**it)[0] << ", " << (**it)[1] << ", " << (**it)[2] << std::endl;
 
 }

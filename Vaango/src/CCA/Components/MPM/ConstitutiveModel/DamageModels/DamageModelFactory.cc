@@ -48,7 +48,7 @@ DamageModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("damage_model");
   if (!child) {
-    proc0cout << "**WARNING** Creating default null damage model" << endl;
+    proc0cout << "**WARNING** Creating default null damage model" << std::endl;
     return (scinew NullDamage());
     // throw ProblemSetupException("Cannot find damage_model tag", __FILE__,
     // __LINE__);
@@ -62,7 +62,7 @@ DamageModelFactory::create(ProblemSpecP& ps)
   else if (mat_type == "hancock_mackenzie")
     return (scinew HancockMacKenzieDamage(child));
   else {
-    proc0cout << "**WARNING** Creating default null damage model" << endl;
+    proc0cout << "**WARNING** Creating default null damage model" << std::endl;
     return (scinew NullDamage(child));
     // throw ProblemSetupException("Unknown Damage Model ("+mat_type+")",
     // __FILE__, __LINE__);
@@ -84,7 +84,7 @@ DamageModelFactory::createCopy(const DamageModel* dm)
 
   else {
     proc0cout << "**WARNING** Creating copy of default null damage model"
-              << endl;
+              << std::endl;
     return (scinew NullDamage(dynamic_cast<const NullDamage*>(dm)));
     // throw ProblemSetupException("Cannot create copy of unknown damage model",
     // __FILE__, __LINE__);

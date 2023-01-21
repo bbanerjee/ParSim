@@ -269,7 +269,7 @@ void DDT0::initialize(const ProcessorGroup*,
   int m0 = d_matl0->getDWIndex();
   for(int p=0;p<patches->size();p++) {
     const Patch* patch = patches->get(p);
-    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << endl;
+    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << std::endl;
     
     // This section is needed for outputting F and burn on each timestep
     CCVariable<double> F, burn;
@@ -398,7 +398,7 @@ void DDT0::computeModelSources(const ProcessorGroup*,
     ParticleSubset* pset = old_dw->getParticleSubset(m0, patch); 
     
     cout_doing << "Doing computeModelSources on patch "<< patch->getID()
-               <<"\t\t\t\t  DDT0" << endl;
+               <<"\t\t\t\t  DDT0" << std::endl;
 
     // Variable to modify or compute
     CCVariable<double> mass_src_0, mass_src_1, mass_0;
@@ -617,7 +617,7 @@ void DDT0::computeModelSources(const ProcessorGroup*,
                 double F = prodRho[c]/(rctRho[c]+prodRho[c]);
                 burnedMass += d_Gcrack*(1-F)*pow((press_CC[c]/d_refPress),d_nCrack);
 
-                // std::cout << "Cracked but not regularly burning. Cell: " << c << " Burned Mass: " << burnedMass << " Temperature: " << Temp << endl;
+                // std::cout << "Cracked but not regularly burning. Cell: " << c << " Burned Mass: " << burnedMass << " Temperature: " << Temp << std::endl;
             }
 
 

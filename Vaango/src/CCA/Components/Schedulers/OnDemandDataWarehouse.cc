@@ -706,7 +706,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
           if (!d_var_DB.exists(pos_var, pmg.matl_, pmg.patch_)) {
             std::cout << d_myworld->myRank() << "  Naughty: patch "
                       << pmg.patch_->getID() << " matl " << pmg.matl_ << " id "
-                      << pmg.dwid_ << endl;
+                      << pmg.dwid_ << std::endl;
             SCI_THROW(UnknownVariable(pos_var->getName(),
                                       getID(),
                                       pmg.patch_,
@@ -2469,14 +2469,14 @@ OnDemandDataWarehouse::allocateAndPut(GridVariableBase& var,
 
 #if 0
       if (difference.size() > 0) {
-        std::cout << "Box difference: " << superLowIndex << " " << superHighIndex << " with patches " << endl;
+        std::cout << "Box difference: " << superLowIndex << " " << superHighIndex << " with patches " << std::endl;
         for (size_t i = 0; i < (*superPatchGroup).size(); i++) {
           const Patch* p = (*superPatchGroup)[i];
-          std::cout << p->getExtraLowIndex(basis, label->getBoundaryLayer()) << " " << p->getExtraHighIndex(basis, label->getBoundaryLayer()) << endl;
+          std::cout << p->getExtraLowIndex(basis, label->getBoundaryLayer()) << " " << p->getExtraHighIndex(basis, label->getBoundaryLayer()) << std::endl;
         }
 
         for (size_t i = 0; i < difference.size(); i++) {
-          std::cout << difference[i].lower() << " " << difference[i].upper() << endl;
+          std::cout << difference[i].lower() << " " << difference[i].upper() << std::endl;
         }
       }
 #endif
@@ -3350,7 +3350,7 @@ OnDemandDataWarehouse::addParticles(const Patch* patch,
     psetAddDBType::key_type key(matlIndex, patch);
     psetAddDBType::iterator iter = d_addset_DB.find(key);
     if (iter != d_addset_DB.end()) {
-      std::cerr << "addParticles called twice for patch" << endl;
+      std::cerr << "addParticles called twice for patch" << std::endl;
     } else {
       d_addset_DB[key] = addedState;
     }
@@ -3677,7 +3677,7 @@ OnDemandDataWarehouse::getGridVar(GridVariableBase& var,
     // print();
     std::cout << d_myworld->myRank() << " unable to find variable '"
               << label->getName() << " on patch: " << patch->getID()
-              << " matl: " << matlIndex << endl;
+              << " matl: " << matlIndex << std::endl;
     SCI_THROW(UnknownVariable(label->getName(),
                               getID(),
                               patch,

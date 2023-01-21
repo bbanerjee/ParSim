@@ -133,7 +133,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
   proc0cout << "Time information from the original uda\n";
   for (unsigned int t = 0; t < d_udaTimesteps.size(); t++) {
     proc0cout << " *** " << t << " sim timestep " << d_udaTimesteps[t]
-              << " sim time: " << d_udaTimes[t] << endl;
+              << " sim time: " << d_udaTimes[t] << std::endl;
   }
 
   //__________________________________
@@ -147,7 +147,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
   for (unsigned int i = 0; i < varNames.size(); i++) {
     d_udaSavedLabels.push_back(
       VarLabel::create(varNames[i], typeDescriptions[i]));
-    proc0cout << " *** Label: " << varNames[i] << endl;
+    proc0cout << " *** Label: " << varNames[i] << std::endl;
   }
 
   proc0cout << "\n";
@@ -173,7 +173,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
     d_materialManager->registerMaterial(std::string(mat->getName()), mat);
 
     proc0cout << "***  DW index = " << mat->getDWIndex() << " ("
-              << mat->getName() << ")" << endl;
+              << mat->getName() << ")" << std::endl;
   }
 
   //__________________________________
@@ -354,8 +354,8 @@ PostProcessUda::readDataArchive(const ProcessorGroup* pg,
   int udaTimestep = d_udaTimesteps[d_simTimestep];
   proc0cout << "    *** working on uda timestep: " << udaTimestep
             << " simTimestep: " << d_simTimestep << " physical time: " << time
-            << endl;
-  proc0cout << "    Reading data archive " << endl;
+            << std::endl;
+  proc0cout << "    Reading data archive " << std::endl;
 
   const Level* level = getLevel(patches);
   const GridP grid   = level->getGrid();
@@ -383,7 +383,7 @@ PostProcessUda::readDataArchive(const ProcessorGroup* pg,
                                      d_loadBalancer);
   d_simTimestep++;
 
-  proc0cout << "    __________________________________ " << endl;
+  proc0cout << "    __________________________________ " << std::endl;
 
   // new_dw->print();
   // old_dw->print();

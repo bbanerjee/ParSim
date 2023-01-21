@@ -104,7 +104,7 @@ void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
     
     // Bullet Proofing
     for (int i = 0; i<(int)d_K_mom.size(); i++) {
-      cout_norm << "K_mom = " << d_K_mom[i] << endl;
+      cout_norm << "K_mom = " << d_K_mom[i] << std::endl;
       if( d_K_mom[i] < 0.0 || d_K_mom[i] > 1e20 ) {
          std::ostringstream warn;
         warn<<"ERROR\n Momentum exchange coef. is either too big or negative\n";
@@ -119,7 +119,7 @@ void ExchangeCoefficients::problemSetup(ProblemSpecP& ps,
     
       // Bullet Proofing
       for (int i = 0; i<(int)d_K_heat.size(); i++) {
-        cout_norm << "K_heat = " << d_K_heat[i] << endl;
+        cout_norm << "K_heat = " << d_K_heat[i] << std::endl;
         if( d_K_heat[i] < 0.0 || d_K_heat[i] > 1e15 ) {
            std::ostringstream warn;
           warn<<"ERROR\n Heat exchange coef. is either too big or negative\n";

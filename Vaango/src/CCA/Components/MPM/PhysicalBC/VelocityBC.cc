@@ -53,7 +53,7 @@ VelocityBC::VelocityBC(ProblemSpecP& ps,
   ProblemSpecP child  = parent->findBlock();
   std::string go_type = child->getNodeName();
 
-  // std::cerr << "VelocityBC::go_type = " << go_type << endl;
+  // std::cerr << "VelocityBC::go_type = " << go_type << std::endl;
 
   if (go_type == "box") {
     d_surface     = scinew BoxGeometryPiece(child);
@@ -248,33 +248,33 @@ namespace Uintah {
 ostream&
 operator<<(std::ostream& out, const VelocityBC& bc)
 {
-  out << "Begin MPM Velocity BC # = " << bc.loadCurveID() << endl;
+  out << "Begin MPM Velocity BC # = " << bc.loadCurveID() << std::endl;
   std::string surfType = bc.getSurfaceType();
-  out << "    Surface of application = " << surfType << endl;
+  out << "    Surface of application = " << surfType << std::endl;
   if (surfType == "box") {
     Box box = (bc.getSurface())->getBoundingBox();
-    out << "        " << box << endl;
+    out << "        " << box << std::endl;
   } else if (surfType == "cylinder") {
     CylinderGeometryPiece* cgp =
       dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << cgp->radius() << " top = " << cgp->top()
-        << " bottom = " << cgp->bottom() << endl;
+        << " bottom = " << cgp->bottom() << std::endl;
   } else if (surfType == "sphere") {
     SphereGeometryPiece* sgp =
       dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << sgp->radius() << " origin = " << sgp->origin()
-        << endl;
+        << std::endl;
   }
-  out << "    Time vs. Velocity = " << endl;
+  out << "    Time vs. Velocity = " << std::endl;
   LoadCurve<Vector>* lc = bc.getLoadCurve();
   int numPts            = lc->numberOfPointsOnLoadCurve();
   for (int ii = 0; ii < numPts; ++ii) {
     out << "        time = " << lc->getTime(ii)
-        << " velocity = " << lc->getLoad(ii) << endl;
+        << " velocity = " << lc->getLoad(ii) << std::endl;
   }
-  out << "End MPM Velocity BC # = " << bc.loadCurveID() << endl;
+  out << "End MPM Velocity BC # = " << bc.loadCurveID() << std::endl;
   return out;
 }
 

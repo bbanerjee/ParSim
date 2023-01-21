@@ -132,7 +132,7 @@ void addRequires_MMS(Task* t,
                      const MaterialSubset* /*ice_matls*/)
 {
   cout_doing<< "Doing addRequires_MMS: \t\t" <<t->getName()
-            << " " << where << endl;
+            << " " << where << std::endl;
   
   Ghost::GhostType  gn  = Ghost::None;
   Task::MaterialDomainSpec oims = Task::OutOfDomain;  //outside of ice matlSet.
@@ -207,7 +207,7 @@ int set_MMS_Velocity_BC(const Patch* patch,
 {
   int nCells = 0;
   if (var_desc == "Velocity" && bc_kind == "MMS_1") {
-    cout_doing << "Setting Vel_MMS on face " << face << endl;
+    cout_doing << "Setting Vel_MMS on face " << face << std::endl;
     
     // bulletproofing
     if (!mms_var_basket || !mms_v){
@@ -255,7 +255,7 @@ int set_MMS_Temperature_BC(const Patch* /*patch*/,
   
   int nCells = 0;
   if (bc_kind == "MMS_1") {
-    cout_doing << "Setting Temp_MMS on face " <<face<< endl;
+    cout_doing << "Setting Temp_MMS on face " <<face<< std::endl;
     double cv = mms_var_basket->cv;
     double gamma = mms_var_basket->gamma;
     constCCVariable<double> press_CC = mms_v->press_CC;
@@ -284,7 +284,7 @@ int set_MMS_press_BC(const Patch* patch,
                       mms_variable_basket* mms_var_basket,
                       mms_vars* mms_v)  
 {
-  cout_doing << "Setting press_MMS_BC on face " <<face<< endl;
+  cout_doing << "Setting press_MMS_BC on face " <<face<< std::endl;
 
   // bulletproofing
   if (!mms_var_basket || !mms_v){

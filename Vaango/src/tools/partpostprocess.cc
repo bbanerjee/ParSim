@@ -82,7 +82,7 @@ int main()
   string file_name = fileroot+fnum;
   ifstream source(file_name.c_str());
   if(!source){
-    cerr << "File " << file_name << " can't be opened." << endl;
+    std::cerr <<  "File " << file_name << " can't be opened." << std::endl;
   }
   
   while(source >> x >> y >> z >> velx >> vely >> velz >> pID){
@@ -92,7 +92,7 @@ int main()
   }
 
   for(int i=0;i<pIDs.size();i++){
-    std::cout << pIDs[i] << endl;
+    std::cout << pIDs[i] << std::endl;
   }
 
   int step_max=100;
@@ -105,12 +105,12 @@ int main()
     string outfile_name = outfileroot+fnum;
     ifstream source(file_name.c_str());
     if(!source){
-      cerr << "File " << file_name << " can't be opened." << endl;
+      std::cerr <<  "File " << file_name << " can't be opened." << std::endl;
       exit(1);
     }
     ofstream dest(outfile_name.c_str());
     if(!dest){
-      cerr << "File " << outfile_name << " can't be opened." << endl;
+      std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
     }
 
     while(source >> x >> y >> z >> velx >> vely >> velz >> pID){
@@ -126,7 +126,7 @@ int main()
     }  // while
     for(int i=0;i<xs.size();i++){
       dest << xs[i] << " " << velxs[i] << " " << velys[i]
-                    << " " << velzs[i] << endl;
+                    << " " << velzs[i] << std::endl;
     }  // for
     xs.clear();
     velxs.clear();

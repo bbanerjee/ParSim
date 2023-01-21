@@ -161,7 +161,7 @@ Water::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
   if (!flag->d_doGridReset) {
-    std::cerr << "The water model doesn't work without resetting the grid" << endl;
+    std::cerr << "The water model doesn't work without resetting the grid" << std::endl;
   }
 
   for (int pp = 0; pp < patches->size(); pp++) {

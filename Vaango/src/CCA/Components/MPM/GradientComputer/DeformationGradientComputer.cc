@@ -1275,9 +1275,9 @@ DeformationGradientComputer::subcycleUpdateConstantVelGrad(const Matrix3& velGra
   for(int n=0;n<num_scs;n++){
     defGrad_new = OP_tensorL_DT*defGrad_new;
     // if(num_scs >1000){
-    //   cerr << "n = " << n << "\n";
-    //   cerr << "F = " << defGrad_new << "\n";
-    //   cerr << "J = " << defGrad_new.Determinant() << "\n" << "\n";
+    //   std::cerr <<  "n = " << n << "\n";
+    //   std::cerr <<  "F = " << defGrad_new << "\n";
+    //   std::cerr <<  "J = " << defGrad_new.Determinant() << "\n" << "\n";
     // }
   }
   defGrad_inc = defGrad_new*defGrad_old.Inverse();

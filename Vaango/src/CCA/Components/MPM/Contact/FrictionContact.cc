@@ -347,7 +347,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
     //  static int ts=0;
     //  static ofstream tmpout("max_strain.dat");
 
-    //  tmpout << ts << " " << epsilon_max_max << endl;
+    //  tmpout << ts << " " << epsilon_max_max << std::endl;
     //  ts++;
 
     // This converts frictional work into a temperature rate
@@ -366,7 +366,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
           IntVector c = *iter;
           frictionWork[m][c] /= (c_v * gmass[m][c] * delT);
           if (frictionWork[m][c] < 0.0) {
-            std::cout << "dT/dt is negative: " << frictionWork[m][c] << endl;
+            std::cout << "dT/dt is negative: " << frictionWork[m][c] << std::endl;
           }
         }
       }

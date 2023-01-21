@@ -119,7 +119,7 @@ Diamm::Diamm(ProblemSpecP& ps, MPMFlags* Mflag)
   DMMRXV(UI, UI, UI, nx, namea, keya, rinit, rdim, iadvct, itype);
 
   d_NINSV = nx;
-  //  std::cout << "d_NINSV = " << d_NINSV << endl;
+  //  std::cout << "d_NINSV = " << d_NINSV << std::endl;
 
   initializeLocalMPMLabels();
 }
@@ -231,7 +231,7 @@ Diamm::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
-  std::cout << "In initializeCMData" << endl;
+  std::cout << "In initializeCMData" << std::endl;
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
     ParticleSubset::iterator iter = pset->begin();
@@ -416,16 +416,16 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       double J = pDefGrad_new[idx].Determinant();
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {
-        cerr << getpid();
+        std::cerr <<  getpid();
         constParticleVariable<long64> pParticleID;
         old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-        cerr << "**ERROR** Negative Jacobian of deformation gradient"
-             << " in particle " << pParticleID[idx] << endl;
-        cerr << "l = " << velGrad[idx] << endl;
-        cerr << "F_old = " << pDefGrad[idx] << endl;
-        cerr << "F_inc = " << pDefGradInc << endl;
-        cerr << "F_new = " << pDefGrad_new[idx] << endl;
-        cerr << "J = " << J << endl;
+        std::cerr <<  "**ERROR** Negative Jacobian of deformation gradient"
+             << " in particle " << pParticleID[idx] << std::endl;
+        std::cerr <<  "l = " << velGrad[idx] << std::endl;
+        std::cerr <<  "F_old = " << pDefGrad[idx] << std::endl;
+        std::cerr <<  "F_inc = " << pDefGradInc << std::endl;
+        std::cerr <<  "F_new = " << pDefGrad_new[idx] << std::endl;
+        std::cerr <<  "J = " << J << std::endl;
         throw InternalError("Negative Jacobian", __FILE__, __LINE__);
       }
 
@@ -494,7 +494,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       pstress_new[idx] = (tensorR * tensorSig) * (tensorR.Transpose());
 
 #if 0
-      std::cout << pstress_new[idx] << endl;
+      std::cout << pstress_new[idx] << std::endl;
 #endif
 
       c_dil = sqrt(USM / rho_cur);
@@ -582,7 +582,7 @@ Diamm::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
 
-  std::cout << "In add InitialComputesAnd" << endl;
+  std::cout << "In add InitialComputesAnd" << std::endl;
 
   // Other constitutive model and input dependent computes and requires
   for (int i = 0; i < d_NINSV; i++) {
@@ -628,7 +628,7 @@ Diamm::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << std::endl;
 #endif
 }
 
@@ -647,7 +647,7 @@ Diamm::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << std::endl;
 #endif
 }
 

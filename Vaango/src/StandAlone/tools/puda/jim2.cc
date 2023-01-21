@@ -72,7 +72,7 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       
   std::vector<int> index;
   std::vector<double> times;
@@ -80,7 +80,7 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -91,7 +91,7 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
 
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    std::cout << "time = " << time << endl;
+    std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
 
     Vector mean_vel(0.,0.,0.);
@@ -128,7 +128,7 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
     KE*=.5;
 
    outfile.precision(15);
-   outfile << time << " " << mean_vel_mag << " " << total_mass << " " << KE << endl; 
+   outfile << time << " " << mean_vel_mag << " " << total_mass << " " << KE << std::endl; 
 
   }
 } // end jim2()

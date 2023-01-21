@@ -909,10 +909,10 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::findOptimalSuperBoxSet(
       numAvailable++;
     }
   }
-  cerr << "DEPTH = " << depth << ", numAvailable = " << numAvailable
+  std::cerr <<  "DEPTH = " << depth << ", numAvailable = " << numAvailable
        << ", maxPossibleValue = " << maxPossibleValue
        << ", currentlyKnownOptimalValue = " << currentlyKnownOptimalValue
-       << endl;
+       << std::endl;
 
   /*
   for (std::set<SB*, ValueCompare>::iterator iter = activeBoxes.begin();
@@ -944,7 +944,7 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::findOptimalSuperBoxSet(
 	&& currentlyKnownOptimalValue > 0 /* make sure there is some other
 					     solution in the works */) {
 #ifdef SUPERBOX_DEBUGGING
-      cerr << depth << "\tPruned\n";
+      std::cerr <<  depth << "\tPruned\n";
 #endif
 
       // Can't beat the current global solution, so don't bother
@@ -957,7 +957,7 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::findOptimalSuperBoxSet(
     pick = *activeBoxes.begin();
 
 #ifdef SUPERBOX_DEBUGGING
-    cerr << depth << "\tPick: " << *pick << endl;
+    std::cerr <<  depth << "\tPick: " << *pick << std::endl;
 #endif
 
     takePick(pick, rangeQuerier, boxMap, activeBoxes, maxPossibleValue);
@@ -991,7 +991,7 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::findOptimalSuperBoxSet(
   // something that works out better.  So try those.
   if (compositePick != 0 && compositePick->getActiveConflicts().size() > 0) {
 #ifdef SUPERBOX_DEBUGGING
-    cerr << depth << "\tWithout: " << *pick << endl;
+    std::cerr <<  depth << "\tWithout: " << *pick << std::endl;
 #endif
     compositePick->inactivate(rangeQuerier,
                               boxMap,
@@ -1009,7 +1009,7 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::findOptimalSuperBoxSet(
          conflictIter++) {
       CB* conflict = *conflictIter;
 #ifdef SUPERBOX_DEBUGGING
-      cerr << depth << "\tConflict Pick: " << *conflict << endl;
+      std::cerr <<  depth << "\tConflict Pick: " << *conflict << std::endl;
 #endif
 
       // Try each conflict as an alternate possibility to the pick
@@ -1623,7 +1623,7 @@ SuperBox<BoxP, Point, Volume, Value, Evaluator>::
     maximalSuperBoxes.push_back(this);
     makeActive();
 #ifdef SUPERBOX_DEBUGGING
-    cerr << "Active SuperBox: " << *this << endl;
+    std::cerr <<  "Active SuperBox: " << *this << std::endl;
 #endif
   }
 }
@@ -1740,7 +1740,7 @@ CompositeBox<BoxP, Point, Volume, Value, Evaluator>::inactivateConflicts(
   for (iter = activeConflicts_.begin(); iter != activeConflicts_.end();
        iter++) {
 #ifdef SUPERBOX_DEBUGGING
-    cerr << "\tConflict: " << **iter << endl;
+    std::cerr <<  "\tConflict: " << **iter << std::endl;
 #endif
     (*iter)->inactivate(rangeQuerier, boxMap, activeBoxes, maxPossibleValue);
   }
@@ -1816,7 +1816,7 @@ SuperBoxSet<BoxP, Point, Volume, Value, Evaluator>::makeOptimalSuperBoxSet(
   std::vector<SB*> maximalSuperBoxes;
 #if 0
   for (unsigned long i = 0; i < basicBoxes.size(); i++) {
-    cerr << i << endl;
+    std::cerr <<  i << std::endl;
     basicBoxes[i]->buildActivatedMaximalSuperBoxes(rangeQuerier, boxMap,
 						   maximalSuperBoxes);
   }
@@ -1828,10 +1828,10 @@ SuperBoxSet<BoxP, Point, Volume, Value, Evaluator>::makeOptimalSuperBoxSet(
                                       maximalSuperBoxes);
 
 #ifdef SUPERBOX_DEBUGGING
-  cerr << "Maximal SuperBoxes:\n";
+  std::cerr <<  "Maximal SuperBoxes:\n";
   for (sb_iter = maximalSuperBoxes.begin(); sb_iter != maximalSuperBoxes.end();
        sb_iter++) {
-    cerr << "\t" << **sb_iter << endl;
+    std::cerr <<  "\t" << **sb_iter << std::endl;
   }
 #endif
 

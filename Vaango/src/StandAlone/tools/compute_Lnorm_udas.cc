@@ -87,7 +87,7 @@ using namespace Uintah;
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != ""){
-    cerr << "\nError parsing argument: " << badarg << "\n\n";
+    std::cerr <<  "\nError parsing argument: " << badarg << "\n\n";
   }
   std::cout << " \n compute_Lnorm_uda:  Computes the L(1,2,inf) norm for each variable in two udas.  Each variable in uda1 \n"
        << " is examined at each level and timestep.  You can compare udas that have different computational domains\n"
@@ -111,7 +111,7 @@ void usage(const std::string& badarg, const std::string& progname)
 //__________________________________
 void abort_uncomparable()
 {
-  cerr << "\nThe uda directories may not be compared.\n";
+  std::cerr <<  "\nThe uda directories may not be compared.\n";
   Thread::exitAll(5);
 }
 
@@ -160,7 +160,7 @@ class Norms{
       out.precision(10);
       
       if(! out){
-        cerr << " could not open output file: " << filename << endl;
+        std::cerr <<  " could not open output file: " << filename << std::endl;
         abort_uncomparable();
       }
       out << time << " " << d_L1 << " " << d_L2 << " " << d_Linf<<endl;
@@ -250,7 +250,7 @@ void compareFields(Norms<subtype>* norms,
        (p1.z() != p2.z() ) ){
       std::cout <<"\n__________________________________\n "
             << "You can't compare data at different physical locations  \n"
-            << " uda1 data location: " << p1 << "\n uda2 data location: " << p2 << endl;
+            << " uda1 data location: " << p1 << "\n uda2 data location: " << p2 << std::endl;
       abort_uncomparable();
     }
     
@@ -318,9 +318,9 @@ void BuildCellToPatchMap(LevelP level,
       if (*iter != 0) {
        
        #if 0
-       cerr << "Patches " << patch->getID() << " and " 
+       std::cerr <<  "Patches " << patch->getID() << " and " 
                << (*iter)->getID() << " overlap on the same file at time " << time
-               << " in " << filebase << " at index " << iter.getIndex() << endl;
+               << " in " << filebase << " at index " << iter.getIndex() << std::endl;
         #endif
         // in some cases, we can have overlapping patches, where an extra cell/node 
         // overlaps an interior cell/node of another patch.  We prefer the interior
@@ -361,7 +361,7 @@ createDirectory(string& levelIndex, string& path)
   path = dirName + "/" + levelIndex;
   check = opendir(path.c_str());
   if ( check == nullptr ) {
-    std::cout << "Making directory " << path << endl;
+    std::cout << "Making directory " << path << std::endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);
@@ -374,10 +374,10 @@ void createFile(string& filename, const int timestep)
   if(timestep == 0){
     ofstream out(filename.c_str(), ios_base::out);
     if(! out){
-      cerr << " could not open output file: " << filename << endl;
+      std::cerr <<  " could not open output file: " << filename << std::endl;
       abort_uncomparable();
     }
-    std::cout << " Now creating the file: "<< filename << endl;
+    std::cout << " Now creating the file: "<< filename << std::endl;
     out << "#Time \t\t\t L1 \t\t L2 \t\t Linf" <<endl;
     out.close();
   }
@@ -421,7 +421,7 @@ main(int argc, char** argv)
   }
   //__________________________________
   if( filebase2 == "" ){
-    cerr << "\nYou must specify two archive directories.\n";
+    std::cerr <<  "\nYou must specify two archive directories.\n";
     usage("", argv[0]);
   }
 
@@ -440,22 +440,22 @@ main(int argc, char** argv)
   ASSERTEQ(vars2.size(), types2.size());
 
   if (vars.size() != vars2.size()) {
-    cerr << filebase1 << " has " << vars.size() << " variables\n";
-    cerr << filebase2 << " has " << vars2.size() << " variables\n";
+    std::cerr <<  filebase1 << " has " << vars.size() << " variables\n";
+    std::cerr <<  filebase2 << " has " << vars2.size() << " variables\n";
     abort_uncomparable();
   }
  
   for (unsigned int i = 0; i < vars.size(); i++) {
     if (vars[i] != vars2[i]) {
-      cerr << "Variable " << vars[i]  << " in " << filebase1 << " does not match\n";
-      cerr << "variable " << vars2[i] << " in " << filebase2 << endl;
+      std::cerr <<  "Variable " << vars[i]  << " in " << filebase1 << " does not match\n";
+      std::cerr <<  "variable " << vars2[i] << " in " << filebase2 << std::endl;
       abort_uncomparable();
     }
 
     if (types[i] != types2[i]) {
-      cerr << "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
-      cerr << "In " << filebase1 << " its type is " << types[i]->getName() << endl;
-      cerr << "In " << filebase2 << " its type is " << types2[i]->getName() << endl;
+      std::cerr <<  "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
+      std::cerr <<  "In " << filebase1 << " its type is " << types[i]->getName() << std::endl;
+      std::cerr <<  "In " << filebase2 << " its type is " << types2[i]->getName() << std::endl;
       abort_uncomparable();
     } 
   }
@@ -498,20 +498,20 @@ main(int argc, char** argv)
     // warn the user that the computational domains are different
     if ((b1.min() != b2.min() ) ||
         (b1.max() != b2.max() ) ){
-      std::cout << " The compuational domains of uda1 & uda2 are different" << endl;
-      std::cout << " uda1: " << b1 << "\n uda2: " << b2 << endl;
+      std::cout << " The compuational domains of uda1 & uda2 are different" << std::endl;
+      std::cout << " uda1: " << b1 << "\n uda2: " << b2 << std::endl;
     }
     
     // bullet proofing
     if (grid1->numLevels() != grid2->numLevels()) {
-      cerr << "Grid at time " << time1 << " in " << filebase1 << " has " << grid1->numLevels() << " levels.\n";
-      cerr << "Grid at time " << time2 << " in " << filebase2 << " has " << grid2->numLevels() << " levels.\n";
+      std::cerr <<  "Grid at time " << time1 << " in " << filebase1 << " has " << grid1->numLevels() << " levels.\n";
+      std::cerr <<  "Grid at time " << time2 << " in " << filebase2 << " has " << grid2->numLevels() << " levels.\n";
       abort_uncomparable();
     }
     
     if (abs(times[t] - times2[t]) > 1e-5) {
-      cerr << "Timestep at time " << times[t] << " in " << filebase1 << " does not match\n";
-      cerr << "timestep at time " << times2[t] << " in " << filebase2 << " within the allowable tolerance.\n";
+      std::cerr <<  "Timestep at time " << times[t] << " in " << filebase1 << " does not match\n";
+      std::cerr <<  "timestep at time " << times2[t] << " in " << filebase2 << " within the allowable tolerance.\n";
       abort_uncomparable();
     }
 
@@ -549,7 +549,7 @@ main(int argc, char** argv)
         difference2 = Region::difference(region1,region2);
 
         if(!difference1.empty() || !difference2.empty()){
-          cerr << "\n__________________________________\n"
+          std::cerr <<  "\n__________________________________\n"
                << "The physical region covered on level " << l << " is not the same on both udas\n"
                << "If one of the udas has a smaller computational domain make sure it's the first\n"
                << "one listed in the command line arguments\n";
@@ -570,12 +570,12 @@ main(int argc, char** argv)
 
           if ((cellToPatchMap1[index] == 0 && cellToPatchMap2[index] != 0) ||
               (cellToPatchMap2[index] == 0 && cellToPatchMap1[index] != 0)) {
-            cerr << "Inconsistent patch coverage on level " << l << " at time " << time1 << endl;
+            std::cerr <<  "Inconsistent patch coverage on level " << l << " at time " << time1 << std::endl;
 
             if (cellToPatchMap1[index] != 0) {
-              cerr << index << " is covered by " << filebase1 << " and not " << filebase2 << endl;
+              std::cerr <<  index << " is covered by " << filebase1 << " and not " << filebase2 << std::endl;
             } else {
-              cerr << index << " is covered by " << filebase2 << " and not " << filebase1 << endl;
+              std::cerr <<  index << " is covered by " << filebase2 << " and not " << filebase1 << std::endl;
             }
 
             abort_uncomparable();
@@ -703,7 +703,7 @@ main(int argc, char** argv)
                 }
                 break;
               default:
-                std::cout << " Data type not yet supported: " << td->getName() << endl;
+                std::cout << " Data type not yet supported: " << td->getName() << std::endl;
               break;
             }
           }  // patches
@@ -731,7 +731,7 @@ main(int argc, char** argv)
   }
 
   if (times.size() != times2.size()) {
-    std::cout << endl;
+    std::cout << std::endl;
     std::cout << filebase1 << " has " << times.size() << " timesteps\n";
     std::cout << filebase2 << " has " << times2.size() << " timesteps\n";
     abort_uncomparable();

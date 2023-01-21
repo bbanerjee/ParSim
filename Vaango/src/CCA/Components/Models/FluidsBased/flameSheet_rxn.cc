@@ -101,7 +101,7 @@ flameSheet_rxn::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 void flameSheet_rxn::problemSetup(GridP& grid, MaterialManagerP& in_state,
                            ModelSetup* setup)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tFLAMESHEET" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tFLAMESHEET" << std::endl;
   d_mat_manager = in_state;
   d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
@@ -165,7 +165,7 @@ void flameSheet_rxn::problemSetup(GridP& grid, MaterialManagerP& in_state,
          << "\n delta_H_combustion     "<< d_del_h_comb
          << "\n oxidizer_temp_infinity "<< d_T_oxidizer_inf
          << "\n fuel_temp_init         "<< d_T_fuel_init 
-         << "\n diffusivity            "<< d_diffusivity<< endl;
+         << "\n diffusivity            "<< d_diffusivity<< std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -230,7 +230,7 @@ void flameSheet_rxn::scheduleInitialize(SchedulerP& sched,
 {
   //__________________________________
   //  intialize the scalar field
-  cout_doing << "FLAMESHEET::scheduleInitialize " << endl;
+  cout_doing << "FLAMESHEET::scheduleInitialize " << std::endl;
   Task* t = scinew Task("flameSheet_rxn::initialize",
                   this, &flameSheet_rxn::initialize);
  t->computes(d_scalar->scalar_CCLabel);
@@ -243,7 +243,7 @@ void flameSheet_rxn::initialize(const ProcessorGroup*,
                                    DataWarehouse*,
                                    DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\tFLAMESHEET" << endl;
+  cout_doing << "Doing Initialize \t\t\t\tFLAMESHEET" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int indx = d_matl->getDWIndex();
@@ -287,7 +287,7 @@ void flameSheet_rxn::scheduleComputeModelSources(SchedulerP& sched,
                                                       const LevelP& level,
                                                       const ModelInfo* mi)
 {
-  cout_doing << "FLAMESHEET::scheduleComputeModelSources " << endl;
+  cout_doing << "FLAMESHEET::scheduleComputeModelSources " << std::endl;
   Task* t = scinew Task("flameSheet_rxn::computeModelSources",this, 
                         &flameSheet_rxn::computeModelSources, mi);
                      
@@ -319,7 +319,7 @@ void flameSheet_rxn::computeModelSources(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing computeModelSources on patch "<<patch->getID()
-               << "\t\t\t\t\t FLAMESHEET" << endl;
+               << "\t\t\t\t\t FLAMESHEET" << std::endl;
 
 
     Ghost::GhostType  gn = Ghost::None;  
@@ -449,7 +449,7 @@ void flameSheet_rxn::scheduleTestConservation(SchedulerP& sched,
                                             const ModelInfo* mi)
 {
   if(d_test_conservation){
-    cout_doing << "PASSIVESCALAR::scheduleTestConservation " << endl;
+    cout_doing << "PASSIVESCALAR::scheduleTestConservation " << std::endl;
     Task* t = scinew Task("flameSheet_rxn::testConservation", 
                      this,&flameSheet_rxn::testConservation, mi);
 
@@ -482,7 +482,7 @@ void flameSheet_rxn::testConservation(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing testConservation on patch "<<patch->getID()
-               << "\t\t\t FLAMESHEET" << endl;
+               << "\t\t\t FLAMESHEET" << std::endl;
                
     //__________________________________
     //  conservation of f test

@@ -563,7 +563,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
 
   std::cout << "There are " << vars.size() << " variables:\n";
   for (int i = 0; i < (int)vars.size(); i++)
-    std::cout << "  " << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << "  " << vars[i] << ": " << types[i]->getName() << std::endl;
   std::cout << "\n";
 
   std::vector<int> index;
@@ -574,7 +574,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
   std::cout << "There are " << index.size() << " timesteps:\n";
 
   for (int i = 0; i < (int)index.size(); i++) {
-    std::cout << "  " << index[i] << ": " << times[i] << endl;
+    std::cout << "  " << index[i] << ": " << times[i] << std::endl;
   }
 
   std::cout << "\n";
@@ -587,7 +587,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
 
     std::cout << "------------------------------------------------------------------"
             "----\n";
-    std::cout << "Time = " << time << endl;
+    std::cout << "Time = " << time << std::endl;
     std::cout << "\n";
     GridP grid = da->queryGrid(t);
     for (int v = 0; v < (int)vars.size(); v++) {
@@ -595,19 +595,19 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
       const Uintah::TypeDescription* td = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
       if (!clf.be_brief) {
-        std::cout << "\tVariable: " << var << ", type " << td->getName() << endl;
+        std::cout << "\tVariable: " << var << ", type " << td->getName() << std::endl;
       }
       for (int l = 0; l < grid->numLevels(); l++) {
         LevelP level = grid->getLevel(l);
         if (!clf.be_brief) {
           std::cout << "\t    Level: " << level->getIndex() << ", id "
-               << level->getID() << endl;
+               << level->getID() << std::endl;
         }
         for (Level::const_patchIterator iter = level->patchesBegin();
              iter != level->patchesEnd(); iter++) {
           const Patch* patch = *iter;
           if (!clf.be_brief) {
-            std::cout << "\t\tPatch: " << patch->getID() << endl;
+            std::cout << "\t\tPatch: " << patch->getID() << std::endl;
           }
           ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
           // loop over materials
@@ -617,7 +617,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
             if (mat != -1 && matl != mat)
               continue;
             if (!clf.be_brief) {
-              std::cout << "\t\t\tMaterial: " << matl << endl;
+              std::cout << "\t\t\tMaterial: " << matl << std::endl;
             }
             switch (td->getType()) {
                 //__________________________________
@@ -660,8 +660,8 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   default:
-                    cerr << "Particle Variable of unknown type: "
-                         << subtype->getName() << endl;
+                    std::cerr <<  "Particle Variable of unknown type: "
+                         << subtype->getName() << std::endl;
                     break;
                 }
                 break;
@@ -698,8 +698,8 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   default:
-                    cerr << "NC Variable of unknown type: "
-                         << subtype->getName() << endl;
+                    std::cerr <<  "NC Variable of unknown type: "
+                         << subtype->getName() << std::endl;
                     break;
                 }
                 break;
@@ -744,8 +744,8 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   } break;
                   default:
-                    cerr << "CC Variable of unknown type: "
-                         << subtype->getName() << endl;
+                    std::cerr <<  "CC Variable of unknown type: "
+                         << subtype->getName() << std::endl;
                     break;
                 }
                 break;
@@ -824,7 +824,7 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                 //__________________________________
                 //  BULLET PROOFING
               default:
-                cerr << "Variable of unknown type: " << td->getName() << endl;
+                std::cerr <<  "Variable of unknown type: " << td->getName() << std::endl;
                 break;
 
             } // end switch( type )

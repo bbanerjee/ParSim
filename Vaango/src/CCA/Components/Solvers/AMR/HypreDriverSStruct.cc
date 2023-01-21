@@ -314,7 +314,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
       hpatch.makeGraphConnections(_graph,DoingCoarseToFine);
     }
   } 
-  cout_doing << Parallel::getMPIRank()<< " Doing Assemble graph \t\t\tPatches"<< *_patches << endl;  
+  cout_doing << Parallel::getMPIRank()<< " Doing Assemble graph \t\t\tPatches"<< *_patches << std::endl;  
   HYPRE_SStructGraphAssemble(_graph);
   _exists[SStructGraph] = SStructAssembled;
 
@@ -506,7 +506,7 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
   int mpiRank = Parallel::getMPIRank();
   cout_doing << mpiRank << " Doing makeGraphConnections \t\t\t\tL-"
                   << _level << " Patch " << _patch->getID()
-                  << " viewpoint " << viewpoint << endl;
+                  << " viewpoint " << viewpoint << std::endl;
 
   //__________________________________
   // viewpoint LOGIC
@@ -565,7 +565,7 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
                << " offset " << offset
                << " finePatch ID " << finePatch->getID() 
                << " f_level " << fineIndex 
-               << " c_level " << coarseIndex << endl;
+               << " c_level " << coarseIndex << std::endl;
 #endif
 
           for(; !f_iter.done(); f_iter++) {
@@ -582,7 +582,7 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
                                            CC_VAR,
                                            coarseIndex, coarseCell.get_pointer(),
                                            CC_VAR);
-              //cout << " done " << endl;
+              //cout << " done " << std::endl;
 
             }
             if(viewpoint == DoingCoarseToFine){
@@ -594,7 +594,7 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
                                            CC_VAR,
                                            fineIndex, fineCell.get_pointer(),
                                            CC_VAR);
-              //cout << " done " << endl;
+              //cout << " done " << std::endl;
 
             }
           }
@@ -620,7 +620,7 @@ HypreDriverSStruct::HyprePatch_CC::makeInteriorEquations(HYPRE_SStructMatrix& HA
 
 {
   cout_doing << Parallel::getMPIRank() << " doing makeInteriorEquations \t\t\t\tL-" 
-             << _level<< " Patch " << (_patch?_patch->getID():-1) << endl;
+             << _level<< " Patch " << (_patch?_patch->getID():-1) << std::endl;
 
   CCTypes::matrix_type A;
   if (_patch) {
@@ -757,7 +757,7 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
   int mpiRank = Parallel::getMPIRank();
   cout_doing << mpiRank << " Doing makeConnections \t\t\t\tL-"
                         << _level << " Patch " << _patch->getID()
-                        << " viewpoint " << viewpoint << endl;
+                        << " viewpoint " << viewpoint << std::endl;
 
   //__________________________________
   // viewpoint LOGIC
@@ -848,7 +848,7 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
                << " offset " << offset
                << " finePatch ID " << finePatch->getID() 
                << " f_level " << fineIndex 
-               << " c_level " << coarseIndex << endl;
+               << " c_level " << coarseIndex << std::endl;
 #endif
 
           for(; !f_iter.done(); f_iter++) {

@@ -114,14 +114,14 @@ int main(int argc, char** argv)
   if (argc != 9) usage( "", argv[0] );
 
   std::cout << "Particle Variable to be extracted = p.deformationGradient\n";
-  std::cout << "Material ID to be extracted = " << matID << endl;
+  std::cout << "Material ID to be extracted = " << matID << std::endl;
 
   // Read the particle ID file
-  std::cout << "Particle ID File to be read = " << partIDFile << endl;
+  std::cout << "Particle ID File to be read = " << partIDFile << std::endl;
   std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
-    cerr << "Particle ID File " << partIDFile << " not found \n";
+    std::cerr <<  "Particle ID File " << partIDFile << " not found \n";
     exit(1);
   }
   do {
@@ -130,30 +130,30 @@ int main(int argc, char** argv)
     partID.push_back(id);
   } while (!pidFile.eof());
   
-  std::cout << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cout << "  Number of Particle IDs = " << partID.size() << std::endl;
   for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    std::cout << "    p"<< (ii+1) << " = " << partID[ii] << endl;
+    std::cout << "    p"<< (ii+1) << " = " << partID[ii] << std::endl;
   }
 
-  std::cout << "Output file name = " << outFile << endl;
-  std::cout << "UDA directory to be read = " << udaDir << endl;
+  std::cout << "Output file name = " << outFile << std::endl;
+  std::cout << "UDA directory to be read = " << udaDir << std::endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
     
     // Print a particular particle variable
     printDefGrad(da, matID, partID, outFile);
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 }
 void usage(const std::string& badarg, const std::string& progname)
 {
-  if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname 
+  if(badarg != "") std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname 
        << " -m <material id>"
        << " -p <particle id file>"
        << " -uda <archive file>"
@@ -184,7 +184,7 @@ void printDefGrad(DataArchive* da,
     if (var == partVar) variableFound = true;
   }
   if (!variableFound) {
-    cerr << "Variable " << partVar << " not found\n"; 
+    std::cerr <<  "Variable " << partVar << " not found\n"; 
     exit(1);
   }
 
@@ -213,7 +213,7 @@ void printDefGrad(DataArchive* da,
       int startPatch = 1;
       for(unsigned long t=0;t<times.size();t++){
         double time = times[t];
-        cerr << "t = " << time ;
+        std::cerr <<  "t = " << time ;
         clock_t start = clock();
         GridP grid = da->queryGrid(t);
 
@@ -278,8 +278,8 @@ void printDefGrad(DataArchive* da,
         } // end of level loop
         clock_t end = clock();
         double timetaken = (double) (end - start)/(double) CLOCKS_PER_SEC;
-        cerr << " CPU Time = " << timetaken << " s" << " found " 
-             << numFound << endl;
+        std::cerr <<  " CPU Time = " << timetaken << " s" << " found " 
+             << numFound << std::endl;
       } // end of time step loop
     } // end of var compare if
   } // end of variable loop
@@ -292,7 +292,7 @@ void printDefGrad(DataArchive* da,
     file.setf(ios::scientific,ios::floatfield);
     file.precision(8);
     std::cout << "Created output file " << name.str() << " for particle ID "
-         << partID[ii] << endl;
+         << partID[ii] << std::endl;
     for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
       double time = matData[ii].time[jj];
       int patchIndex = matData[ii].patch[jj];
@@ -306,7 +306,7 @@ void printDefGrad(DataArchive* da,
           file << " " << defGrad(kk,ll) ;
         }
       }
-      file << endl;
+      file << std::endl;
     }
     file.close();
   }

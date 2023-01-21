@@ -259,7 +259,7 @@ AnalysisModule::createDirectory(mode_t mode,
         std::cout << "path [" << newPath << "] not a dir \n";
         return -1;
       } else {
-        // cout << "path [" << newPath << "] already exists " << endl;
+        // cout << "path [" << newPath << "] already exists " << std::endl;
       }
     }
 

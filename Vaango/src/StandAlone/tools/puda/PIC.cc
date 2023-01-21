@@ -76,7 +76,7 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       
   std::vector<int> index;
   std::vector<double> times;
@@ -84,14 +84,14 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
       
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    std::cout << "time = " << time << endl;
+    std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
      std::ostringstream fnum;
     string filename;
@@ -111,7 +111,7 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
       const Patch * patch = level->getPatchFromIndex(cell, true);
       if(patch != nullptr)
       {
-        std::cout << "Cell found on patch: " << patch->getID() << " on level: " << level << endl;   
+        std::cout << "Cell found on patch: " << patch->getID() << " on level: " << level << std::endl;   
       } else {
          continue;
       }
@@ -134,7 +134,7 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
 
           if(ci.x() == cell.x() && ci.y() == cell.y() && ci.z() == cell.z())
           {
-            partfile << value_pID[*iter] << endl;
+            partfile << value_pID[*iter] << std::endl;
           }
         } // for
       }  //if

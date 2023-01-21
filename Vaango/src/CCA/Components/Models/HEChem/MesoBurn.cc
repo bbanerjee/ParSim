@@ -262,7 +262,7 @@ void MesoBurn::initialize(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++) {
     const Patch* patch = patches->get(p);
     ParticleSubset* pset = old_dw->getParticleSubset(m0, patch);
-    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t MesoBurn" << endl; 
+    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t MesoBurn" << std::endl; 
     
     CCVariable<double> Ts;
     new_dw->allocateAndPut(Ts, TsLabel, m0, patch);

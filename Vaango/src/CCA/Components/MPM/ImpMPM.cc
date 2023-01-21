@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ImpMPM.h> 
 #include <CCA/Components/MPM/ImpMPMFlags.h> 
-#include <CCA/Components/MPM/MPMUtils.h> 
+#include <CCA/Components/MPM/Core/MPMUtils.h> 
 #include <Core/Math/Matrix3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -164,7 +164,7 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
                      GridP& grid,
                      MaterialManagerP& mat_manager)
 {
-  cout_doing << " Doing ImpMPM::problemSetup " << endl;
+  cout_doing << " Doing ImpMPM::problemSetup " << std::endl;
   d_mat_manager = sharedState;
   dynamic_cast<Scheduler*>(getPort("scheduler"))->setPositionVar(lb->pXLabel);
   
@@ -551,11 +551,11 @@ ImpMPM::switchInitialize(const LevelP& level, SchedulerP& sched)
   if (flags->d_useLoadCurves) {
     // Schedule the initialization of HeatFlux BCs per particle
     if(UintahParallelComponent::d_myworld->myRank() == 0){
-      std::cout << " \n--------------------------------------------------------------"<< endl;
-      std::cout << " ImpMPM: the heat flux BC cannot be applied on the timestep" << endl; 
-      std::cout << " immediately after a component switch.  The computes/requires " << endl;
-      std::cout << " cannot be met and one pseudo timestep must take place" << endl;
-      std::cout << " ---------------------------------------------------------------\n"<< endl;
+      std::cout << " \n--------------------------------------------------------------"<< std::endl;
+      std::cout << " ImpMPM: the heat flux BC cannot be applied on the timestep" << std::endl; 
+      std::cout << " immediately after a component switch.  The computes/requires " << std::endl;
+      std::cout << " cannot be met and one pseudo timestep must take place" << std::endl;
+      std::cout << " ---------------------------------------------------------------\n"<< std::endl;
     }
     scheduleInitializeHeatFluxBCs(level, sched);
 
@@ -661,7 +661,7 @@ ImpMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
     auto bcType = particleBC->getType();
     if (bcType == "HeatFlux") {
       nofHeatFluxBCs++;
-      //std::cout << "nofHeatFluxBCs = " << nofHeatFluxBCs << endl;
+      //std::cout << "nofHeatFluxBCs = " << nofHeatFluxBCs << std::endl;
 
       for(int p=0;p<patches->size();p++){
         const Patch* patch = patches->get(p);
@@ -681,7 +681,7 @@ ImpMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
             }
           }
         } // matl loop
-        //std::cout << "numPts found = " << numPts << endl;
+        //std::cout << "numPts found = " << numPts << std::endl;
         new_dw->put(sumlong_vartype(numPts), 
                     lb->materialPointsPerLoadCurveLabel, 0, nofHeatFluxBCs-1);
       }  // patch loop
@@ -738,8 +738,8 @@ ImpMPM::initializeHeatFluxBC(const ProcessorGroup*,
         phf = dynamic_cast<HeatFluxBC*>(particleBC.get());
         phf->numMaterialPoints(numPart);
         fluxPerPart = phf->fluxPerParticle(time);
-        //std::cout << "numPart = " << numPart << endl;
-        //std::cout << "fluxPerPart = " << fluxPerPart << endl;
+        //std::cout << "numPart = " << numPart << std::endl;
+        //std::cout << "fluxPerPart = " << fluxPerPart << std::endl;
       }
       
       // Loop through the patches and calculate the force vector
@@ -765,7 +765,7 @@ ImpMPM::initializeHeatFluxBC(const ProcessorGroup*,
               if (bcType == "HeatFlux") {
                 pExternalHeatFlux[idx] = phf->getFlux(pX[idx], fluxPerPart);
               }
-              // std::cout << "pExternalHeatFlux[idx] = " << pExternalHeatFlux[idx] << endl;
+              // std::cout << "pExternalHeatFlux[idx] = " << pExternalHeatFlux[idx] << std::endl;
             }
           }
         } // matl loop
@@ -785,7 +785,7 @@ ImpMPM::initializePressureBC(const ProcessorGroup*,
   double time = 0.0;
 
   if (cout_dbg.active()) {
-    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << endl;
+    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << std::endl;
   }
 
   // Calculate the force vector at each particle
@@ -804,7 +804,7 @@ ImpMPM::initializePressureBC(const ProcessorGroup*,
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active()) {
-        cout_dbg << "    Load Curve = " << nofPressureBCs << " Num Particles = " << numPart << endl;
+        cout_dbg << "    Load Curve = " << nofPressureBCs << " Num Particles = " << numPart << std::endl;
       }
 
       // Calculate the force per particle at t = 0.0
@@ -1127,7 +1127,7 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
   double time = d_mat_manager->getElapsedTime();
 
   if (cout_doing.active()) {
-    cout_doing << "Current Time (applyExternalLoads) = " << time << endl;
+    cout_doing << "Current Time (applyExternalLoads) = " << time << std::endl;
   }
                                                                                 
   // Calculate the force vector at each particle for each bc
@@ -1143,7 +1143,7 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
       auto bcType = particleBC->getType();
       if (bcType == "Pressure") {
 
-        // std::cerr << "Pressure BCs is being supported in ImpMPM" << endl;
+        // std::cerr << "Pressure BCs is being supported in ImpMPM" << std::endl;
         PressureBC* pbc = dynamic_cast<PressureBC*>(particleBC.get());
         pbcP.push_back(pbc);
         forceMagPerPart.push_back(pbc->forcePerParticle(time));
@@ -1152,11 +1152,11 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
 
         HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(particleBC.get());
         #if 0
-        std::cout << *hfbc << endl;
-        std::cout << "hfbc type = " << hfbc->getType() << endl;
-        std::cout << "surface area = " << hfbc->getSurfaceArea() << endl;
-        std::cout << "heat flux = " << hfbc->heatflux(time) << endl;
-        std::cout << "flux per particle = " << hfbc->fluxPerParticle(time) << endl;
+        std::cout << *hfbc << std::endl;
+        std::cout << "hfbc type = " << hfbc->getType() << std::endl;
+        std::cout << "surface area = " << hfbc->getSurfaceArea() << std::endl;
+        std::cout << "heat flux = " << hfbc->heatflux(time) << std::endl;
+        std::cout << "flux per particle = " << hfbc->fluxPerParticle(time) << std::endl;
         #endif
         hfbcP.push_back(hfbc);
         heatFluxMagPerPart.push_back(hfbc->fluxPerParticle(time));
@@ -1239,7 +1239,7 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
         
         if (!heatFluxMagPerPart.empty()) {
           //double mag = heatFluxMagPerPart[0];
-          //std::cout << "heat flux mag = " << mag << endl;
+          //std::cout << "heat flux mag = " << mag << std::endl;
           for (auto idx : *pset) {
             int loadCurveID = pLoadCurveID[idx]-1;
             if (loadCurveID < 0) {
@@ -1584,14 +1584,14 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       }
 
       #ifdef debug
-      std::cout << "size of cell_map before = " << cell_map.size() << endl;
+      std::cout << "size of cell_map before = " << cell_map.size() << std::endl;
       #endif
       for (auto iter = cell_map.begin(); iter != cell_map.end(); 
                 iter = cell_map.upper_bound(iter->first)) {
         #ifdef debug
         std::cout << "cell = " << iter->first << " temp = " 
                   << iter->second.particleTemps << " count = " 
-                  << cell_map.count(iter->first) << endl;
+                  << cell_map.count(iter->first) << std::endl;
         #endif
 
         if (cell_map.count(iter->first) < 8 ) {
@@ -1606,10 +1606,10 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         }  
       }
       #ifdef debug
-      std::cout << "size of cell_map after = " << cell_map.size() << endl;
+      std::cout << "size of cell_map after = " << cell_map.size() << std::endl;
       for (int i = 0; i < 7; i++) {
         std::cout << "size of sparse_cell_map[" << i << "] after = " 
-             << sparse_cell_map[i].size() << endl;
+             << sparse_cell_map[i].size() << std::endl;
       }
       #endif
 
@@ -1617,12 +1617,12 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       FastMatrix A(8,8);
       double B[8];
       #ifdef debug    
-      std::cout << "Working on cells with 8 particles" << endl;
+      std::cout << "Working on cells with 8 particles" << std::endl;
       #endif
       for (auto iter = cell_map.begin(); iter != cell_map.end(); 
                 iter = cell_map.upper_bound(iter->first)) {
         #ifdef debug        
-        std::cout << "working on cell " << iter->first << endl;
+        std::cout << "working on cell " << iter->first << std::endl;
         #endif
 
         auto eq_range = cell_map.equal_range(iter->first);
@@ -1645,7 +1645,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             gTemperature[ptshape.cellNodes[j]] = B[j];
             #ifdef debug
             std::cout << "gTemperature[" << ptshape.cellNodes[j] << "] = " 
-                 << gTemperature[ptshape.cellNodes[j]] << endl;
+                 << gTemperature[ptshape.cellNodes[j]] << std::endl;
             #endif
           }
         }
@@ -1654,7 +1654,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Work on the cells that have fewer than 8 particles in them
       for (int i = 6; i >= 0; i--) {
         #ifdef debug
-        std::cout << "Working on cells with " << i + 1 << " particles" << endl;
+        std::cout << "Working on cells with " << i + 1 << " particles" << std::endl;
         #endif
         auto& smap = sparse_cell_map[i];
 
@@ -1663,7 +1663,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         for (auto it = smap.begin(); it != smap.end();
                   it = smap.upper_bound(it->first)) {
           #ifdef debug
-          std::cout << "working on cell " << it->first << endl;
+          std::cout << "working on cell " << it->first << std::endl;
           #endif
           
           auto eq_range = smap.equal_range(it->first);
@@ -1695,7 +1695,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                 #ifdef debug
                 std::cout << "i = " << i << " setting gTemperature[" 
                      << ptshape.cellNodes[i] << "]=" 
-                     << gTemperature[ptshape.cellNodes[i]] << endl;
+                     << gTemperature[ptshape.cellNodes[i]] << std::endl;
                 #endif
                 for (int j = 0; j < 8; j++) {
                   A_tA(i,j) = 0.;
@@ -1712,7 +1712,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
               gTemperature[ptshape.cellNodes[j]] = A_tB[j];
               #ifdef debug
               std::cout << "gTemperature[" << ptshape.cellNodes[j] << "] = " 
-                   << gTemperature[ptshape.cellNodes[j]] << endl;
+                   << gTemperature[ptshape.cellNodes[j]] << std::endl;
               #endif
             }
           }
@@ -2130,7 +2130,7 @@ ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
             auto bc = std::dynamic_pointer_cast<BoundCond<Vector> >(vel_bcs);
 
             if (bc != 0) {
-              if (bc->getBCType__NEW() == "Dirichlet") {
+              if (bc->getBCType() == "Dirichlet") {
                 for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
                   gVelocity_old[*nbound_ptr] = bc->getValue();
                   gAcceleration[*nbound_ptr] = bc->getValue();
@@ -3154,7 +3154,7 @@ ImpMPM::formQ(const ProcessorGroup*,
           Q += v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
         }
         if (std::isnan(Q)) {
-          std::cout << "RHS contains a nan, restarting timestep" << endl;
+          std::cout << "RHS contains a nan, restarting timestep" << std::endl;
           new_dw->abortTimestep();
           new_dw->restartTimestep();
           return;
@@ -3202,7 +3202,7 @@ ImpMPM::solveForDuCG(const ProcessorGroup* /*pg*/,
     std::vector<double> guess;
     d_solver->solve(guess);   
   } else {
-    std::cout << "skipping solve, timestep has already called for a restart" << endl;
+    std::cout << "skipping solve, timestep has already called for a restart" << std::endl;
   }
 }
 
@@ -4268,7 +4268,7 @@ void ImpMPM::refine(const ProcessorGroup*,
                                                                                 
       if (cout_doing.active()) {
         cout_doing <<"Doing refine on patch "
-                   << patch->getID() << " material # = " << dwi << endl;
+                   << patch->getID() << " material # = " << dwi << std::endl;
       }
                                                                                 
       // this is a new patch, so create empty particle variables.

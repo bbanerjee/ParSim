@@ -99,7 +99,7 @@ CostModelForecaster::outputError(const GridP grid)
 
       //      std::cout << d_myworld->myRank() << " patch:" << patch->getID() <<
       //      " exectTime: " << d_execTimes[patch->getID()]
-      //           << " cost: " << costs[l][p] << " error: " << error << endl;
+      //           << " cost: " << costs[l][p] << " error: " << error << std::endl;
 
       IntVector low(patch->getCellLowIndex());
       IntVector high(patch->getCellHighIndex());
@@ -107,7 +107,7 @@ CostModelForecaster::outputError(const GridP grid)
       if (stats2.active()) {
         std::cout << "PROFILESTATS: " << iter << " " << fabs(error) << " " << l
                   << " " << low[0] << " " << low[1] << " " << low[2] << " "
-                  << high[0] << " " << high[1] << " " << high[2] << endl;
+                  << high[0] << " " << high[1] << " " << high[2] << std::endl;
       }
 
       if (fabs(error) > max_error_local) {
@@ -155,7 +155,7 @@ CostModelForecaster::outputError(const GridP grid)
     sum_error /= size;
     sum_aerror /= size;
     std::cout << "sMPE: " << sum_error << " sMAPE: " << sum_aerror
-              << " MAXsPE: " << max_error << endl;
+              << " MAXsPE: " << max_error << std::endl;
   }
 }
 //______________________________________________________________________
@@ -277,7 +277,7 @@ min_norm_least_sq(std::vector<std::vector<double>>& A,
       {
         std::cout << ATA[i][j] << " ";
       }
-      std::cout << endl;
+      std::cout << std::endl;
     }
   }
 #endif
@@ -295,7 +295,7 @@ min_norm_least_sq(std::vector<std::vector<double>>& A,
     std::cout << " ATB: "; 
     for(int j=0;j<cols; j++)
       std::cout << ATb[j] << " ";
-    std::cout << endl;
+    std::cout << std::endl;
   }
 #endif
 
@@ -331,7 +331,7 @@ min_norm_least_sq(std::vector<std::vector<double>>& A,
     {
       std::cout << L[i][j] << " ";
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
 #endif
 
@@ -384,7 +384,7 @@ CostModelForecaster::finalizeContributions(const GridP currentGrid)
     static int j=0;
     
     for(size_t i=0;i<patch_info.size();i++){
-      stats << j << " " << patch_info[i] << endl;
+      stats << j << " " << patch_info[i] << std::endl;
     }
     j++;
   }
@@ -414,7 +414,7 @@ CostModelForecaster::finalizeContributions(const GridP currentGrid)
         if (patch_info[j][i] != first_val) {
 
           // cout << "patch_info[" << j << "][" << i <<"]:" << patch_info[j][i]
-          // << " first_val: " << first_val << endl; add this field
+          // << " first_val: " << first_val << std::endl; add this field
           fields.push_back(i);
           break;
         }
@@ -465,7 +465,7 @@ CostModelForecaster::finalizeContributions(const GridP currentGrid)
     for(int i=0;i<cols;i++){
       std::cout << "x["<<i<<"]: "<< x[i]<< "\n";
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
 #endif
 
@@ -490,7 +490,7 @@ CostModelForecaster::finalizeContributions(const GridP currentGrid)
     std::cout << "Update: patchCost: " << d_patchCost
               << " cellCost: " << d_cellCost
               << " d_extraCellCost: " << d_extraCellCost
-              << " particleCost: " << d_particleCost << endl;
+              << " particleCost: " << d_particleCost << std::endl;
   }
 
   d_execTimes.clear();

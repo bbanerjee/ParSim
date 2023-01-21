@@ -186,7 +186,7 @@ void AdiabaticTable::outputProblemSpec(ProblemSpecP& ps)
 void AdiabaticTable::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << std::endl;
   d_mat_manager = in_state;
   d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
@@ -353,7 +353,7 @@ void AdiabaticTable::scheduleInitialize(SchedulerP& sched,
                                    const LevelP& level,
                                    const ModelInfo*)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleInitialize " << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleInitialize " << std::endl;
   Task* t = scinew Task("AdiabaticTable::initialize", this, 
                         &AdiabaticTable::initialize);
 
@@ -383,7 +383,7 @@ void AdiabaticTable::initialize(const ProcessorGroup*,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tADIABATIC_TABLE" << endl;
+  cout_doing << "Doing Initialize \t\t\t\t\tADIABATIC_TABLE" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int indx = d_matl->getDWIndex();
@@ -515,7 +515,7 @@ void AdiabaticTable::scheduleModifyThermoTransportProperties(SchedulerP& sched,
                                                    const LevelP& level,
                                                    const MaterialSet* /*ice_matls*/)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleModifyThermoTransportProperties" << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleModifyThermoTransportProperties" << std::endl;
 
   Task* t = scinew Task("AdiabaticTable::modifyThermoTransportProperties", 
                    this,&AdiabaticTable::modifyThermoTransportProperties);
@@ -545,7 +545,7 @@ void AdiabaticTable::modifyThermoTransportProperties(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing modifyThermoTransportProperties on patch "<<patch->getID()
-               << "\t ADIABATIC_TABLE" << endl;
+               << "\t ADIABATIC_TABLE" << std::endl;
    
     int indx = d_matl->getDWIndex();
     CCVariable<double> diffusionCoeff, gamma, cv, thermalCond, viscosity;
@@ -586,7 +586,7 @@ void AdiabaticTable::computeSpecificHeat(CCVariable<double>& cv_new,
                                     const int indx)
 { 
   cout_doing << "Doing computeSpecificHeat on patch "<<patch->getID()
-             << "\t ADIABATIC_TABLE" << endl;
+             << "\t ADIABATIC_TABLE" << std::endl;
 
   int test_indx = d_matl->getDWIndex();
   //__________________________________
@@ -621,7 +621,7 @@ void AdiabaticTable::scheduleComputeModelSources(SchedulerP& sched,
                                                  const LevelP& level,
                                                  const ModelInfo* mi)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleComputeModelSources " << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleComputeModelSources " << std::endl;
   Task* t = scinew Task("AdiabaticTable::computeModelSources", 
                    this,&AdiabaticTable::computeModelSources, mi);
                     
@@ -671,7 +671,7 @@ void AdiabaticTable::computeModelSources(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing momentumAndEnergyExch... on patch "<<patch->getID()
-               << "\t\tADIABATIC_TABLE" << endl;
+               << "\t\tADIABATIC_TABLE" << std::endl;
 
     for(int m=0;m<matls->size();m++){
       int matl = matls->get(m);
@@ -764,7 +764,7 @@ void AdiabaticTable::computeModelSources(const ProcessorGroup*,
         cout.setf(ios::scientific,ios::floatfield);
         cout.precision(10);
     
-        std::cout << "                 MixtureFraction,                      temp_table,       gamma,             cv,             rho_table,      press_thermo,   (gamma-1)cv,   rho_table*temp_table,  co2,           h2o"<< endl;        
+        std::cout << "                 MixtureFraction,                      temp_table,       gamma,             cv,             rho_table,      press_thermo,   (gamma-1)cv,   rho_table*temp_table,  co2,           h2o"<< std::endl;        
         for(CellIterator iter = patch->getCellIterator(); !iter.done(); iter++){
           IntVector c = *iter;
           double press = (rho_table[c] * cv[c] * (gamma[c]-1) * flameTemp[c]);
@@ -830,7 +830,7 @@ void AdiabaticTable::computeModelSources(const ProcessorGroup*,
         CellIterator iter = patch->getExtraCellIterator();
         table->interpolate(tv->index, value, iter, ind_vars);
         if(patch->getID() == 0){ 
-          cerr << "interpolating " << tv->name << '\n';
+          std::cerr <<  "interpolating " << tv->name << '\n';
         }
       }
     }
@@ -876,7 +876,7 @@ void AdiabaticTable::scheduleTestConservation(SchedulerP& sched,
                                               const ModelInfo* mi)
 {
   if(d_scalar->d_test_conservation){
-    cout_doing << "ADIABATICTABLE::scheduleTestConservation " << endl;
+    cout_doing << "ADIABATICTABLE::scheduleTestConservation " << std::endl;
     Task* t = scinew Task("AdiabaticTable::testConservation", 
                      this,&AdiabaticTable::testConservation, mi);
 
@@ -910,7 +910,7 @@ void AdiabaticTable::testConservation(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing testConservation on patch "<<patch->getID()
-               << "\t\t\t AdiabaticTable" << endl;
+               << "\t\t\t AdiabaticTable" << std::endl;
                
     //__________________________________
     //  conservation of f test
@@ -981,7 +981,7 @@ void AdiabaticTable::errorEstimate(const ProcessorGroup*,
                                    DataWarehouse* new_dw,
                                    bool)
 {
-  cout_doing << "Doing errorEstimate \t\t\t\t\t AdiabaticTable"<< endl;
+  cout_doing << "Doing errorEstimate \t\t\t\t\t AdiabaticTable"<< std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     

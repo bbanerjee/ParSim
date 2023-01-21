@@ -209,7 +209,7 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
                                         DataWarehouse* new_dw,
                                         FilterScalar* s)
 {
-  cout_doing << "Doing computeVariance "<< "\t\t\t Smagorinsky_Model" << endl;
+  cout_doing << "Doing computeVariance "<< "\t\t\t Smagorinsky_Model" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     

@@ -166,7 +166,7 @@ int main(int argc, char** argv)
   mycurve.GenerateCurve();
   double finish=Time::currentSeconds();
   
-  std::cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << std::endl;
 
   MPI_Barrier(Comm);
 
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
   mycurve.GenerateCurve(true);
   finish=Time::currentSeconds();
   
-  std::cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << std::endl;
 
   MPI_Barrier(Comm);
 
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
       if(index1!=index2)
         std::cout << j << ": " << index1 << "!=" << index2 << "\n";
 
-      //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
+      //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << std::endl;
       j++;
     }
 
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
         int index2=orderss[j].i;
         if(index1!=index2)
           std::cout << j << ": " << index1 << "!=" << index2 <<  "\n";
-        //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
+        //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << std::endl;
         j++;
       }
     }

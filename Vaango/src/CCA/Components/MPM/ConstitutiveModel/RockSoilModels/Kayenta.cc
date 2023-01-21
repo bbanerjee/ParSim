@@ -130,17 +130,17 @@ Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)
   // Check that model parameters are valid and allow model to change if needed
 
   // First, print out the UI values specified by the user
-  proc0cout << "Original UI values" << endl;
+  proc0cout << "Original UI values" << std::endl;
   for (int i = 0; i < d_NKMMPROP; i++) {
-    proc0cout << "UI[" << i << "] = " << UI[i] << endl;
+    proc0cout << "UI[" << i << "] = " << UI[i] << std::endl;
   }
 
   KAYENTA_CHK(UI, GC, DC);
 
   // Now, print out the UI values after alteration by KAYENTA_CHK
-  proc0cout << "Modified UI values" << endl;
+  proc0cout << "Modified UI values" << std::endl;
   for (int i = 0; i < d_NKMMPROP; i++) {
-    proc0cout << "UI[" << i << "] = " << UI[i] << endl;
+    proc0cout << "UI[" << i << "] = " << UI[i] << std::endl;
   }
 
   // Create VarLabels for Kayenta internal state variables (ISVs)
@@ -154,17 +154,17 @@ Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)
   KAYENTA_RXV(UI, GC, DC, nx, namea, keya, rinit, rdim, iadvct, itype);
 
   // Print out the Derived Constants
-  //  proc0cout << "Derived Constants" << endl;
+  //  proc0cout << "Derived Constants" << std::endl;
   //  for(int i = 0; i<d_NKMMDC; i++){
-  //     proc0cout << "DC[" << i << "] = " << DC[i] << endl;
+  //     proc0cout << "DC[" << i << "] = " << DC[i] << std::endl;
   //  }
 
   // Print out Internal State Variables
   d_NINSV = nx;
-  proc0cout << "Internal State Variables" << endl;
-  proc0cout << "# ISVs = " << d_NINSV << endl;
+  proc0cout << "Internal State Variables" << std::endl;
+  proc0cout << "# ISVs = " << d_NINSV << std::endl;
   //  for(int i = 0;i<d_NINSV; i++){
-  //    proc0cout << "ISV[" << i << "] = " << rinit[i] << endl;
+  //    proc0cout << "ISV[" << i << "] = " << rinit[i] << std::endl;
   //  }
   setErosionAlgorithm();
   initializeLocalMPMLabels();
@@ -391,7 +391,7 @@ Kayenta::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
-  //  proc0cout << "In initializeCMData" << endl;
+  //  proc0cout << "In initializeCMData" << std::endl;
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
     ParticleSubset::iterator iter = pset->begin();
@@ -726,13 +726,13 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       if (J <= 0.0 || J > d_hugeJ) {
         double Jold = pDefGrad[idx].Determinant();
         std::cout << "negative or huge J encountered J=" << J << ", Jold = " << Jold
-             << " deleting particle" << endl;
-        std::cout << "pos = " << px[idx] << endl;
+             << " deleting particle" << std::endl;
+        std::cout << "pos = " << px[idx] << std::endl;
 
         pLocalized_new[idx] = -999;
-        std::cout << "localizing (deleting) particle " << pParticleID[idx] << endl;
-        std::cout << "material = " << dwi << endl
-             << "Momentum deleted = " << pvelocity[idx] * pmass[idx] << endl;
+        std::cout << "localizing (deleting) particle " << pParticleID[idx] << std::endl;
+        std::cout << "material = " << dwi << std::endl
+             << "Momentum deleted = " << pvelocity[idx] * pmass[idx] << std::endl;
         pDefGrad_new[idx] = Vaango::Util::Identity;
         D = Matrix3(0.);
       }
@@ -967,7 +967,7 @@ Kayenta::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << std::endl;
 #endif
 }
 
@@ -986,7 +986,7 @@ Kayenta::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << std::endl;
 #endif
 }
 
@@ -1171,13 +1171,13 @@ Kayenta::initializeLocalMPMLabels()
   char* ISV[d_NINSV];
   ISV[0] = strtok(keya, "|"); // Splits | between words in string
   ISVNames.push_back(ISV[0]);
-  proc0cout << "ISV[" << 0 << "] is called " << ISVNames[0] << endl;
+  proc0cout << "ISV[" << 0 << "] is called " << ISVNames[0] << std::endl;
   for (int i = 1; i < d_NINSV; i++) {
     // If you specify nullptr, by default it will start again from the previous
     // stop.
     ISV[i] = strtok(nullptr, "|");
     ISVNames.push_back(ISV[i]);
-    proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << endl;
+    proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << std::endl;
   }
   // Code ends here.KC
 

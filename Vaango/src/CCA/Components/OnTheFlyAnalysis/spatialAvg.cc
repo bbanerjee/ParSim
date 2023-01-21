@@ -111,8 +111,8 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
 
   int numMatls  = m_materialManager->getNumMaterials();
 
-  proc0cout << "__________________________________Data Analysis module: spatialAvg" << endl;
-  proc0cout << "         Computing spatial average for all of the variables listed"<< endl;
+  proc0cout << "__________________________________Data Analysis module: spatialAvg" << std::endl;
+  proc0cout << "         Computing spatial average for all of the variables listed"<< std::endl;
 
   //__________________________________
   //  region to average over
@@ -147,7 +147,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
     throw ProblemSetupException("\n ERROR:spatialAvg: startTime > stopTime. \n", __FILE__, __LINE__);
   }
   
-  proc0cout << "  StartTime: " << d_startTime << " stopTime: "<< d_stopTime << endl;
+  proc0cout << "  StartTime: " << d_startTime << " stopTime: "<< d_stopTime << std::endl;
 
   // debugging
   m_module_spec->get("monitorCell", d_monitorCell);
@@ -235,7 +235,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
       ostringstream warn;
       warn << "WARNING:  You've activated the  AnalysisModule:spatialAvg module but your not saving the variable(s) ("
            << mesg.str() << ")";
-      proc0cout << warn.str() << endl;
+      proc0cout << warn.str() << std::endl;
     }
   }
   
@@ -245,7 +245,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
   d_matlSet->addAll_unique(m);
   d_matlSet->addReference();
   d_matSubSet = d_matlSet->getUnion();
-  proc0cout << "__________________________________ Data Analysis module: spatialAvg" << endl;
+  proc0cout << "__________________________________ Data Analysis module: spatialAvg" << std::endl;
 
 }
 
@@ -389,11 +389,11 @@ void spatialAvg::computeAvgWrapper( DataWarehouse     * old_dw,
   old_dw->get( simTime, m_simulationTimeLabel );
   
   if(simTime < d_startTime || simTime > d_stopTime){
-    //proc0cout << " IGNORING------------DataAnalysis: spatialAvg" << endl;
+    //proc0cout << " IGNORING------------DataAnalysis: spatialAvg" << std::endl;
     allocateAndZeroLabels< T >( new_dw, patch, Q );
   }
   else {
-    //proc0cout << " Computing------------DataAnalysis: spatialAvg" << endl;
+    //proc0cout << " Computing------------DataAnalysis: spatialAvg" << std::endl;
 
     computeAvg< T >(old_dw, new_dw, patch, Q);
   }
@@ -474,7 +474,7 @@ void spatialAvg::computeAvg( DataWarehouse  * old_dw,
          <<"\t Q_var: " << Qvar[c]
          <<"\t Qavg: "  << Qavg[c]
 //         <<"\t Qvariance: " << Qvariance[c]
-         << endl;
+         << std::endl;
   }
 }
 
@@ -503,7 +503,7 @@ void spatialAvg::query( const Patch         * patch,
       for ( int k=0; k<nBoxes.z(); k++ ){
 
         IntVector start = lo + IntVector(i,j,k) * avgBoxCells;
-     //   cout << " Box: start: " << start << endl;
+     //   cout << " Box: start: " << start << std::endl;
 
         // compute the average
         T Q_sum = T(0);

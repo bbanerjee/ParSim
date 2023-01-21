@@ -236,7 +236,7 @@ MinMax::problemSetup(const ProblemSpecP&,
     if (throwException) {
       ostringstream warn;
       warn << "ERROR:AnalysisModule:MinMax: (" << label->getName() << " "
-           << td->getName() << " ) has not been implemented" << endl;
+           << td->getName() << " ) has not been implemented" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
 
@@ -622,7 +622,7 @@ MinMax::computeMinMax(const ProcessorGroup* pg,
         default:
           ostringstream warn;
           warn << "ERROR:AnalysisModule:MinMax: (" << labelName << " "
-               << td->getName() << " ) has not been implemented" << endl;
+               << td->getName() << " ) has not been implemented" << std::endl;
           throw InternalError(warn.str(), __FILE__, __LINE__);
       }
     } // VarLabel loop
@@ -895,7 +895,7 @@ MinMax::createFile(const string& filename, const string& levelIndex, FILE*& fp)
   DOUTR(dout_OTF_MM,
         d_myworld->myRank() << " MinMax:Created file " << filename);
 
-  cout << "OnTheFlyAnalysis MinMax results are located in " << filename << endl;
+  cout << "OnTheFlyAnalysis MinMax results are located in " << filename << std::endl;
 }
 
 //______________________________________________________________________

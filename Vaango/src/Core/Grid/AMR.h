@@ -181,18 +181,18 @@ linearInterpolation(constCCVariable<T>& q_CL, // course level
       if ((f_cell.y() == half.y() && f_cell.z() == half.z())){
        cout.setf(ios::scientific,ios::floatfield);
        cout.precision(5);
-       std::cout << " f_cell " << f_cell << " c_cell "<< c_cell << " offset ["<<i<<","<<j<<","<<k<<"]  " << endl;
-       std::cout << " relative indx " << relativeIndx  << endl;
+       std::cout << " f_cell " << f_cell << " c_cell "<< c_cell << " offset ["<<i<<","<<j<<","<<k<<"]  " << std::endl;
+       std::cout << " relative indx " << relativeIndx  << std::endl;
        std::cout << "dist "<< dist << " dir " << dir <<  endl;
-       std::cout << " q_CL[c_cell]                       "                           << q_CL[c_cell]                       << " w0 " << w0 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( " << i << ", 0, 0)] "                 << q_CL[c_cell + Uintah::IntVector( i, 0, 0)] << " w1 " << w1 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, " << j << ", 0)] "                 << q_CL[c_cell + Uintah::IntVector( 0, j, 0)] << " w2 " << w2 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", 0)] "        << q_CL[c_cell + Uintah::IntVector( i, j, 0)] << " w3 " << w3 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, 0, "<<k<<")] "                     << q_CL[c_cell + Uintah::IntVector( 0, 0, k)] << " w0 " << w0 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", 0, "<<k<<")] "            << q_CL[c_cell + Uintah::IntVector( i, 0, k)] << " w1 " << w1 << endl;
-       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, "<< j <<", "<<k<<")] "             << q_CL[c_cell + Uintah::IntVector( 0, j, k)] << " w2 " << w2 << endl;
+       std::cout << " q_CL[c_cell]                       "                           << q_CL[c_cell]                       << " w0 " << w0 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( " << i << ", 0, 0)] "                 << q_CL[c_cell + Uintah::IntVector( i, 0, 0)] << " w1 " << w1 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, " << j << ", 0)] "                 << q_CL[c_cell + Uintah::IntVector( 0, j, 0)] << " w2 " << w2 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", 0)] "        << q_CL[c_cell + Uintah::IntVector( i, j, 0)] << " w3 " << w3 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, 0, "<<k<<")] "                     << q_CL[c_cell + Uintah::IntVector( 0, 0, k)] << " w0 " << w0 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", 0, "<<k<<")] "            << q_CL[c_cell + Uintah::IntVector( i, 0, k)] << " w1 " << w1 << std::endl;
+       std::cout << " q_CL[c_cell + Uintah::IntVector( 0, "<< j <<", "<<k<<")] "             << q_CL[c_cell + Uintah::IntVector( 0, j, k)] << " w2 " << w2 << std::endl;
        std::cout << " q_CL[c_cell + Uintah::IntVector( "<< i << ", " << j << ", "<< k <<")] " << q_CL[c_cell + Uintah::IntVector( i, j, k)] << " w3 " << w3 <<endl;
-       std::cout << " q_XY_Plane_1 " << q_XY_Plane_1 << " q_XY_Plane_2 " << q_XY_Plane_2 << " q_FineLevel[f_cell] "<< q_FineLevel[f_cell] << endl;
+       std::cout << " q_XY_Plane_1 " << q_XY_Plane_1 << " q_XY_Plane_2 " << q_XY_Plane_2 << " q_FineLevel[f_cell] "<< q_FineLevel[f_cell] << std::endl;
     }
 #endif
   }
@@ -464,7 +464,7 @@ quadraticInterpolation_CFI(constCCVariable<T>& q_CL, // course level
 #if 0
   cout<< " face " << name << " refineRatio "<< refineRatio
       << " FineLevel iterator" << fl << " " << fh
-      << " coarseLevel " << fineLevel->mapCellToCoarser(fl) << " " << fineLevel->mapCellToCoarser(fh)<< endl;
+      << " coarseLevel " << fineLevel->mapCellToCoarser(fl) << " " << fineLevel->mapCellToCoarser(fh)<< std::endl;
 #endif
 
   //__________________________________
@@ -588,7 +588,7 @@ quadraticInterpolation_CFI(constCCVariable<T>& q_CL, // course level
 
      std::cout.setf(ios::scientific,ios::floatfield);
      std::cout.precision(5);
-     std::cout << "\n relativeIndex " << relativeIndx << " dist " << dist << endl;
+     std::cout << "\n relativeIndex " << relativeIndx << " dist " << dist << std::endl;
      std::cout << name << " baseCell " << baseCell << " f_cell " << f_cell << " dy " << dy << " dz " << dz << "\n";
      std::cout << " q_CL[baseCell + " << offset[0] << "] " << q_CL[baseCell +  offset[0]]<< " w(0,0) " << w(0,0) << "\n";
      std::cout << " q_CL[baseCell + " << offset[1] << "] " << q_CL[baseCell +  offset[1]]<< " w(0,1) " << w(0,1) << "\n";
@@ -603,10 +603,10 @@ quadraticInterpolation_CFI(constCCVariable<T>& q_CL, // course level
 
      std::cout  << " w0_y " << w0_y << " w1_y " << w1_y << " w2_y "<< w2_y << " sum (w_y): " << w0_y + w1_y + w2_y<<"\n";
      std::cout  << " w0_z " << w0_z << " w1_z " << w1_z << " w2_z "<< w2_z << " sum (w_z): " << w0_z + w1_z + w2_z<<"\n";
-     std::cout <<"--------------------------------" << endl;
-     std::cout << " f_cell " << f_cell << " x0 " << x0 << " x1 " << x1 << " dir " << dir << endl;
-     std::cout << " w0_x " << w0_x << " w1_x " << w1_x << " w2_x " << w2_x << " sum(weights) " << w0_x+w1_x+w2_x<< " x2 " << d_CL << endl;
-     std::cout << " q_FineLevel[x0] " << q_FineLevel[x0] << " q_FineLevel[x1] " << q_FineLevel[x1] << " q_FineLevel " << q_FineLevel[f_cell] << endl;
+     std::cout <<"--------------------------------" << std::endl;
+     std::cout << " f_cell " << f_cell << " x0 " << x0 << " x1 " << x1 << " dir " << dir << std::endl;
+     std::cout << " w0_x " << w0_x << " w1_x " << w1_x << " w2_x " << w2_x << " sum(weights) " << w0_x+w1_x+w2_x<< " x2 " << d_CL << std::endl;
+     std::cout << " q_FineLevel[x0] " << q_FineLevel[x0] << " q_FineLevel[x1] " << q_FineLevel[x1] << " q_FineLevel " << q_FineLevel[f_cell] << std::endl;
 
    }
 #endif
@@ -777,7 +777,7 @@ interpolationTest_helper(CCVariable<T>& q_FineLevel,
       error = error + diff * diff;
       // if( fabs(diff) > 1e-3) {
       //   std::cout << c << " q_FineLevel[c] " <<  q_FineLevel[c] << " exact "
-      //   << exact << " diff " << diff << endl;
+      //   << exact << " diff " << diff << std::endl;
       // }
       ncell += 1;
     }

@@ -158,7 +158,7 @@ void LightTime::scheduleInitialize(SchedulerP& sched,
                                const LevelP& level,
                                const ModelInfo*)
 {
-  cout_doing << "LightTime::scheduleInitialize " << endl;
+  cout_doing << "LightTime::scheduleInitialize " << std::endl;
   Task* t = scinew Task("LightTime::initialize", this, &LightTime::initialize);
 
   const MaterialSubset* react_matl = matl0->thisMaterial();
@@ -176,7 +176,7 @@ void LightTime::initialize(const ProcessorGroup*,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tLightTime" << endl;
+  cout_doing << "Doing Initialize \t\t\t\t\tLightTime" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int m0 = matl0->getDWIndex();
@@ -254,7 +254,7 @@ void LightTime::computeModelSources(const ProcessorGroup*,
     const Patch* patch = patches->get(p);  
     
     cout_doing << "Doing computeModelSources on patch "<< patch->getID()
-               <<"\t\t\t\t  LightTime \tL-" << level->getIndex()<< endl;
+               <<"\t\t\t\t  LightTime \tL-" << level->getIndex()<< std::endl;
     CCVariable<double> mass_src_0, mass_src_1, mass_0;
     CCVariable<Vector> momentum_src_0, momentum_src_1;
     CCVariable<double> energy_src_0, energy_src_1;
@@ -414,7 +414,7 @@ void LightTime::errorEstimate(const ProcessorGroup*,
                                  DataWarehouse*,
                                  DataWarehouse* new_dw)
 {
-  cout_doing << "Doing errorEstimate \t\t\t\t\t LightTime"<< endl;
+  cout_doing << "Doing errorEstimate \t\t\t\t\t LightTime"<< std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     

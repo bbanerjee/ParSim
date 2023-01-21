@@ -493,7 +493,7 @@ void momentumAnalysis::integrateMomentumField(const ProcessorGroup * pg,
     //__________________________________
     // put in the dw
     //cout.precision(15);
-    //cout <<  " Total CV momentum: " << totalCVMomentum << " Net  convectiveFlux: " << net_convect_flux << " viscousFlux: " << net_viscous_flux << " pressForce " << net_press_forces << endl;
+    //cout <<  " Total CV momentum: " << totalCVMomentum << " Net  convectiveFlux: " << net_convect_flux << " viscousFlux: " << net_viscous_flux << " pressForce " << net_press_forces << std::endl;
 
     new_dw->put( sumvec_vartype( totalCVMomentum ),     labels->totalCVMomentum );
     new_dw->put( sumvec_vartype( net_convect_flux ),    labels->convectMom_fluxes );
@@ -659,7 +659,7 @@ void momentumAnalysis::integrateOverFace( const std::string faceName,
   faceQ->viscous_faceFlux[f] = viscous_flux;
   faceQ->pressForce_face[f]  = pressForce;
 
-//  cout << "face: " << faceName << "\t dir: " << dir << " convect_Flux = " <<  convect_flux << " ViscousFlux " << viscous_flux << " pressForce " << pressForce << endl;
+//  cout << "face: " << faceName << "\t dir: " << dir << " convect_Flux = " <<  convect_flux << " ViscousFlux " << viscous_flux << " pressForce " << pressForce << std::endl;
 }
 
 //______________________________________________________________________
@@ -681,7 +681,7 @@ void momentumAnalysis::createFile(string& filename,
   fprintf(fp, "#Time                    CV_mom.x                 CV_mom.y                  CV_mom.z                  momFlux.x               momFlux.y                momFlux.z                 visFlux.x                 visFlux.y                visFlux.z                 pressForce.x              pressForce.y             pressForce.z\n");
 
 
-  proc0cout << Parallel::getMPIRank() << " momentumAnalysis:Created file " << filename << endl;
+  proc0cout << Parallel::getMPIRank() << " momentumAnalysis:Created file " << filename << std::endl;
 }
 
 
@@ -783,7 +783,7 @@ void momentumAnalysis::bulletProofing(GridP& grid,
      ostringstream warn;
      warn << "\n ERROR:1stLawThermo: the plane on face ("<< side
           << ") that you've specified " << start << " to " << end
-          << " is not at the edge of the computational domain. \n" << endl;
+          << " is not at the edge of the computational domain. \n" << std::endl;
      throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
    }
 

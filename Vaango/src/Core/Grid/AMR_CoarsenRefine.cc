@@ -70,7 +70,7 @@ coarsenDriver_std(const IntVector& cl,
         q_CC_tmp += fine_q_CC[fc];
         count += 1.0;
         // std::cout << "    " << fc << "   fine_q_CC " << fine_q_CC[fc] <<"
-        // q_CC_tmp: " << q_CC_tmp << endl;
+        // q_CC_tmp: " << q_CC_tmp << std::endl;
       }
     }
     coarse_q_CC[c] = q_CC_tmp * ratio;
@@ -89,7 +89,7 @@ coarsenDriver_std(const IntVector& cl,
     }
 #endif
     // std::cout << c << "   coarse_q_CC " << coarse_q_CC[c] << " ratio " <<
-    // ratio << endl;
+    // ratio << std::endl;
   }
 }
 
@@ -162,7 +162,7 @@ fineToCoarseOperator(CCVariable<T>& q_CC,
     new_dw->getRegion(fine_q_CC, varLabel, indx, fineLevel, fl, fh, false);
 
     cout_dbg << " fineToCoarseOperator: finePatch " << fl << " " << fh
-             << " coarsePatch " << cl << " " << ch << endl;
+             << " coarsePatch " << cl << " " << ch << std::endl;
 
     IntVector r_Ratio = fineLevel->getRefinementRatio();
 

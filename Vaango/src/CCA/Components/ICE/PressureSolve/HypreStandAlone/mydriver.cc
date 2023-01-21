@@ -250,7 +250,7 @@ main(int argc, char *argv[]) {
     solver = scinew SolverFAC(param);
     break;
   default:
-    cerr << "\n\nError: unknown solver type" << "\n";
+    std::cerr <<  "\n\nError: unknown solver type" << "\n";
     clean();
     exit(1);
   }
@@ -298,7 +298,7 @@ main(int argc, char *argv[]) {
     dbg0 << "Checking arguments and parameters ... ";
     if ((param->solverType == Param::FAC) &&
         ((numLevels < 2) || (numDims != 3))) {
-      cerr << "\n\nFAC solver needs a 3D problem and at least 2 levels."
+      std::cerr <<  "\n\nFAC solver needs a 3D problem and at least 2 levels."
            << "\n";
       clean();
       exit(1);
@@ -310,7 +310,7 @@ main(int argc, char *argv[]) {
     //    int correct = mypow(2,numDims);
     int correct = int(pow(2.0,numDims));
     if (numProcs != correct) {
-      cerr << "\n\nError, hard coded to " << correct
+      std::cerr <<  "\n\nError, hard coded to " << correct
            << " processors in " << numDims << "-D for now." << "\n";
       clean();
       exit(1);

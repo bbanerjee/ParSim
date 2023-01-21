@@ -767,7 +767,7 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
   // Make sure p1!=p2
   if (p1 == p2) {
     std::cout << "Error: p1=p2=" << p1 << " in Crack::TrimLineSegmentWithBox(...)."
-         << " Program is terminated." << endl;
+         << " Program is terminated." << std::endl;
     exit(1);
   } else {
     v = TwoPtsDirCos(p1, p2);
@@ -794,8 +794,8 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
   if (p1Outside) {
     std::cout << "Error: p1=" << p1
          << " is outside of the box in Crack::TrimLineSegmentWithBox(): " << lp
-         << "-->" << hp << ", where p2=" << p2 << endl;
-    std::cout << " Program terminated." << endl;
+         << "-->" << hp << ", where p2=" << p2 << std::endl;
+    std::cout << " Program terminated." << std::endl;
     exit(1);
   }
 

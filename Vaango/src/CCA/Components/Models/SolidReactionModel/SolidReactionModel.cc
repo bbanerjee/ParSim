@@ -326,7 +326,7 @@ void SolidReactionModel::computeModelSources(const ProcessorGroup*,
         const Patch* patch = patches->get(p);
 
         cout_doing << "Doing computeModelSources on patch "<< patch->getID()
-                   <<"\t\t\t\t  SolidReactionModel" << endl;
+                   <<"\t\t\t\t  SolidReactionModel" << std::endl;
         CCVariable<double> mass_src_0, mass_src_1, mass_0;
         CCVariable<Vector> momentum_src_0, momentum_src_1;
         CCVariable<double> energy_src_0, energy_src_1;

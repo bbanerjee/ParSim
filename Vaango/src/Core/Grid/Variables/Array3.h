@@ -394,13 +394,13 @@ namespace Uintah {
         IntVector h = d_window->getHighIndex();
         out << "Variable from " << l << " to " << h << '\n';
         for (int ii = l.x(); ii < h.x(); ii++) {
-          out << "variable for ii = " << ii << endl;
+          out << "variable for ii = " << ii << std::endl;
           for (int jj = l.y(); jj < h.y(); jj++) {
             for (int kk = l.z(); kk < h.z(); kk++) {
               out.width(10);
               out << (*this)[IntVector(ii,jj,kk)] << " " ; 
             }
-            out << endl;
+            out << std::endl;
           }
         }
       }

@@ -488,7 +488,7 @@ ParticleCreator::getLoadCurveID(const Uintah::Point& pp, const Uintah::Vector& d
 
     std::string bcs_type = (*iter)->getType();
 
-    //cerr << " BC Type = " << bcs_type << endl;
+    //cerr << " BC Type = " << bcs_type << std::endl;
     if (bcs_type == "Pressure") {
       ParticlePressureBC* bc = dynamic_cast<ParticlePressureBC*>(*iter);
       if (bc->flagSurfaceParticle(pp, dxpp)) {

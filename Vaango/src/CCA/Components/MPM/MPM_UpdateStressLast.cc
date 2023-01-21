@@ -424,7 +424,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                     << " T_old = " << pTemperature[idx]
                     << " Tdot = " << tempRate
                     << " dT = " << (tempRate*delT)
-                    << " T_new = " << pTemp_new[idx] << endl;
+                    << " T_new = " << pTemp_new[idx] << std::endl;
         }
 
         thermal_energy += pTemperature[idx] * pMass[idx] * Cp;
@@ -498,7 +498,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                       << " massold = " << pMass[idx] << " massnew = " << pMass_new[idx]
                       << " tempold = " << pTemperature[idx] 
                       << " tempnew = " << pTemp_new[idx]
-                      << " volnew = " << pVolume[idx] << endl;
+                      << " volnew = " << pVolume[idx] << std::endl;
           #endif
         }
         
@@ -554,10 +554,10 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->put(sumvec_vartype(CMX),         lb->CenterOfMassPositionLabel);
     }
 
-    // std::cout << "Solid mass lost this timestep = " << massLost << endl;
-    // std::cout << "Solid momentum after advection = " << totalMom << endl;
+    // std::cout << "Solid mass lost this timestep = " << massLost << std::endl;
+    // std::cout << "Solid momentum after advection = " << totalMom << std::endl;
 
-    // std::cout << "THERMAL ENERGY " << thermal_energy << endl;
+    // std::cout << "THERMAL ENERGY " << thermal_energy << std::endl;
   }
   
 }

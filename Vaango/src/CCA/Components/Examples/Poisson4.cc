@@ -207,14 +207,14 @@ Poisson4::initialize(const ProcessorGroup*,
           for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++) {
 
             phi[*nbound_ptr]=value;
-            // std::cout << "phi" << *nbound_ptr  << "=" << phi[*nbound_ptr] << endl;
+            // std::cout << "phi" << *nbound_ptr  << "=" << phi[*nbound_ptr] << std::endl;
 
           }
           delete bcb;
         }
       }
       for(NodeIterator iter(l, h);!iter.done(); iter++) {
-        std::cout << "phi" << *iter  << "=" << phi[*iter] << endl;
+        std::cout << "phi" << *iter  << "=" << phi[*iter] << std::endl;
       }
     }
 #endif
@@ -225,7 +225,7 @@ Poisson4::initialize(const ProcessorGroup*,
 
         for (NodeIterator iter(l, h); !iter.done(); iter++) {
           if (phi[*iter] != 1.0) {
-            std::cout << "phi_old[" << *iter << "]=" << phi[*iter] << endl;
+            std::cout << "phi_old[" << *iter << "]=" << phi[*iter] << std::endl;
           }
           phi[*iter] = 1;
         }
@@ -234,7 +234,7 @@ Poisson4::initialize(const ProcessorGroup*,
       IntVector l_e = patch->getExtraNodeLowIndex();
       IntVector h_e = patch->getExtraNodeHighIndex();
       for (NodeIterator iter(l_e, h_e); !iter.done(); iter++) {
-        std::cout << "phi[" << *iter << "]=" << phi[*iter] << endl;
+        std::cout << "phi[" << *iter << "]=" << phi[*iter] << std::endl;
       }
     }
 #endif
@@ -295,7 +295,7 @@ Poisson4::timeAdvance(const ProcessorGroup*,
 #endif
 
 #ifdef SURFACE_ITERATOR
-    std::cout << "Doing interior iteration" << endl;
+    std::cout << "Doing interior iteration" << std::endl;
     while (!iter_interior.done()) {
       IntVector n = *iter_interior;
 #else
@@ -316,10 +316,10 @@ Poisson4::timeAdvance(const ProcessorGroup*,
 #endif
     }
 #ifdef SURFACE_ITERATOR
-    std::cout << "Doing exterior iteration" << endl;
+    std::cout << "Doing exterior iteration" << std::endl;
     while (!iter_exterior.done()) {
       IntVector n = *iter_exterior;
-      std::cout << "iterator = " << n << endl;
+      std::cout << "iterator = " << n << std::endl;
       newphi[n] =
         (1. / 6) * (phi[n + IntVector(1, 0, 0)] + phi[n + IntVector(-1, 0, 0)] +
                     phi[n + IntVector(0, 1, 0)] + phi[n + IntVector(0, -1, 0)] +
@@ -385,7 +385,7 @@ Poisson4::timeAdvance1(const ProcessorGroup*,
 #endif
 
 #ifdef SURFACE_ITERATOR
-    std::cout << "Doing interior iteration" << endl;
+    std::cout << "Doing interior iteration" << std::endl;
     while (!iter_interior.done()) {
       IntVector n = *iter_interior;
 #else
@@ -406,10 +406,10 @@ Poisson4::timeAdvance1(const ProcessorGroup*,
 #endif
     }
 #ifdef SURFACE_ITERATOR
-    std::cout << "Doing exterior iteration" << endl;
+    std::cout << "Doing exterior iteration" << std::endl;
     while (!iter_exterior.done()) {
       IntVector n = *iter_exterior;
-      std::cout << "iterator = " << n << endl;
+      std::cout << "iterator = " << n << std::endl;
       newphi[n] =
         (1. / 6) * (phi[n + IntVector(1, 0, 0)] + phi[n + IntVector(-1, 0, 0)] +
                     phi[n + IntVector(0, 1, 0)] + phi[n + IntVector(0, -1, 0)] +

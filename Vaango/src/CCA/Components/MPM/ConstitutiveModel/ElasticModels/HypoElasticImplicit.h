@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 #include <Core/Math/Matrix3.h>
 #include <Eigen/Dense>
 #include <cmath>

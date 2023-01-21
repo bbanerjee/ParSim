@@ -54,7 +54,7 @@
 void Param::setNumDims(const Counter d)
 {
   if (numDims) {
-    cerr << "\n\nError: numDims already initialized and cannot be re-set."
+    std::cerr <<  "\n\nError: numDims already initialized and cannot be re-set."
          << "\n";
     clean();
     exit(1);

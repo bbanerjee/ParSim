@@ -151,7 +151,7 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& ,
   if(validPlane == false){
     ostringstream warn;
     warn << "\n ERROR:flatPlat_heatFlux: the plane that you've specified " << start
-         << " " << end << " is not parallel to the coordinate system. \n" << endl;
+         << " " << end << " is not parallel to the coordinate system. \n" << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -319,6 +319,6 @@ void flatPlate_heatFlux::doAnalysis(const ProcessorGroup* pg,
       total_heatRate += gHeatRate[n];
     }
   }  // patches
-  //cout << " total_heatRate: " << total_heatRate << endl;
+  //cout << " total_heatRate: " << total_heatRate << std::endl;
   new_dw->put(sumvec_vartype(total_heatRate), v_lb->total_heatRateLabel);
 }

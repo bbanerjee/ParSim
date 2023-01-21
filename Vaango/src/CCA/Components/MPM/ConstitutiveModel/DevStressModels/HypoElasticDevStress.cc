@@ -48,7 +48,7 @@ HypoElasticDevStress::computeDeviatoricStressInc(
   const particleIndex, const ModelStateBase* plaState,
   DeformationState* defState, const double delT)
 {
-  // proc0cout << " HypoElasticDevStress:computeDevStessInc " << endl;
+  // proc0cout << " HypoElasticDevStress:computeDevStessInc " << std::endl;
   double mu = plaState->shearModulus;
   defState->devStressInc = defState->devD * (2.0 * mu * delT);
 }

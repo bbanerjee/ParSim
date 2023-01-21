@@ -248,7 +248,7 @@ public:
     for (int p = 0; p < patches->size(); p++) {
       const Patch* patch = patches->get(p);
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::step2 on patch" << patch->getID() << endl;
+        cout_doing << "CGSolver::step2 on patch" << patch->getID() << std::endl;
       }
       for (int m = 0; m < matls->size(); m++) {
         int matl = matls->get(m);
@@ -341,7 +341,7 @@ public:
     for (int p = 0; p < patches->size(); p++) {
       const Patch* patch = patches->get(p);
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::step3 on patch" << patch->getID() << endl;
+        cout_doing << "CGSolver::step3 on patch" << patch->getID() << std::endl;
       }
       for (int m = 0; m < matls->size(); m++) {
         int matl = matls->get(m);
@@ -398,7 +398,7 @@ public:
     for (int p = 0; p < patches->size(); p++) {
       const Patch* patch = patches->get(p);
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::setup on patch " << patch->getID() << endl;
+        cout_doing << "CGSolver::setup on patch " << patch->getID() << std::endl;
       }
 
       for (int m = 0; m < matls->size(); m++) {
@@ -505,7 +505,7 @@ public:
         Handle<CGStencil7<GridVarType>>)
   {
     if (cout_doing.active()) {
-      cout_doing << "CGSolver::solve" << endl;
+      cout_doing << "CGSolver::solve" << std::endl;
     }
 
     Timers::Simple timer;
@@ -535,7 +535,7 @@ public:
     //__________________________________
     // Schedule the setup
     if (cout_doing.active()) {
-      cout_doing << "CGSolver::schedule setup" << endl;
+      cout_doing << "CGSolver::schedule setup" << std::endl;
     }
     Task* task =
       scinew Task("CGSolver:setup", this, &CGStencil7<GridVarType>::setup);
@@ -610,7 +610,7 @@ public:
       //__________________________________
       // Step 1 - requires A(parent), D(old, 1 ghost) computes aden(new)
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::schedule Step 1" << endl;
+        cout_doing << "CGSolver::schedule Step 1" << std::endl;
       }
       task =
         scinew Task("CGSolver:step1", this, &CGStencil7<GridVarType>::step1);
@@ -627,7 +627,7 @@ public:
       // Step 2 - requires d(old), aden(new) D(old), X(old) R(old)  computes X,
       // R, Q, d
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::schedule Step 2" << endl;
+        cout_doing << "CGSolver::schedule Step 2" << std::endl;
       }
       task =
         scinew Task("CGSolver:step2", this, &CGStencil7<GridVarType>::step2);
@@ -654,7 +654,7 @@ public:
       // schedule
       // Step 3 - requires D(old), Q(new), d(new), d(old), computes D
       if (cout_doing.active()) {
-        cout_doing << "CGSolver::schedule Step 3" << endl;
+        cout_doing << "CGSolver::schedule Step 3" << std::endl;
       }
       task =
         scinew Task("CGSolver:step3", this, &CGStencil7<GridVarType>::step3);
@@ -758,7 +758,7 @@ public:
     } else if (params->getRecomputeTimestepOnFailure()) {
       proc0cout << "CGSolver not converging, requesting smaller time step\n";
       proc0cout << "    niters:   " << niter << "\n"
-                << "    residual: " << e << endl;
+                << "    residual: " << e << std::endl;
 
       new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
       new_dw->put(bool_or_vartype(true),

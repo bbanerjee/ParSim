@@ -32,7 +32,7 @@
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/Array3.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 
 #include <set>
 #include <map>

@@ -96,7 +96,7 @@ namespace Uintah {
          << " Influx_outflux error detected, "
          << " patch " << patch->getID()
          << ", Level " << patch->getLevel()->getIndex()
-         << ", matl indx "<< indx << ", number of bad cells: " << badCells.size() << endl;
+         << ", matl indx "<< indx << ", number of bad cells: " << badCells.size() << std::endl;
 
     for (int i = 0; i<(int) badCells.size(); i++) {
       std::cout << Parallel::getMPIRank() << "  cell " <<  badCells[i] << " outflux: ";
@@ -109,11 +109,11 @@ namespace Uintah {
         total_fluxout += flux;
         std::cout << " \t face: " << f << " (" << flux << ") ";
       }
-      std::cout << " total_outflux: " << total_fluxout << endl;
+      std::cout << " total_outflux: " << total_fluxout << std::endl;
     }
     
     if (new_dw->timestepRestarted() == false){
-      std::cout << "\nA timestep restart has been requested \n " << endl;
+      std::cout << "\nA timestep restart has been requested \n " << std::endl;
       new_dw->restartTimestep();
     }
   }

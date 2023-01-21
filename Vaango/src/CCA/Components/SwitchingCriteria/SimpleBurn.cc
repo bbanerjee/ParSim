@@ -55,7 +55,7 @@ SimpleBurnCriteria::SimpleBurnCriteria(ProblemSpecP& ps)
 
   proc0cout << "Switching criteria:  \tSimpleBurn, reactant matl: "
             << d_material << " Threshold tempterature " << d_temperature
-            << endl;
+            << std::endl;
 
   d_mpm_labels    = std::make_unique<MPMLabel>();
   d_mpmice_labels = std::make_unique<MPMICELabel>();

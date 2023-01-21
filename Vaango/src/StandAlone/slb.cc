@@ -140,7 +140,7 @@ void bisect(const string& div, int num, int factor,
       box->appendElement("extraCells", extraCells);
     box->appendElement("resolution", res);
 
-    cerr << idx++ << ": patch: " << low << "-" << high << ',' 
+    std::cerr <<  idx++ << ": patch: " << low << "-" << high << ',' 
          << low_point << "-" << high_point << '\n';
 
 
@@ -232,12 +232,12 @@ parseArgs( int argc, char *argv[],
 
   weight = atof( argv[1] );
   if( weight < -1.0 || weight > 1.0 ) {
-    cerr << "Weight must be between 0.0 and 1.0\n";
+    std::cerr <<  "Weight must be between 0.0 and 1.0\n";
     exit( 1 );
   }
   nump = atoi( argv[2] );
   if( nump < 1 ) {
-    cerr << "Number of patches must be greater than 0.\n";
+    std::cerr <<  "Number of patches must be greater than 0.\n";
     exit( 1 );
   }
 
@@ -249,12 +249,12 @@ parseArgs( int argc, char *argv[],
     if (strcmp(argv[i], "-div") == 0) {
       i++;
       if (i >= argc) {
-        cerr << "-div option needs an argument (i.e., -div xyz)\n";
+        std::cerr <<  "-div option needs an argument (i.e., -div xyz)\n";
         exit( 1 );
       }
       for (unsigned int j = 0; j < strlen(argv[i]); j++) {
         if (argv[i][j] != 'x' && argv[i][j] != 'y' && argv[i][j] != 'z') {
-          cerr << "Divisions string must be a combination of x, y, or z\n";
+          std::cerr <<  "Divisions string must be a combination of x, y, or z\n";
           exit( 1 );
         }
       }
@@ -263,17 +263,17 @@ parseArgs( int argc, char *argv[],
     else if (strcmp(argv[i], "-sub") == 0) {
       i++;
       if (i >= argc) {
-        cerr << "-sub option needs an argument (i.e., -sub 2)\n";
+        std::cerr <<  "-sub option needs an argument (i.e., -sub 2)\n";
         exit( 1 );
       }
       submultiples = atoi(argv[i]);
       if (submultiples < 1) {
-        cerr << "Number of Submultiples must be greater than 0\n";
+        std::cerr <<  "Number of Submultiples must be greater than 0\n";
         exit( 1 );
       }
     }
     else {
-      cerr << "Unknown option " << argv[i] << '\n';
+      std::cerr <<  "Unknown option " << argv[i] << '\n';
       exit( 1 );
     }
   }
@@ -359,11 +359,11 @@ main(int argc, char *argv[])
 
       Uintah::Primes::FactorType factors;
       int n = Uintah::Primes::factorize(nump, factors);
-      cerr << nump << ": ";
+      std::cerr <<  nump << ": ";
       for(int i=0;i<n;i++){
-        cerr << factors[i] << " ";
+        std::cerr <<  factors[i] << " ";
       }
-      cerr << '\n';
+      std::cerr <<  '\n';
       
       string div = divisions;
       while(static_cast<int>(div.length()) <= n)
@@ -428,10 +428,10 @@ main(int argc, char *argv[])
     ofstream out(outfile.c_str());
     out << ups;
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << '\n';
+    std::cerr <<  "Caught exception: " << e.message() << '\n';
     if(e.stackTrace())
-      cerr << "Stack trace: " << e.stackTrace() << '\n';
+      std::cerr <<  "Stack trace: " << e.stackTrace() << '\n';
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
   }
 }

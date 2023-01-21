@@ -136,22 +136,22 @@ void Mixing2::problemSetup(GridP&, MaterialManagerP& in_state,
     gas = scinew IdealGasMix(fname, id);
     int nsp = gas->nSpecies();
 #if 0
-    cerr << "refPressure=" << gas->refPressure() << '\n';
+    std::cerr <<  "refPressure=" << gas->refPressure() << '\n';
     gas->setState_TPY(200, 101325, "H2:1");
 #endif
     if(d_myworld->myRank() == 0){
 #if 0
       int nel = gas->nElements();
       cerr.precision(17);
-      cerr << "Using ideal gas " << id << "(from " << fname << ") with " << nel << " elements and " << nsp << " species\n";
+      std::cerr <<  "Using ideal gas " << id << "(from " << fname << ") with " << nel << " elements and " << nsp << " species\n";
       gas->setState_TPY(300., 101325., "CH4:0.1, O2:0.2, N2:0.7");
-      cerr << *gas;
+      std::cerr <<  *gas;
 #endif
 #if 0
       
       //equilibrate(*gas, UV);
       gas->setState_TPY(300, 101325, "H2:1");
-      cerr << *gas;
+      std::cerr <<  *gas;
 #endif
     }
     for (int k = 0; k < nsp; k++) {
@@ -173,7 +173,7 @@ void Mixing2::problemSetup(GridP&, MaterialManagerP& in_state,
   }
   catch (CanteraError) {
     showErrors(cerr);
-    cerr << "test failed." << endl;
+    std::cerr <<  "test failed." << std::endl;
     throw InternalError("Cantera failed", __FILE__, __LINE__);
   }
 
@@ -217,8 +217,8 @@ void Mixing2::problemSetup(GridP&, MaterialManagerP& in_state,
     IdealGasMix* gas2 = scinew IdealGasMix("gri30.xml", "gri30");
     gas->setState_TPY(1300., 101325., "CH4:0.1, O2:0.2, N2:0.7");
     gas2->setState_TPY(1300., 101325., "CH4:0.1, O2:0.2, N2:0.7");
-    cerr << *gas;
-    cerr << *gas2;
+    std::cerr <<  *gas;
+    std::cerr <<  *gas2;
     Reactor r;
   
     // specify the thermodynamic property and kinetics managers
@@ -260,7 +260,7 @@ void Mixing2::problemSetup(GridP&, MaterialManagerP& in_state,
   // handle exceptions thrown by Cantera
   catch (CanteraError) {
     showErrors(cout);
-    std::cout << " terminating... " << endl;
+    std::cout << " terminating... " << std::endl;
   }
 #endif
 }
@@ -427,13 +427,13 @@ void Mixing2::computeModelSources(const ProcessorGroup*,
         for(int i=0;i<numSpecies;i++){
           //ASSERT(tmp_mf[i] >= 0 && tmp_mf[i] <= 1);
           if(tmp_mf[i] < -1.e-8)
-            cerr << "mf[" << i << "]=" << tmp_mf[i] << '\n';
+            std::cerr <<  "mf[" << i << "]=" << tmp_mf[i] << '\n';
           if(tmp_mf[i] > 1+1.e-8)
-            cerr << "mf[" << i << "]=" << tmp_mf[i] << '\n';
+            std::cerr <<  "mf[" << i << "]=" << tmp_mf[i] << '\n';
           sum += tmp_mf[i];
         }
         if(sum < 1-1.e-8 || sum > 1+1.e-8){
-          cerr << "mf sum" << idx << "=" << sum << '\n';
+          std::cerr <<  "mf sum" << idx << "=" << sum << '\n';
         }
 #endif
         
@@ -441,9 +441,9 @@ void Mixing2::computeModelSources(const ProcessorGroup*,
         double press = pressure[*iter];
         gas->setState_TPY(temp, press, tmp_mf);
 #if 0
-        cerr << "Cp=" << gas->cp_mass() << '\n';
-        cerr << "Cv=" << gas->cv_mass() << '\n';
-        cerr << "gamma=" << gas->cp_mass()/gas->cv_mass() << '\n';
+        std::cerr <<  "Cp=" << gas->cp_mass() << '\n';
+        std::cerr <<  "Cv=" << gas->cv_mass() << '\n';
+        std::cerr <<  "gamma=" << gas->cp_mass()/gas->cv_mass() << '\n';
 #endif
         
         // create a reactor
@@ -461,7 +461,7 @@ void Mixing2::computeModelSources(const ProcessorGroup*,
         for(int i = 0; i< numSpecies; i++)
           mfsource[i][*iter] += new_mf[i]-tmp_mf[i];
       }
-      cerr << "Mixing2 total energy: " << etotal << ", release rate=" << etotal/dt << '\n';
+      std::cerr <<  "Mixing2 total energy: " << etotal << ", release rate=" << etotal/dt << '\n';
 #if 0
       {
         static ofstream outt("temp.dat");

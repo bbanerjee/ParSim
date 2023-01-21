@@ -239,7 +239,7 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
         if(Uintah::MPI::Waitsome(requests_.size(),&requests_[0],&count,&indicies_[0],&statuses_[0])==MPI_ERR_IN_STATUS)
         {
                 BNRTask *task;
-                cerr << "rank:" << rank << " error in Uintah::MPI::Waitsome status\n";
+                std::cerr <<  "rank:" << rank << " error in Uintah::MPI::Waitsome status\n";
                 for(int c=0;c<count;c++)
                 {
                   if(statuses_[c].MPI_ERROR!=MPI_SUCCESS)
@@ -248,13 +248,13 @@ void GBRv2Regridder::RunBR( vector<IntVector> &flags, vector<Region> &patches)
                     int length;
                     
                     MPI_Error_string(statuses_[c].MPI_ERROR,message,&length);
-                    cerr << "Error message" << ": '" << message << "'\n";
+                    std::cerr <<  "Error message" << ": '" << message << "'\n";
                   
                     task=request_to_task_[indicies_[c]];
-                    cerr << "Task status:" << task->status_ << " patch:" << task->patch_ << endl;
+                    std::cerr <<  "Task status:" << task->status_ << " patch:" << task->patch_ << std::endl;
                   }
                 }
-                cerr << "Entering infinite loop so debugger can be attached\n";
+                std::cerr <<  "Entering infinite loop so debugger can be attached\n";
                 while(1); //hang so debugger can be attached
         }
       

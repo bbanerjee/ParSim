@@ -265,8 +265,8 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
     int numPts = fgp->returnPointCount();
     std::vector<Point>* points = fgp->getPoints();
     if(numMatls > 2)  {
-      cerr << "ERROR!!!\n";
-      cerr << "File Geometry Piece with ICE only supported for one ice matl.\n";
+      std::cerr <<  "ERROR!!!\n";
+      std::cerr <<  "File Geometry Piece with ICE only supported for one ice matl.\n";
       exit(1);
     }
 
@@ -283,8 +283,8 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
 
     IntVector ppc = d_geom_objs[obj]->getInitialData_IntVector("res");
     double ppc_tot = ppc.x()*ppc.y()*ppc.z();
-    std::cout << "ppc_tot = " << ppc_tot << endl;
-    std::cout << "numPts = " << numPts << endl;
+    std::cout << "ppc_tot = " << ppc_tot << std::endl;
+    std::cout << "numPts = " << numPts << std::endl;
     IntVector cell_idx;
     for (int ii = 0; ii < numPts; ++ii) {
       Point p = points->at(ii);

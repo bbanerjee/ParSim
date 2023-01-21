@@ -136,8 +136,8 @@ ConeGeometryPiece::inside(const Point& pt) const {
   double dist       = normal.length();
 
   // std::cout << "Bottom = " << d_bottom << " Top = " << d_top << " Point = " << pt
-  // << endl; std::cout << "tt = " << tt
-  //      << " Cur. Rad = " << rad << " Rad. Dist = " << dist << endl;
+  // << std::endl; std::cout << "tt = " << tt
+  //      << " Cur. Rad = " << rad << " Rad. Dist = " << dist << std::endl;
 
   // If dist < rad the point is inside
   if (dist > rad) return false;

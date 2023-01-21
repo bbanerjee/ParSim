@@ -122,7 +122,7 @@ GV_TaskGraph::inflate(string xmlDir)
 //    try {
 //      XMLPlatformUtils::Initialize();
 //    } catch (const XMLException& e) {
-//      cerr << "Unable to initialize XML library: " << e.getMessage() << endl;
+//      std::cerr <<  "Unable to initialize XML library: " << e.getMessage() << endl;
 //      return 0;
 //    }
 
@@ -152,8 +152,8 @@ GV_TaskGraph::inflate(string xmlDir)
 			       -- but just so it won't ever be caught in an
 			       infinite loop */);  
   if (process == 0) {
-    cerr << "Task graph data does not exist:" << endl;
-    cerr << xmlFileName << " does not exist." << endl;
+    std::cerr <<  "Task graph data does not exist:" << endl;
+    std::cerr <<  xmlFileName << " does not exist." << endl;
     delete pGraph;
     return 0;
   }
@@ -266,7 +266,7 @@ void
 GV_Task::processTaskForSorting(vector<GV_Task*>& sortedTasks)
 {
   if(m_visited){
-    cerr << "Cycle detected in task graph: already did\n\t"
+    std::cerr <<  "Cycle detected in task graph: already did\n\t"
 	 << getName() << endl;
     exit(1);
   }

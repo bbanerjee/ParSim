@@ -96,7 +96,7 @@ int main()
     pow_time/=factor;
     cube_root_time/=factor;
 
-    std::cout << "Range: [" << range.low << "," << range.high << "] initial guess: " << guess << " pow time: " << pow_time << " cubeRoot time:" << cube_root_time << " avg diff: " << avg_diff << " max diff:" << max_diff << endl;
+    std::cout << "Range: [" << range.low << "," << range.high << "] initial guess: " << guess << " pow time: " << pow_time << " cubeRoot time:" << cube_root_time << " avg diff: " << avg_diff << " max diff:" << max_diff << std::endl;
   }
 
   return 0;

@@ -94,14 +94,14 @@ void ArcCrack::outputInitialCrackPlane(int i)
 {
 
   std::cout << "  * Arc " << i+1 << ": meshed by " << NCells
-       << " cells on the circumference." << endl;
+       << " cells on the circumference." << std::endl;
   if(CrkFrtSegID==-1)
-    std::cout << "   crack front: on the arc" << endl;
+    std::cout << "   crack front: on the arc" << std::endl;
   else
-    std::cout << "   crack front segment ID: " << CrkFrtSegID << endl;
-  std::cout << "\n    start, middle and end points of the arc:"  << endl;
+    std::cout << "   crack front segment ID: " << CrkFrtSegID << std::endl;
+  std::cout << "\n    start, middle and end points of the arc:"  << std::endl;
   for(int j=0;j<3;j++)
-    std::cout << "    p" << j+1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j+1 << ": " << vertices[j] << std::endl;
 
 }
 

@@ -77,7 +77,7 @@ using namespace std;
 void
 Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, int ortho2, bool average = true, bool stresses = false)
 {
-  std::cout << "Attempting to extract down axis: " << axis << " at point: (" << ortho1 << "," << ortho2 << ") for variable: " << clf.particleVariable << endl;
+  std::cout << "Attempting to extract down axis: " << axis << " at point: (" << ortho1 << "," << ortho2 << ") for variable: " << clf.particleVariable << std::endl;
   // Print out all the variables to console
   std::vector<std::string> vars;
   std::vector<const Uintah::TypeDescription*> types;
@@ -85,7 +85,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
      
   // Print the timesteps to console
   std::vector<int> index;
@@ -94,7 +94,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
   
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -115,12 +115,12 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.y() || ortho1 < 0)
     {
-      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
     if(ortho2 > domainHi.z() || ortho2 < 0)
     {
-      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
   } else if(axis == 'y') 
@@ -129,12 +129,12 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.x() || ortho1 < 0)
     {
-      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
     if(ortho2 > domainHi.z() || ortho2 < 0)
     {
-      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect z specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
   } else if(axis == 'z')
@@ -143,16 +143,16 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
 
     if(ortho1 > domainHi.x() || ortho1 < 0)
     {
-      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect x specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
     if(ortho2 > domainHi.y() || ortho2 < 0)
     {
-      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << endl;
+      std::cout << "ERROR: Incorrect y specified in 'pol' option: " << ortho1 << std::endl;
       exit(1);
     }
   } else {
-    std::cout << "ERROR: Incorrect axis specified in 'pol' option: " << axis << ".  Must be x, y or z." << endl;
+    std::cout << "ERROR: Incorrect axis specified in 'pol' option: " << axis << ".  Must be x, y or z." << std::endl;
     exit(1);
   } 
 
@@ -161,7 +161,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
     double time = times[t];
     
     // set up the output file
-    std::cout << "time = " << time << endl;
+    std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
      std::ostringstream fnum;
     string filename;
@@ -226,7 +226,7 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
                   // save all the particles
                   particlesToGrab.push_back(*iter);
                } else {
-                  std::cout << "Adding particle: " << *iter << endl;
+                  std::cout << "Adding particle: " << *iter << std::endl;
                   particlesToGrab.push_back(*iter);
                   break;
                }
@@ -247,9 +247,9 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
            }
 
            if(particlesToGrab.size() > 0)
-             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << endl;
+             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << std::endl;
            else 
-             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << endl;
+             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << std::endl;
              
         } else if( clf.particleVariable.compare("p.velocity") == 0) {
            da->query(valueVector,  clf.particleVariable,  matl, patch, t);
@@ -261,9 +261,9 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
            }
 
            if(particlesToGrab.size() > 0)
-             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << endl;
+             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << std::endl;
            else 
-             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << endl;
+             partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << std::endl;
 
         } else if( clf.particleVariable.compare("p.stress") == 0) {
            da->query(valueMatrix,  clf.particleVariable,  matl, patch, t);
@@ -282,14 +282,14 @@ Uintah::POL( DataArchive * da, CommandLineFlags & clf, char axis, int ortho1, in
               double eq_stress=sqrt(Mdev.NormSquared()*1.5);
 
              if(particlesToGrab.size() > 0)
-               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << -1./3.0*(total / particlesToGrab.size()).Trace() << "\t" << eq_stress << endl;
+               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << -1./3.0*(total / particlesToGrab.size()).Trace() << "\t" << eq_stress << std::endl;
              else 
-               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << "\t" << 0 << endl;
+               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << "\t" << 0 << std::endl;
            } else {
              if(particlesToGrab.size() > 0)
-               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << endl;
+               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << total / particlesToGrab.size() << std::endl;
              else 
-               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << endl;
+               partfile << cell.x() << "\t" << cell.y() << "\t" << cell.z() << "\t" << 0 << std::endl;
            }
         }
 

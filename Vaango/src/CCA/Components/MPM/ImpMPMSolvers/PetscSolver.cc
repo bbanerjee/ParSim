@@ -353,13 +353,13 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
 #endif
 
 #if 0
-  cerr << "me = " << me << endl;
-  cerr << "numlrows = " << numlrows << endl;
-  cerr << "numlcolumns = " << numlcolumns << endl;
-  cerr << "globalrows = " << globalrows << endl;
-  cerr << "globalcolumns = " << globalcolumns << endl;
+  std::cerr <<  "me = " << me << std::endl;
+  std::cerr <<  "numlrows = " << numlrows << std::endl;
+  std::cerr <<  "numlcolumns = " << numlcolumns << std::endl;
+  std::cerr <<  "globalrows = " << globalrows << std::endl;
+  std::cerr <<  "globalcolumns = " << globalcolumns << std::endl;
   for (int i = 0; i < numlrows; i++) 
-    cerr << "diag[" << i << "] = " << diag[i] << endl;
+    std::cerr <<  "diag[" << i << "] = " << diag[i] << std::endl;
 #endif
 
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
@@ -448,7 +448,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
     flushMatrix();
 //    MatType type;
 //    MatGetType(d_A, &type);
-//    std::cout << "MatType = " << type << endl;
+//    std::cout << "MatType = " << type << std::endl;
 
     //set the initial stash size.
     //for now set it to be 1M
@@ -776,7 +776,7 @@ void MPMPetscSolver::removeFixedDOFHeat()
         // zero out the columns
         ierr = MatSetValue(d_A,*n,index,0,INSERT_VALUES);
         if (ierr)
-          std::cout << "MatSetValue error for " << index << "," << *n << endl;
+          std::cout << "MatSetValue error for " << index << "," << *n << std::endl;
       }
     }
   }
@@ -784,7 +784,7 @@ void MPMPetscSolver::removeFixedDOFHeat()
   finalizeMatrix();
 
   if (d_DOF.size() != 0) {
-    std::cout << "Zeroing out rows" << endl;
+    std::cout << "Zeroing out rows" << std::endl;
   }
   IS is;
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
@@ -909,7 +909,7 @@ int MPMPetscSolver::getSolution(vector<double>& xPetsc)
   VecGetOwnershipRange(d_x,&begin,&end);
   ierr = VecGetArray(d_x,&x);
   if (ierr)
-    cerr << "VecGetArray failed" << endl;
+    std::cerr <<  "VecGetArray failed" << std::endl;
   for (int ii = 0; ii < nlocal; ii++) {
     xPetsc.push_back(x[ii]);
   }
@@ -925,7 +925,7 @@ int MPMPetscSolver::getRHS(vector<double>& QPetsc)
   VecGetOwnershipRange(d_B,&begin,&end);
   ierr = VecGetArray(d_B,&q);
   if (ierr)
-    cerr << "VecGetArray failed" << endl;
+    std::cerr <<  "VecGetArray failed" << std::endl;
   for (int ii = 0; ii < nlocal; ii++) {
     QPetsc.push_back(q[ii]);
   }

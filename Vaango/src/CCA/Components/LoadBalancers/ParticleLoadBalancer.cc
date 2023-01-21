@@ -240,7 +240,7 @@ ParticleLoadBalancer::collectParticlesForRegrid(
   if (dbg.active() && d_myworld->myRank() == 0) {
     for (unsigned i = 0; i < num_particles.size(); i++) {
       dbg << d_myworld->myRank() << "  Post gather index " << i << ": "
-          << " numP : " << num_particles[i] << endl;
+          << " numP : " << num_particles[i] << std::endl;
     }
   }
 }
@@ -308,7 +308,7 @@ ParticleLoadBalancer::collectParticles(const Grid* grid,
       // add to particle list
       PatchInfo p(id, thisPatchParticles);
       particleList.push_back(p);
-      dbg << "  Pre gather " << id << " part: " << thisPatchParticles << endl;
+      dbg << "  Pre gather " << id << " part: " << thisPatchParticles << std::endl;
     }
   }
 
@@ -344,7 +344,7 @@ ParticleLoadBalancer::collectParticles(const Grid* grid,
       for (unsigned i = 0; i < all_particles.size(); i++) {
         PatchInfo& pi = all_particles[i];
         dbg << d_myworld->myRank() << "  Post gather index " << i << ": "
-            << pi.id << " numP : " << pi.numParticles << endl;
+            << pi.id << " numP : " << pi.numParticles << std::endl;
       }
     }
     for (int i = 0; i < num_patches; i++) {
@@ -518,7 +518,7 @@ ParticleLoadBalancer::assignPatches(
     {
       std::cout << assignments[p] << " ";
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
 #endif
 }
@@ -557,7 +557,7 @@ ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
 
     proc0cout << "ParticleLoadBalancer: ParticlePatches: "
               << particlePatches.size()
-              << " cellPatches: " << cellPatches.size() << endl;
+              << " cellPatches: " << cellPatches.size() << std::endl;
 
     std::vector<double> procCosts(numProcs);
     std::vector<int> assignments;
@@ -597,7 +597,7 @@ ParticleLoadBalancer::loadBalanceGrid(const GridP& grid, bool force)
     partImb = computeImbalance(particleCosts);
 
     stats << "Load Imbalance, cellImb: " << cellImb << " partImb: " << partImb
-          << endl;
+          << std::endl;
   }
 
   // need to rewrite thresholdExceeded to take into account cells and particles
@@ -632,7 +632,7 @@ ParticleLoadBalancer::computeImbalance(
       std::cout << "ProcCosts: level: " << l << ", ";
       for(int p=0;p<numProcs;p++)
         std::cout << tempProcCosts[l][p] << " ";
-      std::cout << endl;
+      std::cout << std::endl;
     }
   }
 #endif
@@ -722,7 +722,7 @@ ParticleLoadBalancer::thresholdExceeded(
   if (d_myworld->myRank() == 0) {
     stats << "Total:"
           << " Load Balance:  Cell Improvement:" << cellImp
-          << " Particle Improvement:" << partImp << endl;
+          << " Particle Improvement:" << partImp << std::endl;
   }
 
   if ((cellImp + partImp) / 2 > d_lbThreshold) {
@@ -759,7 +759,7 @@ ParticleLoadBalancer::needRecompile(const GridP& grid)
   //    dbg << d_myworld->myRank() << " DLB::NeedRecompile: check=" << do_check
   //    << " ts: " << timestep << " " << d_lbTimestepInterval << " t " << time
   //    << " " << d_lb_interval << " last: " << d_last_lb_simTimestep << " " <<
-  //    d_last_lb_simTime << endl;
+  //    d_last_lb_simTime << std::endl;
 
   // if it determines we need to re-load-balance, recompile
   if (do_check && possiblyDynamicallyReallocate(grid, LoadBalancer::CHECK_LB)) {
@@ -823,13 +823,13 @@ ParticleLoadBalancer::getCosts(const Grid* grid,
       {
         std::cout << cell_costs[l][p] << " ";
       }
-      std::cout << endl;
+      std::cout << std::endl;
       std::cout << " Level: " << l << " particleCosts: ";
       for (int p = 0; p < grid->getLevel(l)->numPatches(); p++) 
       {
         std::cout << particle_costs[l][p] << " ";
       }
-      std::cout << endl;
+      std::cout << std::endl;
     }
 #endif
   }
@@ -840,7 +840,7 @@ ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid,
                                                     int state)
 {
   if (Uintah::Parallel::getMPIRank() == 0) {
-    dbg << d_myworld->myRank() << " In DLB, state " << state << endl;
+    dbg << d_myworld->myRank() << " In DLB, state " << state << std::endl;
   }
 
   Timers::Simple timer;

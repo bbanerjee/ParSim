@@ -91,7 +91,7 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
       lower[2] = gp->getBoundingBox().lower().z();
     }
     else {
-      std::cout << "error" << endl; // TODO error.
+      std::cout << "error" << std::endl; // TODO error.
     }
 
     // Compute L1 and L2, distance from normal plane to either side of the boundary.
@@ -100,13 +100,13 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
     d_norm_L1L2 = pow(abs(d_norm_L1),3) + pow(abs(d_norm_L2),3);
 
     // TODO DC comment
-    /* std::cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << endl;
-       std::cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << endl;
+    /* std::cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << std::endl;
+       std::cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << std::endl;
        std::cout << "box: [" << gp->getBoundingBox().lower().x() << ", " << gp->getBoundingBox().lower().y() << ", " << gp->getBoundingBox().lower().z() <<
-       "], [" << gp->getBoundingBox().upper().x() << ", " << gp->getBoundingBox().upper().y() << ", " << gp->getBoundingBox().upper().z() << "]" << endl;
-       std::cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << endl;
-       std::cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << endl;
-       std::cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << endl; */
+       "], [" << gp->getBoundingBox().upper().x() << ", " << gp->getBoundingBox().upper().y() << ", " << gp->getBoundingBox().upper().z() << "]" << std::endl;
+       std::cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << std::endl;
+       std::cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << std::endl;
+       std::cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << std::endl; */
 
   } else {
     throw ParameterNotFound("** ERROR ** No surface specified for moment BC.",
@@ -235,11 +235,11 @@ MomentBC::getForceVector(const Point& px,
     force = normalRefConfig*force_m;
 
     // TODO DC comment
-    /* std::cout << "px_dist: " << px_dist << endl;
-       std::cout << "force_m: " << force_m << endl;
-       std::cout << "force: " << force.x() << " " << force.y() << " " << force.z() << endl;
-       std::cout << "L1^3+L2^3: " << d_norm_L1L2 << endl;
-       std::cout << "forcePerParticle: " << forcePerParticle << endl; */
+    /* std::cout << "px_dist: " << px_dist << std::endl;
+       std::cout << "force_m: " << force_m << std::endl;
+       std::cout << "force: " << force.x() << " " << force.y() << " " << force.z() << std::endl;
+       std::cout << "L1^3+L2^3: " << d_norm_L1L2 << std::endl;
+       std::cout << "forcePerParticle: " << forcePerParticle << std::endl; */
 
   } else {
     throw ParameterNotFound("ERROR: Unknown surface specified for moment BC",
@@ -325,22 +325,22 @@ namespace Uintah {
 // A method to print out the moment bcs
   ostream& operator<<(std::ostream& out, const MomentBC& bc)
   {
-    out << "Begin MPM Moment BC # = " << bc.loadCurveID() << endl;
+    out << "Begin MPM Moment BC # = " << bc.loadCurveID() << std::endl;
     std::string surfType = bc.getSurfaceType();
-    out << "    Surface of application = " << surfType << endl;
+    out << "    Surface of application = " << surfType << std::endl;
     // TODO sphere and cylinder
     if (surfType == "box") {
       Box box = (bc.getSurface())->getBoundingBox();
-      out << "        " << box << endl;
+      out << "        " << box << std::endl;
     }
-    out << "    Time vs. Load = " << endl;
+    out << "    Time vs. Load = " << std::endl;
     LoadCurve<double>* lc = bc.getLoadCurve();
     int numPts = lc->numberOfPointsOnLoadCurve();
     for (int ii = 0; ii < numPts; ++ii) {
       out << "        time = " << lc->getTime(ii)
-	  << " moment = " << lc->getLoad(ii) << endl;
+	  << " moment = " << lc->getLoad(ii) << std::endl;
     }
-    out << "End MPM Moment BC # = " << bc.loadCurveID() << endl;
+    out << "End MPM Moment BC # = " << bc.loadCurveID() << std::endl;
     return out;
   }
 

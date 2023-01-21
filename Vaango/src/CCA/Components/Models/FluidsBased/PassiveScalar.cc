@@ -132,7 +132,7 @@ PassiveScalar::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 void PassiveScalar::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tPASSIVE_SCALAR" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tPASSIVE_SCALAR" << std::endl;
   d_mat_manager = in_state;
   d_matl = d_mat_manager->parseAndLookupMaterial(params, "material");
 
@@ -254,7 +254,7 @@ void PassiveScalar::scheduleInitialize(SchedulerP& sched,
                                        const LevelP& level,
                                        const ModelInfo*)
 {
-  cout_doing << "PassiveScalar::scheduleInitialize " << endl;
+  cout_doing << "PassiveScalar::scheduleInitialize " << std::endl;
   Task* t = scinew Task("PassiveScalar::initialize", 
                   this, &PassiveScalar::initialize);
   
@@ -270,7 +270,7 @@ void PassiveScalar::initialize(const ProcessorGroup*,
                                DataWarehouse*,
                                DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tPASSIVE_SCALAR" << endl;
+  cout_doing << "Doing Initialize \t\t\t\t\tPASSIVE_SCALAR" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int indx = d_matl->getDWIndex();
@@ -416,7 +416,7 @@ void PassiveScalar::scheduleModifyThermoTransportProperties(SchedulerP& sched,
                                                             const LevelP& level,
                                                             const MaterialSet* /*ice_matls*/)
 {
-  cout_doing << "PASSIVE_SCALAR::scheduleModifyThermoTransportProperties" << endl;
+  cout_doing << "PASSIVE_SCALAR::scheduleModifyThermoTransportProperties" << std::endl;
   Task* t = scinew Task("PassiveScalar::modifyThermoTransportProperties", 
                    this,&PassiveScalar::modifyThermoTransportProperties);
   t->computes(d_scalar->diffusionCoefLabel);
@@ -432,7 +432,7 @@ void PassiveScalar::modifyThermoTransportProperties(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing modifyThermoTransportProperties on patch "
-               <<patch->getID()<< "\t PassiveScalar" << endl;
+               <<patch->getID()<< "\t PassiveScalar" << std::endl;
    
     int indx = d_matl->getDWIndex();
     CCVariable<double> diffusionCoeff;
@@ -457,7 +457,7 @@ void PassiveScalar::scheduleComputeModelSources(SchedulerP& sched,
                                                 const LevelP& level,
                                                 const ModelInfo* mi)
 {
-  cout_doing << "PASSIVE_SCALAR::scheduleComputeModelSources " << endl;
+  cout_doing << "PASSIVE_SCALAR::scheduleComputeModelSources " << std::endl;
   Task* t = scinew Task("PassiveScalar::computeModelSources", 
                    this,&PassiveScalar::computeModelSources, mi);
                      
@@ -486,7 +486,7 @@ void PassiveScalar::computeModelSources(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing computeModelSources... on patch "<<patch->getID()
-               << "\t\t\t PassiveScalar" << endl;
+               << "\t\t\t PassiveScalar" << std::endl;
    
     constCCVariable<double> f_old, diff_coeff;
     CCVariable<double>  f_src;
@@ -527,7 +527,7 @@ void PassiveScalar::scheduleTestConservation(SchedulerP& sched,
   int L = level->getIndex();
   
   if(d_test_conservation && L == 0){
-    cout_doing << "PASSIVESCALAR::scheduleTestConservation " << endl;
+    cout_doing << "PASSIVESCALAR::scheduleTestConservation " << std::endl;
     Task* t = scinew Task("PassiveScalar::testConservation", 
                      this,&PassiveScalar::testConservation, mi);
 
@@ -561,7 +561,7 @@ void PassiveScalar::testConservation(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing testConservation on patch "<<patch->getID()
-               << "\t\t\t PassiveScalar" << endl;
+               << "\t\t\t PassiveScalar" << std::endl;
                
     //__________________________________
     //  conservation of f test
@@ -637,7 +637,7 @@ void PassiveScalar::errorEstimate(const ProcessorGroup*,
                                   DataWarehouse* new_dw,
                                   bool)
 {
-  cout_doing << "Doing errorEstimate \t\t\t\t\t PassiveScalar"<< endl;
+  cout_doing << "Doing errorEstimate \t\t\t\t\t PassiveScalar"<< std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     

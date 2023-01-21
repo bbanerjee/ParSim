@@ -81,7 +81,7 @@ int main()
 
   // Part of optimizing the search for intersections
   int n_bins = RVEsize/diam_max;
-  std::cout << "n_bins = " << n_bins << endl;
+  std::cout << "n_bins = " << n_bins << std::endl;
 
   double bin_width = RVEsize/((double) n_bins);
 
@@ -97,7 +97,7 @@ int main()
   string infile_name = "Position_Radius.txt";
   ifstream source(infile_name.c_str());
   if(!source){
-    cerr << "File " << infile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << infile_name << " can't be opened." << std::endl;
   }
   double x,y,r,d;
 
@@ -115,7 +115,7 @@ int main()
 
   double total_cyl_area_orig = 0.0;
   double total_cyl_area_new  = 0.0;
-  std::cout << xLocs.size() << endl;
+  std::cout << xLocs.size() << std::endl;
 
   int numInts=0;
   for(int i = 0;i<xLocs.size();i++){
@@ -140,11 +140,11 @@ int main()
     total_cyl_area_new+= 0.25*M_PI*(d*d);;
   }
 
-  std::cout << "numInts = " << numInts << endl;
-  std::cout << "Spheres out of RVE = " << outOfRVE << endl;
-  std::cout << "Total cylinder area orig = " << total_cyl_area_orig << endl;
-  std::cout << "Total cylinder area new  = " << total_cyl_area_new  << endl;
-  std::cout << "New Maximum Diameter = " << diam_max << endl;
+  std::cout << "numInts = " << numInts << std::endl;
+  std::cout << "Spheres out of RVE = " << outOfRVE << std::endl;
+  std::cout << "Total cylinder area orig = " << total_cyl_area_orig << std::endl;
+  std::cout << "Total cylinder area new  = " << total_cyl_area_new  << std::endl;
+  std::cout << "New Maximum Diameter = " << diam_max << std::endl;
 
   std::vector<vector<double> > xbinLocs(n_bins);
   std::vector<vector<double> > ybinLocs(n_bins);
@@ -225,11 +225,11 @@ void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
   string outfile_name = "Test2D.RS.xml";
   ofstream dest(outfile_name.c_str());
   if(!dest){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
-  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-  dest << "<Uintah_Include>" << endl;
+  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+  dest << "<Uintah_Include>" << std::endl;
   dest << "<union>\n\n";
 
   int cylcount = 0;
@@ -244,12 +244,12 @@ void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
   }
 
   dest << "</union>\n\n";
-  dest << "</Uintah_Include>" << endl;
+  dest << "</Uintah_Include>" << std::endl;
 
   string outfile_name2 = "Position_Radius.RS.txt";
   ofstream dest2(outfile_name2.c_str());
   if(!dest2){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
   dest2.precision(15);

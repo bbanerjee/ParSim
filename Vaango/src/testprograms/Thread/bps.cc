@@ -80,7 +80,7 @@ public:
 
 void usage(char* progname)
 {
-    cerr << "usage: " << progname << " nprocessors count\n";
+    std::cerr <<  "usage: " << progname << " nprocessors count\n";
     exit(1);
 }
 
@@ -116,7 +116,7 @@ void BPS::run()
 	barrier->wait(np);
 	static int g=0;
 	if(g != i)
-	    cerr << "OOPS!: " << g << " vs. " << i << ", proc=" << proc << "\n";
+	    std::cerr <<  "OOPS!: " << g << " vs. " << i << ", proc=" << proc << "\n";
 	barrier->wait(np);
 	if(proc==0)
 	    g++;

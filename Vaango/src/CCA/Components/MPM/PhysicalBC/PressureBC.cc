@@ -60,7 +60,7 @@ PressureBC::PressureBC(ProblemSpecP& ps,
   ProblemSpecP adult  = ps->findBlock("geom_object");
   ProblemSpecP child  = adult->findBlock();
   std::string go_type = child->getNodeName();
-  // std::cerr << "PressureBC::go_type = " << go_type << endl;
+  // std::cerr << "PressureBC::go_type = " << go_type << std::endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
     // Box box = d_surface->getBoundingBox();
@@ -631,33 +631,33 @@ namespace Uintah {
 ostream&
 operator<<(std::ostream& out, const PressureBC& bc)
 {
-  out << "Begin MPM Pressure BC # = " << bc.loadCurveID() << endl;
+  out << "Begin MPM Pressure BC # = " << bc.loadCurveID() << std::endl;
   std::string surfType = bc.getSurfaceType();
-  out << "    Surface of application = " << surfType << endl;
+  out << "    Surface of application = " << surfType << std::endl;
   if (surfType == "box") {
     Box box = (bc.getSurface())->getBoundingBox();
-    out << "        " << box << endl;
+    out << "        " << box << std::endl;
   } else if (surfType == "cylinder") {
     CylinderGeometryPiece* cgp =
       dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << cgp->radius() << " top = " << cgp->top()
-        << " bottom = " << cgp->bottom() << endl;
+        << " bottom = " << cgp->bottom() << std::endl;
   } else if (surfType == "sphere") {
     SphereGeometryPiece* sgp =
       dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << sgp->radius() << " origin = " << sgp->origin()
-        << endl;
+        << std::endl;
   }
-  out << "    Time vs. Load = " << endl;
+  out << "    Time vs. Load = " << std::endl;
   LoadCurve<double>* lc = bc.getLoadCurve();
   int numPts            = lc->numberOfPointsOnLoadCurve();
   for (int ii = 0; ii < numPts; ++ii) {
     out << "        time = " << lc->getTime(ii)
-        << " pressure = " << lc->getLoad(ii) << endl;
+        << " pressure = " << lc->getLoad(ii) << std::endl;
   }
-  out << "End MPM Pressure BC # = " << bc.loadCurveID() << endl;
+  out << "End MPM Pressure BC # = " << bc.loadCurveID() << std::endl;
   return out;
 }
 

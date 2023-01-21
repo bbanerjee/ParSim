@@ -79,7 +79,7 @@ Test* Suite::addTest(const string& testName)
   
   if (!insertResult) {
     // test name is already used, so cannot add
-    cerr << "**ERROR**  Test name " << testName << " already used.";
+    std::cerr <<  "**ERROR**  Test name " << testName << " already used.";
     delete newTest;
     return nullptr; 
   }
@@ -143,7 +143,7 @@ void Suite::report()
   Test* test = nullptr;
 
   std::cout << "=============================\n";
-  std::cout << "Suite: " << myName << endl;
+  std::cout << "Suite: " << myName << std::endl;
   std::cout << "-----------------------------\n\n";
 
    std::list<Test*>::iterator it = myOrderedTests.begin();
@@ -163,7 +163,7 @@ void Suite::report()
       std::cout << "Not Run\t";
       num_not_run++;
     }
-    std::cout << test->getName() << endl;
+    std::cout << test->getName() << std::endl;
   }
 
   std::cout << "-----------------------------\n\n";

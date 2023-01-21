@@ -154,7 +154,7 @@ TabularPlasticity::checkInputParameters()
   if (d_cm.subcycling_characteristic_number < 1) {
      std::ostringstream warn;
     warn << "Subcycling characteristic number should be > 1. Default = 256"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -162,7 +162,7 @@ TabularPlasticity::checkInputParameters()
      std::ostringstream warn;
     warn << "Yield surface scaling factor should be between 1 and 1.0e6. "
             "Default = 1."
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 }

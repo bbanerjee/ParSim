@@ -20,7 +20,7 @@ void MPMICE::scheduleInterpolateVelIncFCToNC(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* mpm_matls)
 {
-  cout_doing << "MPMICE::scheduleInterpolateVelIncFCToNC" << endl;
+  cout_doing << "MPMICE::scheduleInterpolateVelIncFCToNC" << std::endl;
 
    Task* t=scinew Task("MPMICE::interpolateVelIncFCToNC",
                  this, &MPMICE::interpolateVelIncFCToNC);
@@ -122,9 +122,9 @@ ______________________________________________________________________
       for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
         nodal_mom+=gvelocity[*iter]*gmass[*iter];
       }
-      std::cout << "Solid matl nodal momentum = " << nodal_mom << endl;
+      std::cout << "Solid matl nodal momentum = " << nodal_mom << std::endl;
       Vector cell_mom(0.,0.,0.);
-      std::cout << "In NCToCC_0" << endl;
+      std::cout << "In NCToCC_0" << std::endl;
   #endif
   
 ______________________________________________________________________
@@ -140,8 +140,8 @@ ______________________________________________________________________
        for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
           nodal_mom+=gvelocity[*iter]*gmass[*iter];
        }
-       std::cout << "In NCToCC" << endl;
-       std::cout << "Solid matl nodal momentum = " << nodal_mom << endl;
+       std::cout << "In NCToCC" << std::endl;
+       std::cout << "Solid matl nodal momentum = " << nodal_mom << std::endl;
   #endif
   
   
@@ -195,7 +195,7 @@ void MPMICE::HEChemistry(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     cout_doing << "Doing HEChemistry on patch "<< patch->getID()
-               <<"\t\t\t\t MPMICE" << endl;
+               <<"\t\t\t\t MPMICE" << std::endl;
     delt_vartype delT;
     old_dw->get(delT, d_mat_manager->get_delt_label());
     int numALLMatls=d_mat_manager->getNumMaterials();
@@ -318,7 +318,7 @@ void MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
     return;
                                                                                 
   if (cout_doing.active())
-    cout_doing << "MPMICE::scheduleInterpolateCCToNC" << endl;
+    cout_doing << "MPMICE::scheduleInterpolateCCToNC" << std::endl;
                                                                                 
   Task* t=scinew Task("MPMICE::interpolateCCToNC",
                       this, &MPMICE::interpolateCCToNC);
@@ -351,7 +351,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     if (cout_doing.active()) {
       cout_doing << "Doing interpolateCCToNC on patch "<< patch->getID()
-                 <<"\t\t\t MPMICE L-" <<getLevel(patches)->getIndex()<< endl;
+                 <<"\t\t\t MPMICE L-" <<getLevel(patches)->getIndex()<< std::endl;
     }
                                                                                 
     //__________________________________
@@ -522,7 +522,7 @@ void MPMICE::computeRateFormPressure(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     if (cout_doing.active()) {
       cout_doing<<"Doing computeRateFormPressure on patch "
-              << patch->getID() <<"\t\t MPMICE" << endl;
+              << patch->getID() <<"\t\t MPMICE" << std::endl;
     }
 
     double tmp;

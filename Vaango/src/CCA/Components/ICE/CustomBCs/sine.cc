@@ -131,7 +131,7 @@ void addRequires_Sine(Task* t,
                       const MaterialSubset* /*ice_matls*/)
 {
   cout_doing<< "Doing addRequires_Sine: \t\t" <<t->getName()
-            << " " << where << endl;
+            << " " << where << std::endl;
   
   Ghost::GhostType  gn  = Ghost::None;
   Task::MaterialDomainSpec oims = Task::OutOfDomain;  //outside of ice matlSet.
@@ -213,7 +213,7 @@ int  set_Sine_Velocity_BC(const Patch* patch,
 {
   int nCells = 0;
   if (var_desc == "Velocity" && bc_kind == "Sine") {
-    cout_doing << "    Vel_CC (Sine) \t\t" <<patch->getFaceName(face)<< endl;
+    cout_doing << "    Vel_CC (Sine) \t\t" <<patch->getFaceName(face)<< std::endl;
     
     // bulletproofing
     if (!sine_var_basket || !sine_v){
@@ -257,7 +257,7 @@ int set_Sine_Temperature_BC(const Patch* patch,
 {
   int nCells = 0;
   if (bc_kind == "Sine") {
-    cout_doing << "    Temp_CC (Sine) \t\t" <<patch->getFaceName(face)<< endl;
+    cout_doing << "    Temp_CC (Sine) \t\t" <<patch->getFaceName(face)<< std::endl;
 
     // bulletproofing
     if (!sine_var_basket || !sine_v){
@@ -290,7 +290,7 @@ int set_Sine_press_BC(const Patch* patch,
                       sine_variable_basket* sine_var_basket,
                       sine_vars* sine_v)  
 {
-  cout_doing << "    press_CC (Sine) \t\t" <<patch->getFaceName(face)<< endl;
+  cout_doing << "    press_CC (Sine) \t\t" <<patch->getFaceName(face)<< std::endl;
 
   // bulletproofing
   if (!sine_var_basket || !sine_v){

@@ -25,9 +25,9 @@
 #ifndef __MPM_INTERNAL_VAR_TYPES_H__
 #define __MPM_INTERNAL_VAR_TYPES_H__
 
-#include <Core/Util/Assert.h>
 #include <Core/Disclosure/TypeUtils.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Util/Assert.h>
 
 namespace Uintah {
 
@@ -36,43 +36,48 @@ class TypeDescription;
 class MetalIntVar
 {
 public:
-  double  eqPlasticStrain;
-  double  plasticPorosity; 
+  double eqPlasticStrain;
+  double plasticPorosity;
 };
 
 class DStressDMetalIntVar
 {
 public:
-  Matrix3  eqPlasticStrain;
-  Matrix3  plasticPorosity; 
+  Matrix3 eqPlasticStrain;
+  Matrix3 plasticPorosity;
 };
 
 class ArenaIntVar
 {
 public:
-  double  kappa;
-  double  capX;
-  double  plasticVolStrain;
-  double  P3;
+  double kappa;
+  double capX;
+  double plasticVolStrain;
+  double P3;
   Matrix3 plasticStrain;
 };
 
 class BorjaIntVar
 {
 public:
-  double  p_c;
+  double p_c;
 };
 
 class SoilBrannonIntVar
 {
 public:
-  double  kappa;
+  double kappa;
 };
 
 class TabularCapIntVar
 {
 public:
-  double  capX;
+  double capX;
+};
+
+struct ViscoScramStateData
+{
+  Matrix3 DevStress[5];
 };
 
 } // End namespace Uintah
@@ -80,32 +85,77 @@ public:
 #include <Core/Datatypes/TypeName.h>
 namespace Uintah {
 
-  void swapbytes(Uintah::MetalIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::MetalIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::MetalIntVar*);
+void
+swapbytes(Uintah::MetalIntVar& mp);
 
-  void swapbytes(Uintah::DStressDMetalIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::DStressDMetalIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::DStressDMetalIntVar*);
+template<>
+const std::string
+find_type_name(Uintah::MetalIntVar* mp);
 
-  void swapbytes(Uintah::ArenaIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::ArenaIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::ArenaIntVar*);
+const TypeDescription*
+fun_getTypeDescription(Uintah::MetalIntVar*);
 
-  void swapbytes(Uintah::BorjaIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::BorjaIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::BorjaIntVar*);
+void
+swapbytes(Uintah::DStressDMetalIntVar& mp);
 
-  void swapbytes(Uintah::SoilBrannonIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::SoilBrannonIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::SoilBrannonIntVar*);
+template<>
+const std::string
+find_type_name(Uintah::DStressDMetalIntVar* mp);
 
-  void swapbytes(Uintah::TabularCapIntVar& mp); 
-  template <> const std::string find_type_name(Uintah::TabularCapIntVar* mp);
-  const TypeDescription* fun_getTypeDescription(Uintah::TabularCapIntVar*);
+const TypeDescription*
+fun_getTypeDescription(Uintah::DStressDMetalIntVar*);
+
+void
+swapbytes(Uintah::ArenaIntVar& mp);
+template<>
+
+const std::string
+find_type_name(Uintah::ArenaIntVar* mp);
+
+const TypeDescription*
+fun_getTypeDescription(Uintah::ArenaIntVar*);
+
+void
+swapbytes(Uintah::BorjaIntVar& mp);
+template<>
+
+const std::string
+find_type_name(Uintah::BorjaIntVar* mp);
+
+const TypeDescription*
+fun_getTypeDescription(Uintah::BorjaIntVar*);
+
+void
+swapbytes(Uintah::SoilBrannonIntVar& mp);
+
+template<>
+const std::string
+find_type_name(Uintah::SoilBrannonIntVar* mp);
+
+const TypeDescription*
+fun_getTypeDescription(Uintah::SoilBrannonIntVar*);
+
+void
+swapbytes(Uintah::TabularCapIntVar& mp);
+
+template<>
+const std::string
+find_type_name(Uintah::TabularCapIntVar* mp);
+
+const TypeDescription*
+fun_getTypeDescription(Uintah::TabularCapIntVar*);
+
+/*! Set up type for StateData */
+void
+swapbytes(Uintah::ViscoScramStateData& d);
+
+template<>
+const std::string
+find_type_name(Uintah::ViscoScramStateData* mp);
+
+const TypeDescription*
+fun_getTypeDescription(Uintah::ViscoScramStateData*);
 
 } // End namespace Uintah
 
 #endif //__MPM_INTERNAL_VAR_TYPES_H__
-
-

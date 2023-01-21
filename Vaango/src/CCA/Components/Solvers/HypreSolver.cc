@@ -1218,7 +1218,7 @@ void
 HypreSolver2::allocateHypreMatrices(DataWarehouse* new_dw)
 {
 
-  // std::cout << "Doing HypreSolver2::allocateHypreMatrices" << endl;
+  // std::cout << "Doing HypreSolver2::allocateHypreMatrices" << std::endl;
 
   SoleVariable<hypre_solver_structP> hypre_solverP_;
   hypre_solver_struct* hypre_solver_ = scinew hypre_solver_struct;

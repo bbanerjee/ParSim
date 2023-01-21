@@ -160,7 +160,7 @@ Arenisca::Arenisca(ProblemSpecP& ps, MPMFlags* Mflag)
 #ifdef JC_LIMITER_PRINT
   std::cout << ",JC_LIMITER_PRINT";
 #endif
-  std::cout << endl;
+  std::cout << std::endl;
   
   ps->require("FSLOPE",d_initialData.FSLOPE);
   ps->require("FSLOPE_p",d_initialData.FSLOPE_p);
@@ -182,7 +182,7 @@ Arenisca::Arenisca(ProblemSpecP& ps, MPMFlags* Mflag)
   d_intvar = Vaango::InternalVariableModelFactory::create(ps);
   if(!d_intvar){
      std::ostringstream desc;
-    desc << "**ERROR** Internal error while creating Arenisca_BB->InternalVariableModelFactory." << endl;
+    desc << "**ERROR** Internal error while creating Arenisca_BB->InternalVariableModelFactory." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 #endif
@@ -378,11 +378,11 @@ void Arenisca::computeStableTimestep(const Patch* patch,
     // "wave speed + particle velocity"
     WaveSpeed = dx/WaveSpeed;
 /*    std::cout << "pvel.x: " << pvelocity[idvel.x()].x() 
-         << "; wavespeed.x: " << WaveSpeed.x() << endl;
+         << "; wavespeed.x: " << WaveSpeed.x() << std::endl;
     std::cout << "pvel.y: " << pvelocity[idvel.y()].y() 
-         << "; wavespeed.y: " << WaveSpeed.y() << endl;
+         << "; wavespeed.y: " << WaveSpeed.y() << std::endl;
     std::cout << "pvel.z: " << pvelocity[idvel.z()].z() 
-         << "; wavespeed.z: " << WaveSpeed.z() << endl;*/
+         << "; wavespeed.z: " << WaveSpeed.z() << std::endl;*/
     double delT_new = WaveSpeed.minComponent();
     if(delT_new < 1.e-12)
       new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
@@ -555,7 +555,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
         cout<<"Fold= "<<deformationGradient[idx]<<endl;
         cout<<"L= "<<tensorL<<endl;
         pLocalized_new[idx] = -999;
-        cout<<"DELETING Arenisca particle " << endl;
+        cout<<"DELETING Arenisca particle " << std::endl;
         J=1;
         deformationGradient_new[idx] = Identity;
         //throw InvalidValue("**ERROR**:Negative Jacobian", __FILE__, __LINE__);
@@ -563,7 +563,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 #ifdef JC_FREEZE_PARTICLE
       if (J>4000){
         std::cout << "WARNING, massive $J! " << "J=" << J
-        //     <<", DELETING particleID=" <<pParticleID[idx]<< endl; 
+        //     <<", DELETING particleID=" <<pParticleID[idx]<< std::endl; 
         //pLocalized_new[idx] = -999;
              <<",FREEZING particleID="<<pParticleID[idx]<<endl;
         J = deformationGradient[idx].Determinant();
@@ -802,7 +802,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
           if(num_subcycles > 1000){
             std::cout << "WARNING: $num_subcycles="<<num_subcycles
-                 << " exceeds 1000 maximum for pID="<<pParticleID[idx] << endl;
+                 << " exceeds 1000 maximum for pID="<<pParticleID[idx] << std::endl;
             num_subcycles=1000;
           }
 
@@ -824,7 +824,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 //JC_IF_FAIL_RESTART_WITH_MORE_SUBCYCLES
 #ifdef JC_DEBUG_PARTICLE  // Print number of subcycles
             if(pParticleID[idx]==JC_DEBUG_PARTICLE)
-              std::cout << endl << "  SCc=" << subcycle_counter << "/"<<num_subcycles-1;
+              std::cout << std::endl << "  SCc=" << subcycle_counter << "/"<<num_subcycles-1;
                   //<< ",tsr="<<trial_stress[idx].Norm();
 #endif
             // Compute the trial stress for the current sub-cycle
@@ -985,7 +985,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                                          pPlasticStrainVol_new[idx])-1.0) )*
                                        (pPlasticStrainVol_new[idx]);
                 if (std::isnan(pBackStress_new[idx].Trace())) {  //Check pBackStress for nan
-                  cerr << "ParticleID = " << pParticleID[idx] << " pBackStress_new[idx] = " << pBackStress_new[idx] << endl;
+                  std::cerr <<  "ParticleID = " << pParticleID[idx] << " pBackStress_new[idx] = " << pBackStress_new[idx] << std::endl;
                   cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
                   cout<<"epv=" << pPlasticStrainVol_new[idx]<<endl;
                   cout<<"pKappa_new[idx]="<<pKappa_new[idx]<<endl;
@@ -1205,7 +1205,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                 trial_stress_loop = stress_iteration;
 
                 if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
-                  cerr << "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
+                  std::cerr <<  "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << std::endl;
                   //cerr<<"I1_iter="<<I1_iteration_err<<endl;
                   //cerr<<"J2_iter="<<J2_iteration_err<<endl;
                   throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
@@ -1376,7 +1376,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                       std::cout << ",maxiter_fastretbackstr";
             #ifdef JC_DEBUG_FR_OUTSIDE_CAP
                     if(pParticleID[idx]==JC_DEBUG_PARTICLE)
-                      std::cout << endl << "    c_t=" << counter_temp << ",f_iteration2=" << f_iteration2
+                      std::cout << std::endl << "    c_t=" << counter_temp << ",f_iteration2=" << f_iteration2
                            << ",I1_iterL=" <<I1_iteration1 <<",I1_iterM="<<I1_iteration3
                            << ",I1_iterH="<<I1_iteration2<<",H-L="<<I1_iteration2-I1_iteration1;
             #endif
@@ -1418,7 +1418,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
           #endif
             #ifdef JC_DEBUG_FR_OUTSIDE_CAP
                     cerr<<"ERROR: Fast returned stress not on yield surface"<<endl;
-                    cerr<<"ParticleID = " << pParticleID[idx] << endl<<endl;
+                    cerr<<"ParticleID = " << pParticleID[idx] << std::endl<<endl;
                     cerr<<"f_iteration2 = " << f_iteration2<<endl; 
                     cerr<< "1.e-11*clen="<<1.e-11*clen<<endl;
                     cerr<<"pKappa_loop="<<pKappa_loop<<endl;
@@ -1465,7 +1465,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
                 }
                 if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
-                  cerr << "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
+                  std::cerr <<  "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << std::endl;
                   throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
                 }
                 // Compute the invariants of the fast returned stress in the loop
@@ -1480,7 +1480,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   G = Identity*(-2.0)*FSLOPE*(FSLOPE*I1_iteration-PEAKI1_hardening) + S_iteration;
           //#ifdef JC_DEBUG_PARTICLE // Print shifted trial stress for current subcycle
           //        if(pParticleID[idx]==JC_DEBUG_PARTICLE)
-          //          std::cout << endl<<"BEFORE:FSLOPE_p="<<FSLOPE_p<<",FSLOPE="<<FSLOPE<<",I1_iteration="<<I1_iteration
+          //          std::cout << std::endl<<"BEFORE:FSLOPE_p="<<FSLOPE_p<<",FSLOPE="<<FSLOPE<<",I1_iteration="<<I1_iteration
           //               << ",PEAKI1_hardening="<<PEAKI1_hardening<<",S_iteration="<<S_iteration
           //               <<",F*I1-PI1h="<<FSLOPE*I1_iteration-PEAKI1_hardening
           //               <<",F*I1="<<FSLOPE*I1_iteration<<endl;
@@ -1488,7 +1488,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   M = Identity*(-2.0)*FSLOPE_p*(FSLOPE*I1_iteration-PEAKI1_hardening) + S_iteration;
           #ifdef JC_DEBUG_PARTICLE // Print shifted trial stress for current subcycle
                   if(pParticleID[idx]==JC_DEBUG_PARTICLE)
-                    std::cout << endl<<"M="<<M<<",M.Norm()="<<M.Norm()<<",F*I1-PI1h="<<FSLOPE*I1_iteration-PEAKI1_hardening<<endl;
+                    std::cout << std::endl<<"M="<<M<<",M.Norm()="<<M.Norm()<<",F*I1-PI1h="<<FSLOPE*I1_iteration-PEAKI1_hardening<<endl;
           #endif
                   M = M/M.Norm();
           #ifdef JC_DEBUG_PARTICLE // Print shifted trial stress for current subcycle
@@ -1520,13 +1520,13 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
                 }
                 if (std::isnan(M.Trace())) {  //Check M for nan
-                  cerr << "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
-                       <<", I1_iteration=" << I1_iteration << endl;
+                  std::cerr <<  "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
+                       <<", I1_iteration=" << I1_iteration << std::endl;
                   throw InvalidValue("**ERROR**: Nan in M value", __FILE__, __LINE__);
                 }
                 if (std::isnan(G.Trace())) {  //Check G for nan
-                  cerr << "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
-                       <<", I1_iteration=" << I1_iteration << endl;
+                  std::cerr <<  "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
+                       <<", I1_iteration=" << I1_iteration << std::endl;
                   throw InvalidValue("**ERROR**: Nan in M value", __FILE__, __LINE__);
                 }
 
@@ -1592,7 +1592,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   // direction of the plastic strain and the multiplier Gamma
                   plasStrain_loop = M*gamma;
                   if (std::isnan(plasStrain_loop.Trace())) {  //Check plasStrain_loop for nan
-                    cerr << "ERRORpID = " << pParticleID[idx] << ", M = " << M <<", gamma=" << gamma << endl;
+                    std::cerr <<  "ERRORpID = " << pParticleID[idx] << ", M = " << M <<", gamma=" << gamma << std::endl;
                     throw InvalidValue("**ERROR**: Nan in plasStrain_loop value", __FILE__, __LINE__);
                   }
 
@@ -1614,7 +1614,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   pBackStress_loop = deltaBackStressIso;
                   
                   if (std::isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
-                    cerr << "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << endl;
+                    std::cerr <<  "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << std::endl;
                     throw InvalidValue("**ERROR**: Nan in pBackStress_loop value", __FILE__, __LINE__);
                   }
 
@@ -1869,7 +1869,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
  
     #ifdef JC_DEBUG_PARTICLE // Print shifted trial stress for current subcycle
                 if(pParticleID[idx]==JC_DEBUG_PARTICLE){
-                  std::cout << endl << "   cNR="<<counter<<",f="<<f_new_loop
+                  std::cout << std::endl << "   cNR="<<counter<<",f="<<f_new_loop
                     <<",9.9e-2*clen="<<9.9e-2*clen;
                 }
                 if(pParticleID[idx]==JC_DEBUG_PARTICLE
@@ -1878,9 +1878,9 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
     #endif
                 #ifdef JC_MAX_NESTED_RETURN
                 if (std::abs(f_new_loop)>9.9e-2*clen && counter>max_number_of_iterations) {
-                  cerr<<endl << "ERROR: Nested return loop not converged" << endl;
-                  cerr<<"ParticleID = " << pParticleID[idx] << endl <<endl;
-                  cerr<<"f_new_loop = " << f_new_loop << endl;
+                  cerr<<endl << "ERROR: Nested return loop not converged" << std::endl;
+                  cerr<<"ParticleID = " << pParticleID[idx] << std::endl <<endl;
+                  cerr<<"f_new_loop = " << f_new_loop << std::endl;
                   cerr<<"9.9e-2*clen="<<9.9e-2*clen<<endl;
                   cerr<<"pKappa_loop= "<<pKappa_loop<<endl;
                   cerr<<"gamma="<<gamma<<endl;
@@ -1900,19 +1900,19 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
               }//END OF NR LOOP
               if (std::isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
-                cerr << "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << endl;
+                std::cerr <<  "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << std::endl;
                 throw InvalidValue("**ERROR**: Nan in pBackStress_loop value", __FILE__, __LINE__);
               }
               if (std::isnan(pKappa_loop)) {  //Check pKappa_loop for nan
-                cerr << "ERRORpID = " << pParticleID[idx] << " pKappa_loop = " << pKappa_loop << endl;
+                std::cerr <<  "ERRORpID = " << pParticleID[idx] << " pKappa_loop = " << pKappa_loop << std::endl;
                 throw InvalidValue("**ERROR**: Nan in pKappa_loop value", __FILE__, __LINE__);
               }
               if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
-                cerr << "ERRORpID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
+                std::cerr <<  "ERRORpID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << std::endl;
                 throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
               }
               if (std::isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
-                cerr << "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << endl;
+                std::cerr <<  "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << std::endl;
                 throw InvalidValue("**ERROR**: Nan in trial_stress_loop value", __FILE__, __LINE__);
               }
 
@@ -1932,7 +1932,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
               Matrix3 strain_iteration = (Identity*nu_over_E*(diff_stress_iteration.Trace()) +
                                           diff_stress_iteration*shear_inverse);
               if (std::isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
-                cerr << "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << endl;
+                std::cerr <<  "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << std::endl;
                 throw InvalidValue("**ERROR**: Nan in trial_stress_loop value", __FILE__, __LINE__);
               }
 
@@ -2108,7 +2108,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
         se += e;
 #ifdef JC_DEBUG_PARTICLE
       if(pParticleID[idx]==JC_DEBUG_PARTICLE)
-        std::cout << endl;
+        std::cout << std::endl;
 
 #endif
 
@@ -2129,19 +2129,19 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
       std::cout << "pvel.x=" << pvelocity[idvel.x()].x() 
            << ",wavespeed.x=" << WaveSpeed.x()
            << ",bulk=" << vbulk.x() 
-           << ",rho=" << rho_cur[idvel.x()]  << endl;
+           << ",rho=" << rho_cur[idvel.x()]  << std::endl;
     }
     else if(delT_new==WaveSpeed.y()){
     std::cout << "pvel.y: " << pvelocity[idvel.y()].y() 
          << ",wavespeed.y=" << WaveSpeed.y()
          << ",bulk=" << vbulk.y() 
-         << ",rho=" << rho_cur[idvel.y()] << endl;
+         << ",rho=" << rho_cur[idvel.y()] << std::endl;
     }
     else if(delT_new==WaveSpeed.z()){
       std::cout << "pvel.z: " << pvelocity[idvel.z()].z() 
            << ",wavespeed.z=" << WaveSpeed.z()
            << ",bulk=" << vbulk.z() 
-           << ",rho=" << rho_cur[idvel.z()]  << endl;
+           << ",rho=" << rho_cur[idvel.z()]  << std::endl;
     }
     else
       std::cout << "ERROR in JC_DEBUG_SMALL_TIMESTEP" <<endl;
@@ -2416,14 +2416,14 @@ void Arenisca::computePressEOSCM(double rho_cur,double& pressure,
   tmp = (bulk + 4.*shear/3.)/rho_cur;  // speed of sound squared
 
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca"
-       << endl;
+       << std::endl;
 }
 
 //T2D: Throw exception that this is not supported
 double Arenisca::getCompressibility()
 {
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca"
-       << endl;
+       << std::endl;
   return 1.0;
 }
 

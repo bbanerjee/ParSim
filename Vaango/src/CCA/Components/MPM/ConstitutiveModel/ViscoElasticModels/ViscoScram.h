@@ -30,18 +30,6 @@
 #include <Core/Math/Short27.h>
 #include <Core/Math/Matrix3.h>
 
-namespace Uintah {
-
-struct ViscoScramStateData
-{
-  Matrix3 DevStress[5];
-};
-}
-
-namespace Uintah {
-void swapbytes(Uintah::ViscoScramStateData& d);
-}
-
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Util/Endian.h>
 
@@ -260,9 +248,6 @@ private:
                      const double temperature, const double pressure,
                      double& rho_refrr, double& K0);
 };
-
-/*! Set up type for StateData */
-const Uintah::TypeDescription* fun_getTypeDescription(ViscoScramStateData*);
 
 } // End namespace Uintah
 

@@ -139,7 +139,7 @@ void particleExtract::problemSetup(const ProblemSpecP& ,
       ostringstream warn;
       warn << "ERROR:AnalysisModule:particleExtact: ("<<label->getName() << " "
            << td->getName() << " ) is either not a particle variable "
-           << "or a valid type (int double, Vector)" << endl;
+           << "or a valid type (int double, Vector)" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     d_varLabels.push_back(label);
@@ -157,14 +157,14 @@ void particleExtract::problemSetup(const ProblemSpecP& ,
 
   //__________________________________
   //  Warning
-  proc0cout << "\n\n______________________________________________________________________" << endl;
-  proc0cout << "  WARNING      WARNING       WARNING" << endl;
-  proc0cout << "     DataAnalysis:particleExract" << endl;
-  proc0cout << "         BE VERY JUDICIOUS when selecting the <samplingFrequency> " << endl;
-  proc0cout << "         and the number of particles to extract data from. Every time" << endl;
-  proc0cout << "         the particles are analyized N particle files are opened and closed" << endl;
-  proc0cout << "         This WILL slow your simulation down!" << endl;
-  proc0cout << "______________________________________________________________________\n\n" << endl;
+  proc0cout << "\n\n______________________________________________________________________" << std::endl;
+  proc0cout << "  WARNING      WARNING       WARNING" << std::endl;
+  proc0cout << "     DataAnalysis:particleExract" << std::endl;
+  proc0cout << "         BE VERY JUDICIOUS when selecting the <samplingFrequency> " << std::endl;
+  proc0cout << "         and the number of particles to extract data from. Every time" << std::endl;
+  proc0cout << "         the particles are analyized N particle files are opened and closed" << std::endl;
+  proc0cout << "         This WILL slow your simulation down!" << std::endl;
+  proc0cout << "______________________________________________________________________\n\n" << std::endl;
 
 
 }
@@ -459,7 +459,7 @@ particleExtract::doAnalysis( const ProcessorGroup * pg,
         default:
           ostringstream warn;
           warn << "ERROR:AnalysisModule:lineExtact: ("<<d_varLabels[i]->getName() << " "
-               << td->getName() << " ) has not been implemented" << endl;
+               << td->getName() << " ) has not been implemented" << std::endl;
           throw InternalError(warn.str(), __FILE__, __LINE__);
         }
       }
@@ -485,7 +485,7 @@ particleExtract::doAnalysis( const ProcessorGroup * pg,
 #if 0
           if( myFiles[idx] ){           // if the filepointer has been previously stored.
             fp = myFiles[idx];
-            cout << Parallel::getMPIRank() << " I think this pointer is valid " << idx << " fp " << fp << " patch " << patch->getID() << endl;
+            cout << Parallel::getMPIRank() << " I think this pointer is valid " << idx << " fp " << fp << " patch " << patch->getID() << std::endl;
           } else {
             createFile(filename, fp);
             myFiles[idx] = fp;
@@ -584,7 +584,7 @@ void particleExtract::createFile(string& filename, FILE*& fp)
   fprintf(fp,"\n");
   fflush(fp);
 
-  cout << Parallel::getMPIRank() << " particleExtract:Created file " << filename << endl;
+  cout << Parallel::getMPIRank() << " particleExtract:Created file " << filename << std::endl;
 }
 
 //______________________________________________________________________

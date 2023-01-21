@@ -110,7 +110,7 @@ void
 HypoViscoElasticDevStress::addInitialComputesAndRequires(
   Task* task, const MPMMaterial* matl)
 {
-  dbg << " hypoViscoElastic::addInitialComputesAndRequires " << endl;
+  dbg << " hypoViscoElastic::addInitialComputesAndRequires " << std::endl;
   const MaterialSubset* matlset = matl->thisMaterial();
 
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
@@ -123,7 +123,7 @@ void
 HypoViscoElasticDevStress::addComputesAndRequires(Task* task,
                                                   const MPMMaterial* matl)
 {
-  dbg << " hypoViscoElastic:addComputesAndRequires 1 " << endl;
+  dbg << " hypoViscoElastic:addComputesAndRequires 1 " << std::endl;
   const MaterialSubset* matlset = matl->thisMaterial();
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
 
@@ -139,7 +139,7 @@ HypoViscoElasticDevStress::addComputesAndRequires(Task* task,
                                                   bool SchedParent)
 {
 
-  dbg << " hypoViscoElastic:addComputesAndRequires 2 " << endl;
+  dbg << " hypoViscoElastic:addComputesAndRequires 2 " << std::endl;
   const MaterialSubset* matlset = matl->thisMaterial();
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     if (SchedParent) {
@@ -156,7 +156,7 @@ void
 HypoViscoElasticDevStress::addParticleState(std::vector<const VarLabel*>& from,
                                             std::vector<const VarLabel*>& to)
 {
-  dbg << " hypoViscoElastic:addParticleState " << endl;
+  dbg << " hypoViscoElastic:addParticleState " << std::endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     from.push_back(d_sigmaDevLabel[j]);
     to.push_back(d_sigmaDevLabel_preReloc[j]);
@@ -169,7 +169,7 @@ void
 HypoViscoElasticDevStress::initializeInternalVars(ParticleSubset* pset,
                                                   DataWarehouse* new_dw)
 {
-  dbg << " hypoViscoElastic:initializeInternalVars " << endl;
+  dbg << " hypoViscoElastic:initializeInternalVars " << std::endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     new_dw->allocateAndPut(*d_sigmaDev_new[j], d_sigmaDevLabel[j], pset);
     for (auto idx : *pset) {
@@ -183,7 +183,7 @@ void
 HypoViscoElasticDevStress::getInternalVars(ParticleSubset* pset,
                                            DataWarehouse* old_dw)
 {
-  dbg << " hypoViscoElastic:getInternalVars " << endl;
+  dbg << " hypoViscoElastic:getInternalVars " << std::endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     old_dw->get(*d_sigmaDev[j], d_sigmaDevLabel[j], pset);
   }
@@ -194,7 +194,7 @@ void
 HypoViscoElasticDevStress::allocateAndPutInternalVars(ParticleSubset* pset,
                                                       DataWarehouse* new_dw)
 {
-  dbg << " hypoViscoElastic:allocateAndPutInternalVars " << endl;
+  dbg << " hypoViscoElastic:allocateAndPutInternalVars " << std::endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     new_dw->allocateAndPut(*d_sigmaDev_new[j], d_sigmaDevLabel_preReloc[j],
                            pset);
@@ -207,7 +207,7 @@ void
 HypoViscoElasticDevStress::allocateAndPutRigid(ParticleSubset* pset,
                                                DataWarehouse* new_dw)
 {
-  dbg << " hypoViscoElastic:allocateAndPutRigid " << endl;
+  dbg << " hypoViscoElastic:allocateAndPutRigid " << std::endl;
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     new_dw->allocateAndPut(*d_sigmaDev_new[j], d_sigmaDevLabel_preReloc[j], pset);
     for (auto idx : *pset) {
@@ -224,7 +224,7 @@ HypoViscoElasticDevStress::computeDeviatoricStressInc(
   DeformationState* defState, const double delT)
 {
 
-  dbg << " hypoViscoElastic:computeDevStessInc " << endl;
+  dbg << " hypoViscoElastic:computeDevStessInc " << std::endl;
 
   Matrix3 sigmadot = 0.0;
 
@@ -273,7 +273,7 @@ HypoViscoElasticDevStress::updateInternalStresses(const particleIndex idx,
                                                   DeformationState* defState,
                                                   const double delT)
 {
-  dbg << " hypoViscoElastic:updateInternalStresses " << endl;
+  dbg << " hypoViscoElastic:updateInternalStresses " << std::endl;
   const Matrix3 devD = defState->devD;
 
   int j = 0;
@@ -295,14 +295,14 @@ void
 HypoViscoElasticDevStress::rotateInternalStresses(const particleIndex idx,
                                                   const Matrix3& tensorR)
 {
-  dbg << " hypoViscoElastic:rotateInternalStresses " << endl;
+  dbg << " hypoViscoElastic:rotateInternalStresses " << std::endl;
 
   //int j = 0;
   for (auto& sigmaDev_new : d_sigmaDev_new) {
     (*sigmaDev_new)[idx] =
       tensorR.Transpose() * ((*sigmaDev_new)[idx] * tensorR);
     // std::cout << "    d_sigmaDev_new " << ( *sigmaDev_new )[idx] << "
-    // d_sigmaDev " << ( *d_sigmaDev[j] )[idx] << endl;
+    // d_sigmaDev " << ( *d_sigmaDev[j] )[idx] << std::endl;
     //++j;
   }
 }

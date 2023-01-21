@@ -172,7 +172,7 @@ Benchmark::initialize(const ProcessorGroup*,
  
       for(NodeIterator iter(l,h); !iter.done(); iter++){
         if (phi[*iter] != 1.0) {
-          std::cout << "phi_old[" << *iter << "]=" << phi[*iter] << endl;
+          std::cout << "phi_old[" << *iter << "]=" << phi[*iter] << std::endl;
         }
          phi[*iter]=1;
       }

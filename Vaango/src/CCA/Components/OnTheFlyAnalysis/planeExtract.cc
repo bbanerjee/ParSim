@@ -184,7 +184,7 @@ void planeExtract::problemSetup(const ProblemSpecP& ,
     if(throwException){
       ostringstream warn;
       warn << "ERROR:AnalysisModule:planeExtact: ("<<label->getName() << " "
-           << td->getName() << " ) has not been implemented" << endl;
+           << td->getName() << " ) has not been implemented" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     d_varLabels.push_back(label);
@@ -554,7 +554,7 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
               default:
                 ostringstream warn;
                 warn << "ERROR:AnalysisModule:planeExtact: ("<< labelName << " "
-                     << td->getName() << " ) has not been implemented" << endl;
+                     << td->getName() << " ) has not been implemented" << std::endl;
                 throw InternalError(warn.str(), __FILE__, __LINE__);
             }
 
@@ -620,7 +620,7 @@ void planeExtract::createFile(const string& filename,
   fprintf(fp,"\n");
   fflush(fp);
 
-  cout << Parallel::getMPIRank() << " OnTheFlyAnalysis planeExtract results are located in " << filename << endl;
+  cout << Parallel::getMPIRank() << " OnTheFlyAnalysis planeExtract results are located in " << filename << std::endl;
 }
 
 //______________________________________________________________________
@@ -742,7 +742,7 @@ planeExtract::getIterator( const Uintah::TypeDescription* td,
       break;
     default:
       ostringstream warn;
-      warn<< "ERROR:planeExtract::getIterator Don't know how to handle type: " << td->getName()<< endl;
+      warn<< "ERROR:planeExtract::getIterator Don't know how to handle type: " << td->getName()<< std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
   }
 

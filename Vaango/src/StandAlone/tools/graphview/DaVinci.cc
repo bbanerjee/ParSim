@@ -123,7 +123,7 @@ DaVinci::run()
     if (execv("/bin/sh", const_cast<char* const*>(DAVINCI_ARGS)) == -1) {
       perror("execv() failed");
       if (errno == ENOENT) {
-        cerr << "\n******************************************\n"
+        std::cerr <<  "\n******************************************\n"
              << "An executable named 'davinci' or 'daVinci'\n"
              << "must be in your path to use graphview.\n"
              << "******************************************\n\n";
@@ -148,7 +148,7 @@ DaVinci::DaVinci(pid_t pid, int in_fd, int out_fd)
 {
   string response = readline(m_fromDV);
   if ((response != "ok") && (response.size() > 0))
-    cerr << "daVinci said: " << response << endl;
+    std::cerr <<  "daVinci said: " << response << endl;
 }
 
 DaVinci::~DaVinci()
@@ -207,7 +207,7 @@ DaVinci::setGraph(const GV_TaskGraph* graph)
   writeline(m_toDV, graph_str.str());
   string response = readline(m_fromDV);
   if (response != "ok")
-    cerr << "daVinci said: " << response << endl;
+    std::cerr <<  "daVinci said: " << response << endl;
 }
 
 void
@@ -273,7 +273,7 @@ DaVinci::handleInput()
   if (strcmp(cmd, "quit") == 0)
     gEventQueue.push(Event(EVT_DV_QUIT));
   else if (strcmp(cmd, "communication_error") == 0) {
-    cerr << "DaVinci error: " << args.front() << endl;
+    std::cerr <<  "DaVinci error: " << args.front() << endl;
   } else if (strcmp(cmd, "node_selections_labels") == 0) {
     m_selectedNodes.clear();
     m_selectedEdge = "";
@@ -420,7 +420,7 @@ writeline(int fd, string str)
     if (len > 0)
       written += len;
     else if ((len == -1) && (errno != EINTR))
-      //	  cerr << "write() error: " << errno << endl;
+      //	  std::cerr <<  "write() error: " << errno << endl;
       throw ErrnoException("write() error", errno, __FILE__, __LINE__);
     else {
       std::stringstream s;
@@ -429,7 +429,7 @@ writeline(int fd, string str)
       const char* buf = return_string.c_str();
       // char buf[64];
       // sprintf(buf, "Unexpected write() return code %ld", len);
-      cerr << buf << endl;
+      std::cerr <<  buf << endl;
       // throw InternalError(buf);
     }
   }

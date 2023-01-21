@@ -102,25 +102,25 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname << " [options] "
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname << " [options] "
        << "-uda <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  -h,--help\n";
-  cerr << "  -v,--variable <variable name> [defaults to cellType]\n";
-  cerr << "  -tx,--timeextract <path to timeextract> [defaults to just timeextract]\n";
-  cerr << "  -m,--material <material number> [defaults to 1]\n";
-  cerr << "  -timestep,--timestep [int] (timestep used for face lookup int) [defaults to 1]\n";
-  cerr << "  -container,--container [int] (container cell type int) [defaults to -3 (i.e. not present)]\n";
-  cerr << "  -donetheatflux [do net heat flux extraction]\n";
-  cerr << "  -dovelocity [do velocity extraction at face boundary (one off)]\n";
-  cerr << "  -doincheatflux [do incident heat flux extraction]\n";
-  cerr << "  -istart,--indexs <x> <y> <z> (cell index) [defaults to 0,0,0]\n";
-  cerr << "  -iend,--indexe <x> <y> <z> (cell index) [defaults to Nx,Ny,Nz]\n";
-  cerr << "  -l,--level [int] (level index to query range from) [defaults to 0]\n";
-  cerr << "  -o,--out <outputfilename> [defaults to stdout]\n"; 
-  cerr << "  -vv,--verbose (prints status of output)\n";
-  //    cerr << "  -cellCoords (prints the cell centered coordinates on that level)\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  -h,--help\n";
+  std::cerr <<  "  -v,--variable <variable name> [defaults to cellType]\n";
+  std::cerr <<  "  -tx,--timeextract <path to timeextract> [defaults to just timeextract]\n";
+  std::cerr <<  "  -m,--material <material number> [defaults to 1]\n";
+  std::cerr <<  "  -timestep,--timestep [int] (timestep used for face lookup int) [defaults to 1]\n";
+  std::cerr <<  "  -container,--container [int] (container cell type int) [defaults to -3 (i.e. not present)]\n";
+  std::cerr <<  "  -donetheatflux [do net heat flux extraction]\n";
+  std::cerr <<  "  -dovelocity [do velocity extraction at face boundary (one off)]\n";
+  std::cerr <<  "  -doincheatflux [do incident heat flux extraction]\n";
+  std::cerr <<  "  -istart,--indexs <x> <y> <z> (cell index) [defaults to 0,0,0]\n";
+  std::cerr <<  "  -iend,--indexe <x> <y> <z> (cell index) [defaults to Nx,Ny,Nz]\n";
+  std::cerr <<  "  -l,--level [int] (level index to query range from) [defaults to 0]\n";
+  std::cerr <<  "  -o,--out <outputfilename> [defaults to stdout]\n"; 
+  std::cerr <<  "  -vv,--verbose (prints status of output)\n";
+  //    std::cerr <<  "  -cellCoords (prints the cell centered coordinates on that level)\n";
   exit(1);
 }
 
@@ -151,7 +151,7 @@ void printData(DataArchive* archive, string& variable_name,
   //__________________________________
   // bullet proofing 
   if (timestep >= times.size() ) {
-    cerr << "timestep must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timestep must be between 0 and " << times.size()-1 << std::endl;
     exit(1);
   }
   
@@ -163,7 +163,7 @@ void printData(DataArchive* archive, string& variable_name,
   //__________________________________
   
   if (verbose)
-    std::cout << "Outputting for time["<<timestep<<"] = " << times[timestep]<< endl;
+    std::cout << "Outputting for time["<<timestep<<"] = " << times[timestep]<< std::endl;
 
   //__________________________________
   //  does the requested level exist
@@ -178,7 +178,7 @@ void printData(DataArchive* archive, string& variable_name,
     }
   }
   if (!levelExists){
-    cerr<< " Level " << levelIndex << " does not exist at this timestep " << timestep << endl;
+    cerr<< " Level " << levelIndex << " does not exist at this timestep " << timestep << std::endl;
   }
     
   if(levelExists){   // only extract data if the level exists
@@ -204,9 +204,9 @@ void printData(DataArchive* archive, string& variable_name,
     Level::selectType patches;
     level->selectPatches(var_start, var_end + IntVector(1,1,1), patches);
     if( patches.size() == 0){
-      cerr << " Could not find any patches on Level " << level->getIndex()
+      std::cerr <<  " Could not find any patches on Level " << level->getIndex()
            << " that contain cells along line: " << var_start << " and " << var_end 
-           << " Double check the starting and ending indices "<< endl;
+           << " Double check the starting and ending indices "<< std::endl;
       exit(1);
     }
 
@@ -240,7 +240,7 @@ void printData(DataArchive* archive, string& variable_name,
                         material, patches[p], timestep);
         break;
       default:
-        cerr << "Unknown variable type: " << variable_type->getName() << endl;
+        std::cerr <<  "Unknown variable type: " << variable_type->getName() << std::endl;
       }
           
     }
@@ -367,7 +367,7 @@ void printData(DataArchive* archive, string& variable_name,
       if(d_printCell_coords){
         Point point = level->getCellPosition(c);
         Vector here = point.asVector() + shift;
-        out << here.x() << " "<< here.y() << " " << here.z() << " "<<val << endl;;
+        out << here.x() << " "<< here.y() << " " << here.z() << " "<<val << std::endl;;
       }else if (d_donetheatflux){
         if ((val == container)&&(!(val_xm == container)))
           out << path_to_timeextract << " -v htfluxRadX -i "
@@ -592,7 +592,7 @@ int main(int argc, char** argv)
   }
   
   if(input_uda_name == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -613,7 +613,7 @@ int main(int argc, char** argv)
   }  else if (d_doincheatflux) {
 	cout << "face extract for incident heat flux \n";	  
   } else if (!(d_donetheatflux) && !(d_doincheatflux) && !(d_dovelocity)) {
-    cerr << "You must specify -donetheatflux or -doincheatflux or -dovelocity (see help)" << endl;
+    std::cerr <<  "You must specify -donetheatflux or -doincheatflux or -dovelocity (see help)" << std::endl;
 	cerr << "Aborting!\n";
 	exit(-1);
   }
@@ -638,20 +638,20 @@ int main(int argc, char** argv)
     //__________________________________
     // bulletproofing
     if (!var_found) {
-      cerr << "Variable \"" << variable_name << "\" was not found.\n";
-      cerr << "If a variable name was not specified try -var [name].\n";
-      cerr << "Possible variable names are:\n";
+      std::cerr <<  "Variable \"" << variable_name << "\" was not found.\n";
+      std::cerr <<  "If a variable name was not specified try -var [name].\n";
+      std::cerr <<  "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << std::endl;
       }
-      cerr << "Aborting!!\n";
+      std::cerr <<  "Aborting!!\n";
       exit(-1);
     }
 
     if (verbose) {
       std::cout << vars[var_index] << ": " << types[var_index]->getName() 
-           << " being extracted for material "<<material << endl;
+           << " being extracted for material "<<material << std::endl;
     }
     //__________________________________
     // get type and subtype of data
@@ -668,7 +668,7 @@ int main(int argc, char** argv)
       output->open(output_file_name.c_str());
       
       if (!(*output)) {   // bullet proofing
-        cerr << "Could not open "<<output_file_name<<" for writing.\n";
+        std::cerr <<  "Could not open "<<output_file_name<<" for writing.\n";
         exit(1);
       }
       output_stream = output;
@@ -699,11 +699,11 @@ int main(int argc, char** argv)
     case Uintah::TypeDescription::Type::short_int_type:
     case Uintah::TypeDescription::Type::long_type:
     case Uintah::TypeDescription::Type::long64_type:
-      cerr << "Subtype is not implemented\n";
+      std::cerr <<  "Subtype is not implemented\n";
       exit(1);
       break;
     default:
-      cerr << "Unknown subtype\n";
+      std::cerr <<  "Unknown subtype\n";
       exit(1);
     }
 
@@ -713,10 +713,10 @@ int main(int argc, char** argv)
     }
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     exit(1);
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     exit(1);
   }
 }

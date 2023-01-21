@@ -74,7 +74,7 @@ Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 	ASSERTEQ(vars.size(), types.size());
 	cout << "There are " << vars.size() << " variables:\n";
 	for(int i=0;i<(int)vars.size();i++)
-		cout << vars[i] << ": " << types[i]->getName() << endl;
+		cout << vars[i] << ": " << types[i]->getName() << std::endl;
 	
 	vector<int> index;
 	vector<int> counts;
@@ -86,7 +86,7 @@ Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 	ASSERTEQ(index.size(), times.size());
 	cout << "There are " << index.size() << " timesteps:\n";
 	for( int i = 0; i < (int)index.size(); i++ ) {
-		cout << index[i] << ": " << times[i] << endl;
+		cout << index[i] << ": " << times[i] << std::endl;
 	}
 	
 	findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -105,7 +105,7 @@ Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 	
 	for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
 		double time = times[t];
-		cout << "time = " << time << endl;
+		cout << "time = " << time << std::endl;
 		GridP grid = da->queryGrid(t);
 		count=0;
 		total_press = 0;
@@ -142,7 +142,7 @@ Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 	for(unsigned long t=clf.time_step_lower+1;t<=clf.time_step_upper;t+=clf.time_step_inc){
 		double time = times[t];
 		double timeold = times[t-1];
-		cout << "time = " << time << endl;
+		cout << "time = " << time << std::endl;
 		GridP grid = da->queryGrid(t);
 		total_burned_mass=0;
 		LevelP level = grid->getLevel(grid->numLevels()-1);
@@ -169,6 +169,6 @@ Uintah::jacquie( DataArchive * da, CommandLineFlags & clf )
 		p++;
 		
 		outfile.precision(15);
-		outfile << time << " " << avePress << " " << burnRate << " " <<total_press << " " << count << endl; 
+		outfile << time << " " << avePress << " " << burnRate << " " <<total_press << " " << count << std::endl; 
     }//timestep
 } // end jim2()

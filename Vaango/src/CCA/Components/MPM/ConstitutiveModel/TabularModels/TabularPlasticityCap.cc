@@ -152,7 +152,7 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps,
      std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -2994,7 +2994,7 @@ TabularPlasticityCap::addComputesAndRequires(Task*,
 {
   std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR "
                "TabularPlasticityCap"
-            << endl;
+            << std::endl;
 }
 
 /*!

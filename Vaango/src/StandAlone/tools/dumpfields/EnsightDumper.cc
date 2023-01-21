@@ -79,7 +79,7 @@ namespace Uintah {
     string casefilename = data_.dir_ + string("/") + string("ensight.case");
     casestrm_.open(casefilename.c_str());
     if (!casestrm_) {
-      cerr << "Can't open output file " << casefilename << endl;
+      std::cerr <<  "Can't open output file " << casefilename << endl;
       abort();
     }
     std::cout << "     " << casefilename << endl;

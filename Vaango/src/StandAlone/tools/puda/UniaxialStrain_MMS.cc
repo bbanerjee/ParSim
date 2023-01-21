@@ -56,7 +56,7 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
   std::cout << "There are " << vars.size() << " variables:\n";
   
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       
   std::vector<int> index;
   std::vector<double> times;
@@ -66,7 +66,7 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -174,7 +174,7 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
           
             double error = (v_exact - value_vel[*iter]).length();
             std::cout << " x = " << curx(dir) << " v (exact) = " << V << " v (mpm) = " << value_vel[*iter].x()
-                 <<  " error = "  << error << endl;
+                 <<  " error = "  << error << std::endl;
             sumError += error*error;
                 
             if (error>max_error){
@@ -197,7 +197,7 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
       }
       
       std::cout << "     Level: " << level->getIndex() << " L_inf Error: " << LinfLevel[l] << ", L2norm: " << L2normLevel[l] 
-           << " numParticles: " << numParticles[l] << " , Worst particle: " << worstPos << ", " << worstCell << endl;
+           << " numParticles: " << numParticles[l] << " , Worst particle: " << worstPos << ", " << worstCell << std::endl;
       
       TotalSumError     += sumError;
       TotalNumParticles += numParticles[l];
@@ -210,7 +210,7 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
     }   // for levels
     double L2norm = sqrt( TotalSumError /(double)TotalNumParticles );
     
-    std::cout << "time: " << time << " , L_inf Error: " << max_errorAllLevels << " , L2norm Error: "<< L2norm << " , Worst particle: " << worstPosAllLevels << " " << worstCellAllLevels << endl;
+    std::cout << "time: " << time << " , L_inf Error: " << max_errorAllLevels << " , L2norm Error: "<< L2norm << " , Worst particle: " << worstPosAllLevels << " " << worstCellAllLevels << std::endl;
     
     //__________________________________
     // write data to the files (L_norms & L_normsPerLevels)

@@ -2846,7 +2846,7 @@ GPUDataWarehouse::isAllocatedOnGPU(char const* label, int patchID, int matlIndx,
   varLock->lock();
   labelPatchMatlLevel lpml(label, patchID, matlIndx, levelIndx);
   if (varPointers->find(lpml) != varPointers->end()) {
-    //cout << "In isAllocatedOnGPU - For patchID " << patchID << " for the status is " << getDisplayableStatusCodes(varPointers->at(lpml).atomicStatusInGpuMemory) << endl;
+    //cout << "In isAllocatedOnGPU - For patchID " << patchID << " for the status is " << getDisplayableStatusCodes(varPointers->at(lpml).atomicStatusInGpuMemory) << std::endl;
     bool retVal = ((__sync_fetch_and_or(&(varPointers->at(lpml).var->atomicStatusInGpuMemory), 0) & ALLOCATED) == ALLOCATED);
     if (retVal) {
       //now check the sizes

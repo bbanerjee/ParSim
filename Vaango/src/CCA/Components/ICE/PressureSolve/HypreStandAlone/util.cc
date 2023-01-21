@@ -122,7 +122,7 @@ serializeProcsBegin(void)
     _____________________________________________________________________*/
 {
   if (serializing) {
-    cerr << "\n\nError: serializeProcsBegin() called before "
+    std::cerr <<  "\n\nError: serializeProcsBegin() called before "
          << "serializeProcsEnd() done" << "\n";
     clean();
     exit(1);
@@ -162,7 +162,7 @@ serializeProcsEnd(void)
   }
 #endif
   if (!serializing) {
-    cerr << "\n\nError: serializeProcsEnd() called before "
+    std::cerr <<  "\n\nError: serializeProcsEnd() called before "
          << "serializeProcsBegin() done" << "\n";
     clean();
     exit(1);

@@ -88,7 +88,7 @@ public:
   
   void do_work(int proc) {
     //cerr << "Proc: "<<proc<<" of "<<np<<" working\n";
-    cerr << proc;
+    std::cerr <<  proc;
 #if 0
     int start = (int)((float)buff_size / np * proc);
     int end = (int)((float)buff_size / np * (proc+1));
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
   Thread::parallel(phelper, np, true);
 
   worker.print_test();
-  cerr << "Program end\n";
+  std::cerr <<  "Program end\n";
   Thread::exitAll(0);
 
   return 0;

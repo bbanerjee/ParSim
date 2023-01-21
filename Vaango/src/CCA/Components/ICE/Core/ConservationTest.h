@@ -128,7 +128,7 @@ void  conservationTest(const Patch* patch,
 
   //cout<< " sum: interior " << sum_interior
   //    << " faces " << delT * sum_fluxes
-  //    << " sum " << sum << endl;
+  //    << " sum " << sum << std::endl;
 }
 }// End namespace Uintah
 #endif

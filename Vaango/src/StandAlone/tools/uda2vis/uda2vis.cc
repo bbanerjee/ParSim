@@ -332,10 +332,10 @@ GridDataRaw* getGridDataMainType(DataArchive *archive,
   case Uintah::TypeDescription::Type::short_int_type:
   case Uintah::TypeDescription::Type::long_type:
   case Uintah::TypeDescription::Type::long64_type:
-    cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
+    std::cerr <<  "Subtype " << subtype->getName() << " is not implemented...\n";
     return nullptr;
   default:
-    cerr << "Unknown subtype\n";
+    std::cerr <<  "Unknown subtype\n";
     return nullptr;
   }
 }
@@ -389,7 +389,7 @@ getGridData(DataArchive *archive,
   case Uintah::TypeDescription::Type::SFCZVariable:
     return getGridDataMainType<SFCZVariable>(archive, patch, level, variable_name, material, timestep, low, high, subtype);
   default:
-    cerr << "Type is unknown.\n";
+    std::cerr <<  "Type is unknown.\n";
     return nullptr;
   }
 }
@@ -508,7 +508,7 @@ getParticleData(DataArchive *archive,
   case Uintah::TypeDescription::Type::Matrix3:
     return readParticleData<Matrix3>(archive, patch, variable_name, material, timestep);
   default:
-    cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";
+    std::cerr <<  "Unknown subtype for particle data: " << subtype->getName() << "\n";
     return nullptr;
   }
 }

@@ -145,7 +145,7 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
          // this is an inside test
          if(extraCell_node == Max(extraCell_node, finePatch_lo) && extraCell_node == Min(extraCell_node, finePatch_hi) ) {  
           CFI_ni.push_back(extraCell_node);
-          //cout << "    ni " << extraCell_node << endl;
+          //cout << "    ni " << extraCell_node << std::endl;
         } 
       }
     }
@@ -172,34 +172,34 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
 /*`==========TESTING==========*/
 #if 0
   if(ni[i].x() == 100 && (ni[i].z() == 1 || ni[i].z() == 2)){
-    std::cout << "  findCellAndWeights " << ni[i] << endl;
-    std::cout << "    dx " << dx << " L.w " << L.w << " L.e " << L.e << endl;
-    std::cout << "    dy " << dy << " L.n " << L.n << " L.s " << L.s << endl;
+    std::cout << "  findCellAndWeights " << ni[i] << std::endl;
+    std::cout << "    dx " << dx << " L.w " << L.w << " L.e " << L.e << std::endl;
+    std::cout << "    dy " << dy << " L.n " << L.n << " L.s " << L.s << std::endl;
     
    if(dx <= -L.w){                       // Lx-
-      std::cout << "     fx = 0;" << endl; 
+      std::cout << "     fx = 0;" << std::endl; 
     }
     else if ( -L.w <= dx && dx <= 0 ){   // Lx-
-     std::cout << "     fx = 1 + dx/L.w; " << endl;
+     std::cout << "     fx = 1 + dx/L.w; " << std::endl;
     }
     else if ( 0 <= dx  && dx <= L.e ){    // Lx+
-      std::cout << "     fx = 1 - dx/L.e; " << endl;
+      std::cout << "     fx = 1 - dx/L.e; " << std::endl;
     }
     else if (L.e <= dx){                  // Lx+
-      std::cout << "     fx = 0; " << endl;
+      std::cout << "     fx = 0; " << std::endl;
     }
     
     if(dy <= -L.s){                       // Ly-
-      std::cout << "     fy = 0; " << endl;
+      std::cout << "     fy = 0; " << std::endl;
     }
     else if ( -L.s <= dy && dy <= 0 ){    // Ly-
-      std::cout << "     fy = 1 + dy/L.s; " << endl;
+      std::cout << "     fy = 1 + dy/L.s; " << std::endl;
     }
     else if ( 0 <= dy && dy <= L.n ){    // Ly+
-      std::cout << "     fy = 1 - dy/L.n; " << endl;
+      std::cout << "     fy = 1 - dy/L.n; " << std::endl;
     }
     else if (L.n <= dy){                 // Ly+
-      std::cout << "     fy = 0; " << endl;
+      std::cout << "     fy = 0; " << std::endl;
     } 
   } 
 #endif
@@ -251,7 +251,7 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
 /*`==========TESTING==========*/
 #if 0
     if(s < 0 ) {
-      std::cout << CFI_ni[i] << "  fx " << fx << " fy " << fy <<  " fz " << fz << "    S[i] "<< s<< endl;
+      std::cout << CFI_ni[i] << "  fx " << fx << " fy " << fy <<  " fz " << fz << "    S[i] "<< s<< std::endl;
     }
 #endif 
 /*===========TESTING==========`*/
@@ -321,7 +321,7 @@ void LinearInterpolator::findCellAndWeightsAndShapeDerivatives_CFI(
          // this is an inside test
          if(extraCell_node == Max(extraCell_node, finePatch_lo) && extraCell_node == Min(extraCell_node, finePatch_hi) ) {  
           CFI_ni.push_back(extraCell_node);
-          //cout << "    ni " << extraCell_node << endl;
+          //cout << "    ni " << extraCell_node << std::endl;
         } 
       }
     }

@@ -96,7 +96,7 @@ DebugBuf::xsputn(const char* s,
   // Writing num characters of the char array s: our implementation
   // of the virtual function streambuf::xsputn().
 {
-  //  cerr << "verbose=" << owner->getVerboseLevel() 
+  //  std::cerr <<  "verbose=" << owner->getVerboseLevel() 
   //       << " level=" << owner->getLevel() << "\n";
   if ((owner->getLevel() > owner->getVerboseLevel())
       || (!owner->active())) {
@@ -166,19 +166,19 @@ void DebugStream::setActive(const bool active)
 void DebugStream::indent(void)
 {
   if (_indent >= 10) {
-    cerr << "\n\nWarning: DebugStream indent overflow" << "\n";
+    std::cerr <<  "\n\nWarning: DebugStream indent overflow" << "\n";
   } else {
     _indent++;
   }
-  //  cerr << "(indent=" << _indent << ") ";
+  //  std::cerr <<  "(indent=" << _indent << ") ";
 }
 
 void DebugStream::unindent(void)
 {
   if (_indent == 0) {
-    cerr << "\n\nWarning: DebugStream indent underflow" << "\n";
+    std::cerr <<  "\n\nWarning: DebugStream indent underflow" << "\n";
   } else {
     _indent--;
   }
-  //  cerr << "(indent=" << _indent << ") ";
+  //  std::cerr <<  "(indent=" << _indent << ") ";
 }

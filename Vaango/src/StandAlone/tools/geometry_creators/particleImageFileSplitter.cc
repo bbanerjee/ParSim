@@ -167,10 +167,10 @@ main(int argc, char* argv[])
         fprintf(stderr, "Cylinder height, volume: %g, %g\n", cylinder->height(),
                 cylinder->volume());
       } catch (Exception& e) {
-        cerr << "Caught exception: " << e.message() << endl;
+        std::cerr <<  "Caught exception: " << e.message() << endl;
         abort();
       } catch (...) {
-        cerr << "Caught unknown exception\n";
+        std::cerr <<  "Caught unknown exception\n";
         abort();
       }
     }
@@ -457,11 +457,11 @@ main(int argc, char* argv[])
     }       // loop over grid levels
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << '\n';
+    std::cerr <<  "Caught exception: " << e.message() << '\n';
     if (e.stackTrace())
-      cerr << "Stack trace: " << e.stackTrace() << '\n';
+      std::cerr <<  "Stack trace: " << e.stackTrace() << '\n';
   } catch (...) {
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
   }
 }
 

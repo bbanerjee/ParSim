@@ -61,7 +61,7 @@ main(int argc, char *argv[])
   ofstream vesselfile("vessel.pts");
   ofstream collagenfile("collagen.pts");
 
-  std::cout << "argc = " << argc << endl;
+  std::cout << "argc = " << argc << std::endl;
 
   // number of pixels in x and y and number of slices in z
   int xsize_raw = atoi(argv[1]);
@@ -105,10 +105,10 @@ main(int argc, char *argv[])
          double y = ((double)j - (double)ly)*dy + dy/2.;
          double z = ((double)k - (double)lz)*dz + dz/2.;
          if(intensity>=threshold){ // vessel
-           vesselfile << x << " " << y << " " << z << endl;
+           vesselfile << x << " " << y << " " << z << std::endl;
          }
          if(intensity<threshold){  // collagen
-           collagenfile << x << " " << y << " " << z << endl;
+           collagenfile << x << " " << y << " " << z << std::endl;
          }
        }
     }

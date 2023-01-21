@@ -50,7 +50,7 @@ ArchesHeatFluxBC::ArchesHeatFluxBC(ProblemSpecP& ps, const GridP& grid)
   // **WARNING** Currently allows only for box, cylinder or sphere.
   ProblemSpecP child  = (ps->findBlock("geom_object"))->findBlock();
   std::string go_type = child->getNodeName();
-  // std::cerr << "ArchesHeatFluxBC::go_type = " << go_type << endl;
+  // std::cerr << "ArchesHeatFluxBC::go_type = " << go_type << std::endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
     // Box box = d_surface->getBoundingBox();
@@ -227,7 +227,7 @@ ArchesHeatFluxBC::getSurfaceArea() const
 double
 ArchesHeatFluxBC::fluxPerParticle(double time) const
 {
-  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
+  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << std::endl;
   if (d_numMaterialPoints < 1)
     return 0.0;
 
@@ -238,8 +238,8 @@ ArchesHeatFluxBC::fluxPerParticle(double time) const
   // Get the initial heatflux that is applied ( t = 0.0 )
   double heatflx = heatflux(time);
 #if 0
-  std::cout << "heatflx = " << heatflx << endl;
-  std::cout << "area = " << area << endl;
+  std::cout << "heatflx = " << heatflx << std::endl;
+  std::cout << "area = " << area << std::endl;
 #endif
 
   // Calculate the heatflux per particle
@@ -260,9 +260,9 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
   } else if (d_surfaceType == "cylinder") {
     double new_flux = d_polyData->interpolateValue(px) * getSurfaceArea() /
                       static_cast<double>(d_numMaterialPoints);
-    // std::cout << "interpolated new_flux = " << new_flux << endl;
+    // std::cout << "interpolated new_flux = " << new_flux << std::endl;
 #if 0
-    std::cout << "FLUX PER PARTICLE = " << fluxPerParticle << endl;
+    std::cout << "FLUX PER PARTICLE = " << fluxPerParticle << std::endl;
 
     Vector normal = gp->radialDirection(px);
     double theta = atan(px.y()/px.x());
@@ -271,14 +271,14 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
     double flux_variation_mag = fluxPerParticle*max_min/2.;
     double offset = fluxPerParticle - flux_variation_mag;
     double flux_variation = flux_variation_mag*cos(theta) + offset;
-    std::cout << "theta = " << theta << " theta_n = " << theta_n << endl;
+    std::cout << "theta = " << theta << " theta_n = " << theta_n << std::endl;
     std::cout << "flux = " << fluxPerParticle  << " flux_variation = " 
          << flux_variation <<  endl;
 
     //    flux = fluxPerParticle;
 #endif
     flux = new_flux;
-    //    std::cout << "flux = " << flux << endl;
+    //    std::cout << "flux = " << flux << std::endl;
   } else if (d_surfaceType == "sphere") {
     // SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
     // Vector normal = gp->radialDirection(px);
@@ -322,7 +322,7 @@ operator<<(std::ostream& out, const ArchesHeatFluxBC& bc)
   for (int ii = 0; ii < numPts; ++ii) {
     out << "        time = "
         << lc->getTime(ii)
-        //         << " heatflux = " << lc->getLoad(ii) << endl;
+        //         << " heatflux = " << lc->getLoad(ii) << std::endl;
         << " heatflux = " << bc.heatflux(ii) << std::endl;
   }
   out << "End MPM ArchesHeatFlux BC # = " << bc.loadCurveID() << std::endl;

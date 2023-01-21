@@ -83,13 +83,13 @@ ArchesTable::ArchesTable(ProblemSpecP& params)
     string::iterator end = expr.end();
     dep->expression = parse_addsub(beg, end);
     if(beg != end || !dep->expression){
-      cerr << "expression = " << dep->expression << '\n';
+      std::cerr <<  "expression = " << dep->expression << '\n';
       if(beg != end)
-        cerr << "next=" << *beg << '\n';
-      cerr << "Error parsing expression:\n" << expr << '\n';
+        std::cerr <<  "next=" << *beg << '\n';
+      std::cerr <<  "Error parsing expression:\n" << expr << '\n';
       for(string::iterator skip = expr.begin(); skip != beg; skip++)
-        cerr << ' ';
-      cerr << "^\n";
+        std::cerr <<  ' ';
+      std::cerr <<  "^\n";
       throw ProblemSetupException("Error parsing expression", __FILE__, __LINE__);
     }
     deps.push_back(dep);
@@ -313,7 +313,7 @@ ArchesTable::setup(const bool cerrSwitch)
     throw ProblemSetupException("Unable to open the given input file: " + filename_, __FILE__, __LINE__);
   }
 
-  cerr_dbg << "Reading reaction table: " << filename_ << endl;
+  cerr_dbg << "Reading reaction table: " << filename_ << std::endl;
   int nvars = getInt( gzFp );
   cerr_dbg << "Reading " << nvars << " variables : ";
 
@@ -797,9 +797,9 @@ ArchesTable::interpolate( int index, CCVariable<double>& result,
                 idx=0;
               } else {
                 cerr.precision(17);
-                cerr << "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
-                cerr << "index=" << index << ", fraction=" << index-idx << '\n';
-                cerr << "last value=" << axis->weights[axis->weights.size()-1] << '\n';
+                std::cerr <<  "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
+                std::cerr <<  "index=" << index << ", fraction=" << index-idx << '\n';
+                std::cerr <<  "last value=" << axis->weights[axis->weights.size()-1] << '\n';
                 throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
               }
             }
@@ -816,7 +816,7 @@ ArchesTable::interpolate( int index, CCVariable<double>& result,
                 value = axis->weights[h];
               else {
                 cerr.precision(17);
-                cerr << *iter << ", value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
+                std::cerr <<  *iter << ", value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
                 throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
               }
             }
@@ -878,8 +878,8 @@ ArchesTable::interpolate( int index, vector<double>& independents )
     if(axis->uniform){
       double index = (value-axis->weights[0])/axis->dx;
       if(index < 0 || index >= axis->weights.size()){
-        cerr << "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
-        cerr << "index=" << index << '\n';
+        std::cerr <<  "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
+        std::cerr <<  "index=" << index << '\n';
         throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
       }
       int idx = (int)index;
@@ -896,7 +896,7 @@ ArchesTable::interpolate( int index, vector<double>& independents )
           value = axis->weights[h];
         else {
           cerr.precision(17);
-          cerr << "value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
+          std::cerr <<  "value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
           throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
         }
       }

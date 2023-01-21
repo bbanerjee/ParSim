@@ -121,32 +121,32 @@ static
 void usage(const string& badarg, const string& progname)
 {
   if(badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname << " [options] <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  -basename [bnm]            alternate output basename\n";
-  cerr << "  -format [fmt]              output format, one of (text,histogram,info)\n"; // ensight, dx
-  cerr << "                             default is info\n";
-  cerr << "  selection options:" << endl;
-  cerr << FieldSelection::options() << endl;
-  cerr << "  time options:" << endl;
-  cerr << "      -datasetlow  [int]    output data sets starting at [int]\n";
-  cerr << "      -datasethigh [int]    output data sets up to [int]\n";
-  cerr << "      -datasetinc  [int]    output every [int] data sets\n";
-  cerr << "  info options:" << endl;
-  cerr << InfoOpts::options() << endl;
-  cerr << "  text options:" << endl;
-  cerr << TextOpts::options() << endl;
-  // cerr << "  ensight options:" << endl;
-  // cerr << EnsightOpts::options() << endl;
-  cerr << "  histogram options:" << endl;
-  cerr << HistogramOpts::options() << endl;
-  cerr << "  help options:" << endl;
-  cerr << "      -help                  this help\n";
-  cerr << "      -showdiags             print available diagnostic names\n";
-  cerr << "      -showtensorops         print known tensor transformations\n";
-  cerr << "      -showfields            print available field names (requires archive name)\n";
-  cerr << endl;
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname << " [options] <archive file>\n\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  -basename [bnm]            alternate output basename\n";
+  std::cerr <<  "  -format [fmt]              output format, one of (text,histogram,info)\n"; // ensight, dx
+  std::cerr <<  "                             default is info\n";
+  std::cerr <<  "  selection options:" << std::endl;
+  std::cerr <<  FieldSelection::options() << std::endl;
+  std::cerr <<  "  time options:" << std::endl;
+  std::cerr <<  "      -datasetlow  [int]    output data sets starting at [int]\n";
+  std::cerr <<  "      -datasethigh [int]    output data sets up to [int]\n";
+  std::cerr <<  "      -datasetinc  [int]    output every [int] data sets\n";
+  std::cerr <<  "  info options:" << std::endl;
+  std::cerr <<  InfoOpts::options() << std::endl;
+  std::cerr <<  "  text options:" << std::endl;
+  std::cerr <<  TextOpts::options() << std::endl;
+  // std::cerr <<  "  ensight options:" << std::endl;
+  // std::cerr <<  EnsightOpts::options() << std::endl;
+  std::cerr <<  "  histogram options:" << std::endl;
+  std::cerr <<  HistogramOpts::options() << std::endl;
+  std::cerr <<  "  help options:" << std::endl;
+  std::cerr <<  "      -help                  this help\n";
+  std::cerr <<  "      -showdiags             print available diagnostic names\n";
+  std::cerr <<  "      -showtensorops         print known tensor transformations\n";
+  std::cerr <<  "      -showfields            print available field names (requires archive name)\n";
+  std::cerr <<  std::endl;
   exit(EXIT_SUCCESS);
 }
 
@@ -176,18 +176,18 @@ main(int argc, char** argv)
     string basedir      = args.getString("basename", "");
     
     if(args.getLogical("showdiags")) {
-      std::cout << "Valid diagnostics: " << endl;
+      std::cout << "Valid diagnostics: " << std::endl;
       describeScalarDiags(cout);
       describeVectorDiags(cout);
       describeTensorDiags(cout);
-      std::cout << endl;
+      std::cout << std::endl;
       exit(EXIT_SUCCESS);
     }
     
     if(args.getLogical("showtensorops")) {
-      std::cout << "Valid tensor operations: " << endl;
+      std::cout << "Valid tensor operations: " << std::endl;
       describeTensorDiags(cout);
-      std::cout << endl;
+      std::cout << std::endl;
       exit(EXIT_SUCCESS);
     }
     
@@ -198,7 +198,7 @@ main(int argc, char** argv)
     if(basedir=="")
       basedir = filebase.substr(0, filebase.find('.'));
     
-    std::cout << "filebase: " << filebase << endl;
+    std::cout << "filebase: " << filebase << std::endl;
     DataArchive* da = scinew DataArchive(filebase);
     
     // load list of possible variables from the data archive
@@ -208,12 +208,12 @@ main(int argc, char** argv)
     ASSERTEQ(allvars.size(), alltypes.size());
     
     if(args.getLogical("showfields")) {
-      std::cout << "Valid field names are: " << endl;
+      std::cout << "Valid field names are: " << std::endl;
       for(vector<std::string>::const_iterator vit(allvars.begin());vit!=allvars.end();vit++) {
         if(*vit != "p.x") 
-          std::cout << "   " << *vit << endl;
+          std::cout << "   " << *vit << std::endl;
       }
-      std::cout << endl;
+      std::cout << std::endl;
       exit(EXIT_SUCCESS);
     }
     
@@ -237,16 +237,16 @@ main(int argc, char** argv)
     } else if(fmt=="info") {
       dumper = new InfoDumper(da, basedir, args, fldselection);
     } else {
-      cerr << "Failed to find match to format '" + fmt + "'" << endl;
+      std::cerr <<  "Failed to find match to format '" + fmt + "'" << std::endl;
       usage("", argv[0]);
     }
     
     if(args.hasUnused()) {
-      cerr << "Unused options detected" << endl;
+      std::cerr <<  "Unused options detected" << std::endl;
       std::vector<std::string> extraargs = args.unusedArgs();
       for(vector<std::string>::const_iterator ait(extraargs.begin());ait!=extraargs.end();ait++)
         {
-          cerr << "    " << *ait << endl;
+          std::cerr <<  "    " << *ait << std::endl;
         }
       usage("", argv[0]);
     }
@@ -278,7 +278,7 @@ main(int argc, char** argv)
     
     // loop over the times
     for(int i=time_step_lower;i<=time_step_upper;i+=time_step_inc) {
-      std::cout << index[i] << ": " << times[i] << endl;
+      std::cout << index[i] << ": " << times[i] << std::endl;
         
       FieldDumper::Step * step_dumper = dumper->addStep(index[i], times[i], i);
         
@@ -292,7 +292,7 @@ main(int argc, char** argv)
         
         step_dumper->storeField(fieldname, td);
       }
-      std::cout << endl;
+      std::cout << std::endl;
 	
       dumper->finishStep(step_dumper);
       
@@ -303,19 +303,19 @@ main(int argc, char** argv)
     // delete dumper;
     
   } catch (ProblemSetupException & e) {
-    cerr << endl;
-    cerr << "----------------------------------------------------------------------" << endl;
-    cerr << endl;
-    cerr << "ERROR: " << e.message() << endl;
-    cerr << endl;
-    cerr << "----------------------------------------------------------------------" << endl;
+    std::cerr <<  std::endl;
+    std::cerr <<  "----------------------------------------------------------------------" << std::endl;
+    std::cerr <<  std::endl;
+    std::cerr <<  "ERROR: " << e.message() << std::endl;
+    std::cerr <<  std::endl;
+    std::cerr <<  "----------------------------------------------------------------------" << std::endl;
     usage("", argv[0]);
     exit(EXIT_FAILURE);
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
   exit(EXIT_SUCCESS);

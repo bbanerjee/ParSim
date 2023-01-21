@@ -55,7 +55,7 @@ DXDumper::DXDumper(DataArchive* da, string basedir, bool bin, bool onedim)
   string indexfilename = dirname_ + string("/") + string("index.dx");
   dxstrm_.open(indexfilename.c_str());
   if (!dxstrm_) {
-    cerr << "Can't open output file " << indexfilename << endl;
+    std::cerr <<  "Can't open output file " << indexfilename << endl;
     abort();
   }
   std::cout << "     " << indexfilename << endl;
@@ -101,7 +101,7 @@ DXDumper::FldWriter::FldWriter(string outdir, string fieldname)
   string outname = outdir+"/"+fieldname+".dx";
   strm_.open(outname.c_str());
   if(!strm_) {
-    cerr << "Can't open output file " << outname << endl;
+    std::cerr <<  "Can't open output file " << outname << endl;
     abort();
   }
   std::cout << "     " << outname << endl;

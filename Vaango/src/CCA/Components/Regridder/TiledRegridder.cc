@@ -112,11 +112,11 @@ TiledRegridder::ComputeTiles(std::vector<IntVector>& tiles,
 
 #if 0
       if(patch->getID() == 222082){
-          std::cout << "   Patch_ID  " << patch->getID() << endl;
-          std::cout << "   coarsePatch : "<< patch->getCellLowIndex() << " patchHigh: " << patch->getCellHighIndex() << endl;
-          std::cout << "   finePatch   : " << patchLow << " finePatchHigh: " << patchHigh << endl;
-          std::cout << "   tileIndex   : " << *ti << " tileLow:  " << tileLow << " tileHigh: " << tileHigh << endl;
-          std::cout << "   cellLow     : " << cellLow << " cellHigh: " << cellHigh << endl;
+          std::cout << "   Patch_ID  " << patch->getID() << std::endl;
+          std::cout << "   coarsePatch : "<< patch->getCellLowIndex() << " patchHigh: " << patch->getCellHighIndex() << std::endl;
+          std::cout << "   finePatch   : " << patchLow << " finePatchHigh: " << patchHigh << std::endl;
+          std::cout << "   tileIndex   : " << *ti << " tileLow:  " << tileLow << " tileHigh: " << tileHigh << std::endl;
+          std::cout << "   cellLow     : " << cellLow << " cellHigh: " << cellHigh << std::endl;
       }
 #endif
 
@@ -152,7 +152,7 @@ TiledRegridder::ComputeTiles(std::vector<IntVector>& tiles,
       std::ostringstream msg;
       msg << " ERROR:  TiledRegridder:  Did not search this patch " << *patch
           << " entirely for refinement flags.  Number of cells not searched: "
-          << count << endl;
+          << count << std::endl;
 
       throw InternalError(msg.str(), __FILE__, __LINE__);
     }
@@ -260,8 +260,8 @@ TiledRegridder::CreateGrid(Grid* oldGrid,
       IntVector high =
         computeCellHighIndex(tiles[l][p], d_numCells[l], d_tileSize[l]);
       // cout << "level: " << l << " Creating patch from tile " << tiles[l][p]
-      // << " at " << low << ", " << high << endl; cout << "     numCells: " <<
-      // d_numCells[l] << " tileSize: " << d_tileSize[l] << endl;
+      // << " at " << low << ", " << high << std::endl; cout << "     numCells: " <<
+      // d_numCells[l] << " tileSize: " << d_tileSize[l] << std::endl;
 
       // create patch
       level->addPatch(low, high, low, high, newGrid);
@@ -421,7 +421,7 @@ TiledRegridder::problemSetup_BulletProofing(const int L)
       msg << "Problem Setup: Regridder: The problem you're running is <3D. \n"
           << " The min Patch Size must be 1 in the other dimensions. \n"
           << "Grid Size: " << d_cellNum[L]
-          << " min patch size: " << d_minTileSize[L] << endl;
+          << " min patch size: " << d_minTileSize[L] << std::endl;
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
 
@@ -430,7 +430,7 @@ TiledRegridder::problemSetup_BulletProofing(const int L)
       msg << "Problem Setup: Regridder: Min Patch Size needs to be greater "
              "than 4 cells in each dimension \n"
           << "except for 1-cell-wide dimensions.\n"
-          << "  Patch size on level " << L << ": " << d_minTileSize[L] << endl;
+          << "  Patch size on level " << L << ": " << d_minTileSize[L] << std::endl;
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
 
@@ -481,14 +481,14 @@ TiledRegridder::CoarsenFlags(GridP oldGrid, int l, std::vector<IntVector> tiles)
   }
 
   // cout << d_myworld->myRank() << " SAFETY LAYER Level:" << l << " coarse
-  // patches:" << cp->size() << " tiles:" << tiles.size() << endl; create a
+  // patches:" << cp->size() << " tiles:" << tiles.size() << std::endl; create a
   // range tree out of my patches
   PatchBVH pbvh(cp->getVector());
 
   // for each tile
   for (unsigned t = 0; t < tiles.size(); t++) {
     // cout << d_myworld->myRank() << "    fine tile: low:" << tiles[t] << "
-    // high:" << tiles[t]+d_tileSize[l+1] << endl;
+    // high:" << tiles[t]+d_tileSize[l+1] << std::endl;
 
     // add a boundary and convert coordinates to a coarse level by dividing by
     // the refinement ratios.
@@ -506,8 +506,8 @@ TiledRegridder::CoarsenFlags(GridP oldGrid, int l, std::vector<IntVector> tiles)
     // cout << "level " << l << " coarsening flags for tile: " << tiles[t] << "
     // low:" << computeCellLowIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) <<
     // " high: " <<
-    // computeCellHighIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) << endl;
-    // cout << "     coarseLow: " << low << " coarseHigh: " << high << endl;
+    // computeCellHighIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) << std::endl;
+    // cout << "     coarseLow: " << low << " coarseHigh: " << high << std::endl;
     // clamp low and high points to domain boundaries
     for (int d = 0; d < 3; d++) {
       if (low[d] < 0) {
@@ -518,7 +518,7 @@ TiledRegridder::CoarsenFlags(GridP oldGrid, int l, std::vector<IntVector> tiles)
       }
     }
     // cout << d_myworld->myRank() << "    coarse tile low:" << low << " high:"
-    // << high << endl;
+    // << high << std::endl;
 
     Level::selectType intersecting_patches;
     // intersect range tree
@@ -539,7 +539,7 @@ TiledRegridder::CoarsenFlags(GridP oldGrid, int l, std::vector<IntVector> tiles)
       IntVector int_high = Min(patch->getExtraCellHighIndex(), high);
 
       // cout << d_myworld->myRank() << "             int_low:" << int_low << "
-      // int_high:" << int_high << endl; for each intesecting cells
+      // int_high:" << int_high << std::endl; for each intesecting cells
       for (CellIterator iter(int_low, int_high); !iter.done(); iter++) {
         // if(flags[*iter]==false)
         //   std::cout << d_myworld->myRank() << "                changing flag
@@ -566,7 +566,7 @@ TiledRegridder::verifyGrid(Grid* grid)
 
   int num_levels = grid->numLevels();
   regrider_dbg << d_myworld->myRank() << " Grid number of levels:" << num_levels
-               << endl;
+               << std::endl;
   their_checksums.resize(d_myworld->nRanks());
   Uintah::MPI::Gather(&num_levels,
                       1,
@@ -583,7 +583,7 @@ TiledRegridder::verifyGrid(Grid* grid)
         std::cout << d_myworld->myRank()
                   << " Error number of levels does not match on rank " << i
                   << " my levels:" << num_levels
-                  << " their levels:" << their_checksums[i] << endl;
+                  << " their levels:" << their_checksums[i] << std::endl;
         return false;
       }
     }
@@ -603,7 +603,7 @@ TiledRegridder::verifyGrid(Grid* grid)
     for (int p = 0; p < level->numPatches(); p++) {
       const Patch* patch = level->getPatch(p);
       regrider_dbg << d_myworld->myRank() << "    Level: " << i << " Patch "
-                   << p << ": " << *patch << endl;
+                   << p << ": " << *patch << std::endl;
       Sum  = Abs(patch->getCellHighIndex()) + Abs(patch->getCellLowIndex());
       Diff = Abs(patch->getCellHighIndex()) - Abs(patch->getCellLowIndex());
 
@@ -611,7 +611,7 @@ TiledRegridder::verifyGrid(Grid* grid)
       diff += Diff[0] * Diff[1] * Diff[2] * (p + 1000000);
       // cout << d_myworld->myRank() << " patch:" << *patch << " sum:" <<
       // Sum[0]*Sum[1]*Sum[2]*(p+1) << " diff:" << Diff[0]*Diff[1]*Diff[2]*(p+1)
-      // << endl;
+      // << std::endl;
     }
     checksums[i] += (sum + diff);
   }
@@ -632,7 +632,7 @@ TiledRegridder::verifyGrid(Grid* grid)
         if (checksums[i] != their_checksums[p * checksums.size() + i]) {
           std::cout << d_myworld->myRank()
                     << " Error grid inconsistency: " << labels[i]
-                    << " does not match on rank:" << p << endl;
+                    << " does not match on rank:" << p << std::endl;
           return false;
         }
       }
@@ -731,7 +731,7 @@ TiledRegridder::GatherTiles(std::vector<IntVector>& mytiles,
       displs[p]     = pos;
       recvcounts[p] = counts[p] * sizeof(CompressedIntVector);
       // cout << d_myworld->myRank() << " displs: " << displs[p] << " recvs: "
-      // << recvcounts[p] << endl;
+      // << recvcounts[p] << std::endl;
       pos += recvcounts[p];
     }
 

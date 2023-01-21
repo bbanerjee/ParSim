@@ -65,18 +65,18 @@ Uintah::findTimestep_loopLimits( const bool tslow_set,
     time_step_lower = 0;
   }
   else if( time_step_lower >= times.size() ) {
-    cerr << "\n";
-    cerr << "ERROR: 'timesteplow' must be between 0 and " << times.size()-1 << ".  You had " << time_step_lower << ".\n";
-    cerr << "\n";
+    std::cerr <<  "\n";
+    std::cerr <<  "ERROR: 'timesteplow' must be between 0 and " << times.size()-1 << ".  You had " << time_step_lower << ".\n";
+    std::cerr <<  "\n";
     Uintah::Thread::exitAll( 2 );
   }
   if( !tsup_set ) {
     time_step_upper = times.size() - 1;
   }
   else if( time_step_upper >= times.size() ) {
-    cerr << "\n";
-    cerr << "Error: 'timestephigh' must be between 0 and " << times.size()-1 << ".  You had " << time_step_upper << ".\n";
-    cerr << "\n";
+    std::cerr <<  "\n";
+    std::cerr <<  "Error: 'timestephigh' must be between 0 and " << times.size()-1 << ".  You had " << time_step_upper << ".\n";
+    std::cerr <<  "\n";
     Uintah::Thread::exitAll( 2 );
   }
 }

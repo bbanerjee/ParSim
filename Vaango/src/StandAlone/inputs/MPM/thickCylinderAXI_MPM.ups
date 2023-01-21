@@ -191,7 +191,7 @@
         if(pset->numParticles() > 0){
           ParticleSubset::iterator iter = pset->begin();
           for(;iter != pset->end(); iter++){
-            partfile << value_pos[*iter].x() << " " << value_strs[*iter](0,0) << " " << value_strs[*iter](1,1) << " " << value_strs[*iter](2,2) << endl;
+            partfile << value_pos[*iter].x() << " " << value_strs[*iter](0,0) << " " << value_strs[*iter](1,1) << " " << value_strs[*iter](2,2) << std::endl;
           }
         }  //if
       }  // for patches

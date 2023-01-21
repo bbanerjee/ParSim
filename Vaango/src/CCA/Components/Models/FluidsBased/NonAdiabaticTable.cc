@@ -123,7 +123,7 @@ NonAdiabaticTable::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 void NonAdiabaticTable::problemSetup(GridP& grid, MaterialManagerP& in_state,
                         ModelSetup* setup)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tADIABATIC_TABLE" << std::endl;
   sharedState = in_state;
   d_matl = sharedState->parseAndLookupMaterial(params, "material");
 
@@ -308,7 +308,7 @@ void NonAdiabaticTable::scheduleInitialize(SchedulerP& sched,
                                    const LevelP& level,
                                    const ModelInfo*)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleInitialize " << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleInitialize " << std::endl;
   Task* t = scinew Task("NonAdiabaticTable::initialize", this, 
                         &NonAdiabaticTable::initialize);
 
@@ -335,7 +335,7 @@ void NonAdiabaticTable::initialize(const ProcessorGroup*,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tADIABATIC_TABLE" << endl;
+  cout_doing << "Doing Initialize \t\t\t\t\tADIABATIC_TABLE" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     int indx = d_matl->getDWIndex();
@@ -455,7 +455,7 @@ void NonAdiabaticTable::scheduleModifyThermoTransportProperties(SchedulerP& sche
                                                    const LevelP& level,
                                                    const MaterialSet* /*ice_matls*/)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleModifyThermoTransportProperties" << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleModifyThermoTransportProperties" << std::endl;
 
   Task* t = scinew Task("NonAdiabaticTable::modifyThermoTransportProperties", 
                    this,&NonAdiabaticTable::modifyThermoTransportProperties);
@@ -485,7 +485,7 @@ void NonAdiabaticTable::modifyThermoTransportProperties(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing modifyThermoTransportProperties on patch "<<patch->getID()
-               << "\t ADIABATIC_TABLE" << endl;
+               << "\t ADIABATIC_TABLE" << std::endl;
    
     int indx = d_matl->getDWIndex();
     CCVariable<double> diffusionCoeff, gamma, cv, thermalCond, viscosity;
@@ -547,7 +547,7 @@ void NonAdiabaticTable::computeSpecificHeat(CCVariable<double>& cv_new,
                                     const int indx)
 { 
   cout_doing << "Doing computeSpecificHeat on patch "<<patch->getID()
-             << "\t ADIABATIC_TABLE" << endl;
+             << "\t ADIABATIC_TABLE" << std::endl;
 
   int test_indx = d_matl->getDWIndex();
   //__________________________________
@@ -591,7 +591,7 @@ void NonAdiabaticTable::scheduleComputeModelSources(SchedulerP& sched,
                                                  const LevelP& level,
                                                  const ModelInfo* mi)
 {
-  cout_doing << "ADIABATIC_TABLE::scheduleComputeModelSources " << endl;
+  cout_doing << "ADIABATIC_TABLE::scheduleComputeModelSources " << std::endl;
   Task* t = scinew Task("NonAdiabaticTable::computeModelSources", 
                    this,&NonAdiabaticTable::computeModelSources, mi);
                     
@@ -641,7 +641,7 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing momentumAndEnergyExch... on patch "<<patch->getID()
-               << "\t\tADIABATIC_TABLE" << endl;
+               << "\t\tADIABATIC_TABLE" << std::endl;
 
     for(int m=0;m<matls->size();m++){
       int matl = matls->get(m);
@@ -761,14 +761,14 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
 #endif
       }
 #if 0
-      cerr << "MaxTemp = " << maxTemp << ", maxFlameTemp=" << maxFlameTemp << ", maxIncrease=" << maxIncrease << ", maxDecrease=" << maxDecrease << ", totalEnergy=" << totalEnergy << '\n';
+      std::cerr <<  "MaxTemp = " << maxTemp << ", maxFlameTemp=" << maxFlameTemp << ", maxIncrease=" << maxIncrease << ", maxDecrease=" << maxDecrease << ", totalEnergy=" << totalEnergy << '\n';
       double cp = cpsum/ncells;
       double mass = masssum/ncells;
       double e = esum/ncells;
       double atemp = e/(mass*cp);
       std::vector<double> tmp(1);
       tmp[0]=fsum/masssum;
-      cerr << "AverageTemp=" << atemp << ", AverageF=" << fsum/masssum << ", targetTemp=" << table->interpolate(d_temp_index, tmp) << '\n';
+      std::cerr <<  "AverageTemp=" << atemp << ", AverageF=" << fsum/masssum << ", targetTemp=" << table->interpolate(d_temp_index, tmp) << '\n';
 #endif
 
       //__________________________________
@@ -821,7 +821,7 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
       // concentrations.
       for(int i=0;i<(int)tablevalues.size();i++){
         TableValue* tv = tablevalues[i];
-        cerr << "interpolating " << tv->name << '\n';
+        std::cerr <<  "interpolating " << tv->name << '\n';
         CCVariable<double> value;
         new_dw->allocateAndPut(value, tv->label, matl, patch);
         CellIterator iter = patch->getCellIterator();
@@ -836,7 +836,7 @@ void NonAdiabaticTable::scheduleTestConservation(SchedulerP& sched,
                                               const ModelInfo* mi)
 {
   if(d_test_conservation){
-    cout_doing << "ADIABATICTABLE::scheduleTestConservation " << endl;
+    cout_doing << "ADIABATICTABLE::scheduleTestConservation " << std::endl;
     Task* t = scinew Task("NonAdiabaticTable::testConservation", 
                      this,&NonAdiabaticTable::testConservation, mi);
 
@@ -870,7 +870,7 @@ void NonAdiabaticTable::testConservation(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     cout_doing << "Doing testConservation on patch "<<patch->getID()
-               << "\t\t\t NonAdiabaticTable" << endl;
+               << "\t\t\t NonAdiabaticTable" << std::endl;
                
     //__________________________________
     //  conservation of f test

@@ -86,7 +86,7 @@ Box::get(const Side& s) const
   if      (s == Left ) return _lower;
   else if (s == Right) return _upper;
   else {
-    cerr << "\n\nError: Box::get() with s == NA" << "\n";
+    std::cerr <<  "\n\nError: Box::get() with s == NA" << "\n";
     clean();
     exit(1);
   }
@@ -98,7 +98,7 @@ Box::get(const Side& s)
   if      (s == Left ) return _lower;
   else if (s == Right) return _upper;
   else {
-    cerr << "\n\nError: Box::get() with s == NA" << "\n";
+    std::cerr <<  "\n\nError: Box::get() with s == NA" << "\n";
     clean();
     exit(1);
   }
@@ -111,7 +111,7 @@ Box::set(const Side& s,
   if      (s == Left ) _lower = value;
   else if (s == Right) _upper = value;
   else {
-    cerr << "\n\nError: Box::set() with s == NA" << "\n";
+    std::cerr <<  "\n\nError: Box::set() with s == NA" << "\n";
     clean();
     exit(1);
   }
@@ -125,7 +125,7 @@ Box::set(const Counter d,
   if      (s == Left ) _lower[d] = value;
   else if (s == Right) _upper[d] = value;
   else {
-    cerr << "\n\nError: Box::set() with s == NA" << "\n";
+    std::cerr <<  "\n\nError: Box::set() with s == NA" << "\n";
     clean();
     exit(1);
   }

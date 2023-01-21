@@ -82,7 +82,7 @@ Turbulence* TurbulenceFactory::create(ProblemSpecP& ps, MaterialManagerP& mat_ma
       warn << "ERROR ICE: Unknown turbulence model ("<< turbulence_model << " )\n"
          << "Valid models are:\n" 
          << "Smagorinsky\n"
-         << "Germano\n" << endl;
+         << "Germano\n" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
   }

@@ -163,7 +163,7 @@ void SimpleSolver::solve(vector<double>& guess)
   for (int i = 0; i < (int)Q.size(); i++){
     Qtot += fabs(Q[i]);
   }
-  std::cout << "Qtot = " << Qtot << endl;
+  std::cout << "Qtot = " << Qtot << std::endl;
 
   d_x.resize(Q.size());
 
@@ -178,7 +178,7 @@ void SimpleSolver::solve(vector<double>& guess)
   }
 #if 0
   for (int i=0;i< d_x.size();i++)
-    std::cout << "T[" << i << "]= " << d_x[i] << endl;
+    std::cout << "T[" << i << "]= " << d_x[i] << std::endl;
 #endif
 }
 
@@ -403,7 +403,7 @@ void SimpleSolver::printMatrix()
       if (KK[i][j] != 0.)
         std::cout << " (" << j << ", " << KK[i][j] << ") ";
     }
-    std::cout << endl;
+    std::cout << std::endl;
   }
 
 }
@@ -412,5 +412,5 @@ void SimpleSolver::printMatrix()
 void SimpleSolver::printRHS()
 {
   for (int i = 0; i < (int)Q.size(); i++)
-    std::cout << Q[i] << endl;;
+    std::cout << Q[i] << std::endl;;
 }

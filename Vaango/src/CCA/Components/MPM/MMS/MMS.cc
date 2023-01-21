@@ -195,7 +195,7 @@ MMS::extForceGeneralizedVortex(const MPMFlags* flags,
                                DataWarehouse* new_dw,
                                ParticleVariable<Vector>& pExtForce)
 {
-  // std::cout << "Entered the GV loop " << endl;
+  // std::cout << "Entered the GV loop " << std::endl;
   double mu = 384.615;
   double E = 1000.0;
   double rho0=1000.0;
@@ -298,7 +298,7 @@ MMS::extForceAxisAligned(const MPMFlags* flags,
                          DataWarehouse* new_dw,
                          ParticleVariable<Vector>& pExtForce)
 {
-  // std::cout << "Entered the AA loop " << endl;
+  // std::cout << "Entered the AA loop " << std::endl;
   double mu = 3846.15;
   double bulk = 8333.33;
   double E = 9.*bulk*mu/(3.*bulk+mu);
@@ -355,7 +355,7 @@ MMS::initExpandingRing(const MPMFlags* flags,
                        ParticleVariable<Vector>& pdisp,
                        ParticleVariable<Matrix3>& psize)
 {
-  // std::cout << "Entered the ER loop " << endl;
+  // std::cout << "Entered the ER loop " << std::endl;
   double A = 0.1;
   double E = 1e7;
   double rho = 1000;;
@@ -416,7 +416,7 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
     particleIndex idx = *iter;
     double X = px[idx].x()-pdisp[idx].x();
     double Y = px[idx].y()-pdisp[idx].y();
-    // std::cout << "time :: " << time << endl;
+    // std::cout << "time :: " << time << std::endl;
     double t = time;
 
     double pi_c_t = C*M_PI*t/2.0;
@@ -447,7 +447,7 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
     double term3 = A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0;
     double term4 = c3*Asinct*4.0+ASq*c2Sq*sinctSq*2.0+ASq*c3Sq*sinctSq*lenSq*3.0+ASq*c1c3*sinctSq*4.0;
 
-    // std::cout << "t :: " << t << endl;
+    // std::cout << "t :: " << t << std::endl;
     // Don't get overwhelmed by looking at the body force. Its insanely large.
     double bx = -((mu*(YAsinct*Xc3Xc2*term1+XAsinct*Yc3Yc2*term2)*(XSq*c3*YAsinct*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)*2.0-XSq*YAsinct*c2pc3*term3*2.0-YAsinct*c2pc3*lenSq*term3+YAsinct*c2pc3*len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)+XYAsinct*(X*term4*2.0+ASq*X*c3Sq*sinctSq*lenSq*6.0)*c2pc3*len-XSq*c3*YAsinct*len*term3*2.0+XSq*YAsinct*c2pc3*1.0/len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)-(A*A*A)*XSq*Y*c2c3*pow(sinct,3.0)*c2pc3*lenSq*1.0E1))/(pow(lenSq,2.0)*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)-lenSq*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0))+
                   (mu*(pow(term2,2.0)+ASq*YSq*sinctSq*pow(Xc3Xc2,2.0)-1.0)*(YSq*c3*XAsinct*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)*2.0-A*X*YSq*sinct*c2pc3*term3*2.0-XAsinct*c2pc3*lenSq*term3+XAsinct*c2pc3*len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)+XYAsinct*(Y*term4*2.0+ASq*Y*c3Sq*sinctSq*lenSq*6.0)*c2pc3*len-YSq*c3*XAsinct*len*term3*2.0+A*X*YSq*sinct*c2pc3*1.0/len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)-(A*A*A)*X*YSq*c2c3*pow(sinct,3.0)*c2pc3*lenSq*1.0E1))/(pow(lenSq,2.0)*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)-lenSq*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0))-

@@ -79,32 +79,32 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname << " [options] "
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname << " [options] "
        << "-uda <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  -h,        --help\n";
-  cerr << "  -v,        --variable:      <variable name>\n";
-  cerr << "  -m,        --material:      <material number> [defaults to 0]\n";
-  cerr << "  -tlow,     --timesteplow:   [int] (sets start output timestep to int) [defaults to 0]\n";
-  cerr << "  -thigh,    --timestephigh:  [int] (sets end output timestep to int) [defaults to last timestep]\n";
-  cerr << "  -timestep, --timestep:      [int] (only outputs from timestep int)  [defaults to 0]\n";
-  cerr << "  -istart,   --indexs:        <i> <j> <k> [ints] starting point cell index  [defaults to 0 0 0]\n";
-  cerr << "  -iend,     --indexe:        <i> <j> <k> [ints] end-point cell index [defaults to 0 0 0]\n";
-  cerr << "  -startPt                    <x> <y> <z> [doubles] starting point of line in physical coordinates\n";
-  cerr << "  -endPt                      <x> <y> <z> [doubles] end-point of line in physical coordinates\n";
-  cerr << "  -pr,       --precision:     [int] (specify precision of output data) [defaults to 16. maximum 32]\n";  
-  cerr << "  -l,        --level:         [int] (level index to query range from) [defaults to 0]\n";
-  cerr << "  -o,        --out:           <outputfilename> [defaults to stdout]\n"; 
-  cerr << "  -vv,       --verbose:       (prints status of output)\n";
-  cerr << "  -q,        --quiet:         (only print data values)\n";
-  cerr << "  -cellCoords:                (prints the cell centered coordinates on that level)\n";
-  cerr << "  --cellIndexFile:            <filename> (file that contains a list of cell indices)\n";
-  cerr << "                                   [int 100, 43, 0]\n";
-  cerr << "                                   [int 101, 43, 0]\n";
-  cerr << "                                   [int 102, 44, 0]\n";
-  cerr << "----------------------------------------------------------------------------------------\n";
-  cerr << " For particle variables the average over all particles in a cell is returned.\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  -h,        --help\n";
+  std::cerr <<  "  -v,        --variable:      <variable name>\n";
+  std::cerr <<  "  -m,        --material:      <material number> [defaults to 0]\n";
+  std::cerr <<  "  -tlow,     --timesteplow:   [int] (sets start output timestep to int) [defaults to 0]\n";
+  std::cerr <<  "  -thigh,    --timestephigh:  [int] (sets end output timestep to int) [defaults to last timestep]\n";
+  std::cerr <<  "  -timestep, --timestep:      [int] (only outputs from timestep int)  [defaults to 0]\n";
+  std::cerr <<  "  -istart,   --indexs:        <i> <j> <k> [ints] starting point cell index  [defaults to 0 0 0]\n";
+  std::cerr <<  "  -iend,     --indexe:        <i> <j> <k> [ints] end-point cell index [defaults to 0 0 0]\n";
+  std::cerr <<  "  -startPt                    <x> <y> <z> [doubles] starting point of line in physical coordinates\n";
+  std::cerr <<  "  -endPt                      <x> <y> <z> [doubles] end-point of line in physical coordinates\n";
+  std::cerr <<  "  -pr,       --precision:     [int] (specify precision of output data) [defaults to 16. maximum 32]\n";  
+  std::cerr <<  "  -l,        --level:         [int] (level index to query range from) [defaults to 0]\n";
+  std::cerr <<  "  -o,        --out:           <outputfilename> [defaults to stdout]\n"; 
+  std::cerr <<  "  -vv,       --verbose:       (prints status of output)\n";
+  std::cerr <<  "  -q,        --quiet:         (only print data values)\n";
+  std::cerr <<  "  -cellCoords:                (prints the cell centered coordinates on that level)\n";
+  std::cerr <<  "  --cellIndexFile:            <filename> (file that contains a list of cell indices)\n";
+  std::cerr <<  "                                   [int 100, 43, 0]\n";
+  std::cerr <<  "                                   [int 101, 43, 0]\n";
+  std::cerr <<  "                                   [int 102, 44, 0]\n";
+  std::cerr <<  "----------------------------------------------------------------------------------------\n";
+  std::cerr <<  " For particle variables the average over all particles in a cell is returned.\n";
   exit(1);
 }
 
@@ -143,12 +143,12 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
   //__________________________________
   // bullet proofing 
   if (time_end >= times.size() || time_end < time_start) {
-    cerr << "timestephigh("<<time_end<<") must be greater than " << time_start 
-         << " and less than " << times.size()-1 << endl;
+    std::cerr <<  "timestephigh("<<time_end<<") must be greater than " << time_start 
+         << " and less than " << times.size()-1 << std::endl;
     exit(1);
   }
   if (time_start >= times.size() || time_end > times.size()) {
-    cerr << "timestep must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timestep must be between 0 and " << times.size()-1 << std::endl;
     exit(1);
   }
   
@@ -157,12 +157,12 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
   // tries to output a big range of data...
   IntVector var_range = var_end - var_start;
   if (var_range.x() && var_range.y() && var_range.z()) {
-    cerr << "PERFORMANCE WARNING: Outputting over 3 dimensions!\n";
+    std::cerr <<  "PERFORMANCE WARNING: Outputting over 3 dimensions!\n";
   }
   else if ((var_range.x() && var_range.y()) ||
            (var_range.x() && var_range.z()) ||
            (var_range.y() && var_range.z())){
-    cerr << "PERFORMANCE WARNING: Outputting over 2 dimensions\n";
+    std::cerr <<  "PERFORMANCE WARNING: Outputting over 2 dimensions\n";
   }
 
   // set defaults for output stream
@@ -173,7 +173,7 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
   // loop over timesteps
   for (unsigned long time_step = time_start; time_step <= time_end; time_step++) {
   
-    cerr << "%outputting for times["<<time_step<<"] = " << times[time_step]<< endl;
+    std::cerr <<  "%outputting for times["<<time_step<<"] = " << times[time_step]<< std::endl;
 
     //__________________________________
     //  does the requested level exist
@@ -188,7 +188,7 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
       }
     }
     if (!levelExists){
-      cerr<< " Level " << levelIndex << " does not exist at this timestep " << time_step << endl;
+      cerr<< " Level " << levelIndex << " does not exist at this timestep " << time_step << std::endl;
     }
     
     if(levelExists){   // only extract data if the level exists
@@ -201,9 +201,9 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
         Level::selectType patches;
         level->selectPatches(var_start, var_end + IntVector(1,1,1), patches,true);
         if( patches.size() == 0){
-          cerr << " Could not find any patches on Level " << level->getIndex()
+          std::cerr <<  " Could not find any patches on Level " << level->getIndex()
                << " that contain cells along line: " << var_start << " and " << var_end 
-               << " Double check the starting and ending indices "<< endl;
+               << " Double check the starting and ending indices "<< std::endl;
           exit(1);
         }
 
@@ -238,7 +238,7 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
                             material, patches[p], time_step);
             break;
           default:
-            cerr << "Unknown variable type: " << variable_type->getName() << endl;
+            std::cerr <<  "Unknown variable type: " << variable_type->getName() << std::endl;
           }
           
         }
@@ -302,9 +302,9 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
 	      if(d_printCell_coords){
                 Point point = level->getCellPosition(c);
                 Vector here = point.asVector() + shift;
-                out << here.x() << " "<< here.y() << " " << here.z() << " "<<val << endl;;
+                out << here.x() << " "<< here.y() << " " << here.z() << " "<<val << std::endl;;
               }else{
-                out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << endl;;
+                out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << std::endl;;
               }
             }
           } // patch loop
@@ -325,18 +325,18 @@ void printData(DataArchive* archive, string& variable_name, const Uintah::TypeDe
             archive->query(values, variable_name, material, c, 
 			   times[time_step], times[time_step], levelIndex);
           } catch (const VariableNotFoundInGrid& exception) {
-            cerr << "Caught VariableNotFoundInGrid Exception: " << exception.message() << endl;
+            std::cerr <<  "Caught VariableNotFoundInGrid Exception: " << exception.message() << std::endl;
             exit(1);
           }
           if(d_printCell_coords){
             Point p = level->getCellPosition(c);
-            out << p.x() << " "<< p.y() << " " << p.z() << " "<< values[0] << endl;
+            out << p.x() << " "<< p.y() << " " << p.z() << " "<< values[0] << std::endl;
           }else{
-            out << c.x() << " "<< c.y() << " " << c.z() << " "<< values[0] << endl;
+            out << c.x() << " "<< c.y() << " " << c.z() << " "<< values[0] << std::endl;
           }
         }
       }
-      out << endl;
+      out << std::endl;
     } // if level exists
     
   } // timestep loop
@@ -405,12 +405,12 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
   //__________________________________
   // bullet proofing 
   if (time_end >= times.size() || time_end < time_start) {
-    cerr << "timestephigh("<<time_end<<") must be greater than " << time_start 
-         << " and less than " << times.size()-1 << endl;
+    std::cerr <<  "timestephigh("<<time_end<<") must be greater than " << time_start 
+         << " and less than " << times.size()-1 << std::endl;
     exit(1);
   }
   if (time_start >= times.size() || time_end > times.size()) {
-    cerr << "timestep must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timestep must be between 0 and " << times.size()-1 << std::endl;
     exit(1);
   }
   
@@ -419,12 +419,12 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
   // tries to output a big range of data...
   IntVector var_range = var_end - var_start;
   if (var_range.x() && var_range.y() && var_range.z()) {
-    cerr << "PERFORMANCE WARNING: Outputting over 3 dimensions!\n";
+    std::cerr <<  "PERFORMANCE WARNING: Outputting over 3 dimensions!\n";
   }
   else if ((var_range.x() && var_range.y()) ||
            (var_range.x() && var_range.z()) ||
            (var_range.y() && var_range.z())){
-    cerr << "PERFORMANCE WARNING: Outputting over 2 dimensions\n";
+    std::cerr <<  "PERFORMANCE WARNING: Outputting over 2 dimensions\n";
   }
 
   // set defaults for output stream
@@ -435,7 +435,7 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
   // loop over timesteps
   for (unsigned long time_step = time_start; time_step <= time_end; time_step++) {
   
-    cerr << "%outputting for times["<<time_step<<"] = " << times[time_step]<< endl;
+    std::cerr <<  "%outputting for times["<<time_step<<"] = " << times[time_step]<< std::endl;
 
     //__________________________________
     //  does the requested level exist
@@ -450,7 +450,7 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
       }
     }
     if (!levelExists){
-      cerr<< " Level " << levelIndex << " does not exist at this timestep " << time_step << endl;
+      cerr<< " Level " << levelIndex << " does not exist at this timestep " << time_step << std::endl;
     }
     
     if(levelExists){   // only extract data if the level exists
@@ -460,9 +460,9 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
       Level::selectType patches;
       level->selectPatches(var_start, var_end + IntVector(1,1,1), patches,true);
       if( patches.size() == 0){
-        cerr << " Could not find any patches on Level " << level->getIndex()
+        std::cerr <<  " Could not find any patches on Level " << level->getIndex()
              << " that contain cells along line: " << var_start << " and " << var_end 
-             << " Double check the starting and ending indices "<< endl;
+             << " Double check the starting and ending indices "<< std::endl;
         exit(1);
       }
 
@@ -512,9 +512,9 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
           
 	  if(d_printCell_coords){
             Point point = level->getCellPosition(c);
-            out << point.x() << " "<< point.y() << " " << point.z() << " "<<val << endl;;
+            out << point.x() << " "<< point.y() << " " << point.z() << " "<<val << std::endl;;
           }else{
-            out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << endl;;
+            out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << std::endl;;
           }
         }
         for (unsigned i = 0; i < vars.size(); i++)
@@ -544,13 +544,13 @@ void printData_PV(DataArchive* archive, string& variable_name, const Uintah::Typ
           
           if(d_printCell_coords){
             Point point = level->getCellPosition(c);
-            out << point.x() << " "<< point.y() << " " << point.z() << " "<< val << endl;
+            out << point.x() << " "<< point.y() << " " << point.z() << " "<< val << std::endl;
           }else{
-            out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << endl;
+            out << c.x() << " "<< c.y() << " " << c.z() << " "<< val << std::endl;
           }
         }
       } // if cell index file
-      out << endl;
+      out << std::endl;
     } // if level exists
     
   } // timestep loop
@@ -565,7 +565,7 @@ void readCellIndicies(const string& filename, vector<IntVector>& cells)
   // open the file
   ifstream fp(filename.c_str());
   if (!fp){
-    cerr << "Couldn't open the file that contains the cell indicies " << filename<< endl;
+    std::cerr <<  "Couldn't open the file that contains the cell indicies " << filename<< std::endl;
   }
   char c;
   int i,j,k;
@@ -579,7 +579,7 @@ void readCellIndicies(const string& filename, vector<IntVector>& cells)
   }
   // We should do some bullet proofing here
   //for (int i = 0; i<(int) cells.size(); i++) {
-  //  std::cout << cells[i] << endl;
+  //  std::cout << cells[i] << std::endl;
   //}
 }
 
@@ -688,7 +688,7 @@ int main(int argc, char** argv)
   }
   
   if(input_uda_name == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -712,14 +712,14 @@ int main(int argc, char** argv)
     //__________________________________
     // bulletproofing
     if (!var_found) {
-      cerr << "Variable \"" << variable_name << "\" was not found.\n";
-      cerr << "If a variable name was not specified try -var [name].\n";
-      cerr << "Possible variable names are:\n";
+      std::cerr <<  "Variable \"" << variable_name << "\" was not found.\n";
+      std::cerr <<  "If a variable name was not specified try -var [name].\n";
+      std::cerr <<  "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        std::cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << std::endl;
       }
-      cerr << "Aborting!!\n";
+      std::cerr <<  "Aborting!!\n";
       exit(-1);
     }
 
@@ -738,7 +738,7 @@ int main(int argc, char** argv)
       output->open(output_file_name.c_str());
       
       if (!(*output)) {   // bullet proofing
-        cerr << "Could not open "<<output_file_name<<" for writing.\n";
+        std::cerr <<  "Could not open "<<output_file_name<<" for writing.\n";
         exit(1);
       }
       output_stream = output;
@@ -813,11 +813,11 @@ int main(int argc, char** argv)
       case Uintah::TypeDescription::Type::short_int_type:
       case Uintah::TypeDescription::Type::long_type:
       case Uintah::TypeDescription::Type::long64_type:
-        cerr << "Subtype is not implemented\n";
+        std::cerr <<  "Subtype is not implemented\n";
         exit(1);
         break;
       default:
-        cerr << "Unknown subtype\n";
+        std::cerr <<  "Unknown subtype\n";
         exit(1);
       }
     }
@@ -856,11 +856,11 @@ int main(int argc, char** argv)
       case Uintah::TypeDescription::Type::short_int_type:
       case Uintah::TypeDescription::Type::long_type:
       case Uintah::TypeDescription::Type::long64_type:
-        cerr << "Subtype is not implemented\n";
+        std::cerr <<  "Subtype is not implemented\n";
         exit(1);
         break;
       default:
-        cerr << "Unknown subtype\n";
+        std::cerr <<  "Unknown subtype\n";
         exit(1);
       }
     }    
@@ -871,10 +871,10 @@ int main(int argc, char** argv)
     }
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     exit(1);
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     exit(1);
   }
 }

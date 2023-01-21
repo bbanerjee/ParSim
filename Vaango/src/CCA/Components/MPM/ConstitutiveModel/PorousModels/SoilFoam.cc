@@ -573,7 +573,7 @@ SoilFoam::computeRhoMicroCM(double pressure,
 {
 
   // std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilFoam"
-  //   << endl;
+  //   << std::endl;
 
   int i1 = 0, i;
   for (i = 1; i < 9; i++) {
@@ -615,13 +615,13 @@ SoilFoam::computePressEOSCM(double rho_cur,
         rho_cur; // speed of sound squared
 
   // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilFoam"
-  //   << endl;
+  //   << std::endl;
 }
 
 double
 SoilFoam::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << endl;
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << std::endl;
   return 1.0;
 }
 

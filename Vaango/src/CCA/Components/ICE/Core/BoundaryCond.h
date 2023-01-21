@@ -300,12 +300,12 @@ void setBC(T& vel_FC,
             BC_dbg <<whichVel<< " Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                  <<"\t child " << child  <<" NumChildren "<<numChildren 
                  <<"\t BC kind "<< bc_kind <<" \tBC value "<< value
-                 <<"\t bound_ptr= " << bound_ptr<< endl;
+                 <<"\t bound_ptr= " << bound_ptr<< std::endl;
           }              
         }  // Children loop
       }
       cout_BC_FC << patch->getFaceName(face) << " \t " << whichVel << " \t" << bc_kind << " faceDir: " << faceDir << " numChildren: " << numChildren 
-                 << " nCells: " << nCells << endl;
+                 << " nCells: " << nCells << std::endl;
       //__________________________________
       //  bulletproofing
       Patch::FaceIteratorType type = Patch::ExtraPlusEdgeCells;
@@ -315,7 +315,7 @@ void setBC(T& vel_FC,
          std::ostringstream warn;
         warn << "ERROR ICE: Boundary conditions were not set for ("<< whichVel << ", " 
              << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-             << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << ") " << endl;
+             << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << ") " << std::endl;
         throw InternalError(warn.str(), __FILE__, __LINE__);
       }
     }  // found iterator
@@ -329,14 +329,14 @@ void setBC(T& vel_FC,
 template <class T>
 void set_CFI_BC( CCVariable<T>& q_CC, const Patch* patch)        
 { 
-  cout_BC_CC << "set_CFI_BC "<< endl; 
+  cout_BC_CC << "set_CFI_BC "<< std::endl; 
   //__________________________________
   // On the fine levels at the coarse fine interface 
   BC_dbg << *patch << " ";
   patch->printPatchBCs(BC_dbg);
 
   if(patch->hasCoarseFaces() ){  
-    BC_dbg << " BC at coarse/Fine interfaces " << endl;
+    BC_dbg << " BC at coarse/Fine interfaces " << std::endl;
     //__________________________________
     // Iterate over coarsefine interface faces
     std::vector<Patch::FaceType> cf;

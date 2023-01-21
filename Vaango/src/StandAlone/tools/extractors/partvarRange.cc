@@ -59,10 +59,10 @@ using namespace Uintah;
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname << " [options] <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << " -mat <material id>\n";
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname << " [options] <archive file>\n\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  " -mat <material id>\n";
   exit(1);
 }
 
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   }
   filebase = argv[argc-1];
   if(filebase == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
     ASSERTEQ(vars.size(), types.size());
     //cout << "There are " << vars.size() << " variables:\n";
     //for(int i=0;i<(int)vars.size();i++) {
-    //  std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    //  std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
     //}
 
       
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     ASSERTEQ(index.size(), times.size());
     //cout << "There are " << index.size() << " timesteps:\n";
     //for(int i=0;i<(int)index.size();i++)
-    //  std::cout << index[i] << ": " << times[i] << endl;
+    //  std::cout << index[i] << ": " << times[i] << std::endl;
       
     // Var loop
     for(int v=0;v<(int)vars.size();v++){
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
             } // end time loop
             numParticles /= numSteps;
             std::cout << "# particles = " << numParticles << " " 
-                 << var << " min = " << min << " max = " << max << endl;
+                 << var << " min = " << min << " max = " << max << std::endl;
           } // end double case
         break;
 
@@ -227,7 +227,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            std::cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << std::endl;
           } // end float case
         break;
 
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            std::cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << std::endl;
           } // end int case
         break;
 
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
               } // end level loop
             } // end time loop
             std::cout << var << " min = " << sqrt(min) 
-                 << " max = " << sqrt(max) << endl;
+                 << " max = " << sqrt(max) << std::endl;
           } // end Vector case
         break;
 
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
               } // end level loop
             } // end time loop
             std::cout << var << " min = " << sqrt(min) 
-                 << " max = " << sqrt(max) << endl;
+                 << " max = " << sqrt(max) << std::endl;
           } // end Matrix3 case
         break;
 
@@ -388,8 +388,8 @@ int main(int argc, char** argv)
 
         default:
           {
-            cerr << "Particle Variable of unknown type: " 
-                 << subtype->getName() << endl;
+            std::cerr <<  "Particle Variable of unknown type: " 
+                 << subtype->getName() << std::endl;
           }
         break;
 
@@ -417,10 +417,10 @@ int main(int argc, char** argv)
     
     } // end var loop
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 }

@@ -48,8 +48,8 @@ KinematicHardeningModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("kinematic_hardening_model");
   if (!child) {
-    cerr << "**WARNING** Creating default (no kinematic hardening) model"
-         << endl;
+    std::cerr <<  "**WARNING** Creating default (no kinematic hardening) model"
+         << std::endl;
     return (scinew KinematicHardening_None());
   }
 
@@ -65,8 +65,8 @@ KinematicHardeningModelFactory::create(ProblemSpecP& ps)
   else if (mat_type == "armstrong_frederick")
     return (scinew KinematicHardening_Armstrong(child));
   else {
-    cerr << "**WARNING** Creating default (no kinematic hardening) model"
-         << endl;
+    std::cerr <<  "**WARNING** Creating default (no kinematic hardening) model"
+         << std::endl;
     return (scinew KinematicHardening_None(child));
   }
 }
@@ -77,8 +77,8 @@ KinematicHardeningModelFactory::create(ProblemSpecP& ps,
 {
   ProblemSpecP child = ps->findBlock("kinematic_hardening_model");
   if (!child) {
-    cerr << "**WARNING** Creating default (no kinematic hardening) model"
-         << endl;
+    std::cerr <<  "**WARNING** Creating default (no kinematic hardening) model"
+         << std::endl;
     return (scinew KinematicHardening_None());
   }
 
@@ -90,8 +90,8 @@ KinematicHardeningModelFactory::create(ProblemSpecP& ps,
   if (mat_type == "arena")
     return (scinew KinematicHardening_Arena(child, intvar));
   else {
-    cerr << "**WARNING** Creating default (no kinematic hardening) model"
-         << endl;
+    std::cerr <<  "**WARNING** Creating default (no kinematic hardening) model"
+         << std::endl;
     return (scinew KinematicHardening_None(child));
   }
 }
@@ -118,7 +118,7 @@ KinematicHardeningModelFactory::createCopy(const KinematicHardeningModel* pm)
   } else {
     cerr
       << "**WARNING** Creating copy of default (no kinematic hardening) model"
-      << endl;
+      << std::endl;
     return (scinew KinematicHardening_None(
       dynamic_cast<const KinematicHardening_None*>(pm)));
     // throw ProblemSetupException("Cannot create copy of unknown

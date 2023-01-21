@@ -108,7 +108,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       rayDir.create( clf.raydatadir );
     }
     catch (Exception& e) {
-      cerr << "Caught exception: " << e.message() << endl;
+      std::cerr <<  "Caught exception: " << e.message() << std::endl;
     }
   }
 
@@ -117,7 +117,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   const string filelistname = clf.raydatadir + string("/") + string("timelist");
   filelist = fopen(filelistname.c_str(),"w");
   if (!filelist) {
-    cerr << "Can't open output file " << filelistname << endl;
+    std::cerr <<  "Can't open output file " << filelistname << std::endl;
     abort();
   }
 
@@ -149,7 +149,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
     GridP grid = da->queryGrid(t);
     fprintf(filelist,"<TIMESTEP>\n");
     if(clf.do_verbose) {
-      std::cout << "time = " << time << endl;
+      std::cout << "time = " << time << std::endl;
     }
     // Create a directory if it's not already there.
     // The exception occurs when the directory is already there
@@ -159,7 +159,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       rayDir.create(clf.raydatadir + string("/TS_") + time_file);
     }
     catch (Exception& e) {
-      cerr << "Caught directory making exception: " << e.message() << endl;
+      std::cerr <<  "Caught directory making exception: " << e.message() << std::endl;
     }
     // for each level in the grid
     for(int l=0;l<grid->numLevels();l++){
@@ -245,7 +245,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 break;
                 default:
-                  cerr << __LINE__ << ":Particle Variable of unknown type: " << subtype->getName() << endl;
+                  std::cerr <<  __LINE__ << ":Particle Variable of unknown type: " << subtype->getName() << std::endl;
                   break;
                 }
                 break;
@@ -358,7 +358,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
               break;
               default:
-                cerr << "NC variable of unknown type: " << subtype->getName() << endl;
+                std::cerr <<  "NC variable of unknown type: " << subtype->getName() << std::endl;
                 break;
               }
               break;
@@ -470,12 +470,12 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
               break;
               default:
-                cerr << "CC variable of unknown type: " << subtype->getName() << endl;
+                std::cerr <<  "CC variable of unknown type: " << subtype->getName() << std::endl;
                 break;
               }
               break;
             default:
-              cerr << "Variable of unknown type: " << td->getName() << endl;
+              std::cerr <<  "Variable of unknown type: " << td->getName() << std::endl;
               break;
             } // end switch(td->getType())
             if (matl < (int)material_data_list.size())
@@ -501,10 +501,10 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           for(int m = 0; m <(int) material_data_list.size(); m++) {
             // determine the min and max
             MaterialData md = material_data_list[m];
-            //cerr << "First md = " << m << endl;
+            //cerr << "First md = " << m << std::endl;
             ParticleSubset* pset = md.p_x.getParticleSubset();
             if (!pset) {
-              cerr << __LINE__ << ":No particle location variable found for material index "<<m<<"\n";
+              std::cerr <<  __LINE__ << ":No particle location variable found for material index "<<m<<"\n";
               continue;
               abort();
             }
@@ -551,14 +551,14 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           // extract data and write it to a file MaterialData at a time
 
           if (clf.do_verbose)
-            cerr << "---Extracting data and writing it out  ";
+            std::cerr <<  "---Extracting data and writing it out  ";
           for(int m = 0; m <(int) material_data_list.size(); m++) {
             MaterialData md = material_data_list[m];
             ParticleSubset* pset = md.p_x.getParticleSubset();
             // a little redundant, but may not have been cought
             // by the previous section
             if (!pset) {
-              cerr << __LINE__ << ":No particle location variable found\n";
+              std::cerr <<  __LINE__ << ":No particle location variable found\n";
               continue;
               abort();
             }
@@ -627,7 +627,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           // write the header file
 
           if( clf.do_verbose ) {
-            cerr << "---Writing header file\n";
+            std::cerr <<  "---Writing header file\n";
           }
           if (data_found) {
             fprintf(headerfile,"%d\n",total_particles);
@@ -709,13 +709,13 @@ setupOutFiles(FILE** data, FILE** header, string name, string head)
 
   datafile = fopen(name.c_str(),"w");
   if (!datafile) {
-    cerr << "Can't open output file " << name << endl;
+    std::cerr <<  "Can't open output file " << name << std::endl;
     return false;
   }
   
   headerfile = fopen(headername.c_str(),"w");
   if (!headerfile) {
-    cerr << "Can't open output file " << headername << endl;
+    std::cerr <<  "Can't open output file " << headername << std::endl;
     return false;
   }
   

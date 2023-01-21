@@ -65,7 +65,7 @@ int main(int argc, char **argv)
       std::cout << " Command was: ";
       for(int i=0;i<argc;i++)
         std::cout << argv[i] << " ";
-      std::cout << endl;
+      std::cout << std::endl;
     }
     MPI_Finalize();
     return 1;
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     num_patches[d]*=2;
     d=(d+1)%3;
   }
-  //cout << "Num patches: " << num_patches << " total:" << num_patches[0]*num_patches[1]*num_patches[2] << endl;
+  //cout << "Num patches: " << num_patches << " total:" << num_patches[0]*num_patches[1]*num_patches[2] << std::endl;
   IntVector cells;
   cells[0]=cells[1]=cells[2]=num_patches[0]*patch_size[0];
   IntVector rr(4,4,4);
@@ -99,9 +99,9 @@ int main(int argc, char **argv)
 
   Sphere2 s(cells.asVector()/Vector(2,2,2),radin,radout);
   
-  //cout << "num patches:" << num_patches << endl;
-  //cout << "cells: " << cells << endl;
-  //cout << "rad: " << rad << endl;
+  //cout << "num patches:" << num_patches << std::endl;
+  //cout << "cells: " << cells << std::endl;
+  //cout << "rad: " << rad << std::endl;
 
   //create coarse patch set
   std::vector<Region> patches;
@@ -113,13 +113,13 @@ int main(int argc, char **argv)
   int div=total_patches/num_procs;
   int mod=total_patches%num_procs;
 
-  //cout << "total patches: " << total_patches << endl;
-  //cout << "div: " << div << " mod: " << mod << endl;
+  //cout << "total patches: " << total_patches << std::endl;
+  //cout << "div: " << div << " mod: " << mod << std::endl;
   int p=0;
   int p_assigned=0;
   int to_assign=div+int(mod>0);
   int idx=0;
-  //cout << "to_assign=" << to_assign << endl;
+  //cout << "to_assign=" << to_assign << std::endl;
 
   for(int i=0;i<num_patches.x();i++)
   {
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
   }
 
   //for(unsigned int i=0;i<patches.size();i++)
-  //  std::cout << rank << " patch: " << patches[i] << endl;
+  //  std::cout << rank << " patch: " << patches[i] << std::endl;
 
   //create refinement flags
   flags.resize(patches.size());
@@ -271,7 +271,7 @@ void outputTime(double time, int alg)
   getTime(time,mint,maxt,avgt);
 
   if(rank==0)
-    std::cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << endl; 
+    std::cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << std::endl; 
 
 }
 

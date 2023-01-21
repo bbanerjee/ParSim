@@ -91,16 +91,16 @@ void EllipticCrack::outputInitialCrackPlane(int i)
 {
 
   std::cout << "  * Ellipse " << i+1 << ": meshed by " << NCells
-       << " cells on the circumference." << endl;
+       << " cells on the circumference." << std::endl;
   if(CrkFrtSegID==-1)
-    std::cout << "    crack front: on the ellipse circumference" << endl;
+    std::cout << "    crack front: on the ellipse circumference" << std::endl;
   else    
     std::cout << "    crack front segment ID: " << CrkFrtSegID
-         << endl;
-  std::cout << "    end point on axis1: " << vertices[0] << endl;
-  std::cout << "    end point on axis2: " << vertices[1] << endl;
+         << std::endl;
+  std::cout << "    end point on axis1: " << vertices[0] << std::endl;
+  std::cout << "    end point on axis2: " << vertices[1] << std::endl;
   std::cout << "    another end point on axis1: " << vertices[2]
-       << endl;
+       << std::endl;
 
 
 }

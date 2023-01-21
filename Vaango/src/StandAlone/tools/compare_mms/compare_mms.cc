@@ -111,21 +111,21 @@ usage( const std::string& message,
        const std::string& badarg,
        const std::string& progname)
 {
-   cerr << message << "\n";
+   std::cerr <<  message << "\n";
    if(badarg != "")
-     cerr << "Error parsing argument: " << badarg << '\n';
-   cerr << "Usage: " << progname << " [options] <input_file_name>\n\n";
-   cerr << "Valid options are:\n";
-   cerr << "-h[elp]              : This usage information.\n";
-   cerr << "-ice                 : \n";
-   cerr << "-arches              : \n";
-   cerr << "-mms                 :<linear, sine or exp> \n";
-   cerr << "-uda                 :\n";
-   cerr << "-v,                  :<variable name>\n";
-   cerr << "-verbose             : verbose output \n";
-   cerr << "-matl                : material index. Default is 0.\n";
-   cerr << "-o                   :<output_file_name>\n";
-   cerr << "-L                   :Compute global error for the last time step only\n";
+     std::cerr <<  "Error parsing argument: " << badarg << '\n';
+   std::cerr <<  "Usage: " << progname << " [options] <input_file_name>\n\n";
+   std::cerr <<  "Valid options are:\n";
+   std::cerr <<  "-h[elp]              : This usage information.\n";
+   std::cerr <<  "-ice                 : \n";
+   std::cerr <<  "-arches              : \n";
+   std::cerr <<  "-mms                 :<linear, sine or exp> \n";
+   std::cerr <<  "-uda                 :\n";
+   std::cerr <<  "-v,                  :<variable name>\n";
+   std::cerr <<  "-verbose             : verbose output \n";
+   std::cerr <<  "-matl                : material index. Default is 0.\n";
+   std::cerr <<  "-o                   :<output_file_name>\n";
+   std::cerr <<  "-L                   :Compute global error for the last time step only\n";
    exit(1);
 }
 
@@ -181,7 +181,7 @@ main( int argc, char *argv[] )
       outFile = fopen(argv[i],"w");
       
       if(!outFile) { // Checking success of file creation
-        cerr << "The outputfile cannot be created\n";
+        std::cerr <<  "The outputfile cannot be created\n";
         exit (1);
       }
       
@@ -344,11 +344,11 @@ main( int argc, char *argv[] )
   da1->queryTimesteps(index, times);
   
   std::cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
-  std::cout << "MMS Type (whichMMS)        :" << whichMMS << endl;
+  std::cout << "MMS Type (whichMMS)        :" << whichMMS << std::endl;
   std::cout << "dynamic viscosity          :"<<dyVis<<endl;
   std::cout << "A (amplitude)              :"<<A<<endl;
   std::cout << "Reference Pressure (p_ref) :"<< p_ref <<endl;
-  std::cout << "Resolution                 :" << resolution << endl;
+  std::cout << "Resolution                 :" << resolution << std::endl;
   std::cout <<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"<<endl;
 
   unsigned int loopLowerBound;
@@ -470,17 +470,17 @@ main( int argc, char *argv[] )
       } // end patch iteration
 
       if(varName=="pressurePS"||varName=="press_CC" || varName=="press_equil_CC") {
-        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_D << endl;
-        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_D << endl;
+        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_D << std::endl;
+        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_D << std::endl;
       }
       if(varName=="vel_CC"||varName=="newCCVelocity") {
-        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_V << endl;
-        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_V << endl;
+        std::cout << " Max. Diff: " << c_maxDiff << " "<< maxDiff_V << std::endl;
+        std::cout << " Min. Diff: " << c_minDiff << " "<< minDiff_V << std::endl;
       }
       
       if (varName=="pressurePS"||varName=="press_CC"|| varName=="press_equil_CC") {
-        std::cout << "i= " << i << endl;
-        std::cout << "L2norm of error: " << sqrt(total_error_D/i) << endl;
+        std::cout << "i= " << i << std::endl;
+        std::cout << "L2norm of error: " << sqrt(total_error_D/i) << std::endl;
         fprintf(outFile, "%le\n",sqrt(total_error_D/double(i))) ;
       }
       if (varName=="vel_CC"||varName=="newCCVelocity") {

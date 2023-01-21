@@ -67,6 +67,6 @@ int main()
 
   for(vector<Region>::iterator iter=difference.begin();iter!=difference.end();iter++)
   {
-    std::cout << *iter << endl;
+    std::cout << *iter << std::endl;
   }
 }

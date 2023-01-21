@@ -108,7 +108,7 @@ WARNING
        d_done= d_curFace==nullptrFACE || d_iter.done();
 
        //if(!d_done)
-       // std::cout << " GSI face: " << d_curFace << " iter: " << d_iter << endl;
+       // std::cout << " GSI face: " << d_curFace << " iter: " << d_iter << std::endl;
        return *this;
      }
 
@@ -138,8 +138,8 @@ WARNING
        d_int_high=Min(high,high+offset);
        d_ext_high=Max(high,high+offset);
 
-       //cout << "Int: " << d_int_low << "->" << d_int_high << endl;
-       //cout << "Ext: " << d_ext_low << "->" << d_ext_high << endl;
+       //cout << "Int: " << d_int_low << "->" << d_int_high << std::endl;
+       //cout << "Ext: " << d_ext_low << "->" << d_ext_high << std::endl;
        reset();
      }
      inline GridSurfaceIterator(const IntVector& int_low, const IntVector& int_high, const IntVector& ext_low, const IntVector& ext_high)
@@ -200,7 +200,7 @@ WARNING
      {
        d_curFace=XMINUS;
        d_iter=getFaceIterator(d_curFace);
-       //cout << "reset called xdone: " << d_iter.done() << endl;
+       //cout << "reset called xdone: " << d_iter.done() << std::endl;
        //increment face iterator if necessary
        while(d_iter.done() && d_curFace<nullptrFACE)
        {
@@ -316,7 +316,7 @@ WARNING
            low=IntVector(0,0,0),high=IntVector(0,0,0);
 
        }
-       //cout << "New Face Iterator, face: " << curFace << " low: " << low << " high: " << high << endl;
+       //cout << "New Face Iterator, face: " << curFace << " low: " << low << " high: " << high << std::endl;
        return GridIterator(low,high);
      }
 

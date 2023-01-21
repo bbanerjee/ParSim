@@ -88,20 +88,20 @@ void print(std::ostream& out, const Uintah::Point& t)
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "")
-    cerr << "\nError parsing argument: " << badarg << '\n';
-  cerr << "\nUsage: " << progname 
+    std::cerr <<  "\nError parsing argument: " << badarg << '\n';
+  std::cerr <<  "\nUsage: " << progname 
        << " [options] <archive file 1> <archive file 2>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  -h[elp]\n";
-  cerr << "  -abs_tolerance [double]  (Allowable absolute difference of any number, default: 1e-9)\n";
-  cerr << "  -rel_tolerance [double]  (Allowable relative difference of any number, default: 1e-6)\n";
-  cerr << "  -exact                   (Perform an exact comparison, absolute/relative tolerance = 0)\n";
-  cerr << "  -as_warnings             (Treat tolerance errors as warnings and continue)\n";
-  cerr << "  -concise                 (With '-as_warnings', only print first incidence of error per var.)\n";
-  cerr << "  -skip_unknown_types      (Skip variable comparisons of unknown types without error)\n";
-  cerr << "  -ignoreVariable [string] (Skip this variable)\n";
-  cerr << "  -dont_sort               (Don't sort the variable names before comparing them)";
-  cerr << "\nNote: The absolute and relative tolerance tests must both fail\n"
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  -h[elp]\n";
+  std::cerr <<  "  -abs_tolerance [double]  (Allowable absolute difference of any number, default: 1e-9)\n";
+  std::cerr <<  "  -rel_tolerance [double]  (Allowable relative difference of any number, default: 1e-6)\n";
+  std::cerr <<  "  -exact                   (Perform an exact comparison, absolute/relative tolerance = 0)\n";
+  std::cerr <<  "  -as_warnings             (Treat tolerance errors as warnings and continue)\n";
+  std::cerr <<  "  -concise                 (With '-as_warnings', only print first incidence of error per var.)\n";
+  std::cerr <<  "  -skip_unknown_types      (Skip variable comparisons of unknown types without error)\n";
+  std::cerr <<  "  -ignoreVariable [string] (Skip this variable)\n";
+  std::cerr <<  "  -dont_sort               (Don't sort the variable names before comparing them)";
+  std::cerr <<  "\nNote: The absolute and relative tolerance tests must both fail\n"
        << "      for a comparison to fail.\n\n";
   Thread::exitAll(1);
 }
@@ -117,7 +117,7 @@ bool d_strict_types          = true;
 
 void abort_uncomparable()
 {
-  cerr << "\nThe uda directories may not be compared.\n";
+  std::cerr <<  "\nThe uda directories may not be compared.\n";
   Thread::exitAll(5);
 }
 
@@ -125,7 +125,7 @@ void tolerance_failure()
 {
   if (d_tolerance_as_warnings) {
     d_tolerance_error = true;
-    cerr << endl;
+    std::cerr <<  std::endl;
   }
   else
     Thread::exitAll(2);
@@ -136,11 +136,11 @@ void displayProblemLocation(const string& var,
                             const Patch* patch, 
                             double time)
 {
-  cerr << "Time: " << time << endl <<
-    "Variable: " << var << endl <<
-    "Material: " << matl << endl;
+  std::cerr <<  "Time: " << time << std::endl <<
+    "Variable: " << var << std::endl <<
+    "Material: " << matl << std::endl;
   if (patch != 0)
-    cerr << "Patch: " << patch->getID() <<endl;   
+    std::cerr <<  "Patch: " << patch->getID() <<endl;   
 
 }
 
@@ -150,12 +150,12 @@ void displayProblemLocation(const string& var,
                             const Patch* patch2,
                             double time)
 {
-  cerr << "Time: " << time << " "<<
+  std::cerr <<  "Time: " << time << " "<<
     "Level: " <<patch->getLevel()->getIndex() << " " << 
     "Patch1: " << patch->getID() << " " <<
     "Patch2: " << patch2->getID() << " " <<
     "Material: " << matl << " " <<
-    "Variable: " << var << endl;
+    "Variable: " << var << std::endl;
 }
 
 bool compare(double a, double b, double abs_tolerance, double rel_tolerance)
@@ -398,7 +398,7 @@ void MaterialParticleVarData::createPatchMap()
     ParticleVariable<long64>* particleID = dynamic_cast< ParticleVariable<long64>* >(d_particleVars[patch]);
     
     if (particleID == 0) {
-      cerr << "p.particleID must be a ParticleVariable<long64>\n";
+      std::cerr <<  "p.particleID must be a ParticleVariable<long64>\n";
       abort_uncomparable();
     }
     
@@ -428,7 +428,7 @@ void MaterialParticleData::compare(MaterialParticleData& data2,
   if (!particleIDs_->compare(*data2.particleIDs_, matl_, 
                              time1, time2,
                              abs_tolerance, rel_tolerance)){
-    cerr << "ParticleIDs do not match\n";
+    std::cerr <<  "ParticleIDs do not match\n";
     abort_uncomparable();
   }
   
@@ -476,7 +476,7 @@ void MaterialParticleData::sort()
     ParticleVariable<long64>* pIDs = dynamic_cast<ParticleVariable<long64>*>(particleIDs_->getParticleVars()[i]);
     
     if (pIDs == 0) {
-      cerr << "p.particleID must be a ParticleVariable<long64>\n";
+      std::cerr <<  "p.particleID must be a ParticleVariable<long64>\n";
       abort_uncomparable();
     }
 
@@ -542,7 +542,7 @@ bool MaterialParticleVarData::
 compare(MaterialParticleVarData& data2, int matl, double time1, double time2,
         double abs_tolerance, double rel_tolerance)
 {
-  cerr << "\tVariable: " << d_name << ", comparing via particle ids" << endl;
+  std::cerr <<  "\tVariable: " << d_name << ", comparing via particle ids" << std::endl;
   ASSERT(d_particleVars.size() == 1 && subsets_.size() == 1 &&
          data2.d_particleVars.size() == 1 && data2.subsets_.size() == 1);
   
@@ -584,7 +584,7 @@ compare(MaterialParticleVarData& data2, int matl, double time1, double time2,
                      dynamic_cast<ParticleVariable<Matrix3>*>(pvb2), matl,
                      time1, time2, abs_tolerance, rel_tolerance);
     default:
-      cerr << "MaterialParticleVarData::gather: ParticleVariable of unsupported type: " << pvb1->virtualGetTypeDescription()->getName() << '\n';
+      std::cerr <<  "MaterialParticleVarData::gather: ParticleVariable of unsupported type: " << pvb1->virtualGetTypeDescription()->getName() << '\n';
       Thread::exitAll(-1);
     }
   return 0;
@@ -608,12 +608,12 @@ MaterialParticleVarData::compare( MaterialParticleVarData & data2,
   ParticleSubset* pset2 = value2->getParticleSubset();
   
   if (pset1->numParticles() != pset2->numParticles()) {
-    cerr << "Inconsistent number of particles.\n";
+    std::cerr <<  "Inconsistent number of particles.\n";
     
     displayProblemLocation(d_name, matl, 0, time1);    
     
-    cerr << d_filebase1 << " has " << pset1->numParticles() << " particles.\n";
-    cerr << d_filebase2 << " has " << pset2->numParticles() << " particles.\n";
+    std::cerr <<  d_filebase1 << " has " << pset1->numParticles() << " particles.\n";
+    std::cerr <<  d_filebase2 << " has " << pset2->numParticles() << " particles.\n";
     abort_uncomparable();
   }
 
@@ -626,22 +626,22 @@ MaterialParticleVarData::compare( MaterialParticleVarData & data2,
         ASSERT(getParticleID(i) == data2.getParticleID(i));
       }
       
-      cerr << setprecision(18) << endl;
-      cerr << "DIFFERENCE on particle id= " << getParticleID(i) << endl;
+      std::cerr <<  setprecision(18) << std::endl;
+      std::cerr <<  "DIFFERENCE on particle id= " << getParticleID(i) << std::endl;
       
       IntVector origin((int)(getParticleID(i) >> 16) & 0xffff,
                        (int)(getParticleID(i) >> 32) & 0xffff,
                        (int)(getParticleID(i) >> 48) & 0xffff);
                        
-      cerr << "(Originating from " << origin << ")\n";
+      std::cerr <<  "(Originating from " << origin << ")\n";
       
       const Patch* patch1 = getPatch(i);
       const Patch* patch2 = data2.getPatch(i);
       
       displayProblemLocation(d_name, matl, patch1, patch2, time1);  
          
-      cerr << d_filebase1 << ":\n" << (*value1)[i] << endl;
-      cerr << d_filebase2 << ":\n" << (*value2)[i] << endl;
+      std::cerr <<  d_filebase1 << ":\n" << (*value1)[i] << std::endl;
+      std::cerr <<  d_filebase2 << ":\n" << (*value2)[i] << std::endl;
       
       tolerance_failure();
       if( d_concise ) {
@@ -755,7 +755,7 @@ void addParticleData(MaterialParticleDataMap& matlParticleDataMap,
             pvb = scinew ParticleVariable<Matrix3>();
             break;
           default:
-            cerr << "addParticleData: ParticleVariable of unsupported type: " 
+            std::cerr <<  "addParticleData: ParticleVariable of unsupported type: " 
                  << subtype->getName() << '\n';
             Thread::exitAll(-1);
           }
@@ -790,10 +790,10 @@ compareParticles( DataArchive  * da1,
   ParticleSubset* pset2 = value2.getParticleSubset();
   
   if (pset1->numParticles() != pset2->numParticles()) {
-    cerr << "Inconsistent number of particles.\n";
+    std::cerr <<  "Inconsistent number of particles.\n";
     displayProblemLocation(var, matl, patch1, time);    
-    cerr << d_filebase1 << " has " << pset1->numParticles() << " particles.\n";
-    cerr << d_filebase2 << " has " << pset2->numParticles() << " particles.\n";
+    std::cerr <<  d_filebase1 << " has " << pset1->numParticles() << " particles.\n";
+    std::cerr <<  d_filebase2 << " has " << pset2->numParticles() << " particles.\n";
     abort_uncomparable();
   }
   
@@ -802,13 +802,13 @@ compareParticles( DataArchive  * da1,
   
   for ( ; iter1 != pset1->end() && iter2 != pset2->end(); iter1++, iter2++) {
     if (!compare(value1[*iter1], value2[*iter2], abs_tolerance, rel_tolerance)) {
-      cerr << "\nValues differ too much.\n";
+      std::cerr <<  "\nValues differ too much.\n";
       displayProblemLocation(var, matl, patch1, time);    
-      cerr << d_filebase1 << ":\n";
+      std::cerr <<  d_filebase1 << ":\n";
       print(cerr, value1[*iter1]);
-      cerr << endl << d_filebase2 << ":\n";
+      std::cerr <<  std::endl << d_filebase2 << ":\n";
       print(cerr, value2[*iter2]);
-      cerr << endl;
+      std::cerr <<  std::endl;
       tolerance_failure();
       if( d_concise ) {
         break;
@@ -835,22 +835,22 @@ compareParticles( DataArchive  * da1,
   IntVector dx2(value2.getHighIndex() - value2.getLowIndex());
   if (value1.getHighIndex() != value2.getHighIndex() ||
   value1.getLowIndex() != value2.getLowIndex()) {
-  cerr << "Inconsistent variable grid ranges.\n";
+  std::cerr <<  "Inconsistent variable grid ranges.\n";
   displayProblemLocation(var, matl, patch1, time);    
-  cerr << d_filebase1 << ": " << value1.getLowIndex() << " - " <<
-  value1.getHighIndex() << endl;
-  cerr << d_filebase2 << ": " << value2.getLowIndex() << " - " <<
-  value2.getHighIndex() << endl;
+  std::cerr <<  d_filebase1 << ": " << value1.getLowIndex() << " - " <<
+  value1.getHighIndex() << std::endl;
+  std::cerr <<  d_filebase2 << ": " << value2.getLowIndex() << " - " <<
+  value2.getHighIndex() << std::endl;
   abort_uncomparable();
   }
   
   for ( ; !iter1.done() && !iter2.done(); iter1++, iter2++ ) {
   if (!compare(value1[*iter1], value2[*iter2], abs_tolerance,
   rel_tolerance)) {
-  cerr << "\nValues differ too much.\n";
+  std::cerr <<  "\nValues differ too much.\n";
   displayProblemLocation(var, matl, patch1, time);    
-  cerr << d_filebase1 << ":\n" << value1[*iter1] << endl;
-  cerr << d_filebase2 << ":\n" << value2[*iter2] << endl;
+  std::cerr <<  d_filebase1 << ":\n" << value1[*iter1] << std::endl;
+  std::cerr <<  d_filebase2 << ":\n" << value2[*iter2] << std::endl;
   tolerance_failure();
   }
   }
@@ -937,7 +937,7 @@ makeFieldComparator(const Uintah::TypeDescription* td,
       return scinew
         SpecificFieldComparator<NCVariable<Matrix3>, NodeIterator>(iter);
     default:
-      cerr << "FieldComparator::makeFieldComparator: NC Variable of unsupported type: " << subtype->getName() << '\n';
+      std::cerr <<  "FieldComparator::makeFieldComparator: NC Variable of unsupported type: " << subtype->getName() << '\n';
       Thread::exitAll(-1);
     }
   }
@@ -967,7 +967,7 @@ makeFieldComparator(const Uintah::TypeDescription* td,
       return scinew
         SpecificFieldComparator<CCVariable<Stencil7>, CellIterator>(iter);
     default:
-      cerr << "FieldComparator::makeFieldComparator: CC Variable of unsupported type: " << subtype->getName() << '\n';
+      std::cerr <<  "FieldComparator::makeFieldComparator: CC Variable of unsupported type: " << subtype->getName() << '\n';
       Thread::exitAll(-1);
     }
   }
@@ -994,7 +994,7 @@ makeFieldComparator(const Uintah::TypeDescription* td,
       return scinew
         SpecificFieldComparator<SFCXVariable<Matrix3>, CellIterator>(iter);
     default:
-      cerr << "FieldComparator::makeFieldComparator: SFCX Variable of unsupported type: " << subtype->getName() << '\n';
+      std::cerr <<  "FieldComparator::makeFieldComparator: SFCX Variable of unsupported type: " << subtype->getName() << '\n';
       Thread::exitAll(-1);
     }
   }
@@ -1021,7 +1021,7 @@ makeFieldComparator(const Uintah::TypeDescription* td,
       return scinew
         SpecificFieldComparator<SFCYVariable<Matrix3>, CellIterator>(iter);
     default:
-      cerr << "FieldComparator::makeFieldComparator: SFCY Variable of unsupported type: " << subtype->getName() << '\n';
+      std::cerr <<  "FieldComparator::makeFieldComparator: SFCY Variable of unsupported type: " << subtype->getName() << '\n';
       Thread::exitAll(-1);
     }
   }
@@ -1048,12 +1048,12 @@ makeFieldComparator(const Uintah::TypeDescription* td,
       return scinew
         SpecificFieldComparator<SFCZVariable<Matrix3>,  CellIterator>(iter);
     default:
-      cerr << "FieldComparator::makeFieldComparator: SFCZ Variable of unsupported type: " << subtype->getName() << '\n';
+      std::cerr <<  "FieldComparator::makeFieldComparator: SFCZ Variable of unsupported type: " << subtype->getName() << '\n';
       Thread::exitAll(-1);
     }
   }
   default:
-    cerr << "FieldComparator::makeFieldComparator: Variable of unsupported type: " << td->getName() << '\n';
+    std::cerr <<  "FieldComparator::makeFieldComparator: Variable of unsupported type: " << td->getName() << '\n';
     Thread::exitAll(-1);
   }
   return 0;
@@ -1110,14 +1110,14 @@ SpecificFieldComparator<Field, Iterator>::compareFields( DataArchive            
 
       if (!compare(field[*iter], (*field2)[*iter], abs_tolerance, rel_tolerance)) {
       
-        cerr << "DIFFERENCE " << *iter << "  ";
+        std::cerr <<  "DIFFERENCE " << *iter << "  ";
         displayProblemLocation(var, matl, patch, patch2, time1);
  
-        cerr << d_filebase1 << " (1)\t\t" << d_filebase2 << " (2)"<<endl;
+        std::cerr <<  d_filebase1 << " (1)\t\t" << d_filebase2 << " (2)"<<endl;
         print(cerr, field[*iter]);
-        cerr << "\t\t";
+        std::cerr <<  "\t\t";
         print(cerr, (*field2)[*iter]);
-        cerr << endl;
+        std::cerr <<  std::endl;
 
         tolerance_failure();
         if( d_concise ) {
@@ -1180,9 +1180,9 @@ buildPatchMap( LevelP                 level,
       if (*iter != 0) {
         static ProgressiveWarning pw("Two patches on the same grid overlap", 10);
         if (pw.invoke())
-          cerr << "Patches " << patch->getID() << " and " 
+          std::cerr <<  "Patches " << patch->getID() << " and " 
                << (*iter)->getID() << " overlap on the same file at time " << time
-               << " in " << filebase << " at index " << iter.getIndex() << endl;
+               << " in " << filebase << " at index " << iter.getIndex() << std::endl;
         //abort_uncomparable();
         
         // in some cases, we can have overlapping patches, where an extra cell/node 
@@ -1278,21 +1278,21 @@ main(int argc, char** argv)
   }
 
   if( d_filebase2 == "" ){
-    cerr << "\nYou must specify two archive directories.\n";
+    std::cerr <<  "\nYou must specify two archive directories.\n";
     usage("", argv[0]);
   }
 
-  cerr << "Using absolute tolerance: " << abs_tolerance << endl;
-  cerr << "Using relative tolerance: " << rel_tolerance << endl;
+  std::cerr <<  "Using absolute tolerance: " << abs_tolerance << std::endl;
+  std::cerr <<  "Using relative tolerance: " << rel_tolerance << std::endl;
   
   if (rel_tolerance < 0) {
-    cerr << "Must have a non-negative value rel_tolerance.\n";
+    std::cerr <<  "Must have a non-negative value rel_tolerance.\n";
     Thread::exitAll(1);
   }
 
   // default to 16 digits of precision when using exact comparison (i.e. rel_tolerance = 0)
   int digits_precision = (rel_tolerance > 0 ) ? (int)ceil(-log10(rel_tolerance)) + 1 : 16;
-  cerr << setprecision(digits_precision);
+  std::cerr <<  setprecision(digits_precision);
   std::cout << setprecision(digits_precision);
 
   try {
@@ -1314,8 +1314,8 @@ main(int argc, char** argv)
     ASSERTEQ(vars2.size(), types2.size());
     
     if (vars.size() != vars2.size() && ignoreVar.size() == 0) {
-      cerr << d_filebase1 << " has " << vars.size() << " variables\n";
-      cerr << d_filebase2 << " has " << vars2.size() << " variables\n";
+      std::cerr <<  d_filebase1 << " has " << vars.size() << " variables\n";
+      std::cerr <<  d_filebase2 << " has " << vars2.size() << " variables\n";
       abort_uncomparable();
     }
 
@@ -1355,8 +1355,8 @@ main(int argc, char** argv)
     vartypes2.resize(vars2.size()); 
     
     if (vartypes1.size() != vartypes2.size() )  {
-      cerr << d_filebase1 << " has " << vars.size()  << " variables\n";
-      cerr << d_filebase2 << " has " << vars2.size() << " variables\n";
+      std::cerr <<  d_filebase1 << " has " << vars.size()  << " variables\n";
+      std::cerr <<  d_filebase2 << " has " << vars2.size() << " variables\n";
       abort_uncomparable();
     }
     
@@ -1378,15 +1378,15 @@ main(int argc, char** argv)
     
     for (unsigned int i = 0; i < vars.size(); i++) {
       if (vars[i] != vars2[i]) {
-        cerr << "Variable " << vars[i] << " in " << d_filebase1 << " does not match\n";
-        cerr << "variable " << vars2[i] << " in " << d_filebase2 << endl;
+        std::cerr <<  "Variable " << vars[i] << " in " << d_filebase1 << " does not match\n";
+        std::cerr <<  "variable " << vars2[i] << " in " << d_filebase2 << std::endl;
         abort_uncomparable();
       }
       
       if (types[i] != types2[i]) {
-        cerr << "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
-        cerr << "In " << d_filebase1 << " its type is " << types[i]->getName() << endl;
-        cerr << "In " << d_filebase2 << " its type is " << types2[i]->getName() << endl;
+        std::cerr <<  "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
+        std::cerr <<  "In " << d_filebase1 << " its type is " << types[i]->getName() << std::endl;
+        std::cerr <<  "In " << d_filebase2 << " its type is " << types2[i]->getName() << std::endl;
         abort_uncomparable();
       } 
     }
@@ -1404,21 +1404,21 @@ main(int argc, char** argv)
 
     for( unsigned long tstep = 0; tstep < times.size() && tstep < times2.size(); tstep++ ){
       if (!compare(times[tstep], times2[tstep], abs_tolerance, rel_tolerance)) {
-        cerr << "Timestep at time " << times[tstep]  << " in " << d_filebase1 << " does not match\n";
-        cerr << "timestep at time " << times2[tstep] << " in " << d_filebase2 << " within the allowable tolerance.\n";
+        std::cerr <<  "Timestep at time " << times[tstep]  << " in " << d_filebase1 << " does not match\n";
+        std::cerr <<  "timestep at time " << times2[tstep] << " in " << d_filebase2 << " within the allowable tolerance.\n";
         abort_uncomparable();
       }
       
       double time1 = times[tstep];
       double time2 = times2[tstep];
-      cerr << "time = " << time1 << "\n";
+      std::cerr <<  "time = " << time1 << "\n";
       
       GridP grid  = da1->queryGrid(tstep);
       GridP grid2 = da2->queryGrid(tstep);
 
       if (grid->numLevels() != grid2->numLevels()) {
-        cerr << "Grid at time " << time1 << " in " << d_filebase1 << " has " << grid->numLevels() << " levels.\n";
-        cerr << "Grid at time " << time2 << " in " << d_filebase2 << " has " << grid2->numLevels() << " levels.\n";
+        std::cerr <<  "Grid at time " << time1 << " in " << d_filebase1 << " has " << grid->numLevels() << " levels.\n";
+        std::cerr <<  "Grid at time " << time2 << " in " << d_filebase2 << " has " << grid2->numLevels() << " levels.\n";
         abort_uncomparable();
       }
 
@@ -1452,11 +1452,11 @@ main(int argc, char** argv)
               matls = da1->queryMaterials( var, patch, tstep );
             }
             else if (matls != da1->queryMaterials( var, patch, tstep )) {
-              cerr << "The material set is not consistent for variable "
-                   << var << " across patches at time " << time1 << endl;
-              cerr << "Previously was: " << matls << endl;
-              cerr << "But on patch " << patch->getID() << ": " <<
-                da1->queryMaterials(var, patch, tstep) << endl;
+              std::cerr <<  "The material set is not consistent for variable "
+                   << var << " across patches at time " << time1 << std::endl;
+              std::cerr <<  "Previously was: " << matls << std::endl;
+              std::cerr <<  "But on patch " << patch->getID() << ": " <<
+                da1->queryMaterials(var, patch, tstep) << std::endl;
               abort_uncomparable();
             }
             first = false;
@@ -1468,11 +1468,11 @@ main(int argc, char** argv)
             const Patch* patch = *iter;
             
             if (matls != da2->queryMaterials( var, patch, tstep )) {
-              cerr << "Inconsistent material sets for variable "
+              std::cerr <<  "Inconsistent material sets for variable "
                    << var << " on patch2 = " << patch->getID()
-                   << ", time " << time1 << endl;
-              cerr << d_filebase1 << " (1) has material set: " << matls << ".\n";
-              cerr << d_filebase2 << " (2) has material set: "
+                   << ", time " << time1 << std::endl;
+              std::cerr <<  d_filebase1 << " (1) has material set: " << matls << ".\n";
+              std::cerr <<  d_filebase2 << " (2) has material set: "
                    << da2->queryMaterials(var, patch, tstep) << ".\n";
               abort_uncomparable();  
             }
@@ -1486,12 +1486,12 @@ main(int argc, char** argv)
         
         // Compare particle variables without p.particleID -- patches
         // must be consistent.
-        cerr << "Particle data exists without p.particleID output.\n";
-        cerr << "There must be patch consistency in order to do this comparison.\n";
-        cerr << "In order to make a comparison between udas with different\n"
+        std::cerr <<  "Particle data exists without p.particleID output.\n";
+        std::cerr <<  "There must be patch consistency in order to do this comparison.\n";
+        std::cerr <<  "In order to make a comparison between udas with different\n"
              << "number or distribution of patches, you must either output\n"
              << "p.particleID or don't output any particle variables at all.\n";
-        cerr << endl;
+        std::cerr <<  std::endl;
         
         for(int v=0;v<(int)vars.size();v++){
           std::string var = vars[v];
@@ -1499,16 +1499,16 @@ main(int argc, char** argv)
           const Uintah::TypeDescription* td = types[v];
           const Uintah::TypeDescription* subtype = td->getSubType();
           
-          cerr << "\tVariable: " << var << ", type " << td->getName() << "\n";
+          std::cerr <<  "\tVariable: " << var << ", type " << td->getName() << "\n";
           
           if (td->getName() == string("-- unknown type --")) {
-            cerr << "\t\tParticleVariable of unknown type";
+            std::cerr <<  "\t\tParticleVariable of unknown type";
           
             if (d_strict_types) {
-              cerr << ".\nQuitting.\n";
+              std::cerr <<  ".\nQuitting.\n";
               Thread::exitAll(-1);
             }
-            cerr << "; skipping comparison...\n";
+            std::cerr <<  "; skipping comparison...\n";
             continue;
           }
 
@@ -1517,9 +1517,9 @@ main(int argc, char** argv)
             LevelP level2 = grid2->getLevel(l);
           
             if (level->numPatches() != level2->numPatches()) {
-              cerr << "Inconsistent number of patches on level " << l << " at time " << time1 << ":" << endl;
-              cerr << d_filebase1 << " has " << level->numPatches()  << " patches.\n";
-              cerr << d_filebase2 << " has " << level2->numPatches() << " patches.\n";
+              std::cerr <<  "Inconsistent number of patches on level " << l << " at time " << time1 << ":" << std::endl;
+              std::cerr <<  d_filebase1 << " has " << level->numPatches()  << " patches.\n";
+              std::cerr <<  d_filebase2 << " has " << level2->numPatches() << " patches.\n";
               abort_uncomparable();
             }
 
@@ -1532,27 +1532,27 @@ main(int argc, char** argv)
               const Patch* patch2 = *iter2;
 
               if (patch->getID() != patch2->getID()) {
-                cerr << "Inconsistent patch ids on level " << l << " at time " << time1 << endl;
-                cerr << d_filebase1 << " has patch id " << patch->getID() << " where\n";
-                cerr << d_filebase2 << " has patch id " << patch2->getID() << endl;
+                std::cerr <<  "Inconsistent patch ids on level " << l << " at time " << time1 << std::endl;
+                std::cerr <<  d_filebase1 << " has patch id " << patch->getID() << " where\n";
+                std::cerr <<  d_filebase2 << " has patch id " << patch2->getID() << std::endl;
                 abort_uncomparable();  
               }
             
-              cerr << "\t\tPatch: " << patch->getID() << "\n";
+              std::cerr <<  "\t\tPatch: " << patch->getID() << "\n";
 
               if (!compare(patch->getExtraBox().lower(), patch2->getExtraBox().lower(), abs_tolerance, rel_tolerance) ||
                   !compare(patch->getExtraBox().upper(), patch2->getExtraBox().upper(), abs_tolerance, rel_tolerance)) {
                   
-                cerr << "Inconsistent patch bounds on patch " << patch->getID()
-                     << " at time " << time1 << endl;
+                std::cerr <<  "Inconsistent patch bounds on patch " << patch->getID()
+                     << " at time " << time1 << std::endl;
                 
-                cerr << d_filebase1 << " has bounds " << patch->getExtraBox().lower()
+                std::cerr <<  d_filebase1 << " has bounds " << patch->getExtraBox().lower()
                      << " - " << patch->getExtraBox().upper() << ".\n";
                 
-                cerr << d_filebase2 << " has bounds " << patch2->getExtraBox().lower()
+                std::cerr <<  d_filebase2 << " has bounds " << patch2->getExtraBox().lower()
                      << " - " << patch2->getExtraBox().upper() << ".\n";
                 
-                cerr << "Difference is: " << patch->getExtraBox().lower() - patch2->getExtraBox().lower() << " - " << patch->getExtraBox().upper() - patch2->getExtraBox().upper() << endl;
+                std::cerr <<  "Difference is: " << patch->getExtraBox().lower() - patch2->getExtraBox().lower() << " - " << patch->getExtraBox().upper() - patch2->getExtraBox().upper() << std::endl;
                 abort_uncomparable();  
               }
 
@@ -1565,7 +1565,7 @@ main(int argc, char** argv)
                   matlIter != matls.end(); matlIter++){
                 int matl = *matlIter;
                 
-                cerr << "\t\t\tMaterial: " << matl << "\n";
+                std::cerr <<  "\t\t\tMaterial: " << matl << "\n";
                 
                 if (td->getType() == Uintah::TypeDescription::Type::ParticleVariable) {
                   switch(subtype->getType()){
@@ -1594,7 +1594,7 @@ main(int argc, char** argv)
                                               time1, tstep, abs_tolerance, rel_tolerance);
                     break;
                   default:
-                    cerr << "main: ParticleVariable of unsupported type: " << subtype->getName() << '\n';
+                    std::cerr <<  "main: ParticleVariable of unsupported type: " << subtype->getName() << '\n';
                     Thread::exitAll(-1);
                   }
                 }
@@ -1650,15 +1650,15 @@ main(int argc, char** argv)
         
         if (td->getType() == Uintah::TypeDescription::Type::ParticleVariable)
           continue;
-        cerr << "\tVariable: " << var << ", type " << td->getName() << "\n";
+        std::cerr <<  "\tVariable: " << var << ", type " << td->getName() << "\n";
         
         if (td->getName() == string("-- unknown type --")) {
-          cerr << "\t\tParticleVariable of unknown type";
+          std::cerr <<  "\t\tParticleVariable of unknown type";
           if (d_strict_types) {
-            cerr << ".\nQuitting.\n";
+            std::cerr <<  ".\nQuitting.\n";
             Thread::exitAll(-1);
           }
-          cerr << "; skipping comparison...\n";
+          std::cerr <<  "; skipping comparison...\n";
           continue;
         }
         
@@ -1684,7 +1684,7 @@ main(int argc, char** argv)
           difference2 = Region::difference(region1,region2);
 
           if(!difference1.empty() || !difference2.empty()){
-            cerr << "Patches on level:" << l << " do not cover the same area\n";
+            std::cerr <<  "Patches on level:" << l << " do not cover the same area\n";
             abort_uncomparable();
           }
           
@@ -1703,16 +1703,16 @@ main(int argc, char** argv)
             // bulletproofing
             if ((patchMap[index]  == 0 && patch2Map[index] != 0) ||
                 (patch2Map[index] == 0 && patchMap[index] != 0)) {
-              cerr << "Inconsistent patch coverage on level " << l
-                   << " at time " << time1 << endl;
+              std::cerr <<  "Inconsistent patch coverage on level " << l
+                   << " at time " << time1 << std::endl;
           
               if (patchMap[index] != 0) {
-                cerr << index << " is covered by " << d_filebase1 << endl
-                     << " and not " << d_filebase2 << endl;
+                std::cerr <<  index << " is covered by " << d_filebase1 << std::endl
+                     << " and not " << d_filebase2 << std::endl;
               }
               else {
-                cerr << index << " is covered by " << d_filebase2 << endl
-                     << " and not " << d_filebase1 << endl;
+                std::cerr <<  index << " is covered by " << d_filebase2 << std::endl
+                     << " and not " << d_filebase1 << std::endl;
               }
               abort_uncomparable();
             }
@@ -1740,28 +1740,28 @@ main(int argc, char** argv)
     //__________________________________
     //
     if (times.size() != times2.size()) {
-      cerr << endl;
-      cerr << d_filebase1 << " has " << times.size() << " timesteps\n";
-      cerr << d_filebase2 << " has " << times2.size() << " timesteps\n";
+      std::cerr <<  std::endl;
+      std::cerr <<  d_filebase1 << " has " << times.size() << " timesteps\n";
+      std::cerr <<  d_filebase2 << " has " << times2.size() << " timesteps\n";
       abort_uncomparable();
     }
     
     delete da1;
     delete da2;
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << '\n';
+    std::cerr <<  "Caught exception: " << e.message() << '\n';
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 
   if (d_tolerance_error) {
-    cerr << "\nComparison did NOT fully pass.\n";
+    std::cerr <<  "\nComparison did NOT fully pass.\n";
     Thread::exitAll(2);
   }
   else
-    cerr << "\nComparison fully passed!\n";
+    std::cerr <<  "\nComparison fully passed!\n";
 
   return 0;
 }

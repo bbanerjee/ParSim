@@ -338,7 +338,7 @@ void
 HyperElasticDamage::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet* patches) const
 {
-  cerr << "HyperElasticDamage::addComputesAndRequires needs to be filled in\n";
+  std::cerr <<  "HyperElasticDamage::addComputesAndRequires needs to be filled in\n";
 }
 
 double
@@ -403,7 +403,7 @@ HyperElasticDamage::writeRestartParameters(ofstream& out) const
       << (getDeformationMeasure())(2, 3) << " "
       << (getDeformationMeasure())(3, 1) << " "
       << (getDeformationMeasure())(3, 2) << " "
-      << (getDeformationMeasure())(3, 3) << endl;
+      << (getDeformationMeasure())(3, 3) << std::endl;
 }
 
 ConstitutiveModel*
@@ -450,11 +450,11 @@ HyperElasticDamage::getNumParameters() const
 void
 HyperElasticDamage::printParameterNames(ofstream& out) const
 {
-  out << "bulk" << endl
-      << "shear" << endl
-      << "d_Alpha" << endl
-      << "d_Beta" << endl
-      << "maxEquivStrain" << endl;
+  out << "bulk" << std::endl
+      << "shear" << std::endl
+      << "d_Alpha" << std::endl
+      << "d_Beta" << std::endl
+      << "maxEquivStrain" << std::endl;
 }
 
 ConstitutiveModel*

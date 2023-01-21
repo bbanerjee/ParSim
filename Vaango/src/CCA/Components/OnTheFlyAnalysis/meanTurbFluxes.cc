@@ -246,7 +246,7 @@ meanTurbFluxes::problemSetup(
       ostringstream warn;
       warn << "ERROR:AnalysisModule:meanTurbFluxes: (" << label->getName()
            << " "
-           << " only CCVariable<double> variables work" << endl;
+           << " only CCVariable<double> variables work" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
 
@@ -782,7 +782,7 @@ meanTurbFluxes::calc_Q_prime(DataWarehouse* new_dw,
                << setw(10) << Q->label->getName() << setw(10)
                << "\t Qprime: " << Qprime[c] << setw(10)
                << " Qlocal: " << Qlocal[c] << setw(10) << "Q_bar: " << Qbar[z]
-               << endl;
+               << std::endl;
         }
       }
     }
@@ -893,7 +893,7 @@ meanTurbFluxes::calc_TurbFluxes(const ProcessorGroup*,
           cout << "  calc_TurbFluxes:  L-" << L_indx << " " << d_monitorCell
                << setw(10) << Q->label->getName()
                << "\t QturbFlux: " << QturbFlux[c] << " Qprime: " << Qprime[c]
-               << "\t velPrime: " << velPrime[c] << endl;
+               << "\t velPrime: " << velPrime[c] << std::endl;
         }
       }
     } // QVars loop
@@ -930,7 +930,7 @@ meanTurbFluxes::calc_TurbFluxes(const ProcessorGroup*,
         cout << "  calc_TurbFluxes:  L-" << L_indx << " " << d_monitorCell
              << setw(10) << d_velocityVar->label->getName()
              << "\t diag: " << diag[c] << " offdiag: " << offdiag[c]
-             << "\t velPrime: " << velPrime[c] << endl;
+             << "\t velPrime: " << velPrime[c] << std::endl;
       }
     }
   }

@@ -23,9 +23,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-//#include </usr/include/valgrind/callgrind.h>
-#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/NonLocalDruckerPrager.h>
+// #include </usr/include/valgrind/callgrind.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/NonLocalDruckerPrager.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Box.h>
@@ -37,7 +38,6 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MinMax.h>
@@ -48,7 +48,6 @@
 #include <iostream>
 #include <sci_values.h>
 #include <string>
-
 
 using namespace Uintah;
 
@@ -64,7 +63,8 @@ NonLocalDruckerPrager::NonLocalDruckerPrager(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->getWithDefault("l_nonlocal", d_initialData.l_nonlocal, 0.0);
   ps->getWithDefault("h_local", d_initialData.h_local, 0.0);
   ps->getWithDefault("h_nonlocal", d_initialData.h_nonlocal, 0.0);
-  ps->getWithDefault("minimum_yield_stress", d_initialData.minimum_yield_stress,
+  ps->getWithDefault("minimum_yield_stress",
+                     d_initialData.minimum_yield_stress,
                      0.0);
   ps->getWithDefault("initial_xstress", d_initialData.initial_xstress, 0.0);
   ps->getWithDefault("initial_ystress", d_initialData.initial_ystress, 0.0);
@@ -79,26 +79,26 @@ NonLocalDruckerPrager::NonLocalDruckerPrager(ProblemSpecP& ps, MPMFlags* Mflag)
 NonLocalDruckerPrager::NonLocalDruckerPrager(const NonLocalDruckerPrager* cm)
   : ConstitutiveModel(cm)
 {
-  d_initialData.alpha = cm->d_initialData.alpha;
-  d_initialData.alpha_p = cm->d_initialData.alpha_p;
-  d_initialData.k_o = cm->d_initialData.k_o;
-  d_initialData.bulk_modulus = cm->d_initialData.bulk_modulus;
-  d_initialData.shear_modulus = cm->d_initialData.shear_modulus;
-  d_initialData.l_nonlocal = cm->d_initialData.l_nonlocal;
-  d_initialData.h_local = cm->d_initialData.h_local;
-  d_initialData.h_nonlocal = cm->d_initialData.h_nonlocal;
+  d_initialData.alpha                = cm->d_initialData.alpha;
+  d_initialData.alpha_p              = cm->d_initialData.alpha_p;
+  d_initialData.k_o                  = cm->d_initialData.k_o;
+  d_initialData.bulk_modulus         = cm->d_initialData.bulk_modulus;
+  d_initialData.shear_modulus        = cm->d_initialData.shear_modulus;
+  d_initialData.l_nonlocal           = cm->d_initialData.l_nonlocal;
+  d_initialData.h_local              = cm->d_initialData.h_local;
+  d_initialData.h_nonlocal           = cm->d_initialData.h_nonlocal;
   d_initialData.minimum_yield_stress = cm->d_initialData.minimum_yield_stress;
-  d_initialData.initial_xstress = cm->d_initialData.initial_xstress;
-  d_initialData.initial_ystress = cm->d_initialData.initial_ystress;
-  d_initialData.initial_zstress = cm->d_initialData.initial_zstress;
-  d_initialData.hardening_type = cm->d_initialData.hardening_type;
+  d_initialData.initial_xstress      = cm->d_initialData.initial_xstress;
+  d_initialData.initial_ystress      = cm->d_initialData.initial_ystress;
+  d_initialData.initial_zstress      = cm->d_initialData.initial_zstress;
+  d_initialData.hardening_type       = cm->d_initialData.hardening_type;
 
-  wdist.WeibMed = cm->wdist.WeibMed;
-  wdist.WeibMod = cm->wdist.WeibMod;
+  wdist.WeibMed    = cm->wdist.WeibMed;
+  wdist.WeibMod    = cm->wdist.WeibMod;
   wdist.WeibRefVol = cm->wdist.WeibRefVol;
-  wdist.WeibSeed = cm->wdist.WeibSeed;
-  wdist.Perturb = cm->wdist.Perturb;
-  wdist.WeibDist = cm->wdist.WeibDist;
+  wdist.WeibSeed   = cm->wdist.WeibSeed;
+  wdist.Perturb    = cm->wdist.Perturb;
+  wdist.WeibDist   = cm->wdist.WeibDist;
 
   initializeLocalMPMLabels();
 }
@@ -163,14 +163,17 @@ NonLocalDruckerPrager::initializeCMData(const Patch* patch,
   initSharedDataForExplicit(patch, matl, new_dw);
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  Uintah::Weibull weibGen(wdist.WeibMed, wdist.WeibMod, wdist.WeibRefVol,
-                          wdist.WeibSeed, wdist.WeibMod);
+  Uintah::Weibull weibGen(wdist.WeibMed,
+                          wdist.WeibMod,
+                          wdist.WeibRefVol,
+                          wdist.WeibSeed,
+                          wdist.WeibMod);
   std::cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
-       << "Median:            " << wdist.WeibMed
-       << "\nModulus:         " << wdist.WeibMod
-       << "\nReference Vol:   " << wdist.WeibRefVol
-       << "\nSeed:            " << wdist.WeibSeed
-       << "\nPerturb?:        " << wdist.Perturb << std::endl;
+            << "Median:            " << wdist.WeibMed
+            << "\nModulus:         " << wdist.WeibMod
+            << "\nReference Vol:   " << wdist.WeibRefVol
+            << "\nSeed:            " << wdist.WeibSeed
+            << "\nPerturb?:        " << wdist.Perturb << std::endl;
 
   constParticleVariable<double> pVolume;
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
@@ -183,8 +186,8 @@ NonLocalDruckerPrager::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(k_o_dist, k_o_distLabel, pset);
   ParticleSubset::iterator iter = pset->begin();
   for (; iter != pset->end(); iter++) {
-    eta[*iter] = 0.0;
-    eta_nl[*iter] = 0.0;
+    eta[*iter]            = 0.0;
+    eta_nl[*iter]         = 0.0;
     pPlasticStrain[*iter] = 0.0;
     if (wdist.Perturb) {
       k_o_dist[*iter] = weibGen.rand(pVolume[*iter]);
@@ -219,7 +222,8 @@ void
 NonLocalDruckerPrager::allocateCMDataAdd(DataWarehouse* new_dw,
                                          ParticleSubset* addset,
                                          ParticleLabelVariableMap* newState,
-                                         ParticleSubset* delset, DataWarehouse*)
+                                         ParticleSubset* delset,
+                                         DataWarehouse*)
 {
 }
 
@@ -231,7 +235,7 @@ NonLocalDruckerPrager::computeStableTimestep(const Patch* patch,
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
   Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
+  int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
   constParticleVariable<double> pmass, pvolume;
@@ -242,24 +246,25 @@ NonLocalDruckerPrager::computeStableTimestep(const Patch* patch,
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-  double bulk = d_initialData.bulk_modulus;
+  double bulk  = d_initialData.bulk_modulus;
   double shear = d_initialData.shear_modulus;
 
   for (int idx : *pset) {
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
 
-    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
+    c_dil     = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
     WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
                        Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
                        Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
   }
-  WaveSpeed = dx / WaveSpeed;
+  WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
-  if (delT_new < 1.e-12)
+  if (delT_new < 1.e-12) {
     new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
-  else
+  } else {
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+  }
 }
 
 void
@@ -312,7 +317,8 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
     old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
-    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
+    new_dw->allocateAndPut(pPlasticStrain_new,
+                           pPlasticStrainLabel_preReloc,
                            pset);
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
@@ -351,19 +357,19 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateTemporary(rho_cur, pset);
     new_dw->allocateTemporary(softened, pset);
 
-    const double alpha = d_initialData.alpha;
-    const double alpha_p = d_initialData.alpha_p;
-    const double k_o_const = d_initialData.k_o;
-    const double bulk = d_initialData.bulk_modulus;
-    const double shear = d_initialData.shear_modulus;
-    const double l_nonlocal = d_initialData.l_nonlocal;
-    double h_local = d_initialData.h_local;
-    double h_nonlocal = d_initialData.h_nonlocal;
+    const double alpha          = d_initialData.alpha;
+    const double alpha_p        = d_initialData.alpha_p;
+    const double k_o_const      = d_initialData.k_o;
+    const double bulk           = d_initialData.bulk_modulus;
+    const double shear          = d_initialData.shear_modulus;
+    const double l_nonlocal     = d_initialData.l_nonlocal;
+    double h_local              = d_initialData.h_local;
+    double h_nonlocal           = d_initialData.h_nonlocal;
     double minimum_yield_stress = d_initialData.minimum_yield_stress;
-    double initial_xstress = d_initialData.initial_xstress;
-    double initial_ystress = d_initialData.initial_ystress;
-    double initial_zstress = d_initialData.initial_zstress;
-    int hardening_type = d_initialData.hardening_type;
+    double initial_xstress      = d_initialData.initial_xstress;
+    double initial_ystress      = d_initialData.initial_ystress;
+    double initial_zstress      = d_initialData.initial_zstress;
+    int hardening_type          = d_initialData.hardening_type;
 
     // assemble the initial stress tensor
     Matrix3 initial_stress(0.0);
@@ -373,7 +379,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
     // create node data for the plastic multiplier field
     NCVariable<double> gdlambda, gmat;
-    int NGhost = (int)ceil(l_nonlocal / dx.maxComponent());
+    int NGhost = (int)std::ceil(l_nonlocal / dx.maxComponent());
     new_dw->allocateTemporary(gdlambda, patch, gac, NGhost);
     new_dw->allocateTemporary(gmat, patch, gac, NGhost);
     gdlambda.initialize(0.0);
@@ -407,24 +413,28 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       if (wdist.Perturb) {
         k_o[idx] = k_o_dist[idx];
       } else {
-        k_o[idx] = k_o_const;
+        k_o[idx]          = k_o_const;
         k_o_dist_new[idx] = k_o_const;
       }
-      double lame = bulk - 2.0 / 3.0 * shear;
-      double eta_in = eta_old[idx];
+      double lame      = bulk - 2.0 / 3.0 * shear;
+      double eta_in    = eta_old[idx];
       double eta_nl_in = eta_nl_old[idx];
       trial_stress[idx] =
         unrotated_stress +
         (Identity * lame * (D.Trace() * delT) + D * delT * 2.0 * shear);
 
       // evaluate yield function:
-      f_trial[idx] = YieldFunction(trial_stress[idx], alpha, k_o[idx], eta_in,
-                                   eta_nl_in, hardening_type);
-      eta_new[idx] = eta_old[idx];
-      eta_nl_new[idx] = eta_nl_old[idx];
+      f_trial[idx]            = YieldFunction(trial_stress[idx],
+                                   alpha,
+                                   k_o[idx],
+                                   eta_in,
+                                   eta_nl_in,
+                                   hardening_type);
+      eta_new[idx]            = eta_old[idx];
+      eta_nl_new[idx]         = eta_nl_old[idx];
       pPlasticStrain_new[idx] = pPlasticStrain[idx];
-      pdlambda[idx] = 0.0;
-      softened[idx] = 0;
+      pdlambda[idx]           = 0.0;
+      softened[idx]           = 0;
       if (f_trial[idx] < 0.0) {
         stress_new[idx] = trial_stress[idx];
       } else {
@@ -445,7 +455,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
         Matrix3 Strial_hat = S_trial * (1.0 / sqrt(2.0 * J2_trial));
         M = (Identity * alpha_p + Strial_hat * (sqrt(2.0) / 2.0)) *
             (1.0 / sqrt(0.5 + 3.0 * alpha_p * alpha_p));
-        A = (Identity * lame * (M.Trace()) + M * 2.0 * shear);
+        A                  = (Identity * lame * (M.Trace()) + M * 2.0 * shear);
         double dlambda_new = 0.0;
 
         double current_yield_strength;
@@ -478,23 +488,31 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
         Matrix3 S_new;
         computeInvariants(stress_new[idx], S_new, I1_new, J2_new);
         if (current_yield_strength < 0) {
-          std::cout << "zero yield strength detected" << endl;
+          std::cout << "zero yield strength detected" << std::endl;
           // just set deviator to zero (von-Mise ONLY!!)
           stress_new[idx] = Identity * (1.0 / 3.0) * trial_stress[idx].Trace();
         } else if (alpha * I1_new > current_yield_strength) {
           // just put the stress on the vertex
-          std::cout << "stress on yield vertex" << endl;
+          std::cout << "stress on yield vertex" << std::endl;
           stress_new[idx] =
             Identity * (1.0 / (3.0 * alpha)) * current_yield_strength;
         }
 
         [[maybe_unused]] double f_new;
         if (current_yield_strength < minimum_yield_stress) {
-          f_new = YieldFunction(stress_new[idx], alpha, minimum_yield_stress,
-                                0.0, 0.0, hardening_type);
+          f_new = YieldFunction(stress_new[idx],
+                                alpha,
+                                minimum_yield_stress,
+                                0.0,
+                                0.0,
+                                hardening_type);
         } else {
-          f_new = YieldFunction(stress_new[idx], alpha, k_o[idx], eta_new[idx],
-                                eta_nl_new[idx], hardening_type);
+          f_new = YieldFunction(stress_new[idx],
+                                alpha,
+                                k_o[idx],
+                                eta_new[idx],
+                                eta_nl_new[idx],
+                                hardening_type);
         }
         // this is just generating an initial estimate, so it doesn't need to
         // actually hit the yield surface
@@ -517,11 +535,17 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       // interpolate plastic multiplier to the grid
       if (!flag->d_axisymmetric) {
         // Get the node indices that surround the cell
-        interpolator->findCellAndWeights(px[idx], ni, S, psize[idx],
+        interpolator->findCellAndWeights(px[idx],
+                                         ni,
+                                         S,
+                                         psize[idx],
                                          deformationGradient[idx]);
       } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
-        interpolator->findCellAndWeights(px[idx], ni, S, psize[idx],
+        interpolator->findCellAndWeights(px[idx],
+                                         ni,
+                                         S,
+                                         psize[idx],
                                          deformationGradient[idx]);
       }
       IntVector node;
@@ -543,12 +567,12 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
       q++;
       bool soften_elastic = false;
-      double tolerance = 1.e-14;
-      double error_max = 0.0;
-      double error = 0.0;
-      double dlambda_max = 0.0;
-      double dlambda_nl = 0.0;
-      double V_alpha = 0.0;
+      double tolerance    = 1.e-14;
+      double error_max    = 0.0;
+      double error        = 0.0;
+      double dlambda_max  = 0.0;
+      double dlambda_nl   = 0.0;
+      double V_alpha      = 0.0;
 
       // loop over particles
       for (int idx : *pset) {
@@ -559,17 +583,27 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
           // evaluate nonlocal average
           // if l_nonlocal is less than the cell spacing, just stick with the
           // local value:
-          EvaluateNonLocalAverage(dlambda_nl, V_alpha, pdlambda, px, gdlambda,
-                                  gmat, patch, idx, l_nonlocal);
+          EvaluateNonLocalAverage(dlambda_nl,
+                                  V_alpha,
+                                  pdlambda,
+                                  px,
+                                  gdlambda,
+                                  gmat,
+                                  patch,
+                                  idx,
+                                  l_nonlocal);
           eta_nl_new[idx] = eta_nl_old[idx] + h_nonlocal * dlambda_nl;
           if (softened[idx] == 1) {
-            f_trial[idx] =
-              YieldFunction(trial_stress[idx], alpha, k_o[idx], eta_old[idx],
-                            eta_nl_new[idx], hardening_type);
+            f_trial[idx] = YieldFunction(trial_stress[idx],
+                                         alpha,
+                                         k_o[idx],
+                                         eta_old[idx],
+                                         eta_nl_new[idx],
+                                         hardening_type);
           }
           if (f_trial[idx] > 0) {
             double factorp = sqrt(0.5 + 3.0 * alpha_p * alpha_p);
-            pdlambda[idx] = (f_trial[idx] - h_nonlocal * dlambda_nl) /
+            pdlambda[idx]  = (f_trial[idx] - h_nonlocal * dlambda_nl) /
                             (shear / factorp +
                              alpha * 9.0 * bulk * alpha_p / factorp + h_local);
 
@@ -582,13 +616,16 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
             (eta_nl_old[idx] + h_nonlocal * dlambda_nl);
           if (current_yield_strength < minimum_yield_stress) {
 
-            eta_new[idx] = eta_old[idx];
+            eta_new[idx]    = eta_old[idx];
             eta_nl_new[idx] = eta_nl_old[idx];
 
-            double f_trial_min =
-              YieldFunction(trial_stress[idx], alpha, minimum_yield_stress, 0.0,
-                            0.0, hardening_type);
-            double factorp = sqrt(0.5 + 3.0 * alpha_p * alpha_p);
+            double f_trial_min = YieldFunction(trial_stress[idx],
+                                               alpha,
+                                               minimum_yield_stress,
+                                               0.0,
+                                               0.0,
+                                               hardening_type);
+            double factorp     = sqrt(0.5 + 3.0 * alpha_p * alpha_p);
             pdlambda[idx] =
               (f_trial_min) /
               (shear / factorp + alpha * 9.0 * bulk * alpha_p / factorp);
@@ -604,11 +641,11 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
           double I1_trial, J2_trial;
           computeInvariants(trial_stress[idx], S_trial, I1_trial, J2_trial);
           Matrix3 Strial_hat = S_trial * (1.0 / sqrt(2.0 * J2_trial));
-          double factorp = sqrt(0.5 + 3.0 * alpha_p * alpha_p);
+          double factorp     = sqrt(0.5 + 3.0 * alpha_p * alpha_p);
           Matrix3 M = (Identity * alpha_p + Strial_hat * (sqrt(2.0) / 2.0)) *
                       (1.0 / factorp);
           double lame = bulk - 2.0 / 3.0 * shear;
-          Matrix3 A = (Identity * lame * (M.Trace()) + M * 2.0 * shear);
+          Matrix3 A   = (Identity * lame * (M.Trace()) + M * 2.0 * shear);
           // compute a new estimate for the stress
           stress_new[idx] = trial_stress[idx] - A * pdlambda[idx];
 
@@ -617,12 +654,19 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
                                    (eta_old[idx] + h_local * pdlambda[idx]) +
                                    (eta_nl_old[idx] + h_nonlocal * dlambda_nl);
           if (current_yield_strength < minimum_yield_stress) {
-            f_new = YieldFunction(stress_new[idx], alpha, minimum_yield_stress,
-                                  0.0, 0.0, hardening_type);
+            f_new = YieldFunction(stress_new[idx],
+                                  alpha,
+                                  minimum_yield_stress,
+                                  0.0,
+                                  0.0,
+                                  hardening_type);
           } else {
-            f_new =
-              YieldFunction(stress_new[idx], alpha, k_o[idx], eta_new[idx],
-                            eta_nl_new[idx], hardening_type);
+            f_new = YieldFunction(stress_new[idx],
+                                  alpha,
+                                  k_o[idx],
+                                  eta_new[idx],
+                                  eta_nl_new[idx],
+                                  hardening_type);
           }
 
           // cerr<<"yield function value after nonlocal iteration "<<q-1<<" is
@@ -632,19 +676,27 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
           error = abs(pdlambda[idx] - dlambda_old);
 
           // find out if this is the maximum value for dlambda or error
-          if (pdlambda[idx] > dlambda_max)
+          if (pdlambda[idx] > dlambda_max) {
             dlambda_max = pdlambda[idx];
-          if (error > error_max)
+          }
+          if (error > error_max) {
             error_max = error;
+          }
 
           // get the interpolation data
           if (!flag->d_axisymmetric) {
             // Get the node indices that surround the cell
-            interpolator->findCellAndWeights(px[idx], ni, S, psize[idx],
+            interpolator->findCellAndWeights(px[idx],
+                                             ni,
+                                             S,
+                                             psize[idx],
                                              deformationGradient[idx]);
           } else { // axi-symmetric kinematics
             // Get the node indices that surround the cell
-            interpolator->findCellAndWeights(px[idx], ni, S, psize[idx],
+            interpolator->findCellAndWeights(px[idx],
+                                             ni,
+                                             S,
+                                             psize[idx],
                                              deformationGradient[idx]);
           }
 
@@ -663,17 +715,27 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
         } else {
           // update the nonlocal isv for the elastic particles
-          EvaluateNonLocalAverage(dlambda_nl, V_alpha, pdlambda, px, gdlambda,
-                                  gmat, patch, idx, l_nonlocal);
+          EvaluateNonLocalAverage(dlambda_nl,
+                                  V_alpha,
+                                  pdlambda,
+                                  px,
+                                  gdlambda,
+                                  gmat,
+                                  patch,
+                                  idx,
+                                  l_nonlocal);
           eta_nl_new[idx] = eta_nl_old[idx] + h_nonlocal * dlambda_nl;
           // now evaluate the yield function with this value for eta_nl
-          double f_max =
-            YieldFunction(stress_new[idx], alpha, k_o[idx], eta_new[idx],
-                          eta_nl_new[idx], hardening_type);
+          double f_max = YieldFunction(stress_new[idx],
+                                       alpha,
+                                       k_o[idx],
+                                       eta_new[idx],
+                                       eta_nl_new[idx],
+                                       hardening_type);
           if (f_max > 0.0) {
-            softened[idx] = 1;
+            softened[idx]  = 1;
             soften_elastic = true;
-            std::cout << "elastic softening" << endl;
+            std::cout << "elastic softening" << std::endl;
           }
 
         } // end elastic part
@@ -683,9 +745,10 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       // check if the error in the plastic multiplier is small and that
       // there are no softened elastic particles
       std::cout << "maximum iteration error after iteration " << q << " is "
-           << error_max << endl;
-      if (error_max < tolerance && !soften_elastic)
+                << error_max << std::endl;
+      if (error_max < tolerance && !soften_elastic) {
         done = true;
+      }
 
     } // end iterative loop
 
@@ -700,7 +763,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
 
-      c_dil = sqrt((bulk + (4.0 / 3.0) * shear) / (rho_cur[idx]));
+      c_dil     = sqrt((bulk + (4.0 / 3.0) * shear) / (rho_cur[idx]));
       WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
                          Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
                          Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
@@ -726,7 +789,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
     } // end loop over particles
 
-    WaveSpeed = dx / WaveSpeed;
+    WaveSpeed       = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
 
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
@@ -736,16 +799,21 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
-    //delete interpolator;
+    // delete interpolator;
 
   } // end loop over patches
 }
 
 void
 NonLocalDruckerPrager::EvaluateNonLocalAverage(
-  double& dlambda_nl, double& V_alpha, ParticleVariable<double>& pdlambda,
-  constParticleVariable<Point>& px, NCVariable<double>& gdlambda,
-  NCVariable<double>& gmat, const Patch*& patch, particleIndex& idx,
+  double& dlambda_nl,
+  double& V_alpha,
+  ParticleVariable<double>& pdlambda,
+  constParticleVariable<Point>& px,
+  NCVariable<double>& gdlambda,
+  NCVariable<double>& gmat,
+  const Patch*& patch,
+  particleIndex& idx,
   const double& l_nonlocal)
 {
   Vector dx = patch->dCell();
@@ -753,7 +821,7 @@ NonLocalDruckerPrager::EvaluateNonLocalAverage(
   l_nonlocal_index[0] = l_nonlocal / dx.x();
   l_nonlocal_index[1] = l_nonlocal / dx.y();
   l_nonlocal_index[2] = l_nonlocal / dx.z();
-  if (min(min(dx[0], dx[1]), dx[2]) > 2.0 * l_nonlocal) {
+  if (std::min(std::min(dx[0], dx[1]), dx[2]) > 2.0 * l_nonlocal) {
     dlambda_nl = pdlambda[idx];
 
     V_alpha = 1;
@@ -769,20 +837,20 @@ NonLocalDruckerPrager::EvaluateNonLocalAverage(
     Point nl_lower_index = patch->getLevel()->positionToIndex(nl_lower_corner);
     /*
     int xmax_index = Floor(nl_upper_index.x());
-    int xmin_index = ceil(nl_lower_index.x());
+    int xmin_index = std::ceil(nl_lower_index.x());
     int ymax_index = Floor(nl_upper_index.y());
-    int ymin_index = ceil(nl_lower_index.y());
+    int ymin_index = std::ceil(nl_lower_index.y());
     int zmax_index = Floor(nl_upper_index.z());
-    int zmin_index = ceil(nl_lower_index.z());
+    int zmin_index = std::ceil(nl_lower_index.z());
     */
-    int xmax_index = (int)ceil(nl_upper_index.x());
-    int xmin_index = (int)floor(nl_lower_index.x());
-    int ymax_index = (int)ceil(nl_upper_index.y());
-    int ymin_index = (int)floor(nl_lower_index.y());
-    int zmax_index = (int)ceil(nl_upper_index.z());
-    int zmin_index = (int)floor(nl_lower_index.z());
-    dlambda_nl = 0.0;
-    V_alpha = 0.0;
+    int xmax_index = (int)std::ceil(nl_upper_index.x());
+    int xmin_index = (int)std::floor(nl_lower_index.x());
+    int ymax_index = (int)std::ceil(nl_upper_index.y());
+    int ymin_index = (int)std::floor(nl_lower_index.y());
+    int zmax_index = (int)std::ceil(nl_upper_index.z());
+    int zmin_index = (int)std::floor(nl_lower_index.z());
+    dlambda_nl     = 0.0;
+    V_alpha        = 0.0;
     for (int i = xmin_index; i < xmax_index + 1; i++) {
       for (int j = ymin_index; j < ymax_index + 1; j++) {
         for (int k = zmin_index; k < zmax_index + 1; k++) {
@@ -807,45 +875,54 @@ NonLocalDruckerPrager::EvaluateNonLocalAverage(
 }
 
 double
-NonLocalDruckerPrager::alpha_nl(const Point& x, Point& s,
+NonLocalDruckerPrager::alpha_nl(const Point& x,
+                                Point& s,
                                 const vector<double>& l_nl)
 {
-  if (l_nl[0] < 1e-14)
+  if (l_nl[0] < 1e-14) {
     return 1.0;
-  double pi = 3.14159265358979323;
-  double k = pow(6.0 * sqrt(pi), (1.0 / 3.0));
+  }
+  double pi    = 3.14159265358979323;
+  double k     = pow(6.0 * sqrt(pi), (1.0 / 3.0));
   double diffx = x.x() - s.x();
   double diffy = x.y() - s.y();
   double diffz = x.z() - s.z();
-  double arg = k * (diffx / l_nl[0] + diffy / l_nl[1] + diffz / l_nl[2]);
+  double arg   = k * (diffx / l_nl[0] + diffy / l_nl[1] + diffz / l_nl[2]);
   return exp(-pow(arg, 2));
 }
 
 void
-NonLocalDruckerPrager::computeInvariants(Matrix3& stress, Matrix3& S,
-                                         double& I1, double& J2)
+NonLocalDruckerPrager::computeInvariants(Matrix3& stress,
+                                         Matrix3& S,
+                                         double& I1,
+                                         double& J2)
 {
   Matrix3 Identity;
   Identity.Identity();
   I1 = stress.Trace();
-  S = stress - Identity * (1.0 / 3.0) * I1;
+  S  = stress - Identity * (1.0 / 3.0) * I1;
   J2 = 0.5 * S.Contract(S);
 }
 
 void
-NonLocalDruckerPrager::computeInvariants(const Matrix3& stress, Matrix3& S,
-                                         double& I1, double& J2)
+NonLocalDruckerPrager::computeInvariants(const Matrix3& stress,
+                                         Matrix3& S,
+                                         double& I1,
+                                         double& J2)
 {
   Matrix3 Identity;
   Identity.Identity();
   I1 = stress.Trace();
-  S = stress - Identity * (1.0 / 3.0) * I1;
+  S  = stress - Identity * (1.0 / 3.0) * I1;
   J2 = 0.5 * S.Contract(S);
 }
 
 double
-NonLocalDruckerPrager::YieldFunction(Matrix3& stress, const double& alpha,
-                                     double& k_o, double& eta, double& eta_nl,
+NonLocalDruckerPrager::YieldFunction(Matrix3& stress,
+                                     const double& alpha,
+                                     double& k_o,
+                                     double& eta,
+                                     double& eta_nl,
                                      const int& hardening_type)
 {
 
@@ -856,8 +933,10 @@ NonLocalDruckerPrager::YieldFunction(Matrix3& stress, const double& alpha,
 }
 
 double
-NonLocalDruckerPrager::YieldFunction(const Matrix3& stress, const double& alpha,
-                                     double& k_o, const double& eta,
+NonLocalDruckerPrager::YieldFunction(const Matrix3& stress,
+                                     const double& alpha,
+                                     double& k_o,
+                                     const double& eta,
                                      const double& eta_nl,
                                      const int& hardening_type)
 {
@@ -869,8 +948,10 @@ NonLocalDruckerPrager::YieldFunction(const Matrix3& stress, const double& alpha,
 }
 
 double
-NonLocalDruckerPrager::YieldFunction(Matrix3& stress, const double& alpha,
-                                     double& k_o, const double& eta,
+NonLocalDruckerPrager::YieldFunction(Matrix3& stress,
+                                     const double& alpha,
+                                     double& k_o,
+                                     const double& eta,
                                      const double& eta_nl,
                                      const int& hardening_type)
 {
@@ -888,8 +969,8 @@ NonLocalDruckerPrager::carryForward(const PatchSubset* patches,
                                     DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
+    const Patch* patch   = patches->get(p);
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Carry forward the data common to all constitutive models
@@ -961,19 +1042,23 @@ NonLocalDruckerPrager::addComputesAndRequires(Task* task,
 }
 
 void
-NonLocalDruckerPrager::addComputesAndRequires(Task*, const MPMMaterial*,
-                                              const PatchSet*, const bool,
+NonLocalDruckerPrager::addComputesAndRequires(Task*,
+                                              const MPMMaterial*,
+                                              const PatchSet*,
+                                              const bool,
                                               const bool) const
 {
 }
 
 double
-NonLocalDruckerPrager::computeRhoMicroCM(double pressure, const double p_ref,
+NonLocalDruckerPrager::computeRhoMicroCM(double pressure,
+                                         const double p_ref,
                                          const MPMMaterial* matl,
-                                         double temperature, double rho_guess)
+                                         double temperature,
+                                         double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
-  double p_gauge = pressure - p_ref;
+  double p_gauge  = pressure - p_ref;
   double rho_cur;
   double bulk = d_initialData.bulk_modulus;
 
@@ -982,36 +1067,42 @@ NonLocalDruckerPrager::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR NonLocalDruckerPrager"
-       << endl;
+  std::cout
+    << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR NonLocalDruckerPrager"
+    << std::endl;
 #endif
 }
 
 void
-NonLocalDruckerPrager::computePressEOSCM(double rho_cur, double& pressure,
-                                         double p_ref, double& dp_drho,
-                                         double& tmp, const MPMMaterial* matl,
+NonLocalDruckerPrager::computePressEOSCM(double rho_cur,
+                                         double& pressure,
+                                         double p_ref,
+                                         double& dp_drho,
+                                         double& tmp,
+                                         const MPMMaterial* matl,
                                          double temperature)
 {
 
-  double bulk = d_initialData.bulk_modulus;
-  double shear = d_initialData.shear_modulus;
+  double bulk     = d_initialData.bulk_modulus;
+  double shear    = d_initialData.shear_modulus;
   double rho_orig = matl->getInitialDensity();
 
   double p_g = .5 * bulk * (rho_cur / rho_orig - rho_orig / rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
-  tmp = (bulk + 4. * shear / 3.) / rho_cur; // speed of sound squared
+  pressure   = p_ref + p_g;
+  dp_drho    = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
+  tmp        = (bulk + 4. * shear / 3.) / rho_cur; // speed of sound squared
 
-  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
-       << endl;
+  std::cout
+    << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
+    << std::endl;
 }
 
 double
 NonLocalDruckerPrager::getCompressibility()
 {
-  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
-       << endl;
+  std::cout
+    << "NO VERSION OF computePressEOSCM EXISTS YET FOR NonLocalDruckerPrager"
+    << std::endl;
   return 1.0;
 }
 
@@ -1027,14 +1118,18 @@ NonLocalDruckerPrager::initializeLocalMPMLabels()
     VarLabel::create("eta+", ParticleVariable<double>::getTypeDescription());
   eta_nlLabel_preReloc =
     VarLabel::create("eta_nl+", ParticleVariable<double>::getTypeDescription());
-  pPlasticStrainLabel = VarLabel::create(
-    "p.plasticStrain", ParticleVariable<double>::getTypeDescription());
-  pPlasticStrainLabel_preReloc = VarLabel::create(
-    "p.plasticStrain+", ParticleVariable<double>::getTypeDescription());
-  k_o_distLabel = VarLabel::create(
-    "k_o_dist", ParticleVariable<double>::getTypeDescription());
-  k_o_distLabel_preReloc = VarLabel::create(
-    "k_o_dist+", ParticleVariable<double>::getTypeDescription());
+  pPlasticStrainLabel =
+    VarLabel::create("p.plasticStrain",
+                     ParticleVariable<double>::getTypeDescription());
+  pPlasticStrainLabel_preReloc =
+    VarLabel::create("p.plasticStrain+",
+                     ParticleVariable<double>::getTypeDescription());
+  k_o_distLabel =
+    VarLabel::create("k_o_dist",
+                     ParticleVariable<double>::getTypeDescription());
+  k_o_distLabel_preReloc =
+    VarLabel::create("k_o_dist+",
+                     ParticleVariable<double>::getTypeDescription());
 }
 
 // Weibull input parser that accepts a structure of input
@@ -1081,18 +1176,21 @@ NonLocalDruckerPrager::WeibullParser(WeibParameters& iP)
   // If perturbation is NOT desired
   // ######
   if (!iP.Perturb) {
-    bool escape = false;
-    int num_of_e = 0;
+    bool escape        = false;
+    int num_of_e       = 0;
     int num_of_periods = 0;
     for (char i : iP.WeibDist) {
-      if (i != '.' && i != 'e' && i != '-' && !isdigit(i))
+      if (i != '.' && i != 'e' && i != '-' && !isdigit(i)) {
         escape = true;
+      }
 
-      if (i == 'e')
+      if (i == 'e') {
         num_of_e += 1;
+      }
 
-      if (i == '.')
+      if (i == '.') {
         num_of_periods += 1;
+      }
 
       if (num_of_e > 1 || num_of_periods > 1 || escape) {
         std::cerr << "\n\nERROR:\nInput value cannot be parsed. Please\n"
@@ -1102,8 +1200,9 @@ NonLocalDruckerPrager::WeibullParser(WeibParameters& iP)
       }
     } // end for(int i = 0;....)
 
-    if (escape)
+    if (escape) {
       exit(1);
+    }
 
     iP.WeibMed = atof(iP.WeibDist.c_str());
   }
@@ -1143,10 +1242,10 @@ NonLocalDruckerPrager::WeibullParser(WeibParameters& iP)
       iP.WeibDist.substr(weibValues[2] + 1, weibValues[3] - weibValues[2] - 1);
     weibSeed = iP.WeibDist.substr(weibValues[3] + 1);
 
-    iP.WeibMed = atof(weibMedian.c_str());
-    iP.WeibMod = atof(weibModulus.c_str());
+    iP.WeibMed    = atof(weibMedian.c_str());
+    iP.WeibMod    = atof(weibModulus.c_str());
     iP.WeibRefVol = atof(weibRefVol.c_str());
-    iP.WeibSeed = atoi(weibSeed.c_str());
+    iP.WeibSeed   = atoi(weibSeed.c_str());
 
   } // End if (iP.Perturb)
 }

@@ -614,7 +614,7 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
                                              low, high, subtype);
 
   default:
-    cerr << "Type is unknown.\n";
+    std::cerr <<  "Type is unknown.\n";
     return nullptr;
   }
 }
@@ -664,11 +664,11 @@ ReadUDA::getGridDataMainType(const Patch *patch,
   case Uintah::TypeDescription::Type::long_type:
 
   case Uintah::TypeDescription::Type::long64_type:
-    cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
+    std::cerr <<  "Subtype " << subtype->getName() << " is not implemented...\n";
     return nullptr;
 
   default:
-    cerr << "Unknown subtype\n";
+    std::cerr <<  "Unknown subtype\n";
     return nullptr;
   }
 }
@@ -782,7 +782,7 @@ ReadUDA::getParticleData(int level_i,
     return readParticleData<Matrix3>(patch, variable_name, material, timestep);
 
   default:
-    cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";
+    std::cerr <<  "Unknown subtype for particle data: " << subtype->getName() << "\n";
     return nullptr;
   }
 }

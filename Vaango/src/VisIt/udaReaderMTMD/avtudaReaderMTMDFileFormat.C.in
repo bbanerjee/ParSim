@@ -152,9 +152,9 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
   libHandle = dlopen(lib, RTLD_NOW); // The dylib locn should be changed
   if (!libHandle) {
     char* errString = dlerror();
-    cerr << "Error: " << string( errString ) << "\n"; 
-    cerr << "The library libuda2vis could not be located!!!\n"; 
-    cerr << "Tried to load: " << lib << "\n";
+    std::cerr <<  "Error: " << string( errString ) << "\n"; 
+    std::cerr <<  "The library libuda2vis could not be located!!!\n"; 
+    std::cerr <<  "Tried to load: " << lib << "\n";
     EXCEPTION1(InvalidDBTypeException, errString);
   }
 
@@ -411,7 +411,7 @@ avtudaReaderMTMDFileFormat::ReadMetaData(avtDatabaseMetaData *md, int timeState)
   int totalPatches = 0;
   for (int i = 0; i < numLevels; i++)
     totalPatches +=  stepInfo->levelInfo[i].patchInfo.size();
-  //debug5 << "avtudaReaderMTMDFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << endl;
+  //debug5 << "avtudaReaderMTMDFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << std::endl;
 
   std::vector<int> groupIds(totalPatches);
   std::vector<std::string> pieceNames(totalPatches);
@@ -665,7 +665,7 @@ avtudaReaderMTMDFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md, in
 
   MPI_Comm_size(VISIT_MPI_COMM, &numProcs);
   MPI_Comm_rank(VISIT_MPI_COMM, &rank);
-  //debug5 << "Proc: " << rank << " sent to mdserver" << endl;  
+  //debug5 << "Proc: " << rank << " sent to mdserver" << std::endl;  
 
   if (rank == 0) {
     ReadMetaData(md, timeState);
@@ -1158,7 +1158,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
       // domain 0 always reads right away
       if (domain==0)
         prev = -1;
-      //debug5 << "Proc: " << rank << " sent to GetVar" << endl;
+      //debug5 << "Proc: " << rank << " sent to GetVar" << std::endl;
 
       // wait for previous read to finish
       if (prev>=0)
@@ -1214,7 +1214,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
     // domain 0 always reads right away
     if (domain==0)
       prev = -1;
-    //debug5 << "Proc: " << rank << " sent to GetVar" << endl;
+    //debug5 << "Proc: " << rank << " sent to GetVar" << std::endl;
 
     // wait for previous read to finish
     if (prev>=0)

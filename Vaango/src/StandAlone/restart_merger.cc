@@ -67,32 +67,32 @@ using namespace Uintah;
 void
 usage( const string & badarg, const string & progname )
 {
-  cerr << "\n";
+  std::cerr <<  "\n";
   if(badarg != "") {
-    cerr << "Error parsing argument: " << badarg << '\n';
+    std::cerr <<  "Error parsing argument: " << badarg << '\n';
   }
-  cerr << "Usage: " << progname << " [options] <uda dir 1> <uda dir 2> [<uda dir 3> ...]\n";
-  cerr << "    There can be any number of udas on the command line.\n";
-  cerr << "\n";
-  cerr << "    The " << progname << " program is used to merge N UDAs together into a single UDA.\n";
-  cerr << "    The N merged UDAs must all be restarts of a common UDA.  This tool is most commonly\n";
-  cerr << "    used in order to create a single UDA for visualization purposes.\n";
-  cerr << "\n";
-  cerr << "Options:\n";
-  cerr << "\t-copy\t(Default) Copies timestep directories into the new uda directory\n"
+  std::cerr <<  "Usage: " << progname << " [options] <uda dir 1> <uda dir 2> [<uda dir 3> ...]\n";
+  std::cerr <<  "    There can be any number of udas on the command line.\n";
+  std::cerr <<  "\n";
+  std::cerr <<  "    The " << progname << " program is used to merge N UDAs together into a single UDA.\n";
+  std::cerr <<  "    The N merged UDAs must all be restarts of a common UDA.  This tool is most commonly\n";
+  std::cerr <<  "    used in order to create a single UDA for visualization purposes.\n";
+  std::cerr <<  "\n";
+  std::cerr <<  "Options:\n";
+  std::cerr <<  "\t-copy\t(Default) Copies timestep directories into the new uda directory\n"
        << "\t\twithout affecting the source uda directories.\n";
-  cerr << "\t-move\tMoves timestep directories from the source udas directories into\n"
+  std::cerr <<  "\t-move\tMoves timestep directories from the source udas directories into\n"
        << "\t\tthe new uda directory and removes the source udas.\n"
        << "\t\tThis option can be faster if the source and destination are\n"
        << "\t\ton the same file system, but there may be data loss where the\n"
        << "\t\tudas overlap.\n";
-  cerr << "\n";
-  cerr << "\t\t\t-move or -copy must be the first argument if specified.\n";
-  cerr << "\n";
-  cerr << "Assuming <uda dir n> was created by restarting from <uda dir n-1>\n";
-  cerr << "with the -nocopy option (which is the default), this will create a\n";
-  cerr << "new uda directory that is a continuous version of these uda directories.\n"; 
-  cerr << "\n";
+  std::cerr <<  "\n";
+  std::cerr <<  "\t\t\t-move or -copy must be the first argument if specified.\n";
+  std::cerr <<  "\n";
+  std::cerr <<  "Assuming <uda dir n> was created by restarting from <uda dir n-1>\n";
+  std::cerr <<  "with the -nocopy option (which is the default), this will create a\n";
+  std::cerr <<  "new uda directory that is a continuous version of these uda directories.\n"; 
+  std::cerr <<  "\n";
   exit(1);
 }
 
@@ -174,23 +174,23 @@ main( int argc, char *argv[], char *env[] )
 
     //ups->releaseDocument();
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << '\n';
+    std::cerr <<  "Caught exception: " << e.message() << '\n';
     if(e.stackTrace())
-      cerr << "Stack trace: " << e.stackTrace() << '\n';
+      std::cerr <<  "Stack trace: " << e.stackTrace() << '\n';
     // Dd: I believe that these cause error messages
     // to be lost when the program dies...
     //Uintah::Parallel::finalizeManager(Uintah::Parallel::Abort);
     //abort();
     thrownException = true;
   } catch (std::exception& e){
-    cerr << "Caught std exception: " << e.what() << '\n';
+    std::cerr <<  "Caught std exception: " << e.what() << '\n';
     //Uintah::Parallel::finalizeManager(Uintah::Parallel::Abort);
     //abort();
     thrownException = true;
   }
   /*
   catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     //Uintah::Parallel::finalizeManager(Uintah::Parallel::Abort);
     //abort();
     thrownException = true;

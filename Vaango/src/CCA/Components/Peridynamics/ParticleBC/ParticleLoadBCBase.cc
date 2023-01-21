@@ -46,7 +46,7 @@ ParticleLoadBCBase::ParticleLoadBCBase(Uintah::ProblemSpecP& ps)
   Uintah::ProblemSpecP parent = ps->findBlock("geom_object");
   Uintah::ProblemSpecP child = parent->findBlock();
   std::string go_type = child->getNodeName();
-  //std::cerr << "ParticleLoadBCBase::go_type = " << go_type << endl;
+  //std::cerr << "ParticleLoadBCBase::go_type = " << go_type << std::endl;
 
   if (go_type == "box") {
     d_surface = scinew Uintah::BoxGeometryPiece(child);

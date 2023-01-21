@@ -256,7 +256,7 @@ void planeAverage::problemSetup(const ProblemSpecP&,
       if(throwException){
         ostringstream warn;
         warn << "ERROR:AnalysisModule:planeAverage: ("<<label->getName() << " "
-             << td->getName() << " ) has not been implemented" << endl;
+             << td->getName() << " ) has not been implemented" << std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
 
@@ -638,7 +638,7 @@ void planeAverage::computePlanarSums(const ProcessorGroup * pg,
         default:
           ostringstream mesg;
           mesg << "ERROR:AnalysisModule:planeAverage: ("<< label->getName() << " "
-               << label->typeDescription()->getName() << " ) has not been implemented" << endl;
+               << label->typeDescription()->getName() << " ) has not been implemented" << std::endl;
           throw InternalError(mesg.str(), __FILE__, __LINE__);
       }
     }  // VarLabel loop
@@ -1094,7 +1094,7 @@ void planeAverage::createFile(const string  & filename,
     throw InternalError("\nERROR:dataAnalysisModule:planeAverage:  failed opening file: " + filename,__FILE__, __LINE__);
   }
 
-  cout << "OnTheFlyAnalysis planeAverage results are located in " << filename << endl;
+  cout << "OnTheFlyAnalysis planeAverage results are located in " << filename << std::endl;
 }
 
 //______________________________________________________________________

@@ -108,7 +108,7 @@ SoilModelBrannon::SoilModelBrannon(ProblemSpecP& ps, MPMFlags* Mflag)
      std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "SoilModelBrannon->InternalVariableModelFactory."
-         << endl;
+         << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
@@ -458,9 +458,9 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       Matrix3 velGrad(0.0);
       velGrad = pVelGrad_new[idx];
       if (std::isnan(velGrad.Trace())) {
-        cerr << "Particle = " << idx << " velGrad = " << velGrad << endl;
-        cerr << "  "
-             << " deformation gradient = " << pDefGrad[idx] << endl;
+        std::cerr <<  "Particle = " << idx << " velGrad = " << velGrad << std::endl;
+        std::cerr <<  "  "
+             << " deformation gradient = " << pDefGrad[idx] << std::endl;
         throw InvalidValue("**ERROR**: Nan in velocity gradient value",
                            __FILE__, __LINE__);
       }
@@ -549,10 +549,10 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       // Compute the symmetric part of the velocity gradient
       Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * 0.5;
       if (std::isnan(pVelGrad_new[idx].Trace())) {
-        cerr << "Particle = " << idx << " velGrad = " << pVelGrad_new[idx]
-             << endl;
-        cerr << "  "
-             << " rate of deformation = " << D << endl;
+        std::cerr <<  "Particle = " << idx << " velGrad = " << pVelGrad_new[idx]
+             << std::endl;
+        std::cerr <<  "  "
+             << " rate of deformation = " << D << std::endl;
         throw InvalidValue("**ERROR**: Nan in velocity gradient value",
                            __FILE__, __LINE__);
       }
@@ -578,10 +578,10 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         (Identity * lame * (D.Trace() * delT) + D * delT * 2.0 * shear);
       trial_stress[idx] = unrotated_stress + stress_diff;
       if (std::isnan(trial_stress[idx].Trace())) {
-        cerr << "Particle = " << idx << " trial_stress = " << trial_stress[idx]
-             << endl;
-        cerr << "  "
-             << " rate of deformation = " << D << endl;
+        std::cerr <<  "Particle = " << idx << " trial_stress = " << trial_stress[idx]
+             << std::endl;
+        std::cerr <<  "  "
+             << " rate of deformation = " << D << std::endl;
         throw InvalidValue("**ERROR**: Nan in trial stress value", __FILE__,
                            __LINE__);
       }
@@ -593,10 +593,10 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       f_trial[idx] = YieldFunction(trial_stress[idx], fSlope, kappa_temp,
                                    cap_radius, peakI1_hardening);
       if (std::isnan(f_trial[idx])) {
-        cerr << "Particle = " << idx << " f_trial = " << f_trial[idx] << endl;
-        cerr << "  "
+        std::cerr <<  "Particle = " << idx << " f_trial = " << f_trial[idx] << std::endl;
+        std::cerr <<  "  "
              << " trial_stress = " << trial_stress[idx]
-             << " backStress = " << pBackStress[idx] << endl;
+             << " backStress = " << pBackStress[idx] << std::endl;
         throw InvalidValue("**ERROR**: Nan in f_trial value", __FILE__,
                            __LINE__);
       }
@@ -625,10 +625,10 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
 
       // Check if the stress is elastic or plastic?
       if (std::isnan(f_trial[idx])) {
-        cerr << "Particle = " << idx << " f_trial = " << f_trial[idx] << endl;
-        cerr << "  "
+        std::cerr <<  "Particle = " << idx << " f_trial = " << f_trial[idx] << std::endl;
+        std::cerr <<  "  "
              << " trial_stress = " << trial_stress[idx]
-             << " backStress = " << pBackStress[idx] << endl;
+             << " backStress = " << pBackStress[idx] << std::endl;
         throw InvalidValue("**ERROR**: Nan in f_trial value", __FILE__,
                            __LINE__);
       }
@@ -642,8 +642,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         // algrithm would be used.
         stress_new[idx] = trial_stress[idx];
         if (std::isnan(stress_new[idx].Trace())) {
-          cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-               << endl;
+          std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+               << std::endl;
           throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                              __LINE__);
         }
@@ -686,15 +686,15 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
           if (char_length_yield_surface < 0.0) {
             constParticleVariable<long64> pParticleID;
             old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-            cerr << "ERROR! Negative char_length_yield_surface in particle "
-                 << idx << " id " << pParticleID[idx] << endl;
-            cerr << "  char_length_yield_surface=" << char_length_yield_surface
+            std::cerr <<  "ERROR! Negative char_length_yield_surface in particle "
+                 << idx << " id " << pParticleID[idx] << std::endl;
+            std::cerr <<  "  char_length_yield_surface=" << char_length_yield_surface
                  << " pKappa1 = " << kappa_temp
                  << " pKappa_new[idx] = " << kappa_new
-                 << " cap_radius = " << cap_radius << endl;
-            cerr << " peakI1_hardening/fSlope = " << PI1_h_over_fSlope
+                 << " cap_radius = " << cap_radius << std::endl;
+            std::cerr <<  " peakI1_hardening/fSlope = " << PI1_h_over_fSlope
                  << " temp1 = " << temp1 << " temp2 = " << temp2
-                 << " temp3 = " << temp3 << " temp4 = " << temp4 << endl;
+                 << " temp3 = " << temp3 << " temp4 = " << temp4 << std::endl;
             throw InvalidValue("**ERROR**:in char_length_yield_surface",
                                __FILE__, __LINE__);
           }
@@ -704,13 +704,13 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         // there is an issue
         // with the yield surface, which should be reported.
         if (char_length_yield_surface < 0.0) {
-          std::cout << "ERROR! in char_length_yield_surface" << endl;
+          std::cout << "ERROR! in char_length_yield_surface" << std::endl;
           std::cout << "char_length_yield_surface=" << char_length_yield_surface
-               << endl;
-          std::cout << "pKappa_new[idx]=" << kappa_new << endl;
-          std::cout << "cap_radius=" << cap_radius << endl;
-          std::cout << "peakI1_hardening/fSlope=" << PI1_h_over_fSlope << endl;
-          std::cout << "idx=" << idx << endl;
+               << std::endl;
+          std::cout << "pKappa_new[idx]=" << kappa_new << std::endl;
+          std::cout << "cap_radius=" << cap_radius << std::endl;
+          std::cout << "peakI1_hardening/fSlope=" << PI1_h_over_fSlope << std::endl;
+          std::cout << "idx=" << idx << std::endl;
           throw InvalidValue("**ERROR**:in char_length_yield_surface", __FILE__,
                              __LINE__);
         }
@@ -734,8 +734,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
             // The updated stress should be the vertex.
             stress_new[idx] = Identity * PI1_h_over_fSlope * one_third;
             if (std::isnan(stress_new[idx].Trace())) {
-              cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                   << endl;
+              std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                   << std::endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                  __LINE__);
             }
@@ -820,8 +820,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
               // The updated stress should be the vertex.
               stress_new[idx] = Identity * one_third * PI1_h_over_fSlope;
               if (std::isnan(stress_new[idx].Trace())) {
-                cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                     << endl;
+                std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                     << std::endl;
                 throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                    __LINE__);
               }
@@ -864,9 +864,9 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
             pPlasticStrainVol_new[idx] =
               pPlasticStrainVol[idx] + strain_iteration.Trace();
             // if (pPlasticStrainVol_new[idx] < 0.0) {
-            //  cerr << " eps_v_p[n+1] = " << pPlasticStrainVol_new[idx]
+            //  std::cerr <<  " eps_v_p[n+1] = " << pPlasticStrainVol_new[idx]
             //       << " eps_v_p[n] = " << pPlasticStrainVol[idx]
-            //       << " Delta eps_v_p = " << strain_iteration.Trace() << endl;
+            //       << " Delta eps_v_p = " << strain_iteration.Trace() << std::endl;
             //}
 
             // Update the volumetric part of the elastic strain
@@ -920,8 +920,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
             //       endl;
             //}
             // if (fetestexcept(FE_INVALID) != 0) {
-            //  cerr << "Location 1: Floating point exception in particle = " <<
-            //  idx << endl;
+            //  std::cerr <<  "Location 1: Floating point exception in particle = " <<
+            //  idx << std::endl;
             //}
 
             // Set the kappa state flag
@@ -1018,25 +1018,25 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
           pBackStress_new[idx] = pBackStress[idx];
           stress_new[idx] = trial_stress[idx];
           if (std::isnan(stress_new[idx].Trace())) {
-            cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                 << endl;
-            cerr << "  "
+            std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                 << std::endl;
+            std::cerr <<  "  "
                  << " num_subcycles = " << num_subcycles
-                 << " f_trial = " << f_trial[idx] << endl;
-            cerr << "  "
+                 << " f_trial = " << f_trial[idx] << std::endl;
+            std::cerr <<  "  "
                  << " trial_stress = " << trial_stress[idx]
-                 << " backStress = " << pBackStress[idx] << endl;
-            cerr << "  "
+                 << " backStress = " << pBackStress[idx] << std::endl;
+            std::cerr <<  "  "
                  << " stress_diff = " << stress_diff
-                 << " pKappa = " << kappa_new << endl;
+                 << " pKappa = " << kappa_new << std::endl;
             throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                __LINE__);
           }
           Matrix3 trial_stress_loop;
 
           // if (pPlasticStrainVol_new[idx] < 0.0) {
-          //  cerr << " eps_v_p[n+1] = " << pPlasticStrainVol_new[idx]
-          //       << " eps_v_p[n] = " << pPlasticStrainVol[idx] << endl;
+          //  std::cerr <<  " eps_v_p[n+1] = " << pPlasticStrainVol_new[idx]
+          //       << " eps_v_p[n] = " << pPlasticStrainVol[idx] << std::endl;
           //}
 
           // Loop over sub-cycles in the plasticity return algorithm
@@ -1198,8 +1198,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                       // reported.
                       counter_I1_iteration2 = counter_I1_iteration2 + 1;
                       if (counter_I1_iteration2 > 1000) {
-                        std::cout << "ERROR! in fast return algorithm" << endl;
-                        std::cout << "idx=" << idx << endl;
+                        std::cout << "ERROR! in fast return algorithm" << std::endl;
+                        std::cout << "idx=" << idx << std::endl;
                         throw InvalidValue("**ERROR**:in fast return algorithm",
                                            __FILE__, __LINE__);
                       }
@@ -1422,8 +1422,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                 // be reported.
                 counter_gamma1 = counter_gamma1 + 1;
                 if (counter_gamma1 > 1000) {
-                  std::cout << "ERROR! in nested retuen algorithm" << endl;
-                  std::cout << "idx=" << idx << endl;
+                  std::cout << "ERROR! in nested retuen algorithm" << std::endl;
+                  std::cout << "idx=" << idx << std::endl;
                   throw InvalidValue("**ERROR**:in nested retuen algorithm",
                                      __FILE__, __LINE__);
                 }
@@ -1621,21 +1621,21 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                 //       cap_radius = " << cap_radius
                 //       << " max_X = " << max_X << " eps_v = " <<
                 //       pPlasticStrainVol_new[idx]
-                //       << " del eps_v = " << (M*gamma).Trace()/var1 << endl;
+                //       << " del eps_v = " << (M*gamma).Trace()/var1 << std::endl;
                 //}
                 kappa_loop = d_intvar->computeInternalVariable("dummy", nullptr, &state);
                 // if (fetestexcept(FE_INVALID) != 0) {
-                //  cerr << "Location 2: Floating point exception in particle =
-                //  " << idx << endl;
+                //  std::cerr <<  "Location 2: Floating point exception in particle =
+                //  " << idx << std::endl;
                 //}
 
-                // cerr << "Particle = " << idx << " kappa = " << kappa_loop <<
+                // std::cerr <<  "Particle = " << idx << " kappa = " << kappa_loop <<
                 // endl;
                 // if (pPlasticStrainVol_new[idx] < 0.0) {
-                //  cerr << " After compute int var with M: eps_v_p[n+1] = " <<
+                //  std::cerr <<  " After compute int var with M: eps_v_p[n+1] = " <<
                 //  pPlasticStrainVol_new[idx]
                 //       << " eps_v_p[n] = " << pPlasticStrainVol[idx]
-                //       << " Delta eps_v_p = " << (M*gamma).Trace() << endl;
+                //       << " Delta eps_v_p = " << (M*gamma).Trace() << std::endl;
                 //}
 
                 // Set the kappa state flag
@@ -1722,8 +1722,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
 
             stress_new[idx] = stress_iteration;
             if (std::isnan(stress_new[idx].Trace())) {
-              cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                   << " kappa = " << kappa_new << endl;
+              std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                   << " kappa = " << kappa_new << std::endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                  __LINE__);
             }
@@ -1747,16 +1747,16 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
               pPlasticStrain_new[idx] + strain_iteration.Norm();
 
             // Update the volumetric part of the plastic strain
-            // cerr << " Before update plastic strain: eps_v_p[n+1][k] = " <<
+            // std::cerr <<  " Before update plastic strain: eps_v_p[n+1][k] = " <<
             // pPlasticStrainVol_new[idx]
-            //     << " Delta eps_v_p = " << strain_iteration.Trace() << endl;
+            //     << " Delta eps_v_p = " << strain_iteration.Trace() << std::endl;
             pPlasticStrainVol_new[idx] =
               pPlasticStrainVol_new[idx] + strain_iteration.Trace();
             // if (pPlasticStrainVol_new[idx] < 0.0) {
-            //  cerr << " After update plastic strain: eps_v_p[n+1][k+1] = " <<
+            //  std::cerr <<  " After update plastic strain: eps_v_p[n+1][k+1] = " <<
             //  pPlasticStrainVol_new[idx]
             //       << " eps_v_p[n] = " << pPlasticStrainVol[idx]
-            //       << " Delta eps_v_p = " << strain_iteration.Trace() << endl;
+            //       << " Delta eps_v_p = " << strain_iteration.Trace() << std::endl;
             //}
 
             // Update the volumetric part of the elastic strain
@@ -1764,8 +1764,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
               pElasticStrainVol_new[idx] - strain_iteration.Trace();
             stress_new[idx] = stress_new[idx] + pBackStress_new[idx];
             if (std::isnan(stress_new[idx].Trace())) {
-              cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                   << endl;
+              std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                   << std::endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                  __LINE__);
             }
@@ -1774,8 +1774,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
           // Compute the shifted stress
           stress_new[idx] = stress_new[idx] - pBackStress_new[idx];
           if (std::isnan(stress_new[idx].Trace())) {
-            cerr << "Particle = " << idx << " stress = " << stress_new[idx]
-                 << endl;
+            std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx]
+                 << std::endl;
             throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                                __LINE__);
           }
@@ -1793,23 +1793,23 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         computeInvariants(stress_new[idx], S_new, I1_new, J2_new);
 
         if (std::isnan(I1_new)) {
-          cerr << " Stress = " << stress_new[idx] << endl;
+          std::cerr <<  " Stress = " << stress_new[idx] << std::endl;
         }
 
         // Check if X is larger than peakI1 or not?
         // If yes, an error message should be sent to the host code.
         if (kappa_new - cap_radius > peakI1_hardening / fSlope) {
-          cerr << "ERROR! pKappa-R>peakI1 " << endl;
-          cerr << "J2_new= " << J2_new << endl;
-          cerr << "I1_new= " << I1_new << endl;
-          cerr << "pKappa_new[idx]= " << kappa_new << endl;
-          cerr << "f_new= " << f_new << endl;
-          cerr << "char_length_yield_surface= " << char_length_yield_surface
-               << endl;
-          cerr << "peakI1=" << peakI1_hardening / fSlope << endl;
-          cerr << "R=" << cap_radius << endl;
-          cerr << "fSlope=" << fSlope << endl;
-          cerr << "idx=" << idx << endl;
+          std::cerr <<  "ERROR! pKappa-R>peakI1 " << std::endl;
+          std::cerr <<  "J2_new= " << J2_new << std::endl;
+          std::cerr <<  "I1_new= " << I1_new << std::endl;
+          std::cerr <<  "pKappa_new[idx]= " << kappa_new << std::endl;
+          std::cerr <<  "f_new= " << f_new << std::endl;
+          std::cerr <<  "char_length_yield_surface= " << char_length_yield_surface
+               << std::endl;
+          std::cerr <<  "peakI1=" << peakI1_hardening / fSlope << std::endl;
+          std::cerr <<  "R=" << cap_radius << std::endl;
+          std::cerr <<  "fSlope=" << fSlope << std::endl;
+          std::cerr <<  "idx=" << idx << std::endl;
           throw InvalidValue("**ERROR**:pKappa-R>peakI1 ", __FILE__, __LINE__);
         }
 
@@ -1819,18 +1819,18 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
         } else {
           cerr
             << "ERROR!  did not return to yield surface (SoilModelBrannon.cc)"
-            << endl;
-          cerr << "J2_new= " << J2_new << endl;
-          cerr << "I1_new= " << I1_new << endl;
-          cerr << "pKappa_new[idx]= " << kappa_new << endl;
-          cerr << "f_new= " << f_new << endl;
-          cerr << "char_length_yield_surface= " << char_length_yield_surface
-               << endl;
-          cerr << "peakI1=" << peakI1_hardening / fSlope << endl;
-          cerr << "R=" << cap_radius << endl;
-          cerr << "fSlope=" << fSlope << endl;
-          cerr << "idx=" << idx << endl;
-          cerr << "stress_new[idx]=" << stress_new[idx] << endl;
+            << std::endl;
+          std::cerr <<  "J2_new= " << J2_new << std::endl;
+          std::cerr <<  "I1_new= " << I1_new << std::endl;
+          std::cerr <<  "pKappa_new[idx]= " << kappa_new << std::endl;
+          std::cerr <<  "f_new= " << f_new << std::endl;
+          std::cerr <<  "char_length_yield_surface= " << char_length_yield_surface
+               << std::endl;
+          std::cerr <<  "peakI1=" << peakI1_hardening / fSlope << std::endl;
+          std::cerr <<  "R=" << cap_radius << std::endl;
+          std::cerr <<  "fSlope=" << fSlope << std::endl;
+          std::cerr <<  "idx=" << idx << std::endl;
+          std::cerr <<  "stress_new[idx]=" << stress_new[idx] << std::endl;
           throw InvalidValue("**ERROR**:did not return to yield surface ",
                              __FILE__, __LINE__);
         }
@@ -1839,7 +1839,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       // Compute the unshifted stress from the shifted stress
       stress_new[idx] = stress_new[idx] + pBackStress_new[idx];
       if (std::isnan(stress_new[idx].Trace())) {
-        cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
+        std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx] << std::endl;
         throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                            __LINE__);
       }
@@ -1859,7 +1859,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       stress_new[idx] =
         (rotation[idx] * stress_new[idx]) * (rotation[idx].Transpose());
       if (std::isnan(stress_new[idx].Trace())) {
-        cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
+        std::cerr <<  "Particle = " << idx << " stress = " << stress_new[idx] << std::endl;
         throw InvalidValue("**ERROR**: Nan in stress value", __FILE__,
                            __LINE__);
       }
@@ -2228,7 +2228,7 @@ SoilModelBrannon::computePressEOSCM(double rho_cur, double& pressure,
 
 #if 1
 // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
-//      << endl;
+//      << std::endl;
 #endif
 }
 
@@ -2239,7 +2239,7 @@ SoilModelBrannon::getCompressibility()
 
 #if 1
 // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilModelBrannon"
-//      << endl;
+//      << std::endl;
 #endif
 
   return 1.0 / bulk;

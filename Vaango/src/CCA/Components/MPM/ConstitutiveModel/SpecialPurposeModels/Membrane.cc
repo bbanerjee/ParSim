@@ -284,7 +284,7 @@ Membrane::computeStressTensor(const PatchSubset* patches,
       Matrix3 UU = Vaango::Util::Identity;
       Matrix3 RR = Vaango::Util::Identity;
       pDefGrad_old[idx].polarDecompositionRMB(UU, RR);
-      // std::cout << RR << endl << endl;
+      // std::cout << RR << std::endl << std::endl;
 
       T1[idx] = RR * pTang1[idx];
       T2[idx] = RR * pTang2[idx];

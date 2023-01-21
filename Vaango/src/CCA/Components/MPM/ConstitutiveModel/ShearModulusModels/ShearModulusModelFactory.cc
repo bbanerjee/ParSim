@@ -49,7 +49,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
     std::cerr
       << "**WARNING** Attempting to create default (constant shear modulus) "
          "model"
-      << endl;
+      << std::endl;
     return (scinew ShearModulus_Constant(ps, nullptr));
   }
   string mat_type;
@@ -86,7 +86,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps,
     std::cerr
       << "**WARNING** Attempting to create default (constant shear modulus) "
          "model"
-      << endl;
+      << std::endl;
     return (scinew ShearModulus_Constant(ps, eos));
   }
   string mat_type;
@@ -141,7 +141,7 @@ ShearModulusModelFactory::createCopy(const ShearModulusModel* smm)
   else {
     std::cerr
       << "**WARNING** Creating copy of default (constant shear modulus) model"
-      << endl;
+      << std::endl;
     return (scinew ShearModulus_Constant(
       dynamic_cast<const ShearModulus_Constant*>(smm)));
   }

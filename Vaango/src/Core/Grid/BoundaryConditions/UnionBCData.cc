@@ -180,7 +180,7 @@ UnionBCData::determineIteratorLimits(Patch::FaceType face,
                                      std::vector<Point>& test_pts)
 {
 #if 0
-  std::cout << "UnionBC determineIteratorLimits()" << endl;
+  std::cout << "UnionBC determineIteratorLimits()" << std::endl;
 #endif
 
   for (std::vector<BCGeomBase*>::const_iterator bc = child.begin();
@@ -218,7 +218,7 @@ UnionBCData::determineIteratorLimits(Patch::FaceType face,
 
   setBoundaryIterator(b);
 #if 0
-  std::cout << "Size of boundary = " << boundary.size() << endl;
+  std::cout << "Size of boundary = " << boundary.size() << std::endl;
 #endif
   // Need to determine the boundary iterators for each separate bc.
   for (std::vector<BCGeomBase*>::const_iterator bc = child.begin();  
@@ -229,7 +229,7 @@ UnionBCData::determineIteratorLimits(Patch::FaceType face,
       if ( (*bc)->inside(*pts))
         boundary_itr.push_back(*bound);
 #if 0
-    std::cout << "Size of boundary_itr = " << boundary_itr.size() << endl;
+    std::cout << "Size of boundary_itr = " << boundary_itr.size() << std::endl;
 #endif
     (*bc)->setBoundaryIterator(boundary_itr);
   }

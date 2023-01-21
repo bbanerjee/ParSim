@@ -398,7 +398,7 @@ ViscoSCRAMHotSpot::computeStressTensor(const PatchSubset* patches,
       pStrainRate_new[idx] = pDefRate.Norm();
 
       if (dbg.active())
-        dbg << "Total strain rate = " << pStrainRate_new[idx] << endl;
+        dbg << "Total strain rate = " << pStrainRate_new[idx] << std::endl;
 
       pDefRateDev     = pDefRate - Id * (onethird * pDefRate.Trace());
       double edotnorm = sqrtopf * pDefRateDev.Norm();
@@ -415,16 +415,16 @@ ViscoSCRAMHotSpot::computeStressTensor(const PatchSubset* patches,
       FVector Y_old(c_old, pState[idx].DevStress);
 
       // Matrix3 sigDev_old(0.0);
-      // dbg << "Crack Radius (old) = " << c_old << endl;
+      // dbg << "Crack Radius (old) = " << c_old << std::endl;
       // for (int ii = 0 ; ii < 5; ++ii) {
-      //  dbg << " Dev Stress (old) [" << ii << "] = " << endl
-      //       << pState[idx].DevStress[ii] << endl;
+      //  dbg << " Dev Stress (old) [" << ii << "] = " << std::endl
+      //       << pState[idx].DevStress[ii] << std::endl;
       //  sigDev_old += pState[idx].DevStress[ii];
       //}
-      // dbg << "Total Dev Stress (old) = " << endl
-      //    << sigDev_old << endl;
-      // dbg << " Mean Stress (old) = " << sig_m << endl;
-      // dbg << "Total Stress (old) = " << endl << sig_old << endl;
+      // dbg << "Total Dev Stress (old) = " << std::endl
+      //    << sigDev_old << std::endl;
+      // dbg << " Mean Stress (old) = " << sig_m << std::endl;
+      // dbg << "Total Stress (old) = " << std::endl << sig_old << std::endl;
 
       double cdot_new = 0.0;
       FVector Y_new   = integrateRateEquations(
@@ -446,15 +446,15 @@ ViscoSCRAMHotSpot::computeStressTensor(const PatchSubset* patches,
 
       // Update the Cauchy stress
       pSig_new[idx] = sigDev_new + Id * sig_m_new;
-      // dbg << "Crack Radius (new) = " << c_new << endl;
+      // dbg << "Crack Radius (new) = " << c_new << std::endl;
       // for (int ii = 0 ; ii < 5; ++ii) {
-      //  dbg << " Dev Stress (new) [" << ii << "] = " << endl
-      //       << pState[idx].DevStress[ii] << endl;
+      //  dbg << " Dev Stress (new) [" << ii << "] = " << std::endl
+      //       << pState[idx].DevStress[ii] << std::endl;
       //}
-      // dbg << "Total Dev Stress (new) = " << endl
-      //    << sigDev_new << endl;
-      // dbg << " Mean Stress (new) = " << sig_m_new << endl;
-      // dbg << "Total Stress (new) = " << endl << pSig_new[idx] << endl;
+      // dbg << "Total Dev Stress (new) = " << std::endl
+      //    << sigDev_new << std::endl;
+      // dbg << " Mean Stress (new) = " << sig_m_new << std::endl;
+      // dbg << "Total Stress (new) = " << std::endl << pSig_new[idx] << std::endl;
 
       // Update the deformation gradient tensor to its time n+1 value.
       double J = pDefGrad_new[idx].Determinant();
@@ -484,7 +484,7 @@ ViscoSCRAMHotSpot::computeStressTensor(const PatchSubset* patches,
                                                Gmw,
                                                cdot_new);
       if (dbg.active())
-        dbg << "rhoCv = " << rhoCv << endl;
+        dbg << "rhoCv = " << rhoCv << std::endl;
 
       // Compute bulk chemical heating rate
       double qdot_ch = computeChemicalHeatRate(rho_cur, T_old);
@@ -496,7 +496,7 @@ ViscoSCRAMHotSpot::computeStressTensor(const PatchSubset* patches,
       double crHeatRate  = wdot_cr * fac;
 
       if (dbg.active())
-        dbg << "pCrHeatRate = " << crHeatRate << endl;
+        dbg << "pCrHeatRate = " << crHeatRate << std::endl;
 
       double chHeatRate     = d_matConst.vfHE * qdot_ch;
       pVolHeatRate_new[idx] = volHeatRate;
@@ -903,7 +903,7 @@ ViscoSCRAMHotSpot::computeCrackingWorkRate(int numElem,
   Matrix3 sdot        = edot * psi - s_new * theta - lambdaTheta;
 
   if (dbg.active())
-    dbg << "SRate = " << endl << sdot << endl;
+    dbg << "SRate = " << std::endl << sdot << std::endl;
 
   // Compute maxwell element stress rate
   double workrate =
@@ -911,7 +911,7 @@ ViscoSCRAMHotSpot::computeCrackingWorkRate(int numElem,
     (2.0 * G);
 
   if (dbg.active())
-    dbg << "Wdot_cr = " << workrate << endl;
+    dbg << "Wdot_cr = " << workrate << std::endl;
 
   return workrate;
 }
@@ -1165,7 +1165,7 @@ ViscoSCRAMHotSpot::evaluateHotSpotModel(double sig_m,
   Vector edotvec(eigvec(0, 0), eigvec(1, 0), eigvec(2, 0));
 
   if (dbg.active())
-    dbg << " Max dev edot = " << edotmax << " Direction = " << edotvec << endl;
+    dbg << " Max dev edot = " << edotmax << " Direction = " << edotvec << std::endl;
 
   // Compute the component of the shear stress in the plane of the "crack"
   // (the component sigCrack(2,3))

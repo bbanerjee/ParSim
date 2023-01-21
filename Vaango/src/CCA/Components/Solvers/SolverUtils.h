@@ -56,7 +56,7 @@ Mult(Array3<double>& B,
      long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Mult" << endl;
+    cout_doing << "CGSolver::Mult" << std::endl;
   }
 
   for (; !iter.done(); ++iter) {
@@ -100,7 +100,7 @@ Mult(Array3<double>& B,
      double& dotresult)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Mult" << endl;
+    cout_doing << "CGSolver::Mult" << std::endl;
   }
 
   double dot = 0;
@@ -145,7 +145,7 @@ Sub(Array3<double>& r,
     long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Sub" << endl;
+    cout_doing << "CGSolver::Sub" << std::endl;
   }
   for (; !iter.done(); ++iter) {
     r[*iter] = a[*iter] - b[*iter];
@@ -164,7 +164,7 @@ Mult(Array3<double>& r,
      long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Mult" << endl;
+    cout_doing << "CGSolver::Mult" << std::endl;
   }
   for (; !iter.done(); ++iter) {
     r[*iter] = a[*iter] * b[*iter];
@@ -182,7 +182,7 @@ InverseDiagonal(Array3<double>& r,
                 long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::InverseDiagonal" << endl;
+    cout_doing << "CGSolver::InverseDiagonal" << std::endl;
   }
   for (; !iter.done(); ++iter) {
     r[*iter] = 1. / A[*iter].p;
@@ -196,7 +196,7 @@ InverseDiagonal(Array3<double>& r,
 L1(const Array3<double>& a, CellIterator iter, long64& flops, long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::L1" << endl;
+    cout_doing << "CGSolver::L1" << std::endl;
   }
   double sum = 0;
   for (; !iter.done(); ++iter) {
@@ -212,7 +212,7 @@ double
 LInf(const Array3<double>& a, CellIterator iter, long64& flops, long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Linf" << endl;
+    cout_doing << "CGSolver::Linf" << std::endl;
   }
   double max = 0;
   for (; !iter.done(); ++iter) {
@@ -232,7 +232,7 @@ Dot(const Array3<double>& a,
     long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::Dot" << endl;
+    cout_doing << "CGSolver::Dot" << std::endl;
   }
   double sum = 0;
   for (; !iter.done(); ++iter) {
@@ -254,7 +254,7 @@ ScMult_Add(Array3<double>& r,
            long64& memrefs)
 {
   if (cout_doing.active()) {
-    cout_doing << "CGSolver::ScMult_Add" << endl;
+    cout_doing << "CGSolver::ScMult_Add" << std::endl;
   }
 
   for (; !iter.done(); ++iter) {

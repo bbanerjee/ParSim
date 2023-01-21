@@ -134,20 +134,20 @@ void QuadCrack::outputInitialCrackPlane(int i)
 
   std::cout << "  * Quad " << i+1 << ": meshed by [" << N12
        << ", " << N23 << ", " << N12
-       << ", " << N23 << "]" << endl;
+       << ", " << N23 << "]" << std::endl;
   for(int j=0;j< (int)vertices.size();j++)
-    std::cout << "    p" << j+1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j+1 << ": " << vertices[j] << std::endl;
   for(int j=0;j<4;j++) {
     if(AtFront[j]) {
       int j2=(j+2<5 ? j+2 : 1);
       std::cout << "    Side " << j+1 << " (p" << j+1 << "-" << "p" << j2
-           << ") is a crack front." << endl;
+           << ") is a crack front." << std::endl;
     }
   }
   
   if (Repetition > 1)
     std::cout << "    The quad is repeated by " << Repetition
-         << " times with the offset " << Offset << "." << endl;
+         << " times with the offset " << Offset << "." << std::endl;
   
 }
 

@@ -76,7 +76,7 @@ namespace Uintah {
 void ImplicitMatrixBC( CCVariable<Stencil7>& A, 
                        const Patch* patch)        
 { 
-  cout_BC_CC << "ImplicitMatrixBC Patch: "<< patch->getID()<< endl;
+  cout_BC_CC << "ImplicitMatrixBC Patch: "<< patch->getID()<< std::endl;
   
   std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
@@ -173,12 +173,12 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
           BC_dbg <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells << "\t one_or_zero " << one_or_zero
                <<"\t child " << child  <<" NumChildren "<<numChildren 
                <<"\t BC kind "<< bc_kind
-               <<"\t bound_ptr "<< bound_ptr<< endl;
+               <<"\t bound_ptr "<< bound_ptr<< std::endl;
         }
       } // if iterator found
     } // child loop
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-               << " nCellsTouched: " << nCells << endl;
+               << " nCellsTouched: " << nCells << std::endl;
     
     //__________________________________
     //  bulletproofing    
@@ -189,7 +189,7 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
        std::ostringstream warn;
       warn << "ERROR: ICE: ImplicitMatrixBC Boundary conditions were not set correctly (" 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
   }  // face loop
@@ -205,7 +205,7 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
   patch->printPatchBCs(BC_dbg);
 
   if(patch->hasCoarseFaces() ){  
-    std::cout << " Matrix BC at coarse/Fine interfaces " << endl;
+    std::cout << " Matrix BC at coarse/Fine interfaces " << std::endl;
     //__________________________________
     // Iterate over coarsefine interface faces
     std::vector<Patch::FaceType> cf;
@@ -264,7 +264,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
                       const VarLabel* label,
                       DataWarehouse* new_dw)        
 { 
-  cout_BC_CC << "set_imp_DelP_BC, Patch: "<< patch->getID()<< endl;
+  cout_BC_CC << "set_imp_DelP_BC, Patch: "<< patch->getID()<< std::endl;
   std::vector<Patch::FaceType> boundaryFaces;
   patch->getBoundaryFaces(boundaryFaces);
   for (auto face : boundaryFaces) {
@@ -310,13 +310,13 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
           BC_dbg <<"Face: "<< patch->getFaceName(face)<<" numCellsTouched " << nCells
                <<"\t child " << child  <<" NumChildren "<<numChildren
                <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
-               <<"\t bound_ptr = "<< bound_ptr<< endl;
+               <<"\t bound_ptr = "<< bound_ptr<< std::endl;
         }
       } // if(foundIterator)
     } // child loop
     
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-               << " nCellsTouched: " << nCells << endl;
+               << " nCellsTouched: " << nCells << std::endl;
     //__________________________________
     // bulletproofing      
     Patch::FaceIteratorType type = Patch::ExtraPlusEdgeCells;
@@ -327,7 +327,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
        std::ostringstream warn;
       warn << "ERROR: ICE: set_imp_DelP_BC Boundary conditions were not set correctly ("
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
   }  // face loop
@@ -340,7 +340,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
   patch->printPatchBCs(BC_dbg);
 
   if(patch->hasCoarseFaces() ){  
-    BC_dbg << " BC at coarse/Fine interfaces " << endl;
+    BC_dbg << " BC at coarse/Fine interfaces " << std::endl;
     //__________________________________
     // Iterate over coarsefine interface faces
     std::vector<Patch::FaceType> cf;
@@ -374,7 +374,7 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
       
       int P_dir = patch->getFaceAxes(face)[0];  //principal dir.
       
-      std::cout << " using linear Interpolation for impDelP " << endl;;
+      std::cout << " using linear Interpolation for impDelP " << std::endl;;
      
       for(CellIterator cIter(fl,fh); !cIter.done(); cIter++){
         IntVector f_cell = *cIter;
@@ -408,7 +408,7 @@ void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
                    DataWarehouse* new_dw,
                    customBC_var_basket* custom_BC_basket)
 {
-  BC_doing << " get_rho_micro: (" << which_Var <<")"<< endl;
+  BC_doing << " get_rho_micro: (" << which_Var <<")"<< std::endl;
   
   if( which_Var !="rho_micro" && which_Var !="sp_vol" ){
     throw InternalError("setBC (pressure): Invalid option for which_var", __FILE__, __LINE__);
@@ -569,7 +569,7 @@ void setBC(CCVariable<double>& press_CC,
   }
   
   cout_BC_CC << "setBC (press_CC) \t"<< kind <<" " << which_Var
-            << " mat_id = " << mat_id <<  ", Patch: "<< patch->getID() << endl;
+            << " mat_id = " << mat_id <<  ", Patch: "<< patch->getID() << std::endl;
 
   int numALLMatls = sharedState->getNumMaterials();
   bool isNotInitialTimestep = (sharedState->getCurrentTopLevelTimeStep() > 0);  
@@ -674,13 +674,13 @@ void setBC(CCVariable<double>& press_CC,
           BC_dbg <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                <<"\t child " << child  <<" NumChildren "<<numChildren 
                <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
-               <<"\t bound_ptr = "<< bound_ptr<< endl;
+               <<"\t bound_ptr = "<< bound_ptr<< std::endl;
         }
       }  // if bcKind != LODI
     }  // child loop
     
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-                        << " nCellsTouched: " << nCells << " nCells_LODI: " << nCells_LODI[face] << endl;
+                        << " nCellsTouched: " << nCells << " nCells_LODI: " << nCells_LODI[face] << std::endl;
     //__________________________________
     //  bulletproofing   
     Patch::FaceIteratorType type = Patch::ExtraPlusEdgeCells;
@@ -690,7 +690,7 @@ void setBC(CCVariable<double>& press_CC,
        std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(press_CC) Boundary conditions were not set correctly ("
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
   }  // faces loop
@@ -714,7 +714,7 @@ void setBC(CCVariable<double>& var_CC,
     return;
   }
   cout_BC_CC << "setBC (double) \t"<< desc << " mat_id = " 
-             << mat_id <<  ", Patch: "<< patch->getID() << endl;
+             << mat_id <<  ", Patch: "<< patch->getID() << std::endl;
   Vector cell_dx = patch->dCell();
   bool isNotInitialTimestep = (sharedState->getCurrentTopLevelTimeStep() > 0);
 
@@ -824,13 +824,13 @@ void setBC(CCVariable<double>& var_CC,
           std::cout  <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                 <<"\t child " << child  <<" NumChildren "<<numChildren 
                 <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
-                <<"\t bound_itr "<< bound_ptr << endl;
+                <<"\t bound_itr "<< bound_ptr << std::endl;
         }
       }  // found iterator
     }  // child loop
     
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-                        << " nCellsTouched: " << nCells << " nCells_LODI: " << nCells_LODI[face] << endl;
+                        << " nCellsTouched: " << nCells << " nCells_LODI: " << nCells_LODI[face] << std::endl;
     //__________________________________
     //  bulletproofing
     Patch::FaceIteratorType type = Patch::ExtraPlusEdgeCells;
@@ -849,7 +849,7 @@ void setBC(CCVariable<double>& var_CC,
        std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(double_CC) Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
   }  // faces loop
@@ -871,7 +871,7 @@ void setBC(CCVariable<Vector>& var_CC,
     return;
   }
   cout_BC_CC <<"setBC (Vector_CC) \t"<< desc <<" mat_id = " 
-              <<mat_id<<  ", Patch: "<< patch->getID() << endl;
+              <<mat_id<<  ", Patch: "<< patch->getID() << std::endl;
   
   bool isNotInitialTimestep = (sharedState->getCurrentTopLevelTimeStep() > 0);
   Vector cell_dx = patch->dCell();
@@ -963,12 +963,12 @@ void setBC(CCVariable<Vector>& var_CC,
           BC_dbg <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                <<"\t child " << child  <<" NumChildren "<<numChildren 
                <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
-               <<"\t bound_ptr = "<< bound_ptr<< endl;
+               <<"\t bound_ptr = "<< bound_ptr<< std::endl;
         }
       }  // found iterator
     }  // child loop
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-                        << " nCellsTouched: " << nCells <<" nCells_LODI: " << nCells_LODI[face] << endl;
+                        << " nCellsTouched: " << nCells <<" nCells_LODI: " << nCells_LODI[face] << std::endl;
     //__________________________________
     //  bulletproofing
     Patch::FaceIteratorType type = Patch::ExtraPlusEdgeCells;
@@ -987,7 +987,7 @@ void setBC(CCVariable<Vector>& var_CC,
        std::ostringstream warn;
       warn << "ERROR: ICE: SetBC(Vector_CC) Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << " nCells_LODI: " << nCells_LODI[face] <<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
   }  // faces loop
@@ -1008,7 +1008,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
     return;
   }
   cout_BC_CC << "setSpecificVolBC \t"<< desc <<" "
-             << " mat_id = " << mat_id <<  ", Patch: "<< patch->getID() << endl;
+             << " mat_id = " << mat_id <<  ", Patch: "<< patch->getID() << std::endl;
                 
   Vector dx = patch->dCell();
   double cellVol = dx.x() * dx.y() * dx.z();
@@ -1077,13 +1077,13 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
           BC_dbg <<"Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
                <<"\t child " << child  <<" NumChildren "<<numChildren 
                <<"\t BC kind "<< bc_kind <<" \tBC value "<< bc_value
-               <<"\t bound limits = "<< bound_ptr << endl;
+               <<"\t bound limits = "<< bound_ptr << std::endl;
         }
       }  // if iterator found
     }  // child loop
     
     cout_BC_CC << "    "<< patch->getFaceName(face) << " \t " << bc_kind << " numChildren: " << numChildren 
-               << " nCellsTouched: " << nCells << endl;
+               << " nCellsTouched: " << nCells << std::endl;
     //__________________________________
     //  bulletproofing
 #if 0
@@ -1094,7 +1094,7 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
        std::ostringstream warn;
       warn << "ERROR: ICE: setSpecificVolBC Boundary conditions were not set correctly ("<< desc<< ", " 
            << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
-           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << endl;
+           << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells<<") " << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
 #endif
@@ -1187,7 +1187,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
           bc_type["label"] != "scalar-f"      && bc_type["label"] != "cumulativeEnergyReleased"){
          std::ostringstream warn;
         warn <<"\n INPUT FILE ERROR:\n The boundary condition label ("<< bc_type["label"] <<") is not valid\n"
-             << " Face:  " << face["side"] << " BCType " << bc_type["label"]<< endl;
+             << " Face:  " << face["side"] << " BCType " << bc_type["label"]<< std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }  
       
@@ -1198,7 +1198,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
              << "ERROR: This is a single material problem and you've specified 'BCType id = all' \n"
              << "The boundary condition infrastructure treats 'all' and '0' as two separate materials, \n"
              << "setting the boundary conditions twice on each face.  Set BCType id = '0' \n" 
-             << " Face:  " << face["side"] << " BCType " << bc_type["label"]<< endl;
+             << " Face:  " << face["side"] << " BCType " << bc_type["label"]<< std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
       
@@ -1209,7 +1209,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
           warn <<"\n__________________________________\n"   
              << "ERROR: This is a multimaterial problem with a symmetric boundary condition\n"
              << "You must have the id = all instead of id = "<<bc_type["id"]<<"\n"
-             << "Face:  " << face["side"] << " BCType " << bc_type["label"]<< endl;
+             << "Face:  " << face["side"] << " BCType " << bc_type["label"]<< std::endl;
           throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
         }
       }  // symmetric 
@@ -1273,7 +1273,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
       if( periodic[dir]==0 && ( tagFace_minus[dir] == 0 || tagFace_plus[dir] == 0)){
          std::ostringstream warn;
         warn <<"\n__________________________________\n "
-             << "ERROR: You must specify a boundary condition in direction "<< dir << endl;
+             << "ERROR: You must specify a boundary condition in direction "<< dir << std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);   
       }
     }
@@ -1286,7 +1286,7 @@ void BC_bulletproofing(const ProblemSpecP& prob_spec,
          std::ostringstream warn;
         warn <<"\n__________________________________\n "
              << "ERROR: A periodic AND a normal boundary condition have been specifed for \n"
-             << " direction: "<< dir << "  You can only have on or the other"<< endl;
+             << " direction: "<< dir << "  You can only have on or the other"<< std::endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);   
       }
     }

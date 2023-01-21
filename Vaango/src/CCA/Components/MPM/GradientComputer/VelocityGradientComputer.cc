@@ -87,7 +87,7 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
   if (std::isnan(velGrad_new.Norm())) {
     std::ostringstream out;
     out << "**ERROR**: Nan in velocity gradient value." << std::endl;
-    out << " velGrad = " << velGrad_new << endl;
+    out << " velGrad = " << velGrad_new << std::endl;
     //out << " ni = " << ni << " d_S = " << d_S << " oodx = " << oodx << std::endl;
     for (int k = 0; k < flag->d_8or27; k++) {
       out << " gVelocity [" << ni[k] << " = " << gVelocity[ni[k]] << std::endl;

@@ -220,7 +220,7 @@ UniformGrid::operator=(const UniformGrid& rhs)
     return *this;
   }
 
-  std::cout << "d_grid size = " << d_grid.size() << endl;
+  std::cout << "d_grid size = " << d_grid.size() << std::endl;
   if (d_grid.size() != IntVector(0, 0, 0)) {
     // Delete the lhs stuff grid and copy the rhs to it
     for (auto gridIter = d_grid.begin(); gridIter != d_grid.end(); gridIter++) {
@@ -263,15 +263,15 @@ UniformGrid::buildUniformGrid(TriangleList& polygons)
     IntVector v2 = cellID(triangle.vertex(2));
 #if 0
     if (v0 > d_grid.getHighIndex())
-      std::cout << "v0 = " << v0 << endl;
+      std::cout << "v0 = " << v0 << std::endl;
     if (v1 > d_grid.getHighIndex())
-      std::cout << "v1 = " << v1 << endl;
+      std::cout << "v1 = " << v1 << std::endl;
     if (v2 > d_grid.getHighIndex())
-      std::cout << "v2 = " << v2 << endl;
+      std::cout << "v2 = " << v2 << std::endl;
 
     std::cout << "Triangle = " << triangle.vertex(0) << " " << triangle.vertex(1) << " " 
-	 << triangle.vertex(2) << endl;
-    std::cout << "v0 " << v0 << " v1 " << v1 << " v2 " << v2 << endl;
+	 << triangle.vertex(2) << std::endl;
+    std::cout << "v0 " << v0 << " v1 " << v1 << " v2 " << v2 << std::endl;
 #endif
     IntVector low = Min(v0, v1);
     low           = Min(low, v2);
@@ -281,7 +281,7 @@ UniformGrid::buildUniformGrid(TriangleList& polygons)
       for (int j = low.y(); j <= hi.y(); j++) {
         for (int k = low.z(); k <= hi.z(); k++) {
           IntVector id(i, j, k);
-          //  std::cout << "Inserting into cellID = " << id << endl;
+          //  std::cout << "Inserting into cellID = " << id << std::endl;
           d_grid[id].push_back(triangle);
         }
       }
@@ -315,7 +315,7 @@ UniformGrid::countIntersections(const Point& pt, int& crossings)
 #if 0
 	  std::cout << "Inside_new hit = " << hit << "vertices: " 
 	       << triangle.vertex(0) << " " << triangle.vertex(1) <<  " "
-	       << triangle.vertex(2) << endl;
+	       << triangle.vertex(2) << std::endl;
 #endif
           double distance = int_ray.length();
           auto duplicate  = cross_map.find(distance);

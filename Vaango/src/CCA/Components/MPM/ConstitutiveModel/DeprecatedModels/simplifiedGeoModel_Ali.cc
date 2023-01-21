@@ -407,7 +407,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       defGrad_new[idx]=(L_new*delT+Identity)*defGrad[idx];
       J = defGrad_new[idx].Determinant();
       if (J <= 0){
-        cout<< "ERROR, negative J! in particle "<< idx << endl;
+        cout<< "ERROR, negative J! in particle "<< idx << std::endl;
         cout<<"J= "<<J<<endl;
         cout<<"L= "<<L_new<<endl;
         exit(1);
@@ -429,7 +429,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       double dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/pow((1 + eta*(1-s)), 3);
 
       bulk = dp_drho*rho_cur;
-      if (idx == 3120) cerr << "bulk modulus = " << bulk << endl;
+      if (idx == 3120) std::cerr <<  "bulk modulus = " << bulk << std::endl;
 
       // modify the bulk modulus based on the fluid effects
       double vol_strain = pPlasticStrainVol[idx]+pElasticStrainVol[idx];
@@ -559,7 +559,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
           // Multi-stage return loop begins
           while(abs(del_gamma)>gamma_tolerance && counter<=max_number_of_iterations){
             //cout << "Particle = " << idx << " return algo counter = " << counter 
-            //     << " del_gamma = " << del_gamma << endl;
+            //     << " del_gamma = " << del_gamma << std::endl;
             counter=counter+1;
             // fast return algorithm to the yield surface
             // compute the invariants of the trial stres in the loop
@@ -704,12 +704,12 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
         if (abs(f_new) > 0.01*sqrt(J2_new+I1_new*I1_new)) {
           cerr<<"ERROR!  Particle " << idx << 
                 " did not return to yield surface (simplifiedGeomodel.cc)"<<endl;
-          cerr << "f_new= " << f_new << " sqrt(J2_new)= " << sqrt(J2_new) 
-               <<" I1_new= " << I1_new << endl;
-          cerr << "f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(J2_trial) 
-               <<" I1_trial= " << I1_trial << endl;
-          cerr << "sig_n = " << unrotated_stress << "\n D = " << D  
-               << "\n sig_trial = " << trial_stress << "\n sig_n+1 = " << stress_new[idx] << endl; 
+          std::cerr <<  "f_new= " << f_new << " sqrt(J2_new)= " << sqrt(J2_new) 
+               <<" I1_new= " << I1_new << std::endl;
+          std::cerr <<  "f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(J2_trial) 
+               <<" I1_trial= " << I1_trial << std::endl;
+          std::cerr <<  "sig_n = " << unrotated_stress << "\n D = " << D  
+               << "\n sig_trial = " << trial_stress << "\n sig_n+1 = " << stress_new[idx] << std::endl; 
           //exit(1);
         }
 
@@ -906,9 +906,9 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       defGrad_new[idx] = (L_new * delT + Identity) * defGrad[idx];
       J = defGrad_new[idx].Determinant();
       if (J <= 0) {
-        std::cout << "ERROR, negative J! in particle " << idx << endl;
-        std::cout << "J= " << J << endl;
-        std::cout << "L= " << L_new << endl;
+        std::cout << "ERROR, negative J! in particle " << idx << std::endl;
+        std::cout << "J= " << J << std::endl;
+        std::cout << "L= " << L_new << std::endl;
         exit(1);
       }
 
@@ -931,7 +931,7 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
           c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
         // bulk = dp_drho*rho_cur;
         if (idx == 3120)
-          cerr << "bulk modulus = " << bulk << endl;
+          std::cerr <<  "bulk modulus = " << bulk << std::endl;
       }
 
       // modify the bulk modulus based on the fluid effects
@@ -1082,10 +1082,10 @@ simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl,
   // Compute deformation gradient and rate of deformation tensor
   F_new = (L_new * delT + One) * F_old;
   if (isnan(F_new(0, 0))) {
-    cerr << "F_new = " << F_new << endl;
-    cerr << "F_old = " << F_old << endl;
-    cerr << "L_new = " << L_new << endl;
-    cerr << "delT = " << delT << endl;
+    std::cerr <<  "F_new = " << F_new << std::endl;
+    std::cerr <<  "F_old = " << F_old << std::endl;
+    std::cerr <<  "L_new = " << L_new << std::endl;
+    std::cerr <<  "delT = " << delT << std::endl;
   }
   // double j_new = F_new.Determinant();
   Matrix3 U_new;
@@ -1218,7 +1218,7 @@ simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl,
       int count = 1;
       while (abs(del_gamma) > gamma_tol && count <= max_iter) {
         // std::cout << "Particle = " << idx << " return algo count = " << count
-        //     << " del_gamma = " << del_gamma << endl;
+        //     << " del_gamma = " << del_gamma << std::endl;
         count = count + 1;
 
         // compute the invariants of the trial stres in the loop
@@ -1386,13 +1386,13 @@ simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl,
     if (abs(f_new) > 0.01 * sqrt(j2_new + i1_new * i1_new)) {
       // Error message
       lvl += 1;
-      cerr << "ERROR!  Particle " << idx << " Recursion level = " << lvl
+      std::cerr <<  "ERROR!  Particle " << idx << " Recursion level = " << lvl
            << " did not return to yield surface (simplifiedGeomodel.cc)"
-           << " with delT = " << delT << endl;
-      cerr << "  f_new= " << f_new << " sqrt(J2_new)= " << sqrt(j2_new)
-           << " I1_new= " << i1_new << endl;
-      cerr << "  f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(j2_trial)
-           << " I1_trial= " << i1_trial << endl;
+           << " with delT = " << delT << std::endl;
+      std::cerr <<  "  f_new= " << f_new << " sqrt(J2_new)= " << sqrt(j2_new)
+           << " I1_new= " << i1_new << std::endl;
+      std::cerr <<  "  f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(j2_trial)
+           << " I1_trial= " << i1_trial << std::endl;
       // exit(1);
 
       // Split again and see it is gets to the yield surface
@@ -1654,16 +1654,16 @@ simplifiedGeoModel::computeRhoMicroCM(double pressure, const double p_ref,
       fPrime = rho0 * dp_drho;
       eta -= f / fPrime;
     } while (fabs(f) > 1.0e-5);
-    // cerr << "eta = " << eta << " rho = " << rho << " p = " << p_gauge <<
+    // std::cerr <<  "eta = " << eta << " rho = " << rho << " p = " << p_gauge <<
     // endl;
     rho = rho0 * (1 + eta);
   }
 
   if (!(rho > 0.0)) {
-    cerr << "**Warning**Negative mass density in "
+    std::cerr <<  "**Warning**Negative mass density in "
             "SimplifiedGeoModel::computeRhoMicroCM "
          << rho << " rho0 = " << rho0 << " eta = " << eta << " p = " << p_gauge
-         << endl;
+         << std::endl;
   }
 
   // eta cannot be less than -1 or greater than 2
@@ -1733,19 +1733,19 @@ simplifiedGeoModel::computePressEOSCM(double rho, double& pressure,
       c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
     csquared = dp_drho * dp_drho;
     if (csquared < 0.0) {
-      cerr << "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound "
+      std::cerr <<  "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound "
               "speed: c^2 = "
            << csquared << " p = " << (pressure - p_ref) << " eta = " << eta
-           << endl;
+           << std::endl;
     }
     // if (pressure < p_ref) {
-    //  cerr << "simplifiedGeoMode:computePressEOSCM:eta = " << eta
+    //  std::cerr <<  "simplifiedGeoMode:computePressEOSCM:eta = " << eta
     //       << " p = " << (pressure - p_ref) << " dp_drho = " << dp_drho <<
     //       endl;
     //}
   }
   // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simplifiedGeoModel"
-  //     << endl;
+  //     << std::endl;
 }
 
 //***************************************************************************
@@ -1755,7 +1755,7 @@ double
 simplifiedGeoModel::getCompressibility()
 {
   std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR simplifiedGeoModel"
-       << endl;
+       << std::endl;
   return 1.0;
 }
 

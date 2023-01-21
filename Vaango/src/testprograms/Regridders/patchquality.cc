@@ -84,9 +84,9 @@ int main(int argc, char **argv)
 
     Sphere2 s(cells.asVector()/Vector(2,2,2),radin,radout);
 
-    //cout << "num patches:" << num_patches << endl;
-    //cout << "cells: " << cells << endl;
-    //cout << "rad: " << rad << endl;
+    //cout << "num patches:" << num_patches << std::endl;
+    //cout << "cells: " << cells << std::endl;
+    //cout << "rad: " << rad << std::endl;
 
     //create coarse patch set
     std::vector<Region> patches;
@@ -98,13 +98,13 @@ int main(int argc, char **argv)
     int div=total_patches/num_procs;
     int mod=total_patches%num_procs;
 
-    //cout << "total patches: " << total_patches << endl;
-    //cout << "div: " << div << " mod: " << mod << endl;
+    //cout << "total patches: " << total_patches << std::endl;
+    //cout << "div: " << div << " mod: " << mod << std::endl;
     int p=0;
     int p_assigned=0;
     int to_assign=div+int(mod>0);
     int idx=0;
-    //cout << "to_assign=" << to_assign << endl;
+    //cout << "to_assign=" << to_assign << std::endl;
 
     for(int i=0;i<num_patches.x();i++)
     {
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     }
 
     //for(unsigned int i=0;i<patches.size();i++)
-    //  std::cout << rank << " patch: " << patches[i] << endl;
+    //  std::cout << rank << " patch: " << patches[i] << std::endl;
 
     //create refinement flags
     flags.resize(patches.size());
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<global_patches.size();i++)
         vol+=global_patches[i].getVolume();
-      std::cout << "0 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "0 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << std::endl;
       if(vol<fflags)
       {
         std::cout << "Error\n";
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<fine_patches.size();i++)
         vol+=fine_patches[i].getVolume();
-      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
 
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<fine_patches.size();i++)
         vol+=fine_patches[i].getVolume();
-      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
 
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<global_patches.size();i++)
         vol+=global_patches[i].getVolume();
-      std::cout << "2 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "2 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
   }

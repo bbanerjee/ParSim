@@ -144,7 +144,7 @@ int set_MMS_BCs_FC( const Patch* patch,
                       mms_vars* mms_v)
 {
   //cout<< "Doing set_MMS_BCs_FC: \t\t" << whichVel
-  //          << " face " << face << endl;
+  //          << " face " << face << std::endl;
  
   //__________________________________
   // on (x,y,z)minus faces move in one cell

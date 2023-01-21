@@ -352,7 +352,7 @@ CompMooneyRivlin::computeRhoMicroCM(double /*pressure*/, const double /*p_ref*/,
 #endif
 
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR CompMooneyRivlin"
-       << endl;
+       << std::endl;
 
   double rho_cur = 0.;
 
@@ -378,13 +378,13 @@ CompMooneyRivlin::computePressEOSCM(double /*rho_cur*/, double& /*pressure*/,
 #endif
 
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
-       << endl;
+       << std::endl;
 }
 
 double
 CompMooneyRivlin::getCompressibility()
 {
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
-       << endl;
+       << std::endl;
   return 1.0;
 }

@@ -216,7 +216,7 @@ CohesiveZone::countCohesiveZones(const Patch* patch, const string filename)
     // Everything else is assumed to be zero.
     double f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,mt,mb;
     while(is >> f1 >> f2 >> f3 >> f4 >> f5 >> f6 >> f7 >> f8 >> f9 >> f10 >> mt >> mb){
-      //cout << f1 << " " << f2 << " " << f3 << endl;
+      //cout << f1 << " " << f2 << " " << f3 << std::endl;
       if(patch->containsPoint(Point(f1,f2,f3))){
         sum++;
       }
@@ -339,7 +339,7 @@ void CohesiveZone::initialize(const ProcessorGroup*,
       particleIndex numCZs = countCohesiveZones(patch,filename);
       totalCZs+=numCZs;
 
-      std::cout << "Total CZs " << totalCZs << endl;
+      std::cout << "Total CZs " << totalCZs << std::endl;
 
       createCohesiveZones(cz_matl, numCZs, cellNACZID, patch, new_dw,filename);
     }

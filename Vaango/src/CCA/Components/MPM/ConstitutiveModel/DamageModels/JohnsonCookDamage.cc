@@ -146,7 +146,7 @@ JohnsonCookDamage::computeScalarDamage(const double& epdot,
 
   double Tr = matl->getRoomTemperature();
   double Tm = matl->getMeltTemperature();
-  // std::cout << " Tr = " << Tr << " Tm = " << Tm << " T = " << T << endl;
+  // std::cout << " Tr = " << Tr << " Tm = " << Tm << " T = " << T << std::endl;
   double Tstar = (T - Tr) / (Tm - Tr);
   double tempPart = 1.0 + d_initialData.D5 * Tstar;
   // std::cout << " tempPart = " << tempPart;
@@ -163,12 +163,12 @@ JohnsonCookDamage::computeScalarDamage(const double& epdot,
     damage_new = 0.0;
   /*
   std::cout << "sigstar = " << sigStar << " epdotStar = " << epdot
-       << " Tstar = " << Tstar << endl;
+       << " Tstar = " << Tstar << std::endl;
   std::cout << "Ep_dot = " << epdot
        << " e_inc = " << epsInc
        << " e_f = " << epsFrac
        << " D_n = " << damage_old
-       << " D_n+1 = " << damage_new << endl;
+       << " D_n+1 = " << damage_new << std::endl;
   */
   return damage_new;
 }

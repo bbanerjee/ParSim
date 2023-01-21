@@ -113,9 +113,9 @@ int main()
        rhoM=fabs(rhoM);
        if(count>=150){
          //cerr << setprecision(15);
-         cerr << "ERROR:ICE:JWLC::computeRhoMicro not converging. \n";
-         cerr << "press= " << press << "\n";
-         cerr << "delta= " << delta << " rhoM= " << rhoM << " f = " << f 
+         std::cerr <<  "ERROR:ICE:JWLC::computeRhoMicro not converging. \n";
+         std::cerr <<  "press= " << press << "\n";
+         std::cerr <<  "delta= " << delta << " rhoM= " << rhoM << " f = " << f 
               <<" df_drho =" << df_drho << " rho_guess =" << rho_guess << "\n";
          
        }

@@ -79,9 +79,9 @@ void    MPMICE::printData(int matl,
     //__________________________________
     // spew to stderr
     if ( high.x() > low.x() && high.y() > low.y() && high.z() > low.z() ) {      
-      cerr << "____________________________________________L-"<<levelIndx<<"\n";
-      cerr << "$" << message1 << "\n";
-      cerr << "$" << message2 << "\n"; 
+      std::cerr <<  "____________________________________________L-"<<levelIndx<<"\n";
+      std::cerr <<  "$" << message1 << "\n";
+      std::cerr <<  "$" << message2 << "\n"; 
       cerr.setf(ios::scientific,ios::floatfield);
       cerr.precision(d_ice->d_dbgSigFigs);
 
@@ -89,15 +89,15 @@ void    MPMICE::printData(int matl,
         for(int j = low.y(); j < high.y(); j++) {
           for(int i = low.x(); i < high.x(); i++) {
            IntVector idx(i, j, k);
-            cerr << "[" << i << "," << j << "," << k << "]~ " 
+            std::cerr <<  "[" << i << "," << j << "," << k << "]~ " 
                  << q_NC[idx] << "  ";
-           /*  cerr << "\n"); */
+           /*  std::cerr <<  "\n"); */
           }
-          cerr << "\n";
+          std::cerr <<  "\n";
         }
-        cerr << "\n";
+        std::cerr <<  "\n";
       }
-      cerr <<" ______________________________________________\n";
+      std::cerr << " ______________________________________________\n";
       cerr.setf(ios::scientific, ios::floatfield);
     }
   }
@@ -160,23 +160,23 @@ void    MPMICE::printNCVector(int matl,
       if (dir == 2 ) {
         var_name="Z_" + message2;
       }
-      cerr << "______________________________________________\n";
-      cerr << "$" << message1 << "\n";
-      cerr << "$" << var_name << "\n"; 
+      std::cerr <<  "______________________________________________\n";
+      std::cerr <<  "$" << message1 << "\n";
+      std::cerr <<  "$" << var_name << "\n"; 
       for(int k = low.z(); k < high.z(); k++)  {
         for(int j = low.y(); j < high.y(); j++) {
           for(int i = low.x(); i < high.x(); i++) {
            IntVector idx(i, j, k);
-           cerr << "[" << i << "," << j << "," << k << "]~ " 
+           std::cerr <<  "[" << i << "," << j << "," << k << "]~ " 
                 << q_NC[idx][dir] << "  ";  
-           /*  cerr << "\n"; */
+           /*  std::cerr <<  "\n"; */
           }
-          cerr << "\n";
+          std::cerr <<  "\n";
         }
-        cerr << "\n";
+        std::cerr <<  "\n";
       }
     }
-    cerr <<" ______________________________________________\n";
+    std::cerr << " ______________________________________________\n";
     cerr.setf(ios::scientific, ios::floatfield);
   }
   //__________________________________

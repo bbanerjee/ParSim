@@ -59,6 +59,8 @@ class BorjaIntVar;
 class SoilBrannonIntVar;
 class TabularCapIntVar;
 
+class ViscoScramStateData;
+
 typedef int64_t long64;
 typedef int64_t ParticleID;
 
@@ -101,11 +103,15 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondEnergy*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondInternalForce*);
 
+ // For MPM constitutive models
  const TypeDescription* fun_getTypeDescription(Uintah::MetalIntVar*);
  const TypeDescription* fun_getTypeDescription(Uintah::ArenaIntVar*);
  const TypeDescription* fun_getTypeDescription(Uintah::BorjaIntVar*);
  const TypeDescription* fun_getTypeDescription(Uintah::SoilBrannonIntVar*);
  const TypeDescription* fun_getTypeDescription(Uintah::TabularCapIntVar*);
+
+ const TypeDescription* fun_getTypeDescription(Uintah::ViscoScramStateData*);
+
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include

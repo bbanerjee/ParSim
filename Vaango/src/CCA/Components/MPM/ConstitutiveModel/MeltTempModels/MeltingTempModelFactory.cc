@@ -46,7 +46,7 @@ MeltingTempModelFactory::create(ProblemSpecP& ps)
   if (!child) {
     proc0cout
       << "**WARNING** Creating default (constant melting temperature) model"
-      << endl;
+      << std::endl;
     return (scinew ConstantMeltTemp());
     // throw ProblemSetupException("MPM::ConstitutiveModel:Cannot find melting
     // temp model.", __FILE__, __LINE__);
@@ -68,7 +68,7 @@ MeltingTempModelFactory::create(ProblemSpecP& ps)
   else {
     proc0cout
       << "**WARNING** Creating default (constant melting temperature) model"
-      << endl;
+      << std::endl;
     return (scinew ConstantMeltTemp(child));
     // throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Melting Temp
     // Model ("+mat_type+")",
@@ -91,7 +91,7 @@ MeltingTempModelFactory::createCopy(const MeltingTempModel* mtm)
   else {
     proc0cout << "**WARNING** Creating copy of default (constant melting "
                  "temperature) model"
-              << endl;
+              << std::endl;
     return (
       scinew ConstantMeltTemp(dynamic_cast<const ConstantMeltTemp*>(mtm)));
     // throw ProblemSetupException("Cannot create copy of unknown melting temp

@@ -116,7 +116,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
   
   if (usingLODI) {
     std::cout << "\n WARNING:  LODI boundary conditions are "
-         << " NOT set during the problem initialization \n " << endl;
+         << " NOT set during the problem initialization \n " << std::endl;
   }
   return usingLODI;
 }
@@ -143,7 +143,7 @@ void Lodi_maxMach_patchSubset(const LevelP& level,
                                MaterialManagerP& mat_manager,
                                std::vector<PatchSubset*> & maxMach_patchSubset)
 {
-  cout_doing << "Lodi_maxMach_patchSubset "<< endl;
+  cout_doing << "Lodi_maxMach_patchSubset "<< std::endl;
   //__________________________________
   // Iterate over all patches on this levels
   std::vector<const Patch*> p[Patch::numFaces];
@@ -212,7 +212,7 @@ void lodi_getVars_pressBC( const Patch* patch,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw)
 {
-  cout_doing << "lodi_getVars_pressBC on patch "<<patch->getID()<< endl;
+  cout_doing << "lodi_getVars_pressBC on patch "<<patch->getID()<< std::endl;
   int numMatls = sharedState->getNumMaterials();
   std::vector<constCCVariable<double> > Temp_CC(numMatls);
   std::vector<constCCVariable<double> > f_theta_CC(numMatls);
@@ -327,8 +327,8 @@ void debugging_Di(const IntVector c,
   if (leftFace && normalVel >= 0 || rightFace && normalVel <= 0){
     flowDir = "inFlow";
   }
-  std::cout << " \n ----------------- " << c << endl;
-  std::cout << " default values " << endl;
+  std::cout << " \n ----------------- " << c << std::endl;
+  std::cout << " default values " << std::endl;
   string s_A  = " A = rho * speedSound * dVel_dx[n_dir]; ";
   string s_L1 = " 0.5 * (normalVel - speedSound) * (dp_dx - A) ";
   string s_L2 = " normalVel * (drho_dx - dp_dx/speedSoundsqr) ";
@@ -336,45 +336,45 @@ void debugging_Di(const IntVector c,
   string s_L4 = " normalVel * dVel_dx[dir[2]];  ";
   string s_L5 = " 0.5 * (normalVel + speedSound) * (dp_dx + A); \n";
   
-  std::cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[dir[0]] ) "<< endl;
-  std::cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << endl;
-  std::cout << "s[3] = "<< s[3] << "  s_mom[dir[1]];                                          " << endl;
-  std::cout << "s[4] = "<< s[4] << "  s_mom[dir[2]];                                          " << endl;
-  std::cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[dir[0]] )  " << endl;
-  std::cout << "\n"<< endl;
+  std::cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[dir[0]] ) "<< std::endl;
+  std::cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << std::endl;
+  std::cout << "s[3] = "<< s[3] << "  s_mom[dir[1]];                                          " << std::endl;
+  std::cout << "s[4] = "<< s[4] << "  s_mom[dir[2]];                                          " << std::endl;
+  std::cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[dir[0]] )  " << std::endl;
+  std::cout << "\n"<< std::endl;
   //__________________________________
   //Subsonic non-reflective inflow
   if (flowDir == "inFlow" && Mach < 1.0){
-    std::cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< endl;
-    std::cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << endl;
-    std::cout << "L2 = s[2];                             " << L2 << endl;
-    std::cout << "L3 = s[3];                             " << L3 << endl;
-    std::cout << "L4 = s[4];                             " << L4 << endl;
-    std::cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << endl;
+    std::cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< std::endl;
+    std::cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << std::endl;
+    std::cout << "L2 = s[2];                             " << L2 << std::endl;
+    std::cout << "L3 = s[3];                             " << L3 << std::endl;
+    std::cout << "L4 = s[4];                             " << L4 << std::endl;
+    std::cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << std::endl;
   }
   //__________________________________
   // Subsonic non-reflective outflow
   if (flowDir == "outFlow" && Mach < 1.0){
-    std::cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << endl;
+    std::cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << std::endl;
     std::cout << "L1   "<< L1 
-         << "  rightFace *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[1]) + leftFace  * L1 " << endl;
-    std::cout << "L2   " << L2 <<" " << s_L2 << endl;
-    std::cout << "L3   " << L3 <<" " << s_L3 << endl;
-    std::cout << "L4   " << L4 <<" " << s_L4 << endl;
+         << "  rightFace *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[1]) + leftFace  * L1 " << std::endl;
+    std::cout << "L2   " << L2 <<" " << s_L2 << std::endl;
+    std::cout << "L3   " << L3 <<" " << s_L3 << std::endl;
+    std::cout << "L4   " << L4 <<" " << s_L4 << std::endl;
     std::cout << "L5   " << L5
-         << "  leftFace  *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[5]) rightFace * L5 " << endl;
+         << "  leftFace  *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[5]) rightFace * L5 " << std::endl;
   }
   
   //__________________________________
   //Supersonic non-reflective inflow
   // see Thompson II pg 453
   if (flowDir == "inFlow" && Mach > 1.0){
-    std::cout << " SUPER SONIC inflow " << endl;
-    std::cout << " L1 = s[1] " << L1 << endl;
-    std::cout << " L2 = s[2] " << L2 << endl;
-    std::cout << " L3 = s[3] " << L3 << endl;
-    std::cout << " L4 = s[4] " << L4 << endl;
-    std::cout << " L5 = s[5] " << L5 << endl;
+    std::cout << " SUPER SONIC inflow " << std::endl;
+    std::cout << " L1 = s[1] " << L1 << std::endl;
+    std::cout << " L2 = s[2] " << L2 << std::endl;
+    std::cout << " L3 = s[3] " << L3 << std::endl;
+    std::cout << " L4 = s[4] " << L4 << std::endl;
+    std::cout << " L5 = s[5] " << L5 << std::endl;
   }
   //__________________________________
   // Supersonic non-reflective outflow
@@ -384,23 +384,23 @@ void debugging_Di(const IntVector c,
   //__________________________________
   //  compute Di terms in the normal direction based on the 
   // modified Ls  See Sutherland Table 7
-    std::cout << "\nd[1][c]["<<n_dir<<"] = L2 + (L1 + L5)/speedSoundsqr    " << d[1][c][n_dir] << endl;
-    std::cout << "d[2][c]["  <<n_dir<<"] = (L5 + L1);                     " << d[2][c][n_dir] << endl;
+    std::cout << "\nd[1][c]["<<n_dir<<"] = L2 + (L1 + L5)/speedSoundsqr    " << d[1][c][n_dir] << std::endl;
+    std::cout << "d[2][c]["  <<n_dir<<"] = (L5 + L1);                     " << d[2][c][n_dir] << std::endl;
  
   if (n_dir == 0) {   // X-normal
-    std::cout << "d[3][c][0] = (L5 - L1)/(rho * speedSound)    " << d[3][c][n_dir] << endl;
-    std::cout << "d[4][c][0] = L3                              " << d[4][c][n_dir] << endl;
-    std::cout << "d[5][c][0] = L4                              " << d[5][c][n_dir] << endl;
+    std::cout << "d[3][c][0] = (L5 - L1)/(rho * speedSound)    " << d[3][c][n_dir] << std::endl;
+    std::cout << "d[4][c][0] = L3                              " << d[4][c][n_dir] << std::endl;
+    std::cout << "d[5][c][0] = L4                              " << d[5][c][n_dir] << std::endl;
   }
   if (n_dir == 1) {   // Y-normal
-    std::cout << "d[3][c][1] = L3                              " << d[3][c][n_dir] << endl;
-    std::cout << "d[4][c][1] = (L5 - L1)/(rho * speedSound)    " << d[4][c][n_dir] << endl;
-    std::cout << "d[5][c][1] = L4;                             " << d[5][c][n_dir] << endl;
+    std::cout << "d[3][c][1] = L3                              " << d[3][c][n_dir] << std::endl;
+    std::cout << "d[4][c][1] = (L5 - L1)/(rho * speedSound)    " << d[4][c][n_dir] << std::endl;
+    std::cout << "d[5][c][1] = L4;                             " << d[5][c][n_dir] << std::endl;
   }
   if (n_dir == 2) {   // Z-normal
-    std::cout << "d[3][c][3] = L3;                             " << d[3][c][n_dir] << endl;
-    std::cout << "d[4][c][3] = L4;                             " << d[4][c][n_dir] << endl;
-    std::cout << "d[5][c][3] = (L5 - L1)/(rho * speedSound);   " << d[5][c][n_dir] << endl;
+    std::cout << "d[3][c][3] = L3;                             " << d[3][c][n_dir] << std::endl;
+    std::cout << "d[4][c][3] = L4;                             " << d[4][c][n_dir] << std::endl;
+    std::cout << "d[5][c][3] = (L5 - L1)/(rho * speedSound);   " << d[5][c][n_dir] << std::endl;
   }
 }
 
@@ -560,7 +560,7 @@ void computeDi(std::vector<CCVariable<Vector> >& d,
                MaterialManagerP& mat_manager,
                const Lodi_variable_basket* user_inputs)                              
 {
-  cout_doing << "LODI computeDi "<< endl;
+  cout_doing << "LODI computeDi "<< std::endl;
   Vector dx = patch->dCell();
   
   // Characteristic Length of the overall domain
@@ -643,7 +643,7 @@ void computeNu(CCVariable<Vector>& nu,
                const Patch* patch,
                MaterialManagerP& mat_manager)
 {
-  cout_doing << "LODI computeNu "<< endl;
+  cout_doing << "LODI computeNu "<< std::endl;
   double d_SMALL_NUM = 1.0e-100;
     
   // Iterate over the faces encompassing the domain
@@ -747,7 +747,7 @@ void computeNu(CCVariable<Vector>& nu,
       for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
         IntVector c = *itr;
         nu[c] = Vector(0,0,0);
-        //cout << " I'm working on cell " << c << endl;
+        //cout << " I'm working on cell " << c << std::endl;
       } 
   /*==========TESTING==========`*/
     }  // on the LODI bc face
@@ -766,7 +766,7 @@ void  lodi_bc_preprocess( const Patch* patch,
                           DataWarehouse* new_dw,
                           MaterialManagerP& mat_manager)
 {
-  cout_doing << "lodi_bc_preprocess on patch "<<patch->getID()<< endl;
+  cout_doing << "lodi_bc_preprocess on patch "<<patch->getID()<< std::endl;
   
   Ghost::GhostType  gac = Ghost::AroundCells;
   Ghost::GhostType  gn  = Ghost::None;
@@ -1027,14 +1027,14 @@ void FaceDensity_LODI(const Patch* patch,
       if (c == dbgCells[i]) {
         cout.setf(ios::scientific,ios::floatfield);
         cout.precision(10);
-        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << endl;
-        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << endl;
-        std::cout << " rho_old                 " << rho_old[c] << endl;
-        std::cout << " rho_src                 " << rho_src << endl;
-        std::cout << " conv_dir1               " << conv_dir1 << endl;
-        std::cout << " conv_dir                " << conv_dir2 << endl;
+        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << std::endl;
+        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << std::endl;
+        std::cout << " rho_old                 " << rho_old[c] << std::endl;
+        std::cout << " rho_src                 " << rho_src << std::endl;
+        std::cout << " conv_dir1               " << conv_dir1 << std::endl;
+        std::cout << " conv_dir                " << conv_dir2 << std::endl;
         std::cout << " BN_convect              " << d[1][c][P_dir] <<endl;
-        std::cout << " rho_CC                  " << rho_CC[c] << endl;
+        std::cout << " rho_CC                  " << rho_CC[c] << std::endl;
       }
     }  //  dbgCells loop
 #endif
@@ -1103,7 +1103,7 @@ void FaceVel_LODI(const Patch* patch,
                  MaterialManagerP& mat_manager)                     
 
 {
-  cout_doing << "Setting FaceVel_LODI on face " << face << endl;
+  cout_doing << "Setting FaceVel_LODI on face " << face << std::endl;
   // bulletproofing
   if (!lv){
     throw InternalError("FaceVelLODI: Lodi_vars = null", __FILE__, __LINE__);
@@ -1211,19 +1211,19 @@ double time = sharedState->getElapsedTime();
       if (c == dbgCells[i]) {
         cout.setf(ios::scientific,ios::floatfield);
         cout.precision(10);
-        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << endl;
-        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << endl;
-        std::cout << " rho_old[c] * vel_old[c] " << momOld << endl;
-        std::cout << " convect1                " << convect1 << endl;
-        std::cout << " convect2                " << convect2 << endl;
+        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << std::endl;
+        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << std::endl;
+        std::cout << " rho_old[c] * vel_old[c] " << momOld << std::endl;
+        std::cout << " convect1                " << convect1 << std::endl;
+        std::cout << " convect2                " << convect2 << std::endl;
         std::cout << " BN_convect              " << BN_convect <<endl;
-        std::cout << " pressGradient           " << pressGradient << endl;
-        std::cout << " rho_old * gravity       " << bodyForce << endl;
+        std::cout << " pressGradient           " << pressGradient << std::endl;
+        std::cout << " rho_old * gravity       " << bodyForce << std::endl;
         std::cout << " vel                     " << vel_CC[c] << "\n"<<endl;
-        std::cout << " convect1: rho_old, vel_old["<<dir1<<"], vel_old["<<dir1<<"], dx["<<dir1<<"]" << endl;
-        std::cout << " convect2: rho_old, vel_old["<<dir1<<"], vel_old["<<dir2<<"], dx["<<dir2<<"]" << endl;
+        std::cout << " convect1: rho_old, vel_old["<<dir1<<"], vel_old["<<dir1<<"], dx["<<dir1<<"]" << std::endl;
+        std::cout << " convect2: rho_old, vel_old["<<dir1<<"], vel_old["<<dir2<<"], dx["<<dir2<<"]" << std::endl;
         std::cout << " vel_old[c].y() * d[1][c][P_dir] " <<  vel_old[c].y() * d[1][c][P_dir]
-             << " - rho_old[c] *d[4][c][P_dir] "    << rho_old[c] *d[4][c][P_dir] << "  "<< BN_convect.y() << endl;
+             << " - rho_old[c] *d[4][c][P_dir] "    << rho_old[c] *d[4][c][P_dir] << "  "<< BN_convect.y() << std::endl;
       }
     }  //  dbgCells loop
 #endif
@@ -1311,20 +1311,20 @@ double time = sharedState->getElapsedTime();
           cout.setf(ios::scientific,ios::floatfield);
           cout.precision(10);
 
-          std::cout << " -------------------------- E D G E " << endl;
-          std::cout << c <<" P_dir " << P_dir << " Edir1 " << Edir1 << " Edir2 " << Edir2 << endl;
-          std::cout << " rho_old[c] * vel_old[c] " << rho_old[c] * vel_old[c] << endl;
-          std::cout << " BN_convect              " << BN_convect << endl;
-          std::cout << " convect1                " << convect1 << endl;
-          std::cout << " pressGradient           " << pressGradient << endl;
-          std::cout << " rho_old gravity         " << bodyForce << endl;
-          std::cout << " mom                     " << mom << endl;
+          std::cout << " -------------------------- E D G E " << std::endl;
+          std::cout << c <<" P_dir " << P_dir << " Edir1 " << Edir1 << " Edir2 " << Edir2 << std::endl;
+          std::cout << " rho_old[c] * vel_old[c] " << rho_old[c] * vel_old[c] << std::endl;
+          std::cout << " BN_convect              " << BN_convect << std::endl;
+          std::cout << " convect1                " << convect1 << std::endl;
+          std::cout << " pressGradient           " << pressGradient << std::endl;
+          std::cout << " rho_old gravity         " << bodyForce << std::endl;
+          std::cout << " mom                     " << mom << std::endl;
           std::cout << " vel                     " << vel_CC[c] << "\n"<<endl;
 
           for (int i = 1; i<= 5; i++ ) {
-            std::cout << " d[" << i << "]:\t"<< d[i][c]<< endl;
+            std::cout << " d[" << i << "]:\t"<< d[i][c]<< std::endl;
           }
-          std::cout << " -------------------------- " << endl;
+          std::cout << " -------------------------- " << std::endl;
         }
       }
 #endif
@@ -1358,19 +1358,19 @@ double time = sharedState->getElapsedTime();
       //__________________________________
       //  debugging
 #if 0
-  std::cout << " corner " << c << endl;
+  std::cout << " corner " << c << std::endl;
       for (int i = 0; i<(int) dbgCells.size(); i++) {
         if (c == dbgCells[i]) {
-         std::cout << "-------------------------- C O R N E R " << c << endl;
-         std::cout << " rho_old[c] * vel_old[c] " << rho_old[c] * vel_old[c] << endl;
-         std::cout << " term1 =                 " << term1 << endl;
-         std::cout << " term2 =                 " << term2 << endl;
-         std::cout << " rho_old gravity         " << bodyForce << endl;
+         std::cout << "-------------------------- C O R N E R " << c << std::endl;
+         std::cout << " rho_old[c] * vel_old[c] " << rho_old[c] * vel_old[c] << std::endl;
+         std::cout << " term1 =                 " << term1 << std::endl;
+         std::cout << " term2 =                 " << term2 << std::endl;
+         std::cout << " rho_old gravity         " << bodyForce << std::endl;
  
-         std::cout << " mom/delT                " <<  mom/delT<< endl;
-         std::cout << " vel_CC[c]               " << vel_CC[c] << endl;
+         std::cout << " mom/delT                " <<  mom/delT<< std::endl;
+         std::cout << " vel_CC[c]               " << vel_CC[c] << std::endl;
          for (int i = 1; i<= 5; i++ ) {
-           std::cout << " d[" << i << "]:\t"<< d[i][c]<< endl;
+           std::cout << " d[" << i << "]:\t"<< d[i][c]<< std::endl;
          }
        }
     }
@@ -1391,7 +1391,7 @@ void FaceTemp_LODI(const Patch* patch,
              const Vector& dx,
              MaterialManagerP& mat_manager)
 {
-  cout_doing << "Setting FaceTemp_LODI on face " <<face<< endl; 
+  cout_doing << "Setting FaceTemp_LODI on face " <<face<< std::endl; 
   
   // bulletproofing
   if (!lv){
@@ -1482,17 +1482,17 @@ void FaceTemp_LODI(const Patch* patch,
       if (c == dbgCells[i]) {
         cout.setf(ios::scientific,ios::floatfield);
         cout.precision(10);
-        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << endl;
-        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << endl;
-        std::cout << " Temp_old                " << Temp_old[c] << endl;
-        std::cout << " E_old[c]                " << E[c] << endl;
-        std::cout << " E_src                   " << E_src << endl;
-        std::cout << " conv_dir1               " << conv_dir1 << endl;
-        std::cout << " conv_dir                " << conv_dir2 << endl;
+        std::cout << " \n c " << c << "--------------------------  F A C E " << face << " P_dir " << P_dir << std::endl;
+        std::cout << c <<" P_dir " << P_dir << " dir1 " << dir1 << "dir2 " << dir2 << std::endl;
+        std::cout << " Temp_old                " << Temp_old[c] << std::endl;
+        std::cout << " E_old[c]                " << E[c] << std::endl;
+        std::cout << " E_src                   " << E_src << std::endl;
+        std::cout << " conv_dir1               " << conv_dir1 << std::endl;
+        std::cout << " conv_dir                " << conv_dir2 << std::endl;
         std::cout << " BN_convect              " << BN_convect <<endl;
-        std::cout << " gravityTerm             " << gravityTerm << endl;
-        std::cout << " rho_old                 " << rho_old[c] << " \t rho_new " << rho_new[c] << endl;
-        std::cout << " Temp_CC                 " << temp_CC[c] << endl;
+        std::cout << " gravityTerm             " << gravityTerm << std::endl;
+        std::cout << " rho_old                 " << rho_old[c] << " \t rho_new " << rho_new[c] << std::endl;
+        std::cout << " Temp_CC                 " << temp_CC[c] << std::endl;
       }
     }  //  dbgCells loop
 #endif
@@ -1607,7 +1607,7 @@ void FacePress_LODI(const Patch* patch,
                     Patch::FaceType face,
                     Lodi_vars_pressBC* lv)
 {
-  cout_doing << " I am in FacePress_LODI on face " <<face<< endl;
+  cout_doing << " I am in FacePress_LODI on face " <<face<< std::endl;
   // bulletproofing
   if (!lv){
     throw InternalError("FacePress_LODI: Lodi_vars_pressBC = null", __FILE__, __LINE__);
@@ -1649,10 +1649,10 @@ void FacePress_LODI(const Patch* patch,
       }
 #else
       // This needs to be rethought, due to circular dependencies...
-      cerr << "Temporarily commented out by Steve\n";
+      std::cerr <<  "Temporarily commented out by Steve\n";
 #endif
       press_CC[c] += f_theta[m][c]*press_eos[m];
-//     std::cout << "press_CC" << c << press_CC[c] << endl;           
+//     std::cout << "press_CC" << c << press_CC[c] << std::endl;           
     }  // for ALLMatls...
   }
 } 

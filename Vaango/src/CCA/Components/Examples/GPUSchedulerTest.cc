@@ -134,7 +134,7 @@ void GPUSchedulerTest::computeStableTimestep(const ProcessorGroup* pg,
   if (pg->myRank() == 0) {
     sum_vartype residual;
     new_dw->get(residual, residual_label);
-    cerr << "Residual=" << residual << '\n';
+    std::cerr <<  "Residual=" << residual << '\n';
   }
   new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
 }
@@ -271,12 +271,12 @@ void GPUSchedulerTest::timeAdvance1DP(const ProcessorGroup*,
     int ystride = yhigh + numGhostCells;
     int xstride = xhigh + numGhostCells;
 
-//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int k = l.z(); k < zhigh; k++) {
       for (int j = l.y(); j < yhigh; j++) {
         for (int i = l.x(); i < xhigh; i++) {
-          std::cout << "(x,y,z): " << k << "," << j << "," << i << endl;
+          std::cout << "(x,y,z): " << k << "," << j << "," << i << std::endl;
           // For an array of [ A ][ B ][ C ], we can index it thus:
           // (a * B * C) + (b * C) + (c * 1)
           int idx = i + (j * xstride) + (k * xstride * ystride);
@@ -343,7 +343,7 @@ void GPUSchedulerTest::timeAdvance3DP(const ProcessorGroup*,
     int yhigh = h.y();
     int xhigh = h.x();
 
-//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int i = l.z(); i < zhigh; i++) {
       for (int j = l.y(); j < yhigh; j++) {

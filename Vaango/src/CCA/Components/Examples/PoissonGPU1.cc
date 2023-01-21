@@ -135,7 +135,7 @@ void PoissonGPU1::computeStableTimestep(const ProcessorGroup* pg,
   if (pg->myRank() == 0) {
     sum_vartype residual;
     new_dw->get(residual, residual_label);
-    cerr << "Residual=" << residual << endl;
+    std::cerr <<  "Residual=" << residual << std::endl;
   }
 
   new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
@@ -271,12 +271,12 @@ void PoissonGPU1::timeAdvance1DP(const ProcessorGroup*,
     int ystride = yhigh + numGhostCells;
     int xstride = xhigh + numGhostCells;
 
-    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int k = l.z(); k < zhigh; k++) {
       for (int j = l.y(); j < yhigh; j++) {
         for (int i = l.x(); i < xhigh; i++) {
-          std::cout << "(x,y,z): " << k << "," << j << "," << i << endl;
+          std::cout << "(x,y,z): " << k << "," << j << "," << i << std::endl;
           // For an array of [ A ][ B ][ C ], we can index it thus:
           // (a * B * C) + (b * C) + (c * 1)
           int idx = i + (j * xstride) + (k * xstride * ystride);

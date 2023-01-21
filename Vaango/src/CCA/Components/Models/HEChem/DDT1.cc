@@ -328,7 +328,7 @@ void DDT1::initialize(const ProcessorGroup*,
  
   for(int p=0;p<patches->size();p++) {
     const Patch* patch = patches->get(p);
-    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << endl;
+    cout_doing << "Doing Initialize on patch " << patch->getID()<< "\t\t\t STEADY_BURN" << std::endl;
     
     // This section is needed for outputting F and burn on each timestep
     CCVariable<double> F, Ts, det, crack, inductionTime, countTime, inductionTimeOld, countTimeOld;
@@ -616,7 +616,7 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
     ParticleSubset* pset = old_dw->getParticleSubset(m0, patch); 
    
     cout_doing << "Doing computeBurnLogic on patch "<< patch->getID()
-               <<"\t\t\t\t  DDT1" << endl;
+               <<"\t\t\t\t  DDT1" << std::endl;
 
 
     // Burning related
@@ -984,7 +984,7 @@ void DDT1::computeModelSources(const ProcessorGroup*,
     const Patch* patch   = patches->get(p);
    
     cout_doing << "Doing computeModelSources on patch "<< patch->getID()
-               <<"\t\t\t\t  DDT1" << endl;
+               <<"\t\t\t\t  DDT1" << std::endl;
 
     /* Variable to modify or compute */
     // Sources and Sinks

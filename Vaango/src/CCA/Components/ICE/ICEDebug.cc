@@ -124,7 +124,7 @@ void ICE::printData_problemSetup( const ProblemSpecP& prob_spec)
       d_dbgSymmetryTest = true;
       std::cout << "Perform Symmetry test:  Planes of symmetry " << d_dbgSymPlanes
            << " absolute Tolerance: " << d_dbgSym_absolute_tol
-           << " relative Tolerance: " << d_dbgSym_relative_tol << endl;
+           << " relative Tolerance: " << d_dbgSym_relative_tol << std::endl;
     }
 
     for (ProblemSpecP child = debug_ps->findBlock("debug"); child != 0;
@@ -198,14 +198,14 @@ void ICE::printData_problemSetup( const ProblemSpecP& prob_spec)
     d_dbgLevel.push_back(0);
   }
  
-  cout_norm << "Pulled out the debugging switches from input file" << endl;
+  cout_norm << "Pulled out the debugging switches from input file" << std::endl;
   cout_norm<< "  debugging starting time   "<<d_dbgStartTime<<endl;
   cout_norm<< "  debugging stopping time   "<<d_dbgStopTime<<endl;
   cout_norm<< "  debugging output interval "<<d_dbgOutputInterval<<endl;
   cout_norm<< "  debugging variable 1      "<<d_dbgVar1<<endl;
   cout_norm<< "  debugging variable 2      "<<d_dbgVar2<<endl; 
   for (int i = 0; i<(int) d_dbgMatls.size(); i++) {
-    cout_norm << "  d_dbg_matls = " << d_dbgMatls[i] << endl;
+    cout_norm << "  d_dbg_matls = " << d_dbgMatls[i] << std::endl;
   }
 }
 
@@ -354,9 +354,9 @@ void    ICE::printData_driver( int matl,
     // spew to stderr
     if ( d_dbgGnuPlot== false && 
         high.x() > low.x() && high.y() > low.y() && high.z() > low.z() ) {      
-      cerr << "____________________________________________L-"<<levelIndx<<"\n";
-      cerr << "$" << message1 << "\n";
-      cerr << "$" << message2 << "\n";
+      std::cerr <<  "____________________________________________L-"<<levelIndx<<"\n";
+      std::cerr <<  "$" << message1 << "\n";
+      std::cerr <<  "$" << message2 << "\n";
 
       cerr.setf(std::ios::scientific,std::ios::floatfield);
       cerr.precision(d_dbgSigFigs);  
@@ -364,16 +364,16 @@ void    ICE::printData_driver( int matl,
         for(int j = low.y(); j < high.y(); j++) {
           for(int i = low.x(); i < high.x(); i++) {
            IntVector idx(i, j, k);
-           cerr << "[" << i << "," << j << "," << k << "]~ " 
+           std::cerr <<  "[" << i << "," << j << "," << k << "]~ " 
                 << q_CC[idx] << "  ";
 
-           /*  cerr << "\n"; */
+           /*  std::cerr <<  "\n"; */
           }
-         cerr << "\n";
+         std::cerr <<  "\n";
         }
-        cerr << "\n";
+        std::cerr <<  "\n";
       }
-      cerr <<" ______________________________________________\n";
+      std::cerr << " ______________________________________________\n";
       cerr.setf(std::ios::scientific ,std::ios::floatfield);
     }
     
@@ -401,7 +401,7 @@ void    ICE::printData_driver( int matl,
           for(int i = low.x(); i < high.x(); i++) {
             IntVector idx(i, j, k);
             //    fprintf(fp, "%16.15E %16.15E\n", x, q_CC[idx]);
-            fp << x << " " <<  q_CC[idx] << endl;
+            fp << x << " " <<  q_CC[idx] << std::endl;
             x+=dx;
           }
         }
@@ -478,23 +478,23 @@ void    ICE::printVector_driver(int matl,
        
         cerr.setf(std::ios::scientific,std::ios::floatfield);
         cerr.precision(d_dbgSigFigs);
-        cerr << "__________________________________________L-"<<levelIndx<<"\n";
-        cerr << "$" << message1 << "\n";
-        cerr << "$" << var_name << "\n";
+        std::cerr <<  "__________________________________________L-"<<levelIndx<<"\n";
+        std::cerr <<  "$" << message1 << "\n";
+        std::cerr <<  "$" << var_name << "\n";
         for(int k = low.z(); k < high.z(); k++)  {
           for(int j = low.y(); j < high.y(); j++) {
             for(int i = low.x(); i < high.x(); i++) {
              IntVector idx(i, j, k);
-             cerr << "[" << i << "," << j << "," << k << "]~ " 
+             std::cerr <<  "[" << i << "," << j << "," << k << "]~ " 
                   <<  q_CC[idx][dir] << "  ";
 
-             /*  cerr << "\n"; */
+             /*  std::cerr <<  "\n"; */
             }
-           cerr << "\n";
+           std::cerr <<  "\n";
           }
-          cerr << "\n";
+          std::cerr <<  "\n";
         }
-        cerr << " ______________________________________________\n";
+        std::cerr <<  " ______________________________________________\n";
         cerr.setf(std::ios::scientific, std::ios::floatfield);
       }
 
@@ -569,7 +569,7 @@ void    ICE::symmetryTest_driver( int matl,
   if((nCells.x() % 2 !=0 && d_dbgSymPlanes.x()) ||
      (nCells.y() % 2 !=0 && d_dbgSymPlanes.y()) ||
      (nCells.z() % 2 !=0 && d_dbgSymPlanes.z())){
-      std::cout << " number of interior cells " << nCells << endl;
+      std::cout << " number of interior cells " << nCells << std::endl;
       throw ProblemSetupException("PRINT_DATA: symmetryTest_driver:  "
              "Only works if the number of interior cells is even ", __FILE__, __LINE__);
   }
@@ -658,15 +658,15 @@ void    ICE::symmetryTest_driver( int matl,
               if (abs_diff > d_dbgSym_absolute_tol || 
                   rel_diff > d_dbgSym_relative_tol){
                 if (printHeader) {  
-                  cerr << "____________________________________________Symmetry Test L-"<<levelIndx<<"\n";
-                  cerr << "$" << message2 <<"\t " << message1 <<endl;
+                  std::cerr <<  "____________________________________________Symmetry Test L-"<<levelIndx<<"\n";
+                  std::cerr <<  "$" << message2 <<"\t " << message1 <<endl;
                   printHeader = false; 
                 } 
-                cerr << "c " << c <<  " " << q_CC[c] <<" vs " 
+                std::cerr <<  "c " << c <<  " " << q_CC[c] <<" vs " 
                      << mirrorCell<< " " << q_CC[mirrorCell]
                      << " abs_diff: " << abs_diff 
                      << " relative diff: "<<rel_diff 
-                     << " plane " << dir << endl;;
+                     << " plane " << dir << std::endl;;
               }  
             }  // i loop
           }  // j loop
@@ -713,7 +713,7 @@ void    ICE::symmetryTest_Vector( int matl,
   if((nCells.x() % 2 !=0 && d_dbgSymPlanes.x()) ||
      (nCells.y() % 2 !=0 && d_dbgSymPlanes.y()) ||
      (nCells.z() % 2 !=0 && d_dbgSymPlanes.z())){
-      std::cout << " number of interior cells " << nCells << endl;
+      std::cout << " number of interior cells " << nCells << std::endl;
       throw ProblemSetupException("PRINT_DATA: symmetryTest_driver:  "
              "Only works if the number of interior cells is even ",
                                   __FILE__, __LINE__);
@@ -789,14 +789,14 @@ void    ICE::symmetryTest_Vector( int matl,
                   rel_diff.length() > d_dbgSym_relative_tol){
                   
                if (printHeader) {  
-                  cerr << "____________________________________________Symmetry Test L-"<<levelIndx<<"\n";
-                  cerr << "$" << message2 <<"\t " << message1 <<endl;
+                  std::cerr <<  "____________________________________________Symmetry Test L-"<<levelIndx<<"\n";
+                  std::cerr <<  "$" << message2 <<"\t " << message1 <<endl;
                   printHeader = false; 
                 } 
-                cerr << c << " "  << q_CC[c]
+                std::cerr <<  c << " "  << q_CC[c]
                      << "     abs_diff: " << abs_diff 
-                     << " relative diff: "<<rel_diff << endl;
-                cerr << mirrorCell<< " " << q_CC[mirrorCell]  << endl;
+                     << " relative diff: "<<rel_diff << std::endl;
+                std::cerr <<  mirrorCell<< " " << q_CC[mirrorCell]  << std::endl;
 
               }  
             }  // i loop
@@ -843,9 +843,9 @@ void    ICE::printStencil( int /*matl*/,
                         d_dbgEndIndx[L], low, high); 
     //__________________________________
     // spew to stderr
-    cerr << "______________________________________________L-"<<levelIndx<<"\n";
-    cerr << "$" << message1 << "\n";
-    cerr << "$" << message2 << "\n";
+    std::cerr <<  "______________________________________________L-"<<levelIndx<<"\n";
+    std::cerr <<  "$" << message1 << "\n";
+    std::cerr <<  "$" << message2 << "\n";
 
     cerr.setf(std::ios::scientific,std::ios::floatfield);
     cerr.precision(d_dbgSigFigs);    
@@ -861,12 +861,12 @@ void    ICE::printStencil( int /*matl*/,
               << " A.p "<< q_CC[idx].p
               << " A.n "<< q_CC[idx].n
               << " A.e "<< q_CC[idx].e
-              << " A.t "<< q_CC[idx].t << endl;
+              << " A.t "<< q_CC[idx].t << std::endl;
         }
       }
     }
-    cerr << "\n";
-    cerr <<" ______________________________________________\n";
+    std::cerr <<  "\n";
+    std::cerr << " ______________________________________________\n";
     cerr.setf(std::ios::scientific ,std::ios::floatfield);
   } 
 }
@@ -915,7 +915,7 @@ void  ICE::adjust_dbg_indices(  const int include_EC,
          << beginIndx << " " << endIndx
          << " that is outside the range of this level "
          << level->getIndex()
-         << " " << L_lowIndex << " " << L_highIndex << endl;
+         << " " << L_lowIndex << " " << L_highIndex << std::endl;
     static Uintah::ProgressiveWarning warning(warn.str(),2); 
     warning.invoke();
   }
@@ -1029,7 +1029,7 @@ void    ICE::readData(const Patch* patch, int include_EC,
        fp.get(c);
        while ( c != '~') {         
          fp.get(c);
-         // cerr << c;
+         // std::cerr <<  c;
        }
        
        fp >> number;
@@ -1037,7 +1037,7 @@ void    ICE::readData(const Patch* patch, int include_EC,
         throw ProblemSetupException("Having problem reading " + var_name,
                                     __FILE__, __LINE__);
               
-      // cerr << number;
+      // std::cerr <<  number;
        q_CC[idx] = number;
       }
       char c;
@@ -1207,6 +1207,6 @@ void ICE::find_gnuplot_origin_And_dx(const string variableType,
   *dx = dx_org[principalDir];
   Vector pos = patch->cellPosition(low).asVector();
   *origin = pos[principalDir] - offset;
-  // std::cout << " dx " << *dx  << " *origin " << *origin << " offset " << offset << endl;
+  // std::cout << " dx " << *dx  << " *origin " << *origin << " offset " << offset << std::endl;
 }
 

@@ -88,7 +88,7 @@ void vorticity::problemSetup(const ProblemSpecP& ,
                              std::vector<std::vector<const VarLabel* > > &PState,
                              std::vector<std::vector<const VarLabel* > > &PState_preReloc)
 {
-  cout_doing << "Doing problemSetup \t\t\t\tvorticity" << endl;
+  cout_doing << "Doing problemSetup \t\t\t\tvorticity" << std::endl;
 
   DOUTR(dout_OTF_VTY, "Doing vorticity::problemSetup");
 

@@ -1284,7 +1284,7 @@ public:
     using std::string;
     using std::vector;
 
-    if (verbose) std::cout << "PLY parser: Reading ply file: " << filename << endl;
+    if (verbose) std::cout << "PLY parser: Reading ply file: " << filename << std::endl;
 
     // Open a file in binary always, in case it turns out to have binary data.
     std::ifstream inStream(filename, std::ios::binary);
@@ -1295,7 +1295,7 @@ public:
     parsePLY(inStream, verbose);
 
     if (verbose) {
-      std::cout << "  - Finished parsing file." << endl;
+      std::cout << "  - Finished parsing file." << std::endl;
     }
   }
 
@@ -1310,12 +1310,12 @@ public:
     using std::cout;
     using std::endl;
 
-    if (verbose) std::cout << "PLY parser: Reading ply file from stream" << endl;
+    if (verbose) std::cout << "PLY parser: Reading ply file from stream" << std::endl;
 
     parsePLY(inStream, verbose);
 
     if (verbose) {
-      std::cout << "  - Finished parsing stream." << endl;
+      std::cout << "  - Finished parsing stream." << std::endl;
     }
   }
 
@@ -1725,13 +1725,13 @@ private:
       // ascii/binary
       if (typeStr == "ascii") {
         inputDataFormat = DataFormat::ASCII;
-        if (verbose) std::cout << "  - Type: ascii" << endl;
+        if (verbose) std::cout << "  - Type: ascii" << std::endl;
       } else if (typeStr == "binary_little_endian") {
         inputDataFormat = DataFormat::Binary;
-        if (verbose) std::cout << "  - Type: binary" << endl;
+        if (verbose) std::cout << "  - Type: binary" << std::endl;
       } else if (typeStr == "binary_big_endian") {
         inputDataFormat = DataFormat::BinaryBigEndian;
-        if (verbose) std::cout << "  - Type: binary big endian" << endl;
+        if (verbose) std::cout << "  - Type: binary big endian" << std::endl;
       } else {
         throw std::runtime_error("PLY parser: bad format line");
       }
@@ -1740,7 +1740,7 @@ private:
       if (versionStr != "1.0") {
         throw std::runtime_error("PLY parser: encountered file with version != 1.0. Don't know how to parse that");
       }
-      if (verbose) std::cout << "  - Version: " << versionStr << endl;
+      if (verbose) std::cout << "  - Version: " << versionStr << std::endl;
     }
 
     // Consume header line by line
@@ -1751,7 +1751,7 @@ private:
       // Parse a comment
       if (startsWith(line, "comment")) {
         string comment = line.substr(8);
-        if (verbose) std::cout << "  - Comment: " << comment << endl;
+        if (verbose) std::cout << "  - Comment: " << comment << std::endl;
         comments.push_back(comment);
         continue;
       }
@@ -1759,7 +1759,7 @@ private:
       // Parse an obj_info comment
       if (startsWith(line, "obj_info")) {
         string infoComment = line.substr(9);
-        if (verbose) std::cout << "  - obj_info: " << infoComment << endl;
+        if (verbose) std::cout << "  - obj_info: " << infoComment << std::endl;
         objInfoComments.push_back(infoComment);
         continue;
       }
@@ -1773,7 +1773,7 @@ private:
         std::istringstream iss(tokens[2]);
         iss >> count;
         elements.emplace_back(name, count);
-        if (verbose) std::cout << "  - Found element: " << name << " (count = " << count << ")" << endl;
+        if (verbose) std::cout << "  - Found element: " << name << " (count = " << count << ")" << std::endl;
         continue;
       }
 
@@ -1788,7 +1788,7 @@ private:
         elements.back().properties.push_back(createPropertyWithType(name, type, true, countType));
         if (verbose)
           std::cout << "    - Found list property: " << name << " (count type = " << countType << ", data type = " << type
-               << ")" << endl;
+               << ")" << std::endl;
         continue;
       }
 
@@ -1800,7 +1800,7 @@ private:
         string type = tokens[1];
         string name = tokens[2];
         elements.back().properties.push_back(createPropertyWithType(name, type, false, ""));
-        if (verbose) std::cout << "    - Found property: " << name << " (type = " << type << ")" << endl;
+        if (verbose) std::cout << "    - Found property: " << name << " (type = " << type << ")" << std::endl;
         continue;
       }
 

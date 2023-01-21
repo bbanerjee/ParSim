@@ -515,9 +515,9 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
 
 
       if(is_rightFace_variable(name,desc)){
-          std::cout << " ------------ FirstOrderAdvector::q_FC_fluxes " << desc<< endl;
+          std::cout << " ------------ FirstOrderAdvector::q_FC_fluxes " << desc<< std::endl;
         std::cout << "AMR_subCycleProgressVar " << AMR_subCycleProgressVar << " Level " << patch->getLevel()->getIndex()
-              << " Patch " << patch->getGridIndex()<< endl;
+              << " Patch " << patch->getGridIndex()<< std::endl;
         std::cout <<" patchFace " << name << " " ;
 
         IntVector shift = patch->faceDirection(patchFace);

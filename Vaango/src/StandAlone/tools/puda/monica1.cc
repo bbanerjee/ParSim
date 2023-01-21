@@ -72,7 +72,7 @@ Uintah::monica1( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
   for(int i=0;i<(int)vars.size();i++)
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       
   std::vector<int> index;
   std::vector<double> times;
@@ -80,7 +80,7 @@ Uintah::monica1( DataArchive * da, CommandLineFlags & clf )
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for( int i = 0; i < (int)index.size(); i++ ) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
       
   findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
@@ -93,7 +93,7 @@ Uintah::monica1( DataArchive * da, CommandLineFlags & clf )
 
   for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
     double time = times[t];
-    std::cout << "time = " << time << endl;
+    std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
 
       double pressure = -9999999.0;  // the max pressure during the timestep
@@ -120,12 +120,12 @@ Uintah::monica1( DataArchive * da, CommandLineFlags & clf )
         } // for cells
       }  // for patches
    
-   std::cout << "Max pressure for timestep was:\t" << pressure << endl;
+   std::cout << "Max pressure for timestep was:\t" << pressure << std::endl;
 
    outfile.precision(15);
-   outfile << t << " " << pressure << endl; 
+   outfile << t << " " << pressure << std::endl; 
 
   }
-  std::cout << "Max pressure overall was:\t" << maxPressure << endl;
+  std::cout << "Max pressure overall was:\t" << maxPressure << std::endl;
 } // end jim2()
 

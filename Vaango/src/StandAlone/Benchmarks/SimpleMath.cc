@@ -71,14 +71,14 @@ const int LOOP_DEFAULT = 1;
 
 void usage ( void )
 {
-  cerr << "Usage: SimpleMath <size> [<loop>]" << endl;
-  cerr << endl;
-  cerr << "  <size>  This benchmark will use four CCVariable<double>" << endl;
-  cerr << "          variables, each with a size*size*size resolution" << endl;
-  cerr << "          and perform the operation 'result = a * x + b'" << endl;
-  cerr << "          on each of their elements."<< endl;
-  cerr << endl;
-  cerr << "  <loop>  The above operation will be repeated <loop> times." << endl;
+  std::cerr <<  "Usage: SimpleMath <size> [<loop>]" << std::endl;
+  std::cerr <<  std::endl;
+  std::cerr <<  "  <size>  This benchmark will use four CCVariable<double>" << std::endl;
+  std::cerr <<  "          variables, each with a size*size*size resolution" << std::endl;
+  std::cerr <<  "          and perform the operation 'result = a * x + b'" << std::endl;
+  std::cerr <<  "          on each of their elements."<< std::endl;
+  std::cerr <<  std::endl;
+  std::cerr <<  "  <loop>  The above operation will be repeated <loop> times." << std::endl;
 }
 
 void bench1(int loop, const IntVector& low, const IntVector& high,
@@ -136,9 +136,9 @@ int main ( int argc, char** argv )
     return EXIT_FAILURE;
   }
 
-  std::cout << "Simple Math Benchmark: " << endl;
-  std::cout << "Resolution (" << size << ", " << size << ", " << size << ")" << endl;
-  std::cout << "Repeating " << loop << " time(s)." << endl;
+  std::cout << "Simple Math Benchmark: " << std::endl;
+  std::cout << "Resolution (" << size << ", " << size << ", " << size << ")" << std::endl;
+  std::cout << "Repeating " << loop << " time(s)." << std::endl;
 
   IntVector low ( 0,0,0 );
   IntVector high( size,size,size );
@@ -163,7 +163,7 @@ int main ( int argc, char** argv )
     double megaFlops = (loop * size * size * size * 2.0) / 1000000.0 / deltaTime;
 
     std::cout << "Completed in " << deltaTime << " seconds.";
-    std::cout << " (" << megaFlops << " MFLOPS)" << endl;
+    std::cout << " (" << megaFlops << " MFLOPS)" << std::endl;
   }
   {
     double startTime = Time::currentSeconds();
@@ -173,7 +173,7 @@ int main ( int argc, char** argv )
     double megaFlops = (loop * size * size * size * 2.0) / 1000000.0 / deltaTime;
 
     std::cout << "Completed in " << deltaTime << " seconds.";
-    std::cout << " (" << megaFlops << " MFLOPS)" << endl;
+    std::cout << " (" << megaFlops << " MFLOPS)" << std::endl;
   }
  
   return EXIT_SUCCESS;

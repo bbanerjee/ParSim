@@ -193,6 +193,7 @@ ConstitutiveModel::addSharedCRForExplicit(Task* task,
   Ghost::GhostType gac = Ghost::AroundCells;
 
   task->requires(Task::OldDW, lb->delTLabel);
+  task->requires(Task::OldDW, lb->simulationTimeLabel);
   task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
@@ -226,6 +227,7 @@ ConstitutiveModel::addComputesAndRequiresForRotatedExplicit(Task* task,
 {
   Ghost::GhostType gnone = Ghost::None;
   task->requires(Task::OldDW, lb->delTLabel);
+  task->requires(Task::OldDW, lb->simulationTimeLabel);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);

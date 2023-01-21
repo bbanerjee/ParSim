@@ -98,8 +98,8 @@ using namespace Uintah;
 Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  proc0cout << "Arenisca ver 3.0"<< endl;
-  proc0cout << "University of Utah, Mechanical Engineering, Computational Solid Mechanics" << endl;
+  proc0cout << "Arenisca ver 3.0"<< std::endl;
+  proc0cout << "University of Utah, Mechanical Engineering, Computational Solid Mechanics" << std::endl;
 
   // Private Class Variables:
   one_third      = 1.0/3.0;
@@ -979,7 +979,7 @@ failedStep:
   ep_p      = ep_n;
   stepFlag  = 1;
 #ifdef MHdebug
-  std::cout << "995: Step Failed I1_n = "<<sigma_n.Trace() <<", I1_p = "<<sigma_p.Trace()<< endl;
+  std::cout << "995: Step Failed I1_n = "<<sigma_n.Trace() <<", I1_p = "<<sigma_p.Trace()<< std::endl;
   std::cout << "996: evp_p = "<<ep_p.Trace()<<", evp_n = "<<ep_n.Trace()<<endl;
   std::cout << "997: X_p = "<<X_p<<", X_n = "<<X_n<<endl;
 #endif
@@ -1286,7 +1286,7 @@ int Arenisca3::computeSubstep(const Matrix3& d_e,       // Total strain incremen
                   I1_0,rJ2_0,S_0,d_ep_0);
   if (returnFlag!=0){
 #ifdef MHdebug
-    std::cout << "1344: failed nonhardeningReturn in substep "<< endl;
+    std::cout << "1344: failed nonhardeningReturn in substep "<< std::endl;
 #endif
     goto failedSubstep;
   }
@@ -1355,7 +1355,7 @@ updateISV:
                   I1_new,rJ2_new,S_new,d_ep_new);
   if (returnFlag!=0){
 #ifdef MHdebug
-    std::cout << "1344: failed nonhardeningReturn in substep "<< endl;
+    std::cout << "1344: failed nonhardeningReturn in substep "<< std::endl;
 #endif
     goto failedSubstep;
   }
@@ -1413,7 +1413,7 @@ updateISV:
       // This code was never reached in testing, but is here to catch
       // unforseen errors.
 #ifdef MHdebug
-      std::cout << "1273: i>=imax, failed substep "<< endl;
+      std::cout << "1273: i>=imax, failed substep "<< std::endl;
 #endif
       goto failedSubstep;
     }
@@ -2219,14 +2219,14 @@ void Arenisca3::computePressEOSCM(double rho_cur,double& pressure,
   dp_drho  = 0.5*bulk*(rho_orig/(rho_cur*rho_cur) + 1./rho_orig);
   tmp = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
 
-  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3" << std::endl;
 }
 
 //T2D: Throw exception that this is not supported
 double Arenisca3::getCompressibility()
 {
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3"
-       << endl;
+       << std::endl;
   return 1.0;
 }
 

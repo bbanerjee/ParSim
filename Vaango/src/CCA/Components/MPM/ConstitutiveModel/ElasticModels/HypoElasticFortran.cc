@@ -365,7 +365,7 @@ HypoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
 
 #if 0
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR HypoElasticFortran"
-       << endl;
+       << std::endl;
 #endif
 }
 
@@ -386,7 +386,7 @@ HypoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
 
 #if 0
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElasticFortran"
-       << endl;
+       << std::endl;
 #endif
 }
 

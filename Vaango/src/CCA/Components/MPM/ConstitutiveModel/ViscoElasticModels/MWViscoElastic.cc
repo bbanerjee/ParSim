@@ -518,7 +518,7 @@ MWViscoElastic::computeRhoMicroCM(double pressure, const double p_ref,
 
 #if 0
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR MWViscoElastic"
-       << endl;
+       << std::endl;
 #endif
 }
 
@@ -544,7 +544,7 @@ MWViscoElastic::computePressEOSCM(const double rho_cur, double& pressure,
 
 #if 0
   std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR MWViscoElastic"
-       << endl;
+       << std::endl;
 #endif
 }
 

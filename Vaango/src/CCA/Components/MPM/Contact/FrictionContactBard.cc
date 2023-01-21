@@ -520,7 +520,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
     //  print out epsilon_max_max
     //  static int ts=0;
     //  static ofstream tmpout("max_strain.dat");
-    //  tmpout << ts << " " << epsilon_max_max << endl;
+    //  tmpout << ts << " " << epsilon_max_max << std::endl;
     //  ts++;
 
     // This converts frictional work into a temperature rate
@@ -536,7 +536,7 @@ FrictionContactBard::exMomIntegrated(const ProcessorGroup*,
           IntVector node = *iter;
           gFrictionWork[mat][node] /= (c_v * gMass[mat][node] * delT);
           if (gFrictionWork[mat][node] < 0.0) {
-            std::cout << "dT/dt is negative: " << gFrictionWork[mat][node] << endl;
+            std::cout << "dT/dt is negative: " << gFrictionWork[mat][node] << std::endl;
           }
         }
       }

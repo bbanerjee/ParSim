@@ -100,16 +100,16 @@ bool load_timestep(int timestep, float prune_percent);
 
 void usage(char* prog_name)
 {
-  cerr << "usage: " << prog_name
+  std::cerr <<  "usage: " << prog_name
        << " <uda directory> [-t <timestep>] [-p <prune percent>] [-x]" << endl;
-  cerr << endl << "Options\n";
-  cerr << "-t <timestep>\n"
+  std::cerr <<  endl << "Options\n";
+  std::cerr <<  "-t <timestep>\n"
       << "\tLoads the taskgraph from the given timestep directory in the uda\n"
       << "\tdirectory.\n";
-  cerr << "-p <prune percent>\n"
+  std::cerr <<  "-p <prune percent>\n"
       << "\tHide nodes and edges with maximum path costs less than <percent>\n"
        << "\tof the critical path cost.\n";
-  cerr << "-x\n"
+  std::cerr <<  "-x\n"
     << "\tNot just hide, but exclude nodes with maximum path costs less than\n"
     << "\tthe set pruning percent.  This is useful for very large graphs.\n";
 }
@@ -166,7 +166,7 @@ main(int argc, char* argv[])
 
   bool loaded = load_timestep(timestep, prune_percent);
   if (!loaded) {
-    cerr << "Failed reading task graph.  Quitting.\n";
+    std::cerr <<  "Failed reading task graph.  Quitting.\n";
     return 1;
   }
  
@@ -365,7 +365,7 @@ static void handle_console_input()
   } break;
     
   default:
-    cerr << "Unknown command: " << cmd << endl;
+    std::cerr <<  "Unknown command: " << cmd << endl;
     break;
   }
   

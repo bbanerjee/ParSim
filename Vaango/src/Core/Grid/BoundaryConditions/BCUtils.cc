@@ -181,7 +181,7 @@ is_BC_specified(const ProblemSpecP& prob_spec,
            << "ERROR: A periodic AND a normal boundary condition have been "
               "specifed for \n"
            << " direction(s): (" << dir
-           << ")  You can only have one or the other" << endl;
+           << ")  You can only have one or the other" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
   }

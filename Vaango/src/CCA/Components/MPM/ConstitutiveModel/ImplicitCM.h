@@ -28,7 +28,7 @@
 #define __IMPLICIT_CM_H__
 
 #include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 #include <vector>
 #include <Core/Grid/Variables/Array3.h>
 #include <Core/Grid/Variables/ComputeSet.h>

@@ -380,7 +380,7 @@ void DynamicModel::computeVariance(const ProcessorGroup*,
                                    DataWarehouse* new_dw,
                                    FilterScalar* s)
 {
-  cout_doing << "Doing computeVariance "<< "\t\t\t DynamicModel" << endl;
+  cout_doing << "Doing computeVariance "<< "\t\t\t DynamicModel" << std::endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     

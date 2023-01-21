@@ -375,7 +375,7 @@ ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
 
-    // std::cerr << " BC Type = " << bcType << endl;
+    // std::cerr << " BC Type = " << bcType << std::endl;
     if (bcType == "Pressure") {
       PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
       if (pbc->flagMaterialPoint(pp, dxpp)) {
@@ -411,19 +411,19 @@ ParticleCreator::printPhysicalBCs()
     string bcType = bc->getType();
     if (bcType == "Pressure") {
       PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
-      std::cerr << *pbc << endl;
+      std::cerr << *pbc << std::endl;
     }
     if (bcType == "Velocity") {
       VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
-      std::cerr << *vbc << endl;
+      std::cerr << *vbc << std::endl;
     }
     if (bcType == "Moment") {
       MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
-      std::cerr << *pbc << endl;
+      std::cerr << *pbc << std::endl;
     }
     if (bcType == "HeatFlux") {
       HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
-      std::cerr << *hfbc << endl;
+      std::cerr << *hfbc << std::endl;
     }
   }
 }
@@ -437,18 +437,18 @@ ParticleCreator::applyForceBC(const Vector& dxpp,
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
 
-    // std::cerr << " BC Type = " << bcType << endl;
+    // std::cerr << " BC Type = " << bcType << std::endl;
     if (bcType == "Force") {
       ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
 
       Box fbcBox(fbc->getLowerRange() - dxpp, fbc->getUpperRange() + dxpp);
 
-      // std::cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
+      // std::cerr << "BC Box = " << bcBox << " Point = " << pp << std::endl;
       if (fbcBox.contains(pp)) {
         pExtForce = fbc->getForceDensity() * pMass;
         // std::cerr << "External Force on Particle = " << pExtForce
         //      << " Force Density = " << bc->getForceDensity()
-        //      << " Particle Mass = " << pMass << endl;
+        //      << " Particle Mass = " << pMass << std::endl;
       }
     }
   }
@@ -839,7 +839,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     FileGeometryPiece* fgp = dynamic_cast<FileGeometryPiece*>(piece.get());
     if (fgp) {
       if (d_useCPTI) {
-        proc0cout << "*** Reading CPTI file ***" << endl;
+        proc0cout << "*** Reading CPTI file ***" << std::endl;
       }
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();

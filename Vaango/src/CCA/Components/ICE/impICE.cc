@@ -102,7 +102,7 @@ void ICE::scheduleSetupMatrix(  SchedulerP& sched,
   //__________________________________
   //  Form the matrix
   cout_doing << d_myworld->myRank()<< " ICE::scheduleSetupMatrix" 
-            << "\t\t\t\t\tL-" << levelIndex<< endl;
+            << "\t\t\t\t\tL-" << levelIndex<< std::endl;
   t = scinew Task("ICE::setupMatrix", this, &ICE::setupMatrix);
   t->requires( Task::ParentOldDW, lb->delTLabel, getLevel(patches));
   t->requires( whichDW,   lb->sp_volX_FCLabel,    gac,1);        
@@ -137,7 +137,7 @@ void ICE::scheduleSetupRHS(  SchedulerP& sched,
   int levelIndex = level->getIndex();
  
   cout_doing << d_myworld->myRank()<< " ICE::scheduleSetupRHS" 
-             << "\t\t\t\t\t\tL-" << levelIndex<< endl;
+             << "\t\t\t\t\t\tL-" << levelIndex<< std::endl;
   t = scinew Task("ICE::setupRHS", this, 
                   &ICE::setupRHS, insideOuterIterLoop,computes_or_modifies);
  
@@ -196,7 +196,7 @@ void ICE::scheduleCompute_maxRHS(SchedulerP& sched,
                                  const MaterialSubset* one_matl,
                                  const MaterialSet* allMatls){ 
   cout_doing << d_myworld->myRank()<< " ICE::scheduleCompute_maxRHS" 
-             << "\t\t\t\t\tL-" << level->getIndex()<< endl;
+             << "\t\t\t\t\tL-" << level->getIndex()<< std::endl;
   Task* t;
   t = scinew Task("ICE::compute_maxRHS", this, &ICE::compute_maxRHS);
   
@@ -347,7 +347,7 @@ void ICE::scheduleImplicitPressureSolve(  SchedulerP& sched,
                                           const MaterialSet* all_matls)
 {
   cout_doing << d_myworld->myRank()
-              <<" ICE::scheduleImplicitPressureSolve" << endl;
+              <<" ICE::scheduleImplicitPressureSolve" << std::endl;
 
   // if we're here, we're compiling the outer taskgraph.  Then we should compile the inner one too.
   d_recompileSubsched = true;
@@ -826,7 +826,7 @@ void ICE::compute_maxRHS(const ProcessorGroup*,
         }
         rhs_max = Max(rhs_max, Abs(rhs[c]/vol));
       }  
-      std::cout << " maxRHS: " << maxCell << " " << rhs_max << " \t L-" << level->getIndex() << endl;
+      std::cout << " maxRHS: " << maxCell << " " << rhs_max << " \t L-" << level->getIndex() << std::endl;
     }
   } // patch loop
 }
@@ -1009,7 +1009,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
                                 const MaterialSubset* mpm_matls)
 {
   cout_doing<<"Doing implicitPressureSolve "<<"\t\t\t\t ICE \tL-" 
-            << level->getIndex()<< endl;
+            << level->getIndex()<< std::endl;
 
   //__________________________________
   // define Matl sets and subsets
@@ -1156,7 +1156,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
     
     proc0cout << "Outer iteration " << counter
               << " max_rhs before solve "<< max_RHS_old
-              << " after solve " << max_RHS<< endl;
+              << " after solve " << max_RHS<< std::endl;
     
     // output files for debugging
     int timestep = d_simulator->getTimeStep();
@@ -1187,7 +1187,7 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
       proc0cout << "\nWARNING: outer interation is diverging now "
                 << "restarting the timestep"
                 << " Max_RHS " << max_RHS 
-                << " smallest_max_RHS_sofar "<< smallest_max_RHS_sofar<< endl;
+                << " smallest_max_RHS_sofar "<< smallest_max_RHS_sofar<< std::endl;
       restart = true;
     }
     if(restart){

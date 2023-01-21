@@ -750,7 +750,7 @@ DataArchive::setupQueryPIDX(PIDX_access& access,
 
   // int me;
   // PIDX_get_current_time_step(idxFile, &me);
-  // cout << " PIDX file has currentl timestep: " << me << endl;
+  // cout << " PIDX file has currentl timestep: " << me << std::endl;
 
   //__________________________________
   //  set locations in PIDX file for querying variable
@@ -1428,7 +1428,7 @@ DataArchive::queryRegion(Variable& var,
                 << patch->getLowIndex(basis) << " "
                 << patch->getHighIndex(basis)
                 << " var range: " << tmpVar->getLow() << " "
-                << tmpVar->getHigh() << endl;
+                << tmpVar->getHigh() << std::endl;
       throw e;
     }
     delete tmpVar;
@@ -2441,7 +2441,7 @@ DataArchive::TimeData::parseFile(const string& filename,
       if (std::find(d_datafileInfoIndex.begin(),
                     d_datafileInfoIndex.end(),
                     vmp) != d_datafileInfoIndex.end()) {
-        // cerr << "Duplicate variable name: " << name << endl;
+        // std::cerr <<  "Duplicate variable name: " << name << std::endl;
       } else {
         DataFileInfo dfi(start, end, numParticles);
         d_datafileInfoIndex.push_back(vmp);

@@ -88,13 +88,13 @@ tecplot( DataArchive *   da,
   const Uintah::TypeDescription* subtype;
   if(!do_all_ccvars) {
     for(int i=0;i<(int)vars.size();i++){
-      std::cout << vars[i] << ": " << types[i]->getName() << endl;
+      std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
       if(vars[i] == ccVarInput) {
         ccVarFound = true;
       }
     }
     if(!ccVarFound) {
-      cerr << "the input ccVariable for tecplot is not storaged in the Dada Archive" << endl;
+      std::cerr <<  "the input ccVariable for tecplot is not storaged in the Dada Archive" << std::endl;
       abort();
     }
   } // end of (!do_all_ccvars)
@@ -105,24 +105,24 @@ tecplot( DataArchive *   da,
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   for(int i=0;i<(int)index.size();i++) {
-    std::cout << index[i] << ": " << times[i] << endl;
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
   
   if (!tslow_set)
     time_step_lower =0;
   else if (time_step_lower >= times.size()) {
-    cerr << "timesteplow must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timesteplow must be between 0 and " << times.size()-1 << std::endl;
     abort();
   }
   if (!tsup_set)
     time_step_upper = times.size()-1;
   else if (time_step_upper >= times.size()) {
-    cerr << "timestephigh must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timestephigh must be between 0 and " << times.size()-1 << std::endl;
     abort();
   }
               
   for(int i=0;i<(int)vars.size();i++){ //for loop over all the variables: 2
-    std::cout << vars[i] << ": " << types[i]->getName() << endl;
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
     if(do_all_ccvars || ((!do_all_ccvars) && (vars[i] == ccVarInput))){ // check if do all CCVariables 
       // or just do one variable: 3  
       td = types[i];
@@ -147,7 +147,7 @@ tecplot( DataArchive *   da,
 
           //    print out the Title of the output file according to the subtype of the CCVariables 
 		       
-          outfile << "TITLE = " << "\"" << ccVariable << " tecplot data file" << "\"" << endl;
+          outfile << "TITLE = " << "\"" << ccVariable << " tecplot data file" << "\"" << std::endl;
 
           if(i_xd == "i_3d") {
             if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
@@ -169,7 +169,7 @@ tecplot( DataArchive *   da,
                       << ", \"" << ccVariable << ".2.1\"" << ", \"" << ccVariable << ".2.2\"" << ", \"" << ccVariable << ".2.3\""
                       << ", \"" << ccVariable << ".3.1\"" << ", \"" << ccVariable << ".3.2\"" << ", \"" << ccVariable << ".3.3\"";
             }
-            outfile << endl;
+            outfile << std::endl;
           } else if(i_xd == "i_2d") {
             if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"Y" << "\", " 
@@ -188,7 +188,7 @@ tecplot( DataArchive *   da,
                       << "\"" << ccVariable  << ".1.1\"" << ", \"" << ccVariable << ".1.2\"" 
                       << ", \"" << ccVariable << ".2.1\"" << ", \"" << ccVariable << ".2.2\""; 
             }
-            outfile << endl;
+            outfile << std::endl;
           } else if(i_xd == "i_1d") {
             if(subtype->getType() == Uintah::TypeDescription::Type::double_type) {
               outfile << "VARIABLES = " << "\"X" << "\", " << "\"" << ccVariable << "\""; 
@@ -202,13 +202,13 @@ tecplot( DataArchive *   da,
             if(subtype->getType() == Uintah::TypeDescription::Type::Matrix3) {
               outfile << "VARIABLES =" << "\"X" << "\", " << "\"" << ccVariable  << ".1.1\"";
             }
-            outfile << endl;
+            outfile << std::endl;
           }
 
           //loop over the time
           for(unsigned long t=time_step_lower;t<=time_step_upper;t=t+tskip){  //time loop: 6
             double time = times[t];
-            std::cout << "time = " << time << endl;
+            std::cout << "time = " << time << std::endl;
 	
             /////////////////////////////////////////////////////////////////
             // find index ranges for current grid level
@@ -217,7 +217,7 @@ tecplot( DataArchive *   da,
             GridP grid = da->queryGrid(t);
             for(int l=0;l<grid->numLevels();l++){  //level loop: 7
               LevelP level = grid->getLevel(l);
-              std::cout << "\t    Level: " << level->getIndex() << ", id " << level->getID() << endl;
+              std::cout << "\t    Level: " << level->getIndex() << ", id " << level->getID() << std::endl;
 
               //		  int numNode,numPatch;
               int numMatl;
@@ -240,7 +240,7 @@ tecplot( DataArchive *   da,
                 const Patch* patch = *iter;
                 lo = patch->getExtraCellLowIndex();
                 hi = patch->getExtraCellHighIndex();
-                std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
+                std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << std::endl;
                 int matlNum = da->queryNumMaterials(patch, t);
                 if(numMatl < matlNum) numMatl = matlNum;
                 if(Imax < hi.x()) Imax = hi.x();
@@ -264,14 +264,14 @@ tecplot( DataArchive *   da,
                   if(i_xd == "i_3d"){ 
                     outfile << "ZONE T =  " << "\"T:" << time << "," <<"M:" << matlsIndex << "," << "L:" << l << "," << "\"," 
                             << "N = " << Irange*Jrange*Krange << "," << "E = " << (Irange-1)*(Jrange-1)*(Krange-1) << "," 
-                            << "F = " << "\"FEPOINT\"" << "," << "ET = " << "\"BRICK\"" << endl;
+                            << "F = " << "\"FEPOINT\"" << "," << "ET = " << "\"BRICK\"" << std::endl;
                   } else if(i_xd == "i_2d") {
                     outfile << "ZONE T =  " <<"\"T:"  << time << "," <<"M:" << matlsIndex << ","  << "L:" << l << "\"," 
                             << "N = " << Irange*Jrange << "," << "E = " << (Irange-1)*(Jrange-1) << "," 
-                            << "F = " << "\"FEPOINT\"" << "," << "ET = " << "\"QUADRILATERAL\"" << endl;
+                            << "F = " << "\"FEPOINT\"" << "," << "ET = " << "\"QUADRILATERAL\"" << std::endl;
                   } else if(i_xd == "i_1d"){
                     outfile << "ZONE T =  " <<"\"T:"  << time << "," <<"M:" << matlsIndex << ","  << "L:" << l << "\","
-                            << "I = " << Irange << "," << "F = " << "\"POINT\"" << endl;
+                            << "I = " << Irange << "," << "F = " << "\"POINT\"" << std::endl;
                   }
 
                   Uintah::Array3Container<int> nodeIndex(Imax-Imin,Jmax-Jmin,Kmax-Kmin);
@@ -290,7 +290,7 @@ tecplot( DataArchive *   da,
                     Vector dx = patch->dCell();
                     IntVector lo = patch->getExtraCellLowIndex();
                     IntVector hi = patch->getExtraCellHighIndex();
-                    std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << endl;
+                    std::cout << "\t\tPatch: " << patch->getID() << " Over: " << lo << " to " << hi << std::endl;
                     ConsecutiveRangeSet matls = da->queryMaterials(ccVariable, patch, t);
                     for(ConsecutiveRangeSet::iterator matlIter = matls.begin();
                         matlIter != matls.end(); matlIter++){ //material loop: 10
@@ -311,7 +311,7 @@ tecplot( DataArchive *   da,
                                     outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
                                             << start.y() + dx.y()*(indexJ + 1) << " "   
                                             << start.z() + dx.z()*(indexK + 1) << " "  
-                                            << value[cellIndex] << endl;
+                                            << value[cellIndex] << std::endl;
                                   }
                                 }
                               } 
@@ -325,7 +325,7 @@ tecplot( DataArchive *   da,
                                   IntVector cellIndex(indexI, indexJ, 0);
                                   outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
                                           << start.y() + dx.y()*(indexJ + 1) << " "   
-                                          << value[cellIndex] << endl;
+                                          << value[cellIndex] << std::endl;
                                 }
                               }
                             } //end of if(i_xd == "i_2d")
@@ -336,7 +336,7 @@ tecplot( DataArchive *   da,
                                 nodeIndex(indexI-Imin,0,0) = totalNode;
                                 IntVector cellIndex(indexI, 0, 0);
                                 outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
-                                        << value[cellIndex] << endl;
+                                        << value[cellIndex] << std::endl;
                               }
                             }//end of if(i_xd == "i_1d") 
                           }
@@ -355,7 +355,7 @@ tecplot( DataArchive *   da,
                                     outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
                                             << start.y() + dx.y()*(indexJ + 1) << " "   
                                             << start.z() + dx.z()*(indexK + 1) << " "  
-                                            << value[cellIndex] << endl;
+                                            << value[cellIndex] << std::endl;
                                   }
                                 }
                               } 
@@ -369,7 +369,7 @@ tecplot( DataArchive *   da,
                                   IntVector cellIndex(indexI, indexJ, 0);
                                   outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
                                           << start.y() + dx.y()*(indexJ + 1) << " "   
-                                          << value[cellIndex] << endl;
+                                          << value[cellIndex] << std::endl;
                                 }
                               }
                             } //end of if(i_xd == "i_2d")
@@ -380,7 +380,7 @@ tecplot( DataArchive *   da,
                                 nodeIndex(indexI-Imin,0,0) = totalNode;
                                 IntVector cellIndex(indexI, 0, 0);
                                 outfile << start.x() + dx.x()*(indexI + 1) << " " //assume the begining index as [-1,-1,-1] 
-                                        << value[cellIndex] << endl;
+                                        << value[cellIndex] << std::endl;
                               }
                             }//end of if(i_xd == "i_1d") 
                           }
@@ -400,7 +400,7 @@ tecplot( DataArchive *   da,
                                             << start.y() + dx.y()*(indexJ + 1) << " "
                                             << start.z() + dx.z()*(indexK + 1) << " " 
                                             << value[cellIndex].x() << " " << value[cellIndex].y() << " "
-                                            << value[cellIndex].z() << endl;  
+                                            << value[cellIndex].z() << std::endl;  
                                   }
                                 }
                               }
@@ -413,7 +413,7 @@ tecplot( DataArchive *   da,
                                   nodeIndex(indexI-Imin,indexJ-Jmin,0) = totalNode;
                                   outfile << start.x() + dx.x()*(indexI + 1) << " "  //assume the begining index is [-1,-1,-1]
                                           << start.y() + dx.y()*(indexJ + 1) << " "
-                                          << value[cellIndex].x() << " " << value[cellIndex].y() << endl;
+                                          << value[cellIndex].x() << " " << value[cellIndex].y() << std::endl;
                                 }
                               }
                             } //end of if(i_xd == "i_2d")
@@ -424,7 +424,7 @@ tecplot( DataArchive *   da,
                                 ++totalNode;
                                 nodeIndex(indexI-Imin,0,0) = totalNode;
                                 outfile << start.x() + dx.x()*(indexI + 1) << " "  //assume the begining index is [-1,-1,-1]
-                                        << value[cellIndex].x() << endl;
+                                        << value[cellIndex].x() << std::endl;
                               }
                             } //end of if(i_xd == "i_1d")
                           }
@@ -444,7 +444,7 @@ tecplot( DataArchive *   da,
                                             << start.y() + dx.y()*(indexJ + 1) << " "
                                             << start.z() + dx.z()*(indexK + 1) << " " 
                                             << value[cellIndex].x() << " " << value[cellIndex].y() << " "
-                                            << value[cellIndex].z() << endl;  
+                                            << value[cellIndex].z() << std::endl;  
                                   }
                                 }
                               }
@@ -458,7 +458,7 @@ tecplot( DataArchive *   da,
                                   nodeIndex(indexI-Imin,indexJ-Jmin,0) = totalNode;
                                   outfile << start.x() + dx.x()*(indexI + 1) << " "  //assume the begining index is [-1,-1,-1]
                                           << start.y() + dx.y()*(indexJ + 1) << " "
-                                          << value[cellIndex].x() << " " << value[cellIndex].y() << endl;
+                                          << value[cellIndex].x() << " " << value[cellIndex].y() << std::endl;
                                 }
                               }
                             } //end of if(i_xd == "i_2d")
@@ -469,7 +469,7 @@ tecplot( DataArchive *   da,
                                 ++totalNode;
                                 nodeIndex(indexI-Imin,0,0) = totalNode;
                                 outfile << start.x() + dx.x()*(indexI + 1) << " "  //assume the begining index is [-1,-1,-1]
-                                        << value[cellIndex].x() << endl;
+                                        << value[cellIndex].x() << std::endl;
                               }
                             } //end of if(i_xd == "i_1d")
                           }
@@ -494,7 +494,7 @@ tecplot( DataArchive *   da,
                                             << (value[cellIndex])(1,0) << " " << (value[cellIndex])(1,1) << " "  
                                             << (value[cellIndex])(1,2) << " " 
                                             << (value[cellIndex])(2,0) << " " << (value[cellIndex])(2,1) << " " 
-                                            << (value[cellIndex])(2,2) << endl;  
+                                            << (value[cellIndex])(2,2) << std::endl;  
                                   }
                                 }
                               }
@@ -510,7 +510,7 @@ tecplot( DataArchive *   da,
                                           << start.y() + dx.y()*(indexJ + 1) << " "  
                                           << (value[cellIndex])(0,0) << " " << (value[cellIndex])(0,1) << " "
                                           << (value[cellIndex])(1,0) << " " << (value[cellIndex])(1,1) << " "
-                                          << endl;
+                                          << std::endl;
                                 }
                               }
                             }//end of if(i_xd == "i_2d")
@@ -521,13 +521,13 @@ tecplot( DataArchive *   da,
                                 nodeIndex(indexI-Imin,0,0) = totalNode;
                                 IntVector cellIndex(indexI, 0, 0);
                                 outfile << start.x() + dx.x()*(indexI + 1) << " "  //assume the begining index is [-1,-1,-1]
-                                        << (value[cellIndex])(0,0) << endl; 
+                                        << (value[cellIndex])(0,0) << std::endl; 
                               }
                             }//end of if(i_xd == "i_1d") 
                           }
                         break;
                         default:
-                          cerr << "CC Variable of unknown type: " << subtype->getName() << endl;
+                          std::cerr <<  "CC Variable of unknown type: " << subtype->getName() << std::endl;
                           break;
                         } //end of switch (subtype->getType()): 12
                       } //end of if(matlsIndex == matl): 11
@@ -548,7 +548,7 @@ tecplot( DataArchive *   da,
                                   << nodeIndex(indexI-Imin,indexJ-Jmin,indexK+1-Kmin) << " "  
                                   << nodeIndex(indexI+1-Imin,indexJ-Jmin,indexK+1-Kmin) << " "  
                                   << nodeIndex(indexI+1-Imin,indexJ+1-Jmin,indexK-Kmin) << " "  
-                                  << nodeIndex(indexI-Imin,indexJ+1-Jmin,indexK+1-Kmin) << endl;
+                                  << nodeIndex(indexI-Imin,indexJ+1-Jmin,indexK+1-Kmin) << std::endl;
                         } //end of loop over indexI
                       } //end of loop over indexJ
                     } //end of loop over indexK
@@ -561,7 +561,7 @@ tecplot( DataArchive *   da,
                                 << nodeIndex(indexI+1-Imin,indexJ-Jmin,0) << " "  
                                 << nodeIndex(indexI+1-Imin,indexJ+1-Jmin,0) << " "  
                                 << nodeIndex(indexI-Imin,indexJ+1-Jmin,0) << " "  
-                                << endl;
+                                << std::endl;
                       } //end of loop over indexI
                     } //end of loop over indexJ
                   } //end of if(i_xd == "i_2d") 

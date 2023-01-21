@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 
 using namespace Uintah;
 

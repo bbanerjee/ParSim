@@ -27,12 +27,16 @@
 //  MPMMaterial.cc
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
-#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
@@ -47,7 +51,6 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Variables/VarLabel.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <iostream>
@@ -185,8 +188,9 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
 
     GeometryPieceP mainpiece;
     if (pieces.size() == 0) {
-      throw ParameterNotFound(
-        "No piece specified in geom_object", __FILE__, __LINE__);
+      throw ParameterNotFound("No piece specified in geom_object",
+                              __FILE__,
+                              __LINE__);
     } else if (pieces.size() > 1) {
       mainpiece = std::make_shared<UnionGeometryPiece>(pieces);
     } else {
@@ -199,8 +203,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   }
 }
 
-MPMMaterial::~MPMMaterial() {
-}
+MPMMaterial::~MPMMaterial() {}
 
 void
 MPMMaterial::registerParticleState(std::vector<VarLabelVector>& state,
@@ -294,8 +297,11 @@ MPMMaterial::createParticles(CCVariable<short int>& cellNAPID,
                              const Patch* patch,
                              DataWarehouse* new_dw)
 {
-  return d_particle_creator->createParticles(
-    this, cellNAPID, patch, new_dw, d_geom_objs);
+  return d_particle_creator->createParticles(this,
+                                             cellNAPID,
+                                             patch,
+                                             new_dw,
+                                             d_geom_objs);
 }
 
 ParticleCreator*
@@ -404,8 +410,9 @@ MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
           for (int iz = 0; iz < ppc.z(); iz++) {
             IntVector idx(ix, iy, iz);
             Point p = lower + dxpp * idx;
-            if (piece->inside(p))
+            if (piece->inside(p)) {
               count++;
+            }
           }
         }
       }

@@ -264,7 +264,7 @@ Crack::MoveCracks(const ProcessorGroup*,
                 std::cout << "Error: cx[" << m << "," << idx << "]=" << cx[m][idx]
                      << " has moved to " << cptmp[j] << ", outside the global grid."
                      << " Center-of-mass velocity, vcm=" << vcm 
-                     << ". Program terminated." << endl;
+                     << ". Program terminated." << std::endl;
                 exit(1);
               }   
               

@@ -90,7 +90,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
           // Cast the boundary condition into a vector type BC
           BoundCond<Vector>::BoundCondP bc = std::dynamic_pointer_cast<BoundCond<Vector> >(bcb); 
           if (bc) {
-            if (bc->getBCType__NEW() == "Dirichlet") {
+            if (bc->getBCType() == "Dirichlet") {
               for (nbound_ptr.reset();!nbound_ptr.done();nbound_ptr++){ 
                 variable[*nbound_ptr] = bc->getValue();
               }
@@ -100,7 +100,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         } else if (bc_type == "Symmetric") {
 
-          if (bcb->getBCType__NEW() == "symmetry") {
+          if (bcb->getBCType() == "symmetry") {
 
             if (face == Patch::xplus || face == Patch::xminus){
               for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
@@ -169,14 +169,14 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         if (bc_type=="Pressure" || bc_type=="Temperature") {
 
-          if (bc->getBCType__NEW() == "Dirichlet") {
+          if (bc->getBCType() == "Dirichlet") {
             double bcv = bc->getValue();
             for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
               variable[*nbound_ptr] = bcv;
             }
           } // end if Dirichlet
             
-          if (bc->getBCType__NEW() == "Neumann"){
+          if (bc->getBCType() == "Neumann"){
             Vector deltax = patch->dCell();
             double dx = -9;
             IntVector off(-9,-9,-9);

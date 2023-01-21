@@ -142,16 +142,16 @@ usage( const std::string & message,
        const std::string& badarg,
        const std::string& progname)
 {
-  cerr << message << "\n";
+  std::cerr <<  message << "\n";
   if(badarg != ""){
-    cerr << "Error parsing argument: " << badarg << '\n';
+    std::cerr <<  "Error parsing argument: " << badarg << '\n';
   }
-  cerr << "Usage: " << progname << " -uda <archive file>  [options] \n\n";
-  cerr << "options are:\n";
-  cerr << "-h[elp]    This usage information.\n";
-  cerr << "-matl      material index for the velocity and scalar-f. Default is 0.\n";
-  cerr << "-o         output_file_name\n";
-  cerr << "-v         verbose output.  This also creates a file named compScalar.dat that contains cell indices and the difference\n";
+  std::cerr <<  "Usage: " << progname << " -uda <archive file>  [options] \n\n";
+  std::cerr <<  "options are:\n";
+  std::cerr <<  "-h[elp]    This usage information.\n";
+  std::cerr <<  "-matl      material index for the velocity and scalar-f. Default is 0.\n";
+  std::cerr <<  "-o         output_file_name\n";
+  std::cerr <<  "-v         verbose output.  This also creates a file named compScalar.dat that contains cell indices and the difference\n";
   
   exit(1);
 }
@@ -187,7 +187,7 @@ main( int argc, char *argv[] )
       outFile = fopen(argv[i],"w");
       
       if(!outFile) { // Checking success of file creation
-        cerr << "The outputfile cannot be created\n";
+        std::cerr <<  "The outputfile cannot be created\n";
         exit (1);
       }
     } else if (s == "-v"){
@@ -220,7 +220,7 @@ main( int argc, char *argv[] )
   
   // bulletproofing
   if(t_initial != 0.0){ 
-    cout<<"ERROR:Compare_scalar: please add <outputInitTimestep/> to the  <DataArchiver> section of the inputfile" << endl;
+    cout<<"ERROR:Compare_scalar: please add <outputInitTimestep/> to the  <DataArchiver> section of the inputfile" << std::endl;
     exit(1);
   }
   
@@ -259,7 +259,7 @@ main( int argc, char *argv[] )
         if (!(is_int(offset.x()) && is_int(offset.y()) && is_int(offset.z()) ) ){
           cout<<"ERROR:Compare_scalar: The quantity (final timestep * velocity/dx) must be an integer:"
               << offset << "\n";
-          std::cout << "final timestep " << t_final << " velocity " << initial_vel[c] << " dx " << dx << endl;
+          std::cout << "final timestep " << t_final << " velocity " << initial_vel[c] << " dx " << dx << std::endl;
           exit(1);
         }
         
@@ -333,10 +333,10 @@ main( int argc, char *argv[] )
       }
     } // end patch iteration
     if(verbose){
-      std::cout << "\t\tTime Step: " << index[timeIndex] << " Physical Time: " << times[timeIndex] << " dx " << dx << endl;
-      std::cout << "\t\tMax diff: "<< maxDiff << " " << c_maxDiff << endl;
-      std::cout << "\t\tMin_diff: "<< minDiff << " " << c_minDiff << endl; 
-      std::cout << "\t\tNumber of cells:  " << i << " Number of cells the passive scalar moved " << offset << endl;
+      std::cout << "\t\tTime Step: " << index[timeIndex] << " Physical Time: " << times[timeIndex] << " dx " << dx << std::endl;
+      std::cout << "\t\tMax diff: "<< maxDiff << " " << c_maxDiff << std::endl;
+      std::cout << "\t\tMin_diff: "<< minDiff << " " << c_minDiff << std::endl; 
+      std::cout << "\t\tNumber of cells:  " << i << " Number of cells the passive scalar moved " << offset << std::endl;
       std::cout << "\t\tL2 norm of error: " << sqrt(total_error/i) << "\n";
     }
     fprintf(outFile, "%16.16le\n",sqrt(total_error/double(i)) );

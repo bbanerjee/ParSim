@@ -67,18 +67,18 @@ FractureParticleCreator::applyForceBC(const Vector& dxpp,
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
 
-    // cerr << " BC Type = " << bcType << endl;
+    // std::cerr <<  " BC Type = " << bcType << std::endl;
     if (bcType == "Force") {
       ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
 
       Box fbcBox(fbc->getLowerRange(), fbc->getUpperRange());
 
-      // cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
+      // std::cerr <<  "BC Box = " << bcBox << " Point = " << pp << std::endl;
       if (fbcBox.contains(pp)) {
         pExtForce = fbc->getForceDensity() * pMass;
-        // cerr << "External Force on Particle = " << pExtForce
+        // std::cerr <<  "External Force on Particle = " << pExtForce
         //      << " Force Density = " << fbc->getForceDensity()
-        //      << " Particle Mass = " << pMass << endl;
+        //      << " Particle Mass = " << pMass << std::endl;
       }
     }
   }

@@ -229,7 +229,7 @@ RegridderTest::initialize(const ProcessorGroup*,
                           DataWarehouse* /*old_dw*/,
                           DataWarehouse* new_dw)
 {
-  //    cerr << "RANDY: RegridderTest::initialize()" << endl;
+  //    std::cerr <<  "RANDY: RegridderTest::initialize()" << std::endl;
 
   new_dw->put(max_vartype(0), d_currentAngleLabel);
   d_centerOfBall = d_centerOfDomain;
@@ -271,7 +271,7 @@ RegridderTest::timeAdvance(const ProcessorGroup*,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw)
 {
-  //    cerr << "RANDY: RegridderTest::timeAdvance()" << endl;
+  //    std::cerr <<  "RANDY: RegridderTest::timeAdvance()" << std::endl;
 
   const Level* level = getLevel(patches);
   if (level->getIndex() == 0) {
@@ -280,7 +280,7 @@ RegridderTest::timeAdvance(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     dbg << d_myworld->myRank() << "  RegridderTest::timeAdvance() on patch "
-        << patch->getID() << endl;
+        << patch->getID() << std::endl;
     for (int m = 0; m < matls->size(); m++) {
       int matl = matls->get(m);
       CCVariable<double> density;
@@ -327,8 +327,8 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
     }
 
     d_oldCenterOfBall = d_centerOfBall;
-    // cerr << "RANDY: RegridderTest::scheduleErrorEstimate() center = " <<
-    // d_centerOfBall << endl;
+    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() center = " <<
+    // d_centerOfBall << std::endl;
     d_centerOfBall = d_centerOfDomain;
     d_centerOfBall[0] += d_radiusOfOrbit * cos((pi * currentAngle) / 180.0);
     d_centerOfBall[1] += d_radiusOfOrbit * sin((pi * currentAngle) / 180.0);
@@ -347,14 +347,14 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
       }
     }
 
-    // cerr << "RANDY: RegridderTest::scheduleErrorEstimate() after  = " <<
-    // d_centerOfBall << endl;
+    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() after  = " <<
+    // d_centerOfBall << std::endl;
   }
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     dbg << d_myworld->myRank() << "  RegridderTest::errorEstimate() on patch "
-        << patch->getID() << endl;
+        << patch->getID() << std::endl;
 
     CCVariable<int> refineFlag;
     new_dw->getModifiable(refineFlag,
@@ -432,7 +432,7 @@ RegridderTest::coarsen(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* coarsePatch = patches->get(p);
     dbg << d_myworld->myRank() << "  RegridderTest::coarsen() on patch "
-        << coarsePatch->getID() << endl;
+        << coarsePatch->getID() << std::endl;
     // Find the overlapping regions...
     Level::selectType finePatches;
     coarsePatch->getFineLevelPatches(finePatches);
@@ -481,11 +481,11 @@ RegridderTest::refine(const ProcessorGroup*,
                       DataWarehouse*,
                       DataWarehouse* new_dw)
 {
-  //    cerr << "RANDY: RegridderTest::refine()" << endl;
+  //    std::cerr <<  "RANDY: RegridderTest::refine()" << std::endl;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     dbg << d_myworld->myRank() << "  RegridderTest::refine() on patch "
-        << patch->getID() << endl;
+        << patch->getID() << std::endl;
     for (int m = 0; m < matls->size(); m++) {
       int matl = matls->get(m);
       CCVariable<double> density;

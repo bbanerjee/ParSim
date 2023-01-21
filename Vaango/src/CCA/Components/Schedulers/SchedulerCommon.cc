@@ -741,7 +741,7 @@ SchedulerCommon::printTrackedVars(DetailedTask* dtask, int when)
               location = " after execution of ";
               break;
           }
-          std::cout << d_myworld->myRank() << location << *dtask << endl;
+          std::cout << d_myworld->myRank() << location << *dtask << std::endl;
           printed_header = true;
         }
 
@@ -1812,7 +1812,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*,
 
         if (!matls->contains(matl)) {
           // std::cout << "We are skipping material " << currentVar.matlIndex_
-          // << endl;
+          // << std::endl;
           continue;
         }
 

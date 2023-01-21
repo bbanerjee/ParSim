@@ -118,14 +118,14 @@ main(int argc, char** argv)
     usage("", argv[0]);
 
   std::cout << "Particle Variable to be extracted = p.stress\n";
-  std::cout << "Material ID to be extracted = " << matID << endl;
+  std::cout << "Material ID to be extracted = " << matID << std::endl;
 
   // Read the particle ID file
-  std::cout << "Particle ID File to be read = " << partIDFile << endl;
+  std::cout << "Particle ID File to be read = " << partIDFile << std::endl;
   std::vector<long64> partID;
   ifstream pidFile(partIDFile.c_str());
   if (!pidFile.is_open()) {
-    cerr << "Particle ID File " << partIDFile << " not found \n";
+    std::cerr <<  "Particle ID File " << partIDFile << " not found \n";
     exit(1);
   }
   do {
@@ -137,23 +137,23 @@ main(int argc, char** argv)
     partID.push_back(id);
   } while (!pidFile.eof());
 
-  std::cout << "  Number of Particle IDs = " << partID.size() << endl;
+  std::cout << "  Number of Particle IDs = " << partID.size() << std::endl;
   for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
-    std::cout << "    p" << (ii + 1) << " = " << partID[ii] << endl;
+    std::cout << "    p" << (ii + 1) << " = " << partID[ii] << std::endl;
   }
 
-  std::cout << "Output file name = " << outFile << endl;
-  std::cout << "UDA directory to be read = " << udaDir << endl;
+  std::cout << "Output file name = " << outFile << std::endl;
+  std::cout << "UDA directory to be read = " << udaDir << std::endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
 
     // Print a particular particle variable
     printStress(da, matID, partID, outFile, timeFiles);
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch (...) {
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 }
@@ -161,15 +161,15 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
   if (badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "\nPrints out a uintah data archive for particle stress data.\n";
-  cerr << "Usage:\n";
-  cerr << " -m <material id> (required)\n";
-  cerr << " -p <particle id file> (required, use selectpart to create this "
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "\nPrints out a uintah data archive for particle stress data.\n";
+  std::cerr <<  "Usage:\n";
+  std::cerr <<  " -m <material id> (required)\n";
+  std::cerr <<  " -p <particle id file> (required, use selectpart to create this "
           "file)\n";
-  cerr << " -uda <archive file> (required)\n";
-  cerr << " -o <output file> (required)\n";
-  cerr << " -timefiles (optional, outputs one file per timestep instead per "
+  std::cerr <<  " -uda <archive file> (required)\n";
+  std::cerr <<  " -o <output file> (required)\n";
+  std::cerr <<  " -timefiles (optional, outputs one file per timestep instead per "
           "particle (default))\n\n";
   exit(1);
 }
@@ -197,7 +197,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
       variableFound = true;
   }
   if (!variableFound) {
-    cerr << "Variable " << partVar << " not found\n";
+    std::cerr <<  "Variable " << partVar << " not found\n";
     exit(1);
   }
 
@@ -226,7 +226,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
       int startPatch = 1;
       for (unsigned long t = 0; t < times.size(); t++) {
         double time = times[t];
-        cerr << "t = " << time;
+        std::cerr <<  "t = " << time;
         clock_t start = clock();
         GridP grid = da->queryGrid(t);
 
@@ -302,8 +302,8 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
         }       // end of level loop
         clock_t end = clock();
         double timetaken = (double)(end - start) / (double)CLOCKS_PER_SEC;
-        cerr << " CPU Time = " << timetaken << " s"
-             << " found " << numFound << endl;
+        std::cerr <<  " CPU Time = " << timetaken << " s"
+             << " found " << numFound << std::endl;
       } // end of time step loop
     }   // end of var compare if
   }     // end of variable loop
@@ -318,7 +318,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
       file.setf(ios::scientific, ios::floatfield);
       file.precision(8);
       std::cout << "Created output file " << name.str() << " for time " << time
-           << endl;
+           << std::endl;
       for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
         int patchIndex = matData[ii].patch[jj];
         int matl = matData[ii].matl[jj];
@@ -329,7 +329,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
         file << " " << pid;
         file << " " << px.x() << " " << px.y() << " " << px.z();
         file << " " << sig(0, 0) << " " << sig(1, 1) << " " << sig(2, 2) << " "
-             << sig(1, 2) << " " << sig(2, 0) << " " << sig(0, 1) << endl;
+             << sig(1, 2) << " " << sig(2, 0) << " " << sig(0, 1) << std::endl;
       }
       file.close();
     }
@@ -342,7 +342,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
       file.setf(ios::scientific, ios::floatfield);
       file.precision(8);
       std::cout << "Created output file " << name.str() << " for particle ID "
-           << partID[ii] << endl;
+           << partID[ii] << std::endl;
       for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
         double time = matData[ii].time[jj];
         int patchIndex = matData[ii].patch[jj];
@@ -354,7 +354,7 @@ printStress(DataArchive* da, int matID, vector<long64>& partID, string outFile,
         file << " " << pid;
         file << " " << px.x() << " " << px.y() << " " << px.z();
         file << " " << sig(0, 0) << " " << sig(1, 1) << " " << sig(2, 2) << " "
-             << sig(1, 2) << " " << sig(2, 0) << " " << sig(0, 1) << endl;
+             << sig(1, 2) << " " << sig(2, 0) << " " << sig(0, 1) << std::endl;
       }
       file.close();
     }

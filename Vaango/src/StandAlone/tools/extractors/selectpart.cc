@@ -130,7 +130,7 @@ namespace Vaango {
       for (auto token: input.d_tokens)  {
         out << token << " ";
       }
-      out << endl;
+      out << std::endl;
       return out;
     }
   };
@@ -170,7 +170,7 @@ int main(const int argc, const char** argv)
 
   // Create input parser
   Vaango::InputParser input(argc, argv);
-  cerr << input;
+  std::cerr <<  input;
 
   // Check if only one of point, line, box have been given in the input line
   bool pointExists = input.cmdOptionExists("-point");
@@ -388,29 +388,29 @@ int main(const int argc, const char** argv)
                     time_step_upper);
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     exit(1);
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     exit(1);
   }
 }
 
 void usage(const std::string& badarg, const std::string& progname)
 {
-  if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
+  if(badarg != "") std::cerr <<  "Error parsing argument: " << badarg << std::endl;
 
-  cerr << "Usage: " << progname << "[options] <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << "  exactly one of (required): \n";
-  cerr << "    -point <x0> <y0> <z0>\n";
-  cerr << "    -line <x0> <y0> <z0> <x1> <y1> <z1>\n";
-  cerr << "    -plane <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2>\n";
-  cerr << "    -box <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> <x3> <y3> <z3>\n";
-  cerr << "  -mat <material id>\n";
-  cerr << "  -timesteplow <int>  (only outputs timestep from int)\n";
-  cerr << "  -timestephigh <int> (only outputs timesteps upto int)\n";
-  cerr << "  -uda <filename>\n";
+  std::cerr <<  "Usage: " << progname << "[options] <archive file>\n\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  "  exactly one of (required): \n";
+  std::cerr <<  "    -point <x0> <y0> <z0>\n";
+  std::cerr <<  "    -line <x0> <y0> <z0> <x1> <y1> <z1>\n";
+  std::cerr <<  "    -plane <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2>\n";
+  std::cerr <<  "    -box <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> <x3> <y3> <z3>\n";
+  std::cerr <<  "  -mat <material id>\n";
+  std::cerr <<  "  -timesteplow <int>  (only outputs timestep from int)\n";
+  std::cerr <<  "  -timestephigh <int> (only outputs timesteps upto int)\n";
+  std::cerr <<  "  -uda <filename>\n";
   exit(1);
 }
 
@@ -425,14 +425,14 @@ findTimestep_loopLimits(bool tslow_set,
     time_step_lower = 0;
   }
   else if( time_step_lower >= times.size() ) {
-    cerr << "timesteplow must be between 0 and " << times.size()-1 << "\n";
+    std::cerr <<  "timesteplow must be between 0 and " << times.size()-1 << "\n";
     exit(1);
   }
   if( !tsup_set || time_step_upper > (times.size() - 1)) {
     time_step_upper = times.size() - 1;
   }
   else if( time_step_upper >= times.size() ) {
-    cerr << "timestephigh must be between 0 and " << times.size()-1 << "\n";
+    std::cerr <<  "timestephigh must be between 0 and " << times.size()-1 << "\n";
     exit(1);
   }
 }
@@ -463,7 +463,7 @@ void printParticleID(DataArchive* da, int mat,
   }
 
   if (!variableFound) {
-    cerr << "p.particleID or p.x not found\n"; 
+    std::cerr <<  "p.particleID or p.x not found\n"; 
     exit(1);
   }
 
@@ -564,7 +564,7 @@ void printParticleID(DataArchive* da, int mat,
          Box coarseBox(low, high);
          selectionBox = coarseBox;
        } 
-       cerr << "Selection box = " << selectionBox << endl;
+       std::cerr <<  "Selection box = " << selectionBox << std::endl;
     
        // loop thru all the materials
        auto matls = da->queryMaterials("p.x", patch, t);
@@ -588,7 +588,7 @@ void printParticleID(DataArchive* da, int mat,
                std::cout << " " << pid[pidx];
                std::cout << " " << position[pidx](0) 
                     << " " << position[pidx](1)
-                    << " " << position[pidx](2) << endl;
+                    << " " << position[pidx](2) << std::endl;
 	     }
           }
         }
@@ -609,14 +609,14 @@ findTimestep_loopLimits( const bool tslow_set,
     time_step_lower = 0;
   }
   else if( time_step_lower >= times.size() ) {
-    cerr << "timesteplow must be between 0 and " << times.size()-1 << "\n";
+    std::cerr <<  "timesteplow must be between 0 and " << times.size()-1 << "\n";
     abort();
   }
   if( !tsup_set ) {
     time_step_upper = times.size() - 1;
   }
   else if( time_step_upper >= times.size() ) {
-    cerr << "timestephigh must be between 0 and " << times.size()-1 << "\n";
+    std::cerr <<  "timestephigh must be between 0 and " << times.size()-1 << "\n";
     abort();
   }
 }

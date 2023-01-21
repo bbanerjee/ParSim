@@ -194,7 +194,7 @@ void lineExtract::problemSetup(const ProblemSpecP& ,
     if(throwException){
       ostringstream warn;
       warn << "ERROR:AnalysisModule:lineExtact: ("<<label->getName() << " "
-           << td->getName() << " ) has not been implemented" << endl;
+           << td->getName() << " ) has not been implemented" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     d_varLabels.push_back(label);
@@ -527,7 +527,7 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
           default:
             ostringstream warn;
             warn << "ERROR:AnalysisModule:lineExtact: ("<<d_varLabels[i]->getName() << " "
-                 << td->getName() << " ) has not been implemented" << endl;
+                 << td->getName() << " ) has not been implemented" << std::endl;
             throw InternalError(warn.str(), __FILE__, __LINE__);
         }
       }
@@ -594,7 +594,7 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
           //  if it's not in the fileInfo struct then create it
           FILE *fp;
 
-          cout << " filename: " << filename << endl;
+          cout << " filename: " << filename << std::endl;
 
           if( myFiles.count(filename) == 0 ){
             createFile(filename, fp);
@@ -670,7 +670,7 @@ void lineExtract::createFile( const string& filename,
   fprintf(fp,"\n");
   fflush(fp);
 
-  cout << Parallel::getMPIRank() << " lineExtract:Created file " << filename << endl;
+  cout << Parallel::getMPIRank() << " lineExtract:Created file " << filename << std::endl;
 }
 
 //______________________________________________________________________

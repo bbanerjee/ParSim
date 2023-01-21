@@ -41,7 +41,7 @@
 #include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ImpMPMFlags.h>
 #include <CCA/Components/MPM/Core/MPMCommon.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 #include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <CCA/Ports/SwitchingCriteria.h>

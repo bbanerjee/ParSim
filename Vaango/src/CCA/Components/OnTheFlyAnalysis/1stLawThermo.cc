@@ -476,7 +476,7 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
             sumMdot += mdot;
 
             mat_fluxes +=  mdot * (enthpy + KE * d_conversion);
-            //cout << "face: " << faceName << " c: " << c << " offset: " << offset << " vel = " << vel << " mdot = " << mdot << endl;
+            //cout << "face: " << faceName << " c: " << c << " offset: " << offset << " vel = " << vel << " mdot = " << mdot << std::endl;
           }
           DOUTR(dbg_OTF_FLT, "    face: " << faceName << " mdot = " << sumMdot << "      sum of KE = " << sumKE << "     sum H = " << sumH <<  "      sum mat_fluxes = " << mat_fluxes );
         }
@@ -518,7 +518,7 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
             sumMdot += mdot;
 
             mat_fluxes +=  mdot * (enthpy + KE * d_conversion);
-            //cout << "face: " << faceName << " c: " << c << " offset: " << offset << " vel = " << vel << " mdot = " << mdot << endl;
+            //cout << "face: " << faceName << " c: " << c << " offset: " << offset << " vel = " << vel << " mdot = " << mdot << std::endl;
           }
            DOUTR(dbg_OTF_FLT, "    face: " << faceName << " mdot = "<< sumMdot << "     sum of KE = " << sumKE << "     sum H = " << sumH << "      sum mat_fluxes = " << mat_fluxes );
         }
@@ -724,7 +724,7 @@ void FirstLawThermo::createFile(string& filename,  FILE*& fp)
   fprintf(fp,"#    - mpm matls are listed in order 0, 1, 2, 3\n");
   fprintf(fp,"#    - Energy conversion factor, in SI units KJ ->J %E\n",d_conversion);
   fprintf(fp,"#Time                      ICE_totalIntEng            MPM_totalIntEng             totalIntEng                 total_ICE_Flux\n");
-  cout << Parallel::getMPIRank() << " FirstLawThermo:Created file " << filename << endl;
+  cout << Parallel::getMPIRank() << " FirstLawThermo:Created file " << filename << std::endl;
 }
 
 
@@ -807,7 +807,7 @@ void FirstLawThermo::bulletProofing(GridP& grid,
     ostringstream warn;
     warn << "\n ERROR:1stLawThermo: the plane on face ("<< side
          << ")  specified " << start << " to " << end
-         << " is not at the edge of the computational domain. \n" << endl;
+         << " is not at the edge of the computational domain. \n" << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 

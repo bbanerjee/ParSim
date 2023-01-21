@@ -65,16 +65,16 @@ bool load_timestep(int timestep, float prune_percent);
 
 void usage(char* prog_name)
 {
-  cerr << "usage: " << prog_name
-       << " <uda directory> [-t <timestep>] [-p <prune percent>] [-x]" << endl;
-  cerr << endl << "Options\n";
-  cerr << "-t <timestep>\n"
+  std::cerr <<  "usage: " << prog_name
+       << " <uda directory> [-t <timestep>] [-p <prune percent>] [-x]" << std::endl;
+  std::cerr <<  std::endl << "Options\n";
+  std::cerr <<  "-t <timestep>\n"
       << "\tLoads the taskgraph from the given timestep directory in the uda\n"
       << "\tdirectory.\n";
-  cerr << "-p <prune percent>\n"
+  std::cerr <<  "-p <prune percent>\n"
       << "\tHide nodes and edges with maximum path costs less than <percent>\n"
        << "\tof the critical path cost.\n";
-  cerr << "-x\n"
+  std::cerr <<  "-x\n"
     << "\tNot just hide, but exclude nodes with maximum path costs less than\n"
     << "\tthe set pruning percent.  This is useful for very large graphs.\n";
 }
@@ -112,7 +112,7 @@ main(int argc, char* argv[])
       else if (argv[i][1] == 'x')
 	do_exclusion = true;
       else {
-	cerr << "Invalid option " << argv[i] << endl;
+	cerr << "Invalid option " << argv[i] << std::endl;
 	usage(argv[0]);
 	return 1;
       }
@@ -125,7 +125,7 @@ main(int argc, char* argv[])
   
   bool loaded = load_timestep(timestep, prune_percent);
   if (!loaded) {
-    cerr << "Failed reading task graph.  Quitting.\n";
+    std::cerr <<  "Failed reading task graph.  Quitting.\n";
     return 1;
   }
 }
@@ -195,9 +195,9 @@ bool load_timestep(int timestep, float prune_percent)
     }
     else {
       if (sourceTask == nullptr)
-	cerr << "ERROR: Undefined task, '" << source << "'" << endl;
+	cerr << "ERROR: Undefined task, '" << source << "'" << std::endl;
       if (targetTask == nullptr) 
-	cerr << "ERROR: Undefined task, '" << target << "'" << endl;
+	cerr << "ERROR: Undefined task, '" << target << "'" << std::endl;
     }
   }
     process++;
@@ -205,8 +205,8 @@ bool load_timestep(int timestep, float prune_percent)
 			       -- but just so it won't ever be caught in an
 			       infinite loop */);  
   if (process == 0) {
-    cerr << "Task graph data does not exist:" << endl;
-    cerr << xmlFileName << " does not exist." << endl;
+    std::cerr <<  "Task graph data does not exist:" << std::endl;
+    std::cerr <<  xmlFileName << " does not exist." << std::endl;
     return false;
   }
   
