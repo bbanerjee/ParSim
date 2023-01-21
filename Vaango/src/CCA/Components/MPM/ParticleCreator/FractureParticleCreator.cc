@@ -25,14 +25,17 @@
  */
 
 #include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
-#include <Core/Grid/Box.h>
-#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
-#include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
-#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
-#include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
+
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
+#include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
+#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
+#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/Box.h>
 
 using namespace Uintah;
 using std::vector;
@@ -40,47 +43,43 @@ using std::vector;
 FractureParticleCreator::FractureParticleCreator(MPMMaterial* matl,
                                                  MPMFlags* flags)
 
-  :  ParticleCreator(matl,flags)
+  : ParticleCreator(matl, flags)
 {
   registerPermanentParticleState(matl);
 }
 
-FractureParticleCreator::~FractureParticleCreator()
-{
-}
+FractureParticleCreator::~FractureParticleCreator() {}
 
 void
 FractureParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 
 {
-  //particle_state.push_back(lb->pX0Label);
-  //particle_state_preReloc.push_back(lb->pX0Label_preReloc);
-
+  // particle_state.push_back(lb->pX0Label);
+  // particle_state_preReloc.push_back(lb->pX0Label_preReloc);
 }
 
-
-void 
-FractureParticleCreator::applyForceBC(const Vector& dxpp, 
+void
+FractureParticleCreator::applyForceBC(const Vector& dxpp,
                                       const Point& pp,
-                                      const double& pMass, 
+                                      const double& pMass,
                                       Vector& pExtForce)
 {
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
-        
-    //cerr << " BC Type = " << bcType << endl;
+
+    // cerr << " BC Type = " << bcType << endl;
     if (bcType == "Force") {
       ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
 
       Box fbcBox(fbc->getLowerRange(), fbc->getUpperRange());
 
-      //cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
-      if(fbcBox.contains(pp)) {
+      // cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
+      if (fbcBox.contains(pp)) {
         pExtForce = fbc->getForceDensity() * pMass;
-        //cerr << "External Force on Particle = " << pExtForce 
-        //     << " Force Density = " << fbc->getForceDensity() 
-        //     << " Particle Mass = " << pMass << endl;
+        // cerr << "External Force on Particle = " << pExtForce
+        //      << " Force Density = " << fbc->getForceDensity()
+        //      << " Particle Mass = " << pMass << endl;
       }
-    } 
+    }
   }
 }

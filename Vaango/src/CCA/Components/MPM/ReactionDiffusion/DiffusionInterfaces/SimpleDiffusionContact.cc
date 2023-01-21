@@ -74,7 +74,7 @@ void SimpleSDInterface::addComputesAndRequiresDivergence(
                                                            const MaterialSet  * matls
                                                           )
 {
-  Ghost::GhostType  gan   = Ghost::AroundNodes;
+  //Ghost::GhostType  gan   = Ghost::AroundNodes;
   Ghost::GhostType  gnone = Ghost::None;
 
   Task* task  = scinew Task("SimpleSDInterface::sdInterfaceDivergence", this,

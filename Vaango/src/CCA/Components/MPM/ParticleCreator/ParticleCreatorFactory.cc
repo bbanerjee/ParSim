@@ -24,14 +24,19 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
+
 #include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ImplicitParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/MembraneParticleCreator.h>
-#include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/MPM/ParticleCreator/ShellParticleCreator.h>
+
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 namespace Uintah {
 
@@ -45,20 +50,25 @@ ParticleCreatorFactory::create(ProblemSpecP& ps,
   string mat_type;
   cm_ps->getAttribute("type", mat_type);
 
-  if (flags->d_integratorType == "implicit")
+  if (flags->d_integratorType == "implicit") {
     return std::make_unique<ImplicitParticleCreator>(mat, flags);
+  }
 
-  else if (flags->d_integratorType == "fracture")
+  else if (flags->d_integratorType == "fracture") {
     return std::make_unique<FractureParticleCreator>(mat, flags);
+  }
 
-  else if (mat_type == "membrane")
+  else if (mat_type == "membrane") {
     return std::make_unique<MembraneParticleCreator>(mat, flags);
+  }
 
-  else if (mat_type == "shell_CNH")
+  else if (mat_type == "shell_CNH") {
     return std::make_unique<ShellParticleCreator>(mat, flags);
+  }
 
-  else
+  else {
     return std::make_unique<ParticleCreator>(mat, flags);
+  }
 }
 
 } // end namespace Uintah

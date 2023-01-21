@@ -72,6 +72,7 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(float*);
  const TypeDescription* fun_getTypeDescription(Point*);
  const TypeDescription* fun_getTypeDescription(Vector*);
+ const TypeDescription* fun_getTypeDescription(IntVector*);
 
 // THIS IS A GUESS -> Because of the order of instantiation of
 // templates by the IBM xlC compiler, we can not declare the

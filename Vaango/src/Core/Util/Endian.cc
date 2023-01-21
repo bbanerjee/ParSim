@@ -31,50 +31,118 @@
 
 namespace Uintah {
 
-#if !defined( SCI_32BITS )
-void swapbytes( long long& i ) { LONG_LONG_SWAP(i); }
+#if !defined(SCI_32BITS)
+void
+swapbytes(long long& i)
+{
+  LONG_LONG_SWAP(i);
+}
 #endif
 
-void swapbytes( bool& )       { }
-void swapbytes( int8_t& )     { }
-void swapbytes( uint8_t& )    { }
-void swapbytes( FILE* & )     { }
-void swapbytes( int16_t& i )  { SWAP_2(i); }
-void swapbytes( uint16_t& i ) { SWAP_2(i); }
-void swapbytes( int32_t& i )  { SWAP_4(i); }
-void swapbytes( uint32_t& i ) { SWAP_4(i); }
-#if !defined( OSX_SNOW_LEOPARD_OR_LATER )
-void swapbytes( int64_t& i )  { SWAP_8(i); }
+void
+swapbytes(bool&)
+{
+}
+void
+swapbytes(int8_t&)
+{
+}
+void
+swapbytes(uint8_t&)
+{
+}
+void
+swapbytes(FILE*&)
+{
+}
+void
+swapbytes(int16_t& i)
+{
+  SWAP_2(i);
+}
+void
+swapbytes(uint16_t& i)
+{
+  SWAP_2(i);
+}
+void
+swapbytes(int32_t& i)
+{
+  SWAP_4(i);
+}
+void
+swapbytes(uint32_t& i)
+{
+  SWAP_4(i);
+}
+#if !defined(OSX_SNOW_LEOPARD_OR_LATER)
+void
+swapbytes(int64_t& i)
+{
+  SWAP_8(i);
+}
 #endif
-void swapbytes( uint64_t& i ) { SWAP_8(i); }
-void swapbytes( float& i )    { SWAP_4(i); }
-void swapbytes( double& i )   { SWAP_8(i); }
-void swapbytes( Point &i )    { // probably dangerous, but effective
-                              double* p = (double *)(&i);
-                              SWAP_8(*p); SWAP_8(*++p); SWAP_8(*++p); }
-void swapbytes( Vector &i )   { // probably dangerous, but effective
-                              double* p = (double *)(&i);
-                              SWAP_8(*p); SWAP_8(*++p); SWAP_8(*++p); }
+void
+swapbytes(uint64_t& i)
+{
+  SWAP_8(i);
+}
+void
+swapbytes(float& i)
+{
+  SWAP_4(i);
+}
+void
+swapbytes(double& i)
+{
+  SWAP_8(i);
+}
+void
+swapbytes(Point& i)
+{ // probably dangerous, but effective
+  double* p = (double*)(&i);
+  SWAP_8(*p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+}
+void
+swapbytes(Vector& i)
+{ // probably dangerous, but effective
+  double* p = (double*)(&i);
+  SWAP_8(*p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+}
+void
+swapbytes(IntVector& i)
+{ // probably dangerous, but effective
+  int* p = (int*)(&i);
+  SWAP_4(*p);
+  SWAP_4(*++p);
+  SWAP_4(*++p);
+}
 
-bool isBigEndian()
+bool
+isBigEndian()
 {
   short i = 0x4321;
-  if((*(char *)&i) != 0x21 ){
+  if ((*(char*)&i) != 0x21) {
     return true;
   } else {
     return false;
   }
 }
 
-bool isLittleEndian()
+bool
+isLittleEndian()
 {
   return !isBigEndian();
 }
- 
 
-string endianness()
+string
+endianness()
 {
-  if( isBigEndian() ){
+  if (isBigEndian()) {
     return string("big_endian");
   } else {
     return string("little_endian");
