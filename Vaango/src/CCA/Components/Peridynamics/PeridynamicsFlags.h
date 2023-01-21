@@ -54,7 +54,7 @@ namespace Vaango {
     const Uintah::ProcessorGroup* d_myworld;
 
     Uintah::Vector d_gravity;
-    std::string d_integrator_type; // Explicit or implicit time integration
+    std::string d_integratorType; // Explicit or implicit time integration
     IntegratorType d_integrator;
     double d_numCellsInHorizon;
     bool d_useLoadCurves;

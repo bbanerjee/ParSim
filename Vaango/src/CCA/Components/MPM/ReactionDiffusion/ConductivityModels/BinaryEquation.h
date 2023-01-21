@@ -22,27 +22,46 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _SCALARDIFFUSIONMODELFACTORY_H_
-#define _SCALARDIFFUSIONMODELFACTORY_H_
+#ifndef UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_BINARYEQUATION_H
+#define UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_BINARYEQUATION_H
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <string>
+#include <CCA/Components/MPM/ReactionDiffusion/ConductivityModels/ConductivityEquation.h>
 
-namespace Uintah {
+namespace Uintah
+{
+/*************************************************
+ *
+ * CLASS
+ *   BinaryEquation
+ *
+ *   This class computes the conductivity of a
+ *   particle based on concentration levels.
+ *   Conductivity values are either a min conductivity
+ *   value or a max conductivity value based on
+ *   the level of concentration and a user specified
+ *   concentration threshold.
+ *
+ *************************************************/
 
-  class ScalarDiffusionModel;
-  class MPMFlags;
 
-  class ScalarDiffusionModelFactory
-  {
+  class BinaryEquation : public ConductivityEquation {
     public:
-      // Dispatch based on diffusion model.
-      static ScalarDiffusionModel* create(ProblemSpecP      & ps    ,
-                                          MaterialManagerP  & ss    ,
-                                          MPMFlags          * flags );
+      BinaryEquation(ProblemSpecP& ps);
+
+      virtual ~BinaryEquation();
+
+      virtual double computeConductivity(double conductivity);
+
+      virtual void outputProblemSpec(ProblemSpecP& ps);
+
+    private:
+      double d_min_conc;
+      double d_max_conc;
+      double d_min_conductivity;
+      double d_max_conductivity;
+      double d_slope;
 
   };
-} // End namespace Uintah
-      
-#endif /* _SCALARDIFFUSIONMODELFACTORY_H_ */
+}
+#endif // End of UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_BINARYEQUATION_H

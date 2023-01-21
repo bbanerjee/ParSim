@@ -22,27 +22,37 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _SCALARDIFFUSIONMODELFACTORY_H_
-#define _SCALARDIFFUSIONMODELFACTORY_H_
+#ifndef UINTAH_CCA_COMPONENTS_MPMFVM_FIXEDEQUATION_H
+#define UINTAH_CCA_COMPONENTS_MPMFVM_FIXEDEQUATION_H
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <string>
+#include <CCA/Components/MPM/ReactionDiffusion/ConductivityModels/ConductivityEquation.h>
 
-namespace Uintah {
+namespace Uintah{
+/*************************************************
+ *
+ * CLASS
+ *   FixedEquation
+ *
+ *   This class returns a fixed conductivity value.
+ *
+ *
+ *************************************************/
 
-  class ScalarDiffusionModel;
-  class MPMFlags;
 
-  class ScalarDiffusionModelFactory
-  {
+  class FixedEquation : public ConductivityEquation {
     public:
-      // Dispatch based on diffusion model.
-      static ScalarDiffusionModel* create(ProblemSpecP      & ps    ,
-                                          MaterialManagerP  & ss    ,
-                                          MPMFlags          * flags );
+      FixedEquation(ProblemSpecP& ps);
+
+      virtual ~FixedEquation();
+
+      virtual double computeConductivity(double conductivity);
+
+      virtual void outputProblemSpec(ProblemSpecP& ps);
+
+    private:
+      double d_conductivity;
 
   };
-} // End namespace Uintah
-      
-#endif /* _SCALARDIFFUSIONMODELFACTORY_H_ */
+}
+#endif // End of UINTAH_CCA_COMPONENTS_MPMFVM_FIXEDEQUATION_H

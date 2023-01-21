@@ -26,8 +26,8 @@
 #ifndef __MPM_CONTACT_PENALTY_H__
 #define __MPM_CONTACT_PENALTY_H__
 
-#include <CCA/Components/MPM/Materials/Contact/Contact.h>
-#include <CCA/Components/MPM/Materials/Contact/ContactMaterialSpec.h> 
+#include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h> 
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

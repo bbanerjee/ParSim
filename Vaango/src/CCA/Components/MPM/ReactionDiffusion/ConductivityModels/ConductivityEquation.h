@@ -22,27 +22,38 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _SCALARDIFFUSIONMODELFACTORY_H_
-#define _SCALARDIFFUSIONMODELFACTORY_H_
+#ifndef UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_CONDUCTIVITYEQUATION_H
+#define UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_CONDUCTIVITYEQUATION_H
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <string>
+#include <Core/ProblemSpec/ProblemSpec.h>
+//#include <Core/Util/Handle.h>
 
-namespace Uintah {
+namespace Uintah{
+/*************************************************
+ *
+ * CLASS
+ *   ConductivityEquation
+ *
+ *   This class computes the conductivity of a
+ *   particle based on concentration levels.
+ *
+ *   The is a base class that can be extended to
+ *   implement new conductivity equations.
+ *
+ *************************************************/
 
-  class ScalarDiffusionModel;
-  class MPMFlags;
 
-  class ScalarDiffusionModelFactory
-  {
+  class ConductivityEquation{
     public:
-      // Dispatch based on diffusion model.
-      static ScalarDiffusionModel* create(ProblemSpecP      & ps    ,
-                                          MaterialManagerP  & ss    ,
-                                          MPMFlags          * flags );
+      ConductivityEquation(ProblemSpecP& ps);
+
+      virtual ~ConductivityEquation();
+
+      virtual double computeConductivity(double conductivity);
+
+      virtual void outputProblemSpec(ProblemSpecP& ps);
 
   };
-} // End namespace Uintah
-      
-#endif /* _SCALARDIFFUSIONMODELFACTORY_H_ */
+}
+#endif // End of UINTAH_CCA_COMPONENTS_MPM_REACTIONDIFFUSION_CONDUCTIVITYEQUATION_H

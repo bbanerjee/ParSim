@@ -24,15 +24,33 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ReactionDiffusion
 
+SET(MPM_Diffusion_ConductivityModels_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConductivityModels/BinaryEquation.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConductivityModels/ConductivityEquation.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConductivityModels/FixedEquation.cc
+   )
+
+SET(MPM_Diffusion_DiffusionInterfaces_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionInterfaces/CommonIFConcDiff.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionInterfaces/SDInterfaceModel.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionInterfaces/SimpleDiffusionContact.cc
+   )
+
+SET(MPM_Diffusion_DiffusionModels_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/ConstantRate.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/JGConcentrationDiffusion.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/NonLinearDiff1.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/NonLinearDiff2.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/RFConcDiffusion1MPM.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiffusionModels/ScalarDiffusionModel.cc
+   )
+
 SET(Vaango_CCA_Components_MPM_Diffusion_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModel.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/JGConcentrationDiffusion.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModelFactory.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CommonIFConcDiff.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModelFactory.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/RFConcDiffusion1MPM.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/GaoDiffusion.cc
+  ${MPM_Diffusion_ConductivityModels_SRCS}
+  ${MPM_Diffusion_DiffusionInterfaces_SRCS}
+  ${MPM_Diffusion_DiffusionModels_SRCS}
 )
 
 add_library(MPM_Diffusion ${Vaango_CCA_Components_MPM_Diffusion_SRCS})

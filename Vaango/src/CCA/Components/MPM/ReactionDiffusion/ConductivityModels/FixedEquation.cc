@@ -22,27 +22,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _SCALARDIFFUSIONMODELFACTORY_H_
-#define _SCALARDIFFUSIONMODELFACTORY_H_
+#include <CCA/Components/MPM/ReactionDiffusion/ConductivityModels/FixedEquation.h>
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <string>
+#include <iostream>
 
-namespace Uintah {
+using namespace Uintah;
 
-  class ScalarDiffusionModel;
-  class MPMFlags;
+FixedEquation::FixedEquation(ProblemSpecP& ps) :
+  ConductivityEquation(ps)
+{
+  ps->require("conductivity", d_conductivity);
+}
 
-  class ScalarDiffusionModelFactory
-  {
-    public:
-      // Dispatch based on diffusion model.
-      static ScalarDiffusionModel* create(ProblemSpecP      & ps    ,
-                                          MaterialManagerP  & ss    ,
-                                          MPMFlags          * flags );
+FixedEquation::~FixedEquation()
+{
 
-  };
-} // End namespace Uintah
-      
-#endif /* _SCALARDIFFUSIONMODELFACTORY_H_ */
+}
+
+double FixedEquation::computeConductivity(double concentration)
+{
+  return d_conductivity;
+}
+
+void FixedEquation::outputProblemSpec(ProblemSpecP& ps)
+{
+  ProblemSpecP eq_ps;
+  eq_ps = ps->appendChild("conductivity_equation");
+  eq_ps->setAttribute("type", "fixed");
+  eq_ps->appendElement("conductivity", d_conductivity);
+}

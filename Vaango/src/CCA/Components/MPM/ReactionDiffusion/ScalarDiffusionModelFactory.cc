@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,63 +21,53 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
-#include <CCA/Components/MPM/ReactionDiffusion/JGConcentrationDiffusion.h>
-#include <CCA/Components/MPM/ReactionDiffusion/RFConcDiffusion1MPM.h>
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
 
-#include <sci_defs/uintah_defs.h> // For NO_FORTRAN
-
-#include <CCA/Components/MPM/Core/MPMFlags.h>
-
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-
-#include <fstream>
-#include <iostream>
+#include <Core/Malloc/Allocator.h>
 #include <string>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ConstantRate.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/JGConcentrationDiffusion.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/NonLinearDiff1.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/NonLinearDiff2.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/RFConcDiffusion1MPM.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 
-namespace Uintah {
+using namespace std;
+using namespace Uintah;
 
-std::unique_ptr<ScalarDiffusionModel>
-ScalarDiffusionModelFactory::create(ProblemSpecP& ps,
-                                    MaterialManagerP& matManager,
-                                    MPMFlags* flags)
+ScalarDiffusionModel* ScalarDiffusionModelFactory::create(ProblemSpecP      & ps    ,
+                                                          MaterialManagerP  & ss    ,
+                                                          MPMFlags          * flags )
 {
   ProblemSpecP child = ps->findBlock("diffusion_model");
-  if (!child) {
-    throw ProblemSetupException(
-      "Cannot find scalar_diffusion_model tag", __FILE__, __LINE__);
-  }
+  if(!child)
+    throw ProblemSetupException("Cannot find scalar_diffusion_model tag",
+                                __FILE__, __LINE__);
   string diffusion_type;
-  if (!child->getAttribute("type", diffusion_type)) {
-    throw ProblemSetupException(
-      "No type for scalar_diffusion_model", __FILE__, __LINE__);
-  }
+  if(!child->getAttribute("type", diffusion_type))
+    throw ProblemSetupException("No type for scalar_diffusion_model",
+                                __FILE__, __LINE__);
 
-  if (diffusion_type == "linear") {
-    return std::make_unique<ScalarDiffusionModel>(
-      child, matManager, flags, diffusion_type);
-  } else if (diffusion_type == "jg") {
-    return std::make_unique<JGConcentrationDiffusion>(
-      child, matManager, flags, diffusion_type);
-  } else if (diffusion_type == "rf1") {
-    return std::make_unique<RFConcDiffusion1MPM>(
-      child, matManager, flags, diffusion_type);
-  } else if (diffusion_type == "gao_diffusion") {
-    return std::make_unique<GaoDiffusion>(
-      child, matManager, flags, diffusion_type);
+  if (diffusion_type == "constant_rate")
+    return(scinew ConstantRate(child, ss, flags, diffusion_type));
 
-  } else {
-    throw ProblemSetupException("Unknown Scalar Diffusion Type (" +
-                                  diffusion_type + ")",
-                                __FILE__,
-                                __LINE__);
-  }
+  if (diffusion_type == "jg")
+    return(scinew JGConcentrationDiffusion(child, ss, flags, diffusion_type));
+
+  if (diffusion_type == "non_linear1")
+    return(scinew NonLinearDiff1(child, ss, flags, diffusion_type));
+
+  if (diffusion_type == "non_linear2")
+    return(scinew NonLinearDiff2(child, ss, flags, diffusion_type));
+
+  if (diffusion_type == "rf1")
+    return(scinew RFConcDiffusion1MPM(child, ss, flags, diffusion_type));
+
+  // No suitable diffusion model found, throw an error and return a null ptr.
+  std::string errorMsg = "Unknown Scalar Diffusion Type (" +diffusion_type +")";
+  throw ProblemSetupException(errorMsg, __FILE__, __LINE__);
 
   return nullptr;
 }
-
-} // end namespace Uintah

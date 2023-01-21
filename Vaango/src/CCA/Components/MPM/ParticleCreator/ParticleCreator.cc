@@ -30,7 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 
@@ -1064,7 +1064,7 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
                                                       particle_state_preReloc);
   }
 
-  if (d_coupledflow && !matl->getIsRigid()) {
+  if (d_coupledFlow && !matl->getIsRigid()) {
     // if (d_coupledflow ) {
     particle_state.push_back(d_hydrompm_labels->pFluidMassLabel);
     particle_state.push_back(d_hydrompm_labels->pSolidMassLabel);
@@ -1082,7 +1082,7 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state_preReloc.push_back(
       d_hydrompm_labels->pPorosityLabel_preReloc);
 
-    if (d_flags->d_integrator_type == "explicit") {
+    if (d_flags->d_integratorType == "explicit") {
       particle_state.push_back(d_hydrompm_labels->pFluidVelocityLabel);
       particle_state_preReloc.push_back(
         d_hydrompm_labels->pFluidVelocityLabel_preReloc);

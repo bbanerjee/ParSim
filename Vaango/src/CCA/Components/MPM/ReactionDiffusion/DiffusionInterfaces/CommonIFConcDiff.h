@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,45 +25,41 @@
 #ifndef __COMMONIFCONCDIFF_H__
 #define __COMMONIFCONCDIFF_H__
 
-#include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/MaterialManager.h>
-#include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
 
 namespace Uintah {
 
-  class Task;
-  class MPMFlags;
-  class MPMLabel;
-  class MPMMaterial;
-  class DataWarehouse;
-  class ProcessorGroup;
-
-  
   class CommonIFConcDiff : public SDInterfaceModel {
   public:
     
-    CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS, MPMFlags* Mflag);
+    CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS,
+                     MPMFlags* mpm_flags, MPMLabel* mpm_lb);
+
     ~CommonIFConcDiff();
 
-//    virtual void initializeSDMData(const Patch* patch, DataWarehouse* new_dw);
+    virtual void addComputesAndRequiresInterpolated(SchedulerP & sched,
+                                              const PatchSet* patches,
+                                              const MaterialSet* matls);
 
-    virtual void computeDivergence(const Patch* patch, DataWarehouse* old_dw,
-		                               DataWarehouse* new_dw);
+    virtual void sdInterfaceInterpolated(const ProcessorGroup*,
+                                         const PatchSubset* patches,
+                                         const MaterialSubset* matls,
+                                         DataWarehouse* old_dw,
+                                         DataWarehouse* new_dw);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_sdim_tag = true);
+    virtual void addComputesAndRequiresDivergence(SchedulerP & sched,
+                                                  const PatchSet* patches,
+                                                  const MaterialSet* matls);
+
+    virtual void sdInterfaceDivergence(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* matls,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw);
+
+    virtual void outputProblemSpec(ProblemSpecP& ps);
 
   protected:
-    MPMLabel* d_lb;
-    MPMFlags* d_Mflag;
-    MaterialManagerP 
- d_mat_manager;
-
-    int NGP, NGN;
-    std::string diffusion_type;
-    int numMPMmatls;
-    bool include_hydrostress;
 
     CommonIFConcDiff(const CommonIFConcDiff&);
     CommonIFConcDiff& operator=(const CommonIFConcDiff&);
