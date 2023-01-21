@@ -37,7 +37,7 @@
 
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 #include <Core/GeometryPiece/FileGeometryPiece.h>
 
 #include <Core/Grid/Box.h>
@@ -114,9 +114,9 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
   if (b.degenerate()) return 0;
   
   // If the object is a FileGeometryPiece (e.g. FileGeometryPiece or
-  // SmoothGeomPiece) then use the particle creators in that 
+  // SpecialGeomPiece) then use the particle creators in that 
   // class to do the counting 
-  Uintah::SmoothGeomPiece *sgp = dynamic_cast<Uintah::SmoothGeomPiece*>(piece.get_rep());
+  Uintah::SpecialGeomPiece *sgp = dynamic_cast<Uintah::SpecialGeomPiece*>(piece.get_rep());
   if (sgp) {
     int numPts = 0;
     
@@ -162,7 +162,7 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
         }  // patch contains cell
       }
     }
-  } else { // Not a SmoothGeomPiece or FileGeometryPiece
+  } else { // Not a SpecialGeomPiece or FileGeometryPiece
     cout_dbg << "\t\t Calling createPoints for patch " << patch << std::endl;
     createPoints(patch,obj);
   }
@@ -254,11 +254,11 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
     std::vector<Uintah::Vector>* pVelArray = 0;   // particle velocities 
     std::vector<Uintah::Vector>* pForceArray = 0; // particle forces 
 
-    // Special case exception for SmoothGeomPieces and FileGeometryPieces
-    // FileGeometryPieces are derived from SmoothGeomPiece and contain the particle data in a file
+    // Special case exception for SpecialGeomPieces and FileGeometryPieces
+    // FileGeometryPieces are derived from SpecialGeomPiece and contain the particle data in a file
     // while smooth geometry pieces generate these same data.  
     // **WARNING** Not sure what the effect is on Abaqus type input files.
-    Uintah::SmoothGeomPiece *gp = dynamic_cast<Uintah::SmoothGeomPiece*>(piece.get_rep());
+    Uintah::SpecialGeomPiece *gp = dynamic_cast<Uintah::SpecialGeomPiece*>(piece.get_rep());
     if (gp){
       pVolArray  = gp->getVolume();
       pVelArray  = gp->getVelocity();  

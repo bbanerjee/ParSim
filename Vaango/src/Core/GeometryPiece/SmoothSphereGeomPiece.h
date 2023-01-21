@@ -27,7 +27,7 @@
 #define __SMOOTH_SPHERE_PIECE_H__
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 
 #include <cmath>
 #ifndef M_PI
@@ -79,7 +79,7 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class SmoothSphereGeomPiece : public SmoothGeomPiece {
+class SmoothSphereGeomPiece : public SpecialGeomPiece {
  public:
   //////////////////////////////////////////////////////////////////////
   /*!

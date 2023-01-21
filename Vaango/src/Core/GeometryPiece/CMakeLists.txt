@@ -75,7 +75,7 @@ SET(Vaango_Core_GeometryPiece_SRCS
   CylinderShellPiece.cc 
   PlaneShellPiece.cc 
   SphereShellPiece.cc 
-  SmoothGeomPiece.cc 
+  SpecialGeomPiece.cc 
   SmoothCylGeomPiece.cc 
   SmoothSphereGeomPiece.cc 
   CorrugEdgeGeomPiece.cc 

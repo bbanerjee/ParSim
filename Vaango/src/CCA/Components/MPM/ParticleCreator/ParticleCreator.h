@@ -60,12 +60,14 @@ public:
 
   virtual ~ParticleCreator() = default;
 
+  using VecGeometryObjectSP = std::vector<std::shared_ptr<GeometryObject>>;
+
   virtual particleIndex
   createParticles(MPMMaterial* matl,
                   CCVariable<short int>& cellNAPID,
                   const Patch*,
                   DataWarehouse* new_dw,
-                  const std::vector<std::shared_ptr<GeometryObject>>& objects);
+                  const VecGeometryObjectSP& objects);
 
   virtual void
   registerPermanentParticleState(MPMMaterial* matl);
@@ -76,26 +78,18 @@ public:
   std::vector<const VarLabel*>
   returnParticleStatePreReloc();
 
-  using GeomPoint   = std::map<GeometryObject*, std::vector<Point>>;
-  using GeomReal    = std::map<GeometryObject*, std::vector<double>>;
-  using GeomVector  = std::map<GeometryObject*, std::vector<Vector>>;
-  using GeomMatrix3 = std::map<GeometryObject*, std::vector<Matrix3>>;
+  using GeomName   = std::pair<std::string, GeometryObject*>;
+  using GeomPoint  = std::map<GeometryObject*, std::vector<Point>>;
+  using GeomScalar = std::map<GeomName, std::vector<double>>;
+  using GeomVector = std::map<GeomName, std::vector<Vector>>;
+  using GeomTensor = std::map<GeomName, std::vector<Matrix3>>;
 
   struct ObjectVars
   {
-    GeomPoint d_object_points;
-    GeomReal d_object_vols;
-    GeomReal d_object_temps;
-    GeomReal d_object_colors;
-    GeomReal d_object_concentration;
-    GeomReal d_object_poscharge;
-    GeomReal d_object_negcharge;
-    GeomReal d_object_permittivity;
-    GeomVector d_object_forces;
-    GeomVector d_object_fibers;
-    GeomVector d_object_velocity; // gcd add
-    GeomVector d_object_area;
-    GeomMatrix3 d_object_size;
+    GeomPoint points;
+    GeomScalar scalars;
+    GeomVector vectors;
+    GeomTensor tensors;
   };
 
   struct ParticleVars
@@ -142,6 +136,7 @@ public:
     ParticleVariable<Vector> pPosChargeGrad;
     ParticleVariable<Vector> pNegChargeGrad;
     ParticleVariable<double> pPermittivity;
+    ParticleVariable<Vector> pArea;
 
     // Hydro-mechanical coupling MPM
     ParticleVariable<double> pFluidMass, pSolidMass, pPorePressure, pPorosity;
@@ -165,7 +160,7 @@ protected:
 
   virtual void
   initializeParticle(const Patch* patch,
-                     const std::vector<GeometryObject*>& obj,
+                     GeometryObject* obj,
                      MPMMaterial* matl,
                      Point p,
                      IntVector cell_idx,
@@ -214,6 +209,7 @@ protected:
   MPMFlags* d_flags;
 
   bool d_useLoadCurves;
+  bool d_useLoadCurvesVector;
   bool d_withColor;
   bool d_doScalarDiffusion;
   bool d_artificialViscosity;

@@ -24,11 +24,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __SMOOTH_PIECE_H__
-#define __SMOOTH_PIECE_H__
+#ifndef __CORE_GEOMETRYPIECE_SPECIAL_GEOMETRYPIECE_H__
+#define __CORE_GEOMETRYPIECE_SPECIAL_GEOMETRYPIECE_H__
+
+#include <Core/GeometryPiece/GeometryPiece.h>
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Math/Matrix3.h>
 
@@ -44,7 +45,7 @@ namespace Uintah {
 /////////////////////////////////////////////////////////////////////////////
 /*!
 
-\class SmoothGeomPiece
+\class SpecialGeomPiece
 
 \brief Abstract base class for smooth geometry pieces
 
@@ -60,17 +61,22 @@ University of Utah \n
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class SmoothGeomPiece : public GeometryPiece {
- public:
+class SpecialGeomPiece : public GeometryPiece
+{
+public:
+  using ParticleScalarData = std::vector<double>;
+  using ParticleVectorData = std::vector<Vector>;
+  using ParticleTensorData = std::vector<Matrix3>;
+
   //////////////////////////////////////////////////////////////////////
   /*! Constructor */
   //////////////////////////////////////////////////////////////////////
-  SmoothGeomPiece();
+  SpecialGeomPiece() = default;
 
   //////////////////////////////////////////////////////////////////////
   /*! Destructor */
   //////////////////////////////////////////////////////////////////////
-  virtual ~SmoothGeomPiece();
+  virtual ~SpecialGeomPiece() = default;
 
   /// Make a clone
   virtual GeometryPieceP
@@ -78,7 +84,8 @@ class SmoothGeomPiece : public GeometryPiece {
 
   static const std::string TYPE_NAME;
   virtual std::string
-  getType() const {
+  getType() const
+  {
     return TYPE_NAME;
   }
 
@@ -107,57 +114,16 @@ class SmoothGeomPiece : public GeometryPiece {
   getPoints();
 
   //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle volumes */
+  /*! Returns the vector containing the set of particle data using name */
   //////////////////////////////////////////////////////////////////////
-  std::vector<double>*
-  getVolume();
+  const ParticleScalarData*
+  getScalar(const std::string& scalar_name) const;
 
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle temperatures */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<double>*
-  getTemperature();
+  const ParticleVectorData*
+  getVector(const std::string& vector_name) const;
 
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle colors */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<double>*
-  getColors();
-
-  //////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle forces */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<Vector>*
-  getForces();
-
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle fiber directions */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<Vector>*
-  getFiberDirs();
-
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vectors containing the CPDI or CPTI R-vectors       */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<Vector>*
-  getRvec1();
-  std::vector<Vector>*
-  getRvec2();
-  std::vector<Vector>*
-  getRvec3();
-
-  /////////////////////////////////////////////////////////////  // gcd adds
-  /*! Returns the vector containing the set of particle velocity */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<Vector>*
-  getVelocity();  // gcd add end
-
-  //////////////////////////////////////////////////////////////////////
-  /*! Returns the vector containing the set of particle size tensor   */
-  //////////////////////////////////////////////////////////////////////
-  std::vector<Matrix3>*
-  getSize();
+  const ParticleTensorData*
+  getTensor(const std::string& tensor_name) const;
 
   //////////////////////////////////////////////////////////////////////
   /*! Deletes the vector containing the set of particle locations */
@@ -166,22 +132,23 @@ class SmoothGeomPiece : public GeometryPiece {
   deletePoints();
 
   //////////////////////////////////////////////////////////////////////
-  /*! Deletes the vector containing the set of particle volumes */
+  /* Deletes the vector containing the set of particle scalars */
   //////////////////////////////////////////////////////////////////////
   void
-  deleteVolume();
+  deleteScalar(const std::string& name);
 
   //////////////////////////////////////////////////////////////////////
-  /*! Deletes the vector containing the set of particle sizes         */
+  /* Deletes the vector containing the set of particle vectors          */
   //////////////////////////////////////////////////////////////////////
   void
-  deleteSizes();
+  deleteVector(const std::string& name);
 
   //////////////////////////////////////////////////////////////////////
-  /*! Deletes the vector containing the set of particle temperatures */
+  /* Deletes the vector containing the set of particle tensors          */
   //////////////////////////////////////////////////////////////////////
   void
-  deleteTemperature();
+  deleteTensor(const std::string& name);
+
   //////////////////////////////////////////////////////////////////////
   /*! Returns the number of particles */
   //////////////////////////////////////////////////////////////////////
@@ -200,7 +167,7 @@ class SmoothGeomPiece : public GeometryPiece {
   void
   setCellSize(Vector DX);
 
- protected:
+protected:
   //////////////////////////////////////////////////////////////////////
   /*! Writes the particle locations to a file that can be read by
       the FileGeometryPiece */
@@ -208,20 +175,15 @@ class SmoothGeomPiece : public GeometryPiece {
   void
   writePoints(const std::string& f_name, const std::string& var);
 
+protected:
   std::vector<Point> d_points;
-  std::vector<double> d_volume;  // CPDI or CPTI calculates
-  std::vector<double> d_temperature;
-  std::vector<double> d_color;
-  std::vector<Vector> d_forces;
-  std::vector<Vector> d_fiberdirs;
-  std::vector<Vector> d_velocity;  // gcd adds
-  std::vector<Vector> d_rvec1;     // CPDI or CPTI
-  std::vector<Vector> d_rvec2;     // CPDI or CPTI
-  std::vector<Vector> d_rvec3;     // CPDI or CPTI
-  std::vector<Matrix3> d_size;     // CPDI or CPTI
-  double d_dx;
-  Vector d_DX;
-};
-}  // End namespace Uintah
+  std::map<std::string, ParticleScalarData> d_scalars;
+  std::map<std::string, ParticleVectorData> d_vectors;
+  std::map<std::string, ParticleTensorData> d_tensors;
 
-#endif  // __SMOOTH_PIECE_H__
+  double d_dx{ 1.0 };
+  Vector d_DX{ 0.0, 0.0, 0.0 };
+};
+} // End namespace Uintah
+
+#endif // __CORE_GEOMETRYPIECE_SPECIAL_GEOMETRYPIECE_H__

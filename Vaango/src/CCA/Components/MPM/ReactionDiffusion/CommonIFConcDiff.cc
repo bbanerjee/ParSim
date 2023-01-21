@@ -32,6 +32,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Ghost.h>
@@ -64,13 +65,17 @@ CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps,
   for (ProblemSpecP mat_ps = ps->findBlock("material"); mat_ps != 0;
        mat_ps              = mat_ps->findNextBlock("material")) {
     ProblemSpecP child = mat_ps->findBlock("diffusion_model");
-    if (!child)
-      throw ProblemSetupException(
-        "Cannot find diffusion_model tag", __FILE__, __LINE__);
+    if (!child) {
+      throw ProblemSetupException("Cannot find diffusion_model tag",
+                                  __FILE__,
+                                  __LINE__);
+    }
     string mat_type;
-    if (!child->getAttribute("type", mat_type))
-      throw ProblemSetupException(
-        "No type for diffusion_model", __FILE__, __LINE__);
+    if (!child->getAttribute("type", mat_type)) {
+      throw ProblemSetupException("No type for diffusion_model",
+                                  __FILE__,
+                                  __LINE__);
+    }
     if (mat_type == "rf1") {
       include_hydrostress = true;
     } else if (mat_type == "gao_diffusion") {
@@ -143,7 +148,12 @@ CommonIFConcDiff::computeDivergence(const Patch* patch,
     int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
 
     new_dw->get(gmass, d_lb->gMassLabel, dwi, patch, gnone, 0);
-    new_dw->get(gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);
+    new_dw->get(gConcRate,
+                d_lb->diffusion->gConcentrationRate,
+                dwi,
+                patch,
+                gnone,
+                0);
 
     for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
          iter++) {
@@ -157,8 +167,12 @@ CommonIFConcDiff::computeDivergence(const Patch* patch,
     int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
     NCVariable<double> gConcRate;
 
-    new_dw->getModifiable(
-      gConcRate, d_lb->gConcentrationRateLabel, dwi, patch, gnone, 0);
+    new_dw->getModifiable(gConcRate,
+                          d_lb->diffusion->gConcentrationRate,
+                          dwi,
+                          patch,
+                          gnone,
+                          0);
     for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
          iter++) {
       IntVector c  = *iter;

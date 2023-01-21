@@ -160,7 +160,7 @@ public:
 private:
 
   std::unique_ptr<PressureT> d_eos;
-  std::unqiue_ptr<ShearT> d_shear;
+  std::unique_ptr<ShearT> d_shear;
 
   ElasticModuliT()
   {

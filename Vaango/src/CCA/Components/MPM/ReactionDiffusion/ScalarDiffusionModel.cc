@@ -26,6 +26,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
 #include <Core/Grid/AMR.h>
 #include <Core/Grid/DbgOutput.h>
@@ -125,9 +126,9 @@ ScalarDiffusionModel::scheduleComputeDivergence(Task* task,
   task->requires(Task::OldDW, d_lb->pVolumeLabel, gan, NGP);
   task->requires(Task::OldDW, d_lb->pDefGradLabel, gan, NGP);
 
-  task->requires(Task::NewDW, d_lb->pFluxLabel, gan, NGP);
+  task->requires(Task::NewDW, d_lb->diffusion->pFlux, gan, NGP);
 
-  task->computes(d_lb->gConcentrationRateLabel, matlset);
+  task->computes(d_lb->diffusion->gConcentrationRate, matlset);
 }
 
 void
@@ -165,9 +166,9 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
   old_dw->get(pMass, d_lb->pMassLabel, pset);
   old_dw->get(psize, d_lb->pSizeLabel, pset);
   old_dw->get(deformationGradient, d_lb->pDefGradLabel, pset);
-  new_dw->get(pFlux, d_lb->pFluxLabel, pset);
+  new_dw->get(pFlux, d_lb->diffusion->pFlux, pset);
 
-  new_dw->allocateAndPut(gConcRate, d_lb->gConcentrationRateLabel, dwi, patch);
+  new_dw->allocateAndPut(gConcRate, d_lb->diffusion->gConcentrationRate, dwi, patch);
 
   gConcRate.initialize(0.0);
 
@@ -253,7 +254,7 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
               gac,
               npc);
   t->requires(Task::NewDW,
-              d_lb->pFluxLabel,
+              d_lb->diffusion->pFlux,
               allPatches,
               Task::CoarseLevel,
               allMatls,
@@ -261,7 +262,7 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
               gac,
               npc);
 
-  t->modifies(d_lb->gConcentrationRateLabel, matlset);
+  t->modifies(d_lb->diffusion->gConcentrationRate, matlset);
 }
 
 void
@@ -334,10 +335,10 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
 
       NCVariable<double> gConcRate;
       new_dw->getModifiable(
-        gConcRate, d_lb->gConcentrationRateLabel, dwi, finePatch);
+        gConcRate, d_lb->diffusion->gConcentrationRate, dwi, finePatch);
 
       // loop over the coarse patches under the fine patches.
-      for (int cp = 0; cp < coarsePatches.size(); cp++) {
+      for (size_t cp = 0; cp < coarsePatches.size(); cp++) {
         const Patch* coarsePatch = coarsePatches[cp];
 
         // get coarse level particle data
@@ -356,7 +357,7 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
         // coarse level data
         old_dw->get(px_coarse, d_lb->pXLabel, pset_coarse);
         old_dw->get(pmass_coarse, d_lb->pMassLabel, pset_coarse);
-        new_dw->get(pflux_coarse, d_lb->pFluxLabel, pset_coarse);
+        new_dw->get(pflux_coarse, d_lb->diffusion->pFlux, pset_coarse);
 
         for (ParticleSubset::iterator iter = pset_coarse->begin();
              iter != pset_coarse->end();

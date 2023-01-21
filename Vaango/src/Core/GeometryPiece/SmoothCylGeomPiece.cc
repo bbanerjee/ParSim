@@ -299,11 +299,11 @@ SmoothCylGeomPiece::createEndCapPoints() {
         Point p(pp);
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
-          d_volume.push_back(axisInc * area);
-          d_size.push_back(size);
-          d_rvec1.push_back(r1);
-          d_rvec2.push_back(r2);
-          d_rvec3.push_back(r3);
+          d_scalars.at("p.volume").push_back(axisInc * area);
+          d_tensors.at("p.size").push_back(size);
+          d_vectors.at("p,rvec1").push_back(r1);
+          d_vectors.at("p.rvec2").push_back(r2);
+          d_vectors.at("p.rvec3").push_back(r3);
           // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -369,11 +369,11 @@ SmoothCylGeomPiece::createEndCapPoints() {
 
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
-          d_volume.push_back(axisInc * area);
-          d_size.push_back(size);
-          d_rvec1.push_back(r1);
-          d_rvec2.push_back(r2);
-          d_rvec3.push_back(r3);
+          d_scalars.at("p.volume").push_back(axisInc * area);
+          d_tensors.at("p.size").push_back(size);
+          d_vectors.at("p,rvec1").push_back(r1);
+          d_vectors.at("p.rvec2").push_back(r2);
+          d_vectors.at("p.rvec3").push_back(r3);
           // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -459,11 +459,11 @@ SmoothCylGeomPiece::createSolidCylPoints() {
 
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
-          d_volume.push_back(axisInc * area);
-          d_size.push_back(size);
-          d_rvec1.push_back(r1);
-          d_rvec2.push_back(r2);
-          d_rvec3.push_back(r3);
+          d_scalars.at("p.volume").push_back(axisInc * area);
+          d_tensors.at("p.size").push_back(size);
+          d_vectors.at("p,rvec1").push_back(r1);
+          d_vectors.at("p.rvec2").push_back(r2);
+          d_vectors.at("p.rvec3").push_back(r3);
           // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -549,11 +549,11 @@ SmoothCylGeomPiece::createHollowCylPoints() {
 
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
-          d_volume.push_back(axisInc * area);
-          d_size.push_back(size);
-          d_rvec1.push_back(r1);
-          d_rvec2.push_back(r2);
-          d_rvec3.push_back(r3);
+          d_scalars.at("p.volume").push_back(axisInc * area);
+          d_tensors.at("p.size").push_back(size);
+          d_vectors.at("p,rvec1").push_back(r1);
+          d_vectors.at("p.rvec2").push_back(r2);
+          d_vectors.at("p.rvec3").push_back(r3);
           // std::cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }

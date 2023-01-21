@@ -28,7 +28,7 @@
 #define __CORRUG_EDGE_PIECE_H__
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 
 #include <cmath>
 #ifndef M_PI
@@ -72,7 +72,7 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class CorrugEdgeGeomPiece : public SmoothGeomPiece {
+class CorrugEdgeGeomPiece : public SpecialGeomPiece {
  public:
   //////////////////////////////////////////////////////////////////////
   /*!

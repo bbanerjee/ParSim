@@ -27,7 +27,7 @@
 #define __ABAQUS_MESH_GEOMETRY_OBJECT_H__
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 #include <Core/Grid/Box.h>
 
 #include <iostream>
@@ -60,7 +60,7 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class AbaqusMeshGeometryPiece final : public SmoothGeomPiece {
+class AbaqusMeshGeometryPiece final : public SpecialGeomPiece {
  public:
   //////////////////////////////////////////////////////////////////////
   /*! \brief Constructor that takes a ProblemSpecP argument.

@@ -28,7 +28,7 @@
 #define __SMOOTH_CYL_PIECE_H__
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Math/Matrix3.h>
 
@@ -98,7 +98,7 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class SmoothCylGeomPiece : public SmoothGeomPiece {
+class SmoothCylGeomPiece : public SpecialGeomPiece {
  public:
   //////////////////////////////////////////////////////////////////////
   /*!

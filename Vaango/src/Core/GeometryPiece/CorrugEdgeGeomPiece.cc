@@ -42,19 +42,24 @@ const std::string CorrugEdgeGeomPiece::TYPE_NAME = "corrugated";
 
 //////////
 // Constructor : Initialize stuff
-CorrugEdgeGeomPiece::CorrugEdgeGeomPiece(ProblemSpecP& ps) {
+CorrugEdgeGeomPiece::CorrugEdgeGeomPiece(ProblemSpecP& ps)
+{
   d_name = "Unnamed Corrugated";
   ps->require("xymin", d_xymin);
   ps->require("xymax", d_xymax);
-  if ((d_xymax - d_xymin).length2() <= 0.0)
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Check data in input", __FILE__, __LINE__));
+  if ((d_xymax - d_xymin).length2() <= 0.0) {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Check data in input",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "xmin = " << d_xymin << " xmax = " << d_xymax << "\n";
 
   ps->require("thickness", d_thickness);
-  if (d_thickness <= 0.0)
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Thickness <= 0", __FILE__, __LINE__));
+  if (d_thickness <= 0.0) {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Thickness <= 0",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "thickness = " << d_thickness << "\n";
 
   d_normal = Vector(0.0, 0.0, 1.0);
@@ -63,33 +68,42 @@ CorrugEdgeGeomPiece::CorrugEdgeGeomPiece(ProblemSpecP& ps) {
 
   d_edge = "x+";
   ps->require("corr_edge", d_edge);
-  if (d_edge != "x+" && d_edge != "x-" && d_edge != "y+" && d_edge != "y-")
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Unknown edge.", __FILE__, __LINE__));
+  if (d_edge != "x+" && d_edge != "x-" && d_edge != "y+" && d_edge != "y-") {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Unknown edge.",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "corr_edge = " << d_edge << "\n";
 
   d_curve = "sin";
   ps->require("curve", d_curve);
-  if (d_curve != "sin" && d_curve != "cos")
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Unknown curve", __FILE__, __LINE__));
+  if (d_curve != "sin" && d_curve != "cos") {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Unknown curve",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "curve = " << d_curve << "\n";
 
   ps->require("wavelength", d_wavelength);
-  if (d_wavelength <= 0.0)
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Wavelength <= 0.0", __FILE__, __LINE__));
+  if (d_wavelength <= 0.0) {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Wavelength <= 0.0",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "wavelength = " << d_wavelength << "\n";
 
   ps->require("amplitude", d_amplitude);
-  if (d_amplitude <= 0.0)
-    SCI_THROW(ProblemSetupException(
-        "CorrugEdgeGeom: Amplitude <= 0.0", __FILE__, __LINE__));
+  if (d_amplitude <= 0.0) {
+    SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Amplitude <= 0.0",
+                                    __FILE__,
+                                    __LINE__));
+  }
   std::cout << "amplitude = " << d_amplitude << "\n";
 }
 
 void
-CorrugEdgeGeomPiece::outputHelper(ProblemSpecP& ps) const {
+CorrugEdgeGeomPiece::outputHelper(ProblemSpecP& ps) const
+{
   ps->appendElement("xymin", d_xymin);
   ps->appendElement("xymax", d_xymax);
   ps->appendElement("thickness", d_thickness);
@@ -101,7 +115,8 @@ CorrugEdgeGeomPiece::outputHelper(ProblemSpecP& ps) const {
 }
 
 GeometryPieceP
-CorrugEdgeGeomPiece::clone() const {
+CorrugEdgeGeomPiece::clone() const
+{
   return std::make_shared<CorrugEdgeGeomPiece>(*this);
 }
 
@@ -109,7 +124,8 @@ CorrugEdgeGeomPiece::clone() const {
 /*! Find if a point is inside the plate with corrugated edge */
 /////////////////////////////////////////////////////////////////////////////
 bool
-CorrugEdgeGeomPiece::inside(const Point& p) const {
+CorrugEdgeGeomPiece::inside(const Point& p) const
+{
   bool isInside = false;
 
   // std::cout << "CorrugEdgeGeomPiece:inside(p) not yet implemented." << "\n";
@@ -120,7 +136,8 @@ CorrugEdgeGeomPiece::inside(const Point& p) const {
 /*! Find the bounding box for the plate */
 /////////////////////////////////////////////////////////////////////////////
 Box
-CorrugEdgeGeomPiece::getBoundingBox() const {
+CorrugEdgeGeomPiece::getBoundingBox() const
+{
   Point lo   = d_xymin;
   Vector top = d_xymax.asVector() + d_normal * d_thickness;
   Point hi(top.x(), top.y(), top.z());
@@ -132,8 +149,11 @@ CorrugEdgeGeomPiece::getBoundingBox() const {
 /* Create particles */
 //////////////////////////////////////////////////////////////////////////
 unsigned int
-CorrugEdgeGeomPiece::createPoints() {
-  if (!d_points.empty()) d_points.clear();
+CorrugEdgeGeomPiece::createPoints()
+{
+  if (!d_points.empty()) {
+    d_points.clear();
+  }
   double lambda = d_wavelength;
   double a      = d_amplitude;
   double L      = 0.0;
@@ -144,10 +164,11 @@ CorrugEdgeGeomPiece::createPoints() {
   // Decide whether sin or cos curve is to be used
   double sinFactor = 0.0;
   double cosFactor = 0.0;
-  if (d_curve == "sin")
+  if (d_curve == "sin") {
     sinFactor = 1.0;
-  else
+  } else {
     cosFactor = 1.0;
+  }
   std::cout << "sinFactor = " << sinFactor << " cosFactor = " << cosFactor
             << "\n";
 
@@ -209,7 +230,12 @@ CorrugEdgeGeomPiece::createPoints() {
           double x = xx + a * sin(2.0 * yy * M_PI / lambda) * sinFactor +
                      a * cos(2.0 * yy * M_PI / lambda) * cosFactor;
           d_points.push_back(Point(x, yy, zz));
-          d_volume.push_back(dx * dx * dx);
+          d_scalars["p.volume"].push_back(dx * dx * dx);
+          d_tensors.at("p.size").push_back(
+            Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
+          d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+          d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
+          d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
           yy += ysign * dxL;
         }
         xx += xsign * dxW;
@@ -228,7 +254,12 @@ CorrugEdgeGeomPiece::createPoints() {
           double y = yy + a * sin(2.0 * xx * M_PI / lambda) * sinFactor +
                      a * cos(2.0 * xx * M_PI / lambda) * cosFactor;
           d_points.push_back(Point(xx, y, zz));
-          d_volume.push_back(dx * dx * dx);
+          d_scalars["p.volume"].push_back(dx * dx * dx);
+          d_tensors.at("p.size").push_back(
+            Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
+          d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+          d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
+          d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
           xx += xsign * dxL;
         }
         yy += ysign * dxW;

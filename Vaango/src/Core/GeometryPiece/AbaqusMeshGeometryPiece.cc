@@ -45,7 +45,8 @@ const string AbaqusMeshGeometryPiece::TYPE_NAME = "abaqus_mesh";
 //---------------------------------------------------------------------------
 // Read geometry data from file
 //---------------------------------------------------------------------------
-AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP& ps) {
+AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP& ps)
+{
   // Set the default GeometryPiece type name
   d_name = "Unnamed " + TYPE_NAME + " from PS";
 
@@ -98,7 +99,8 @@ AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP& ps) {
 //---------------------------------------------------------------------------
 // Initialize geometry piece type name
 //---------------------------------------------------------------------------
-AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(const string& /*file_name*/) {
+AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(const string& /*file_name*/)
+{
   d_name = "Unnamed " + TYPE_NAME + " from file_name";
 }
 
@@ -106,7 +108,8 @@ AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(const string& /*file_name*/) {
 // Write the output problem spec
 //---------------------------------------------------------------------
 void
-AbaqusMeshGeometryPiece::outputHelper(ProblemSpecP& ps) const {
+AbaqusMeshGeometryPiece::outputHelper(ProblemSpecP& ps) const
+{
   ps->appendElement("file_name", d_fileName);
   ps->appendElement("scaling_factor", d_scalefac);
   ps->appendElement("translation_vector", d_translate);
@@ -126,7 +129,8 @@ AbaqusMeshGeometryPiece::outputHelper(ProblemSpecP& ps) const {
 // Clone the geometry piece
 //---------------------------------------------------------------------
 GeometryPieceP
-AbaqusMeshGeometryPiece::clone() const {
+AbaqusMeshGeometryPiece::clone() const
+{
   return std::make_shared<AbaqusMeshGeometryPiece>(*this);
 }
 
@@ -134,7 +138,8 @@ AbaqusMeshGeometryPiece::clone() const {
 // Read input tetrahedral volume mesh file in Abaqus format
 //--------------------------------------------------------------------------------
 void
-AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
+AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
+{
   // Try to open file
   std::ifstream file(fileName);
   if (!file.is_open()) {
@@ -163,7 +168,9 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
     // std::cout << "line = " << line << std::endl;
 
     // Ignore empty lines
-    if (line.empty()) continue;
+    if (line.empty()) {
+      continue;
+    }
 
     // Erase white spaces from the line
     line.erase(remove(line.begin(), line.end(), ' '), line.end());
@@ -188,10 +195,12 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
         if (std::regex_search(line.begin(), line.end(), line_token1) ||
             std::regex_search(line.begin(), line.end(), line_token2)) {
           line_elem_flag = true;
-        } else if (std::regex_search(
-                       line.begin(), line.end(), surface_token1) ||
-                   std::regex_search(
-                       line.begin(), line.end(), surface_token2)) {
+        } else if (std::regex_search(line.begin(),
+                                     line.end(),
+                                     surface_token1) ||
+                   std::regex_search(line.begin(),
+                                     line.end(),
+                                     surface_token2)) {
           // std::cout << " contains the string SURFACE";
           surf_elem_flag = true;
         } else {
@@ -231,7 +240,7 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
   // Timing
   endTime = std::chrono::system_clock::now();
   double time =
-      std::chrono::duration<double, std::milli>(endTime - startTime).count();
+    std::chrono::duration<double, std::milli>(endTime - startTime).count();
   std::cout << "Done reading Abaqus mesh file in " << time << " millisecs"
             << std::endl;
   startTime = std::chrono::system_clock::now();
@@ -358,8 +367,9 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
   d_box = Box(min, max);
 
   // Compute centroid (approx)
-  Vector centroid(
-      0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax));
+  Vector centroid(0.5 * (xmin + xmax),
+                  0.5 * (ymin + ymax),
+                  0.5 * (zmin + zmax));
 
   // Rotate points
   if (d_use_gauss_pts) {
@@ -397,23 +407,35 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName) {
   if (d_use_gauss_pts) {
     for (auto node : gaussPtArray) {
       d_points.push_back(Point(node.x_, node.y_, node.z_));
-      d_volume.push_back(node.volume_);
+      d_scalars["p.volume"].push_back(node.volume_);
+      d_tensors.at("p.size").push_back(
+        Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
+      d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+      d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
+      d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
     }
   } else {
     for (auto iter = nodeArray.begin(); iter != nodeArray.end(); ++iter) {
       MeshNode node = *iter;
       d_points.push_back(Point(node.x_, node.y_, node.z_));
-      d_volume.push_back(node.volume_);
+      d_scalars["p.volume"].push_back(node.volume_);
+      d_tensors.at("p.size").push_back(
+        Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
+      d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+      d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
+      d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
     }
   }
 
   std::cout << "Number of MPM points = " << d_points.size()
-            << " Number of MPM points/w volume = " << d_volume.size() << "\n";
+            << " Number of MPM points/w volume = "
+            << d_scalars["p.volume"].size() << "\n";
 }
 
 void
 AbaqusMeshGeometryPiece::readMeshNode(const std::string& inputLine,
-                                      std::vector<MeshNode>& nodes) {
+                                      std::vector<MeshNode>& nodes)
+{
   // Tokenize the string
   std::string data_piece;
   std::istringstream data_stream(inputLine);
@@ -440,7 +462,7 @@ AbaqusMeshGeometryPiece::readMeshNode(const std::string& inputLine,
   int first        = d_axis.x() - 1;
   int second       = d_axis.y() - 1;
   int third        = d_axis.z() - 1;
-  double coords[3] = {0.0, 0.0, 0.0};
+  double coords[3] = { 0.0, 0.0, 0.0 };
   coords[first]    = xcoord;
   coords[second]   = ycoord;
   coords[third]    = zcoord;
@@ -456,7 +478,9 @@ AbaqusMeshGeometryPiece::readMeshNode(const std::string& inputLine,
 
 void
 AbaqusMeshGeometryPiece::readMeshVolumeElement(
-    const std::string& inputLine, std::vector<VolumeElement>& elements) {
+  const std::string& inputLine,
+  std::vector<VolumeElement>& elements)
+{
   // Tokenize the string
   std::string data_piece;
   std::istringstream data_stream(inputLine);
@@ -487,9 +511,9 @@ AbaqusMeshGeometryPiece::readMeshVolumeElement(
   }
   if (node_list.empty()) {
     throw ProblemSetupException(
-        "Could not find nodes in volume element input data stream",
-        __FILE__,
-        __LINE__);
+      "Could not find nodes in volume element input data stream",
+      __FILE__,
+      __LINE__);
   }
 
   // Save the data
@@ -498,7 +522,9 @@ AbaqusMeshGeometryPiece::readMeshVolumeElement(
 
 void
 AbaqusMeshGeometryPiece::readMeshSurfaceElement(
-    const std::string& inputLine, std::vector<SurfaceElement>& elements) {
+  const std::string& inputLine,
+  std::vector<SurfaceElement>& elements)
+{
   // Tokenize the string
   std::string data_piece;
   std::istringstream data_stream(inputLine);
@@ -527,9 +553,9 @@ AbaqusMeshGeometryPiece::readMeshSurfaceElement(
   }
   if (node_list.empty()) {
     throw ProblemSetupException(
-        "Could not find nodes in surface element input data stream",
-        __FILE__,
-        __LINE__);
+      "Could not find nodes in surface element input data stream",
+      __FILE__,
+      __LINE__);
   }
 
   // Save the data
@@ -538,7 +564,9 @@ AbaqusMeshGeometryPiece::readMeshSurfaceElement(
 
 void
 AbaqusMeshGeometryPiece::computeElementVolumes(
-    std::vector<MeshNode>& nodes, std::vector<VolumeElement>& elements) {
+  std::vector<MeshNode>& nodes,
+  std::vector<VolumeElement>& elements)
+{
   // Loop thru elements
   for (auto& elem : elements) {
     MeshNode node1 = nodes[elem.node1_ - 1];
@@ -560,9 +588,10 @@ AbaqusMeshGeometryPiece::computeElementVolumes(
 
 void
 AbaqusMeshGeometryPiece::computeGaussPtVolumes(
-    std::vector<MeshNode>& nodes,
-    std::vector<VolumeElement>& elements,
-    std::vector<MeshNode>& gaussPts) {
+  std::vector<MeshNode>& nodes,
+  std::vector<VolumeElement>& elements,
+  std::vector<MeshNode>& gaussPts)
+{
   // Timing
   auto startTime = std::chrono::system_clock::now();
 
@@ -618,32 +647,32 @@ AbaqusMeshGeometryPiece::computeGaussPtVolumes(
       A(3, 3) = 0.5854101966249680;
 
       Uintah::Vector q =
-          A(0, 0) * e1 + A(0, 1) * e2 + A(0, 2) * e3 + A(0, 3) * e4;
+        A(0, 0) * e1 + A(0, 1) * e2 + A(0, 2) * e3 + A(0, 3) * e4;
       ++pt_id;
       gaussPts.push_back(
-          MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
+        MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
 
       q = A(1, 0) * e1 + A(1, 1) * e2 + A(1, 2) * e3 + A(1, 3) * e4;
       ++pt_id;
       gaussPts.push_back(
-          MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
+        MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
 
       q = A(2, 0) * e1 + A(2, 1) * e2 + A(2, 2) * e3 + A(2, 3) * e4;
       ++pt_id;
       gaussPts.push_back(
-          MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
+        MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
 
       q = A(3, 0) * e1 + A(3, 1) * e2 + A(3, 2) * e3 + A(3, 3) * e4;
       ++pt_id;
       gaussPts.push_back(
-          MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
+        MeshNode(pt_id, q.x(), q.y(), q.z(), 0.25 * elem.volume_));
     }
   }
 
   // Timing
   auto endTime = std::chrono::system_clock::now();
   auto time =
-      std::chrono::duration<double, std::milli>(endTime - startTime).count();
+    std::chrono::duration<double, std::milli>(endTime - startTime).count();
   std::cout << "Done computing quadrature points in " << time << " millisecs"
             << std::endl;
   startTime = std::chrono::system_clock::now();
@@ -651,9 +680,10 @@ AbaqusMeshGeometryPiece::computeGaussPtVolumes(
 
 void
 AbaqusMeshGeometryPiece::computeNodalVolumes(
-    std::vector<MeshNode>& nodes,
-    std::vector<VolumeElement>& elements,
-    std::map<int, int>& elemMap) {
+  std::vector<MeshNode>& nodes,
+  std::vector<VolumeElement>& elements,
+  std::map<int, int>& elemMap)
+{
   // Timing
   auto startTime = std::chrono::system_clock::now();
 
@@ -663,7 +693,7 @@ AbaqusMeshGeometryPiece::computeNodalVolumes(
   // Timing
   auto endTime = std::chrono::system_clock::now();
   auto time =
-      std::chrono::duration<double, std::milli>(endTime - startTime).count();
+    std::chrono::duration<double, std::milli>(endTime - startTime).count();
   std::cout << "Done finding adjacent elements in " << time << " millisecs"
             << std::endl;
   startTime = std::chrono::system_clock::now();
@@ -693,7 +723,9 @@ AbaqusMeshGeometryPiece::computeNodalVolumes(
 
 void
 AbaqusMeshGeometryPiece::findNodalAdjacentElements(
-    std::vector<MeshNode>& nodes, std::vector<VolumeElement>& elements) {
+  std::vector<MeshNode>& nodes,
+  std::vector<VolumeElement>& elements)
+{
   // Loop thru elements and find adjacent elements for each node
   for (VolumeElement cur_elem : elements) {
     // Loop thru nodes of each element
@@ -734,27 +766,31 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(
 //______________________________________________________________________
 // *TODO* Implement this
 bool
-AbaqusMeshGeometryPiece::inside(const Point& p) const {
+AbaqusMeshGeometryPiece::inside(const Point& p) const
+{
   // proc0cout << "**WARNING: 'inside' for Abaqus Mesh Geometry not implemented
   // yet."
   //           << std::endl;
   // Check p with the lower coordinates
-  if (p == Max(p, d_box.lower()) && p == Min(p, d_box.upper()))
+  if (p == Max(p, d_box.lower()) && p == Min(p, d_box.upper())) {
     return true;
-  else
+  } else {
     return false;
+  }
 }
 //______________________________________________________________________
 //
 Box
-AbaqusMeshGeometryPiece::getBoundingBox() const {
+AbaqusMeshGeometryPiece::getBoundingBox() const
+{
   return d_box;
 }
 
 //______________________________________________________________________
 //
 unsigned int
-AbaqusMeshGeometryPiece::createPoints() {
+AbaqusMeshGeometryPiece::createPoints()
+{
   std::cout << "AbaqusMeshGeometryPiece: d_points.size() = " << d_points.size()
             << "\n";
   return d_points.size();
@@ -764,7 +800,8 @@ AbaqusMeshGeometryPiece::createPoints() {
 // From:
 // https://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf/6089413#6089413
 std::istream&
-AbaqusMeshGeometryPiece::getline_safer(std::istream& is, std::string& t) {
+AbaqusMeshGeometryPiece::getline_safer(std::istream& is, std::string& t)
+{
   t.clear();
 
   // The characters in the stream are read one-by-one using a std::streambuf.
@@ -782,11 +819,15 @@ AbaqusMeshGeometryPiece::getline_safer(std::istream& is, std::string& t) {
       case '\n':
         return is;
       case '\r':
-        if (sb->sgetc() == '\n') sb->sbumpc();
+        if (sb->sgetc() == '\n') {
+          sb->sbumpc();
+        }
         return is;
       case std::streambuf::traits_type::eof():
         // Also handle the case when the last line has no line ending
-        if (t.empty()) is.setstate(std::ios::eofbit);
+        if (t.empty()) {
+          is.setstate(std::ios::eofbit);
+        }
         return is;
       default:
         t += (char)c;

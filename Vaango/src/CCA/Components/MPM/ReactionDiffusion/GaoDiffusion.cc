@@ -25,11 +25,12 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <iostream>
 
@@ -65,11 +66,14 @@ GaoDiffusion::scheduleComputeFlux(Task* task,
   task->requires(Task::OldDW, d_lb->pVolumeLabel, matlset, gan, NGP);
   task->requires(Task::OldDW, d_lb->pDefGradLabel, matlset, gan, NGP);
   task->requires(Task::NewDW, d_lb->gMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pConcentrationLabel, matlset, gan, NGP);
-  task->requires(
-    Task::NewDW, d_lb->gHydrostaticStressLabel, matlset, gan, 2 * NGN);
+  task->requires(Task::OldDW, d_lb->diffusion->pConcentration, matlset, gan, NGP);
+  task->requires(Task::NewDW,
+                 d_lb->diffusion->gHydrostaticStress,
+                 matlset,
+                 gan,
+                 2 * NGN);
 
-  task->computes(d_lb->pFluxLabel, matlset);
+  task->computes(d_lb->diffusion->pFlux, matlset);
 }
 
 void
@@ -113,27 +117,30 @@ GaoDiffusion::computeFlux(const Patch* patch,
   old_dw->get(pMass, d_lb->pMassLabel, pset);
   old_dw->get(psize, d_lb->pSizeLabel, pset);
   old_dw->get(deformationGradient, d_lb->pDefGradLabel, pset);
-  old_dw->get(pConcentration, d_lb->pConcentrationLabel, pset);
-  old_dw->get(pConcGradient, d_lb->pConcGradientLabel, pset);
+  old_dw->get(pConcentration, d_lb->diffusion->pConcentration, pset);
+  old_dw->get(pConcGradient, d_lb->diffusion->pGradConcentration, pset);
 
   new_dw->get(gMass, d_lb->gMassLabel, dwi, patch, gnone, 0);
   new_dw->get(gHydrostaticStress,
-              d_lb->gHydrostaticStressLabel,
+              d_lb->diffusion->gHydrostaticStress,
               dwi,
               patch,
               gac,
               2 * NGN);
 
   new_dw->allocateTemporary(pHydroStressGradient, pset);
-  new_dw->allocateAndPut(pFlux, d_lb->pFluxLabel, pset);
+  new_dw->allocateAndPut(pFlux, d_lb->diffusion->pFlux, pset);
 
   double chem_potential;
   double mech_potential;
   for (const auto& idx : *pset) {
 
     // Get the node indices that surround the cell
-    interpolator->findCellAndShapeDerivatives(
-      px[idx], ni, d_S, psize[idx], deformationGradient[idx]);
+    interpolator->findCellAndShapeDerivatives(px[idx],
+                                              ni,
+                                              d_S,
+                                              psize[idx],
+                                              deformationGradient[idx]);
 
     pHydroStressGradient[idx] = Vector(0.0, 0.0, 0.0);
     for (int k = 0; k < d_Mflag->d_8or27; k++) {
@@ -149,8 +156,8 @@ GaoDiffusion::computeFlux(const Patch* patch,
 
     pFlux[idx] = chem_potential * pConcGradient[idx] +
                  mech_potential * pHydroStressGradient[idx];
-    // std::cout << "id: " << idx << " CG: " << pConcentrationGradient[idx] << ", PF:
-    // " << pPotentialFlux[idx] << endl;
+    // std::cout << "id: " << idx << " CG: " << pConcentrationGradient[idx] <<
+    // ", PF: " << pPotentialFlux[idx] << endl;
   } // End of Particle Loop
 
   // delete interpolator;

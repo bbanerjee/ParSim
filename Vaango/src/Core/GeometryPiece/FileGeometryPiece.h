@@ -28,10 +28,9 @@
 #define __FILE_GEOMETRY_OBJECT_H__
 
 #include <Core/Geometry/Point.h>
-#include <Core/GeometryPiece/SmoothGeomPiece.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 #include <Core/Grid/Box.h>
 
-#include <list>
 #include <string>
 #include <vector>
 
@@ -95,8 +94,9 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class FileGeometryPiece : public SmoothGeomPiece {
- public:
+class FileGeometryPiece : public SpecialGeomPiece
+{
+public:
   //////////////////////////////////////////////////////////////////////
   /*! \brief Constructor that takes a ProblemSpecP argument.
       It reads the xml input specification and builds a generalized box. */
@@ -112,7 +112,8 @@ class FileGeometryPiece : public SmoothGeomPiece {
 
   static const std::string TYPE_NAME;
   virtual std::string
-  getType() const {
+  getType() const
+  {
     return TYPE_NAME;
   }
 
@@ -131,12 +132,14 @@ class FileGeometryPiece : public SmoothGeomPiece {
   unsigned int
   createPoints();
 
- private:
+private:
   Box d_box;
   std::string d_file_name;
   std::string d_file_format;
-  std::list<std::string> d_vars;
-  bool d_usePFS;
+  std::vector<std::string> d_scalar_vars;
+  std::vector<std::string> d_vector_vars;
+  std::vector<std::string> d_tensor_vars;
+  bool d_usePFS{ false };
 
   void
   checkFileType(std::ifstream& source,
@@ -145,12 +148,20 @@ class FileGeometryPiece : public SmoothGeomPiece {
 
   bool
   read_line(std::istream& is, Point& xmin, Point& xmax);
+
+  bool
+  read_line_text(std::istream& is, Point& position, Matrix3& size);
+
+  bool
+  read_line_binary(std::istream& is, Point& position, Matrix3& size);
+
   void
   read_bbox(std::istream& source, Point& lowpt, Point& highpt) const;
+
   virtual void
   outputHelper(ProblemSpecP& ps) const;
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  // __FILE_GEOMTRY_Piece_H__
+#endif // __FILE_GEOMTRY_Piece_H__

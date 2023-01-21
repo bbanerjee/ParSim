@@ -120,13 +120,14 @@ public:
   bool d_prescribeDeformation; // Prescribe deformation via a table of U and R
   bool d_useCohesiveZones;     // Flag for using cohesive zones
   bool d_useCoordRotation;     // Coordinate rotation on/off
-  bool d_useCBDI;         // Flag for using CBDI boundary condition treatment
-  bool d_useCPTI;         // Flag for using CPTI interpolation
-  bool d_useLoadCurves;   // Flag for using load curves
-  bool d_withColor;       // to turn on the color variable
-  bool d_AMR;             // Do AMR?
-  bool d_GEVelProj;       // Flag for adaptive mesh refinement
-  bool d_refineParticles; // Flag for refinement
+  bool d_useCBDI;       // Flag for using CBDI boundary condition treatment
+  bool d_useCPTI;       // Flag for using CPTI interpolation
+  bool d_useLoadCurves; // Flag for using load curves
+  bool d_useLoadCurvesVector{ false }; // Flag for using load curves
+  bool d_withColor;                    // to turn on the color variable
+  bool d_AMR;                          // Do AMR?
+  bool d_GEVelProj;                    // Flag for adaptive mesh refinement
+  bool d_refineParticles;              // Flag for refinement
 
   int d_8or27;                 // Number of nodes a particle can interact with
   int d_minGridLevel;          // Only do MPM on this grid level

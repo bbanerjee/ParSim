@@ -43,24 +43,32 @@ const std::string SmoothSphereGeomPiece::TYPE_NAME = "smooth_sphere";
 
 //////////
 // Constructor : Initialize stuff
-SmoothSphereGeomPiece::SmoothSphereGeomPiece(ProblemSpecP& ps) {
+SmoothSphereGeomPiece::SmoothSphereGeomPiece(ProblemSpecP& ps)
+{
   ps->require("center", d_center);
 
   ps->require("outer_radius", d_outerRadius);
-  if (d_outerRadius <= 0.0)
-    SCI_THROW(ProblemSetupException(
-        "SmoothSphereGeom: Radius <= 0", __FILE__, __LINE__));
+  if (d_outerRadius <= 0.0) {
+    SCI_THROW(ProblemSetupException("SmoothSphereGeom: Radius <= 0",
+                                    __FILE__,
+                                    __LINE__));
+  }
 
   d_innerRadius = 0.0;
   ps->get("inner_radius", d_innerRadius);
-  if (d_innerRadius > d_outerRadius)
-    SCI_THROW(ProblemSetupException(
-        "SmoothSphereGeom: inner radius > outer radius", __FILE__, __LINE__));
+  if (d_innerRadius > d_outerRadius) {
+    SCI_THROW(
+      ProblemSetupException("SmoothSphereGeom: inner radius > outer radius",
+                            __FILE__,
+                            __LINE__));
+  }
 
   ps->require("num_radial_pts", d_numRadial);
-  if (d_numRadial < 1)
-    SCI_THROW(ProblemSetupException(
-        "SmoothSphereGeom: Radial Divs < 1", __FILE__, __LINE__));
+  if (d_numRadial < 1) {
+    SCI_THROW(ProblemSetupException("SmoothSphereGeom: Radial Divs < 1",
+                                    __FILE__,
+                                    __LINE__));
+  }
 
   d_algorithm = "spiral";
   ps->get("algorithm", d_algorithm);
@@ -70,7 +78,8 @@ SmoothSphereGeomPiece::SmoothSphereGeomPiece(ProblemSpecP& ps) {
 }
 
 void
-SmoothSphereGeomPiece::outputHelper(ProblemSpecP& ps) const {
+SmoothSphereGeomPiece::outputHelper(ProblemSpecP& ps) const
+{
   ps->appendElement("center", d_center);
   ps->appendElement("outer_radius", d_outerRadius);
   ps->appendElement("inner_radius", d_innerRadius);
@@ -80,7 +89,8 @@ SmoothSphereGeomPiece::outputHelper(ProblemSpecP& ps) const {
 }
 
 GeometryPieceP
-SmoothSphereGeomPiece::clone() const {
+SmoothSphereGeomPiece::clone() const
+{
   return std::make_shared<SmoothSphereGeomPiece>(*this);
 }
 
@@ -88,12 +98,15 @@ SmoothSphereGeomPiece::clone() const {
 /*! Find if a point is inside the _sphere */
 /////////////////////////////////////////////////////////////////////////////
 bool
-SmoothSphereGeomPiece::inside(const Point& pt) const {
+SmoothSphereGeomPiece::inside(const Point& pt) const
+{
   // Find the distance of the point to the origin
   Vector vec  = pt - d_center;
   double dist = vec.length();
 
-  if (dist > d_innerRadius && dist < d_outerRadius) return true;
+  if (dist > d_innerRadius && dist < d_outerRadius) {
+    return true;
+  }
 
   return false;
 }
@@ -102,7 +115,8 @@ SmoothSphereGeomPiece::inside(const Point& pt) const {
 /*! Find the bounding box for the _sphere */
 /////////////////////////////////////////////////////////////////////////////
 Box
-SmoothSphereGeomPiece::getBoundingBox() const {
+SmoothSphereGeomPiece::getBoundingBox() const
+{
   // Find the vector along the axis of the _sphere
   Point lo(d_center.x() - d_outerRadius,
            d_center.y() - d_outerRadius,
@@ -118,7 +132,8 @@ SmoothSphereGeomPiece::getBoundingBox() const {
 /* Create particles */
 //////////////////////////////////////////////////////////////////////////
 unsigned int
-SmoothSphereGeomPiece::createPoints() {
+SmoothSphereGeomPiece::createPoints()
+{
   int totCount = 0;
   if (d_algorithm == "spiral") {
     totCount = createSpherePointsSpiral();
@@ -126,7 +141,8 @@ SmoothSphereGeomPiece::createPoints() {
     totCount = createSpherePointsEqualArea();
   } else {
     std::ostringstream out;
-    out << "**ERROR** SmoothSphereGeom: Unknown algorithm for point generation.";
+    out
+      << "**ERROR** SmoothSphereGeom: Unknown algorithm for point generation.";
     throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
 
@@ -143,7 +159,8 @@ SmoothSphereGeomPiece::createPoints() {
     equal volume */
 //////////////////////////////////////////////////////////////////////////
 int
-SmoothSphereGeomPiece::createSpherePointsSpiral() {
+SmoothSphereGeomPiece::createSpherePointsSpiral()
+{
   std::cout << "Creating particles for the Solid Sphere"
             << "\n";
 
@@ -167,14 +184,20 @@ SmoothSphereGeomPiece::createSpherePointsSpiral() {
 void
 SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
                                             double inner_radius,
-                                            double char_dist) {
+                                            double char_dist)
+{
   // Find the radius of the middle of the annulus
   double mid_radius = 0.5 * (outer_radius + inner_radius);
 
   // This is the point at the center of the sphere that is being discretized
   if (inner_radius < 1.0e-16) {
-    d_points.push_back(Point(0.0, 0.0, 0.0));
-    d_volume.push_back(volumeOfSphere(mid_radius));
+    d_points.emplace_back(Point(0.0, 0.0, 0.0));
+    d_scalars.at("p.volume").emplace_back(volumeOfSphere(mid_radius));
+    d_tensors.at("p.size").emplace_back(
+      Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
+    d_vectors.at("p,rvec1").emplace_back(Vector(1.0, 0.0, 0.0));
+    d_vectors.at("p.rvec2").emplace_back(Vector(0.0, 1.0, 0.0));
+    d_vectors.at("p.rvec3").emplace_back(Vector(0.0, 0.0, 1.0));
     return;
   }
 
@@ -195,8 +218,8 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
   // Loop thru set of points
   double theta = 0.0;
   for (int ii = 0; ii < num_points; ++ii) {
-    double cosphi = ((double)(ii + 1 - num_points) + (double)(ii)) /
-                    (double)(num_points - 1);
+    double cosphi =
+      ((double)(ii + 1 - num_points) + (double)(ii)) / (double)(num_points - 1);
     double sinphi = std::sqrt(1.0 - cosphi * cosphi);
     if (ii == 0 || ii == num_points - 1) {
       theta = 0.0;
@@ -207,8 +230,6 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
     double x = mid_radius * sinphi * cos(theta) + d_center.x();
     double y = mid_radius * sinphi * sin(theta) + d_center.y();
     double z = mid_radius * cosphi + d_center.z();
-    d_points.push_back(Point(x, y, z));
-    d_volume.push_back(point_volume);
 
     // Create points for particle "size" (radial, phi, theta order)
     double phi    = std::acos(cosphi);
@@ -237,10 +258,13 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
     size(0, 2) = r3[0];
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
-    d_size.push_back(size);
-    d_rvec1.push_back(r1);
-    d_rvec2.push_back(r2);
-    d_rvec3.push_back(r3);
+
+    d_points.push_back(Point(x, y, z));
+    d_scalars.at("p.volume").push_back(point_volume);
+    d_tensors.at("p.size").push_back(size);
+    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec2").push_back(r2);
+    d_vectors.at("p.rvec3").push_back(r3);
   }
 }
 
@@ -256,7 +280,8 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
    diameter. */
 //////////////////////////////////////////////////////////////////////////
 int
-SmoothSphereGeomPiece::createSpherePointsEqualArea() {
+SmoothSphereGeomPiece::createSpherePointsEqualArea()
+{
   std::cout << "Creating particles for the Solid Sphere ...";
 
   // Find the characteristic distance between points
@@ -271,7 +296,7 @@ SmoothSphereGeomPiece::createSpherePointsEqualArea() {
   }
 
   std::cout << " done. Created " << d_points.size() << " points "
-            << " and " << d_volume.size() << " volumes.\n";
+            << " and " << d_scalars["p.volume"].size() << " volumes.\n";
 
   return d_points.size();
 }
@@ -281,14 +306,13 @@ SmoothSphereGeomPiece::createSpherePointsEqualArea() {
 void
 SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
                                              double inner_radius,
-                                             double char_dist) {
+                                             double char_dist)
+{
   // Find the radius of the middle of the annulus
   double mid_radius = 0.5 * (outer_radius + inner_radius);
 
   // This is the point at the center of the sphere that is being discretized
   if (mid_radius < char_dist) {
-    d_points.push_back(d_center);
-    d_volume.push_back(volumeOfSphere(mid_radius));
     Matrix3 size;
     Vector r1(mid_radius, 0, 0);
     Vector r2(0, mid_radius, 0);
@@ -302,10 +326,13 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     size(0, 2) = r3[0];
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
-    d_size.push_back(size);
-    d_rvec1.push_back(r1);
-    d_rvec2.push_back(r2);
-    d_rvec3.push_back(r3);
+
+    d_points.push_back(d_center);
+    d_scalars.at("p.volume").push_back(volumeOfSphere(mid_radius));
+    d_tensors.at("p.size").push_back(size);
+    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec2").push_back(r2);
+    d_vectors.at("p.rvec3").push_back(r3);
     return;
   }
 
@@ -338,7 +365,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   // Add center point of top polar cap
   points_polar_theta.push_back(0.0);
   points_polar_phi.push_back(0.0);
-  d_volume.push_back(point_volume);
+
   Matrix3 size;
   Vector r1(outer_radius - inner_radius, 0, 0);
   Vector r2(0, outer_radius - inner_radius, 0);
@@ -352,10 +379,6 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   size(0, 2) = r3[0];
   size(1, 2) = r3[1];
   size(2, 2) = r3[2];
-  d_size.push_back(size);
-  d_rvec1.push_back(r1);
-  d_rvec2.push_back(r2);
-  d_rvec3.push_back(r3);
 
   // Loop thru partitions
   int num_collars = int_regions.size() - 2;
@@ -387,7 +410,6 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
       point_angle        = std::fmod(point_angle, 2.0 * M_PI);
       points_polar_theta.push_back(point_angle);
       points_polar_phi.push_back(colatitude_mid);
-      d_volume.push_back(point_volume);
 
       // std::cout << "  point_angle = " << point_angle << " offset = " <<
       // offset << "\n";
@@ -404,7 +426,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
 
     // Compute offset
     double circle_offset =
-        circleOffset(num_regions_in_collar, int_regions[collar_id + 2]);
+      circleOffset(num_regions_in_collar, int_regions[collar_id + 2]);
     offset += circle_offset;
     offset -= std::floor(offset);
 
@@ -419,7 +441,6 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   // Add center point of bottom polar cap
   points_polar_theta.push_back(0.0);
   points_polar_phi.push_back(M_PI);
-  d_volume.push_back(point_volume);
 
   // Convert polar angles to cartesian coordinates
   int numTheta = points_polar_theta.size();
@@ -429,7 +450,6 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     double x     = mid_radius * sin(phi) * cos(theta) + d_center.x();
     double y     = mid_radius * sin(phi) * sin(theta) + d_center.y();
     double z     = mid_radius * cos(phi) + d_center.z();
-    d_points.push_back(Point(x, y, z));
 
     // Create points for particle "size" (radial, phi, theta order)
     double phiInc = 0.0, thetaInc = 0.0;
@@ -464,17 +484,21 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     size(0, 2) = r3[0];
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
-    d_size.push_back(size);
-    d_rvec1.push_back(r1);
-    d_rvec2.push_back(r2);
-    d_rvec3.push_back(r3);
+
+    d_points.push_back(Point(x, y, z));
+    d_scalars.at("p.volume").push_back(point_volume);
+    d_tensors.at("p.size").push_back(size);
+    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec2").push_back(r2);
+    d_vectors.at("p.rvec3").push_back(r3);
   }
 }
 
 // Create point sets for the collars (1D)
 void
 SmoothSphereGeomPiece::createPointSetPolar1D(int num_points,
-                                             std::vector<double>& points) {
+                                             std::vector<double>& points)
+{
   if (num_points == 1) {
     points.push_back(0.0);
     return;
@@ -497,7 +521,8 @@ SmoothSphereGeomPiece::createPointSetPolar1D(int num_points,
 void
 SmoothSphereGeomPiece::createCaps2D(int num_points,
                                     std::vector<double>& cap_colatitudes,
-                                    std::vector<int>& int_regions) {
+                                    std::vector<int>& int_regions)
+{
   // Find the colatitude of the North polar spherical cap.
   double polar_colatitude = M_PI / 2.0;
   if (num_points > 2) {
@@ -509,7 +534,7 @@ SmoothSphereGeomPiece::createCaps2D(int num_points,
 
   // Find the number of collars between the polar caps.
   int num_collars =
-      numCollars(num_points, polar_colatitude, ideal_collar_angle);
+    numCollars(num_points, polar_colatitude, ideal_collar_angle);
 
   // Create a list of the ideal real number of regions in each collar,
   // plus the polar caps.
@@ -529,7 +554,8 @@ SmoothSphereGeomPiece::createCaps2D(int num_points,
 // Create the set of nested caps in 1D
 void
 SmoothSphereGeomPiece::createCaps1D(int num_points,
-                                    std::vector<double>& cap_colatitudes) {
+                                    std::vector<double>& cap_colatitudes)
+{
   for (int ii = 0; ii < num_points; ++ii) {
     double sector = (double)(ii + 1);
     double s_cap  = (sector * 2.0 * M_PI) / (double)num_points;
@@ -540,10 +566,11 @@ SmoothSphereGeomPiece::createCaps1D(int num_points,
 
 // Maximize the minimum distance of center points of collars
 double
-SmoothSphereGeomPiece::circleOffset(int num_start, int num_end) {
+SmoothSphereGeomPiece::circleOffset(int num_start, int num_end)
+{
   double offset =
-      (1.0 / (double)num_end - 1.0 / (double)num_start) * 0.5 +
-      (double)gcd(num_start, num_end) / (double)(2.0 * num_start * num_end);
+    (1.0 / (double)num_end - 1.0 / (double)num_start) * 0.5 +
+    (double)gcd(num_start, num_end) / (double)(2.0 * num_start * num_end);
   // std::cout << "n_bot = " << num_end << " n_top = " << num_start
   //           << " gcd = " << gcd(num_start, num_end) << " offset = " << offset
   //           << "\n";
@@ -552,7 +579,8 @@ SmoothSphereGeomPiece::circleOffset(int num_start, int num_end) {
 
 // Compute the colatitide of the north polar spherical cap
 double
-SmoothSphereGeomPiece::polarColatitude(int num_points) {
+SmoothSphereGeomPiece::polarColatitude(int num_points)
+{
   double area = areaOfIdealRegion(num_points);
   return sRadiusOfCap(area);
 }
@@ -561,9 +589,11 @@ SmoothSphereGeomPiece::polarColatitude(int num_points) {
 int
 SmoothSphereGeomPiece::numCollars(int num_points,
                                   double polar_colatitude,
-                                  double ideal_collar_angle) {
+                                  double ideal_collar_angle)
+{
   return std::max(
-      1, (int)std::round((M_PI - 2.0 * polar_colatitude) / ideal_collar_angle));
+    1,
+    (int)std::round((M_PI - 2.0 * polar_colatitude) / ideal_collar_angle));
 }
 
 // Compute ideal real number of regions in each collar
@@ -571,18 +601,19 @@ void
 SmoothSphereGeomPiece::idealRegionList(int num_points,
                                        double polar_colatitude,
                                        int num_collars,
-                                       std::vector<double>& real_regions) {
+                                       std::vector<double>& real_regions)
+{
   real_regions.push_back(1);
   if (num_collars > 0) {
     double angle_fitting =
-        (M_PI - 2.0 * polar_colatitude) / (double)num_collars;
+      (M_PI - 2.0 * polar_colatitude) / (double)num_collars;
     double ideal_region_area = areaOfIdealRegion(num_points);
     for (int collar_id = 0; collar_id < num_collars; ++collar_id) {
       double collar_end_radius =
-          polar_colatitude + (collar_id + 1.0) * angle_fitting;
+        polar_colatitude + (collar_id + 1.0) * angle_fitting;
       double collar_start_radius = collar_end_radius - angle_fitting;
       double ideal_collar_area =
-          areaOfCollar(collar_start_radius, collar_end_radius);
+        areaOfCollar(collar_start_radius, collar_end_radius);
       real_regions.push_back(ideal_collar_area / ideal_region_area);
     }
   }
@@ -593,7 +624,8 @@ SmoothSphereGeomPiece::idealRegionList(int num_points,
 void
 SmoothSphereGeomPiece::roundToNaturals(int num_points,
                                        std::vector<double>& real_regions,
-                                       std::vector<int>& int_regions) {
+                                       std::vector<int>& int_regions)
+{
   double discrepancy = 0.0;
   for (int zone_n = 0; zone_n < (int)real_regions.size(); ++zone_n) {
     int_regions.push_back(std::round(real_regions[zone_n] + discrepancy));
@@ -606,7 +638,8 @@ void
 SmoothSphereGeomPiece::capColatitudes(int num_points,
                                       double polar_colatitude,
                                       std::vector<int>& int_regions,
-                                      std::vector<double>& cap_colatitudes) {
+                                      std::vector<double>& cap_colatitudes)
+{
   cap_colatitudes.push_back(polar_colatitude);
   double ideal_region_area = areaOfIdealRegion(num_points);
   int num_collars          = int_regions.size() - 2;
@@ -614,7 +647,7 @@ SmoothSphereGeomPiece::capColatitudes(int num_points,
   for (int collar_id = 0; collar_id < num_collars; ++collar_id) {
     subtotal_int_regions += int_regions[collar_id + 1];
     double sph_radius_of_cap =
-        sRadiusOfCap(subtotal_int_regions * ideal_region_area);
+      sRadiusOfCap(subtotal_int_regions * ideal_region_area);
     cap_colatitudes.push_back(sph_radius_of_cap);
   }
   cap_colatitudes.push_back(M_PI);
@@ -622,20 +655,23 @@ SmoothSphereGeomPiece::capColatitudes(int num_points,
 
 // Compute the spherical radius of a cap
 double
-SmoothSphereGeomPiece::sRadiusOfCap(double area) {
+SmoothSphereGeomPiece::sRadiusOfCap(double area)
+{
   return 2.0 * std::asin(std::sqrt(area / M_PI) * 0.5);
 }
 
 // Compute angle for spherecal collars for an equal area partition
 double
-SmoothSphereGeomPiece::idealCollarAngle(int num_points) {
+SmoothSphereGeomPiece::idealCollarAngle(int num_points)
+{
   double area = areaOfIdealRegion(num_points);
   return std::sqrt(area);
 }
 
 // Compute area of one region of a equal area partition
 double
-SmoothSphereGeomPiece::areaOfIdealRegion(int num_points) {
+SmoothSphereGeomPiece::areaOfIdealRegion(int num_points)
+{
   double area = surfaceAreaOfSphere(1.0);
   area /= (double)num_points;
   return area;
@@ -644,7 +680,8 @@ SmoothSphereGeomPiece::areaOfIdealRegion(int num_points) {
 // Compute the area of a spherical collar
 double
 SmoothSphereGeomPiece::areaOfCollar(double collar_start_radius,
-                                    double collar_end_radius) {
+                                    double collar_end_radius)
+{
   double cap_area_start = areaOfCap(collar_start_radius);
   double cap_area_end   = areaOfCap(collar_end_radius);
   return cap_area_end - cap_area_start;
@@ -652,31 +689,39 @@ SmoothSphereGeomPiece::areaOfCollar(double collar_start_radius,
 
 // Compute the area of a spherical cap
 double
-SmoothSphereGeomPiece::areaOfCap(double collar_radius) {
+SmoothSphereGeomPiece::areaOfCap(double collar_radius)
+{
   double ss = std::sin(0.5 * collar_radius);
   return 4.0 * M_PI * ss * ss;
 }
 
 // Compute the surface area of a sphere
 double
-SmoothSphereGeomPiece::surfaceAreaOfSphere(double radius) {
+SmoothSphereGeomPiece::surfaceAreaOfSphere(double radius)
+{
   return (4.0 * M_PI * radius * radius);
 }
 
 // Compute the volume of a sphere
 double
-SmoothSphereGeomPiece::volumeOfSphere(double radius) {
+SmoothSphereGeomPiece::volumeOfSphere(double radius)
+{
   return (4.0 / 3.0) * M_PI * (radius * radius * radius);
 }
 
 // Compute greatest common divisor of two ints
 int
-SmoothSphereGeomPiece::gcd(int u, int v) {
+SmoothSphereGeomPiece::gcd(int u, int v)
+{
   int shift;
 
   /* GCD(0,v) == v; GCD(u,0) == u, GCD(0,0) == 0 */
-  if (u == 0) return v;
-  if (v == 0) return u;
+  if (u == 0) {
+    return v;
+  }
+  if (v == 0) {
+    return u;
+  }
 
   /* Let shift := lg K, where K is the greatest power of 2
         dividing both u and v. */
@@ -685,14 +730,17 @@ SmoothSphereGeomPiece::gcd(int u, int v) {
     v >>= 1;
   }
 
-  while ((u & 1) == 0) u >>= 1;
+  while ((u & 1) == 0) {
+    u >>= 1;
+  }
 
   /* From here on, u is always odd. */
   do {
     /* remove all factors of 2 in v -- they are not common */
     /*   note: v is not zero, so while will terminate */
-    while ((v & 1) == 0) /* Loop X */
+    while ((v & 1) == 0) { /* Loop X */
       v >>= 1;
+    }
 
     /* Now u and v are both odd. Swap if necessary so u <= v,
        then set v = v - u (which is even). For bignums, the
@@ -702,8 +750,8 @@ SmoothSphereGeomPiece::gcd(int u, int v) {
       unsigned int t = v;
       v              = u;
       u              = t;
-    }           // Swap u and v.
-    v = v - u;  // Here v >= u.
+    }          // Swap u and v.
+    v = v - u; // Here v >= u.
   } while (v != 0);
 
   /* restore common factors of 2 */
@@ -713,7 +761,8 @@ SmoothSphereGeomPiece::gcd(int u, int v) {
 // Compute complete elliptic integral of second kind
 // In this case mm < 1 so imaginary modulus transformation is needed
 double
-SmoothSphereGeomPiece::elliptic2E(double mm) {
+SmoothSphereGeomPiece::elliptic2E(double mm)
+{
   double m_inv = -mm / (1.0 - mm);
   double kk    = std::sqrt(m_inv);
   double EE    = boost::math::ellint_2(kk);

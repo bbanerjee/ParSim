@@ -25,11 +25,12 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/JGConcentrationDiffusion.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <iostream>
 
@@ -51,8 +52,8 @@ JGConcentrationDiffusion::scheduleComputeFlux(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   Ghost::GhostType gnone        = Ghost::None;
 
-  task->requires(Task::OldDW, d_lb->pConcGradientLabel, matlset, gnone);
-  task->computes(d_lb->pFluxLabel, matlset);
+  task->requires(Task::OldDW, d_lb->diffusion->pGradConcentration, matlset, gnone);
+  task->computes(d_lb->diffusion->pFlux, matlset);
 }
 
 void
@@ -72,8 +73,8 @@ JGConcentrationDiffusion::computeFlux(const Patch* patch,
 
   ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-  old_dw->get(pConcGradient, d_lb->pConcGradientLabel, pset);
-  new_dw->allocateAndPut(pFlux, d_lb->pFluxLabel, pset);
+  old_dw->get(pConcGradient, d_lb->diffusion->pGradConcentration, pset);
+  new_dw->allocateAndPut(pFlux, d_lb->diffusion->pFlux, pset);
 
   double timestep = 10000.0;
   for (const auto& idx : *pset) {
