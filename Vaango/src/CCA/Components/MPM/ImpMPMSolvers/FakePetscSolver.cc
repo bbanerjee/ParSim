@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/PetscSolver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/PetscSolver.h>
 #include <Core/Exceptions/InternalError.h>
 
 

@@ -28,6 +28,7 @@
 #define UINTAH_HOMEBREW_MPMLABEL_H
 
 #include <vector>
+#include <memory>
 
 namespace Uintah {
 

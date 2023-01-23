@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,56 +26,60 @@
 
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <string>
 #include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/CommonIFConcDiff.h>
-#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SimpleDiffusionContact.h>
 #include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SimpleDiffusionContact.h>
+#include <string>
 
-using namespace std;
 using namespace Uintah;
 
-SDInterfaceModel* SDInterfaceModelFactory::create(ProblemSpecP      & ps      ,
-                                                  MaterialManagerP  & ss      ,
-                                                  MPMFlags          * flags   ,
-                                                  MPMLabel          * mpm_lb  )
+std::unique_ptr<SDInterfaceModel>
+SDInterfaceModelFactory::create(ProblemSpecP& ps,
+                                const MaterialManager* ss,
+                                const MPMFlags* flags,
+                                const MPMLabel* mpm_lb)
 {
-  ProblemSpecP mpm_ps = 
-     ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
-        if(!mpm_ps)
+  ProblemSpecP mpm_ps =
+    ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
+  if (!mpm_ps) {
     throw ProblemSetupException("Cannot MPM material subsection.",
-                                __FILE__, __LINE__);
+                                __FILE__,
+                                __LINE__);
+  }
 
-  ProblemSpecP child = mpm_ps->findBlock("diffusion_interface");  // Default to a null interface model
+  // Default to a null interface model
+  ProblemSpecP child = mpm_ps->findBlock("diffusion_interface");
+
   // If we don't specify a diffusion interface, assume null.
-  string diff_interface_type = "null";
+  std::string diff_interface_type = "null";
 
   if (child) {
     child->getWithDefault("type", diff_interface_type, "null");
   }
-        
-//  if (flags->d_integratorType != "implicit" &&
-//      flags->d_integratorType != "explicit"){
-//    string txt="MPM: time integrator [explicit or implicit] hasn't been set.";
-//    throw ProblemSetupException(txt, __FILE__, __LINE__);
-//  }
 
-  if(flags->d_integratorType == "implicit"){
-    string txt="MPM:  Implicit Scalar Diffusion is not working yet!";
+  if (flags->d_integratorType == "implicit") {
+    std::string txt = "MPM:  Implicit Scalar Diffusion is not working yet!";
     throw ProblemSetupException(txt, __FILE__, __LINE__);
   }
 
-  if (diff_interface_type == "common")
-    return(scinew CommonIFConcDiff(child, ss, flags, mpm_lb));
+  if (diff_interface_type == "common") {
+    return std::make_unique<CommonIFConcDiff>(child, ss, flags, mpm_lb);
+  }
 
-  if (diff_interface_type == "null")
-    return(scinew SDInterfaceModel(child, ss, flags, mpm_lb));
+  if (diff_interface_type == "null") {
+    return std::make_unique<SDInterfaceModel>(child, ss, flags, mpm_lb);
+  }
 
-  if (diff_interface_type == "simple")
-    return(scinew SimpleSDInterface(child, ss, flags, mpm_lb));
+  if (diff_interface_type == "simple") {
+    return std::make_unique<SimpleSDInterface>(child, ss, flags, mpm_lb);
+  }
 
-  throw ProblemSetupException("Unknown Scalar Interface Type ("+diff_interface_type+")", __FILE__, __LINE__);
+  throw ProblemSetupException("Unknown Scalar Interface Type (" +
+                                diff_interface_type + ")",
+                              __FILE__,
+                              __LINE__);
   return nullptr;
 }

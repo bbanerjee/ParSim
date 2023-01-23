@@ -126,7 +126,7 @@ private:
   Vector chooseNewNormal(Vector& prevnormal, Matrix3& J) const;
 
   /*! Choose normal from normal set */
-  Vector chooseNormalFromNormalSet(vector<Vector>& normalSet,
+  Vector chooseNormalFromNormalSet(std::vector<Vector>& normalSet,
                                    const TangentModulusTensor& C);
   Vector chooseNormalFromNormalSet(const std::vector<Vector>& normalSet,
                                    const Vaango::Tensor::Matrix6Mandel& C_e,

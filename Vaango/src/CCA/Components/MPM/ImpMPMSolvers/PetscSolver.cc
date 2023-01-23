@@ -30,7 +30,7 @@
 #include <sci_defs/petsc_defs.h>
 
 //#include <TauProfilerForUintah.h>
-#include <CCA/Components/MPM/PetscSolver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/PetscSolver.h>
 #include <Core/Exceptions/UintahPetscError.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Parallel/Parallel.h>

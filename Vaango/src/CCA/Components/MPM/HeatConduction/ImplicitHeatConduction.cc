@@ -32,8 +32,8 @@
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <CCA/Components/MPM/PetscSolver.h>
-#include <CCA/Components/MPM/SimpleSolver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/PetscSolver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/SimpleSolver.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Task.h>

@@ -26,10 +26,10 @@
 
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
+
 #include <Core/Grid/MPMInterpolators/AxiLinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiGIMPInterpolator.h>
 #include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
-#include <Core/Grid/Level.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/MPMInterpolators/axiCpdiInterpolator.h>
 #include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
@@ -38,6 +38,8 @@
 // #include <Core/Grid/MPMInterpolators/fastAxiCpdiInterpolator.h>
 #include <Core/Grid/MPMInterpolators/BSplineInterpolator.h>
 #include <Core/Grid/MPMInterpolators/TOBSplineInterpolator.h>
+
+#include <Core/Grid/Level.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/DebugStream.h>
 #include <iostream>
@@ -184,8 +186,9 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   d_reductionVars->centerOfMass =
     dataArchive->isLabelSaved("CenterOfMassPosition");
 
-  if (!mpm_flag_ps)
+  if (!mpm_flag_ps) {
     return;
+  }
 
   mpm_flag_ps->get("axisymmetric", d_axisymmetric);
 
@@ -218,7 +221,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     if (!d_axisymmetric) {
       d_interpolator = std::make_unique<TOBSplineInterpolator>();
     } else {
-       std::ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
            << ") Can't be used with axisymmetry at this time \n\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -227,7 +230,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     if (!d_axisymmetric) {
       d_interpolator = std::make_unique<BSplineInterpolator>();
     } else {
-       std::ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
            << ") Can't be used with axisymmetry at this time \n\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -255,7 +258,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   }
 #endif
   else {
-     std::ostringstream warn;
+    std::ostringstream warn;
     warn << "ERROR:MPM: invalid interpolation type (" << d_interpolatorType
          << ")"
          << "Valid options are: \n"
@@ -289,8 +292,9 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   }
 
   mpm_flag_ps->get("minimum_particle_mass", d_minPartMass);
-  mpm_flag_ps->getWithDefault(
-    "minimum_mass_for_acc", d_minMassForAcceleration, 1.0e-199);
+  mpm_flag_ps->getWithDefault("minimum_mass_for_acc",
+                              d_minMassForAcceleration,
+                              1.0e-199);
   mpm_flag_ps->get("maximum_particle_velocity", d_maxVel);
 
   mpm_flag_ps->get("with_color", d_withColor);
@@ -314,7 +318,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   }
   if (!d_artificialViscosity && d_artificialViscosityHeating) {
-     std::ostringstream warn;
+    std::ostringstream warn;
     warn << "ERROR:MPM: You can't have heating due to artificial viscosity "
          << "if artificial_viscosity is not enabled."
          << "\n";
@@ -363,7 +367,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
     // Do checks
     if (!(d_coordRotationAxis.length2() > 0.0)) {
-       std::ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR:MPM: Rotation axis has zero length: "
            << d_coordRotationAxis << "\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -373,7 +377,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
 
     if (d_coordRotationSpeed < 0.0) {
-       std::ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR:MPM: Rotation speed " << d_coordRotationSpeed << " is < 0"
            << "\n";
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -385,16 +389,18 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
                               d_initializeStressFromBodyForce,
                               false);
 
-  mpm_flag_ps->getWithDefault(
-    "collinear_bimaterial_contact_normals", d_computeCollinearNormals, false);
+  mpm_flag_ps->getWithDefault("collinear_bimaterial_contact_normals",
+                              d_computeCollinearNormals,
+                              false);
   mpm_flag_ps->get("boundary_traction_faces", d_boundaryTractionFaceStrings);
 
   mpm_flag_ps->get("use_cohesive_zones", d_useCohesiveZones);
 
   mpm_flag_ps->get("do_thermal_expansion", d_doThermalExpansion);
   mpm_flag_ps->get("do_contact_friction_heating", d_doContactFriction);
-  if (!d_doContactFriction)
+  if (!d_doContactFriction) {
     d_addFrictionWork = 0.0;
+  }
   mpm_flag_ps->get("do_explicit_heat_conduction", d_doExplicitHeatConduction);
   mpm_flag_ps->get("do_implicit_heat_conduction", d_doImplicitHeatConduction);
   mpm_flag_ps->get("do_transient_implicit_heat_conduction",
@@ -404,10 +410,11 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   ProblemSpecP erosion_ps = mpm_flag_ps->findBlock("erosion");
   if (erosion_ps) {
     if (erosion_ps->getAttribute("algorithm", d_erosionAlgorithm)) {
-      if (d_erosionAlgorithm == "none")
+      if (d_erosionAlgorithm == "none") {
         d_doErosion = false;
-      else
+      } else {
         d_doErosion = true;
+      }
     }
   }
   mpm_flag_ps->get("delete_rogue_particles", d_deleteRogueParticles);
@@ -429,8 +436,9 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
   // AMR
   mpm_flag_ps->get("AMR", d_AMR);
-  mpm_flag_ps->getWithDefault(
-    "use_gradient_enhanced_velocity_projection", d_GEVelProj, false);
+  mpm_flag_ps->getWithDefault("use_gradient_enhanced_velocity_projection",
+                              d_GEVelProj,
+                              false);
   mpm_flag_ps->get("refine_particles", d_refineParticles);
 
   // restart problem spec

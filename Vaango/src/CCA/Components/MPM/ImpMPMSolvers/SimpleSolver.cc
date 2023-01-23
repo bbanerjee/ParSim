@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/SimpleSolver.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/SimpleSolver.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>

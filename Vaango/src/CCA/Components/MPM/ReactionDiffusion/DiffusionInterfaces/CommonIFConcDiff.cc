@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 1997-2021 The University of Uintah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,10 +29,9 @@
 #include <Core/Grid/Task.h>
 
 using namespace Uintah;
-using namespace std;
 
-CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS,
-                                   MPMFlags* mpm_flags, MPMLabel* mpm_lb)
+CommonIFConcDiff::CommonIFConcDiff(ProblemSpecP& ps, const MaterialManager* sS,
+                                   const MPMFlags* mpm_flags, const MPMLabel* mpm_lb)
                  : SDInterfaceModel(ps, sS, mpm_flags, mpm_lb)
 {
 //  ps->get("materials", d_materials_list);

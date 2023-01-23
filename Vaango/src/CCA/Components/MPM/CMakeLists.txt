@@ -53,8 +53,15 @@ ELSE ()
       ImpMPMSolvers/FakePetscSolver.cc)
 ENDIF ()
 
+SET(Vaango_MPM_DiffusionTasks_SRCS
+  ScalarDiffusionTasks.cc
+)
+
 
 SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_MPM_Core_SRCS}
+  ${Vaango_MPM_Solvers_SRCS}
+  ${Vaango_MPM_DiffusionTasks_SRCS}
   SerialMPM.cc    
   MPM_UpdateStressLast.cc    
   RigidMPM.cc     
@@ -63,8 +70,6 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ShellMPM.cc     
   AMRMPM.cc       
   UofU_MPM.cc    
-  ${Vaango_MPM_Core_SRCS}
-  ${Vaango_MPM_Solvers_SRCS}
 )
 
 add_subdirectory(ConstitutiveModel)

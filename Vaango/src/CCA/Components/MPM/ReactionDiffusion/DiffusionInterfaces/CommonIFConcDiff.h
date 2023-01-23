@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,42 +30,48 @@
 
 namespace Uintah {
 
-  class CommonIFConcDiff : public SDInterfaceModel {
-  public:
-    
-    CommonIFConcDiff(ProblemSpecP& ps, MaterialManagerP& sS,
-                     MPMFlags* mpm_flags, MPMLabel* mpm_lb);
+class CommonIFConcDiff : public SDInterfaceModel
+{
+public:
+  CommonIFConcDiff(ProblemSpecP& ps,
+                   const MaterialManager* sS,
+                   const MPMFlags* mpm_flags,
+                   const MPMLabel* mpm_lb);
 
-    ~CommonIFConcDiff();
+  ~CommonIFConcDiff();
 
-    virtual void addComputesAndRequiresInterpolated(SchedulerP & sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls);
+  virtual void
+  addComputesAndRequiresInterpolated(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
 
-    virtual void sdInterfaceInterpolated(const ProcessorGroup*,
-                                         const PatchSubset* patches,
-                                         const MaterialSubset* matls,
-                                         DataWarehouse* old_dw,
-                                         DataWarehouse* new_dw);
+  virtual void
+  sdInterfaceInterpolated(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset* matls,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw);
 
-    virtual void addComputesAndRequiresDivergence(SchedulerP & sched,
-                                                  const PatchSet* patches,
-                                                  const MaterialSet* matls);
+  virtual void
+  addComputesAndRequiresDivergence(SchedulerP& sched,
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls);
 
-    virtual void sdInterfaceDivergence(const ProcessorGroup*,
-                                       const PatchSubset* patches,
-                                       const MaterialSubset* matls,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw);
+  virtual void
+  sdInterfaceDivergence(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps);
 
-  protected:
+protected:
+  CommonIFConcDiff(const CommonIFConcDiff&);
+  CommonIFConcDiff&
+  operator=(const CommonIFConcDiff&);
+};
 
-    CommonIFConcDiff(const CommonIFConcDiff&);
-    CommonIFConcDiff& operator=(const CommonIFConcDiff&);
-    
-  };
-  
 } // end namespace Uintah
 #endif

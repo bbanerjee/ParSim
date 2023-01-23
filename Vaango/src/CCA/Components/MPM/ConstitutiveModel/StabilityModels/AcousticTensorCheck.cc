@@ -44,18 +44,20 @@ using namespace Uintah;
  *   Returns true if the normals are distinct, false if not.
  *   Both vectors should be normalized before being passed into this
  *   function. */
-bool normalCompare(const Vector& normal1, const Vector& normal2, double tol);
+bool
+normalCompare(const Vector& normal1, const Vector& normal2, double tol);
 bool
 normalCompare(const Vector& normal1, const Vector& normal2, double tol)
 {
   Vector diff = normal1 - normal2;
-  Vector sum = normal1 + normal2;
+  Vector sum  = normal1 + normal2;
   return (diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2] < tol ||
           sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2] < tol);
 }
 
 /*! As above, 10e-10 seems to be a good tolerance for this comparison */
-bool normalCompare(const Vector& normal1, const Vector& normal2);
+bool
+normalCompare(const Vector& normal1, const Vector& normal2);
 bool
 normalCompare(const Vector& normal1, const Vector& normal2)
 {
@@ -76,10 +78,10 @@ AcousticTensorCheck::AcousticTensorCheck(const AcousticTensorCheck* cm)
 {
   d_sweepInc = cm->d_sweepInc;
   d_numTheta = cm->d_numTheta;
-  d_numPhi = cm->d_numPhi;
+  d_numPhi   = cm->d_numPhi;
 }
 
-void 
+void
 AcousticTensorCheck::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP stability_ps = ps->appendChild("stability_check");
@@ -94,13 +96,14 @@ AcousticTensorCheck::outputProblemSpec(ProblemSpecP& ps)
   \return false if stable
 */
 bool
-AcousticTensorCheck::checkStability(const Matrix3&, const Matrix3&,
+AcousticTensorCheck::checkStability(const Matrix3&,
+                                    const Matrix3&,
                                     const TangentModulusTensor& tangentModulus,
                                     Vector& direction)
 {
   return isLocalized(tangentModulus, direction);
 }
-bool 
+bool
 AcousticTensorCheck::checkStability(const Matrix3& cauchyStress,
                                     const Matrix3& deformRate,
                                     const Vaango::Tensor::Matrix6Mandel& C_e,
@@ -126,19 +129,19 @@ AcousticTensorCheck::isLocalized(const TangentModulusTensor& C, Vector& normal)
   // setTol    : Tolerance to check if normals should be in normal set
   // leastMin  : Tolerance for choosing normals w/ least determinant
   double normalTol = 10e-20;
-  double setTol = 1.0e-7;
-  double leastMin = 2 * setTol;
+  double setTol    = 1.0e-7;
+  double leastMin  = 2 * setTol;
 
   // detA      : Array to store the determinant of the acoustic tensor at
   //             each increment
   // localMin  : Array pointing to local minima : 1 for local minimum, 0 if not
-  double** detA = scinew double * [d_numTheta];
-  int** localMin = scinew int * [d_numTheta];
+  double** detA  = scinew double* [d_numTheta];
+  int** localMin = scinew int* [d_numTheta];
   for (int ii = 0; ii < d_numTheta; ++ii) {
-    detA[ii] = scinew double[d_numPhi];
+    detA[ii]     = scinew double[d_numPhi];
     localMin[ii] = scinew int[d_numPhi];
     for (int jj = 0; jj < d_numPhi; jj++) {
-      detA[ii][jj] = 0.0;
+      detA[ii][jj]     = 0.0;
       localMin[ii][jj] = 0;
     }
   }
@@ -157,10 +160,10 @@ AcousticTensorCheck::isLocalized(const TangentModulusTensor& C, Vector& normal)
 
         /* form starting approximate normal */
         double theta = M_PI / 180.0 * d_sweepInc * ii;
-        double phi = M_PI / 180.0 * d_sweepInc * jj;
-        normal[0] = cos(theta) * cos(phi);
-        normal[1] = sin(theta) * cos(phi);
-        normal[2] = sin(phi);
+        double phi   = M_PI / 180.0 * d_sweepInc * jj;
+        normal[0]    = cos(theta) * cos(phi);
+        normal[1]    = sin(theta) * cos(phi);
+        normal[2]    = sin(phi);
 
         /* Iteration to refine normal */
         Vector prevNormal(zero);
@@ -223,7 +226,8 @@ AcousticTensorCheck::isLocalized(const TangentModulusTensor& C, Vector& normal)
 // local minima of determinant of acoustic tensor A as fn of normal. Sweeps
 // only over half sphere since A(n) = A(-n)
 void
-AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
+AcousticTensorCheck::findApproxLocalMins(double** detA,
+                                         int** localMin,
                                          const TangentModulusTensor& C)
 {
   // First sweep :
@@ -236,8 +240,9 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
   Matrix3 A(0.0);
   formAcousticTensor(normal, C, A);
   double det = A.Determinant();
-  for (int ii = 0; ii < d_numTheta; ii++)
+  for (int ii = 0; ii < d_numTheta; ii++) {
     detA[ii][d_numPhi - 1] = det;
+  }
 
   // Rest of the sphere by increments
   // 1) Find current polar co-ordinates
@@ -247,10 +252,10 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
   for (int ii = 0; ii < d_numTheta; ii++) {
     for (int jj = 0; jj < d_numPhi - 1; jj++) {
       double theta = M_PI / 180.0 * d_sweepInc * ii;
-      double phi = M_PI / 180.0 * d_sweepInc * jj;
-      normal[0] = cos(theta) * cos(phi);
-      normal[1] = sin(theta) * cos(phi);
-      normal[2] = sin(phi);
+      double phi   = M_PI / 180.0 * d_sweepInc * jj;
+      normal[0]    = cos(theta) * cos(phi);
+      normal[1]    = sin(theta) * cos(phi);
+      normal[2]    = sin(phi);
       formAcousticTensor(normal, C, A);
       detA[ii][jj] = A.Determinant();
     }
@@ -283,13 +288,15 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
                 // of already tested, speeds up plane strain problems
                 int mid = d_numTheta / 2;
                 if (ii < mid) {
-                  if (detA[ii][jj] <= detA[ii + mid][jj + 1])
+                  if (detA[ii][jj] <= detA[ii + mid][jj + 1]) {
                     localMin[ii][jj] = 1;
+                  }
                 }
               } else {
                 // standard case
-                if (detA[ii][jj] <= detA[ii][jj - 1])
+                if (detA[ii][jj] <= detA[ii][jj - 1]) {
                   localMin[ii][jj] = 1;
+                }
               }
             }
           }
@@ -333,15 +340,15 @@ AcousticTensorCheck::chooseNewNormal(Vector& prevNormal, Matrix3& J) const
   Vector normal(0.0, 0.0, 0.0);
   for (int ii = 0; ii < numEV; ii++) {
     std::vector<Vector> eigVec = J.getEigenVectors(eigVal[ii], eigVal[0]);
-    Vector trialNormal = eigVec[0] / eigVec[0].length();
-    double inner = std::abs(Dot(trialNormal, prevNormal));
+    Vector trialNormal         = eigVec[0] / eigVec[0].length();
+    double inner               = std::abs(Dot(trialNormal, prevNormal));
 
     if (ii == 0) {
       maxInner = inner;
-      normal = trialNormal;
+      normal   = trialNormal;
     } else if (inner > maxInner) {
       maxInner = inner;
-      normal = trialNormal;
+      normal   = trialNormal;
     }
   }
   return normal;
@@ -350,15 +357,15 @@ AcousticTensorCheck::chooseNewNormal(Vector& prevNormal, Matrix3& J) const
 // Chooses normal from a set that have essentially same detA that is least
 // of all the normals. Typically there are two
 Vector
-AcousticTensorCheck::chooseNormalFromNormalSet(vector<Vector>& normalSet,
+AcousticTensorCheck::chooseNormalFromNormalSet(std::vector<Vector>& normalSet,
                                                const TangentModulusTensor& C)
 {
   // First item
   std::vector<Vector>::iterator iter = normalSet.begin();
   Matrix3 A(0.0);
   formAcousticTensor(*iter, C, A);
-  double detA = A.Determinant();
-  double leastMin = detA;
+  double detA       = A.Determinant();
+  double leastMin   = detA;
   Vector bestNormal = *iter;
   ++iter;
 
@@ -373,7 +380,7 @@ AcousticTensorCheck::chooseNormalFromNormalSet(vector<Vector>& normalSet,
     formAcousticTensor(*iter, C, A);
     detA = A.Determinant();
     if (detA < leastMin) {
-      leastMin = detA;
+      leastMin   = detA;
       bestNormal = *iter;
     }
   }
@@ -398,19 +405,19 @@ AcousticTensorCheck::isLocalized(const Vaango::Tensor::Matrix6Mandel& C_e,
   // setTol    : Tolerance to check if normals should be in normal set
   // leastMin  : Tolerance for choosing normals w/ least determinant
   double normalTol = 10e-20;
-  double setTol = 1.0e-7;
-  double leastMin = 2 * setTol;
+  double setTol    = 1.0e-7;
+  double leastMin  = 2 * setTol;
 
   // detA      : Array to store the determinant of the acoustic tensor at
   //             each increment
   // localMin  : Array pointing to local minima : 1 for local minimum, 0 if not
-  double** detA = scinew double * [d_numTheta];
-  int** localMin = scinew int * [d_numTheta];
+  double** detA  = scinew double* [d_numTheta];
+  int** localMin = scinew int* [d_numTheta];
   for (int ii = 0; ii < d_numTheta; ++ii) {
-    detA[ii] = scinew double[d_numPhi];
+    detA[ii]     = scinew double[d_numPhi];
     localMin[ii] = scinew int[d_numPhi];
     for (int jj = 0; jj < d_numPhi; jj++) {
-      detA[ii][jj] = 0.0;
+      detA[ii][jj]     = 0.0;
       localMin[ii][jj] = 0;
     }
   }
@@ -429,10 +436,10 @@ AcousticTensorCheck::isLocalized(const Vaango::Tensor::Matrix6Mandel& C_e,
 
         /* form starting approximate normal */
         double theta = M_PI / 180.0 * d_sweepInc * ii;
-        double phi = M_PI / 180.0 * d_sweepInc * jj;
-        normal[0] = cos(theta) * cos(phi);
-        normal[1] = sin(theta) * cos(phi);
-        normal[2] = sin(phi);
+        double phi   = M_PI / 180.0 * d_sweepInc * jj;
+        normal[0]    = cos(theta) * cos(phi);
+        normal[1]    = sin(theta) * cos(phi);
+        normal[2]    = sin(phi);
 
         /* Iteration to refine normal */
         Vector prevNormal(zero);
@@ -484,11 +491,13 @@ AcousticTensorCheck::isLocalized(const Vaango::Tensor::Matrix6Mandel& C_e,
 // local minima of determinant of acoustic tensor A as fn of normal. Sweeps
 // only over half sphere since A(n) = A(-n)
 void
-AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
-                                         const Vaango::Tensor::Matrix6Mandel& C_e,
-                                         const Vaango::Tensor::Vector6Mandel& P_vec,
-                                         const Vaango::Tensor::Vector6Mandel& N_vec,
-                                         double H) const
+AcousticTensorCheck::findApproxLocalMins(
+  double** detA,
+  int** localMin,
+  const Vaango::Tensor::Matrix6Mandel& C_e,
+  const Vaango::Tensor::Vector6Mandel& P_vec,
+  const Vaango::Tensor::Vector6Mandel& N_vec,
+  double H) const
 {
   // First sweep :
   // 1) Set initial normal
@@ -496,11 +505,12 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
   // 3) Find determinant of A as function of angle
   //    (case where j = numPhi - 1, i.e. pole)
   Vector normal(0.0, 0.0, 0.0);
-  normal[2] = 1.0;
-  auto A = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
+  normal[2]  = 1.0;
+  auto A     = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
   double det = A.Determinant();
-  for (int ii = 0; ii < d_numTheta; ii++)
+  for (int ii = 0; ii < d_numTheta; ii++) {
     detA[ii][d_numPhi - 1] = det;
+  }
 
   // Rest of the sphere by increments
   // 1) Find current polar co-ordinates
@@ -510,11 +520,11 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
   for (int ii = 0; ii < d_numTheta; ii++) {
     for (int jj = 0; jj < d_numPhi - 1; jj++) {
       double theta = M_PI / 180.0 * d_sweepInc * ii;
-      double phi = M_PI / 180.0 * d_sweepInc * jj;
-      normal[0] = cos(theta) * cos(phi);
-      normal[1] = sin(theta) * cos(phi);
-      normal[2] = sin(phi);
-      A = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
+      double phi   = M_PI / 180.0 * d_sweepInc * jj;
+      normal[0]    = cos(theta) * cos(phi);
+      normal[1]    = sin(theta) * cos(phi);
+      normal[2]    = sin(phi);
+      A            = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
       detA[ii][jj] = A.Determinant();
     }
   }
@@ -546,13 +556,15 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
                 // of already tested, speeds up plane strain problems
                 int mid = d_numTheta / 2;
                 if (ii < mid) {
-                  if (detA[ii][jj] <= detA[ii + mid][jj + 1])
+                  if (detA[ii][jj] <= detA[ii + mid][jj + 1]) {
                     localMin[ii][jj] = 1;
+                  }
                 }
               } else {
                 // standard case
-                if (detA[ii][jj] <= detA[ii][jj - 1])
+                if (detA[ii][jj] <= detA[ii][jj - 1]) {
                   localMin[ii][jj] = 1;
+                }
               }
             }
           }
@@ -571,22 +583,22 @@ AcousticTensorCheck::findApproxLocalMins(double** detA, int** localMin,
 // (2001) suggest maximum plastic dissipation, which may be best
 // handled in the function calling IsLocalized_SS, after it is called.
 Vector
-AcousticTensorCheck::chooseNormalFromNormalSet(const std::vector<Vector>& normalSet,
-                                               const Vaango::Tensor::Matrix6Mandel& C_e,
-                                               const Vaango::Tensor::Vector6Mandel& P_vec,
-                                               const Vaango::Tensor::Vector6Mandel& N_vec,
-                                               double H) const
+AcousticTensorCheck::chooseNormalFromNormalSet(
+  const std::vector<Vector>& normalSet,
+  const Vaango::Tensor::Matrix6Mandel& C_e,
+  const Vaango::Tensor::Vector6Mandel& P_vec,
+  const Vaango::Tensor::Vector6Mandel& N_vec,
+  double H) const
 {
-  double leastMin = std::numeric_limits<double>::max();
+  double leastMin   = std::numeric_limits<double>::max();
   Vector bestNormal = normalSet[0];
   for (auto normal : normalSet) {
-    auto A = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
+    auto A    = elasticPlasticAcousticTensor(C_e, P_vec, N_vec, H, normal);
     auto detA = A.Determinant();
     if (detA < leastMin) {
-      leastMin = detA;
+      leastMin   = detA;
       bestNormal = normal;
     }
   }
   return bestNormal;
 }
-

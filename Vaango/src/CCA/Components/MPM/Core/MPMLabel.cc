@@ -24,6 +24,7 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -57,7 +58,7 @@ MPMLabel::MPMLabel()
   nonconstDelt->isReductionTask(false);
   delTLabel = nonconstDelt;
 
-  diffusion = scinew MPMDiffusionLabel();
+  diffusion = std::make_unique<MPMDiffusionLabel>();
 
   // Heat flux from fire
   heatRate_CCLabel =
@@ -487,17 +488,6 @@ MPMLabel::MPMLabel()
 
   gSp_vol_srcLabel =
     VarLabel::create("g.sp_vol_src", NCVariable<double>::getTypeDescription());
-
-  // Interaction with Arches, Fluid Mechanics
-
-  AccArchesNCLabel =
-    VarLabel::create("AccArchesNC", NCVariable<Vector>::getTypeDescription());
-
-  // Interaction with Arches, Heat Transfer
-
-  heaTranSolid_NCLabel =
-    VarLabel::create("heaTranSolid_NC",
-                     NCVariable<double>::getTypeDescription());
 
   frictionalWorkLabel =
     VarLabel::create("frictionalWork",
@@ -1159,8 +1149,6 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(czBotMatLabel_preReloc);
   VarLabel::destroy(czFailedLabel);
   VarLabel::destroy(czFailedLabel_preReloc);
-
-  VarLabel::destroy(pExternalScalarFluxLabel);
 
   // For adaptive mesh refinement
   VarLabel::destroy(pRefinedLabel);

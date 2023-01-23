@@ -92,8 +92,8 @@ class MaterialManager : public RefCounted {
                                           : nullptr;
   }
 
-  MaterialSubset*
-  getAllInOneMaterial() {
+  const MaterialSubset*
+  getAllInOneMaterial() const {
     return d_all_in_one_material.get();
   }
   const MaterialSet*

@@ -39,16 +39,17 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
 // put here to avoid template problems
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
 #include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 
@@ -57,22 +58,38 @@ namespace Uintah {
 class ThermalContact;
 class HeatConduction;
 class AnalysisModule;
+class SDInterfaceModel;
+class SDInterfaceTasks;
+class FluxBCModel;
+class CZLabel;
+class CohesiveZoneTasks;
+class ScalarDiffusionTasks;
 
 class SerialMPM
   : public SimulationCommon
   , public MPMCommon
 {
 public:
+  std::unique_ptr<Contact> contactModel{ nullptr };
+  std::unique_ptr<ThermalContact> thermalContactModel{ nullptr };
+  std::unique_ptr<HeatConduction> heatConductionModel{ nullptr };
+  std::unique_ptr<SDInterfaceTasks> sdInterfaceTasks{ nullptr };
+
+public:
   SerialMPM(const ProcessorGroup* myworld, const MaterialManagerP matManager);
+
   virtual ~SerialMPM() noexcept(false);
 
+  // No copy or move allowed
   SerialMPM(const SerialMPM&) = delete;
+  SerialMPM(SerialMPM&&)      = delete;
   SerialMPM&
   operator=(const SerialMPM&) = delete;
+  SerialMPM&
+  operator=(SerialMPM&&) = delete;
 
-  Contact* contactModel;
-  ThermalContact* thermalContactModel;
-  HeatConduction* heatConductionModel;
+  virtual double
+  recomputeDelT(double delT);
 
   virtual void
   problemSetup(const ProblemSpecP& params,
@@ -87,13 +104,11 @@ public:
   scheduleInitialize(const LevelP& level, SchedulerP&);
 
   virtual void
-  addMaterial(const ProblemSpecP& params, MaterialManagerP& matManager);
-
-  virtual void
-  scheduleInitializeAddedMaterial(const LevelP& level, SchedulerP&);
+  scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched);
 
   virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+
   virtual void
   restartInitialize();
 
@@ -163,16 +178,16 @@ public:
   void
   setMPMLabel(MPMLabel* Mlb)
   {
-    delete lb;
-    lb = Mlb;
+    d_mpmLabels.reset(Mlb);
   };
 
   void
   setWithICE()
   {
-    flags->d_withICE = true;
+    d_mpmFlags->d_withICE = true;
   };
 
+public:
   enum IntegratorType
   {
     Explicit,
@@ -182,6 +197,7 @@ public:
 
 protected:
   friend class MPMICE;
+  friend class SingleHydroMPM;
 
   virtual void
   actuallyInitialize(const ProcessorGroup*,
@@ -189,13 +205,6 @@ protected:
                      const MaterialSubset* matls,
                      DataWarehouse* old_dw,
                      DataWarehouse* new_dw);
-
-  virtual void
-  actuallyInitializeAddedMaterial(const ProcessorGroup*,
-                                  const PatchSubset* patches,
-                                  const MaterialSubset* matls,
-                                  DataWarehouse* old_dw,
-                                  DataWarehouse* new_dw);
 
   void
   printParticleCount(const ProcessorGroup*,
@@ -256,6 +265,23 @@ protected:
                      DataWarehouse* new_dw);
 
   void
+  scheduleRestartInitialize_alt(SchedulerP& sched, const LevelP& level);
+
+  void
+  restartInitialize_alt(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse*,
+                        DataWarehouse* new_dw){};
+
+  void
+  restartInitializeTask(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset*,
+                        DataWarehouse*,
+                        DataWarehouse* new_dw);
+
+  void
   actuallyComputeStableTimestep(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset* matls,
@@ -289,6 +315,20 @@ protected:
                             const MaterialSubset*,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw);
+
+  virtual void
+  computeSSPlusVp(const ProcessorGroup*,
+                  const PatchSubset* patches,
+                  const MaterialSubset* matls,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw);
+
+  virtual void
+  computeSPlusSSPlusVp(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
 
   virtual void
   addCohesiveZoneForces(const ProcessorGroup*,
@@ -409,6 +449,13 @@ protected:
                      DataWarehouse* new_dw);
 
   void
+  computeCurrentParticleSize(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw);
+
+  void
   addNewParticles(const ProcessorGroup*,
                   const PatchSubset* patches,
                   const MaterialSubset* matls,
@@ -434,6 +481,7 @@ protected:
   /*! Final particle update schedule and actual */
   virtual void
   scheduleFinalParticleUpdate(SchedulerP&, const PatchSet*, const MaterialSet*);
+
   virtual void
   finalParticleUpdate(const ProcessorGroup*,
                       const PatchSubset* patches,
@@ -467,6 +515,7 @@ protected:
   /*! Add new particles to the simulation based on criteria TBD: */
   virtual void
   scheduleAddParticles(SchedulerP&, const PatchSet*, const MaterialSet*);
+
   virtual void
   addParticles(const ProcessorGroup*,
                const PatchSubset* patches,
@@ -530,6 +579,14 @@ protected:
                                 const MaterialSubset*,
                                 const MaterialSubset*,
                                 const MaterialSet*);
+
+  virtual void
+  scheduleComputeSSPlusVp(SchedulerP&, const PatchSet*, const MaterialSet*);
+
+  virtual void
+  scheduleComputeSPlusSSPlusVp(SchedulerP&,
+                               const PatchSet*,
+                               const MaterialSet*);
 
   virtual void
   scheduleComputeHeatExchange(SchedulerP&, const PatchSet*, const MaterialSet*);
@@ -737,16 +794,27 @@ protected:
   virtual void
   scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
 
-  MaterialManagerP d_materialManager;
-  MPMLabel* lb;
-  MPMFlags* flags;
-  Output* dataArchiver;
-  DeformationGradientComputer* d_defGradComputer;
+protected:
+  double d_nextOutputTime{ 0.0 };
+  double d_SMALL_NUM_MPM{ 1.0e-200 };
+  int d_numGhostParticles{ 1 }; // Number of ghost particles needed.
+  int d_numGhostNodes{ 1 };     // Number of ghost nodes     needed.
+  bool d_fracture{false};
+  bool d_recompile{false};
 
-  double d_nextOutputTime;
-  double d_SMALL_NUM_MPM;
-  int NGP; // Number of ghost particles needed.
-  int NGN; // Number of ghost nodes     needed.
+  IntegratorType d_integrator;
+  MaterialSubset* d_loadCurveIndex{nullptr};
+
+  std::unique_ptr<MPMLabel> d_mpmLabels{nullptr};
+  std::unique_ptr<MPMFlags> d_mpmFlags{nullptr};
+
+  std::unique_ptr<DeformationGradientComputer> d_defGradComputer{nullptr};
+  std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{nullptr};
+  std::unique_ptr<SwitchingCriteria> d_switchCriteria{nullptr};
+  std::vector<std::unique_ptr<AnalysisModule>> d_analysisModules;
+
+  MaterialManagerP d_materialManager{nullptr};
+  Output* d_dataArchiver{nullptr};
 
   std::list<Patch::FaceType>
     d_boundaryTractionFaces; // list of xminus, xplus, yminus, ...
@@ -763,14 +831,6 @@ protected:
   std::vector<double> d_IPColor;
   std::vector<Vector> d_IPTranslate;
   std::vector<Vector> d_IPVelNew;
-
-  bool d_fracture;
-  bool d_recompile;
-  IntegratorType d_integrator;
-  MaterialSubset* d_loadCurveIndex;
-
-  std::vector<AnalysisModule*> d_analysisModules;
-  SwitchingCriteria* d_switchCriteria;
 
 };
 

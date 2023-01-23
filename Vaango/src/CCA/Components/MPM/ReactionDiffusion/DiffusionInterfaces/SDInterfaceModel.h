@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,72 +26,79 @@
 #ifndef __SDINTERFACEMODEL_H__
 #define __SDINTERFACEMODEL_H__
 
+#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/SchedulerP.h>
-#include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
-#include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <CCA/Components/MPM/Core/MPMLabel.h>
 
 namespace Uintah {
 
-  class SDInterfaceModel {
-  public:
-    
-    SDInterfaceModel(       ProblemSpecP      & ps
-                    ,       MaterialManagerP  & sS
-                    ,       MPMFlags          * mpm_flags
-                    ,       MPMLabel          * mpm_lb    );
+class SDInterfaceModel
+{
+public:
+  SDInterfaceModel(ProblemSpecP& ps,
+                   const MaterialManager* sS,
+                   const MPMFlags* mpm_flags,
+                   const MPMLabel* mpm_lb);
 
-    virtual ~SDInterfaceModel();
+  virtual ~SDInterfaceModel();
 
-    virtual void addComputesAndRequiresInterpolated(        SchedulerP  & sched
-                                                   ,  const PatchSet    * patches
-                                                   ,  const MaterialSet * matls   );
+  virtual void
+  addComputesAndRequiresInterpolated(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
 
-    virtual void sdInterfaceInterpolated( const ProcessorGroup  *
-                                        , const PatchSubset     * patches
-                                        , const MaterialSubset  * matls
-                                        ,       DataWarehouse   * old_dw
-                                        ,       DataWarehouse   * new_dw    );
+  virtual void
+  sdInterfaceInterpolated(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset* matls,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw);
 
-    virtual void addComputesAndRequiresDivergence(        SchedulerP  & sched
-                                                 ,  const PatchSet    * patches
-                                                 ,  const MaterialSet * matls   );
+  virtual void
+  addComputesAndRequiresDivergence(SchedulerP& sched,
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls);
 
-    virtual void sdInterfaceDivergence( const ProcessorGroup  *
-                                      , const PatchSubset     * patches
-                                      , const MaterialSubset  * matls
-                                      ,       DataWarehouse   * old_dw
-                                      ,       DataWarehouse   * new_dw    );
+  virtual void
+  sdInterfaceDivergence(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps);
 
-    const VarLabel* getInterfaceFluxLabel() const;
+  const VarLabel*
+  getInterfaceFluxLabel() const;
 
-    const VarLabel* getInterfaceFlagLabel() const;
+  const VarLabel*
+  getInterfaceFlagLabel() const;
 
-  protected:
+protected:
+  void
+  setBaseComputesAndRequiresDivergence(Task* task, const MaterialSubset* matls);
 
-    void setBaseComputesAndRequiresDivergence(        Task            * task
-                                             ,  const MaterialSubset  * matls);
+  const MPMLabel* d_mpm_lb;
+  const MaterialManager* d_materialManager;
+  ContactMaterialSpec d_materials_list;
+  const MPMFlags* d_mpm_flags;
 
-    MPMLabel* d_mpm_lb;
-    MaterialManagerP d_materialManager;
-    ContactMaterialSpec d_materials_list;
-    MPMFlags* d_mpm_flags;
+  // Stores dC/dt at the interface points.
+  VarLabel* sdInterfaceRate;
+  VarLabel* sdInterfaceFlag; // True means interface at point
 
-    // Stores dC/dt at the interface points.
-    VarLabel* sdInterfaceRate;
-    VarLabel* sdInterfaceFlag; // True means interface at point
+  SDInterfaceModel(const SDInterfaceModel&);
+  SDInterfaceModel&
+  operator=(const SDInterfaceModel&);
+};
 
-    SDInterfaceModel(const SDInterfaceModel&);
-    SDInterfaceModel& operator=(const SDInterfaceModel&);    
-  };
-  
 } // end namespace Uintah
 #endif

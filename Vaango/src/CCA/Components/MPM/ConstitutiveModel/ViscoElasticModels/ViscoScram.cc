@@ -32,12 +32,12 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/MPMIntVarTypes.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h> // just added
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Grid/Variables/MPMIntVarTypes.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Rand48.h>
 #include <Core/Math/Short27.h> //for Fracture
@@ -1288,8 +1288,9 @@ ViscoScram::computeRhoRef(const double rho_orig,
   double Cv      = d_JWLEOSData.Cv;
   double epsilon = 1.0e-10;
   double rho_min = 0.0; // Such that f(min) < 0
-  double rho_max = 100000.0; // pressure*1.001*rho_orig/(om*Cv*temperature)*1.3431907e7;
-                             // // Such that f(max) > 0
+  double rho_max =
+    100000.0; // pressure*1.001*rho_orig/(om*Cv*temperature)*1.3431907e7;
+              // // Such that f(max) > 0
 
   IterationVariables iterVar;
   iterVar.Pressure     = p_ref;
@@ -1418,8 +1419,9 @@ ViscoScram::computeRhoMicroCM(double pressure,
     double Cv      = d_JWLEOSData.Cv;
     double epsilon = 1.0e-15;
     double rho_min = 0.0; // Such that f(min) < 0
-    double rho_max = 100000.0; // pressure*1.001*rho_orig/(om*Cv*temperature)*1.3431907e7;
-                               // // Such that f(max) > 0
+    double rho_max =
+      100000.0; // pressure*1.001*rho_orig/(om*Cv*temperature)*1.3431907e7;
+                // // Such that f(max) > 0
 
     IterationVariables iterVar;
     iterVar.Pressure     = pressure;
@@ -1869,3 +1871,4 @@ swapbytes(Uintah::ViscoScramStateData& d)
     swapbytes(DevStres);
   }
 }
+} // namespace Uintah

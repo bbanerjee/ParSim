@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ImpMPMFlags.h>
+#include <CCA/Components/MPM/Core/ImpMPMFlags.h>
 #include <Core/Util/DebugStream.h>
 
 using namespace Uintah;
