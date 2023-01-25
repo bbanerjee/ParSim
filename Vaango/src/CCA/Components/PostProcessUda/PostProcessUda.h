@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,8 +27,11 @@
 #define __CCA_COMPONENTS_POSTPROCESSUDA_POSTPROCESSUDA_H__
 
 #include <CCA/Components/SimulationCommon/SimulationCommon.h>
+
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Components/PostProcessUda/Module.h>
+
+#include <memory>
 #include <vector>
 
 namespace Uintah {
@@ -89,7 +92,7 @@ public:
   //
 private:
   PostProcessUda(const PostProcessUda&) = delete;
-  PostProcessUda(PostProcessUda&&) = delete;
+  PostProcessUda(PostProcessUda&&)      = delete;
   PostProcessUda&
   operator=(const PostProcessUda&) = delete;
   PostProcessUda&
@@ -130,8 +133,9 @@ private:
   DataArchive* d_dataArchive = nullptr;
   int d_simTimestep          = 0;
 
-  std::vector<Module*> d_Modules;                 // postProcess modules
-  std::vector<AnalysisModule*> d_analysisModules; // OnTheFly modules
+  std::vector<Module*> d_Modules; // postProcess modules
+  std::vector<std::unique_ptr<AnalysisModule>>
+    d_analysisModules; // OnTheFly modules
 };
 } // End namespace Uintah
 

@@ -43,6 +43,25 @@ namespace Uintah {
 class MPMFlags;
 class MPMLabel;
 class MaterialManager;
+class FluxBCModel;
+
+struct ScalarDiffusionGlobalConcData
+{
+  double concRate;
+  double minPatchConc;
+  double maxPatchConc;
+  double totalConc;
+};
+
+struct ScalarDiffusionTaskData
+{
+  double maxEffectiveConc{ -999.0 };
+  double minEffectiveConc{ -999.0 };
+  constParticleVariable<double> pConcentration;
+  constNCVariable<double> gConcentrationRate;
+  ParticleVariable<double> pConcentrationNew;
+  ParticleVariable<double> pConcPreviousNew;
+};
 
 class ScalarDiffusionTasks final
 {
@@ -53,31 +72,86 @@ private:
 
 public:
   std::unique_ptr<SDInterfaceModel> sdInterfaceModel;
+  std::unique_ptr<FluxBCModel> fluxBC;
 
 public:
   ScalarDiffusionTasks(ProblemSpecP& ps,
-                       const MaterialManager* mat_manager,
-                       const MPMFlags* mpm_flags,
-                       const MPMLabel* mpm_labels);
+                       const MaterialManagerP& mat_manager,
+                       const MPMLabel* mpm_labels,
+                       const MPMFlags* mpm_flags);
 
   ~ScalarDiffusionTasks() = default;
 
-  // Disallow copy and move
-  ScalarDiffusionTasks(const ScalarDiffusionTasks&) = delete;
-  ScalarDiffusionTasks(ScalarDiffusionTasks&&)      = delete;
-
-  ScalarDiffusionTasks&
-  operator=(const ScalarDiffusionTasks&) = delete;
-  ScalarDiffusionTasks&
-  operator=(ScalarDiffusionTasks&&) = delete;
+  void
+  outputProblemSpec(ProblemSpecP& ps);
 
   void
-  scheduleInterpolateToParticlesAndUpdate(Task* task, int numGhostNodes);
+  scheduleInitialize(Task* task);
+
+  void
+  addInitialComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patches);
+
+  void
+  actuallyInitialize(const Patch* patch,
+                     const MPMMaterial* mpm_matl,
+                     DataWarehouse* new_dw);
+
+  void
+  actuallyInitializeReductionVars(DataWarehouse* new_dw);
+
+  void
+  scheduleInitializeFluxBCs(const LevelP& level, SchedulerP& sched);
+
+  void
+  scheduleApplyExternalScalarFlux(SchedulerP& sched,
+                                  const PatchSet* patches,
+                                  const MaterialSet* matls);
 
   void
   scheduleConcInterpolated(SchedulerP& sched,
                            const PatchSet* patches,
                            const MaterialSet* matls);
+
+  void
+  scheduleCompute(SchedulerP& sched,
+                  const PatchSet* patches,
+                  const MaterialSet* matls);
+
+  void
+  scheduleIntegrate(SchedulerP& sched,
+                    const PatchSet* patches,
+                    const MaterialSet* matls);
+
+  void
+  computeAndIntegrateDiffusion(const ProcessorGroup*,
+                               const PatchSubset* patches,
+                               const MaterialSubset*,
+                               DataWarehouse* old_dw,
+                               DataWarehouse* new_dw);
+
+  void
+  scheduleInterpolateToParticlesAndUpdate(Task* task, int numGhostNodes);
+
+  void
+  getAndAllocateForInterpolateToParticles(const Patch* patch,
+                                          const MPMMaterial* mpm_matl,
+                                          ParticleSubset* pset,
+                                          DataWarehouse* old_dw,
+                                          DataWarehouse* new_dw,
+                                          int matl_dw_index,
+                                          int num_ghost_particles,
+                                          ScalarDiffusionTaskData& data);
+
+  void
+  interpolateToParticles(double delT,
+                         particleIndex idx,
+                         MPMMaterial* mpm_matl,
+                         const std::vector<IntVector>& ni,
+                         const std::vector<double>& S,
+                         ScalarDiffusionTaskData& data,
+                         ScalarDiffusionGlobalConcData& conc_data);
 
   void
   scheduleComputeFlux(SchedulerP& sched,
@@ -107,6 +181,15 @@ public:
   scheduleDiffusionInterfaceDiv(SchedulerP& sched,
                                 const PatchSet* patches,
                                 const MaterialSet* matls);
+
+  // Disallow copy and move
+  ScalarDiffusionTasks(const ScalarDiffusionTasks&) = delete;
+  ScalarDiffusionTasks(ScalarDiffusionTasks&&)      = delete;
+
+  ScalarDiffusionTasks&
+  operator=(const ScalarDiffusionTasks&) = delete;
+  ScalarDiffusionTasks&
+  operator=(ScalarDiffusionTasks&&) = delete;
 };
 
 } // end namespace Uintah

@@ -66,6 +66,7 @@ public:
     bool KE;
     bool volDeformed;
     bool centerOfMass;
+    bool sumTransmittedForce;
   };
 
   MPMFlags(const ProcessorGroup* myworld);
@@ -89,7 +90,7 @@ public:
   std::unique_ptr<ReductionVars> d_reductionVars;
   std::unique_ptr<ParticleInterpolator> d_interpolator;
 
-  bool d_withICE;
+  bool d_withICE{ false };
 
   bool d_addNewMaterial;             // Flag to decide whether to create
   bool d_axisymmetric;               // Use axisymmetric?
@@ -128,13 +129,22 @@ public:
   bool d_AMR;                          // Do AMR?
   bool d_GEVelProj;                    // Flag for adaptive mesh refinement
   bool d_refineParticles;              // Flag for refinement
+  bool d_useXPIC{ false };             // Use XPIC (Nairn et al.) algorithm
+  bool d_updateStressLast{ true };
 
-  int d_8or27;                 // Number of nodes a particle can interact with
-  int d_minGridLevel;          // Only do MPM on this grid level
-  int d_maxGridLevel;          // Only do MPM on this grid level
-  int d_numTermsSeriesDefGrad; // Number of terms in series expansion
-                               // for deformation gradient calculation
-  int d_extraSolverFlushes;    // Have PETSc do more flushes to save memory
+  // For scalar diffusion
+  double d_autoCycleMin{ 0.1 };
+  double d_autoCycleMax{ 0.9 };
+  bool d_doAutoCycleBC{ false };
+  bool d_autoCycleUseMinMax{ false };
+
+  int d_ndim{ 3 };
+  int d_8or27;        // Number of nodes a particle can interact with
+  int d_minGridLevel; // Only do MPM on this grid level
+  int d_maxGridLevel; // Only do MPM on this grid level
+  int d_numTermsSeriesDefGrad{ 1 }; // Number of terms in series expansion
+                                    // for deformation gradient calculation
+  int d_extraSolverFlushes;         // Have PETSc do more flushes to save memory
 
   double d_addFrictionWork;      // 1 == add , 0 == do not add
   double d_artificialDampCoeff;  //

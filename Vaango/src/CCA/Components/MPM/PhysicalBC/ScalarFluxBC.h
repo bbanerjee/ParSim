@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -80,9 +80,10 @@ WARNING
 
       virtual void outputProblemSpec(ProblemSpecP& ps);
 
-      // Locate and flag the material points to which this scalar flux BC is
-      // to be applied. 
-      bool flagMaterialPoint(const Point& p, const Vector& dxpp);
+      // Locate and flag the material points to
+      // which this scalar flux BC is to be applied. 
+      bool flagMaterialPoint(const Point& p, const Vector& dxpp,
+                                             Vector& areavec);
       
       // Get the load curve number for this scalar flux BC
       inline int loadCurveID() const {return d_loadCurve->getID();}
@@ -99,34 +100,23 @@ WARNING
       // Get the number of material points on the surface
       inline long numMaterialPoints() const {return d_numMaterialPoints;}
 
-      // Get the area of the surface
-      double getSurfaceArea() const;
-
       // Get the load curve 
       inline LoadCurve<double>* getLoadCurve() const {return d_loadCurve;}
 
       // Get the applied scalar flux at time t
       inline double ScalarFlux(double t) const {return d_loadCurve->getLoad(t);}
 
-      // Get the force per particle at time t
-      double fluxPerParticle(double time) const;
-
 #if 0
-      // Get the force vector to be applied at a point 
-      Vector getForceVector(const Point& px, double forcePerParticle,
-                            const double time) const;
+      // Get the area of the surface
+      double getSurfaceArea() const;
 
-      // Get the force vector to be applied at 4 corners of the point 
-      Vector getForceVectorCBDI(const Point& px, const Matrix3& psize,
-                              const Matrix3& pDeformationMeasure,
-                              double forcePerParticle, const double time,
-                              Point& pExternalForceCorner1,
-                              Point& pExternalForceCorner2,
-                              Point& pExternalForceCorner3,
-                              Point& pExternalForceCorner4,
-                              const Vector& dxCell) const;
-
+      // Get the flux per particle at time t
+      double fluxPerParticle(double time) const;
 #endif
+
+      // Get the flux for a particle at time t, given its area
+      double fluxPerParticle(double time, double area) const;
+
    private:
 
       // Prevent empty constructor

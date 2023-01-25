@@ -1,9 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +36,7 @@
 #include <iostream>
 
 using namespace Uintah;
-
+using namespace std;
 
 // Store the geometry object and the load curve
 HeatFluxBC::HeatFluxBC(ProblemSpecP& ps, const GridP& grid)
@@ -50,7 +49,7 @@ HeatFluxBC::HeatFluxBC(ProblemSpecP& ps, const GridP& grid)
   // **WARNING** Currently allows only for box, cylinder or sphere.
   ProblemSpecP child  = (ps->findBlock("geom_object"))->findBlock();
   std::string go_type = child->getNodeName();
-  // std::cerr << "HeatFluxBC::go_type = " << go_type << std::endl;
+  // std::cerr << "HeatFluxBC::go_type = " << go_type << endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
     // Box box = d_surface->getBoundingBox();
@@ -65,8 +64,9 @@ HeatFluxBC::HeatFluxBC(ProblemSpecP& ps, const GridP& grid)
     d_surface     = scinew TriGeometryPiece(child);
     d_surfaceType = "tri";
   } else {
-    throw ParameterNotFound(
-      "** ERROR ** No surface specified for heatflux BC.", __FILE__, __LINE__);
+    throw ParameterNotFound("** ERROR ** No surface specified for heatflux BC.",
+                            __FILE__,
+                            __LINE__);
   }
 
   d_numMaterialPoints = 0; // this value is read in on a restart
@@ -139,55 +139,61 @@ HeatFluxBC::flagMaterialPoint(const Point& p, const Vector& dxpp) const
   bool flag = false;
   if (d_surfaceType == "box") {
     // Create box that is min-dxpp, max+dxpp;
-    Box box                = d_surface->getBoundingBox();
-    GeometryPieceUP volume = std::make_unique<BoxGeometryPiece>(
-      box.lower() - dxpp, box.upper() + dxpp);
-    if (volume->inside(p))
+    Box box = d_surface->getBoundingBox();
+    GeometryPiece* volume =
+      scinew BoxGeometryPiece(box.lower() - dxpp, box.upper() + dxpp);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else if (d_surfaceType == "cylinder") {
     // Create a cylindrical annulus with radius-|dxpp|, radius+|dxpp|
     double tol = dxpp.length() / 2.;
     CylinderGeometryPiece* cgp =
       dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    GeometryPieceP outer = std::make_shared<CylinderGeometryPiece>(
-      cgp->top(), cgp->bottom(), cgp->radius() + tol);
-    GeometryPieceP inner = std::make_shared<CylinderGeometryPiece>(
-      cgp->top(), cgp->bottom(), cgp->radius() - tol);
-    GeometryPieceUP volume =
-      std::make_unique<DifferenceGeometryPiece>(outer, inner);
-    if (volume->inside(p))
+    auto outer            = std::make_shared<CylinderGeometryPiece>(cgp->top(),
+                                                         cgp->bottom(),
+                                                         cgp->radius() + tol);
+    auto inner            = std::make_shared<CylinderGeometryPiece>(cgp->top(),
+                                                         cgp->bottom(),
+                                                         cgp->radius() - tol);
+    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else if (d_surfaceType == "sphere") {
     // Create a spherical shell with radius-|dxpp|, radius+|dxpp|
     double tol               = dxpp.length();
     SphereGeometryPiece* sgp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    GeometryPieceP outer =
+    auto outer =
       std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() + tol);
-    GeometryPieceP inner =
+    auto inner =
       std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() - tol);
-    GeometryPieceUP volume =
-      std::make_unique<DifferenceGeometryPiece>(outer, inner);
-    if (volume->inside(p))
+    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else if (d_surfaceType == "tri") {
     // Create a spherical shell with radius-|dxpp|, radius+|dxpp|
     double tol            = dxpp.length();
     TriGeometryPiece* tgp = dynamic_cast<TriGeometryPiece*>(d_surface);
-    std::shared_ptr<TriGeometryPiece> outer =
-      std::make_shared<TriGeometryPiece>(*tgp);
-    outer->scale(1. + tol);
 
-    std::shared_ptr<TriGeometryPiece> inner =
-      std::make_shared<TriGeometryPiece>(*tgp);
+    auto outer = std::make_shared<TriGeometryPiece>(*tgp);
+    auto inner = std::make_shared<TriGeometryPiece>(*tgp);
+
+    outer->scale(1. + tol);
     inner->scale(1. - tol);
 
-    GeometryPieceUP volume =
-      std::make_unique<DifferenceGeometryPiece>(outer, inner);
-    if (volume->inside(p))
+    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else {
     throw ParameterNotFound(
@@ -230,9 +236,10 @@ HeatFluxBC::getSurfaceArea() const
 double
 HeatFluxBC::fluxPerParticle(double time) const
 {
-  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << std::endl;
-  if (d_numMaterialPoints < 1)
+  // cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
+  if (d_numMaterialPoints < 1) {
     return 0.0;
+  }
 
   // Get the area of the surface on which the heatflux BC is applied
   double area = getSurfaceArea();
@@ -257,12 +264,12 @@ HeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
     normal[gp->thicknessDirection()] = 1.0;
     flux                             = fluxPerParticle;
   } else if (d_surfaceType == "cylinder") {
-    // CylinderGeometryPiece* gp =
-    // dynamic_cast<CylinderGeometryPiece*>(d_surface); Vector normal =
+    // CylinderGeometryPiece*
+    // gp=dynamic_cast<CylinderGeometryPiece*>(d_surface); Vector normal =
     // gp->radialDirection(px);
 #if 0
-    std::cout << "theta = " << theta << " theta_n = " << theta_n << std::endl;
-    std::cout << "flux = " << fluxPerParticle  << " flux_variation = " 
+    cout << "theta = " << theta << " theta_n = " << theta_n << endl;
+    cout << "flux = " << fluxPerParticle  << " flux_variation = " 
          << flux_variation <<  endl;
 #endif
 
@@ -283,37 +290,37 @@ HeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
 namespace Uintah {
 // A method to print out the heatflux bcs
 ostream&
-operator<<(std::ostream& out, const HeatFluxBC& bc)
+operator<<(ostream& out, const HeatFluxBC& bc)
 {
-  out << "Begin MPM HeatFlux BC # = " << bc.loadCurveID() << std::endl;
+  out << "Begin MPM HeatFlux BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();
-  out << "    Surface of application = " << surfType << std::endl;
+  out << "    Surface of application = " << surfType << endl;
   if (surfType == "box") {
     Box box = (bc.getSurface())->getBoundingBox();
-    out << "        " << box << std::endl;
+    out << "        " << box << endl;
   } else if (surfType == "cylinder") {
     CylinderGeometryPiece* cgp =
       dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << cgp->radius() << " top = " << cgp->top()
-        << " bottom = " << cgp->bottom() << std::endl;
+        << " bottom = " << cgp->bottom() << endl;
   } else if (surfType == "sphere") {
     SphereGeometryPiece* sgp =
       dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << sgp->radius() << " origin = " << sgp->origin()
-        << std::endl;
+        << endl;
   }
-  out << "    Time vs. Load = " << std::endl;
+  out << "    Time vs. Load = " << endl;
   LoadCurve<double>* lc = bc.getLoadCurve();
   int numPts            = lc->numberOfPointsOnLoadCurve();
   for (int ii = 0; ii < numPts; ++ii) {
     out << "        time = "
         << lc->getTime(ii)
-        //         << " heatflux = " << lc->getLoad(ii) << std::endl;
-        << " heatflux = " << bc.heatflux(ii) << std::endl;
+        //         << " heatflux = " << lc->getLoad(ii) << endl;
+        << " heatflux = " << bc.heatflux(ii) << endl;
   }
-  out << "End MPM HeatFlux BC # = " << bc.loadCurveID() << std::endl;
+  out << "End MPM HeatFlux BC # = " << bc.loadCurveID() << endl;
   return out;
 }
 

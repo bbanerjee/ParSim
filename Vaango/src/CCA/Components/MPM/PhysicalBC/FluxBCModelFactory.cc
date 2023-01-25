@@ -1,9 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,35 +22,29 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <CCA/Components/MPM/PhysicalBC/FluxBCModelFactory.h>
 
-#ifndef _CONTACTFACTORY_H_
-#define _CONTACTFACTORY_H_
-
-#include <Core/Grid/MaterialManagerP.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <CCA/Components/MPM/PhysicalBC/AutoCycleFluxBC.h>
+#include <CCA/Components/MPM/PhysicalBC/FluxBCModel.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <memory>
+#include <string>
 
-namespace Uintah {
+using namespace Uintah;
 
-class Contact;
-class MPMLabel;
-class MPMFlags;
-
-class ContactFactory
+std::unique_ptr<FluxBCModel>
+FluxBCModelFactory::create(const MaterialManager* ss,
+                           const MPMLabel* labels,
+                           const MPMFlags* flags)
 {
-public:
-  // this function has a switch for all known mat_types
-  // and calls the proper class' readParameters()
-  // addMaterial() calls this
-  static std::unique_ptr<Contact>
-  create(const ProcessorGroup* myworld,
-         const ProblemSpecP& ps,
-         MaterialManagerP& ss,
-         const MPMLabel* lb,
-         const MPMFlags* MFlag);
-};
-} // End namespace Uintah
+  if (flags->d_doAutoCycleBC) {
+    return std::make_unique<AutoCycleFluxBC>(ss, labels, flags);
+  } else {
+    return std::make_unique<FluxBCModel>(ss, labels, flags);
+  }
 
-#endif /* _CONTACTFACTORY_H_ */
+  return nullptr;
+}

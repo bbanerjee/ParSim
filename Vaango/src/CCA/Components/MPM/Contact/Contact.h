@@ -36,18 +36,18 @@
 
 namespace Uintah {
 
-using constNCint    = constNCVariable<int>;
-using NCint         = NCVariable<int>;
-using constNCdouble = constNCVariable<double>;
-using NCdouble      = NCVariable<double>;
-using constNCPoint  = constNCVariable<Point>;
-using NCPoint       = NCVariable<Point>;
-using constNCVector = constNCVariable<Vector>;
-using NCVector      = NCVariable<Vector>;
-using constNCdoubleArray =  std::vector<constNCdouble>;
-using NCdoubleArray =  std::vector<NCdouble>;
-using constNCVectorArray =  std::vector<constNCVector>;
-using NCVectorArray =  std::vector<NCVector>;
+using constNCint         = constNCVariable<int>;
+using NCint              = NCVariable<int>;
+using constNCdouble      = constNCVariable<double>;
+using NCdouble           = NCVariable<double>;
+using constNCPoint       = constNCVariable<Point>;
+using NCPoint            = NCVariable<Point>;
+using constNCVector      = constNCVariable<Vector>;
+using NCVector           = NCVariable<Vector>;
+using constNCdoubleArray = std::vector<constNCdouble>;
+using NCdoubleArray      = std::vector<NCdouble>;
+using constNCVectorArray = std::vector<constNCVector>;
+using NCVectorArray      = std::vector<NCVector>;
 
 class DataWarehouse;
 class MPMLabel;
@@ -61,28 +61,51 @@ class Contact : public UintahParallelComponent
 {
 public:
   // Constructor
-  Contact(const ProcessorGroup* myworld, MPMLabel* Mlb, MPMFlags* MFlag,
+  Contact(const ProcessorGroup* myworld,
+          MPMLabel* Mlb,
+          MPMFlags* MFlag,
           ProblemSpecP ps);
   virtual ~Contact();
 
-  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) = 0;
 
   // Basic contact methods
-  virtual void exchangeMomentum(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* matls,
-                                DataWarehouse* old_dw, DataWarehouse* new_dw,
-                                const VarLabel* label) = 0;
+  virtual void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) = 0;
 
-  virtual void addComputesAndRequires(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls,
-                                      const VarLabel* label) = 0;
+  virtual void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) = 0;
 
-  inline bool needNormals() const { return d_needNormals;}
-  inline bool useLogisticRegression() const { return d_useLogisticRegression;}
-  inline int  oneOrTwoStep() const {return d_oneOrTwoStep;}
-    
+  inline bool
+  needNormals() const
+  {
+    return d_needNormals;
+  }
+  inline bool
+  useLogisticRegression() const
+  {
+    return d_useLogisticRegression;
+  }
+  inline int
+  oneOrTwoStep() const
+  {
+    return d_oneOrTwoStep;
+  }
+
+  // Enable setting material attributes (isRigid, needsNormals, etc)
+  // based on the chosen contact model
+  virtual void
+  setContactMaterialAttributes(){};
+
 protected:
   MPMLabel* lb;
   MPMFlags* flag;
@@ -91,7 +114,7 @@ protected:
 
   bool d_needNormals;
   bool d_useLogisticRegression;
-  int  d_oneOrTwoStep;
+  int d_oneOrTwoStep;
 };
 
 inline bool

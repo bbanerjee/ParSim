@@ -27,27 +27,27 @@
 
 using namespace Uintah;
 
-DisplacementGradientComputer::DisplacementGradientComputer(MPMFlags* Mflag) 
+DisplacementGradientComputer::DisplacementGradientComputer(const MPMFlags* Mflag)
   : GradientComputer(Mflag)
 {
 }
 
-DisplacementGradientComputer::DisplacementGradientComputer(const DisplacementGradientComputer* gc)
+DisplacementGradientComputer::DisplacementGradientComputer(
+  const DisplacementGradientComputer* gc)
   : GradientComputer(gc)
 {
 }
 
-DisplacementGradientComputer* DisplacementGradientComputer::clone()
+DisplacementGradientComputer*
+DisplacementGradientComputer::clone()
 {
   return scinew DisplacementGradientComputer(*this);
 }
 
-DisplacementGradientComputer::~DisplacementGradientComputer()
-{
-}
+DisplacementGradientComputer::~DisplacementGradientComputer() {}
 
 // Actually compute displacement gradient
-void 
+void
 DisplacementGradientComputer::computeDispGrad(ParticleInterpolator* interp,
                                               const double* oodx,
                                               const Point& px,

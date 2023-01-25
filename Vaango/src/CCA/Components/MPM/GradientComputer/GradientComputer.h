@@ -26,74 +26,71 @@
 #ifndef __GRADIENT_COMPUTER_H__
 #define __GRADIENT_COMPUTER_H__
 
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <vector>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
-#include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <vector>
-
 
 namespace Uintah {
 
-  class MPMFlags;
-  class ParticleVariableBase;
+class MPMFlags;
+class ParticleVariableBase;
 
-  //////////////////////////////////////////////////////////////////////////
-  /*!
-    \class GradientComputer
-    \brief Base class for computing gradients
-  */
-  //////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+/*!
+  \class GradientComputer
+  \brief Base class for computing gradients
+*/
+//////////////////////////////////////////////////////////////////////////
 
-  class GradientComputer {
-  public:
-         
-    GradientComputer(MPMFlags* MFlag);
-    GradientComputer(const GradientComputer* gc);
-    virtual ~GradientComputer();
+class GradientComputer
+{
+public:
+  GradientComputer(const MPMFlags* MFlag);
+  GradientComputer(const GradientComputer* gc);
+  virtual ~GradientComputer();
 
-    // Make a clone of the gradient computer
-    virtual GradientComputer* clone() = 0;
+  // Make a clone of the gradient computer
+  virtual GradientComputer*
+  clone() = 0;
 
-  public:
-
-    /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
-        for Kmat and B matrix for Kgeo */
-    void computeGradAndBmats(Matrix3& grad,
-                             std::vector<IntVector>& ni,
-                             std::vector<Vector>& d_S,
-                             const double* oodx, 
-                             constNCVariable<Vector>& gVec,
-                             const Array3<int>& l2g,
-                             double B[6][24],
-                             double Bnl[3][24],
-                             int* dof);
-
-    void computeBmats(vector<IntVector>& ni,
+public:
+  /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
+      for Kmat and B matrix for Kgeo */
+  void
+  computeGradAndBmats(Matrix3& grad,
+                      std::vector<IntVector>& ni,
                       std::vector<Vector>& d_S,
-                      const double* oodx, 
+                      const double* oodx,
+                      constNCVariable<Vector>& gVec,
                       const Array3<int>& l2g,
                       double B[6][24],
                       double Bnl[3][24],
                       int* dof);
 
-  protected:
-    
-    /*! Calculate gradient of a vector field for 8 noded interpolation */
-    void computeGrad(Matrix3& grad,
-                     std::vector<IntVector>& ni,
-                     std::vector<Vector>& d_S,
-                     const double* oodx, 
-                     constNCVariable<Vector>& gVec);
+  void
+  computeBmats(vector<IntVector>& ni,
+               std::vector<Vector>& d_S,
+               const double* oodx,
+               const Array3<int>& l2g,
+               double B[6][24],
+               double Bnl[3][24],
+               int* dof);
 
-    MPMFlags* flag;
+protected:
+  /*! Calculate gradient of a vector field for 8 noded interpolation */
+  void
+  computeGrad(Matrix3& grad,
+              std::vector<IntVector>& ni,
+              std::vector<Vector>& d_S,
+              const double* oodx,
+              constNCVariable<Vector>& gVec);
 
-  };
+  const MPMFlags* flag;
+};
 } // End namespace Uintah
-      
 
-#endif  // __GRADIENT_COMPUTER_H__
-
+#endif // __GRADIENT_COMPUTER_H__

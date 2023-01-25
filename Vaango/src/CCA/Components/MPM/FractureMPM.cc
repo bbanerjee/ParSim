@@ -329,12 +329,12 @@ FractureMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleInterpolateParticlesToGrid(     sched, patches, matls);
   scheduleComputeHeatExchange(            sched, patches, matls);
   scheduleAdjustCrackContactInterpolated( sched, patches, matls);//for FractureMPM
-  scheduleExMomInterpolated(              sched, patches, matls);
+  scheduleMomentumExchangeInterpolated(              sched, patches, matls);
   scheduleComputeContactArea(             sched, patches, matls);
   scheduleComputeInternalForce(           sched, patches, matls);
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
   scheduleAdjustCrackContactIntegrated(   sched, patches, matls);//for FractureMPM
-  scheduleExMomIntegrated(                sched, patches, matls);
+  scheduleMomentumExchangeIntegrated(                sched, patches, matls);
   scheduleSetGridBoundaryConditions(      sched, patches, matls);
   scheduleComputeStressTensor(            sched, patches, matls);
   if(flags->d_doExplicitHeatConduction){
@@ -494,7 +494,7 @@ void FractureMPM::scheduleAdjustCrackContactInterpolated(SchedulerP& sched,
   sched->addTask(t, patches, matls);
 }
 
-void FractureMPM::scheduleExMomInterpolated(SchedulerP& sched,
+void FractureMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls)
 {
@@ -741,7 +741,7 @@ void FractureMPM::scheduleAdjustCrackContactIntegrated(SchedulerP& sched,
   sched->addTask(t, patches, matls);
 }
 
-void FractureMPM::scheduleExMomIntegrated(SchedulerP& sched,
+void FractureMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {

@@ -29,22 +29,24 @@
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
 
 namespace Uintah {
-  class AnalysisModule;
+class AnalysisModule;
 
-  class AnalysisModuleFactory {
+class AnalysisModuleFactory
+{
 
-  private:
-    AnalysisModuleFactory();
-    ~AnalysisModuleFactory();
+private:
+  AnalysisModuleFactory();
+  ~AnalysisModuleFactory();
 
-  public:
-    static
-    std::vector< AnalysisModule*> create( const ProcessorGroup* myworld,
-                                          const MaterialManagerP materialManager,
-                                          const ProblemSpecP& prob_spec );
-  };
-}
+public:
+  static std::vector<std::unique_ptr<AnalysisModule>>
+  create(const ProcessorGroup* myworld,
+         const MaterialManagerP materialManager,
+         const ProblemSpecP& prob_spec);
+};
+} // namespace Uintah
 
 #endif

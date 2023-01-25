@@ -524,7 +524,7 @@ AMRMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
     scheduleComputeNormals(sched, patches, matls);
     scheduleFindSurfaceParticles(sched, patches, matls);
     scheduleComputeLogisticRegression(sched, patches, matls);
-    scheduleExMomInterpolated(sched, patches, matls);
+    scheduleMomentumExchangeInterpolated(sched, patches, matls);
   }
 
   for (int l = 0; l < maxLevels; l++) {
@@ -564,7 +564,7 @@ AMRMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
     const LevelP& level     = grid->getLevel(l);
     const PatchSet* patches = level->eachPatch();
     scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
-    scheduleExMomIntegrated(sched, patches, matls);
+    scheduleMomentumExchangeIntegrated(sched, patches, matls);
     scheduleSetGridBoundaryConditions(sched, patches, matls);
   }
 

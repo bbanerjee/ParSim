@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -65,11 +65,8 @@ PostProcessUda::~PostProcessUda()
     delete *iter;
   }
 
-  for (auto iter = d_analysisModules.begin(); iter != d_analysisModules.end();
-       iter++) {
-    AnalysisModule* am = *iter;
+  for (auto& am : d_analysisModules) {
     am->releaseComponents();
-    delete am;
   }
 }
 //______________________________________________________________________
@@ -193,11 +190,8 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
   d_analysisModules =
     AnalysisModuleFactory::create(d_myworld, d_materialManager, prob_spec);
 
-  for (auto iter = d_analysisModules.begin(); iter != d_analysisModules.end();
-       iter++) {
-    AnalysisModule* am = *iter;
-    std::vector<std::vector<const VarLabel*>> dummy;
-
+  std::vector<std::vector<const VarLabel*>> dummy;
+  for (auto& am :  d_analysisModules) {
     am->setComponents(dynamic_cast<SimulationInterface*>(this));
     am->problemSetup(prob_spec, restart_ps, grid, dummy, dummy);
   }
@@ -238,8 +232,8 @@ PostProcessUda::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   //__________________________________
   //    OnTheFly dataAnalysis
-  for (auto module : d_analysisModules) {
-    module->scheduleInitialize(sched, level);
+  for (auto& am : d_analysisModules) {
+    am->scheduleInitialize(sched, level);
   }
 }
 
@@ -259,9 +253,7 @@ PostProcessUda::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 
   //__________________________________
   //    OnTheFly analysis
-  for (auto iter = d_analysisModules.begin(); iter != d_analysisModules.end();
-       iter++) {
-    AnalysisModule* am = *iter;
+  for (auto& am : d_analysisModules) {
     am->scheduleDoAnalysis(sched, level);
   }
 }

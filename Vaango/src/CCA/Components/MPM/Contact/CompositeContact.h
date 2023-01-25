@@ -37,36 +37,53 @@ class CompositeContact : public Contact
 {
 public:
   // Constructor
-  CompositeContact(const ProcessorGroup* myworld, MPMLabel* Mlb,
-                   MPMFlags* MFlag);
+  CompositeContact(const ProcessorGroup* myworld,
+                   const MPMLabel* Mlb,
+                   const MPMFlags* MFlag);
   virtual ~CompositeContact();
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
   // memory deleted on destruction of composite
-  void add(Contact* m);
+  void
+  add(std::unique_ptr<Contact> m);
 
   // how many
-  size_t size() const { return d_m.size(); }
+  size_t
+  size() const
+  {
+    return d_m.size();
+  }
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 
-  void initFriction(const ProcessorGroup*, const PatchSubset*,
-                    const MaterialSubset* matls, DataWarehouse*,
-                    DataWarehouse* new_dw);
+  void
+  initFriction(const ProcessorGroup*,
+               const PatchSubset*,
+               const MaterialSubset* matls,
+               DataWarehouse*,
+               DataWarehouse* new_dw);
 
 private: // hide
   CompositeContact(const CompositeContact&);
-  CompositeContact& operator=(const CompositeContact&);
+  CompositeContact&
+  operator=(const CompositeContact&);
 
 protected: // data
-  std::list<Contact*> d_m;
+  std::list<std::unique_ptr<Contact>> d_m;
 };
 
 } // End namespace Uintah

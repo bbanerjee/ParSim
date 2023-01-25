@@ -31,7 +31,6 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/Array3.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -143,6 +142,20 @@ public:
   initializeStressAndDefGradFromBodyForce(const Patch* patch,
                                           const MPMMaterial* matl,
                                           DataWarehouse* new_dw) const;
+
+  void
+  addReinitializeComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
+                                     const PatchSet*) const
+  {
+  }
+
+  void
+  reinitializeCMData(const Patch* patch,
+                     const MPMMaterial* matl,
+                     DataWarehouse* new_dw)
+  {
+  }
 
   ///////////////////////////////////////////////////////////////////////
   /*! Set up the computes and requires for the task that computes the

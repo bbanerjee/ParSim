@@ -35,7 +35,6 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/CCVariable.h>
@@ -167,6 +166,13 @@ public:
     return d_thermalConductivity;
   }
 
+  // For scalar diffusion
+  bool
+  doConcReduction()
+  {
+    return d_doConcReduction;
+  };
+
   // For MPMICE
   double
   getGamma() const;
@@ -218,6 +224,8 @@ private:
   double d_troom{ 0.0 };
   double d_tmelt{ 0.0 };
 
+  // For scalar diffusion
+  bool d_doConcReduction{ false };
 };
 
 } // End namespace Uintah

@@ -198,6 +198,9 @@ public:
   const VarLabel* RigidReactionForceLabel;
   const VarLabel* TotalLocalizedParticleLabel;
 
+  // Needs to be modified (flagged as a reduction task in runtime)
+  VarLabel* SumTransmittedForceLabel;
+
   const VarLabel* pCellNAPIDLabel;
 
   // Implicit MPM labels

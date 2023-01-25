@@ -1,9 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -38,6 +37,7 @@
 #include <iostream>
 
 using namespace Uintah;
+using namespace std;
 
 // Store the geometry object and the load curve
 ArchesHeatFluxBC::ArchesHeatFluxBC(ProblemSpecP& ps, const GridP& grid)
@@ -50,7 +50,7 @@ ArchesHeatFluxBC::ArchesHeatFluxBC(ProblemSpecP& ps, const GridP& grid)
   // **WARNING** Currently allows only for box, cylinder or sphere.
   ProblemSpecP child  = (ps->findBlock("geom_object"))->findBlock();
   std::string go_type = child->getNodeName();
-  // std::cerr << "ArchesHeatFluxBC::go_type = " << go_type << std::endl;
+  // std::cerr << "ArchesHeatFluxBC::go_type = " << go_type << endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
     // Box box = d_surface->getBoundingBox();
@@ -62,8 +62,9 @@ ArchesHeatFluxBC::ArchesHeatFluxBC(ProblemSpecP& ps, const GridP& grid)
     d_surface     = scinew CylinderGeometryPiece(child);
     d_surfaceType = "cylinder";
   } else {
-    throw ParameterNotFound(
-      "** ERROR ** No surface specified for heatflux BC.", __FILE__, __LINE__);
+    throw ParameterNotFound("** ERROR ** No surface specified for heatflux BC.",
+                            __FILE__,
+                            __LINE__);
   }
   d_numMaterialPoints = 0;
 
@@ -142,11 +143,13 @@ ArchesHeatFluxBC::flagMaterialPoint(const Point& p, const Vector& dxpp) const
   bool flag = false;
   if (d_surfaceType == "box") {
     // Create box that is min-dxpp, max+dxpp;
-    Box box                = d_surface->getBoundingBox();
-    GeometryPieceUP volume = std::make_unique<BoxGeometryPiece>(
-      box.lower() - dxpp, box.upper() + dxpp);
-    if (volume->inside(p))
+    Box box = d_surface->getBoundingBox();
+    GeometryPiece* volume =
+      scinew BoxGeometryPiece(box.lower() - dxpp, box.upper() + dxpp);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else if (d_surfaceType == "cylinder") {
     // Create a cylindrical annulus with radius-|dxpp|, radius+|dxpp|
@@ -164,27 +167,33 @@ ArchesHeatFluxBC::flagMaterialPoint(const Point& p, const Vector& dxpp) const
       off_minus        = -cgp_u_vec * tol;
     }
 
-    GeometryPieceP outer = std::make_shared<CylinderGeometryPiece>(
-      cgp->top() + off_plus, cgp->bottom() + off_minus, cgp->radius() + tol);
-    GeometryPieceP inner = std::make_shared<CylinderGeometryPiece>(
-      cgp->top() + off_minus, cgp->bottom() + off_plus, cgp->radius() - tol);
-    GeometryPieceUP volume =
-      std::make_unique<DifferenceGeometryPiece>(outer, inner);
-    if (volume->inside(p))
+    auto outer =
+      std::make_shared<CylinderGeometryPiece>(cgp->top() + off_plus,
+                                              cgp->bottom() + off_minus,
+                                              cgp->radius() + tol);
+    auto inner =
+      std::make_shared<CylinderGeometryPiece>(cgp->top() + off_minus,
+                                              cgp->bottom() + off_plus,
+                                              cgp->radius() - tol);
+    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else if (d_surfaceType == "sphere") {
     // Create a spherical shell with radius-|dxpp|, radius+|dxpp|
     double tol               = dxpp.length();
     SphereGeometryPiece* sgp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    GeometryPieceP outer =
+    auto outer =
       std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() + tol);
-    GeometryPieceP inner =
+    auto inner =
       std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() - tol);
-    GeometryPieceUP volume =
-      std::make_unique<DifferenceGeometryPiece>(outer, inner);
-    if (volume->inside(p))
+    GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
+    if (volume->inside(p)) {
       flag = true;
+    }
+    delete volume;
 
   } else {
     throw ParameterNotFound(
@@ -207,10 +216,11 @@ ArchesHeatFluxBC::getSurfaceArea() const
     area                 = gp->volume() / gp->smallestSide();
   } else if (d_surfaceType == "cylinder") {
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    if (d_polyData->d_endCapName != "")
+    if (d_polyData->d_endCapName != "") {
       area = gp->surfaceArea() + gp->surfaceAreaEndCaps();
-    else
+    } else {
       area = gp->surfaceArea();
+    }
   } else if (d_surfaceType == "sphere") {
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
     area                    = gp->surfaceArea();
@@ -227,9 +237,10 @@ ArchesHeatFluxBC::getSurfaceArea() const
 double
 ArchesHeatFluxBC::fluxPerParticle(double time) const
 {
-  // std::cout << "d_numMaterialPoints = " << d_numMaterialPoints << std::endl;
-  if (d_numMaterialPoints < 1)
+  // cout << "d_numMaterialPoints = " << d_numMaterialPoints << endl;
+  if (d_numMaterialPoints < 1) {
     return 0.0;
+  }
 
   // Get the area of the surface on which the heatflux BC is applied
   double area = getSurfaceArea();
@@ -238,8 +249,8 @@ ArchesHeatFluxBC::fluxPerParticle(double time) const
   // Get the initial heatflux that is applied ( t = 0.0 )
   double heatflx = heatflux(time);
 #if 0
-  std::cout << "heatflx = " << heatflx << std::endl;
-  std::cout << "area = " << area << std::endl;
+  cout << "heatflx = " << heatflx << endl;
+  cout << "area = " << area << endl;
 #endif
 
   // Calculate the heatflux per particle
@@ -260,9 +271,9 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
   } else if (d_surfaceType == "cylinder") {
     double new_flux = d_polyData->interpolateValue(px) * getSurfaceArea() /
                       static_cast<double>(d_numMaterialPoints);
-    // std::cout << "interpolated new_flux = " << new_flux << std::endl;
+    // cout << "interpolated new_flux = " << new_flux << endl;
 #if 0
-    std::cout << "FLUX PER PARTICLE = " << fluxPerParticle << std::endl;
+    cout << "FLUX PER PARTICLE = " << fluxPerParticle << endl;
 
     Vector normal = gp->radialDirection(px);
     double theta = atan(px.y()/px.x());
@@ -271,14 +282,14 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
     double flux_variation_mag = fluxPerParticle*max_min/2.;
     double offset = fluxPerParticle - flux_variation_mag;
     double flux_variation = flux_variation_mag*cos(theta) + offset;
-    std::cout << "theta = " << theta << " theta_n = " << theta_n << std::endl;
-    std::cout << "flux = " << fluxPerParticle  << " flux_variation = " 
+    cout << "theta = " << theta << " theta_n = " << theta_n << endl;
+    cout << "flux = " << fluxPerParticle  << " flux_variation = " 
          << flux_variation <<  endl;
 
     //    flux = fluxPerParticle;
 #endif
     flux = new_flux;
-    //    std::cout << "flux = " << flux << std::endl;
+    //    cout << "flux = " << flux << endl;
   } else if (d_surfaceType == "sphere") {
     // SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
     // Vector normal = gp->radialDirection(px);
@@ -294,38 +305,38 @@ ArchesHeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
 
 namespace Uintah {
 // A method to print out the heatflux bcs
-std::ostream&
-operator<<(std::ostream& out, const ArchesHeatFluxBC& bc)
+ostream&
+operator<<(ostream& out, const ArchesHeatFluxBC& bc)
 {
-  out << "Begin MPM ArchesHeatFlux BC # = " << bc.loadCurveID() << std::endl;
+  out << "Begin MPM ArchesHeatFlux BC # = " << bc.loadCurveID() << endl;
   std::string surfType = bc.getSurfaceType();
-  out << "    Surface of application = " << surfType << std::endl;
+  out << "    Surface of application = " << surfType << endl;
   if (surfType == "box") {
     Box box = (bc.getSurface())->getBoundingBox();
-    out << "        " << box << std::endl;
+    out << "        " << box << endl;
   } else if (surfType == "cylinder") {
     CylinderGeometryPiece* cgp =
       dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << cgp->radius() << " top = " << cgp->top()
-        << " bottom = " << cgp->bottom() << std::endl;
+        << " bottom = " << cgp->bottom() << endl;
   } else if (surfType == "sphere") {
     SphereGeometryPiece* sgp =
       dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
     out << "        "
         << "radius = " << sgp->radius() << " origin = " << sgp->origin()
-        << std::endl;
+        << endl;
   }
-  out << "    Time vs. Load = " << std::endl;
+  out << "    Time vs. Load = " << endl;
   LoadCurve<double>* lc = bc.getLoadCurve();
   int numPts            = lc->numberOfPointsOnLoadCurve();
   for (int ii = 0; ii < numPts; ++ii) {
     out << "        time = "
         << lc->getTime(ii)
-        //         << " heatflux = " << lc->getLoad(ii) << std::endl;
-        << " heatflux = " << bc.heatflux(ii) << std::endl;
+        //         << " heatflux = " << lc->getLoad(ii) << endl;
+        << " heatflux = " << bc.heatflux(ii) << endl;
   }
-  out << "End MPM ArchesHeatFlux BC # = " << bc.loadCurveID() << std::endl;
+  out << "End MPM ArchesHeatFlux BC # = " << bc.loadCurveID() << endl;
   return out;
 }
 

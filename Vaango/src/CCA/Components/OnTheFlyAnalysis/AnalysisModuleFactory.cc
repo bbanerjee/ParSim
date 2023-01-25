@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,52 +24,49 @@
  */
 
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModuleFactory.h>
-#include <CCA/Components/OnTheFlyAnalysis/lineExtract.h>
+
 #include <CCA/Components/OnTheFlyAnalysis/MinMax.h>
+#include <CCA/Components/OnTheFlyAnalysis/lineExtract.h>
 #include <CCA/Components/OnTheFlyAnalysis/meanTurbFluxes.h>
 #include <CCA/Components/OnTheFlyAnalysis/momentumAnalysis.h>
 #include <CCA/Components/OnTheFlyAnalysis/planeAverage.h>
 #include <CCA/Components/OnTheFlyAnalysis/planeExtract.h>
-#include <CCA/Components/OnTheFlyAnalysis/statistics.h>
 #include <CCA/Components/OnTheFlyAnalysis/spatialAvg.h>
+#include <CCA/Components/OnTheFlyAnalysis/statistics.h>
 #include <CCA/Components/OnTheFlyAnalysis/turbulentFluxes.h>
 
 #include <sci_defs/uintah_defs.h>
 
-#if !defined( NO_ICE )
-  #include <CCA/Components/OnTheFlyAnalysis/vorticity.h>
-  #include <CCA/Components/OnTheFlyAnalysis/controlVolFluxes.h>
+#if !defined(NO_ICE)
+#include <CCA/Components/OnTheFlyAnalysis/controlVolFluxes.h>
+#include <CCA/Components/OnTheFlyAnalysis/vorticity.h>
 #endif
 
-#if !defined( NO_MPM )
-  #include <CCA/Components/OnTheFlyAnalysis/flatPlate_heatFlux.h>
-  #include <CCA/Components/OnTheFlyAnalysis/particleExtract.h>
+#if !defined(NO_MPM)
+#include <CCA/Components/OnTheFlyAnalysis/flatPlate_heatFlux.h>
+#include <CCA/Components/OnTheFlyAnalysis/particleExtract.h>
 #endif
 
-#if !defined( NO_ICE ) && !defined( NO_MPM )
-  #include <CCA/Components/OnTheFlyAnalysis/1stLawThermo.h>
+#if !defined(NO_ICE) && !defined(NO_MPM)
+#include <CCA/Components/OnTheFlyAnalysis/1stLawThermo.h>
 #endif
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/MaterialManager.h>
 
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
 
 using namespace Uintah;
 
-AnalysisModuleFactory::AnalysisModuleFactory()
-{
-}
+AnalysisModuleFactory::AnalysisModuleFactory() {}
 
-AnalysisModuleFactory::~AnalysisModuleFactory()
-{
-}
+AnalysisModuleFactory::~AnalysisModuleFactory() {}
 
 //______________________________________________________________________
 //
-std::vector<AnalysisModule*>
+std::vector<std::unique_ptr<AnalysisModule>>
 AnalysisModuleFactory::create(const ProcessorGroup* myworld,
                               const MaterialManagerP materialManager,
                               const ProblemSpecP& prob_spec)
@@ -78,85 +76,102 @@ AnalysisModuleFactory::create(const ProcessorGroup* myworld,
   ProblemSpecP da_ps = prob_spec->findBlock("DataAnalysis");
   ProblemSpecP pp_ps = prob_spec->findBlock("PostProcess");
 
-  if( da_ps ){
+  if (da_ps) {
     base_ps = da_ps;
-  } 
-  else{
+  } else {
     base_ps = pp_ps;
   }
 
-
-  std::vector<AnalysisModule*> modules;
+  std::vector<std::unique_ptr<AnalysisModule>> modules;
 
   if (base_ps) {
 
-    for( ProblemSpecP module_ps = base_ps->findBlock( "Module" );
-                      module_ps != nullptr;
-                      module_ps = module_ps->findNextBlock( "Module" ) ) {
+    for (ProblemSpecP module_ps = base_ps->findBlock("Module");
+         module_ps != nullptr;
+         module_ps = module_ps->findNextBlock("Module")) {
 
-      if( !module_ps ) {
-        throw ProblemSetupException( "\nERROR<DataAnalysis>: Could not find find <Module> tag.\n", __FILE__, __LINE__ );
+      if (!module_ps) {
+        throw ProblemSetupException(
+          "\nERROR<DataAnalysis>: Could not find find <Module> tag.\n",
+          __FILE__,
+          __LINE__);
       }
 
       std::map<std::string, std::string> attributes;
       module_ps->getAttributes(attributes);
       std::string module = attributes["name"];
 
-      if ( module == "statistics" ) {
-        modules.push_back( scinew statistics(          myworld, materialManager, module_ps) );
-      }
-      else if ( module == "spatialAvg" ) {
-        modules.push_back( scinew spatialAvg(          myworld, materialManager, module_ps) );
-      }
-      else if ( module == "lineExtract" ) {
-        modules.push_back(scinew lineExtract(          myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "planeAverage" ) {
-        modules.push_back( scinew planeAverage(        myworld, materialManager, module_ps, true, true, 0 ) );
-      }
-      else if ( module == "planeExtract" ) {
-        modules.push_back( scinew planeExtract(        myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "meanTurbFluxes" ) {
-        modules.push_back( scinew meanTurbFluxes(      myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "momentumAnalysis" ) {
-        modules.push_back( scinew momentumAnalysis(    myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "minMax" ) {
-        modules.push_back( scinew MinMax(              myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "turbulentFluxes" ) {
-        modules.push_back( scinew turbulentFluxes(     myworld, materialManager, module_ps ) );
+      if (module == "statistics") {
+        modules.push_back(
+          std::make_unique<statistics>(myworld, materialManager, module_ps));
+      } else if (module == "spatialAvg") {
+        modules.push_back(
+          std::make_unique<spatialAvg>(myworld, materialManager, module_ps));
+      } else if (module == "lineExtract") {
+        modules.push_back(
+          std::make_unique<lineExtract>(myworld, materialManager, module_ps));
+      } else if (module == "planeAverage") {
+        modules.push_back(std::make_unique<planeAverage>(myworld,
+                                                         materialManager,
+                                                         module_ps,
+                                                         true,
+                                                         true,
+                                                         0));
+      } else if (module == "planeExtract") {
+        modules.push_back(
+          std::make_unique<planeExtract>(myworld, materialManager, module_ps));
+      } else if (module == "meanTurbFluxes") {
+        modules.push_back(std::make_unique<meanTurbFluxes>(myworld,
+                                                           materialManager,
+                                                           module_ps));
+      } else if (module == "momentumAnalysis") {
+        modules.push_back(std::make_unique<momentumAnalysis>(myworld,
+                                                             materialManager,
+                                                             module_ps));
+      } else if (module == "minMax") {
+        modules.push_back(
+          std::make_unique<MinMax>(myworld, materialManager, module_ps));
+      } else if (module == "turbulentFluxes") {
+        modules.push_back(std::make_unique<turbulentFluxes>(myworld,
+                                                            materialManager,
+                                                            module_ps));
       }
 
-#if !defined( NO_ICE )
-      else if ( module == "vorticity" ) {
-        modules.push_back( scinew vorticity(           myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "controlVolFluxes" ) {
-        modules.push_back( scinew controlVolFluxes(    myworld, materialManager, module_ps ) );
+#if !defined(NO_ICE)
+      else if (module == "vorticity") {
+        modules.push_back(
+          std::make_unique<vorticity>(myworld, materialManager, module_ps));
+      } else if (module == "controlVolFluxes") {
+        modules.push_back(std::make_unique<controlVolFluxes>(myworld,
+                                                             materialManager,
+                                                             module_ps));
       }
 #endif
 
-#if !defined( NO_MPM )
-      else if ( module == "particleExtract" ) {
-        modules.push_back( scinew particleExtract(     myworld, materialManager, module_ps ) );
-      }
-      else if ( module == "flatPlate_heatFlux" ) {
-        modules.push_back( scinew flatPlate_heatFlux(  myworld, materialManager, module_ps ) );
+#if !defined(NO_MPM)
+      else if (module == "particleExtract") {
+        modules.push_back(std::make_unique<particleExtract>(myworld,
+                                                            materialManager,
+                                                            module_ps));
+      } else if (module == "flatPlate_heatFlux") {
+        modules.push_back(std::make_unique<flatPlate_heatFlux>(myworld,
+                                                               materialManager,
+                                                               module_ps));
       }
 #endif
 
-#if !defined( NO_ICE ) && !defined( NO_MPM )
-      else if ( module == "firstLawThermo" ) {
-        modules.push_back( scinew FirstLawThermo(      myworld, materialManager, module_ps ) );
+#if !defined(NO_ICE) && !defined(NO_MPM)
+      else if (module == "firstLawThermo") {
+        modules.push_back(std::make_unique<FirstLawThermo>(myworld,
+                                                           materialManager,
+                                                           module_ps));
       }
 #endif
 
       else {
         std::ostringstream msg;
-        msg << "\nERROR<DataAnalysis>: Unknown analysis module : " << module << ".\n";
+        msg << "\nERROR<DataAnalysis>: Unknown analysis module : " << module
+            << ".\n";
         throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
       }
     }

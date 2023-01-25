@@ -23,8 +23,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -520,6 +520,7 @@ MPMLabel::MPMLabel()
 
   NeedAddMPMMaterialLabel =
     VarLabel::create("NeedAddMPMMaterial", sum_vartype::getTypeDescription());
+
   for (int iside = 0; iside < 6; iside++) {
     string label_name =
       Patch::getFaceName((Patch::FaceType)iside); // FIXME: assumes face indices
@@ -552,6 +553,10 @@ MPMLabel::MPMLabel()
   TotalLocalizedParticleLabel =
     VarLabel::create("TotalLocalizedParticle",
                      sumlong_vartype::getTypeDescription());
+
+  SumTransmittedForceLabel =
+    VarLabel::create("SumTransmittedForce",
+                     sumvec_vartype::getTypeDescription());
 
   // for assigning particle ids
   pCellNAPIDLabel =
@@ -1027,16 +1032,20 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(TotalMassLabel);
   VarLabel::destroy(NeedAddMPMMaterialLabel);
   VarLabel::destroy(TotalVolumeDeformedLabel);
+
   for (int iside = 0; iside < 6; iside++) {
     VarLabel::destroy(BndyContactAreaLabel[iside]);
     VarLabel::destroy(BndyContactCellAreaLabel[iside]);
     VarLabel::destroy(BndyForceLabel[iside]);
     VarLabel::destroy(BndyTractionLabel[iside]);
   }
+
   VarLabel::destroy(CenterOfMassPositionLabel);
   VarLabel::destroy(TotalMomentumLabel);
   VarLabel::destroy(RigidReactionForceLabel);
   VarLabel::destroy(TotalLocalizedParticleLabel);
+  VarLabel::destroy(SumTransmittedForceLabel);
+
   VarLabel::destroy(pCellNAPIDLabel);
   VarLabel::destroy(pCellNACZIDLabel);
 

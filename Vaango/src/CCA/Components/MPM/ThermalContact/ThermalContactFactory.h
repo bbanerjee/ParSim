@@ -49,24 +49,27 @@
 #ifndef __ThermalContactFactory__
 #define __ThermalContactFactory__
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <memory>
 
 namespace Uintah {
 
-  class ThermalContact;
-  class MPMLabel;
-  class MPMFlags;
+class ThermalContact;
+class MPMLabel;
+class MPMFlags;
 
-  class ThermalContactFactory {
-  public:
-   static ThermalContact* create(const ProblemSpecP& ps,MaterialManagerP& d_sS,
-                                 MPMLabel* lb,MPMFlags* flag);
-
-  };
+class ThermalContactFactory
+{
+public:
+  static std::unique_ptr<ThermalContact>
+  create(const ProblemSpecP& ps,
+         MaterialManagerP& d_sS,
+         const MPMLabel* lb,
+         const MPMFlags* flag);
+};
 
 } // End namespace Uintah
-      
 
 #endif //__ThermalContactFactory__
-

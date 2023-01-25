@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,27 +28,27 @@
 
 using namespace Uintah;
 
-VelocityGradientComputer::VelocityGradientComputer(MPMFlags* Mflag) 
+VelocityGradientComputer::VelocityGradientComputer(const MPMFlags* Mflag)
   : GradientComputer(Mflag)
 {
 }
 
-VelocityGradientComputer::VelocityGradientComputer(const VelocityGradientComputer* gc)
+VelocityGradientComputer::VelocityGradientComputer(
+  const VelocityGradientComputer* gc)
   : GradientComputer(gc)
 {
 }
 
-VelocityGradientComputer* VelocityGradientComputer::clone()
+VelocityGradientComputer*
+VelocityGradientComputer::clone()
 {
   return scinew VelocityGradientComputer(*this);
 }
 
-VelocityGradientComputer::~VelocityGradientComputer()
-{
-}
+VelocityGradientComputer::~VelocityGradientComputer() {}
 
 // Actually compute velocity gradient
-void 
+void
 VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
                                          const double* oodx,
                                          const short pgFld[],
@@ -60,8 +61,8 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
 {
   double numInfluenceNodes = interpolator->size();
   std::vector<IntVector> ni(numInfluenceNodes);
-  std::vector<Vector>    d_S(numInfluenceNodes);
-  if(!flag->d_axisymmetric){
+  std::vector<Vector> d_S(numInfluenceNodes);
+  if (!flag->d_axisymmetric) {
 
     // Get the node indices that surround the cell
     interpolator->findCellAndShapeDerivatives(px, ni, d_S, pSize, pDefGrad_old);
@@ -69,15 +70,24 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
     // Fracture
     if (flag->d_fracture) {
       // Special vel grad for fracture
-      computeVelocityGradient(velGrad_new, ni, d_S, oodx, pgFld, gVelocity, GVelocity);
+      computeVelocityGradient(velGrad_new,
+                              ni,
+                              d_S,
+                              oodx,
+                              pgFld,
+                              gVelocity,
+                              GVelocity);
     } else {
       // Standard 3d vel grad computation
       computeGrad(velGrad_new, ni, d_S, oodx, gVelocity);
     }
-  } else {  // axi-symmetric kinematics
+  } else { // axi-symmetric kinematics
     // Get the node indices that surround the cell
-    std::vector<double>    S(numInfluenceNodes);
-    interpolator->findCellAndWeightsAndShapeDerivatives(px, ni, S, d_S,
+    std::vector<double> S(numInfluenceNodes);
+    interpolator->findCellAndWeightsAndShapeDerivatives(px,
+                                                        ni,
+                                                        S,
+                                                        d_S,
                                                         pSize,
                                                         pDefGrad_old);
     // x -> r, y -> z, z -> theta
@@ -88,60 +98,66 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
     std::ostringstream out;
     out << "**ERROR**: Nan in velocity gradient value." << std::endl;
     out << " velGrad = " << velGrad_new << std::endl;
-    //out << " ni = " << ni << " d_S = " << d_S << " oodx = " << oodx << std::endl;
+    // out << " ni = " << ni << " d_S = " << d_S << " oodx = " << oodx <<
+    // std::endl;
     for (int k = 0; k < flag->d_8or27; k++) {
       out << " gVelocity [" << ni[k] << " = " << gVelocity[ni[k]] << std::endl;
     }
     out << " pDefGrad_old = " << pDefGrad_old << std::endl;
     throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
- 
+
   return;
 }
 
 //-------------------------------------------------------------------------
 // Protected methods
 //-------------------------------------------------------------------------
-void 
-VelocityGradientComputer::computeAxiSymVelocityGradient(Matrix3& velGrad,
-                                             std::vector<IntVector>& ni,
-                                             std::vector<Vector>& d_S,
-                                             std::vector<double>& S,
-                                             const double* oodx,
-                                             constNCVariable<Vector>& gVelocity,
-                                             const Point& px)
+void
+VelocityGradientComputer::computeAxiSymVelocityGradient(
+  Matrix3& velGrad,
+  std::vector<IntVector>& ni,
+  std::vector<Vector>& d_S,
+  std::vector<double>& S,
+  const double* oodx,
+  constNCVariable<Vector>& gVelocity,
+  const Point& px)
 {
   // x -> r, y -> z, z -> theta
-  for(int k = 0; k < flag->d_8or27; k++) {
+  for (int k = 0; k < flag->d_8or27; k++) {
     Vector gvel = gVelocity[ni[k]];
-    for (int j = 0; j<2; j++){
-      for (int i = 0; i<2; i++) {
-        velGrad(i,j)+=gvel[i] * d_S[k][j] * oodx[j];
+    for (int j = 0; j < 2; j++) {
+      for (int i = 0; i < 2; i++) {
+        velGrad(i, j) += gvel[i] * d_S[k][j] * oodx[j];
       }
     }
-    velGrad(2,2) += gvel.x()*d_S[k].z();
+    velGrad(2, 2) += gvel.x() * d_S[k].z();
   }
 }
 
-void 
-VelocityGradientComputer::computeVelocityGradient(Matrix3& velGrad,
-                                        std::vector<IntVector>& ni,
-                                        std::vector<Vector>& d_S,
-                                        const double* oodx, 
-                                        const short pgFld[],
-                                        constNCVariable<Vector>& gVelocity,
-                                        constNCVariable<Vector>& GVelocity)
+void
+VelocityGradientComputer::computeVelocityGradient(
+  Matrix3& velGrad,
+  std::vector<IntVector>& ni,
+  std::vector<Vector>& d_S,
+  const double* oodx,
+  const short pgFld[],
+  constNCVariable<Vector>& gVelocity,
+  constNCVariable<Vector>& GVelocity)
 {
-  Vector gvel(0.,0.,0);
-  for(int k = 0; k < flag->d_8or27; k++) {
-    if(pgFld[k]==1)  gvel = gVelocity[ni[k]];
-    if(pgFld[k]==2)  gvel = GVelocity[ni[k]];
-    for (int j = 0; j<3; j++){
-      double d_SXoodx = d_S[k][j]*oodx[j];
-      for (int i = 0; i<3; i++) {
-        velGrad(i,j) += gvel[i] * d_SXoodx;
+  Vector gvel(0., 0., 0);
+  for (int k = 0; k < flag->d_8or27; k++) {
+    if (pgFld[k] == 1) {
+      gvel = gVelocity[ni[k]];
+    }
+    if (pgFld[k] == 2) {
+      gvel = GVelocity[ni[k]];
+    }
+    for (int j = 0; j < 3; j++) {
+      double d_SXoodx = d_S[k][j] * oodx[j];
+      for (int i = 0; i < 3; i++) {
+        velGrad(i, j) += gvel[i] * d_SXoodx;
       }
     }
   }
 }
-    

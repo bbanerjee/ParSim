@@ -54,9 +54,8 @@ ELSE ()
 ENDIF ()
 
 SET(Vaango_MPM_DiffusionTasks_SRCS
-  ScalarDiffusionTasks.cc
+  ReactionDiffusion/ScalarDiffusionTasks.cc
 )
-
 
 SET(Vaango_CCA_Components_MPM_SRCS
   ${Vaango_MPM_Core_SRCS}
@@ -72,8 +71,8 @@ SET(Vaango_CCA_Components_MPM_SRCS
   UofU_MPM.cc    
 )
 
-add_subdirectory(ConstitutiveModel)
 add_subdirectory(Contact)
+add_subdirectory(ConstitutiveModel)
 add_subdirectory(ThermalContact)
 add_subdirectory(PhysicalBC)
 add_subdirectory(ParticleCreator)
@@ -105,7 +104,6 @@ SET(LIBS
   ${M_LIBRARY}
   ${MPI_LIBRARY}
 )
-
 
 ADD_LIBRARY(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
 

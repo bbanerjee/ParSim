@@ -27,21 +27,20 @@
 #ifndef UINTAH_HOMEBREW_RIGIDMPM_H
 #define UINTAH_HOMEBREW_RIGIDMPM_H
 
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/MPM/SerialMPM.h>
+
+#include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/SimulationInterface.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/SerialMPM.h>
-#include <Core/Geometry/Vector.h>
-#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
-
-using namespace Uintah;
 
 class ThermalContact;
 
@@ -49,7 +48,7 @@ class ThermalContact;
 
 CLASS
    RigidMPM
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -61,29 +60,31 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    RigidMPM
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-class RigidMPM : public SerialMPM {
+class RigidMPM : public SerialMPM
+{
 public:
-  RigidMPM(const ProcessorGroup* myworld);
+  RigidMPM(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
   virtual ~RigidMPM();
 
   //////////
   // Insert Documentation Here:
-  virtual void problemSetup(const ProblemSpecP& params, 
-                            const ProblemSpecP& restart_prob_spec, 
-                            GridP& grid, MaterialManagerP&);
-         
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid);
+
   //////////
   // Insert Documentation Here:
   friend class MPMICE;
@@ -91,51 +92,58 @@ public:
 
   //////////
   // Insert Documentation Here:
-  void computeStressTensor(const ProcessorGroup*,
-                           const PatchSubset* patches,
-                           const MaterialSubset* matls,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw);
+  void
+  computeStressTensor(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw);
 
   //////////
   // Insert Documentation Here:
-  void scheduleComputeInternalForce(           SchedulerP&, const PatchSet*,
-                                               const MaterialSet*);
+  void
+  scheduleComputeInternalForce(SchedulerP&,
+                               const PatchSet*,
+                               const MaterialSet*);
 
+  void
+  computeInternalForce(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
 
-  void computeInternalForce(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
-
-  void scheduleComputeAndIntegrateAcceleration(SchedulerP&, const PatchSet*,
-                                               const MaterialSet*);
-
+  void
+  scheduleComputeAndIntegrateAcceleration(SchedulerP&,
+                                          const PatchSet*,
+                                          const MaterialSet*);
 
   // Insert Documentation Here:
-  virtual void computeAndIntegrateAcceleration(const ProcessorGroup*,
-                                               const PatchSubset* patches,
-                                               const MaterialSubset* matls,
-                                               DataWarehouse* old_dw,
-                                               DataWarehouse* new_dw);
+  virtual void
+  computeAndIntegrateAcceleration(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw);
 
+  void
+  scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
+                                          const PatchSet*,
+                                          const MaterialSet*);
 
-  void scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
-                                                       const PatchSet*,
-                                                       const MaterialSet*);
-
-  void interpolateToParticlesAndUpdate(const ProcessorGroup*,
-                                       const PatchSubset* patches,
-                                       const MaterialSubset* matls,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw);
+  void
+  interpolateToParticlesAndUpdate(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw);
 
 private:
   RigidMPM(const RigidMPM&);
-  RigidMPM& operator=(const RigidMPM&);
+  RigidMPM&
+  operator=(const RigidMPM&);
 };
-      
+
 } // end namespace Uintah
 
 #endif

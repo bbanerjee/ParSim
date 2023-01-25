@@ -31,10 +31,13 @@ SET(Vaango_CCA_Components_MPM_PhysicalBC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/VelocityBC.cc            
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CrackBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/PolynomialData.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluxBCModelFactory.cc   
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluxBCModel.cc   
+  ${CMAKE_CURRENT_SOURCE_DIR}/AutoCycleFluxBC.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/ScalarFluxBC.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
 )
 
 add_library(MPM_PhysicalBC ${Vaango_CCA_Components_MPM_PhysicalBC_SRCS})

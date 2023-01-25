@@ -296,7 +296,7 @@ protected:
   virtual void scheduleComputeHeatExchange(SchedulerP&, const PatchSet*,
                                            const MaterialSet*);
 
-  virtual void scheduleExMomInterpolated(SchedulerP&, const PatchSet*,
+  virtual void scheduleMomentumExchangeInterpolated(SchedulerP&, const PatchSet*,
                                          const MaterialSet*);
 
   virtual void scheduleComputeStressTensor(SchedulerP&, const PatchSet*,
@@ -331,7 +331,7 @@ protected:
   virtual void scheduleIntegrateTemperatureRate(SchedulerP&, const PatchSet*,
                                                 const MaterialSet*);
 
-  virtual void scheduleExMomIntegrated(SchedulerP&, const PatchSet*,
+  virtual void scheduleMomentumExchangeIntegrated(SchedulerP&, const PatchSet*,
                                        const MaterialSet*);
 
   void scheduleSetGridBoundaryConditions(SchedulerP&, const PatchSet*,

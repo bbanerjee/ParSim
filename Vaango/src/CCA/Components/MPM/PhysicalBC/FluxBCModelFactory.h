@@ -1,9 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,34 +23,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _CONTACTFACTORY_H_
-#define _CONTACTFACTORY_H_
+#ifndef _FLUXBCMODELFACTORY_H_
+#define _FLUXBCMODELFACTORY_H_
 
+#include <CCA/Components/MPM/PhysicalBC/FluxBCModel.h>
+
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-#include <memory>
+#include <string>
 
 namespace Uintah {
 
-class Contact;
-class MPMLabel;
-class MPMFlags;
-
-class ContactFactory
+class FluxBCModelFactory
 {
 public:
-  // this function has a switch for all known mat_types
-  // and calls the proper class' readParameters()
-  // addMaterial() calls this
-  static std::unique_ptr<Contact>
-  create(const ProcessorGroup* myworld,
-         const ProblemSpecP& ps,
-         MaterialManagerP& ss,
-         const MPMLabel* lb,
-         const MPMFlags* MFlag);
+  // this function has a switch for all known types
+
+  static std::unique_ptr<FluxBCModel>
+  create(const MaterialManager* ss, const MPMLabel* labels, const MPMFlags* flags);
 };
 } // End namespace Uintah
 
-#endif /* _CONTACTFACTORY_H_ */
+#endif /* _FLUXBCMODELFACTORY_H_ */
