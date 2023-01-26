@@ -164,12 +164,10 @@ SerialMPM::~SerialMPM()
 void
 SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
                         const ProblemSpecP& restart_prob_spec,
-                        GridP& grid,
-                        MaterialManagerP& mat_manager)
+                        GridP& grid)
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
              << "\n";
-  d_materialManager = mat_manager;
   dynamic_cast<Scheduler*>(getPort("scheduler"))
     ->setPositionVar(d_mpmLabels->pXLabel);
 
@@ -598,14 +596,6 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   // Cohesive zones
   d_cohesiveZoneTasks->scheduleInitialize(level, sched);
-
-  int numCZM = d_materialManager->getNumMaterials("CohesizeZone");
-  for (int m = 0; m < numCZM; m++) {
-    CZMaterial* cz_matl = static_cast<CZMaterial*>(
-      d_materialManager->getMaterial("CohesiveZone", m));
-    CohesiveZone* ch = cz_matl->getCohesiveZone();
-    ch->scheduleInitialize(level, sched, cz_matl);
-  }
 
   // Data analysis
   if (d_analysisModules.size() != 0) {
@@ -2297,6 +2287,8 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   if (d_mpmFlags->d_withICE) {
     t->computes(d_mpmLabels->gVelocityBCLabel);
   }
+
+  d_diffusionTasks->scheduleInterpolateParticlesToGrid(t, d_numGhostParticles);
 
   sched->addTask(t, patches, matls);
 }

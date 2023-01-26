@@ -120,6 +120,11 @@ public:
                   const MaterialSet* matls);
 
   void
+  scheduleComputeAMR(const LevelP& level,
+                     SchedulerP& sched,
+                     const MaterialSet* matls);
+
+  void
   scheduleIntegrate(SchedulerP& sched,
                     const PatchSet* patches,
                     const MaterialSet* matls);
@@ -130,6 +135,12 @@ public:
                                const MaterialSubset*,
                                DataWarehouse* old_dw,
                                DataWarehouse* new_dw);
+
+  void
+  scheduleInterpolateParticlesToGrid(Task* task, int numGhostParticles);
+
+  void
+  scheduleInterpolateParticlesToGrid_CFI(Task* task, int numPaddingCells);
 
   void
   scheduleInterpolateToParticlesAndUpdate(Task* task, int numGhostNodes);
@@ -181,6 +192,17 @@ public:
   scheduleDiffusionInterfaceDiv(SchedulerP& sched,
                                 const PatchSet* patches,
                                 const MaterialSet* matls);
+
+  void
+  scheduleComputeDivergence_CFI(SchedulerP& sched,
+                                const PatchSet* patches,
+                                const MaterialSet* matls);
+  void
+  computeDivergence_CFI(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
 
   // Disallow copy and move
   ScalarDiffusionTasks(const ScalarDiffusionTasks&) = delete;

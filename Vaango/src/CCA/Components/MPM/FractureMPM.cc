@@ -118,10 +118,9 @@ FractureMPM::~FractureMPM()
 void
 FractureMPM::problemSetup(const ProblemSpecP& prob_spec,
                           const ProblemSpecP& restart_prob_spec,
-                          GridP& grid,
-                          MaterialManagerP& mat_manager)
+                          GridP& grid)
 {
-  SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid, mat_manager);
+  SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid);
 
   // for FractureMPM
   d_dataArchiver = dynamic_cast<Output*>(getPort("output"));

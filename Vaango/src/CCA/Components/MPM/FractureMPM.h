@@ -95,8 +95,7 @@ public:
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid,
-               MaterialManagerP& mat_manager);
+               GridP& grid);
 
   virtual void
   scheduleInitialize(const LevelP& level, SchedulerP&);

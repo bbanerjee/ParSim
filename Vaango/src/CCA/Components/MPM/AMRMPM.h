@@ -27,40 +27,48 @@
 #define UINTAH_HOMEBREW_AMRMPM_H
 
 #include <CCA/Components/MPM/SerialMPM.h>
+
+#include <CCA/Components/MPM/Core/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/SimulationInterface.h>
+
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-// put here to avoid template problems
-#include <CCA/Components/MPM/Core/MPMCommon.h>
-#include <CCA/Components/MPM/Core/MPMFlags.h>
-#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
 class GeometryObject;
-class SDInterfaceModel;
+class AMRMPMLabel;
 
 class AMRMPM : public SerialMPM
 {
 
 public:
-  AMRMPM(const ProcessorGroup* myworld);
+  AMRMPM(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
+
   virtual ~AMRMPM();
-  SDInterfaceModel* sdInterfaceModel;
+
+  AMRMPM(const AMRMPM&) = delete;
+  AMRMPM(AMRMPM&&)      = delete;
+  AMRMPM&
+  operator=(const AMRMPM&) = delete;
+  AMRMPM&
+  operator=(AMRMPM&&) = delete;
 
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP&,
-               MaterialManagerP&);
+               GridP& grid);
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);
@@ -79,6 +87,9 @@ public:
 
   virtual void
   scheduleFinalizeTimestep(const LevelP& level, SchedulerP&);
+
+  virtual void
+  scheduleAnalysis(const LevelP& level, SchedulerP&);
 
   virtual void
   scheduleRefine(const PatchSet* patches, SchedulerP& scheduler);
@@ -100,27 +111,7 @@ public:
   void
   scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
 
-  //  void setMPMLabel(MPMLabel* Mlb) {
-  //    delete lb;
-  //    lb = Mlb;
-  //  };
-
-  //  enum IntegratorType {
-  //    Explicit,
-  //    Implicit,
-  //  };
-
-  // Inherit this from the SerialMPM base class
-  // MaterialManagerP 
- d_mat_manager;
-
 protected:
-  enum coarsenFlag
-  {
-    coarsenData,
-    zeroData,
-  };
-
   virtual void
   actuallyInitialize(const ProcessorGroup*,
                      const PatchSubset* patches,
@@ -140,23 +131,6 @@ protected:
                       DataWarehouse* dw,
                       int dwi,
                       const Patch* patch);
-
-  void
-  scheduleInitializeScalarFluxBCs(const LevelP& level, SchedulerP&);
-
-  void
-  countMaterialPointsPerFluxLoadCurve(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset* matls,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw);
-
-  void
-  initializeScalarFluxBC(const ProcessorGroup*,
-                         const PatchSubset* patches,
-                         const MaterialSubset* matls,
-                         DataWarehouse* old_dw,
-                         DataWarehouse* new_dw);
 
   void
   actuallyComputeStableTimestep(const ProcessorGroup*,
@@ -185,6 +159,7 @@ protected:
                              const MaterialSubset* matls,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw);
+
   // At Coarse Fine interface
   void
   interpolateParticlesToGrid_CFI(const ProcessorGroup*,
@@ -192,6 +167,13 @@ protected:
                                  const MaterialSubset* matls,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw);
+
+  void
+  interpolateParticlesToGrid_CFI_GIMP(const ProcessorGroup*,
+                                      const PatchSubset* patches,
+                                      const MaterialSubset* matls,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw);
 
   void
   coarsenNodalData_CFI(const ProcessorGroup*,
@@ -256,13 +238,6 @@ protected:
                             const MaterialSubset*,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw);
-
-  void
-  applyExternalScalarFlux(const ProcessorGroup*,
-                          const PatchSubset* patches,
-                          const MaterialSubset*,
-                          DataWarehouse* old_dw,
-                          DataWarehouse* new_dw);
 
   // Compute Vel. Grad and Def Grad
   void
@@ -416,11 +391,6 @@ protected:
                                     const MaterialSet* matls);
 
   void
-  scheduleApplyExternalScalarFlux(SchedulerP&,
-                                  const PatchSet*,
-                                  const MaterialSet*);
-
-  void
   scheduleComputeLAndF(SchedulerP&, const PatchSet*, const MaterialSet*);
 
   virtual void
@@ -468,26 +438,47 @@ protected:
             const MaterialSubset*,
             DataWarehouse* old_dw,
             DataWarehouse* new_dw);
-  //
-  // returns does coarse patches have a CFI
+
+  // input coarse patches and return coarse & fine level patches with CFI
   void
-  coarseLevelCFI_Patches(const PatchSubset* patches,
-                         Level::selectType& CFI_patches);
+  coarseLevelCFI_Patches(const PatchSubset* coarsePatches,
+                         Level::selectType& CFI_coarsePatches,
+                         Level::selectType& CFI_finePatches);
 
-  int d_nPaddingCells_Coarse; // Number of cells on the coarse level that
-                              // contain particles and surround a fine patch.
-                              // Coarse level particles are used in the task
-                              // interpolateToParticlesAndUpdate_CFI.
+  // input fine patches and return coarse & fine level patches with CFI
+  void
+  fineLevelCFI_Patches(const PatchSubset* finePatches,
+                       Level::selectType& CFI_coarsePatches,
+                       Level::selectType& CFI_finePatches);
 
-  Vector d_acc_ans; // debugging code used to check the answers (acceleration)
-  double d_acc_tol;
-  Vector d_vel_ans; // debugging code used to check the answers (velocity)
-  double d_vel_tol;
+  // remove duplicate entries in array  This belongs in Core/Grid/fixedvector.h
+  void
+  removeDuplicates(Level::selectType& array);
+
+protected:
+  enum coarsenFlag
+  {
+    coarsenData,
+    zeroData,
+  };
+
+  // Number of cells on the coarse level that
+  // contain particles and surround a fine patch.
+  // Coarse level particles are used in the task
+  // interpolateToParticlesAndUpdate_CFI.
+  int d_nPaddingCells_Coarse{ -9 };
+
+  // debugging code used to check the answers (acceleration)
+  Vector d_acc_ans{ 0.0, 0.0, 0.0 };
+  double d_acc_tol{ 1.0e-7 };
+  // debugging code used to check the answers (velocity)
+  Vector d_vel_ans{ -100.0, 0.0, 0.0 };
+  double d_vel_tol{ 1.0e-7 };
 
   const VarLabel* pDbgLabel; // debugging labels
   const VarLabel* gSumSLabel;
-  const VarLabel* gZOINETLabel;
-  const VarLabel* gZOISWBLabel;
+  const VarLabel* gZOINETLabel{nullptr};
+  const VarLabel* gZOISWBLabel{nullptr};
   const VarLabel* RefineFlagXMaxLabel;
   const VarLabel* RefineFlagXMinLabel;
   const VarLabel* RefineFlagYMaxLabel;
@@ -496,19 +487,51 @@ protected:
   const VarLabel* RefineFlagZMinLabel;
 
   std::vector<MPMPhysicalBC*> d_physicalBCs;
-  IntegratorType d_integrator;
+  std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{ nullptr };
+  SwitchingCriteria* d_switchCriteria{nullptr};
 
 private:
-  MaterialSubset* d_one_matl; // matlsubset for zone of influence
+  std::string d_CFI_interpolator; // user can override interpolator at CFI
 
-  std::vector<GeometryObject*> d_refine_geom_objs;
-  AMRMPM(const AMRMPM&);
-  AMRMPM&
-  operator=(const AMRMPM&);
+  std::unique_ptr<AMRMPMLabel> d_amrmpmLabels{ nullptr };
+
+  // matlsubset for zone of influence
+  std::unique_ptr<MaterialSubset> d_oneMaterial{ nullptr };
+
+  std::vector<std::unique_ptr<GeometryObject>> d_refineGeomObjs;
+
+  // refinement criteria threshold knobs
+  struct thresholdVar
+  {
+    std::string name;
+    int matl;
+    double value;
+  };
+  std::vector<thresholdVar> d_thresholdVars;
 
   //______________________________________________________________________
   // Bulletproofing machinery to keep track of
   // how many nodes on a CFI have been 'touched'
+  struct faceMarks
+  {
+    int marks[Patch::numFaces];
+    int&
+    operator[](Patch::FaceType face)
+    {
+      return marks[static_cast<int>(face)];
+    }
+    faceMarks()
+    {
+      marks[0] = 0;
+      marks[1] = 0;
+      marks[2] = 0;
+      marks[3] = 0;
+      marks[4] = 0;
+      marks[5] = 0;
+    }
+  };
+  std::map<const Patch*, faceMarks> faceMarks_map[2];
+
   inline void
   clearFaceMarks(const int whichMap, const Patch* patch)
   {
@@ -529,25 +552,6 @@ private:
     faceMarks_map[whichMap][patch][face] = value;
   };
 
-  struct faceMarks
-  {
-    int marks[Patch::numFaces];
-    int& operator[](Patch::FaceType face)
-    {
-      return marks[static_cast<int>(face)];
-    }
-    faceMarks()
-    {
-      marks[0] = 0;
-      marks[1] = 0;
-      marks[2] = 0;
-      marks[3] = 0;
-      marks[4] = 0;
-      marks[5] = 0;
-    }
-  };
-  std::map<const Patch*, faceMarks> faceMarks_map[2];
-
   inline void
   computeVelocityGradient(Matrix3& velGrad,
                           std::vector<IntVector>& ni,
@@ -555,7 +559,7 @@ private:
                           const double* oodx,
                           constNCVariable<Vector>& gVelocity)
   {
-    for (int k = 0; k < flags->d_8or27; k++) {
+    for (int k = 0; k < d_mpmFlags->d_8or27; k++) {
       const Vector& gvel = gVelocity[ni[k]];
       for (int j = 0; j < 3; j++) {
         double d_SXoodx = d_S[k][j] * oodx[j];
@@ -578,6 +582,11 @@ private:
                              const MaterialSubset* matls,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw);
+
+  virtual void
+  scheduleConcInterpolated(SchedulerP& sched,
+                           const PatchSet* patches,
+                           const MaterialSet* matls);
 
   virtual void
   scheduleComputeFlux(SchedulerP&, const PatchSet*, const MaterialSet*);
@@ -610,6 +619,11 @@ private:
                         const MaterialSubset* matls,
                         DataWarehouse* old_dw,
                         DataWarehouse* new_dw);
+
+  virtual void
+  scheduleDiffusionInterfaceDiv(SchedulerP& sched,
+                                const PatchSet* patches,
+                                const MaterialSet* matls);
 };
 
 } // end namespace Uintah

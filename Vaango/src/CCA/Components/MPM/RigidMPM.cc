@@ -79,10 +79,8 @@ RigidMPM::problemSetup(const ProblemSpecP& prob_spec,
                        GridP& grid)
 {
 
-  SerialMPM::problemSetup(prob_spec,
-                          restart_prob_spec,
-                          grid,
-                          d_materialManager);
+  SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid);
+
   ProblemSpecP cfd_ps = prob_spec->findBlock("CFD");
   if (cfd_ps && UintahParallelComponent::d_myworld->myRank() == 0) {
     std::cout << "\n__________________________________" << std::endl;
@@ -241,10 +239,22 @@ RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::OldDW, d_mpmLabels->delTLabel);
 
   Ghost::GhostType gac = Ghost::AroundCells;
-  t->requires(Task::NewDW, d_mpmLabels->gTemperatureRateLabel, gac, d_numGhostNodes);
-  t->requires(Task::NewDW, d_mpmLabels->gTemperatureLabel, gac, d_numGhostNodes);
-  t->requires(Task::NewDW, d_mpmLabels->gTemperatureNoBCLabel, gac, d_numGhostNodes);
-  t->requires(Task::NewDW, d_mpmLabels->gAccelerationLabel, gac, d_numGhostNodes);
+  t->requires(Task::NewDW,
+              d_mpmLabels->gTemperatureRateLabel,
+              gac,
+              d_numGhostNodes);
+  t->requires(Task::NewDW,
+              d_mpmLabels->gTemperatureLabel,
+              gac,
+              d_numGhostNodes);
+  t->requires(Task::NewDW,
+              d_mpmLabels->gTemperatureNoBCLabel,
+              gac,
+              d_numGhostNodes);
+  t->requires(Task::NewDW,
+              d_mpmLabels->gAccelerationLabel,
+              gac,
+              d_numGhostNodes);
   t->requires(Task::OldDW, d_mpmLabels->pXLabel, Ghost::None);
   t->requires(Task::OldDW, d_mpmLabels->pMassLabel, Ghost::None);
   t->requires(Task::OldDW, d_mpmLabels->pParticleIDLabel, Ghost::None);

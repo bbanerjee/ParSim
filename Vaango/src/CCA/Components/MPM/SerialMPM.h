@@ -93,8 +93,7 @@ public:
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP&,
-               MaterialManagerP&);
+               GridP& grid);
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);

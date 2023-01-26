@@ -174,6 +174,31 @@ ScalarDiffusionTasks::scheduleCompute(SchedulerP& sched,
 }
 
 void
+ScalarDiffusionTasks::scheduleComputeAMR(const LevelP& level,
+                                         SchedulerP& sched,
+                                         const MaterialSet* matls)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    GridP grid    = level->getGrid();
+    int maxLevels = grid->numLevels();
+
+    for (int l = 0; l < maxLevels; l++) {
+      const LevelP& level     = grid->getLevel(l);
+      const PatchSet* patches = level->eachPatch();
+      scheduleComputeFlux(sched, patches, matls);
+      scheduleComputeDivergence(sched, patches, matls);
+      scheduleDiffusionInterfaceDiv(sched, patches, matls);
+    }
+
+    for (int l = 0; l < maxLevels; l++) {
+      const LevelP& level     = grid->getLevel(l);
+      const PatchSet* patches = level->eachPatch();
+      scheduleComputeDivergence_CFI(sched, patches, matls);
+    }
+  }
+}
+
+void
 ScalarDiffusionTasks::scheduleIntegrate(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
@@ -295,6 +320,85 @@ ScalarDiffusionTasks::computeAndIntegrateDiffusion(const ProcessorGroup*,
                           gExternalScalarFlux[node] / mass[node];
       }
     }
+  }
+}
+
+void
+ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid(Task* task,
+                                                         int numGhostParticles)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    task->requires(Task::OldDW,
+                   d_mpm_labels->pStressLabel,
+                   Ghost::AroundNodes,
+                   numGhostParticles);
+    task->requires(Task::OldDW,
+                   d_mpm_labels->diffusion->pConcentration,
+                   Ghost::AroundNodes,
+                   numGhostParticles);
+    if (d_mpm_flags->d_GEVelProj) {
+      task->requires(Task::OldDW,
+                     d_mpm_labels->diffusion->pGradConcentration,
+                     Ghost::AroundNodes,
+                     numGhostParticles);
+    }
+    task->requires(Task::NewDW,
+                   d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
+                   Ghost::AroundNodes,
+                   numGhostParticles);
+    task->computes(d_mpm_labels->diffusion->gConcentration);
+    task->computes(d_mpm_labels->diffusion->gConcentrationNoBC);
+    task->computes(d_mpm_labels->diffusion->gHydrostaticStress);
+    task->computes(d_mpm_labels->diffusion->gExternalScalarFlux);
+
+#ifdef CBDI_FLUXBCS
+    if (d_mpm_flags->d_useLoadCurves) {
+      task->requires(Task::OldDW,
+                     d_mpm_labels->pLoadCurveIDLabel,
+                     Ghost::AroundNodes,
+                     numGhostParticles);
+    }
+#endif
+  }
+}
+
+void
+ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid_CFI(
+  Task* task,
+  int numPaddingCells)
+{
+#define allPatches 0
+#define allMatls 0
+
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    task->requires(Task::OldDW,
+                   d_mpm_labels->diffusion->pConcentration,
+                   allPatches,
+                   Task::CoarseLevel,
+                   allMatls,
+                   Task::NormalDomain,
+                   Ghost::AroundCells,
+                   numPaddingCells);
+    task->requires(Task::OldDW,
+                   d_mpm_labels->pStressLabel,
+                   allPatches,
+                   Task::CoarseLevel,
+                   allMatls,
+                   Task::NormalDomain,
+                   Ghost::AroundCells,
+                   numPaddingCells);
+    task->requires(Task::NewDW,
+                   d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
+                   allPatches,
+                   Task::CoarseLevel,
+                   allMatls,
+                   Task::NormalDomain,
+                   Ghost::AroundCells,
+                   numPaddingCells);
+
+    task->modifies(d_mpm_labels->diffusion->gConcentration);
+    task->modifies(d_mpm_labels->diffusion->gHydrostaticStress);
+    task->modifies(d_mpm_labels->diffusion->gExternalScalarFlux);
   }
 }
 
@@ -521,6 +625,50 @@ ScalarDiffusionTasks::scheduleDiffusionInterfaceDiv(SchedulerP& sched,
     printSchedule(patches, cout_doing, "MPM::scheduleDiffusionInterfaceDiv");
 
     sdInterfaceModel->addComputesAndRequiresDivergence(sched, patches, matls);
+  }
+}
+
+void
+ScalarDiffusionTasks::scheduleComputeDivergence_CFI(SchedulerP& sched,
+                                                    const PatchSet* patches,
+                                                    const MaterialSet* matls)
+{
+  const Level* fineLevel = getLevel(patches);
+  int L_indx             = fineLevel->getIndex();
+
+  if (L_indx > 0) {
+    printSchedule(patches, cout_doing, "AMRMPM::scheduleComputeDivergence_CFI");
+
+    Task* t = scinew Task("ScalarDiffusionTasks::computeDivergence_CFI",
+                          this,
+                          &ScalarDiffusionTasks::computeDivergence_CFI);
+
+    int numMPM = d_mat_manager->getNumMaterials("MPM");
+    for (int m = 0; m < numMPM; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
+      ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
+      sdm->scheduleComputeDivergence_CFI(t, mpm_matl, patches);
+    }
+
+    sched->addTask(t, patches, matls);
+  }
+}
+
+void
+ScalarDiffusionTasks::computeDivergence_CFI(const ProcessorGroup*,
+                                            const PatchSubset* patches,
+                                            const MaterialSubset* matls,
+                                            DataWarehouse* old_dw,
+                                            DataWarehouse* new_dw)
+{
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
+
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl =
+      static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
+    ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
+    sdm->computeDivergence_CFI(patches, mpm_matl, old_dw, new_dw);
   }
 }
 
