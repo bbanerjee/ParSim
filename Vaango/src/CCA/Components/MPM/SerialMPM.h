@@ -338,8 +338,6 @@ protected:
                              const MaterialSet* matls);
 
 private:
-
-
 protected:
   virtual void
   actuallyInitialize(const ProcessorGroup*,
@@ -682,6 +680,7 @@ protected:
   int d_numGhostNodes{ 1 };     // Number of ghost nodes     needed.
   bool d_fracture{ false };
   bool d_recompile{ false };
+  bool d_isRestart{ false };
 
   IntegratorType d_integrator;
   MaterialSubset* d_loadCurveIndex{ nullptr };

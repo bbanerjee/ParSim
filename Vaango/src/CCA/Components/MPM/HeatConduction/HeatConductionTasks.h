@@ -63,7 +63,7 @@ public:
 private:
   const MPMLabel* d_mpm_labels;
   const MPMFlags* d_mpm_flags;
-  MaterialManagerP dmat_manager;
+  MaterialManagerP d_mat_manager;
 
   std::unique_ptr<ThermalContact> thermalContactModel{ nullptr };
   std::unique_ptr<HeatConduction> heatConductionModel{ nullptr };

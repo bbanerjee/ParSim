@@ -47,14 +47,11 @@ HeatConductionTasks::HeatConductionTasks(const ProblemSpecP& ps,
   d_mpm_labels  = mpm_labels;
   d_mpm_flags   = mpm_flags;
 
-  thermalContactModel = ThermalContactFactory::create(ps,
-                                                      mat_manager,
-                                                      mpm_labels.get(),
-                                                      mpm_flags.get());
+  thermalContactModel =
+    ThermalContactFactory::create(ps, mat_manager, mpm_labels, mpm_flags);
 
-  heatConductionModel = std::make_unique<HeatConduction>(mat_manager,
-                                                         mpm_labels.get(),
-                                                         mpm_flags.get());
+  heatConductionModel =
+    std::make_unique<HeatConduction>(mat_manager, mpm_labels, mpm_flags);
 }
 
 void
@@ -110,9 +107,9 @@ HeatConductionTasks::scheduleComputeHeatExchange(SchedulerP& sched,
  * scheduleComputeInternalHeatRate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeInternalHeatRate(SchedulerP& sched,
-                                           const PatchSet* patches,
-                                           const MaterialSet* matls)
+HeatConductionTasks::scheduleComputeInternalHeatRate(SchedulerP& sched,
+                                                     const PatchSet* patches,
+                                                     const MaterialSet* matls)
 {
   if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                 getLevel(patches)->getGrid()->numLevels())) {
@@ -126,9 +123,9 @@ SerialMPM::scheduleComputeInternalHeatRate(SchedulerP& sched,
  * scheduleComputeNodalHeatFlux
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeNodalHeatFlux(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+HeatConductionTasks::scheduleComputeNodalHeatFlux(SchedulerP& sched,
+                                                  const PatchSet* patches,
+                                                  const MaterialSet* matls)
 {
   if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                 getLevel(patches)->getGrid()->numLevels())) {
@@ -142,9 +139,9 @@ SerialMPM::scheduleComputeNodalHeatFlux(SchedulerP& sched,
  * scheduleSolveHeatEquations
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleSolveHeatEquations(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+HeatConductionTasks::scheduleSolveHeatEquations(SchedulerP& sched,
+                                                const PatchSet* patches,
+                                                const MaterialSet* matls)
 {
   if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                 getLevel(patches)->getGrid()->numLevels())) {
@@ -158,9 +155,9 @@ SerialMPM::scheduleSolveHeatEquations(SchedulerP& sched,
  * scheduleIntegrateTemperatureRate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleIntegrateTemperatureRate(SchedulerP& sched,
-                                            const PatchSet* patches,
-                                            const MaterialSet* matls)
+HeatConductionTasks::scheduleIntegrateTemperatureRate(SchedulerP& sched,
+                                                      const PatchSet* patches,
+                                                      const MaterialSet* matls)
 {
   if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                 getLevel(patches)->getGrid()->numLevels())) {

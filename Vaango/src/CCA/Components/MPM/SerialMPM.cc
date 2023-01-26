@@ -45,12 +45,12 @@
 
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
 
+#include <CCA/Components/MPM/PhysicalBC/FluxBCModel.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
-#include <CCA/Components/MPM/PhysicalBC/FluxBCModel.h>
 
 #include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
 #include <CCA/Components/MPM/ThermalContact/ThermalContactFactory.h>
@@ -182,11 +182,10 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   ProblemSpecP prob_spec_mat_ps =
     prob_spec->findBlockWithOutAttribute("MaterialProperties");
 
-  bool is_restart = false;
   if (prob_spec_mat_ps) {
     restart_mat_ps = prob_spec;
   } else if (restart_prob_spec) {
-    is_restart     = true;
+    d_isRestart    = true;
     restart_mat_ps = restart_prob_spec;
   } else {
     restart_mat_ps = prob_spec;
@@ -268,7 +267,7 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   contactModel->setContactMaterialAttributes();
 
   // Creates MPM material w/ constitutive models and damage models
-  materialProblemSetup(restart_mat_ps, d_mpmFlags.get(), is_restart);
+  materialProblemSetup(restart_mat_ps, d_mpmFlags.get(), d_isRestart);
 
   // Cohesize zones
   d_cohesiveZoneTasks = std::make_unique<CohesiveZoneTasks>(restart_mat_ps,
