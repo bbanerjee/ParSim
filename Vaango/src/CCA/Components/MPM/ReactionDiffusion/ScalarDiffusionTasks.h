@@ -33,6 +33,7 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/SchedulerP.h>
 
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
@@ -42,6 +43,7 @@ namespace Uintah {
 
 class MPMFlags;
 class MPMLabel;
+class MPMBoundCond;
 class MaterialManager;
 class FluxBCModel;
 
@@ -57,10 +59,31 @@ struct ScalarDiffusionTaskData
 {
   double maxEffectiveConc{ -999.0 };
   double minEffectiveConc{ -999.0 };
+
   constParticleVariable<double> pConcentration;
-  constNCVariable<double> gConcentrationRate;
+  constParticleVariable<double> pExternalScalarFlux;
+  constParticleVariable<Vector> pConcentrationGrad;
+  constParticleVariable<Matrix3> pStress;
+
   ParticleVariable<double> pConcentrationNew;
   ParticleVariable<double> pConcPreviousNew;
+
+  constNCVariable<double> gConcentration;
+  constNCVariable<double> gConcentrationRate;
+
+  NCVariable<double> gConcentration_new;
+  NCVariable<double> gExternalScalarFlux_new;
+
+  NCVariable<double> gConcentrationNoBC_new;
+  NCVariable<double> gHydrostaticStress_new;
+
+  NCVariable<double> gConcentration_coarse;
+  NCVariable<double> gExternalScalarFlux_coarse;
+  NCVariable<double> gConcentrationRate_coarse;
+
+  constNCVariable<double> gConcentration_fine;
+  constNCVariable<double> gExternalScalarFlux_fine;
+  constNCVariable<double> gConcentrationRate_fine;
 };
 
 class ScalarDiffusionTasks final
@@ -69,6 +92,8 @@ private:
   const MaterialManager* d_mat_manager;
   const MPMFlags* d_mpm_flags;
   const MPMLabel* d_mpm_labels;
+  int d_num_ghost_particles;
+  int d_num_ghost_nodes;
 
 public:
   std::unique_ptr<SDInterfaceModel> sdInterfaceModel;
@@ -78,7 +103,9 @@ public:
   ScalarDiffusionTasks(ProblemSpecP& ps,
                        const MaterialManagerP& mat_manager,
                        const MPMLabel* mpm_labels,
-                       const MPMFlags* mpm_flags);
+                       const MPMFlags* mpm_flags,
+                       int numGhostParticles,
+                       int numGhostNodes);
 
   ~ScalarDiffusionTasks() = default;
 
@@ -137,13 +164,149 @@ public:
                                DataWarehouse* new_dw);
 
   void
-  scheduleInterpolateParticlesToGrid(Task* task, int numGhostParticles);
+  scheduleInterpolateParticlesToGrid(Task* task);
 
   void
   scheduleInterpolateParticlesToGrid_CFI(Task* task, int numPaddingCells);
 
   void
-  scheduleInterpolateToParticlesAndUpdate(Task* task, int numGhostNodes);
+  scheduleCoarsenNodalData_CFI(Task* task);
+
+  void
+  scheduleCoarsenNodalData_CFI2(Task* task);
+
+  void
+  scheduleNormalizeNodalConc(Task* task);
+
+  void
+  scheduleComputeAndIntegrateConcentration(Task* task);
+
+  void
+  scheduleComputeConcentrationGradient(SchedulerP& sched,
+                                       const PatchSet* patches,
+                                       const MaterialSet* matls);
+
+  void
+  scheduleComputeConcentrationGradientAMR(const LevelP& level_in,
+                                          SchedulerP& sched,
+                                          const MaterialSet* matls);
+
+  void
+  computeConcentrationGradient(const ProcessorGroup*,
+                               const PatchSubset* patches,
+                               const MaterialSubset*,
+                               DataWarehouse* old_dw,
+                               DataWarehouse* new_dw);
+
+  void
+  scheduleInterpolateToParticlesAndUpdate(Task* task);
+
+  void
+  scheduleAddParticles(Task* task);
+
+  void
+  scheduleRefine(Task* task);
+
+  void
+  getAndAllocateForParticlesToGrid(const Patch* patch,
+                                   ParticleSubset* pset,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw,
+                                   int matl_dw_index,
+                                   ScalarDiffusionTaskData& data);
+
+  void
+  interpolateParticlesToGrid(const Patch* patch,
+                             const std::vector<IntVector>& ni,
+                             const std::vector<double>& S,
+                             constParticleVariable<Point>& px,
+                             constParticleVariable<double>& pMass,
+                             particleIndex idx,
+                             ScalarDiffusionTaskData& data);
+
+  void
+  getAndAllocateForParticlesToGrid_CFI(const Patch* patch,
+                                       ParticleSubset* pset,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw,
+                                       int matl_dw_index,
+                                       ScalarDiffusionTaskData& data);
+  void
+  getForParticlesToGrid_CFI(const Patch* coarsePatch,
+                            ParticleSubset* pset,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw,
+                            int matl_dw_index,
+                            ScalarDiffusionTaskData& data);
+
+  void
+  getModifiableForParticlesToGrid_CFI(const Patch* finePatch,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw,
+                                      int matl_dw_index,
+                                      ScalarDiffusionTaskData& data);
+
+  void
+  interpolateParticlesToGrid_CFI(const Patch* patch,
+                                 const std::vector<IntVector>& ni,
+                                 const std::vector<double>& S,
+                                 constParticleVariable<Point>& px,
+                                 constParticleVariable<double>& pMass,
+                                 particleIndex idx,
+                                 ScalarDiffusionTaskData& data);
+
+  void
+  getModifiableCoarsenNodalData_CFI(const Patch* coarsePatch,
+                                    DataWarehouse* new_dw,
+                                    int dwi,
+                                    ScalarDiffusionTaskData& data);
+
+  void
+  getRegionCoarsenNodalData_CFI(const Level* fineLevel,
+                                const Patch* finePatch,
+                                DataWarehouse* new_dw,
+                                int dwi,
+                                ScalarDiffusionTaskData& data);
+
+  void
+  coarsenNodalData_CFI(bool zero_flag,
+                       ScalarDiffusionTaskData& coarse_data,
+                       const ScalarDiffusionTaskData& fine_data,
+                       const IntVector& coarse_node,
+                       const IntVector& fine_node);
+
+  void
+  getModifiableCoarsenNodalData_CFI2(const Patch* coarsePatch,
+                                     DataWarehouse* new_dw,
+                                     int dwi,
+                                     ScalarDiffusionTaskData& data);
+
+  void
+  getRegionCoarsenNodalData_CFI2(const Level* fineLevel,
+                                 const Patch* finePatch,
+                                 DataWarehouse* new_dw,
+                                 int dwi,
+                                 ScalarDiffusionTaskData& data);
+
+  void
+  coarsenNodalData_CFI2(bool zero_flag,
+                        ScalarDiffusionTaskData& coarse_data,
+                        const ScalarDiffusionTaskData& fine_data,
+                        const IntVector& coarse_node,
+                        const IntVector& fine_node);
+
+  void
+  getAndAllocateForNormalizeNodalConc(const Patch* patch,
+                                      DataWarehouse* new_dw,
+                                      int dwi,
+                                      ScalarDiffusionTaskData& data);
+
+  void
+  normalizeNodalConc(const Patch* patch,
+                     const NCVariable<double>& gMass,
+                     MPMBoundCond& bc,
+                     int dwi,
+                     ScalarDiffusionTaskData& data);
 
   void
   getAndAllocateForInterpolateToParticles(const Patch* patch,
@@ -163,6 +326,16 @@ public:
                          const std::vector<double>& S,
                          ScalarDiffusionTaskData& data,
                          ScalarDiffusionGlobalConcData& conc_data);
+
+  void
+  interpolateFluxBCsCBDI(LinearInterpolator* interpolator,
+                         const Patch* patch,
+                         ParticleSubset* pset,
+                         constParticleVariable<Point>& pX,
+                         constParticleVariable<int>& pLoadCurveID,
+                         constParticleVariable<Matrix3>& pSize,
+                         constParticleVariable<Matrix3>& pDefGrad,
+                         ScalarDiffusionTaskData& data);
 
   void
   scheduleComputeFlux(SchedulerP& sched,
@@ -203,6 +376,23 @@ public:
                         const MaterialSubset* matls,
                         DataWarehouse* old_dw,
                         DataWarehouse* new_dw);
+
+private:
+  void
+  getForParticlesToGrid(const Patch* patch,
+                        ParticleSubset* pset,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw,
+                        int matl_dw_index,
+                        ScalarDiffusionTaskData& data);
+
+  void
+  allocateForParticlesToGrid(const Patch* patch,
+                             ParticleSubset* pset,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw,
+                             int matl_dw_index,
+                             ScalarDiffusionTaskData& data);
 
   // Disallow copy and move
   ScalarDiffusionTasks(const ScalarDiffusionTasks&) = delete;

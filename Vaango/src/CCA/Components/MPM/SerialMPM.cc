@@ -278,7 +278,9 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   d_diffusionTasks = std::make_unique<ScalarDiffusionTasks>(restart_mat_ps,
                                                             d_materialManager,
                                                             d_mpmLabels.get(),
-                                                            d_mpmFlags.get());
+                                                            d_mpmFlags.get(),
+                                                            d_numGhostParticles,
+                                                            d_numGhostNodes);
 
   // Heat conduction
   d_heatConductionTasks =
@@ -2288,7 +2290,7 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
     t->computes(d_mpmLabels->gVelocityBCLabel);
   }
 
-  d_diffusionTasks->scheduleInterpolateParticlesToGrid(t, d_numGhostParticles);
+  d_diffusionTasks->scheduleInterpolateParticlesToGrid(t);
 
   sched->addTask(t, patches, matls);
 }
@@ -2469,6 +2471,14 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       gSp_vol.initialize(0.);
       // gnumnearparticles.initialize(0.);
 
+      ScalarDiffusionTaskData diffusion_data;
+      d_diffusionTasks->getAndAllocateForParticlesToGrid(patch,
+                                                         pset,
+                                                         old_dw,
+                                                         new_dw,
+                                                         matID,
+                                                         diffusion_data);
+
       // Interpolate particle data to Grid data.
       // This currently consists of the particle velocity and mass
       // Need to compute the lumped global mass matrix and velocity
@@ -2517,7 +2527,11 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             }
 #endif
           }
+
+          d_diffusionTasks
+            ->interpolateParticlesToGrid(patch, ni, S, pX, pMass, idx, diffusion_data);
         }
+
         if (d_mpmFlags->d_useLoadCurves && d_mpmFlags->d_useCBDI) {
           std::vector<IntVector> niCorner1(linear_interpolator->size());
           std::vector<IntVector> niCorner2(linear_interpolator->size());

@@ -54,6 +54,13 @@ class AMRMPM : public SerialMPM
 {
 
 public:
+  enum class CoarsenFlag
+  {
+    coarsenData,
+    zeroData,
+  };
+
+public:
   AMRMPM(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
 
   virtual ~AMRMPM();
@@ -181,7 +188,7 @@ protected:
                        const MaterialSubset* matls,
                        DataWarehouse* old_dw,
                        DataWarehouse* new_dw,
-                       const coarsenFlag flag);
+                       const CoarsenFlag flag);
 
   void
   coarsenNodalData_CFI2(const ProcessorGroup*,
@@ -350,7 +357,7 @@ protected:
   scheduleCoarsenNodalData_CFI(SchedulerP&,
                                const PatchSet*,
                                const MaterialSet*,
-                               const coarsenFlag flag);
+                               const CoarsenFlag flag);
 
   void
   scheduleCoarsenNodalData_CFI2(SchedulerP&,
@@ -456,12 +463,6 @@ protected:
   removeDuplicates(Level::selectType& array);
 
 protected:
-  enum coarsenFlag
-  {
-    coarsenData,
-    zeroData,
-  };
-
   // Number of cells on the coarse level that
   // contain particles and surround a fine patch.
   // Coarse level particles are used in the task
