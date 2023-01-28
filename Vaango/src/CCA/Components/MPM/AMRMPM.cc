@@ -23,23 +23,33 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/AMRMPM.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
+
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMUtils.h>
+
 #include <CCA/Components/MPM/MMS/MMS.h>
+
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
+
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/PhysicalBC/ScalarFluxBC.h>
+
 #include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionTasks.h>
+
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Regridder.h>
 #include <CCA/Ports/Scheduler.h>
+
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/Point.h>
@@ -4304,6 +4314,7 @@ AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(d_mpmLabels->pSizeLabel);
   // t->computes(d_mpmLabels->pVelGradLabel);
   t->computes(d_mpmLabels->pCellNAPIDLabel, d_oneMaterial.get());
+  t->computes(d_mpmLabels->NC_CCweightLabel);
 
   // Debugging Scalar
   if (d_mpmFlags->d_withColor) {
@@ -4360,8 +4371,29 @@ AMRMPM::refineGrid(const ProcessorGroup*,
     new_dw->allocateAndPut(cellNAPID, d_mpmLabels->pCellNAPIDLabel, 0, patch);
     cellNAPID.initialize(0);
 
-    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
-    for (int m = 0; m < numMPMMatls; m++) {
+    // First do NC_CCweight
+    // - Initialize NC_CCweight = 0.125
+    // - Find the walls with symmetry BC and double NC_CCweight
+    NCVariable<double> NC_CCweight;
+    new_dw->allocateAndPut(
+      NC_CCweight, d_mpmLabels->NC_CCweightLabel, 0, patch);
+    NC_CCweight.initialize(0.125);
+
+    vector<Patch::FaceType> bf;
+    patch->getBoundaryFaces(bf);
+    for (auto& face : bf) {
+      int mat_id = 0;
+      if (patch->haveBC(face, mat_id, "symmetry", "Symmetric")) {
+        for (auto iter = patch->getFaceIterator(face, Patch::FaceNodes);
+             !iter.done();
+             iter++) {
+          NC_CCweight[*iter] = 2.0 * NC_CCweight[*iter];
+        }
+      }
+    }
+
+    size_t numMPMMatls = d_materialManager->getNumMaterials("MPM");
+    for (size_t m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       int dwi = mpm_matl->getDWIndex();
@@ -4378,10 +4410,9 @@ AMRMPM::refineGrid(const ProcessorGroup*,
         // Create arrays for the particle data
         ParticleVariable<Point> pX;
         ParticleVariable<double> pMass, pVolume, pTemperature;
-        ParticleVariable<Vector> pVelocity, pExternalforce, pDisp, pConcGrad;
+        ParticleVariable<Vector> pVelocity, pExternalforce, pDisp;
         ParticleVariable<Matrix3> pSize;
-        ParticleVariable<double> pTempPrev, pColor, pConc, pConcPrev,
-          pExtScalFlux;
+        ParticleVariable<double> pTempPrev, pColor;
         ParticleVariable<int> pLoadCurve, pLastLevel, pLocalized, pRefined;
         ParticleVariable<long64> pID;
         ParticleVariable<Matrix3> pdeform, pStress;
@@ -4396,8 +4427,6 @@ AMRMPM::refineGrid(const ProcessorGroup*,
           pTempPrev, d_mpmLabels->pTempPreviousLabel, pset);
         new_dw->allocateAndPut(
           pExternalforce, d_mpmLabels->pExternalForceLabel, pset);
-        new_dw->allocateAndPut(
-          pExtScalFlux, d_mpmLabels->diffusion->pExternalScalarFlux, pset);
         new_dw->allocateAndPut(pID, d_mpmLabels->pParticleIDLabel, pset);
         new_dw->allocateAndPut(pDisp, d_mpmLabels->pDispLabel, pset);
         new_dw->allocateAndPut(pLastLevel, d_mpmLabels->pLastLevelLabel, pset);
@@ -4412,14 +4441,7 @@ AMRMPM::refineGrid(const ProcessorGroup*,
         if (d_mpmFlags->d_withColor) {
           new_dw->allocateAndPut(pColor, d_mpmLabels->pColorLabel, pset);
         }
-        if (d_mpmFlags->d_doScalarDiffusion) {
-          new_dw->allocateAndPut(
-            pConc, d_mpmLabels->diffusion->pConcentration, pset);
-          new_dw->allocateAndPut(
-            pConcPrev, d_mpmLabels->pConcPreviousLabel, pset);
-          new_dw->allocateAndPut(
-            pConcGrad, d_mpmLabels->pGradConcentrationLabel, pset);
-        }
+
         new_dw->allocateAndPut(pSize, d_mpmLabels->pSizeLabel, pset);
 
         // Init deformation gradient
@@ -4435,10 +4457,14 @@ AMRMPM::refineGrid(const ProcessorGroup*,
           pBodyFAcc, d_mpmLabels->pBodyForceAccLabel, pset);
         new_dw->allocateAndPut(
           pCoriolis, d_mpmLabels->pCoriolisImportanceLabel, pset);
+
+        ScalarDiffusionTaskData diffusion_data;
+        d_diffusionTasks->allocateAndPutForRefineGrid(pset, new_dw, diffusion_data);
       }
     }
   }
 } // end refine()
+
 void
 AMRMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
                                 SchedulerP& /*scheduler*/,
@@ -4461,8 +4487,8 @@ AMRMPM::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
   const MaterialSet* all_matls  = d_materialManager->allMaterials();
   const PatchSet* patch_set     = coarseLevel->eachPatch();
 
-  Task::SearchTG OldTG =
-    Task::SearchTG::OldTG; // possibly search old TG for computes
+  // possibly search old TG for computes
+  Task::SearchTG OldTG = Task::SearchTG::OldTG;
   task->requires(Task::NewDW,
                  d_mpmLabels->MPMRefineCellLabel,
                  0,
@@ -4687,285 +4713,6 @@ AMRMPM::printParticleCount(const ProcessorGroup* pg,
   }
 }
 
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-
-//______________________________________________________________________
-
-//______________________________________________________________________
-
-//______________________________________________________________________
-
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-//
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-//
-//______________________________________________________________________
-//
-//______________________________________________________________________
-
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-//
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-// Debugging Task that counts the number of particles in the domain.
-void
-AMRMPM::scheduleCountParticles(const PatchSet* patches, SchedulerP& sched)
-{
-  printSchedule(patches, cout_doing, "AMRMPM::scheduleCountParticles");
-  Task* t =
-    scinew Task("AMRMPM::countParticles", this, &AMRMPM::countParticles);
-  t->computes(d_mpmLabels->partCountLabel);
-  sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
-}
-//______________________________________________________________________
-//
-void
-AMRMPM::countParticles(const ProcessorGroup*,
-                       const PatchSubset* patches,
-                       const MaterialSubset*,
-                       DataWarehouse* old_dw,
-                       DataWarehouse* new_dw)
-{
-  long int totalParticles = 0;
-  int numMPMMatls         = d_materialManager->getNumMaterials("MPM");
-
-  //  const Level* level = getLevel(patches);
-  //  std::cout << "Level " << level->getIndex() << " has " <<
-  //  level->numPatches() << " patches" << std::endl;
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-
-    printTask(patches, patch, cout_doing, "Doing AMRMPM::countParticles");
-
-    for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl =
-        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      int dwi = mpm_matl->getDWIndex();
-
-      ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-      totalParticles += pset->end() - pset->begin();
-    }
-    //    std::cout << "patch = " << patch->getID()
-    //         << ", numParticles = " << totalParticles << std::endl;
-  }
-  new_dw->put(sumlong_vartype(totalParticles), d_mpmLabels->partCountLabel);
-}
-
-//______________________________________________________________________
-//
-
-//______________________________________________________________________
-// This task colors the particles that are retrieved from the coarse level and
-// used on the CFI.  This task mimics interpolateParticlesToGrid_CFI
-void
-AMRMPM::scheduleDebug_CFI(SchedulerP& sched,
-                          const PatchSet* patches,
-                          const MaterialSet* matls)
-{
-  const Level* level = getLevel(patches);
-
-  printSchedule(patches, cout_doing, "AMRMPM::scheduleDebug_CFI");
-
-  Task* t = scinew Task("AMRMPM::debug_CFI", this, &AMRMPM::debug_CFI);
-
-  Ghost::GhostType gn = Ghost::None;
-  t->requires(Task::OldDW, d_mpmLabels->pXLabel, gn, 0);
-  t->requires(Task::NewDW, d_mpmLabels->pSizeLabel, gn, 0);
-  t->requires(Task::OldDW, d_mpmLabels->pDefGradLabel, gn, 0);
-
-  if (level->hasFinerLevel()) {
-#define allPatches 0
-    Task::MaterialDomainSpec ND = Task::NormalDomain;
-    t->requires(Task::NewDW,
-                d_mpmLabels->gZOILabel,
-                allPatches,
-                Task::FineLevel,
-                d_oneMaterial.get(),
-                Task::NormalDomain,
-                gn,
-                0);
-  }
-
-  t->computes(d_mpmLabels->pColorLabel_preReloc);
-
-  sched->addTask(t, patches, matls);
-}
-//______________________________________________________________________
-void
-AMRMPM::debug_CFI(const ProcessorGroup*,
-                  const PatchSubset* patches,
-                  const MaterialSubset*,
-                  DataWarehouse* old_dw,
-                  DataWarehouse* new_dw)
-{
-  const Level* level = getLevel(patches);
-
-  for (int cp = 0; cp < patches->size(); cp++) {
-    const Patch* patch = patches->get(cp);
-
-    printTask(patches, patch, cout_doing, "Doing AMRMPM::debug_CFI");
-
-    //__________________________________
-    //  Write p.color all levels all patches
-    ParticleSubset* pset = 0;
-    int dwi              = 0;
-    pset                 = old_dw->getParticleSubset(dwi, patch);
-
-    constParticleVariable<Point> pX;
-    constParticleVariable<Matrix3> pSize;
-    constParticleVariable<Matrix3> pDefGrad;
-    ParticleVariable<double> pColor;
-
-    old_dw->get(pX, d_mpmLabels->pXLabel, pset);
-    new_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
-    old_dw->get(pDefGrad, d_mpmLabels->pDefGradLabel, pset);
-    new_dw->allocateAndPut(pColor, d_mpmLabels->pColorLabel_preReloc, pset);
-
-    auto interpolatorCoarse = d_mpmFlags->d_interpolator->clone(patch);
-    std::vector<IntVector> ni(interpolatorCoarse->size());
-    std::vector<double> S(interpolatorCoarse->size());
-
-    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-         iter++) {
-      particleIndex idx = *iter;
-      pColor[idx]       = 0;
-
-      interpolatorCoarse->findCellAndWeights(
-        pX[idx], ni, S, pSize[idx], pDefGrad[idx]);
-
-      for (int k = 0; k < (int)ni.size(); k++) {
-        pColor[idx] += S[k];
-      }
-    }
-
-    //__________________________________
-    //  Mark the particles that are accessed at the CFI.
-    if (level->hasFinerLevel()) {
-      // find the fine patches over the coarse patch.  Add a single layer of
-      // cells
-      // so you will get the required patches when coarse patch and fine patch
-      // boundaries coincide.
-      Level::selectType finePatches;
-      patch->getOtherLevelPatches(1, finePatches, 1);
-
-      const Level* fineLevel = level->getFinerLevel().get_rep();
-      IntVector refineRatio(fineLevel->getRefinementRatio());
-
-      for (size_t fp = 0; fp < finePatches.size(); fp++) {
-        const Patch* finePatch = finePatches[fp];
-
-        // Determine extents for coarser level particle data
-        // Linear Interpolation:  1 layer of coarse level cells
-        // Gimp Interpolation:    2 layers
-        /*`==========TESTING==========*/
-        IntVector nLayers(d_nPaddingCells_Coarse,
-                          d_nPaddingCells_Coarse,
-                          d_nPaddingCells_Coarse);
-        IntVector nPaddingCells = nLayers * (refineRatio);
-        // std::cout << " nPaddingCells " << nPaddingCells << "nLayers " <<
-        // nLayers
-        // << std::endl;
-        /*===========TESTING==========`*/
-
-        int nGhostCells           = 0;
-        bool returnExclusiveRange = false;
-        IntVector cl_tmp, ch_tmp, fl, fh;
-
-        getCoarseLevelRange(finePatch,
-                            level,
-                            cl_tmp,
-                            ch_tmp,
-                            fl,
-                            fh,
-                            nPaddingCells,
-                            nGhostCells,
-                            returnExclusiveRange);
-
-        cl_tmp -= finePatch->neighborsLow() *
-                  nLayers; //  expand cl_tmp when a neighor patch exists.
-        //  This patch owns the low nodes.  You need particles
-        //  from the neighbor patch.
-
-        // coarseLow and coarseHigh cannot lie outside of the coarse patch
-        IntVector cl = Max(cl_tmp, patch->getCellLowIndex());
-        IntVector ch = Min(ch_tmp, patch->getCellHighIndex());
-
-        ParticleSubset* pset2 = 0;
-        pset2 =
-          old_dw->getParticleSubset(dwi, cl, ch, patch, d_mpmLabels->pXLabel);
-
-        constParticleVariable<Point> pX_CFI;
-        constNCVariable<Stencil7> zoi;
-        old_dw->get(pX_CFI, d_mpmLabels->pXLabel, pset2);
-        new_dw->get(zoi, d_mpmLabels->gZOILabel, 0, finePatch, Ghost::None, 0);
-
-        auto interpolatorFine = d_mpmFlags->d_interpolator->clone(finePatch);
-
-        for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-             iter++) {
-          particleIndex idx = *iter;
-
-          for (ParticleSubset::iterator iter2 = pset2->begin();
-               iter2 != pset2->end();
-               iter2++) {
-            particleIndex idx2 = *iter2;
-
-            if (pX[idx] == pX_CFI[idx2]) {
-              pColor[idx] = 0;
-              std::vector<IntVector> ni;
-              std::vector<double> S;
-              interpolatorFine->findCellAndWeights_CFI(pX[idx], ni, S, zoi);
-              for (int k = 0; k < (int)ni.size(); k++) {
-                pColor[idx] += S[k];
-              }
-            }
-          } // pset2 loop
-        }   // pset loop
-      }     // loop over fine patches
-    }       //// hasFinerLevel
-  }         // End loop over coarse patches
-}
-
-//______________________________________________________________________
-//  Returns the patches that have coarse fine interfaces
-void
-AMRMPM::coarseLevelCFI_Patches(const PatchSubset* coarsePatches,
-                               Level::selectType& CFI_patches)
-{
-  for (int p = 0; p < coarsePatches->size(); p++) {
-    const Patch* coarsePatch = coarsePatches->get(p);
-
-    Level::selectType finePatches;
-    coarsePatch->getFineLevelPatches(finePatches);
-    // loop over all the coarse level patches
-
-    for (size_t fp = 0; fp < finePatches.size(); fp++) {
-      const Patch* finePatch = finePatches[fp];
-
-      if (finePatch->hasCoarseFaces()) {
-        CFI_patches.push_back(coarsePatch);
-      }
-    }
-  }
-}
-
 #if 0
 //______________________________________________________________________
 //
@@ -5135,3 +4882,270 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
   }  // End loop over patches
 }
 #endif
+
+// Debugging Task that counts the number of particles in the domain.
+void
+AMRMPM::scheduleCountParticles(const PatchSet* patches, SchedulerP& sched)
+{
+  printSchedule(patches, cout_doing, "AMRMPM::scheduleCountParticles");
+  Task* t =
+    scinew Task("AMRMPM::countParticles", this, &AMRMPM::countParticles);
+  t->computes(d_mpmLabels->partCountLabel);
+  sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
+}
+
+void
+AMRMPM::countParticles(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset*,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw)
+{
+  long int totalParticles = 0;
+  int numMPMMatls         = d_materialManager->getNumMaterials("MPM");
+
+  //  const Level* level = getLevel(patches);
+  //  std::cout << "Level " << level->getIndex() << " has " <<
+  //  level->numPatches() << " patches" << std::endl;
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing AMRMPM::countParticles");
+
+    for (int m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int dwi = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+      totalParticles += pset->end() - pset->begin();
+    }
+    //    std::cout << "patch = " << patch->getID()
+    //         << ", numParticles = " << totalParticles << std::endl;
+  }
+  new_dw->put(sumlong_vartype(totalParticles), d_mpmLabels->partCountLabel);
+}
+
+// This task colors the particles that are retrieved from the coarse level and
+// used on the CFI.  This task mimics interpolateParticlesToGrid_CFI
+void
+AMRMPM::scheduleDebug_CFI(SchedulerP& sched,
+                          const PatchSet* patches,
+                          const MaterialSet* matls)
+{
+  const Level* level = getLevel(patches);
+
+  printSchedule(patches, cout_doing, "AMRMPM::scheduleDebug_CFI");
+
+  Task* t = scinew Task("AMRMPM::debug_CFI", this, &AMRMPM::debug_CFI);
+
+  Ghost::GhostType gn = Ghost::None;
+  t->requires(Task::OldDW, d_mpmLabels->pXLabel, gn, 0);
+  t->requires(Task::NewDW, d_mpmLabels->pSizeLabel, gn, 0);
+  t->requires(Task::OldDW, d_mpmLabels->pDefGradLabel, gn, 0);
+
+  if (level->hasFinerLevel()) {
+#define allPatches 0
+    t->requires(Task::NewDW,
+                d_mpmLabels->gZOILabel,
+                allPatches,
+                Task::FineLevel,
+                d_oneMaterial.get(),
+                Task::NormalDomain,
+                gn,
+                0);
+  }
+
+  t->computes(d_mpmLabels->pColorLabel_preReloc);
+
+  sched->addTask(t, patches, matls);
+}
+
+void
+AMRMPM::debug_CFI(const ProcessorGroup*,
+                  const PatchSubset* patches,
+                  const MaterialSubset*,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw)
+{
+  const Level* level = getLevel(patches);
+
+  for (int cp = 0; cp < patches->size(); cp++) {
+    const Patch* patch = patches->get(cp);
+
+    printTask(patches, patch, cout_doing, "Doing AMRMPM::debug_CFI");
+
+    //  Write p.color all levels all patches
+    int dwi              = 0;
+    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+
+    constParticleVariable<Point> pX;
+    constParticleVariable<Matrix3> pSize;
+    constParticleVariable<Matrix3> pDefGrad;
+    ParticleVariable<double> pColor;
+
+    old_dw->get(pX, d_mpmLabels->pXLabel, pset);
+    new_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
+    old_dw->get(pDefGrad, d_mpmLabels->pDefGradLabel, pset);
+    new_dw->allocateAndPut(pColor, d_mpmLabels->pColorLabel_preReloc, pset);
+
+    auto interpolatorCoarse = d_mpmFlags->d_interpolator->clone(patch);
+    std::vector<IntVector> ni(interpolatorCoarse->size());
+    std::vector<double> S(interpolatorCoarse->size());
+
+    for (auto idx : *pset) {
+      pColor[idx] = 0;
+
+      interpolatorCoarse->findCellAndWeights(
+        pX[idx], ni, S, pSize[idx], pDefGrad[idx]);
+
+      for (int k = 0; k < (int)ni.size(); k++) {
+        pColor[idx] += S[k];
+      }
+    }
+
+    //  Mark the particles that are accessed at the CFI.
+    if (level->hasFinerLevel()) {
+
+      // find the fine patches over the coarse patch.  Add a single layer of
+      // cells so you will get the required patches when coarse patch and fine
+      // patch boundaries coincide.
+      Level::selectType finePatches;
+      patch->getOtherLevelPatches(1, finePatches, 1);
+
+      const Level* fineLevel = level->getFinerLevel().get_rep();
+      IntVector refineRatio(fineLevel->getRefinementRatio());
+
+      for (const auto& finePatch : finePatches) {
+
+        // Determine extents for coarser level particle data
+        // Linear Interpolation:  1 layer of coarse level cells
+        // Gimp Interpolation:    2 layers
+        /*`==========TESTING==========*/
+        IntVector nLayers(d_nPaddingCells_Coarse,
+                          d_nPaddingCells_Coarse,
+                          d_nPaddingCells_Coarse);
+        IntVector nPaddingCells = nLayers * (refineRatio);
+        // std::cout << " nPaddingCells " << nPaddingCells << "nLayers " <<
+        // nLayers
+        // << std::endl;
+        /*===========TESTING==========`*/
+
+        int nGhostCells           = 0;
+        bool returnExclusiveRange = false;
+        IntVector cl_tmp, ch_tmp, fl, fh;
+
+        getCoarseLevelRange(finePatch,
+                            level,
+                            cl_tmp,
+                            ch_tmp,
+                            fl,
+                            fh,
+                            nPaddingCells,
+                            nGhostCells,
+                            returnExclusiveRange);
+
+        //  Expand cl_tmp when a neighor patch exists.   This patch owns the low
+        //  nodes.  You need particles from the neighbor patch.
+        cl_tmp -= finePatch->neighborsLow() * nLayers;
+
+        // coarseLow and coarseHigh cannot lie outside of the coarse patch
+        IntVector cl = Max(cl_tmp, patch->getCellLowIndex());
+        IntVector ch = Min(ch_tmp, patch->getCellHighIndex());
+
+        ParticleSubset* pset2 =
+          old_dw->getParticleSubset(dwi, cl, ch, patch, d_mpmLabels->pXLabel);
+
+        constParticleVariable<Point> pX_CFI;
+        constNCVariable<Stencil7> zoi;
+        old_dw->get(pX_CFI, d_mpmLabels->pXLabel, pset2);
+        new_dw->get(zoi, d_mpmLabels->gZOILabel, 0, finePatch, Ghost::None, 0);
+
+        auto interpolatorFine = d_mpmFlags->d_interpolator->clone(finePatch);
+
+        for (auto idx : *pset) {
+
+          for (auto idx2 : *pset2) {
+
+            if (pX[idx] == pX_CFI[idx2]) {
+              pColor[idx] = 0;
+              std::vector<IntVector> ni;
+              std::vector<double> S;
+              interpolatorFine->findCellAndWeights_CFI(pX[idx], ni, S, zoi);
+              for (int k = 0; k < (int)ni.size(); k++) {
+                pColor[idx] += S[k];
+              }
+            }
+          } // pset2 loop
+        }   // pset loop
+      }     // loop over fine patches
+    }       //// hasFinerLevel
+  }         // End loop over coarse patches
+}
+
+//  Returns the fine and coarse level patches that have coarse fine interfaces
+void
+AMRMPM::coarseLevelCFI_Patches(const PatchSubset* coarsePatches,
+                               Level::selectType& CFI_coarsePatches,
+                               Level::selectType& CFI_finePatches)
+{
+  const Level* coarseLevel = getLevel(coarsePatches);
+  if (!coarseLevel->hasFinerLevel()) {
+    return;
+  }
+
+  for (int p = 0; p < coarsePatches->size(); p++) {
+    const Patch* coarsePatch = coarsePatches->get(p);
+    bool addMe               = false;
+
+    Level::selectType finePatches;
+    coarsePatch->getFineLevelPatches(finePatches);
+
+    for (size_t fp = 0; fp < finePatches.size(); fp++) {
+      const Patch* finePatch = finePatches[fp];
+
+      if (finePatch->hasCoarseFaces()) {
+        addMe = true;
+        CFI_finePatches.push_back(finePatch);
+      }
+    }
+
+    if (addMe) { // only add once
+      CFI_coarsePatches.push_back(coarsePatch);
+    }
+  }
+
+  // remove duplicate patches
+  Uintah::Util::removeDuplicatePatches(CFI_coarsePatches);
+  Uintah::Util::removeDuplicatePatches(CFI_finePatches);
+}
+
+//______________________________________________________________________
+//  Returns the fine patches that have a CFI and all of the underlying
+//  coarse patches beneath those patches.  We don't know which of the coarse
+//  patches are beneath the fine patch with the CFI.
+// This takes in fine level patches
+void
+AMRMPM::fineLevelCFI_Patches(const PatchSubset* finePatches,
+                             Level::selectType& coarsePatches,
+                             Level::selectType& CFI_finePatches)
+{
+  const Level* fineLevel = getLevel(finePatches);
+
+  if (!fineLevel->hasCoarserLevel()) {
+    return;
+  }
+
+  for (int p = 0; p < finePatches->size(); p++) {
+    const Patch* finePatch = finePatches->get(p);
+
+    if (finePatch->hasCoarseFaces()) {
+      CFI_finePatches.push_back(finePatch);
+
+      // need to use the Node Based version of getOtherLevel
+      finePatch->getOtherLevelPatchesNB(-1, coarsePatches, 0);
+    }
+  }
+  Uintah::Util::removeDuplicatePatches(coarsePatches);
+  Uintah::Util::removeDuplicatePatches(CFI_finePatches);
+}

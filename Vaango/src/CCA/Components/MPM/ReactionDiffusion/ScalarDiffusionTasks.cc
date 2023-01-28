@@ -1346,6 +1346,26 @@ ScalarDiffusionTasks::scheduleRefine(Task* task)
 }
 
 void
+ScalarDiffusionTasks::allocateAndPutForRefineGrid(ParticleSubset* pset,
+                                                  DataWarehouse* new_dw,
+                                                  ScalarDiffusionTaskData& data)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    new_dw->allocateAndPut(
+      data.pConcentrationNew, d_mpm_labels->diffusion->pConcentration, pset);
+    new_dw->allocateAndPut(
+      data.pConcPreviousNew, d_mpm_labels->diffusion->pConcPrevious, pset);
+    new_dw->allocateAndPut(data.pConcentrationGradNew,
+                           d_mpm_labels->diffusion->pGradConcentration,
+                           pset);
+    new_dw->allocateAndPut(data.pExternalScalarFluxNew,
+                           d_mpm_labels->diffusion->pExternalScalarFlux,
+                           pset);
+    new_dw->allocateAndPut(data.pAreaNew, d_mpm_labels->diffusion->pArea, pset);
+  }
+}
+
+void
 ScalarDiffusionTasks::scheduleComputeFlux(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls)

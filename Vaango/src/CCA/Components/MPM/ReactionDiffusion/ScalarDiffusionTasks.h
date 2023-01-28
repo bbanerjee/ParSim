@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModelFactory.h>
+#include <CCA/Components/MPM/PhysicalBC/FluxBCModel.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/SchedulerP.h>
@@ -45,7 +46,6 @@ class MPMFlags;
 class MPMLabel;
 class MPMBoundCond;
 class MaterialManager;
-class FluxBCModel;
 
 struct ScalarDiffusionGlobalConcData
 {
@@ -397,6 +397,11 @@ public:
   void
   putTmpDataAddParticles(DataWarehouse* new_dw,
                          ScalarDiffusionTaskData& data_tmp);
+
+  void
+  allocateAndPutForRefineGrid(ParticleSubset* pset,
+                              DataWarehouse* new_dw,
+                              ScalarDiffusionTaskData& data);
 
   void
   interpolateFluxBCsCBDI(LinearInterpolator* interpolator,
