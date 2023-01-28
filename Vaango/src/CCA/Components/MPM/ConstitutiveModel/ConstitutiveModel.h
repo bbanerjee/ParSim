@@ -304,9 +304,24 @@ public:
   }
 
   // Make a clone of the constitutive model
-
   virtual std::unique_ptr<ConstitutiveModel>
   clone() = 0;
+
+  virtual void
+  addSplitParticlesComputesAndRequires(Task* task,
+                                       const MPMMaterial* matl,
+                                       const PatchSet* patches);
+
+  virtual void
+  splitCMSpecificParticleData(const Patch* patch,
+                              const int dwi,
+                              const int nDims,
+                              ParticleVariable<int>& prefOld,
+                              ParticleVariable<int>& pref,
+                              const unsigned int oldNumPar,
+                              const unsigned int numNewPartNeeded,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
 
 protected:
   ///////////////////////////////////////////////////////////////////////

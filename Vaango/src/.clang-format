@@ -6,7 +6,7 @@ AlignAfterOpenBracket: Align
 
 AlignConsecutiveAssignments: true
 
-AllowAllArgumentsOnNextLine: false
+AllowAllArgumentsOnNextLine: true
 
 AlwaysBreakAfterReturnType: All
 

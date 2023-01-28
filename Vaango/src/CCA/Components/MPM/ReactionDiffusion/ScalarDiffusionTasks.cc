@@ -32,7 +32,6 @@
 #include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
-#include <CCA/Components/MPM/Core/MPMBoundCond.h>
 
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Ghost.h>
@@ -63,10 +62,8 @@ ScalarDiffusionTasks::ScalarDiffusionTasks(ProblemSpecP& ps,
   d_num_ghost_nodes     = num_ghost_nodes;
 
   if (d_mpm_flags->d_doScalarDiffusion) {
-    sdInterfaceModel = SDInterfaceModelFactory::create(ps,
-                                                       mat_manager.get(),
-                                                       mpm_flags,
-                                                       mpm_labels);
+    sdInterfaceModel = SDInterfaceModelFactory::create(
+      ps, mat_manager.get(), mpm_flags, mpm_labels);
     fluxBC =
       FluxBCModelFactory::create(mat_manager.get(), mpm_labels, mpm_flags);
   }
@@ -226,18 +223,14 @@ ScalarDiffusionTasks::scheduleIntegrate(SchedulerP& sched,
 
     t->requires(Task::OldDW, d_mpm_labels->delTLabel);
     t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-    t->requires(Task::NewDW,
-                d_mpm_labels->diffusion->gConcentrationNoBC,
-                Ghost::None);
-    t->requires(Task::NewDW,
-                d_mpm_labels->diffusion->gConcentration,
-                Ghost::None);
-    t->requires(Task::NewDW,
-                d_mpm_labels->diffusion->gExternalScalarFlux,
-                Ghost::None);
-    t->requires(Task::NewDW,
-                sdInterfaceModel->getInterfaceFluxLabel(),
-                Ghost::None);
+    t->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gConcentrationNoBC, Ghost::None);
+    t->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gConcentration, Ghost::None);
+    t->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gExternalScalarFlux, Ghost::None);
+    t->requires(
+      Task::NewDW, sdInterfaceModel->getInterfaceFluxLabel(), Ghost::None);
     t->modifies(d_mpm_labels->diffusion->gConcentrationRate);
     t->computes(d_mpm_labels->diffusion->gConcentrationStar);
 
@@ -298,14 +291,10 @@ ScalarDiffusionTasks::computeAndIntegrateDiffusion(const ProcessorGroup*,
                   gnone,
                   0);
 
-      new_dw->getModifiable(gConcRate,
-                            d_mpm_labels->diffusion->gConcentrationRate,
-                            dwi,
-                            patch);
-      new_dw->allocateAndPut(gConcStar,
-                             d_mpm_labels->diffusion->gConcentrationStar,
-                             dwi,
-                             patch);
+      new_dw->getModifiable(
+        gConcRate, d_mpm_labels->diffusion->gConcentrationRate, dwi, patch);
+      new_dw->allocateAndPut(
+        gConcStar, d_mpm_labels->diffusion->gConcentrationStar, dwi, patch);
 
       // JBH -- Variables associated with scalar diffusion
       for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
@@ -316,11 +305,8 @@ ScalarDiffusionTasks::computeAndIntegrateDiffusion(const ProcessorGroup*,
                                                   gSD_IF_FluxRate[node]);
       }
       MPMBoundCond bc;
-      bc.setBoundaryCondition(patch,
-                              dwi,
-                              "SD-Type",
-                              gConcStar,
-                              d_mpm_flags->d_interpolatorType);
+      bc.setBoundaryCondition(
+        patch, dwi, "SD-Type", gConcStar, d_mpm_flags->d_interpolatorType);
       for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
            ++iter) {
         IntVector node  = *iter;
@@ -380,12 +366,8 @@ ScalarDiffusionTasks::getAndAllocateForParticlesToGrid(
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
     getForParticlesToGrid(patch, pset, old_dw, new_dw, matl_dw_index, data);
-    allocateForParticlesToGrid(patch,
-                               pset,
-                               old_dw,
-                               new_dw,
-                               matl_dw_index,
-                               data);
+    allocateForParticlesToGrid(
+      patch, pset, old_dw, new_dw, matl_dw_index, data);
   }
 }
 
@@ -400,9 +382,8 @@ ScalarDiffusionTasks::getForParticlesToGrid(const Patch* patch,
   new_dw->get(data.pExternalScalarFlux,
               d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
               pset);
-  old_dw->get(data.pConcentration,
-              d_mpm_labels->diffusion->pConcentration,
-              pset);
+  old_dw->get(
+    data.pConcentration, d_mpm_labels->diffusion->pConcentration, pset);
   old_dw->get(data.pStress, d_mpm_labels->pStressLabel, pset);
   if (d_mpm_flags->d_GEVelProj) {
     old_dw->get(data.pConcentrationGrad,
@@ -506,11 +487,8 @@ ScalarDiffusionTasks::interpolateFluxBCsCBDI(
                        pX[idx].y() + 0.5 * pSize[idx](1, 1) * dx.y(),
                        pX[idx].z());
     }
-    interpolator->findCellAndWeights(flux_pos,
-                                     ni_LPI,
-                                     S_LPI,
-                                     pSize[idx],
-                                     pDefGrad[idx]);
+    interpolator->findCellAndWeights(
+      flux_pos, ni_LPI, S_LPI, pSize[idx], pDefGrad[idx]);
     for (size_t k = 0; k < ni_LPI.size(); k++) {
       if (patch->containsNode(ni_LPI[k])) {
         data.gExternalScalarFlux_new[ni_LPI[k]] +=
@@ -566,12 +544,8 @@ ScalarDiffusionTasks::getForParticlesToGrid_CFI(const Patch* coarsePatch,
                                                 ScalarDiffusionTaskData& data)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    getForParticlesToGrid(coarsePatch,
-                          pset,
-                          old_dw,
-                          new_dw,
-                          matl_dw_index,
-                          data);
+    getForParticlesToGrid(
+      coarsePatch, pset, old_dw, new_dw, matl_dw_index, data);
   }
 }
 
@@ -847,21 +821,94 @@ void
 ScalarDiffusionTasks::scheduleComputeAndIntegrateConcentration(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::NewDW,
-                   d_mpm_labels->diffusion->gConcentrationNoBC,
-                   Ghost::None);
-    task->requires(Task::NewDW,
-                   d_mpm_labels->diffusion->gConcentration,
-                   Ghost::None);
-    task->requires(Task::NewDW,
-                   d_mpm_labels->diffusion->gExternalScalarFlux,
-                   Ghost::None);
-    task->requires(Task::NewDW,
-                   sdInterfaceModel->getInterfaceFluxLabel(),
-                   Ghost::None);
+    task->requires(
+      Task::NewDW, sdInterfaceModel->getInterfaceFluxLabel(), Ghost::None);
+    task->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gConcentration, Ghost::None);
+    task->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gConcentrationNoBC, Ghost::None);
+    task->requires(
+      Task::NewDW, d_mpm_labels->diffusion->gExternalScalarFlux, Ghost::None);
     task->modifies(d_mpm_labels->diffusion->gConcentrationRate);
     task->computes(d_mpm_labels->diffusion->gConcentrationStar);
   }
+}
+
+void
+ScalarDiffusionTasks::getAndAllocateForIntegrateConc(
+  const Patch* patch,
+  DataWarehouse* new_dw,
+  int dwi,
+  ScalarDiffusionTaskData& data)
+{
+  // constNCVariable<double> gConcentration, gConcNoBC, gExtScalarFlux;
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    new_dw->get(data.gFluxRate,
+                sdInterfaceModel->getInterfaceFluxLabel(),
+                dwi,
+                patch,
+                Ghost::None,
+                0);
+    new_dw->get(data.gConcentration,
+                d_mpm_labels->diffusion->gConcentration,
+                dwi,
+                patch,
+                Ghost::None,
+                0);
+    new_dw->get(data.gConcentrationNoBC,
+                d_mpm_labels->diffusion->gConcentrationNoBC,
+                dwi,
+                patch,
+                Ghost::None,
+                0);
+    new_dw->get(data.gExternalScalarFlux,
+                d_mpm_labels->diffusion->gExternalScalarFlux,
+                dwi,
+                patch,
+                Ghost::None,
+                0);
+
+    new_dw->getModifiable(data.gConcentrationRate_new,
+                          d_mpm_labels->diffusion->gConcentrationRate,
+                          dwi,
+                          patch);
+    new_dw->allocateAndPut(data.gConcentrationStar_new,
+                           d_mpm_labels->diffusion->gConcentrationStar,
+                           dwi,
+                           patch);
+  }
+}
+
+void
+ScalarDiffusionTasks::integrateConcentration(const Patch* patch,
+                                             double delT,
+                                             int dwi,
+                                             constNCVariable<double>& gMass,
+                                             ScalarDiffusionTaskData& data)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      data.gConcentrationRate_new[c] /= gMass[c];
+      data.gConcentrationStar_new[c] =
+        data.gConcentration[c] +
+        (data.gConcentrationRate_new[c] + data.gFluxRate[c]) * delT;
+    }
+
+    MPMBoundCond bc;
+    bc.setBoundaryCondition(patch,
+                            dwi,
+                            "SD-Type",
+                            data.gConcentrationStar_new,
+                            d_mpm_flags->d_interpolatorType);
+
+    for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      data.gConcentrationRate_new[c] =
+        (data.gConcentrationStar_new[c] - data.gConcentrationNoBC[c]) / delT +
+        data.gExternalScalarFlux[c] / gMass[c];
+    }
+  } // if doScalarDiffusion
 }
 
 void
@@ -965,9 +1012,8 @@ ScalarDiffusionTasks::computeConcentrationGradient(const ProcessorGroup*,
                   Ghost::AroundCells,
                   d_num_ghost_nodes);
 
-      new_dw->allocateAndPut(pAreaNew,
-                             d_mpm_labels->diffusion->pArea_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pAreaNew, d_mpm_labels->diffusion->pArea_preReloc, pset);
       new_dw->allocateAndPut(
         pConcGradNew,
         d_mpm_labels->diffusion->pGradConcentration_preReloc,
@@ -992,9 +1038,8 @@ void
 ScalarDiffusionTasks::scheduleInterpolateToParticlesAndUpdate(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::OldDW,
-                   d_mpm_labels->diffusion->pConcentration,
-                   Ghost::None);
+    task->requires(
+      Task::OldDW, d_mpm_labels->diffusion->pConcentration, Ghost::None);
     task->requires(Task::NewDW,
                    d_mpm_labels->diffusion->gConcentrationRate,
                    Ghost::AroundCells,
@@ -1033,9 +1078,8 @@ ScalarDiffusionTasks::getAndAllocateForInterpolateToParticles(
     data.minEffectiveConc =
       sdm->getMinConcentration() + sdm->getConcentrationTolerance();
 
-    old_dw->get(data.pConcentration,
-                d_mpm_labels->diffusion->pConcentration,
-                pset);
+    old_dw->get(
+      data.pConcentration, d_mpm_labels->diffusion->pConcentration, pset);
     new_dw->get(data.gConcentrationRate,
                 d_mpm_labels->diffusion->gConcentrationRate,
                 matl_dw_index,
@@ -1095,6 +1139,23 @@ ScalarDiffusionTasks::interpolateToParticles(
 }
 
 void
+ScalarDiffusionTasks::updateReductionVars(
+  DataWarehouse* new_dw,
+  ScalarDiffusionGlobalConcData& conc_data)
+{
+  if (d_mpm_flags->d_doAutoCycleBC && d_mpm_flags->d_doScalarDiffusion) {
+    if (d_mpm_flags->d_autoCycleUseMinMax) {
+      new_dw->put(min_vartype(conc_data.minPatchConc),
+                  d_mpm_labels->diffusion->rMinConcentration);
+      new_dw->put(max_vartype(conc_data.maxPatchConc),
+                  d_mpm_labels->diffusion->rMaxConcentration);
+    } else {
+      new_dw->put(sum_vartype(conc_data.totalConc),
+                  d_mpm_labels->diffusion->rTotalConcentration);
+    }
+  }
+}
+void
 ScalarDiffusionTasks::scheduleAddParticles(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
@@ -1104,6 +1165,172 @@ ScalarDiffusionTasks::scheduleAddParticles(Task* task)
     task->modifies(d_mpm_labels->diffusion->pExternalScalarFlux_preReloc);
     task->modifies(d_mpm_labels->diffusion->pArea_preReloc);
     task->modifies(d_mpm_labels->diffusion->pDiffusivity_preReloc);
+  }
+}
+
+void
+ScalarDiffusionTasks::scheduleAddSplitParticlesComputesAndRequires(
+  Task* task,
+  MPMMaterial* mpm_matl,
+  const PatchSet* patches)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
+    sdm->addSplitParticlesComputesAndRequires(task, mpm_matl, patches);
+  }
+}
+
+void
+ScalarDiffusionTasks::getModifiableForAddParticles(
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  ScalarDiffusionTaskData& data)
+{
+  ParticleVariable<double> pESF, pConc, pConcpre, pConcgrad;
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    new_dw->getModifiable(data.pConcentrationNew,
+                          d_mpm_labels->diffusion->pConcentration_preReloc,
+                          pset);
+    new_dw->getModifiable(data.pConcPreviousNew,
+                          d_mpm_labels->diffusion->pConcPrevious_preReloc,
+                          pset);
+    new_dw->getModifiable(data.pConcentrationGradNew,
+                          d_mpm_labels->diffusion->pGradConcentration_preReloc,
+                          pset);
+    new_dw->getModifiable(data.pExternalScalarFluxNew,
+                          d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
+                          pset);
+    new_dw->getModifiable(
+      data.pAreaNew, d_mpm_labels->diffusion->pArea_preReloc, pset);
+    new_dw->getModifiable(data.pDiffusivityNew,
+                          d_mpm_labels->diffusion->pDiffusivity_preReloc,
+                          pset);
+  }
+}
+
+void
+ScalarDiffusionTasks::copyTemporaryForAddParticles(
+  size_t old_num_particles,
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  const ScalarDiffusionTaskData& data,
+  ScalarDiffusionTaskData& data_tmp)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    new_dw->allocateTemporary(data_tmp.pConcentrationNew, pset);
+    new_dw->allocateTemporary(data_tmp.pConcPreviousNew, pset);
+    new_dw->allocateTemporary(data_tmp.pConcentrationGradNew, pset);
+    new_dw->allocateTemporary(data_tmp.pExternalScalarFluxNew, pset);
+    new_dw->allocateTemporary(data_tmp.pAreaNew, pset);
+    new_dw->allocateTemporary(data_tmp.pDiffusivityNew, pset);
+
+    for (size_t pp = 0; pp < old_num_particles; ++pp) {
+      data_tmp.pConcentrationNew[pp]      = data.pConcentrationNew[pp];
+      data_tmp.pConcPreviousNew[pp]       = data.pConcPreviousNew[pp];
+      data_tmp.pConcentrationGradNew[pp]  = data.pConcentrationGradNew[pp];
+      data_tmp.pExternalScalarFluxNew[pp] = data.pExternalScalarFluxNew[pp];
+      data_tmp.pAreaNew[pp]               = data.pAreaNew[pp];
+      data_tmp.pDiffusivityNew[pp]        = data.pDiffusivityNew[pp];
+    }
+  }
+}
+
+void
+ScalarDiffusionTasks::setDataForTmpAddParticles(
+  double fourthOrEighth,
+  int cell_idx,
+  int idx,
+  const ParticleVariable<IntVector>& pLoadCurveID,
+  int new_idx,
+  int last_idx,
+  ParticleVariable<Point>& pX_tmp,
+  ParticleVariable<IntVector>& pLoadCurveID_tmp,
+  const ScalarDiffusionTaskData& data,
+  ScalarDiffusionTaskData& data_tmp)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    data_tmp.pConcentrationNew[new_idx]      = data.pConcentrationNew[idx];
+    data_tmp.pConcPreviousNew[new_idx]       = data.pConcPreviousNew[idx];
+    data_tmp.pConcentrationGradNew[new_idx]  = data.pConcentrationGradNew[idx];
+    data_tmp.pExternalScalarFluxNew[new_idx] = data.pExternalScalarFluxNew[idx];
+    data_tmp.pDiffusivityNew[new_idx]        = data.pDiffusivityNew[idx];
+    if ((std::abs(data.pAreaNew[idx].x()) > 0.0 &&
+         std::abs(data.pAreaNew[idx].y()) > 0.0) ||
+        (std::abs(data.pAreaNew[idx].x()) > 0.0 &&
+         std::abs(data.pAreaNew[idx].z()) > 0.0) ||
+        (std::abs(data.pAreaNew[idx].y()) > 0.0 &&
+         std::abs(data.pAreaNew[idx].z()) > 0.0) ||
+        (std::abs(data.pAreaNew[idx][0]) < 1.e-12)) {
+      data_tmp.pAreaNew[new_idx] = fourthOrEighth * data.pAreaNew[idx];
+    } else {
+      if (cell_idx == 0) {
+        data_tmp.pAreaNew[new_idx] = data.pAreaNew[idx];
+      } else {
+        if (pX_tmp[new_idx].asVector().length2() >
+            pX_tmp[last_idx].asVector().length2()) {
+          data_tmp.pAreaNew[last_idx] = 0.0;
+          data_tmp.pAreaNew[new_idx]  = data.pAreaNew[idx];
+          pLoadCurveID_tmp[last_idx]  = IntVector(0, 0, 0);
+          pLoadCurveID_tmp[new_idx]   = pLoadCurveID[idx];
+        } else {
+          data_tmp.pAreaNew[new_idx] = 0.0;
+          pLoadCurveID_tmp[new_idx]  = IntVector(0, 0, 0);
+        } // if pxtmp
+      }   // if i==0
+    }     // if pArea
+  }       // if diffusion
+}
+
+void
+ScalarDiffusionTasks::splitCMSpecificParticleData(
+  const Patch* patch,
+  MPMMaterial* mpm_matl,
+  int dwi,
+  double fourOrEight,
+  ParticleVariable<int>& pRefined_old,
+  ParticleVariable<int>& pRefined,
+  size_t oldNumPar,
+  size_t numNewPartNeeded,
+  DataWarehouse* old_dw,
+  DataWarehouse* new_dw)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
+    sdm->splitSDMSpecificParticleData(patch,
+                                      dwi,
+                                      fourOrEight,
+                                      pRefined_old,
+                                      pRefined,
+                                      oldNumPar,
+                                      numNewPartNeeded,
+                                      old_dw,
+                                      new_dw);
+  }
+}
+
+void
+ScalarDiffusionTasks::putTmpDataAddParticles(DataWarehouse* new_dw,
+                                             ScalarDiffusionTaskData& data_tmp)
+{
+  if (d_mpm_flags->d_doScalarDiffusion) {
+    new_dw->put(data_tmp.pConcentrationNew,
+                d_mpm_labels->diffusion->pConcentration_preReloc,
+                true);
+    new_dw->put(data_tmp.pConcPreviousNew,
+                d_mpm_labels->diffusion->pConcPrevious_preReloc,
+                true);
+    new_dw->put(data_tmp.pConcentrationGradNew,
+                d_mpm_labels->diffusion->pGradConcentration_preReloc,
+                true);
+    new_dw->put(data_tmp.pExternalScalarFluxNew,
+                d_mpm_labels->diffusion->pExternalScalarFlux,
+                true);
+
+    new_dw->put(
+      data_tmp.pAreaNew, d_mpm_labels->diffusion->pArea_preReloc, true);
+    new_dw->put(data_tmp.pDiffusivityNew,
+                d_mpm_labels->diffusion->pDiffusivity_preReloc,
+                true);
   }
 }
 

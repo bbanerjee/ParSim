@@ -49,10 +49,10 @@ class FluxBCModel;
 
 struct ScalarDiffusionGlobalConcData
 {
-  double concRate;
-  double minPatchConc;
-  double maxPatchConc;
-  double totalConc;
+  double concRate{ 0.0 };
+  double minPatchConc{ 5.0e11 };
+  double maxPatchConc{ -5.0e11 };
+  double totalConc{ 0.0 };
 };
 
 struct ScalarDiffusionTaskData
@@ -67,12 +67,21 @@ struct ScalarDiffusionTaskData
 
   ParticleVariable<double> pConcentrationNew;
   ParticleVariable<double> pConcPreviousNew;
+  ParticleVariable<Vector> pConcentrationGradNew;
+  ParticleVariable<double> pExternalScalarFluxNew;
+  ParticleVariable<Vector> pAreaNew;
+  ParticleVariable<double> pDiffusivityNew;
 
   constNCVariable<double> gConcentration;
+  constNCVariable<double> gConcentrationNoBC;
+  constNCVariable<double> gExternalScalarFlux;
   constNCVariable<double> gConcentrationRate;
+  constNCVariable<double> gFluxRate;
 
   NCVariable<double> gConcentration_new;
   NCVariable<double> gExternalScalarFlux_new;
+  NCVariable<double> gConcentrationRate_new;
+  NCVariable<double> gConcentrationStar_new;
 
   NCVariable<double> gConcentrationNoBC_new;
   NCVariable<double> gHydrostaticStress_new;
@@ -205,6 +214,11 @@ public:
   scheduleAddParticles(Task* task);
 
   void
+  scheduleAddSplitParticlesComputesAndRequires(Task* task,
+                                               MPMMaterial* mpm_matl,
+                                               const PatchSet* patches);
+
+  void
   scheduleRefine(Task* task);
 
   void
@@ -309,6 +323,19 @@ public:
                      ScalarDiffusionTaskData& data);
 
   void
+  getAndAllocateForIntegrateConc(const Patch* patch,
+                                 DataWarehouse* new_dw,
+                                 int dwi,
+                                 ScalarDiffusionTaskData& data);
+
+  void
+  integrateConcentration(const Patch* patch,
+                         double delT,
+                         int dwi,
+                         constNCVariable<double>& gMass,
+                         ScalarDiffusionTaskData& data);
+
+  void
   getAndAllocateForInterpolateToParticles(const Patch* patch,
                                           const MPMMaterial* mpm_matl,
                                           ParticleSubset* pset,
@@ -326,6 +353,50 @@ public:
                          const std::vector<double>& S,
                          ScalarDiffusionTaskData& data,
                          ScalarDiffusionGlobalConcData& conc_data);
+
+  void
+  updateReductionVars(DataWarehouse* new_dw,
+                      ScalarDiffusionGlobalConcData& conc_data);
+
+  void
+  getModifiableForAddParticles(ParticleSubset* pset,
+                               DataWarehouse* new_dw,
+                               ScalarDiffusionTaskData& data);
+
+  void
+  copyTemporaryForAddParticles(size_t old_num_particles,
+                               ParticleSubset* pset,
+                               DataWarehouse* new_dw,
+                               const ScalarDiffusionTaskData& data,
+                               ScalarDiffusionTaskData& data_tmp);
+
+  void
+  setDataForTmpAddParticles(double fourthOrEighth,
+                            int cell_idx,
+                            int idx,
+                            const ParticleVariable<IntVector>& pLoadCurveID,
+                            int new_idx,
+                            int last_idx,
+                            ParticleVariable<Point>& pX_tmp,
+                            ParticleVariable<IntVector>& pLoadCurveID_tmp,
+                            const ScalarDiffusionTaskData& data,
+                            ScalarDiffusionTaskData& data_tmp);
+
+  void
+  splitCMSpecificParticleData(const Patch* patch,
+                              MPMMaterial* mpm_matl,
+                              int dwi,
+                              double fourOrEight,
+                              ParticleVariable<int>& pRefined_old,
+                              ParticleVariable<int>& pRefined,
+                              size_t oldNumPar,
+                              size_t numNewPartNeeded,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
+
+  void
+  putTmpDataAddParticles(DataWarehouse* new_dw,
+                         ScalarDiffusionTaskData& data_tmp);
 
   void
   interpolateFluxBCsCBDI(LinearInterpolator* interpolator,
