@@ -56,8 +56,8 @@ TimestepNumber::~TimestepNumber()
 }
 
 void
-TimestepNumber::problemSetup(const ProblemSpecP& ps,
-                             const ProblemSpecP& restart_prob_spec,
+TimestepNumber::problemSetup([[maybe_unused]] const ProblemSpecP& ps,
+                             [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
                              MaterialManagerP& mat_manager)
 {
   d_mat_manager = mat_manager;
@@ -78,9 +78,9 @@ TimestepNumber::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 }
 
 void
-TimestepNumber::switchTest(const ProcessorGroup* group,
-                           const PatchSubset* patches,
-                           const MaterialSubset* matls,
+TimestepNumber::switchTest([[maybe_unused]] const ProcessorGroup* group,
+                           [[maybe_unused]] const PatchSubset* patches,
+                           [[maybe_unused]] const MaterialSubset* matls,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw)
 {

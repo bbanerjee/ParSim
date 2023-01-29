@@ -46,7 +46,8 @@ ErrnoException::ErrnoException(const std::string& message,
                                int err,
                                const char* file,
                                int line)
-  : errno_(err)
+  : Exception()
+  , errno_(err)
 {
   std::ostringstream str;
   const char* s = strerror(err);
@@ -64,7 +65,8 @@ ErrnoException::ErrnoException(const std::string& message,
 }
 
 ErrnoException::ErrnoException(const ErrnoException& copy)
-  : message_(copy.message_)
+  : Exception()
+  , message_(copy.message_)
   , errno_(copy.errno_)
 {
 }

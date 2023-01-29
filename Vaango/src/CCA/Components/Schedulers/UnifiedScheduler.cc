@@ -6279,7 +6279,7 @@ UnifiedSchedulerWorker::stopWaitTime()
 
 //______________________________________________________________________
 //
-const double
+double
 UnifiedSchedulerWorker::getWaitTime() const
 {
   return m_wait_time;
@@ -6287,7 +6287,7 @@ UnifiedSchedulerWorker::getWaitTime() const
 
 //______________________________________________________________________
 //
-const int
+int
 UnifiedSchedulerWorker::getAffinity() const
 {
   return m_affinity;
@@ -6295,7 +6295,7 @@ UnifiedSchedulerWorker::getAffinity() const
 
 //______________________________________________________________________
 //
-const int
+int
 UnifiedSchedulerWorker::getLocalTID() const
 {
   return m_tid;

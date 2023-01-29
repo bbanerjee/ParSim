@@ -2634,7 +2634,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
   auto numMPMMatls = d_materialManager->getNumMaterials("MPM");
   std::vector<constNCVariable<double>> gMass(numMPMMatls);
   std::vector<NCVariable<Point>> gPosition(numMPMMatls);
-  std::vector<NCVariable<Vector>> gvelocity(numMPMMatls);
+  std::vector<NCVariable<Vector>> gVelocity(numMPMMatls);
   std::vector<NCVariable<Vector>> gSurfNorm(numMPMMatls);
   std::vector<NCVariable<double>> gNormTraction(numMPMMatls);
   std::vector<NCVariable<Matrix3>> gStress(numMPMMatls);

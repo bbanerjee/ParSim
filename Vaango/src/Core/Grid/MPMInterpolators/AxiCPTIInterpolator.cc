@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 // *** AXISYMMETRIC CPTI HAS NOT ACTUALLY BEEN IMPLEMENTED YET ***
-#include <Core/Grid/axiCptiInterpolator.h>
+#include <Core/Grid/AxiCPTIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>
@@ -34,29 +34,29 @@ using namespace Uintah;
 using namespace Uintah;
 
     
-axiCptiInterpolator::axiCptiInterpolator()
+AxiCPTIInterpolator::AxiCPTIInterpolator()
 {
   d_size = 32;
   d_patch = 0;
 }
 
-axiCptiInterpolator::axiCptiInterpolator(const Patch* patch)
+AxiCPTIInterpolator::AxiCPTIInterpolator(const Patch* patch)
 {
   d_size = 32;
   d_patch = patch;
 }
     
-axiCptiInterpolator::~axiCptiInterpolator()
+AxiCPTIInterpolator::~AxiCPTIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-axiCptiInterpolator::clone(const Patch* patch)
+AxiCPTIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<axiCptiInterpolator>(patch);
+  return std::make_unique<AxiCPTIInterpolator>(patch);
 }
     
-void axiCptiInterpolator::findCellAndWeights(const Point& pos,
+void AxiCPTIInterpolator::findCellAndWeights(const Point& pos,
                                             std::vector<IntVector>& ni, 
                                             std::vector<double>& S,
                                             const Matrix3& size,
@@ -131,7 +131,7 @@ void axiCptiInterpolator::findCellAndWeights(const Point& pos,
   }
 }
  
-void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void AxiCPTIInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                    std::vector<IntVector>& ni,
                                                    std::vector<Vector>& d_S,
                                                    const Matrix3& size,
@@ -245,7 +245,7 @@ void axiCptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   }
 }
 
-void axiCptiInterpolator::findCellAndWeightsAndShapeDerivatives(
+void AxiCPTIInterpolator::findCellAndWeightsAndShapeDerivatives(
                                                          const Point& pos,
                                                          std::vector<IntVector>& ni,
                                                          std::vector<double>& S,
@@ -367,7 +367,7 @@ void axiCptiInterpolator::findCellAndWeightsAndShapeDerivatives(
   }
 }
 
-int axiCptiInterpolator::size()
+int AxiCPTIInterpolator::size()
 {
   return d_size;
 }

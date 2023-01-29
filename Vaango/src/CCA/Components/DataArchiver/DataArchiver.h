@@ -72,7 +72,7 @@ public:
 
   // Methods for managing the components attached via the ports.
   virtual void
-  setComponents(UintahParallelComponent* parent){};
+  setComponents([[maybe_unused]] UintahParallelComponent* parent){};
 
   virtual void
   getComponents();

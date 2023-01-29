@@ -177,7 +177,7 @@ namespace Uintah {
       bool operator==(const Iterator& b)
       {
         Iterator i1(*this);
-        Iterator i2(*this);
+        Iterator i2(b);
 
         for(i1.reset(),i2.reset();!i1.done() && !i2.done();i1++,i2++)
         {

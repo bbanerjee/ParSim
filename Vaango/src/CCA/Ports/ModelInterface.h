@@ -53,8 +53,7 @@ class VarLabel;
 class ModelInterface : public UintahParallelComponent
 {
 public:
-  ModelInterface(const ProcessorGroup* my_world,
-                 MaterialManagerP mat_manager);
+  ModelInterface(const ProcessorGroup* my_world, MaterialManagerP mat_manager);
   virtual ~ModelInterface() = default;
 
   // Disallow copy and move
@@ -67,7 +66,7 @@ public:
 
   // Methods for managing the components attached via the ports.
   virtual void
-  setComponents(UintahParallelComponent* comp){};
+  setComponents([[maybe_unused]] UintahParallelComponent* comp){};
   virtual void
   setComponents(SimulationInterface* comp);
   virtual void
@@ -91,7 +90,8 @@ public:
   scheduleComputeStableTimestep(SchedulerP& sched, const LevelP& level) = 0;
 
   virtual void
-  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler)
+  scheduleRefine([[maybe_unused]] const PatchSet* patches,
+                 [[maybe_unused]] SchedulerP& scheduler)
   {
   }
 

@@ -117,7 +117,7 @@ PackBufferInfo::pack(MPI_Comm comm, int& out_count)
 }
 
 void
-PackBufferInfo::unpack(MPI_Comm comm, MPI_Status& status)
+PackBufferInfo::unpack(MPI_Comm comm, [[maybe_unused]] MPI_Status& status)
 {
   ASSERT(d_have_datatype);
 

@@ -22,8 +22,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <Core/Grid/MPMInterpolators/fastAxiCpdiInterpolator.h>
-#include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/FastAxiCPDIInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPDIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>
@@ -32,29 +32,29 @@
 using namespace Uintah;
 using namespace Uintah;
 
-fastAxiCpdiInterpolator::fastAxiCpdiInterpolator()
+FastAxiCPDIInterpolator::FastAxiCPDIInterpolator()
 {
   d_size = 27;
   d_patch = 0;
 }
 
-fastAxiCpdiInterpolator::fastAxiCpdiInterpolator(const Patch* patch):fastCpdiInterpolator(patch)
+FastAxiCPDIInterpolator::FastAxiCPDIInterpolator(const Patch* patch):FastCPDIInterpolator(patch)
 {
   d_size = 27;
   d_patch = patch;
 }
 
-fastAxiCpdiInterpolator::~fastAxiCpdiInterpolator()
+FastAxiCPDIInterpolator::~FastAxiCPDIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-fastAxiCpdiInterpolator::clone(const Patch* patch)
+FastAxiCPDIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<fastAxiCpdiInterpolator>(patch);
+  return std::make_unique<FastAxiCPDIInterpolator>(patch);
 }
 
-void fastAxiCpdiInterpolator::findCellAndWeights(const Point& pos,
+void FastAxiCPDIInterpolator::findCellAndWeights(const Point& pos,
 					    std::vector<IntVector>& ni,
 					    std::vector<double>& S,
 					    const Matrix3& size,
@@ -63,10 +63,10 @@ void fastAxiCpdiInterpolator::findCellAndWeights(const Point& pos,
   Matrix3 defgrad1=Matrix3(defgrad(0,0),defgrad(0,1),defgrad(0,2),
                            defgrad(1,0),defgrad(1,1),defgrad(1,2),
                            defgrad(2,0),defgrad(2,1),1);
-  fastCpdiInterpolator::findCellAndWeights(pos,ni,S,size,defgrad1);
+  FastCPDIInterpolator::findCellAndWeights(pos,ni,S,size,defgrad1);
 }
 
-void fastAxiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void FastAxiCPDIInterpolator::findCellAndShapeDerivatives(const Point& pos,
 						     std::vector<IntVector>& ni,
 						     std::vector<Vector>& d_S,
 						     const Matrix3& size,
@@ -75,10 +75,10 @@ void fastAxiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   Matrix3 defgrad1=Matrix3(defgrad(0,0),defgrad(0,1),defgrad(0,2),
                            defgrad(1,0),defgrad(1,1),defgrad(1,2),
                            defgrad(2,0),defgrad(2,1),1);
-  fastCpdiInterpolator::findCellAndShapeDerivatives(pos,ni,d_S,size,defgrad1);
+  FastCPDIInterpolator::findCellAndShapeDerivatives(pos,ni,d_S,size,defgrad1);
 }
 
-void fastAxiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
+void FastAxiCPDIInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
 							  std::vector<IntVector>& ni,
 							  std::vector<double>& S,
 							  std::vector<Vector>& d_S,
@@ -88,11 +88,11 @@ void fastAxiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point&
   Matrix3 defgrad1=Matrix3(defgrad(0,0),defgrad(0,1),defgrad(0,2),
                            defgrad(1,0),defgrad(1,1),defgrad(1,2),
                            defgrad(2,0),defgrad(2,1),1);
-  fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(pos,ni,S,d_S,
+  FastCPDIInterpolator::findCellAndWeightsAndShapeDerivatives(pos,ni,S,d_S,
                                                           size,defgrad1);
 }
 
-int fastAxiCpdiInterpolator::size()
+int FastAxiCPDIInterpolator::size()
 {
   return d_size;
 }

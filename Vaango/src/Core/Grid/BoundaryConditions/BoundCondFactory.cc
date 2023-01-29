@@ -187,7 +187,7 @@ BoundCondFactory::create(ProblemSpecP& child,
 }
 
 BoundCondBaseP
-BoundCondFactory::customBC(int mat_id,
+BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            double value,
                            const std::string label,
@@ -201,7 +201,7 @@ BoundCondFactory::customBC(int mat_id,
 }
 
 BoundCondBaseP
-BoundCondFactory::customBC(int mat_id,
+BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            const Vector value,
                            const std::string label,
@@ -215,7 +215,7 @@ BoundCondFactory::customBC(int mat_id,
 }
 
 BoundCondBaseP
-BoundCondFactory::customBC(int mat_id,
+BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            const std::string value,
                            const std::string label,

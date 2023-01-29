@@ -57,10 +57,11 @@ class SideBCData : public BCGeomBase
 public:
   /// Constructor
   SideBCData();
+  SideBCData(const SideBCData& bc) = default;
 
   /// Assignment Operator
   SideBCData&
-  operator=(const SideBCData& bc);
+  operator=(const SideBCData& bc) = default;
 
   /// Destructor
   virtual ~SideBCData();

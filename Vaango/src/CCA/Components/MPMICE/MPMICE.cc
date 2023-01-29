@@ -1441,8 +1441,8 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int indx = mpm_matl->getDWIndex();
       // Create arrays for the grid data
-      constNCVariable<double> gmass, gvolume, gtemperature, gSp_vol;
-      constNCVariable<Vector> gvelocity;
+      constNCVariable<double> gMass, gvolume, gtemperature, gSp_vol;
+      constNCVariable<Vector> gVelocity;
       CCVariable<double> cmass,Temp_CC, sp_vol_CC, rho_CC;
       CCVariable<Vector> vel_CC;
       constCCVariable<double> Temp_CC_ice, sp_vol_CC_ice;
@@ -1456,9 +1456,9 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       double very_small_mass = d_TINY_RHO * cell_vol;
       cmass.initialize(very_small_mass);
 
-      new_dw->get(gmass,        Mlb->gMassLabel,        indx, patch,gac, 1);
+      new_dw->get(gMass,        Mlb->gMassLabel,        indx, patch,gac, 1);
       new_dw->get(gvolume,      Mlb->gVolumeLabel,      indx, patch,gac, 1);
-      new_dw->get(gvelocity,    Mlb->gVelocityBCLabel,  indx, patch,gac, 1);
+      new_dw->get(gVelocity,    Mlb->gVelocityBCLabel,  indx, patch,gac, 1);
       new_dw->get(gtemperature, Mlb->gTemperatureLabel, indx, patch,gac, 1);
       new_dw->get(gSp_vol,      Mlb->gSp_volLabel,      indx, patch,gac, 1);
       old_dw->get(sp_vol_CC_ice,Ilb->sp_vol_CCLabel,    indx, patch,gn, 0); 
@@ -1473,10 +1473,10 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
          std::ostringstream desc;
         desc<< "TOP_MPMICE::interpolateNCToCC_0_mat_"<<indx<<"_patch_"
 	    <<  patch->getID();
-        printData(     indx, patch, 1,desc.str(), "gmass",       gmass);
+        printData(     indx, patch, 1,desc.str(), "gMass",       gMass);
         printData(     indx, patch, 1,desc.str(), "gvolume",     gvolume);
         printData(     indx, patch, 1,desc.str(), "gtemperatue", gtemperature);
-        printNCVector( indx, patch, 1,desc.str(), "gvelocity", 0, gvelocity);
+        printNCVector( indx, patch, 1,desc.str(), "gVelocity", 0, gVelocity);
       }
 #endif 
       //__________________________________
@@ -1490,10 +1490,10 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
         Vector vel_CC_mpm  = Vector(0.0, 0.0, 0.0);
 
         for (int in=0;in<8;in++){
-          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gmass[nodeIdx[in]];
+          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gMass[nodeIdx[in]];
           cmass[c]    += NC_CCw_mass;
           sp_vol_mpm  += gSp_vol[nodeIdx[in]]      * NC_CCw_mass;
-          vel_CC_mpm  += gvelocity[nodeIdx[in]]    * NC_CCw_mass;
+          vel_CC_mpm  += gVelocity[nodeIdx[in]]    * NC_CCw_mass;
           Temp_CC_mpm += gtemperature[nodeIdx[in]] * NC_CCw_mass;
         }
         double inv_cmass = 1.0/cmass[c];
@@ -1594,14 +1594,14 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
       int indx = mpm_matl->getDWIndex();
 
       // Create arrays for the grid data
-      constNCVariable<double> gmass, gvolume,gtempstar;
-      constNCVariable<Vector> gvelocity;
+      constNCVariable<double> gMass, gvolume,gtempstar;
+      constNCVariable<Vector> gVelocity;
       CCVariable<Vector> cmomentum;
       CCVariable<double> int_eng_L, mass_L;
       constCCVariable<double> cmass, Temp_CC_sur, int_eng_src;
       constCCVariable<Vector> vel_CC_sur, mom_source;
-      new_dw->get(gmass,       Mlb->gMassLabel,             indx,patch,gac,1);
-      new_dw->get(gvelocity,   Mlb->gVelocityStarLabel,     indx,patch,gac,1);
+      new_dw->get(gMass,       Mlb->gMassLabel,             indx,patch,gac,1);
+      new_dw->get(gVelocity,   Mlb->gVelocityStarLabel,     indx,patch,gac,1);
       new_dw->get(gtempstar,   Mlb->gTemperatureStarLabel,  indx,patch,gac,1);
       new_dw->get(cmass,       MIlb->cMassLabel,            indx,patch,gn, 0);
       new_dw->get(Temp_CC_sur, MIlb->temp_CCLabel,          indx,patch,gn, 0);
@@ -1626,10 +1626,10 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
         desc <<"TOP_MPMICE::computeLagrangianValuesMPM_mat_"<<indx<<"_patch_"
 	     <<  indx<<patch->getID();
         d_ice->printData(indx, patch,1,desc.str(), "cmass",    cmass);
-        printData(     indx, patch,  1,desc.str(), "gmass",    gmass);
+        printData(     indx, patch,  1,desc.str(), "gMass",    gMass);
         printData(     indx, patch,  1,desc.str(), "gtemStar", gtempstar);
-        //printNCVector( indx, patch,  1,desc.str(), "gvelocityStar", 0,
-        //                                                       gvelocity);
+        //printNCVector( indx, patch,  1,desc.str(), "gVelocityStar", 0,
+        //                                                       gVelocity);
       }
 
       for(CellIterator iter = patch->getExtraCellIterator();!iter.done();
@@ -1642,8 +1642,8 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
         Vector cmomentum_sur = vel_CC_sur[c] * cmass[c];
 
         for (int in=0;in<8;in++){
-          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gmass[nodeIdx[in]];
-          cmomentum_mpm +=gvelocity[nodeIdx[in]]      * NC_CCw_mass;
+          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gMass[nodeIdx[in]];
+          cmomentum_mpm +=gVelocity[nodeIdx[in]]      * NC_CCw_mass;
           int_eng_L_mpm +=gtempstar[nodeIdx[in]] * cv * NC_CCw_mass;
           //if (c == IntVector(60,44,10)) {
           //  std::cout << "in = " << in << " nodeIndex = " << nodeIdx[in] 
@@ -1875,13 +1875,13 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int indx = mpm_matl->getDWIndex();
-      NCVariable<Vector> gacceleration, gvelocity;
+      NCVariable<Vector> gacceleration, gVelocity;
       NCVariable<double> dTdt_NC,massBurnFraction;
 
       constCCVariable<double> dTdt_CC;
       constCCVariable<Vector> dVdt_CC;
 
-      new_dw->getModifiable(gvelocity,    Mlb->gVelocityStarLabel,indx,patch);
+      new_dw->getModifiable(gVelocity,    Mlb->gVelocityStarLabel,indx,patch);
       new_dw->getModifiable(gacceleration,Mlb->gAccelerationLabel,indx,patch);
 
       Ghost::GhostType  gan = Ghost::AroundNodes;
@@ -1900,7 +1900,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
       for(NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++){
         patch->findCellsFromNode(*iter,cIdx);
         for(int in=0;in<8;in++){
-          gvelocity[*iter]     +=  dVdt_CC[cIdx[in]]*delT*.125;
+          gVelocity[*iter]     +=  dVdt_CC[cIdx[in]]*delT*.125;
           gacceleration[*iter] +=  dVdt_CC[cIdx[in]]*.125;
           dTdt_NC[*iter]       +=  dTdt_CC[cIdx[in]]*.125;
         }

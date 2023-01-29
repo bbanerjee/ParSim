@@ -31,43 +31,44 @@
 // fields.  The main purpose of this type of contact is to
 // ensure that one can get the same answer using prescribed
 // contact as can be gotten using "automatic" contact.
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
+
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/Patch.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
+
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <vector>
 
 using namespace Uintah;
 using std::vector;
 
 SingleVelContact::SingleVelContact(const ProcessorGroup* myworld,
-                                   ProblemSpecP& ps, MaterialManagerP& d_sS,
-                                   MPMLabel* Mlb, MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
+                                   const MaterialManagerP& mat_manager,
+                                   const MPMLabel* labels,
+                                   const MPMFlags* flags,
+                                   ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  // Constructor
-  d_mat_manager = d_sS;
-  lb = Mlb;
-  flag = MFlag;
-}
+  d_one_or_two_step = 2;
 
-SingleVelContact::~SingleVelContact()
-{
+  ps->get("one_or_two_step", d_one_or_two_step);
+  ps->getWithDefault("exclude_material", d_exclude_material, -999);
 }
 
 void
@@ -75,6 +76,8 @@ SingleVelContact::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP contact_ps = ps->appendChild("contact");
   contact_ps->appendElement("type", "single_velocity");
+  contact_ps->appendElement("one_or_two_step", d_one_or_two_step);
+  contact_ps->appendElement("exclude_material", d_exclude_material);
   d_matls.outputProblemSpec(contact_ps);
 }
 
@@ -82,9 +85,16 @@ void
 SingleVelContact::exchangeMomentum(const ProcessorGroup*,
                                    const PatchSubset* patches,
                                    const MaterialSubset* matls,
-                                   DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw,
                                    const VarLabel* gVelocity_label)
 {
+  // If one_step, only do exchange for gVelocity_star
+  if (d_one_or_two_step == 1 &&
+      gVelocity_label == d_mpm_labels->gVelocityLabel) {
+    return;
+  }
+
   int numMatls = d_mat_manager->getNumMaterials("MPM");
   ASSERTEQ(numMatls, matls->size());
 
@@ -97,36 +107,41 @@ SingleVelContact::exchangeMomentum(const ProcessorGroup*,
     double centerOfMassMass;
 
     // Retrieve necessary data from DataWarehouse
-    std::vector<constNCVariable<double>> gmass(numMatls);
-    std::vector<NCVariable<Vector>> gvelocity_star(numMatls);
+    std::vector<constNCVariable<double>> gMass(numMatls);
+    std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
 
     for (int m = 0; m < matls->size(); m++) {
-      int dwi = matls->get(m);
-      new_dw->get(gmass[m], lb->gMassLabel, dwi, patch, Ghost::None, 0);
-      new_dw->getModifiable(gvelocity_star[m], gVelocity_label, dwi, patch);
+      int matID = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
+      new_dw->get(gMass[m], d_mpm_labels->gMassLabel, matID, patch, Ghost::None, 0);
+      new_dw->getModifiable(gVelocity_star[m], gVelocity_label, matID, patch);
     }
 
     delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
+    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
 
-      centerOfMassMom = zero;
+      centerOfMassMom  = zero;
       centerOfMassMass = 0.0;
       for (int n = 0; n < numMatls; n++) {
         if (d_matls.requested(n)) {
-          centerOfMassMom += gvelocity_star[n][c] * gmass[n][c];
-          centerOfMassMass += gmass[n][c];
+          centerOfMassMom += gVelocity_star[n][c] * gMass[n][c];
+          centerOfMassMass += gMass[n][c];
         }
+      }
+
+      double excludeMass = 0.;
+      if(d_exclude_material >=0){
+        excludeMass = gMass[d_exclude_material][c];
       }
 
       // Set each field's velocity equal to the center of mass velocity
       centerOfMassVelocity = centerOfMassMom / centerOfMassMass;
       for (int n = 0; n < numMatls; n++) {
-        if (d_matls.requested(n)) {
-          Dvdt = (centerOfMassVelocity - gvelocity_star[n][c]) / delT;
-          gvelocity_star[n][c] = centerOfMassVelocity;
+        if (d_matls.requested(n) && excludeMass < 1.0e-99) {
+          Dvdt = (centerOfMassVelocity - gVelocity_star[n][c]) / delT;
+          gVelocity_star[n][c] = centerOfMassVelocity;
         }
       }
     }
@@ -139,13 +154,14 @@ SingleVelContact::addComputesAndRequires(SchedulerP& sched,
                                          const MaterialSet* matls,
                                          const VarLabel* gVelocity_label)
 {
-  Task* t = scinew Task("SingleVelContact::exchangeMomentum", this,
+  Task* t = scinew Task("SingleVelContact::exchangeMomentum",
+                        this,
                         &SingleVelContact::exchangeMomentum,
                         gVelocity_label);
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::NewDW, lb->gMassLabel, Ghost::None);
+  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
 
   t->modifies(gVelocity_label, mss);
 

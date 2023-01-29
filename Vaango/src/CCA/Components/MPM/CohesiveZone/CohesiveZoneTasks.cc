@@ -254,20 +254,20 @@ CohesiveZoneTasks::updateCohesiveZones(const ProcessorGroup*,
     old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
 
     unsigned int numMPMMatls = d_mat_manager->getNumMatls("MPM");
-    std::vector<constNCVariable<Vector>> gvelocity(numMPMMatls);
-    std::vector<constNCVariable<double>> gmass(numMPMMatls);
+    std::vector<constNCVariable<Vector>> gVelocity(numMPMMatls);
+    std::vector<constNCVariable<double>> gMass(numMPMMatls);
 
     for (unsigned int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       int dwi = mpm_matl->getDWIndex();
-      new_dw->get(gvelocity[m],
+      new_dw->get(gVelocity[m],
                   d_mpm_labels->gVelocityLabel,
                   dwi,
                   patch,
                   Ghost::AroundCells,
                   d_num_ghost_nodes);
-      new_dw->get(gmass[m],
+      new_dw->get(gMass[m],
                   d_mpm_labels->gMassLabel,
                   dwi,
                   patch,
@@ -391,16 +391,16 @@ CohesiveZoneTasks::updateCohesiveZones(const ProcessorGroup*,
         // Accumulate the contribution from each surrounding vertex
         for (int k = 0; k < NN; k++) {
           IntVector node = ni[k];
-          if (gmass[TopMat][node] > 2.e-200) {
-            velTop += gvelocity[TopMat][node] * S[k];
+          if (gMass[TopMat][node] > 2.e-200) {
+            velTop += gVelocity[TopMat][node] * S[k];
             sumSTop += S[k];
           }
-          if (gmass[BotMat][node] > 2.e-200) {
-            velBot += gvelocity[BotMat][node] * S[k];
+          if (gMass[BotMat][node] > 2.e-200) {
+            velBot += gVelocity[BotMat][node] * S[k];
             sumSBot += S[k];
           }
-          massTop += gmass[TopMat][node] * S[k];
-          massBot += gmass[BotMat][node] * S[k];
+          massTop += gMass[TopMat][node] * S[k];
+          massBot += gMass[BotMat][node] * S[k];
         }
         velTop /= (sumSTop + 1.e-100);
         velBot /= (sumSBot + 1.e-100);
@@ -585,7 +585,7 @@ CohesiveZoneTasks::addCohesiveZoneForces(const ProcessorGroup*,
     unsigned int numMPMMatls            = d_mat_manager->getNumMatls("MPM");
 
     std::vector<NCVariable<Vector>> gext_force(numMPMMatls);
-    std::vector<constNCVariable<double>> gmass(numMPMMatls);
+    std::vector<constNCVariable<double>> gMass(numMPMMatls);
     for (unsigned int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         (MPMMaterial*)d_mat_manager->getMaterial("MPM", m);
@@ -595,7 +595,7 @@ CohesiveZoneTasks::addCohesiveZoneForces(const ProcessorGroup*,
                             d_mpm_labels->gExternalForceLabel,
                             dwi,
                             patch);
-      new_dw->get(gmass[m],
+      new_dw->get(gMass[m],
                   d_mpm_labels->gMassLabel,
                   dwi,
                   patch,
@@ -644,13 +644,13 @@ CohesiveZoneTasks::addCohesiveZoneForces(const ProcessorGroup*,
 
         for (int k = 0; k < NN; k++) {
           IntVector node = ni[k];
-          totMassTop += S[k] * gmass[TopMat][node];
-          totMassBot += S[k] * gmass[BotMat][node];
+          totMassTop += S[k] * gMass[TopMat][node];
+          totMassBot += S[k] * gMass[BotMat][node];
 #if 0
-          if(gmass[TopMat][node]>d_SMALL_NUM_MPM){
+          if(gMass[TopMat][node]>d_SMALL_NUM_MPM){
             sumSTop     += S[k];
           }
-          if(gmass[BotMat][node]>d_SMALL_NUM_MPM){
+          if(gMass[BotMat][node]>d_SMALL_NUM_MPM){
             sumSBot     += S[k];
           }
 #endif
@@ -676,9 +676,9 @@ CohesiveZoneTasks::addCohesiveZoneForces(const ProcessorGroup*,
             // Distribute force according to material mass on the nodes
             // to get an approximately equal contribution to the acceleration
             gext_force[BotMat][node] +=
-              czforce[idx] * S[k] * gmass[BotMat][node] / totMassBot;
+              czforce[idx] * S[k] * gMass[BotMat][node] / totMassBot;
             gext_force[TopMat][node] -=
-              czforce[idx] * S[k] * gmass[TopMat][node] / totMassTop;
+              czforce[idx] * S[k] * gMass[TopMat][node] / totMassTop;
 
             //            gext_force[BotMat][node] += czforce[idx]*S[k]/sumSBot;
             //            gext_force[TopMat][node] -= czforce[idx]*S[k]/sumSTop;
@@ -700,18 +700,18 @@ CohesiveZoneTasks::addCohesiveZoneForces(const ProcessorGroup*,
         IntVector c = *iter;
         if(gext_force[1][c].length() > 1.e-100){
            cout << "gEF_BM[" << c << "] = " << gext_force[1][c] 
-                << ", " << gext_force[1][c]/gmass[1][c] << endl;
+                << ", " << gext_force[1][c]/gMass[1][c] << endl;
            sumForceBot += gext_force[1][c];
         }
         if(gext_force[2][c].length() > 1.e-100){
            cout << "gEF_BM[" << c << "] = " << gext_force[2][c]
-                << ", " << gext_force[2][c]/gmass[2][c] << endl;
+                << ", " << gext_force[2][c]/gMass[2][c] << endl;
            sumForceTop += gext_force[2][c];
         }
         if(gext_force[1][c].length() > 1.e-100 &&
            gext_force[2][c].length() > 1.e-100){
-           cout << "ratio = " << (gext_force[1][c].x()/gmass[1][c])/
-                                 (gext_force[2][c].x()/gmass[2][c]) << endl;
+           cout << "ratio = " << (gext_force[1][c].x()/gMass[1][c])/
+                                 (gext_force[2][c].x()/gMass[2][c]) << endl;
         }
       }
       cout << "SFB = " << sumForceBot << endl;

@@ -57,7 +57,8 @@ public:
   scheduleInitialize(const LevelP& level, SchedulerP&);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP&){};
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                            [[maybe_unused]] SchedulerP&){};
 
   virtual void
   restartInitialize()
@@ -74,7 +75,8 @@ public:
   needRecompile(const GridP& grid);
 
   virtual void
-  scheduleFinalizeTimestep(const LevelP& level, SchedulerP&){};
+  scheduleFinalizeTimestep([[maybe_unused]] const LevelP& level,
+                           [[maybe_unused]] SchedulerP&){};
 
   // stubs
   virtual void

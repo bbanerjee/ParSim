@@ -99,7 +99,7 @@ SideBCData::getBCData(BCData& bc) const
 }
 
 bool
-SideBCData::inside(const Point& p) const
+SideBCData::inside([[maybe_unused]] const Point& p) const
 {
   return true;
 }
@@ -114,7 +114,7 @@ SideBCData::print()
 void
 SideBCData::determineIteratorLimits(Patch::FaceType face,
                                     const Patch* patch,
-                                    std::vector<Point>& test_pts)
+                                    [[maybe_unused]] std::vector<Point>& test_pts)
 {
   DOUT(bc_dbg, "SideBC determineIteratorLimits() " << patch->getFaceName(face));
 

@@ -46,30 +46,54 @@ namespace Uintah {
 
 class FrictionContact : public Contact
 {
+public:
+  // Constructor
+  FrictionContact(const ProcessorGroup* myworld,
+                  ProblemSpecP& ps,
+                  MaterialManagerP& d_sS,
+                  MPMLabel* lb,
+                  MPMFlags* MFlag);
+
+  // Destructor
+  virtual ~FrictionContact();
+
+  FrictionContact(const FrictionContact& con) = delete;
+  FrictionContact(FrictionContact&& con)      = delete;
+  FrictionContact&
+  operator=(const FrictionContact& con) = delete;
+  FrictionContact&
+  operator=(FrictionContact&& con) = delete;
+
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
+
 private:
-  // Prevent copying of this class
-  // copy constructor
-  FrictionContact(const FrictionContact& con);
-  FrictionContact& operator=(const FrictionContact& con);
-
-  MaterialManagerP 
- d_mat_manager;
-
   // Coefficient of friction
   double d_mu;
-  // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const;
-  int NGP;
-  int NGN;
 
   // For hardcoded normals
   enum class NormalCoordSystem
   {
-    NONE = 0,
+    NONE        = 0,
     CYLINDRICAL = 1,
-    SPHERICAL = 2,
-    CARTESIAN = 3
+    SPHERICAL   = 2,
+    CARTESIAN   = 3
   };
+
   bool d_hardcodedNormals;
   std::vector<int> d_matIndex;
 
@@ -78,24 +102,6 @@ private:
   std::vector<NormalCoordSystem> d_coordType;
   std::vector<Point> d_center;
   std::vector<Vector> d_axisDir;
-
-public:
-  // Constructor
-  FrictionContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
-
-  // Destructor
-  virtual ~FrictionContact();
-
-  void outputProblemSpec(ProblemSpecP& ps) override;
-
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
-
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
 };
 } // End namespace Uintah
 

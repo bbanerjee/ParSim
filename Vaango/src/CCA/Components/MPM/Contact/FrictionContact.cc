@@ -172,9 +172,9 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
 
   // Need access to all velocity fields at once, so store in
   // vectors of NCVariables
-  std::vector<constNCVariable<double>> gmass(numMatls);
+  std::vector<constNCVariable<double>> gMass(numMatls);
   std::vector<constNCVariable<double>> gvolume(numMatls);
-  std::vector<NCVariable<Vector>> gvelocity_star(numMatls);
+  std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
   std::vector<constNCVariable<double>> normtraction(numMatls);
   std::vector<NCVariable<double>> frictionWork(numMatls);
   std::vector<constNCVariable<Vector>> gsurfnorm(numMatls);
@@ -189,12 +189,12 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
     // Retrieve necessary data from DataWarehouse
     for (int m = 0; m < matls->size(); m++) {
       int dwi = matls->get(m);
-      new_dw->get(gmass[m], lb->gMassLabel, dwi, patch, gnone, 0);
+      new_dw->get(gMass[m], lb->gMassLabel, dwi, patch, gnone, 0);
       new_dw->get(normtraction[m], lb->gNormTractionLabel, dwi, patch, gnone,
                   0);
       new_dw->get(gsurfnorm[m], lb->gSurfNormLabel, dwi, patch, gnone, 0);
       new_dw->get(gvolume[m], lb->gVolumeLabel, dwi, patch, gnone, 0);
-      new_dw->getModifiable(gvelocity_star[m], gVelocity_label, dwi, patch);
+      new_dw->getModifiable(gVelocity_star[m], gVelocity_label, dwi, patch);
       new_dw->getModifiable(frictionWork[m], lb->frictionalWorkLabel, dwi,
                             patch);
     }
@@ -211,8 +211,8 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
       for (int n = 0; n < numMatls; n++) {
         if (!d_matls.requested(n))
           continue;
-        double mass = gmass[n][c];
-        centerOfMassMom += gvelocity_star[n][c] * mass;
+        double mass = gMass[n][c];
+        centerOfMassMom += gVelocity_star[n][c] * mass;
         centerOfMassMass += mass;
         totalNodalVol += gvolume[n][c] * 8.0 * NC_CCweight[c];
       }
@@ -266,8 +266,8 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
           for (int n = 0; n < numMatls; n++) {
             if (!d_matls.requested(n))
               continue;
-            Vector deltaVelocity = gvelocity_star[n][c] - centerOfMassVelocity;
-            double mass = gmass[n][c];
+            Vector deltaVelocity = gVelocity_star[n][c] - centerOfMassVelocity;
+            double mass = gMass[n][c];
             if (!compare(mass / centerOfMassMass, 0.0) &&
                 !compare(mass - centerOfMassMass, 0.0)) {
 
@@ -335,7 +335,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
                   Dv = Dv * ff;
                 }
                 Dv = scale_factor * Dv;
-                gvelocity_star[n][c] += Dv;
+                gVelocity_star[n][c] += Dv;
               } // traction
             }   // if !compare && !compare
           }     // for numMatls
@@ -364,7 +364,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
              iter++) {
           IntVector c = *iter;
-          frictionWork[m][c] /= (c_v * gmass[m][c] * delT);
+          frictionWork[m][c] /= (c_v * gMass[m][c] * delT);
           if (frictionWork[m][c] < 0.0) {
             std::cout << "dT/dt is negative: " << frictionWork[m][c] << std::endl;
           }

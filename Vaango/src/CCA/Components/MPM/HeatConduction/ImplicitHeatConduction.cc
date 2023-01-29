@@ -505,12 +505,12 @@ void ImplicitHeatConduction::findFixedHCDOF(const ProcessorGroup*,
     for(int m = 0; m < numMatls; m++){
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int matlindex = mpm_matl->getDWIndex();
-      constNCVariable<double> gmass;
-      new_dw->get(gmass,   lb->gMassLabel,matlindex,patch,Ghost::None,0);
+      constNCVariable<double> gMass;
+      new_dw->get(gMass,   lb->gMassLabel,matlindex,patch,Ghost::None,0);
 
       for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++){
         IntVector n = *iter;
-        GMASS[n] += gmass[n];
+        GMASS[n] += gMass[n];
       }  
     }    
 

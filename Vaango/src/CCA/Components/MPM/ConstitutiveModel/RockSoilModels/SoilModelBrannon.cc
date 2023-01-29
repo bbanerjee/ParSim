@@ -375,8 +375,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Get the grid variables
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    constNCVariable<Vector> gVelocity;
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
 
     // Get the particle variables
     delt_vartype delT;

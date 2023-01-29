@@ -120,15 +120,16 @@ SolverInterface::scheduleSetReferenceValue(const LevelP& level,
  */
 template<typename FieldT>
 void
-SolverInterface::findRefValueDiff(const Uintah::ProcessorGroup*,
-                                  const Uintah::PatchSubset* patches,
-                                  const Uintah::MaterialSubset* materials,
-                                  Uintah::DataWarehouse* old_dw,
-                                  Uintah::DataWarehouse* new_dw,
-                                  const VarLabel* xLabel,
-                                  VarLabel* refValueLabel,
-                                  const IntVector refCell,
-                                  const double refValue)
+SolverInterface::findRefValueDiff(
+  const Uintah::ProcessorGroup*,
+  const Uintah::PatchSubset* patches,
+  const Uintah::MaterialSubset* materials,
+  [[maybe_unused]] Uintah::DataWarehouse* old_dw,
+  Uintah::DataWarehouse* new_dw,
+  const VarLabel* xLabel,
+  VarLabel* refValueLabel,
+  const IntVector refCell,
+  const double refValue)
 {
   for (int ip = 0; ip < patches->size(); ++ip) {
     const Uintah::Patch* const patch = patches->get(ip);
@@ -155,13 +156,14 @@ SolverInterface::findRefValueDiff(const Uintah::ProcessorGroup*,
  */
 template<typename FieldT>
 void
-SolverInterface::computeRHSIntegral(const Uintah::ProcessorGroup*,
-                                    const Uintah::PatchSubset* patches,
-                                    const Uintah::MaterialSubset* materials,
-                                    Uintah::DataWarehouse* old_dw,
-                                    Uintah::DataWarehouse* new_dw,
-                                    const VarLabel* bLabel,
-                                    VarLabel* rhsIntegralLabel)
+SolverInterface::computeRHSIntegral(
+  const Uintah::ProcessorGroup*,
+  const Uintah::PatchSubset* patches,
+  const Uintah::MaterialSubset* materials,
+  [[maybe_unused]] Uintah::DataWarehouse* old_dw,
+  Uintah::DataWarehouse* new_dw,
+  const VarLabel* bLabel,
+  VarLabel* rhsIntegralLabel)
 {
   for (int ip = 0; ip < patches->size(); ++ip) {
     const Uintah::Patch* const patch = patches->get(ip);
@@ -193,7 +195,7 @@ void
 SolverInterface::setRefValue(const Uintah::ProcessorGroup*,
                              const Uintah::PatchSubset* patches,
                              const Uintah::MaterialSubset* materials,
-                             Uintah::DataWarehouse* old_dw,
+                             [[maybe_unused]] Uintah::DataWarehouse* old_dw,
                              Uintah::DataWarehouse* new_dw,
                              const VarLabel* xLabel,
                              VarLabel* refValueLabel)
@@ -223,13 +225,14 @@ SolverInterface::setRefValue(const Uintah::ProcessorGroup*,
  */
 template<typename FieldT>
 void
-SolverInterface::enforceSolvability(const Uintah::ProcessorGroup*,
-                                    const Uintah::PatchSubset* patches,
-                                    const Uintah::MaterialSubset* materials,
-                                    Uintah::DataWarehouse* old_dw,
-                                    Uintah::DataWarehouse* new_dw,
-                                    const VarLabel* bLabel,
-                                    VarLabel* rhsIntegralLabel)
+SolverInterface::enforceSolvability(
+  const Uintah::ProcessorGroup*,
+  const Uintah::PatchSubset* patches,
+  const Uintah::MaterialSubset* materials,
+  [[maybe_unused]] Uintah::DataWarehouse* old_dw,
+  Uintah::DataWarehouse* new_dw,
+  const VarLabel* bLabel,
+  VarLabel* rhsIntegralLabel)
 {
   // once we've computed the total integral, subtract it from the poisson rhs
   for (int ip = 0; ip < patches->size(); ++ip) {

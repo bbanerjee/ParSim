@@ -366,7 +366,7 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleVariable<double> pTempPreNew;
 
       // Get the arrays of grid data on which the new part. values depend
-      constNCVariable<Vector> gvelocity_star, gacceleration;
+      constNCVariable<Vector> gVelocity_star, gacceleration;
       constNCVariable<double> gTemperatureRate, gTemperature, gTemperatureNoBC;
       constNCVariable<double> dTdt;
 

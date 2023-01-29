@@ -78,7 +78,7 @@ MPIScatterRecords::findOrInsertRecord(const Patch* fromPatch,
                                       const Patch* toPatch,
                                       int matl,
                                       int curLevelIndex,
-                                      ParticleSubset* pset)
+                                      [[maybe_unused]] ParticleSubset* pset)
 {
   ASSERT(toPatch != 0);
   IntVector vectorToNeighbor =

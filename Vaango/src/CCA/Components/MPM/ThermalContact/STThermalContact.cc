@@ -88,7 +88,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
 
     int numMatls = d_mat_manager->getNumMaterials("MPM");
 
-    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<constNCVariable<double> > gMass(numMatls);
     std::vector<constNCVariable<double> > gTemp(numMatls);
     std::vector<NCVariable<double> > thermalContactTemperatureRate(numMatls);
     std::vector<double> Cp(numMatls);
@@ -103,7 +103,7 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
     for(int m = 0; m < numMatls; m++){
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int dwi = mpm_matl->getDWIndex();
-      new_dw->get(gmass[dwi], lb->gMassLabel,        dwi, patch, Ghost::None,0);
+      new_dw->get(gMass[dwi], lb->gMassLabel,        dwi, patch, Ghost::None,0);
       new_dw->get(gTemp[dwi], lb->gTemperatureLabel, dwi, patch, Ghost::None,0);
       new_dw->allocateAndPut(thermalContactTemperatureRate[dwi],
                             lb->gThermalContactTemperatureRateLabel,dwi,patch);
@@ -127,8 +127,8 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
       for(int m = 0; m < numMatls; m++) {
         MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
         int n = mpm_matl->getDWIndex();
-        numerator   += (gTemp[n][c] * gmass[n][c]  * Cp[m]);
-        denominator += (gmass[n][c]  * Cp[m]);
+        numerator   += (gTemp[n][c] * gMass[n][c]  * Cp[m]);
+        denominator += (gMass[n][c]  * Cp[m]);
         if (flag->d_fracture) {
           numerator   += GTemp[n][c] * Gmass[n][c]  * Cp[m];
           denominator += Gmass[n][c]  * Cp[m];  // add in second field;

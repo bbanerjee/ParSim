@@ -55,7 +55,7 @@ class GridVariable
   , public Array3<T>
 {
 public:
-  GridVariable() {}
+  GridVariable() : GridVariableBase() {}
   virtual ~GridVariable() {}
 
   inline void
@@ -248,7 +248,7 @@ public:
 
 protected:
   GridVariable(const GridVariable<T>& copy)
-    : Array3<T>(copy)
+    : GridVariableBase(), Array3<T>(copy)
   {
   }
 

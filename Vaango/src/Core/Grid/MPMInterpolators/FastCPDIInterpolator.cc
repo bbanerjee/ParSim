@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/MPMInterpolators/fastCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/FastCPDIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Parallel/Parallel.h>
@@ -34,29 +34,29 @@ using namespace Uintah;
 using namespace Uintah;
 
     
-fastCpdiInterpolator::fastCpdiInterpolator()
+FastCPDIInterpolator::FastCPDIInterpolator()
 {
   d_size = 27;
   d_patch = 0;
 }
 
-fastCpdiInterpolator::fastCpdiInterpolator(const Patch* patch)
+FastCPDIInterpolator::FastCPDIInterpolator(const Patch* patch)
 {
   d_size = 27;
   d_patch = patch;
 }
     
-fastCpdiInterpolator::~fastCpdiInterpolator()
+FastCPDIInterpolator::~FastCPDIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-fastCpdiInterpolator::clone(const Patch* patch)
+FastCPDIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<fastCpdiInterpolator>(patch);
+  return std::make_unique<FastCPDIInterpolator>(patch);
 }
     
-void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
+void FastCPDIInterpolator::findCellAndWeights(const Point& pos,
                                             std::vector<IntVector>& ni, 
                                             std::vector<double>& S,
                                             const Matrix3& size,
@@ -188,8 +188,8 @@ void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
           {
              proc0cout << "\n\nHash function was out of bounds.  Particle corners span an entire cell."
                        << "\nThis is due to the large deformation nature of your problem."
-                       << "\nUse fastCpdiInterpolator/axiCpdiInterpolator to circumvent the limitations"
-                       << "of fastCpdiInterpolator." << std::endl;
+                       << "\nUse FastCPDIInterpolator/AxiCPDIInterpolator to circumvent the limitations"
+                       << "of FastCPDIInterpolator." << std::endl;
 
              // send an exit to the program
              exit(1);
@@ -206,7 +206,7 @@ void fastCpdiInterpolator::findCellAndWeights(const Point& pos,
 
 }
  
-void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void FastCPDIInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                      std::vector<IntVector>& ni,
                                                      std::vector<Vector>& d_S,
                                                      const Matrix3& size,
@@ -375,8 +375,8 @@ void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
           {
              proc0cout << "\n\nHash function was out of bounds.  Particle corners span an entire cell."
                        << "\nThis is due to the large deformation nature of your problem." 
-                       << "\nUse fastCpdiInterpolator/axiCpdiInterpolator to circumvent the limitations" 
-                       << "of fastCpdiInterpolator." << std::endl;
+                       << "\nUse FastCPDIInterpolator/AxiCPDIInterpolator to circumvent the limitations" 
+                       << "of FastCPDIInterpolator." << std::endl;
 
              // send an exit to the program
              exit(1);
@@ -393,7 +393,7 @@ void fastCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   } // node for
 }
 
-void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
+void FastCPDIInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                           std::vector<IntVector>& ni,
                                                           std::vector<double>& S,
                                                           std::vector<Vector>& d_S,
@@ -565,8 +565,8 @@ void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& po
           {
              proc0cout << "\n\nHash function was out of bounds.  Particle corners span an entire cell."
                        << "\nThis is due to the large deformation nature of your problem."
-                       << "\nUse fastCpdiInterpolator/axiCpdiInterpolator to circumvent the limitations"
-                       << "of fastCpdiInterpolator." << std::endl;
+                       << "\nUse FastCPDIInterpolator/AxiCPDIInterpolator to circumvent the limitations"
+                       << "of FastCPDIInterpolator." << std::endl;
 
              // send an exit to the program
              exit(1);
@@ -585,7 +585,7 @@ void fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& po
   } // node for
 }
 
-int fastCpdiInterpolator::size()
+int FastCPDIInterpolator::size()
 {
   return d_size;
 }

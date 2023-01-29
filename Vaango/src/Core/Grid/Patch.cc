@@ -52,9 +52,9 @@ namespace Uintah {
 static std::atomic<int32_t> ids{ 0 };
 static Uintah::MasterLock ids_init{};
 
-Patch::Patch(const Level* level,
-             const IntVector& lowIndex,
-             const IntVector& highIndex,
+Patch::Patch([[maybe_unused]] const Level* level,
+             [[maybe_unused]] const IntVector& lowIndex,
+             [[maybe_unused]] const IntVector& highIndex,
              const IntVector& inLowIndex,
              const IntVector& inHighIndex,
              unsigned int levelIndex,

@@ -166,7 +166,7 @@ BCData::find(const std::string& bc_type, const std::string& bc_variable) const
 void
 BCData::combine(BCData& from)
 {
-  for (const auto& bc : d_BCData) {
+  for (const auto& bc : from.d_BCData) {
     setBCValues(bc);
   }
 }

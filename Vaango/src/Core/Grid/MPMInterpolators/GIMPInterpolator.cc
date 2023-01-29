@@ -59,7 +59,7 @@ void GIMPInterpolator::findCellAndWeights(const Point& pos,
                                             std::vector<IntVector>& ni, 
                                             std::vector<double>& S,
                                             const Matrix3& size,
-                                            const Matrix3& defgrad)
+                                            [[maybe_unused]] const Matrix3& defgrad)
 {
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());
@@ -198,7 +198,7 @@ void GIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                      std::vector<IntVector>& ni,
                                                      std::vector<Vector>& d_S,
                                                      const Matrix3& size,
-                                                     const Matrix3& defgrad)
+                                                     [[maybe_unused]] const Matrix3& defgrad)
 {
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());
@@ -371,7 +371,7 @@ GIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                           std::vector<double>& S,
                                                           std::vector<Vector>& d_S,
                                                           const Matrix3& size,
-                                                          const Matrix3& defgrad)
+                                                          [[maybe_unused]] const Matrix3& defgrad)
 {
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());

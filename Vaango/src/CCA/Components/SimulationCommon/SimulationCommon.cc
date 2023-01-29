@@ -593,7 +593,7 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleInitializeSystemVars(const GridP& grid,
+SimulationCommon::scheduleInitializeSystemVars([[maybe_unused]] const GridP& grid,
                                                const PatchSet* perProcPatchSet,
                                                SchedulerP& scheduler) {
   // Initialize the system vars which are on a per rank basis.
@@ -619,7 +619,7 @@ SimulationCommon::scheduleInitializeSystemVars(const GridP& grid,
 //
 void
 SimulationCommon::initializeSystemVars(const ProcessorGroup*,
-                                       const PatchSubset* patches,
+                                       [[maybe_unused]] const PatchSubset* patches,
                                        const MaterialSubset* /*matls*/,
                                        DataWarehouse* /*old_dw*/,
                                        DataWarehouse* new_dw) {
@@ -633,7 +633,7 @@ SimulationCommon::initializeSystemVars(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleUpdateSystemVars(const GridP& grid,
+SimulationCommon::scheduleUpdateSystemVars([[maybe_unused]] const GridP& grid,
                                            const PatchSet* perProcPatchSet,
                                            SchedulerP& scheduler) {
   // Update the system vars which are on a per rank basis.
@@ -659,7 +659,7 @@ SimulationCommon::scheduleUpdateSystemVars(const GridP& grid,
 //
 void
 SimulationCommon::updateSystemVars(const ProcessorGroup*,
-                                   const PatchSubset* patches,
+                                   [[maybe_unused]] const PatchSubset* patches,
                                    const MaterialSubset* /*matls*/,
                                    DataWarehouse* /*old_dw*/,
                                    DataWarehouse* new_dw) {
@@ -786,7 +786,7 @@ SimulationCommon::recomputeDelT() {
 //______________________________________________________________________
 //
 double
-SimulationCommon::recomputeDelT(const double delT) {
+SimulationCommon::recomputeDelT([[maybe_unused]] const double delT) {
   throw InternalError("recomputeDelT is not implemented for this application",
                       __FILE__,
                       __LINE__);

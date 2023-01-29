@@ -31,11 +31,11 @@
 #include <Core/Grid/MPMInterpolators/AxiGIMPInterpolator.h>
 #include <Core/Grid/MPMInterpolators/GIMPInterpolator.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
-#include <Core/Grid/MPMInterpolators/axiCpdiInterpolator.h>
-#include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
-#include <Core/Grid/MPMInterpolators/cptiInterpolator.h>
-// #include <Core/Grid/MPMInterpolators/fastCpdiInterpolator.h>
-// #include <Core/Grid/MPMInterpolators/fastAxiCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiCPDIInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPDIInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPTIInterpolator.h>
+// #include <Core/Grid/MPMInterpolators/FastCPDIInterpolator.h>
+// #include <Core/Grid/MPMInterpolators/FastAxiCPDIInterpolator.h>
 #include <Core/Grid/MPMInterpolators/BSplineInterpolator.h>
 #include <Core/Grid/MPMInterpolators/TOBSplineInterpolator.h>
 
@@ -237,23 +237,23 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   } else if (d_interpolatorType == "cpdi") {
     if (d_axisymmetric) {
-      d_interpolator = std::make_unique<axiCpdiInterpolator>();
+      d_interpolator = std::make_unique<AxiCPDIInterpolator>();
     } else {
-      d_interpolator = std::make_unique<cpdiInterpolator>();
+      d_interpolator = std::make_unique<CPDIInterpolator>();
       d_interpolator->setLcrit(d_cpdiLcrit);
     }
   } else if (d_interpolatorType == "cpti") {
     if (!d_axisymmetric) {
-      d_interpolator = std::make_unique<cptiInterpolator>();
+      d_interpolator = std::make_unique<CPTIInterpolator>();
       d_interpolator->setLcrit(d_cpdiLcrit);
     }
   }
 #if 0
  else if(d_interpolatorType=="fastcpdi"){
     if(d_axisymmetric){
-      d_interpolator = std::make_unique<fastAxiCpdiInterpolator>();
+      d_interpolator = std::make_unique<FastAxiCPDIInterpolator>();
     } else{
-      d_interpolator = std::make_unique<fastCpdiInterpolator>();
+      d_interpolator = std::make_unique<FastCPDIInterpolator>();
     }
   }
 #endif

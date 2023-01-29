@@ -379,11 +379,11 @@ public:
   void
   run();
 
-  const double
+  double
   getWaitTime() const;
-  const int
+  int
   getLocalTID() const;
-  const int
+  int
   getAffinity() const;
 
   void

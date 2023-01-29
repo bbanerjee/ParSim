@@ -659,7 +659,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<double> peakI1IDist_new;
     constParticleVariable<Vector> pvelocity;
     constParticleVariable<Matrix3> psize;
-    constNCVariable<Vector> gvelocity;
+    constNCVariable<Vector> gVelocity;
     delt_vartype delT;
     constParticleVariable<int> pLocalized;
     ParticleVariable<int> pLocalized_new;
@@ -687,7 +687,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       old_dw->get(ISVs[i], ISVLabels[i], pset);
     }
 
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
 
     constParticleVariable<double> pvolume_new;
     constParticleVariable<Matrix3> velGrad;

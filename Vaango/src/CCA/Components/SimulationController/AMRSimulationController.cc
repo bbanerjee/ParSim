@@ -99,7 +99,7 @@ Uintah::Dout gheapchecker("HeapChecker",
                           "Google Prof HeapChecker",
                           false);
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -408,13 +408,8 @@ AMRSimulationController::run()
       m_barrier_times[4] += m_barrier_timer().seconds();
 
       double avg[5];
-      Uintah::MPI::Reduce(m_barrier_times,
-                          avg,
-                          5,
-                          MPI_DOUBLE,
-                          MPI_SUM,
-                          0,
-                          d_myworld->getComm());
+      Uintah::MPI::Reduce(
+        m_barrier_times, avg, 5, MPI_DOUBLE, MPI_SUM, 0, d_myworld->getComm());
 
       std::ostringstream mesg;
       if (d_myworld->myRank() == 0) {
@@ -574,8 +569,7 @@ AMRSimulationController::doInitialTimeStep()
           d_regridder->scheduleInitializeErrorEstimate(
             d_current_gridP->getLevel(i));
           d_simulator->scheduleInitialErrorEstimate(
-            d_current_gridP->getLevel(i),
-            d_scheduler);
+            d_current_gridP->getLevel(i), d_scheduler);
 
           // We don't use error estimates if we don't make another
           // level, so don't dilate.
@@ -725,9 +719,8 @@ AMRSimulationController::executeTimeStep(int totalFine)
                 // << "outputing and checkpointing the time step. "
                 << "Ending the simulation." << std::endl;
 
-      d_simulator->setReductionVariable(d_scheduler->getLastDW(),
-                                        abortTimeStep_name,
-                                        true);
+      d_simulator->setReductionVariable(
+        d_scheduler->getLastDW(), abortTimeStep_name, true);
 
       // This should be a for the previous time step.
       // d_output->setOutputTimeStep( true, d_current_gridP );
@@ -930,10 +923,8 @@ AMRSimulationController::compileTaskGraph(int totalFine)
           DOUT(dbg,
                my_rank << "   schedule RI on level " << j << " for tg " << i
                        << " coarseold " << (j == i) << " coarsenew " << true);
-          d_simulator->scheduleRefineInterface(d_current_gridP->getLevel(j),
-                                               d_scheduler,
-                                               j == i,
-                                               true);
+          d_simulator->scheduleRefineInterface(
+            d_current_gridP->getLevel(j), d_scheduler, j == i, true);
         }
       }
     }
@@ -1056,10 +1047,8 @@ AMRSimulationController::subCycleCompile(int startDW,
       int newStride = dwStride / numFineSteps;
 
       for (int substep = 0; substep < numFineSteps; substep++) {
-        subCycleCompile(startDW + substep * newStride,
-                        newStride,
-                        numLevel + 1,
-                        substep);
+        subCycleCompile(
+          startDW + substep * newStride, newStride, numLevel + 1, substep);
       }
 
       // Coarsen and then refine_CFI at the end of the W-cycle
@@ -1095,18 +1084,14 @@ AMRSimulationController::subCycleCompile(int startDW,
         d_scheduler->mapDataWarehouse(Task::CoarseOldDW, coarseStartDW);
         d_scheduler->mapDataWarehouse(Task::CoarseNewDW,
                                       coarseStartDW + coarseDWStride);
-        d_simulator->scheduleRefineInterface(fineLevel,
-                                             d_scheduler,
-                                             true,
-                                             true);
+        d_simulator->scheduleRefineInterface(
+          fineLevel, d_scheduler, true, true);
       } else {
         // look in the NewDW all the way down
         d_scheduler->mapDataWarehouse(Task::CoarseOldDW, 0);
         d_scheduler->mapDataWarehouse(Task::CoarseNewDW, startDW + dwStride);
-        d_simulator->scheduleRefineInterface(fineLevel->getGrid()->getLevel(i),
-                                             d_scheduler,
-                                             false,
-                                             true);
+        d_simulator->scheduleRefineInterface(
+          fineLevel->getGrid()->getLevel(i), d_scheduler, false, true);
       }
     }
   }
@@ -1116,7 +1101,7 @@ void
 AMRSimulationController::subCycleExecute(int startDW,
                                          int dwStride,
                                          int levelNum,
-                                         bool rootCycle)
+                                         [[maybe_unused]] bool rootCycle)
 {
   // there are 2n+1 taskgraphs, n for the basic timestep, n for intermediate
   // timestep work, and 1 for the errorEstimate and stableTimeStep, where n

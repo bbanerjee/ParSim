@@ -26,75 +26,86 @@
 #ifndef AXI_LINEAR_INTERPOLATOR_H
 #define AXI_LINEAR_INTERPOLATOR_H
 
-#include <Core/Math/MiscMath.h>
+#include <Core/Grid/Level.h>
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/Level.h>
-#include <Core/Grid/Variables/Stencil7.h>
 #include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/Stencil7.h>
+#include <Core/Math/MiscMath.h>
 #include <vector>
 
 namespace Uintah {
 
-  using namespace Uintah;
-  using std::vector;
+using namespace Uintah;
+using std::vector;
 
-  class AxiLinearInterpolator : public ParticleInterpolator {
-    
-  public:
-    
-    AxiLinearInterpolator();
-    AxiLinearInterpolator(const Patch* patch);
-    virtual ~AxiLinearInterpolator();
-    
-    virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
+class AxiLinearInterpolator : public ParticleInterpolator
+{
 
-    virtual void findCellAndWeights(const Point& p,
-                                    std::vector<IntVector>& ni, 
-				         std::vector<double>& S,
-                                     const Matrix3& size, 
-                                     const Matrix3& defgrad);
-                                
-    virtual void findCellAndShapeDerivatives(const Point& pos,
-					          std::vector<IntVector>& ni,
-					          std::vector<Vector>& d_S,
-					          const Matrix3& size, 
-                                             const Matrix3& defgrad);
-                                        
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       std::vector<IntVector>& ni,
-                                                       std::vector<double>& S,
-                                                       std::vector<Vector>& d_S,
-                                                       const Matrix3& size,
-                                                       const Matrix3& defgrad);
-    virtual int size();
+public:
+  AxiLinearInterpolator();
+  AxiLinearInterpolator(const Patch* patch);
+  virtual ~AxiLinearInterpolator();
 
-    void findCellAndWeights(const Point& pos,
-                                    std::vector<IntVector>& ni,
-                                    std::vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {};
-                                    
-    void findCellAndWeights_CFI(const Point& pos,
+  virtual std::unique_ptr<ParticleInterpolator>
+  clone(const Patch*);
+
+  virtual void
+  findCellAndWeights(const Point& p,
+                     std::vector<IntVector>& ni,
+                     std::vector<double>& S,
+                     const Matrix3& size,
+                     const Matrix3& defgrad);
+
+  virtual void
+  findCellAndShapeDerivatives(const Point& pos,
+                              std::vector<IntVector>& ni,
+                              std::vector<Vector>& d_S,
+                              const Matrix3& size,
+                              const Matrix3& defgrad);
+
+  virtual void
+  findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                         std::vector<IntVector>& ni,
                                         std::vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {};
-                                    
-    void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            std::vector<IntVector>& CFI_ni,
-                                            std::vector<double>& S,
-                                            std::vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {};
-  private:
-    const Patch* d_patch;
-    int d_size;
-  };
-}
+                                        std::vector<Vector>& d_S,
+                                        const Matrix3& size,
+                                        const Matrix3& defgrad);
+  virtual int
+  size();
+
+  void
+  findCellAndWeights([[maybe_unused]] const Point& pos,
+                     [[maybe_unused]] std::vector<IntVector>& ni,
+                     [[maybe_unused]] std::vector<double>& S,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi_fine,
+                     [[maybe_unused]] const bool& getFiner,
+                     [[maybe_unused]] int& num_cur,
+                     [[maybe_unused]] int& num_fine,
+                     [[maybe_unused]] int& num_coarse,
+                     [[maybe_unused]] const Vector& size,
+                     [[maybe_unused]] bool coarse_part,
+                     [[maybe_unused]] const Patch* patch){};
+
+  void
+  findCellAndWeights_CFI([[maybe_unused]] const Point& pos,
+                         [[maybe_unused]] std::vector<IntVector>& ni,
+                         [[maybe_unused]] std::vector<double>& S,
+                         [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
+
+  void
+  findCellAndWeightsAndShapeDerivatives_CFI(
+    [[maybe_unused]] const Point& pos,
+    [[maybe_unused]] std::vector<IntVector>& CFI_ni,
+    [[maybe_unused]] std::vector<double>& S,
+    [[maybe_unused]] std::vector<Vector>& d_S,
+    [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
+
+private:
+  const Patch* d_patch;
+  int d_size;
+};
+} // namespace Uintah
 
 #endif
-

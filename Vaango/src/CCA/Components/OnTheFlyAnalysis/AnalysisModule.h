@@ -68,7 +68,7 @@ public:
 
   // Methods for managing the components attached via the ports.
   virtual void
-  setComponents(UintahParallelComponent* comp){};
+  setComponents([[maybe_unused]] UintahParallelComponent* comp){};
   virtual void
   setComponents(SimulationInterface* comp);
   virtual void

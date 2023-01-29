@@ -22,62 +22,41 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-#ifndef FAST_CPDI_INTERPOLATOR_H
-#define FAST_CPDI_INTERPOLATOR_H
+#ifndef FAST_AXICPDI_INTERPOLATOR_H
+#define FAST_AXICPDI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
-
+#include <Core/Grid/MPMInterpolators/FastCPDIInterpolator.h>
 namespace Uintah {
 
   class Patch;
 
-  class fastCpdiInterpolator : public ParticleInterpolator {
+  class FastAxiCPDIInterpolator : public FastCPDIInterpolator {
     
   public:
     
-    fastCpdiInterpolator();
-    fastCpdiInterpolator(const Patch* patch);
-    virtual ~fastCpdiInterpolator();
+    FastAxiCPDIInterpolator();
+    FastAxiCPDIInterpolator(const Patch* patch);
+    virtual ~FastAxiCPDIInterpolator();
     
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     
     virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
-                                    std::vector<double>& S, const Matrix3& size, const Matrix3& defgrad);
+                                    std::vector<double>& S, const Matrix3& size,
+                                    const Matrix3& defgrad);
+
     virtual void findCellAndShapeDerivatives(const Point& pos,
                                              std::vector<IntVector>& ni,
                                              std::vector<Vector>& d_S,
                                              const Matrix3& size,
                                              const Matrix3& defgrad);
+
     virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                        std::vector<IntVector>& ni,
                                                        std::vector<double>& S,
                                                        std::vector<Vector>& d_S,
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
-   //__________________________________
-   //  Needed for AMRMPM
-    virtual void findCellAndWeights(const Point& pos,
-                                    std::vector<IntVector>& ni,
-                                    std::vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {}
-                                    
-    virtual void findCellAndWeights_CFI(const Point& pos,
-                                        std::vector<IntVector>& ni,
-                                        std::vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {}
-                                    
-    virtual void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            std::vector<IntVector>& CFI_ni,
-                                            std::vector<double>& S,
-                                            std::vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {}
     virtual int size();
     
   private:
@@ -88,4 +67,3 @@ namespace Uintah {
 }
 
 #endif
-

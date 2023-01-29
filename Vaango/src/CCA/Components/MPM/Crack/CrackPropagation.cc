@@ -109,9 +109,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       Ghost::GhostType gac = Ghost::AroundCells;
-      constNCVariable<double> gmass, Gmass;
+      constNCVariable<double> gMass, Gmass;
       int NGC = 2 * NGN;
-      new_dw->get(gmass, lb->gMassLabel, dwi, patch, gac, NGC);
+      new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
 
       constParticleVariable<Matrix3> psize;
@@ -264,7 +264,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
                     patch->findCellNodes27(new_pt, ni);
 
                   for (int j = 0; j < n8or27; j++) {
-                    double totalMass = gmass[ni[j]] + Gmass[ni[j]];
+                    double totalMass = gMass[ni[j]] + Gmass[ni[j]];
                     if (totalMass < d_cell_mass / 64.) {
                       newPtInMat = NO;
                       break;

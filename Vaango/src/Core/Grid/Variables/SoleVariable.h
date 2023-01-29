@@ -25,19 +25,18 @@
 #ifndef UINTAH_HOMEBREW_SoleVARIABLE_H
 #define UINTAH_HOMEBREW_SoleVARIABLE_H
 
-#include <Core/Grid/Variables/SoleVariableBase.h>
-#include <Core/Grid/Variables/DataItem.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Disclosure/TypeUtils.h>
-#include <Core/Exceptions/TypeMismatchException.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/TypeMismatchException.h>
+#include <Core/Grid/Variables/DataItem.h>
+#include <Core/Grid/Variables/SoleVariableBase.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/Endian.h>
 
+#include <cstring>
 #include <iosfwd>
 #include <iostream>
-#include <cstring>
-
 
 namespace Uintah {
 
@@ -45,7 +44,7 @@ namespace Uintah {
 
 CLASS
    SoleVariable
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -57,116 +56,152 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Sole_Variable
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  template<class T> class SoleVariable : public SoleVariableBase {
-  public:
-    inline SoleVariable() {}
-    inline SoleVariable(T value) : value(value) {}
-    inline SoleVariable(const SoleVariable<T>& copy) :
-      value(copy.value) {}
-    virtual ~SoleVariable();
-      
-    static const TypeDescription* getTypeDescription();
-      
-    inline operator T () const {
-      return value;
-    }
-    inline T& get() {
-      return value;
-    }
-    inline const T& get() const {
-      return value;
-    }
-
-    void setData(const T&);
-
-    virtual SoleVariableBase* clone() const;
-    virtual void copyPointer(Variable&);
-
-    virtual void getSizeInfo(std::string& elems, unsigned long& totsize,
-                             void*& ptr) const {
-      elems="1";
-      totsize = sizeof(T);
-      ptr=(void*)&value;
-    }
-
-    virtual size_t getDataSize() const {
-      return sizeof(T);
-    }
-
-    virtual bool copyOut(void* dst) const {
-      void* src = (void*)(&value);
-      size_t numBytes = getDataSize();
-      void* retVal = std::memcpy(dst, src, numBytes);
-      return (retVal == dst) ? true : false;
-    }
-
-  private:
-    SoleVariable<T>& operator=(const SoleVariable<T>&copy);
-    static Variable* maker();
-    T value;
-  };
-
-  template<class T>  const TypeDescription* 
-    SoleVariable<T>::getTypeDescription()
-  {
-    static TypeDescription* td;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::Type::SoleVariable,
-                                  "SoleVariable", &maker,
-                                  fun_getTypeDescription((int*)0));
-    }
-    return td;
-  }
-
-  template<class T> Variable*  SoleVariable<T>::maker()
-  {
-    //    return scinew SoleVariable<T>();
-    return 0;
-  }
-   
-  template<class T> SoleVariable<T>::~SoleVariable()
+template<class T>
+class SoleVariable : public SoleVariableBase
+{
+public:
+  inline SoleVariable()
+    : SoleVariableBase()
   {
   }
-
-  template<class T> SoleVariableBase*  SoleVariable<T>::clone() const
+  inline SoleVariable(T value)
+    : SoleVariableBase()
+    , value(value)
   {
-    return scinew SoleVariable<T>(*this);
+  }
+  inline SoleVariable(const SoleVariable<T>& copy)
+    : SoleVariableBase()
+    , value(copy.value)
+  {
+  }
+  virtual ~SoleVariable();
+
+  static const TypeDescription*
+  getTypeDescription();
+
+  inline operator T() const { return value; }
+  inline T&
+  get()
+  {
+    return value;
+  }
+  inline const T&
+  get() const
+  {
+    return value;
   }
 
-  template<class T> void 
-    SoleVariable<T>::copyPointer(Variable& copy)
+  void
+  setData(const T&);
+
+  virtual SoleVariableBase*
+  clone() const;
+  virtual void
+  copyPointer(Variable&);
+
+  virtual void
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
   {
-    SoleVariable<T>* c = dynamic_cast<SoleVariable<T>* >(&copy);
-    if(!c)
-      SCI_THROW(TypeMismatchException("Type mismatch in sole variable", __FILE__, __LINE__));
-    *this = *c;
-  }
-   
-  template<class T> SoleVariable<T>&
-  SoleVariable<T>::operator=(const SoleVariable<T>& copy)
-  {
-    value = copy.value;
-    return *this;
+    elems   = "1";
+    totsize = sizeof(T);
+    ptr     = (void*)&value;
   }
 
-  template<class T>
-    void
-    SoleVariable<T>::setData(const T& val)
-    {
-      value = val;
-    }  
+  virtual size_t
+  getDataSize() const
+  {
+    return sizeof(T);
+  }
+
+  virtual bool
+  copyOut(void* dst) const
+  {
+    void* src       = (void*)(&value);
+    size_t numBytes = getDataSize();
+    void* retVal    = std::memcpy(dst, src, numBytes);
+    return (retVal == dst) ? true : false;
+  }
+
+private:
+  SoleVariable<T>&
+  operator=(const SoleVariable<T>& copy);
+  static Variable*
+  maker();
+  T value;
+};
+
+template<class T>
+const TypeDescription*
+SoleVariable<T>::getTypeDescription()
+{
+  static TypeDescription* td;
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Type::SoleVariable,
+                                "SoleVariable",
+                                &maker,
+                                fun_getTypeDescription((int*)0));
+  }
+  return td;
+}
+
+template<class T>
+Variable*
+SoleVariable<T>::maker()
+{
+  //    return scinew SoleVariable<T>();
+  return 0;
+}
+
+template<class T>
+SoleVariable<T>::~SoleVariable()
+{
+}
+
+template<class T>
+SoleVariableBase*
+SoleVariable<T>::clone() const
+{
+  return scinew SoleVariable<T>(*this);
+}
+
+template<class T>
+void
+SoleVariable<T>::copyPointer(Variable& copy)
+{
+  SoleVariable<T>* c = dynamic_cast<SoleVariable<T>*>(&copy);
+  if (!c) {
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in sole variable", __FILE__, __LINE__));
+  }
+  *this = *c;
+}
+
+template<class T>
+SoleVariable<T>&
+SoleVariable<T>::operator=(const SoleVariable<T>& copy)
+{
+  value = copy.value;
+  return *this;
+}
+
+template<class T>
+void
+SoleVariable<T>::setData(const T& val)
+{
+  value = val;
+}
 } // End namespace Uintah
 
 #endif

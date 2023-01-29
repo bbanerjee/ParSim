@@ -461,7 +461,7 @@ struct Attribute : public AttributeAndTagBase
   }
 
   void
-  cleanUp(bool force = false) override
+  cleanUp([[maybe_unused]] bool force = false) override
   {
     parent_ = nullptr;
   }
@@ -546,7 +546,7 @@ public:
   // as it doesn't have a parent_.
 
   void
-  cleanUp(bool force = false) override
+  cleanUp([[maybe_unused]] bool force = false) override
   {
 
     for (auto& attribute : attributes_) {

@@ -309,7 +309,9 @@ TriGeometryPiece::inside(const Point& p, int& cross) const
 }
 
 bool
-TriGeometryPiece::inside(const Point& p, int& cross, bool all_directions) const
+TriGeometryPiece::inside(const Point& p,
+                         [[maybe_unused]] int& cross,
+                         [[maybe_unused]] bool all_directions) const
 {
   // Count the number of times a ray from the point p
   // intersects the triangular surface.  If the number

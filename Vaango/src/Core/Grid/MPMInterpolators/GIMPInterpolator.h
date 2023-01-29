@@ -57,27 +57,27 @@ namespace Uintah {
                                                        const Matrix3& defgrad);
     virtual int size();
     
-    void findCellAndWeights(const Point& pos,
-                                    std::vector<IntVector>& ni,
-                                    std::vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {};
+    void findCellAndWeights([[maybe_unused]] const Point& pos,
+                                    [[maybe_unused]] std::vector<IntVector>& ni,
+                                    [[maybe_unused]] std::vector<double>& S,
+                                    [[maybe_unused]] constNCVariable<Stencil7>& zoi,
+                                    [[maybe_unused]] constNCVariable<Stencil7>& zoi_fine,
+                                    [[maybe_unused]] const bool& getFiner,
+                                    [[maybe_unused]] int& num_cur,[[maybe_unused]] int& num_fine,[[maybe_unused]] int& num_coarse,                                     
+                                    [[maybe_unused]] const Vector& size, [[maybe_unused]] bool coarse_part,
+                                    [[maybe_unused]] const Patch* patch) {};
                                     
-    void findCellAndWeights_CFI(const Point& pos,
-                                        std::vector<IntVector>& ni,
-                                        std::vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {};
+    void findCellAndWeights_CFI([[maybe_unused]] const Point& pos,
+                                        [[maybe_unused]] std::vector<IntVector>& ni,
+                                        [[maybe_unused]] std::vector<double>& S,
+                                        [[maybe_unused]] constNCVariable<Stencil7>& zoi) {};
                                     
     void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            std::vector<IntVector>& CFI_ni,
-                                            std::vector<double>& S,
-                                            std::vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {};
+                                            [[maybe_unused]] const Point& pos,
+                                            [[maybe_unused]] std::vector<IntVector>& CFI_ni,
+                                            [[maybe_unused]] std::vector<double>& S,
+                                            [[maybe_unused]] std::vector<Vector>& d_S,
+                                            [[maybe_unused]] constNCVariable<Stencil7>& zoi) {};
   private:
     const Patch* d_patch;
     int d_size;

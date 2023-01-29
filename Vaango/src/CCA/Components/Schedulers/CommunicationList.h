@@ -53,7 +53,8 @@ public:
   virtual ~CommHandle() {}
 
   virtual void
-  finishedCommunication(const ProcessorGroup* pg, MPI_Status& status)
+  finishedCommunication([[maybe_unused]] const ProcessorGroup* pg,
+                        [[maybe_unused]] MPI_Status& status)
   {
     // do nothing
   }

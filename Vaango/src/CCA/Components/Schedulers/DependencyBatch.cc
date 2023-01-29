@@ -70,7 +70,7 @@ DependencyBatch::makeMPIRequest()
 }
 
 void
-DependencyBatch::received(const ProcessorGroup* pg)
+DependencyBatch::received([[maybe_unused]] const ProcessorGroup* pg)
 {
   std::lock_guard<Uintah::MasterLock> dep_batch_lock(g_dep_batch_mutex);
 

@@ -30,80 +30,111 @@
 
 namespace Uintah {
 
-  class Patch;
+class Patch;
 
-  class BSplineInterpolator : public ParticleInterpolator {
-    
-  public:
-    
-    BSplineInterpolator();
-    BSplineInterpolator(const Patch* patch);
-    virtual ~BSplineInterpolator();
-    
-    virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
-    
-    virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
-                                    std::vector<double>& S, const Matrix3& size,
-                                    const Matrix3& defgrad);
+class BSplineInterpolator : public ParticleInterpolator
+{
 
-    virtual void findCellAndShapeDerivatives(const Point& pos,
-                                             std::vector<IntVector>& ni,
-                                             std::vector<Vector>& d_S,
-                                             const Matrix3& size,
-                                             const Matrix3& defgrad);
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       std::vector<IntVector>& ni,
-                                                       std::vector<double>& S,
-                                                       std::vector<Vector>& d_S,
-                                                       const Matrix3& size,
-                                                       const Matrix3& defgrad);
-    virtual int size();
+public:
+  BSplineInterpolator();
+  BSplineInterpolator(const Patch* patch);
+  virtual ~BSplineInterpolator();
 
-    void findNodeComponents(const int& idx, int* xn, int& count,
-                            const int& low, const int& hi);
+  virtual std::unique_ptr<ParticleInterpolator>
+  clone(const Patch*);
 
-    void getBSplineWeights(double* Sd, const int* xn,
-                           const int& low, const int& hi,
-                           const int& count, const double& cellpos);
+  virtual void
+  findCellAndWeights(const Point& p,
+                     vector<IntVector>& ni,
+                     std::vector<double>& S,
+                     const Matrix3& size,
+                     const Matrix3& defgrad);
 
-    void getBSplineGrads(double* dSd, const int* xn,
-                         const int& low, const int& hi, const int& count,
-                         const double& cellpos);
-
-    double evalType1BSpline(const double& cp);
-    double evalType2BSpline(const double& cp);
-    double evalType3BSpline(const double& cp);
-
-    double evalType1BSplineGrad(const double& cp);
-    double evalType2BSplineGrad(const double& cp);
-    double evalType3BSplineGrad(const double& cp);
-
-    void findCellAndWeights(const Point& pos,
-                                    std::vector<IntVector>& ni,
-                                    std::vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {};
-                                    
-    void findCellAndWeights_CFI(const Point& pos,
+  virtual void
+  findCellAndShapeDerivatives(const Point& pos,
+                              std::vector<IntVector>& ni,
+                              std::vector<Vector>& d_S,
+                              const Matrix3& size,
+                              const Matrix3& defgrad);
+  virtual void
+  findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                         std::vector<IntVector>& ni,
                                         std::vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {};
-                                    
-    void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            std::vector<IntVector>& CFI_ni,
-                                            std::vector<double>& S,
-                                            std::vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {};
-  private:
-    const Patch* d_patch;
-    int d_size;
-    
-  };
-}
+                                        std::vector<Vector>& d_S,
+                                        const Matrix3& size,
+                                        const Matrix3& defgrad);
+  virtual int
+  size();
+
+  void
+  findNodeComponents(const int& idx,
+                     int* xn,
+                     int& count,
+                     const int& low,
+                     const int& hi);
+
+  void
+  getBSplineWeights(double* Sd,
+                    const int* xn,
+                    const int& low,
+                    const int& hi,
+                    const int& count,
+                    const double& cellpos);
+
+  void
+  getBSplineGrads(double* dSd,
+                  const int* xn,
+                  const int& low,
+                  const int& hi,
+                  const int& count,
+                  const double& cellpos);
+
+  double
+  evalType1BSpline(const double& cp);
+  double
+  evalType2BSpline(const double& cp);
+  double
+  evalType3BSpline(const double& cp);
+
+  double
+  evalType1BSplineGrad(const double& cp);
+  double
+  evalType2BSplineGrad(const double& cp);
+  double
+  evalType3BSplineGrad(const double& cp);
+
+  void
+  findCellAndWeights([[maybe_unused]] const Point& pos,
+                     [[maybe_unused]] std::vector<IntVector>& ni,
+                     [[maybe_unused]] std::vector<double>& S,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi_fine,
+                     [[maybe_unused]] const bool& getFiner,
+                     [[maybe_unused]] int& num_cur,
+                     [[maybe_unused]] int& num_fine,
+                     [[maybe_unused]] int& num_coarse,
+                     [[maybe_unused]] const Vector& size,
+                     [[maybe_unused]] bool coarse_part,
+                     [[maybe_unused]] const Patch* patch){};
+
+  void
+  findCellAndWeights_CFI([[maybe_unused]] const Point& pos,
+                         [[maybe_unused]] std::vector<IntVector>& ni,
+                         [[maybe_unused]] std::vector<double>& S,
+                         [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
+
+  void
+  findCellAndWeightsAndShapeDerivatives_CFI(
+    [[maybe_unused]] const Point& pos,
+    [[maybe_unused]] std::vector<IntVector>& CFI_ni,
+    [[maybe_unused]] std::vector<double>& S,
+    [[maybe_unused]] std::vector<Vector>& d_S,
+    [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
+
+private:
+  const Patch* d_patch;
+  int d_size;
+};
+} // namespace Uintah
 
 #endif

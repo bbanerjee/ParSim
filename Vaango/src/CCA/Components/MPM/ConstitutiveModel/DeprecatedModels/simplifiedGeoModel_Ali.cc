@@ -381,8 +381,8 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
 
     // Get the deformation gradients first.  This is done differently
     // depending on whether or not the grid is reset.  (Should it be??? -JG)
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel,dwi,patch,gac,NGN);
+    constNCVariable<Vector> gVelocity;
+    new_dw->get(gVelocity, lb->gVelocityStarLabel,dwi,patch,gac,NGN);
     for(ParticleSubset::iterator iter=pset->begin();iter!=pset->end();iter++){
       particleIndex idx = *iter;
 
@@ -393,13 +393,13 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
         interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],
         defGrad[idx]);
 
-        computeVelocityGradient(L_new,ni,d_S, oodx, gvelocity);
+        computeVelocityGradient(L_new,ni,d_S, oodx, gVelocity);
       } else {  // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
                                   psize[idx],defGrad[idx]);
         // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gvelocity,px[idx]);
+        computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gVelocity,px[idx]);
       }
 
       // Update vel grad, def grad, J
@@ -878,8 +878,8 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
 
     // Get the deformation gradients first.  This is done differently
     // depending on whether or not the grid is reset.  (Should it be??? -JG)
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    constNCVariable<Vector> gVelocity;
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
          iter++) {
       particleIndex idx = *iter;
@@ -891,13 +891,13 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
         interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
                                                   defGrad[idx]);
 
-        computeVelocityGradient(L_new, ni, d_S, oodx, gvelocity);
+        computeVelocityGradient(L_new, ni, d_S, oodx, gVelocity);
       } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(
           px[idx], ni, S, d_S, psize[idx], defGrad[idx]);
         // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gvelocity,
+        computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gVelocity,
                                       px[idx]);
       }
 

@@ -1094,19 +1094,19 @@ DenseMatrix::eigenvectors(ColumnMatrix& R, ColumnMatrix& I, DenseMatrix& Vecs)
 #else
 
 void
-DenseMatrix::svd(DenseMatrix& U, SparseRowMatrix& S, DenseMatrix& VT)
+DenseMatrix::svd([[maybe_unused]] DenseMatrix& U, [[maybe_unused]] SparseRowMatrix& S, [[maybe_unused]] DenseMatrix& VT)
 {
   ASSERTFAIL("Build was not configured with LAPACK");
 }
 
 void
-DenseMatrix::eigenvalues(ColumnMatrix& R, ColumnMatrix& I)
+DenseMatrix::eigenvalues([[maybe_unused]] ColumnMatrix& R, [[maybe_unused]] ColumnMatrix& I)
 {
   ASSERTFAIL("Build was not configured with LAPACK");
 }
 
 void
-DenseMatrix::eigenvectors(ColumnMatrix& R, ColumnMatrix& I, DenseMatrix& Vecs)
+DenseMatrix::eigenvectors([[maybe_unused]] ColumnMatrix& R, [[maybe_unused]] ColumnMatrix& I, [[maybe_unused]] DenseMatrix& Vecs)
 {
   ASSERTFAIL("Build was not configured with LAPACK");
 }

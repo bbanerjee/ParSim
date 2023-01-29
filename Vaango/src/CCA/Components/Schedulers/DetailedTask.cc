@@ -59,7 +59,7 @@ Uintah::Dout g_external_deps_dbg(
   "DetailedTask",
   "info on external (inter-nodal) data dependencies",
   false);
-}
+} // namespace
 
 namespace Uintah {
 
@@ -183,16 +183,8 @@ DetailedTask::doit(const ProcessorGroup* pg,
   } else
 #endif
 
-    m_task->doit(this,
-                 event,
-                 pg,
-                 m_patches,
-                 m_matls,
-                 dws,
-                 nullptr,
-                 nullptr,
-                 nullptr,
-                 -1);
+    m_task->doit(
+      this, event, pg, m_patches, m_matls, dws, nullptr, nullptr, nullptr, -1);
 
   for (size_t i = 0u; i < dws.size(); ++i) {
     if (oddws[i] != nullptr) {
@@ -262,14 +254,12 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
 
             if (req->patches_dom == Task::ThisLevel && patch != neighbor) {
               // don't scrub on AMR overlapping patches...
-              IntVector l =
-                Max(neighbor->getExtraLowIndex(basis,
-                                               req->var->getBoundaryLayer()),
-                    low);
-              IntVector h =
-                Min(neighbor->getExtraHighIndex(basis,
-                                                req->var->getBoundaryLayer()),
-                    high);
+              IntVector l = Max(
+                neighbor->getExtraLowIndex(basis, req->var->getBoundaryLayer()),
+                low);
+              IntVector h = Min(neighbor->getExtraHighIndex(
+                                  basis, req->var->getBoundaryLayer()),
+                                high);
 
               patch->cullIntersection(basis,
                                       req->var->getBoundaryLayer(),
@@ -302,9 +292,8 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
                 // require from an OldDW, but only ones internal to the W-cycle
                 // (and not the previous timestep) which can have variables not
                 // exist in the OldDW.
-                count = dws[dw]->decrementScrubCount(req->var,
-                                                     matls->get(m),
-                                                     neighbor);
+                count = dws[dw]->decrementScrubCount(
+                  req->var, matls->get(m), neighbor);
                 if (g_scrubbing_dbg &&
                     (req->var->getName() == g_var_scrub_dbg ||
                      g_var_scrub_dbg == "") &&
@@ -314,9 +303,8 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
                   DOUTR(g_scrubbing_dbg,
                         "    decrementing scrub count for requires of "
                           << dws[dw]->getID() << "/" << neighbor->getID() << "/"
-                          << matls->get(m) << "/" << req->var->getName()
-                          << ": " << count
-                          << (count == 0 ? " - scrubbed\n" : "\n"));
+                          << matls->get(m) << "/" << req->var->getName() << ": "
+                          << count << (count == 0 ? " - scrubbed\n" : "\n"));
                 }
               } catch (UnknownVariable& e) {
                 std::cerr << "   BAD BOY FROM Task : " << *this << " scrubbing "
@@ -407,8 +395,8 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
             int matl = matls->get(m);
             int count;
 
-            if (m_task_group
-                  ->getScrubCount(comp->var, matl, patch, whichdw, count)) {
+            if (m_task_group->getScrubCount(
+                  comp->var, matl, patch, whichdw, count)) {
 
               if (g_scrubbing_dbg &&
                   (comp->var->getName() == g_var_scrub_dbg ||
@@ -418,8 +406,8 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseUP>& dws)
                 DOUTR(true,
                       "    setting scrub count for computes of "
                         << dws[dw]->getID() << "/" << patch->getID() << "/"
-                        << matls->get(m) << "/" << comp->var->getName()
-                        << ": " << count);
+                        << matls->get(m) << "/" << comp->var->getName() << ": "
+                        << count);
               }
               dws[dw]->setScrubCount(comp->var, matl, patch, count);
             } else {
@@ -452,9 +440,8 @@ DetailedTask::findRequiringTasks(const VarLabel* var,
        batch                  = batch->comp_next) {
     for (DetailedDep* dep = batch->head; dep != nullptr; dep = dep->m_next) {
       if (dep->m_req->var == var) {
-        requiringTasks.insert(requiringTasks.end(),
-                              dep->m_to_tasks.begin(),
-                              dep->m_to_tasks.end());
+        requiringTasks.insert(
+          requiringTasks.end(), dep->m_to_tasks.begin(), dep->m_to_tasks.end());
       }
     }
   }
@@ -475,7 +462,7 @@ void
 DetailedTask::addComputes(DependencyBatch* comp)
 {
   comp->comp_next = m_comp_head;
-  m_comp_head       = comp;
+  m_comp_head     = comp;
 }
 
 bool
@@ -488,7 +475,7 @@ DetailedTask::addRequires(DependencyBatch* req)
 void
 DetailedTask::addInternalComputes(DependencyBatch* comp)
 {
-  comp->comp_next    = m_internal_comp_head;
+  comp->comp_next      = m_internal_comp_head;
   m_internal_comp_head = comp;
 }
 
@@ -552,11 +539,8 @@ DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
       prerequisiteTask->m_internal_dependents.find(this);
 
     if (foundIt == prerequisiteTask->m_internal_dependents.end()) {
-      m_internal_dependencies.push_back(
-        InternalDependency(prerequisiteTask,
-                           this,
-                           var,
-                           0 /* 0 == not satisfied */));
+      m_internal_dependencies.push_back(InternalDependency(
+        prerequisiteTask, this, var, 0 /* 0 == not satisfied */));
       prerequisiteTask->m_internal_dependents[this] =
         &m_internal_dependencies.back();
       m_num_pending_internal_dependencies = m_internal_dependencies.size();
@@ -668,6 +652,11 @@ public:
   PatchIDIterator(const std::vector<const Patch*>::const_iterator& iter)
     : m_const_iter(iter)
   {
+  }
+
+  PatchIDIterator(const PatchIDIterator& iter2)
+  {
+    m_const_iter = iter2.m_const_iter;
   }
 
   PatchIDIterator&

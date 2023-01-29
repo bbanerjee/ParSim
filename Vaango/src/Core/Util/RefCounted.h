@@ -34,15 +34,23 @@ class RefCounted
 public:
   RefCounted();
   virtual ~RefCounted() noexcept(false);
+  RefCounted(const RefCounted&) = default;
 
-  void addReference() const;
-  bool removeReference() const;
-  int getReferenceCount() const { return d_refCount; }
+  void
+  addReference() const;
+  bool
+  removeReference() const;
+  int
+  getReferenceCount() const
+  {
+    return d_refCount;
+  }
 
 private:
-  RefCounted& operator=(const RefCounted&);
-  mutable int d_refCount{0};
-  int d_lockIndex{0};
+  RefCounted&
+  operator=(const RefCounted&) = default;
+  mutable int d_refCount{ 0 };
+  int d_lockIndex{ 0 };
 };
 
 } // End namespace Uintah

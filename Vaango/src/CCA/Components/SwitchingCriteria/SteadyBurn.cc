@@ -66,8 +66,8 @@ SteadyBurnCriteria::SteadyBurnCriteria(ProblemSpecP& ps)
 }
 
 void
-SteadyBurnCriteria::problemSetup(const ProblemSpecP& ps,
-                                 const ProblemSpecP& restart_prob_spec,
+SteadyBurnCriteria::problemSetup([[maybe_unused]] const ProblemSpecP& ps,
+                                 [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
                                  MaterialManagerP& mat_manager)
 {
   d_mat_manager = mat_manager;
@@ -110,9 +110,9 @@ SteadyBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 //  This task uses similar logic in the HEChem/steadyBurn.cc
 //  to determine if the burning criteria has been reached.
 void
-SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
+SteadyBurnCriteria::switchTest([[maybe_unused]] const ProcessorGroup* group,
                                const PatchSubset* patches,
-                               const MaterialSubset* matls,
+                               [[maybe_unused]] const MaterialSubset* matls,
                                DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {
@@ -138,7 +138,7 @@ SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
       // mpm matls
       constNCVariable<double> NC_CCweight;
       constNCVariable<double> gTempAllMatls;
-      std::vector<constNCVariable<double>> gmass(numMPMMatls);
+      std::vector<constNCVariable<double>> gMass(numMPMMatls);
       std::vector<CCVariable<double>> temp_CC_mpm(numAllMatls);
       std::vector<constCCVariable<double>> vol_frac_mpm(numAllMatls);
 
@@ -147,7 +147,7 @@ SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
       for (int m = 0; m < numMPMMatls; m++) {
         Material* matl = d_mat_manager->getMaterial(m);
         int indx       = matl->getDWIndex();
-        new_dw->get(gmass[m], d_mpm_labels->gMassLabel, indx, patch, gan, 2);
+        new_dw->get(gMass[m], d_mpm_labels->gMassLabel, indx, patch, gan, 2);
         old_dw
           ->get(vol_frac_mpm[m], d_ice_labels->vol_frac_CCLabel, indx, patch, gac, 1);
         new_dw->allocateTemporary(temp_CC_mpm[m], patch, gac, 1);
@@ -188,7 +188,7 @@ SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
           double cmass   = 1.e-100;
           for (int in = 0; in < 8; in++) {
             double NC_CCw_mass =
-              NC_CCweight[nodeIdx[in]] * gmass[m][nodeIdx[in]];
+              NC_CCweight[nodeIdx[in]] * gMass[m][nodeIdx[in]];
             cmass += NC_CCw_mass;
             Temp_CC += gTempAllMatls[nodeIdx[in]] * NC_CCw_mass;
           }
@@ -208,7 +208,7 @@ SteadyBurnCriteria::switchTest(const ProcessorGroup* group,
         double MinMass = 1.0 / d_SMALL_NUM;
         for (int in = 0; in < 8; in++) {
           double NC_CCw_mass =
-            NC_CCweight[nodeIdx[in]] * gmass[d_material][nodeIdx[in]];
+            NC_CCweight[nodeIdx[in]] * gMass[d_material][nodeIdx[in]];
           MaxMass = std::max(MaxMass, NC_CCw_mass);
           MinMass = std::min(MinMass, NC_CCw_mass);
         }

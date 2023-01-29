@@ -161,7 +161,7 @@ void TangentModulusTensor::transformBy2ndOrderTensor(const Matrix3& F, double J)
         for (int KK = 0; KK < 3; ++KK) {
          for (int LL = 0; LL < 3; ++LL) {
           c_ijkl(ii,jj,kk,ll) += F(ii,II)*F(jj,JJ)
-                                *F(kk,KK)*F(ll,LL)*(*this)(II,JJ,KK,LL);
+                                *F(kk,KK)*F(ll,LL)*(*this)(II,JJ,KK,LL)/J;
         }
        }
       }

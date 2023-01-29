@@ -121,12 +121,12 @@ UnionBCData::clone()
 }
 
 void
-UnionBCData::addBCData(BCData& bc)
+UnionBCData::addBCData([[maybe_unused]] BCData& bc)
 {
 }
 
 void
-UnionBCData::addBC(BoundCondBaseP bc)
+UnionBCData::addBC([[maybe_unused]] BoundCondBaseP bc)
 {
 }
 

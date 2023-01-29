@@ -36,8 +36,8 @@
 
 #include <cstring>
 #include <iosfwd>
-#include <memory>
 #include <iostream>
+#include <memory>
 
 namespace Uintah {
 
@@ -55,17 +55,20 @@ public:
 
 public:
   inline PerPatch()
-    : value(std::make_shared<T>())
+    : PerPatchBase()
+    , value(std::make_shared<T>())
   {
   }
 
   inline PerPatch(T value)
-    : value(std::make_shared<T>(value))
+    : PerPatchBase()
+    , value(std::make_shared<T>(value))
   {
   }
 
   inline PerPatch(const PerPatch<T>& copy)
-    : value(copy.value)
+    : PerPatchBase()
+    , value(copy.value)
   {
   }
 
@@ -147,10 +150,10 @@ public:
 
   virtual void
   emitNormal(std::ostream& out,
-             const IntVector& l,
-             const IntVector& h,
-             ProblemSpecP /*varnode*/,
-             bool outputDoubleAsFloat)
+             [[maybe_unused]] const IntVector& l,
+             [[maybe_unused]] const IntVector& h,
+             [[maybe_unused]] ProblemSpecP varnode,
+             [[maybe_unused]] bool outputDoubleAsFloat)
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
 
@@ -228,15 +231,11 @@ PerPatch<int>::getTypeDescription()
 {
   if (!td) {
     TypeDescription* sub_td;
-    sub_td = scinew TypeDescription(TypeDescription::Type::int_type,
-                                    "int",
-                                    true,
-                                    MPI_INT);
+    sub_td = scinew TypeDescription(
+      TypeDescription::Type::int_type, "int", true, MPI_INT);
 
-    td = scinew TypeDescription(TypeDescription::Type::PerPatch,
-                                "PerPatch",
-                                &maker,
-                                sub_td);
+    td = scinew TypeDescription(
+      TypeDescription::Type::PerPatch, "PerPatch", &maker, sub_td);
   }
   return td;
 }
@@ -247,15 +246,11 @@ PerPatch<double>::getTypeDescription()
 {
   if (!td) {
     TypeDescription* sub_td;
-    sub_td = scinew TypeDescription(TypeDescription::Type::double_type,
-                                    "double",
-                                    true,
-                                    MPI_DOUBLE);
+    sub_td = scinew TypeDescription(
+      TypeDescription::Type::double_type, "double", true, MPI_DOUBLE);
 
-    td = scinew TypeDescription(TypeDescription::Type::PerPatch,
-                                "PerPatch",
-                                &maker,
-                                sub_td);
+    td = scinew TypeDescription(
+      TypeDescription::Type::PerPatch, "PerPatch", &maker, sub_td);
   }
   return td;
 }
@@ -266,9 +261,8 @@ PerPatch<T>::copyPointer(Variable& copy)
 {
   const PerPatch<T>* c = dynamic_cast<const PerPatch<T>*>(&copy);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in PerPatch variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in PerPatch variable", __FILE__, __LINE__));
   }
   *this = *c;
 }
@@ -279,9 +273,8 @@ PerPatch<double>::copyPointer(Variable& copy)
 {
   const PerPatch<double>* c = dynamic_cast<const PerPatch<double>*>(&copy);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in PerPatch variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in PerPatch variable", __FILE__, __LINE__));
   }
   *this = *c;
 }
@@ -292,9 +285,8 @@ PerPatch<double*>::copyPointer(Variable& copy)
 {
   const PerPatch<double*>* c = dynamic_cast<const PerPatch<double*>*>(&copy);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in PerPatch variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in PerPatch variable", __FILE__, __LINE__));
   }
   *this = *c;
 }

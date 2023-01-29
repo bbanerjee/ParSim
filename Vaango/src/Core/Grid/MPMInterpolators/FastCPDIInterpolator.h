@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef TO_BSPLINE_INTERPOLATOR_H
-#define TO_BSPLINE_INTERPOLATOR_H
+#ifndef FAST_CPDI_INTERPOLATOR_H
+#define FAST_CPDI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
@@ -32,26 +32,23 @@ namespace Uintah {
 
 class Patch;
 
-class TOBSplineInterpolator : public ParticleInterpolator
+class FastCPDIInterpolator : public ParticleInterpolator
 {
 
-  // TO = ThirdOrder B Splines
-
 public:
-  TOBSplineInterpolator();
-  TOBSplineInterpolator(const Patch* patch);
-  virtual ~TOBSplineInterpolator();
+  FastCPDIInterpolator();
+  FastCPDIInterpolator(const Patch* patch);
+  virtual ~FastCPDIInterpolator();
 
   virtual std::unique_ptr<ParticleInterpolator>
   clone(const Patch*);
 
   virtual void
   findCellAndWeights(const Point& p,
-                     std::vector<IntVector>& ni,
+                     vector<IntVector>& ni,
                      std::vector<double>& S,
                      const Matrix3& size,
                      const Matrix3& defgrad);
-
   virtual void
   findCellAndShapeDerivatives(const Point& pos,
                               std::vector<IntVector>& ni,
@@ -102,44 +99,6 @@ public:
   }
   virtual int
   size();
-
-  void
-  findNodeComponents(const int& idx,
-                     int* xn,
-                     int& count,
-                     const int& low,
-                     const int& hi,
-                     const double& cellpos);
-
-  void
-  getBSplineWeights(double* Sd,
-                    const int* xn,
-                    const int& low,
-                    const int& hi,
-                    const int& count,
-                    const double& cellpos);
-
-  void
-  getBSplineGrads(double* dSd,
-                  const int* xn,
-                  const int& low,
-                  const int& hi,
-                  const int& count,
-                  const double& cellpos);
-
-  double
-  evalType1BSpline(const double& cp);
-  double
-  evalType2BSpline(const double& cp);
-  double
-  evalType3BSpline(const double& cp);
-
-  double
-  evalType1BSplineGrad(const double& cp);
-  double
-  evalType2BSplineGrad(const double& cp);
-  double
-  evalType3BSplineGrad(const double& cp);
 
 private:
   const Patch* d_patch;

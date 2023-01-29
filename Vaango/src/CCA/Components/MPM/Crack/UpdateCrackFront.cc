@@ -196,9 +196,9 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       Ghost::GhostType  gac = Ghost::AroundCells;
-      constNCVariable<double> gmass,Gmass;
+      constNCVariable<double> gMass,Gmass;
       int NGC=2*NGN;
-      new_dw->get(gmass, lb->gMassLabel, dwi, patch, gac, NGC);
+      new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
 
       constParticleVariable<Matrix3> psize;
@@ -231,7 +231,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
               interpolator->findCellAndWeights(pt, ni, S, psize[j],deformationGradient[j]);
 
               for(int k = 0; k < n8or27; k++) {
-                double totalMass=gmass[ni[k]]+Gmass[ni[k]];
+                double totalMass=gMass[ni[k]]+Gmass[ni[k]];
                 if(totalMass<d_cell_mass/32.) {
                   inMat[j]=NO;
                   break;
@@ -276,7 +276,7 @@ void Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
               interpolator->findCellAndWeights(cent, ni, S, psize[j],deformationGradient[j]);
 
               for(int k = 0; k < n8or27; k++) {
-                double totalMass=gmass[ni[k]]+Gmass[ni[k]];
+                double totalMass=gMass[ni[k]]+Gmass[ni[k]];
                 if(totalMass<d_cell_mass/32.) {
                   inMat[j]=NO;
                   break;

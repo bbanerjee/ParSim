@@ -152,7 +152,7 @@ public:
   virtual TaskGraph*
   getTaskGraph(unsigned int index)
   {
-    ASSERT(0 <= index && index < d_task_graphs.size());
+    ASSERT(index < d_task_graphs.size());
     return d_task_graphs[index].get();
   }
 

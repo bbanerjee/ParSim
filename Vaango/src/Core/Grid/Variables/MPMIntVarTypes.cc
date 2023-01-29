@@ -40,7 +40,7 @@ swapbytes(MetalIntVar& mp)
 
 template<>
 const std::string
-find_type_name(MetalIntVar* mp)
+find_type_name([[maybe_unused]] MetalIntVar* mp)
 {
   static const std::string name = "MetalIntVar";
   return name;
@@ -72,7 +72,7 @@ swapbytes(DStressDMetalIntVar& mp)
 
 template<>
 const std::string
-find_type_name(DStressDMetalIntVar* mp)
+find_type_name([[maybe_unused]] DStressDMetalIntVar* mp)
 {
   static const std::string name = "DStressDMetalIntVar";
   return name;
@@ -93,7 +93,7 @@ swapbytes(ArenaIntVar& mp)
 
 template<>
 const std::string
-find_type_name(ArenaIntVar* mp)
+find_type_name([[maybe_unused]] ArenaIntVar* mp)
 {
   static const std::string name = "ArenaIntVar";
   return name;
@@ -108,7 +108,7 @@ swapbytes(BorjaIntVar& mp)
 
 template<>
 const std::string
-find_type_name(BorjaIntVar* mp)
+find_type_name([[maybe_unused]] BorjaIntVar* mp)
 {
   static const std::string name = "BorjaIntVar";
   return name;
@@ -123,7 +123,7 @@ swapbytes(SoilBrannonIntVar& mp)
 
 template<>
 const std::string
-find_type_name(SoilBrannonIntVar* mp)
+find_type_name([[maybe_unused]] SoilBrannonIntVar* mp)
 {
   static const std::string name = "SoilBrannonIntVar";
   return name;
@@ -138,7 +138,7 @@ swapbytes(TabularCapIntVar& mp)
 
 template<>
 const std::string
-find_type_name(TabularCapIntVar* mp)
+find_type_name([[maybe_unused]] TabularCapIntVar* mp)
 {
   static const std::string name = "TabularCapIntVar";
   return name;

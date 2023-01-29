@@ -154,8 +154,8 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
 
       // Get nodal mass
-      constNCVariable<double> gmass, Gmass;
-      new_dw->get(gmass, lb->gMassLabel, dwi, patch, Ghost::None, 0);
+      constNCVariable<double> gMass, Gmass;
+      new_dw->get(gMass, lb->gMassLabel, dwi, patch, Ghost::None, 0);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, Ghost::None, 0);
 
       // Declare the nodal variables to be calculated
@@ -226,11 +226,11 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
              iter++) {
           IntVector c = *iter;
           // above crack
-          ggridstress[c] /= gmass[c];
-          gdispgrads[c] /= gmass[c];
-          gvelgrads[c] /= gmass[c];
-          gstrainenergydensity[c] /= gmass[c];
-          gkineticenergydensity[c] /= gmass[c];
+          ggridstress[c] /= gMass[c];
+          gdispgrads[c] /= gMass[c];
+          gvelgrads[c] /= gMass[c];
+          gstrainenergydensity[c] /= gMass[c];
+          gkineticenergydensity[c] /= gMass[c];
           // below crack
           Ggridstress[c] /= Gmass[c];
           Gdispgrads[c] /= Gmass[c];
@@ -307,7 +307,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       int dwi              = matls->get(m);
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-      constNCVariable<double> gmass, Gmass;
+      constNCVariable<double> gMass, Gmass;
       constNCVariable<int> GnumPatls;
       constNCVariable<Vector> gdisp, Gdisp;
       constNCVariable<Matrix3> ggridStress, GgridStress;
@@ -321,7 +321,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       // Get nodal solutions
       int NGC              = NJ + NGN + 1;
       Ghost::GhostType gac = Ghost::AroundCells;
-      new_dw->get(gmass, lb->gMassLabel, dwi, patch, gac, NGC);
+      new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
       new_dw->get(GnumPatls, lb->GNumPatlsLabel, dwi, patch, gac, NGC);
       new_dw->get(gdisp, lb->gDisplacementLabel, dwi, patch, gac, NGC);

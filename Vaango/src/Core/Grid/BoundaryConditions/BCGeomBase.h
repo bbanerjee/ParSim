@@ -90,10 +90,8 @@ public:
     // Default constructor
     ParticleBndSpec()
     {
-      ParticleBndSpec(ParticleBndSpec::NOTSET,
-                      ParticleBndSpec::ELASTIC,
-                      0.0,
-                      0.0);
+      ParticleBndSpec(
+        ParticleBndSpec::NOTSET, ParticleBndSpec::ELASTIC, 0.0, 0.0);
     }
 
     // Constructor
@@ -109,13 +107,9 @@ public:
     }
 
     // Copy constructor
-    ParticleBndSpec(const ParticleBndSpec& rhs)
-    {
-      bndType         = rhs.bndType;
-      wallType        = rhs.wallType;
-      restitutionCoef = rhs.restitutionCoef;
-      particlesPerSec = rhs.particlesPerSec;
-    }
+    ParticleBndSpec(const ParticleBndSpec& rhs) = default;
+    ParticleBndSpec&
+    operator=(const ParticleBndSpec& rhs) = default;
 
     /*
      *  \brief Checks whether a particle boundary condition has been specified

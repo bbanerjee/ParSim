@@ -92,8 +92,8 @@ sci_putenv(const string& key, const string& val)
 
 void
 create_sci_environment(char** env,
-                               char* execname,
-                               bool beSilent /* = false */)
+                       char* execname,
+                       [[maybe_unused]] bool beSilent /* = false */)
 {
   if (sci_environment_created) {
     std::cout

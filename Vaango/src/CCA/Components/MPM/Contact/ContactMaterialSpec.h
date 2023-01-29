@@ -109,17 +109,17 @@ public:
   }
 
   //  does this cell have the requested materials
-  bool present(const std::vector<constNCVariable<double>>& gmass,
+  bool present(const std::vector<constNCVariable<double>>& gMass,
                IntVector c) const
   {
     static const double EPSILON = 1.e-14;
 
-    size_t numMats = gmass.size();
+    size_t numMats = gMass.size();
     if (numMats > d_matls.size())
       numMats = d_matls.size();
 
     for (unsigned int imat = 0; imat < numMats; imat++) {
-      if (d_matls[imat] && fabs(gmass[imat][c]) < EPSILON) {
+      if (d_matls[imat] && fabs(gMass[imat][c]) < EPSILON) {
         // required material not present, dont apply this bc
         return false;
       }

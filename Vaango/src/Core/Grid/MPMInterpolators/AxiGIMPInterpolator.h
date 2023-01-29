@@ -30,63 +30,80 @@
 
 namespace Uintah {
 
-  class Patch;
+class Patch;
 
-  class AxiGIMPInterpolator : public ParticleInterpolator {
-    
-  public:
-    
-    AxiGIMPInterpolator();
-    AxiGIMPInterpolator(const Patch* patch);
-    virtual ~AxiGIMPInterpolator();
-    
-    virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
-    
-    virtual void findCellAndWeights(const Point& p,std::vector<IntVector>& ni,
-                                    std::vector<double>& S, const Matrix3& size,
-                                    const Matrix3& defgrad);
-    virtual void findCellAndShapeDerivatives(const Point& pos,
-                                             std::vector<IntVector>& ni,
-                                             std::vector<Vector>& d_S,
-                                             const Matrix3& size,
-                                             const Matrix3& defgrad);
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       std::vector<IntVector>& ni,
-                                                       std::vector<double>& S,
-                                                       std::vector<Vector>& d_S,
-                                                       const Matrix3& size,
-                                                       const Matrix3& defgrad);
-   //__________________________________
-   //  Needed for AMRMPM
-    virtual void findCellAndWeights(const Point& pos,
-                                    std::vector<IntVector>& ni,
-                                    std::vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {}
-                                    
-    virtual void findCellAndWeights_CFI(const Point& pos,
+class AxiGIMPInterpolator : public ParticleInterpolator
+{
+
+public:
+  AxiGIMPInterpolator();
+  AxiGIMPInterpolator(const Patch* patch);
+  virtual ~AxiGIMPInterpolator();
+
+  virtual std::unique_ptr<ParticleInterpolator>
+  clone(const Patch*);
+
+  virtual void
+  findCellAndWeights(const Point& p,
+                     std::vector<IntVector>& ni,
+                     std::vector<double>& S,
+                     const Matrix3& size,
+                     const Matrix3& defgrad);
+  virtual void
+  findCellAndShapeDerivatives(const Point& pos,
+                              std::vector<IntVector>& ni,
+                              std::vector<Vector>& d_S,
+                              const Matrix3& size,
+                              const Matrix3& defgrad);
+  virtual void
+  findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                         std::vector<IntVector>& ni,
                                         std::vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {}
-                                    
-    virtual void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            std::vector<IntVector>& CFI_ni,
-                                            std::vector<double>& S,
-                                            std::vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {}
-    virtual int size();
-    
-  private:
-    const Patch* d_patch;
-    int d_size;
-    
-  };
-}
+                                        std::vector<Vector>& d_S,
+                                        const Matrix3& size,
+                                        const Matrix3& defgrad);
+  //__________________________________
+  //  Needed for AMRMPM
+  virtual void
+  findCellAndWeights([[maybe_unused]] const Point& pos,
+                     [[maybe_unused]] std::vector<IntVector>& ni,
+                     [[maybe_unused]] std::vector<double>& S,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi,
+                     [[maybe_unused]] constNCVariable<Stencil7>& zoi_fine,
+                     [[maybe_unused]] const bool& getFiner,
+                     [[maybe_unused]] int& num_cur,
+                     [[maybe_unused]] int& num_fine,
+                     [[maybe_unused]] int& num_coarse,
+                     [[maybe_unused]] const Vector& size,
+                     [[maybe_unused]] bool coarse_part,
+                     [[maybe_unused]] const Patch* patch)
+  {
+  }
+
+  virtual void
+  findCellAndWeights_CFI([[maybe_unused]] const Point& pos,
+                         [[maybe_unused]] std::vector<IntVector>& ni,
+                         [[maybe_unused]] std::vector<double>& S,
+                         [[maybe_unused]] constNCVariable<Stencil7>& zoi)
+  {
+  }
+
+  virtual void
+  findCellAndWeightsAndShapeDerivatives_CFI(
+    [[maybe_unused]] const Point& pos,
+    [[maybe_unused]] std::vector<IntVector>& CFI_ni,
+    [[maybe_unused]] std::vector<double>& S,
+    [[maybe_unused]] std::vector<Vector>& d_S,
+    [[maybe_unused]] constNCVariable<Stencil7>& zoi)
+  {
+  }
+  virtual int
+  size();
+
+private:
+  const Patch* d_patch;
+  int d_size;
+};
+} // namespace Uintah
 
 #endif
-

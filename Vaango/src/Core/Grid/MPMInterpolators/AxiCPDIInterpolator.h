@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2018-2023 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,22 +22,23 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#ifndef FAST_AXICPDI_INTERPOLATOR_H
-#define FAST_AXICPDI_INTERPOLATOR_H
+#ifndef AXICPDI_INTERPOLATOR_H
+#define AXICPDI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
-#include <Core/Grid/MPMInterpolators/fastCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPDIInterpolator.h>
+
 namespace Uintah {
 
   class Patch;
 
-  class fastAxiCpdiInterpolator : public fastCpdiInterpolator {
+  class AxiCPDIInterpolator : public CPDIInterpolator {
     
   public:
     
-    fastAxiCpdiInterpolator();
-    fastAxiCpdiInterpolator(const Patch* patch);
-    virtual ~fastAxiCpdiInterpolator();
+    AxiCPDIInterpolator();
+    AxiCPDIInterpolator(const Patch* patch);
+    virtual ~AxiCPDIInterpolator();
     
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     

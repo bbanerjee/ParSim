@@ -40,8 +40,8 @@ class AfterCommunicationHandler
 {
 public:
   virtual ~AfterCommunicationHandler() {}
-  virtual void finishedCommunication(const ProcessorGroup*,
-                                     MPI_Status& status) = 0;
+  virtual void
+  finishedCommunication(const ProcessorGroup*, MPI_Status& status) = 0;
 };
 
 class Sendlist : public AfterCommunicationHandler
@@ -59,7 +59,8 @@ public:
   // Sendlist is to be an AfterCommuncationHandler object for the
   // MPI_CommunicationRecord template in MPIScheduler.cc.  The only task
   // it needs to do to handle finished send requests is simply get deleted.
-  virtual void finishedCommunication(const ProcessorGroup*, MPI_Status& status)
+  virtual void finishedCommunication([[maybe_unused]] const ProcessorGroup*,
+                                     [[maybe_unused]] MPI_Status& status)
   {
   }
 };
@@ -71,18 +72,24 @@ public:
   virtual ~BufferInfo() noexcept(false);
 
   BufferInfo(const BufferInfo&) = delete;
-  BufferInfo& operator=(const BufferInfo&) = delete;
-  BufferInfo(BufferInfo&&) = delete;
-  BufferInfo& operator=(BufferInfo&&) = delete;
+  BufferInfo&
+  operator=(const BufferInfo&) = delete;
+  BufferInfo(BufferInfo&&)     = delete;
+  BufferInfo&
+  operator=(BufferInfo&&) = delete;
 
-  unsigned int count() const;
-  void get_type(void*&, int&, MPI_Datatype&);
+  unsigned int
+  count() const;
+  void
+  get_type(void*&, int&, MPI_Datatype&);
 
-  void add(void* startbuf, int count, MPI_Datatype datatype,
-           bool free_datatype);
+  void
+  add(void* startbuf, int count, MPI_Datatype datatype, bool free_datatype);
 
-  void addSendlist(RefCounted*);
-  Sendlist* takeSendlist();
+  void
+  addSendlist(RefCounted*);
+  Sendlist*
+  takeSendlist();
 
 protected:
   Sendlist* d_sendlist{ nullptr };
@@ -92,7 +99,7 @@ protected:
   std::vector<bool> d_free_datatypes;
 
   void* d_buffer{ nullptr };
-  int d_count {0};
+  int d_count{ 0 };
   MPI_Datatype d_datatype{ MPI_DATATYPE_NULL };
 
   bool d_free_datatype{ false };

@@ -44,15 +44,27 @@
 
 namespace Uintah {
 
-template <class T, class Op>
-class ReductionVariable : public ReductionVariableBase {
- public:
-  inline ReductionVariable() : d_value(std::make_shared<T>()) {}
+template<class T, class Op>
+class ReductionVariable : public ReductionVariableBase
+{
+public:
+  inline ReductionVariable()
+    : ReductionVariableBase()
+    , d_value(std::make_shared<T>())
+  {
+  }
 
-  inline ReductionVariable(T value) : d_value(std::make_shared<T>(value)) {}
+  inline ReductionVariable(T value)
+    : ReductionVariableBase()
+    , d_value(std::make_shared<T>(value))
+  {
+  }
 
   inline ReductionVariable(const ReductionVariable<T, Op>& copy)
-      : d_value(copy.d_value) {}
+    : ReductionVariableBase()
+    , d_value(copy.d_value)
+  {
+  }
 
   virtual void
   copyPointer(Variable&);
@@ -60,7 +72,8 @@ class ReductionVariable : public ReductionVariableBase {
   virtual ~ReductionVariable(){};
 
   virtual const TypeDescription*
-  virtualGetTypeDescription() const {
+  virtualGetTypeDescription() const
+  {
     return getTypeDescription();
   }
 
@@ -69,51 +82,60 @@ class ReductionVariable : public ReductionVariableBase {
 
   inline operator T() const { return *d_value; }
   inline T&
-  get() {
+  get()
+  {
     return *d_value;
   }
   inline const T&
-  get() const {
+  get() const
+  {
     return *d_value;
   }
 
   void
-  setData(const T& val) {
+  setData(const T& val)
+  {
     d_value = std::make_shared<T>(val);
   };
 
   virtual ReductionVariableBase*
-  clone() const {
+  clone() const
+  {
     return scinew ReductionVariable<T, Op>(*this);
   }
 
- private:
+private:
   ReductionVariable<T, Op>&
-  operator=(const ReductionVariable<T, Op>& copy) {
+  operator=(const ReductionVariable<T, Op>& copy)
+  {
     d_value = copy.d_value;
     return *this;
   };
 
- public:
+public:
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const {
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  {
     elems   = "1";
     totsize = sizeof(T);
     ptr     = getBasePointer();
   }
 
   virtual size_t
-  getDataSize() const {
+  getDataSize() const
+  {
     return sizeof(T);
   }
 
   virtual void*
-  getBasePointer() const {
+  getBasePointer() const
+  {
     return d_value.get();
   }
 
   virtual bool
-  copyOut(void* dst) const {
+  copyOut(void* dst) const
+  {
     void* src       = (void*)(&d_value);
     size_t numBytes = getDataSize();
     void* retVal    = std::memcpy(dst, src, numBytes);
@@ -125,24 +147,29 @@ class ReductionVariable : public ReductionVariableBase {
              const IntVector& /*l*/,
              const IntVector& /*h*/,
              ProblemSpecP /*varnode*/,
-             bool /*outputDoubleAsFloat*/) {
+             bool /*outputDoubleAsFloat*/)
+  {
     ssize_t linesize = (ssize_t)(sizeof(T));
     out.write((char*)(d_value.get()), linesize);
   }
 
   virtual void
-  readNormal(std::istream& in, bool swapBytes) {
+  readNormal(std::istream& in, bool swapBytes)
+  {
     ssize_t linesize = (ssize_t)(sizeof(T));
     T val;
     in.read((char*)&val, linesize);
 
-    if (swapBytes) Uintah::swapbytes(val);
+    if (swapBytes) {
+      Uintah::swapbytes(val);
+    }
 
     d_value = std::make_shared<T>(val);
   }
 
   virtual void
-  print(std::ostream& out) const {
+  print(std::ostream& out) const
+  {
     out << *(d_value.get());
   }
 
@@ -159,14 +186,16 @@ class ReductionVariable : public ReductionVariableBase {
   //! Sets the value to a harmless value that will have no impact
   //! on a reduction.
   virtual void
-  setBenignValue() {
+  setBenignValue()
+  {
     Op op;
     d_value = std::make_shared<T>(op.getBenignValue());
   }
 
   // check if the value is benign value
   virtual bool
-  isBenignValue() const {
+  isBenignValue() const
+  {
     Op op;
     return (*(d_value.get()) == op.getBenignValue());
   }
@@ -179,18 +208,19 @@ class ReductionVariable : public ReductionVariableBase {
   // program.
   static TypeDescription::Register s_registerMe;
 
- private:
+private:
   static TypeDescription* s_td;
   static Variable*
-  maker() {
+  maker()
+  {
     return scinew ReductionVariable<T, Op>();
   }
 
- private:
+private:
   std::shared_ptr<T> d_value;
 };
 
-template <class T, class Op>
+template<class T, class Op>
 TypeDescription* ReductionVariable<T, Op>::s_td = nullptr;
 
 // The following line is the initialization (creation) of the
@@ -198,13 +228,14 @@ TypeDescription* ReductionVariable<T, Op>::s_td = nullptr;
 // (double, int, etc)).  Note, the 'registerMe' variable is created
 // when the object code is initially loaded (usually during intial
 // program load by the operating system).
-template <class T, class Op>
+template<class T, class Op>
 TypeDescription::Register ReductionVariable<T, Op>::s_registerMe(
-    getTypeDescription());
+  getTypeDescription());
 
-template <class T, class Op>
+template<class T, class Op>
 const TypeDescription*
-ReductionVariable<T, Op>::getTypeDescription() {
+ReductionVariable<T, Op>::getTypeDescription()
+{
   if (!s_td) {
     // this is a hack to get a non-null ReductionVariable var for some
     // functions the ReductionVariables are used in (i.e., task->computes).
@@ -220,11 +251,12 @@ ReductionVariable<T, Op>::getTypeDescription() {
   return s_td;
 }
 
-template <class T, class Op>
+template<class T, class Op>
 void
-ReductionVariable<T, Op>::copyPointer(Variable& copy) {
+ReductionVariable<T, Op>::copyPointer(Variable& copy)
+{
   const ReductionVariable<T, Op>* c =
-      dynamic_cast<const ReductionVariable<T, Op>*>(&copy);
+    dynamic_cast<const ReductionVariable<T, Op>*>(&copy);
   if (!c) {
     std::ostringstream out;
     out << "Type mismatch in reduction variable";
@@ -233,11 +265,12 @@ ReductionVariable<T, Op>::copyPointer(Variable& copy) {
   *this = *c;
 }
 
-template <class T, class Op>
+template<class T, class Op>
 void
-ReductionVariable<T, Op>::reduce(const ReductionVariableBase& other) {
+ReductionVariable<T, Op>::reduce(const ReductionVariableBase& other)
+{
   const ReductionVariable<T, Op>* c =
-      dynamic_cast<const ReductionVariable<T, Op>*>(&other);
+    dynamic_cast<const ReductionVariable<T, Op>*>(&other);
   if (!c) {
     std::ostringstream out;
     out << "Type mismatch in reduction variable";
@@ -248,6 +281,6 @@ ReductionVariable<T, Op>::reduce(const ReductionVariableBase& other) {
   d_value = std::make_shared<T>(val);
 }
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  //__CORE_GRID_VARIABLES_REDUCTION_VARIABLE_H__
+#endif //__CORE_GRID_VARIABLES_REDUCTION_VARIABLE_H__

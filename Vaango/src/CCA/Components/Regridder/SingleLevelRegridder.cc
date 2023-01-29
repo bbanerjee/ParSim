@@ -118,7 +118,7 @@ SingleLevelRegridder::problemSetup_BulletProofing(const int L)
 //  grid structures will remain constant
 //
 Grid*
-SingleLevelRegridder::regrid(Grid* oldGrid, int timeStep)
+SingleLevelRegridder::regrid(Grid* oldGrid, [[maybe_unused]] int timeStep)
 {
   std::vector<std::vector<IntVector>> tiles(
     std::min(oldGrid->numLevels() + 1, d_maxLevels));

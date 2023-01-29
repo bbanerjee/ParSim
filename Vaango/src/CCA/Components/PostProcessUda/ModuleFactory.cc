@@ -25,55 +25,59 @@
 #include <CCA/Components/PostProcessUda/ModuleFactory.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-#include <string>
 #include <iostream>
+#include <string>
 
 using namespace Uintah;
 
-ModuleFactory::ModuleFactory()
-{
-}
+ModuleFactory::ModuleFactory() {}
 
-ModuleFactory::~ModuleFactory()
-{
-}
+ModuleFactory::~ModuleFactory() {}
 
 //______________________________________________________________________
 //
 std::vector<Module*>
 ModuleFactory::create(const ProblemSpecP& prob_spec,
-                      MaterialManagerP  & materialManager,
-                      Output            * dataArchiver,
-                      DataArchive       * dataArchive)
+                      [[maybe_unused]] MaterialManagerP& materialManager,
+                      [[maybe_unused]] Output* dataArchiver,
+                      [[maybe_unused]] DataArchive* dataArchive)
 {
-  
+
   std::string module("");
-  
+
   ProblemSpecP PP_ps = prob_spec->findBlock("PostProcess");
 
-  if( !PP_ps ) {
-    throw ProblemSetupException( "\nERROR<PostProcess>: Could not find find <PostPocess> tag. \n", __FILE__, __LINE__ );
+  if (!PP_ps) {
+    throw ProblemSetupException(
+      "\nERROR<PostProcess>: Could not find find <PostPocess> tag. \n",
+      __FILE__,
+      __LINE__);
   }
 
   std::vector<Module*> modules;
-  
-  for( ProblemSpecP module_ps = PP_ps->findBlock( "Module" ); module_ps != nullptr; module_ps = module_ps->findNextBlock( "Module" ) ) {
 
-    if( !module_ps ) {
-      throw ProblemSetupException( "\nERROR<PostProcess>: Could not find find <Module> tag. \n", __FILE__, __LINE__ );
+  for (ProblemSpecP module_ps = PP_ps->findBlock("Module");
+       module_ps != nullptr;
+       module_ps = module_ps->findNextBlock("Module")) {
+
+    if (!module_ps) {
+      throw ProblemSetupException(
+        "\nERROR<PostProcess>: Could not find find <Module> tag. \n",
+        __FILE__,
+        __LINE__);
     }
 
     std::map<std::string, std::string> attributes;
     module_ps->getAttributes(attributes);
     module = attributes["name"];
 
-#if 0     // Needs to be filled in.
+#if 0 // Needs to be filled in.
 
     if ( module == "reduceUda" ) {
       // do nothing
-    } 
+    }
 #endif
-  } 
+  }
 
   return modules;
 }

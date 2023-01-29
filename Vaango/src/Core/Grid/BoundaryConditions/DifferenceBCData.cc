@@ -107,12 +107,12 @@ DifferenceBCData::clone()
 }
 
 void
-DifferenceBCData::addBCData(BCData& bc)
+DifferenceBCData::addBCData([[maybe_unused]] BCData& bc)
 {
 }
 
 void
-DifferenceBCData::addBC(BoundCondBaseP bc)
+DifferenceBCData::addBC([[maybe_unused]] BoundCondBaseP bc)
 {
 }
 

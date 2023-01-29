@@ -145,7 +145,7 @@ plot  'gEF.1L.dat'            using xdir:col t '1 L',\
       'gEF.2L.1.dat'          using xdir:col t 'L-2'
 
 #__________________________________
-#   gmass
+#   gMass
 #__________________________________
 set origin 0.0,0.25
 

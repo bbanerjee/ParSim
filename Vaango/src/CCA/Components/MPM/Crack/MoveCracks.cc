@@ -202,13 +202,13 @@ Crack::MoveCracks(const ProcessorGroup*,
       old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
 
       Ghost::GhostType  gac = Ghost::AroundCells;
-      constNCVariable<double> gmass,Gmass;
+      constNCVariable<double> gMass,Gmass;
       constNCVariable<int>    gnum,Gnum;
-      constNCVariable<Vector> gvelocity_star, Gvelocity_star;
+      constNCVariable<Vector> gVelocity_star, Gvelocity_star;
       int NGC=2*NGN;
-      new_dw->get(gmass,         lb->gMassLabel,        dwi,patch,gac,NGC);
+      new_dw->get(gMass,         lb->gMassLabel,        dwi,patch,gac,NGC);
       new_dw->get(gnum,          lb->gNumPatlsLabel,    dwi,patch,gac,NGC);
-      new_dw->get(gvelocity_star,lb->gVelocityStarLabel,dwi,patch,gac,NGC);
+      new_dw->get(gVelocity_star,lb->gVelocityStarLabel,dwi,patch,gac,NGC);
       new_dw->get(Gmass,         lb->GMassLabel,        dwi,patch,gac,NGC);
       new_dw->get(Gnum,          lb->GNumPatlsLabel,    dwi,patch,gac,NGC);
       new_dw->get(Gvelocity_star,lb->GVelocityStarLabel,dwi,patch,gac,NGC);
@@ -244,9 +244,9 @@ Crack::MoveCracks(const ProcessorGroup*,
                   Point pi=patch->nodePosition(ni[k]);
                   if(PhysicalGlobalGridContainsPoint(dx_min,pi) &&
                              (gnum[ni[k]]+Gnum[ni[k]]!=0)) {
-                    mg = gmass[ni[k]];
+                    mg = gMass[ni[k]];
                     mG = Gmass[ni[k]];
-                    vg = gvelocity_star[ni[k]];
+                    vg = gVelocity_star[ni[k]];
                     vG = Gvelocity_star[ni[k]];
                     vcm += (mg*vg+mG*vG)/(mg+mG)*S[k]/sumS;
                   }

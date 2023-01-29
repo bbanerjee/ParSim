@@ -124,7 +124,7 @@ CorrugEdgeGeomPiece::clone() const
 /*! Find if a point is inside the plate with corrugated edge */
 /////////////////////////////////////////////////////////////////////////////
 bool
-CorrugEdgeGeomPiece::inside(const Point& p) const
+CorrugEdgeGeomPiece::inside([[maybe_unused]] const Point& p) const
 {
   bool isInside = false;
 

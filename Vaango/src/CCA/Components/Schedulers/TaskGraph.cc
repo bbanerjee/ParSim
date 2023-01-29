@@ -99,7 +99,7 @@ namespace Uintah {
 TaskGraph::TaskGraph(SchedulerCommon* sc,
                      const ProcessorGroup* pg,
                      Scheduler::tgType type,
-                     int index)
+                     [[maybe_unused]] int index)
   : d_scheduler(sc)
   , d_proc_group(pg)
   , d_type(type)
@@ -130,7 +130,7 @@ TaskGraph::initialize()
 }
 
 void
-TaskGraph::nullSort(std::vector<Task*>& tasks)
+TaskGraph::nullSort([[maybe_unused]] std::vector<Task*>& tasks)
 {
   DOUTR(g_detailed_task_dbg, " TaskGraph::nullSort ");
 
@@ -1579,7 +1579,7 @@ TaskGraph::createDetailedDependencies(DetailedTask* dtask,
 int
 TaskGraph::findVariableLocation(Task::Dependency* req,
                                 const Patch* patch,
-                                int matl,
+                                [[maybe_unused]] int matl,
                                 int iteration)
 {
   // This needs to be improved, especially for re-distribution on

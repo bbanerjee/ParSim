@@ -545,7 +545,7 @@ Task::modifiesWithScratchGhost(const VarLabel* var,
                                MaterialDomainSpec matls_dom,
                                Ghost::GhostType gtype,
                                int numGhostCells,
-                               SearchTG whichTG)
+                               [[maybe_unused]] SearchTG whichTG)
 {
   this->requires(
     NewDW, var, patches, patches_dom, matls, matls_dom, gtype, numGhostCells);

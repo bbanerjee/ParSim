@@ -42,7 +42,7 @@ class SwitchingCriteria : public UintahParallelPort
 {
 
 public:
-  SwitchingCriteria() = default;
+  SwitchingCriteria()          = default;
   virtual ~SwitchingCriteria() = default;
 
   // Disallow copy and move
@@ -59,9 +59,11 @@ public:
                MaterialManagerP& state) = 0;
 
   virtual void
-  scheduleInitialize(const LevelP& level, SchedulerP& sched){};
+  scheduleInitialize([[maybe_unused]] const LevelP& level,
+                     [[maybe_unused]] SchedulerP& sched){};
   virtual void
-  scheduleSwitchTest(const LevelP& level, SchedulerP& sched){};
+  scheduleSwitchTest([[maybe_unused]] const LevelP& level,
+                     [[maybe_unused]] SchedulerP& sched){};
 
   virtual void
   setSwitchLabel(const VarLabel* switch_label)
@@ -72,6 +74,6 @@ public:
 protected:
   const VarLabel* d_switch_label;
 };
-}
+} // namespace Uintah
 
 #endif //__VAANGO_CCA_PORTS_SwitchingCriteria_H__

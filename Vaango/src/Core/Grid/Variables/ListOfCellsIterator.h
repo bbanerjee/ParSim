@@ -59,6 +59,14 @@ public:
     reset();
   }
 
+  ListOfCellsIterator&
+  operator=(const ListOfCellsIterator& copy)
+  {
+    d_list_of_cells = copy.d_list_of_cells;
+    reset();
+    return *this;
+  }
+
   /**
    * prefix operator to move the iterator forward
    */

@@ -843,7 +843,7 @@ void
 RegridderCommon::Dilate(const ProcessorGroup*,
                         const PatchSubset* patches,
                         const MaterialSubset*,
-                        DataWarehouse* old_dw,
+                        [[maybe_unused]] DataWarehouse* old_dw,
                         DataWarehouse* new_dw,
                         const VarLabel* to_put,
                         CCVariable<int>* filter,

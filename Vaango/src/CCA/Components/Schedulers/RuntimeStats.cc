@@ -98,9 +98,8 @@ std::unique_ptr<std::atomic<int64_t>[]> g_task_wait_times{ nullptr };
 size_t
 impl_get_global_id(DetailedTask const* t)
 {
-  auto const itr = std::lower_bound(g_task_names.begin(),
-                                    g_task_names.end(),
-                                    t->getTask()->getName());
+  auto const itr = std::lower_bound(
+    g_task_names.begin(), g_task_names.end(), t->getTask()->getName());
   return itr - g_task_names.begin();
 }
 
@@ -179,9 +178,8 @@ RuntimeStats::initialize_timestep(
     }
 
     g_task_names.clear();
-    g_task_names.insert(g_task_names.begin(),
-                        task_names.begin(),
-                        task_names.end());
+    g_task_names.insert(
+      g_task_names.begin(), task_names.begin(), task_names.end());
 
     g_num_tasks = g_task_names.size();
 
@@ -304,11 +302,13 @@ rank_sum_min_max_impl(int64_t const* in, int64_t* inout, int len)
 }
 
 extern "C" void
-rank_sum_min_max(void* in, void* inout, int* len, MPI_Datatype* type)
+rank_sum_min_max(void* in,
+                 void* inout,
+                 int* len,
+                 [[maybe_unused]] MPI_Datatype* type)
 {
-  rank_sum_min_max_impl(reinterpret_cast<int64_t*>(in),
-                        reinterpret_cast<int64_t*>(inout),
-                        *len);
+  rank_sum_min_max_impl(
+    reinterpret_cast<int64_t*>(in), reinterpret_cast<int64_t*>(inout), *len);
 }
 
 MPI_Op rank_sum_min_max_op;
@@ -437,68 +437,44 @@ RuntimeStats::report(MPI_Comm comm)
       RuntimeStats::Memory,
       []() { return MPI::Impl::SendVolumeStats::get(MPI::Impl::COMM_SIZE); },
       []() { return MPI::Impl::SendVolumeStats::clear(); });
-    register_report(mpi_stats,
-                    "Volume Send0: <= 64B",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::SendVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_0);
-                    });
-    register_report(mpi_stats,
-                    "Volume Send1: <= 4KB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::SendVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_1);
-                    });
-    register_report(mpi_stats,
-                    "Volume Send2: <= 2MB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::SendVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_2);
-                    });
-    register_report(mpi_stats,
-                    "Volume Send3: >  2MB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::SendVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_3);
-                    });
+    register_report(
+      mpi_stats, "Volume Send0: <= 64B", RuntimeStats::Count, []() {
+        return MPI::Impl::SendVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_0);
+      });
+    register_report(
+      mpi_stats, "Volume Send1: <= 4KB", RuntimeStats::Count, []() {
+        return MPI::Impl::SendVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_1);
+      });
+    register_report(
+      mpi_stats, "Volume Send2: <= 2MB", RuntimeStats::Count, []() {
+        return MPI::Impl::SendVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_2);
+      });
+    register_report(
+      mpi_stats, "Volume Send3: >  2MB", RuntimeStats::Count, []() {
+        return MPI::Impl::SendVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_3);
+      });
     register_report(
       mpi_stats,
       "Volume Recv TOTAL   ",
       RuntimeStats::Memory,
       []() { return MPI::Impl::RecvVolumeStats::get(MPI::Impl::COMM_SIZE); },
       []() { return MPI::Impl::RecvVolumeStats::clear(); });
-    register_report(mpi_stats,
-                    "Volume Recv0: <= 64B",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::RecvVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_0);
-                    });
-    register_report(mpi_stats,
-                    "Volume Recv1: <= 4KB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::RecvVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_1);
-                    });
-    register_report(mpi_stats,
-                    "Volume Recv2: <= 2MB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::RecvVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_2);
-                    });
-    register_report(mpi_stats,
-                    "Volume Recv3: >  2MB",
-                    RuntimeStats::Count,
-                    []() {
-                      return MPI::Impl::RecvVolumeStats::get(
-                        MPI::Impl::COMM_HISTOGRAM_3);
-                    });
+    register_report(
+      mpi_stats, "Volume Recv0: <= 64B", RuntimeStats::Count, []() {
+        return MPI::Impl::RecvVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_0);
+      });
+    register_report(
+      mpi_stats, "Volume Recv1: <= 4KB", RuntimeStats::Count, []() {
+        return MPI::Impl::RecvVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_1);
+      });
+    register_report(
+      mpi_stats, "Volume Recv2: <= 2MB", RuntimeStats::Count, []() {
+        return MPI::Impl::RecvVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_2);
+      });
+    register_report(
+      mpi_stats, "Volume Recv3: >  2MB", RuntimeStats::Count, []() {
+        return MPI::Impl::RecvVolumeStats::get(MPI::Impl::COMM_HISTOGRAM_3);
+      });
   }
 
   if (task_stats) {

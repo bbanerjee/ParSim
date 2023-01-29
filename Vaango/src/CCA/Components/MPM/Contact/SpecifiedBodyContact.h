@@ -188,7 +188,6 @@ private:
   bool d_include_rotation{ false };
   int d_rotation_axis{ -99 };
   bool d_rigid_velocity{ true };
-  int d_exclude_material{ -999 };
   std::string d_filename{ "none" };
   IntVector d_direction{ 0, 0, 1 };
   std::vector<std::pair<double, Vector>> d_vel_profile;

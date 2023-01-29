@@ -22,7 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <Core/Grid/MPMInterpolators/axiCpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/AxiCPDIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>
@@ -33,29 +33,29 @@ using namespace Uintah;
 using namespace Uintah;
 
     
-axiCpdiInterpolator::axiCpdiInterpolator()
+AxiCPDIInterpolator::AxiCPDIInterpolator()
 {
   d_size = 32;
   d_patch = 0;
 }
 
-axiCpdiInterpolator::axiCpdiInterpolator(const Patch* patch)
+AxiCPDIInterpolator::AxiCPDIInterpolator(const Patch* patch)
 {
   d_size = 32;
   d_patch = patch;
 }
     
-axiCpdiInterpolator::~axiCpdiInterpolator()
+AxiCPDIInterpolator::~AxiCPDIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-axiCpdiInterpolator::clone(const Patch* patch)
+AxiCPDIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<axiCpdiInterpolator>(patch);
+  return std::make_unique<AxiCPDIInterpolator>(patch);
 }
     
-void axiCpdiInterpolator::findCellAndWeights(const Point& pos,
+void AxiCPDIInterpolator::findCellAndWeights(const Point& pos,
                                             std::vector<IntVector>& ni, 
                                             std::vector<double>& S,
                                             const Matrix3& size,
@@ -130,7 +130,7 @@ void axiCpdiInterpolator::findCellAndWeights(const Point& pos,
   }
 }
  
-void axiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void AxiCPDIInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                    std::vector<IntVector>& ni,
                                                    std::vector<Vector>& d_S,
                                                    const Matrix3& size,
@@ -244,7 +244,7 @@ void axiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   }
 }
 
-void axiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(
+void AxiCPDIInterpolator::findCellAndWeightsAndShapeDerivatives(
                                                          const Point& pos,
                                                          std::vector<IntVector>& ni,
                                                          std::vector<double>& S,
@@ -366,7 +366,7 @@ void axiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(
   }
 }
 
-int axiCpdiInterpolator::size()
+int AxiCPDIInterpolator::size()
 {
   return d_size;
 }

@@ -126,10 +126,10 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
 
     // Nodal solutions above crack
     std::vector<constNCVariable<int> >    gNumPatls(numMatls);
-    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<constNCVariable<double> > gMass(numMatls);
     std::vector<constNCVariable<double> > gvolume(numMatls);
     std::vector<constNCVariable<Vector> > gdisplacement(numMatls);
-    std::vector<NCVariable<Vector> >      gvelocity(numMatls);
+    std::vector<NCVariable<Vector> >      gVelocity(numMatls);
 
     // Nodal solutions below crack
     std::vector<constNCVariable<int> >    GNumPatls(numMatls);
@@ -146,11 +146,11 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
       int dwi = matls->get(m);
       // Get data above crack
       new_dw->get(gNumPatls[m], lb->gNumPatlsLabel, dwi, patch, gnone, 0);
-      new_dw->get(gmass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
+      new_dw->get(gMass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
       new_dw->get(gvolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
       new_dw->get(gdisplacement[m],lb->gDisplacementLabel,dwi,patch,gnone,0);
 
-      new_dw->getModifiable(gvelocity[m],lb->gVelocityLabel,dwi,patch);
+      new_dw->getModifiable(gVelocity[m],lb->gVelocityLabel,dwi,patch);
 
       // Get data below crack
       new_dw->get(GNumPatls[m],lb->GNumPatlsLabel,  dwi, patch, gnone, 0);
@@ -176,8 +176,8 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
         if(norm.length()<1.e-16) continue;  // should not happen now, but ...
 
         // Get nodal solutions
-        ma=gmass[m][c];
-        va=gvelocity[m][c];
+        ma=gMass[m][c];
+        va=gVelocity[m][c];
         mb=Gmass[m][c];
         vb=Gvelocity[m][c];
         vc=(va*ma+vb*mb)/(ma+mb);
@@ -190,19 +190,19 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
           
         // If contact, adjust velocity field 
         if(!contact) { // No contact
-          gvelocity[m][c]=gvelocity[m][c];
+          gVelocity[m][c]=gVelocity[m][c];
           Gvelocity[m][c]=Gvelocity[m][c];
           frictionWork[m][c] += 0.;
         }
         else { // There is contact, apply contact law
           if(crackType[m]=="null") { // Do nothing 
-            gvelocity[m][c]=gvelocity[m][c];
+            gVelocity[m][c]=gVelocity[m][c];
             Gvelocity[m][c]=Gvelocity[m][c];
             frictionWork[m][c] += 0.;
           }
 
           else if(crackType[m]=="stick") { // Assign centerofmass velocity
-            gvelocity[m][c]=vc;
+            gVelocity[m][c]=vc;
             Gvelocity[m][c]=vc;
             frictionWork[m][c] += 0.;
           }
@@ -223,11 +223,11 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
                if(ratioa>0.) mua=cmu[m];
                if(ratioa<0.) mua=-cmu[m];
                deltva=-(na+ta*mua)*dvan;
-               gvelocity[m][c]=va+deltva;
+               gVelocity[m][c]=va+deltva;
                frictionWork[m][c]+=ma*cmu[m]*dvan*dvan*(fabs(ratioa)-cmu[m]);
             }
             else { // stick
-               gvelocity[m][c]=vc;
+               gVelocity[m][c]=vc;
                frictionWork[m][c] += 0.;
             }
 
@@ -306,12 +306,12 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
     ASSERTEQ(numMatls, matls->size());
 
     // Nodal solutions above crack
-    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<constNCVariable<double> > gMass(numMatls);
     std::vector<constNCVariable<double> > gvolume(numMatls);
     std::vector<constNCVariable<int> >    gNumPatls(numMatls);
     std::vector<constNCVariable<Vector> > gdisplacement(numMatls);
-    std::vector<constNCVariable<Vector> > gvelocity(numMatls); 
-    std::vector<NCVariable<Vector> >      gvelocity_star(numMatls);
+    std::vector<constNCVariable<Vector> > gVelocity(numMatls); 
+    std::vector<NCVariable<Vector> >      gVelocity_star(numMatls);
     std::vector<NCVariable<Vector> >      gacceleration(numMatls);
     // Nodal solutions below crack
     std::vector<constNCVariable<double> > Gmass(numMatls);
@@ -330,13 +330,13 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
     for(int m=0;m<matls->size();m++){
       int dwi = matls->get(m);
       // Get nodal data above crack
-      new_dw->get(gmass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
+      new_dw->get(gMass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
       new_dw->get(gvolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
       new_dw->get(gNumPatls[m], lb->gNumPatlsLabel, dwi, patch, gnone, 0);
       new_dw->get(gdisplacement[m],lb->gDisplacementLabel,dwi,patch,gnone,0);
-      new_dw->get(gvelocity[m], lb->gVelocityLabel, dwi, patch, gnone, 0); 
+      new_dw->get(gVelocity[m], lb->gVelocityLabel, dwi, patch, gnone, 0); 
       
-      new_dw->getModifiable(gvelocity_star[m], lb->gVelocityStarLabel,
+      new_dw->getModifiable(gVelocity_star[m], lb->gVelocityStarLabel,
                                                          dwi, patch);
       new_dw->getModifiable(gacceleration[m],lb->gAccelerationLabel,
                                                          dwi, patch);
@@ -369,13 +369,13 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
         if(norm.length()<1.e-16) continue;   // should not happen now, but ...
 
         // Get nodal solutions
-        ma=gmass[m][c];           // mass above crack
+        ma=gMass[m][c];           // mass above crack
         mb=Gmass[m][c];           // mass below crack
         aa=gacceleration[m][c];   // acceleration above crack
         ab=Gacceleration[m][c];   // acceleration below crack
-        va0=gvelocity[m][c];      // velocity before integration (above crack)
+        va0=gVelocity[m][c];      // velocity before integration (above crack)
         vb0=Gvelocity[m][c];      // velocity before integration (below crack)
-        va=gvelocity_star[m][c];  // velocity after integration  (above crack)
+        va=gVelocity_star[m][c];  // velocity after integration  (above crack)
         vb=Gvelocity_star[m][c];  // velocity after integration  (below crack)
         vc=(va*ma+vb*mb)/(ma+mb); // center-of-mass velocity
                         
@@ -387,7 +387,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
           
         // If contact, adjust velocity field  
         if(!contact) { // No contact
-          gvelocity_star[m][c]=gvelocity_star[m][c];
+          gVelocity_star[m][c]=gVelocity_star[m][c];
           gacceleration[m][c]=gacceleration[m][c];
           Gvelocity_star[m][c]=Gvelocity_star[m][c];
           Gacceleration[m][c]=Gacceleration[m][c];
@@ -395,7 +395,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
         }
         else { // There is contact, apply contact law
           if(crackType[m]=="null") { // Do nothing
-            gvelocity_star[m][c]=gvelocity_star[m][c];
+            gVelocity_star[m][c]=gVelocity_star[m][c];
             gacceleration[m][c]=gacceleration[m][c];
             Gvelocity_star[m][c]=Gvelocity_star[m][c];
             Gacceleration[m][c]=Gacceleration[m][c];
@@ -403,7 +403,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
           }
 
           else if(crackType[m]=="stick") { // Assign centerofmass velocity
-            gvelocity_star[m][c]=vc;
+            gVelocity_star[m][c]=vc;
             gacceleration[m][c]=aa+(vb-va)*mb/(ma+mb)/delT;
             Gvelocity_star[m][c]=vc;
             Gacceleration[m][c]=ab+(va-vb)*ma/(ma+mb)/delT;
@@ -426,12 +426,12 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
                if(ratioa>0.) mua= cmu[m];
                if(ratioa<0.) mua=-cmu[m];
                deltva=-(na+ta*mua)*dvan;
-               gvelocity_star[m][c]=va+deltva;
+               gVelocity_star[m][c]=va+deltva;
                gacceleration[m][c]=aa+deltva/delT;
                frictionWork[m][c]+=ma*cmu[m]*dvan*dvan*(fabs(ratioa)-cmu[m]);
             }
             else { // stick
-               gvelocity_star[m][c]=vc;
+               gVelocity_star[m][c]=vc;
                gacceleration[m][c]=aa+(vb-va)*mb/(ma+mb)/delT;
                frictionWork[m][c]+=0.0;
             }

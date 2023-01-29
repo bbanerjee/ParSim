@@ -117,17 +117,17 @@ private: // class Task
 
     virtual ~Action() {}
 
-    virtual void doit(DetailedTask* dtask,
-                      CallBackEvent event,
+    virtual void doit([[maybe_unused]] DetailedTask* dtask,
+                      [[maybe_unused]] CallBackEvent event,
                       const ProcessorGroup* pg,
                       const PatchSubset* patches,
                       const MaterialSubset* matls,
                       DataWarehouse* fromDW,
                       DataWarehouse* toDW,
-                      void* oldTaskGpuDW,
-                      void* newTaskGpuDW,
-                      void* stream,
-                      int deviceID)
+                      [[maybe_unused]] void* oldTaskGpuDW,
+                      [[maybe_unused]] void* newTaskGpuDW,
+                      [[maybe_unused]] void* stream,
+                      [[maybe_unused]] int deviceID)
     {
       doit_impl(pg,
                 patches,

@@ -3465,7 +3465,7 @@ OnDemandDataWarehouse::getValidNeighbors(
   Ghost::GhostType gtype,
   int numGhostCells,
   std::vector<ValidNeighbors>& validNeighbors,
-  bool ignoreMissingNeighbors /* = false */
+  [[maybe_unused]] bool ignoreMissingNeighbors /* = false */
 )
 {
 
@@ -3717,7 +3717,7 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
                                     const VarLabel* var,
                                     const PatchSubset* patches,
                                     const MaterialSubset* matls,
-                                    void* dtask,
+                                    [[maybe_unused]] void* dtask,
                                     bool replace /*=false*/,
                                     const PatchSubset* newPatches /*=0*/)
 {
@@ -3938,11 +3938,11 @@ OnDemandDataWarehouse::logMemoryUse(std::ostream& out,
 }
 
 inline void
-OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
-                                      int matlIndex,
-                                      const Patch* patch,
-                                      Ghost::GhostType gtype,
-                                      int numGhostCells)
+OnDemandDataWarehouse::checkGetAccess([[maybe_unused]] const VarLabel* label,
+                                      [[maybe_unused]] int matlIndex,
+                                      [[maybe_unused]] const Patch* patch,
+                                      [[maybe_unused]] Ghost::GhostType gtype,
+                                      [[maybe_unused]] int numGhostCells)
 {
 #if 0
 
@@ -4062,10 +4062,10 @@ OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
 }
 
 inline void
-OnDemandDataWarehouse::checkPutAccess(const VarLabel* label,
-                                      int matlIndex,
-                                      const Patch* patch,
-                                      bool replace)
+OnDemandDataWarehouse::checkPutAccess([[maybe_unused]] const VarLabel* label,
+                                      [[maybe_unused]] int matlIndex,
+                                      [[maybe_unused]] const Patch* patch,
+                                      [[maybe_unused]] bool replace)
 {
 #if 0
 
@@ -4184,7 +4184,7 @@ OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
                                     const VarLabel* label,
                                     int matlIndex,
                                     const Patch* patch,
-                                    bool replace)
+                                    [[maybe_unused]] bool replace)
 {
   return runningTask->hasComputes(label, matlIndex, patch);
 }

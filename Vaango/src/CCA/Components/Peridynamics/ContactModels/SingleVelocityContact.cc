@@ -128,12 +128,12 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
     Vector centerOfMassVelocity(0.0,0.0,0.0);
 
     // Retrieve necessary data from DataWarehouse
-    std::vector<constNCVariable<double> > gmass(numBodies);
-    std::vector<NCVariable<Vector> > gvelocity(numBodies);
+    std::vector<constNCVariable<double> > gMass(numBodies);
+    std::vector<NCVariable<Vector> > gVelocity(numBodies);
     for (int m=0; m<matls->size(); m++) {
       int matlIndex = matls->get(m);
-      new_dw->get(gmass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
-      new_dw->getModifiable(gvelocity[m], d_labels->gVelocityLabel, matlIndex, patch);
+      new_dw->get(gMass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
+      new_dw->getModifiable(gVelocity[m], d_labels->gVelocityLabel, matlIndex, patch);
     }
 
     for(NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
@@ -145,8 +145,8 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
 
       for(int n = 0; n < numBodies; n++){
         if(d_bodiesThatCanInteract.requested(n)) {
-          centerOfMassMom += gvelocity[n][c] * gmass[n][c];
-          centerOfMassMass += gmass[n][c]; 
+          centerOfMassMom += gVelocity[n][c] * gMass[n][c];
+          centerOfMassMass += gMass[n][c]; 
         }
       }
 
@@ -154,7 +154,7 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
       centerOfMassVelocity = centerOfMassMom/centerOfMassMass;
       for(int n = 0; n < numBodies; n++) {
         if(d_bodiesThatCanInteract.requested(n)) {
-          gvelocity[n][c] = centerOfMassVelocity;
+          gVelocity[n][c] = centerOfMassVelocity;
         }
       }
     }
@@ -162,7 +162,7 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
     for(int m=0;m<matls->size();m++){
       int matlIndex = matls->get(m);
       PeridynamicsDomainBoundCond bc;
-      bc.setBoundaryCondition(patch, matlIndex, "Symmetric",gvelocity[m],interp_type);
+      bc.setBoundaryCondition(patch, matlIndex, "Symmetric",gVelocity[m],interp_type);
     }
   }
 }
@@ -204,13 +204,13 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
     double centerOfMassMass;
 
     // Retrieve necessary data from DataWarehouse
-    std::vector<constNCVariable<double> > gmass(numBodies);
-    std::vector<NCVariable<Vector> > gvelocity_star(numBodies);
+    std::vector<constNCVariable<double> > gMass(numBodies);
+    std::vector<NCVariable<Vector> > gVelocity_star(numBodies);
 
     for(int m=0; m < matls->size();m++){
      int matlIndex = matls->get(m);
-     new_dw->get(gmass[m],d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
-     new_dw->getModifiable(gvelocity_star[m],d_labels->gVelocityStarLabel, matlIndex,patch);
+     new_dw->get(gMass[m],d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
+     new_dw->getModifiable(gVelocity_star[m],d_labels->gVelocityStarLabel, matlIndex,patch);
     }
 
     delt_vartype delT;
@@ -223,8 +223,8 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
       centerOfMassMass=0.0; 
       for(int  n = 0; n < numBodies; n++){
         if(d_bodiesThatCanInteract.requested(n)) {
-          centerOfMassMom += gvelocity_star[n][c] * gmass[n][c];
-          centerOfMassMass += gmass[n][c]; 
+          centerOfMassMom += gVelocity_star[n][c] * gMass[n][c];
+          centerOfMassMass += gMass[n][c]; 
         }
       }
 
@@ -232,8 +232,8 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
       centerOfMassVelocity = centerOfMassMom/centerOfMassMass;
       for(int  n = 0; n < numBodies; n++){
         if(d_bodiesThatCanInteract.requested(n)) {
-          //Vector dvdt = (centerOfMassVelocity - gvelocity_star[n][c])/delT;
-          gvelocity_star[n][c] = centerOfMassVelocity;
+          //Vector dvdt = (centerOfMassVelocity - gVelocity_star[n][c])/delT;
+          gVelocity_star[n][c] = centerOfMassVelocity;
         }
       }
     }

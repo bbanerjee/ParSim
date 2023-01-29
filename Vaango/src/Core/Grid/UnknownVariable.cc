@@ -39,6 +39,7 @@ UnknownVariable::UnknownVariable(const std::string& varname,
                                  const std::string& extramsg,
                                  const char* file,
                                  int line)
+  : Exception()
 {
   std::ostringstream s;
   s << "An UnknownVariable exception was thrown.\n";
@@ -71,8 +72,9 @@ UnknownVariable::UnknownVariable(const std::string& varname,
                                  const Level* level,
                                  int matlIndex,
                                  const std::string& extramsg,
-                                 const char* file,
-                                 int line)
+                                 [[maybe_unused]] const char* file,
+                                 [[maybe_unused]] int line)
+  : Exception()
 {
   std::ostringstream s;
   s << "Unknown variable: " << varname;
@@ -99,7 +101,8 @@ UnknownVariable::UnknownVariable(const std::string& varname,
 }
 
 UnknownVariable::UnknownVariable(const UnknownVariable& copy)
-  : d_msg(copy.d_msg)
+  : Exception()
+  , d_msg(copy.d_msg)
 {
 }
 

@@ -75,7 +75,7 @@ public:
   ConsecutiveRangeSetException(const std::string& msg,
                                const char* file,
                                int line)
-    : msg_(msg)
+    : Exception(), msg_(msg)
   {
 
     std::ostringstream s;
@@ -90,8 +90,15 @@ public:
   }
 
   ConsecutiveRangeSetException(const ConsecutiveRangeSetException& copy)
-    : msg_(copy.msg_)
+    : Exception(), msg_(copy.msg_)
   {
+  }
+
+  ConsecutiveRangeSetException
+  operator=(const ConsecutiveRangeSetException& copy)
+  {
+    msg_ = copy.msg_;
+    return *this;
   }
 
   virtual const char*

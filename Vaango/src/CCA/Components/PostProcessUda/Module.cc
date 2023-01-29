@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,65 +29,60 @@
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <ostream>                         // for operator<<, basic_ostream
+#include <ostream> // for operator<<, basic_ostream
 #include <vector>
 
 using namespace Uintah;
 using namespace std;
 
-Module::Module()
-{
-}
+Module::Module() {}
 
-Module::Module(ProblemSpecP     & prob_spec,
-               MaterialManagerP & materialManager,
-               Output           * dataArchiver,
-               DataArchive      * dataArchive )
+Module::Module([[maybe_unused]] ProblemSpecP& prob_spec,
+               MaterialManagerP& materialManager,
+               Output* dataArchiver,
+               DataArchive* dataArchive)
 {
-  d_materialManager  = materialManager;
-  d_dataArchiver = dataArchiver;
-  d_dataArchive  = dataArchive;
+  d_materialManager = materialManager;
+  d_dataArchiver    = dataArchiver;
+  d_dataArchive     = dataArchive;
 
- if(!d_dataArchiver){
+  if (!d_dataArchiver) {
     throw InternalError("Module:couldn't get output port", __FILE__, __LINE__);
   }
 }
 
-Module::~Module()
-{
-}
+Module::~Module() {}
 
 //______________________________________________________________________
 //  Parse the ups file and read timeStart and timeStop
-void Module::readTimeStartStop(const ProblemSpecP & ps,
-                               double & startTime,
-                               double & stopTime)
+void
+Module::readTimeStartStop(const ProblemSpecP& ps,
+                          double& startTime,
+                          double& stopTime)
 {
   ProblemSpecP prob_spec = ps;
-  prob_spec->require("timeStart",  startTime);
-  prob_spec->require("timeStop",   stopTime);
+  prob_spec->require("timeStart", startTime);
+  prob_spec->require("timeStop", stopTime);
 
   //__________________________________
   // bulletproofing
   // Start time < stop time
-  if(startTime >= stopTime ){
-    throw ProblemSetupException("\n ERROR:PostProcess: startTime >= stopTime. \n", __FILE__, __LINE__);
+  if (startTime >= stopTime) {
+    throw ProblemSetupException(
+      "\n ERROR:PostProcess: startTime >= stopTime. \n", __FILE__, __LINE__);
   }
-  
-  std::vector<int> udaTimesteps;
-  d_dataArchive->queryTimesteps( udaTimesteps, d_udaTimes );
 
-  if ( startTime < d_udaTimes[0] ){
+  std::vector<int> udaTimesteps;
+  d_dataArchive->queryTimesteps(udaTimesteps, d_udaTimes);
+
+  if (startTime < d_udaTimes[0]) {
     std::ostringstream warn;
     warn << "  Warning:PostProcess: The startTime (" << startTime
-         << ") must be greater than the time at timestep 1 (" << d_udaTimes[0] << ")\n";
+         << ") must be greater than the time at timestep 1 (" << d_udaTimes[0]
+         << ")\n";
     proc0cout << warn.str();
   }
 }
-
-
-
-

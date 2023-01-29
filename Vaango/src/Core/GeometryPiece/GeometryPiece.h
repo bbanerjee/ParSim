@@ -33,18 +33,19 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Util/RefCounted.h>
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace Uintah {
 
 class Box;
 class GeometryPiece;
 
-// template<class T> class Handle;
-// typedef Handle<GeometryPiece> GeometryPieceP;
+template<class T>
+class Handle;
+using GeometryPieceHP = Handle<GeometryPiece>;
 using GeometryPieceUP = std::unique_ptr<GeometryPiece>;
-using GeometryPieceP = std::shared_ptr<GeometryPiece>;
+using GeometryPieceP  = std::shared_ptr<GeometryPiece>;
 
 /**************************************
 
@@ -73,9 +74,11 @@ WARNING
 
 ****************************************/
 
-class GeometryPiece : public RefCounted {
- public:
-  GeometryPiece() = default;
+class GeometryPiece : public RefCounted
+{
+
+public:
+  GeometryPiece()          = default;
   virtual ~GeometryPiece() = default;
 
   /// Clone a geometry piece
@@ -92,7 +95,8 @@ class GeometryPiece : public RefCounted {
   inside(const Point& p) const = 0;
 
   std::string
-  getName() const {
+  getName() const
+  {
     return d_name;
   }
 
@@ -103,7 +107,8 @@ class GeometryPiece : public RefCounted {
   getType() const = 0;
 
   void
-  setName(const std::string& name) {
+  setName(const std::string& name)
+  {
     d_nameSet = true;
     d_name    = name;
   }
@@ -112,15 +117,16 @@ class GeometryPiece : public RefCounted {
   // object will output the full spec the first time, and only a
   // reference subsequently.
   void
-  resetOutput() const {
+  resetOutput() const
+  {
     d_firstOutput = true;
   }
 
- protected:
+protected:
   virtual void
   outputHelper(ProblemSpecP& ps) const = 0;
 
-  bool d_nameSet{ false };  // defaults to false
+  bool d_nameSet{ false }; // defaults to false
   std::string d_name;
 
   // Used for outputing the problem spec... on the 1st output, the
@@ -129,6 +135,6 @@ class GeometryPiece : public RefCounted {
   mutable bool d_firstOutput{ true };
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  // __GEOMETRY_PIECE_H__
+#endif // __GEOMETRY_PIECE_H__

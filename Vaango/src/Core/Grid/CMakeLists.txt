@@ -26,13 +26,13 @@
 # CMakeLists.txt for Vaango/src/Core/Grid
 
 SET(Vaango_Core_Grid_MPMInterpolator_SRCS
-    MPMInterpolators/axiCpdiInterpolator.cc
+    MPMInterpolators/AxiCPDIInterpolator.cc
     MPMInterpolators/AxiGIMPInterpolator.cc
     MPMInterpolators/BSplineInterpolator.cc
-    MPMInterpolators/cpdiInterpolator.cc
-    MPMInterpolators/cptiInterpolator.cc
-    MPMInterpolators/fastAxiCpdiInterpolator.cc
-    MPMInterpolators/fastCpdiInterpolator.cc
+    MPMInterpolators/CPDIInterpolator.cc
+    MPMInterpolators/CPTIInterpolator.cc
+    MPMInterpolators/FastAxiCPDIInterpolator.cc
+    MPMInterpolators/FastCPDIInterpolator.cc
     MPMInterpolators/GIMPInterpolator.cc
     MPMInterpolators/LinearInterpolator.cc
     MPMInterpolators/AxiLinearInterpolator.cc

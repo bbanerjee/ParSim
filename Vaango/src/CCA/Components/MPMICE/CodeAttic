@@ -61,7 +61,7 @@ void MPMICE::interpolateVelIncFCToNC(const ProcessorGroup*,
     SFCZVariable<double> wvel_FC, wvel_FCME;
     CCVariable<Vector> velInc_CC;
     NCVariable<Vector> velInc_NC;
-    NCVariable<Vector> gvelocity;
+    NCVariable<Vector> gVelocity;
 
     for(int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
@@ -73,7 +73,7 @@ void MPMICE::interpolateVelIncFCToNC(const ProcessorGroup*,
       new_dw->get(vvel_FCME, Ilb->vvel_FCMELabel, dwindex, patch,Ghost::None,0);
       new_dw->get(wvel_FCME, Ilb->wvel_FCMELabel, dwindex, patch,Ghost::None,0);
 
-      new_dw->get(gvelocity,Mlb->gVelocityLabel,  dwindex, patch,Ghost::None,0);
+      new_dw->get(gVelocity,Mlb->gVelocityLabel,  dwindex, patch,Ghost::None,0);
 
       new_dw->allocate(velInc_CC, MIlb->velInc_CCLabel, dwindex, patch);
       new_dw->allocate(velInc_NC, MIlb->velInc_NCLabel, dwindex, patch);
@@ -101,10 +101,10 @@ void MPMICE::interpolateVelIncFCToNC(const ProcessorGroup*,
         for (int in=0;in<8;in++){
          velInc_NC[*iter]     +=  velInc_CC[cIdx[in]]*.125;
         }
-        gvelocity[*iter] += velInc_NC[*iter];
+        gVelocity[*iter] += velInc_NC[*iter];
       }
 
-      new_dw->put(gvelocity, Mlb->gMomExedVelocityLabel, dwindex, patch);
+      new_dw->put(gVelocity, Mlb->gMomExedVelocityLabel, dwindex, patch);
 
     }
   }  //patches
@@ -120,7 +120,7 @@ ______________________________________________________________________
   #if 0
       Vector nodal_mom(0.,0.,0.);
       for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
-        nodal_mom+=gvelocity[*iter]*gmass[*iter];
+        nodal_mom+=gVelocity[*iter]*gMass[*iter];
       }
       std::cout << "Solid matl nodal momentum = " << nodal_mom << std::endl;
       Vector cell_mom(0.,0.,0.);
@@ -138,7 +138,7 @@ ______________________________________________________________________
        Vector cell_momwpg(0.,0.,0.);
 
        for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
-          nodal_mom+=gvelocity[*iter]*gmass[*iter];
+          nodal_mom+=gVelocity[*iter]*gMass[*iter];
        }
        std::cout << "In NCToCC" << std::endl;
        std::cout << "Solid matl nodal momentum = " << nodal_mom << std::endl;
@@ -367,7 +367,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int indx = mpm_matl->getDWIndex();
-      NCVariable<Vector> gacceleration, gvelocity;
+      NCVariable<Vector> gacceleration, gVelocity;
       NCVariable<double> dTdt_NC;
                                                                                 
       constCCVariable<double> mass_L_CC, old_heatFlux;
@@ -375,7 +375,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
       constCCVariable<double> eng_L_ME_CC, old_int_eng_L_CC;
       CCVariable<double> heatFlux;
                                                                                 
-      new_dw->getModifiable(gvelocity,    Mlb->gVelocityStarLabel,indx,patch);
+      new_dw->getModifiable(gVelocity,    Mlb->gVelocityStarLabel,indx,patch);
       new_dw->getModifiable(gacceleration,Mlb->gAccelerationLabel,indx,patch);
       old_dw->get(old_heatFlux,      Mlb->heatFlux_CCLabel,  indx,patch,gn,0);
                                                                                 
@@ -408,7 +408,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
         for(int in=0;in<8;in++){
           dvdt_tmp  = (mom_L_ME_CC[cIdx[in]] - old_mom_L_CC[cIdx[in]])
                     / (mass_L_CC[cIdx[in]] * delT);
-          gvelocity[*iter]     +=  dvdt_tmp*.125*delT;
+          gVelocity[*iter]     +=  dvdt_tmp*.125*delT;
           gacceleration[*iter] +=  dvdt_tmp*.125;
         }
       }
@@ -454,7 +454,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
         desc<< "BOT_MPMICE::interpolateCCToNC_mat_"<< indx<<"_patch_"
             <<patch->getID();
         printData(    indx,patch, 1,desc.str(), "dTdt_NC",     dTdt_NC);
-        printNCVector(indx,patch, 1,desc.str(),"gvelocity",    0,gvelocity);
+        printNCVector(indx,patch, 1,desc.str(),"gVelocity",    0,gVelocity);
         printNCVector(indx,patch, 1,desc.str(),"gacceleration",0,gacceleration);      }
     }
   }  //patches

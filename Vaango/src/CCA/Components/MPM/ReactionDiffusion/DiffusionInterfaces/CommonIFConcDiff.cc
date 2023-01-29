@@ -68,12 +68,12 @@ void CommonIFConcDiff::sdInterfaceInterpolated(const ProcessorGroup *,
   {
     const Patch* patch = patches->get(p);
 
-    std::vector<constNCVariable<double> > gmass(num_matls);
+    std::vector<constNCVariable<double> > gMass(num_matls);
     std::vector<NCVariable<double> >      gconcentration(num_matls);
     for(int m = 0; m < num_matls; m++)
     {
       int dwi = matls->get(m);
-      new_dw->get(gmass[m], d_mpm_lb->gMassLabel, dwi, patch,
+      new_dw->get(gMass[m], d_mpm_lb->gMassLabel, dwi, patch,
                   Ghost::AroundNodes, 1);
       new_dw->getModifiable(gconcentration[m], d_mpm_lb->diffusion->gConcentration,
                             dwi, patch);
@@ -87,8 +87,8 @@ void CommonIFConcDiff::sdInterfaceInterpolated(const ProcessorGroup *,
       double g_sum_concmass = 0;
 
       for(int m = 0; m < num_matls; m++){
-        g_sum_mass += gmass[m][c];
-        g_sum_concmass += gconcentration[m][c] * gmass[m][c];
+        g_sum_mass += gMass[m][c];
+        g_sum_concmass += gconcentration[m][c] * gMass[m][c];
       }
 
       double g_conc = g_sum_concmass / g_sum_mass;
@@ -134,11 +134,11 @@ void CommonIFConcDiff::sdInterfaceDivergence(const ProcessorGroup*,
     for(int p = 0; p < patches->size(); p++){
       const Patch* patch = patches->get(p);
 
-      std::vector<constNCVariable<double> > gmass(num_matls);
+      std::vector<constNCVariable<double> > gMass(num_matls);
       std::vector<NCVariable<double> > gconc_rate(num_matls);
       for(int m = 0; m < num_matls; m++){
         int dwi = matls->get(m);
-        new_dw->get(gmass[m], d_mpm_lb->gMassLabel, dwi, patch, Ghost::None, 0);
+        new_dw->get(gMass[m], d_mpm_lb->gMassLabel, dwi, patch, Ghost::None, 0);
         new_dw->getModifiable(gconc_rate[m], d_mpm_lb->diffusion->gConcentrationRate, dwi, patch);
       }
 
@@ -149,8 +149,8 @@ void CommonIFConcDiff::sdInterfaceDivergence(const ProcessorGroup*,
         double g_sum_conc_rate_mass = 0;
 
         for(int m = 0; m < num_matls; m++){
-          g_sum_mass += gmass[m][c];
-          g_sum_conc_rate_mass += gconc_rate[m][c] * gmass[m][c];
+          g_sum_mass += gMass[m][c];
+          g_sum_conc_rate_mass += gconc_rate[m][c] * gMass[m][c];
         }
 
         double g_conc_rate = g_sum_conc_rate_mass / g_sum_mass;

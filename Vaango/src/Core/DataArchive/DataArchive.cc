@@ -577,7 +577,7 @@ DataArchive::queryGlobals(std::vector<std::string>& names,
 }
 
 void
-DataArchive::queryVariables(FILE* fp,
+DataArchive::queryVariables([[maybe_unused]] FILE* fp,
                             std::vector<std::string>& names,
                             std::vector<int>& num_matls,
                             std::vector<const Uintah::TypeDescription*>& types,
@@ -2135,7 +2135,7 @@ DataArchive::turnOnXMLCaching()
 // if you want to override the default cache size determined by
 // TimeHashMaps.
 void
-DataArchive::setTimestepCacheSize(int new_size)
+DataArchive::setTimestepCacheSize([[maybe_unused]] int new_size)
 {
   d_lock.lock();
   // Now we need to reduce the size

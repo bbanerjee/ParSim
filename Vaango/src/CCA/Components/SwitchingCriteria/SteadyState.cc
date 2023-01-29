@@ -78,8 +78,8 @@ SteadyState::~SteadyState()
 }
 
 void
-SteadyState::problemSetup(const ProblemSpecP& ps,
-                          const ProblemSpecP& restart_prob_spec,
+SteadyState::problemSetup([[maybe_unused]] const ProblemSpecP& ps,
+                          [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
                           MaterialManagerP& mat_manager)
 {
   d_mat_manager = mat_manager;
@@ -101,10 +101,10 @@ SteadyState::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 }
 
 void
-SteadyState::initialize(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse*,
+SteadyState::initialize([[maybe_unused]] const ProcessorGroup*,
+                        [[maybe_unused]] const PatchSubset* patches,
+                        [[maybe_unused]] const MaterialSubset* matls,
+                        [[maybe_unused]] DataWarehouse*,
                         DataWarehouse* new_dw)
 {
   proc0cout << "Initializing heatFluxSum and heatFluxSumTimeDerivative" << std::endl;
@@ -143,9 +143,9 @@ SteadyState::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 }
 
 void
-SteadyState::switchTest(const ProcessorGroup* group,
+SteadyState::switchTest([[maybe_unused]] const ProcessorGroup* group,
                         const PatchSubset* patches,
-                        const MaterialSubset* matls,
+                        [[maybe_unused]] const MaterialSubset* matls,
                         DataWarehouse* old_dw,
                         DataWarehouse* new_dw)
 {
@@ -199,11 +199,11 @@ SteadyState::scheduleDummy(const LevelP& level, SchedulerP& sched)
 }
 
 void
-SteadyState::dummy(const ProcessorGroup* group,
-                   const PatchSubset* patches,
-                   const MaterialSubset* matls,
+SteadyState::dummy([[maybe_unused]] const ProcessorGroup* group,
+                   [[maybe_unused]] const PatchSubset* patches,
+                   [[maybe_unused]] const MaterialSubset* matls,
                    DataWarehouse* old_dw,
-                   DataWarehouse* new_dw)
+                   [[maybe_unused]] DataWarehouse* new_dw)
 {
   max_vartype old_sw(1.23);
   old_dw->get(old_sw, d_switch_label);

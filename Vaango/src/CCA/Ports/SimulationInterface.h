@@ -64,7 +64,8 @@ class VarLabel;
 
 using ValidateFlag = unsigned char;
 
-class SimulationInterface : public UintahParallelPort {
+class SimulationInterface : public UintahParallelPort
+{
 
   // NOTE: No physics simulation component should be a friend class.
   // They should access the data via the DataWarehouse.
@@ -86,12 +87,12 @@ class SimulationInterface : public UintahParallelPort {
 
   friend class Switcher;
 
- public:
+public:
   SimulationInterface();
   virtual ~SimulationInterface();
 
   SimulationInterface(const SimulationInterface&) = delete;
-  SimulationInterface(SimulationInterface&&) = delete;
+  SimulationInterface(SimulationInterface&&)      = delete;
   SimulationInterface&
   operator=(const SimulationInterface&) = delete;
   SimulationInterface&
@@ -157,7 +158,9 @@ class SimulationInterface : public UintahParallelPort {
   // initializations that are necessary when a simulation is restarted.
   //
   virtual void
-  restartInitialize() {}
+  restartInitialize()
+  {
+  }
 
   // Schedule the initial switching.
   virtual void
@@ -226,7 +229,10 @@ class SimulationInterface : public UintahParallelPort {
   getSubCycleProgress(DataWarehouse* fineNewDW) = 0;
 
   virtual void
-  switchInitialize(const LevelP& level, SchedulerP&) {}
+  switchInitialize([[maybe_unused]] const LevelP& level,
+                   [[maybe_unused]] SchedulerP&)
+  {
+  }
 
   // Redo a timestep if current time advance is not converging.
   // Returned time is the new dt to use.
@@ -335,7 +341,10 @@ class SimulationInterface : public UintahParallelPort {
   getMaterialManagerP() const = 0;
 
   // Simulation statistics
-  enum SimulationStatsEnum { DummyEnum = 999 };
+  enum SimulationStatsEnum
+  {
+    DummyEnum = 999
+  };
 
   virtual ReductionInfoMapper<SimulationStatsEnum, double>&
   getSimulationStats() = 0;
@@ -402,11 +411,11 @@ class SimulationInterface : public UintahParallelPort {
   getTimeStepsMax() const = 0;
 
   virtual void
-  setWallTimeMax(double val)  = 0;
+  setWallTimeMax(double val) = 0;
   virtual double
-  getWallTimeMax() const  = 0;
+  getWallTimeMax() const = 0;
 
- private:
+private:
   // Flag for outputting or checkpointing if the next delta is invalid
   virtual void
   setOutputIfInvalidNextDelT(ValidateFlag flag) = 0;
@@ -458,6 +467,6 @@ class SimulationInterface : public UintahParallelPort {
   virtual bool
   maybeLastTimeStep(double walltime) const = 0;
 };
-}  // End namespace Uintah
+} // End namespace Uintah
 
 #endif

@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/MPMInterpolators/cptiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPTIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>
@@ -34,38 +34,38 @@ using namespace Uintah;
 using namespace Uintah;
 
     
-cptiInterpolator::cptiInterpolator()
+CPTIInterpolator::CPTIInterpolator()
 {
   d_size = 32; //number of grid nodes that might be affected by a particle corner
   d_patch = 0; 
   d_lcrit = 1.e10;  //set large value for critical particle size beyond which cpdi domain freezes
 }
 
-cptiInterpolator::cptiInterpolator(const Patch* patch)
+CPTIInterpolator::CPTIInterpolator(const Patch* patch)
 {
   d_size = 32;
   d_patch = patch;
   d_lcrit = 1.e10;
 }
 
-cptiInterpolator::cptiInterpolator(const Patch* patch, const double lcrit)
+CPTIInterpolator::CPTIInterpolator(const Patch* patch, const double lcrit)
 {
   d_size = 32;
   d_patch = patch;
   d_lcrit = lcrit;
 }
     
-cptiInterpolator::~cptiInterpolator()
+CPTIInterpolator::~CPTIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-cptiInterpolator::clone(const Patch* patch)
+CPTIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<cptiInterpolator>(patch, d_lcrit);
+  return std::make_unique<CPTIInterpolator>(patch, d_lcrit);
 }
     
-void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: physical coordinates of a particle
+void CPTIInterpolator::findCellAndWeights(const Point& pos,           //input: physical coordinates of a particle
                                             std::vector<IntVector>& ni,    //output: logic locations of corners
                                             std::vector<double>& S,        //output: weighted node shape function value at corners (where weight = 1/ num particle corners)
                                             const Matrix3& size,      //input: reference size r-vectors of the particle
@@ -197,7 +197,7 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
   }
 }
  
-void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void CPTIInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                    std::vector<IntVector>& ni,
                                                    std::vector<Vector>& d_S,
                                                    const Matrix3& size,
@@ -375,7 +375,7 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   }
 }
 
-void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, //input: positions of particles
+void CPTIInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, //input: positions of particles
                                                           std::vector<IntVector>& ni,
                                                           std::vector<double>& S,
                                                           std::vector<Vector>& d_S,
@@ -560,7 +560,7 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
   }
 }
 
-int cptiInterpolator::size()
+int CPTIInterpolator::size()
 {
   return d_size;
 }

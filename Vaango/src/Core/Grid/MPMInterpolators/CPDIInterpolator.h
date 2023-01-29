@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2018-2023 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,8 +24,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef TO_BSPLINE_INTERPOLATOR_H
-#define TO_BSPLINE_INTERPOLATOR_H
+/*!
+ *  CPDI interpolator based on the paper by Sadeghirad, Burghardt and Brannon
+ * "A convected particle domain interpolation technique to extend applicability
+ * of the material point method for problems involving massive deformations"
+ *  International Journal for Numerical Methods in Engineering
+ *  Volume 86, Issue 12, pages 1435–1456, 24 June 2011
+ */
+
+#ifndef CPDI_INTERPOLATOR_H
+#define CPDI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
@@ -32,15 +41,14 @@ namespace Uintah {
 
 class Patch;
 
-class TOBSplineInterpolator : public ParticleInterpolator
+class CPDIInterpolator : public ParticleInterpolator
 {
 
-  // TO = ThirdOrder B Splines
-
 public:
-  TOBSplineInterpolator();
-  TOBSplineInterpolator(const Patch* patch);
-  virtual ~TOBSplineInterpolator();
+  CPDIInterpolator();
+  CPDIInterpolator(const Patch* patch);
+  CPDIInterpolator(const Patch* patch, const double& lcrit);
+  virtual ~CPDIInterpolator();
 
   virtual std::unique_ptr<ParticleInterpolator>
   clone(const Patch*);
@@ -58,6 +66,7 @@ public:
                               std::vector<Vector>& d_S,
                               const Matrix3& size,
                               const Matrix3& defgrad);
+
   virtual void
   findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                         std::vector<IntVector>& ni,
@@ -65,9 +74,31 @@ public:
                                         std::vector<Vector>& d_S,
                                         const Matrix3& size,
                                         const Matrix3& defgrad);
-  //__________________________________
-  //  Needed for AMRMPM
+  virtual int
+  size();
+
+  /*!
+   *  Set the critial length of a particle.
+   *  An additional feature of this implementation is the
+   *  ability to restrict the particle domains from exceeding a user specified
+   *  length, defined here as "lcrit".  An algorithm, developed by Michael Homel
+   * and Rebecca Brannon, is used to scale the deformed particle such that no
+   * corners of that particle will fall outside of a sphere with radius lcrit,
+   * co-centered with the particle.  This feature was added to avoid particles
+   * from getting so large that they have influence with nodes that lie beyond
+   * the ghost nodes of neighboring patches, or outside of the computational
+   * domain, as they approach node boundaries.  Note that lcrit is a dimension
+   * relative to the cell size. Thus, lcrit=1 implies that a particle can have
+   * no length as measured from the center to any corner that exceeds the side
+   * length of a computational cell.
+   */
   virtual void
+  setLcrit(double lcrit)
+  {
+    d_lcrit = lcrit;
+  }
+
+  void
   findCellAndWeights([[maybe_unused]] const Point& pos,
                      [[maybe_unused]] std::vector<IntVector>& ni,
                      [[maybe_unused]] std::vector<double>& S,
@@ -79,71 +110,26 @@ public:
                      [[maybe_unused]] int& num_coarse,
                      [[maybe_unused]] const Vector& size,
                      [[maybe_unused]] bool coarse_part,
-                     [[maybe_unused]] const Patch* patch)
-  {
-  }
+                     [[maybe_unused]] const Patch* patch){};
 
-  virtual void
+  void
   findCellAndWeights_CFI([[maybe_unused]] const Point& pos,
                          [[maybe_unused]] std::vector<IntVector>& ni,
                          [[maybe_unused]] std::vector<double>& S,
-                         [[maybe_unused]] constNCVariable<Stencil7>& zoi)
-  {
-  }
+                         [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
 
-  virtual void
+  void
   findCellAndWeightsAndShapeDerivatives_CFI(
     [[maybe_unused]] const Point& pos,
     [[maybe_unused]] std::vector<IntVector>& CFI_ni,
     [[maybe_unused]] std::vector<double>& S,
     [[maybe_unused]] std::vector<Vector>& d_S,
-    [[maybe_unused]] constNCVariable<Stencil7>& zoi)
-  {
-  }
-  virtual int
-  size();
-
-  void
-  findNodeComponents(const int& idx,
-                     int* xn,
-                     int& count,
-                     const int& low,
-                     const int& hi,
-                     const double& cellpos);
-
-  void
-  getBSplineWeights(double* Sd,
-                    const int* xn,
-                    const int& low,
-                    const int& hi,
-                    const int& count,
-                    const double& cellpos);
-
-  void
-  getBSplineGrads(double* dSd,
-                  const int* xn,
-                  const int& low,
-                  const int& hi,
-                  const int& count,
-                  const double& cellpos);
-
-  double
-  evalType1BSpline(const double& cp);
-  double
-  evalType2BSpline(const double& cp);
-  double
-  evalType3BSpline(const double& cp);
-
-  double
-  evalType1BSplineGrad(const double& cp);
-  double
-  evalType2BSplineGrad(const double& cp);
-  double
-  evalType3BSplineGrad(const double& cp);
+    [[maybe_unused]] constNCVariable<Stencil7>& zoi){};
 
 private:
   const Patch* d_patch;
   int d_size;
+  double d_lcrit;
 };
 } // namespace Uintah
 

@@ -587,7 +587,7 @@ SmoothSphereGeomPiece::polarColatitude(int num_points)
 
 // Compute the numbers of collars between the polar caps
 int
-SmoothSphereGeomPiece::numCollars(int num_points,
+SmoothSphereGeomPiece::numCollars([[maybe_unused]] int num_points,
                                   double polar_colatitude,
                                   double ideal_collar_angle)
 {
@@ -622,7 +622,7 @@ SmoothSphereGeomPiece::idealRegionList(int num_points,
 
 // Round to nearest int
 void
-SmoothSphereGeomPiece::roundToNaturals(int num_points,
+SmoothSphereGeomPiece::roundToNaturals([[maybe_unused]] int num_points,
                                        std::vector<double>& real_regions,
                                        std::vector<int>& int_regions)
 {

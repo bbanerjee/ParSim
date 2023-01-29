@@ -26,7 +26,7 @@
 #define AXICPTI_INTERPOLATOR_H
 
 #include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
-#include <Core/Grid/MPMInterpolators/cptiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPTIInterpolator.h>
 /* Axisymmetric CPTI (Convected Particle Triangle/Tetrahedral domain Interpolator) 
    This has not actually been implemented yet, but is proposed based on 
    methods developed by Alireza Sadeghirad and Rebecca Brannon
@@ -37,13 +37,13 @@ namespace Uintah {
 
   class Patch;
 
-  class axiCptiInterpolator : public cptiInterpolator {
+  class AxiCPTIInterpolator : public CPTIInterpolator {
     
   public:
     
-    axiCptiInterpolator();
-    axiCptiInterpolator(const Patch* patch);
-    virtual ~axiCptiInterpolator();
+    AxiCPTIInterpolator();
+    AxiCPTIInterpolator(const Patch* patch);
+    virtual ~AxiCPTIInterpolator();
     
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     

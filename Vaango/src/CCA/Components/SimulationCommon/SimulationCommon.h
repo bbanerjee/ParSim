@@ -26,8 +26,8 @@
 #ifndef __CCA_COMPONENTS_SIMULATIONCOMMON_H__
 #define __CCA_COMPONENTS_SIMULATIONCOMMON_H__
 
-#include <Core/Parallel/UintahParallelComponent.h>
 #include <CCA/Ports/SimulationInterface.h>
+#include <Core/Parallel/UintahParallelComponent.h>
 
 #include <CCA/Components/SimulationCommon/SimulationReductionVariable.h>
 #include <CCA/Ports/LoadBalancer.h>
@@ -48,13 +48,15 @@ class DataWarehouse;
 class Output;
 class Regridder;
 
-class SimulationCommon : public UintahParallelComponent,
-                         public SimulationInterface {
+class SimulationCommon
+  : public UintahParallelComponent
+  , public SimulationInterface
+{
 
   friend class Switcher;
   friend class PostProcessUda;
 
- public:
+public:
   SimulationCommon(const ProcessorGroup* myworld,
                    const MaterialManagerP materialManager);
 
@@ -73,15 +75,18 @@ class SimulationCommon : public UintahParallelComponent,
   releaseComponents();
 
   virtual Scheduler*
-  getScheduler() {
+  getScheduler()
+  {
     return d_scheduler;
   }
   virtual Regridder*
-  getRegridder() {
+  getRegridder()
+  {
     return d_regridder;
   }
   virtual Output*
-  getOutput() {
+  getOutput()
+  {
     return d_output;
   }
 
@@ -99,11 +104,12 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Called to add missing grid based UPS specs.
   virtual void
-  preGridProblemSetup(const ProblemSpecP& params, GridP& grid){};
+  preGridProblemSetup([[maybe_unused]] const ProblemSpecP& params,
+                      [[maybe_unused]] GridP& grid){};
 
   // Used to write parts of the problem spec.
   virtual void
-  outputProblemSpec(ProblemSpecP& ps){};
+  outputProblemSpec(ProblemSpecP& ps) = 0;
 
   // Schedule the inital setup of the problem.
   virtual void
@@ -115,25 +121,33 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Used by the switcher
   virtual void
-  setupForSwitching() {}
+  setupForSwitching()
+  {
+  }
 
   // Get the task graph the application wants to execute. Returns an
   // index into the scheduler's list of task graphs.
   virtual void
-  setTaskGraphIndex(int index) {
+  setTaskGraphIndex(int index)
+  {
     d_taskGraphIndex = index;
   }
   virtual int
-  getTaskGraphIndex() {
+  getTaskGraphIndex()
+  {
     return d_taskGraphIndex;
   }
 
   // Schedule the inital switching.
   virtual void
-  scheduleSwitchInitialization(const LevelP& level, SchedulerP& sched) {}
+  scheduleSwitchInitialization([[maybe_unused]] const LevelP& level,
+                               [[maybe_unused]] SchedulerP& sched)
+  {
+  }
 
   virtual void
-  scheduleSwitchTest(const LevelP& level, SchedulerP& scheduler){};
+  scheduleSwitchTest([[maybe_unused]] const LevelP& level,
+                     [[maybe_unused]] SchedulerP& scheduler){};
 
   // Schedule the actual time step advencement tasks.
   virtual void
@@ -141,11 +155,17 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Optionally schedule tasks that can not be done in scheduleTimeAdvance.
   virtual void
-  scheduleFinalizeTimestep(const LevelP& level, SchedulerP& scheduler) {}
+  scheduleFinalizeTimestep([[maybe_unused]] const LevelP& level,
+                           [[maybe_unused]] SchedulerP& scheduler)
+  {
+  }
 
   // Optionally schedule analysis tasks.
   virtual void
-  scheduleAnalysis(const LevelP& level, SchedulerP& scheduler) {}
+  scheduleAnalysis([[maybe_unused]] const LevelP& level,
+                   [[maybe_unused]] SchedulerP& scheduler)
+  {
+  }
 
   // Optionally schedule a task that determines the next delt T value.
   virtual void
@@ -166,11 +186,11 @@ class SimulationCommon : public UintahParallelComponent,
 
   // An optional call for the application to check their reduction vars.
   virtual void
-  checkReductionVars(const ProcessorGroup* pg,
-                     const PatchSubset* patches,
-                     const MaterialSubset* matls,
-                     DataWarehouse* old_dw,
-                     DataWarehouse* new_dw){};
+  checkReductionVars([[maybe_unused]] const ProcessorGroup* pg,
+                     [[maybe_unused]] const PatchSubset* patches,
+                     [[maybe_unused]] const MaterialSubset* matls,
+                     [[maybe_unused]] DataWarehouse* old_dw,
+                     [[maybe_unused]] DataWarehouse* new_dw){};
 
   // Schedule the initialization of system values such at the time step.
   virtual void
@@ -236,193 +256,231 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Asks the application if it needs to be recompiled.
   virtual bool
-  needRecompile(const GridP& grid) {
+  needRecompile([[maybe_unused]] const GridP& grid)
+  {
     return false;
   };
 
   // Labels for access value in the data warehouse.
   virtual const VarLabel*
-  getTimeStepLabel() const {
+  getTimeStepLabel() const
+  {
     return d_timeStepLabel;
   }
   virtual const VarLabel*
-  getSimTimeLabel() const {
+  getSimTimeLabel() const
+  {
     return d_simulationTimeLabel;
   }
   virtual const VarLabel*
-  getDelTLabel() const {
+  getDelTLabel() const
+  {
     return d_delTLabel;
   }
 
   //////////
   virtual void
-  setAMR(bool val) {
+  setAMR(bool val)
+  {
     d_AMR = val;
   }
   virtual bool
-  isAMR() const {
+  isAMR() const
+  {
     return d_AMR;
   }
 
   virtual void
-  setLockstepAMR(bool val) {
+  setLockstepAMR(bool val)
+  {
     d_lockstepAMR = val;
   }
   virtual bool
-  isLockstepAMR() const {
+  isLockstepAMR() const
+  {
     return d_lockstepAMR;
   }
 
   virtual void
-  setDynamicRegridding(bool val) {
+  setDynamicRegridding(bool val)
+  {
     d_dynamicRegridding = val;
   }
   virtual bool
-  isDynamicRegridding() const {
+  isDynamicRegridding() const
+  {
     return d_dynamicRegridding;
   }
 
   // Boolean for vars chanegd by the in-situ.
   virtual void
-  haveModifiedVars(bool val) {
+  haveModifiedVars(bool val)
+  {
     d_haveModifiedVars = val;
   }
   virtual bool
-  haveModifiedVars() const {
+  haveModifiedVars() const
+  {
     return d_haveModifiedVars;
   }
 
   // For restarting.
   virtual bool
-  isRestartTimeStep() const {
+  isRestartTimeStep() const
+  {
     return d_isRestartTimestep;
   }
   virtual void
-  setRestartTimeStep(bool val) {
+  setRestartTimeStep(bool val)
+  {
     d_isRestartTimestep = val;
   }
 
   // For regridding.
   virtual bool
-  isRegridTimeStep() const {
+  isRegridTimeStep() const
+  {
     return d_isRegridTimeStep;
   }
   virtual void
-  setRegridTimeStep(bool val) {
+  setRegridTimeStep(bool val)
+  {
     d_isRegridTimeStep = val;
 
-    if (d_isRegridTimeStep) d_lastRegridTimestep = d_timeStep;
+    if (d_isRegridTimeStep) {
+      d_lastRegridTimestep = d_timeStep;
+    }
   }
   virtual int
-  getLastRegridTimeStep() {
+  getLastRegridTimeStep()
+  {
     return d_lastRegridTimestep;
   }
 
   virtual bool
-  wasRegridLastTimeStep() const {
+  wasRegridLastTimeStep() const
+  {
     return ((d_timeStep - d_lastRegridTimestep - 1) == 0);
   }
 
   // Some applications can set reduction variables
   virtual unsigned int
-  numReductionVariable() const {
+  numReductionVariable() const
+  {
     return d_simReductionVars.size();
   }
 
   virtual void
   addReductionVariable(std::string name,
                        const TypeDescription* varType,
-                       bool varActive = false) {
+                       bool varActive = false)
+  {
     d_simReductionVars[name] =
-        std::make_unique<SimulationReductionVariable>(name, varType, varActive);
+      std::make_unique<SimulationReductionVariable>(name, varType, varActive);
   }
 
   virtual void
-  activateReductionVariable(std::string name, bool val) {
+  activateReductionVariable(std::string name, bool val)
+  {
     d_simReductionVars[name]->setActive(val);
   }
   virtual bool
-  activeReductionVariable(std::string name) const {
-    if (d_simReductionVars.find(name) != d_simReductionVars.end())
+  activeReductionVariable(std::string name) const
+  {
+    if (d_simReductionVars.find(name) != d_simReductionVars.end()) {
       return d_simReductionVars.find(name)->second->getActive();
-    else
+    } else {
       return false;
+    }
   }
 
   virtual bool
-  isBenignReductionVariable(std::string name) {
+  isBenignReductionVariable(std::string name)
+  {
     return d_simReductionVars[name]->isBenignValue();
   }
   virtual void
-  overrideReductionVariable(DataWarehouse* new_dw, std::string name, bool val) {
+  overrideReductionVariable(DataWarehouse* new_dw, std::string name, bool val)
+  {
     d_simReductionVars[name]->setValue(new_dw, val);
   }
   virtual void
-  overrideReductionVariable(DataWarehouse* new_dw,
-                            std::string name,
-                            double val) {
+  overrideReductionVariable(DataWarehouse* new_dw, std::string name, double val)
+  {
     d_simReductionVars[name]->setValue(new_dw, val);
   }
   virtual void
-  setReductionVariable(DataWarehouse* new_dw, std::string name, bool val) {
+  setReductionVariable(DataWarehouse* new_dw, std::string name, bool val)
+  {
     d_simReductionVars[name]->setValue(new_dw, val);
   }
   virtual void
-  setReductionVariable(DataWarehouse* new_dw, std::string name, double val) {
+  setReductionVariable(DataWarehouse* new_dw, std::string name, double val)
+  {
     d_simReductionVars[name]->setValue(new_dw, val);
   }
   // Get application specific reduction values all cast to doubles.
   virtual double
-  getReductionVariable(std::string name) const {
-    if (d_simReductionVars.find(name) != d_simReductionVars.end())
+  getReductionVariable(std::string name) const
+  {
+    if (d_simReductionVars.find(name) != d_simReductionVars.end()) {
       return d_simReductionVars.at(name)->getValue();
-    else
+    } else {
       return 0;
+    }
   }
 
   virtual double
-  getReductionVariable(unsigned int index) const {
+  getReductionVariable(unsigned int index) const
+  {
     for (const auto& var : d_simReductionVars) {
-      if (index == 0)
+      if (index == 0) {
         return var.second->getValue();
-      else
+      } else {
         --index;
+      }
     }
 
     return 0;
   }
 
   virtual std::string
-  getReductionVariableName(unsigned int index) const {
+  getReductionVariableName(unsigned int index) const
+  {
     for (const auto& var : d_simReductionVars) {
-      if (index == 0)
+      if (index == 0) {
         return var.second->getName();
-      else
+      } else {
         --index;
+      }
     }
 
     return "Unknown";
   }
 
   virtual unsigned int
-  getReductionVariableCount(unsigned int index) const {
+  getReductionVariableCount(unsigned int index) const
+  {
     for (const auto& var : d_simReductionVars) {
-      if (index == 0)
+      if (index == 0) {
         return var.second->getCount();
-      else
+      } else {
         --index;
+      }
     }
 
     return 0;
   }
 
   virtual bool
-  overriddenReductionVariable(unsigned int index) const {
+  overriddenReductionVariable(unsigned int index) const
+  {
     for (const auto& var : d_simReductionVars) {
-      if (index == 0)
+      if (index == 0) {
         return var.second->overridden();
-      else
+      } else {
         --index;
+      }
     }
 
     return false;
@@ -430,135 +488,163 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Access methods for member classes.
   virtual MaterialManagerP
-  getMaterialManagerP() const {
+  getMaterialManagerP() const
+  {
     return d_materialManager;
   }
 
   virtual ReductionInfoMapper<SimulationStatsEnum, double>&
-  getSimulationStats() {
+  getSimulationStats()
+  {
     return d_simulation_stats;
   };
 
   virtual void
-  resetSimulationStats(double val) {
+  resetSimulationStats(double val)
+  {
     d_simulation_stats.reset(val);
   };
 
   virtual void
-  reduceSimulationStats(bool allReduce, const ProcessorGroup* myWorld) {
+  reduceSimulationStats(bool allReduce, const ProcessorGroup* myWorld)
+  {
     d_simulation_stats.reduce(allReduce, myWorld);
   };
 
- public:
+public:
   virtual void
-  setDelTOverrideRestart(double val) {
+  setDelTOverrideRestart(double val)
+  {
     d_delTOverrideRestart = val;
   }
   virtual double
-  getDelTOverrideRestart() const {
+  getDelTOverrideRestart() const
+  {
     return d_delTOverrideRestart;
   }
 
   virtual void
-  setDelTInitialMax(double val) {
+  setDelTInitialMax(double val)
+  {
     d_delTInitialMax = val;
   }
   virtual double
-  getDelTInitialMax() const {
+  getDelTInitialMax() const
+  {
     return d_delTInitialMax;
   }
 
   virtual void
-  setDelTInitialRange(double val) {
+  setDelTInitialRange(double val)
+  {
     d_delTInitialRange = val;
   }
   virtual double
-  getDelTInitialRange() const {
+  getDelTInitialRange() const
+  {
     return d_delTInitialRange;
   }
 
   virtual void
-  setDelTMultiplier(double val) {
+  setDelTMultiplier(double val)
+  {
     d_delTMultiplier = val;
   }
   virtual double
-  getDelTMultiplier() const {
+  getDelTMultiplier() const
+  {
     return d_delTMultiplier;
   }
 
   virtual void
-  setDelTMaxIncrease(double val) {
+  setDelTMaxIncrease(double val)
+  {
     d_delTMaxIncrease = val;
   }
   virtual double
-  getDelTMaxIncrease() const {
+  getDelTMaxIncrease() const
+  {
     return d_delTMaxIncrease;
   }
 
   virtual void
-  setDelTMin(double val) {
+  setDelTMin(double val)
+  {
     d_delTMin = val;
   }
   virtual double
-  getDelTMin() const {
+  getDelTMin() const
+  {
     return d_delTMin;
   }
 
   virtual void
-  setDelTMax(double val) {
+  setDelTMax(double val)
+  {
     d_delTMax = val;
   }
   virtual double
-  getDelTMax() const {
+  getDelTMax() const
+  {
     return d_delTMax;
   }
 
   virtual void
-  setSimTimeEndAtMax(bool val) {
+  setSimTimeEndAtMax(bool val)
+  {
     d_simTimeEndAtMax = val;
   }
   virtual bool
-  getSimTimeEndAtMax() const {
+  getSimTimeEndAtMax() const
+  {
     return d_simTimeEndAtMax;
   }
 
   virtual void
-  setSimTimeMax(double val) {
+  setSimTimeMax(double val)
+  {
     d_simTimeMax = val;
   }
   virtual double
-  getSimTimeMax() const {
+  getSimTimeMax() const
+  {
     return d_simTimeMax;
   }
 
   virtual void
-  setSimTimeClampToOutput(bool val) {
+  setSimTimeClampToOutput(bool val)
+  {
     d_simTimeClampToOutput = val;
   }
   virtual bool
-  getSimTimeClampToOutput() const {
+  getSimTimeClampToOutput() const
+  {
     return d_simTimeClampToOutput;
   }
 
   virtual void
-  setTimeStepsMax(int val) {
+  setTimeStepsMax(int val)
+  {
     d_timeStepsMax = val;
   }
   virtual int
-  getTimeStepsMax() const {
+  getTimeStepsMax() const
+  {
     return d_timeStepsMax;
   }
 
   virtual void
-  setWallTimeMax(double val) {
+  setWallTimeMax(double val)
+  {
     d_wallTimeMax = val;
   }
   virtual double
-  getWallTimeMax() const {
+  getWallTimeMax() const
+  {
     return d_wallTimeMax;
   }
 
- private:
+private:
   // The classes are private because only the top level application
   // should be changing them. This only really matters when there are
   // applications built upon multiple applications. The children
@@ -567,30 +653,36 @@ class SimulationCommon : public UintahParallelComponent,
 
   // Flag for outputting or checkpointing if the next delta is invalid
   virtual void
-  setOutputIfInvalidNextDelT(ValidateFlag flag) {
+  setOutputIfInvalidNextDelT(ValidateFlag flag)
+  {
     d_outputIfInvalidNextDelTFlag = flag;
   }
   virtual ValidateFlag
-  getOutputIfInvalidNextDelT() const {
+  getOutputIfInvalidNextDelT() const
+  {
     return d_outputIfInvalidNextDelTFlag;
   }
 
   virtual void
-  setCheckpointIfInvalidNextDelT(ValidateFlag flag) {
+  setCheckpointIfInvalidNextDelT(ValidateFlag flag)
+  {
     d_checkpointIfInvalidNextDelTFlag = flag;
   }
   virtual ValidateFlag
-  getCheckpointIfInvalidNextDelT() const {
+  getCheckpointIfInvalidNextDelT() const
+  {
     return d_checkpointIfInvalidNextDelTFlag;
   }
 
   //////////
   virtual void
-  setDelT(double delT) {
+  setDelT(double delT)
+  {
     d_delT = delT;
   }
   virtual double
-  getDelT() const {
+  getDelT() const
+  {
     return d_delT;
   }
   virtual void
@@ -601,7 +693,8 @@ class SimulationCommon : public UintahParallelComponent,
   virtual void
   setNextDelT(double delT, bool restart = false);
   virtual double
-  getNextDelT() const {
+  getNextDelT() const
+  {
     return d_delTNext;
   }
   virtual ValidateFlag
@@ -611,7 +704,8 @@ class SimulationCommon : public UintahParallelComponent,
   virtual void
   setSimTime(double simTime);
   virtual double
-  getSimTime() const {
+  getSimTime() const
+  {
     return d_simTime;
   };
 
@@ -626,7 +720,8 @@ class SimulationCommon : public UintahParallelComponent,
   virtual void
   incrementTimeStep();
   virtual int
-  getTimeStep() const {
+  getTimeStep() const
+  {
     return d_timeStep;
   }
 
@@ -635,17 +730,18 @@ class SimulationCommon : public UintahParallelComponent,
   virtual bool
   maybeLastTimeStep(double walltime) const;
 
- protected:
-  Scheduler* d_scheduler{nullptr};
-  LoadBalancer* d_loadBalancer{nullptr};
-  SolverInterface* d_solver{nullptr};
-  Regridder* d_regridder{nullptr};
-  Output* d_output{nullptr};
+protected:
+  Scheduler* d_scheduler{ nullptr };
+  LoadBalancer* d_loadBalancer{ nullptr };
+  SolverInterface* d_solver{ nullptr };
+  Regridder* d_regridder{ nullptr };
+  Output* d_output{ nullptr };
 
   // Use a map to store the reduction variables.
-  std::map<std::string, std::unique_ptr<SimulationReductionVariable>> d_simReductionVars;
+  std::map<std::string, std::unique_ptr<SimulationReductionVariable>>
+    d_simReductionVars;
 
-  enum VALIDATE_ENUM  // unsigned char
+  enum VALIDATE_ENUM // unsigned char
   {
     DELTA_T_MAX_INCREASE = 0x01,
     DELTA_T_MIN          = 0x02,
@@ -657,66 +753,69 @@ class SimulationCommon : public UintahParallelComponent,
     CLAMP_TIME_TO_MAX        = 0x40
   };
 
- private:
-  bool d_AMR{false};
-  bool d_lockstepAMR{false};
+private:
+  bool d_AMR{ false };
+  bool d_lockstepAMR{ false };
 
-  bool d_dynamicRegridding{false};
+  bool d_dynamicRegridding{ false };
 
-  bool d_isRestartTimestep{false};
+  bool d_isRestartTimestep{ false };
 
-  bool d_isRegridTimeStep{false};
+  bool d_isRegridTimeStep{ false };
   // While it may not have been a "re"-grid, the original grid is
   // created on time step 0.
-  int d_lastRegridTimestep{0};
+  int d_lastRegridTimestep{ 0 };
 
-  bool d_haveModifiedVars{false};
+  bool d_haveModifiedVars{ false };
 
   const VarLabel* d_timeStepLabel;
   const VarLabel* d_simulationTimeLabel;
   const VarLabel* d_delTLabel;
 
   // Some applications may use multiple task graphs.
-  int d_taskGraphIndex{0};
+  int d_taskGraphIndex{ 0 };
 
   // The simulation runs to either the maximum number of time steps
   // (timeStepsMax) or the maximum simulation time (simTimeMax), which
   // ever comes first. If the "max_Timestep" is not specified in the .ups
   // file, then it is set to zero.
-  double d_delT{0.0};
-  double d_delTNext{0.0};
+  double d_delT{ 0.0 };
+  double d_delTNext{ 0.0 };
 
-  double d_delTOverrideRestart{0};  // Override the restart delta T value
-  double d_delTInitialMax{0};       // Maximum initial delta T
+  double d_delTOverrideRestart{ 0 }; // Override the restart delta T value
+  double d_delTInitialMax{ 0 };      // Maximum initial delta T
   double d_delTInitialRange{
-      0};  // Simulation time range for the initial delta T
+    0
+  }; // Simulation time range for the initial delta T
 
-  double d_delTMin{0};           // Minimum delta T
-  double d_delTMax{0};           // Maximum delta T
-  double d_delTMultiplier{1.0};  // Multiple for increasing delta T
-  double d_delTMaxIncrease{0};   // Maximum delta T increase.
+  double d_delTMin{ 0 };          // Minimum delta T
+  double d_delTMax{ 0 };          // Maximum delta T
+  double d_delTMultiplier{ 1.0 }; // Multiple for increasing delta T
+  double d_delTMaxIncrease{ 0 };  // Maximum delta T increase.
 
-  double d_simTime{0.0};   // Current sim time
-  double d_simTimeMax{0};  // Maximum simulation time
+  double d_simTime{ 0.0 };  // Current sim time
+  double d_simTimeMax{ 0 }; // Maximum simulation time
   bool d_simTimeEndAtMax{
-      false};  // End the simulation at exactly this sim time.
+    false
+  }; // End the simulation at exactly this sim time.
   bool d_simTimeClampToOutput{
-      false};  // Clamp the simulation time to the next output or checkpoint
+    false
+  }; // Clamp the simulation time to the next output or checkpoint
 
-  int d_timeStep{0};      // Current time step
-  int d_timeStepsMax{0};  // Maximum number of time steps to run.
+  int d_timeStep{ 0 };     // Current time step
+  int d_timeStepsMax{ 0 }; // Maximum number of time steps to run.
 
-  double d_wallTimeMax{0};  // Maximum wall time.
+  double d_wallTimeMax{ 0 }; // Maximum wall time.
 
-  ValidateFlag d_outputIfInvalidNextDelTFlag{0};
-  ValidateFlag d_checkpointIfInvalidNextDelTFlag{0};
+  ValidateFlag d_outputIfInvalidNextDelTFlag{ 0 };
+  ValidateFlag d_checkpointIfInvalidNextDelTFlag{ 0 };
 
- protected:
-  MaterialManagerP d_materialManager{nullptr};
+protected:
+  MaterialManagerP d_materialManager{ nullptr };
 
   ReductionInfoMapper<SimulationStatsEnum, double> d_simulation_stats;
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  //__CCA_COMPONENTS_SIMULATIONCOMMON_H__
+#endif //__CCA_COMPONENTS_SIMULATIONCOMMON_H__

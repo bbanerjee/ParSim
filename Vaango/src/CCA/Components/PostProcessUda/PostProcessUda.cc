@@ -164,7 +164,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
   // create material and register it.
   for (size_t i = 0; i < matls_ps.size(); i++) {
 
-    ProblemSpecP mat_ps = matls_ps[i];
+    ProblemSpecP mat_ps           = matls_ps[i];
     std::shared_ptr<Material> mat = std::make_shared<Material>(mat_ps);
 
     d_materialManager->registerMaterial(std::string(mat->getName()), mat);
@@ -175,10 +175,8 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
 
   //__________________________________
   //  create the PostProcess analysis modules
-  d_Modules = ModuleFactory::create(prob_spec,
-                                    d_materialManager,
-                                    d_output,
-                                    d_dataArchive);
+  d_Modules = ModuleFactory::create(
+    prob_spec, d_materialManager, d_output, d_dataArchive);
 
   for (auto iter = d_Modules.begin(); iter != d_Modules.end(); iter++) {
     Module* m = *iter;
@@ -191,7 +189,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
     AnalysisModuleFactory::create(d_myworld, d_materialManager, prob_spec);
 
   std::vector<std::vector<const VarLabel*>> dummy;
-  for (auto& am :  d_analysisModules) {
+  for (auto& am : d_analysisModules) {
     am->setComponents(dynamic_cast<SimulationInterface*>(this));
     am->problemSetup(prob_spec, restart_ps, grid, dummy, dummy);
   }
@@ -264,9 +262,8 @@ PostProcessUda::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 void
 PostProcessUda::sched_readDataArchive(const LevelP& level, SchedulerP& sched)
 {
-  Task* t = scinew Task("PostProcessUda::readDataArchive",
-                        this,
-                        &PostProcessUda::readDataArchive);
+  Task* t = scinew Task(
+    "PostProcessUda::readDataArchive", this, &PostProcessUda::readDataArchive);
 
   t->requires(Task::OldDW, getTimeStepLabel());
 
@@ -337,7 +334,7 @@ PostProcessUda::sched_readDataArchive(const LevelP& level, SchedulerP& sched)
 void
 PostProcessUda::readDataArchive(const ProcessorGroup* pg,
                                 const PatchSubset* patches,
-                                const MaterialSubset* matls,
+                                [[maybe_unused]] const MaterialSubset* matls,
                                 DataWarehouse* old_dw,
                                 DataWarehouse* new_dw)
 {
@@ -356,23 +353,15 @@ PostProcessUda::readDataArchive(const ProcessorGroup* pg,
 
     proc0cout << "    OLD_DW  ";
     old_dw->unfinalize();
-    d_dataArchive->postprocess_ReadUda(pg,
-                                       d_simTimestep - 1,
-                                       grid,
-                                       patches,
-                                       old_dw,
-                                       d_loadBalancer);
+    d_dataArchive->postprocess_ReadUda(
+      pg, d_simTimestep - 1, grid, patches, old_dw, d_loadBalancer);
     old_dw->refinalize();
   }
 
   // new dw
   proc0cout << "    NEW_DW\n";
-  d_dataArchive->postprocess_ReadUda(pg,
-                                     d_simTimestep,
-                                     grid,
-                                     patches,
-                                     new_dw,
-                                     d_loadBalancer);
+  d_dataArchive->postprocess_ReadUda(
+    pg, d_simTimestep, grid, patches, new_dw, d_loadBalancer);
   d_simTimestep++;
 
   proc0cout << "    __________________________________ " << std::endl;
@@ -387,9 +376,8 @@ void
 PostProcessUda::scheduleComputeStableTimeStep(const LevelP& level,
                                               SchedulerP& sched)
 {
-  Task* t = scinew Task("PostProcessUda::computeDelT",
-                        this,
-                        &PostProcessUda::computeDelT);
+  Task* t = scinew Task(
+    "PostProcessUda::computeDelT", this, &PostProcessUda::computeDelT);
 
   t->computes(getDelTLabel(), level.get_rep());
 
@@ -433,7 +421,7 @@ PostProcessUda::computeDelT(const ProcessorGroup*,
 //  If the number of materials on a level changes or if the grid
 //  has changed then call for a recompile
 bool
-PostProcessUda::needRecompile(const GridP& currentGrid)
+PostProcessUda::needRecompile([[maybe_unused]] const GridP& currentGrid)
 {
 
 #if 0 // is this needed --Todd

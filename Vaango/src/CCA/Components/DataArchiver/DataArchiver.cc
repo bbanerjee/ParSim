@@ -484,7 +484,7 @@ DataArchiver::outputProblemSpec(ProblemSpecP& root_ps)
 }
 
 void
-DataArchiver::initializeOutput(const ProblemSpecP& params, const GridP& grid)
+DataArchiver::initializeOutput(const ProblemSpecP& params, [[maybe_unused]] const GridP& grid)
 {
   if (d_outputInterval == 0.0 && d_outputTimeStepInterval == 0 &&
       d_checkpointInterval == 0.0 && d_checkpointTimeStepInterval == 0 &&
@@ -1010,7 +1010,7 @@ DataArchiver::createIndexXML(Dir& dir)
 void
 DataArchiver::finalizeTimeStep(const GridP& grid,
                                SchedulerP& sched,
-                               bool recompile /*=false*/,
+                               [[maybe_unused]] bool recompile /*=false*/,
                                int addMaterial /*=0*/)
 {
   // this function should get called exactly once per timestep
@@ -1313,7 +1313,7 @@ DataArchiver::beginOutputTimeStep(const GridP& grid)
 
 void
 DataArchiver::makeTimeStepDirs(Dir& baseDir,
-                               std::vector<DataArchiver::SaveItem>& saveLabels,
+                               [[maybe_unused]] std::vector<DataArchiver::SaveItem>& saveLabels,
                                const GridP& grid,
                                string* pTimeStepDir /* passed back */)
 {
@@ -1346,7 +1346,7 @@ DataArchiver::makeTimeStepDirs(Dir& baseDir,
 
 void
 DataArchiver::findNext_OutputCheckPointTimeStep(const bool restart,
-                                                const GridP& grid)
+                                                [[maybe_unused]] const GridP& grid)
 {
   const int timeStep   = d_simulator->getTimeStep();
   const double simTime = d_simulator->getSimTime();
@@ -2755,7 +2755,7 @@ DataArchiver::outputGlobalVars(const ProcessorGroup*,
 }
 
 void
-DataArchiver::outputVariables(const ProcessorGroup* pg,
+DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
                               const PatchSubset* patches,
                               const MaterialSubset* /*matls*/,
                               DataWarehouse* old_dw,
@@ -3171,15 +3171,15 @@ DataArchiver::outputVariables(const ProcessorGroup* pg,
 
 //  output only the savedLabels of a specified type description in PIDX format.
 size_t
-DataArchiver::saveLabels_PIDX(const ProcessorGroup* pg,
-                              const PatchSubset* patches,
-                              DataWarehouse* new_dw,
-                              int type,
-                              std::vector<SaveItem>& saveLabels,
-                              const TypeDescription::Type TD,
-                              Dir ldir, // uda/timestep/levelIndex
-                              const std::string& dirName, // CCVars, SFC*Vars
-                              ProblemSpecP& doc)
+DataArchiver::saveLabels_PIDX([[maybe_unused]] const ProcessorGroup* pg,
+                              [[maybe_unused]] const PatchSubset* patches,
+                              [[maybe_unused]] DataWarehouse* new_dw,
+                              [[maybe_unused]] int type,
+                              [[maybe_unused]] std::vector<SaveItem>& saveLabels,
+                              [[maybe_unused]] const TypeDescription::Type TD,
+                              [[maybe_unused]] Dir ldir, // uda/timestep/levelIndex
+                              [[maybe_unused]] const std::string& dirName, // CCVars, SFC*Vars
+                              [[maybe_unused]] ProblemSpecP& doc)
 {
 
   size_t totalBytesSaved = 0;
@@ -4132,7 +4132,7 @@ DataArchiver::needRecompile(const GridP& /*grid*/)
 }
 
 void
-DataArchiver::recompile(const GridP& grid)
+DataArchiver::recompile([[maybe_unused]] const GridP& grid)
 {
 
 #ifdef HAVE_PIDX

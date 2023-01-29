@@ -31,15 +31,22 @@ using namespace Uintah;
  * Get the normalized vertex positions of the particle parallelepiped
  */
 Array8_P
-ParticleInterpolator::getParticleDomainHex8Normalized(const Point& pNormPosition,
-                                                      const Matrix3& pSize,
-                                                      const Matrix3& pDefGrad) const
+ParticleInterpolator::getParticleDomainHex8Normalized(
+  const Point& pNormPosition,
+  const Matrix3& pSize,
+  const Matrix3& pDefGrad) const
 {
   // Compute the deformed particle domain basis vectors
   Matrix3 defBasis = pDefGrad * pSize;
-  Vector e1 = {defBasis(0,0) * 0.5, defBasis(1,0) * 0.5, defBasis(2,0) * 0.5};
-  Vector e2 = {defBasis(0,1) * 0.5, defBasis(1,1) * 0.5, defBasis(2,1) * 0.5};
-  Vector e3 = {defBasis(0,2) * 0.5, defBasis(1,2) * 0.5, defBasis(2,2) * 0.5};
+  Vector e1        = { defBasis(0, 0) * 0.5,
+                       defBasis(1, 0) * 0.5,
+                       defBasis(2, 0) * 0.5 };
+  Vector e2        = { defBasis(0, 1) * 0.5,
+                       defBasis(1, 1) * 0.5,
+                       defBasis(2, 1) * 0.5 };
+  Vector e3        = { defBasis(0, 2) * 0.5,
+                       defBasis(1, 2) * 0.5,
+                       defBasis(2, 2) * 0.5 };
 
   // Compute the particle domain vertex locations
   Array8_P vertices;
@@ -52,7 +59,7 @@ ParticleInterpolator::getParticleDomainHex8Normalized(const Point& pNormPosition
   vertices[5] = (pNormPosition + e1 - e2 + e3);
   vertices[6] = (pNormPosition + e1 + e2 + e3);
   vertices[7] = (pNormPosition - e1 + e2 + e3);
-  
+
   return vertices;
 }
 
@@ -61,16 +68,18 @@ ParticleInterpolator::getParticleDomainHex8Normalized(const Point& pNormPosition
  * shape functions and their derivatives for a set of grid points
  * that influence the particle.
  */
-void 
+void
 ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
   const Patch* patch,
   const Point& pPosition,
   std::vector<IntVector>& numInfluenceNodes,
-  std::vector<double>& S_ip_av, std::vector<Vector>& G_ip_av,
-  const Matrix3& pSize, const Matrix3& pDefGrad,
-  bool derivatives)
+  [[maybe_unused]] std::vector<double>& S_ip_av,
+  [[maybe_unused]] std::vector<Vector>& G_ip_av,
+  const Matrix3& pSize,
+  const Matrix3& pDefGrad,
+  [[maybe_unused]] bool derivatives)
 {
-  // Get the normalized particle position 
+  // Get the normalized particle position
   Point pNormPosition = patch->getLevel()->positionToIndex(pPosition);
 
   // Identify the indices of the eight nodes that influence the particle
@@ -90,7 +99,8 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
   IntVector p_node8(p_ix_lower, p_iy_upper, p_iz_upper);
 
   // Get the normalized vertices of the particle domain
-  Array8_P pNormVertices = getParticleDomainHex8Normalized(pNormPosition, pSize, pDefGrad);
+  Array8_P pNormVertices =
+    getParticleDomainHex8Normalized(pNormPosition, pSize, pDefGrad);
 
   // For the particle position and domain vertices, find the nodes of influence
   for (auto& vertex : pNormVertices) {
@@ -110,8 +120,6 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
     IntVector v_node6(v_ix_upper, v_iy_lower, v_iz_upper);
     IntVector v_node7(v_ix_upper, v_iy_upper, v_iz_upper);
     IntVector v_node8(v_ix_lower, v_iy_upper, v_iz_upper);
-
-
   }
 
   // Find the nodes that influence the particle and evaluate the shape
@@ -147,7 +155,7 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
   C X (8 x 1) array of x coordinates of hexahedron nodes
   C Y (8 x 1) array of y coordinates of hexahedron nodes
   C Z (8 x 1) array of z coordinates of hexahedron nodes
-  C C (6 x 6) constitutive material matrix 
+  C C (6 x 6) constitutive material matrix
   C P Gauss quadrature rule (1 to 4) assumed same in all
   iso-P
   C directions. Normally P=2 is used.
@@ -214,7 +222,7 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
   do 2500 l = 1,p
   do 2400 m = 1,p
   call HEXAGAUSSQ (p, k, p, l, p, m, xi, eta, mu, w)
-  call HEXA8SHAPE (' ', xi, eta, mu, x, y, z, q, 
+  call HEXA8SHAPE (' ', xi, eta, mu, x, y, z, q,
   & qx, qy, qz, det)
   if (det .le. 0.0) then
   status = 'Negative Jacobian determinant'
@@ -223,7 +231,7 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
   end if
   return
   end if
-  w = w * det 
+  w = w * det
   C
   do 2000 j = 1,8
   jx = ls(j)
@@ -290,12 +298,12 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
 }
 
 /*!
- * PURPOSE : 
- *  Compute the value of the shape functions for a  eight-noded isoparametric 
- *  hexahedron ("brick element") and its C x-y-z derivatives, at a sample 
+ * PURPOSE :
+ *  Compute the value of the shape functions for a  eight-noded isoparametric
+ *  hexahedron ("brick element") and its C x-y-z derivatives, at a sample
  *  point given by its hexahedron coordinates (xi,eta,zeta)
  * ORIGINAL AUTHOR :
- *  C. A. Felippa, June 1967 (Fortran IV, UCB 7094) 
+ *  C. A. Felippa, June 1967 (Fortran IV, UCB 7094)
  * INPUT :
  *  xi, eta,zeta : Isoparametric coordinates of given point
  *  x            : (8 x 1) array of x coordinates of hexahedron corners
@@ -312,55 +320,62 @@ ParticleInterpolator::findCellAndWeightsAndShapeDerivativeAverages(
  *                 be treated as an error in the calling program. In such
  *                 a case dSx,dSy,dSz are not computed.
  */
-void shapeFunctionsHex8(double xi, double eta, double zeta, 
-                        const Array8_D& x, const Array8_D& y, const Array8_D& z,
-                        Array8_D& S, 
-                        Array8_D& dSx, Array8_D& dSy, Array8_D& dSz,
-                        double& detJ, 
-                        bool derivatives = false)
+void
+shapeFunctionsHex8(double xi,
+                   double eta,
+                   double zeta,
+                   const Array8_D& x,
+                   const Array8_D& y,
+                   const Array8_D& z,
+                   Array8_D& S,
+                   Array8_D& dSx,
+                   Array8_D& dSy,
+                   Array8_D& dSz,
+                   double& detJ,
+                   bool derivatives = false)
 {
-  double d1 = 0.5 * (1.0+xi);
-  double d2 = 0.5 * (1.0+eta);
-  double d3 = 0.5 * (1.0+zeta);
-  double d4 = 1.0 - d1;
-  double d5 = 1.0 - d2;
-  double d6 = 1.0 - d3;
-  S[0] = d4 * d5 * d6;
-  S[1] = d1 * d5 * d6;
-  S[2] = d1 * d2 * d6;
-  S[3] = d4 * d2 * d6;
-  S[4] = d4 * d5 * d3;
-  S[5] = d1 * d5 * d3;
-  S[6] = d1 * d2 * d3;
-  S[7] = d4 * d2 * d3;
-  double d1h = 0.5 * d1;
-  double d2h = 0.5 * d2;
+  double d1                   = 0.5 * (1.0 + xi);
+  double d2                   = 0.5 * (1.0 + eta);
+  double d3                   = 0.5 * (1.0 + zeta);
+  double d4                   = 1.0 - d1;
+  double d5                   = 1.0 - d2;
+  double d6                   = 1.0 - d3;
+  S[0]                        = d4 * d5 * d6;
+  S[1]                        = d1 * d5 * d6;
+  S[2]                        = d1 * d2 * d6;
+  S[3]                        = d4 * d2 * d6;
+  S[4]                        = d4 * d5 * d3;
+  S[5]                        = d1 * d5 * d3;
+  S[6]                        = d1 * d2 * d3;
+  S[7]                        = d4 * d2 * d3;
+  double d1h                  = 0.5 * d1;
+  double d2h                  = 0.5 * d2;
   [[maybe_unused]] double d3h = 0.5 * d3;
-  double d4h = 0.5 * d4;
-  double d5h = 0.5 * d5;
+  double d4h                  = 0.5 * d4;
+  double d5h                  = 0.5 * d5;
   [[maybe_unused]] double d6h = 0.5 * d6;
 
   Array8_D s1, s2, s3;
-  s1[0] = - d5h * d6;
+  s1[0] = -d5h * d6;
   s1[1] = d5h * d6;
   s1[2] = d2h * d6;
-  s1[3] = - d2h * d6;
-  s1[4] = - d5h * d3;
+  s1[3] = -d2h * d6;
+  s1[4] = -d5h * d3;
   s1[5] = d5h * d3;
   s1[6] = d2h * d3;
-  s1[7] = - d2h * d3;
-  s2[0] = - d4h * d6;
-  s2[1] = - d1h * d6;
+  s1[7] = -d2h * d3;
+  s2[0] = -d4h * d6;
+  s2[1] = -d1h * d6;
   s2[2] = d1h * d6;
   s2[3] = d4h * d6;
-  s2[4] = - d4h * d3;
-  s2[5] = - d1h * d3;
+  s2[4] = -d4h * d3;
+  s2[5] = -d1h * d3;
   s2[6] = d1h * d3;
   s2[7] = d4h * d3;
-  s3[0] = - d4h * d5;
-  s3[1] = - d1h * d5;
-  s3[2] = - d1h * d2;
-  s3[3] = - d4h * d2;
+  s3[0] = -d4h * d5;
+  s3[1] = -d1h * d5;
+  s3[2] = -d1h * d2;
+  s3[3] = -d4h * d2;
   s3[4] = d4h * d5;
   s3[5] = d1h * d5;
   s3[6] = d1h * d2;
@@ -380,49 +395,51 @@ void shapeFunctionsHex8(double xi, double eta, double zeta,
     zd2 += z[ii] * s2[ii];
     zd3 += z[ii] * s3[ii];
   }
-  double a11 = yd2*zd3 - yd3*zd2;
-  double a12 = yd3*zd1 - yd1*zd3;
-  double a13 = yd1*zd2 - yd2*zd1;
-  double a21 = xd3*zd2 - xd2*zd3;
-  double a22 = xd1*zd3 - zd1*xd3;
-  double a23 = xd2*zd1 - xd1*zd2;
-  double a31 = xd2*yd3 - xd3*yd2;
-  double a32 = yd1*xd3 - xd1*yd3;
-  double a33 = xd1*yd2 - yd1*xd2;
-  detJ = xd1*a11 + yd1*a21 + zd1*a31;
+  double a11 = yd2 * zd3 - yd3 * zd2;
+  double a12 = yd3 * zd1 - yd1 * zd3;
+  double a13 = yd1 * zd2 - yd2 * zd1;
+  double a21 = xd3 * zd2 - xd2 * zd3;
+  double a22 = xd1 * zd3 - zd1 * xd3;
+  double a23 = xd2 * zd1 - xd1 * zd2;
+  double a31 = xd2 * yd3 - xd3 * yd2;
+  double a32 = yd1 * xd3 - xd1 * yd3;
+  double a33 = xd1 * yd2 - yd1 * xd2;
+  detJ       = xd1 * a11 + yd1 * a21 + zd1 * a31;
 
-  if (!derivatives || !(detJ > 0.0)) return;
+  if (!derivatives || !(detJ > 0.0)) {
+    return;
+  }
 
   double cdet = 1.0 / detJ;
-  dSx[0] = cdet * ( a11 * s1[0] + a12 * s2[0] + a13 * s3[0]);
-  dSy[0] = cdet * ( a21 * s1[0] + a22 * s2[0] + a23 * s3[0]);
-  dSz[0] = cdet * ( a31 * s1[0] + a32 * s2[0] + a33 * s3[0]);
-  dSx[1] = cdet * ( a11 * s1[1] + a12 * s2[1] + a13 * s3[1]);
-  dSy[1] = cdet * ( a21 * s1[1] + a22 * s2[1] + a23 * s3[1]);
-  dSz[1] = cdet * ( a31 * s1[1] + a32 * s2[1] + a33 * s3[1]);
-  dSx[2] = cdet * ( a11 * s1[2] + a12 * s2[2] + a13 * s3[2]);
-  dSy[2] = cdet * ( a21 * s1[2] + a22 * s2[2] + a23 * s3[2]);
-  dSz[2] = cdet * ( a31 * s1[2] + a32 * s2[2] + a33 * s3[2]);
-  dSx[3] = cdet * ( a11 * s1[3] + a12 * s2[3] + a13 * s3[3]);
-  dSy[3] = cdet * ( a21 * s1[3] + a22 * s2[3] + a23 * s3[3]);
-  dSz[3] = cdet * ( a31 * s1[3] + a32 * s2[3] + a33 * s3[3]);
-  dSx[4] = cdet * ( a11 * s1[4] + a12 * s2[4] + a13 * s3[4]);
-  dSy[4] = cdet * ( a21 * s1[4] + a22 * s2[4] + a23 * s3[4]);
-  dSz[4] = cdet * ( a31 * s1[4] + a32 * s2[4] + a33 * s3[4]);
-  dSx[5] = cdet * ( a11 * s1[5] + a12 * s2[5] + a13 * s3[5]);
-  dSy[5] = cdet * ( a21 * s1[5] + a22 * s2[5] + a23 * s3[5]);
-  dSz[5] = cdet * ( a31 * s1[5] + a32 * s2[5] + a33 * s3[5]);
-  dSx[6] = cdet * ( a11 * s1[6] + a12 * s2[6] + a13 * s3[6]);
-  dSy[6] = cdet * ( a21 * s1[6] + a22 * s2[6] + a23 * s3[6]);
-  dSz[6] = cdet * ( a31 * s1[6] + a32 * s2[6] + a33 * s3[6]);
-  dSx[7] = cdet * ( a11 * s1[7] + a12 * s2[7] + a13 * s3[7]);
-  dSy[7] = cdet * ( a21 * s1[7] + a22 * s2[7] + a23 * s3[7]);
-  dSz[7] = cdet * ( a31 * s1[7] + a32 * s2[7] + a33 * s3[7]);
+  dSx[0]      = cdet * (a11 * s1[0] + a12 * s2[0] + a13 * s3[0]);
+  dSy[0]      = cdet * (a21 * s1[0] + a22 * s2[0] + a23 * s3[0]);
+  dSz[0]      = cdet * (a31 * s1[0] + a32 * s2[0] + a33 * s3[0]);
+  dSx[1]      = cdet * (a11 * s1[1] + a12 * s2[1] + a13 * s3[1]);
+  dSy[1]      = cdet * (a21 * s1[1] + a22 * s2[1] + a23 * s3[1]);
+  dSz[1]      = cdet * (a31 * s1[1] + a32 * s2[1] + a33 * s3[1]);
+  dSx[2]      = cdet * (a11 * s1[2] + a12 * s2[2] + a13 * s3[2]);
+  dSy[2]      = cdet * (a21 * s1[2] + a22 * s2[2] + a23 * s3[2]);
+  dSz[2]      = cdet * (a31 * s1[2] + a32 * s2[2] + a33 * s3[2]);
+  dSx[3]      = cdet * (a11 * s1[3] + a12 * s2[3] + a13 * s3[3]);
+  dSy[3]      = cdet * (a21 * s1[3] + a22 * s2[3] + a23 * s3[3]);
+  dSz[3]      = cdet * (a31 * s1[3] + a32 * s2[3] + a33 * s3[3]);
+  dSx[4]      = cdet * (a11 * s1[4] + a12 * s2[4] + a13 * s3[4]);
+  dSy[4]      = cdet * (a21 * s1[4] + a22 * s2[4] + a23 * s3[4]);
+  dSz[4]      = cdet * (a31 * s1[4] + a32 * s2[4] + a33 * s3[4]);
+  dSx[5]      = cdet * (a11 * s1[5] + a12 * s2[5] + a13 * s3[5]);
+  dSy[5]      = cdet * (a21 * s1[5] + a22 * s2[5] + a23 * s3[5]);
+  dSz[5]      = cdet * (a31 * s1[5] + a32 * s2[5] + a33 * s3[5]);
+  dSx[6]      = cdet * (a11 * s1[6] + a12 * s2[6] + a13 * s3[6]);
+  dSy[6]      = cdet * (a21 * s1[6] + a22 * s2[6] + a23 * s3[6]);
+  dSz[6]      = cdet * (a31 * s1[6] + a32 * s2[6] + a33 * s3[6]);
+  dSx[7]      = cdet * (a11 * s1[7] + a12 * s2[7] + a13 * s3[7]);
+  dSy[7]      = cdet * (a21 * s1[7] + a22 * s2[7] + a23 * s3[7]);
+  dSz[7]      = cdet * (a31 * s1[7] + a32 * s2[7] + a33 * s3[7]);
 }
 
 /*!
- * PURPOSE : 
- *   Returns the hexahedron coordinates of sample points and weights for a 
+ * PURPOSE :
+ *   Returns the hexahedron coordinates of sample points and weights for a
  *   s-point Gauss-product integration rule over an isoparametric hexahedron.
  * ORIGINAL AUTHOR :
  *   C. A. Felippa, June 1967 (Fortran IV, UCB 7094)
@@ -433,15 +450,20 @@ void shapeFunctionsHex8(double xi, double eta, double zeta,
  *   indexEta        : Index of sample point in the ETA direction
  *   numGaussPtsZeta : Number of Gauss points in the ZETA direction
  *   indexZeta       : Index of sample points in the MU direction
- * OUTPUT : 
+ * OUTPUT :
  *   xi, eta, zeta   : Isoparametric coordinates of sample point
  *   weight          : Weight factor
  */
 void
-ParticleInterpolator::getGaussPtsAndWeightsHex8(int numGaussPtsXi, int indexXi,
-                                                int numGaussPtsEta, int indexEta,
-                                                int numGaussPtsZeta, int indexZeta,
-                                                double& xi, double& eta, double& zeta,
+ParticleInterpolator::getGaussPtsAndWeightsHex8(int numGaussPtsXi,
+                                                int indexXi,
+                                                int numGaussPtsEta,
+                                                int indexEta,
+                                                int numGaussPtsZeta,
+                                                int indexZeta,
+                                                double& xi,
+                                                double& eta,
+                                                double& zeta,
                                                 double& weight) const
 {
   double w1, w2, w3;
@@ -456,17 +478,19 @@ ParticleInterpolator::getGaussPtsAndWeightsHex8(int numGaussPtsXi, int indexXi,
  *   Compute signed volume of an 8-node brick element
  * ORIGINAL AUTHOR :
  *   C. A. Felippa, August 1973 (Fortran IV, LMSC 1108)
- * INPUT : 
+ * INPUT :
  *   x, y, z : Global coordinates of brick corners
  *   integration_rule :  Specifies the Gauss integration rule:
  *     ONE_POINT   :  1 point rule at center
- *     EIGHT_POINT :  8 point rule (2 x 2 x 2) which gives the exact volume 
+ *     EIGHT_POINT :  8 point rule (2 x 2 x 2) which gives the exact volume
  *                    for any 8-node brick
- * OUTPUT : 
+ * OUTPUT :
  *   vol : Signed volume of element. vol<=0 flags an error.
  */
-double 
-ParticleInterpolator::volumeHex8(const Array8_D& x, const Array8_D& y, const Array8_D& z,
+double
+ParticleInterpolator::volumeHex8(const Array8_D& x,
+                                 const Array8_D& y,
+                                 const Array8_D& z,
                                  IntegrationRule integration_rule) const
 {
   double vol = 0.0;
@@ -475,27 +499,34 @@ ParticleInterpolator::volumeHex8(const Array8_D& x, const Array8_D& y, const Arr
     Array8_D dNxi, dNeta, dNzeta;
     naturalDerivativesHex8(0.0, 0.0, 0.0, dNxi, dNeta, dNzeta);
 
-    double J11 = 0.0; double J12 = 0.0; double J13 = 0.0;
-    double J21 = 0.0; double J22 = 0.0; double J23 = 0.0;
-    double J31 = 0.0; double J32 = 0.0; double J33 = 0.0;
+    double J11 = 0.0;
+    double J12 = 0.0;
+    double J13 = 0.0;
+    double J21 = 0.0;
+    double J22 = 0.0;
+    double J23 = 0.0;
+    double J31 = 0.0;
+    double J32 = 0.0;
+    double J33 = 0.0;
     for (int ii = 0; ii < 8; ++ii) {
-      J11 += x[ii]*dNxi[ii];
-      J12 += y[ii]*dNxi[ii];
-      J13 += z[ii]*dNxi[ii];
-      J21 += x[ii]*dNeta[ii];
-      J22 += y[ii]*dNeta[ii];
-      J23 += z[ii]*dNeta[ii];
-      J31 += x[ii]*dNzeta[ii];
-      J32 += y[ii]*dNzeta[ii];
-      J33 += z[ii]*dNzeta[ii];
+      J11 += x[ii] * dNxi[ii];
+      J12 += y[ii] * dNxi[ii];
+      J13 += z[ii] * dNxi[ii];
+      J21 += x[ii] * dNeta[ii];
+      J22 += y[ii] * dNeta[ii];
+      J23 += z[ii] * dNeta[ii];
+      J31 += x[ii] * dNzeta[ii];
+      J32 += y[ii] * dNzeta[ii];
+      J33 += z[ii] * dNzeta[ii];
     }
-    vol = (J11*J22*J33 + J21*J32*J13 + J31*J12*J23 
-           - J31*J22*J13 - J11*J32*J23 - J21*J12*J33)*8.0;
+    vol = (J11 * J22 * J33 + J21 * J32 * J13 + J31 * J12 * J23 -
+           J31 * J22 * J13 - J11 * J32 * J23 - J21 * J12 * J33) *
+          8.0;
   } else {
 
     if (integration_rule == IntegrationRule::EIGHT_POINT) {
       Array2_D gaussPoints;
-      gaussPoints[1] = 1.0/std::sqrt(3.0);
+      gaussPoints[1] = 1.0 / std::sqrt(3.0);
       gaussPoints[0] = -gaussPoints[1];
 
       Array8_D dNxi, dNeta, dNzeta;
@@ -505,22 +536,28 @@ ParticleInterpolator::volumeHex8(const Array8_D& x, const Array8_D& y, const Arr
 
             naturalDerivativesHex8(xi, eta, zeta, dNxi, dNeta, dNzeta);
 
-            double J11 = 0.0; double J12 = 0.0; double J13 = 0.0;
-            double J21 = 0.0; double J22 = 0.0; double J23 = 0.0;
-            double J31 = 0.0; double J32 = 0.0; double J33 = 0.0;
+            double J11 = 0.0;
+            double J12 = 0.0;
+            double J13 = 0.0;
+            double J21 = 0.0;
+            double J22 = 0.0;
+            double J23 = 0.0;
+            double J31 = 0.0;
+            double J32 = 0.0;
+            double J33 = 0.0;
             for (int ii = 0; ii < 8; ++ii) {
-              J11 += x[ii]*dNxi[ii];
-              J12 += y[ii]*dNxi[ii];
-              J13 += z[ii]*dNxi[ii];
-              J21 += x[ii]*dNeta[ii];
-              J22 += y[ii]*dNeta[ii];
-              J23 += z[ii]*dNeta[ii];
-              J31 += x[ii]*dNzeta[ii];
-              J32 += y[ii]*dNzeta[ii];
-              J33 += z[ii]*dNzeta[ii];
+              J11 += x[ii] * dNxi[ii];
+              J12 += y[ii] * dNxi[ii];
+              J13 += z[ii] * dNxi[ii];
+              J21 += x[ii] * dNeta[ii];
+              J22 += y[ii] * dNeta[ii];
+              J23 += z[ii] * dNeta[ii];
+              J31 += x[ii] * dNzeta[ii];
+              J32 += y[ii] * dNzeta[ii];
+              J33 += z[ii] * dNzeta[ii];
             }
-            vol += (J11*J22*J33 + J21*J32*J13 + J31*J12*J23 
-                    - J31*J22*J13 - J11*J32*J23 - J21*J12*J33);
+            vol += (J11 * J22 * J33 + J21 * J32 * J13 + J31 * J12 * J23 -
+                    J31 * J22 * J13 - J11 * J32 * J23 - J21 * J12 * J33);
           }
         }
       }
@@ -532,63 +569,66 @@ ParticleInterpolator::volumeHex8(const Array8_D& x, const Array8_D& y, const Arr
 /*
  * PURPOSE :
  *   Computes natural partial derivatives of trilinear shape functions of
- *    isoparametric 8-node brick 
+ *    isoparametric 8-node brick
  * ASSUMPTIONS:
  *   Nodes are ordered as x-, y-, z-
  *                        x+, y-, z-
  *                        x+, y+, z-
- *                        x-, y+, z- 
+ *                        x-, y+, z-
  *                        x-, y-, z+
  *                        x+, y-, z+
  *                        x+, y+, z+
- *                        x-, y+, z+ 
+ *                        x-, y+, z+
  * ORIGINAL AUTHOR :
  *   C. A. Felippa, August 1973 (Fortran IV, LMSC 1108)
  * INPUT :
- *   xi, eta, zeta 
+ *   xi, eta, zeta
  *     Natural coordinates of point at which derivatives are to be evaluated
- * OUTPUT : 
+ * OUTPUT :
  *   dNxi : Array of 8 partial derivatives wrt xi
  *   dNeta : Array of 8 partial derivatives wrt eta
  *   dNzeta : Array of 8 partial derivatives wrt zeta
  */
 void
-ParticleInterpolator::naturalDerivativesHex8(double xi, double eta, double zeta,
-                                             Array8_D& dNxi, Array8_D& dNeta, 
+ParticleInterpolator::naturalDerivativesHex8(double xi,
+                                             double eta,
+                                             double zeta,
+                                             Array8_D& dNxi,
+                                             Array8_D& dNeta,
                                              Array8_D& dNzeta) const
 {
-  dNxi[0] = -(1.0-eta)*(1.0-zeta)*0.125;
-  dNxi[1] = (1.0-eta)*(1.0-zeta)*0.125;
-  dNxi[2] = (1.0+eta)*(1.0-zeta)*0.125;
-  dNxi[3] = -(1.0+eta)*(1.0-zeta)*0.125;
-  dNxi[4] = -(1.0-eta)*(1.0+zeta)*0.125;
-  dNxi[5] = (1.0-eta)*(1.0+zeta)*0.125;
-  dNxi[6] = (1.0+eta)*(1.0+zeta)*0.125;
-  dNxi[7] = -(1.0+eta)*(1.0+zeta)*0.125;
-  dNeta[0] = -(1.0-xi)*(1.0-zeta) *0.125;
-  dNeta[1] = -(1.0+xi)*(1.0-zeta) *0.125;
-  dNeta[2] = (1.0+xi)*(1.0-zeta) *0.125;
-  dNeta[3] = (1.0-xi)*(1.0-zeta) *0.125;
-  dNeta[4] = -(1.0-xi)*(1.0+zeta) *0.125;
-  dNeta[5] = -(1.0+xi)*(1.0+zeta) *0.125;
-  dNeta[6] = (1.0+xi)*(1.0+zeta) *0.125;
-  dNeta[7] = (1.0-xi)*(1.0+zeta) *0.125;
-  dNzeta[0] = -(1.0-xi)*(1.0-eta) *0.125;
-  dNzeta[1] = -(1.0+xi)*(1.0-eta) *0.125;
-  dNzeta[2] = -(1.0+xi)*(1.0+eta) *0.125;
-  dNzeta[3] = -(1.0-xi)*(1.0+eta) *0.125;
-  dNzeta[4] = (1.0-xi)*(1.0-eta) *0.125;
-  dNzeta[5] = (1.0+xi)*(1.0-eta) *0.125;
-  dNzeta[6] = (1.0+xi)*(1.0+eta) *0.125;
-  dNzeta[7] = (1.0-xi)*(1.0+eta) *0.125;
+  dNxi[0]   = -(1.0 - eta) * (1.0 - zeta) * 0.125;
+  dNxi[1]   = (1.0 - eta) * (1.0 - zeta) * 0.125;
+  dNxi[2]   = (1.0 + eta) * (1.0 - zeta) * 0.125;
+  dNxi[3]   = -(1.0 + eta) * (1.0 - zeta) * 0.125;
+  dNxi[4]   = -(1.0 - eta) * (1.0 + zeta) * 0.125;
+  dNxi[5]   = (1.0 - eta) * (1.0 + zeta) * 0.125;
+  dNxi[6]   = (1.0 + eta) * (1.0 + zeta) * 0.125;
+  dNxi[7]   = -(1.0 + eta) * (1.0 + zeta) * 0.125;
+  dNeta[0]  = -(1.0 - xi) * (1.0 - zeta) * 0.125;
+  dNeta[1]  = -(1.0 + xi) * (1.0 - zeta) * 0.125;
+  dNeta[2]  = (1.0 + xi) * (1.0 - zeta) * 0.125;
+  dNeta[3]  = (1.0 - xi) * (1.0 - zeta) * 0.125;
+  dNeta[4]  = -(1.0 - xi) * (1.0 + zeta) * 0.125;
+  dNeta[5]  = -(1.0 + xi) * (1.0 + zeta) * 0.125;
+  dNeta[6]  = (1.0 + xi) * (1.0 + zeta) * 0.125;
+  dNeta[7]  = (1.0 - xi) * (1.0 + zeta) * 0.125;
+  dNzeta[0] = -(1.0 - xi) * (1.0 - eta) * 0.125;
+  dNzeta[1] = -(1.0 + xi) * (1.0 - eta) * 0.125;
+  dNzeta[2] = -(1.0 + xi) * (1.0 + eta) * 0.125;
+  dNzeta[3] = -(1.0 - xi) * (1.0 + eta) * 0.125;
+  dNzeta[4] = (1.0 - xi) * (1.0 - eta) * 0.125;
+  dNzeta[5] = (1.0 + xi) * (1.0 - eta) * 0.125;
+  dNzeta[6] = (1.0 + xi) * (1.0 + eta) * 0.125;
+  dNzeta[7] = (1.0 - xi) * (1.0 + eta) * 0.125;
 }
 
 /*!
- * PURPOSE 
+ * PURPOSE
  *  Get s-point abscissas and weight for quad product Gauss rule
- * ORIGINAL AUTHOR 
+ * ORIGINAL AUTHOR
  *  C. A. Felippa, Jan 1966 (Fortran IV, UCB 7094)
- * RETURNS 
+ * RETURNS
  *  the abscissae and weight factors
  *  of the p-th Gauss-Legendre integration rule (=1,2,3,4) over
  *  the interval xi:(-1,+1).
@@ -600,46 +640,46 @@ ParticleInterpolator::naturalDerivativesHex8(double xi, double eta, double zeta,
  *   xi: Abscissa of sample point (zero of Legendre polynomial)
  *   weight: Weight factor
  */
-void 
-ParticleInterpolator::lineGaussQuadratureWeights(int numIntegrationPts, int index, 
-                                                 double& xi, double& weight) const
+void
+ParticleInterpolator::lineGaussQuadratureWeights(int numIntegrationPts,
+                                                 int index,
+                                                 double& xi,
+                                                 double& weight) const
 {
   if (numIntegrationPts <= 1) {
-    xi = 0.0;
+    xi     = 0.0;
     weight = 2.0;
   } else if (numIntegrationPts == 2) {
     if (index == 1) {
-      xi = -1.0/std::sqrt(3.0);
+      xi = -1.0 / std::sqrt(3.0);
     } else {
-      xi = 1.0/std::sqrt(3.0);
+      xi = 1.0 / std::sqrt(3.0);
     }
     weight = 1.0;
   } else if (numIntegrationPts == 3) {
     if (index == 1) {
-      xi = -std::sqrt(0.6);
-      weight = 5.0/9.0;
+      xi     = -std::sqrt(0.6);
+      weight = 5.0 / 9.0;
     } else if (index == 2) {
-      xi = 0.0;
-      weight = 8.0/9.0;
+      xi     = 0.0;
+      weight = 8.0 / 9.0;
     } else {
-      xi = std::sqrt(0.6);
-      weight = 5.0/9.0;
+      xi     = std::sqrt(0.6);
+      weight = 5.0 / 9.0;
     }
   } else {
     if (index == 1) {
-      xi = -0.861136311594053;
+      xi     = -0.861136311594053;
       weight = 0.347854845137454;
     } else if (index == 2) {
-      xi = -0.339981043584856;
+      xi     = -0.339981043584856;
       weight = 0.652145154862546;
     } else if (index == 3) {
-      xi = 0.339981043584856;
+      xi     = 0.339981043584856;
       weight = 0.652145154862546;
     } else {
-      xi = 0.861136311594053;
+      xi     = 0.861136311594053;
       weight = 0.347854845137454;
     }
   }
 }
-
-

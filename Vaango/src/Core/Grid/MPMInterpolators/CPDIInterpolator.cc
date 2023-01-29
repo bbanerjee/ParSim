@@ -23,7 +23,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <Core/Grid/MPMInterpolators/cpdiInterpolator.h>
+#include <Core/Grid/MPMInterpolators/CPDIInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Malloc/Allocator.h>
@@ -34,21 +34,21 @@ using namespace Uintah;
 using namespace Uintah;
 
     
-cpdiInterpolator::cpdiInterpolator()
+CPDIInterpolator::CPDIInterpolator()
 {
   d_size = 64;
   d_patch = 0;
   d_lcrit = 1.0e10;
 }
 
-cpdiInterpolator::cpdiInterpolator(const Patch* patch)
+CPDIInterpolator::CPDIInterpolator(const Patch* patch)
 {
   d_size = 64;
   d_patch = patch;
   d_lcrit = 1.0e10;
 }
     
-cpdiInterpolator::cpdiInterpolator(const Patch* patch,
+CPDIInterpolator::CPDIInterpolator(const Patch* patch,
                                    const double& lcrit)
 {
   d_size = 64;
@@ -56,17 +56,17 @@ cpdiInterpolator::cpdiInterpolator(const Patch* patch,
   d_lcrit = lcrit;
 }
     
-cpdiInterpolator::~cpdiInterpolator()
+CPDIInterpolator::~CPDIInterpolator()
 {
 }
 
 std::unique_ptr<ParticleInterpolator> 
-cpdiInterpolator::clone(const Patch* patch)
+CPDIInterpolator::clone(const Patch* patch)
 {
-  return std::make_unique<cpdiInterpolator>(patch, d_lcrit);
+  return std::make_unique<CPDIInterpolator>(patch, d_lcrit);
 }
     
-void cpdiInterpolator::findCellAndWeights(const Point& pos,
+void CPDIInterpolator::findCellAndWeights(const Point& pos,
                                             std::vector<IntVector>& ni, 
                                             std::vector<double>& S,
                                             const Matrix3& size,
@@ -233,7 +233,7 @@ void cpdiInterpolator::findCellAndWeights(const Point& pos,
   }
 }
  
-void cpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+void CPDIInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                    std::vector<IntVector>& ni,
                                                    std::vector<Vector>& d_S,
                                                    const Matrix3& size,
@@ -461,7 +461,7 @@ void cpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   }
 }
 
-void cpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
+void CPDIInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                           std::vector<IntVector>& ni,
                                                           std::vector<double>& S,
                                                           std::vector<Vector>& d_S,
@@ -698,7 +698,7 @@ void cpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
 
 }
 
-int cpdiInterpolator::size()
+int CPDIInterpolator::size()
 {
   return d_size;
 }

@@ -62,8 +62,8 @@ SimpleBurnCriteria::SimpleBurnCriteria(ProblemSpecP& ps)
 }
 
 void
-SimpleBurnCriteria::problemSetup(const ProblemSpecP& ps,
-                                 const ProblemSpecP& restart_prob_spec,
+SimpleBurnCriteria::problemSetup([[maybe_unused]] const ProblemSpecP& ps,
+                                 [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
                                  MaterialManagerP& mat_manager)
 {
   d_mat_manager = mat_manager;
@@ -109,9 +109,9 @@ SimpleBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 //  This task uses similar logic in the HEChem/simpleBurn.cc
 //  to determine if the burning criteria has been reached.
 void
-SimpleBurnCriteria::switchTest(const ProcessorGroup* group,
+SimpleBurnCriteria::switchTest([[maybe_unused]] const ProcessorGroup* group,
                                const PatchSubset* patches,
-                               const MaterialSubset* matls,
+                               [[maybe_unused]] const MaterialSubset* matls,
                                DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {
@@ -131,11 +131,11 @@ SimpleBurnCriteria::switchTest(const ProcessorGroup* group,
         d_mat_manager->getMaterial("MPM", d_material));
       int indx = mpm_matl->getDWIndex();
 
-      constNCVariable<double> gmass, gTempAllMatls;
+      constNCVariable<double> gMass, gTempAllMatls;
       constNCVariable<double> NC_CCweight;
       Ghost::GhostType gac = Ghost::AroundCells;
 
-      new_dw->get(gmass, d_mpm_labels->gMassLabel, indx, patch, gac, 1);
+      new_dw->get(gMass, d_mpm_labels->gMassLabel, indx, patch, gac, 1);
       new_dw
         ->get(gTempAllMatls, d_mpm_labels->gTemperatureLabel, 0, patch, gac, 1);
       old_dw
@@ -153,7 +153,7 @@ SimpleBurnCriteria::switchTest(const ProcessorGroup* group,
         double MinMass = 1.0 / d_SMALL_NUM;
 
         for (int in = 0; in < 8; in++) {
-          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gmass[nodeIdx[in]];
+          double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gMass[nodeIdx[in]];
           MaxMass            = std::max(MaxMass, NC_CCw_mass);
           MinMass            = std::min(MinMass, NC_CCw_mass);
           cmass += NC_CCw_mass;

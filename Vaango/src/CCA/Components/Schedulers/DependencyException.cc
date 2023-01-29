@@ -34,9 +34,10 @@ DependencyException::DependencyException(const Task* task,
                                          const Patch* patch,
                                          string has,
                                          string needs,
-                                         const char* file,
-                                         int line)
-  : d_task(task)
+                                         [[maybe_unused]] const char* file,
+                                         [[maybe_unused]] int line)
+  : Exception()
+  , d_task(task)
   , d_label(label)
   , d_mat_index(matlIndex)
   , d_patch(patch)
@@ -76,7 +77,8 @@ DependencyException::makeMessage(const Task* task,
 }
 
 DependencyException::DependencyException(const DependencyException& copy)
-  : d_task(copy.d_task)
+  : Exception()
+  , d_task(copy.d_task)
   , d_label(copy.d_label)
   , d_mat_index(copy.d_mat_index)
   , d_patch(copy.d_patch)

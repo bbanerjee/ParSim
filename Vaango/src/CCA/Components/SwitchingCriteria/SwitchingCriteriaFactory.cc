@@ -43,7 +43,8 @@
 namespace Uintah {
 
 std::unique_ptr<SwitchingCriteria>
-SwitchingCriteriaFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
+SwitchingCriteriaFactory::create(ProblemSpecP& ps,
+                                 [[maybe_unused]] const ProcessorGroup* world)
 {
   string criteria("");
   ProblemSpecP switch_ps = ps->findBlock("SwitchCriteria");

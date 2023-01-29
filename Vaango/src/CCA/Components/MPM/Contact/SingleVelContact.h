@@ -30,6 +30,7 @@
 #define __SINGLE_VEL_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
+
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
@@ -55,32 +56,43 @@ DESCRIPTION
 
 class SingleVelContact : public Contact
 {
-private:
-  // Prevent copying of this class
-  // copy constructor
-  SingleVelContact(const SingleVelContact& con);
-  SingleVelContact& operator=(const SingleVelContact& con);
-
-  MaterialManagerP 
- d_mat_manager;
-
 public:
   // Constructor
-  SingleVelContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                   MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
+  SingleVelContact(const ProcessorGroup* myworld,
+                   const MaterialManagerP& mat_manager,
+                   const MPMLabel* lb,
+                   const MPMFlags* flag,
+                   ProblemSpecP& ps);
 
   // Destructor
-  virtual ~SingleVelContact();
+  virtual ~SingleVelContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  SingleVelContact(const SingleVelContact& con) = delete;
+  SingleVelContact(SingleVelContact&& con)      = delete;
+  SingleVelContact&
+  operator=(const SingleVelContact& con) = delete;
+  SingleVelContact&
+  operator=(SingleVelContact&& con) = delete;
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  virtual void
+  setContactMaterialAttributes();
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 
