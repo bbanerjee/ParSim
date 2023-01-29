@@ -2,6 +2,7 @@
 #define __VAANGO_MPM_UTIL_H__
 
 #include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Patch.h>
 
 #include <utility>
@@ -9,6 +10,27 @@
 namespace Uintah {
 
 namespace Util {
+
+Vector
+face_norm(Patch::FaceType f)
+{
+  switch (f) {
+    case Patch::xminus:
+      return Vector(-1, 0, 0);
+    case Patch::xplus:
+      return Vector(1, 0, 0);
+    case Patch::yminus:
+      return Vector(0, -1, 0);
+    case Patch::yplus:
+      return Vector(0, 1, 0);
+    case Patch::zminus:
+      return Vector(0, 0, -1);
+    case Patch::zplus:
+      return Vector(0, 0, 1);
+    default:
+      return Vector(0, 0, 0); // oops !
+  }
+}
 
 std::pair<IntVector, IntVector>
 getPatchLoHiNodes(const Patch* patch, int n8or27)

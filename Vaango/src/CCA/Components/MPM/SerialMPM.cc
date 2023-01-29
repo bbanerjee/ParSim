@@ -37,6 +37,7 @@
 
 #include <CCA/Components/MPM/Core/CZLabel.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMUtils.h>
 
 #include <CCA/Components/MPM/HeatConduction/HeatConduction.h>
 #include <CCA/Components/MPM/HeatConduction/HeatConductionTasks.h>
@@ -68,6 +69,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/Grid/AMR.h>
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Grid.h>
@@ -121,27 +123,6 @@ static DebugStream cout_heat("MPMHeat", false);
 static DebugStream amr_doing("AMRMPM", false);
 static DebugStream cout_damage("Damage", false);
 
-static Vector
-face_norm(Patch::FaceType f)
-{
-  switch (f) {
-    case Patch::xminus:
-      return Vector(-1, 0, 0);
-    case Patch::xplus:
-      return Vector(1, 0, 0);
-    case Patch::yminus:
-      return Vector(0, -1, 0);
-    case Patch::yplus:
-      return Vector(0, 1, 0);
-    case Patch::zminus:
-      return Vector(0, 0, -1);
-    case Patch::zplus:
-      return Vector(0, 0, 1);
-    default:
-      return Vector(0, 0, 0); // oops !
-  }
-}
-
 SerialMPM::SerialMPM(const ProcessorGroup* myworld,
                      const MaterialManagerP& materialManager)
   : SimulationCommon(myworld, materialManager)
@@ -168,13 +149,7 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
              << "\n";
-  dynamic_cast<Scheduler*>(getPort("scheduler"))
-    ->setPositionVar(d_mpmLabels->pXLabel);
-
-  d_dataArchiver = dynamic_cast<Output*>(getPort("output"));
-  if (!d_dataArchiver) {
-    throw InternalError("MPM:couldn't get output port", __FILE__, __LINE__);
-  }
+  d_scheduler->setPositionVar(d_mpmLabels->pXLabel);
 
   ProblemSpecP restart_mat_ps = nullptr;
   ProblemSpecP prob_spec_mat_ps =
@@ -197,11 +172,10 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   }
 
   // Read all MPM d_mpmFlags (look in MPMFlags.cc)
-  d_mpmFlags->readMPMFlags(restart_mat_ps, d_dataArchiver);
+  d_mpmFlags->readMPMFlags(restart_mat_ps, d_output);
   if (d_mpmFlags->d_integratorType == "implicit") {
-    throw ProblemSetupException("Can't use implicit integration with -mpm",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Can't use implicit integration with -mpm", __FILE__, __LINE__);
   }
 
   // convert text representation of face into FaceType
@@ -233,9 +207,8 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
     }
 
     mpm_amr_ps->getWithDefault("min_grid_level", d_mpmFlags->d_minGridLevel, 0);
-    mpm_amr_ps->getWithDefault("max_grid_level",
-                               d_mpmFlags->d_maxGridLevel,
-                               1000);
+    mpm_amr_ps->getWithDefault(
+      "max_grid_level", d_mpmFlags->d_maxGridLevel, 1000);
   }
 
   if (d_mpmFlags->d_8or27 == 8) {
@@ -283,17 +256,12 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
                                                             d_numGhostNodes);
 
   // Heat conduction
-  d_heatConductionTasks =
-    std::make_unique<HeatConductionTasks>(restart_mat_ps,
-                                          d_materialManager,
-                                          d_mpmLabels.get(),
-                                          d_mpmFlags.get());
+  d_heatConductionTasks = std::make_unique<HeatConductionTasks>(
+    restart_mat_ps, d_materialManager, d_mpmLabels.get(), d_mpmFlags.get());
 
   // Create deformation gradient computer
-  d_defGradComputer =
-    std::make_unique<DeformationGradientComputer>(d_materialManager,
-                                                  d_mpmLabels.get(),
-                                                  d_mpmFlags.get());
+  d_defGradComputer = std::make_unique<DeformationGradientComputer>(
+    d_materialManager, d_mpmLabels.get(), d_mpmFlags.get());
 
   // create analysis modules
   if (!d_mpmFlags->d_withICE) { // mpmice handles this
@@ -315,9 +283,8 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
     dynamic_cast<SwitchingCriteria*>(getPort("switch_criteria"));
 
   if (d_switchCriteria) {
-    d_switchCriteria->problemSetup(restart_mat_ps,
-                                   restart_prob_spec,
-                                   d_materialManager);
+    d_switchCriteria->problemSetup(
+      restart_mat_ps, restart_prob_spec, d_materialManager);
   }
 }
 
@@ -460,12 +427,12 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
                                 level->getGrid()->numLevels())) {
     return;
   }
-  Task* t = scinew Task("MPM::actuallyInitialize",
-                        this,
-                        &SerialMPM::actuallyInitialize);
+  Task* t = scinew Task(
+    "MPM::actuallyInitialize", this, &SerialMPM::actuallyInitialize);
 
   const PatchSet* patches = level->eachPatch();
   printSchedule(patches, cout_doing, "MPM::scheduleInitialize");
+
   MaterialSubset* zeroth_matl = scinew MaterialSubset();
   zeroth_matl->add(0);
   zeroth_matl->addReference();
@@ -543,10 +510,8 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel =
         mpm_matl->getBasicDamageModel();
-      basicDamageModel->addInitialComputesAndRequires(t,
-                                                      mpm_matl,
-                                                      patches,
-                                                      d_mpmLabels.get());
+      basicDamageModel->addInitialComputesAndRequires(
+        t, mpm_matl, patches, d_mpmLabels.get());
     }
 
     // Scalar diffusion
@@ -605,6 +570,10 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
       am->scheduleInitialize(sched, level);
     }
   }
+
+  if (d_mpmFlags->d_deleteGeometryObjects) {
+    scheduleDeleteGeometryObjects(level, sched);
+  }
 }
 
 /*!----------------------------------------------------------------------
@@ -644,10 +613,8 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
     cellNAPID.initialize(0);
 
     NCVariable<double> NC_CCweight;
-    new_dw->allocateAndPut(NC_CCweight,
-                           d_mpmLabels->NC_CCweightLabel,
-                           0,
-                           patch);
+    new_dw->allocateAndPut(
+      NC_CCweight, d_mpmLabels->NC_CCweightLabel, 0, patch);
 
     //__________________________________
     // - Initialize NC_CCweight = 0.125
@@ -689,14 +656,13 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
       d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
       // Initialize constitutive models
-      mpm_matl->getConstitutiveModel()->initializeCMData(patch,
-                                                         mpm_matl,
-                                                         new_dw);
+      mpm_matl->getConstitutiveModel()->initializeCMData(
+        patch, mpm_matl, new_dw);
 
       // Initialize basic damage model
       if (mpm_matl->doBasicDamage()) {
-        mpm_matl->getBasicDamageModel()
-          ->initializeDamageData(patch, mpm_matl, new_dw, d_mpmLabels.get());
+        mpm_matl->getBasicDamageModel()->initializeDamageData(
+          patch, mpm_matl, new_dw, d_mpmLabels.get());
       }
 
       // Diffusion
@@ -762,9 +728,8 @@ void
 SerialMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
 {
   /*`==========TESTING==========*/
-  Task* t = scinew Task("SerialMPM::restartInitialize",
-                        this,
-                        &SerialMPM::restartInitialize);
+  Task* t = scinew Task(
+    "SerialMPM::restartInitialize", this, &SerialMPM::restartInitialize);
 
   const PatchSet* patches = level->eachPatch();
 
@@ -812,15 +777,50 @@ SerialMPM::restartInitialize(const ProcessorGroup*,
   }
 }
 
+void
+SerialMPM::scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched)
+{
+  const PatchSet* patches = level->eachPatch();
+
+  Task* t = scinew Task(
+    "MPM::deleteGeometryObjects", this, &SerialMPM::deleteGeometryObjects);
+  sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
+}
+
+void
+SerialMPM::deleteGeometryObjects(const ProcessorGroup*,
+                                 const PatchSubset* patches,
+                                 const MaterialSubset*,
+                                 DataWarehouse*,
+                                 DataWarehouse* new_dw)
+{
+  printTask(cout_doing, "Doing MPM::deleteGeometryObjects");
+
+  size_t numMPMMatls = d_materialManager->getNumMaterials("MPM");
+  for (size_t m = 0; m < numMPMMatls; m++) {
+    MPMMaterial* mpm_matl =
+      static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+    std::cout << "MPM::Deleting Geometry Objects  matl: "
+              << mpm_matl->getDWIndex() << "\n";
+    mpm_matl->deleteGeomObjects();
+  }
+
+  // The call below is necessary because the GeometryPieceFactory holds on to a
+  // pointer to all geom_pieces (so that it can look them up by name during
+  // initialization) The pieces are never actually deleted until the factory is
+  // destroyed at the end of the program. resetFactory() will rid of the pointer
+  // (lookup table) and allow the deletion of the unneeded pieces.
+  GeometryPieceFactory::resetFactory();
+}
+
 /*!----------------------------------------------------------------------
  * schedulePrintParticleCount
  *-----------------------------------------------------------------------*/
 void
 SerialMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
 {
-  Task* t = scinew Task("MPM::printParticleCount",
-                        this,
-                        &SerialMPM::printParticleCount);
+  Task* t = scinew Task(
+    "MPM::printParticleCount", this, &SerialMPM::printParticleCount);
   t->requires(Task::NewDW, d_mpmLabels->partCountLabel);
   t->setType(Task::OncePerProc);
   sched->addTask(t,
@@ -857,9 +857,8 @@ SerialMPM::scheduleTotalParticleCount(SchedulerP& sched,
     return;
   }
 
-  Task* t = scinew Task("SerialMPM::totalParticleCount",
-                        this,
-                        &SerialMPM::totalParticleCount);
+  Task* t = scinew Task(
+    "SerialMPM::totalParticleCount", this, &SerialMPM::totalParticleCount);
   t->computes(d_mpmLabels->partCountLabel);
   sched->addTask(t, patches, matls);
 }
@@ -899,14 +898,12 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
                                                            SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
-  printSchedule(patches,
-                cout_doing,
-                "MPM::initializeStressAndDefGradFromBodyForce");
+  printSchedule(
+    patches, cout_doing, "MPM::initializeStressAndDefGradFromBodyForce");
 
   // First compute the body force
-  Task* t1 = scinew Task("MPM::initializeBodyForce",
-                         this,
-                         &SerialMPM::initializeBodyForce);
+  Task* t1 = scinew Task(
+    "MPM::initializeBodyForce", this, &SerialMPM::initializeBodyForce);
   t1->requires(Task::NewDW, d_mpmLabels->pXLabel, Ghost::None);
   t1->modifies(d_mpmLabels->pBodyForceAccLabel);
   sched->addTask(t1, patches, d_materialManager->allMaterials("MPM"));
@@ -963,9 +960,8 @@ SerialMPM::initializeBodyForce(const ProcessorGroup*,
 
       // Create space for particle body force
       ParticleVariable<Vector> pBodyForceAcc;
-      new_dw->getModifiable(pBodyForceAcc,
-                            d_mpmLabels->pBodyForceAccLabel,
-                            pset);
+      new_dw->getModifiable(
+        pBodyForceAcc, d_mpmLabels->pBodyForceAccLabel, pset);
 
       // Get the position data
       constParticleVariable<Point> pPosition;
@@ -1071,9 +1067,8 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
 
     // Create a task that calculates the force to be associated with
     // each particle based on the pressure BCs
-    t = scinew Task("MPM::initializePressureBC",
-                    this,
-                    &SerialMPM::initializePressureBC);
+    t = scinew Task(
+      "MPM::initializePressureBC", this, &SerialMPM::initializePressureBC);
     t->requires(Task::NewDW, d_mpmLabels->pXLabel, Ghost::None);
     t->requires(Task::NewDW, d_mpmLabels->pSizeLabel, Ghost::None);
     t->requires(Task::NewDW, d_mpmLabels->pDispLabel, Ghost::None);
@@ -1110,10 +1105,8 @@ SerialMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
                                            DataWarehouse*,
                                            DataWarehouse* new_dw)
 {
-  printTask(patches,
-            patches->get(0),
-            cout_doing,
-            "countMaterialPointsPerLoadCurve");
+  printTask(
+    patches, patches->get(0), cout_doing, "countMaterialPointsPerLoadCurve");
   // Find the number of pressure BCs in the problem
   int nofPressureBCs = 0;
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
@@ -1219,9 +1212,8 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
           constParticleVariable<int> pLoadCurveID;
           new_dw->get(pLoadCurveID, d_mpmLabels->pLoadCurveIDLabel, pset);
           ParticleVariable<Vector> pExternalForce;
-          new_dw->getModifiable(pExternalForce,
-                                d_mpmLabels->pExternalForceLabel,
-                                pset);
+          new_dw->getModifiable(
+            pExternalForce, d_mpmLabels->pExternalForceLabel, pset);
 
           constParticleVariable<Vector> pDisp;
           new_dw->get(pDisp, d_mpmLabels->pDispLabel, pset);
@@ -1275,11 +1267,8 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
                                           pExternalForceCorner4[idx],
                                           dxCell);
               } else {
-                pExternalForce[idx] = pbc->getForceVector(pX[idx],
-                                                          pDisp[idx],
-                                                          forcePerPart,
-                                                          time,
-                                                          pDefGrad[idx]);
+                pExternalForce[idx] = pbc->getForceVector(
+                  pX[idx], pDisp[idx], forcePerPart, time, pDefGrad[idx]);
               }
             }
           }
@@ -1326,9 +1315,8 @@ SerialMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
 
     // Create a task that calculates the force to be associated with
     // each particle based on the moment BCs
-    t = scinew Task("MPM::initializeMomentBC",
-                    this,
-                    &SerialMPM::initializeMomentBC);
+    t = scinew Task(
+      "MPM::initializeMomentBC", this, &SerialMPM::initializeMomentBC);
     t->requires(Task::NewDW, d_mpmLabels->pXLabel, Ghost::None);
     t->requires(Task::NewDW, d_mpmLabels->pSizeLabel, Ghost::None);
     t->requires(Task::NewDW, d_mpmLabels->pDefGradLabel, Ghost::None);
@@ -1415,9 +1403,8 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
           constParticleVariable<int> pLoadCurveID;
           new_dw->get(pLoadCurveID, d_mpmLabels->pLoadCurveIDLabel, pset);
           ParticleVariable<Vector> pExternalForce;
-          new_dw->getModifiable(pExternalForce,
-                                d_mpmLabels->pExternalForceLabel,
-                                pset);
+          new_dw->getModifiable(
+            pExternalForce, d_mpmLabels->pExternalForceLabel, pset);
 
           ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
             pExternalForceCorner3, pExternalForceCorner4;
@@ -1455,10 +1442,8 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
                                           pExternalForceCorner4[idx],
                                           dxCell);
               } else {
-                pExternalForce[idx] = pbc->getForceVector(pX[idx],
-                                                          forcePerPart,
-                                                          time,
-                                                          pDefGrad[idx]);
+                pExternalForce[idx] = pbc->getForceVector(
+                  pX[idx], forcePerPart, time, pDefGrad[idx]);
               }
             }
           }
@@ -1713,9 +1698,8 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup*,
       ParticleVariable<Vector> pBodyForceAcc;
       // new_dw->allocateAndPut(pBodyForceAcc, d_mpmLabels->pBodyForceAccLabel,
       // pset);
-      new_dw->allocateAndPut(pBodyForceAcc,
-                             d_mpmLabels->pBodyForceAccLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pBodyForceAcc, d_mpmLabels->pBodyForceAccLabel_preReloc, pset);
 
       // Create space for particle coriolis importance
       ParticleVariable<double> pCoriolisImportance;
@@ -1848,10 +1832,8 @@ SerialMPM::computeCurrentParticleSize(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches,
-              patch,
-              cout_doing,
-              "Doing MPM::computeCurrentParticleSize");
+    printTask(
+      patches, patch, cout_doing, "Doing MPM::computeCurrentParticleSize");
 
     size_t numMatls = d_materialManager->getNumMaterials("MPM");
 
@@ -1920,9 +1902,8 @@ SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleApplyExternalLoads");
 
-  Task* t = scinew Task("MPM::applyExternalLoads",
-                        this,
-                        &SerialMPM::applyExternalLoads);
+  Task* t = scinew Task(
+    "MPM::applyExternalLoads", this, &SerialMPM::applyExternalLoads);
 
   t->requires(Task::OldDW, d_mpmLabels->simulationTimeLabel);
   t->requires(Task::OldDW, d_mpmLabels->pXLabel, Ghost::None);
@@ -2017,22 +1998,17 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
       ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
         pExternalForceCorner3, pExternalForceCorner4;
 
-      new_dw->allocateAndPut(pExternalForce_new,
-                             d_mpmLabels->pExtForceLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pExternalForce_new, d_mpmLabels->pExtForceLabel_preReloc, pset);
       if (d_mpmFlags->d_useCBDI) {
-        new_dw->allocateAndPut(pExternalForceCorner1,
-                               d_mpmLabels->pExternalForceCorner1Label,
-                               pset);
-        new_dw->allocateAndPut(pExternalForceCorner2,
-                               d_mpmLabels->pExternalForceCorner2Label,
-                               pset);
-        new_dw->allocateAndPut(pExternalForceCorner3,
-                               d_mpmLabels->pExternalForceCorner3Label,
-                               pset);
-        new_dw->allocateAndPut(pExternalForceCorner4,
-                               d_mpmLabels->pExternalForceCorner4Label,
-                               pset);
+        new_dw->allocateAndPut(
+          pExternalForceCorner1, d_mpmLabels->pExternalForceCorner1Label, pset);
+        new_dw->allocateAndPut(
+          pExternalForceCorner2, d_mpmLabels->pExternalForceCorner2Label, pset);
+        new_dw->allocateAndPut(
+          pExternalForceCorner3, d_mpmLabels->pExternalForceCorner3Label, pset);
+        new_dw->allocateAndPut(
+          pExternalForceCorner4, d_mpmLabels->pExternalForceCorner4Label, pset);
       }
       // std::cout << "applyloads: patch = " << patch << " matID = " << matID
       //           << " numparticles = " << pset->numParticles() << "
@@ -2046,9 +2022,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
         old_dw->get(pLoadCurveID, d_mpmLabels->pLoadCurveIDLabel, pset);
 
         ParticleVariable<int> pLoadCurveID_new;
-        new_dw->allocateAndPut(pLoadCurveID_new,
-                               d_mpmLabels->pLoadCurveIDLabel_preReloc,
-                               pset);
+        new_dw->allocateAndPut(
+          pLoadCurveID_new, d_mpmLabels->pLoadCurveIDLabel_preReloc, pset);
         pLoadCurveID_new.copyData(pLoadCurveID);
         // std::cout << " Recycled load curve ID" << "\n";
 
@@ -2109,11 +2084,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
                           << pExternalForceCorner4[idx] << "\n";
                 */
               } else {
-                pExternalForce_new[idx] = pbc->getForceVector(pX[idx],
-                                                              pDisp[idx],
-                                                              force,
-                                                              time,
-                                                              pDefGrad[idx]);
+                pExternalForce_new[idx] = pbc->getForceVector(
+                  pX[idx], pDisp[idx], force, time, pDefGrad[idx]);
               }
             }
           }
@@ -2209,10 +2181,8 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   Ghost::GhostType gan = Ghost::AroundNodes;
   t->requires(Task::OldDW, d_mpmLabels->pMassLabel, gan, d_numGhostParticles);
   t->requires(Task::OldDW, d_mpmLabels->pVolumeLabel, gan, d_numGhostParticles);
-  t->requires(Task::OldDW,
-              d_mpmLabels->pVelocityLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pVelocityLabel, gan, d_numGhostParticles);
   t->requires(Task::OldDW, d_mpmLabels->pXLabel, gan, d_numGhostParticles);
   t->requires(Task::NewDW,
               d_mpmLabels->pBodyForceAccLabel_preReloc,
@@ -2222,20 +2192,14 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
               d_mpmLabels->pExtForceLabel_preReloc,
               gan,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
-              d_mpmLabels->pTemperatureLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pTemperatureLabel, gan, d_numGhostParticles);
   t->requires(Task::OldDW, d_mpmLabels->pSizeLabel, gan, d_numGhostParticles);
-  t->requires(Task::OldDW,
-              d_mpmLabels->pDefGradLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pDefGradLabel, gan, d_numGhostParticles);
   if (d_mpmFlags->d_useLoadCurves) {
-    t->requires(Task::OldDW,
-                d_mpmLabels->pLoadCurveIDLabel,
-                gan,
-                d_numGhostParticles);
+    t->requires(
+      Task::OldDW, d_mpmLabels->pLoadCurveIDLabel, gan, d_numGhostParticles);
     if (d_mpmFlags->d_useCBDI) {
       t->requires(Task::NewDW,
                   d_mpmLabels->pExternalForceCorner1Label,
@@ -2257,10 +2221,8 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   }
 
 #ifdef DEBUG_WITH_PARTICLE_ID
-  t->requires(Task::OldDW,
-              d_mpmLabels->pParticleIDLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pParticleIDLabel, gan, d_numGhostParticles);
 #endif
 
   t->computes(d_mpmLabels->gMassLabel);
@@ -2356,11 +2318,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       constParticleVariable<Matrix3> pSize;
       constParticleVariable<Matrix3> pDefGrad_old;
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       gan,
-                                                       d_numGhostParticles,
-                                                       d_mpmLabels->pXLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpmLabels->pXLabel);
 
       old_dw->get(pX, d_mpmLabels->pXLabel, pset);
       old_dw->get(pMass, d_mpmLabels->pMassLabel, pset);
@@ -2369,9 +2328,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       old_dw->get(pTemperature, d_mpmLabels->pTemperatureLabel, pset);
       old_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
       old_dw->get(pDefGrad_old, d_mpmLabels->pDefGradLabel, pset);
-      new_dw->get(pBodyForceAcc,
-                  d_mpmLabels->pBodyForceAccLabel_preReloc,
-                  pset);
+      new_dw->get(
+        pBodyForceAcc, d_mpmLabels->pBodyForceAccLabel_preReloc, pset);
       new_dw->get(pExternalForce, d_mpmLabels->pExtForceLabel_preReloc, pset);
 
       /*
@@ -2430,34 +2388,20 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       new_dw->allocateAndPut(gMass, d_mpmLabels->gMassLabel, matID, patch);
       new_dw->allocateAndPut(gSp_vol, d_mpmLabels->gSp_volLabel, matID, patch);
       new_dw->allocateAndPut(gVolume, d_mpmLabels->gVolumeLabel, matID, patch);
-      new_dw->allocateAndPut(gVelocity,
-                             d_mpmLabels->gVelocityLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gTemperature,
-                             d_mpmLabels->gTemperatureLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gTemperatureNoBC,
-                             d_mpmLabels->gTemperatureNoBCLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gTemperatureRate,
-                             d_mpmLabels->gTemperatureRateLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gBodyForce,
-                             d_mpmLabels->gBodyForceLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gExternalForce,
-                             d_mpmLabels->gExternalForceLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gExternalheatrate,
-                             d_mpmLabels->gExternalHeatRateLabel,
-                             matID,
-                             patch);
+      new_dw->allocateAndPut(
+        gVelocity, d_mpmLabels->gVelocityLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperature, d_mpmLabels->gTemperatureLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperatureNoBC, d_mpmLabels->gTemperatureNoBCLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperatureRate, d_mpmLabels->gTemperatureRateLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gBodyForce, d_mpmLabels->gBodyForceLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gExternalForce, d_mpmLabels->gExternalForceLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gExternalheatrate, d_mpmLabels->gExternalHeatRateLabel, matID, patch);
 
       gMass.initialize(d_SMALL_NUM_MPM);
       gVolume.initialize(d_SMALL_NUM_MPM);
@@ -2472,12 +2416,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // gnumnearparticles.initialize(0.);
 
       ScalarDiffusionTaskData diffusion_data;
-      d_diffusionTasks->getAndAllocateForParticlesToGrid(patch,
-                                                         pset,
-                                                         old_dw,
-                                                         new_dw,
-                                                         matID,
-                                                         diffusion_data);
+      d_diffusionTasks->getAndAllocateForParticlesToGrid(
+        patch, pset, old_dw, new_dw, matID, diffusion_data);
 
       // Interpolate particle data to Grid data.
       // This currently consists of the particle velocity and mass
@@ -2492,11 +2432,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // loop over all particles in the patch:
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
-        interpolator->findCellAndWeights(pX[idx],
-                                         ni,
-                                         S,
-                                         pSize[idx],
-                                         pDefGrad_old[idx]);
+        interpolator->findCellAndWeights(
+          pX[idx], ni, S, pSize[idx], pDefGrad_old[idx]);
         pMom = pVelocity[idx] * pMass[idx];
         total_mom += pMom;
 
@@ -2528,8 +2465,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 #endif
           }
 
-          d_diffusionTasks
-            ->interpolateParticlesToGrid(patch, ni, S, pX, pMass, idx, diffusion_data);
+          d_diffusionTasks->interpolateParticlesToGrid(
+            patch, ni, S, pX, pMass, idx, diffusion_data);
         }
 
         if (d_mpmFlags->d_useLoadCurves && d_mpmFlags->d_useCBDI) {
@@ -2599,35 +2536,21 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Apply boundary conditions to the temperature and velocity (if symmetry)
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch, matID, "Velocity", gVelocity, interp_type);
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Temperature",
-                              gTemperature,
-                              interp_type);
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Symmetric",
-                              gVelocity,
-                              interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Temperature", gTemperature, interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gVelocity, interp_type);
 
       // If an MPMICE problem, create a velocity with BCs variable for NCToCC_0
       if (d_mpmFlags->d_withICE) {
         NCVariable<Vector> gVelocityWBC;
-        new_dw->allocateAndPut(gVelocityWBC,
-                               d_mpmLabels->gVelocityBCLabel,
-                               matID,
-                               patch);
+        new_dw->allocateAndPut(
+          gVelocityWBC, d_mpmLabels->gVelocityBCLabel, matID, patch);
         gVelocityWBC.copyData(gVelocity);
-        bc.setBoundaryCondition(patch,
-                                matID,
-                                "Velocity",
-                                gVelocityWBC,
-                                interp_type);
-        bc.setBoundaryCondition(patch,
-                                matID,
-                                "Symmetric",
-                                gVelocityWBC,
-                                interp_type);
+        bc.setBoundaryCondition(
+          patch, matID, "Velocity", gVelocityWBC, interp_type);
+        bc.setBoundaryCondition(
+          patch, matID, "Symmetric", gVelocityWBC, interp_type);
       }
     } // End loop over materials
 
@@ -2658,10 +2581,8 @@ SerialMPM::scheduleComputeNormals(SchedulerP& sched,
   z_matl->add(0);
   z_matl->addReference();
 
-  t->requires(Task::OldDW,
-              d_mpmLabels->pXLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pXLabel, Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Task::OldDW,
               d_mpmLabels->pMassLabel,
               Ghost::AroundNodes,
@@ -2747,28 +2668,17 @@ SerialMPM::computeNormals(const ProcessorGroup*,
       int matID = mpm_matl->getDWIndex();
       new_dw->get(gMass[m], d_mpmLabels->gMassLabel, matID, patch, gan, 1);
 
-      new_dw->allocateAndPut(gSurfNorm[m],
-                             d_mpmLabels->gSurfNormLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gPosition[m],
-                             d_mpmLabels->gPositionLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gStress[m],
-                             d_mpmLabels->gStressLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gNormTraction[m],
-                             d_mpmLabels->gNormTractionLabel,
-                             matID,
-                             patch);
+      new_dw->allocateAndPut(
+        gSurfNorm[m], d_mpmLabels->gSurfNormLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gPosition[m], d_mpmLabels->gPositionLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gStress[m], d_mpmLabels->gStressLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gNormTraction[m], d_mpmLabels->gNormTractionLabel, matID, patch);
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       gan,
-                                                       d_numGhostParticles,
-                                                       d_mpmLabels->pXLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpmLabels->pXLabel);
 
       constParticleVariable<Point> pX;
       constParticleVariable<double> pMass, pVolume;
@@ -2790,12 +2700,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
       if (d_mpmFlags->d_axisymmetric) {
         for (auto idx : *pset) {
           interpolator->findCellAndWeightsAndShapeDerivatives(
-            pX[idx],
-            ni,
-            S,
-            d_S,
-            pSize[idx],
-            pDefGrad_old[idx]);
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
           double rho = pMass[idx] / pVolume[idx];
           for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
@@ -2810,12 +2715,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
       } else {
         for (auto idx : *pset) {
           interpolator->findCellAndWeightsAndShapeDerivatives(
-            pX[idx],
-            ni,
-            S,
-            d_S,
-            pSize[idx],
-            pDefGrad_old[idx]);
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
           for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
             if (patch->containsNode(node)) {
@@ -2866,11 +2766,8 @@ SerialMPM::computeNormals(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       int matID = mpm_matl->getDWIndex();
       MPMBoundCond bc;
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Symmetric",
-                              gSurfNorm[m],
-                              interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gSurfNorm[m], interp_type);
 
       for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
         IntVector node = *iter;
@@ -2896,9 +2793,8 @@ SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
 {
   printSchedule(patches, cout_doing, "SerialMPM::scheduleFindSurfaceParticles");
 
-  Task* t = scinew Task("MPM::findSurfaceParticles",
-                        this,
-                        &SerialMPM::findSurfaceParticles);
+  Task* t = scinew Task(
+    "MPM::findSurfaceParticles", this, &SerialMPM::findSurfaceParticles);
 
   Ghost::GhostType gp = Ghost::AroundNodes;
   int ngc_p           = d_numGhostParticles;
@@ -2953,9 +2849,8 @@ SerialMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
                                              const MaterialSet* matls)
 {
   if (contactModel->useLogisticRegression()) {
-    printSchedule(patches,
-                  cout_doing,
-                  "MPM::scheduleComputeLogisticRegression");
+    printSchedule(
+      patches, cout_doing, "MPM::scheduleComputeLogisticRegression");
 
     Task* t = scinew Task("MPM::computeLogisticRegression",
                           this,
@@ -3015,10 +2910,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches,
-              patch,
-              cout_doing,
-              "Doing MPM::computeLogisticRegression");
+    printTask(
+      patches, patch, cout_doing, "Doing MPM::computeLogisticRegression");
 
     Vector dx = patch->dCell();
 
@@ -3040,14 +2933,10 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     NCVariable<Vector> gNormAlphaToBeta;
     std::vector<NCVariable<Int130>> gParticleList(numMPMMatls);
 
-    new_dw->allocateAndPut(gAlphaMaterial,
-                           d_mpmLabels->gAlphaMaterialLabel,
-                           0,
-                           patch);
-    new_dw->allocateAndPut(gNormAlphaToBeta,
-                           d_mpmLabels->gNormAlphaToBetaLabel,
-                           0,
-                           patch);
+    new_dw->allocateAndPut(
+      gAlphaMaterial, d_mpmLabels->gAlphaMaterialLabel, 0, patch);
+    new_dw->allocateAndPut(
+      gNormAlphaToBeta, d_mpmLabels->gNormAlphaToBetaLabel, 0, patch);
     new_dw->allocateTemporary(gNumMatlsOnNode, patch);
     new_dw->allocateTemporary(gNumParticlesOnNode, patch);
     gAlphaMaterial.initialize(-99);
@@ -3102,11 +2991,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
       int matID = mpm_matl->getDWIndex();
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       gan,
-                                                       d_numGhostParticles,
-                                                       d_mpmLabels->pXLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpmLabels->pXLabel);
       constParticleVariable<Matrix3> pSize, pDefGrad_old;
 
       old_dw->get(pX[mat], d_mpmLabels->pXLabel, pset);
@@ -3124,12 +3010,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
       // Loop over particles and find which multi-mat nodes they contribute to
       for (auto idx : *pset) {
 
-        interpolator->findCellAndWeightsAndShapeDerivatives(pX[mat][idx],
-                                                            ni,
-                                                            S,
-                                                            d_S,
-                                                            pSize[idx],
-                                                            pDefGrad_old[idx]);
+        interpolator->findCellAndWeightsAndShapeDerivatives(
+          pX[mat][idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
 
         std::set<IntVector> nodeList;
         for (int k = 0; k < numInfluenceNodes; k++) {
@@ -3254,11 +3136,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     }   // Loop over nodes
 
     MPMBoundCond bc;
-    bc.setBoundaryCondition(patch,
-                            0,
-                            "Symmetric",
-                            gNormAlphaToBeta,
-                            interp_type);
+    bc.setBoundaryCondition(
+      patch, 0, "Symmetric", gNormAlphaToBeta, interp_type);
 
     // Renormalize normal std::vectors after setting BCs
     for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
@@ -3296,11 +3175,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
       int matID = mpm_matl->getDWIndex();
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       gan,
-                                                       d_numGhostParticles,
-                                                       d_mpmLabels->pXLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpmLabels->pXLabel);
 
       constParticleVariable<Matrix3> pSize, pDefGrad_old;
       constParticleVariable<double> pSurf;
@@ -3309,10 +3185,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
       old_dw->get(pDefGrad_old, d_mpmLabels->pDefGradLabel, pset);
       new_dw->get(pSurf, d_mpmLabels->pSurfLabel_preReloc, pset);
 
-      new_dw->allocateAndPut(d_x_p_dot_n[mat],
-                             d_mpmLabels->gMatlProminenceLabel,
-                             matID,
-                             patch);
+      new_dw->allocateAndPut(
+        d_x_p_dot_n[mat], d_mpmLabels->gMatlProminenceLabel, matID, patch);
 
       d_x_p_dot_n[mat].initialize(-99.);
 
@@ -3325,11 +3199,8 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
       for (auto idx : *pset) {
 
         if (pSurf[idx] > 0.9) {
-          interpolator->findCellAndWeights(pX[mat][idx],
-                                           ni,
-                                           S,
-                                           pSize[idx],
-                                           pDefGrad_old[idx]);
+          interpolator->findCellAndWeights(
+            pX[mat][idx], ni, S, pSize[idx], pDefGrad_old[idx]);
 
           Matrix3 curSize = pDefGrad_old[idx] * pSize[idx];
           Matrix3 dsize =
@@ -3470,14 +3341,11 @@ SerialMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
-  printSchedule(patches,
-                cout_doing,
-                "MPM::scheduleExchangeMomentumInterpolated");
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleExchangeMomentumInterpolated");
 
-  contactModel->addComputesAndRequires(sched,
-                                       patches,
-                                       matls,
-                                       d_mpmLabels->gVelocityLabel);
+  contactModel->addComputesAndRequires(
+    sched, patches, matls, d_mpmLabels->gVelocityLabel);
 }
 
 /*!----------------------------------------------------------------------
@@ -3497,9 +3365,8 @@ SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
   if (d_boundaryTractionFaces.size() > 0) {
 
     printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
-    Task* t = scinew Task("MPM::computeContactArea",
-                          this,
-                          &SerialMPM::computeContactArea);
+    Task* t = scinew Task(
+      "MPM::computeContactArea", this, &SerialMPM::computeContactArea);
 
     Ghost::GhostType gnone = Ghost::None;
     t->requires(Task::NewDW, d_mpmLabels->gVolumeLabel, gnone);
@@ -3538,8 +3405,8 @@ SerialMPM::computeContactArea(const ProcessorGroup*,
       int matID = mpm_matl->getDWIndex();
       constNCVariable<double> gVolume;
 
-      new_dw
-        ->get(gVolume, d_mpmLabels->gVolumeLabel, matID, patch, Ghost::None, 0);
+      new_dw->get(
+        gVolume, d_mpmLabels->gVolumeLabel, matID, patch, Ghost::None, 0);
 
       for (auto face : d_boundaryTractionFaces) {
         int iface = (int)(face);
@@ -3610,9 +3477,8 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleComputeInternalForce");
 
-  Task* t = scinew Task("MPM::computeInternalForce",
-                        this,
-                        &SerialMPM::computeInternalForce);
+  Task* t = scinew Task(
+    "MPM::computeInternalForce", this, &SerialMPM::computeInternalForce);
 
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
@@ -3626,22 +3492,16 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
   t->requires(Task::OldDW, d_mpmLabels->pVolumeLabel, gan, d_numGhostParticles);
   t->requires(Task::OldDW, d_mpmLabels->pXLabel, gan, d_numGhostParticles);
   t->requires(Task::OldDW, d_mpmLabels->pSizeLabel, gan, d_numGhostParticles);
-  t->requires(Task::OldDW,
-              d_mpmLabels->pDefGradLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pDefGradLabel, gan, d_numGhostParticles);
 #ifdef DEBUG_WITH_PARTICLE_ID
-  t->requires(Task::OldDW,
-              d_mpmLabels->pParticleIDLabel,
-              gan,
-              d_numGhostParticles);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pParticleIDLabel, gan, d_numGhostParticles);
 #endif
 
   if (d_mpmFlags->d_withICE) {
-    t->requires(Task::NewDW,
-                d_mpmLabels->pPressureLabel,
-                gan,
-                d_numGhostParticles);
+    t->requires(
+      Task::NewDW, d_mpmLabels->pPressureLabel, gan, d_numGhostParticles);
   }
 
   if (d_mpmFlags->d_artificialViscosity) {
@@ -3752,17 +3612,13 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
       old_dw->get(pParticleID, d_mpmLabels->pParticleIDLabel, pset);
 #endif
 
-      new_dw
-        ->get(gVolume, d_mpmLabels->gVolumeLabel, matID, patch, Ghost::None, 0);
+      new_dw->get(
+        gVolume, d_mpmLabels->gVolumeLabel, matID, patch, Ghost::None, 0);
 
-      new_dw->allocateAndPut(gStress,
-                             d_mpmLabels->gStressForSavingLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gInternalForce,
-                             d_mpmLabels->gInternalForceLabel,
-                             matID,
-                             patch);
+      new_dw->allocateAndPut(
+        gStress, d_mpmLabels->gStressForSavingLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gInternalForce, d_mpmLabels->gInternalForceLabel, matID, patch);
 
       if (d_mpmFlags->d_withICE) {
         new_dw->get(p_pressure, d_mpmLabels->pPressureLabel, pset);
@@ -3799,12 +3655,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
 
           // Get the node indices that surround the cell
           interpolator->findCellAndWeightsAndShapeDerivatives(
-            pX[idx],
-            ni,
-            S,
-            d_S,
-            pSize[idx],
-            pDefGrad_old[idx]);
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
           stressvol   = pStress[idx] * pVol[idx];
           stresspress = pStress[idx] + Id * (p_pressure[idx] - p_q[idx]);
           // std::cerr << " idx = " << idx << " pStress = " << pStress[idx] <<
@@ -3852,12 +3703,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
         for (auto part : *pset) {
 
           interpolator->findCellAndWeightsAndShapeDerivatives(
-            pX[part],
-            ni,
-            S,
-            d_S,
-            pSize[part],
-            pDefGrad_old[part]);
+            pX[part], ni, S, d_S, pSize[part], pDefGrad_old[part]);
 
           stressvol   = pStress[part] * pVol[part];
           stresspress = pStress[part] + Id * (p_pressure[part] - p_q[part]);
@@ -3937,7 +3783,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
 
         IntVector projlow, projhigh;
         patch->getFaceNodes(face, 0, projlow, projhigh);
-        Vector norm      = face_norm(face);
+        Vector norm      = Uintah::Util::face_norm(face);
         double celldepth = dx[iface / 2]; // length in dir. perp. to boundary
 
         // loop over face nodes to find boundary forces, ave. stress (traction).
@@ -3972,11 +3818,8 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
       }
 #endif
       MPMBoundCond bc;
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Symmetric",
-                              gInternalForce,
-                              interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gInternalForce, interp_type);
 #ifdef DEBUG_WITH_PARTICLE_ID
       // IntVector node(3,38,0);
       if (patch->containsNode(node)) {
@@ -4045,9 +3888,8 @@ SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches,
-                cout_doing,
-                "MPM::scheduleComputeAndIntegrateAcceleration");
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleComputeAndIntegrateAcceleration");
 
   Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
                         this,
@@ -4079,10 +3921,8 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches,
-              patch,
-              cout_doing,
-              "Doing computeAndIntegrateAcceleration");
+    printTask(
+      patches, patch, cout_doing, "Doing computeAndIntegrateAcceleration");
 
     Ghost::GhostType gnone = Ghost::None;
     // Vector gravity = d_mpmFlags->d_gravity;
@@ -4105,8 +3945,8 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                   patch,
                   gnone,
                   0);
-      new_dw
-        ->get(gBodyForce, d_mpmLabels->gBodyForceLabel, matID, patch, gnone, 0);
+      new_dw->get(
+        gBodyForce, d_mpmLabels->gBodyForceLabel, matID, patch, gnone, 0);
       new_dw->get(gExternalForce,
                   d_mpmLabels->gExternalForceLabel,
                   matID,
@@ -4114,19 +3954,15 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                   gnone,
                   0);
       new_dw->get(gMass, d_mpmLabels->gMassLabel, matID, patch, gnone, 0);
-      new_dw
-        ->get(gVelocity, d_mpmLabels->gVelocityLabel, matID, patch, gnone, 0);
+      new_dw->get(
+        gVelocity, d_mpmLabels->gVelocityLabel, matID, patch, gnone, 0);
 
       // Create variables for the results
       NCVariable<Vector> gVelocity_star, gAcceleration;
-      new_dw->allocateAndPut(gVelocity_star,
-                             d_mpmLabels->gVelocityStarLabel,
-                             matID,
-                             patch);
-      new_dw->allocateAndPut(gAcceleration,
-                             d_mpmLabels->gAccelerationLabel,
-                             matID,
-                             patch);
+      new_dw->allocateAndPut(
+        gVelocity_star, d_mpmLabels->gVelocityStarLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gAcceleration, d_mpmLabels->gAccelerationLabel, matID, patch);
 
       gAcceleration.initialize(Vector(0., 0., 0.));
       double damp_coef = d_mpmFlags->d_artificialDampCoeff;
@@ -4191,10 +4027,8 @@ SerialMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
    *              the others according to specific rules)
    *   out(G.VELOCITY_STAR, G.ACCELERATION) */
   printSchedule(patches, cout_doing, "MPM::scheduleMomentumExchangeIntegrated");
-  contactModel->addComputesAndRequires(sched,
-                                       patches,
-                                       matls,
-                                       d_mpmLabels->gVelocityStarLabel);
+  contactModel->addComputesAndRequires(
+    sched, patches, matls, d_mpmLabels->gVelocityStarLabel);
 }
 
 /*!----------------------------------------------------------------------
@@ -4257,34 +4091,20 @@ SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
       NCVariable<Vector> gVelocity_star, gAcceleration;
       constNCVariable<Vector> gVelocity;
 
-      new_dw->getModifiable(gAcceleration,
-                            d_mpmLabels->gAccelerationLabel,
-                            matID,
-                            patch);
-      new_dw->getModifiable(gVelocity_star,
-                            d_mpmLabels->gVelocityStarLabel,
-                            matID,
-                            patch);
-      new_dw->get(gVelocity,
-                  d_mpmLabels->gVelocityLabel,
-                  matID,
-                  patch,
-                  Ghost::None,
-                  0);
+      new_dw->getModifiable(
+        gAcceleration, d_mpmLabels->gAccelerationLabel, matID, patch);
+      new_dw->getModifiable(
+        gVelocity_star, d_mpmLabels->gVelocityStarLabel, matID, patch);
+      new_dw->get(
+        gVelocity, d_mpmLabels->gVelocityLabel, matID, patch, Ghost::None, 0);
 
       // Apply grid boundary conditions to the velocity_star and
       // acceleration before interpolating back to the particles
       MPMBoundCond bc;
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Velocity",
-                              gVelocity_star,
-                              interp_type);
-      bc.setBoundaryCondition(patch,
-                              matID,
-                              "Symmetric",
-                              gVelocity_star,
-                              interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Velocity", gVelocity_star, interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gVelocity_star, interp_type);
 
       // Now recompute acceleration as the difference between the velocity
       // interpolated to the grid (no bcs applied) and the new velocity_star
@@ -4297,10 +4117,8 @@ SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
       if (!d_mpmFlags->d_doGridReset) {
         NCVariable<Vector> displacement;
         constNCVariable<Vector> displacementOld;
-        new_dw->allocateAndPut(displacement,
-                               d_mpmLabels->gDisplacementLabel,
-                               matID,
-                               patch);
+        new_dw->allocateAndPut(
+          displacement, d_mpmLabels->gDisplacementLabel, matID, patch);
         old_dw->get(displacementOld,
                     d_mpmLabels->gDisplacementLabel,
                     matID,
@@ -4334,9 +4152,8 @@ SerialMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
   if (d_mpmFlags->d_prescribeDeformation) {
     printSchedule(patches, cout_doing, "MPM::scheduleSetPrescribedMotion");
 
-    Task* t = scinew Task("MPM::setPrescribedMotion",
-                          this,
-                          &SerialMPM::setPrescribedMotion);
+    Task* t = scinew Task(
+      "MPM::setPrescribedMotion", this, &SerialMPM::setPrescribedMotion);
 
     const MaterialSubset* mss = matls->getUnion();
     t->modifies(d_mpmLabels->gAccelerationLabel, mss);
@@ -4382,21 +4199,16 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
       int matlID = mpm_matl->getDWIndex();
       NCVariable<Vector> gVelocity_star, gAcceleration;
 
-      new_dw->getModifiable(gVelocity_star,
-                            d_mpmLabels->gVelocityStarLabel,
-                            matlID,
-                            patch);
-      new_dw->getModifiable(gAcceleration,
-                            d_mpmLabels->gAccelerationLabel,
-                            matlID,
-                            patch);
+      new_dw->getModifiable(
+        gVelocity_star, d_mpmLabels->gVelocityStarLabel, matlID, patch);
+      new_dw->getModifiable(
+        gAcceleration, d_mpmLabels->gAccelerationLabel, matlID, patch);
 
       gAcceleration.initialize(Vector(0.0));
 
       // Get F and Q from file by interpolating between available times
-      auto t_upper_iter = std::upper_bound(d_prescribedTimes.begin(),
-                                           d_prescribedTimes.end(),
-                                           time);
+      auto t_upper_iter = std::upper_bound(
+        d_prescribedTimes.begin(), d_prescribedTimes.end(), time);
 
       auto t_upper_index = t_upper_iter - d_prescribedTimes.begin();
       if (t_upper_iter == d_prescribedTimes.end()) {
@@ -4479,9 +4291,8 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
             thetadot = theta_upper * degtorad / (t3 - t_upper);
 
             double tst = t4 - t3;
-            new_dw->put(delt_vartype(tst),
-                        d_mpmLabels->delTLabel,
-                        getLevel(patches));
+            new_dw->put(
+              delt_vartype(tst), d_mpmLabels->delTLabel, getLevel(patches));
           }
         }
       }
@@ -4532,10 +4343,8 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
       if (!d_mpmFlags->d_doGridReset) {
         NCVariable<Vector> displacement;
         constNCVariable<Vector> displacementOld;
-        new_dw->allocateAndPut(displacement,
-                               d_mpmLabels->gDisplacementLabel,
-                               matlID,
-                               patch);
+        new_dw->allocateAndPut(
+          displacement, d_mpmLabels->gDisplacementLabel, matlID, patch);
         old_dw->get(displacementOld,
                     d_mpmLabels->gDisplacementLabel,
                     matlID,
@@ -4586,14 +4395,11 @@ SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
   sched->addTask(t_part, patches, matls);
 
   // Grid velocities
-  Task* t_grid = scinew Task("MPM::computeGridVelocityXPIC",
-                             this,
-                             &SerialMPM::computeGridVelocityXPIC);
+  Task* t_grid = scinew Task(
+    "MPM::computeGridVelocityXPIC", this, &SerialMPM::computeGridVelocityXPIC);
 
-  t_grid->requires(Task::OldDW,
-                   d_mpmLabels->pXLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+  t_grid->requires(
+    Task::OldDW, d_mpmLabels->pXLabel, Ghost::AroundNodes, d_numGhostParticles);
   t_grid->requires(Task::OldDW,
                    d_mpmLabels->pMassLabel,
                    Ghost::AroundNodes,
@@ -4611,10 +4417,8 @@ SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
                    Ghost::AroundNodes,
                    d_numGhostParticles);
 
-  t_grid->requires(Task::NewDW,
-                   d_mpmLabels->gMassLabel,
-                   Ghost::AroundCells,
-                   d_numGhostNodes);
+  t_grid->requires(
+    Task::NewDW, d_mpmLabels->gMassLabel, Ghost::AroundCells, d_numGhostNodes);
 
   t_grid->computes(d_mpmLabels->gVelocityXPICLabel);
 
@@ -4664,17 +4468,13 @@ SerialMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
                   d_numGhostParticles);
 
       ParticleVariable<Vector> pVelocityXPIC;
-      new_dw->allocateAndPut(pVelocityXPIC,
-                             d_mpmLabels->pVelocityXPICLabel,
-                             particles);
+      new_dw->allocateAndPut(
+        pVelocityXPIC, d_mpmLabels->pVelocityXPICLabel, particles);
 
       for (auto particle : *particles) {
 
-        interpolator->findCellAndWeights(pX[particle],
-                                         ni,
-                                         S,
-                                         pSize[particle],
-                                         pDefGrad[particle]);
+        interpolator->findCellAndWeights(
+          pX[particle], ni, S, pSize[particle], pDefGrad[particle]);
         Vector pVelocity(0.0, 0.0, 0.0);
         for (int k = 0; k < numInfluenceNodes; k++) {
           pVelocity += gVelocity[ni[k]] * S[k];
@@ -4734,20 +4534,15 @@ SerialMPM::computeGridVelocityXPIC(const ProcessorGroup*,
                   d_numGhostParticles);
 
       NCVariable<Vector> gVelocityXPIC;
-      new_dw->allocateAndPut(gVelocityXPIC,
-                             d_mpmLabels->gVelocityXPICLabel,
-                             mat_id,
-                             patch);
+      new_dw->allocateAndPut(
+        gVelocityXPIC, d_mpmLabels->gVelocityXPICLabel, mat_id, patch);
       gVelocityXPIC.initialize(Vector(0.0, 0.0, 0.0));
 
       IntVector node;
       for (auto particle : *particles) {
 
-        interpolator->findCellAndWeights(pX[particle],
-                                         ni,
-                                         S,
-                                         pSize[particle],
-                                         pDefGrad[particle]);
+        interpolator->findCellAndWeights(
+          pX[particle], ni, S, pSize[particle], pDefGrad[particle]);
         Vector pMomentum = pVelocityXPIC[particle] * pMass[particle];
         for (int k = 0; k < numInfluenceNodes; k++) {
           node = ni[k];
@@ -4801,9 +4596,8 @@ SerialMPM::scheduleReduceVars(SchedulerP& sched,
 
   // Tell the scheduler to reduce this variable
   d_mpmLabels->SumTransmittedForceLabel->isReductionTask(true);
-  t->computes(d_mpmLabels->SumTransmittedForceLabel,
-              reduction_mss,
-              Task::OutOfDomain);
+  t->computes(
+    d_mpmLabels->SumTransmittedForceLabel, reduction_mss, Task::OutOfDomain);
 
   sched->addTask(t, patches, matls);
 
@@ -4826,9 +4620,8 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches,
-                cout_doing,
-                "MPM::scheduleInterpolateToParticlesAndUpdate");
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleInterpolateToParticlesAndUpdate");
 
   Task* t = scinew Task("MPM::interpolateToParticlesAndUpdate",
                         this,
@@ -4839,28 +4632,18 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::NewDW,
-              d_mpmLabels->gAccelerationLabel,
-              gac,
-              d_numGhostNodes);
-  t->requires(Task::NewDW,
-              d_mpmLabels->gVelocityStarLabel,
-              gac,
-              d_numGhostNodes);
+  t->requires(
+    Task::NewDW, d_mpmLabels->gAccelerationLabel, gac, d_numGhostNodes);
+  t->requires(
+    Task::NewDW, d_mpmLabels->gVelocityStarLabel, gac, d_numGhostNodes);
   if (d_mpmFlags->d_useXPIC) {
-    t->requires(Task::NewDW,
-                d_mpmLabels->gVelocityXPICLabel,
-                gac,
-                d_numGhostNodes);
+    t->requires(
+      Task::NewDW, d_mpmLabels->gVelocityXPICLabel, gac, d_numGhostNodes);
   }
-  t->requires(Task::NewDW,
-              d_mpmLabels->gTemperatureRateLabel,
-              gac,
-              d_numGhostNodes);
-  t->requires(Task::NewDW,
-              d_mpmLabels->frictionalWorkLabel,
-              gac,
-              d_numGhostNodes);
+  t->requires(
+    Task::NewDW, d_mpmLabels->gTemperatureRateLabel, gac, d_numGhostNodes);
+  t->requires(
+    Task::NewDW, d_mpmLabels->frictionalWorkLabel, gac, d_numGhostNodes);
   t->requires(Task::OldDW, d_mpmLabels->pXLabel, gnone);
   t->requires(Task::OldDW, d_mpmLabels->pMassLabel, gnone);
   t->requires(Task::OldDW, d_mpmLabels->pParticleIDLabel, gnone);
@@ -4882,10 +4665,8 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   if (d_mpmFlags->d_withICE) {
     t->requires(Task::NewDW, d_mpmLabels->dTdt_NCLabel, gac, d_numGhostNodes);
-    t->requires(Task::NewDW,
-                d_mpmLabels->massBurnFractionLabel,
-                gac,
-                d_numGhostNodes);
+    t->requires(
+      Task::NewDW, d_mpmLabels->massBurnFractionLabel, gac, d_numGhostNodes);
   }
 
   t->computes(d_mpmLabels->pDispLabel_preReloc);
@@ -4965,10 +4746,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches,
-              patch,
-              cout_doing,
-              "Doing interpolateToParticlesAndUpdate");
+    printTask(
+      patches, patch, cout_doing, "Doing interpolateToParticlesAndUpdate");
 
     auto interpolator      = d_mpmFlags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
@@ -5007,10 +4786,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     constNCVariable<double> NC_CCweight;
     NCVariable<double> NC_CCweight_new;
     old_dw->get(NC_CCweight, d_mpmLabels->NC_CCweightLabel, 0, patch, gnone, 0);
-    new_dw->allocateAndPut(NC_CCweight_new,
-                           d_mpmLabels->NC_CCweightLabel,
-                           0,
-                           patch);
+    new_dw->allocateAndPut(
+      NC_CCweight_new, d_mpmLabels->NC_CCweightLabel, 0, patch);
     NC_CCweight_new.copyData(NC_CCweight);
 
     for (int m = 0; m < numMPMMatls; m++) {
@@ -5025,9 +4802,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleVariable<long64> pParticleID_new;
       ParticleVariable<Matrix3> pSize_new;
       old_dw->get(pParticleID, d_mpmLabels->pParticleIDLabel, pset);
-      new_dw->allocateAndPut(pParticleID_new,
-                             d_mpmLabels->pParticleIDLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pParticleID_new, d_mpmLabels->pParticleIDLabel_preReloc, pset);
       old_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
       new_dw->allocateAndPut(pSize_new, d_mpmLabels->pSizeLabel_preReloc, pset);
       pParticleID_new.copyData(pParticleID);
@@ -5037,9 +4813,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       constParticleVariable<double> pExtHeatFlux;
       ParticleVariable<double> pExtHeatFlux_new;
       old_dw->get(pExtHeatFlux, d_mpmLabels->pExternalHeatFluxLabel, pset);
-      new_dw->allocateAndPut(pExtHeatFlux_new,
-                             d_mpmLabels->pExternalHeatFluxLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pExtHeatFlux_new, d_mpmLabels->pExternalHeatFluxLabel_preReloc, pset);
       pExtHeatFlux_new.copyData(pExtHeatFlux);
 
       // Get particle variables
@@ -5069,28 +4844,23 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // Allocate updated particle variables
       ParticleVariable<double> pMass_new, pVolume_new, pTemp_new, pTempPrev_new;
       new_dw->allocateAndPut(pMass_new, d_mpmLabels->pMassLabel_preReloc, pset);
-      new_dw->getModifiable(pVolume_new,
-                            d_mpmLabels->pVolumeLabel_preReloc,
-                            pset);
-      new_dw->allocateAndPut(pTemp_new,
-                             d_mpmLabels->pTemperatureLabel_preReloc,
-                             pset);
-      new_dw->allocateAndPut(pTempPrev_new,
-                             d_mpmLabels->pTempPreviousLabel_preReloc,
-                             pset);
+      new_dw->getModifiable(
+        pVolume_new, d_mpmLabels->pVolumeLabel_preReloc, pset);
+      new_dw->allocateAndPut(
+        pTemp_new, d_mpmLabels->pTemperatureLabel_preReloc, pset);
+      new_dw->allocateAndPut(
+        pTempPrev_new, d_mpmLabels->pTempPreviousLabel_preReloc, pset);
 
       ParticleVariable<Point> pX_new, pXx;
       new_dw->allocateAndPut(pX_new, d_mpmLabels->pXLabel_preReloc, pset);
       new_dw->allocateAndPut(pXx, d_mpmLabels->pXXLabel, pset);
 
       ParticleVariable<Vector> pVelocity_new, pDisp_new, pAcc_new;
-      new_dw->allocateAndPut(pVelocity_new,
-                             d_mpmLabels->pVelocityLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pVelocity_new, d_mpmLabels->pVelocityLabel_preReloc, pset);
       new_dw->allocateAndPut(pDisp_new, d_mpmLabels->pDispLabel_preReloc, pset);
-      new_dw->allocateAndPut(pAcc_new,
-                             d_mpmLabels->pAccelerationLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pAcc_new, d_mpmLabels->pAccelerationLabel_preReloc, pset);
 
       // Get grid variables
       constNCVariable<double> gTemperatureRate, frictionTempRate;
@@ -5124,10 +4894,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       } else {
         NCVariable<double> dTdt_create, massBurnFrac_create;
         new_dw->allocateTemporary(dTdt_create, patch, gac, d_numGhostParticles);
-        new_dw->allocateTemporary(massBurnFrac_create,
-                                  patch,
-                                  gac,
-                                  d_numGhostParticles);
+        new_dw->allocateTemporary(
+          massBurnFrac_create, patch, gac, d_numGhostParticles);
         dTdt_create.initialize(0.);
         massBurnFrac_create.initialize(0.);
 
@@ -5174,11 +4942,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // Loop over particles
       for (auto idx : *pset) {
 
-        interpolator->findCellAndWeights(pX[idx],
-                                         ni,
-                                         S,
-                                         pSize[idx],
-                                         pDefGrad_new[idx]);
+        interpolator->findCellAndWeights(
+          pX[idx], ni, S, pSize[idx], pDefGrad_new[idx]);
 
         Vector velocity(0.0, 0.0, 0.0);
         Vector acceleration(0.0, 0.0, 0.0);
@@ -5412,9 +5177,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         constParticleVariable<double> pColor;
         ParticleVariable<double> pColor_new;
         old_dw->get(pColor, d_mpmLabels->pColorLabel, pset);
-        new_dw->allocateAndPut(pColor_new,
-                               d_mpmLabels->pColorLabel_preReloc,
-                               pset);
+        new_dw->allocateAndPut(
+          pColor_new, d_mpmLabels->pColorLabel_preReloc, pset);
         pColor_new.copyData(pColor);
       }
     }
@@ -5492,10 +5256,8 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
                                       DataWarehouse* old_dw,
                                       DataWarehouse* new_dw)
 {
-  printTask(patches,
-            patches->get(0),
-            cout_doing,
-            "Doing computeDeformationGradient");
+  printTask(
+    patches, patches->get(0), cout_doing, "Doing computeDeformationGradient");
 
   if (cout_doing.active()) {
     cout_doing << "Before compute def grad: old_dw\n";
@@ -5554,9 +5316,8 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleComputeStressTensor");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t      = scinew Task("MPM::computeStressTensor",
-                        this,
-                        &SerialMPM::computeStressTensor);
+  Task* t      = scinew Task(
+    "MPM::computeStressTensor", this, &SerialMPM::computeStressTensor);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5593,9 +5354,8 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches,
-                cout_doing,
-                "MPM::scheduleUnrotateStressAndDeformationRate");
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleUnrotateStressAndDeformationRate");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task("MPM::computeUnrotatedStressAndDeformationRate",
@@ -5610,23 +5370,15 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
 
       const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
-      t->requires(Task::OldDW,
-                  d_mpmLabels->pParticleIDLabel,
-                  matlset,
-                  Ghost::None);
-      t->requires(Task::OldDW,
-                  d_mpmLabels->pPolarDecompRLabel,
-                  matlset,
-                  Ghost::None);
-      t->requires(Task::NewDW,
-                  d_mpmLabels->pPolarDecompRMidLabel,
-                  matlset,
-                  Ghost::None);
+      t->requires(
+        Task::OldDW, d_mpmLabels->pParticleIDLabel, matlset, Ghost::None);
+      t->requires(
+        Task::OldDW, d_mpmLabels->pPolarDecompRLabel, matlset, Ghost::None);
+      t->requires(
+        Task::NewDW, d_mpmLabels->pPolarDecompRMidLabel, matlset, Ghost::None);
       t->requires(Task::OldDW, d_mpmLabels->pStressLabel, matlset, Ghost::None);
-      t->requires(Task::NewDW,
-                  d_mpmLabels->pVelGradLabel_preReloc,
-                  matlset,
-                  Ghost::None);
+      t->requires(
+        Task::NewDW, d_mpmLabels->pVelGradLabel_preReloc, matlset, Ghost::None);
 
       t->computes(d_mpmLabels->pDeformRateMidLabel, matlset);
       t->computes(d_mpmLabels->pStressUnrotatedLabel, matlset);
@@ -5671,12 +5423,10 @@ SerialMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
         new_dw->get(pVelGrad_mid, d_mpmLabels->pVelGradLabel_preReloc, pset);
 
         ParticleVariable<Matrix3> pDeformRate_mid, pStress_old_unrotated;
-        new_dw->allocateAndPut(pDeformRate_mid,
-                               d_mpmLabels->pDeformRateMidLabel,
-                               pset);
-        new_dw->allocateAndPut(pStress_old_unrotated,
-                               d_mpmLabels->pStressUnrotatedLabel,
-                               pset);
+        new_dw->allocateAndPut(
+          pDeformRate_mid, d_mpmLabels->pDeformRateMidLabel, pset);
+        new_dw->allocateAndPut(
+          pStress_old_unrotated, d_mpmLabels->pStressUnrotatedLabel, pset);
 
         for (auto particle : *pset) {
           pStress_old_unrotated[particle] =
@@ -5760,9 +5510,8 @@ SerialMPM::scheduleRotateStress(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleRotateStress");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t      = scinew Task("MPM::computeRotatedStress",
-                        this,
-                        &SerialMPM::computeRotatedStress);
+  Task* t      = scinew Task(
+    "MPM::computeRotatedStress", this, &SerialMPM::computeRotatedStress);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5772,10 +5521,8 @@ SerialMPM::scheduleRotateStress(SchedulerP& sched,
 
       const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
-      t->requires(Task::OldDW,
-                  d_mpmLabels->pParticleIDLabel,
-                  matlset,
-                  Ghost::None);
+      t->requires(
+        Task::OldDW, d_mpmLabels->pParticleIDLabel, matlset, Ghost::None);
       t->requires(Task::NewDW,
                   d_mpmLabels->pPolarDecompRLabel_preReloc,
                   matlset,
@@ -5818,9 +5565,8 @@ SerialMPM::computeRotatedStress(const ProcessorGroup*,
         ParticleVariable<Matrix3> pStress_new;
         old_dw->get(pParticleID, d_mpmLabels->pParticleIDLabel, pset);
         new_dw->get(pR_new, d_mpmLabels->pPolarDecompRLabel_preReloc, pset);
-        new_dw->getModifiable(pStress_new,
-                              d_mpmLabels->pStressLabel_preReloc,
-                              pset);
+        new_dw->getModifiable(
+          pStress_new, d_mpmLabels->pStressLabel_preReloc, pset);
 
         for (auto particle : *pset) {
           pStress_new[particle] = (pR_new[particle] * pStress_new[particle]) *
@@ -5848,9 +5594,8 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleComputeBasicDamage");
 
   size_t numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t         = scinew Task("MPM::computeBasicDamage",
-                        this,
-                        &SerialMPM::computeBasicDamage);
+  Task* t         = scinew Task(
+    "MPM::computeBasicDamage", this, &SerialMPM::computeBasicDamage);
   for (size_t m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5859,10 +5604,8 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* d_basicDamageModel =
         mpm_matl->getBasicDamageModel();
-      d_basicDamageModel->addComputesAndRequires(t,
-                                                 mpm_matl,
-                                                 patches,
-                                                 d_mpmLabels.get());
+      d_basicDamageModel->addComputesAndRequires(
+        t, mpm_matl, patches, d_mpmLabels.get());
     }
   }
 
@@ -5898,11 +5641,8 @@ SerialMPM::computeBasicDamage(const ProcessorGroup*,
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel =
         mpm_matl->getBasicDamageModel();
-      basicDamageModel->computeBasicDamage(patches,
-                                           mpm_matl,
-                                           old_dw,
-                                           new_dw,
-                                           d_mpmLabels.get());
+      basicDamageModel->computeBasicDamage(
+        patches, mpm_matl, old_dw, new_dw, d_mpmLabels.get());
       if (cout_dbg.active()) {
         cout_dbg << " Damage model = " << basicDamageModel;
       }
@@ -5929,9 +5669,8 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleUpdateErosionParameter");
 
-  Task* t      = scinew Task("MPM::updateErosionParameter",
-                        this,
-                        &SerialMPM::updateErosionParameter);
+  Task* t = scinew Task(
+    "MPM::updateErosionParameter", this, &SerialMPM::updateErosionParameter);
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
@@ -5940,9 +5679,8 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* d_basicDamageModel =
         mpm_matl->getBasicDamageModel();
-      d_basicDamageModel->addRequiresLocalizationParameter(t,
-                                                           mpm_matl,
-                                                           patches);
+      d_basicDamageModel->addRequiresLocalizationParameter(
+        t, mpm_matl, patches);
     }
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addRequiresDamageParameter(t, mpm_matl, patches);
@@ -5994,9 +5732,8 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
 
       // Get the localization info
       ParticleVariable<int> isLocalized;
-      new_dw->allocateAndPut(isLocalized,
-                             d_mpmLabels->pLocalizedMPMLabel,
-                             pset);
+      new_dw->allocateAndPut(
+        isLocalized, d_mpmLabels->pLocalizedMPMLabel, pset);
       for (auto particle : *pset) {
         isLocalized[particle] = 0;
       }
@@ -6005,19 +5742,13 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
       if (mpm_matl->doBasicDamage()) {
         Vaango::BasicDamageModel* basicDamageModel =
           mpm_matl->getBasicDamageModel();
-        basicDamageModel->getLocalizationParameter(patch,
-                                                   isLocalized,
-                                                   matID,
-                                                   old_dw,
-                                                   new_dw);
+        basicDamageModel->getLocalizationParameter(
+          patch, isLocalized, matID, old_dw, new_dw);
       }
 
       // Update the localization info from constitutive model
-      mpm_matl->getConstitutiveModel()->getDamageParameter(patch,
-                                                           isLocalized,
-                                                           matID,
-                                                           old_dw,
-                                                           new_dw);
+      mpm_matl->getConstitutiveModel()->getDamageParameter(
+        patch, isLocalized, matID, old_dw, new_dw);
 
       /*
       constParticleVariable<long64> pParticleID;;
@@ -6040,14 +5771,10 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
         // either individually or in small groups
         // Ghost::GhostType  gac = Ghost::AroundCells;
         CCVariable<int> numLocInCell, numInCell;
-        new_dw->allocateAndPut(numLocInCell,
-                               d_mpmLabels->numLocInCellLabel,
-                               matID,
-                               patch);
-        new_dw->allocateAndPut(numInCell,
-                               d_mpmLabels->numInCellLabel,
-                               matID,
-                               patch);
+        new_dw->allocateAndPut(
+          numLocInCell, d_mpmLabels->numLocInCellLabel, matID, patch);
+        new_dw->allocateAndPut(
+          numInCell, d_mpmLabels->numInCellLabel, matID, patch);
         numLocInCell.initialize(0);
         numInCell.initialize(0);
 
@@ -6095,9 +5822,8 @@ SerialMPM::scheduleFindRogueParticles(SchedulerP& sched,
   if (d_mpmFlags->d_deleteRogueParticles) {
     printSchedule(patches, cout_doing, "MPM::scheduleFindRogueParticles");
 
-    Task* t              = scinew Task("MPM::findRogueParticles",
-                          this,
-                          &SerialMPM::findRogueParticles);
+    Task* t = scinew Task(
+      "MPM::findRogueParticles", this, &SerialMPM::findRogueParticles);
     Ghost::GhostType gac = Ghost::AroundCells;
     t->requires(Task::NewDW, d_mpmLabels->numLocInCellLabel, gac, 1);
     t->requires(Task::NewDW, d_mpmLabels->numInCellLabel, gac, 1);
@@ -6140,12 +5866,8 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
       ParticleVariable<int> isLocalized;
       constParticleVariable<long64> pParticleID;
 
-      new_dw->get(numLocInCell,
-                  d_mpmLabels->numLocInCellLabel,
-                  matID,
-                  patch,
-                  gac,
-                  1);
+      new_dw->get(
+        numLocInCell, d_mpmLabels->numLocInCellLabel, matID, patch, gac, 1);
       new_dw->get(numInCell, d_mpmLabels->numInCellLabel, matID, patch, gac, 1);
       old_dw->get(pX, d_mpmLabels->pXLabel, pset);
       old_dw->get(pParticleID, d_mpmLabels->pParticleIDLabel, pset);
@@ -6206,9 +5928,8 @@ SerialMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
   }
   printSchedule(patches, cout_doing, "MPM::scheduleComputeAccStrainEnergy");
 
-  Task* t = scinew Task("MPM::computeAccStrainEnergy",
-                        this,
-                        &SerialMPM::computeAccStrainEnergy);
+  Task* t = scinew Task(
+    "MPM::computeAccStrainEnergy", this, &SerialMPM::computeAccStrainEnergy);
   t->requires(Task::OldDW, d_mpmLabels->AccStrainEnergyLabel);
   t->requires(Task::NewDW, d_mpmLabels->StrainEnergyLabel);
   t->computes(d_mpmLabels->AccStrainEnergyLabel);
@@ -6255,9 +5976,8 @@ SerialMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleFinalParticleUpdate");
 
-  Task* t = scinew Task("MPM::finalParticleUpdate",
-                        this,
-                        &SerialMPM::finalParticleUpdate);
+  Task* t = scinew Task(
+    "MPM::finalParticleUpdate", this, &SerialMPM::finalParticleUpdate);
 
   t->requires(Task::OldDW, d_mpmLabels->delTLabel);
 
@@ -6305,9 +6025,8 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
       new_dw->get(pMass_new, d_mpmLabels->pMassLabel_preReloc, pset);
       new_dw->get(pLocalized, d_mpmLabels->pLocalizedMPMLabel_preReloc, pset);
 
-      new_dw->getModifiable(pTemp_new,
-                            d_mpmLabels->pTemperatureLabel_preReloc,
-                            pset);
+      new_dw->getModifiable(
+        pTemp_new, d_mpmLabels->pTemperatureLabel_preReloc, pset);
 
       // Loop over particles
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
@@ -6432,9 +6151,8 @@ SerialMPM::insertParticles(const ProcessorGroup*,
 
         old_dw->get(pcolor, d_mpmLabels->pColorLabel, pset);
         new_dw->getModifiable(pX, d_mpmLabels->pXLabel_preReloc, pset);
-        new_dw->getModifiable(pVelocity,
-                              d_mpmLabels->pVelocityLabel_preReloc,
-                              pset);
+        new_dw->getModifiable(
+          pVelocity, d_mpmLabels->pVelocityLabel_preReloc, pset);
 
         int numParticles = pset->end() - pset->begin();
         std::cout << "Insertion: Patch " << p << " now contains "
@@ -6490,10 +6208,8 @@ SerialMPM::scheduleAddParticles(SchedulerP& sched,
   t->modifies(d_mpmLabels->pRefinedLabel_preReloc);
   t->modifies(d_mpmLabels->pVelGradLabel_preReloc);
 
-  t->requires(Task::OldDW,
-              d_mpmLabels->pCellNAPIDLabel,
-              zeroth_matl,
-              Ghost::None);
+  t->requires(
+    Task::OldDW, d_mpmLabels->pCellNAPIDLabel, zeroth_matl, Ghost::None);
   t->computes(d_mpmLabels->pCellNAPIDLabel, zeroth_matl);
 
   sched->addTask(t, patches, matls);
@@ -6535,34 +6251,27 @@ SerialMPM::addParticles(const ProcessorGroup*,
       ParticleVariable<Vector> pVelocity, pextforce, pDisp;
       ParticleVariable<int> pref, ploc;
       new_dw->getModifiable(pX, d_mpmLabels->pXLabel_preReloc, pset);
-      new_dw->getModifiable(pParticleID,
-                            d_mpmLabels->pParticleIDLabel_preReloc,
-                            pset);
+      new_dw->getModifiable(
+        pParticleID, d_mpmLabels->pParticleIDLabel_preReloc, pset);
       new_dw->getModifiable(pMass, d_mpmLabels->pMassLabel_preReloc, pset);
       new_dw->getModifiable(pSize, d_mpmLabels->pSizeLabel_preReloc, pset);
       new_dw->getModifiable(pDisp, d_mpmLabels->pDispLabel_preReloc, pset);
       new_dw->getModifiable(pStress, d_mpmLabels->pStressLabel_preReloc, pset);
       new_dw->getModifiable(pcolor, d_mpmLabels->pColorLabel_preReloc, pset);
       new_dw->getModifiable(pVolume, d_mpmLabels->pVolumeLabel_preReloc, pset);
-      new_dw->getModifiable(pVelocity,
-                            d_mpmLabels->pVelocityLabel_preReloc,
-                            pset);
-      new_dw->getModifiable(pextforce,
-                            d_mpmLabels->pExtForceLabel_preReloc,
-                            pset);
-      new_dw->getModifiable(ptemp,
-                            d_mpmLabels->pTemperatureLabel_preReloc,
-                            pset);
-      new_dw->getModifiable(ptempP,
-                            d_mpmLabels->pTempPreviousLabel_preReloc,
-                            pset);
+      new_dw->getModifiable(
+        pVelocity, d_mpmLabels->pVelocityLabel_preReloc, pset);
+      new_dw->getModifiable(
+        pextforce, d_mpmLabels->pExtForceLabel_preReloc, pset);
+      new_dw->getModifiable(
+        ptemp, d_mpmLabels->pTemperatureLabel_preReloc, pset);
+      new_dw->getModifiable(
+        ptempP, d_mpmLabels->pTempPreviousLabel_preReloc, pset);
       new_dw->getModifiable(pref, d_mpmLabels->pRefinedLabel_preReloc, pset);
-      new_dw->getModifiable(ploc,
-                            d_mpmLabels->pLocalizedMPMLabel_preReloc,
-                            pset);
-      new_dw->getModifiable(pvelgrad,
-                            d_mpmLabels->pVelGradLabel_preReloc,
-                            pset);
+      new_dw->getModifiable(
+        ploc, d_mpmLabels->pLocalizedMPMLabel_preReloc, pset);
+      new_dw->getModifiable(
+        pvelgrad, d_mpmLabels->pVelGradLabel_preReloc, pset);
       new_dw->getModifiable(pF, d_mpmLabels->pDefGradLabel_preReloc, pset);
 
       int numNewPartNeeded = 0;
@@ -6782,11 +6491,10 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
       constParticleVariable<Matrix3> pSize;
       ParticleVariable<Matrix3> pScaleFactor;
       old_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
-      new_dw->allocateAndPut(pScaleFactor,
-                             d_mpmLabels->pScaleFactorLabel_preReloc,
-                             pset);
+      new_dw->allocateAndPut(
+        pScaleFactor, d_mpmLabels->pScaleFactorLabel_preReloc, pset);
 
-      if (d_dataArchiver->isOutputTimeStep()) {
+      if (d_output->isOutputTimeStep()) {
         Vector dx = patch->dCell();
 
         if (d_mpmFlags->d_interpolatorType != "cpdi" &&
@@ -6832,9 +6540,8 @@ SerialMPM::scheduleParticleRelocation(SchedulerP& sched,
 
   // If needed concatenate the labels and matls that are passed into
   // the ParticleRelocate
-  d_cohesiveZoneTasks->scheduleParticleRelocation(new_mss,
-                                                  old_labels,
-                                                  new_labels);
+  d_cohesiveZoneTasks->scheduleParticleRelocation(
+    new_mss, old_labels, new_labels);
 
   //  create a new material set containing the
   //  the updated matlSubset.
@@ -6911,10 +6618,8 @@ SerialMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel =
         mpm_matl->getBasicDamageModel();
-      basicDamageModel->addInitialComputesAndRequires(t,
-                                                      mpm_matl,
-                                                      patches,
-                                                      d_mpmLabels.get());
+      basicDamageModel->addInitialComputesAndRequires(
+        t, mpm_matl, patches, d_mpmLabels.get());
     }
   }
 
@@ -6942,10 +6647,8 @@ SerialMPM::refine(const ProcessorGroup*,
 
     // First do NC_CCweight
     NCVariable<double> NC_CCweight;
-    new_dw->allocateAndPut(NC_CCweight,
-                           d_mpmLabels->NC_CCweightLabel,
-                           0,
-                           patch);
+    new_dw->allocateAndPut(
+      NC_CCweight, d_mpmLabels->NC_CCweightLabel, 0, patch);
     //__________________________________
     // - Initialize NC_CCweight = 0.125
     // - Find the walls with symmetry BC and
@@ -6997,21 +6700,17 @@ SerialMPM::refine(const ProcessorGroup*,
         new_dw->allocateAndPut(pMass, d_mpmLabels->pMassLabel, pset);
         new_dw->allocateAndPut(pVolume, d_mpmLabels->pVolumeLabel, pset);
         new_dw->allocateAndPut(pVelocity, d_mpmLabels->pVelocityLabel, pset);
-        new_dw->allocateAndPut(pTemperature,
-                               d_mpmLabels->pTemperatureLabel,
-                               pset);
-        new_dw->allocateAndPut(pTempPrev,
-                               d_mpmLabels->pTempPreviousLabel,
-                               pset);
-        new_dw->allocateAndPut(pExternalForce,
-                               d_mpmLabels->pExternalForceLabel,
-                               pset);
+        new_dw->allocateAndPut(
+          pTemperature, d_mpmLabels->pTemperatureLabel, pset);
+        new_dw->allocateAndPut(
+          pTempPrev, d_mpmLabels->pTempPreviousLabel, pset);
+        new_dw->allocateAndPut(
+          pExternalForce, d_mpmLabels->pExternalForceLabel, pset);
         new_dw->allocateAndPut(pID, d_mpmLabels->pParticleIDLabel, pset);
         new_dw->allocateAndPut(pDisp, d_mpmLabels->pDispLabel, pset);
         if (d_mpmFlags->d_useLoadCurves) {
-          new_dw->allocateAndPut(pLoadCurve,
-                                 d_mpmLabels->pLoadCurveIDLabel,
-                                 pset);
+          new_dw->allocateAndPut(
+            pLoadCurve, d_mpmLabels->pLoadCurveIDLabel, pset);
         }
         new_dw->allocateAndPut(pSize, d_mpmLabels->pSizeLabel, pset);
 
@@ -7019,14 +6718,13 @@ SerialMPM::refine(const ProcessorGroup*,
         d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
         // Init constitutive model
-        mpm_matl->getConstitutiveModel()->initializeCMData(patch,
-                                                           mpm_matl,
-                                                           new_dw);
+        mpm_matl->getConstitutiveModel()->initializeCMData(
+          patch, mpm_matl, new_dw);
 
         // Initialize basic damage models
         if (mpm_matl->doBasicDamage()) {
-          mpm_matl->getBasicDamageModel()
-            ->initializeDamageData(patch, mpm_matl, new_dw, d_mpmLabels.get());
+          mpm_matl->getBasicDamageModel()->initializeDamageData(
+            patch, mpm_matl, new_dw, d_mpmLabels.get());
         }
 
 #if 0
@@ -7100,9 +6798,8 @@ SerialMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getRefinePatchFlagLabel(),
                  d_regridder->refineFlagMaterials());
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials("MPM"));
+  sched->addTask(
+    task, coarseLevel->eachPatch(), d_materialManager->allMaterials("MPM"));
 }
 
 /*!----------------------------------------------------------------------
@@ -7130,10 +6827,8 @@ SerialMPM::errorEstimate(const ProcessorGroup* group,
       CCVariable<int> refineFlag;
       PerPatch<PatchFlagP> refinePatchFlag;
 
-      new_dw->getModifiable(refineFlag,
-                            d_regridder->getRefineFlagLabel(),
-                            0,
-                            coarsePatch);
+      new_dw->getModifiable(
+        refineFlag, d_regridder->getRefineFlagLabel(), 0, coarsePatch);
       new_dw->get(refinePatchFlag,
                   d_regridder->getRefinePatchFlagLabel(),
                   0,
@@ -7207,14 +6902,10 @@ SerialMPM::initialErrorEstimate(const ProcessorGroup*,
 
     CCVariable<int> refineFlag;
     PerPatch<PatchFlagP> refinePatchFlag;
-    new_dw->getModifiable(refineFlag,
-                          d_regridder->getRefineFlagLabel(),
-                          0,
-                          patch);
-    new_dw->get(refinePatchFlag,
-                d_regridder->getRefinePatchFlagLabel(),
-                0,
-                patch);
+    new_dw->getModifiable(
+      refineFlag, d_regridder->getRefineFlagLabel(), 0, patch);
+    new_dw->get(
+      refinePatchFlag, d_regridder->getRefinePatchFlagLabel(), 0, patch);
 
     PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
 

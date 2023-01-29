@@ -123,10 +123,9 @@ FractureMPM::problemSetup(const ProblemSpecP& prob_spec,
   SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid);
 
   // for FractureMPM
-  d_dataArchiver = dynamic_cast<Output*>(getPort("output"));
   crackModel     = scinew Crack(prob_spec,
                             d_materialManager,
-                            d_dataArchiver,
+                            d_output,
                             d_mpmLabels.get(),
                             d_mpmFlags.get());
 }

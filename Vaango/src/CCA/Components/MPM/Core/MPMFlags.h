@@ -131,6 +131,7 @@ public:
   bool d_refineParticles;              // Flag for refinement
   bool d_useXPIC{ false };             // Use XPIC (Nairn et al.) algorithm
   bool d_updateStressLast{ true };
+  bool d_deleteGeometryObjects{ false };
 
   // For scalar diffusion
   double d_autoCycleMin{ 0.1 };

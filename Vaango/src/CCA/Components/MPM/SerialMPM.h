@@ -88,7 +88,10 @@ public:
   operator=(SerialMPM&&) = delete;
 
   virtual double
-  recomputeDelT(double delT);
+  recomputeDelT(double delT)
+  {
+    return delT * 0.1;
+  }
 
   virtual void
   problemSetup(const ProblemSpecP& params,
@@ -351,6 +354,13 @@ protected:
                     const MaterialSubset*,
                     DataWarehouse* old_dw,
                     DataWarehouse* new_dw);
+
+  void
+  deleteGeometryObjects(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset*,
+                        DataWarehouse*,
+                        DataWarehouse* new_dw);
 
   void
   printParticleCount(const ProcessorGroup*,
@@ -697,7 +707,6 @@ protected:
   MaterialManagerP d_materialManager{ nullptr };
 
   // Ports
-  Output* d_dataArchiver{ nullptr };
   SwitchingCriteria* d_switchCriteria{ nullptr };
 
   std::list<Patch::FaceType>
