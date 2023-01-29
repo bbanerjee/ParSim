@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,6 +50,9 @@ namespace Uintah {
 
 class Level;
 class OutputContext;
+#if HAVE_PIDX
+class PIDXOutputContext;
+#endif
 class ProcessorGroup;
 class VarLabel;
 class Task;
@@ -82,11 +85,11 @@ WARNING
 
 ****************************************/
 
-typedef std::map<const VarLabel*, ParticleVariableBase*>
-  ParticleLabelVariableMap;
-typedef std::map<const VarLabel*, constParticleVariableBase*>
-  constParticleLabelVariableMap;
-typedef std::map<long64, int> ParticleIDMap;
+using ParticleLabelVariableMap =
+  std::map<const VarLabel*, ParticleVariableBase*>;
+using constParticleLabelVariableMap =
+  std::map<const VarLabel*, constParticleVariableBase*>;
+using ParticleIDMap = std::map<long64, int>;
 
 class DataWarehouse : public RefCounted
 {
@@ -97,6 +100,8 @@ public:
   // Check whether a label exists in the DW
   virtual bool
   exists(const VarLabel* label, int matlIndex, const Patch* patch) const = 0;
+  virtual bool
+  exists(const VarLabel* label, int matlIndex, const Level* level) const = 0;
 
   // Returns a (const) pointer to the grid.  This pointer can then be
   // used to (for example) get the number of levels in the grid.
@@ -118,11 +123,27 @@ public:
       const Level* level = 0,
       int matlIndex      = -1) = 0;
 
+  virtual std::map<int, double>
+  get_sum_vartypeD(const VarLabel* label, const MaterialSubset*) = 0;
+
+  virtual std::map<int, Vector>
+  get_sum_vartypeV(const VarLabel* label, const MaterialSubset*) = 0;
+
   virtual void
   put(const ReductionVariableBase& var,
       const VarLabel* label,
       const Level* level = 0,
       int matlIndex      = -1) = 0;
+
+  virtual void
+  put_sum_vartype(std::map<int, Vector>&,
+                  const VarLabel*,
+                  const MaterialSubset*) = 0;
+
+  virtual void
+  put_sum_vartype(std::map<int, double>&,
+                  const VarLabel*,
+                  const MaterialSubset*) = 0;
 
   virtual void
   override(const ReductionVariableBase& var,
@@ -171,6 +192,9 @@ public:
                        const Patch* patch,
                        Uintah::IntVector low  = Uintah::IntVector(0, 0, 0),
                        Uintah::IntVector high = Uintah::IntVector(0, 0, 0)) = 0;
+
+  virtual void
+  deleteParticleSubset(ParticleSubset* psubset) = 0;
 
   virtual void
   saveParticleSubset(ParticleSubset* psubset,
@@ -331,6 +355,13 @@ public:
       const Patch* patch,
       bool replace = false) = 0;
 
+  // returns the constGridVariable for all patches on the level
+  virtual void
+  getLevel(constGridVariableBase&,
+           const VarLabel*,
+           int matlIndex,
+           const Level* level) = 0;
+
   virtual void
   getRegion(constGridVariableBase& var,
             const VarLabel* label,
@@ -389,18 +420,52 @@ public:
 
   // Move stuff to a different data Warehouse
   virtual void
+  transferFrom(DataWarehouse*,
+               const VarLabel*,
+               const PatchSubset*,
+               const MaterialSubset*) = 0;
+
+  virtual void
+  transferFrom(DataWarehouse*,
+               const VarLabel*,
+               const PatchSubset*,
+               const MaterialSubset*,
+               bool replace) = 0;
+
+  virtual void
   transferFrom(DataWarehouse* dw,
                const VarLabel* label,
                const PatchSubset* pset,
                const MaterialSubset* mset,
-               bool replace                = false,
+               bool replace,
                const PatchSubset* patchset = 0) = 0;
+
+  // An overloaded version of transferFrom.  GPU transfers need a stream, and a
+  // stream is found in a detailedTask object.
+  virtual void
+  transferFrom(DataWarehouse*,
+               const VarLabel*,
+               const PatchSubset*,
+               const MaterialSubset*,
+               void* detailedTask,
+               bool replace,
+               const PatchSubset*) = 0;
 
   virtual size_t
   emit(OutputContext& out,
        const VarLabel* label,
        int matlIndex,
        const Patch* patch) = 0;
+
+#if HAVE_PIDX
+  virtual void
+  emitPIDX(PIDXOutputContext&,
+           const VarLabel* label,
+           int matlIndex,
+           const Patch* patch,
+           unsigned char* buffer,
+           size_t bufferSize) = 0;
+#endif
 
   // Scrubbing
   enum ScrubMode
@@ -454,6 +519,21 @@ public:
             const MaterialSubset* matls,
             int nComm) = 0;
 
+#ifdef HAVE_CUDA
+  GPUDataWarehouse*
+  getGPUDW(int i) const
+  {
+    return d_gpuDWs[i];
+  }
+  GPUDataWarehouse*
+  getGPUDW() const
+  {
+    int i;
+    CUDA_RT_SAFE_CALL(cudaGetDevice(&i));
+    return d_gpuDWs[i];
+  }
+#endif
+
 protected:
   DataWarehouse(const ProcessorGroup* myworld,
                 Scheduler* scheduler,
@@ -469,10 +549,17 @@ protected:
   // many previous time steps had taken place before the restart.
   int d_generation;
 
+#ifdef HAVE_CUDA
+  std::vector<GPUDataWarehouse*> d_gpuDWs;
+#endif
+
 private:
-  DataWarehouse(const DataWarehouse&);
+  DataWarehouse(const DataWarehouse&) = delete;
+  DataWarehouse(DataWarehouse&&) = delete;
   DataWarehouse&
-  operator=(const DataWarehouse&);
+  operator=(const DataWarehouse&) = delete;
+  DataWarehouse&
+  operator=(DataWarehouse&&) = delete;
 };
 
 } // End namespace Uintah

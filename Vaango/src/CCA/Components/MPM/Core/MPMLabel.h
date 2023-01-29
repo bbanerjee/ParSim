@@ -27,8 +27,8 @@
 #ifndef UINTAH_HOMEBREW_MPMLABEL_H
 #define UINTAH_HOMEBREW_MPMLABEL_H
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace Uintah {
 
@@ -196,10 +196,11 @@ public:
   const VarLabel* CenterOfMassPositionLabel;
   const VarLabel* TotalMomentumLabel;
   const VarLabel* RigidReactionForceLabel;
+  const VarLabel* RigidReactionTorqueLabel{ nullptr };
   const VarLabel* TotalLocalizedParticleLabel;
 
   // Needs to be modified (flagged as a reduction task in runtime)
-  VarLabel* SumTransmittedForceLabel;
+  VarLabel* SumTransmittedForceLabel{ nullptr };
 
   const VarLabel* pCellNAPIDLabel;
 

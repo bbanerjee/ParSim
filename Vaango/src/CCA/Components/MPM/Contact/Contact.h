@@ -56,16 +56,19 @@ class ProcessorGroup;
 class Patch;
 class VarLabel;
 class Task;
+class Output;
 
-class Contact : public UintahParallelComponent
+class Contact
 {
 public:
   // Constructor
   Contact(const ProcessorGroup* myworld,
-          MPMLabel* Mlb,
-          MPMFlags* MFlag,
-          ProblemSpecP ps);
-  virtual ~Contact();
+          const MaterialManagerP& mat_manager,
+          const MPMLabel* Mlb,
+          const MPMFlags* MFlag,
+          ProblemSpecP& ps);
+
+  virtual ~Contact() = default;
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps) = 0;
@@ -88,33 +91,43 @@ public:
   inline bool
   needNormals() const
   {
-    return d_needNormals;
+    return d_need_normals;
   }
+
   inline bool
   useLogisticRegression() const
   {
-    return d_useLogisticRegression;
+    return d_use_logistic_regression;
   }
+
   inline int
   oneOrTwoStep() const
   {
-    return d_oneOrTwoStep;
+    return d_one_or_two_step;
   }
 
   // Enable setting material attributes (isRigid, needsNormals, etc)
   // based on the chosen contact model
   virtual void
-  setContactMaterialAttributes(){};
+  setContactMaterialAttributes() = 0;
 
 protected:
-  MPMLabel* lb;
-  MPMFlags* flag;
+  Output* d_output{ nullptr };
+
+  const MPMLabel* d_mpm_labels{ nullptr };
+  const MPMFlags* d_mpm_flags{ nullptr };
+
+  MaterialManagerP d_mat_manager{ nullptr };
 
   ContactMaterialSpec d_matls;
 
-  bool d_needNormals;
-  bool d_useLogisticRegression;
-  int d_oneOrTwoStep;
+  bool d_need_normals{ false };
+  bool d_use_logistic_regression{ false };
+  int d_one_or_two_step{ 2 };
+
+  int d_num_ghost_particles{ 1 };
+  int d_num_ghost_nodes{ 1 };
+
 };
 
 inline bool
@@ -122,7 +135,7 @@ compare(double num1, double num2)
 {
   double EPSILON = 1.e-14;
 
-  return (fabs(num1 - num2) <= EPSILON);
+  return (std::abs(num1 - num2) <= EPSILON);
 }
 
 } // End namespace Uintah

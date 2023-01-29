@@ -48,13 +48,12 @@ private:
   // Prevent copying of this class
   // copy constructor
   ApproachContact(const ApproachContact& con);
-  ApproachContact& operator=(const ApproachContact& con);
-
-  MaterialManagerP 
- d_mat_manager;
+  ApproachContact&
+  operator=(const ApproachContact& con);
 
   // Coefficient of friction
   double d_mu;
+
   // Nodal volume fraction that must occur before contact is applied
   double d_vol_const;
 
@@ -63,22 +62,32 @@ private:
 
 public:
   // Constructor
-  ApproachContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  MaterialManagerP& sS, MPMLabel* lb, MPMFlags* Mflag);
+  ApproachContact(const ProcessorGroup* myworld,
+                  ProblemSpecP& ps,
+                  MaterialManagerP& sS,
+                  MPMLabel* lb,
+                  MPMFlags* Mflag);
 
   // Destructor
   virtual ~ApproachContact();
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
   // Basic contact methods
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 

@@ -31,6 +31,10 @@
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
+
+#include <CCA/Components/MPM/Core/MPMCommon.h>
+#include <CCA/Components/MPM/Core/MPMUtils.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/GridP.h>
@@ -139,58 +143,127 @@ fields
 class SpecifiedBodyContact : public Contact
 {
 public:
+  SpecifiedBodyContact(const ProcessorGroup* myworld,
+                       const MaterialManagerP& d_mat_manager,
+                       const MPMLabel* lb,
+                       const MPMFlags* flag,
+                       ProblemSpecP& ps);
 
-  SpecifiedBodyContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                       MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* flag);
   SpecifiedBodyContact(const SpecifiedBodyContact& con) = delete;
-  SpecifiedBodyContact& operator=(const SpecifiedBodyContact& con) = delete;
+  SpecifiedBodyContact(SpecifiedBodyContact&& con)      = delete;
+  SpecifiedBodyContact&
+  operator=(const SpecifiedBodyContact& con) = delete;
+  SpecifiedBodyContact&
+  operator=(SpecifiedBodyContact&& con) = delete;
+
   virtual ~SpecifiedBodyContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  // Currently, setting if any materials are rigid
+  virtual void
+  setContactMaterialAttributes();
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
+
 private:
-
-  MaterialManagerP 
- d_mat_manager;
-  double d_stop_time;
-  double d_vol_const;
-  Vector d_vel_after_stop;
-  int d_material;
-  bool d_rigid_master_material;
-  int NGP;
-  int NGN;
-  bool d_normalOnly;
-  std::string d_filename;
-  IntVector d_direction;
+  double d_stop_time{ std::numeric_limits<double>::max() };
+  double d_vol_const{ 0.0 };
+  Vector d_vel_after_stop{ 0.0, 0.0, 0.0 };
+  int d_material{ 0 };
+  bool d_normal_only{ false };
+  bool d_include_rotation{ false };
+  int d_rotation_axis{ -99 };
+  bool d_rigid_velocity{ true };
+  int d_exclude_material{ -999 };
+  std::string d_filename{ "none" };
+  IntVector d_direction{ 0, 0, 1 };
   std::vector<std::pair<double, Vector>> d_vel_profile;
+  std::vector<std::pair<double, Vector>> d_rot_profile;
+  std::vector<std::pair<double, Vector>> d_ori_profile;
 
-  void readSpecifiedVelocityFile();
+  struct ImposedData
+  {
+    Vector velocity{ 0.0, 0.0, 0.0 };
+    Vector omega{ 0.0, 0.0, 0.0 };
+    Vector origin{ 0.0, 0.0, 0.0 };
+  };
 
-  Vector findVelFromProfile(double t) const;
+  struct ReactionData
+  {
+    std::map<int, Vector> force;
+    std::map<int, Vector> torque;
 
-  void computeNormalBasedExchange(const Patch* patch,
-                                  DataWarehouse* old_dw,
-                                  constNCdoubleArray& gMass,
-                                  constNCdoubleArray& gVolume,
-                                  constNCVectorArray& gSurfNorm,
-                                  const Vector& requested_veocity,
-                                  NCVectorArray& gVelocity_star);
+    ReactionData();
+    ~ReactionData() = default;
+  };
 
-  void computeDirectionBasedExchange(const Patch* patch,
-                                     DataWarehouse* old_dw,
-                                     constNCdoubleArray& gMass,
-                                     constNCdoubleArray& gVolume,
-                                     const Vector& requested_veocity,
-                                     NCVectorArray& gVelocity_star);
+  struct TransmittedData
+  {
+    std::map<int, Vector> force;
+    Vector all_material_force{ 0.0, 0.0, 0.0 };
 
+    TransmittedData();
+    ~TransmittedData() = default;
+  };
 
+  void
+  readSpecifiedVelocityFile();
+
+  void
+  writeSpecifiedVelocityFile();
+
+  Vector
+  findVelFromProfile(double t) const;
+
+  Vector
+  findValueFromProfile(
+    double t,
+    const std::vector<std::pair<double, Vector>>& profile) const;
+
+  void
+  computeNormalBasedExchange(const Patch* patch,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw,
+                             constNCdoubleArray& gMass,
+                             constNCdoubleArray& gVolume,
+                             constNCVectorArray& gInternalForce,
+                             const ImposedData& imposed,
+                             double delT,
+                             NCVectorArray& gVelocity_star,
+                             ReactionData& reaction,
+                             TransmittedData& transmitted);
+
+  std::pair<Vector, Vector>
+  getRotationComponent(const Patch* patch,
+                       const IntVector& node,
+                       const ImposedData& imposed,
+                       double delT);
+
+  void
+  computeDirectionBasedExchange(const Patch* patch,
+                                DataWarehouse* old_dw,
+                                constNCdoubleArray& gMass,
+                                constNCdoubleArray& gVolume,
+                                constNCVectorArray& gInternalForce,
+                                const ImposedData& imposed,
+                                double delT,
+                                NCVectorArray& gVelocity_star,
+                                ReactionData& reaction,
+                                TransmittedData& transmitted);
 };
 
 } // end namespace Uintah

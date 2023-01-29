@@ -29,18 +29,21 @@
 
 using namespace Uintah;
 
-Contact::Contact(const ProcessorGroup* myworld, MPMLabel* Mlb, MPMFlags* MFlag,
-                 ProblemSpecP ps)
-  : UintahParallelComponent(myworld)
-  , lb(Mlb)
-  , flag(MFlag)
+Contact::Contact(const ProcessorGroup* myworld,
+                 const MaterialManagerP& mat_manager,
+                 const MPMLabel* mpm_labels,
+                 const MPMFlags* mpm_flags,
+                 ProblemSpecP& ps)
+  : d_mat_manager(mat_manager)
+  , d_mpm_labels(mpm_labels)
+  , d_mpm_flags(mpm_flags)
   , d_matls(ps)
-  , d_needNormals(false)
-  , d_useLogisticRegression(false)
-  , d_oneOrTwoStep(1)
 {
-}
-
-Contact::~Contact()
-{
+  if (mpm_flags->d_8or27 == 8) {
+    d_num_ghost_particles = 1;
+    d_num_ghost_nodes     = 1;
+  } else {
+    d_num_ghost_particles = 2;
+    d_num_ghost_nodes     = 2;
+  }
 }

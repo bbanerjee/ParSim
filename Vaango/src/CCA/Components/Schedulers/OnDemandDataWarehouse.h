@@ -83,10 +83,18 @@ public:
   virtual ~OnDemandDataWarehouse();
 
   virtual bool
-  exists(const VarLabel*, int matIndex, const Patch* patch) const;
+  exists(const VarLabel*, int matIndex, const Patch* patch) const override;
 
   virtual bool
-  exists(const VarLabel*, int matIndex, const Level* level) const;
+  exists(const VarLabel*, int matIndex, const Level* level) const override;
+
+  // Returns a (const) pointer to the grid.  This pointer can then be
+  // used to (for example) get the number of levels in the grid.
+  virtual const Grid*
+  getGrid() override
+  {
+    return d_grid.get_rep();
+  }
 
   virtual ReductionVariableBase*
   getReductionVariable(const VarLabel* label,
@@ -98,14 +106,6 @@ public:
 
   virtual void
   doReserve();
-
-  // Returns a (const) pointer to the grid.  This pointer can then be
-  // used to (for example) get the number of levels in the grid.
-  virtual const Grid*
-  getGrid()
-  {
-    return d_grid.get_rep();
-  }
 
   // Generic put and allocate, passing Variable as a pointer rather than
   // by reference to avoid ambiguity with other put overloaded methods.
@@ -131,11 +131,11 @@ public:
 
   // double
   virtual std::map<int, double>
-  get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls);
+  get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls) override;
 
   // Vector
   virtual std::map<int, Vector>
-  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls);
+  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls) override;
 
   virtual void
   put(const ReductionVariableBase& var,
@@ -161,13 +161,13 @@ public:
   virtual void
   put_sum_vartype(std::map<int, Vector>& reductionVars,
                   const VarLabel* label,
-                  const MaterialSubset* matls);
+                  const MaterialSubset* matls) override;
 
   // double
   virtual void
   put_sum_vartype(std::map<int, double>& reductionVars,
                   const VarLabel* label,
-                  const MaterialSubset* matls);
+                  const MaterialSubset* matls) override;
 
   virtual void
   override(const ReductionVariableBase&,

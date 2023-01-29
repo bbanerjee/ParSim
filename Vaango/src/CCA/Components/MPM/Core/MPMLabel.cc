@@ -550,6 +550,10 @@ MPMLabel::MPMLabel()
     VarLabel::create("RigidReactionForce",
                      sumvec_vartype::getTypeDescription());
 
+  RigidReactionTorqueLabel =
+    VarLabel::create("RigidReactionTorque",
+                     sumvec_vartype::getTypeDescription());
+
   TotalLocalizedParticleLabel =
     VarLabel::create("TotalLocalizedParticle",
                      sumlong_vartype::getTypeDescription());
@@ -1043,6 +1047,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(CenterOfMassPositionLabel);
   VarLabel::destroy(TotalMomentumLabel);
   VarLabel::destroy(RigidReactionForceLabel);
+  VarLabel::destroy(RigidReactionTorqueLabel);
   VarLabel::destroy(TotalLocalizedParticleLabel);
   VarLabel::destroy(SumTransmittedForceLabel);
 

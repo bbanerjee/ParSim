@@ -27,10 +27,10 @@
 #ifndef __CCA_COMPONENTS_MPM_MPMCOMMON_H__
 #define __CCA_COMPONENTS_MPM_MPMCOMMON_H__
 
-#include <Core/Grid/MaterialManagerP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Grid/Ghost.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <map>
 #include <memory>
@@ -77,8 +77,8 @@ public:
   inline void
   getParticleGhostLayer(Ghost::GhostType& type, int& num_ghost_cells)
   {
-    type = d_particle_ghost_type;
-    num_ghost_cells  = d_particle_ghost_layer;
+    type            = d_particle_ghost_type;
+    num_ghost_cells = d_particle_ghost_layer;
   }
 
 public:
@@ -98,6 +98,6 @@ private:
 
   MPMFlags* d_flags{ nullptr };
 };
-}
+} // namespace Uintah
 
 #endif //__CCA_COMPONENTS_MPM_MPMCOMMON_H__

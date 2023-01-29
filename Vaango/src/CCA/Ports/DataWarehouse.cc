@@ -32,7 +32,6 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace Uintah;
 
 using std::cerr;
 

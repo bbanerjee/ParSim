@@ -84,6 +84,8 @@ public:
 
 public:
   const ProcessorGroup* d_myworld;
+  Output* d_output{ nullptr };
+
   Uintah::Vector d_gravity;
   IntegratorType d_integrator;
   std::vector<std::string> d_boundaryTractionFaceStrings;
