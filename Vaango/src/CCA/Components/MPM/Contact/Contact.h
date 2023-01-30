@@ -123,11 +123,13 @@ protected:
 
   bool d_need_normals{ false };
   bool d_use_logistic_regression{ false };
+
   int d_one_or_two_step{ 2 };
   int d_exclude_material{ -999 };
-
   int d_num_ghost_particles{ 1 };
   int d_num_ghost_nodes{ 1 };
+
+  double d_vol_const{ 0.0 };
 
 };
 

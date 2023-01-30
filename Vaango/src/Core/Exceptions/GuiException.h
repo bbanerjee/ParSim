@@ -54,12 +54,12 @@ public:
   }
   virtual ~GuiException(){};
   virtual const char*
-  message() const
+  message() const override
   {
     return msg_.c_str();
   }
   virtual const char*
-  type() const
+  type() const override
   {
     return "GuiException";
   }

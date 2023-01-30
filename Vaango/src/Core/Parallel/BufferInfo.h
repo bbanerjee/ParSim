@@ -59,8 +59,9 @@ public:
   // Sendlist is to be an AfterCommuncationHandler object for the
   // MPI_CommunicationRecord template in MPIScheduler.cc.  The only task
   // it needs to do to handle finished send requests is simply get deleted.
-  virtual void finishedCommunication([[maybe_unused]] const ProcessorGroup*,
-                                     [[maybe_unused]] MPI_Status& status)
+  virtual void
+  finishedCommunication([[maybe_unused]] const ProcessorGroup*,
+                        [[maybe_unused]] MPI_Status& status) override
   {
   }
 };

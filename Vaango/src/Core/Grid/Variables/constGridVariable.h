@@ -94,14 +94,14 @@ WARNING
       return this->rep_.getPointer();
     }
 
-    virtual const TypeDescription* virtualGetTypeDescription() const
+    virtual const TypeDescription* virtualGetTypeDescription() const override
     { return this->rep_.virtualGetTypeDescription(); }
 
-    virtual size_t getDataSize() const {
+    virtual size_t getDataSize() const override {
       return this->rep_.getDataSize();
     }
 
-    virtual bool copyOut(void* dst) const {
+    virtual bool copyOut(void* dst) const override {
       return this->rep_.copyOut(dst);
     }
 

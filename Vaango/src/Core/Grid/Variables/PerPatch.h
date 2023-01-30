@@ -73,12 +73,12 @@ public:
   }
 
   virtual void
-  copyPointer(Variable&);
+  copyPointer(Variable&) override;
 
   virtual ~PerPatch() = default;
 
   const TypeDescription*
-  virtualGetTypeDescription() const
+  virtualGetTypeDescription() const override
   {
     return getTypeDescription();
   }
@@ -107,7 +107,7 @@ public:
   }
 
   virtual PerPatchBase*
-  clone() const
+  clone() const override
   {
     return scinew PerPatch<T>(*this);
   }
@@ -120,7 +120,7 @@ public:
   }
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const override
   {
     elems   = "1";
     totsize = getDataSize();
@@ -128,19 +128,19 @@ public:
   }
 
   virtual size_t
-  getDataSize() const
+  getDataSize() const override
   {
     return sizeof(T);
   }
 
   virtual void*
-  getBasePointer() const
+  getBasePointer() const override
   {
     return value.get();
   }
 
   virtual bool
-  copyOut(void* dst) const
+  copyOut(void* dst) const override
   {
     void* src       = (void*)(&value);
     size_t numBytes = getDataSize();
@@ -153,7 +153,7 @@ public:
              [[maybe_unused]] const IntVector& l,
              [[maybe_unused]] const IntVector& h,
              [[maybe_unused]] ProblemSpecP varnode,
-             [[maybe_unused]] bool outputDoubleAsFloat)
+             [[maybe_unused]] bool outputDoubleAsFloat) override
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
 
@@ -161,7 +161,7 @@ public:
   }
 
   virtual void
-  readNormal(std::istream& in, bool swapBytes)
+  readNormal(std::istream& in, bool swapBytes) override
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
 

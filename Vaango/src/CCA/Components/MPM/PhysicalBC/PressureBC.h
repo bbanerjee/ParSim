@@ -83,9 +83,9 @@ WARNING
       // of a load curve)
       PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags);
       ~PressureBC();
-      virtual std::string getType() const;
+      virtual std::string getType() const override;
 
-      virtual void outputProblemSpec(ProblemSpecP& ps);
+      virtual void outputProblemSpec(ProblemSpecP& ps) override;
 
       // Locate and flag the material points to which this pressure BC is
       // to be applied. 

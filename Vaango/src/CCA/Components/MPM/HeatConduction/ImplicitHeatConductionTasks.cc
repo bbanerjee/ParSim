@@ -291,10 +291,10 @@ ImplicitHeatConductionTasks::computeCCVolume(const ProcessorGroup*,
         (MPMMaterial*)d_mat_manager->getMaterial("MPM", m);
       int dwi = mpm_matl->getDWIndex();
 
-      constNCVariable<double> gvolume;
+      constNCVariable<double> gVolume;
       CCVariable<double> cvolume;
 
-      new_dw->get(gvolume, d_mpm_labels->gVolumeLabel, dwi, patch, gac, 1);
+      new_dw->get(gVolume, d_mpm_labels->gVolumeLabel, dwi, patch, gac, 1);
       new_dw->allocateAndPut(cvolume, d_mpm_labels->cVolumeLabel, dwi, patch);
       cvolume.initialize(1.e-20);
 
@@ -304,7 +304,7 @@ ImplicitHeatConductionTasks::computeCCVolume(const ProcessorGroup*,
         IntVector nodeIdx[8];
         patch->findNodesFromCell(c, nodeIdx);
         for (int in = 0; in < 8; in++) {
-          cvolume[c] += NC_CCweight[nodeIdx[in]] * gvolume[nodeIdx[in]];
+          cvolume[c] += NC_CCweight[nodeIdx[in]] * gVolume[nodeIdx[in]];
         }
       }
     }
@@ -372,12 +372,12 @@ ImplicitHeatConductionTasks::projectCCHeatSourceToNodes(
         (MPMMaterial*)d_mat_manager->getMaterial("MPM", m);
       int dwi = mpm_matl->getDWIndex();
 
-      constNCVariable<double> gvolume;
+      constNCVariable<double> gVolume;
       NCVariable<double> gextHR;
       constCCVariable<double> CCheatrate, cvolume;
       CCVariable<double> CCheatrate_copy;
 
-      new_dw->get(gvolume, d_mpm_labels->gVolumeLabel, dwi, patch, gac, 1);
+      new_dw->get(gVolume, d_mpm_labels->gVolumeLabel, dwi, patch, gac, 1);
       old_dw
         ->get(CCheatrate, d_mpm_labels->heatRate_CCLabel, dwi, patch, gac, 1);
       new_dw->get(cvolume, d_mpm_labels->cVolumeLabel, dwi, patch, gac, 1);
@@ -401,7 +401,7 @@ ImplicitHeatConductionTasks::projectCCHeatSourceToNodes(
         for (int ic = 0; ic < 8; ic++) {
           double solid_volume = cvolume[cIdx[ic]];
           gextHR[n] +=
-            CCheatrate[cIdx[ic]] * (NC_CCweight[n] * gvolume[n]) / solid_volume;
+            CCheatrate[cIdx[ic]] * (NC_CCweight[n] * gVolume[n]) / solid_volume;
         }
       }
     }

@@ -77,18 +77,18 @@ WARNING
       
     //////////
     // Insert Documentation Here:
-    const TypeDescription* virtualGetTypeDescription() const 
+    const TypeDescription* virtualGetTypeDescription() const override
     { return getTypeDescription(); }
     static const TypeDescription* getTypeDescription();
     
-    virtual GridVariableBase* clone();
-    virtual const GridVariableBase* clone() const;
-    virtual GridVariableBase* cloneType() const
+    virtual GridVariableBase* clone() override;
+    virtual const GridVariableBase* clone() const override;
+    virtual GridVariableBase* cloneType() const override
     { return scinew NCVariable<T>(); }
     
     // allocate(IntVector, IntVector) is hidden without this
     using GridVariable<T>::allocate;
-    virtual void allocate(const Patch* patch, const IntVector& boundary)
+    virtual void allocate(const Patch* patch, const IntVector& boundary) override
     {      
       IntVector l,h;
       patch->computeVariableExtents(Patch::NodeBased, boundary, 

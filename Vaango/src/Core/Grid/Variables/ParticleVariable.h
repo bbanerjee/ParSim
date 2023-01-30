@@ -88,25 +88,25 @@ public:
   }
 
   virtual ParticleVariableBase*
-  clone();
+  clone() override;
 
   virtual const ParticleVariableBase*
   clone() const;
 
   virtual ParticleVariableBase*
-  cloneSubset(ParticleSubset*);
+  cloneSubset(ParticleSubset*) override;
 
   virtual const ParticleVariableBase*
   cloneSubset(ParticleSubset*) const;
 
   virtual ParticleVariableBase*
-  cloneType() const
+  cloneType() const override
   {
     return scinew ParticleVariable<T>();
   }
 
   virtual constParticleVariableBase*
-  cloneConstType() const
+  cloneConstType() const override
   {
     return scinew constVariable<ParticleVariableBase,
                                 ParticleVariable<T>,
@@ -118,7 +118,7 @@ public:
   copyData(const ParticleVariable<T>& src);
 
   virtual void
-  copyData(const ParticleVariableBase* src)
+  copyData(const ParticleVariableBase* src) override
   {
     copyData(castFromBase(src));
   }
@@ -143,16 +143,16 @@ public:
   copyPointer(ParticleVariable<T>&);
 
   virtual void
-  copyPointer(Variable&);
+  copyPointer(Variable&) override;
 
   virtual void
-  allocate(ParticleSubset*);
+  allocate(ParticleSubset*) override;
 
   virtual void
-  allocate(int totalParticles);
+  allocate(int totalParticles) override;
 
   virtual void
-  allocate(const Patch*, const IntVector& /*boundary*/)
+  allocate(const Patch*, const IntVector& /*boundary*/) override
   {
     SCI_THROW(
       InternalError("Should not call ParticleVariable<T>::allocate(const "
@@ -162,7 +162,7 @@ public:
   }
 
   virtual int
-  size()
+  size() override
   {
     return d_pdata->size;
   }
@@ -173,27 +173,27 @@ public:
          const std::vector<ParticleSubset*>& subsets,
          const std::vector<ParticleVariableBase*>& srcs,
          const std::vector<const Patch*>& /*srcPatches*/,
-         particleIndex extra = 0);
+         particleIndex extra = 0) override;
 
   virtual void
   gather(ParticleSubset* dest,
          const std::vector<ParticleSubset*>& subsets,
          const std::vector<ParticleVariableBase*>& srcs,
-         particleIndex extra = 0);
+         particleIndex extra = 0) override;
 
   virtual void
   unpackMPI(void* buf,
             int bufsize,
             int* bufpos,
             const ProcessorGroup* pg,
-            ParticleSubset* pset);
+            ParticleSubset* pset) override;
 
   virtual void
   packMPI(void* buf,
           int bufsize,
           int* bufpos,
           const ProcessorGroup* pg,
-          ParticleSubset* pset);
+          ParticleSubset* pset) override;
 
   // specialized for T=Point
   virtual void
@@ -202,17 +202,19 @@ public:
           int* bufpos,
           const ProcessorGroup* pg,
           ParticleSubset* pset,
-          const Patch* /*forPatch*/);
+          const Patch* /*forPatch*/) override;
 
   virtual void
-  packsizeMPI(int* bufpos, const ProcessorGroup* pg, ParticleSubset* pset);
+  packsizeMPI(int* bufpos,
+              const ProcessorGroup* pg,
+              ParticleSubset* pset) override;
 
   virtual void
   emitNormal(std::ostream& out,
              const IntVector& l,
              const IntVector& h,
              ProblemSpecP varnode,
-             bool outputDoubleAsFloat);
+             bool outputDoubleAsFloat) override;
 
 #ifdef HAVE_PIDX
   virtual void
@@ -225,22 +227,24 @@ public:
 #endif
 
   virtual void
-  readNormal(std::istream& in, bool swapBytes);
+  readNormal(std::istream& in, bool swapBytes) override;
 
   virtual void*
-  getBasePointer() const;
+  getBasePointer() const override;
 
   virtual const TypeDescription*
-  virtualGetTypeDescription() const;
+  virtualGetTypeDescription() const override;
 
   virtual RefCounted*
-  getRefCounted()
+  getRefCounted() override
   {
     return d_pdata;
   }
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override
   {
     std::ostringstream str;
     str << getParticleSubset()->numParticles();
@@ -250,13 +254,13 @@ public:
   }
 
   virtual size_t
-  getDataSize() const
+  getDataSize() const override
   {
     return getParticleSubset()->numParticles() * sizeof(T);
   }
 
   virtual bool
-  copyOut(void* dst) const
+  copyOut(void* dst) const override
   {
     void* src       = (void*)this->getBasePointer();
     size_t numBytes = getDataSize();
@@ -398,9 +402,8 @@ ParticleVariable<T>::castFromBase(const ParticleVariableBase* srcptr)
   const ParticleVariable<T>* c =
     dynamic_cast<const ParticleVariable<T>*>(srcptr);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in Particle variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in Particle variable", __FILE__, __LINE__));
   }
   return *c;
 }
@@ -456,9 +459,8 @@ ParticleVariable<T>::copyPointer(Variable& copy)
 {
   ParticleVariable<T>* c = dynamic_cast<ParticleVariable<T>*>(&copy);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in particle variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in particle variable", __FILE__, __LINE__));
   }
   copyPointer(*c);
 }
@@ -505,10 +507,8 @@ ParticleVariable<T>::gather(ParticleSubset* pset,
   for (int i = 0; i < (int)subsets.size(); i++) {
     ParticleVariable<T>* srcptr = dynamic_cast<ParticleVariable<T>*>(srcs[i]);
     if (!srcptr) {
-      SCI_THROW(
-        TypeMismatchException("Type mismatch in ParticleVariable::gather",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(TypeMismatchException(
+        "Type mismatch in ParticleVariable::gather", __FILE__, __LINE__));
     }
     ParticleVariable<T>& src = *srcptr;
     ParticleSubset* subset   = subsets[i];
@@ -650,9 +650,8 @@ ParticleVariable<T>::emitNormal(std::ostream& out,
     varnode->appendElement("numParticles", d_pset->numParticles());
   }
   if (!td->isFlat()) {
-    SCI_THROW(InternalError("Cannot yet write non-flat objects!\n",
-                            __FILE__,
-                            __LINE__));
+    SCI_THROW(InternalError(
+      "Cannot yet write non-flat objects!\n", __FILE__, __LINE__));
   } else {
     // This could be optimized...
     ParticleSubset::iterator iter = d_pset->begin();
@@ -685,9 +684,8 @@ ParticleVariable<T>::emitPIDX(
   // int numParticles = d_pset->numParticles();
 
   if (!td->isFlat()) { // Not certain what this is for?
-    SCI_THROW(InternalError("Cannot yet write non-flat objects!\n",
-                            __FILE__,
-                            __LINE__));
+    SCI_THROW(InternalError(
+      "Cannot yet write non-flat objects!\n", __FILE__, __LINE__));
   } else {
 
     // FIXME: Add in assertion that pidx_bufferSize == "calculate the

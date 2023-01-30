@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,7 +74,7 @@ WARNING
     using Variable::allocate; // Quiets PGI compiler warning about hidden virtual function...
     virtual void allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
     virtual void allocate(const GridVariableBase* src) { allocate(src->getLow(), src->getHigh()); }
-    virtual void allocate(const Patch* patch, const IntVector& boundary) = 0;
+    virtual void allocate(const Patch* patch, const IntVector& boundary) override = 0;
     
     virtual void getMPIBuffer(BufferInfo& buffer,
                               const IntVector& low, const IntVector& high);
@@ -84,9 +85,9 @@ WARNING
                           IntVector& dataLow, IntVector& siz,
                           IntVector& strides) const = 0;
 
-    virtual size_t getDataSize() const = 0;
+    virtual size_t getDataSize() const override = 0;
 
-    virtual bool copyOut(void* dst) const = 0;
+    virtual bool copyOut(void* dst) const override = 0;
 
     //////////
     // Insert Documentation Here:

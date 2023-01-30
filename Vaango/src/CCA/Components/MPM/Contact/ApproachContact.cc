@@ -102,10 +102,10 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
   // Need access to all velocity fields at once, so store in
   // vectors of NCVariables
   std::vector<constNCVariable<double>> gMass(numMatls);
-  std::vector<constNCVariable<double>> gvolume(numMatls);
+  std::vector<constNCVariable<double>> gVolume(numMatls);
   std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
   std::vector<NCVariable<double>> frictionWork(numMatls);
-  std::vector<constNCVariable<Vector>> gsurfnorm(numMatls);
+  std::vector<constNCVariable<Vector>> gSurfNormal(numMatls);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -118,8 +118,8 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
     for (int m = 0; m < matls->size(); m++) {
       int dwi = matls->get(m);
       new_dw->get(gMass[m], lb->gMassLabel, dwi, patch, gnone, 0);
-      new_dw->get(gsurfnorm[m], lb->gSurfNormLabel, dwi, patch, gnone, 0);
-      new_dw->get(gvolume[m], lb->gVolumeLabel, dwi, patch, gnone, 0);
+      new_dw->get(gSurfNormal[m], lb->gSurfNormLabel, dwi, patch, gnone, 0);
+      new_dw->get(gVolume[m], lb->gVolumeLabel, dwi, patch, gnone, 0);
       new_dw->getModifiable(gVelocity_star[m], gVelocity_label, dwi, patch);
       new_dw->getModifiable(frictionWork[m], lb->frictionalWorkLabel, dwi,
                             patch);
@@ -140,7 +140,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
         double mass = gMass[n][c];
         centerOfMassMom += gVelocity_star[n][c] * mass;
         centerOfMassMass += mass;
-        totalNodalVol += gvolume[n][c] * 8.0 * NC_CCweight[c];
+        totalNodalVol += gVolume[n][c] * 8.0 * NC_CCweight[c];
       }
 
       // Apply Coulomb friction contact
@@ -196,7 +196,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
               // Apply frictional contact IF the surface is in compression
               // OR the surface is stress free and approaching.
               // Otherwise apply free surface conditions (do nothing).
-              Vector normal = gsurfnorm[n][c];
+              Vector normal = gSurfNormal[n][c];
               double normalDeltaVel = Dot(deltaVelocity, normal);
 
               Vector Dv(0., 0., 0.);

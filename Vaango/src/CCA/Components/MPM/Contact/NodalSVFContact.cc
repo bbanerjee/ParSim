@@ -142,7 +142,7 @@ NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
 
     constNCVariable<double> NC_CCweight;
     std::vector<constNCVariable<double>> gMass(numMatls);
-    std::vector<constNCVariable<double>> gvolume(numMatls);
+    std::vector<constNCVariable<double>> gVolume(numMatls);
     std::vector<NCVariable<double>> gSVF(numMatls);
     std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
     std::vector<NCVariable<Vector>> gVelocity_old(numMatls);
@@ -156,7 +156,7 @@ NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       int dwi = matls->get(m);
       new_dw->get(gMass[dwi], lb->gMassLabel, dwi, patch, gnone, 0);
-      new_dw->get(gvolume[dwi], lb->gVolumeLabel, dwi, patch, gnone, 0);
+      new_dw->get(gVolume[dwi], lb->gVolumeLabel, dwi, patch, gnone, 0);
       new_dw->getModifiable(gVelocity_star[dwi], gVelocity_label, dwi, patch);
       new_dw->allocateTemporary(gSVF[dwi], patch, gnone, 0);
       new_dw->allocateTemporary(gVelocity_old[dwi], patch, gnone, 0);
@@ -170,8 +170,8 @@ NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
       IntVector c = *iter;
       gVelocity_old[beta][c] = gVelocity_star[beta][c];
       gVelocity_old[alpha][c] = gVelocity_star[alpha][c];
-      gSVF[beta][c] = 8.0 * NC_CCweight[c] * gvolume[beta][c] / cellVol;
-      gSVF[alpha][c] = 8.0 * NC_CCweight[c] * gvolume[alpha][c] / cellVol;
+      gSVF[beta][c] = 8.0 * NC_CCweight[c] * gVolume[beta][c] / cellVol;
+      gSVF[alpha][c] = 8.0 * NC_CCweight[c] * gVolume[alpha][c] / cellVol;
 
       // Calculate the appropriate value of "factor" based on whether using SVF.
       if (b_svf == 1) {

@@ -1431,7 +1431,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
-    NCVariable<double> gMassglobal, gtempglobal, gvolumeglobal;
+    NCVariable<double> gMassglobal, gtempglobal, gVolumeglobal;
     NCVariable<Vector> gvelglobal;
     new_dw->allocateAndPut(gMassglobal,
                            d_mpmLabels->gMassLabel,
@@ -1441,7 +1441,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                            d_mpmLabels->gTemperatureLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
-    new_dw->allocateAndPut(gvolumeglobal,
+    new_dw->allocateAndPut(gVolumeglobal,
                            d_mpmLabels->gVolumeLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
@@ -1450,7 +1450,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
     gMassglobal.initialize(d_SMALL_NUM_MPM);
-    gvolumeglobal.initialize(d_SMALL_NUM_MPM);
+    gVolumeglobal.initialize(d_SMALL_NUM_MPM);
     gtempglobal.initialize(0.0);
     gvelglobal.initialize(Vector(0.0));
 
@@ -1488,7 +1488,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       // Create arrays for the grid data
       NCVariable<double> gMass;
-      NCVariable<double> gvolume;
+      NCVariable<double> gVolume;
       NCVariable<Vector> gVelocity;
       NCVariable<Vector> gexternalforce;
       NCVariable<double> gexternalheatrate;
@@ -1500,7 +1500,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       new_dw->allocateAndPut(gMass, d_mpmLabels->gMassLabel, dwi, patch);
       new_dw->allocateAndPut(gSp_vol, d_mpmLabels->gSp_volLabel, dwi, patch);
-      new_dw->allocateAndPut(gvolume, d_mpmLabels->gVolumeLabel, dwi, patch);
+      new_dw->allocateAndPut(gVolume, d_mpmLabels->gVolumeLabel, dwi, patch);
       new_dw->allocateAndPut(gVelocity,
                              d_mpmLabels->gVelocityLabel,
                              dwi,
@@ -1531,7 +1531,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                              patch);
 
       gMass.initialize(d_SMALL_NUM_MPM);
-      gvolume.initialize(d_SMALL_NUM_MPM);
+      gVolume.initialize(d_SMALL_NUM_MPM);
       gVelocity.initialize(Vector(0, 0, 0));
       gexternalforce.initialize(Vector(0, 0, 0));
       gTemperature.initialize(0);
@@ -1629,7 +1629,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             if (pgCode[idx][k] == 1) { // above crack
               gMass[ni[k]] += pmass[idx] * S[k];
               gVelocity[ni[k]] += pmom * S[k];
-              gvolume[ni[k]] += pvolume[idx] * S[k];
+              gVolume[ni[k]] += pvolume[idx] * S[k];
               gexternalforce[ni[k]] += pexternalforce[idx] * S[k];
               gTemperature[ni[k]] += pTemperature[idx] * pmass[idx] * S[k];
               // gexternalheatrate[ni[k]] += pexternalheatrate[idx]      * S[k];
@@ -1656,7 +1656,7 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         IntVector c = *iter;
         totalmass += (gMass[c] + Gmass[c]);
         gMassglobal[c] += (gMass[c] + Gmass[c]);
-        gvolumeglobal[c] += (gvolume[c] + Gvolume[c]);
+        gVolumeglobal[c] += (gVolume[c] + Gvolume[c]);
         gvelglobal[c] += (gVelocity[c] + Gvelocity[c]);
         gtempglobal[c] += (gTemperature[c] + GTemperature[c]);
 
@@ -1889,10 +1889,10 @@ FractureMPM::computeContactArea(const ProcessorGroup*,
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
       int dwi = mpm_matl->getDWIndex();
-      constNCVariable<double> gvolume, Gvolume;
+      constNCVariable<double> gVolume, Gvolume;
 
       new_dw
-        ->get(gvolume, d_mpmLabels->gVolumeLabel, dwi, patch, Ghost::None, 0);
+        ->get(gVolume, d_mpmLabels->gVolumeLabel, dwi, patch, Ghost::None, 0);
       new_dw->get(Gvolume,
                   d_mpmLabels->GVolumeLabel,
                   dwi,
@@ -1920,7 +1920,7 @@ FractureMPM::computeContactArea(const ProcessorGroup*,
           for (int j = projlow.y(); j < projhigh.y(); j++) {
             for (int k = projlow.z(); k < projhigh.z(); k++) {
               IntVector ijk(i, j, k);
-              double nodevol = gvolume[ijk] + Gvolume[ijk];
+              double nodevol = gVolume[ijk] + Gvolume[ijk];
               if (nodevol > 0) // FIXME: uses node index to get node volume ...
               {
                 const double celldepth = dx[iface / 2];

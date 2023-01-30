@@ -36,23 +36,23 @@ class ReductionVariableBase : public Variable
 public:
   virtual ~ReductionVariableBase();
 
-  virtual const TypeDescription* virtualGetTypeDescription() const = 0;
+  virtual const TypeDescription* virtualGetTypeDescription() const override = 0;
 
-  virtual void copyPointer(Variable&) = 0;
+  virtual void copyPointer(Variable&) override = 0;
   virtual ReductionVariableBase* clone() const = 0;
-  virtual RefCounted* getRefCounted();
+  virtual RefCounted* getRefCounted() override;
 
   virtual void getSizeInfo(std::string& elems, unsigned long& totsize,
-                           void*& ptr) const = 0;
-  virtual size_t getDataSize() const = 0;
-  virtual bool copyOut(void* dst) const = 0;
+                           void*& ptr) const override = 0;
+  virtual size_t getDataSize() const override = 0;
+  virtual bool copyOut(void* dst) const override = 0;
   virtual void* getBasePointer() const = 0;
 
   virtual void emitNormal(std::ostream& out, const IntVector& l,
                           const IntVector& h, ProblemSpecP varnode,
-                          bool outputDoubleAsFloat) = 0;
-  virtual void readNormal(std::istream& in, bool swapbytes) = 0;
-  virtual void allocate(const Patch* patch, const IntVector& boundary);
+                          bool outputDoubleAsFloat) override = 0;
+  virtual void readNormal(std::istream& in, bool swapbytes) override = 0;
+  virtual void allocate(const Patch* patch, const IntVector& boundary) override;
 
   virtual void print(std::ostream&) const = 0;
 

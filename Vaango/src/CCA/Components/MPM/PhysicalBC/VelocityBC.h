@@ -80,9 +80,9 @@ WARNING
       // of a load curve)
       VelocityBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags);
       ~VelocityBC();
-      virtual std::string getType() const;
+      virtual std::string getType() const override;
 
-      virtual void outputProblemSpec(ProblemSpecP& ps);
+      virtual void outputProblemSpec(ProblemSpecP& ps) override;
 
       // Locate and flag the material points to which this velocity BC is
       // to be applied. 

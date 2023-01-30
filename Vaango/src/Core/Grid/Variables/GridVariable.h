@@ -65,16 +65,16 @@ public:
   }
 
   virtual void
-  copyPointer(Variable&);
+  copyPointer(Variable&) override;
 
   virtual bool
-  rewindow(const IntVector& low, const IntVector& high)
+  rewindow(const IntVector& low, const IntVector& high) override
   {
     return Array3<T>::rewindow(low, high);
   }
 
   virtual void
-  offset(const IntVector& offset)
+  offset(const IntVector& offset) override
   {
     Array3<T>::offset(offset);
   }
@@ -82,7 +82,7 @@ public:
   // offset the indexing into the array (useful when getting virtual
   // patch data -- i.e. for periodic boundary conditions)
   virtual void
-  offsetGrid(const IntVector& offset)
+  offsetGrid(const IntVector& offset) override
   {
     Array3<T>::offset(offset);
   }
@@ -91,7 +91,7 @@ public:
   castFromBase(const GridVariableBase* srcptr);
 
   virtual void
-  allocate(const IntVector& lowIndex, const IntVector& highIndex);
+  allocate(const IntVector& lowIndex, const IntVector& highIndex) override;
 
   void
   copyPatch(const GridVariable<T>& src,
@@ -100,7 +100,7 @@ public:
   virtual void
   copyPatch(const GridVariableBase* src,
             const IntVector& lowIndex,
-            const IntVector& highIndex)
+            const IntVector& highIndex) override
   {
     copyPatch(castFromBase(src), lowIndex, highIndex);
   }
@@ -112,29 +112,29 @@ public:
   }
 
   virtual void
-  copyData(const GridVariableBase* src)
+  copyData(const GridVariableBase* src) override
   {
     copyPatch(src, src->getLow(), src->getHigh());
   }
 
   virtual void*
-  getBasePointer() const
+  getBasePointer() const override
   {
     return (void*)this->getPointer();
   }
 
   virtual void
-  getSizes(IntVector& low, IntVector& high, IntVector& siz) const;
+  getSizes(IntVector& low, IntVector& high, IntVector& siz) const override;
 
   virtual void
   getSizes(IntVector& low,
            IntVector& high,
            IntVector& dataLow,
            IntVector& siz,
-           IntVector& strides) const;
+           IntVector& strides) const override;
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const override
   {
     IntVector siz = this->size();
     std::ostringstream str;
@@ -145,14 +145,14 @@ public:
   }
 
   virtual size_t
-  getDataSize() const
+  getDataSize() const override
   {
     IntVector siz = this->size();
     return siz.x() * siz.y() * siz.z() * sizeof(T);
   }
 
   virtual bool
-  copyOut(void* dst) const
+  copyOut(void* dst) const override
   {
     void* src       = (void*)this->getPointer();
     size_t numBytes = getDataSize();
@@ -161,13 +161,13 @@ public:
   }
 
   virtual IntVector
-  getLow() const
+  getLow() const override
   {
     return this->getLowIndex();
   }
 
   virtual IntVector
-  getHigh() const
+  getHigh() const override
   {
     return this->getHighIndex();
   }
@@ -215,7 +215,7 @@ public:
              const IntVector& l,
              const IntVector& h,
              ProblemSpecP /*varnode*/,
-             bool outputDoubleAsFloat)
+             bool outputDoubleAsFloat) override
   {
     const TypeDescription* td = fun_getTypeDescription((T*) nullptr);
     if (td->isFlat()) {
@@ -228,7 +228,7 @@ public:
   }
 
   virtual void
-  readNormal(std::istream& in, bool swapBytes)
+  readNormal(std::istream& in, bool swapBytes) override
   {
     const TypeDescription* td = fun_getTypeDescription((T*)0);
     if (td->isFlat()) {
@@ -241,7 +241,7 @@ public:
   }
 
   virtual RefCounted*
-  getRefCounted()
+  getRefCounted() override
   {
     return this->getWindow();
   }

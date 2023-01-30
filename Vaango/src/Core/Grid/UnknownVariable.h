@@ -66,10 +66,12 @@ public:
                   int line);
   UnknownVariable(const UnknownVariable&);
   virtual ~UnknownVariable();
+
   virtual const char*
-  message() const;
+  message() const override;
+
   virtual const char*
-  type() const;
+  type() const override;
 
 protected:
 private:

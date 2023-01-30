@@ -160,7 +160,7 @@ public:
 
   // Currently, setting if any materials are rigid
   virtual void
-  setContactMaterialAttributes();
+  setContactMaterialAttributes() override;
 
   void
   outputProblemSpec(ProblemSpecP& ps) override;
@@ -181,7 +181,6 @@ public:
 
 private:
   double d_stop_time{ std::numeric_limits<double>::max() };
-  double d_vol_const{ 0.0 };
   Vector d_vel_after_stop{ 0.0, 0.0, 0.0 };
   int d_material{ 0 };
   bool d_normal_only{ false };

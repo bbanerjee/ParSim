@@ -29,21 +29,20 @@
 #define __FRICTIONLR_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h> 
+#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 /**************************************
 
 CLASS
    FrictionContactLR
-   
+
    This version of contact is based on John Nairn and Chad
    Hammerquist's 2019 manuscript that describes the use of logistic
    regression to find a common normal between objects, and uses
@@ -60,7 +59,7 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Contact_Model_Friction
@@ -68,64 +67,66 @@ KEYWORDS
 DESCRIPTION
   One of the derived Contact classes.  This particular
   version is used to apply Coulombic frictional contact.
-  
+
 WARNING
-  
+
 ****************************************/
 
-class FrictionContactLR : public Contact {
+class FrictionContactLR : public Contact
+{
 
 public:
+  FrictionContactLR(const ProcessorGroup* myworld,
+                    const MaterialManagerP& mat_manager,
+                    const MPMLabel* labels,
+                    const MPMFlags* flags,
+                    ProblemSpecP& ps);
 
-   FrictionContactLR(const ProcessorGroup* myworld,
-                   ProblemSpecP& ps, MaterialManagerP& d_sS,MPMLabel* lb,
-                   MPMFlags* MFlag);
-   
-   FrictionContactLR(const FrictionContactLR &con) = delete;
-   FrictionContactLR& operator=(const FrictionContactLR &con) = delete;
+  FrictionContactLR(const FrictionContactLR& con) = delete;
+  FrictionContactLR&
+  operator=(const FrictionContactLR& con) = delete;
 
-   virtual ~FrictionContactLR() = default;
+  virtual ~FrictionContactLR() = default;
 
-   virtual void outputProblemSpec(ProblemSpecP& ps) override;
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-   void addComputesAndRequires(SchedulerP& sched, 
-                               const PatchSet* patches,
-                               const MaterialSet* matls,
-                               const VarLabel* label) override;
-
-   void exchangeMomentum(const ProcessorGroup*, 
-                         const PatchSubset* patches,
-                         const MaterialSubset* matls, 
-                         DataWarehouse* old_dw,
-                         DataWarehouse* new_dw, 
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
                          const VarLabel* label) override;
 
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
 private:
-   
-   // Coefficient of friction
-   double d_mu;
+  // Coefficient of friction
+  double d_mu{ 0.0 };
 
-   // Nodal volume fraction that must occur before contact is applied
-   double d_vol_const;
-   double d_sepFac;
-   int NGP;
-   int NGN;
+  // Nodal volume fraction that must occur before contact is applied
+  double d_vol_const{ 0.0 };
+  double d_sep_fac{ 1.0e200 };
+  bool d_rigid_material{ false };
 
-   MaterialManagerP 
- d_mat_manager;
+  void
+  exMomInterpolated(const ProcessorGroup*,
+                    const PatchSubset* patches,
+                    const MaterialSubset* matls,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw);
 
-   void exMomInterpolated(const ProcessorGroup*,
-                          const PatchSubset* patches,
-                          const MaterialSubset* matls,
-                          DataWarehouse* old_dw,
-                          DataWarehouse* new_dw);
-   
-   void exMomIntegrated(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw);
-   
+  void
+  exMomIntegrated(const ProcessorGroup*,
+                  const PatchSubset* patches,
+                  const MaterialSubset* matls,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw);
 };
 } // End namespace Uintah
 

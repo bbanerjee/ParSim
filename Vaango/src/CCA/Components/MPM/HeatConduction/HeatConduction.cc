@@ -558,11 +558,11 @@ HeatConduction::solveHeatEquations(const ProcessorGroup*,
       double Cv = mpm_matl->getSpecificHeat();
 
       // Get required variables for this patch
-      constNCVariable<double> mass, externalHeatRate, gvolume;
+      constNCVariable<double> mass, externalHeatRate, gVolume;
       constNCVariable<double> thermalContactTemperatureRate, gdTdt;
 
       new_dw->get(mass, d_lb->gMassLabel, dwi, patch, Ghost::None, 0);
-      new_dw->get(gvolume, d_lb->gVolumeLabel, dwi, patch, Ghost::None, 0);
+      new_dw->get(gVolume, d_lb->gVolumeLabel, dwi, patch, Ghost::None, 0);
       new_dw->get(externalHeatRate,
                   d_lb->gExternalHeatRateLabel,
                   dwi,

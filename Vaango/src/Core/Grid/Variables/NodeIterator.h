@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,7 +71,7 @@ namespace Uintah {
 
         //////////
         // Insert Documentation Here:
-        inline NodeIterator& operator++() {
+        inline NodeIterator& operator++() override {
 
           if(++d_ix >= d_e.x()){
             d_ix = d_s.x();
@@ -84,7 +85,7 @@ namespace Uintah {
 
         //////////
         // Insert Documentation Here:
-        inline void operator++(int) {
+        inline void operator++(int) override {
           this->operator++();
         }
 
@@ -109,11 +110,11 @@ namespace Uintah {
 
         //////////
         // Insert Documentation Here:
-        inline bool done() const {
+        inline bool done() const override {
           return d_ix >= d_e.x() || d_iy >= d_e.y() || d_iz >= d_e.z();
         }
 
-        IntVector operator*() const {
+        IntVector operator*() const override {
           return IntVector(d_ix, d_iy, d_iz);
         }
         IntVector index() const {
@@ -128,16 +129,16 @@ namespace Uintah {
         inline IntVector current() const {
           return IntVector(d_ix, d_iy, d_iz);
         }
-        inline IntVector begin() const {
+        inline IntVector begin() const override {
           return d_s;
         }
-        inline IntVector end() const {
+        inline IntVector end() const override {
           return d_e;
         }
         /**
         * Return the number of cells in the iterator
         */
-        inline unsigned int size() const
+        inline unsigned int size() const override
         {
           IntVector size=d_e-d_s;
           if(size.x()<=0 || size.y()<=0 || size.z()<=0)
@@ -171,14 +172,14 @@ namespace Uintah {
           return begin()!=o.begin() || end()!=o.end() || index()!=o.index();
         }
 
-        inline void reset()
+        inline void reset() override
         {
           d_ix=d_s.x();
           d_iy=d_s.y();
           d_iz=d_s.z();
         }
 
-        std::ostream& limits(std::ostream& out) const
+        std::ostream& limits(std::ostream& out) const override
         {
           out << begin() << " " << end() - IntVector(1,1,1);
           return out;
@@ -187,12 +188,12 @@ namespace Uintah {
       private:
         NodeIterator();
 
-        NodeIterator* clone() const
+        NodeIterator* clone() const override
         {
           return scinew NodeIterator(*this);
         }
         
-        std::ostream& put(std::ostream& out) const
+        std::ostream& put(std::ostream& out) const override
         {
           out << *this;
           return out;

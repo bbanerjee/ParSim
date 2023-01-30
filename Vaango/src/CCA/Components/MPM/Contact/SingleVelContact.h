@@ -75,7 +75,7 @@ public:
   operator=(SingleVelContact&& con) = delete;
 
   virtual void
-  setContactMaterialAttributes();
+  setContactMaterialAttributes() override;
 
   void
   outputProblemSpec(ProblemSpecP& ps) override;

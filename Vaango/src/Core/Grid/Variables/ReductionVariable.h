@@ -67,12 +67,12 @@ public:
   }
 
   virtual void
-  copyPointer(Variable&);
+  copyPointer(Variable&) override;
 
   virtual ~ReductionVariable(){};
 
   virtual const TypeDescription*
-  virtualGetTypeDescription() const
+  virtualGetTypeDescription() const override
   {
     return getTypeDescription();
   }
@@ -99,7 +99,7 @@ public:
   };
 
   virtual ReductionVariableBase*
-  clone() const
+  clone() const override
   {
     return scinew ReductionVariable<T, Op>(*this);
   }
@@ -114,7 +114,7 @@ private:
 
 public:
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const override
   {
     elems   = "1";
     totsize = sizeof(T);
@@ -122,19 +122,19 @@ public:
   }
 
   virtual size_t
-  getDataSize() const
+  getDataSize() const override
   {
     return sizeof(T);
   }
 
   virtual void*
-  getBasePointer() const
+  getBasePointer() const override
   {
     return d_value.get();
   }
 
   virtual bool
-  copyOut(void* dst) const
+  copyOut(void* dst) const override
   {
     void* src       = (void*)(&d_value);
     size_t numBytes = getDataSize();
@@ -147,14 +147,14 @@ public:
              const IntVector& /*l*/,
              const IntVector& /*h*/,
              ProblemSpecP /*varnode*/,
-             bool /*outputDoubleAsFloat*/)
+             bool /*outputDoubleAsFloat*/) override
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
     out.write((char*)(d_value.get()), linesize);
   }
 
   virtual void
-  readNormal(std::istream& in, bool swapBytes)
+  readNormal(std::istream& in, bool swapBytes) override
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
     T val;
@@ -168,25 +168,25 @@ public:
   }
 
   virtual void
-  print(std::ostream& out) const
+  print(std::ostream& out) const override
   {
     out << *(d_value.get());
   }
 
   virtual void
-  reduce(const ReductionVariableBase&);
+  reduce(const ReductionVariableBase&) override;
 
   virtual void
-  getMPIInfo(int& count, MPI_Datatype& datatype, MPI_Op& op);
+  getMPIInfo(int& count, MPI_Datatype& datatype, MPI_Op& op) override;
   virtual void
-  getMPIData(std::vector<char>& buf, int& index);
+  getMPIData(std::vector<char>& buf, int& index) override;
   virtual void
-  putMPIData(std::vector<char>& buf, int& index);
+  putMPIData(std::vector<char>& buf, int& index) override;
 
   //! Sets the value to a harmless value that will have no impact
   //! on a reduction.
   virtual void
-  setBenignValue()
+  setBenignValue() override
   {
     Op op;
     d_value = std::make_shared<T>(op.getBenignValue());

@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,125 +30,164 @@
 
 namespace Uintah {
 
-  class TypeDescription;
+class TypeDescription;
 
-  /**************************************
+/**************************************
 
 CLASS
-   constVariable
-   
-   Version of *Variable that is const in the sense that you can't
-   modify the data that it points to (although you can change what it
-   points to if it is a non-const version of the constVariableBase).
+ constVariable
+
+ Version of *Variable that is const in the sense that you can't
+ modify the data that it points to (although you can change what it
+ points to if it is a non-const version of the constVariableBase).
 
 GENERAL INFORMATION
 
-   constVariable.h
+ constVariable.h
 
-   Wayne Witzel
-   Department of Computer Science
-   University of Utah
+ Wayne Witzel
+ Department of Computer Science
+ University of Utah
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
 
 KEYWORDS
-   Variable, const
+ Variable, const
 
 DESCRIPTION
-   Long description...
-  
+ Long description...
+
 WARNING
-  
+
 ****************************************/
 
-  template<class VariableBase, class Variable, class T, class Index> 
-  class constVariable : public constVariableBase<VariableBase> {
-  public:
-    typedef T value_type;
+template<class VariableBase, class Variable, class T, class Index>
+class constVariable : public constVariableBase<VariableBase>
+{
+public:
+  typedef T value_type;
 
-    constVariable()
-      : rep_() {}
+  constVariable()
+    : rep_()
+  {
+  }
 
-    constVariable(const Variable& copy)
-      : rep_(copy) {}
+  constVariable(const Variable& copy)
+    : rep_(copy)
+  {
+  }
 
-    constVariable<VariableBase, Variable, T, Index>&
-    operator=(const constVariable<VariableBase, Variable, T, Index>& v)
-    { copyPointer(v.rep_); return *this; }
+  constVariable<VariableBase, Variable, T, Index>&
+  operator=(const constVariable<VariableBase, Variable, T, Index>& v)
+  {
+    copyPointer(v.rep_);
+    return *this;
+  }
 
-    constVariable<VariableBase, Variable, T, Index>& operator=(const Variable& v)
-    { copyPointer(v); return *this; }
-    
-    constVariableBase<VariableBase>&
-    operator=(const constVariableBase<VariableBase>& v)
-    {
-      const constVariable<VariableBase, Variable, T, Index>* cvp =
-        dynamic_cast<const constVariable<VariableBase, Variable, T, Index>*>(&v);
-      ASSERT(cvp != 0);
-      copyPointer(cvp->rep_);
-      return *this;
-    }
+  constVariable<VariableBase, Variable, T, Index>&
+  operator=(const Variable& v)
+  {
+    copyPointer(v);
+    return *this;
+  }
 
-    constVariableBase<VariableBase>&
-    operator=(const VariableBase& v)
-    { copyPointer(v); return *this; }
+  constVariableBase<VariableBase>&
+  operator=(const constVariableBase<VariableBase>& v) override
+  {
+    const constVariable<VariableBase, Variable, T, Index>* cvp =
+      dynamic_cast<const constVariable<VariableBase, Variable, T, Index>*>(&v);
+    ASSERT(cvp != 0);
+    copyPointer(cvp->rep_);
+    return *this;
+  }
 
-    // Steve writes: castOffConst() is evil.  It returns a CCVariable
-    // from a constCCVariable that you can modify.  However, you
-    // should NOT modify it or you will cause serious problems for
-    // your simulation.  I used it in SimpleCFD as a hack to get
-    // around some silliness, but if you feel tempted to use it please
-    // let us know why and we will see if we can come up with a better
-    // solution.  So the answer to how/where is never/nowhere.
-    Variable& castOffConst() {
-      return this->rep_;
-    }
-   
-    virtual ~constVariable() {}
+  constVariableBase<VariableBase>&
+  operator=(const VariableBase& v) override
+  {
+    copyPointer(v);
+    return *this;
+  }
 
-    operator const Variable&() const
-    { return this->rep_; }
-    virtual const VariableBase& getBaseRep() const
-    { return this->rep_; }
+  // Steve writes: castOffConst() is evil.  It returns a CCVariable
+  // from a constCCVariable that you can modify.  However, you
+  // should NOT modify it or you will cause serious problems for
+  // your simulation.  I used it in SimpleCFD as a hack to get
+  // around some silliness, but if you feel tempted to use it please
+  // let us know why and we will see if we can come up with a better
+  // solution.  So the answer to how/where is never/nowhere.
+  Variable&
+  castOffConst()
+  {
+    return this->rep_;
+  }
 
-    // It's ok for a constVariable to copyPointer of a const variable
-    // (even though a non-const variable can't).
-//    inline void copyPointer(const Variable& copy)
-//    { this->rep_.copyPointer(const_cast<Variable&>(copy)); }
-    virtual void copyPointer(const VariableBase& copy)
-    { this->rep_.copyPointer(const_cast<VariableBase&>(copy)); }
+  virtual ~constVariable() {}
 
-    virtual const VariableBase* clone() const
-      // need to cast it if it is a GridVariable
-    { return dynamic_cast<const VariableBase*>(this->rep_.clone()); }
+  operator const Variable&() const { return this->rep_; }
 
-    virtual VariableBase* cloneType() const
-      // need to cast it if it is a GridVariable
-    { return dynamic_cast<VariableBase*>(this->rep_.cloneType()); }
+  virtual const VariableBase&
+  getBaseRep() const override
+  {
+    return this->rep_;
+  }
 
-    inline const T& operator[](Index idx) const
-    { return this->rep_[idx]; }
-     
-    virtual const TypeDescription* virtualGetTypeDescription() const
-    { return this->rep_.virtualGetTypeDescription(); }
+  // It's ok for a constVariable to copyPointer of a const variable
+  // (even though a non-const variable can't).
+  //    inline void copyPointer(const Variable& copy)
+  //    { this->rep_.copyPointer(const_cast<Variable&>(copy)); }
+  virtual void
+  copyPointer(const VariableBase& copy) override
+  {
+    this->rep_.copyPointer(const_cast<VariableBase&>(copy));
+  }
 
-    // used to get size info of the underlying data; this is for host-->device variable copy
-    virtual size_t getDataSize() const {
-      return this->rep_.getDataSize();
-    }
+  virtual const VariableBase*
+  clone() const override
+  // need to cast it if it is a GridVariable
+  {
+    return dynamic_cast<const VariableBase*>(this->rep_.clone());
+  }
 
-    // used to copy Variables to contiguous buffer prior to bulk host-->device copy
-    virtual bool copyOut(void* dst) const {
-      return this->rep_.copyOut(dst);
-    }
+  virtual VariableBase*
+  cloneType() const override
+  // need to cast it if it is a GridVariable
+  {
+    return dynamic_cast<VariableBase*>(this->rep_.cloneType());
+  }
 
-  protected:
-    Variable rep_;
-  };
+  inline const T&
+  operator[](Index idx) const
+  {
+    return this->rep_[idx];
+  }
+
+  virtual const TypeDescription*
+  virtualGetTypeDescription() const override
+  {
+    return this->rep_.virtualGetTypeDescription();
+  }
+
+  // used to get size info of the underlying data; this is for host-->device
+  // variable copy
+  virtual size_t
+  getDataSize() const override
+  {
+    return this->rep_.getDataSize();
+  }
+
+  // used to copy Variables to contiguous buffer prior to bulk host-->device
+  // copy
+  virtual bool
+  copyOut(void* dst) const override
+  {
+    return this->rep_.copyOut(dst);
+  }
+
+protected:
+  Variable rep_;
+};
 
 } // end namespace Uintah
 
-
 #endif
-

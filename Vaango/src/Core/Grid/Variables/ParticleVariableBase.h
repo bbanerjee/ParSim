@@ -74,9 +74,9 @@ public:
   copyData(const ParticleVariableBase* src) = 0;
 
   virtual void
-  allocate(
-    const Patch*,
-    const Uintah::IntVector& boundary) = 0; // will throw an InternalError
+  allocate(const Patch*,
+           const Uintah::IntVector& boundary)
+    override = 0; // will throw an InternalError
 
   virtual void
   allocate(ParticleSubset*) = 0;
@@ -126,10 +126,10 @@ public:
   size() = 0;
 
   virtual size_t
-  getDataSize() const = 0;
+  getDataSize() const override = 0;
 
   virtual bool
-  copyOut(void* dst) const = 0;
+  copyOut(void* dst) const override = 0;
 
   ParticleSubset*
   getParticleSubset() const
@@ -145,16 +145,17 @@ public:
   getMPIBuffer(BufferInfo& buffer, ParticleSubset* sendset);
 
   virtual const TypeDescription*
-  virtualGetTypeDescription() const = 0;
+  virtualGetTypeDescription() const override = 0;
 
   virtual RefCounted*
-  getRefCounted() = 0;
+  getRefCounted() override = 0;
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const = 0;
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override = 0;
 
 protected:
-
   ParticleVariableBase(const ParticleVariableBase&);
 
   ParticleVariableBase(ParticleSubset* pset);

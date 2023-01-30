@@ -127,7 +127,7 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
     // Nodal solutions above crack
     std::vector<constNCVariable<int> >    gNumPatls(numMatls);
     std::vector<constNCVariable<double> > gMass(numMatls);
-    std::vector<constNCVariable<double> > gvolume(numMatls);
+    std::vector<constNCVariable<double> > gVolume(numMatls);
     std::vector<constNCVariable<Vector> > gdisplacement(numMatls);
     std::vector<NCVariable<Vector> >      gVelocity(numMatls);
 
@@ -147,7 +147,7 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
       // Get data above crack
       new_dw->get(gNumPatls[m], lb->gNumPatlsLabel, dwi, patch, gnone, 0);
       new_dw->get(gMass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
-      new_dw->get(gvolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
+      new_dw->get(gVolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
       new_dw->get(gdisplacement[m],lb->gDisplacementLabel,dwi,patch,gnone,0);
 
       new_dw->getModifiable(gVelocity[m],lb->gVelocityLabel,dwi,patch);
@@ -307,7 +307,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
 
     // Nodal solutions above crack
     std::vector<constNCVariable<double> > gMass(numMatls);
-    std::vector<constNCVariable<double> > gvolume(numMatls);
+    std::vector<constNCVariable<double> > gVolume(numMatls);
     std::vector<constNCVariable<int> >    gNumPatls(numMatls);
     std::vector<constNCVariable<Vector> > gdisplacement(numMatls);
     std::vector<constNCVariable<Vector> > gVelocity(numMatls); 
@@ -331,7 +331,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
       int dwi = matls->get(m);
       // Get nodal data above crack
       new_dw->get(gMass[m],     lb->gMassLabel,     dwi, patch, gnone, 0);
-      new_dw->get(gvolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
+      new_dw->get(gVolume[m],   lb->gVolumeLabel,   dwi, patch, gnone, 0);
       new_dw->get(gNumPatls[m], lb->gNumPatlsLabel, dwi, patch, gnone, 0);
       new_dw->get(gdisplacement[m],lb->gDisplacementLabel,dwi,patch,gnone,0);
       new_dw->get(gVelocity[m], lb->gVelocityLabel, dwi, patch, gnone, 0); 

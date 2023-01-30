@@ -1441,7 +1441,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
       int indx = mpm_matl->getDWIndex();
       // Create arrays for the grid data
-      constNCVariable<double> gMass, gvolume, gtemperature, gSp_vol;
+      constNCVariable<double> gMass, gVolume, gtemperature, gSp_vol;
       constNCVariable<Vector> gVelocity;
       CCVariable<double> cmass,Temp_CC, sp_vol_CC, rho_CC;
       CCVariable<Vector> vel_CC;
@@ -1457,7 +1457,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       cmass.initialize(very_small_mass);
 
       new_dw->get(gMass,        Mlb->gMassLabel,        indx, patch,gac, 1);
-      new_dw->get(gvolume,      Mlb->gVolumeLabel,      indx, patch,gac, 1);
+      new_dw->get(gVolume,      Mlb->gVolumeLabel,      indx, patch,gac, 1);
       new_dw->get(gVelocity,    Mlb->gVelocityBCLabel,  indx, patch,gac, 1);
       new_dw->get(gtemperature, Mlb->gTemperatureLabel, indx, patch,gac, 1);
       new_dw->get(gSp_vol,      Mlb->gSp_volLabel,      indx, patch,gac, 1);
@@ -1474,7 +1474,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
         desc<< "TOP_MPMICE::interpolateNCToCC_0_mat_"<<indx<<"_patch_"
 	    <<  patch->getID();
         printData(     indx, patch, 1,desc.str(), "gMass",       gMass);
-        printData(     indx, patch, 1,desc.str(), "gvolume",     gvolume);
+        printData(     indx, patch, 1,desc.str(), "gVolume",     gVolume);
         printData(     indx, patch, 1,desc.str(), "gtemperatue", gtemperature);
         printNCVector( indx, patch, 1,desc.str(), "gVelocity", 0, gVelocity);
       }
@@ -1594,7 +1594,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
       int indx = mpm_matl->getDWIndex();
 
       // Create arrays for the grid data
-      constNCVariable<double> gMass, gvolume,gtempstar;
+      constNCVariable<double> gMass, gVolume,gtempstar;
       constNCVariable<Vector> gVelocity;
       CCVariable<Vector> cmomentum;
       CCVariable<double> int_eng_L, mass_L;

@@ -87,7 +87,7 @@ public:
   ~DebugBuf() = default;
 
   int
-  overflow(int ch);
+  overflow(int ch) override;
 
   // points the the DebugStream that instantiated me
   DebugStream* owner{ nullptr };

@@ -29,21 +29,20 @@
 #define __FRICTIONBARD_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h> 
+#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 /**************************************
 
 CLASS
    FrictionContactBard
-   
+
    This is the contact model that has been evolving in Uintah since about
    2001, based on a paper by Bardenhagen, Guilkey, Witzel, et al., with some
    changes for volume constraints and separation constraints added, the latter
@@ -58,7 +57,7 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Contact_Model_Friction
@@ -66,63 +65,65 @@ KEYWORDS
 DESCRIPTION
   One of the derived Contact classes.  This particular
   version is used to apply Coulombic frictional contact.
-  
+
 WARNING
-  
+
 ****************************************/
 
-class FrictionContactBard : public Contact {
+class FrictionContactBard : public Contact
+{
 
 public:
+  FrictionContactBard(const ProcessorGroup* myworld,
+                      const MaterialManagerP& mat_manager,
+                      const MPMLabel* labels,
+                      const MPMFlags* flags,
+                      ProblemSpecP& ps);
 
-   FrictionContactBard(const ProcessorGroup* myworld,
-                   ProblemSpecP& ps, MaterialManagerP& d_sS,MPMLabel* lb,
-                   MPMFlags* MFlag);
-   
-   FrictionContactBard(const FrictionContactBard &con) = delete;
-   FrictionContactBard& operator=(const FrictionContactBard &con) = delete;
+  FrictionContactBard(const FrictionContactBard& con) = delete;
+  FrictionContactBard&
+  operator=(const FrictionContactBard& con) = delete;
 
-   virtual ~FrictionContactBard() = default;
+  virtual ~FrictionContactBard() = default;
 
-   virtual void outputProblemSpec(ProblemSpecP& ps) override;
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-   void addComputesAndRequires(SchedulerP& sched, 
-                               const PatchSet* patches,
-                               const MaterialSet* matls,
-                               const VarLabel* label) override;
-
-   void exchangeMomentum(const ProcessorGroup*, 
-                         const PatchSubset* patches,
-                         const MaterialSubset* matls, 
-                         DataWarehouse* old_dw,
-                         DataWarehouse* new_dw, 
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
                          const VarLabel* label) override;
 
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
 
 private:
-   
-   // Coefficient of friction
-   double d_mu;
-   // Nodal volume fraction that must occur before contact is applied
-   double d_vol_const;
-   double d_sepFac;
-   int NGP;
-   int NGN;
+  // Coefficient of friction
+  double d_mu{ 0.0 };
+  // Nodal volume fraction that must occur before contact is applied
+  double d_vol_const{ 0.0 };
+  // Default to large number to provide no constraint
+  double d_sep_fac{ 1.0e100 };
 
-   MaterialManagerP 
- d_mat_manager;
+  void
+  exMomInterpolated(const ProcessorGroup*,
+                    const PatchSubset* patches,
+                    const MaterialSubset* matls,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw);
 
-   void exMomInterpolated(const ProcessorGroup*,
-                          const PatchSubset* patches,
-                          const MaterialSubset* matls,
-                          DataWarehouse* old_dw,
-                          DataWarehouse* new_dw);
-   
-   void exMomIntegrated(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw);
+  void
+  exMomIntegrated(const ProcessorGroup*,
+                  const PatchSubset* patches,
+                  const MaterialSubset* matls,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw);
 };
 } // End namespace Uintah
 

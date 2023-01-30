@@ -127,7 +127,7 @@ private: // class Task
                       [[maybe_unused]] void* oldTaskGpuDW,
                       [[maybe_unused]] void* newTaskGpuDW,
                       [[maybe_unused]] void* stream,
-                      [[maybe_unused]] int deviceID)
+                      [[maybe_unused]] int deviceID) override
     {
       doit_impl(pg,
                 patches,

@@ -49,13 +49,13 @@ class FrictionContact : public Contact
 public:
   // Constructor
   FrictionContact(const ProcessorGroup* myworld,
-                  ProblemSpecP& ps,
-                  MaterialManagerP& d_sS,
-                  MPMLabel* lb,
-                  MPMFlags* MFlag);
+                  const MaterialManagerP& mat_manager,
+                  const MPMLabel* labels,
+                  const MPMFlags* flags,
+                  ProblemSpecP& ps);
 
   // Destructor
-  virtual ~FrictionContact();
+  virtual ~FrictionContact() = default;
 
   FrictionContact(const FrictionContact& con) = delete;
   FrictionContact(FrictionContact&& con)      = delete;

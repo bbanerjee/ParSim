@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -88,6 +89,12 @@ public:
   }
   virtual ~SoleVariable();
 
+  const TypeDescription*
+  virtualGetTypeDescription() const override
+  {
+    return getTypeDescription();
+  }
+
   static const TypeDescription*
   getTypeDescription();
 
@@ -107,12 +114,14 @@ public:
   setData(const T&);
 
   virtual SoleVariableBase*
-  clone() const;
+  clone() const override;
   virtual void
-  copyPointer(Variable&);
+  copyPointer(Variable&) override;
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override
   {
     elems   = "1";
     totsize = sizeof(T);
@@ -120,13 +129,13 @@ public:
   }
 
   virtual size_t
-  getDataSize() const
+  getDataSize() const override
   {
     return sizeof(T);
   }
 
   virtual bool
-  copyOut(void* dst) const
+  copyOut(void* dst) const override
   {
     void* src       = (void*)(&value);
     size_t numBytes = getDataSize();
