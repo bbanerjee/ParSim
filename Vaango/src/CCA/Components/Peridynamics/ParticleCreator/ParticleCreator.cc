@@ -344,7 +344,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(d_pparticleID,    d_varLabel->pParticleIDLabel,    subset);
   new_dw->allocateAndPut(d_position,       d_varLabel->pPositionLabel,      subset);
   new_dw->allocateAndPut(d_pmass,          d_varLabel->pMassLabel,          subset);
-  new_dw->allocateAndPut(d_psize,          d_varLabel->pSizeLabel,          subset);
+  new_dw->allocateAndPut(d_pSize,          d_varLabel->pSizeLabel,          subset);
   new_dw->allocateAndPut(d_pvolume,        d_varLabel->pVolumeLabel,        subset);
   new_dw->allocateAndPut(d_pdisp,          d_varLabel->pDisplacementLabel,  subset);
   new_dw->allocateAndPut(d_pvelocity,      d_varLabel->pVelocityLabel,      subset); 
@@ -407,7 +407,7 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
 
   d_position[pidx] = pPosition;
   d_pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  d_psize[pidx]      = size;
+  d_pSize[pidx]      = size;
   d_pvelocity[pidx]  = (*obj)->getInitialData_Vector("velocity");
   d_pmass[pidx]      = matl->getInitialDensity()*d_pvolume[pidx];
   d_pdisp[pidx]      = Uintah::Vector(0.,0.,0.);

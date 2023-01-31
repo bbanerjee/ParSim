@@ -252,7 +252,7 @@ MomentBC::getForceVector(const Point& px,
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
+MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& pSize,
 			     const Matrix3& pDeformationMeasure,
 			     double forcePerParticle,const double time,
 			     Point& pExternalForceCorner1,
@@ -280,7 +280,7 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
   }
   // determine four boundary-corners of the particle
   int i1=0,i2=0;
-  Matrix3 dsize=pDeformationMeasure*psize;
+  Matrix3 dsize=pDeformationMeasure*pSize;
   Point px1;
   for (int i = 0; i < 3; ++i) {
     Vector dummy=Vector(dsize(0,i)*dxCell[0],dsize(1,i)*dxCell[1],
@@ -309,8 +309,8 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
 			      px1.y()+dsize(1,i1)*dxCell[1]/2.0+dsize(1,i2)*dxCell[1]/2.0,
 			      px1.z()+dsize(2,i1)*dxCell[2]/2.0+dsize(2,i2)*dxCell[2]/2.0);
   // Recalculate the force based on area changes (current vs. initial)
-  Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
-  Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
+  Vector iniVec1(pSize(0,i1),pSize(1,i1),pSize(2,i1));
+  Vector iniVec2(pSize(0,i2),pSize(1,i2),pSize(2,i2));
   Vector curVec1(dsize(0,i1),dsize(1,i1),dsize(2,i1));
   Vector curVec2(dsize(0,i2),dsize(1,i2),dsize(2,i2));
   Vector iniA = Cross(iniVec1,iniVec2);

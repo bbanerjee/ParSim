@@ -1015,7 +1015,7 @@ HyperelasticPlastic::initializeCMData(const Patch* patch,
   }
 
   // Universal
-  ParticleVariable<Matrix3> deformationGradient, pstress, bElBar;
+  ParticleVariable<Matrix3> pDefGrad, pstress, bElBar;
 
   new_dw->allocateAndPut(bElBar, bElBarLabel, pset);
 

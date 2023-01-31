@@ -62,7 +62,7 @@ public:
   int d_numItersToIncreaseDelT;
   double d_delTDecreaseFactor;
   double d_delTIncreaseFactor;
-  string d_solverType;
+  std::string d_solverType;
   bool d_tempSolve;
   bool d_interpolateParticleTempToGridEveryStep;
 

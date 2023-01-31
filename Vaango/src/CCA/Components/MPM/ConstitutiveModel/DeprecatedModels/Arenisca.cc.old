@@ -434,8 +434,8 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
     // Declare some particle ISVs and field variables
     constParticleVariable<Matrix3> velGrad;
-    ParticleVariable<Matrix3>      deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
+    ParticleVariable<Matrix3>      pDefGrad_new;
+    constParticleVariable<Matrix3> pDefGrad;
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3>      stress_new;
     constParticleVariable<Point>   px;
@@ -443,7 +443,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<double>       pvolume;
     ParticleVariable<double>       p_q;
     constParticleVariable<Vector>  pvelocity;
-	  constParticleVariable<Matrix3> psize;
+	  constParticleVariable<Matrix3> pSize;
     ParticleVariable<double>       pdTdt;
     constParticleVariable<double>  pPlasticStrain;
     ParticleVariable<double>       pPlasticStrain_new;
@@ -494,15 +494,15 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 	//T2D: rearrange by use
     old_dw->get(px,                  lb->pXLabel,                  pset);
     old_dw->get(pmass,               lb->pMassLabel,               pset);
-    old_dw->get(psize,               lb->pSizeLabel,               pset);
+    old_dw->get(pSize,               lb->pSizeLabel,               pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel,            pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel,            pset);
     old_dw->get(stress_old,          lb->pStressLabel,             pset);
 
     new_dw->get(velGrad,                 lb->pVelGradLabel_preReloc, pset);
 
     new_dw->getModifiable(pvolume,                 lb->pVolumeLabel_preReloc,  pset);
-    new_dw->getModifiable(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(stress_new, lb->pStressLabel_preReloc,             pset);
     new_dw->allocateAndPut(pdTdt,      lb->pdTdtLabel_preReloc,               pset);
@@ -545,19 +545,19 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
       pLocalized_new[idx]=pLocalized[idx];
       
       // Compute the Jacobian and delete the particle in the case of negative Jacobian
-      J = deformationGradient_new[idx].Determinant();
+      J = pDefGrad_new[idx].Determinant();
       if (J<=0 || J>10){
         cout<<"ERROR, negative J! "<<endl;
         cout<<"pParticleID="<<pParticleID[idx]<<endl;
-        cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+        cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
         cout<<"J= "<<J<<endl;
-        cout<<"Fnew= "<<deformationGradient_new[idx]<<endl;
-        cout<<"Fold= "<<deformationGradient[idx]<<endl;
+        cout<<"Fnew= "<<pDefGrad_new[idx]<<endl;
+        cout<<"Fold= "<<pDefGrad[idx]<<endl;
         cout<<"L= "<<tensorL<<endl;
         pLocalized_new[idx] = -999;
         cout<<"DELETING Arenisca particle " << std::endl;
         J=1;
-        deformationGradient_new[idx] = Identity;
+        pDefGrad_new[idx] = Identity;
         //throw InvalidValue("**ERROR**:Negative Jacobian", __FILE__, __LINE__);
       }
 #ifdef JC_FREEZE_PARTICLE
@@ -566,8 +566,8 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
         //     <<", DELETING particleID=" <<pParticleID[idx]<< std::endl; 
         //pLocalized_new[idx] = -999;
              <<",FREEZING particleID="<<pParticleID[idx]<<endl;
-        J = deformationGradient[idx].Determinant();
-        deformationGradient_new[idx] = deformationGradient[idx];
+        J = pDefGrad[idx].Determinant();
+        pDefGrad_new[idx] = pDefGrad[idx];
       }
 #endif
 
@@ -653,7 +653,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 
         // Use polar decomposition to compute the rotation and stretch tensors
         Matrix3 tensorR, tensorU;
-        deformationGradient[idx].polarDecompositionRMB(tensorU, tensorR);
+        pDefGrad[idx].polarDecompositionRMB(tensorU, tensorR);
         rotation[idx]=tensorR;
 
 //#ifdef jc_freeze_particle
@@ -781,7 +781,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
           if (clen<=0.0) {
             cout<<"ERROR! in clen"<<endl;
             cout<<"pParticleID="<<pParticleID[idx]<<endl;
-            cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+            cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
             cout<<"clen="<<clen<<endl;
             cout<<"pKappa_new[idx]="<<pKappa_new[idx]<<endl;
             cout<<"cap_radius="<<cap_radius<<endl;
@@ -967,7 +967,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                 if (pPlasticStrainVol_new[idx]<-p3_crush_curve) {
                   cout<<"ERROR! in pPlasticStrainVol_new"<<endl;
                   cout<<"pParticleID="<<pParticleID[idx]<<endl;
-                  cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+                  cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
                   cout<<"epv=" << pPlasticStrainVol_new[idx]<<endl;
                   cout<<"pKappa_new[idx]="<<pKappa_new[idx]<<endl;
                   throw InvalidValue("**ERROR**:in pPlasticStrainVol calculation",
@@ -986,7 +986,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                                        (pPlasticStrainVol_new[idx]);
                 if (std::isnan(pBackStress_new[idx].Trace())) {  //Check pBackStress for nan
                   std::cerr <<  "ParticleID = " << pParticleID[idx] << " pBackStress_new[idx] = " << pBackStress_new[idx] << std::endl;
-                  cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+                  cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
                   cout<<"epv=" << pPlasticStrainVol_new[idx]<<endl;
                   cout<<"pKappa_new[idx]="<<pKappa_new[idx]<<endl;
                   throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
@@ -1318,7 +1318,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                         if (counter_I1_iteration2>1000) {
                           cout<<"ERROR! in fast return algorithm"<<endl;
                           cout<<"pParticleID="<<pParticleID[idx]<<endl;
-                          cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+                          cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
                           throw InvalidValue("**ERROR**:in fast return algorithm",
                                                                __FILE__, __LINE__);
                         }
@@ -1562,7 +1562,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   if (counter_gamma1>1000) {
                     cerr<<"ERROR! in nested retuen algorithm"<<endl;
                     cerr<<"pParticleID="<<pParticleID[idx]<<endl;
-                    cerr<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+                    cerr<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
                     cerr<<"hardeningEns="<<hardeningEns<<endl;
                     cerr<<"f_new_loop="<<f_new_loop<<endl;
                     cerr<<"sqrt(abs(f_new_loop))="<<sqrt(abs(f_new_loop))<<endl;
@@ -1949,7 +1949,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
               if (pPlasticStrainVol_new[idx]<-p3_crush_curve) {
                 cout<<"ERROR! in pPlasticStrainVol_new"<<endl;
                 cout<<"pParticleID="<<pParticleID[idx]<<endl;
-                cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+                cout<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
                 cout<<"epv=" << pPlasticStrainVol_new[idx]<<endl;
                 cout<<"pKappa_new[idx]="<<pKappa_new[idx]<<endl;
                 throw InvalidValue("**ERROR**:in pPlasticStrainVol calculation",
@@ -1987,7 +1987,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
           if (pKappa_new[idx]-cap_radius>PEAKI1_hardening/FSLOPE) {
             cerr<<"ERROR! pKappa-R>PEAKI1 "<<endl;
             cerr<<"pParticleID="<<pParticleID[idx]<<endl;
-            cerr<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
+            cerr<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
             cerr<<"J2_new= "<<J2_new<<endl;
             cerr<<"I1_new= "<<I1_new<<endl;
             cerr<<"pKappa_new[idx]= "<<pKappa_new[idx]<<endl;
@@ -2004,8 +2004,8 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
           {
             cerr<<"ERROR!  did not return to <1e-1 yield surface (Arenisca.cc)"<<endl;
             cerr<<"pParticleID="<<pParticleID[idx]<<endl;
-            cerr<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
-            cerr<<"deformationGradient_old="<<deformationGradient[idx]<<endl;
+            cerr<<"pDefGrad_new="<<pDefGrad_new[idx]<<endl<<endl;
+            cerr<<"pDefGrad_old="<<pDefGrad[idx]<<endl;
             //cerr<<"condition_return_to_vertex="<<condition_return_to_vertex<<endl;
             cerr<<"J2_new= "<<J2_new<<endl;
             cerr<<"I1_new= "<<I1_new<<endl;
@@ -2033,7 +2033,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
         // the particle velocities and wave speed.
 
         // Use polar decomposition to compute the rotation and stretch tensors
-        deformationGradient_new[idx].polarDecompositionRMB(tensorU, tensorR);
+        pDefGrad_new[idx].polarDecompositionRMB(tensorU, tensorR);
         rotation[idx]=tensorR;
 
         // Compute the rotated stress at the end of the current timestep

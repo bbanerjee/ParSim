@@ -304,7 +304,7 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     std::vector<Vector> d_S(interpolator->size());
     std::vector<double> S(interpolator->size());
 
-    Matrix3 deformationGradientInc, Identity, zero(0.), One(1.);
+    Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
     double onethird = (1.0 / 3.0);
@@ -318,29 +318,29 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     // Create array for the particle position
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient, pstress;
+    constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<Matrix3> deformationGradient_new, velGrad;
+    constParticleVariable<Matrix3> pDefGrad_new, velGrad;
     constParticleVariable<double> pmass, ptemperature, sv_min, p_sv_min;
     constParticleVariable<double> pvolume;
     ParticleVariable<double> sv_min_new, p_sv_min_new;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(sv_min, sv_minLabel, pset);
     old_dw->get(p_sv_min, p_sv_minLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
 
     constParticleVariable<Matrix3> pdispGrads;
@@ -369,7 +369,7 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       Matrix3 DPrime = D - Identity * onethird * D.Trace();
 
       // get the volumetric part of the deformation
-      double J          = deformationGradient_new[idx].Determinant();
+      double J          = pDefGrad_new[idx].Determinant();
       double rho_cur    = rho_orig / J;
       double vol_strain = log(pvolume[idx] / (pmass[idx] / rho_orig));
       double pres;

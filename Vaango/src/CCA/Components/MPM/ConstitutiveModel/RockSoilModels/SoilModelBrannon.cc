@@ -385,7 +385,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
       pPlasticStrainVol, pKappaState;
     constParticleVariable<Point> px;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize, pVelGrad, pDefGrad, stress_old,
+    constParticleVariable<Matrix3> pSize, pVelGrad, pDefGrad, stress_old,
       pBackStress, pBackStressIso;
 
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -397,7 +397,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pKappaState, pKappaStateLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pVelGrad, lb->pVelGradLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);

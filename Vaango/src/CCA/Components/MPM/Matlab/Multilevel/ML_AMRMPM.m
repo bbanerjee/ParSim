@@ -272,7 +272,7 @@ if strcmp(problem_type, 'mms')
   
   for l=1:maxLevels
     xp_initial(:,l) = P.xp(:,l);
-    [P.Fp(:,l)]      = mms.deformationGradient(xp_initial(:,l), t_initial, NP,speedSound, bar_length);
+    [P.Fp(:,l)]      = mms.pDefGrad(xp_initial(:,l), t_initial, NP,speedSound, bar_length);
     [P.dp(:,l)]      = mms.displacement(       xp_initial(:,l), t_initial, NP, speedSound, bar_length);
     [P.velP(:,l)]    = mms.velocity(           xp_initial(:,l), t_initial, NP, speedSound, bar_length);
     [P.stressP(:,l)] = computeStress(E,Fp,NP);

@@ -294,8 +294,8 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
 
     // Create array for the particle position
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Matrix3> deformationGradient_new, velGrad;
-    constParticleVariable<Matrix3> deformationGradient;
+    constParticleVariable<Matrix3> pDefGrad_new, velGrad;
+    constParticleVariable<Matrix3> pDefGrad;
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
@@ -303,7 +303,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<double> pvolume;
     ParticleVariable<double> p_q;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> eta_old;
     constParticleVariable<double> eta_nl_old;
@@ -323,16 +323,16 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);
     old_dw->get(eta_old, etaLabel, pset);
     old_dw->get(eta_nl_old, eta_nlLabel, pset);
     old_dw->get(k_o_dist, k_o_distLabel, pset);
 
     new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(stress_new, lb->pStressLabel_preReloc, pset);
@@ -392,7 +392,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[idx] = 0.0;
 
-      J = deformationGradient_new[idx].Determinant();
+      J = pDefGrad_new[idx].Determinant();
       // Update particle volumes
       rho_cur[idx] = rho_orig / J;
 
@@ -400,7 +400,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * .5;
       // NEED TO FIND R
       Matrix3 tensorR, tensorU;
-      deformationGradient_new[idx].polarDecompositionRMB(tensorU, tensorR);
+      pDefGrad_new[idx].polarDecompositionRMB(tensorU, tensorR);
       // Compute the Jacobian of the deformation gradient
 
       rotation[idx] = tensorR;
@@ -538,15 +538,15 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
         interpolator->findCellAndWeights(px[idx],
                                          ni,
                                          S,
-                                         psize[idx],
-                                         deformationGradient[idx]);
+                                         pSize[idx],
+                                         pDefGrad[idx]);
       } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeights(px[idx],
                                          ni,
                                          S,
-                                         psize[idx],
-                                         deformationGradient[idx]);
+                                         pSize[idx],
+                                         pDefGrad[idx]);
       }
       IntVector node;
       for (int k = 0; k < n8or27; k++) {
@@ -689,15 +689,15 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
             interpolator->findCellAndWeights(px[idx],
                                              ni,
                                              S,
-                                             psize[idx],
-                                             deformationGradient[idx]);
+                                             pSize[idx],
+                                             pDefGrad[idx]);
           } else { // axi-symmetric kinematics
             // Get the node indices that surround the cell
             interpolator->findCellAndWeights(px[idx],
                                              ni,
                                              S,
-                                             psize[idx],
-                                             deformationGradient[idx]);
+                                             pSize[idx],
+                                             pDefGrad[idx]);
           }
 
           // replace the old value of gdlambda with the interpolated values of

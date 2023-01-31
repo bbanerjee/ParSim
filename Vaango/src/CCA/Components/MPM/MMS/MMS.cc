@@ -37,7 +37,7 @@ using namespace Uintah;
 void
 MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
                               ParticleVariable<Vector> &pvelocity,
-                              ParticleVariable<Matrix3> &psize,
+                              ParticleVariable<Matrix3> &pSize,
                               ParticleVariable<Vector> &pdisp,
                               ParticleVariable<double> &pmass,
                               ParticleVariable<double> &pvolume ,
@@ -53,32 +53,32 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
   if (mms_type == "GeneralizedVortex") {
 
     initGeneralizedVortex(flags, pidx, p, dxcc, size, 
-                          pvolume, pmass, position, pvelocity, pdisp, psize);
+                          pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   } else if (mms_type == "AxisAligned" || mms_type == "AxisAligned3L") {
 
     initAxisAligned(flags, pidx, p, dxcc, size, 
-                    pvolume, pmass, position, pvelocity, pdisp, psize);
+                    pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   } else if (mms_type == "ExpandingRing") {
 
     initExpandingRing(flags, pidx, p, dxcc, size, 
-                      pvolume, pmass, position, pvelocity, pdisp, psize);
+                      pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   } else if (mms_type == "UniaxialStrainHarmonic") {
 
     initUniaxialStrainHarmonic(flags, pidx, p, dxcc, size, 
-                               pvolume, pmass, position, pvelocity, pdisp, psize);
+                               pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   } else if (mms_type == "UniaxialStrainHomogeneousLinear") {
 
     initUniaxialStrainHomogeneousLinear(flags, pidx, p, dxcc, size, 
-                                        pvolume, pmass, position, pvelocity, pdisp, psize);
+                                        pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   } else if (mms_type == "UniaxialStrainHomogeneousQuadratic") {
 
     initUniaxialStrainHomogeneousQuadratic(flags, pidx, p, dxcc, size, 
-                                           pvolume, pmass, position, pvelocity, pdisp, psize);
+                                           pvolume, pmass, position, pvelocity, pdisp, pSize);
 
   }
 }
@@ -161,7 +161,7 @@ MMS::initGeneralizedVortex(const MPMFlags* flags,
                            ParticleVariable<Point>& position,
                            ParticleVariable<Vector>& pvelocity,
                            ParticleVariable<Vector>& pdisp,
-                           ParticleVariable<Matrix3>& psize)
+                           ParticleVariable<Matrix3>& pSize)
 {
   double t = 0.0;
   double A = 1.0;
@@ -181,7 +181,7 @@ MMS::initGeneralizedVortex(const MPMFlags* flags,
     pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
   pvelocity[pidx]    = Vector(u,v,w);
-  psize[pidx]        = size;
+  pSize[pidx]        = size;
   pmass[pidx]        = rho0*pvolume[pidx];
   pdisp[pidx]        = Vector(0.,0.,0.);
 }
@@ -247,7 +247,7 @@ MMS::initAxisAligned(const MPMFlags* flags,
                      ParticleVariable<Point>& position,
                      ParticleVariable<Vector>& pvelocity,
                      ParticleVariable<Vector>& pdisp,
-                     ParticleVariable<Matrix3>& psize)
+                     ParticleVariable<Matrix3>& pSize)
 {
   /* Vector dx = patch->dCell();             // you need to normalize the variable A by the 
      double normalization = dx.length();    // cell spacing so the Linear interpolation will work
@@ -280,7 +280,7 @@ MMS::initAxisAligned(const MPMFlags* flags,
     pvolume[pidx]  = J*size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
 
-  psize[pidx] = Matrix3(size(0,0)*Fxx,0.,0.,
+  pSize[pidx] = Matrix3(size(0,0)*Fxx,0.,0.,
                         0.,size(1,1)*Fyy,0.,
                         0.,0.,size(2,2)*Fzz);
 
@@ -353,7 +353,7 @@ MMS::initExpandingRing(const MPMFlags* flags,
                        ParticleVariable<Point>& position,
                        ParticleVariable<Vector>& pvelocity,
                        ParticleVariable<Vector>& pdisp,
-                       ParticleVariable<Matrix3>& psize)
+                       ParticleVariable<Matrix3>& pSize)
 {
   // std::cout << "Entered the ER loop " << std::endl;
   double A = 0.1;
@@ -378,7 +378,7 @@ MMS::initExpandingRing(const MPMFlags* flags,
     // standard voxel volume
     pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
-  psize[pidx]        = size;
+  pSize[pidx]        = size;
   pvelocity[pidx]    = Vector(u,v,w);
   pmass[pidx]        = rho*pvolume[pidx];
   pdisp[pidx]        = Vector(0.,0.,0.);
@@ -492,7 +492,7 @@ MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
                                 ParticleVariable<Point>& position,
                                 ParticleVariable<Vector>& pvelocity,
                                 ParticleVariable<Vector>& pdisp,
-                                ParticleVariable<Matrix3>& psize)
+                                ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
   double rho0 = 1700.0;
@@ -516,7 +516,7 @@ MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
   pvelocity[pidx] = Vector(v0, 0.0, 0.0);
   pdisp[pidx]     = Vector(u0, 0.0, 0.0);
   position[pidx]  = p + pdisp[pidx];
-  psize[pidx]     = size;
+  pSize[pidx]     = size;
 }
 
 //=====================================================================================
@@ -605,7 +605,7 @@ MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
                                          ParticleVariable<Point>& position,
                                          ParticleVariable<Vector>& pvelocity,
                                          ParticleVariable<Vector>& pdisp,
-                                         ParticleVariable<Matrix3>& psize)
+                                         ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
   double rho0 = 1700.0;
@@ -626,7 +626,7 @@ MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
   pvelocity[pidx] = Vector(v0, 0.0, 0.0);
   pdisp[pidx]     = Vector(u0, 0.0, 0.0);
   position[pidx]  = p + pdisp[pidx];
-  psize[pidx]     = size;
+  pSize[pidx]     = size;
 }
 
 void 
@@ -664,7 +664,7 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
                                             ParticleVariable<Point>& position,
                                             ParticleVariable<Vector>& pvelocity,
                                             ParticleVariable<Vector>& pdisp,
-                                            ParticleVariable<Matrix3>& psize)
+                                            ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
   double rho0 = 1700.0;
@@ -686,7 +686,7 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
   pvelocity[pidx] = Vector(v0, 0.0, 0.0);
   pdisp[pidx]     = Vector(u0, 0.0, 0.0);
   position[pidx]  = p + pdisp[pidx];
-  psize[pidx]     = size;
+  pSize[pidx]     = size;
 }
 
 void 

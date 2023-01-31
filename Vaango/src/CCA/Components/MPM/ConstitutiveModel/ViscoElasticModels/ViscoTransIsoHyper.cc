@@ -467,8 +467,8 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
+    constParticleVariable<Matrix3> pDefGrad_new;
+    constParticleVariable<Matrix3> pDefGrad;
     constParticleVariable<double> pmass, fail_old;
     constParticleVariable<double> pvolume;
     ParticleVariable<double> stretch, fail;
@@ -482,7 +482,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> history1_old, history2_old, history3_old;
     constParticleVariable<Matrix3> history4_old, history5_old, history6_old;
     constParticleVariable<Matrix3> ElasticStress_old;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
 
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -491,9 +491,9 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pmass, lb->pMassLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
     old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(fail_old, pFailureLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(ElasticStress_old, pElasticStressLabel, pset);
     old_dw->get(history1_old, pHistory1Label, pset);
     old_dw->get(history2_old, pHistory2Label, pset);
@@ -503,7 +503,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     old_dw->get(history6_old, pHistory6Label, pset);
 
     new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     constParticleVariable<Matrix3> velGrad;
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
 
@@ -553,7 +553,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
       pdTdt[idx] = 0.0;
 
       // get the volumetric part of the deformation
-      J = deformationGradient_new[idx].Determinant();
+      J = pDefGrad_new[idx].Determinant();
 
       // carry forward fiber direction
       pfiberdir_carry[idx]  = pfiberdir[idx];
@@ -562,8 +562,8 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
       //_______________________UNCOUPLE DEVIATORIC AND DILATIONAL PARTS
       //_______________________Ftilde=J^(-1/3)*F, Fvol=J^1/3*Identity
       //_______________________right Cauchy Green (C) tilde and invariants
-      rightCauchyGreentilde_new = deformationGradient_new[idx].Transpose() *
-                                  deformationGradient_new[idx] *
+      rightCauchyGreentilde_new = pDefGrad_new[idx].Transpose() *
+                                  pDefGrad_new[idx] *
                                   pow(J, -(2. / 3.));
 
       I1tilde = rightCauchyGreentilde_new.Trace();
@@ -576,14 +576,14 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
 
       double I4    = I4tilde * pow(J, (2. / 3.)); // For diagnostics only
       stretch[idx] = std::sqrt(I4);
-      deformed_fiber_vector = deformationGradient_new[idx] *
+      deformed_fiber_vector = pDefGrad_new[idx] *
                               deformed_fiber_vector *
                               (1. / lambda_tilde * pow(J, -(1. / 3.)));
       Matrix3 DY(deformed_fiber_vector, deformed_fiber_vector);
 
       //________________________________left Cauchy Green (B) tilde
-      leftCauchyGreentilde_new = deformationGradient_new[idx] *
-                                 deformationGradient_new[idx].Transpose() *
+      leftCauchyGreentilde_new = pDefGrad_new[idx] *
+                                 pDefGrad_new[idx].Transpose() *
                                  pow(J, -(2. / 3.));
 
       //________________________________strain energy derivatives
@@ -625,8 +625,8 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
         double fiber_failed  = 0.;
         //______________Mooney Rivlin deviatoric term +failure of matrix
         Matrix3 RCG;
-        RCG = deformationGradient_new[idx].Transpose() *
-              deformationGradient_new[idx];
+        RCG = pDefGrad_new[idx].Transpose() *
+              pDefGrad_new[idx];
         double e1, e2, e3; // eigenvalues of C=symm.+pos.def.->Dis<=0
         double Q, R, Dis;
         double pi = 3.1415926535897932384;

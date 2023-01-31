@@ -49,7 +49,7 @@ namespace MPI {
 namespace Impl {
 
 inline int
-psize(MPI_Comm c)
+pSize(MPI_Comm c)
 {
   int s;
   MPI_Comm_size(c, &s);
@@ -271,7 +271,7 @@ private:
   static void apply(const int* counts, MPI_Datatype d, MPI_Comm c) noexcept
   {
     int64_t count = 0;
-    const int parallel_size = psize(c);
+    const int parallel_size = pSize(c);
     for (int i = 0; i < parallel_size; ++i) {
       count += counts[i];
     }
@@ -468,10 +468,10 @@ Alltoallw(MPICONST void* sendbuf, MPICONST int sendcounts[],
 {
   // TODO handle multiple send and recv types
   Impl::AlltoallTimer timer;
-  const int psize = Impl::psize(comm);
+  const int pSize = Impl::pSize(comm);
   int64_t rcounts = 0;
   int64_t scounts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     scounts += sendcounts[i];
     rcounts += recvcounts[i];
   }
@@ -1334,10 +1334,10 @@ Ialltoallw(MPICONST void* sendbuf, const int sendcounts[], const int sdispls[],
 {
   // TODO handle multiple send and recv types
   Impl::AlltoallTimer timer;
-  const int psize = Impl::psize(comm);
+  const int pSize = Impl::pSize(comm);
   int64_t rcounts = 0;
   int64_t scounts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     scounts += sendcounts[i];
     rcounts += recvcounts[i];
   }
@@ -1501,9 +1501,9 @@ Ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
 {
   // TODO handle multiple send and recv types
   Impl::AlltoallTimer timer;
-  const int psize = Impl::psize(comm);
+  const int pSize = Impl::pSize(comm);
   int64_t scounts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     scounts += sendcounts[i];
   }
   Impl::OneVolumeStats(scounts, sendtypes[0]);
@@ -1639,9 +1639,9 @@ Ireduce_scatter(MPICONST void* sendbuf, void* recvbuf, const int recvcounts[],
                 MPI_Request* request)
 {
   Impl::ReduceTimer timer;
-  int psize = Impl::psize(comm);
+  int pSize = Impl::pSize(comm);
   int64_t counts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     counts += recvcounts[i];
   }
   Impl::SendVolumeStats(counts, datatype);
@@ -1839,10 +1839,10 @@ Neighbor_alltoallw(const void* sendbuf, const int sendcounts[],
 {
   // TODO handle multiple send and recv types
   Impl::AlltoallTimer timer;
-  const int psize = Impl::psize(comm);
+  const int pSize = Impl::pSize(comm);
   int64_t rcounts = 0;
   int64_t scounts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     scounts += sendcounts[i];
     rcounts += recvcounts[i];
   }
@@ -2000,9 +2000,9 @@ Reduce_scatter(MPICONST void* sendbuf, void* recvbuf, MPICONST int recvcounts[],
                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   Impl::ReduceTimer timer;
-  int psize = Impl::psize(comm);
+  int pSize = Impl::pSize(comm);
   int64_t counts = 0;
-  for (int i = 0; i < psize; ++i) {
+  for (int i = 0; i < pSize; ++i) {
     counts += recvcounts[i];
   }
   Impl::SendVolumeStats(counts, datatype);
@@ -2295,12 +2295,12 @@ Type_create_darray(int size, int rank, int ndims,
                    MPICONST int array_of_gsizes[],
                    MPICONST int array_of_distribs[],
                    MPICONST int array_of_dargs[],
-                   MPICONST int array_of_psizes[], int order,
+                   MPICONST int array_of_pSizes[], int order,
                    MPI_Datatype oldtype, MPI_Datatype* newtype)
 {
   return Impl::mpi_check_err(MPI_Type_create_darray(
     size, rank, ndims, array_of_gsizes, array_of_distribs, array_of_dargs,
-    array_of_psizes, order, oldtype, newtype));
+    array_of_pSizes, order, oldtype, newtype));
 }
 
 inline int

@@ -1389,11 +1389,11 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(indx, patch);
       ParticleVariable<double> pPressure;
       constParticleVariable<Point> px;
-      constParticleVariable<Matrix3> psize;
-      constParticleVariable<Matrix3> deformationGradient;
-      old_dw->get(psize,                Mlb->pSizeLabel,     pset);     
+      constParticleVariable<Matrix3> pSize;
+      constParticleVariable<Matrix3> pDefGrad;
+      old_dw->get(pSize,                Mlb->pSizeLabel,     pset);     
       old_dw->get(px,                   Mlb->pXLabel,        pset);     
-      old_dw->get(deformationGradient,  Mlb->pDefGradLabel, pset);
+      old_dw->get(pDefGrad,  Mlb->pDefGradLabel, pset);
       new_dw->allocateAndPut(pPressure, Mlb->pPressureLabel, pset);     
 
       //__________________________________
@@ -1404,7 +1404,7 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
         double press = 0.;
 
         // Get the node indices that surround the cell
-        interpolator->findCellAndWeights(px[idx], ni, S,psize[idx],deformationGradient[idx]);
+        interpolator->findCellAndWeights(px[idx], ni, S,pSize[idx],pDefGrad[idx]);
 
         for (int k = 0; k < d_8or27; k++) {
           press += pressNC[ni[k]] * S[k];

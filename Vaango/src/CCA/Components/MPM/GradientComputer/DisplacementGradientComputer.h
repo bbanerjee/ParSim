@@ -54,7 +54,7 @@ public:
   computeDispGrad(ParticleInterpolator* interp,
                   const double* oodx,
                   const Point& px,
-                  const Matrix3& psize,
+                  const Matrix3& pSize,
                   const Matrix3& pDefGrad_old,
                   constNCVariable<Vector> gDisp,
                   Matrix3& dispGrad_new);

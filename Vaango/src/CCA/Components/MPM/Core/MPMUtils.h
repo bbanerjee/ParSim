@@ -11,67 +11,14 @@ namespace Uintah {
 
 namespace Util {
 
-Vector
-face_norm(Patch::FaceType f)
-{
-  switch (f) {
-    case Patch::xminus:
-      return Vector(-1, 0, 0);
-    case Patch::xplus:
-      return Vector(1, 0, 0);
-    case Patch::yminus:
-      return Vector(0, -1, 0);
-    case Patch::yplus:
-      return Vector(0, 1, 0);
-    case Patch::zminus:
-      return Vector(0, 0, -1);
-    case Patch::zplus:
-      return Vector(0, 0, 1);
-    default:
-      return Vector(0, 0, 0); // oops !
-  }
-}
+extern Vector
+face_norm(Patch::FaceType f);
 
-std::pair<IntVector, IntVector>
-getPatchLoHiNodes(const Patch* patch, int n8or27)
-{
-  Uintah::IntVector lowIndex(0, 0, 0), highIndex(0, 0, 0);
-  if (n8or27 == 8) {
-    lowIndex  = patch->getNodeLowIndex();
-    highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
-  } else if (n8or27 == 27) {
-    lowIndex  = patch->getExtraNodeLowIndex();
-    highIndex = patch->getExtraNodeHighIndex() + IntVector(1, 1, 1);
-  }
-  return std::make_pair(lowIndex, highIndex);
-}
+extern std::pair<IntVector, IntVector>
+getPatchLoHiNodes(const Patch* patch, int n8or27);
 
-void
-removeDuplicatePatches(Level::selectType& array)
-{
-  int length = array.size();
-  if (length <= 1) {
-    return;
-  }
-
-  int newLength = 1; // new length of modified array
-  int i, j;
-
-  for (i = 1; i < length; i++) {
-    for (j = 0; j < newLength; j++) {
-      if (array[i] == array[j]) {
-        break;
-      }
-    }
-    // if none of the values in array[0..j] == array[i],
-    // then copy the current value to a new position in array
-
-    if (j == newLength) {
-      array[newLength++] = array[i];
-    }
-  }
-  array.resize(newLength);
-}
+extern void
+removeDuplicatePatches(Level::selectType& array);
 
 } // namespace Util
 } // end namespace Uintah

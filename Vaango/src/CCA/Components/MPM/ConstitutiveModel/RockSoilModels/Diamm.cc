@@ -362,7 +362,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     ParticleVariable<Matrix3> pstress_new;
     constParticleVariable<double> pmass, pvolume, ptemperature;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constNCVariable<Vector> gVelocity;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -371,7 +371,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
     old_dw->get(pvolume, lb->pVolumeLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);

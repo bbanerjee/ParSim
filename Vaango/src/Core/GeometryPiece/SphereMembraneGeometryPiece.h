@@ -118,7 +118,7 @@ class SphereMembraneGeometryPiece : public GeometryPiece {
                   ParticleVariable<Vector>& pt1,
                   ParticleVariable<Vector>& pt2,
                   ParticleVariable<Vector>& pn,
-                  ParticleVariable<Matrix3>& psize,
+                  ParticleVariable<Matrix3>& pSize,
                   particleIndex start);
 
  private:

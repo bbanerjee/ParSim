@@ -658,7 +658,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<double> pmass, pvolume, ptemperature, peakI1IDist;
     ParticleVariable<double> peakI1IDist_new;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constNCVariable<Vector> gVelocity;
     delt_vartype delT;
     constParticleVariable<int> pLocalized;
@@ -673,7 +673,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
     old_dw->get(pvolume, lb->pVolumeLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);

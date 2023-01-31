@@ -33,9 +33,9 @@ MPM/ParticleCreator/ParticleCreator.cc at about line 552 in rev. 42515:
 
 MPM/ConstitutiveModel/CompNeoHook.cc, around line 277:
 
-       bElBar_new = deformationGradient_new[idx]
--                 * deformationGradient_new[idx].Transpose()*pow(J,-(2./3.));
-+                 * deformationGradient_new[idx].Transpose();
+       bElBar_new = pDefGrad_new[idx]
+-                 * pDefGrad_new[idx].Transpose()*pow(J,-(2./3.));
++                 * pDefGrad_new[idx].Transpose();
  
 -      IEl = onethird*bElBar_new.Trace();
 +      //IEl = onethird*bElBar_new.Trace();

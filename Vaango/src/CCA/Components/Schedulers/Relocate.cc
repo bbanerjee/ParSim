@@ -333,9 +333,9 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
     procRecord->sortPatches();
 
     // Go through once to calc the size of the message
-    int psize;
-    Uintah::MPI::Pack_size(1, MPI_INT, pg->getComm(), &psize);
-    int sendsize  = psize; // One for the count of active patches
+    int pSize;
+    Uintah::MPI::Pack_size(1, MPI_INT, pg->getComm(), &pSize);
+    int sendsize  = pSize; // One for the count of active patches
     int numactive = 0;
     std::vector<int> datasizes;
 
@@ -356,10 +356,10 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
 
         for (; pr.first != pr.second; pr.first++) {
           numactive++;
-          int psize;
+          int pSize;
 
-          Uintah::MPI::Pack_size(4, MPI_INT, pg->getComm(), &psize);
-          sendsize += psize; // Patch ID, matl #, # particles, datasize
+          Uintah::MPI::Pack_size(4, MPI_INT, pg->getComm(), &pSize);
+          sendsize += pSize; // Patch ID, matl #, # particles, datasize
           int orig_sendsize     = sendsize;
           ScatterRecord* record = pr.first->second;
           int np                = record->send_pset->numParticles();

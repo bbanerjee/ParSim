@@ -439,7 +439,7 @@ PressureBC::getForceVector(const Point& px,
 Vector
 PressureBC::getForceVectorCBDI(const Point& px,
                                const Vector& pDisp,
-                               const Matrix3& psize,
+                               const Matrix3& pSize,
                                const Matrix3& pDeformationMeasure,
                                double forcePerParticle,
                                const double time,
@@ -493,7 +493,7 @@ PressureBC::getForceVectorCBDI(const Point& px,
   }
   // determine four boundary-corners of the particle
   std::vector<Point> corners(4);
-  Matrix3 pSize_new = pDeformationMeasure * psize;
+  Matrix3 pSize_new = pDeformationMeasure * pSize;
   auto i1i2 =
     getParticleBoundaryCorners(px, pSize_new, normal, dxCell, corners);
   pExternalForceCorner1 = corners[0];
@@ -505,8 +505,8 @@ PressureBC::getForceVectorCBDI(const Point& px,
   int i1 = i1i2.first;
   int i2 = i1i2.second;
   if (i1 != i2) {
-    Vector iniVec1(psize(0, i1), psize(1, i1), psize(2, i1));
-    Vector iniVec2(psize(0, i2), psize(1, i2), psize(2, i2));
+    Vector iniVec1(pSize(0, i1), pSize(1, i1), pSize(2, i1));
+    Vector iniVec2(pSize(0, i2), pSize(1, i2), pSize(2, i2));
     Vector curVec1(pSize_new(0, i1), pSize_new(1, i1), pSize_new(2, i1));
     Vector curVec2(pSize_new(0, i2), pSize_new(1, i2), pSize_new(2, i2));
     Vector iniA    = Cross(iniVec1, iniVec2);

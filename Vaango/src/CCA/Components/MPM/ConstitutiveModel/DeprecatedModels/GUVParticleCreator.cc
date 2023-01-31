@@ -223,12 +223,12 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
                    << " externalforce = " << pexternalforce[pidx] << std::endl;
 
         position[pidx] = p;
-        psize[pidx] = size;
+        pSize[pidx] = size;
         pvolume[pidx] = *voliter;
         ++voliter;
         pmass[pidx] = matl->getInitialDensity() * pvolume[pidx];
         debug_loop << "GUVPartCreator::create::position = " << position[pidx]
-                   << " size = " << psize[pidx] << " volume = " << pvolume[pidx]
+                   << " size = " << pSize[pidx] << " volume = " << pvolume[pidx]
                    << " mass = " << pmass[pidx] << std::endl;
 
         pType[pidx] = *typeiter;

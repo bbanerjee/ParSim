@@ -1109,7 +1109,7 @@ MohrCoulombBase::getParamRKDP754(Eigen::Matrix<double, 7, 7>& A,
 
 /**
   The procedure uses the embedded Runge - Kutta integration scheme with
-  Adaptive Stepsize Control the constants are as proposed by Bogacki and
+  Adaptive StepSize Control the constants are as proposed by Bogacki and
   Shampine (1996), An efficient R-K (4,5) pair, Computers Math Applic,
   Vol 32 No 6 pp 15-28 with FSAL feauture the method allows for getting the
   error estimate and calculating value in one go

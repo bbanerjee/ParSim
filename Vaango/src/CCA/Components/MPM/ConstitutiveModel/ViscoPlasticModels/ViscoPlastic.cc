@@ -597,10 +597,10 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass, pVolume;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
 
     // Get the velocity from the grid and particle velocity
@@ -1068,7 +1068,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     pStrainRate, pFailureVariable;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDeformGrad, pStress, pLeftStretch, pRotation;
   constNCVariable<Vector> gDisp;
 
@@ -1126,7 +1126,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
     old_dw->get(pStress, lb->pStressLabel, pset);
     old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
@@ -1483,7 +1483,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     pPorosity;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDeformGrad, pStress;
   constNCVariable<Vector> gDisp;
 
@@ -1552,7 +1552,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     parent_old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pStress, lb->pStressLabel, pset);
 
@@ -1605,7 +1605,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       // Calculate the displacement gradient
       //       interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S);
       interpolator->findCellAndShapeDerivatives(
-        px[idx], ni, d_S, psize[idx], pDeformGrad[idx]);
+        px[idx], ni, d_S, pSize[idx], pDeformGrad[idx]);
       dg.computeBmats(ni, d_S, oodx, l2g, B, Bnl, dof);
 
       // Update the deformation gradient

@@ -351,9 +351,9 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       constParticleVariable<Point> px;
       ParticleVariable<Point> pxnew, pxx;
       constParticleVariable<Vector> pvelocity;
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pSize;
       ParticleVariable<Vector> pvelocitynew;
-      ParticleVariable<Matrix3> psizeNew;
+      ParticleVariable<Matrix3> pSizeNew;
       constParticleVariable<double> pmass, pTemperature;
       ParticleVariable<double> pmassNew, pTempNew;
       constParticleVariable<long64> pids;
@@ -401,9 +401,9 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                              pset);
 
       pids_new.copyData(pids);
-      old_dw->get(psize, d_mpmLabels->pSizeLabel, pset);
-      new_dw->allocateAndPut(psizeNew, d_mpmLabels->pSizeLabel_preReloc, pset);
-      psizeNew.copyData(psize);
+      old_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
+      new_dw->allocateAndPut(pSizeNew, d_mpmLabels->pSizeLabel_preReloc, pset);
+      pSizeNew.copyData(pSize);
 
       // Carry forward NC_CCweight
       constNCVariable<double> NC_CCweight;
@@ -474,7 +474,7 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           ni,
           S,
           d_S,
-          psize[idx],
+          pSize[idx],
           pDeformationMeasure[idx]);
 
         double tempRate = 0.0;

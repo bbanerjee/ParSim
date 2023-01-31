@@ -73,7 +73,7 @@ namespace Uintah {
         
     void initializeParticleForMMS(ParticleVariable<Point> &position,
                                   ParticleVariable<Vector> &pvelocity,
-                                  ParticleVariable<Matrix3> &psize,
+                                  ParticleVariable<Matrix3> &pSize,
                                   ParticleVariable<Vector> &pdisp,
                                   ParticleVariable<double> &pmass,
                                   ParticleVariable<double> &pvolume ,
@@ -112,7 +112,7 @@ namespace Uintah {
                                ParticleVariable<Point>& position,
                                ParticleVariable<Vector>& pvelocity,
                                ParticleVariable<Vector>& pdisp,
-                               ParticleVariable<Matrix3>& psize);
+                               ParticleVariable<Matrix3>& pSize);
 
     void extForceGeneralizedVortex(const MPMFlags* flags,
                                    const MPMLabel* lb,
@@ -132,7 +132,7 @@ namespace Uintah {
                          ParticleVariable<Point>& position,
                          ParticleVariable<Vector>& pvelocity,
                          ParticleVariable<Vector>& pdisp,
-                         ParticleVariable<Matrix3>& psize);
+                         ParticleVariable<Matrix3>& pSize);
 
     void extForceAxisAligned(const MPMFlags* flags,
                              const MPMLabel* lb,
@@ -152,7 +152,7 @@ namespace Uintah {
                            ParticleVariable<Point>& position,
                            ParticleVariable<Vector>& pvelocity,
                            ParticleVariable<Vector>& pdisp,
-                           ParticleVariable<Matrix3>& psize);
+                           ParticleVariable<Matrix3>& pSize);
 
     void extForceExpandingRing(const MPMFlags* flags,
                                const MPMLabel* lb,
@@ -172,7 +172,7 @@ namespace Uintah {
                                     ParticleVariable<Point>& position,
                                     ParticleVariable<Vector>& pvelocity,
                                     ParticleVariable<Vector>& pdisp,
-                                    ParticleVariable<Matrix3>& psize);
+                                    ParticleVariable<Matrix3>& pSize);
 
     void bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
                                          const double& time,
@@ -190,7 +190,7 @@ namespace Uintah {
                                              ParticleVariable<Point>& position,
                                              ParticleVariable<Vector>& pvelocity,
                                              ParticleVariable<Vector>& pdisp,
-                                             ParticleVariable<Matrix3>& psize);
+                                             ParticleVariable<Matrix3>& pSize);
 
     void bodyForceUniaxialStrainHomogeneousLinear(const MPMLabel* lb,
                                                   const double& time,
@@ -208,7 +208,7 @@ namespace Uintah {
                                                 ParticleVariable<Point>& position,
                                                 ParticleVariable<Vector>& pvelocity,
                                                 ParticleVariable<Vector>& pdisp,
-                                                ParticleVariable<Matrix3>& psize);
+                                                ParticleVariable<Matrix3>& pSize);
 
     void bodyForceUniaxialStrainHomogeneousQuadratic(const MPMLabel* lb,
                                                      const double& time,

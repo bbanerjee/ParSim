@@ -234,13 +234,13 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    ParticleVariable<Matrix3> deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
+    ParticleVariable<Matrix3> pDefGrad_new;
+    constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress;
     constParticleVariable<double> pmass, pcolor;
     ParticleVariable<double> pvolume_new;
     constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pdTdt;
     delt_vartype delT;
 
@@ -248,8 +248,8 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
     new_dw->getModifiable(pvolume_new, lb->pVolumeLabel_preReloc, pset);
@@ -258,7 +258,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
       old_dw->get(pcolor, lb->pColorLabel, pset);
     }
 
-    new_dw->getModifiable(deformationGradient_new, lb->pDefGradLabel_preReloc,
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc,
                           pset);
 
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -276,7 +276,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
       pdTdt[idx] = 0.0;
 
       // get the volumetric part of the deformation
-      double J = deformationGradient_new[idx].Determinant();
+      double J = pDefGrad_new[idx].Determinant();
 
       // Get the deformed volume
       pvolume_new[idx] = (pmass[idx] / rho_orig) * J;
@@ -285,8 +285,8 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
       double rho_cur = rho_orig / J;
       double c_dil = sqrt((bulk + 4. * shear / 3.) / rho_cur);
 
-      Matrix3 Shear = (deformationGradient_new[idx] *
-                         deformationGradient_new[idx].Transpose() -
+      Matrix3 Shear = (pDefGrad_new[idx] *
+                         pDefGrad_new[idx].Transpose() -
                        Identity) *
                       mu;
 

@@ -191,8 +191,8 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
   constParticleVariable<Point> px;
   constParticleVariable<double> pvol;
   constParticleVariable<double> pMass;
-  constParticleVariable<Matrix3> psize;
-  constParticleVariable<Matrix3> deformationGradient;
+  constParticleVariable<Matrix3> pSize;
+  constParticleVariable<Matrix3> pDefGrad;
   constParticleVariable<Vector> pFlux;
   constNCVariable<double> gConc_OldNoBC;
   NCVariable<double> gConcRate;
@@ -203,7 +203,7 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
   old_dw->get(px, d_lb->pXLabel, pset);
   old_dw->get(pvol, d_lb->pVolumeLabel, pset);
   old_dw->get(pMass, d_lb->pMassLabel, pset);
-  new_dw->get(psize, d_lb->pCurSizeLabel, pset);
+  new_dw->get(pSize, d_lb->pCurSizeLabel, pset);
   new_dw->get(pFlux, d_lb->diffusion->pFlux_preReloc, pset);
 
   new_dw->allocateAndPut(gConcRate,
@@ -221,7 +221,7 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
     particleIndex idx = *iter;
 
     // Get the node indices that surround the cell
-    interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx]);
+    interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx]);
     int NN = static_cast<int>(ni.size());
 
     Vector J         = pFlux[idx];

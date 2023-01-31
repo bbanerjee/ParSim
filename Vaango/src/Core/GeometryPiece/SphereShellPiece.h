@@ -109,7 +109,7 @@ class SphereShellPiece : public ShellGeometryPiece {
                   ParticleVariable<double>& pThickTop,
                   ParticleVariable<double>& pThickBot,
                   ParticleVariable<Vector>& pNormal,
-                  ParticleVariable<Matrix3>& psize,
+                  ParticleVariable<Matrix3>& pSize,
                   particleIndex start);
 
  private:

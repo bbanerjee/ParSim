@@ -149,7 +149,7 @@ NonLinearDiff1::computeFlux(const Patch* patch,
   constParticleVariable<double> pConcentration;
   constParticleVariable<Matrix3> pStress;
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<double> pDiffusivity_old;
 
   constNCVariable<double> gConcentration;
@@ -165,7 +165,7 @@ NonLinearDiff1::computeFlux(const Patch* patch,
   old_dw->get(pConcentration, d_lb->diffusion->pConcentration, pset);
   old_dw->get(pStress, d_lb->pStressLabel, pset);
   old_dw->get(pDiffusivity_old, d_lb->diffusion->pDiffusivity, pset);
-  new_dw->get(psize, d_lb->pCurSizeLabel, pset);
+  new_dw->get(pSize, d_lb->pCurSizeLabel, pset);
 
   new_dw->get(gConcentration,
               d_lb->diffusion->gConcentration,
@@ -204,7 +204,7 @@ NonLinearDiff1::computeFlux(const Patch* patch,
     particleIndex idx = *iter;
 
     Matrix3 defGrad{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
-    interpolator->findCellAndWeights(px[idx], ni, S, psize[idx], defGrad);
+    interpolator->findCellAndWeights(px[idx], ni, S, pSize[idx], defGrad);
 
 #if defined USE_PARTICLE_VALUES
     double neg_one_third = -1.0 / 3.0;

@@ -63,7 +63,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_centrifuge_bulge --line xmin ymin zmin xmax ymax zmax --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepsize> --uda <uda file_name_prefix>")
+    usage="extract_centrifuge_bulge --line xmin ymin zmin xmax ymax zmax --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepSize> --uda <uda file_name_prefix>")
   parser.add_argument('--line', nargs=6, help = 'xmin ymin zmin xmax ymax zmax', type=float, required=True)
   parser.add_argument('--mat', default=0, type=int, required=True)
   parser.add_argument('--tlo', default=0, type=int, required=False)
@@ -419,11 +419,11 @@ def plot_xz(particle_data, time_id, plt_color, line_style):
   ax.set_xlim(-14, 14)
   #ax.set_ylim(0, 20)
   ax.set_ylim(0, 40)
-  stepsize = 2
+  stepSize = 2
   start, end = ax.get_xlim()
-  ax.xaxis.set_ticks(np.arange(start, end, stepsize))
+  ax.xaxis.set_ticks(np.arange(start, end, stepSize))
   start, end = ax.get_ylim()
-  ax.yaxis.set_ticks(np.arange(start, end, stepsize))
+  ax.yaxis.set_ticks(np.arange(start, end, stepSize))
   plt.gca().set_aspect('equal', 'datalim')
   #ax.set_xlim(-0.3, 0.3)
   #ax.set_ylim(0, 1.2)

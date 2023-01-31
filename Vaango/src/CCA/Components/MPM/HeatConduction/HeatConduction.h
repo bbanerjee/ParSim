@@ -41,10 +41,11 @@ class ProcessorGroup;
 class HeatConduction
 {
 public:
-  HeatConduction(MaterialManagerP& ss,
-                 const MPMLabel* lb,
-                 const MPMFlags* mflags);
-  ~HeatConduction();
+  HeatConduction(const MaterialManagerP& mat_manager,
+                 const MPMLabel* labels,
+                 const MPMFlags* flags);
+
+  ~HeatConduction() = default;
 
   void
   scheduleComputeInternalHeatRate(SchedulerP&,
@@ -93,14 +94,18 @@ public:
                            DataWarehouse* new_dw);
 
 private:
-  MPMLabel* d_lb;
-  MPMFlags* d_flag;
-  MaterialManagerP d_mat_manager;
-  int NGP, NGN;
+  const MaterialManagerP d_mat_manager{nullptr};
+  const MPMLabel* d_mpm_labels{nullptr};
+  const MPMFlags* d_mpm_flags{nullptr};
+  int d_num_ghost_particles{2};
+  int d_num_ghost_nodes{2};
 
-  HeatConduction(const HeatConduction&);
+  HeatConduction(const HeatConduction&) = delete;
+  HeatConduction(HeatConduction&&) = delete;
   HeatConduction&
-  operator=(const HeatConduction&);
+  operator=(const HeatConduction&) = delete;
+  HeatConduction&
+  operator=(HeatConduction&&) = delete;
 };
 
 } // end namespace Uintah

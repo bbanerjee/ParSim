@@ -115,9 +115,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
 
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pSize;
       if (n8or27 == 27)
-        old_dw->get(psize, lb->pSizeLabel, pset);
+        old_dw->get(pSize, lb->pSizeLabel, pset);
 
       if (doCrackPropagation) {
 

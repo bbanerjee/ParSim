@@ -290,7 +290,7 @@ FileGeometryPiece::read_line(std::istream& is, Point& xmin, Point& xmax)
   double vol = size.Determinant();
   if (vol < 0) {
     // switch r2 and r3 in size to get a positive volume
-    Matrix3 tmpsize(size(0, 0),
+    Matrix3 tmpSize(size(0, 0),
                     size(0, 2),
                     size(0, 1),
                     size(1, 0),
@@ -299,9 +299,9 @@ FileGeometryPiece::read_line(std::istream& is, Point& xmin, Point& xmax)
                     size(2, 0),
                     size(2, 2),
                     size(2, 1));
-    d_tensors.at("p.size").push_back(tmpsize);
+    d_tensors.at("p.size").push_back(tmpSize);
   } else {
-    // CPTI and CPDI populate psize matrix with Rvectors in columns
+    // CPTI and CPDI populate pSize matrix with Rvectors in columns
     // normalized by the grid spacing for interpolators in ParticleCreator.cc
     d_tensors.at("p.size").push_back(size);
   }

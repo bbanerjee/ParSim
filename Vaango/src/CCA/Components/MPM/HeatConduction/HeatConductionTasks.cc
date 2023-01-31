@@ -25,8 +25,12 @@
 
 #include <CCA/Components/MPM/HeatConduction/HeatConductionTasks.h>
 
+#include <CCA/Components/MPM/HeatConduction/HeatConduction.h>
+#include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
+#include <CCA/Components/MPM/ThermalContact/ThermalContactFactory.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
-#include <CCA/Components/MPM/Materials/MPMMaterial.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 
@@ -82,8 +86,8 @@ HeatConductionTasks::scheduleComputeHeatExchange(SchedulerP& sched,
                                                  const PatchSet* patches,
                                                  const MaterialSet* matls)
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   /* computeHeatExchange
@@ -96,7 +100,7 @@ HeatConductionTasks::scheduleComputeHeatExchange(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleComputeHeatExchange");
 
   Task* t = scinew Task("ThermalContact::computeHeatExchange",
-                        thermalContactModel,
+                        thermalContactModel.get(),
                         &ThermalContact::computeHeatExchange);
 
   thermalContactModel->addComputesAndRequires(t, patches, matls);
@@ -111,8 +115,8 @@ HeatConductionTasks::scheduleComputeInternalHeatRate(SchedulerP& sched,
                                                      const PatchSet* patches,
                                                      const MaterialSet* matls)
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   printSchedule(patches, cout_doing, "MPM::scheduleComputeInternalHeatRate");
@@ -127,8 +131,8 @@ HeatConductionTasks::scheduleComputeNodalHeatFlux(SchedulerP& sched,
                                                   const PatchSet* patches,
                                                   const MaterialSet* matls)
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   printSchedule(patches, cout_doing, "MPM::scheduleComputeNodalHeatFlux");
@@ -143,8 +147,8 @@ HeatConductionTasks::scheduleSolveHeatEquations(SchedulerP& sched,
                                                 const PatchSet* patches,
                                                 const MaterialSet* matls)
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   printSchedule(patches, cout_doing, "MPM::scheduleSolveHeatEquations");
@@ -159,8 +163,8 @@ HeatConductionTasks::scheduleIntegrateTemperatureRate(SchedulerP& sched,
                                                       const PatchSet* patches,
                                                       const MaterialSet* matls)
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   printSchedule(patches, cout_doing, "MPM::scheduleIntegrateTemperatureRate");

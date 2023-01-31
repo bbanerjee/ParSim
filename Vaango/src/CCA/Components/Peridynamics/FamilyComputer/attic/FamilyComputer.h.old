@@ -75,7 +75,7 @@ namespace Vaango {
 
     Uintah::ParticleVariable<Uintah::Point> position;
     Uintah::ParticleVariable<Uintah::Vector> pvelocity, pexternalforce;
-    Uintah::ParticleVariable<Uintah::Matrix3> psize;
+    Uintah::ParticleVariable<Uintah::Matrix3> pSize;
     Uintah::ParticleVariable<double> pmass, pvolume;
     Uintah::ParticleVariable<Uintah::long64> pparticleID;
     Uintah::ParticleVariable<Uintah::Vector> pdisp;

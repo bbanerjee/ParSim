@@ -177,10 +177,10 @@ Crack::MoveCracks(const ProcessorGroup*,
       int dwi = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-      constParticleVariable<Matrix3> psize;
-      constParticleVariable<Matrix3> deformationGradient;
-      old_dw->get(psize, lb->pSizeLabel, pset);
-      old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+      constParticleVariable<Matrix3> pSize;
+      constParticleVariable<Matrix3> pDefGrad;
+      old_dw->get(pSize, lb->pSizeLabel, pset);
+      old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
       Ghost::GhostType gac = Ghost::AroundCells;
       constNCVariable<double> gMass, Gmass;
@@ -208,7 +208,7 @@ Crack::MoveCracks(const ProcessorGroup*,
               Vector vcm = Vector(0.0, 0.0, 0.0);
 
               interpolator->findCellAndWeights(
-                pt, ni, S, psize[idx], deformationGradient[idx]);
+                pt, ni, S, pSize[idx], pDefGrad[idx]);
 
               // Calculate center-of-velocity (vcm)
               // Sum of shape functions from nodes with particle(s) around them

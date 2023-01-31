@@ -451,9 +451,9 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
 
     ParticleSubset* pset;
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
-    constParticleVariable<Matrix3> deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
+    constParticleVariable<Matrix3> pSize;
+    constParticleVariable<Matrix3> pDefGrad_new;
+    constParticleVariable<Matrix3> pDefGrad;
     constParticleVariable<double> pmass, pvolumeold;
     constParticleVariable<double> pvolume_deformed;
     ParticleVariable<double> stretch;
@@ -478,9 +478,9 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     pset = parent_old_dw->getParticleSubset(dwi, patch);
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(pmass, lb->pMassLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
-    parent_old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
     parent_old_dw->get(fail_old, pFailureLabel, pset);
     parent_old_dw->get(ElasticStress_old, pElasticStressLabel, pset);
@@ -492,7 +492,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     parent_old_dw->get(history6_old, pHistory6Label, pset);
 
     new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(stretch, pStretchLabel_preReloc, pset);
@@ -546,19 +546,19 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         interpolator->findCellAndShapeDerivatives(px[idx],
                                                   ni,
                                                   d_S,
-                                                  psize[idx],
-                                                  deformationGradient[idx]);
+                                                  pSize[idx],
+                                                  pDefGrad[idx]);
         int dof[24];
         loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
 
         // get the volumetric part of the deformation
-        double J              = deformationGradient_new[idx].Determinant();
+        double J              = pDefGrad_new[idx].Determinant();
         deformed_fiber_vector = pfiberdir[idx]; // not actually deformed yet
         //________________UNCOUPLE DEVIATORIC AND DILATIONAL PARTS of DEF GRAD
         //________________Ftilde=J^(-1/3)*F and Fvol=J^1/3*Identity
         //________________right Cauchy Green (C) tilde and invariants
-        rightCauchyGreentilde_new = deformationGradient_new[idx].Transpose() *
-                                    deformationGradient_new[idx] *
+        rightCauchyGreentilde_new = pDefGrad_new[idx].Transpose() *
+                                    pDefGrad_new[idx] *
                                     pow(J, -(2. / 3.));
         I1tilde = rightCauchyGreentilde_new.Trace();
         I2tilde =
@@ -570,14 +570,14 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         lambda_tilde = sqrt(I4tilde);
         double I4    = I4tilde * pow(J, (2. / 3.)); // For diagnostics only
         stretch[idx] = sqrt(I4);
-        deformed_fiber_vector = deformationGradient_new[idx] *
+        deformed_fiber_vector = pDefGrad_new[idx] *
                                 deformed_fiber_vector *
                                 (1. / lambda_tilde * pow(J, -(1. / 3.)));
         Matrix3 DY(deformed_fiber_vector, deformed_fiber_vector);
 
         //________________________________left Cauchy Green (B) tilde
-        leftCauchyGreentilde_new = deformationGradient_new[idx] *
-                                   deformationGradient_new[idx].Transpose() *
+        leftCauchyGreentilde_new = pDefGrad_new[idx] *
+                                   pDefGrad_new[idx].Transpose() *
                                    pow(J, -(2. / 3.));
 
         double dWdI1 = 0., dWdI2 = 0., d2WdI1dI1 = 0.;
@@ -954,9 +954,9 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
-    constParticleVariable<Matrix3> deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
+    constParticleVariable<Matrix3> pSize;
+    constParticleVariable<Matrix3> pDefGrad_new;
+    constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress;
     constParticleVariable<double> pvolumeold;
     constParticleVariable<double> pvolume_deformed;
@@ -979,10 +979,10 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
     old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(fail_old, pFailureLabel, pset);
 
     old_dw->get(ElasticStress_old, pElasticStressLabel, pset);
@@ -994,7 +994,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     old_dw->get(history6_old, pHistory6Label, pset);
 
     new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(pfiberdir_carry, lb->pFiberDirLabel_preReloc, pset);
@@ -1040,8 +1040,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     } else {
       for (int idx : *pset) {
         // get the volumetric part of the deformation
-        double J = deformationGradient_new[idx].Determinant();
-        // double Jold = deformationGradient[idx].Determinant();
+        double J = pDefGrad_new[idx].Determinant();
+        // double Jold = pDefGrad[idx].Determinant();
         // double Jinc = J/Jold;
         // carry forward fiber direction
         pfiberdir_carry[idx]  = pfiberdir[idx];
@@ -1049,8 +1049,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         //_______________________UNCOUPLE DEVIATORIC AND DILATIONAL PARTS
         //_______________________Ftilde=J^(-1/3)*F, Fvol=J^1/3*Identity
         //_______________________right Cauchy Green (C) tilde and invariants
-        rightCauchyGreentilde_new = deformationGradient_new[idx].Transpose() *
-                                    deformationGradient_new[idx] *
+        rightCauchyGreentilde_new = pDefGrad_new[idx].Transpose() *
+                                    pDefGrad_new[idx] *
                                     pow(J, -(2. / 3.));
         I1tilde = rightCauchyGreentilde_new.Trace();
         I2tilde =
@@ -1063,7 +1063,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         // For diagnostics only
         double I4             = I4tilde * pow(J, (2. / 3.));
         stretch[idx]          = sqrt(I4);
-        deformed_fiber_vector = deformationGradient_new[idx] *
+        deformed_fiber_vector = pDefGrad_new[idx] *
                                 deformed_fiber_vector *
                                 (1. / lambda_tilde * pow(J, -(1. / 3.)));
 
@@ -1079,8 +1079,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         }
 
         //________________________________left Cauchy Green (B) tilde
-        leftCauchyGreentilde_new = deformationGradient_new[idx] *
-                                   deformationGradient_new[idx].Transpose() *
+        leftCauchyGreentilde_new = pDefGrad_new[idx] *
+                                   pDefGrad_new[idx].Transpose() *
                                    pow(J, -(2. / 3.));
         //________________________________strain energy derivatives
         if (lambda_tilde < 1.) {

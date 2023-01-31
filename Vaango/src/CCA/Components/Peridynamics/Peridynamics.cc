@@ -576,8 +576,8 @@ Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
         constParticleVariable<Point> px;
         new_dw->get(px, d_labels->pPositionLabel, pset);
 
-        //constParticleVariable<Matrix3> psize;
-        //new_dw->get(psize, d_labels->pSizeLabel, pset);
+        //constParticleVariable<Matrix3> pSize;
+        //new_dw->get(pSize, d_labels->pSizeLabel, pset);
 
         //constParticleVariable<Matrix3> pDefGrad;
         //new_dw->get(pDefGrad, d_labels->pDefGradLabel, pset);

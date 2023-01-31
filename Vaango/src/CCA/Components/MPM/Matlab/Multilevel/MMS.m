@@ -1,7 +1,7 @@
 function [s] = MMS()
   % create function handles that are used in AMRMPM.m
   s.displacement        = @MMS_displacement;
-  s.deformationGradient = @MMS_deformationGradient;
+  s.pDefGrad = @MMS_pDefGrad;
   s.velocity            = @MMS_velocity;
   s.stress              = @MMS_stress;
   s.accl_bodyForce      = @MMS_accl_bodyForce;
@@ -28,7 +28,7 @@ function [s] = MMS()
 
   %__________________________________
   % Equation 48
-  function [F] = MMS_deformationGradient(xp_initial, t, NP,speedSound, h)
+  function [F] = MMS_pDefGrad(xp_initial, t, NP,speedSound, h)
     F  = zeros(NP,1);
     A = 0.05;   % Hardwired
 
@@ -52,7 +52,7 @@ function [s] = MMS()
   function [stressExact] = MMS_stress(xp_initial, t, NP, speedSound, h, E)
     stressExact  = zeros(NP,1);
 
-    [F] = MMS_deformationGradient(xp_initial, t, NP,speedSound, h);
+    [F] = MMS_pDefGrad(xp_initial, t, NP,speedSound, h);
 
     for ip=1:NP
       stressExact(ip)  = .5 * E * (F(ip) - 1.0 / F(ip));
@@ -87,7 +87,7 @@ function [s] = MMS()
   function [divStressExact] = MMS_divergenceStress(x, t, N, speedSound, h, E)
     divStressExact  = zeros(N,1);
 
-    [F] = MMS_deformationGradient(x, t, N,speedSound, h);
+    [F] = MMS_pDefGrad(x, t, N,speedSound, h);
     
     [dFdx] = MMS_dFdx(x, t, N, speedSound, h, E);
 
@@ -102,7 +102,7 @@ function [s] = MMS()
      b = zeros(NP,1);
 
     [dp] = MMS_displacement(       xp_initial, t, NP, speedSound, h);
-    [F]  = MMS_deformationGradient(xp_initial, t, NP, speedSound, h);
+    [F]  = MMS_pDefGrad(xp_initial, t, NP, speedSound, h);
 
     c1 = speedSound * speedSound * pi * pi/ (h * h);
     for ip=1:NP
@@ -129,7 +129,7 @@ function [s] = MMS()
       
     [dpExact]  = MMS_displacement(       xp_initial, OV.t, OV.NP, OV.speedSound, OV.bar_length);
     [velExact] = MMS_velocity(           xp_initial, OV.t, OV.NP, OV.speedSound, OV.bar_length);
-    [FpExact]  = MMS_deformationGradient(xp_initial, OV.t, OV.NP, OV.speedSound, OV.bar_length);
+    [FpExact]  = MMS_pDefGrad(xp_initial, OV.t, OV.NP, OV.speedSound, OV.bar_length);
     xpExact = xp_initial + dpExact;
     
     % compute L2Norm

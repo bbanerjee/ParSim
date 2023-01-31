@@ -61,6 +61,32 @@ public:
                   const MaterialSet* matls);
 
 private:
+  void
+  scheduleComputeHeatExchange(SchedulerP& sched,
+                              const PatchSet* patches,
+                              const MaterialSet* matls);
+
+  void
+  scheduleComputeInternalHeatRate(SchedulerP& sched,
+                                  const PatchSet* patches,
+                                  const MaterialSet* matls);
+
+  void
+  scheduleComputeNodalHeatFlux(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls);
+
+  void
+  scheduleSolveHeatEquations(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
+
+  void
+  scheduleIntegrateTemperatureRate(SchedulerP& sched,
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls);
+
+private:
   const MPMLabel* d_mpm_labels;
   const MPMFlags* d_mpm_flags;
   MaterialManagerP d_mat_manager;

@@ -306,7 +306,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Point> px;
     constParticleVariable<double> pmass;
     ParticleVariable<double> pvolume,p_q;
-    constParticleVariable<Vector> pvelocity,psize;
+    constParticleVariable<Vector> pvelocity,pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double>  pPlasticStrain_new;
@@ -337,7 +337,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px,                  lb->pXLabel,                        pset);
     old_dw->get(pmass,               lb->pMassLabel,                     pset);
-    old_dw->get(psize,               lb->pSizeLabel,                     pset);
+    old_dw->get(pSize,               lb->pSizeLabel,                     pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,                 pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel,       pset);
     old_dw->get(stress_old,             lb->pStressLabel,                pset);
@@ -390,14 +390,14 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       L_new.set(0.0);
       if(!flag->d_axisymmetric){
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],
+        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,pSize[idx],
         defGrad[idx]);
 
         computeVelocityGradient(L_new,ni,d_S, oodx, gVelocity);
       } else {  // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
-                                  psize[idx],defGrad[idx]);
+                                  pSize[idx],defGrad[idx]);
         // x -> r, y -> z, z -> theta
         computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gVelocity,px[idx]);
       }
@@ -815,7 +815,7 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Point> px;
     constParticleVariable<double> pmass;
     ParticleVariable<double> pvolume, p_q;
-    constParticleVariable<Vector> pvelocity, psize;
+    constParticleVariable<Vector> pvelocity, pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double> pPlasticStrain_new;
@@ -850,7 +850,7 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);
@@ -888,14 +888,14 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       L_new.set(0.0);
       if (!flag->d_axisymmetric) {
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
+        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx],
                                                   defGrad[idx]);
 
         computeVelocityGradient(L_new, ni, d_S, oodx, gVelocity);
       } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(
-          px[idx], ni, S, d_S, psize[idx], defGrad[idx]);
+          px[idx], ni, S, d_S, pSize[idx], defGrad[idx]);
         // x -> r, y -> z, z -> theta
         computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gVelocity,
                                       px[idx]);

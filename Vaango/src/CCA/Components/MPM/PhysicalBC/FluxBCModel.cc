@@ -258,7 +258,7 @@ FluxBCModel::applyExternalScalarFlux(const ProcessorGroup*,
       constParticleVariable<Point> px;
       constParticleVariable<Vector> parea;
       constParticleVariable<double> pvol;
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pSize;
       ParticleVariable<double> pExternalScalarFlux;
       ParticleVariable<double> pExternalScalarFlux_pR;
 

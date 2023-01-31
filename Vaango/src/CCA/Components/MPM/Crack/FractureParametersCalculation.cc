@@ -132,12 +132,12 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       // Get particle's solutions
       constParticleVariable<Short27> pgCode;
       constParticleVariable<Point> px;
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pSize;
       constParticleVariable<double> pmass;
       constParticleVariable<double> pstrainenergydensity;
       constParticleVariable<double> pkineticenergydensity;
       constParticleVariable<Matrix3> pstress, pdispgrads, pvelgrads,
-        deformationGradient;
+        pDefGrad;
 
       ParticleSubset* pset = old_dw->getParticleSubset(
         dwi, patch, Ghost::AroundNodes, NGP, lb->pXLabel);
@@ -153,8 +153,8 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       new_dw->get(pkineticenergydensity, lb->pKineticEnergyDensityLabel, pset);
 
       old_dw->get(px, lb->pXLabel, pset);
-      old_dw->get(psize, lb->pSizeLabel, pset);
-      old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+      old_dw->get(pSize, lb->pSizeLabel, pset);
+      old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
       // Get nodal mass
       constNCVariable<double> gMass, Gmass;
@@ -199,7 +199,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
              iter++) {
           particleIndex idx = *iter;
           interpolator->findCellAndWeights(
-            px[idx], ni, S, psize[idx], deformationGradient[idx]);
+            px[idx], ni, S, pSize[idx], pDefGrad[idx]);
 
           for (int k = 0; k < n8or27; k++) {
             if (patch->containsNode(ni[k])) {
@@ -355,10 +355,10 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       new_dw->get(gvelGrads, lb->gVelGradsLabel, dwi, patch, gac, NGC);
       new_dw->get(GvelGrads, lb->GVelGradsLabel, dwi, patch, gac, NGC);
 
-      constParticleVariable<Matrix3> psize;
-      constParticleVariable<Matrix3> deformationGradient;
-      old_dw->get(psize, lb->pSizeLabel, pset);
-      old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+      constParticleVariable<Matrix3> pSize;
+      constParticleVariable<Matrix3> pDefGrad;
+      old_dw->get(pSize, lb->pSizeLabel, pset);
+      old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
       // Allocate memories for cfSegJ and cfSegK
       int cfNodeSize = (int)cfSegNodes[m].size();
@@ -547,7 +547,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Matrix3 Sca = Matrix3(0.), Scb = Matrix3(0.);
                   for (int j = 0; j <= nSegs; j++) {
                     interpolator->findCellAndWeights(
-                      X[j], ni, S, psize[j], deformationGradient[j]);
+                      X[j], ni, S, pSize[j], pDefGrad[j]);
                     for (int k = 0; k < n8or27; k++) {
                       // Calculate the values of the variables used in
                       // J-integral
@@ -728,7 +728,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                       Matrix3 VG = Matrix3(0.0);
 
                       interpolator->findCellAndWeights(
-                        X[j], ni, S, psize[j], deformationGradient[j]);
+                        X[j], ni, S, pSize[j], pDefGrad[j]);
 
                       for (int k = 0; k < n8or27; k++) {
                         if (GnumPatls[ni[k]] != 0 &&
@@ -862,7 +862,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Vector disp_a = Vector(0.);
                   Vector disp_b = Vector(0.);
                   interpolator->findCellAndWeights(
-                    p_d, ni, S, psize[0], deformationGradient[0]);
+                    p_d, ni, S, pSize[0], pDefGrad[0]);
                   for (int k = 0; k < n8or27; k++) {
                     disp_a += gdisp[ni[k]] * S[k];
                     disp_b += Gdisp[ni[k]] * S[k];

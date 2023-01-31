@@ -221,8 +221,8 @@ NonLinearDiff2::computeDivergence(const Patch* patch,
   constParticleVariable<Point> px;
   constParticleVariable<double> pvol;
   constParticleVariable<double> pMass;
-  constParticleVariable<Matrix3> psize;
-  constParticleVariable<Matrix3> deformationGradient;
+  constParticleVariable<Matrix3> pSize;
+  constParticleVariable<Matrix3> pDefGrad;
   constParticleVariable<Vector> pPosChargeFlux;
   constParticleVariable<Vector> pNegChargeFlux;
 
@@ -236,7 +236,7 @@ NonLinearDiff2::computeDivergence(const Patch* patch,
   old_dw->get(px, d_lb->pXLabel, pset);
   old_dw->get(pvol, d_lb->pVolumeLabel, pset);
   old_dw->get(pMass, d_lb->pMassLabel, pset);
-  new_dw->get(psize, d_lb->pCurSizeLabel, pset);
+  new_dw->get(pSize, d_lb->pCurSizeLabel, pset);
 
   new_dw->get(pPosChargeFlux, d_Al->pPosChargeFluxLabel_preReloc, pset);
   new_dw->get(pNegChargeFlux, d_Al->pNegChargeFluxLabel_preReloc, pset);
@@ -260,7 +260,7 @@ NonLinearDiff2::computeDivergence(const Patch* patch,
     particleIndex idx = *iter;
 
     // Get the node indices that surround the cell
-    interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx]);
+    interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx]);
     int NN = static_cast<int>(ni.size());
 
     Vector PosJ         = pPosChargeFlux[idx];

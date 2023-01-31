@@ -117,7 +117,7 @@ protected:
 protected:
   Uintah::ParticleVariable<Uintah::Point> d_position;
   Uintah::ParticleVariable<Uintah::Vector> d_pvelocity, d_pexternalforce;
-  Uintah::ParticleVariable<Uintah::Matrix3> d_psize;
+  Uintah::ParticleVariable<Uintah::Matrix3> d_pSize;
   Uintah::ParticleVariable<double> d_pmass, d_pvolume;
   Uintah::ParticleVariable<Uintah::long64> d_pparticleID;
   Uintah::ParticleVariable<Uintah::Vector> d_pdisp;

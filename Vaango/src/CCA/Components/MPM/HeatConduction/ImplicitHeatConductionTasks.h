@@ -37,8 +37,9 @@ namespace Uintah {
 
 class Patch;
 class DataWarehouse;
-class MPMFlags;
+class ImpMPMFlags;
 class MPMLabel;
+class ImpMPMLabel;
 class ThermalContact;
 class ImplicitHeatConduction;
 
@@ -46,9 +47,9 @@ class ImplicitHeatConductionTasks final
 {
 public:
   ImplicitHeatConductionTasks(const ProblemSpecP& ps,
-                              MaterialManagerP& ss,
+                              const MaterialManagerP& ss,
                               const MPMLabel* mpm_labels,
-                              const MPMFlags* mpm_flags);
+                              const ImpMPMFlags* impmpm_flags);
 
   ~ImplicitHeatConductionTasks() = default;
 
@@ -167,9 +168,30 @@ private:
                              DataWarehouse* new_dw);
 
 private:
-  const MPMLabel* d_mpm_labels;
-  const MPMFlags* d_mpm_flags;
-  MaterialManagerP d_mat_manager;
+  void
+  scheduleComputeInternalHeatRate(SchedulerP& sched,
+                                  const PatchSet* patches,
+                                  const MaterialSet* matls);
+
+  void
+  scheduleComputeNodalHeatFlux(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls);
+
+  void
+  scheduleSolveHeatEquations(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
+
+  void
+  scheduleIntegrateTemperatureRate(SchedulerP& sched,
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls);
+
+private:
+  const MaterialManagerP d_mat_manager{ nullptr };
+  const MPMLabel* d_mpm_labels{ nullptr };
+  const ImpMPMFlags* d_mpm_flags{ nullptr };
 
   std::unique_ptr<ThermalContact> thermalContactModel{ nullptr };
   std::unique_ptr<ImplicitHeatConduction> heatConductionModel{ nullptr };

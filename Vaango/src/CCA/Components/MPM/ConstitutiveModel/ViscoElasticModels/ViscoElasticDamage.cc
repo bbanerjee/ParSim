@@ -87,7 +87,7 @@ using namespace Uintah;
 ViscoElasticDamage::ViscoElasticDamage(ProblemSpecP& ps)
 {
   // Constructor
-  // Initialize deformationGradient
+  // Initialize pDefGrad
   ps->require("bulk_modulus", d_Bulk);
   ps->require("shear_modulus", d_Shear);
   ps->require("alpha", d_Alpha);
@@ -96,7 +96,7 @@ ViscoElasticDamage::ViscoElasticDamage(ProblemSpecP& ps)
   ps->require("gamma", d_Gamma);
   ps->require("max_equiv_strain", maxEquivStrain);
 
-  deformationGradient.Identity();
+  pDefGrad.Identity();
   bElBar.Identity();
   damageG = 1.0; // No damage at beginning
   E_bar.set(0.0);
@@ -125,9 +125,9 @@ ViscoElasticDamage::ViscoElasticDamage(double bulk, double shear, double alpha,
   , maxEquivStrain(strainmax)
 {
   // Main constructor
-  // Initialize deformationGradient
+  // Initialize pDefGrad
 
-  deformationGradient.Identity();
+  pDefGrad.Identity();
   bElBar.Identity();
   damageG = 1.0; // No damage at beginning
   E_bar.set(0.0);
@@ -138,7 +138,7 @@ ViscoElasticDamage::ViscoElasticDamage(double bulk, double shear, double alpha,
 }
 
 ViscoElasticDamage::ViscoElasticDamage(const ViscoElasticDamage& cm)
-  : deformationGradient(cm.deformationGradient)
+  : pDefGrad(cm.pDefGrad)
   , bElBar(cm.bElBar)
   , E_bar(cm.E_bar)
   , current_E_bar(cm.current_E_bar)
@@ -220,7 +220,7 @@ ViscoElasticDamage::setDeformationMeasure(Matrix3 dg)
 {
   // Assign the deformation gradient tensor (3 x 3 Matrix)
 
-  deformationGradient = dg;
+  pDefGrad = dg;
 }
 
 Matrix3
@@ -236,7 +236,7 @@ ViscoElasticDamage::getDeformationMeasure() const
 {
   // Return the strain tensor (3 x 3 Matrix)
 
-  return deformationGradient;
+  return pDefGrad;
 }
 
 std::vector<double>
@@ -270,7 +270,7 @@ ViscoElasticDamage::computeStressTensor(const PatchSubset* patches,
   double equiv_strain;
   double dt_tau;
   Matrix3 damage_normal, Ebar_increament, dev_Snn, temp_par;
-  Matrix3 deformationGradientInc;
+  Matrix3 pDefGradInc;
   double onethird = (1.0 / 3.0);
   double damage_flag = 0.0;
   Matrix3 Identity;
@@ -283,19 +283,19 @@ ViscoElasticDamage::computeStressTensor(const PatchSubset* patches,
   // Compute the deformation gradient increment using the time_step
   // velocity gradient
   // F_n^np1 = dudx * dt + Identity
-  deformationGradientInc = velocityGradient * time_step + Identity;
+  pDefGradInc = velocityGradient * time_step + Identity;
 
   // Update the deformation gradient tensor to its time n+1 value.
-  deformationGradient = deformationGradientInc * deformationGradient;
+  pDefGrad = pDefGradInc * pDefGrad;
 
-  fbar = deformationGradientInc *
-         pow(deformationGradientInc.Determinant(), -onethird);
+  fbar = pDefGradInc *
+         pow(pDefGradInc.Determinant(), -onethird);
 
   F_bar =
-    deformationGradient * pow(deformationGradient.Determinant(), -onethird);
+    pDefGrad * pow(pDefGrad.Determinant(), -onethird);
 
   C_bar = F_bar * F_bar.Transpose();
-  C_nn = deformationGradient * deformationGradient.Transpose();
+  C_nn = pDefGrad * pDefGrad.Transpose();
 
   // Deviatoric-Elastic part of the Lagrangian Strain Tensor
   current_E_bar = (C_bar - Identity) / 2.0;
@@ -343,12 +343,12 @@ ViscoElasticDamage::computeStressTensor(const PatchSubset* patches,
       temp_double += temp_par(damage_i, damage_j) * C_nn(damage_i, damage_j);
 
   dev_Snn = (temp_par - C_nn.Inverse() * temp_double / 3.0) *
-            pow(deformationGradient.Determinant(), -2.0 / 3.0);
+            pow(pDefGrad.Determinant(), -2.0 / 3.0);
 
-  shearTrial = deformationGradient * dev_Snn * deformationGradient.Transpose();
+  shearTrial = pDefGrad * dev_Snn * pDefGrad.Transpose();
 
   // get the volumetric part of the deformation
-  J = deformationGradient.Determinant();
+  J = pDefGrad.Determinant();
 
   // get the hydrostatic part of the stress
   p = 0.5 * d_Bulk * (J - 1.0 / J);

@@ -806,11 +806,11 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass;
     constParticleVariable<double> pVolume;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pVolume, lb->pVolumeLabel, pset);
 
@@ -1779,7 +1779,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     pEnergy;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pStress, pRotation, pPlasticStrain;
   constNCVariable<Vector> gDisp;
 
@@ -1824,7 +1824,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pStress, lb->pStressLabel, pset);
 
@@ -2198,7 +2198,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     pEqPlasticStrainRate, pPorosity;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pStress, pPlasticStrain;
   constNCVariable<Vector> gDisp;
 
@@ -2253,7 +2253,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     parent_old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pStress, lb->pStressLabel, pset);
@@ -2298,7 +2298,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
       // Calculate the displacement gradient
       interpolator->findCellAndShapeDerivatives(
-        px[idx], ni, d_S, psize[idx], pDefGrad[idx]);
+        px[idx], ni, d_S, pSize[idx], pDefGrad[idx]);
       computeGradAndBmats(DispGrad, ni, d_S, oodx, gDisp, l2g, B, Bnl, dof);
 
       // Compute the deformation gradient increment

@@ -519,10 +519,10 @@ RuntimeStats::report(MPI_Comm comm)
 
   std::unique_lock<Uintah::MasterLock> lock(g_report_lock);
 
-  int psize;
+  int pSize;
   int prank;
 
-  MPI::Comm_size(comm, &psize);
+  MPI::Comm_size(comm, &pSize);
   MPI::Comm_rank(comm, &prank);
 
   int num_report_values = 0;
@@ -668,16 +668,16 @@ RuntimeStats::report(MPI_Comm comm)
         const int64_t total = global_data[i + SUM];
         const int64_t min   = global_data[i + MIN];
         const int64_t max   = global_data[i + MAX];
-        const double avg    = static_cast<double>(total) / psize;
+        const double avg    = static_cast<double>(total) / pSize;
 
         const double q1 =
-          static_cast<double>(100 * global_histograms[i + Q1]) / psize;
+          static_cast<double>(100 * global_histograms[i + Q1]) / pSize;
         const double q2 =
-          static_cast<double>(100 * global_histograms[i + Q2]) / psize;
+          static_cast<double>(100 * global_histograms[i + Q2]) / pSize;
         const double q3 =
-          static_cast<double>(100 * global_histograms[i + Q3]) / psize;
+          static_cast<double>(100 * global_histograms[i + Q3]) / pSize;
         const double q4 =
-          static_cast<double>(100 * global_histograms[i + Q4]) / psize;
+          static_cast<double>(100 * global_histograms[i + Q4]) / pSize;
 
         const double load = max != 0 ? (100.0 * (1.0 - (avg / max))) : 0.0;
 

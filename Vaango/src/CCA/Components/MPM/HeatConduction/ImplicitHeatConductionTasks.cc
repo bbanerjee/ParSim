@@ -25,8 +25,17 @@
 
 #include <CCA/Components/MPM/HeatConduction/ImplicitHeatConductionTasks.h>
 
+#include <CCA/Components/MPM/HeatConduction/ImplicitHeatConduction.h>
+
+#include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
+#include <CCA/Components/MPM/ThermalContact/ThermalContactFactory.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/ImpMPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
-#include <CCA/Components/MPM/Materials/MPMMaterial.h>
+#include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
+#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 
@@ -40,23 +49,20 @@ static DebugStream cout_doing("ImplicitHeatConduction_MPM", false);
 
 ImplicitHeatConductionTasks::ImplicitHeatConductionTasks(
   const ProblemSpecP& ps,
-  MaterialManagerP& mat_manager,
+  const MaterialManagerP& mat_manager,
   const MPMLabel* mpm_labels,
-  const MPMFlags* mpm_flags)
+  const ImpMPMFlags* mpm_flags)
+  : d_mat_manager(mat_manager)
+  , d_mpm_labels(mpm_labels)
+  , d_mpm_flags(mpm_flags)
 {
-  d_mat_manager = mat_manager;
-  d_mpm_labels  = mpm_labels;
-  d_mpm_flags   = mpm_flags;
+  thermalContactModel =
+    ThermalContactFactory::create(ps, mat_manager, mpm_labels, mpm_flags);
 
-  thermalContactModel = ThermalContactFactory::create(ps,
-                                                      mat_manager,
-                                                      mpm_labels.get(),
-                                                      mpm_flags.get());
+  heatConductionModel = std::make_unique<ImplicitHeatConduction>(
+    mat_manager, mpm_labels, mpm_flags);
 
-  heatConductionModel = std::make_unique<ImplicitHeatConduction>(mat_manager,
-                                                                 mpm_labels.get(),
-                                                                 mpm_flags.get());
-  heatConductionModel->problemSetup(mpm_flags->d_solverType);
+  heatConductionModel->problemSetup(d_mpm_flags->d_solverType);
 }
 
 void
@@ -132,7 +138,7 @@ ImplicitHeatConductionTasks::countMaterialPointsPerLoadCurve(
 
       for (int p = 0; p < patches->size(); p++) {
         const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_mat_manager->getNumMaterials("MPM");
+        size_t numMPMMatls = d_mat_manager->getNumMaterials("MPM");
         int numPts         = 0;
         for (size_t m = 0; m < numMPMMatls; m++) {
           MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
@@ -208,9 +214,8 @@ ImplicitHeatConductionTasks::initializeHeatFluxBC(const ProcessorGroup*,
           ParticleVariable<double> pExternalHeatFlux;
           new_dw->get(pX, d_mpm_labels->pXLabel, pset);
           new_dw->get(pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, pset);
-          new_dw->getModifiable(pExternalHeatFlux,
-                                d_mpm_labels->pExternalHeatFluxLabel,
-                                pset);
+          new_dw->getModifiable(
+            pExternalHeatFlux, d_mpm_labels->pExternalHeatFluxLabel, pset);
 
           for (auto idx : *pset) {
             if (pLoadCurveID[idx] == nofHeatFluxBCs) {
@@ -236,10 +241,8 @@ ImplicitHeatConductionTasks::scheduleProjectHeatSource(
 {
   if (d_mpm_flags->d_projectHeatSource) {
     scheduleComputeCCVolume(sched, perproc_patches, one_material, matls);
-    scheduleProjectCCHeatSourceToNodes(sched,
-                                       perproc_patches,
-                                       one_material,
-                                       matls);
+    scheduleProjectCCHeatSourceToNodes(
+      sched, perproc_patches, one_material, matls);
   }
 }
 
@@ -284,12 +287,9 @@ ImplicitHeatConductionTasks::computeCCVolume(const ProcessorGroup*,
     constNCVariable<double> NC_CCweight;
     old_dw->get(NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gac, 1);
 
-    unsigned int numMPMMatls = d_mat_manager->getNumMatls("MPM");
-
-    for (unsigned int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl =
-        (MPMMaterial*)d_mat_manager->getMaterial("MPM", m);
-      int dwi = mpm_matl->getDWIndex();
+    size_t numMPMMatls = d_mat_manager->getNumMaterials("MPM");
+    for (size_t m = 0; m < numMPMMatls; m++) {
+      int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
 
       constNCVariable<double> gVolume;
       CCVariable<double> cvolume;
@@ -318,9 +318,8 @@ ImplicitHeatConductionTasks::scheduleProjectCCHeatSourceToNodes(
   const MaterialSubset* one_matl,
   const MaterialSet* matls)
 {
-  printSchedule(patches,
-                cout_doing,
-                "IMPM::scheduleProjectCCHeatSourceToNodes");
+  printSchedule(
+    patches, cout_doing, "IMPM::scheduleProjectCCHeatSourceToNodes");
   Task* t =
     scinew Task("ImplicitHeatConductionTasks::projectCCHeatSourceToNodes",
                 this,
@@ -333,10 +332,8 @@ ImplicitHeatConductionTasks::scheduleProjectCCHeatSourceToNodes(
               1);
   t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
   t->requires(Task::NewDW, d_mpm_labels->cVolumeLabel, Ghost::AroundCells, 1);
-  t->requires(Task::OldDW,
-              d_mpm_labels->heatRate_CCLabel,
-              Ghost::AroundCells,
-              1);
+  t->requires(
+    Task::OldDW, d_mpm_labels->heatRate_CCLabel, Ghost::AroundCells, 1);
 
   t->computes(d_mpm_labels->heatRate_CCLabel);
   t->modifies(d_mpm_labels->gExternalHeatRateLabel);
@@ -365,12 +362,9 @@ ImplicitHeatConductionTasks::projectCCHeatSourceToNodes(
     constNCVariable<double> NC_CCweight;
     old_dw->get(NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gac, 1);
 
-    unsigned int numMPMMatls = d_mat_manager->getNumMatls("MPM");
-
-    for (unsigned int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl =
-        (MPMMaterial*)d_mat_manager->getMaterial("MPM", m);
-      int dwi = mpm_matl->getDWIndex();
+    size_t numMPMMatls = d_mat_manager->getNumMaterials("MPM");
+    for (size_t m = 0; m < numMPMMatls; m++) {
+      int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
 
       constNCVariable<double> gVolume;
       NCVariable<double> gextHR;
@@ -378,17 +372,13 @@ ImplicitHeatConductionTasks::projectCCHeatSourceToNodes(
       CCVariable<double> CCheatrate_copy;
 
       new_dw->get(gVolume, d_mpm_labels->gVolumeLabel, dwi, patch, gac, 1);
-      old_dw
-        ->get(CCheatrate, d_mpm_labels->heatRate_CCLabel, dwi, patch, gac, 1);
+      old_dw->get(
+        CCheatrate, d_mpm_labels->heatRate_CCLabel, dwi, patch, gac, 1);
       new_dw->get(cvolume, d_mpm_labels->cVolumeLabel, dwi, patch, gac, 1);
-      new_dw->getModifiable(gextHR,
-                            d_mpm_labels->gExternalHeatRateLabel,
-                            dwi,
-                            patch);
-      new_dw->allocateAndPut(CCheatrate_copy,
-                             d_mpm_labels->heatRate_CCLabel,
-                             dwi,
-                             patch);
+      new_dw->getModifiable(
+        gextHR, d_mpm_labels->gExternalHeatRateLabel, dwi, patch);
+      new_dw->allocateAndPut(
+        CCheatrate_copy, d_mpm_labels->heatRate_CCLabel, dwi, patch);
 
       // carry forward heat rate.
       CCheatrate_copy.copyData(CCheatrate);
@@ -531,7 +521,7 @@ ImplicitHeatConductionTasks::scheduleComputeHeatExchange(
 
   printSchedule(patches, cout_doing, "IMPM::scheduleComputeHeatExchange");
   Task* t = scinew Task("ThermalContact::computeHeatExchange",
-                        thermalContactModel,
+                        thermalContactModel.get(),
                         &ThermalContact::computeHeatExchange);
 
   thermalContactModel->addComputesAndRequires(t, patches, matls);
@@ -543,9 +533,10 @@ ImplicitHeatConductionTasks::scheduleComputeHeatExchange(
  * scheduleComputeInternalHeatRate
  *-----------------------------------------------------------------------*/
 void
-HeatConductionTasks::scheduleComputeInternalHeatRate(SchedulerP& sched,
-                                           const PatchSet* patches,
-                                           const MaterialSet* matls)
+ImplicitHeatConductionTasks::scheduleComputeInternalHeatRate(
+  SchedulerP& sched,
+  const PatchSet* patches,
+  const MaterialSet* matls)
 {
 }
 
@@ -553,9 +544,10 @@ HeatConductionTasks::scheduleComputeInternalHeatRate(SchedulerP& sched,
  * scheduleComputeNodalHeatFlux
  *-----------------------------------------------------------------------*/
 void
-HeatConductionTasks::scheduleComputeNodalHeatFlux(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+ImplicitHeatConductionTasks::scheduleComputeNodalHeatFlux(
+  SchedulerP& sched,
+  const PatchSet* patches,
+  const MaterialSet* matls)
 {
 }
 
@@ -563,9 +555,10 @@ HeatConductionTasks::scheduleComputeNodalHeatFlux(SchedulerP& sched,
  * scheduleSolveHeatEquations
  *-----------------------------------------------------------------------*/
 void
-HeatConductionTasks::scheduleSolveHeatEquations(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+ImplicitHeatConductionTasks::scheduleSolveHeatEquations(
+  SchedulerP& sched,
+  const PatchSet* patches,
+  const MaterialSet* matls)
 {
 }
 
@@ -573,8 +566,9 @@ HeatConductionTasks::scheduleSolveHeatEquations(SchedulerP& sched,
  * scheduleIntegrateTemperatureRate
  *-----------------------------------------------------------------------*/
 void
-HeatConductionTasks::scheduleIntegrateTemperatureRate(SchedulerP& sched,
-                                            const PatchSet* patches,
-                                            const MaterialSet* matls)
+ImplicitHeatConductionTasks::scheduleIntegrateTemperatureRate(
+  SchedulerP& sched,
+  const PatchSet* patches,
+  const MaterialSet* matls)
 {
 }

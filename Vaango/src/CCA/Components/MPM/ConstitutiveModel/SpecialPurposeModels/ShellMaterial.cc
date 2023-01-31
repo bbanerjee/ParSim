@@ -473,7 +473,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
   constParticleVariable<Point> pX;
   constParticleVariable<Vector> pRotRate;
   constParticleVariable<Matrix3> pSize;
-  constParticleVariable<Matrix3> deformationGradient;
+  constParticleVariable<Matrix3> pDefGrad;
   constNCVariable<double> gMass;
 
   // Create arrays for the grid data
@@ -494,7 +494,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pX, lb->pXLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pRotRate, pNormalRotRateLabel, pset);
     new_dw->get(gMass, lb->gMassLabel, dwi, patch, gan, NGN);
 
@@ -509,7 +509,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     for (int idx : *pset) {
       // Get the node indices that surround the cell
       interpolator->findCellAndWeights(pX[idx], ni, S, pSize[idx],
-                                       deformationGradient[idx]);
+                                       pDefGrad[idx]);
 
       // Calculate momentum
       pMom = pRotRate[idx] * pMass[idx];

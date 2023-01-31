@@ -125,7 +125,7 @@ FamilyComputer::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pparticleID,    d_varLabel->pParticleIDLabel,    subset);
   new_dw->allocateAndPut(position,       d_varLabel->pPositionLabel,      subset);
   new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
-  new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
+  new_dw->allocateAndPut(pSize,          d_varLabel->pSizeLabel,          subset);
   new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
   new_dw->allocateAndPut(pdisp,          d_varLabel->pDispLabel,          subset);
   new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
@@ -173,7 +173,7 @@ FamilyComputer::initializeParticle(const Uintah::Patch* patch,
 
   position[i] = p;
   pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  psize[i]      = size;
+  pSize[i]      = size;
   pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
   pmass[i]      = matl->getInitialDensity()*pvolume[i];
   pdisp[i]      = Uintah::Vector(0.,0.,0.);

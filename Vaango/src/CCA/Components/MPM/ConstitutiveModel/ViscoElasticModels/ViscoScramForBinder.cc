@@ -200,8 +200,8 @@ ViscoScramForBinder::initializeCMData(const Patch* patch,
 
   ParticleVariable<Statedata> pStatedata;
   new_dw->allocateAndPut(pStatedata, pStatedataLabel, pset);
-  ParticleVariable<Matrix3> deformationGradient, pstress;
-  new_dw->allocateAndPut(deformationGradient, lb->pDeformationMeasureLabel,
+  ParticleVariable<Matrix3> pDefGrad, pstress;
+  new_dw->allocateAndPut(pDefGrad, lb->pDeformationMeasureLabel,
                          pset);
   new_dw->allocateAndPut(pstress, lb->pStressLabel, pset);
 
@@ -222,7 +222,7 @@ ViscoScramForBinder::initializeCMData(const Patch* patch,
       pStatedata[*iter].sigDev[ii] = zero;
     }
     // Initialize other stuff
-    deformationGradient[*iter] = one;
+    pDefGrad[*iter] = one;
     pstress[*iter] = zero;
   }
   computeStableTimestep(patch, matl, new_dw);
@@ -254,17 +254,17 @@ ViscoScramForBinder::allocateCMDataAdd(
   one.Identity();
 
   ParticleVariable<Statedata> pStatedata;
-  ParticleVariable<Matrix3> deformationGradient, pstress;
+  ParticleVariable<Matrix3> pDefGrad, pstress;
   constParticleVariable<Statedata> o_Statedata;
-  constParticleVariable<Matrix3> o_deformationGradient, o_stress;
+  constParticleVariable<Matrix3> o_pDefGrad, o_stress;
 
   new_dw->allocateTemporary(pStatedata, addset);
-  new_dw->allocateTemporary(deformationGradient, addset);
+  new_dw->allocateTemporary(pDefGrad, addset);
   new_dw->allocateTemporary(pstress, addset);
 
   old_dw->get(o_Statedata, pStatedataLabel, delset);
   old_dw->get(o_stress, lb->pStressLabel, delset);
-  old_dw->get(o_deformationGradient, lb->pDeformationMeasureLabel, delset);
+  old_dw->get(o_pDefGrad, lb->pDeformationMeasureLabel, delset);
 
   ParticleVariable<double> pCrackRadius;
   constParticleVariable<double> o_CrackRadius;
@@ -285,12 +285,12 @@ ViscoScramForBinder::allocateCMDataAdd(
       pStatedata[*n].sigDev[ii] = o_Statedata[*o].sigDev[ii];
     }
     // Initialize other stuff
-    deformationGradient[*n] = o_deformationGradient[*o];
+    pDefGrad[*n] = o_pDefGrad[*o];
     pstress[*n] = zero;
   }
 
   (*newState)[pStatedataLabel] = pStatedata.clone();
-  (*newState)[lb->pDeformationMeasureLabel] = deformationGradient.clone();
+  (*newState)[lb->pDeformationMeasureLabel] = pDefGrad.clone();
   (*newState)[lb->pStressLabel] = pstress.clone();
   if (d_doCrack)
     (*newState)[lb->pCrackRadiusLabel] = pCrackRadius.clone();

@@ -241,7 +241,7 @@ if strcmp(problem_type, 'mms')
   
   xp_initial = zeros(NP,1);
   xp_initial = xp;
-  [Fp]      = mms.deformationGradient(xp_initial, t_initial, NP,speedSound, bar_length);
+  [Fp]      = mms.pDefGrad(xp_initial, t_initial, NP,speedSound, bar_length);
   [dp]      = mms.displacement(       xp_initial, t_initial, NP, speedSound, bar_length);
   [velP]    = mms.velocity(           xp_initial, t_initial, NP, speedSound, bar_length);
   [stressP] = computeStress(E,Fp,NP);

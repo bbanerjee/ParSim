@@ -29,6 +29,7 @@ SET(Vaango_MPM_Core_SRCS
   Core/MPMDiffusionLabel.cc
   Core/MPMFlags.cc	  
   Core/MPMLabel.cc
+  Core/MPMUtils.cc
   Core/ImpMPMLabel.cc
   Core/ImpMPMFlags.cc
   Core/AMRMPMLabel.cc

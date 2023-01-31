@@ -412,7 +412,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     Array3<int> l2g(lowIndex, highIndex);
     solver->copyL2G(l2g, patch);
 
-    Matrix3 Shear, deformationGradientInc, fbar;
+    Matrix3 Shear, pDefGradInc, fbar;
     double onethird = (1.0 / 3.0);
 
     Matrix3 Identity;
@@ -426,9 +426,9 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 
     ParticleSubset* pset;
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
-    constParticleVariable<Matrix3> deformationGradient_new, dispGrad;
-    constParticleVariable<Matrix3> deformationGradient;
+    constParticleVariable<Matrix3> pSize;
+    constParticleVariable<Matrix3> pDefGrad_new, dispGrad;
+    constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress_new;
     constParticleVariable<Matrix3> pstress;
     constParticleVariable<double> pvolumeold, pmass;
@@ -439,14 +439,14 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
       new_dw->getOtherDataWarehouse(Task::ParentOldDW);
     pset = parent_old_dw->getParticleSubset(dwi, patch);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pstress, lb->pStressLabel, pset);
     parent_old_dw->get(pmass, lb->pMassLabel, pset);
     parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
-    parent_old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(dispGrad, lb->pDispGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress_new, lb->pStressLabel_preReloc, pset);
@@ -471,8 +471,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         pdTdt[idx] = 0.;
 
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                                  deformationGradient[idx]);
+        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx],
+                                                  pDefGrad[idx]);
         int dof[24];
         loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
 
@@ -486,7 +486,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
           pstress[idx] + (ePrime * 2. * G + Identity * K * e.Trace());
 
         // get the volumetric part of the deformation
-        double J = deformationGradient_new[idx].Determinant();
+        double J = pDefGrad_new[idx].Determinant();
 
         double E = 9. * K * G / (3. * K + G);
         double PR = (3. * K - E) / (6. * K);
@@ -581,7 +581,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
   for (int pp = 0; pp < patches->size(); pp++) {
     double se = 0.0;
     const Patch* patch = patches->get(pp);
-    Matrix3 deformationGradientInc, Identity, zero(0.), One(1.);
+    Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     // double Jinc;
     double onethird = (1.0 / 3.0);
 
@@ -623,10 +623,10 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     ASSERTEQ(pset, pStatedata.getParticleSubset());
 
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
-    constParticleVariable<Matrix3> deformationGradient, pstress;
+    constParticleVariable<Matrix3> pSize;
+    constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<Matrix3> deformationGradient_new, dispGrad;
+    constParticleVariable<Matrix3> pDefGrad_new, dispGrad;
     constParticleVariable<double> pvolume;
     constParticleVariable<double> pvolume_deformed;
     ParticleVariable<double> pdTdt;
@@ -634,16 +634,16 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     delt_vartype delT;
 
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
     old_dw->get(pvolume, lb->pVolumeLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(dispGrad, lb->pDispGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress_new, lb->pStressLabel_preReloc, pset);
