@@ -296,8 +296,8 @@ public:
   const VarLabel* pColorLabel_preReloc;
 
   // For Cohesive Zones
-  const VarLabel* czLengthLabel;
-  const VarLabel* czLengthLabel_preReloc;
+  const VarLabel* czAreaLabel;
+  const VarLabel* czAreaLabel_preReloc;
   const VarLabel* czNormLabel;
   const VarLabel* czNormLabel_preReloc;
   const VarLabel* czTangLabel;
@@ -306,18 +306,18 @@ public:
   const VarLabel* czDispTopLabel_preReloc;
   const VarLabel* czDispBottomLabel;
   const VarLabel* czDispBottomLabel_preReloc;
-  const VarLabel* czSeparationLabel;
-  const VarLabel* czSeparationLabel_preReloc;
-  const VarLabel* czForceLabel;
-  const VarLabel* czForceLabel_preReloc;
-  const VarLabel* czTopMatLabel;
-  const VarLabel* czTopMatLabel_preReloc;
-  const VarLabel* czBotMatLabel;
-  const VarLabel* czBotMatLabel_preReloc;
-  const VarLabel* czFailedLabel;
-  const VarLabel* czFailedLabel_preReloc;
-  const VarLabel* czIDLabel;
-  const VarLabel* czIDLabel_preReloc;
+  const VarLabel* pCZSeparationLabel;
+  const VarLabel* pCZSeparationLabel_preReloc;
+  const VarLabel* pCZForceLabel;
+  const VarLabel* pCZForceLabel_preReloc;
+  const VarLabel* pCZTopMatLabel;
+  const VarLabel* pCZTopMatLabel_preReloc;
+  const VarLabel* pCZBotMatLabel;
+  const VarLabel* pCZBotMatLabel_preReloc;
+  const VarLabel* pCZFailedLabel;
+  const VarLabel* pCZFailedLabel_preReloc;
+  const VarLabel* pCZIDLabel;
+  const VarLabel* pCZIDLabel_preReloc;
   const VarLabel* pCellNACZIDLabel;
 
   // For adaptive mesh refinement

@@ -682,9 +682,9 @@ MPMLabel::MPMLabel()
     "g.normalRotAcc", NCVariable<Vector>::getTypeDescription());
 
   // For Cohesive Zones
-  czLengthLabel = VarLabel::create(
+  czAreaLabel = VarLabel::create(
     "cz.length", ParticleVariable<double>::getTypeDescription());
-  czLengthLabel_preReloc = VarLabel::create(
+  czAreaLabel_preReloc = VarLabel::create(
     "cz.length+", ParticleVariable<double>::getTypeDescription());
 
   czNormLabel =
@@ -707,35 +707,35 @@ MPMLabel::MPMLabel()
   czDispBottomLabel_preReloc = VarLabel::create(
     "cz.dispbottom+", ParticleVariable<Vector>::getTypeDescription());
 
-  czSeparationLabel = VarLabel::create(
+  pCZSeparationLabel = VarLabel::create(
     "cz.separation", ParticleVariable<Vector>::getTypeDescription());
-  czSeparationLabel_preReloc = VarLabel::create(
+  pCZSeparationLabel_preReloc = VarLabel::create(
     "cz.separation+", ParticleVariable<Vector>::getTypeDescription());
 
-  czForceLabel = VarLabel::create(
+  pCZForceLabel = VarLabel::create(
     "cz.force", ParticleVariable<Vector>::getTypeDescription());
-  czForceLabel_preReloc = VarLabel::create(
+  pCZForceLabel_preReloc = VarLabel::create(
     "cz.force+", ParticleVariable<Vector>::getTypeDescription());
 
-  czTopMatLabel =
+  pCZTopMatLabel =
     VarLabel::create("cz.topmat", ParticleVariable<int>::getTypeDescription());
-  czTopMatLabel_preReloc =
+  pCZTopMatLabel_preReloc =
     VarLabel::create("cz.topmat+", ParticleVariable<int>::getTypeDescription());
 
-  czBotMatLabel =
+  pCZBotMatLabel =
     VarLabel::create("cz.botmat", ParticleVariable<int>::getTypeDescription());
-  czBotMatLabel_preReloc =
+  pCZBotMatLabel_preReloc =
     VarLabel::create("cz.botmat+", ParticleVariable<int>::getTypeDescription());
 
-  czFailedLabel =
+  pCZFailedLabel =
     VarLabel::create("cz.failed", ParticleVariable<int>::getTypeDescription());
-  czFailedLabel_preReloc =
+  pCZFailedLabel_preReloc =
     VarLabel::create("cz.failed+", ParticleVariable<int>::getTypeDescription());
 
-  czIDLabel =
+  pCZIDLabel =
     VarLabel::create("cz.CZID", ParticleVariable<long64>::getTypeDescription());
 
-  czIDLabel_preReloc = VarLabel::create(
+  pCZIDLabel_preReloc = VarLabel::create(
     "cz.CZID+", ParticleVariable<long64>::getTypeDescription());
 
   // for assigning particle ids
@@ -831,8 +831,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pSurfLabel_preReloc);
   VarLabel::destroy(pParticleIDLabel);
   VarLabel::destroy(pParticleIDLabel_preReloc);
-  VarLabel::destroy(czIDLabel);
-  VarLabel::destroy(czIDLabel_preReloc);
+  VarLabel::destroy(pCZIDLabel);
+  VarLabel::destroy(pCZIDLabel_preReloc);
   VarLabel::destroy(pPressureLabel);
   VarLabel::destroy(pScratchVecLabel);
   VarLabel::destroy(pScaleFactorLabel);
@@ -1009,8 +1009,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pColorLabel_preReloc);
 
   // For Cohesive Zones
-  VarLabel::destroy(czLengthLabel);
-  VarLabel::destroy(czLengthLabel_preReloc);
+  VarLabel::destroy(czAreaLabel);
+  VarLabel::destroy(czAreaLabel_preReloc);
   VarLabel::destroy(czNormLabel);
   VarLabel::destroy(czNormLabel_preReloc);
   VarLabel::destroy(czTangLabel);
@@ -1019,16 +1019,16 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(czDispTopLabel_preReloc);
   VarLabel::destroy(czDispBottomLabel);
   VarLabel::destroy(czDispBottomLabel_preReloc);
-  VarLabel::destroy(czSeparationLabel);
-  VarLabel::destroy(czSeparationLabel_preReloc);
-  VarLabel::destroy(czForceLabel);
-  VarLabel::destroy(czForceLabel_preReloc);
-  VarLabel::destroy(czTopMatLabel);
-  VarLabel::destroy(czTopMatLabel_preReloc);
-  VarLabel::destroy(czBotMatLabel);
-  VarLabel::destroy(czBotMatLabel_preReloc);
-  VarLabel::destroy(czFailedLabel);
-  VarLabel::destroy(czFailedLabel_preReloc);
+  VarLabel::destroy(pCZSeparationLabel);
+  VarLabel::destroy(pCZSeparationLabel_preReloc);
+  VarLabel::destroy(pCZForceLabel);
+  VarLabel::destroy(pCZForceLabel_preReloc);
+  VarLabel::destroy(pCZTopMatLabel);
+  VarLabel::destroy(pCZTopMatLabel_preReloc);
+  VarLabel::destroy(pCZBotMatLabel);
+  VarLabel::destroy(pCZBotMatLabel_preReloc);
+  VarLabel::destroy(pCZFailedLabel);
+  VarLabel::destroy(pCZFailedLabel_preReloc);
 
   // For adaptive mesh refinement
   VarLabel::destroy(pRefinedLabel);

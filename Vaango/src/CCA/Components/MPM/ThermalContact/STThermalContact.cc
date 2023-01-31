@@ -80,9 +80,14 @@ STThermalContact::computeHeatExchange(const ProcessorGroup*,
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       int dwi = mpm_matl->getDWIndex();
-      new_dw->get(gMass[dwi], d_mpm_labels->gMassLabel, dwi, patch, Ghost::None, 0);
       new_dw->get(
-        gTemp[dwi], d_mpm_labels->gTemperatureLabel, dwi, patch, Ghost::None, 0);
+        gMass[dwi], d_mpm_labels->gMassLabel, dwi, patch, Ghost::None, 0);
+      new_dw->get(gTemp[dwi],
+                  d_mpm_labels->gTemperatureLabel,
+                  dwi,
+                  patch,
+                  Ghost::None,
+                  0);
       new_dw->allocateAndPut(thermalContactTemperatureRate[dwi],
                              d_mpm_labels->gThermalContactTemperatureRateLabel,
                              dwi,
@@ -91,13 +96,19 @@ STThermalContact::computeHeatExchange(const ProcessorGroup*,
       Cp[m] = mpm_matl->getSpecificHeat();
       if (d_mpm_flags->d_fracture) {
         // for Fracture (for additional field)----------------------------------
-        new_dw->get(Gmass[dwi], d_mpm_labels->GMassLabel, dwi, patch, Ghost::None, 0);
         new_dw->get(
-          GTemp[dwi], d_mpm_labels->GTemperatureLabel, dwi, patch, Ghost::None, 0);
-        new_dw->allocateAndPut(GthermalContactTemperatureRate[dwi],
-                               d_mpm_labels->GThermalContactTemperatureRateLabel,
-                               dwi,
-                               patch);
+          Gmass[dwi], d_mpm_labels->GMassLabel, dwi, patch, Ghost::None, 0);
+        new_dw->get(GTemp[dwi],
+                    d_mpm_labels->GTemperatureLabel,
+                    dwi,
+                    patch,
+                    Ghost::None,
+                    0);
+        new_dw->allocateAndPut(
+          GthermalContactTemperatureRate[dwi],
+          d_mpm_labels->GThermalContactTemperatureRateLabel,
+          dwi,
+          patch);
         GthermalContactTemperatureRate[dwi].initialize(0);
       }
       // -------------------------------------------------------------------

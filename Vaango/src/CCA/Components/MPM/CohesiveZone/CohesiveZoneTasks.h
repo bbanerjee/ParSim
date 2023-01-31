@@ -55,7 +55,7 @@ class CohesiveZoneTasks final
 {
 public:
   CohesiveZoneTasks(const ProblemSpecP& ps,
-                    MaterialManagerP& ss,
+                    const MaterialManagerP& mat_manager,
                     const MPMLabel* mpm_labels,
                     const CZLabel* cz_labels,
                     const MPMFlags* mpm_flags);

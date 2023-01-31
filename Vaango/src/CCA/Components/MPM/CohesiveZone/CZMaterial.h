@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,12 +30,13 @@
 // Do not EVER put a #include for anything in CCA/Components in here.
 // Ask steve for a better way
 
-#include <Core/Grid/Material.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
 #include <CCA/Components/MPM/CohesiveZone/CohesiveZone.h>
-#include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Grid/MaterialManagerP.h>
+
+#include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <Core/Geometry/Point.h>
@@ -69,16 +48,15 @@ namespace Uintah {
 
 using namespace Uintah;
 
- class Patch;
- class DataWarehouse;
- class VarLabel;
- class GeometryObject;
- class MPMLabel;
- class MPMFlags;
+class Patch;
+class DataWarehouse;
+class VarLabel;
+class GeometryObject;
+class MPMLabel;
+class MPMFlags;
 
-      
 /**************************************
-     
+
 CLASS
    CZMaterial
 
@@ -90,7 +68,7 @@ GENERAL INFORMATION
 
    Jim Guilkey
    Perforating Research
-   Schlumberger   
+   Schlumberger
 
 KEYWORDS
    CZ_Material
@@ -102,59 +80,95 @@ WARNING
 
 ****************************************/
 
- class CZMaterial : public Material {
- public:
+using constVarLabel2DArray = std::vector<std::vector<const VarLabel*>>;
 
-   // Default Constructor
-   CZMaterial();
+class CZMaterial final : public Material
+{
+public:
+  // Default Constructor
+  CZMaterial();
 
-   // Standard CZ Material Constructor
-   CZMaterial(ProblemSpecP&, MaterialManagerP& ss, MPMFlags* flags);
-         
-   ~CZMaterial();
+  // Standard CZ Material Constructor
+  CZMaterial(ProblemSpecP&,
+             const MaterialManagerP& mat_manager,
+             const MPMFlags* flags);
 
-   virtual void registerParticleState(MaterialManager* ss);
+  ~CZMaterial() = default;
 
-   virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
+  // Prevent copying/move of this class
+  CZMaterial(const CZMaterial& czm) = delete;
+  CZMaterial(CZMaterial&& czm)      = delete;
+  CZMaterial&
+  operator=(const CZMaterial& czm) = delete;
+  CZMaterial&
+  operator=(CZMaterial&& czm) = delete;
 
-   /*!  Create a copy of the material without the associated geometry */
-   void copyWithoutGeom(ProblemSpecP& ps,const CZMaterial* mat,
-                        MPMFlags* flags);
-         
-   // Access functions
-   CohesiveZone* getCohesiveZone();
-   double getCharLengthNormal() const;
-   double getCharLengthTangential() const;
-   double getCohesiveNormalStrength() const;
-   double getCohesiveTangentialStrength() const;
-   string getCohesiveFilename() const;
-   bool getDoRotation() const;
+  virtual void
+  registerParticleState(constVarLabel2DArray& state,
+                        constVarLabel2DArray& state_preReloc);
 
-   void computeRotationMatrix(Matrix3& Rotation, Matrix3& Rotation_tang,
-                              const Vector& norm, const Vector czsep) const;
+  virtual ProblemSpecP
+  outputProblemSpec(ProblemSpecP& ps) override;
 
- private:
+  /*!  Create a copy of the material without the associated geometry */
+  void
+  copyWithoutGeom(ProblemSpecP& ps,
+                  const CZMaterial* mat,
+                  const MPMFlags* flags);
 
-   MPMLabel* d_lb;
-   CohesiveZone* d_cohesive_zone;
+  // Access functions
+  CohesiveZone*
+  getCohesiveZone();
 
-   double d_delta_n;
-   double d_delta_t;
-   double d_sig_max;
-   double d_tau_max;
-   bool d_do_rotation;
-   string d_cz_filename;
+  double
+  getCharLengthNormal() const;
 
-   // Prevent copying of this class
-   // copy constructor
-   CZMaterial(const CZMaterial &czm);
-   CZMaterial& operator=(const CZMaterial &czm);
+  double
+  getCharLengthTangential() const;
 
-   ///////////////////////////////////////////////////////////////////////////
-   // The standard set of initialization actions except particlecreator
-   //
-   void standardInitialization(ProblemSpecP& ps, MPMFlags* flags);
- };
+  double
+  getNormalFailureDisplacement() const;
+
+  double
+  getTangentialFailureDisplacement() const;
+
+  double
+  getCohesiveNormalStrength() const;
+
+  double
+  getCohesiveTangentialStrength() const;
+
+  string
+  getCohesiveFilename() const;
+
+  bool
+  getDoRotation() const;
+
+  void
+  computeRotationMatrix(Matrix3& Rotation,
+                        Matrix3& Rotation_tang,
+                        const Vector& norm,
+                        const Vector czsep) const;
+
+private:
+  std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
+  std::unique_ptr<CohesiveZone> d_cohesive_zone{ nullptr };
+
+  double d_delta_n{ 0.0 };
+  double d_delta_t{ 0.0 };
+  double d_delta_n_fail{ 0.0 };
+  double d_delta_t_fail{ 0.0 };
+  double d_sig_max{ 0.0 };
+  double d_tau_max{ 0.0 };
+  bool d_do_rotation{ false };
+  std::string d_cz_filename{ "" };
+
+  ///////////////////////////////////////////////////////////////////////////
+  // The standard set of initialization actions except particlecreator
+  //
+  void
+  standardInitialization(ProblemSpecP& ps, const MPMFlags* flags);
+};
 
 } // End namespace Uintah
 
