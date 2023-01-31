@@ -31,34 +31,33 @@
     Created by Yajun Guo in 2002-2005.
 ********************************************************************************/
 
-#include <Core/Math/Short27.h>
-#include <CCA/Components/MPM/Crack/Crack.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Crack/Crack.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/Patch.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Math/Short27.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <vector>
 
 using namespace Uintah;
 
-using std::vector;
 using std::string;
+using std::vector;
 
 #define MAX_BASIS 27
 
@@ -71,6 +70,7 @@ Crack::addComputesAndRequiresGetNodalSolutions(
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
 
+  t->requires(Task::OldDW, lb->simulationTimeLabel);
   t->requires(Task::NewDW, lb->pMassLabel_preReloc, gan, NGP);
   t->requires(Task::NewDW, lb->pStressLabel_preReloc, gan, NGP);
   t->requires(Task::NewDW, lb->pDispGradsLabel_preReloc, gan, NGP);
@@ -108,6 +108,10 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
   // particle's solutions to grid. Those variables will be used to calculate
   // J-integral
 
+  simTime_vartype simTimeVar;
+  old_dw->get(simTimeVar, lb->simulationTimeLabel);
+  double time = simTimeVar;
+
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
@@ -115,16 +119,15 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
-    double time = d_mat_manager->getElapsedTime();
-
     // Detect if calculating fracture parameters or
     // doing crack propagation at this time step
     DetectIfDoingFractureAnalysisAtThisTimeStep(time);
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
-      int dwi               = mpm_matl->getDWIndex();
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
+      int dwi = mpm_matl->getDWIndex();
 
       // Get particle's solutions
       constParticleVariable<Short27> pgCode;
@@ -253,6 +256,9 @@ Crack::addComputesAndRequiresCalculateFractureParameters(
   // Required for contour integral
   int NGC              = NJ + NGN + 1;
   Ghost::GhostType gac = Ghost::AroundCells;
+
+  t->requires(Task::OldDW, lb->delTLabel);
+  t->requires(Task::OldDW, lb->simulationTimeLabel);
   t->requires(Task::NewDW, lb->gMassLabel, gac, NGC);
   t->requires(Task::NewDW, lb->GMassLabel, gac, NGC);
   t->requires(Task::NewDW, lb->GNumPatlsLabel, gac, NGC);
@@ -285,6 +291,13 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw)
 {
+  simTime_vartype simTimeVar;
+  old_dw->get(simTimeVar, lb->simulationTimeLabel);
+  double time = simTimeVar;
+
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     Vector dx          = patch->dCell();
@@ -301,7 +314,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 
     int numMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       int dwi              = matls->get(m);
@@ -387,14 +401,16 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   if (segs[R] < 0) {
                     neighbor = cfSegNodes[m][2 * segs[L] + 1];
                     FindSegsFromNode(m, neighbor, segsNeighbor);
-                    if (segsNeighbor[L] < 0)
+                    if (segsNeighbor[L] < 0) {
                       singleSeg = YES;
+                    }
                   }
                   if (segs[L] < 0) {
                     neighbor = cfSegNodes[m][2 * segs[R]];
                     FindSegsFromNode(m, neighbor, segsNeighbor);
-                    if (segsNeighbor[R] < 0)
+                    if (segsNeighbor[R] < 0) {
                       singleSeg = YES;
+                    }
                   }
 
                   // Position where to calculate J & K
@@ -461,11 +477,11 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     d_rJ *= 0.7;
                     if (d_rJ / rJ < 0.01) {
                       std::cout << "Error: J-integral radius (d_rJ) has been "
-                              "decreassed 100 times "
-                           << " before finding the intersection between "
-                              "J-contour and crack plane."
-                           << " Program terminated."
-                           << "\n";
+                                   "decreassed 100 times "
+                                << " before finding the intersection between "
+                                   "J-contour and crack plane."
+                                << " Program terminated."
+                                << "\n";
                       exit(1);
                     }
                   }
@@ -671,13 +687,16 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     // Define integral points in the area enclosed by J-integral
                     // contour
                     int nc = (int)(d_rJ / dx_max);
-                    if (d_rJ / dx_max - nc >= 0.5)
+                    if (d_rJ / dx_max - nc >= 0.5) {
                       nc++;
-                    if (nc < 2)
-                      nc      = 2; // Cell number J-path away from the origin
+                    }
+                    if (nc < 2) {
+                      nc = 2; // Cell number J-path away from the origin
+                    }
                     double* c = new double[4 * nc];
-                    for (int j = 0; j < 4 * nc; j++)
-                      c[j]     = (float)(-4 * nc + 1 + 2 * j) / 4 / nc * d_rJ;
+                    for (int j = 0; j < 4 * nc; j++) {
+                      c[j] = (float)(-4 * nc + 1 + 2 * j) / 4 / nc * d_rJ;
+                    }
 
                     int count = 0; // number of integral points
                     Point* x  = new Point[16 * nc * nc];
@@ -789,8 +808,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   double tb =
                     sqrt(scb(1, 0) * scb(1, 0) + scb(1, 2) * scb(1, 2));
                   Matrix3 tc = sca;
-                  if (tb > ta)
+                  if (tb > ta) {
                     tc = scb;
+                  }
 
                   // Relative displacement
                   Vector uc = uca - ucb;
@@ -800,8 +820,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   if (cmu[m] != 0.) {
                     fricWork =
                       fabs(tc(1, 0) * uc.x()) + fabs(tc(1, 2) * uc.z());
-                    if (tc(1, 1) < 0. && uc.y() < 0.)
+                    if (tc(1, 1) < 0. && uc.y() < 0.) {
                       fricWork += fabs(tc(1, 1) * uc.y());
+                    }
                   }
 
                   // Step 11. J-integral vector
@@ -819,15 +840,17 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Point p_d;
                   if (CODOption == 0 || CODOption == 1) {
                     double d;
-                    if (d_doCrackPropagation) // For crack propagation
+                    if (d_doCrackPropagation) { // For crack propagation
                       d = (rdadx < 1. ? 1. : rdadx) * dx_max;
-                    else // For calculation of pure fracture parameters
+                    } else { // For calculation of pure fracture parameters
                       d = d_rJ / 2.;
+                    }
 
                     // If point (-d,0,0) is not on crack plane, adjust 'd',
                     // i.e. find the maximum d on the crack
-                    if (CODOption == 1)
+                    if (CODOption == 1) {
                       GetPositionToComputeCOD(m, origin, T, d);
+                    }
 
                     // Global coordinates of the point (-d,0,0)
                     p_d = Point(-d * l1 + x0, -d * m1 + y0, -d * n1 + z0);
@@ -882,8 +905,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
             delete[] cfK;
           } // End if(num>0)
         }   // End of loop over ranks (i)
-        if (pid == 0)
-          OutputCrackFrontResults(m);
+        if (pid == 0) {
+          OutputCrackFrontResults(m, time, delT);
+        }
       } // End if(calFractParameters || doCrackPropagation)
     }   // End of loop over matls
     // delete interpolator;
@@ -1042,12 +1066,15 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
     delt1 = a1 * b2 - a2 * b1;
     delt2 = a1 * c2 - a2 * c1;
     delt3 = b1 * c2 - b2 * c1;
-    if (fabs(delt1) >= fabs(delt2) && fabs(delt1) >= fabs(delt3))
+    if (fabs(delt1) >= fabs(delt2) && fabs(delt1) >= fabs(delt3)) {
       CASE = 1;
-    if (fabs(delt2) >= fabs(delt1) && fabs(delt2) >= fabs(delt3))
+    }
+    if (fabs(delt2) >= fabs(delt1) && fabs(delt2) >= fabs(delt3)) {
       CASE = 2;
-    if (fabs(delt3) >= fabs(delt1) && fabs(delt3) >= fabs(delt2))
+    }
+    if (fabs(delt3) >= fabs(delt1) && fabs(delt3) >= fabs(delt2)) {
       CASE = 3;
+    }
 
     double x1 = 0., y1 = 0., z1 = 0., x2 = 0., y2 = 0., z2 = 0.;
     switch (CASE) {
@@ -1062,8 +1089,9 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
         cbar = q1 * q1 * A + q2 * q2 * B + q1 * q2 * D + q1 * G + q2 * H + J -
                radius * radius;
         abc = bbar * bbar - 4 * abar * cbar;
-        if (abc < 0.0)
+        if (abc < 0.0) {
           continue; // no solution, skip to the next segment
+        }
         // the first solution
         z1       = 0.5 * (-bbar + sqrt(abc)) / abar;
         x1       = p1 * z1 + q1;
@@ -1086,8 +1114,9 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
         cbar = q1 * q1 * A + q2 * q2 * C + q1 * q2 * E + q1 * G + q2 * I + J -
                radius * radius;
         abc = bbar * bbar - 4 * abar * cbar;
-        if (abc < 0.0)
+        if (abc < 0.0) {
           continue; // no intersection, skip to the next elem
+        }
         // the first solution
         y1       = 0.5 * (-bbar + sqrt(abc)) / abar;
         x1       = p1 * y1 + q1;
@@ -1110,8 +1139,9 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
         cbar = q1 * q1 * B + q2 * q2 * C + q1 * q2 * F + q1 * H + q2 * I + J -
                radius * radius;
         abc = bbar * bbar - 4 * abar * cbar;
-        if (abc < 0.0)
+        if (abc < 0.0) {
           continue; // no intersection, skip to the next elem
+        }
         // the first solution
         x1       = 0.5 * (-bbar + sqrt(abc)) / abar;
         y1       = p1 * x1 + q1;
@@ -1145,10 +1175,11 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
     }
   } // End of loop over crack segments
 
-  if (numCross == 0)
+  if (numCross == 0) {
     return NO;
-  else
+  } else {
     return YES;
+  }
 }
 
 // Find the equation of a plane defined by three points
@@ -1207,18 +1238,21 @@ Crack::PointInTriangle(const Point& p,
   area_p123 = fabs(x1 * z2 + x2 * z3 + x3 * z1 - x1 * z3 - x2 * z1 - x3 * z2);
 
   // Set the area zero if relatively error less than 0.1%
-  if (fabs(area_p1p2p) / area_p123 < 1.e-3)
+  if (fabs(area_p1p2p) / area_p123 < 1.e-3) {
     area_p1p2p = 0.;
-  if (fabs(area_p2p3p) / area_p123 < 1.e-3)
+  }
+  if (fabs(area_p2p3p) / area_p123 < 1.e-3) {
     area_p2p3p = 0.;
-  if (fabs(area_p3p1p) / area_p123 < 1.e-3)
+  }
+  if (fabs(area_p3p1p) / area_p123 < 1.e-3) {
     area_p3p1p = 0.;
+  }
 
   return (area_p1p2p <= 0. && area_p2p3p <= 0. && area_p3p1p <= 0.);
 }
 
 void
-Crack::OutputCrackFrontResults(const int& m)
+Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
 {
   if (cfSegNodes[m].size() > 0) {
     // Create output file name in format: CrackFrontResults.matXXX
@@ -1227,10 +1261,11 @@ Crack::OutputCrackFrontResults(const int& m)
 
     char* matbuf = new char[10];
     sprintf(matbuf, "%d", m);
-    if (m < 10)
+    if (m < 10) {
       strcat(outFileName, "00");
-    else if (m < 100)
+    } else if (m < 100) {
       strcat(outFileName, "0");
+    }
     strcat(outFileName, matbuf);
 
     std::ofstream outCrkFrt(outFileName, std::ios::app);
@@ -1249,15 +1284,13 @@ Crack::OutputCrackFrontResults(const int& m)
     std::ofstream outCrkFrt1(outFileName1, std::ios::app);
     std::ofstream outCrkFrt2(outFileName2, std::ios::app);
 
-    double time  = d_mat_manager->getElapsedTime();
-    int timestep = d_simulator->getTimeStep();
-
     int num          = (int)cfSegNodes[m].size();
     int numSubCracks = 0;
     for (int i = 0; i < num; i++) {
       if (i == 0 || i == num - 1 || cfSegPreIdx[m][i] < 0) {
-        if (i == cfSegMinIdx[m][i])
+        if (i == cfSegMinIdx[m][i]) {
           numSubCracks++;
+        }
         int node   = cfSegNodes[m][i];
         Point cp   = cx[m][node];
         Vector cfJ = cfSegJ[m][i];
@@ -1268,14 +1301,16 @@ Crack::OutputCrackFrontResults(const int& m)
                   << std::setw(15) << cp.y() << std::setw(15) << cp.z()
                   << std::setw(15) << cfJ.x() << std::setw(15) << cfK.x()
                   << std::setw(15) << cfK.y() << std::setw(15) << cfK.z();
-        if (cfK.x() != 0.)
+        if (cfK.x() != 0.) {
           outCrkFrt << std::setw(15) << cfK.y() / cfK.x() << "\n";
-        else
+        } else {
           outCrkFrt << std::setw(15) << "inf"
                     << "\n";
+        }
 
-        if (i == cfSegMaxIdx[m][i] && num > 2)
+        if (i == cfSegMaxIdx[m][i] && num > 2) {
           outCrkFrt << "\n";
+        }
 
         if (out3middlecracks) {
           if (i == 2) {
@@ -1285,11 +1320,12 @@ Crack::OutputCrackFrontResults(const int& m)
                        << std::setw(15) << cp.y() << std::setw(15) << cp.z()
                        << std::setw(15) << cfJ.x() << std::setw(15) << cfK.x()
                        << std::setw(15) << cfK.y() << std::setw(15) << cfK.z();
-            if (cfK.x() != 0.)
+            if (cfK.x() != 0.) {
               outCrkFrt0 << std::setw(15) << cfK.y() / cfK.x() << "\n";
-            else
+            } else {
               outCrkFrt0 << std::setw(15) << "inf"
                          << "\n";
+            }
           }
 
           if (i == 4) {
@@ -1299,11 +1335,12 @@ Crack::OutputCrackFrontResults(const int& m)
                        << std::setw(15) << cp.y() << std::setw(15) << cp.z()
                        << std::setw(15) << cfJ.x() << std::setw(15) << cfK.x()
                        << std::setw(15) << cfK.y() << std::setw(15) << cfK.z();
-            if (cfK.x() != 0.)
+            if (cfK.x() != 0.) {
               outCrkFrt1 << std::setw(15) << cfK.y() / cfK.x() << "\n";
-            else
+            } else {
               outCrkFrt1 << std::setw(15) << "inf"
                          << "\n";
+            }
           }
 
           if (i == 6) {
@@ -1313,11 +1350,12 @@ Crack::OutputCrackFrontResults(const int& m)
                        << std::setw(15) << cp.y() << std::setw(15) << cp.z()
                        << std::setw(15) << cfJ.x() << std::setw(15) << cfK.x()
                        << std::setw(15) << cfK.y() << std::setw(15) << cfK.z();
-            if (cfK.x() != 0.)
+            if (cfK.x() != 0.) {
               outCrkFrt2 << std::setw(15) << cfK.y() / cfK.x() << "\n";
-            else
+            } else {
               outCrkFrt2 << std::setw(15) << "inf"
                          << "\n";
+            }
           }
         }
       }
@@ -1382,8 +1420,9 @@ Crack::GetPositionToComputeCOD(const int& m,
         if (fabs(l1 + l2 - l) < 1.e-3 * l) { // point 'p' on segment 'ps-pe'
           // Distance from the intersection (p) to the origin
           d0 = sqrt(x * x + y * y);
-          if (d0 < d && d0 > 1.e-3 * l)
+          if (d0 < d && d0 > 1.e-3 * l) {
             d = d0;
+          }
         }
       }
     }

@@ -32,6 +32,7 @@
 ********************************************************************************/
 
 #include "Crack.h"
+
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -97,7 +98,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       // Cell mass of the material
@@ -359,7 +360,7 @@ Crack::addComputesAndRequiresConstructNewCrackFrontElems(
   const MaterialSet* /*matls*/) const
 {
   // delT will be used to calculate crack propagation velocity
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label());
+  t->requires(Task::OldDW, lb->delTLabel);
 }
 
 void
