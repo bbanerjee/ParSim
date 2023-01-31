@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,30 +27,31 @@
 #ifndef __ThermalContact__
 #define __ThermalContact__
 
+#include <CCA/Components/MPM/Core/ContactDefs.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/MaterialManagerP.h>
-#include <Core/Geometry/Vector.h>
+#include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Math/MinMax.h>
 #include <cmath>
 
 namespace Uintah {
-  using namespace Uintah;
-  class MPMFlags;
-  class MPMLabel;
-  class ProcessorGroup;
-  class Patch;
-  class Task;
-  class VarLabel;
+
+class MPMFlags;
+class MPMLabel;
+class ProcessorGroup;
+class Patch;
+class Task;
+class VarLabel;
 
 /**************************************
 
 CLASS
    ThermalContact
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -61,47 +63,59 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    ThermalContact_Model
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
 
 ****************************************/
 
-  class ThermalContact {
-  public:
-    // Constructor
-    ThermalContact();
-    virtual ~ThermalContact();
+class ThermalContact
+{
+public:
+  // Constructor
+  ThermalContact(const MaterialManagerP& mat_manager,
+                 const MPMLabel* labels,
+                 const MPMFlags* flags)
+    : d_mat_manager{ mat_manager }
+    , d_mpm_labels{ labels }
+    , d_mpm_flags{ flags }
+  {
+  }
 
-    virtual void computeHeatExchange(const ProcessorGroup*,
-                           const PatchSubset* patches,
-                           const MaterialSubset* matls,
-                           DataWarehouse* old_dw,
+  virtual ~ThermalContact() = default;
+
+  virtual void
+  computeHeatExchange(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw) = 0;
+
+  virtual void
+  initializeThermalContact(const Patch* patch,
+                           int vfindex,
                            DataWarehouse* new_dw) = 0;
-         
-    virtual void initializeThermalContact(const Patch* patch,
-                                int vfindex,
-                                DataWarehouse* new_dw) = 0;
 
-    virtual void addComputesAndRequires(Task* task,
-                              const PatchSet* patches,
-                              const MaterialSet* matls) const = 0;
+  virtual void
+  addComputesAndRequires(Task* task,
+                         const PatchSet* patches,
+                         const MaterialSet* matls) const = 0;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) = 0;
 
-  protected:
-    MPMFlags* flag;
-  private:
-    //MPMLabel* lb;
-    
-  };
-      
+protected:
+  const MaterialManagerP d_mat_manager{ nullptr };
+  const MPMLabel* d_mpm_labels{ nullptr };
+  const MPMFlags* d_mpm_flags{ nullptr };
+};
+
 } // End namespace Uintah
 
 #endif // __ThermalContact__

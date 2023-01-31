@@ -28,6 +28,8 @@
 #define __CONTACT_H__
 
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
+#include <CCA/Components/MPM/Core/ContactDefs.h>
+
 #include <CCA/Ports/Scheduler.h>
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
@@ -35,19 +37,6 @@
 #include <cmath>
 
 namespace Uintah {
-
-using constNCint         = constNCVariable<int>;
-using NCint              = NCVariable<int>;
-using constNCdouble      = constNCVariable<double>;
-using NCdouble           = NCVariable<double>;
-using constNCPoint       = constNCVariable<Point>;
-using NCPoint            = NCVariable<Point>;
-using constNCVector      = constNCVariable<Vector>;
-using NCVector           = NCVariable<Vector>;
-using constNCdoubleArray = std::vector<constNCdouble>;
-using NCdoubleArray      = std::vector<NCdouble>;
-using constNCVectorArray = std::vector<constNCVector>;
-using NCVectorArray      = std::vector<NCVector>;
 
 class DataWarehouse;
 class MPMLabel;
@@ -128,7 +117,6 @@ protected:
   int d_num_ghost_nodes{ 1 };
 
   double d_vol_const{ 0.0 };
-
 };
 
 inline bool

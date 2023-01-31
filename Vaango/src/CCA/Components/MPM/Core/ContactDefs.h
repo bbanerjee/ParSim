@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,15 +24,27 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ThermalContact/ThermalContact.h>
-#include <Core/Malloc/Allocator.h>
+#ifndef __CCA_COMPONENTS_MPM_CORE_CONTACT_DEFS_H__
+#define __CCA_COMPONENTS_MPM_CORE_CONTACT_DEFS_H__
 
-using namespace Uintah;
+#include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 
-ThermalContact::ThermalContact()
-{
-}
+namespace Uintah {
 
-ThermalContact::~ThermalContact()
-{
-}
+using constNCint         = constNCVariable<int>;
+using NCint              = NCVariable<int>;
+using constNCdouble      = constNCVariable<double>;
+using NCdouble           = NCVariable<double>;
+using constNCPoint       = constNCVariable<Point>;
+using NCPoint            = NCVariable<Point>;
+using constNCVector      = constNCVariable<Vector>;
+using NCVector           = NCVariable<Vector>;
+using constNCdoubleArray = std::vector<constNCdouble>;
+using NCdoubleArray      = std::vector<NCdouble>;
+using constNCVectorArray = std::vector<constNCVector>;
+using NCVectorArray      = std::vector<NCVector>;
+
+} // End namespace Uintah
+
+#endif // __CCA_COMPONENTS_MPM_CORE_CONTACT_DEFS_H__

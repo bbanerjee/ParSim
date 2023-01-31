@@ -36,18 +36,20 @@ using namespace Uintah;
 
 std::unique_ptr<ThermalContact>
 ThermalContactFactory::create(const ProblemSpecP& ps,
-                              MaterialManagerP& d_sS,
-                              const MPMLabel* lb,
-                              const MPMFlags* flag)
+                              const MaterialManagerP& mat_manager,
+                              const MPMLabel* labels,
+                              const MPMFlags* flags)
 {
   ProblemSpecP mpm_ps =
     ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
 
   for (ProblemSpecP child = mpm_ps->findBlock("thermal_contact"); child != 0;
        child              = child->findNextBlock("thermal_contact")) {
-    return (std::make_unique<STThermalContact>(child, d_sS, lb, flag));
+    return (
+      std::make_unique<STThermalContact>(child, mat_manager, labels, flags));
   }
 
   ProblemSpecP child;
-  return (std::make_unique<NullThermalContact>(child, d_sS, lb, flag));
+  return (
+    std::make_unique<NullThermalContact>(child, mat_manager, labels, flags));
 }
