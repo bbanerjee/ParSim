@@ -45,31 +45,34 @@ namespace Uintah {
 class ApproachContact : public Contact
 {
 private:
-  // Prevent copying of this class
-  // copy constructor
-  ApproachContact(const ApproachContact& con);
-  ApproachContact&
-  operator=(const ApproachContact& con);
 
   // Coefficient of friction
-  double d_mu;
+  double d_mu{0.0};
 
   // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const;
-
-  int NGP;
-  int NGN;
+  double d_vol_const{0.0};
 
 public:
   // Constructor
   ApproachContact(const ProcessorGroup* myworld,
-                  ProblemSpecP& ps,
-                  MaterialManagerP& sS,
-                  MPMLabel* lb,
-                  MPMFlags* Mflag);
+                  const MaterialManagerP& mat_manager,
+                  const MPMLabel* labels,
+                  const MPMFlags* flags,
+                  ProblemSpecP& ps);
 
   // Destructor
-  virtual ~ApproachContact();
+  virtual ~ApproachContact() = default;
+
+  // Prevent copying/move of this class
+  ApproachContact(const ApproachContact& con) = delete;
+  ApproachContact(ApproachContact&& con) = delete;
+  ApproachContact&
+  operator=(const ApproachContact& con) = delete;
+  ApproachContact&
+  operator=(ApproachContact&& con) = delete;
+
+  virtual void
+  setContactMaterialAttributes() override;
 
   void
   outputProblemSpec(ProblemSpecP& ps) override;

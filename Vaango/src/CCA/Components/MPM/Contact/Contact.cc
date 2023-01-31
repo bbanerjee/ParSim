@@ -25,6 +25,8 @@
  */
 
 #include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;

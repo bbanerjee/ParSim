@@ -143,6 +143,7 @@ public:
   const VarLabel* pScaleFactorLabel;
   const VarLabel* pScaleFactorLabel_preReloc;
 
+  const VarLabel* gColorLabel;
   const VarLabel* gLambdaDotLabel;
   const VarLabel* gMassLabel;
   const VarLabel* gMassAllLabel;

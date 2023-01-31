@@ -24,55 +24,47 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/ApproachContact.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/Patch.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <vector>
 
 using namespace Uintah;
-using std::vector;
 using std::string;
+using std::vector;
 
 ApproachContact::ApproachContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, MaterialManagerP& d_sS,
-                                 MPMLabel* Mlb, MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
+                                 const MaterialManagerP& mat_manager,
+                                 const MPMLabel* labels,
+                                 const MPMFlags* flags,
+                                 ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  d_vol_const = 0.;
+  d_need_normals = true;
 
   ps->require("mu", d_mu);
   ps->get("volume_constraint", d_vol_const);
-
-  d_mat_manager = d_sS;
-  d_needNormals = true;
-
-  if (flag->d_8or27 == 8) {
-    NGP = 1;
-    NGN = 1;
-  } else {
-    NGP = 2;
-    NGN = 2;
-  }
 }
 
-ApproachContact::~ApproachContact()
+void
+ApproachContact::setContactMaterialAttributes()
 {
 }
 
@@ -91,7 +83,8 @@ void
 ApproachContact::exchangeMomentum(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset* matls,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw,
                                   const VarLabel* gVelocity_label)
 {
   Ghost::GhostType gnone = Ghost::None;
@@ -109,34 +102,42 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    Vector dx = patch->dCell();
-    double cell_vol = dx.x() * dx.y() * dx.z();
+    Vector dx          = patch->dCell();
+    double cell_vol    = dx.x() * dx.y() * dx.z();
     constNCVariable<double> NC_CCweight;
-    old_dw->get(NC_CCweight, lb->NC_CCweightLabel, 0, patch, gnone, 0);
+    old_dw->get(
+      NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gnone, 0);
 
     // Retrieve necessary data from DataWarehouse
-    for (int m = 0; m < matls->size(); m++) {
-      int dwi = matls->get(m);
-      new_dw->get(gMass[m], lb->gMassLabel, dwi, patch, gnone, 0);
-      new_dw->get(gSurfNormal[m], lb->gSurfNormLabel, dwi, patch, gnone, 0);
-      new_dw->get(gVolume[m], lb->gVolumeLabel, dwi, patch, gnone, 0);
+    for (int m = 0; m < numMatls; m++) {
+
+      if (!d_matls.requested(m)) {
+        continue;
+      }
+
+      int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
+      new_dw->get(gMass[m], d_mpm_labels->gMassLabel, dwi, patch, gnone, 0);
+      new_dw->get(
+        gSurfNormal[m], d_mpm_labels->gSurfNormLabel, dwi, patch, gnone, 0);
+      new_dw->get(gVolume[m], d_mpm_labels->gVolumeLabel, dwi, patch, gnone, 0);
       new_dw->getModifiable(gVelocity_star[m], gVelocity_label, dwi, patch);
-      new_dw->getModifiable(frictionWork[m], lb->frictionalWorkLabel, dwi,
-                            patch);
+      new_dw->getModifiable(
+        frictionWork[m], d_mpm_labels->frictionalWorkLabel, dwi, patch);
     }
 
     delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
+    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
     double epsilon_max_max = 0.0;
 
-    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+    for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
       Vector centerOfMassMom(0., 0., 0.);
       double centerOfMassMass = 0.0;
-      double totalNodalVol = 0.0;
+      double totalNodalVol    = 0.0;
       for (int n = 0; n < numMatls; n++) {
-        if (!d_matls.requested(n))
+        if (!d_matls.requested(n)) {
           continue;
+        }
         double mass = gMass[n][c];
         centerOfMassMom += gVelocity_star[n][c] * mass;
         centerOfMassMass += mass;
@@ -186,17 +187,18 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
           // the centerOfMassVelocity is nonzero (More than one velocity
           // field is contributing to grid vertex).
           for (int n = 0; n < numMatls; n++) {
-            if (!d_matls.requested(n))
+            if (!d_matls.requested(n)) {
               continue;
+            }
             Vector deltaVelocity = gVelocity_star[n][c] - centerOfMassVelocity;
-            double mass = gMass[n][c];
+            double mass          = gMass[n][c];
             if (!compare(mass / centerOfMassMass, 0.0) &&
                 !compare(mass - centerOfMassMass, 0.0)) {
 
               // Apply frictional contact IF the surface is in compression
               // OR the surface is stress free and approaching.
               // Otherwise apply free surface conditions (do nothing).
-              Vector normal = gSurfNormal[n][c];
+              Vector normal         = gSurfNormal[n][c];
               double normalDeltaVel = Dot(deltaVelocity, normal);
 
               Vector Dv(0., 0., 0.);
@@ -205,7 +207,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
                 // Simplify algorithm in case where approach velocity
                 // is in direction of surface normal (no slip).
                 Vector normal_normaldV = normal * normalDeltaVel;
-                Vector dV_normaldV = deltaVelocity - normal_normaldV;
+                Vector dV_normaldV     = deltaVelocity - normal_normaldV;
                 if (compare(dV_normaldV.length2(), 0.0)) {
 
                   // Calculate velocity change needed to enforce contact
@@ -223,9 +225,8 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
                     Min(d_mu, tangentDeltaVelocity / fabs(normalDeltaVel));
 
                   // Calculate velocity change needed to enforce contact
-                  Dv =
-                    -normal_normaldV -
-                    surfaceTangent * frictionCoefficient * fabs(normalDeltaVel);
+                  Dv = -normal_normaldV - surfaceTangent * frictionCoefficient *
+                                            fabs(normalDeltaVel);
 
                   // Calculate work done by the frictional force (only) if
                   // contact slips.  Because the frictional force opposes motion
@@ -252,7 +253,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
                   // Scale velocity change if contact algorithm imposed strain
                   // is too large.
                   double ff = Min(epsilon_max, .5) / epsilon_max;
-                  Dv = Dv * ff;
+                  Dv        = Dv * ff;
                 }
                 Dv = scale_factor * Dv;
                 gVelocity_star[n][c] += Dv;
@@ -272,9 +273,11 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
 
     // This converts frictional work into a temperature rate
     for (int m = 0; m < matls->size(); m++) {
-      if (!d_matls.requested(m))
+      if (!d_matls.requested(m)) {
         continue;
-      MPMMaterial* mpm_matl = d_mat_manager->getMaterial("MPM", m);
+      }
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       double c_v = mpm_matl->getSpecificHeat();
       for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
         IntVector c = *iter;
@@ -293,7 +296,8 @@ ApproachContact::addComputesAndRequires(SchedulerP& sched,
                                         const MaterialSet* matls,
                                         const VarLabel* gVelocity_label)
 {
-  Task* t = scinew Task("ApproachContact::exchangeMomentum", this,
+  Task* t = scinew Task("ApproachContact::exchangeMomentum",
+                        this,
                         &ApproachContact::exchangeMomentum,
                         gVelocity_label);
 
@@ -302,20 +306,21 @@ ApproachContact::addComputesAndRequires(SchedulerP& sched,
   z_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::OldDW, lb->NC_CCweightLabel, z_matl, Ghost::None);
-  t->requires(Task::NewDW, lb->gSurfNormLabel, Ghost::None);
-  t->requires(Task::NewDW, lb->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, lb->gVolumeLabel, Ghost::None);
+  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
   t->modifies(gVelocity_label, mss);
-  if (gVelocity_label == lb->gVelocityLabel) {
-    t->computes(lb->frictionalWorkLabel, mss);
+  if (gVelocity_label == d_mpm_labels->gVelocityLabel) {
+    t->computes(d_mpm_labels->frictionalWorkLabel, mss);
   } else {
-    t->modifies(lb->frictionalWorkLabel, mss);
+    t->modifies(d_mpm_labels->frictionalWorkLabel, mss);
   }
 
   sched->addTask(t, patches, matls);
 
-  if (z_matl->removeReference())
+  if (z_matl->removeReference()) {
     delete z_matl; // shouln't happen, but...
+  }
 }

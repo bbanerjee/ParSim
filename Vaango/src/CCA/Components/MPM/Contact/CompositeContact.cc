@@ -31,18 +31,22 @@
 using namespace Uintah;
 
 CompositeContact::CompositeContact(const ProcessorGroup* myworld,
-                                   const MPMLabel* Mlb,
-                                   const MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, 0)
+                                   const MPMLabel* labels,
+                                   const MPMFlags* flags,
+                                   ProblemSpecP& ps)
+  : Contact(myworld, nullptr, labels, flags, ps)
 {
 }
 
-CompositeContact::~CompositeContact() {}
+void
+CompositeContact::setContactMaterialAttributes()
+{
+}
 
 void
 CompositeContact::outputProblemSpec(ProblemSpecP& ps)
 {
-  for (auto contactModel : d_m) {
+  for (auto& contactModel : d_m) {
     contactModel->outputProblemSpec(ps);
   }
 }
@@ -51,15 +55,15 @@ void
 CompositeContact::add(std::unique_ptr<Contact> m)
 {
   if (m->needNormals()) {
-    d_needNormals = true;
+    d_need_normals = true;
   }
   if (m->useLogisticRegression()) {
-    d_useLogisticRegression = true;
+    d_use_logistic_regression = true;
   }
   if (m->oneOrTwoStep() == 1) {
-    d_oneOrTwoStep = 1;
+    d_one_or_two_step = 1;
   } else {
-    d_oneOrTwoStep = 2;
+    d_one_or_two_step = 2;
   }
 
   d_m.push_back(std::move(m));
@@ -73,9 +77,9 @@ CompositeContact::exchangeMomentum(const ProcessorGroup* pg,
                                    DataWarehouse* new_dw,
                                    const VarLabel* gVelocity_label)
 {
-  for (auto contactModel : d_m) {
-    contactModel
-      ->exchangeMomentum(pg, patches, matls, old_dw, new_dw, gVelocity_label);
+  for (auto& contactModel : d_m) {
+    contactModel->exchangeMomentum(
+      pg, patches, matls, old_dw, new_dw, gVelocity_label);
   }
 }
 
@@ -85,19 +89,16 @@ CompositeContact::addComputesAndRequires(SchedulerP& sched,
                                          const MaterialSet* matls,
                                          const VarLabel* gVelocity_label)
 {
-  if (gVelocity_label == lb->gVelocityLabel) {
-    Task* t = scinew Task("Contact::initFriction",
-                          this,
-                          &CompositeContact::initFriction);
-    t->computes(lb->frictionalWorkLabel);
+  if (gVelocity_label == d_mpm_labels->gVelocityLabel) {
+    Task* t = scinew Task(
+      "Contact::initFriction", this, &CompositeContact::initFriction);
+    t->computes(d_mpm_labels->frictionalWorkLabel);
     sched->addTask(t, patches, matls);
   }
 
-  for (auto contactModel : d_m) {
-    contactModel->addComputesAndRequires(sched,
-                                         patches,
-                                         matls,
-                                         gVelocity_label);
+  for (auto& contactModel : d_m) {
+    contactModel->addComputesAndRequires(
+      sched, patches, matls, gVelocity_label);
   }
 }
 
@@ -113,7 +114,7 @@ CompositeContact::initFriction(const ProcessorGroup*,
     for (int m = 0; m < matls->size(); m++) {
       NCVariable<double> frictionWork_m;
       new_dw->allocateAndPut(frictionWork_m,
-                             lb->frictionalWorkLabel,
+                             d_mpm_labels->frictionalWorkLabel,
                              matls->get(m),
                              patch);
       frictionWork_m.initialize(0.);

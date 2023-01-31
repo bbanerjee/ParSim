@@ -179,7 +179,7 @@ public:
                          const MaterialSet* matls,
                          const VarLabel* label) override;
 
-private:
+protected:
   double d_stop_time{ std::numeric_limits<double>::max() };
   Vector d_vel_after_stop{ 0.0, 0.0, 0.0 };
   int d_material{ 0 };

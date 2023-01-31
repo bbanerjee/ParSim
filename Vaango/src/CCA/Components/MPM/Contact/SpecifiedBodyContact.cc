@@ -168,6 +168,7 @@ SpecifiedBodyContact::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("stop_time", d_stop_time);
   contact_ps->appendElement("velocity_after_stop", d_vel_after_stop);
   contact_ps->appendElement("volume_constraint", d_vol_const);
+  contact_ps->appendElement("include_rotation", d_include_rotation);
   contact_ps->appendElement("normal_only", d_normal_only);
   contact_ps->appendElement("one_or_two_step", d_one_or_two_step);
   contact_ps->appendElement("exclude_material", d_exclude_material);

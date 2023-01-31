@@ -68,16 +68,19 @@ ContactMaterialSpec::add(unsigned int matlIndex)
   // rather than searching a list every time
   if (d_matls.size() == 0) {
     d_matls.resize(matlIndex + 1);
-    for (size_t i = 0; i < matlIndex + 1; i++)
+    for (size_t i = 0; i < matlIndex + 1; i++) {
       d_matls[i] = false;
+    }
   }
   if (matlIndex >= d_matls.size()) {
     std::vector<bool> copy(d_matls);
     d_matls.resize(matlIndex + 1);
-    for (size_t i = 0; i < copy.size(); i++)
+    for (size_t i = 0; i < copy.size(); i++) {
       d_matls[i] = copy[i];
-    for (size_t i = copy.size(); i < matlIndex + 1; i++)
+    }
+    for (size_t i = copy.size(); i < matlIndex + 1; i++) {
       d_matls[i] = false;
+    }
   }
 
   d_matls[matlIndex] = true;

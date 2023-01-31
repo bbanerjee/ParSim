@@ -24,18 +24,21 @@
 #
 
 SET(Vaango_CCA_Components_MPM_Contact_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CompositeContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ContactMaterialSpec.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ApproachContact.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluidContact.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContact.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactBard.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactLR.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactLRGuilkey.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/NodalSVFContact.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ApproachContact.cc  
-  ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
-  ${CMAKE_CURRENT_SOURCE_DIR}/CompositeContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/NullContact.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/ContactMaterialSpec.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyFrictionContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
 )
 
 SET(Vaango_CCA_Components_MPM_SRCS

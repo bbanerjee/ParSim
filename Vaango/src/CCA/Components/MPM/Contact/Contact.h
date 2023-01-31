@@ -114,11 +114,9 @@ public:
 protected:
   Output* d_output{ nullptr };
 
+  MaterialManagerP d_mat_manager{ nullptr };
   const MPMLabel* d_mpm_labels{ nullptr };
   const MPMFlags* d_mpm_flags{ nullptr };
-
-  MaterialManagerP d_mat_manager{ nullptr };
-
   ContactMaterialSpec d_matls;
 
   bool d_need_normals{ false };

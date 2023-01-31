@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2019 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,72 +23,91 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MPM_CONTACT_PENALTY_H__
-#define __MPM_CONTACT_PENALTY_H__
+// Fluid.h
+
+#ifndef __CCA_COMPONENTS_MPM_CONTACT_FLUIDCONTACT_H__
+#define __CCA_COMPONENTS_MPM_CONTACT_FLUIDCONTACT_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
+
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
+class DataWarehouse;
+class MPMLabel;
+class HydroMPMLabel;
+class MPMFlags;
+class ProcessorGroup;
+class Patch;
+class VarLabel;
+class Task;
+
 /**************************************
+
 CLASS
-   PenaltyContact
+   FluidContact
 
    Short description...
+
 GENERAL INFORMATION
-   PenaltyContact.h
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
+   FluidContact.h
+
+   Hilde Aas Nøst
+   Department of Civil Engineering
+   Norwegian University of Science and Technology
+
 
 KEYWORDS
-   Contact_Model_Penalty
+   Contact_Model_Fluid
+
 DESCRIPTION
   One of the derived Contact classes.  This particular
-  version is used to apply Coulombic frictional contact.
+  version is used to apply contact with pore fluid.
 
 WARNING
 
 ****************************************/
 
-class PenaltyContact : public Contact
+class FluidContact : public Contact
 {
-
 public:
-  PenaltyContact(const ProcessorGroup* myworld,
-                 const MaterialManagerP& mat_manager,
-                 const MPMLabel* labels,
-                 const MPMFlags* flags,
-                 const ProblemSpecP& ps);
+  // Constructor
+  FluidContact(const ProcessorGroup* myworld,
+               const MaterialManagerP& mat_manager,
+               const MPMLabel* labels,
+               const MPMFlags* flags,
+               ProblemSpecP& ps);
 
-  PenaltyContact(const PenaltyContact& con) = delete;
-  PenaltyContact(PenaltyContact&& con)      = delete;
-  PenaltyContact&
-  operator=(const PenaltyContact& con) = delete;
-  PenaltyContact&
-  operator=(PenaltyContact&& con) = delete;
+  // Destructor
+  virtual ~FluidContact() = default;
 
-  virtual ~PenaltyContact() = default;
+  // Prevent copying/move of this class
+  FluidContact(const FluidContact& con) = delete;
+  FluidContact(FluidContact&& con)      = delete;
+  FluidContact&
+  operator=(const FluidContact& con) = delete;
+  FluidContact&
+  operator=(FluidContact&& con) = delete;
 
   virtual void
-  outputProblemSpec(ProblemSpecP& ps);
+  setContactMaterialAttributes() override;
 
-  void
-  addComputesAndRequires(SchedulerP& sched,
-                         const PatchSet* patches,
-                         const MaterialSet* matls,
-                         const VarLabel* label) override;
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-  void
+  // Basic contact methods
+  virtual void
   exchangeMomentum(const ProcessorGroup*,
                    const PatchSubset* patches,
                    const MaterialSubset* matls,
@@ -96,20 +115,20 @@ public:
                    DataWarehouse* new_dw,
                    const VarLabel* label) override;
 
-private:
-  // Coefficient of friction
-  double d_mu{ 0.0 };
-  // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const{ 0.0 };
-  double d_sep_fac{ 0.0 };
+  virtual void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 
-  void
-  exMomIntegrated(const ProcessorGroup*,
-                  const PatchSubset* patches,
-                  const MaterialSubset* matls,
-                  DataWarehouse* old_dw,
-                  DataWarehouse* new_dw);
+private:
+  int d_rigid_material{ 0 };
+  double d_vol_const{ 0.0 };
+  double d_sep_fac{ 1.0e100 };
+  bool d_comp_collinear_norms{ true };
+
+  std::unique_ptr<HydroMPMLabel> d_hydro_mpm_labels;
 };
 } // End namespace Uintah
 
-#endif /* __MPM_CONTACT_PENALTY_H__ */
+#endif /* __CCA_COMPONENTS_MPM_CONTACT_FLUIDCONTACT_H__ */

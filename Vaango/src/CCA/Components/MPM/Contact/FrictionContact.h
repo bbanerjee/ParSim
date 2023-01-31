@@ -64,6 +64,9 @@ public:
   FrictionContact&
   operator=(FrictionContact&& con) = delete;
 
+  virtual void
+  setContactMaterialAttributes() override;
+
   void
   outputProblemSpec(ProblemSpecP& ps) override;
 

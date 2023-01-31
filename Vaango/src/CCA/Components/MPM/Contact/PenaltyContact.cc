@@ -45,24 +45,15 @@ using std::vector;
 using std::string;
 
 PenaltyContact::PenaltyContact(const ProcessorGroup* myworld,
-                               ProblemSpecP& ps,
-                               MaterialManagerP& d_sS,
-                               MPMLabel* Mlb,
-                               MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
+                               const MaterialManagerP& mat_manager,
+                               const MPMLabel* labels,
+                               const MPMFlags* flags,
+                               const ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  d_vol_const=0.;
-  d_oneOrTwoStep = 1;
+  d_one_or_two_step = 1;
 
   ps->require("mu",d_mu);
-
-  d_mat_manager = d_sS;
-
-  if (flag->d_8or27 == 8) {
-    NGP = 1; NGN = 1;
-  } else {
-    NGP = 2; NGN = 2;
-  }
 }
 
 void 

@@ -23,9 +23,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/FrictionContactLR.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
@@ -56,6 +56,11 @@ FrictionContactLR::FrictionContactLR(const ProcessorGroup* myworld,
   ps->require("mu", d_mu);
   ps->get("volume_constraint", d_vol_const);
   ps->get("one_or_two_step", d_one_or_two_step);
+}
+
+void
+FrictionContactLR::setContactMaterialAttributes()
+{
 }
 
 void

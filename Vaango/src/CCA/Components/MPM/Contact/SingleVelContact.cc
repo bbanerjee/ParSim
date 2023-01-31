@@ -72,6 +72,11 @@ SingleVelContact::SingleVelContact(const ProcessorGroup* myworld,
 }
 
 void
+SingleVelContact::setContactMaterialAttributes()
+{
+}
+
+void
 SingleVelContact::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP contact_ps = ps->appendChild("contact");

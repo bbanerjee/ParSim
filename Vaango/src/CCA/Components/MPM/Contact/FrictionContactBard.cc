@@ -23,9 +23,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/FrictionContactBard.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
@@ -55,6 +55,11 @@ FrictionContactBard::FrictionContactBard(const ProcessorGroup* myworld,
   ps->get("volume_constraint", d_vol_const);
   ps->get("separation_factor", d_sep_fac);
   ps->get("one_or_two_step", d_one_or_two_step);
+}
+
+void
+FrictionContactBard::setContactMaterialAttributes()
+{
 }
 
 void

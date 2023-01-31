@@ -89,6 +89,9 @@ public:
   virtual ~FrictionContactLR() = default;
 
   virtual void
+  setContactMaterialAttributes() override;
+
+  virtual void
   outputProblemSpec(ProblemSpecP& ps) override;
 
   void

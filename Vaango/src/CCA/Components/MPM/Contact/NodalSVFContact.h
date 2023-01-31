@@ -82,36 +82,50 @@ WARNING
 class NodalSVFContact : public Contact
 {
 private:
-  // Prevent copying of this class
-  // copy constructor
-  NodalSVFContact(const NodalSVFContact& con);
-  NodalSVFContact& operator=(const NodalSVFContact& con);
-
-  MaterialManagerP 
- d_mat_manager;
 
   // PARAMETERS UNIQUE TO THIS MODEL FROM UPS FILE
-  double d_myu;
-  bool b_svf;
-  IntVector d_materials;
+  double d_myu{0.0};
+  bool d_svf{false};
+  std::vector<int> d_materials;
 
 public:
   // Constructor
-  NodalSVFContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  MaterialManagerP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
+  NodalSVFContact(const ProcessorGroup* myworld,
+                  const MaterialManagerP& mat_manager,
+                  const MPMLabel* labels,
+                  const MPMFlags* flags,
+                  ProblemSpecP& ps);
 
   // Destructor
-  virtual ~NodalSVFContact();
+  virtual ~NodalSVFContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  // Prevent copying/move of this class
+  NodalSVFContact(const NodalSVFContact& con) = delete;
+  NodalSVFContact(NodalSVFContact&& con)      = delete;
+  NodalSVFContact&
+  operator=(const NodalSVFContact& con) = delete;
+  NodalSVFContact&
+  operator=(NodalSVFContact&& con) = delete;
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  virtual void
+  setContactMaterialAttributes() override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 

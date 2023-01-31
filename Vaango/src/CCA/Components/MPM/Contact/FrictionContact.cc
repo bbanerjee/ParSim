@@ -123,6 +123,11 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
 }
 
 void
+FrictionContact::setContactMaterialAttributes()
+{
+}
+
+void
 FrictionContact::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP contact_ps = ps->appendChild("contact");

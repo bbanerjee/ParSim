@@ -48,9 +48,9 @@ public:
   static std::unique_ptr<Contact>
   create(const ProcessorGroup* myworld,
          const ProblemSpecP& ps,
-         MaterialManagerP& ss,
-         const MPMLabel* lb,
-         const MPMFlags* MFlag);
+         const MaterialManagerP& mat_manager,
+         const MPMLabel* labels,
+         const MPMFlags* flags);
 };
 } // End namespace Uintah
 

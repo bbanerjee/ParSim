@@ -43,32 +43,44 @@ namespace Uintah {
 
 class NullContact : public Contact
 {
-private:
-  // Prevent copying of this class
-  // copy constructor
-  NullContact(const NullContact& con);
-  NullContact& operator=(const NullContact& con);
-
-  MaterialManagerP 
- d_mat_manager;
-
 public:
   // Constructor
-  NullContact(const ProcessorGroup* myworld, MaterialManagerP& ss, MPMLabel* lb,
-              MPMFlags* MFlag);
+  NullContact(const ProcessorGroup* myworld,
+              const MaterialManagerP& mat_manager,
+              const MPMLabel* labels,
+              const MPMFlags* flags,
+              ProblemSpecP& ps);
 
   // Destructor
-  virtual ~NullContact();
+  virtual ~NullContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  // Prevent copying/move of this class
+  NullContact(const NullContact& con) = delete;
+  NullContact(NullContact&& con)      = delete;
+  NullContact&
+  operator=(const NullContact& con) = delete;
+  NullContact&
+  operator=(NullContact&& con) = delete;
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  virtual void
+  setContactMaterialAttributes() override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 

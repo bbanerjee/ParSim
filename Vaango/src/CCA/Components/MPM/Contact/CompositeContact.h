@@ -38,9 +38,20 @@ class CompositeContact : public Contact
 public:
   // Constructor
   CompositeContact(const ProcessorGroup* myworld,
-                   const MPMLabel* Mlb,
-                   const MPMFlags* MFlag);
-  virtual ~CompositeContact();
+                   const MPMLabel* labels,
+                   const MPMFlags* flags,
+                   ProblemSpecP& ps);
+  virtual ~CompositeContact() = default;
+
+  CompositeContact(const CompositeContact&) = delete;
+  CompositeContact(CompositeContact&&)      = delete;
+  CompositeContact&
+  operator=(const CompositeContact&) = delete;
+  CompositeContact&
+  operator=(CompositeContact&&) = delete;
+
+  virtual void
+  setContactMaterialAttributes() override;
 
   void
   outputProblemSpec(ProblemSpecP& ps) override;
@@ -76,11 +87,6 @@ public:
                const MaterialSubset* matls,
                DataWarehouse*,
                DataWarehouse* new_dw);
-
-private: // hide
-  CompositeContact(const CompositeContact&);
-  CompositeContact&
-  operator=(const CompositeContact&);
 
 protected: // data
   std::list<std::unique_ptr<Contact>> d_m;

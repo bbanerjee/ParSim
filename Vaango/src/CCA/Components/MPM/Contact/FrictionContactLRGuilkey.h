@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2022 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,34 +23,41 @@
  * IN THE SOFTWARE.
  */
 
-// FrictionContactBard.h
+// FrictionContactLRGuilkey.h
 
-#ifndef __FRICTIONBARD_H__
-#define __FRICTIONBARD_H__
+#ifndef __CAA_COMPONENTS_MPM_CONTACT_FRICTIONCONTACTLR_GUILKEY_H__
+#define __CAA_COMPONENTS_MPM_CONTACT_FRICTIONCONTACTLR_GUILKEY_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
+
 #include <CCA/Components/MPM/Core/MPMFlags.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
+
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
+
 /**************************************
 
 CLASS
-   FrictionContactBard
+   FrictionContactLRGuilkey
 
-   This is the contact model that has been evolving in Uintah since about
-   2001, based on a paper by Bardenhagen, Guilkey, Witzel, et al., with some
-   changes for volume constraints and separation constraints added, the latter
-   based on some work of John Nairn.
+   This version of contact is based on John Nairn and Chad
+   Hammerquist's 2019 manuscript that describes the use of logistic
+   regression to find a common normal between objects, and uses
+   particle geometry to find the most prominent portion of a particle
+   at each node, and applies contact when contacting materials'
+   prominences overlap.
 
 GENERAL INFORMATION
 
-   FrictionContactBard.h
+   FrictionContactLRGuilkey.h
 
    Steven G. Parker
    Department of Computer Science
@@ -70,21 +77,36 @@ WARNING
 
 ****************************************/
 
-class FrictionContactBard : public Contact
+class FrictionContactLRGuilkey : public Contact
 {
+  using Color = double;
+  using Mu    = double;
+
+private:
+  // Coefficient of friction vs Color data
+  std::vector<Color> d_color;
+  std::vector<Mu> d_mu;
+  std::vector<std::pair<Color, Mu>> d_color_mu;
+  int d_material;
 
 public:
-  FrictionContactBard(const ProcessorGroup* myworld,
-                      const MaterialManagerP& mat_manager,
-                      const MPMLabel* labels,
-                      const MPMFlags* flags,
-                      ProblemSpecP& ps);
+  // Constructor
+  FrictionContactLRGuilkey(const ProcessorGroup* myworld,
+                           const MaterialManagerP& d_mat_manager,
+                           const MPMLabel* labels,
+                           const MPMFlags* flags,
+                           ProblemSpecP& ps);
 
-  FrictionContactBard(const FrictionContactBard& con) = delete;
-  FrictionContactBard&
-  operator=(const FrictionContactBard& con) = delete;
+  // Destructor
+  virtual ~FrictionContactLRGuilkey() = default;
 
-  virtual ~FrictionContactBard() = default;
+  // Prevent copying/move of this class
+  FrictionContactLRGuilkey(const FrictionContactLRGuilkey& con) = delete;
+  FrictionContactLRGuilkey(FrictionContactLRGuilkey&& con)      = delete;
+  FrictionContactLRGuilkey&
+  operator=(const FrictionContactLRGuilkey& con) = delete;
+  FrictionContactLRGuilkey&
+  operator=(FrictionContactLRGuilkey&& con) = delete;
 
   virtual void
   setContactMaterialAttributes() override;
@@ -92,13 +114,8 @@ public:
   virtual void
   outputProblemSpec(ProblemSpecP& ps) override;
 
-  void
-  addComputesAndRequires(SchedulerP& sched,
-                         const PatchSet* patches,
-                         const MaterialSet* matls,
-                         const VarLabel* label) override;
-
-  void
+  // Basic contact methods
+  virtual void
   exchangeMomentum(const ProcessorGroup*,
                    const PatchSubset* patches,
                    const MaterialSubset* matls,
@@ -106,28 +123,45 @@ public:
                    DataWarehouse* new_dw,
                    const VarLabel* label) override;
 
-private:
-  // Coefficient of friction
-  double d_mu{ 0.0 };
-  // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const{ 0.0 };
-  // Default to large number to provide no constraint
-  double d_sep_fac{ 1.0e100 };
+  virtual void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 
-  void
+private:
+  virtual void
   exMomInterpolated(const ProcessorGroup*,
                     const PatchSubset* patches,
                     const MaterialSubset* matls,
                     DataWarehouse* old_dw,
                     DataWarehouse* new_dw);
 
-  void
+  virtual void
   exMomIntegrated(const ProcessorGroup*,
                   const PatchSubset* patches,
                   const MaterialSubset* matls,
                   DataWarehouse* old_dw,
                   DataWarehouse* new_dw);
+
+  inline double
+  findMuFromColor(double color)
+  {
+    int n_entries = static_cast<int>(d_color.size());
+    if (color >= d_color[n_entries - 1]) {
+      return d_mu[n_entries - 1];
+    }
+
+    for (int ii = 1; ii < n_entries; ++ii) {
+      if (color <= d_color[ii]) {
+        double s = (d_color[ii] - color) / (d_color[ii] - d_color[ii - 1]);
+        return d_mu[ii - 1] * s + d_mu[ii] * (1.0 - s);
+      }
+    }
+
+    return d_mu[0];
+  }
 };
 } // End namespace Uintah
 
-#endif /* __FRICTIONBARD_H__ */
+#endif /* __CAA_COMPONENTS_MPM_CONTACT_FRICTIONCONTACTLR_GUILKEY_H__ */
