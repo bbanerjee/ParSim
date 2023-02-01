@@ -31,9 +31,9 @@ SET(Vaango_CCA_Components_Regridder_SRCS
   TiledRegridder.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_Regridder ${Vaango_CCA_Components_Regridder_SRCS})
+add_library(Vaango_CCA_Components_Regridder ${Vaango_CCA_Components_Regridder_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Regridder
+target_link_libraries(Vaango_CCA_Components_Regridder
   Vaango_CCA_Ports
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
@@ -47,5 +47,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Regridder
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Regridder)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Regridder)
 ENDIF(BUILD_SHARED_LIBS)

@@ -106,10 +106,10 @@ SET(LIBS
   ${MPI_LIBRARY}
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
+add_library(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_MPM ${LIBS})
+target_link_libraries(Vaango_CCA_Components_MPM ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_MPM)
+  add_definitions(-DBUILD_Vaango_CCA_Components_MPM)
 ENDIF(BUILD_SHARED_LIBS)

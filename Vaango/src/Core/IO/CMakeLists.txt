@@ -30,14 +30,14 @@ SET(Vaango_Core_IO_SRCS
   UintahZlibUtil.cc
 )
 
-ADD_LIBRARY(Vaango_Core_IO ${Vaango_Core_IO_SRCS})
+add_library(Vaango_Core_IO ${Vaango_Core_IO_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_IO
+target_link_libraries(Vaango_Core_IO
   ${Z_LIBRARY} 
   ${GPERFTOOLS_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_IO)
+  add_definitions(-DBUILD_Vaango_Core_IO)
 ENDIF(BUILD_SHARED_LIBS)
 

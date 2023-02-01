@@ -27,9 +27,9 @@ SET(Vaango_CCA_Components_DataArchiver_SRCS
   DataArchiver.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_DataArchiver ${Vaango_CCA_Components_DataArchiver_SRCS})
+add_library(Vaango_CCA_Components_DataArchiver ${Vaango_CCA_Components_DataArchiver_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_DataArchiver
+target_link_libraries(Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_GeometryPiece
@@ -48,5 +48,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_DataArchiver
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_DataArchiver)
+  add_definitions(-DBUILD_Vaango_CCA_Components_DataArchiver)
 ENDIF(BUILD_SHARED_LIBS)

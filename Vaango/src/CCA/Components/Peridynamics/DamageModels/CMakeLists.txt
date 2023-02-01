@@ -47,12 +47,12 @@ SET(LIBS
   ${MPI_LIBRARY}
 )
 
-ADD_LIBRARY(Peridynamics_DamageModels ${Peridynamics_DamageModel_SRCS})
+add_library(Peridynamics_DamageModels ${Peridynamics_DamageModel_SRCS})
 
-TARGET_LINK_LIBRARIES(Peridynamics_DamageModels ${LIBS})
+target_link_libraries(Peridynamics_DamageModels ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Peridynamics_DamageModels)
+  add_definitions(-DBUILD_Peridynamics_DamageModels)
 ENDIF(BUILD_SHARED_LIBS)
 
 

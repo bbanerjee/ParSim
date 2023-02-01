@@ -67,9 +67,9 @@ add_subdirectory(UnitTests)
 
 #message(STATUS "Core/Grid sources are ${Vaango_Core_Grid_SRCS}")
 
-ADD_LIBRARY(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
+add_library(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Grid
+target_link_libraries(Vaango_Core_Grid
   Vaango_Core_Exceptions
   Vaango_Core_Util
   Vaango_Core_Containers
@@ -81,6 +81,6 @@ TARGET_LINK_LIBRARIES(Vaango_Core_Grid
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Grid)
+  add_definitions(-DBUILD_Vaango_Core_Grid)
 ENDIF(BUILD_SHARED_LIBS)
 

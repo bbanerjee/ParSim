@@ -38,7 +38,7 @@
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Exceptions/ParameterNotFound.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <iostream>
 using namespace Uintah;

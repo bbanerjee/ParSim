@@ -29,11 +29,11 @@ SET(Vaango_Core_ProblemSpec_SRCS
   ProblemSpec.cc
 )
 
-ADD_LIBRARY(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
+add_library(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
 
 # message(STATUS "Core/ProblemSpec linking to xml library ${XML2_LIBRARY}")
 
-TARGET_LINK_LIBRARIES(Vaango_Core_ProblemSpec
+target_link_libraries(Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
   Vaango_Core_Math
   Vaango_Core_Util
@@ -41,5 +41,5 @@ TARGET_LINK_LIBRARIES(Vaango_Core_ProblemSpec
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_ProblemSpec)
+  add_definitions(-DBUILD_Vaango_Core_ProblemSpec)
 ENDIF(BUILD_SHARED_LIBS)

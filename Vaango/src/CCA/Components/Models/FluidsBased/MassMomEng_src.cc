@@ -56,7 +56,7 @@
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include<CCA/Components/ICE/Core/ICELabel.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <iostream>
 
 using namespace Uintah;

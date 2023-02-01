@@ -29,9 +29,9 @@ SET(Vaango_CCA_Components_SimulationController_SRCS
   AMRSimulationController.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_SimulationController ${Vaango_CCA_Components_SimulationController_SRCS})
+add_library(Vaango_CCA_Components_SimulationController ${Vaango_CCA_Components_SimulationController_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SimulationController
+target_link_libraries(Vaango_CCA_Components_SimulationController
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
@@ -48,5 +48,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SimulationController
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_SimulationController)
+  add_definitions(-DBUILD_Vaango_CCA_Components_SimulationController)
 ENDIF(BUILD_SHARED_LIBS)

@@ -46,8 +46,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/Models/HEChem/LightTime.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>

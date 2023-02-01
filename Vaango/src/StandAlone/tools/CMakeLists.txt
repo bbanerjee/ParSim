@@ -22,11 +22,11 @@
 # IN THE SOFTWARE.
 #
 
-ADD_SUBDIRECTORY(compare_mms)
-ADD_SUBDIRECTORY(dumpfields)
-ADD_SUBDIRECTORY(extractors)
-ADD_SUBDIRECTORY(geometry_creators)
-ADD_SUBDIRECTORY(puda)
-ADD_SUBDIRECTORY(graphview)
-ADD_SUBDIRECTORY(uda2vis)
-#ADD_SUBDIRECTORY(uda2vtk)
+add_subdirectory(compare_mms)
+add_subdirectory(dumpfields)
+add_subdirectory(extractors)
+add_subdirectory(geometry_creators)
+add_subdirectory(puda)
+add_subdirectory(graphview)
+add_subdirectory(uda2vis)
+#add_subdirectory(uda2vtk)

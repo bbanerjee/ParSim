@@ -197,7 +197,7 @@ void MPMICE::HEChemistry(const ProcessorGroup*,
     cout_doing << "Doing HEChemistry on patch "<< patch->getID()
                <<"\t\t\t\t MPMICE" << std::endl;
     delt_vartype delT;
-    old_dw->get(delT, d_mat_manager->get_delt_label());
+    old_dw->get(delT, d_lb->delTLabel);
     int numALLMatls=d_mat_manager->getNumMaterials();
     std::vector<CCVariable<double> > burnedMass(numALLMatls);
     std::vector<CCVariable<double> > createdVol(numALLMatls);
@@ -325,7 +325,7 @@ void MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
   const MaterialSubset* mss = mpm_matls->getUnion();
   Ghost::GhostType  gac = Ghost::AroundCells;
                                                                                 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label());
+  t->requires(Task::OldDW, d_lb->delTLabel);
   t->requires(Task::NewDW, Ilb->mass_L_CCLabel,         gac,1);
   t->requires(Task::NewDW, Ilb->mom_L_CCLabel,          gac,1);
   t->requires(Task::NewDW, Ilb->int_eng_L_CCLabel,      gac,1);
@@ -360,7 +360,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
                                                                                 
     delt_vartype delT;
-    old_dw->get(delT, d_mat_manager->get_delt_label());
+    old_dw->get(delT, d_lb->delTLabel);
     Ghost::GhostType  gac = Ghost::AroundCells;
     Ghost::GhostType  gn  = Ghost::None;
                                                                                 
@@ -489,7 +489,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
 #include <Packages/Uintah/CCA/Components/MPMICE/MPMICE.h>
 #include <Packages/Uintah/CCA/Components/ICE/ICE.h>
 #include <Packages/Uintah/CCA/Components/ICE/ICEMaterial.h>
-#include <Packages/Uintah/CCA/Components/ICE/BoundaryCond.h>
+#include <Packages/Uintah/CCA/Components/ICE/Core/BoundaryCond.h>
 #include <Packages/Uintah/CCA/Components/ICE/EOS/EquationOfState.h>
 #include <Packages/Uintah/CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Packages/Uintah/CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -527,7 +527,7 @@ void MPMICE::computeRateFormPressure(const ProcessorGroup*,
 
     double tmp;
     double press_ref= d_mat_manager->getRefPress();
-    int numICEMatls = d_mat_manager->getNumICEMatls();
+    int numICEMatls = d_mat_manager->getNumMaterials("ICE");
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     int numALLMatls = numICEMatls + numMPMMatls;
 

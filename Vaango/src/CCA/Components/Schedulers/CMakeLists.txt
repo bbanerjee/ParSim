@@ -59,9 +59,9 @@ if (CUDA)
      )
 endif (CUDA)
 
-ADD_LIBRARY(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
+add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
+target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Util
@@ -79,5 +79,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Schedulers)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Schedulers)
 ENDIF(BUILD_SHARED_LIBS)

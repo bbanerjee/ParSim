@@ -69,7 +69,7 @@ IF(WIN32)
   SET(Vaango_Core_Math_SRCS ${Vaango_Core_Math_SRCS} Rand48.cc)
 ENDIF(WIN32)
 
-ADD_LIBRARY(Vaango_Core_Math ${Vaango_Core_Math_SRCS})
+add_library(Vaango_Core_Math ${Vaango_Core_Math_SRCS})
 
 set(LIBS
  ${M_LIBRARY} 
@@ -84,12 +84,12 @@ set(LIBS
  ${Z_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Math
+target_link_libraries(Vaango_Core_Math
   Vaango_Core_Exceptions
   Vaango_Core_Util
   ${LIBS}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Math)
+  add_definitions(-DBUILD_Vaango_Core_Math)
 ENDIF(BUILD_SHARED_LIBS)

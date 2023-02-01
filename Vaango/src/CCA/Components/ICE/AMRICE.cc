@@ -48,7 +48,7 @@
 
 
 #include <CCA/Components/ICE/AMRICE.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 
 #include <CCA/Ports/SolverInterface.h>
 #include <CCA/Ports/Scheduler.h>
@@ -536,7 +536,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
                << " Doing setBC_FineLevel"<< "\t\t\t\t AMRICE L-" 
                << fineLevel->getIndex() << " Patches: " << *patches <<endl;
                
-    int  numICEMatls = d_mat_manager->getNumICEMatls();
+    int  numICEMatls = d_mat_manager->getNumMaterials("ICE");
     bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off
       
     for(int p=0;p<patches->size();p++){
@@ -1771,7 +1771,7 @@ void AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
             
             if(isRight_CP_FP_pair){
 
-              int n_ice_matls = d_mat_manager->getNumICEMatls();
+              int n_ice_matls = d_mat_manager->getNumMaterials("ICE");
               int n_touched_cells = (getFaceMark(0, finePatch, patchFace) )/n_ice_matls;
               int n_CFI_cells     =  getFaceMark(1, finePatch, patchFace);
               //__________________________________
@@ -1966,7 +1966,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
     // During initialization only compute for ICE matls
     int numMatls = 0;
     if (initial){
-      numMatls = d_mat_manager->getNumICEMatls();
+      numMatls = d_mat_manager->getNumMaterials("ICE");
     }else{
       numMatls = d_mat_manager->getNumMaterials();
     }
@@ -1975,7 +1975,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
       
       Material* matl;
       if(initial){
-        matl = d_mat_manager->getICEMaterial( m );
+        matl = static_cast<ICEMaterial*>(d_mat_manager->getMaterial( "ICE", m ));
       }else{
         matl = d_mat_manager->getMaterial( m );
       }

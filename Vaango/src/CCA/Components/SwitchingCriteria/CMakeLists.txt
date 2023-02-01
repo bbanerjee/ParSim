@@ -33,9 +33,9 @@ SET(Vaango_CCA_Components_SwitchingCriteria_SRCS
   SteadyState.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_SwitchingCriteria ${Vaango_CCA_Components_SwitchingCriteria_SRCS})
+add_library(Vaango_CCA_Components_SwitchingCriteria ${Vaango_CCA_Components_SwitchingCriteria_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SwitchingCriteria
+target_link_libraries(Vaango_CCA_Components_SwitchingCriteria
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -48,5 +48,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SwitchingCriteria
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_SwitchingCriteria)
+  add_definitions(-DBUILD_Vaango_CCA_Components_SwitchingCriteria)
 ENDIF(BUILD_SHARED_LIBS)

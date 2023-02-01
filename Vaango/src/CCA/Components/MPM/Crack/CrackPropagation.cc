@@ -450,7 +450,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
           /*
           double time=d_mat_manager->getElapsedTime();
           delt_vartype delT;
-          old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches)
+          old_dw->get(delT, d_lb->delTLabel, getLevel(patches)
           );
           if(sp) { // Record crack incremental and time instant
             cfSegDis[m][2*i]=(p1p-p1).length();

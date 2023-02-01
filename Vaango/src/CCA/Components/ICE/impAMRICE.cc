@@ -48,9 +48,9 @@
 #include <CCA/Components/ICE/ICE.h>
 #include <CCA/Components/ICE/AMRICE.h>
 #include <CCA/Components/ICE/impAMRICE.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
 
@@ -402,8 +402,8 @@ void impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
   // on all the levels
   delt_vartype dt;
   subNewDW = d_subsched->get_dw(3);
-  ParentOldDW->get(dt, d_mat_manager->get_delt_label());
-  subNewDW->put(dt, d_mat_manager->get_delt_label());
+  ParentOldDW->get(dt, d_lb->delTLabel);
+  subNewDW->put(dt, d_lb->delTLabel);
    
   max_vartype max_RHS_old;
   ParentNewDW->get(max_RHS_old, lb->max_RHSLabel);

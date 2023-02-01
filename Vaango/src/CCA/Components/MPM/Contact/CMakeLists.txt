@@ -69,6 +69,6 @@ SET(Vaango_CCA_Components_MPM_SRCS
 #  ${MPI_LIBRARY}
 #)
 #
-#ADD_LIBRARY(Vaango_CCA_Components_MPM_Contact ${Vaango_CCA_Components_MPM_Contact_SRCS})
+#add_library(Vaango_CCA_Components_MPM_Contact ${Vaango_CCA_Components_MPM_Contact_SRCS})
 #
-#TARGET_LINK_LIBRARIES(Vaango_CCA_Components_MPM_Contact ${LIBS})
+#target_link_libraries(Vaango_CCA_Components_MPM_Contact ${LIBS})

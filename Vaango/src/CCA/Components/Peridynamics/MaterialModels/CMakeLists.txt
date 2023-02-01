@@ -49,12 +49,12 @@ SET(LIBS
   ${MPI_LIBRARY}
 )
 
-ADD_LIBRARY(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
+add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
 
-TARGET_LINK_LIBRARIES(Peridynamics_MaterialModels ${LIBS})
+target_link_libraries(Peridynamics_MaterialModels ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Peridynamics_MaterialModels)
+  add_definitions(-DBUILD_Peridynamics_MaterialModels)
 ENDIF(BUILD_SHARED_LIBS)
 
 

@@ -23,5 +23,5 @@
 # IN THE SOFTWARE.
 #
 
-ADD_SUBDIRECTORY(Ports)
-ADD_SUBDIRECTORY(Components)
+add_subdirectory(Ports)
+add_subdirectory(Components)

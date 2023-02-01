@@ -32,13 +32,13 @@ SET(Vaango_Core_Containers_SRCS
   templates.cc
 )
 
-ADD_LIBRARY(Vaango_Core_Containers ${Vaango_Core_Containers_SRCS})
+add_library(Vaango_Core_Containers ${Vaango_Core_Containers_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Containers
+target_link_libraries(Vaango_Core_Containers
   Vaango_Core_Exceptions
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Containers)
+  add_definitions(-DBUILD_Vaango_Core_Containers)
 ENDIF(BUILD_SHARED_LIBS)
 

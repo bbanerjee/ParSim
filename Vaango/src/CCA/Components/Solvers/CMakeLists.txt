@@ -36,8 +36,8 @@ IF (HYPRE)
   )
 endif ()
 
-ADD_LIBRARY(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers
+add_library(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
+target_link_libraries(Vaango_CCA_Components_Solvers
   
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
@@ -51,7 +51,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers
 )
 
 IF (HYPRE)
-  TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers 
+  target_link_libraries(Vaango_CCA_Components_Solvers 
     Vaango_CCA_Components_Solvers_AMR 
     ${HYPRE_LIBRARY}
   )
@@ -61,5 +61,5 @@ ENDIF (HYPRE)
 
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Solvers)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Solvers)
 ENDIF(BUILD_SHARED_LIBS)

@@ -38,7 +38,7 @@ SET(Vaango_Core_Datatypes_SRCS
 
 include_directories(${BLAS_INCLUDE})
 
-ADD_LIBRARY(Vaango_Core_Datatypes ${Vaango_Core_Datatypes_SRCS})
+add_library(Vaango_Core_Datatypes ${Vaango_Core_Datatypes_SRCS})
 
 set(LIBS  
   ${M_LIBRARY} 
@@ -52,7 +52,7 @@ set(LIBS
   ${MPI_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Datatypes
+target_link_libraries(Vaango_Core_Datatypes
   Vaango_Core_Exceptions   
   Vaango_Core_Grid   
   Vaango_Core_Math         
@@ -62,5 +62,5 @@ TARGET_LINK_LIBRARIES(Vaango_Core_Datatypes
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Datatypes)
+  add_definitions(-DBUILD_Vaango_Core_Datatypes)
 ENDIF(BUILD_SHARED_LIBS)

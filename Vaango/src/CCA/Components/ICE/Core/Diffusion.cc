@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/ICE/Diffusion.h>
+#include <CCA/Components/ICE/Core/Diffusion.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>

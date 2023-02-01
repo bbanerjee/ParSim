@@ -67,9 +67,9 @@ IF(PETSC)
   SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(vaango ${VAANGO_LIBS})
+target_link_libraries(vaango ${VAANGO_LIBS})
 
-TARGET_LINK_LIBRARIES(compare_uda ${VAANGO_LIBS})
+target_link_libraries(compare_uda ${VAANGO_LIBS})
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive
@@ -83,9 +83,9 @@ set(RESTART_LIBS
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})
 ENDIF()
-TARGET_LINK_LIBRARIES(restart_merger ${RESTART_LIBS})
+target_link_libraries(restart_merger ${RESTART_LIBS})
   
-TARGET_LINK_LIBRARIES(slb
+target_link_libraries(slb
   Vaango_Core_GeometryPiece
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec

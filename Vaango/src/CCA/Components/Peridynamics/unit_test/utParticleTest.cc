@@ -125,7 +125,7 @@ void utParticleTest::scheduleComputeStableTimestep(const Uintah::LevelP& level,
 {
   Task* task = scinew Task("computeStableTimestep",
 			   this, &utParticleTest::computeStableTimestep);
-  task->computes(d_mat_manager->get_delt_label(),level.get_rep());
+  task->computes(d_lb->delTLabel,level.get_rep());
   sched->addTask(task, level->eachPatch(), d_mat_manager->allMaterials());
 }
 
@@ -190,7 +190,7 @@ void utParticleTest::computeStableTimestep(const ProcessorGroup* /*pg*/,
 				     DataWarehouse* new_dw)
 {
   const Uintah::Level* level = getLevel(patches);
-  new_dw->put(Uintah::delt_vartype(1), d_mat_manager->get_delt_label(), level);
+  new_dw->put(Uintah::delt_vartype(1), d_lb->delTLabel, level);
 }
 
 void utParticleTest::initialize(const ProcessorGroup*,

@@ -43,12 +43,12 @@ SET(GEOM_CREATE_LIBS
   Vaango_CCA_Components_ProblemSpecification
 )
 
-TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda 
+target_link_libraries(createFileGeomPieceFromUda 
                       ${VAANGO_LIBS})
-TARGET_LINK_LIBRARIES(gambitFileReader ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(imageFromGeom ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(objFileReader ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(particleFileSplitter ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(particleImageFileSplitter ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(plyFileReader ${GEOM_CREATE_LIBS})
-TARGET_LINK_LIBRARIES(rawToUniqueGrains ${GEOM_CREATE_LIBS})
+target_link_libraries(gambitFileReader ${GEOM_CREATE_LIBS})
+target_link_libraries(imageFromGeom ${GEOM_CREATE_LIBS})
+target_link_libraries(objFileReader ${GEOM_CREATE_LIBS})
+target_link_libraries(particleFileSplitter ${GEOM_CREATE_LIBS})
+target_link_libraries(particleImageFileSplitter ${GEOM_CREATE_LIBS})
+target_link_libraries(plyFileReader ${GEOM_CREATE_LIBS})
+target_link_libraries(rawToUniqueGrains ${GEOM_CREATE_LIBS})

@@ -25,7 +25,7 @@
 
 ADD_EXECUTABLE(SimpleMath SimpleMath.cc)
 
-TARGET_LINK_LIBRARIES(SimpleMath
+target_link_libraries(SimpleMath
         Vaango_Core_Exceptions    
         Vaango_Core_Grid          
         Vaango_Core_Util          

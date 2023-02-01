@@ -65,10 +65,10 @@ SET(LIBS
   ${MPI_LIBRARY}
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_Peridynamics ${Vaango_CCA_Components_Peridynamics_SRCS})
+add_library(Vaango_CCA_Components_Peridynamics ${Vaango_CCA_Components_Peridynamics_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Peridynamics ${LIBS})
+target_link_libraries(Vaango_CCA_Components_Peridynamics ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Peridynamics)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Peridynamics)
 ENDIF(BUILD_SHARED_LIBS)

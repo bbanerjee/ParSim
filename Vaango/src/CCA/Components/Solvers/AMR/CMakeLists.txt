@@ -34,8 +34,8 @@ add_subdirectory(HyprePreconds)
 
 # message(STATUS "XML2 library is ${XML2_LIBRARY}")
 # message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
-ADD_LIBRARY(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
+add_library(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
+target_link_libraries(Vaango_CCA_Components_Solvers_AMR
   
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
@@ -52,5 +52,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
 ENDIF(BUILD_SHARED_LIBS)

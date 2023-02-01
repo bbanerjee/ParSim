@@ -361,7 +361,7 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
     Vector dx = patch->dCell();
     double vol = dx.x() * dx.y() * dx.z();
 
-    int numICEmatls = m_materialManager->getNumMatls( "ICE" );
+    int numICEmatls = m_materialManager->getNumMaterials( "ICE" );
 
     double ICE_totalIntEng = 0.0;
     double total_flux      = 0.0;
@@ -591,7 +591,7 @@ void FirstLawThermo::compute_MPM_Contributions(const ProcessorGroup * pg,
 
     //__________________________________
     //  compute the thermal energy of the solids
-    int    numMPMMatls     = m_materialManager->getNumMatls( "MPM" );
+    int    numMPMMatls     = m_materialManager->getNumMaterials( "MPM" );
     double MPM_totalIntEng = 0.0;
 
     for(int m = 0; m < numMPMMatls; m++){

@@ -32,15 +32,15 @@ SET(Vaango_Core_OS_SRCS
   sock.cc
 )
 
-ADD_LIBRARY(Vaango_Core_OS ${Vaango_Core_OS_SRCS})
+add_library(Vaango_Core_OS ${Vaango_Core_OS_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_OS
+target_link_libraries(Vaango_Core_OS
   Vaango_Core_Exceptions
   ${SOCKET_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_OS)
+  add_definitions(-DBUILD_Vaango_Core_OS)
 ENDIF(BUILD_SHARED_LIBS)
 
 add_subdirectory(UnitTests)

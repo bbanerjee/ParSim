@@ -35,9 +35,9 @@ SET(Vaango_CCA_Ports_SRCS
   SpaceFillingCurve.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Ports ${Vaango_CCA_Ports_SRCS})
+add_library(Vaango_CCA_Ports ${Vaango_CCA_Ports_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Ports
+target_link_libraries(Vaango_CCA_Ports
   Vaango_Core_Parallel    
   Vaango_Core_Util        
   Vaango_Core_Grid        
@@ -49,5 +49,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Ports
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Ports)
+  add_definitions(-DBUILD_Vaango_CCA_Ports)
 ENDIF(BUILD_SHARED_LIBS)

@@ -26,8 +26,8 @@
 
 
 
-#include <CCA/Components/ICE/BoundaryCond.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/Models/HEChem/Common.h>
 #include <CCA/Components/Models/HEChem/DDT1.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

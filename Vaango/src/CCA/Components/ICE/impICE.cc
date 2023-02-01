@@ -47,9 +47,9 @@
  */
 
 #include <CCA/Components/ICE/ICE.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Grid/AMR.h>
@@ -461,7 +461,7 @@ void ICE::setupMatrix(const ProcessorGroup*,
           new_dw->getOtherDataWarehouse(Task::ParentNewDW);
             
     delt_vartype delT;
-    parent_old_dw->get(delT, d_mat_manager->get_delt_label(),level);
+    parent_old_dw->get(delT, d_lb->delTLabel,level);
     Vector dx     = patch->dCell();
     int numMatls  = d_mat_manager->getNumMaterials();
     CCVariable<Stencil7> A; 
@@ -608,7 +608,7 @@ void ICE::setupRHS(const ProcessorGroup*,
            
     int numMatls  = d_mat_manager->getNumMaterials();
     delt_vartype delT;
-    pOldDW->get(delT, d_mat_manager->get_delt_label(), level);
+    pOldDW->get(delT, d_lb->delTLabel, level);
     
     bool newGrid = d_mat_manager->isRegridTimestep();
     Advector* advector = d_advector->clone(new_dw,patch,newGrid );
@@ -1041,8 +1041,8 @@ void ICE::implicitPressureSolve(const ProcessorGroup* pg,
   //  Move data from parentOldDW to subSchedNewDW.
   delt_vartype dt;
   subNewDW = d_subsched->get_dw(3);
-  ParentOldDW->get(dt, d_mat_manager->get_delt_label(),level.get_rep());
-  subNewDW->put(dt, d_mat_manager->get_delt_label(),level.get_rep());
+  ParentOldDW->get(dt, d_lb->delTLabel,level.get_rep());
+  subNewDW->put(dt, d_lb->delTLabel,level.get_rep());
    
   max_vartype max_RHS_old;
   ParentNewDW->get(max_RHS_old, lb->max_RHSLabel);

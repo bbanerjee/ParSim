@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,7 +49,7 @@
 #include <sstruct_mv.h>
 #include <sstruct_ls.h>
 
-
+using namespace std;
 
 /*================== Global variables ==================*/
 
@@ -250,7 +226,7 @@ main(int argc, char *argv[]) {
     solver = scinew SolverFAC(param);
     break;
   default:
-    std::cerr <<  "\n\nError: unknown solver type" << "\n";
+    cerr << "\n\nError: unknown solver type" << "\n";
     clean();
     exit(1);
   }
@@ -260,10 +236,10 @@ main(int argc, char *argv[]) {
    *-----------------------------------------------------------*/
   /* Initialize MPI */
   int numProcs, myid;
-  MPI_Init(&argc, &argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+  Uintah::MPI::Init(&argc, &argv);
+  Uintah::MPI::Comm_size(MPI_COMM_WORLD, &numProcs);
   param->numProcs = numProcs;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+  Uintah::MPI::Comm_rank(MPI_COMM_WORLD, &myid);
   MYID = myid;
 #if DRIVER_DEBUG
   hypre_InitMemoryDebug(myid);
@@ -298,7 +274,7 @@ main(int argc, char *argv[]) {
     dbg0 << "Checking arguments and parameters ... ";
     if ((param->solverType == Param::FAC) &&
         ((numLevels < 2) || (numDims != 3))) {
-      std::cerr <<  "\n\nFAC solver needs a 3D problem and at least 2 levels."
+      cerr << "\n\nFAC solver needs a 3D problem and at least 2 levels."
            << "\n";
       clean();
       exit(1);
@@ -310,7 +286,7 @@ main(int argc, char *argv[]) {
     //    int correct = mypow(2,numDims);
     int correct = int(pow(2.0,numDims));
     if (numProcs != correct) {
-      std::cerr <<  "\n\nError, hard coded to " << correct
+      cerr << "\n\nError, hard coded to " << correct
            << " processors in " << numDims << "-D for now." << "\n";
       clean();
       exit(1);

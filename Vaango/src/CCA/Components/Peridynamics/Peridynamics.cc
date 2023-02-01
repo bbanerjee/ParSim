@@ -330,7 +330,7 @@ Peridynamics::scheduleInitialize(const LevelP& level,
   t->computes(d_labels->pSizeLabel);
   t->computes(d_labels->pVelocityLabel);
   t->computes(d_labels->pExternalForceLabel);
-  t->computes(d_mat_manager->get_delt_label(),level.get_rep());
+  t->computes(d_lb->delTLabel,level.get_rep());
   t->computes(d_labels->pCellNAPIDLabel,zeroth_matl);
   t->computes(d_labels->pLoadCurveIDLabel);
 
@@ -712,7 +712,7 @@ Peridynamics::scheduleComputeStableTimestep(const LevelP& level,
                     this, &Peridynamics::actuallyComputeStableTimestep);
 
   const MaterialSet* peridynamic_matls = d_mat_manager->allPeridynamicsMaterials();
-  t->computes(d_mat_manager->get_delt_label(),level.get_rep());
+  t->computes(d_lb->delTLabel,level.get_rep());
   sched->addTask(t,level->eachPatch(), peridynamic_matls);
 }
 
@@ -1266,7 +1266,7 @@ Peridynamics::scheduleComputeStressTensor(SchedulerP& sched,
     cm->addComputesAndRequires(t, matl, patches);
   }
 
-  t->computes(d_mat_manager->get_delt_label(),getLevel(patches));
+  t->computes(d_lb->delTLabel,getLevel(patches));
 
   sched->addTask(t, patches, matls);
 }
@@ -1544,7 +1544,7 @@ Peridynamics::scheduleComputeAndIntegrateGridAcceleration(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeAndIntegrateGridAcceleration",
                         this, &Peridynamics::computeAndIntegrateGridAcceleration);
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
+  t->requires(Task::OldDW, d_lb->delTLabel );
 
   t->requires(Task::NewDW, d_labels->gMassLabel,          Ghost::None);
   t->requires(Task::NewDW, d_labels->gInternalForceLabel, Ghost::None);
@@ -1584,7 +1584,7 @@ Peridynamics::computeAndIntegrateGridAcceleration(const ProcessorGroup*,
       constNCVariable<double> mass;
 
       Uintah::delt_vartype delT;
-      old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
+      old_dw->get(delT, d_lb->delTLabel, getLevel(patches) );
  
       new_dw->get(internalforce,d_labels->gInternalForceLabel, matlIndex, patch, gnone, 0);
       new_dw->get(externalforce,d_labels->gExternalForceLabel, matlIndex, patch, gnone, 0);
@@ -1632,7 +1632,7 @@ Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::computeAndIntegrateParticleAcceleration",
                         this, &Peridynamics::computeAndIntegrateParticleAcceleration);
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
+  t->requires(Task::OldDW, d_lb->delTLabel );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
   t->requires(Task::NewDW, d_labels->pVolumeLabel_preReloc,        Ghost::None);
   t->requires(Task::OldDW, d_labels->pPositionLabel,               Ghost::None);
@@ -1672,7 +1672,7 @@ Peridynamics::computeAndIntegrateParticleAcceleration(const ProcessorGroup*,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;
-  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_lb->delTLabel, getLevel(patches) );
  
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1934,7 +1934,7 @@ Peridynamics::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                         this, &Peridynamics::setGridBoundaryConditions);
                   
   const MaterialSubset* all_materials = matls->getUnion();
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
+  t->requires(Task::OldDW, d_lb->delTLabel );
   
   t->requires(Task::NewDW, d_labels->gVelocityLabel, Ghost::None);
 
@@ -1963,7 +1963,7 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::delt_vartype delT;            
-  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_lb->delTLabel, getLevel(patches) );
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -2020,7 +2020,7 @@ Peridynamics::scheduleUpdateParticleKinematics(SchedulerP& sched,
   Task* t = scinew Task("Peridynamics::updateParticleKinematics",
                         this, &Peridynamics::updateParticleKinematics);
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label() );
+  t->requires(Task::OldDW, d_lb->delTLabel );
 
   t->requires(Task::OldDW, d_labels->pPositionLabel,     Ghost::None);
   t->requires(Task::OldDW, d_labels->pVelocityLabel,     Ghost::None);
@@ -2062,7 +2062,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
   Matrix3 dummyMatrix(0.0);
 
   Uintah::delt_vartype delT;
-  old_dw->get(delT, d_mat_manager->get_delt_label(), getLevel(patches) );
+  old_dw->get(delT, d_lb->delTLabel, getLevel(patches) );
 
   for (int p=0; p<patches->size(); p++) {
 

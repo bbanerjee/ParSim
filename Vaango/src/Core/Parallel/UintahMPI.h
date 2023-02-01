@@ -1,6 +1,3 @@
-#ifndef __CORE_PARALLEL_UINTAHMPI_H__
-#define __CORE_PARALLEL_UINTAHMPI_H__
-
 /*
  * The MIT License
  *
@@ -25,6 +22,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+
+#ifndef __CORE_PARALLEL_UINTAHMPI_H__
+#define __CORE_PARALLEL_UINTAHMPI_H__
 
 #include <sci_defs/mpi_defs.h>
 

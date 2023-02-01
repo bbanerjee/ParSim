@@ -23,9 +23,9 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/ICE/ConservationTest.h>
-#include <CCA/Components/ICE/Diffusion.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
+#include <CCA/Components/ICE/Core/ConservationTest.h>
+#include <CCA/Components/ICE/Core/Diffusion.h>
 #include <CCA/Components/Models/FluidsBased/flameSheet_rxn.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>

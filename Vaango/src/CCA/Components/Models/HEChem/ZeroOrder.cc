@@ -54,13 +54,13 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include<CCA/Components/ICE/Core/ICELabel.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <iostream>
 #include <Core/Util/DebugStream.h>
 

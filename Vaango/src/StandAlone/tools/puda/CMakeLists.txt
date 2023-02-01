@@ -44,7 +44,7 @@ ADD_EXECUTABLE(puda
   UniaxialStrain_MMS.cc
 )
 
-TARGET_LINK_LIBRARIES(puda
+target_link_libraries(puda
   Vaango_Core_Containers
   Vaango_Core_OS
   Vaango_Core_DataArchive

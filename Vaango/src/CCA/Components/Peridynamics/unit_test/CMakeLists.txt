@@ -66,5 +66,5 @@ target_link_libraries(boostTest ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES})
 #target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_ut_lib)
+  add_definitions(-DBUILD_ut_lib)
 ENDIF(BUILD_SHARED_LIBS)

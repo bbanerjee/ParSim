@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,10 +23,10 @@
  */
 
 #include <CCA/Components/ICE/CustomBCs/LODI2.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/ICE/EOS/EquationOfState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/Materials/MPMMaterial.h>
+#include <CCA/Components/MPM/Materials/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/MaterialManager.h>
@@ -67,7 +43,7 @@
 //#define DELT_METHOD
 #undef DELT_METHOD
 
-
+using namespace std;
 using namespace Uintah;
 namespace Uintah {
 //__________________________________
@@ -83,8 +59,8 @@ static DebugStream cout_dbg("LODI_DBG_COUT", false);
             sets which boundaries are lodi
  ______________________________________________________________________  */
 bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
-                         MaterialManagerP& mat_manager,
-                         Lodi_variable_basket* vb)
+                         MaterialManagerP& materialManager,
+                         Lodi_globalVars* global)
 {
   //__________________________________
   // search the BoundaryConditions problem spec
@@ -93,27 +69,25 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
 
   ProblemSpecP phys_cons_ps = prob_spec->findBlock("PhysicalConstants");
   if(phys_cons_ps){
-    phys_cons_ps->require("gravity",vb->d_gravity);
+    phys_cons_ps->require("gravity",global->d_gravity);
   } else {
-    vb->d_gravity=Vector(0,0,0);
+    global->d_gravity=Vector(0,0,0);
   }
 
   ProblemSpecP grid_ps= prob_spec->findBlock("Grid");
   ProblemSpecP bc_ps  = grid_ps->findBlock("BoundaryConditions");
  
   bool usingLODI = false;
-  std::vector<int> matl_index;
+  vector<int> matl_index;
   
-  for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
-                    face_ps=face_ps->findNextBlock("Face")) {
-    std::map<std::string,string> face;
+  for( ProblemSpecP face_ps = bc_ps->findBlock( "Face" ); face_ps != nullptr; face_ps=face_ps->findNextBlock( "Face" ) ) {
+    map<string,string> face;
     face_ps->getAttributes(face);
     bool is_a_Lodi_face = false;
     
-    for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
-                     bc_iter = bc_iter->findNextBlock("BCType")){
-      std::map<std::string,string> bc_type;
-      bc_iter->getAttributes(bc_type);
+    for( ProblemSpecP bc_iter = face_ps->findBlock( "BCType" ); bc_iter != nullptr; bc_iter = bc_iter->findNextBlock( "BCType" )){
+      map<string,string> bc_type;
+      bc_iter->getAttributes( bc_type );
       
       //__________________________________
       //  bulletproofing
@@ -136,17 +110,17 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
         is_a_Lodi_face = true;
         // remember which faces are LODI
         if (face["side"] ==  "x-")
-          vb->LodiFaces.push_back(Patch::xminus);
+          global->LodiFaces.push_back(Patch::xminus);
         if (face["side"] == "x+")
-          vb->LodiFaces.push_back(Patch::xplus);
+          global->LodiFaces.push_back(Patch::xplus);
         if (face["side"] == "y-")
-          vb->LodiFaces.push_back(Patch::yminus);
+          global->LodiFaces.push_back(Patch::yminus);
         if (face["side"] == "y+")
-          vb->LodiFaces.push_back(Patch::yplus);
+          global->LodiFaces.push_back(Patch::yplus);
         if (face["side"] == "z-")
-          vb->LodiFaces.push_back(Patch::zminus);
+          global->LodiFaces.push_back(Patch::zminus);
         if (face["side"] == "z+")
-          vb->LodiFaces.push_back(Patch::zplus);
+          global->LodiFaces.push_back(Patch::zplus);
       }
     }
   }
@@ -158,52 +132,51 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
       string warn="ERROR:\n Inputs:Boundary Conditions: Cannot find LODI block";
       throw ProblemSetupException(warn, __FILE__, __LINE__);
     }
-    lodi->require("press_infinity",     vb->press_infinity);
-    lodi->getWithDefault("sigma",       vb->sigma, 0.27);
-    lodi->getWithDefault("Li_scale",    vb->Li_scale, 1.0);
+    lodi->require("press_infinity",     global->press_infinity);
+    lodi->getWithDefault("sigma",       global->sigma, 0.27);
+    lodi->getWithDefault("Li_scale",    global->Li_scale, 1.0);
     
     ProblemSpecP params = lodi;
-    Material* matl = sharedState->parseAndLookupMaterial(params, "material");
-    vb->iceMatl_indx = matl->getDWIndex();
+    Material* matl = materialManager->parseAndLookupMaterial(params, "material");
+    global->iceMatl_indx = matl->getDWIndex();
       
     //__________________________________
     //  bulletproofing
-    std::vector<int>::iterator iter;
+    vector<int>::iterator iter;
     for( iter  = matl_index.begin();iter != matl_index.end(); iter++){
-      if(*iter != vb->iceMatl_indx){
-         std::ostringstream warn;
-        warn << "ERROR:\n Inputs: LODI Boundary Conditions: One of the material indices is not the specified ice_material_index: "<< vb->iceMatl_indx;
+      if(*iter != global->iceMatl_indx){
+        ostringstream warn;
+        warn << "ERROR:\n Inputs: LODI Boundary Conditions: One of the material indices is not the specified ice_material_index: "<< global->iceMatl_indx;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
       }
     }
     
-    int numICEMatls = sharedState->getNumICEMatls();
+    int numICEMatls = materialManager->getNumMatls( "ICE" );
     bool foundMatl = false;
-     std::ostringstream indicies;
+    ostringstream indicies;
     
     for(int m = 0; m < numICEMatls; m++){
-      ICEMaterial* matl = sharedState->getICEMaterial( m );
+      ICEMaterial* matl = (ICEMaterial*) materialManager->getMaterial( "ICE",  m );
       int indx = matl->getDWIndex();
       indicies << " " << indx ;
-      if(indx == vb->iceMatl_indx){
+      if(indx == global->iceMatl_indx){
         foundMatl = true;
       }
     }
     
     if(foundMatl==false){
-       std::ostringstream warn;                                                                                              
-      warn << "ERROR:\n Inputs: LODI Boundary Conditions: The ice_material_index: "<< vb->iceMatl_indx<< " is not "    
-           << "\n an ICE material: " << indicies.str() << std::endl;
+      ostringstream warn;                                                                                              
+      warn << "ERROR:\n Inputs: LODI Boundary Conditions: The ice_material_index: "<< global->iceMatl_indx<< " is not "    
+           << "\n an ICE material: " << indicies.str() << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
     
     //__________________________________
     //  Save Li Terms?
-    vb->saveLiTerms = false;
+    global->saveLiTerms = false;
     ProblemSpecP DA_ps = prob_spec->findBlock("DataArchiver");
-    for (ProblemSpecP child = DA_ps->findBlock("save"); child != 0;
-                      child = child->findNextBlock("save")) {
-      std::map<std::string,string> var_attr;
+    for( ProblemSpecP child = DA_ps->findBlock( "save" ); child != nullptr; child = child->findNextBlock( "save" ) ) {
+      map<string,string> var_attr;
       child->getAttributes(var_attr);
       if( ( var_attr["label"] == "Li1" ||
             var_attr["label"] == "Li2" ||
@@ -211,7 +184,7 @@ bool read_LODI_BC_inputs(const ProblemSpecP& prob_spec,
             var_attr["label"] == "Li4" ||
             var_attr["label"] == "Li5" )
           && usingLODI ) {
-        vb->saveLiTerms = true;
+        global->saveLiTerms = true;
       }
     }
   
@@ -229,7 +202,7 @@ void addRequires_Lodi(Task* t,
                       const string& where,
                       ICELabel* lb,
                       const MaterialSubset* ice_matls,
-                      Lodi_variable_basket* var_basket)
+                      Lodi_globalVars* global)
 {
 
   
@@ -323,22 +296,26 @@ void addRequires_Lodi(Task* t,
   //   All tasks Lodi faces require(maxMach_<face>)
   if(setLODI_bcs){
   
-    cout_doing<< "Doing addRequires_Lodi: \t\t" <<t->getName() << " " << where << std::endl;
-    std::vector<Patch::FaceType>::iterator f ;
-    for( f = var_basket->LodiFaces.begin();
-         f !=var_basket->LodiFaces.end(); ++f) {
+    cout_doing<< "Doing addRequires_Lodi: \t\t" <<t->getName() << " " << where << endl;
+    vector<Patch::FaceType>::iterator f ;
+    for( f = global->LodiFaces.begin();
+         f !=global->LodiFaces.end(); ++f) {
       VarLabel* V_Label = getMaxMach_face_VarLabel(*f);
       t->requires(whichDW,V_Label, ice_matls);
     }
     
-    if(var_basket->saveLiTerms && where == "Advection"){
+    if(global->saveLiTerms && where == "Advection"){
       t->computes(lb->LODI_BC_Li1Label, ice_matls);
       t->computes(lb->LODI_BC_Li2Label, ice_matls);
       t->computes(lb->LODI_BC_Li3Label, ice_matls);
       t->computes(lb->LODI_BC_Li4Label, ice_matls);
       t->computes(lb->LODI_BC_Li5Label, ice_matls); 
     }
-  }  
+  }
+  if ( press_matl && press_matl->removeReference()){
+    delete press_matl;
+  }
+  
 }
 /*______________________________________________________________________ 
  Function~  preprocess_Lodi_BCs-- 
@@ -350,21 +327,21 @@ void  preprocess_Lodi_BCs(DataWarehouse* old_dw,
                           const Patch* patch,
                           const string& where,
                           const int matl_indx,
-                          MaterialManagerP& mat_manager,
+                          MaterialManagerP& materialManager,
                           bool& setLodiBcs,
-                          Lodi_vars* lv,
-                          Lodi_variable_basket* var_basket)
+                          Lodi_localVars* lv,
+                          Lodi_globalVars* gv)
 {
-  cout_doing << "preprocess_Lodi_BCs on patch "<<patch->getID()<< std::endl;
+  cout_doing << "preprocess_Lodi_BCs on patch "<<patch->getID()<< endl;
 
-  Material* matl = sharedState->getMaterial(var_basket->iceMatl_indx);
+  Material* matl = materialManager->getMaterial(gv->iceMatl_indx);
   int indx = matl->getDWIndex();  
   Ghost::GhostType  gn  = Ghost::None;
   
 /*`==========TESTING==========*/
   delt_vartype delT;
   const Level* level   = patch->getLevel();
-  old_dw->get(delT, sharedState->get_delt_label(),level);
+  old_dw->get(delT, lb->delTLabel,level);
   lv->delT = delT; 
 /*===========TESTING==========`*/
   
@@ -417,7 +394,7 @@ void  preprocess_Lodi_BCs(DataWarehouse* old_dw,
   else if(where == "CC_Exchange"){
     if (matl_indx == indx) {
       setLodiBcs = true;
-      //var_basket->Li_scale = 1.0;
+      //gv->Li_scale = 1.0;
       new_dw->get(lv->vel_CC,     lb->vel_CC_XchangeLabel,indx,patch,gn,0);
       new_dw->get(lv->press_CC,   lb->press_CCLabel,      0,   patch,gn,0);  
       new_dw->get(lv->rho_CC,     lb->rho_CCLabel,        indx,patch,gn,0);
@@ -436,7 +413,7 @@ void  preprocess_Lodi_BCs(DataWarehouse* old_dw,
   else if(where == "Advection"){
       if (matl_indx == indx) {
       setLodiBcs = true;
-      //var_basket->Li_scale = 1.0;
+      //gv->Li_scale = 1.0;
       new_dw->get(lv->rho_CC,    lb->rho_CCLabel,        indx,patch,gn,0); 
       new_dw->get(lv->vel_CC,    lb->vel_CCLabel,        indx,patch,gn,0);
       new_dw->get(lv->speedSound,lb->speedSound_CCLabel, indx,patch,gn,0); 
@@ -460,9 +437,9 @@ void  preprocess_Lodi_BCs(DataWarehouse* old_dw,
     }
 
     computeLi(lv->Li, lv->rho_CC,  lv->press_CC, lv->vel_CC, lv->speedSound, 
-              patch, new_dw, sharedState, indx,var_basket, false);
+              patch, new_dw, materialManager, indx,gv, false);
               
-    if(var_basket->saveLiTerms  && where == "Advection"){
+    if(gv->saveLiTerms  && where == "Advection"){
       CCVariable<Vector> Li1, Li2, Li3, Li4, Li5;
       new_dw->allocateAndPut(Li1, lb->LODI_BC_Li1Label, indx,patch);
       new_dw->allocateAndPut(Li2, lb->LODI_BC_Li2Label, indx,patch);
@@ -501,14 +478,14 @@ VarLabel* getMaxMach_face_VarLabel( Patch::FaceType face)
  ______________________________________________________________________  */
 bool is_LODI_face(const Patch* patch,
                   Patch::FaceType face,
-                  MaterialManagerP& mat_manager)
+                  MaterialManagerP& materialManager)
 {
   bool is_lodi_face = false;
-  int numMatls = sharedState->getNumICEMatls();
+  int numMatls = materialManager->getNumMatls( "ICE" );
   bool lodi_pressure =    patch->haveBC(face,0,"LODI","Pressure");
   
   for (int m = 0; m < numMatls; m++ ) {
-    ICEMaterial* ice_matl = sharedState->getICEMaterial(m);
+    ICEMaterial* ice_matl = (ICEMaterial*) materialManager->getMaterial( "ICE", m);
     int indx= ice_matl->getDWIndex();
 
     bool lodi_density  =    patch->haveBC(face,indx,"LODI","Density");
@@ -517,7 +494,7 @@ bool is_LODI_face(const Patch* patch,
     
     if (lodi_pressure || lodi_density || lodi_temperature || lodi_velocity) {
       is_lodi_face = true; 
-      cout_doing << "   "<< patch->getFaceName(face) <<  " Is a LODI face: "<< std::endl;
+      cout_doing << "   "<< patch->getFaceName(face) <<  " Is a LODI face: "<< endl;
     }
   }
   
@@ -553,7 +530,7 @@ inline void characteristic_source_terms(const IntVector dir,
                                         const Vector grav,
                                         const double rho_CC,
                                         const double speedSound,
-                                        std::vector<double>& s)
+                                        vector<double>& s)
 {
   //__________________________________
   // x_dir:  dir = (0,1,2) 
@@ -610,8 +587,8 @@ void debugging_Li(const IntVector c,
   if( ( leftFace && normalVel >= 0 ) || ( rightFace && normalVel <= 0 ) ) {
     flowDir = "inFlow";
   }
-  std::cout << " \n ----------------- " << c << std::endl;
-  std::cout << " default values " << std::endl;
+  cout << " \n ----------------- " << c << endl;
+  cout << " default values " << endl;
   string s_A  = " A = rho * speedSound * dVel_dx[n_dir]; ";
   string s_L1 = " 0.5 * (normalVel - speedSound) * (dp_dx - A) ";
   string s_L2 = " normalVel * (drho_dx - dp_dx/speedSoundsqr) ";
@@ -619,45 +596,45 @@ void debugging_Li(const IntVector c,
   string s_L4 = " normalVel * dVel_dx[dir[2]];  ";
   string s_L5 = " 0.5 * (normalVel + speedSound) * (dp_dx + A); \n";
   
-  std::cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[P_dir] ) "<< std::endl;
-  std::cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << std::endl;
-  std::cout << "s[3] = "<< s[3] << "  s_mom[P_dir];                                          " << std::endl;
-  std::cout << "s[4] = "<< s[4] << "  s_mom[P_dir];                                          " << std::endl;
-  std::cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[P_dir] )  " << std::endl;
-  std::cout << "\n"<< std::endl;
+  cout << "s[1] = "<< s[1] << "  0.5 * (s_press - rho_CC * speedSound * s_mom[P_dir] ) "<< endl;
+  cout << "s[2] = "<< s[2] << "  -s_press/(speedSound * speedSound);                     " << endl;
+  cout << "s[3] = "<< s[3] << "  s_mom[P_dir];                                          " << endl;
+  cout << "s[4] = "<< s[4] << "  s_mom[P_dir];                                          " << endl;
+  cout << "s[5] = "<< s[5] << "  0.5 * (s_press + rho_CC * speedSound * s_mom[P_dir] )  " << endl;
+  cout << "\n"<< endl;
   //__________________________________
   //Subsonic non-reflective inflow
   if (flowDir == "inFlow" && Mach < 1.0){
-    std::cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< std::endl;
-    std::cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << std::endl;
-    std::cout << "L2 = s[2];                             " << L2 << std::endl;
-    std::cout << "L3 = s[3];                             " << L3 << std::endl;
-    std::cout << "L4 = s[4];                             " << L4 << std::endl;
-    std::cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << std::endl;
+    cout << " SUBSONIC INFLOW:  rightFace " <<rightFace << " leftFace " << leftFace<< endl;
+    cout << "L1 = leftFace * L1 + rightFace * s[1]  " << L1 << endl;
+    cout << "L2 = s[2];                             " << L2 << endl;
+    cout << "L3 = s[3];                             " << L3 << endl;
+    cout << "L4 = s[4];                             " << L4 << endl;
+    cout << "L5 = rightFace * L5 + leftFace * s[5]; " << L5 << endl;
   }
   //__________________________________
   // Subsonic non-reflective outflow
   if (flowDir == "outFlow" && Mach < 1.0){
-    std::cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << std::endl;
-    std::cout << "L1   "<< L1 
-         << "  rightFace *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[1]) + leftFace  * L1 " << std::endl;
-    std::cout << "L2   " << L2 <<" " << s_L2 << std::endl;
-    std::cout << "L3   " << L3 <<" " << s_L3 << std::endl;
-    std::cout << "L4   " << L4 <<" " << s_L4 << std::endl;
-    std::cout << "L5   " << L5
-         << "  leftFace  *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[5]) rightFace * L5 " << std::endl;
+    cout << " SUBSONIC OUTFLOW:  rightFace " <<rightFace << " leftFace " << leftFace << endl;
+    cout << "L1   "<< L1 
+         << "  rightFace *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[1]) + leftFace  * L1 " << endl;
+    cout << "L2   " << L2 <<" " << s_L2 << endl;
+    cout << "L3   " << L3 <<" " << s_L3 << endl;
+    cout << "L4   " << L4 <<" " << s_L4 << endl;
+    cout << "L5   " << L5
+         << "  leftFace  *(0.5 * K * (press - p_infinity)/domainLength[n_dir] + s[5]) rightFace * L5 " << endl;
   }
   
   //__________________________________
   //Supersonic non-reflective inflow
   // see Thompson II pg 453
   if (flowDir == "inFlow" && Mach > 1.0){
-    std::cout << " SUPER SONIC inflow " << std::endl;
-    std::cout << " L1 = s[1] " << L1 << std::endl;
-    std::cout << " L2 = s[2] " << L2 << std::endl;
-    std::cout << " L3 = s[3] " << L3 << std::endl;
-    std::cout << " L4 = s[4] " << L4 << std::endl;
-    std::cout << " L5 = s[5] " << L5 << std::endl;
+    cout << " SUPER SONIC inflow " << endl;
+    cout << " L1 = s[1] " << L1 << endl;
+    cout << " L2 = s[2] " << L2 << endl;
+    cout << " L3 = s[3] " << L3 << endl;
+    cout << " L4 = s[4] " << L4 << endl;
+    cout << " L5 = s[5] " << L5 << endl;
   }
   //__________________________________
   // Supersonic non-reflective outflow
@@ -676,7 +653,7 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
                const IntVector& c,
                const Patch::FaceType face,
                const Vector domainLength,
-               const Lodi_variable_basket* vb,
+               const Lodi_globalVars* gv,
                const double maxMach,
                const vector<double>& s,
                const double press,
@@ -710,14 +687,14 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
   double L5 = 0.5 * (normalVel + speedSound) * (dp_dx + A);
   
   #if 0
-  std::cout << "    " << c << " default L1 " << L1 << " L5 " << L5
+  cout << "    " << c << " default L1 " << L1 << " L5 " << L5
        << " dVel_dx " << dVel_dx[n_dir]
-       << " dp_dx " << dp_dx << std::endl;  
+       << " dp_dx " << dp_dx << endl;  
   #endif
   //__________________________________
-  //  vb
-  double p_infinity = vb->press_infinity;
-  double sigma      = vb->sigma;
+  //  global
+  double p_infinity = gv->press_infinity;
+  double sigma      = gv->sigma;
   
   //____________________________________________________________
   //  Modify the Li terms based on whether or not the normal
@@ -776,7 +753,7 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
   //__________________________________
   //  compute Di terms in the normal direction based on the 
   // modified Ls  See Sutherland Table 7
-  double scale = vb->Li_scale;
+  double scale = gv->Li_scale;
   L[1][c][n_dir] = L1*scale;
   L[2][c][n_dir] = L2*scale;
   L[3][c][n_dir] = L3*scale;
@@ -788,15 +765,15 @@ inline void Li(std::vector<CCVariable<Vector> >& L,
   if( cout_dbg.active() ) {
     //__________________________________
     //  debugging 
-    std::vector<IntVector> dbgCells;
+    vector<IntVector> dbgCells;
     dbgCells.push_back(IntVector(199,75,0));
     dbgCells.push_back(IntVector(199,74,0));
            
     for (int i = 0; i<(int) dbgCells.size(); i++) {
       if (c == dbgCells[i]) {
         debugging_Li(c, s, dir, face, speedSound, vel_CC, L1, L2, L3, L4, L5 );
-        std::cout << " press " << press << " p_infinity " << p_infinity
-           << " gradient " << (press - p_infinity)/domainLength[n_dir] << std::endl;
+        cout << " press " << press << " p_infinity " << p_infinity
+           << " gradient " << (press - p_infinity)/domainLength[n_dir] << endl;
       }  // if(dbgCells)
     }  // dbgCells loop
   }
@@ -814,9 +791,9 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
                const CCVariable<double>& speedSound,              
                const Patch* patch,
                DataWarehouse* new_dw,
-               MaterialManagerP& mat_manager,
+               MaterialManagerP& materialManager,
                const int indx,
-               const Lodi_variable_basket* user_inputs,
+               const Lodi_globalVars* user_inputs,
                const bool recursion)                              
 {
   Vector dx = patch->dCell();
@@ -835,15 +812,15 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
   
   //__________________________________
   // Iterate over the faces encompassing the domain
-  std::vector<Patch::FaceType>::const_iterator iter;
-  std::vector<Patch::FaceType> bf;
+  vector<Patch::FaceType>::const_iterator iter;
+  vector<Patch::FaceType> bf;
   patch->getBoundaryFaces(bf);
   for (iter  = bf.begin(); iter != bf.end(); ++iter){
     Patch::FaceType face = *iter;
     
-    if (is_LODI_face(patch,face, sharedState) ) {
+    if (is_LODI_face(patch,face, materialManager) ) {
       cout_doing << "   computing LI \t\t " << patch->getFaceName(face) 
-               << " patch " << patch->getID()<< " matl_indx " << indx << std::endl;
+               << " patch " << patch->getID()<< " matl_indx " << indx << endl;
       //_____________________________________
       // S I D E S
       IntVector dir = patch->getFaceAxes(face);
@@ -894,7 +871,7 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
 //        dVel_dx = user_inputs->Li_scale * dVel_dx; 
 /*===========TESTING==========`*/
         
-        std::vector<double> s(6);
+        vector<double> s(6);
         characteristic_source_terms(dir, grav, rho[c], speedSound[c], s);
 
         Li(L, dir, c, face, domainLength, user_inputs, maxMach, s, press[c],
@@ -913,7 +890,7 @@ void computeLi(std::vector<CCVariable<Vector> >& L,
 ___________________________________________________________________*/  
 void getBoundaryEdges(const Patch* patch,
                       const Patch::FaceType face,
-                      std::vector<Patch::FaceType>& face0)
+                      vector<Patch::FaceType>& face0)
 {
   IntVector patchNeighborLow  = patch->noNeighborsLow();
   IntVector patchNeighborHigh = patch->noNeighborsHigh();
@@ -967,13 +944,13 @@ ___________________________________________________________________*/
 int FaceDensity_LODI(const Patch* patch,
                      const Patch::FaceType face,
                      CCVariable<double>& rho_CC,
-                     Lodi_vars* lv,
+                     Lodi_localVars* lv,
                      const Vector& DX)
 {
   cout_doing << "   FaceDensity_LODI  \t\t" << patch->getFaceName(face)<<endl;
   // bulletproofing
   if (!lv){
-    throw InternalError("FaceDensityLODI: Lodi_vars = null", __FILE__, __LINE__);
+    throw InternalError("FaceDensityLODI: Lodi_localVars = null", __FILE__, __LINE__);
   }  
   
   std::vector<CCVariable<Vector> >& L = lv->Li;
@@ -995,7 +972,7 @@ int FaceDensity_LODI(const Patch* patch,
   double dx = DX[P_dir];
   int nCells = 0;
   
-  cout_dbg << "\n____________________density"<< std::endl;
+  cout_dbg << "\n____________________density"<< endl;
   //__________________________________
   //    S I D E
   Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
@@ -1024,9 +1001,9 @@ int FaceDensity_LODI(const Patch* patch,
     #endif
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    std::cout << "    " << c << "\t rho (gradient Calc): " << rho_CC[c];
+    cout << "    " << c << "\t rho (gradient Calc): " << rho_CC[c];
     rho_CC[c] = rho_old[c] - delT * (L[2][in][P_dir] + 0.5 * ( L[5][in][P_dir] + L[1][in][P_dir]))/(C*C);
-    std::cout << "    rho (delT Calc): " << rho_CC[c] <<  " rho_old " << rho_old[c] << std::endl;
+    cout << "    rho (delT Calc): " << rho_CC[c] <<  " rho_old " << rho_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1034,10 +1011,10 @@ int FaceDensity_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  std::vector<Patch::FaceType> b_faces;
+  vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  std::vector<Patch::FaceType>::const_iterator f;  
+  vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     
@@ -1055,9 +1032,9 @@ int FaceDensity_LODI(const Patch* patch,
 
   //__________________________________
   // C O R N E R S    
-  std::vector<IntVector> corner;
+  vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  std::vector<IntVector>::const_iterator itr;
+  vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1074,15 +1051,15 @@ ___________________________________________________________________*/
 int FaceVel_LODI(const Patch* patch,
                  Patch::FaceType face,
                  CCVariable<Vector>& vel_CC,                 
-                 Lodi_vars* lv,
+                 Lodi_localVars* lv,
                  const Vector& DX,
-                 MaterialManagerP& mat_manager)                     
+                 MaterialManagerP& materialManager)                     
 
 {
-  cout_doing << "   FaceVel_LODI  \t\t" << patch->getFaceName(face) << std::endl;
+  cout_doing << "   FaceVel_LODI  \t\t" << patch->getFaceName(face) << endl;
   // bulletproofing
   if (!lv){
-    throw InternalError("FaceVelLODI: Lodi_vars = null", __FILE__, __LINE__);
+    throw InternalError("FaceVelLODI: Lodi_localVars = null", __FILE__, __LINE__);
   }
      
   // shortcuts       
@@ -1108,7 +1085,7 @@ int FaceVel_LODI(const Patch* patch,
   int nCells = 0;
 
 
-  cout_dbg << "____________________velocity"<< std::endl;
+  cout_dbg << "____________________velocity"<< endl;
   //__________________________________
   //    S I D E 
   Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
@@ -1138,13 +1115,13 @@ int FaceVel_LODI(const Patch* patch,
     #endif         
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    std::cout << "    " << c << "\t vel (gradient calc): " << vel_CC[c][P_dir];
+    cout << "    " << c << "\t vel (gradient calc): " << vel_CC[c][P_dir];
 
     vel_CC[c][P_dir] = vel_old[c][P_dir] - delT * (0.5 * ( L[5][in][P_dir] - L[1][in][P_dir]))/(rho_CC[c] * C); 
     vel_CC[c][dir1]  = 0.0;
     vel_CC[c][dir2]  = 0.0;
     
-    std::cout << "    vel (delT calc): " << vel_CC[c][P_dir] <<  " vel_old " << vel_old[c][P_dir] << std::endl;
+    cout << "    vel (delT calc): " << vel_CC[c][P_dir] <<  " vel_old " << vel_old[c][P_dir] << endl;
 #endif
 /*===========TESTING==========`*/
              
@@ -1153,10 +1130,10 @@ int FaceVel_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  std::vector<Patch::FaceType> b_faces;
+  vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  std::vector<Patch::FaceType>::const_iterator f;  
+  vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++ f ) {
     Patch::FaceType face0 = *f;
    
@@ -1173,9 +1150,9 @@ int FaceVel_LODI(const Patch* patch,
   }  
   //________________________________________________________
   // C O R N E R S
-  std::vector<IntVector> corner;
+  vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  std::vector<IntVector>::const_iterator itr;
+  vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1192,15 +1169,15 @@ ___________________________________________________________________*/
 int FaceTemp_LODI(const Patch* patch,
              const Patch::FaceType face,
              CCVariable<double>& temp_CC,
-             Lodi_vars* lv, 
+             Lodi_localVars* lv, 
              const Vector& DX,
-             MaterialManagerP& mat_manager)
+             MaterialManagerP& materialManager)
 {
-  cout_doing << "   FaceTemp_LODI \t\t" <<patch->getFaceName(face)<< std::endl; 
+  cout_doing << "   FaceTemp_LODI \t\t" <<patch->getFaceName(face)<< endl; 
   
   // bulletproofing
   if (!lv){
-    throw InternalError("FaceTempLODI: Lodi_vars = null", __FILE__, __LINE__);
+    throw InternalError("FaceTempLODI: Lodi_localVars = null", __FILE__, __LINE__);
   } 
   // shortcuts  
   std::vector<CCVariable<Vector> >& L = lv->Li;
@@ -1223,7 +1200,7 @@ int FaceTemp_LODI(const Patch* patch,
   
   IntVector offset = patch->faceDirection(face);
   double plus_minus_one = (double) offset[P_dir];
-  cout_dbg << "\n____________________Temp"<< std::endl;
+  cout_dbg << "\n____________________Temp"<< endl;
   
   //__________________________________
   //    S I D E  
@@ -1246,16 +1223,16 @@ int FaceTemp_LODI(const Patch* patch,
    
     #if 0
     cout_dbg << " c " << c << " in " << in << " temp_CC[c] "<< temp_CC[c]
-             << " dtemp_dx " << dtemp_dx << " temp_CC[in] " << temp_CC[in] << std::endl;
+             << " dtemp_dx " << dtemp_dx << " temp_CC[in] " << temp_CC[in] << endl;
     #endif    
 /*`==========TESTING==========*/
 
 #ifdef DELT_METHOD
-    std::cout << "    " << c << "\t temp (gradient calc): " << temp_CC[c];
+    cout << "    " << c << "\t temp (gradient calc): " << temp_CC[c];
     term1 = temp_CC[in]/(rho_CC[in] * C * C);
     
     temp_CC[c] = temp_old[c] - delT * term1 * ( -L[2][in][P_dir] + 0.5 * (gamma[in] - 1.0) * (L[5][in][P_dir] + L[1][in][P_dir]) ) ;
-    std::cout << "    temp (delT calc) " << temp_CC[c] <<  " temp_old " << temp_old[c] << std::endl;
+    cout << "    temp (delT calc) " << temp_CC[c] <<  " temp_old " << temp_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1263,10 +1240,10 @@ int FaceTemp_LODI(const Patch* patch,
 
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  std::vector<Patch::FaceType> b_faces;
+  vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  std::vector<Patch::FaceType>::const_iterator f;  
+  vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     IntVector offset = IntVector(0,0,0)  - patch->faceDirection(face) 
@@ -1283,9 +1260,9 @@ int FaceTemp_LODI(const Patch* patch,
  
   //________________________________________________________
   // C O R N E R S    
-  std::vector<IntVector> corner;
+  vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  std::vector<IntVector>::const_iterator itr;
+  vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;
@@ -1304,14 +1281,14 @@ ______________________________________________________________________  */
 int FacePress_LODI(const Patch* patch,
                     CCVariable<double>& press_CC,
                     std::vector<CCVariable<double> >& rho_micro,
-                    MaterialManagerP& mat_manager, 
+                    MaterialManagerP& materialManager, 
                     Patch::FaceType face,
-                    Lodi_vars* lv)
+                    Lodi_localVars* lv)
 {
-  cout_doing << "   FacePress_LODI \t\t" <<patch->getFaceName(face)<< std::endl;
+  cout_doing << "   FacePress_LODI \t\t" <<patch->getFaceName(face)<< endl;
   // bulletproofing
   if (!lv){
-    throw InternalError("FacePress_LODI: Lodi_vars = null", __FILE__, __LINE__);
+    throw InternalError("FacePress_LODI: Lodi_localVars = null", __FILE__, __LINE__);
   }
 
   std::vector<CCVariable<Vector> >& L = lv->Li;
@@ -1332,7 +1309,7 @@ int FacePress_LODI(const Patch* patch,
   double plus_minus_one = (double) offset[P_dir];
   double dx = DX[P_dir];
   int nCells = 0;
-  cout_dbg << "\n____________________press"<< std::endl; 
+  cout_dbg << "\n____________________press"<< endl; 
   
   //__________________________________ 
   Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
@@ -1356,11 +1333,11 @@ int FacePress_LODI(const Patch* patch,
     #endif
 /*`==========TESTING==========*/
 #ifdef DELT_METHOD
-    std::cout << "    " << c << "\t press (gradient Calc): " << press_CC[c];
+    cout << "    " << c << "\t press (gradient Calc): " << press_CC[c];
     
     press_CC[c] = press_old[c] - delT * 0.5 * (L[5][in][P_dir] + L[1][in][P_dir]);
     
-    std::cout << "    press (delT calc): " << press_CC[c] <<  " press_old " << press_old[c] << std::endl;
+    cout << "    press (delT calc): " << press_CC[c] <<  " press_old " << press_old[c] << endl;
 #endif
 /*===========TESTING==========`*/
   }
@@ -1368,10 +1345,10 @@ int FacePress_LODI(const Patch* patch,
   
   //__________________________________
   //    E D G E S  -- on boundaryFaces only
-  std::vector<Patch::FaceType> b_faces;
+  vector<Patch::FaceType> b_faces;
   getBoundaryEdges(patch,face,b_faces);
   
-  std::vector<Patch::FaceType>::const_iterator f;  
+  vector<Patch::FaceType>::const_iterator f;  
   for(f = b_faces.begin(); f != b_faces.end(); ++f ) {
     Patch::FaceType face0 = *f;
     IntVector offset = IntVector(0,0,0)  - patch->faceDirection(face) 
@@ -1388,9 +1365,9 @@ int FacePress_LODI(const Patch* patch,
  
   //________________________________________________________
   // C O R N E R S    
-  std::vector<IntVector> corner;
+  vector<IntVector> corner;
   patch->getCornerCells(corner,face);
-  std::vector<IntVector>::const_iterator itr;
+  vector<IntVector>::const_iterator itr;
   
   for(itr = corner.begin(); itr != corner.end(); ++ itr ) {
     IntVector c = *itr;

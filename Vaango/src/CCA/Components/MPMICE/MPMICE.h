@@ -33,7 +33,7 @@
 #include <Core/Grid/Variables/NCVariable.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/SimulationInterface.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/SerialMPM.h>

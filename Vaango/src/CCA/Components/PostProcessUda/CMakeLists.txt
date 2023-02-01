@@ -29,9 +29,9 @@ SET(Vaango_CCA_Components_PostProcessUda_SRCS
   PostProcessUda.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_PostProcessUda ${Vaango_CCA_Components_PostProcessUda_SRCS})
+add_library(Vaango_CCA_Components_PostProcessUda ${Vaango_CCA_Components_PostProcessUda_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_PostProcessUda
+target_link_libraries(Vaango_CCA_Components_PostProcessUda
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
@@ -47,5 +47,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_PostProcessUda
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_PostProcessUda)
+  add_definitions(-DBUILD_Vaango_CCA_Components_PostProcessUda)
 ENDIF(BUILD_SHARED_LIBS)

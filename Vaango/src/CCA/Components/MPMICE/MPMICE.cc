@@ -26,7 +26,7 @@
 
 // MPMICE.cc
 #include <CCA/Components/ICE/AMRICE.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/ICE/EOS/EquationOfState.h>
 #include <CCA/Components/ICE/ICE.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -921,7 +921,7 @@ void MPMICE::scheduleComputeCCVelAndTempRates(SchedulerP& sched,
 
   Ghost::GhostType  gn = Ghost::None;
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label(),getLevel(patches));
+  t->requires(Task::OldDW, d_lb->delTLabel,getLevel(patches));
   t->requires(Task::NewDW, Ilb->mass_L_CCLabel,         gn);
   t->requires(Task::NewDW, Ilb->mom_L_CCLabel,          gn);  
   t->requires(Task::NewDW, Ilb->int_eng_L_CCLabel,      gn);  
@@ -971,7 +971,7 @@ void MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
   Ghost::GhostType  gan = Ghost::AroundNodes;
   Ghost::GhostType  gac = Ghost::AroundCells;
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label(),getLevel(patches));
+  t->requires(Task::OldDW, d_lb->delTLabel,getLevel(patches));
   t->requires(Task::NewDW, Ilb->dVdt_CCLabel,       gan,1);
   t->requires(Task::NewDW, Ilb->dTdt_CCLabel,       gan,1);
 
@@ -1006,7 +1006,7 @@ void MPMICE::scheduleComputePressure(SchedulerP& sched,
   t = scinew Task("MPMICE::computeEquilibrationPressure",
 		  this, &MPMICE::computeEquilibrationPressure, press_matl);
 
-  t->requires(Task::OldDW, d_mat_manager->get_delt_label(),getLevel(patches));
+  t->requires(Task::OldDW, d_lb->delTLabel,getLevel(patches));
 
   // I C E
   Ghost::GhostType  gn  = Ghost::None;
@@ -1210,10 +1210,10 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     //   B U L L E T  P R O O F I N G
     // Verify volume fractions sum to 1.0
     // Loop through ICE materials to get their contribution to volume fraction
-    int numICE_matls = d_mat_manager->getNumICEMatls();
+    int numICE_matls = d_mat_manager->getNumMaterials("ICE");
     for (int m = 0; m < numICE_matls; m++ ) {
       constCCVariable<double> vol_frac;
-      ICEMaterial* ice_matl = d_mat_manager->getICEMaterial(m);
+      ICEMaterial* ice_matl = static_cast<ICEMaterial*>(d_mat_manager->getMaterial("ICE", m));
       int indx= ice_matl->getDWIndex();
 
       // Get the Volume Fraction computed in ICE's actuallyInitialize(...)
@@ -1293,10 +1293,10 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     if (wrongVolFrac) {
 
       vol_frac_sum_ice.initialize(0.0);
-      int numICE_matls = d_mat_manager->getNumICEMatls();
+      int numICE_matls = d_mat_manager->getNumMaterials("ICE");
       for (int m = 0; m < numICE_matls; m++ ) {
         constCCVariable<double> vol_frac;
-        ICEMaterial* ice_matl = d_mat_manager->getICEMaterial(m);
+        ICEMaterial* ice_matl = static_cast<ICEMaterial*>(d_mat_manager->getMaterial("ICE", m));
         int indx= ice_matl->getDWIndex();
 
         // Get the Volume Fraction computed in ICE's actuallyInitialize(...)
@@ -1783,7 +1783,7 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
 
     delt_vartype delT;
-    old_dw->get(delT, d_mat_manager->get_delt_label());
+    old_dw->get(delT, d_lb->delTLabel);
 
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
@@ -1870,7 +1870,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
 
     delt_vartype delT;
-    old_dw->get(delT, d_mat_manager->get_delt_label());
+    old_dw->get(delT, d_lb->delTLabel);
 
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM",  m ));
@@ -1970,7 +1970,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
     double convergence_crit = d_convergence_tolerance;
     double    c_2;
     double press_ref= d_ice->getRefPress();
-    int numICEMatls = d_mat_manager->getNumICEMatls();
+    int numICEMatls = d_mat_manager->getNumMaterials("ICE");
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     int numALLMatls = numICEMatls + numMPMMatls;
 

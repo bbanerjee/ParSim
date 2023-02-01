@@ -86,12 +86,12 @@ SET(LIBS
 
 #message(STATUS "Sources: ${MPM_ConstitutiveModel_SRCS}")
 
-ADD_LIBRARY(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
+add_library(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
-TARGET_LINK_LIBRARIES(MPM_ConstitutiveModel ${LIBS})
+target_link_libraries(MPM_ConstitutiveModel ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_MPM_ConstitutiveModel)
+  add_definitions(-DBUILD_MPM_ConstitutiveModel)
 ENDIF(BUILD_SHARED_LIBS)
 
 #IF(NOT CMAKE_COMPILER_IS_GNUCXX) 

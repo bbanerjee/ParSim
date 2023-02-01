@@ -83,9 +83,9 @@ SET(Vaango_Core_GeometryPiece_SRCS
   AbaqusMeshGeometryPiece.cc
 )
 
-ADD_LIBRARY(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
+add_library(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_GeometryPiece
+target_link_libraries(Vaango_Core_GeometryPiece
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Math
@@ -97,5 +97,5 @@ TARGET_LINK_LIBRARIES(Vaango_Core_GeometryPiece
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_GeometryPiece)
+  add_definitions(-DBUILD_Vaango_Core_GeometryPiece)
 ENDIF(BUILD_SHARED_LIBS)

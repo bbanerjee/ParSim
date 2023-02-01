@@ -26,9 +26,9 @@ SET(Vaango_Core_DataArchive_SRCS
   DataArchive.cc
 )
 
-ADD_LIBRARY(Vaango_Core_DataArchive ${Vaango_Core_DataArchive_SRCS})
+add_library(Vaango_Core_DataArchive ${Vaango_Core_DataArchive_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_DataArchive
+target_link_libraries(Vaango_Core_DataArchive
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
@@ -41,5 +41,5 @@ TARGET_LINK_LIBRARIES(Vaango_Core_DataArchive
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_DataArchive)
+  add_definitions(-DBUILD_Vaango_Core_DataArchive)
 ENDIF(BUILD_SHARED_LIBS)

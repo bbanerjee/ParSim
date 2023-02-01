@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,31 +23,29 @@
  */
 
 
-#include <CCA/Components/ICE/SmagorinskyModel.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
+#include <CCA/Components/ICE/TurbulenceModel/SmagorinskyModel.h>
+#include <CCA/Components/ICE/CustomBCs/BoundaryCond.h>
 #include <CCA/Ports/Scheduler.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/MaterialManager.h>
-#include <Core/Math/CubeRoot.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Patch.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Variables/CellIterator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
 
 using namespace Uintah;
+using namespace std;
+
 static DebugStream cout_doing("ICE_DOING_COUT", false);
 
 Smagorinsky_Model::Smagorinsky_Model(ProblemSpecP& ps,
-                                     MaterialManagerP& mat_manager)
-  : Turbulence(ps, sharedState)
+                                     MaterialManagerP& materialManager)
+  : Turbulence(ps, materialManager)
 {
   //__________________________________
   //typically filter_width=grid spacing(uniform) for implicit filter.
   ps->require("model_constant",d_model_constant);
-  ps->require("filter_width",d_filter_width);
-
-  //  ps->require("turb_Pr",d_turbPr);  
-  
+//  ps->require("filter_width",  d_filter_width);  
 }
 
 Smagorinsky_Model::Smagorinsky_Model()
@@ -88,13 +62,14 @@ Smagorinsky_Model::~Smagorinsky_Model()
   -----------------------------------------------------------------------  */
 void Smagorinsky_Model::computeTurbViscosity(DataWarehouse* new_dw,
                                             const Patch* patch,
-                                            const CCVariable<Vector>& /*vel_CC*/,
-                                            const SFCXVariable<double>& uvel_FC,
-                                            const SFCYVariable<double>& vvel_FC,
-                                            const SFCZVariable<double>& wvel_FC,
-                                            const CCVariable<double>& rho_CC,
+                                            const ICELabel*,         // for debugging
+                                            constCCVariable<Vector>& /*vel_CC*/,
+                                            constSFCXVariable<double>& uvel_FC,
+                                            constSFCYVariable<double>& vvel_FC,
+                                            constSFCZVariable<double>& wvel_FC,
+                                            constCCVariable<double>& rho_CC,
                                             const int indx,
-                                            MaterialManagerP&  d_mat_manager,
+                                            MaterialManagerP&  d_materialManager,
                                             CCVariable<double>& turb_viscosity)
 {
   //__________________________________
@@ -103,7 +78,7 @@ void Smagorinsky_Model::computeTurbViscosity(DataWarehouse* new_dw,
   //keep the parameter here for future use
   
   Vector dx = patch->dCell();
-  filter_width = pow((dx.x()*dx.y()*dx.z()), 1.0/3.0);
+  double filter_width = pow((dx.x()*dx.y()*dx.z()), 1.0/3.0);
   double term = (d_model_constant * filter_width)
                *(d_model_constant * filter_width);
   
@@ -113,8 +88,7 @@ void Smagorinsky_Model::computeTurbViscosity(DataWarehouse* new_dw,
     SIJ[comp].initialize(0.0);
   }
    
-  computeStrainRate(patch, uvel_FC, vvel_FC, wvel_FC, indx, d_mat_manager, new_dw,
-                    SIJ);
+  computeStrainRate(patch, uvel_FC, vvel_FC, wvel_FC, indx, d_materialManager, new_dw, SIJ);
 
   //__________________________________
   //  At patch boundaries you need to extend
@@ -140,7 +114,7 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
                                     const SFCYVariable<double>& vvel_FC,
                                     const SFCZVariable<double>& wvel_FC,
                                     const int indx,
-                                    MaterialManagerP&  d_mat_manager,
+                                    MaterialManagerP&  d_materialManager,
                                     DataWarehouse* new_dw,
                                     std::vector<CCVariable<double> >& SIJ)
 {
@@ -153,7 +127,7 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
   //  At patch boundaries you need to extend
   // the computational footprint by twe cells in ghostCells
   int NGC =2;  // number of ghostCells
-  for(CellIterator iter = patch->getCellIterator(NGC); !iter.done(); iter++) {
+  for(CellIterator iter = patch->getExtraCellIterator(NGC); !iter.done(); iter++) {
     IntVector c = *iter;
     int i = c.x();
     int j = c.y();
@@ -168,21 +142,17 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
     SIJ[1][c] = (vvel_FC[top]   - vvel_FC[c])/delY;
     SIJ[2][c] = (wvel_FC[front] - wvel_FC[c])/delZ;
     
-    SIJ[3][c] = 0.5 * ((uvel_FC[right] - uvel_FC[c])/delY 
-                       + (vvel_FC[top] - vvel_FC[c])/delX);
-    SIJ[4][c] = 0.5 * ((uvel_FC[right] - uvel_FC[c])/delZ 
-                     + (wvel_FC[front] - wvel_FC[c])/delX);
-    SIJ[5][c] = 0.5 * ((vvel_FC[top] - vvel_FC[c])/delZ 
-                   + (wvel_FC[front] - wvel_FC[c])/delY);
+    SIJ[3][c] = 0.5 * ((uvel_FC[right] - uvel_FC[c])/delY + (vvel_FC[top]   - vvel_FC[c])/delX);
+    SIJ[4][c] = 0.5 * ((uvel_FC[right] - uvel_FC[c])/delZ + (wvel_FC[front] - wvel_FC[c])/delX);
+    SIJ[5][c] = 0.5 * ((vvel_FC[top]   - vvel_FC[c])/delZ + (wvel_FC[front] - wvel_FC[c])/delY);
   }
   
   for (int comp = 0; comp < 6; comp ++ ) {
-    setBC(SIJ[comp],"zeroNeumann",patch, d_mat_manager, indx, new_dw);
-  } 
- 
+    setZeroNeumannBC_CC( patch, SIJ[comp], NGC);
+  }
 }
   
-//__________________________________
+//______________________________________________________________________
 //
 void Smagorinsky_Model::scheduleComputeVariance(SchedulerP& sched,
                                                 const PatchSet* patches,
@@ -194,13 +164,14 @@ void Smagorinsky_Model::scheduleComputeVariance(SchedulerP& sched,
       Task* task = scinew Task("Smagorinsky_Model::computeVariance",this, 
                                &Smagorinsky_Model::computeVariance, s);
                                
+      task->requires(Task::OldDW, VarLabel::find( timeStep_name) );
       task->requires(Task::OldDW, s->scalar, Ghost::AroundCells, 1);
       task->computes(s->scalarVariance);
       sched->addTask(task, patches, s->matl_set);
     }
   }
 }
-//__________________________________
+//______________________________________________________________________
 //
 void Smagorinsky_Model::computeVariance(const ProcessorGroup*, 
                                         const PatchSubset* patches,
@@ -209,7 +180,12 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
                                         DataWarehouse* new_dw,
                                         FilterScalar* s)
 {
-  cout_doing << "Doing computeVariance "<< "\t\t\t Smagorinsky_Model" << std::endl;
+  timeStep_vartype timeStep;
+  old_dw->get(timeStep, VarLabel::find( timeStep_name) );
+
+  bool isNotInitialTimeStep = (timeStep > 0);
+
+  cout_doing << "Doing computeVariance "<< "\t\t\t Smagorinsky_Model" << endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
     
@@ -235,13 +211,13 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
         //   0.5*(f[c+IntVector(1,0,0)]-f[c-IntVector(1,0,0)])
         // do the same for x,y,z
         
-        Vector df(0.5*(f[c+IntVector(1,0,0)]-f[c-IntVector(1,0,0)]),
-                  0.5*(f[c+IntVector(0,1,0)]-f[c-IntVector(0,1,0)]),
-                  0.5*(f[c+IntVector(0,0,1)]-f[c-IntVector(0,0,1)]));
+        Vector df( 0.5*( f[c+IntVector(1,0,0)] - f[c-IntVector(1,0,0)] ),
+                   0.5*( f[c+IntVector(0,1,0)] - f[c-IntVector(0,1,0)] ),
+                   0.5*( f[c+IntVector(0,0,1)] - f[c-IntVector(0,0,1)] ));
         df *= inv_dx;
         fvar[c] = scale * df.length2();
       }
-      setBC(fvar,s->scalarVariance->getName(),patch, d_mat_manager, matl, new_dw);
+      setBC(fvar,s->scalarVariance->getName(),patch, d_materialManager, matl, new_dw, isNotInitialTimeStep);
     }
   }
 }

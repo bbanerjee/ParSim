@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,10 +24,12 @@
 
 #ifndef Packages_Uintah_CCA_Components_Ice_BoundaryCond_h
 #define Packages_Uintah_CCA_Components_Ice_BoundaryCond_h
-#include <CCA/Components/ICE/CustomBCs/MMS_BCs.h>
+
 #include <CCA/Components/ICE/CustomBCs/C_BC_driver.h>
-#include <CCA/Components/ICE/CustomBCs/microSlipBCs.h>
-#include <CCA/Components/ICE/CustomBCs/LODI2.h>
+#include <CCA/Components/ICE/CustomBCs/inletVelocity.h>
+#include <CCA/Components/ICE/CustomBCs/MMS_BCs.h>
+#include <CCA/Components/ICE/CustomBCs/sine.h>
+
 #include <Core/Grid/BoundaryConditions/BCUtils.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManager.h>
@@ -41,20 +41,20 @@
 #include <Core/Grid/Variables/SFCZVariable.h>
 #include <Core/Grid/Variables/Stencil7.h>
 
-#include <Core/Exceptions/InternalError.h>
 #include <Core/Util/DebugStream.h>
-#include <vector>
-#include <time.h>
+
+
+static Uintah::DebugStream BC_dbg(  "ICE_BC_DBG", false);
+static Uintah::DebugStream cout_BC_CC("ICE_BC_CC", false);
+static Uintah::DebugStream cout_BC_FC("ICE_BC_FC", false);
 
 namespace Uintah {
 
-static DebugStream BC_dbg(  "ICE_BC_DBG", false);
-static DebugStream cout_BC_CC("ICE_BC_CC", false);
-static DebugStream cout_BC_FC("ICE_BC_FC", false);
-
   class DataWarehouse;
- 
-  void BC_bulletproofing(const ProblemSpecP& prob_spec,MaterialManagerP& mat_manager );
+
+  void BC_bulletproofing(const ProblemSpecP & prob_spec,
+                        MaterialManagerP    & materialManager,
+                        GridP               & grid );
   
   //__________________________________
   //  Temperature, pressure and other CCVariables
@@ -63,17 +63,20 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const CCVariable<double>&gamma,
                       const CCVariable<double>&cv, 
                       const Patch* patch,  
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id,
                       DataWarehouse* new_dw,
-                      customBC_var_basket* C_BC_basket);
+                      customBC_globalVars* globalVars,
+                      customBC_localVars* localVars,
+                      const bool isNotInitialTimeStep);
             
    void setBC(CCVariable<double>& var,     
                       const std::string& type,     // stub function
                       const Patch* patch,  
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id,
-                      DataWarehouse* new_dw); 
+                      DataWarehouse* new_dw,
+                      const bool isNotInitialTimeStep);
   //__________________________________
   //  P R E S S U R E        
    void setBC(CCVariable<double>& press_CC,          
@@ -83,10 +86,12 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const std::string& whichVar, 
                       const std::string& kind, 
                       const Patch* p, 
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id, 
                       DataWarehouse* new_dw,
-                      customBC_var_basket* C_BC_basket);
+                      customBC_globalVars* globalVars,
+                      customBC_localVars* localVars,
+                      const bool isNotInitialTimeStep);
              
    void setBC(CCVariable<double>& press_CC,          
                       std::vector<CCVariable<double> >& rho_micro,
@@ -95,36 +100,40 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       const std::string& whichVar, 
                       const std::string& kind,       // stub function 
                       const Patch* p, 
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id, 
-                      DataWarehouse* new_dw);
+                      DataWarehouse* new_dw,
+                      const bool isNotInitialTimeStep);
              
   //__________________________________
   //    V E C T O R   
    void setBC(CCVariable<Vector>& variable,
                       const std::string& type,
                       const Patch* patch,
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id,
                       DataWarehouse* new_dw, 
-                      customBC_var_basket* C_BC_basket);
+                      customBC_globalVars* globalVars,
+                      customBC_localVars* localVars,
+                      const bool isNotInitialTimeStep);
              
    void setBC(CCVariable<Vector>& variable,  // stub function
                       const std::string& type,
                       const Patch* patch,
-                      MaterialManagerP& mat_manager,
+                      MaterialManagerP& materialManager,
                       const int mat_id,
-                      DataWarehouse* new_dw);
+                      DataWarehouse* new_dw,
+                      const bool isNotInitialTimeStep);
 
   //__________________________________
   //    SPECIFC VOLUME
    void setSpecificVolBC(CCVariable<double>& sp_vol,
-                                 const string& kind,
+                                 const std::string& kind,
                                  const bool isMassSp_vol,
                                  constCCVariable<double> rho_CC,
                                  constCCVariable<double> vol_frac,
                                  const Patch* patch,
-                                 MaterialManagerP& mat_manager,
+                                 MaterialManagerP& materialManager,
                                  const int mat_id);
   
 
@@ -139,8 +148,8 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
   
   template<class T> 
   void setBC(T& variable, 
-             const  string& kind,
-             const string& comp,    
+             const std::string& kind,
+             const std::string& comp,
              const Patch* patch,    
              const int mat_id);
 
@@ -155,7 +164,7 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                         T& vel_FC,                        
                         Iterator& bound_ptr,                  
                         double& value,          
-                        const string& whichVel);
+                        const std::string& whichVel);
   
   void ImplicitMatrixBC(CCVariable<Stencil7>& var, const Patch* patch);
   
@@ -203,15 +212,16 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
  ---------------------------------------------------------------------  */
  template<class T> 
 void setBC(T& vel_FC, 
-           const string& desc,
+           const std::string& desc,
            const Patch* patch,    
            const int mat_id,
-           MaterialManagerP& mat_manager,
-           customBC_var_basket* custom_BC_basket)      
+           MaterialManagerP& materialManager,
+           customBC_globalVars* globalVars,
+           customBC_localVars*  localVars)      
 {
-  cout_BC_FC << "setBCFC (SFCVariable) "<< desc<< " mat_id = " << mat_id <<endl;
+  cout_BC_FC << "--------setBCFC (SFCVariable) "<< desc<< " mat_id = " << mat_id <<std::endl;
   Vector cell_dx = patch->dCell();
-  string whichVel = "unknown";  
+  std::string whichVel = "unknown";
   
   //__________________________________
   // Iterate over the faces encompassing the domain
@@ -231,7 +241,7 @@ void setBC(T& vel_FC,
          (faceDir.z() == 1 &&  (typeid(T) == typeid(SFCZVariable<double>)) ) ){
     
       int nCells = 0;
-      string bc_kind = "NotSet";
+      std::string bc_kind = "NotSet";
       
       int numChildren = patch->getBCDataArray(face)->getNumberChildren(mat_id);
       for (int child = 0;  child < numChildren; child++) {
@@ -240,7 +250,7 @@ void setBC(T& vel_FC,
         Iterator bound_ptr;
         bool foundIterator = 
           getIteratorBCValueBCKind<Vector>( patch, face, child, desc, mat_id,
-					         bc_value, bound_ptr,bc_kind); 
+                                                 bc_value, bound_ptr,bc_kind); 
 
         if (foundIterator && (bc_kind != "LODI" || bc_kind != "Neumann") ) {
           //__________________________________
@@ -281,30 +291,38 @@ void setBC(T& vel_FC,
           // Custom BCs
           else if(bc_kind == "MMS_1"){
             nCells+= set_MMS_BCs_FC<T>(patch, face, vel_FC, bound_ptr,
-                                        cell_dx, sharedState,
-                                        custom_BC_basket->mms_var_basket,
-                                        custom_BC_basket->mms_v);
+                                        cell_dx, materialManager,
+                                        globalVars->mms,
+                                        localVars->mms);
           }
           //__________________________________
           // Custom BCs
           else if(bc_kind == "Sine"){
-            nCells+= set_Sine_BCs_FC<T>(patch, face, vel_FC, bound_ptr, sharedState,
-                                        custom_BC_basket->sine_var_basket,
-                                        custom_BC_basket->sine_v);
-          }         
+            nCells+= set_Sine_BCs_FC<T>(patch, face, vel_FC, bound_ptr, materialManager,
+                                        globalVars->sine,
+                                        localVars->sine);
+          }
+          //__________________________________
+          // Custom BCs
+          else if( (bc_kind == "powerLawProfile" || bc_kind == "logWindProfile") ){
+            nCells+= set_inletVelocity_BCs_FC<T>(patch, face, vel_FC, 
+                                                 bound_ptr, bc_kind, value,
+                                                 localVars->inletVel,
+                                                 globalVars->inletVel);
+          }       
 
           //__________________________________
           //  debugging
           if( BC_dbg.active() ) {
             bound_ptr.reset();
-            BC_dbg <<whichVel<< " Face: "<< patch->getFaceName(face) <<" numCellsTouched " << nCells
+            BC_dbg <<whichVel<<" Face: "<< patch->getFaceName(face) <<"\t numCellsTouched " << nCells
                  <<"\t child " << child  <<" NumChildren "<<numChildren 
                  <<"\t BC kind "<< bc_kind <<" \tBC value "<< value
                  <<"\t bound_ptr= " << bound_ptr<< std::endl;
           }              
         }  // Children loop
       }
-      cout_BC_FC << patch->getFaceName(face) << " \t " << whichVel << " \t" << bc_kind << " faceDir: " << faceDir << " numChildren: " << numChildren 
+      cout_BC_FC << "               " << patch->getFaceName(face) << " \t " << whichVel << " \t" << bc_kind << "\t faceDir: " << faceDir << " numChildren: " << numChildren 
                  << " nCells: " << nCells << std::endl;
       //__________________________________
       //  bulletproofing
@@ -312,7 +330,7 @@ void setBC(T& vel_FC,
       int nFaceCells = numFaceCells(patch,  type, face);
       
       if(nCells != nFaceCells && (bc_kind != "LODI" && bc_kind != "Neumann")){
-         std::ostringstream warn;
+        std::ostringstream warn;
         warn << "ERROR ICE: Boundary conditions were not set for ("<< whichVel << ", " 
              << patch->getFaceName(face) << ", " << bc_kind  << " numChildren: " << numChildren 
              << " nCells Touched: " << nCells << " nCells on boundary: "<< nFaceCells << ") " << std::endl;
@@ -329,7 +347,7 @@ void setBC(T& vel_FC,
 template <class T>
 void set_CFI_BC( CCVariable<T>& q_CC, const Patch* patch)        
 { 
-  cout_BC_CC << "set_CFI_BC "<< std::endl; 
+  cout_BC_CC << "-------- set_CFI_BC "<< std::endl;
   //__________________________________
   // On the fine levels at the coarse fine interface 
   BC_dbg << *patch << " ";
@@ -341,7 +359,7 @@ void set_CFI_BC( CCVariable<T>& q_CC, const Patch* patch)
     // Iterate over coarsefine interface faces
     std::vector<Patch::FaceType> cf;
     patch->getCoarseFaces(cf);
-    std::vector<Patch::FaceType>::const_iterator iter;  
+    std::vector<Patch::FaceType>::const_iterator iter;
     for (iter  = cf.begin(); iter != cf.end(); ++iter){
       Patch::FaceType face = *iter;
       

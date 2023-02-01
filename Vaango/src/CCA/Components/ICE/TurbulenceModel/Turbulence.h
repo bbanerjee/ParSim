@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,7 +26,6 @@
 #define _TURBULENCE_H
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/SimulationInterface.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
@@ -65,47 +40,52 @@ namespace Uintah {
   class ICELabel;
   class Material;
   class Patch;
-  
+
 
   class Turbulence {
 
   public:
     Turbulence();
-    Turbulence(ProblemSpecP& ps, MaterialManagerP& mat_manager);
-    virtual ~Turbulence(); 
+    Turbulence(ProblemSpecP& ps, MaterialManagerP& materialManager);
+    virtual ~Turbulence();
 
     virtual void computeTurbViscosity(DataWarehouse* new_dw,
                                       const Patch* patch,
-                                      const CCVariable<Vector>& vel_CC,
-                                      const SFCXVariable<double>& uvel_FC,
-                                      const SFCYVariable<double>& vvel_FC,
-                                      const SFCZVariable<double>& wvel_FC,
-                                      const CCVariable<double>& rho_CC,
+                                      const ICELabel* lb,
+                                      constCCVariable<Vector>& vel_CC,
+                                      constSFCXVariable<double>& uvel_FC,
+                                      constSFCYVariable<double>& vvel_FC,
+                                      constSFCZVariable<double>& wvel_FC,
+                                      constCCVariable<double>& rho_CC,
                                       const int indx,
-                                      MaterialManagerP&  d_mat_manager,
+                                      MaterialManagerP&  d_materialManager,
                                       CCVariable<double>& turb_viscosity) = 0;
 
-    virtual void scheduleComputeVariance(SchedulerP& sched, 
+    virtual void scheduleComputeVariance(SchedulerP& sched,
                                          const PatchSet* patches,
                                          const MaterialSet* matls) = 0;
-   
+
     void callTurb(DataWarehouse* new_dw,
                  const Patch* patch,
-                 const CCVariable<Vector>& vel_CC,
-                 const CCVariable<double>& rho_CC,
+                 constCCVariable<Vector>& vel_CC,
+                 constCCVariable<double>& rho_CC,
+                 constCCVariable<double>& vol_frac_CC,
                  const int indx,
                  ICELabel* lb,
-                 MaterialManagerP&  d_mat_manager,
+                 MaterialManagerP&  d_materialManager,
+                 constCCVariable<double>& molecularVis,
                  CCVariable<double>& tot_viscosity);
-  protected:
 
-    MaterialManagerP 
- d_mat_manager;
+    template<class T>
+    void setZeroNeumannBC_CC( const Patch* patch,
+                              CCVariable<T>& var,
+                              const int NGC);
+  protected:
+    MaterialManagerP d_materialManager;
     double d_filter_width;
-    
-    
+
     struct FilterScalar {
-      string name;
+      std::string name;
       double scale;
       const VarLabel* scalar;
       const VarLabel* scalarVariance;
@@ -113,7 +93,7 @@ namespace Uintah {
       MaterialSet* matl_set;
     };
     std::vector<FilterScalar*> filterScalars;
-    
+
   };// End class Turbulence
 
 }// End namespace Uintah
