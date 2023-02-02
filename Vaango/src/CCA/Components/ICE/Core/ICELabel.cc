@@ -392,8 +392,6 @@ ICELabel::~ICELabel()
   VarLabel::destroy(maxMach_zminusLabel);
   VarLabel::destroy(maxMach_zplusLabel);
 
-  VarLabel::destroy(NeedAddIceMaterialLabel);
-
   // Model variables
   VarLabel::destroy(modelMass_srcLabel);
   VarLabel::destroy(modelMom_srcLabel);

@@ -772,7 +772,7 @@ public:
 
   int d_max_iter_equilibration{ 100 };
   int d_max_iter_implicit{ 10 };
-  int d_iters_before_timestep_restart{ 100 };
+  int d_iters_before_timestep_recompute{ 100 };
   double d_outer_iter_tolerance{ 1.0e-30 };
 
   // ADD HEAT VARIABLES

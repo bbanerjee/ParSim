@@ -29,6 +29,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Malloc/Allocator.h>
@@ -120,7 +121,7 @@ FirstOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
     double delX_Z = delX * delZ;
     double delX_Y = delX * delY;
     double delY_Z = delY * delZ;
-    fflux& ofs    = d_OFS[c];
+    fflux& ofs    = VB->OFS[c];
 
     ofs.d_fflux[TOP]    = delY_top * delX_Z;
     ofs.d_fflux[BOTTOM] = delY_bottom * delX_Z;
@@ -158,7 +159,7 @@ FirstOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
       fflux& ofs           = VB->OFS[c];
 
       for (int face = TOP; face <= BACK; face++) {
-        total_fluxout += d_OFS[c].d_fflux[face];
+        total_fluxout += VB->OFS[c].d_fflux[face];
         VB->OFS[c].d_fflux[face] = 0.0;
       }
       // keep track of which cells are bad
@@ -333,6 +334,7 @@ void
 FirstOrderAdvector::q_FC_operator(CellIterator iter,
                                   IntVector adj_offset,
                                   const int face,
+                                  const CCVariable<fflux>& ofs,
                                   const CCVariable<double>& q_CC,
                                   T& q_FC)
 {
@@ -342,8 +344,8 @@ FirstOrderAdvector::q_FC_operator(CellIterator iter,
 
     // face:           LEFT,   BOTTOM,   BACK
     // IF_slab[face]:  RIGHT,  TOP,      FRONT
-    double outfluxVol = d_OFS[R].d_fflux[face];
-    double influxVol  = d_OFS[L].d_fflux[IF_slab[face]];
+    double outfluxVol = ofs[R].d_fflux[face];
+    double influxVol  = ofs[L].d_fflux[IF_slab[face]];
 
     double q_faceFlux = q_CC[L] * influxVol - q_CC[R] * outfluxVol;
     double faceVol    = outfluxVol + influxVol;

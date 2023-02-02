@@ -312,7 +312,7 @@ bool is_MicroSlip_face(const Patch      * patch,
                        MaterialManagerP & materialManager)
 {
   bool is_MicroSlip_face = false;
-  int numMatls = materialManager->getNumMatls( "ICE" );
+  int numMatls = materialManager->getNumMaterials( "ICE" );
 
   for (int m = 0; m < numMatls; m++ ) {
     ICEMaterial* ice_matl = (ICEMaterial*) materialManager->getMaterial( "ICE", m);

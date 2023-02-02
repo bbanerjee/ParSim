@@ -28,7 +28,7 @@
 #include <CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Components/ICE/Core/ConservationTest.h>
 #include <CCA/Components/ICE/Core/Diffusion.h>
-#include <CCA/Components/ICE/CustomBCs/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/Scheduler.h>

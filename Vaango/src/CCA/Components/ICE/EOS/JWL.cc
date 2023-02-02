@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,253 +25,270 @@
  */
 
 #include <CCA/Components/ICE/EOS/JWL.h>
+#include <Core/Exceptions/InternalError.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Exceptions/InternalError.h>
-#include <iostream>
 #include <iomanip>
-
+#include <iostream>
 
 using namespace Uintah;
 
-
-JWL::JWL(ProblemSpecP& ps){
-   // Constructor
-  ps->require("A",A);
-  ps->require("B",B);
-  ps->require("R1",R1);
-  ps->require("R2",R2);
-  ps->require("om",om);
-  ps->require("rho0",rho0);
+JWL::JWL(ProblemSpecP& ps)
+{
+  // Constructor
+  ps->require("A", A);
+  ps->require("B", B);
+  ps->require("R1", R1);
+  ps->require("R2", R2);
+  ps->require("om", om);
+  ps->require("rho0", rho0);
 }
 
+JWL::~JWL() {}
 
-JWL::~JWL(){
-}
-
-
-void JWL::outputProblemSpec(ProblemSpecP& ps){
+void
+JWL::outputProblemSpec(ProblemSpecP& ps)
+{
   ProblemSpecP eos_ps = ps->appendChild("EOS");
-  eos_ps->setAttribute("type","JWL");
-  eos_ps->appendElement("A",A);
-  eos_ps->appendElement("B",B);
-  eos_ps->appendElement("R1",R1);
-  eos_ps->appendElement("R2",R2);
-  eos_ps->appendElement("om",om);
-  eos_ps->appendElement("rho0",rho0);
+  eos_ps->setAttribute("type", "JWL");
+  eos_ps->appendElement("A", A);
+  eos_ps->appendElement("B", B);
+  eos_ps->appendElement("R1", R1);
+  eos_ps->appendElement("R2", R2);
+  eos_ps->appendElement("om", om);
+  eos_ps->appendElement("rho0", rho0);
 }
-
 
 //__________________________________
-double JWL::computeRhoMicro(double press, double,
-                            double cv, double Temp,double rho_guess){
+double
+JWL::computeRhoMicro(double press,
+                     double,
+                     double cv,
+                     double Temp,
+                     double rho_guess)
+{
   // Set up iteration variables for the solver
   IterationVariables iterVar;
-  iterVar.Pressure = press;
-  iterVar.Temperature = Temp;
+  iterVar.Pressure     = press;
+  iterVar.Temperature  = Temp;
   iterVar.SpecificHeat = cv;
-  
+
   /* Use a hybrid Newton-Bisection Method to compute the rho_micro.
      The solver guarantees to converge to a solution.
 
      Modified by:
      Changwei Xiong
-     Department of Chemistry 
+     Department of Chemistry
      University of Utah
   */
-  double epsilon  = 1e-15;
-  double rho_min = 0.0;                      // Such that f(min) < 0
-  double rho_max = press*1.001/(om*cv*Temp); // Such that f(max) > 0
-  iterVar.IL = rho_min;
-  iterVar.IR = rho_max;
+  double epsilon = 1e-15;
+  double rho_min = 0.0;                              // Such that f(min) < 0
+  double rho_max = press * 1.001 / (om * cv * Temp); // Such that f(max) > 0
+  iterVar.IL     = rho_min;
+  iterVar.IR     = rho_max;
 
-  double f = 0;
+  double f       = 0;
   double df_drho = 0;
   double delta_old, delta_new;
 
-  double rhoM = rho_guess <= rho_max ? rho_guess : rho_max/2.0;
+  double rhoM = rho_guess <= rho_max ? rho_guess : rho_max / 2.0;
   if (!(rhoM > 0.0)) {
     std::ostringstream warn;
-    warn << "Microscopic density <=  0.0 " 
-         << "\n\tpress = " << press
-         << " Temp = " << Temp << " cv = " << cv
-         << " rhoM = " << rhoM << " rho_gues = " << rho_guess 
+    warn << "Microscopic density <=  0.0 "
+         << "\n\tpress = " << press << " Temp = " << Temp << " cv = " << cv
+         << " rhoM = " << rhoM << " rho_gues = " << rho_guess
          << " rho_max = " << rho_max << std::endl;
     throw InternalError(warn.str(), __FILE__, __LINE__);
   }
-  //double rhoM_start = rhoM;
- 
+  // double rhoM_start = rhoM;
+
   int iter = 0;
-  while(1){
+  while (1) {
     f = func(rhoM, &iterVar);
     if (std::isnan(f)) {
       std::ostringstream warn;
       warn << "Nan in function evaluation: iter = " << iter
-           << "\n\tpress = " << press
-           << " Temp = " << Temp << " cv = " << cv
+           << "\n\tpress = " << press << " Temp = " << Temp << " cv = " << cv
            << " rhoM = " << rhoM << " f = " << f << std::endl;
       throw InternalError(warn.str(), __FILE__, __LINE__);
     }
     setInterval(f, rhoM, &iterVar);
-    
-    if(fabs((iterVar.IL-iterVar.IR)/rhoM)<epsilon){
-      return (iterVar.IL+iterVar.IR)/2.0;
+
+    if (fabs((iterVar.IL - iterVar.IR) / rhoM) < epsilon) {
+      return (iterVar.IL + iterVar.IR) / 2.0;
     }
-    
+
     delta_new = 1e100;
-    while(1){
+    while (1) {
       df_drho = deri(rhoM, &iterVar);
 
       if (std::isnan(df_drho)) {
         std::ostringstream warn;
         warn << "Nan in function derivative evaluation: iter = " << iter
-             << "\n\tpress = " << press
-             << " Temp = " << Temp << " cv = " << cv
+             << "\n\tpress = " << press << " Temp = " << Temp << " cv = " << cv
              << " rhoM = " << rhoM << " df_drho = " << df_drho << std::endl;
         throw InternalError(warn.str(), __FILE__, __LINE__);
       }
 
       delta_old = delta_new;
-      delta_new = -f/df_drho; 
+      delta_new = -f / df_drho;
       rhoM += delta_new;
-      
-      if(fabs(delta_new/rhoM)<epsilon){
+
+      if (fabs(delta_new / rhoM) < epsilon) {
         return rhoM;
       }
-      
-      if(iter>=100 || std::isnan(rhoM)){
-         std::ostringstream warn;
-        warn << setprecision(15);
-        warn << "ERROR:ICE:JWL::computeRhoMicro not converging. iter = " << iter;
-        warn << "\n\tpress= " << press << " temp=" << Temp ;
-        warn << "\n\tdelta= " << delta_new << " rhoM= " << rhoM << " f = " << f 
-             <<" df_drho =" << df_drho << "\n";
+
+      if (iter >= 100 || std::isnan(rhoM)) {
+        std::ostringstream warn;
+        warn << std::setprecision(15);
+        warn << "ERROR:ICE:JWL::computeRhoMicro not converging. iter = "
+             << iter;
+        warn << "\n\tpress= " << press << " temp=" << Temp;
+        warn << "\n\tdelta= " << delta_new << " rhoM= " << rhoM << " f = " << f
+             << " df_drho =" << df_drho << "\n";
         throw InternalError(warn.str(), __FILE__, __LINE__);
       }
-      
-      if(rhoM<iterVar.IL || rhoM>iterVar.IR || fabs(delta_new)>fabs(delta_old*0.7)){
+
+      if (rhoM < iterVar.IL || rhoM > iterVar.IR ||
+          fabs(delta_new) > fabs(delta_old * 0.7)) {
         break;
       }
-      
+
       f = func(rhoM, &iterVar);
-      setInterval(f, rhoM, &iterVar);      
+      setInterval(f, rhoM, &iterVar);
       iter++;
     }
-    
-    rhoM = (iterVar.IL+iterVar.IR)/2.0;
+
+    rhoM = (iterVar.IL + iterVar.IR) / 2.0;
     iter++;
   }
-  
+
   return rhoM;
 }
 
-
-double JWL::func(double rhoM, IterationVariables *iterVar){
-  if(rhoM == 0){
+double
+JWL::func(double rhoM, IterationVariables* iterVar)
+{
+  if (rhoM == 0) {
     return -(iterVar->Pressure);
   }
-  double V  = rho0/rhoM;
-  double P1 = A*exp(-R1*V);
-  double P2 = B*exp(-R2*V);
-  double P3 = om*iterVar->SpecificHeat*iterVar->Temperature*rhoM;
+  double V  = rho0 / rhoM;
+  double P1 = A * exp(-R1 * V);
+  double P2 = B * exp(-R2 * V);
+  double P3 = om * iterVar->SpecificHeat * iterVar->Temperature * rhoM;
   return P1 + P2 + P3 - iterVar->Pressure;
 }
 
-
-double JWL::deri(double rhoM, IterationVariables *iterVar){
-  double V  = rho0/rhoM;
-  double P1 = A*exp(-R1*V);
-  double P2 = B*exp(-R2*V);
-  double P3 = om*iterVar->SpecificHeat*iterVar->Temperature*rhoM;
-  return (P1*R1*V + P2*R2*V + P3)/rhoM;
+double
+JWL::deri(double rhoM, IterationVariables* iterVar)
+{
+  double V  = rho0 / rhoM;
+  double P1 = A * exp(-R1 * V);
+  double P2 = B * exp(-R2 * V);
+  double P3 = om * iterVar->SpecificHeat * iterVar->Temperature * rhoM;
+  return (P1 * R1 * V + P2 * R2 * V + P3) / rhoM;
 }
 
-
-void JWL::setInterval(double f, double rhoM, IterationVariables *iterVar){
-  if(f < 0)   
+void
+JWL::setInterval(double f, double rhoM, IterationVariables* iterVar)
+{
+  if (f < 0) {
     iterVar->IL = rhoM;
-  else if(f > 0)  
+  } else if (f > 0) {
     iterVar->IR = rhoM;
-  else if(f ==0){    
+  } else if (f == 0) {
     iterVar->IL = rhoM;
-    iterVar->IR = rhoM; 
-  } 
+    iterVar->IR = rhoM;
+  }
 }
-
 
 //__________________________________
 // Return (1/v)*(dv/dT)  (constant pressure thermal expansivity)
-double JWL::getAlpha(double, double sp_v, double P, double cv){
+double
+JWL::getAlpha(double, double sp_v, double P, double cv)
+{
   // Cheating here a bit, computing v*(dT/dv) and returning the inverse of that
-  double V  = rho0*sp_v;
-  double P1 = A*exp(-R1*V);
-  double P2 = B*exp(-R2*V);
+  double V  = rho0 * sp_v;
+  double P1 = A * exp(-R1 * V);
+  double P2 = B * exp(-R2 * V);
 
-  double alpha = om*cv/(sp_v * (P + P1*(V*R1-1)+P2*(V*R2-1)));
-  return  alpha;
+  double alpha = om * cv / (sp_v * (P + P1 * (V * R1 - 1) + P2 * (V * R2 - 1)));
+  return alpha;
 }
 
-
 //__________________________________
-void JWL::computeTempCC(const Patch* patch,
-                        const string& comp_domain,
-                        const CCVariable<double>& press, 
-                        const CCVariable<double>&,
-                        const CCVariable<double>& cv,
-                        const CCVariable<double>& rhoM, 
-                        CCVariable<double>& Temp,
-                        Patch::FaceType face){
-  if(comp_domain == "WholeDomain") {
-    for (CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
+void
+JWL::computeTempCC(const Patch* patch,
+                   const string& comp_domain,
+                   const CCVariable<double>& press,
+                   const CCVariable<double>&,
+                   const CCVariable<double>& cv,
+                   const CCVariable<double>& rhoM,
+                   CCVariable<double>& Temp,
+                   Patch::FaceType face)
+{
+  if (comp_domain == "WholeDomain") {
+    for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
+         iter++) {
       IntVector c = *iter;
-      double V  = rho0/rhoM[c];
-      Temp[c]= (press[c]- A*exp(-R1*V) - B*exp(-R2*V)) / (om*rhoM[c]*cv[c]);
+      double V    = rho0 / rhoM[c];
+      Temp[c]     = (press[c] - A * exp(-R1 * V) - B * exp(-R2 * V)) /
+                (om * rhoM[c] * cv[c]);
     }
-  } 
+  }
   // Although this isn't currently being used
   // keep it around it could be useful
-  if(comp_domain == "FaceCells") {   
-    Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;  
-     
-    for (CellIterator iter=patch->getFaceIterator(face,MEC);!iter.done();iter++){
+  if (comp_domain == "FaceCells") {
+    Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
+
+    for (CellIterator iter = patch->getFaceIterator(face, MEC); !iter.done();
+         iter++) {
       IntVector c = *iter;
-      double V  = rho0/rhoM[c];
-      Temp[c]= (press[c] - A*exp(-R1*V) - B*exp(-R2*V)) / (om*rhoM[c]*cv[c]);
+      double V    = rho0 / rhoM[c];
+      Temp[c]     = (press[c] - A * exp(-R1 * V) - B * exp(-R2 * V)) /
+                (om * rhoM[c] * cv[c]);
     }
   }
 }
 
-
 //__________________________________
 //
-void JWL::computePressEOS(double rhoM, double,
-                          double cv, double Temp,
-                          double& press, double& dp_drho, double& dp_de){
+void
+JWL::computePressEOS(double rhoM,
+                     double,
+                     double cv,
+                     double Temp,
+                     double& press,
+                     double& dp_drho,
+                     double& dp_de)
+{
   // Pointwise computation of thermodynamic quantities
-  double V  = rho0/rhoM;
-  double P1 = A*exp(-R1*V);
-  double P2 = B*exp(-R2*V);
-  double P3 = om*cv*Temp*rhoM;
+  double V  = rho0 / rhoM;
+  double P1 = A * exp(-R1 * V);
+  double P2 = B * exp(-R2 * V);
+  double P3 = om * cv * Temp * rhoM;
 
   press   = P1 + P2 + P3;
-  dp_drho = (R1*rho0*P1 + R2*rho0*P2)/(rhoM*rhoM) + om*cv*Temp;
-  dp_de   = om*rhoM;
+  dp_drho = (R1 * rho0 * P1 + R2 * rho0 * P2) / (rhoM * rhoM) + om * cv * Temp;
+  dp_de   = om * rhoM;
 }
-
 
 //______________________________________________________________________
 // Update temperature boundary conditions due to hydrostatic pressure gradient
 // call this after set Dirchlet and Neuman BC
-void JWL::hydrostaticTempAdjustment(Patch::FaceType, 
-                                    const Patch*,
-                                    Iterator& ,
-                                    Vector&,
-                                    const CCVariable<double>&,
-                                    const CCVariable<double>&,
-                                    const Vector&,
-                                    CCVariable<double>&){ 
-  throw InternalError( "ERROR:ICE:EOS:JWL: hydrostaticTempAdj() \n"
-                       " has not been implemented", __FILE__, __LINE__ );
+void
+JWL::hydrostaticTempAdjustment(Patch::FaceType,
+                               const Patch*,
+                               Iterator&,
+                               Vector&,
+                               const CCVariable<double>&,
+                               const CCVariable<double>&,
+                               const Vector&,
+                               CCVariable<double>&)
+{
+  throw InternalError("ERROR:ICE:EOS:JWL: hydrostaticTempAdj() \n"
+                      " has not been implemented",
+                      __FILE__,
+                      __LINE__);
 }
-

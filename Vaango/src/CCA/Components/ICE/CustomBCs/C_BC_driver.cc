@@ -44,10 +44,10 @@ computesRequires_CustomBCs(Task* t,
                            const bool recursiveTask)
 {
   if (gv->usingLodi) { // LODI
-    addRequires_Lodi(t, where, lb, ice_matls, gv->lodi);
+    addRequires_Lodi(t, where, lb, ice_matls, gv->lodi.get());
   }
   if (gv->usingMicroSlipBCs) { // MicroSlip
-    addRequires_MicroSlip(t, where, lb, ice_matls, gv->slip);
+    addRequires_MicroSlip(t, where, lb, ice_matls, gv->slip.get());
   }
   if (gv->using_MMS_BCs) { // method of manufactured solutions
     addRequires_MMS(t, where, lb, ice_matls);
@@ -94,7 +94,7 @@ preprocess_CustomBCs(const string& where,
                         gv->materialManager,
                         lv->setLodiBcs,
                         lv->lodi,
-                        gv->lodi);
+                        gv->lodi.get());
   }
   //__________________________________
   //  micro slip boundary conditions
@@ -110,7 +110,7 @@ preprocess_CustomBCs(const string& where,
                              gv->materialManager,
                              lv->setMicroSlipBcs,
                              lv->slip,
-                             gv->slip);
+                             gv->slip.get());
   }
   //__________________________________
   //  method of manufactured solutions boundary conditions
@@ -142,7 +142,7 @@ preprocess_CustomBCs(const string& where,
                                  where,
                                  lv->set_inletVel_BCs,
                                  lv->recursiveTask,
-                                 gv->inletVel,
+                                 gv->inletVel.get(),
                                  lv->inletVel);
   }
 }

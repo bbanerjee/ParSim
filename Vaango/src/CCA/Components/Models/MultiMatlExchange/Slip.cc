@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/Models/MultiMatlExchange/Slip.h>
-#include <CCA/Components/ICE/CustomBCs/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/Materials/MPMMaterial.h>
 #include <CCA/Ports/Scheduler.h>
@@ -1031,7 +1031,7 @@ void SlipExch::computeMeanFreePath(const ProcessorGroup *,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, dbgExch, "Doing SlipExch::computeMeanFreePath" );
 
-    int numICEMatls = d_matlManager->getNumMatls( "ICE" );
+    int numICEMatls = d_matlManager->getNumMaterials( "ICE" );
     Ghost::GhostType  gn = Ghost::None;
 
     for (int m = 0; m < numICEMatls; m++) {

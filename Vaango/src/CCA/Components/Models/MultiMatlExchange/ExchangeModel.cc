@@ -52,7 +52,7 @@ ExchangeModel::ExchangeModel(const ProblemSpecP     & prob_spec,
                              const bool with_mpm )
 {
   d_matlManager = materialManager;
-  d_numMatls    = materialManager->getNumMatls();
+  d_numMatls    = materialManager->getNumMaterials();
   d_zero_matl   = scinew MaterialSubset();
   d_zero_matl->add(0);
   d_zero_matl->addReference();
@@ -138,7 +138,7 @@ void ExchangeModel::ComputeSurfaceNormal( const ProcessorGroup*,
 
     //__________________________________
     //    loop over MPM matls
-    int numMPM_matls = d_matlManager->getNumMatls( "MPM" );
+    int numMPM_matls = d_matlManager->getNumMaterials( "MPM" );
     
     for(int m=0; m<numMPM_matls; m++){
       MPMMaterial* matl = (MPMMaterial*) d_matlManager->getMaterial( "MPM", m);

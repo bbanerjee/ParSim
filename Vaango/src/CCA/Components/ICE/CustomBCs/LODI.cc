@@ -160,7 +160,7 @@ bool is_LODI_face(const Patch* patch,
                   MaterialManagerP& materialManager)
 {
   bool is_lodi_face = false;
-  int numMatls = materialManager->getNumMatls( "ICE" );
+  int numMatls = materialManager->getNumMaterials( "ICE" );
 
   for (int m = 0; m < numMatls; m++ ) {
     ICEMaterial* ice_matl = materialManager->getMaterial( "ICE", m);
@@ -189,7 +189,7 @@ void lodi_getVars_pressBC( const Patch* patch,
                            DataWarehouse* new_dw)
 {
   cout_doing << "lodi_getVars_pressBC on patch "<<patch->getID()<< endl;
-  int numMatls = materialManager->getNumMatls();
+  int numMatls = materialManager->getNumMaterials();
   std::vector<constCCVariable<double> > Temp_CC(numMatls);
   std::vector<constCCVariable<double> > f_theta_CC(numMatls);
   std::vector<constCCVariable<double> > gamma(numMatls);
@@ -1588,7 +1588,7 @@ void FacePress_LODI(const Patch* patch,
     throw InternalError("FacePress_LODI: Lodi_vars_pressBC = null", __FILE__, __LINE__);
   }
 
-  int numMatls = materialManager->getNumMatls();
+  int numMatls = materialManager->getNumMaterials();
   std::vector<double> press_eos(numMatls);
   std::vector<constCCVariable<double> >& gamma   = lv->gamma;
   std::vector<constCCVariable<double> >& cv      = lv->cv;

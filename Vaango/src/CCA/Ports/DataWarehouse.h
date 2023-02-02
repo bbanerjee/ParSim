@@ -438,7 +438,7 @@ public:
                const PatchSubset* pset,
                const MaterialSubset* mset,
                bool replace,
-               const PatchSubset* patchset = 0) = 0;
+               const PatchSubset* patchset) = 0;
 
   // An overloaded version of transferFrom.  GPU transfers need a stream, and a
   // stream is found in a detailedTask object.

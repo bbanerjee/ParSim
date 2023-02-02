@@ -94,6 +94,12 @@ public:
   virtual bool
   inside(const Point& p) const = 0;
 
+  virtual bool
+  inside(const Point& p, bool default_val) const 
+  {
+    return inside(p);
+  }
+
   std::string
   getName() const
   {

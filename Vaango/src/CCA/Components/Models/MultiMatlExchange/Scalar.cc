@@ -25,7 +25,7 @@
 #include <CCA/Components/Models/MultiMatlExchange/ExchangeModel.h>
 #include <CCA/Components/Models/MultiMatlExchange/Scalar.h>
 
-#include <CCA/Components/ICE/CustomBCs/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/Materials/MPMMaterial.h>
 #include <CCA/Ports/Scheduler.h>
@@ -509,8 +509,8 @@ void ScalarExch::addExch_Vel_Temp_CC( const ProcessorGroup * pg,
 
     printTask(patches, patch, dbgExch, "Doing ScalarExch::addExch_Vel_Temp_CC" );
 
-    int numMPMMatls = d_matlManager->getNumMatls( "MPM" );
-    int numICEMatls = d_matlManager->getNumMatls( "ICE" );
+    int numMPMMatls = d_matlManager->getNumMaterials( "MPM" );
+    int numICEMatls = d_matlManager->getNumMaterials( "ICE" );
     int numALLMatls = numMPMMatls + numICEMatls;
     Ghost::GhostType  gn = Ghost::None;
 

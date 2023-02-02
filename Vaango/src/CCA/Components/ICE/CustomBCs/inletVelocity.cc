@@ -93,7 +93,7 @@ bool read_inletVel_BC_inputs(const ProblemSpecP& prob_spec,
     Material* matl = materialManager->parseAndLookupMaterial(inlet_ps, "material");
     global->iceMatl_indx = matl->getDWIndex();
     
-    int numICEMatls = materialManager->getNumMatls( "ICE" );
+    int numICEMatls = materialManager->getNumMaterials( "ICE" );
     bool foundMatl = false;
     ostringstream indicies;
     

@@ -31,6 +31,7 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Malloc/Allocator.h>
@@ -50,9 +51,9 @@ SecondOrderAdvector::SecondOrderAdvector(DataWarehouse* new_dw,
                                          const bool isNewGrid)
 {
   Ghost::GhostType gac = Ghost::AroundCells;
-  new_dw->allocateTemporary(r_out_x, patch, gac, 1);
-  new_dw->allocateTemporary(r_out_y, patch, gac, 1);
-  new_dw->allocateTemporary(r_out_z, patch, gac, 1);
+  new_dw->allocateTemporary(d_r_out_x, patch, gac, 1);
+  new_dw->allocateTemporary(d_r_out_y, patch, gac, 1);
+  new_dw->allocateTemporary(d_r_out_z, patch, gac, 1);
   new_dw->allocateTemporary(d_mass_massVertex, patch, gac, 1);
   new_dw->allocateTemporary(d_mass_slabs, patch, gac, 1);
 
@@ -171,9 +172,9 @@ SecondOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
     r_y = delY_bottom / 2.0 - delY_top / 2.0;
     r_z = delZ_back / 2.0 - delZ_front / 2.0;
 
-    fflux& rx = r_out_x[c];
-    fflux& ry = r_out_y[c];
-    fflux& rz = r_out_z[c];
+    fflux& rx = d_r_out_x[c];
+    fflux& ry = d_r_out_y[c];
+    fflux& rz = d_r_out_z[c];
 
     rx.d_fflux[RIGHT] = delX / 2.0 - delX_right / 2.0;
     ry.d_fflux[RIGHT] = r_y;
@@ -206,9 +207,9 @@ SecondOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
   // -set the outflux slab vol in all cells = 0.0,
   // -request that the timestep be restarted.
   // -ignore if a timestep restart has already been requested
-  bool tsr = new_dw->timestepRestarted();
+  bool rst = new_dw->recomputeTimeStep();
 
-  if (error && bulletProof_test && !tsr) {
+  if (error && bulletProof_test && !rst) {
     std::vector<IntVector> badCells;
     std::vector<fflux> badOutflux;
 
@@ -418,7 +419,7 @@ SecondOrderAdvector::advectQ(const CCVariable<double>& q_CC,
                       save_q_FC(),
                       varBasket);
 
-  q_FC_PlusFaces(q_OAFS, q_CC, patch, q_XFC, q_YFC, q_ZFC);
+  q_FC_PlusFaces(q_OAFS, q_CC, patch, q_XFC, q_YFC, q_ZFC, varBasket);
 
   // fluxes on faces at the coarse fine interfaces
   q_FC_fluxes<double>(q_CC, q_OAFS, "vol_frac", varBasket);
@@ -558,9 +559,9 @@ SecondOrderAdvector::qAverageFlux(const bool useCompatibleFluxes,
       T q_grad_Y          = grad_y[c];
       T q_grad_Z          = grad_z[c];
       facedata<T>& q_slab = q_OAFS[c];
-      const fflux& rx     = r_out_x[c];
-      const fflux& ry     = r_out_y[c];
-      const fflux& rz     = r_out_z[c];
+      const fflux& rx     = d_r_out_x[c];
+      const fflux& ry     = d_r_out_y[c];
+      const fflux& rz     = d_r_out_z[c];
 
       for (int face = TOP; face <= BACK; face++) {
         q_slab.d_data[face] = q_grad_X * rx.d_fflux[face] +
@@ -581,9 +582,9 @@ SecondOrderAdvector::qAverageFlux(const bool useCompatibleFluxes,
       T q_grad_Z = grad_z[c];
 
       facedata<T>& q_slab              = q_OAFS[c];
-      const fflux& rx                  = r_out_x[c];
-      const fflux& ry                  = r_out_y[c];
-      const fflux& rz                  = r_out_z[c];
+      const fflux& rx                  = d_r_out_x[c];
+      const fflux& ry                  = d_r_out_y[c];
+      const fflux& rz                  = d_r_out_z[c];
       const facedata<double> mass_slab = d_mass_slabs[c];
       const double mass                = mass_CC[c];
 
@@ -605,6 +606,7 @@ void
 SecondOrderAdvector::q_FC_operator(CellIterator iter,
                                    IntVector adj_offset,
                                    const int face,
+                                   const CCVariable<fflux>& ofs,
                                    const CCVariable<facedata<double>>& q_OAFS,
                                    const CCVariable<double>& q_CC,
                                    T& q_FC)
@@ -615,15 +617,15 @@ SecondOrderAdvector::q_FC_operator(CellIterator iter,
 
     // face:           LEFT,   BOTTOM,   BACK
     // IF_slab[face]:  RIGHT,  TOP,      FRONT
-    double outfluxVol = VB->OFS[R].d_fflux[face];
-    double influxVol  = VB->OFS[L].d_fflux[IF_slab[face]];
+    double outfluxVol = ofs[R].d_fflux[face];
+    double influxVol  = ofs[L].d_fflux[IF_slab[face]];
 
     double q_faceFlux = q_OAFS[L].d_data[IF_slab[face]] * influxVol -
                         q_OAFS[R].d_data[face] * outfluxVol;
 
     double faceVol = outfluxVol + influxVol;
 
-    double q_tmp_FC = fabs(q_faceFlux) / (faceVol + 1.0e-100);
+    double q_tmp_FC = std::abs(q_faceFlux) / (faceVol + 1.0e-100);
 
     // if q_tmp_FC = 0.0 then set it equal to q_CC[c]
     q_FC[R] = equalZero(q_faceFlux, q_CC[R], q_tmp_FC);
@@ -809,6 +811,7 @@ SecondOrderAdvector::q_FC_fluxes(const CCVariable<T>& /*q_CC*/,
                                            BACK,
                                            patch,
                                            is_Q_massSpecific,
+                                           vb->OFS,
                                            q_OAFS,
                                            q_Z_FC_flux);
 

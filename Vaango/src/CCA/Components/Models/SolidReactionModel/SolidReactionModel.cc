@@ -23,7 +23,7 @@
  */
 #include <CCA/Components/Models/SolidReactionModel/SolidReactionModel.h>
 
-#include <CCA/Components/ICE/CustomBCs/BoundaryCond.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/MPM/Materials/MPMMaterial.h>
 

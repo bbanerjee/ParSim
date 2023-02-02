@@ -43,7 +43,7 @@ ExchangeFactory::create(const ProblemSpecP& matl_ps,
                         const MaterialManagerP& materialManager,
                         const bool with_mpm)
 {
-  int numMatls = materialManager->getNumMatls();
+  int numMatls = materialManager->getNumMaterials();
 
   //__________________________________
   //    single matl

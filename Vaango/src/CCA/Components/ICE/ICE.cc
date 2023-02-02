@@ -244,7 +244,7 @@ ICE::problemSetup(const ProblemSpecP& prob_spec,
     impSolver->require("max_outer_iterations", d_max_iter_implicit);
     impSolver->require("outer_iteration_tolerance", d_outer_iter_tolerance);
     impSolver->getWithDefault(
-      "iters_before_timestep_restart", d_iters_before_timestep_restart, 5);
+      "iters_before_timestep_recompute", d_iters_before_timestep_recompute, 5);
     d_impICE = true;
 
     d_subsched = d_scheduler->createSubScheduler();
