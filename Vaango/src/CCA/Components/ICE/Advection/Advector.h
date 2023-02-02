@@ -27,7 +27,6 @@
 #ifndef UINTAH_ADVECTOR_H
 #define UINTAH_ADVECTOR_H
 
-#include <CCA/Components/ICE/Advection/FluxDatatypes.h>
 #include <CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InternalError.h>

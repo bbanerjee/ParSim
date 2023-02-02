@@ -38,6 +38,8 @@
 
 #include <Core/Grid/Variables/MPMIntVarTypes.h>  // **WARNING** Needed for template instantiation
 
+#include <CCA/Components/ICE/Advection/FluxDatatypes.h>  // **WARNING** Needed for template instantiation
+
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Int130.h>
