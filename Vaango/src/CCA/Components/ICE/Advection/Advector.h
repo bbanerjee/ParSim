@@ -40,6 +40,8 @@
 #include <Core/Grid/Variables/SFCZVariable.h>
 #include <Core/Util/ProgressiveWarning.h>
 
+#include <memory>
+
 namespace Uintah {
 
 class DataWarehouse;
@@ -58,6 +60,7 @@ struct advectVarBasket
   const Patch* patch;
   const Level* level;
   bool doRefluxing;
+  CCVariable<fflux> OFS; // outflux slabs
 };
 
 class Advector
@@ -67,7 +70,7 @@ public:
   Advector();
   virtual ~Advector();
 
-  virtual Advector*
+  virtual std::unique_ptr<Advector>
   clone(DataWarehouse* new_dw, const Patch* patch, const bool isNewGrid) = 0;
 
   virtual void
@@ -78,7 +81,8 @@ public:
                       const Patch* patch,
                       const int& indx,
                       const bool& bulletProofing_test,
-                      DataWarehouse* new_dw) = 0;
+                      DataWarehouse* new_dw,
+                      advectVarBasket* varBasket) = 0;
 
   virtual void
   advectQ(const CCVariable<double>& q_CC,
@@ -119,12 +123,11 @@ public:
 
 //__________________________________
 void
-warning_restartTimestep(std::vector<IntVector> badCells,
-                        std::vector<fflux> badOutFlux,
-                        const double vol,
-                        const int indx,
-                        const Patch* patch,
-                        DataWarehouse* new_dw);
+warning_recomputeTimestep(std::vector<IntVector> badCells,
+                          std::vector<fflux> badOutFlux,
+                          const double vol,
+                          const int indx,
+                          const Patch* patch);
 
 inline double
 equalZero(double d1, double d2, double d3)
@@ -145,6 +148,7 @@ enum FACE
   FRONT,
   BACK
 };
+
 // These inlined functions are passed into advect() and calculate the face
 // value of q_CC.  Note only one version of advectQ needs to compute q_FC thus
 // we have the ignoreFaceFluxes functions.  This really cuts down on Code
@@ -197,9 +201,9 @@ public:
 
     double tmp_XFC, tmp_YFC, tmp_ZFC, q_tmp;
     q_tmp   = q_CC[c];
-    tmp_XFC = fabs(q_face_flux[LEFT]) / (faceVol[LEFT] + 1e-100);
-    tmp_YFC = fabs(q_face_flux[BOTTOM]) / (faceVol[BOTTOM] + 1e-100);
-    tmp_ZFC = fabs(q_face_flux[BACK]) / (faceVol[BACK] + 1e-100);
+    tmp_XFC = std::abs(q_face_flux[LEFT]) / (faceVol[LEFT] + 1e-100);
+    tmp_YFC = std::abs(q_face_flux[BOTTOM]) / (faceVol[BOTTOM] + 1e-100);
+    tmp_ZFC = std::abs(q_face_flux[BACK]) / (faceVol[BACK] + 1e-100);
 
     // if q_(X,Y,Z)FC = 0.0 then set it equal to q_CC[c]
     tmp_XFC = equalZero(q_face_flux[LEFT], q_tmp, tmp_XFC);

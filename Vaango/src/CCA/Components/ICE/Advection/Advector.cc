@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,107 +25,113 @@
  */
 
 #include <CCA/Components/ICE/Advection/Advector.h>
-#include <Core/Parallel/Parallel.h>
+
 #include <Core/Malloc/Allocator.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Util/Endian.h>
 #include <Core/Util/FancyAssert.h>
-#include <iostream>
 
+#include <iostream>
 
 using namespace Uintah;
 
 Advector::Advector()
 {
-    //__________________________________
-    //  outflux/influx slabs
-    OF_slab[RIGHT] = RIGHT;         IF_slab[RIGHT]  = LEFT;
-    OF_slab[LEFT]  = LEFT;          IF_slab[LEFT]   = RIGHT;
-    OF_slab[TOP]   = TOP;           IF_slab[TOP]    = BOTTOM;
-    OF_slab[BOTTOM]= BOTTOM;        IF_slab[BOTTOM] = TOP;  
-    OF_slab[FRONT] = FRONT;         IF_slab[FRONT]  = BACK;
-    OF_slab[BACK]  = BACK;          IF_slab[BACK]   = FRONT;   
+  //__________________________________
+  //  outflux/influx slabs
+  OF_slab[RIGHT]  = RIGHT;
+  IF_slab[RIGHT]  = LEFT;
+  OF_slab[LEFT]   = LEFT;
+  IF_slab[LEFT]   = RIGHT;
+  OF_slab[TOP]    = TOP;
+  IF_slab[TOP]    = BOTTOM;
+  OF_slab[BOTTOM] = BOTTOM;
+  IF_slab[BOTTOM] = TOP;
+  OF_slab[FRONT]  = FRONT;
+  IF_slab[FRONT]  = BACK;
+  OF_slab[BACK]   = BACK;
+  IF_slab[BACK]   = FRONT;
 
-    // Slab adjacent cell
-    S_ac[RIGHT]  =  IntVector( 1, 0, 0);   
-    S_ac[LEFT]   =  IntVector(-1, 0, 0);   
-    S_ac[TOP]    =  IntVector( 0, 1, 0);   
-    S_ac[BOTTOM] =  IntVector( 0,-1, 0);   
-    S_ac[FRONT]  =  IntVector( 0, 0, 1);   
-    S_ac[BACK]   =  IntVector( 0, 0,-1);
+  // Slab adjacent cell
+  S_ac[RIGHT]  = IntVector(1, 0, 0);
+  S_ac[LEFT]   = IntVector(-1, 0, 0);
+  S_ac[TOP]    = IntVector(0, 1, 0);
+  S_ac[BOTTOM] = IntVector(0, -1, 0);
+  S_ac[FRONT]  = IntVector(0, 0, 1);
+  S_ac[BACK]   = IntVector(0, 0, -1);
 }
 
-Advector::~Advector()
-{
-}
-
+Advector::~Advector() {}
 
 //______________________________________________________________________
-//  
+//
 namespace Uintah {
-  //__________________________________
-  void  warning_restartTimestep( vector<IntVector> badCells,
-                                 std::vector<fflux> badOutFlux,
-                                 const double vol,
-                                 const int indx,
-                                 const Patch* patch,
-                                 DataWarehouse* new_dw)
-  {
-    std::cout << Parallel::getMPIRank() << " ERROR: ICE Advection operator: "
-         << " Influx_outflux error detected, "
-         << " patch " << patch->getID()
-         << ", Level " << patch->getLevel()->getIndex()
-         << ", matl indx "<< indx << ", number of bad cells: " << badCells.size() << std::endl;
+//__________________________________
+void
+warning_recomputeTimestep(std::vector<IntVector> badCells,
+                        std::vector<fflux> badOutFlux,
+                        const double vol,
+                        const int indx,
+                        const Patch* patch)
+{
+  std::cout << Parallel::getMPIRank() << " ERROR: ICE Advection operator: "
+            << " Influx_outflux error detected, "
+            << " patch " << patch->getID() << ", Level "
+            << patch->getLevel()->getIndex() << ", matl indx " << indx
+            << ", number of bad cells: " << badCells.size() << std::endl;
 
-    for (int i = 0; i<(int) badCells.size(); i++) {
-      std::cout << Parallel::getMPIRank() << "  cell " <<  badCells[i] << " outflux: ";
-      
-      fflux& outflux_faces = badOutFlux[i];
-      double total_fluxout = 0.0;
-      
-      for(int f = TOP; f <= BACK; f++ )  {
-        double flux = outflux_faces.d_fflux[f];
-        total_fluxout += flux;
-        std::cout << " \t face: " << f << " (" << flux << ") ";
-      }
-      std::cout << " total_outflux: " << total_fluxout << std::endl;
-    }
-    
-    if (new_dw->timestepRestarted() == false){
-      std::cout << "\nA timestep restart has been requested \n " << std::endl;
-      new_dw->restartTimestep();
-    }
-  }
-  
-  //__________________________________
-  static MPI_Datatype makeMPI_fflux()
-  {
-    ASSERTEQ(sizeof(fflux), sizeof(double)*6);
-    MPI_Datatype mpitype;
-    MPI_Type_vector(1, 6, 6, MPI_DOUBLE, &mpitype);
-    MPI_Type_commit(&mpitype);
-    return mpitype;
-  }
+  for (int i = 0; i < (int)badCells.size(); i++) {
+    std::cout << Parallel::getMPIRank() << "  cell " << badCells[i]
+              << " outflux: ";
 
-  const TypeDescription* fun_getTypeDescription(fflux*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::Type::Other,
-                                  "fflux", true, 
-                                  &makeMPI_fflux);
+    fflux& outflux_faces = badOutFlux[i];
+    double total_fluxout = 0.0;
+
+    for (int f = TOP; f <= BACK; f++) {
+      double flux = outflux_faces.d_fflux[f];
+      total_fluxout += flux;
+      std::cout << " \t face: " << f << " (" << flux << ") ";
     }
-    return td;
+    std::cout << " total_outflux: " << total_fluxout << std::endl;
   }
+}
+
+//__________________________________
+static MPI_Datatype
+makeMPI_fflux()
+{
+  ASSERTEQ(sizeof(fflux), sizeof(double) * 6);
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, 6, 6, MPI_DOUBLE, &mpitype);
+  MPI_Type_commit(&mpitype);
+  return mpitype;
+}
+
+const TypeDescription*
+fun_getTypeDescription(fflux*)
+{
+  static TypeDescription* td = 0;
+  if (!td) {
+    td = scinew TypeDescription(
+      TypeDescription::Type::Other, "fflux", true, &makeMPI_fflux);
+  }
+  return td;
+}
 } // namespace Uintah
 
-
 //______________________________________________________________________
-//  
+//
 namespace Uintah {
 
-  void swapbytes( Uintah::fflux& f) {
-    double *p = f.d_fflux;
-    SWAP_8(*p); SWAP_8(*++p); SWAP_8(*++p);
-    SWAP_8(*++p); SWAP_8(*++p); SWAP_8(*++p);
-  }
+void
+swapbytes(Uintah::fflux& f)
+{
+  double* p = f.d_fflux;
+  SWAP_8(*p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+  SWAP_8(*++p);
+}
 } // namespace Uintah
