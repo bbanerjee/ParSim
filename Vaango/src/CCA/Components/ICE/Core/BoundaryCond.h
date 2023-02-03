@@ -68,8 +68,8 @@ setBC(CCVariable<double>& var,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep);
 
 void
@@ -93,8 +93,8 @@ setBC(CCVariable<double>& press_CC,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep);
 
 void
@@ -119,8 +119,8 @@ setBC(CCVariable<Vector>& variable,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep);
 
 void
@@ -228,8 +228,8 @@ setBC(T& vel_FC,
       const Patch* patch,
       const int mat_id,
       MaterialManagerP& materialManager,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars)
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars)
 {
   cout_BC_FC << "--------setBCFC (SFCVariable) " << desc
              << " mat_id = " << mat_id << std::endl;

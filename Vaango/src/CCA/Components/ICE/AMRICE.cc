@@ -435,21 +435,21 @@ AMRICE::scheduleRefineInterface(const LevelP& fineLevel,
                                      needCoarseNew);
     scheduleRefineInterface_Variable(fineLevel,
                                      sched,
-                                     d_ice_labels->sp_vol_CCLabel,
+                                     d_ice_labels->specificVolume_CCLabel,
                                      ND,
                                      all_matls,
                                      needCoarseOld,
                                      needCoarseNew);
     scheduleRefineInterface_Variable(fineLevel,
                                      sched,
-                                     d_ice_labels->temp_CCLabel,
+                                     d_ice_labels->temperature_CCLabel,
                                      ND,
                                      all_matls,
                                      needCoarseOld,
                                      needCoarseNew);
     scheduleRefineInterface_Variable(fineLevel,
                                      sched,
-                                     d_ice_labels->vel_CCLabel,
+                                     d_ice_labels->velocity_CCLabel,
                                      ND,
                                      ice_matls,
                                      needCoarseOld,
@@ -655,9 +655,9 @@ AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches, SchedulerP& sched)
 
     t->modifies(d_ice_labels->press_CCLabel, d_press_matl, oims);
     t->modifies(d_ice_labels->rho_CCLabel);
-    t->modifies(d_ice_labels->sp_vol_CCLabel);
-    t->modifies(d_ice_labels->temp_CCLabel);
-    t->modifies(d_ice_labels->vel_CCLabel);
+    t->modifies(d_ice_labels->specificVolume_CCLabel);
+    t->modifies(d_ice_labels->temperature_CCLabel);
+    t->modifies(d_ice_labels->velocity_CCLabel);
 
     // we really only do the ice matls, but we need to tell CopyData to do the
     // right thing
@@ -731,13 +731,13 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
         CCVariable<Vector> vel_CC;
 
         fine_new_dw->getModifiable(
-          sp_vol_CC[m], d_ice_labels->sp_vol_CCLabel, indx, patch);
+          sp_vol_CC[m], d_ice_labels->specificVolume_CCLabel, indx, patch);
         fine_new_dw->getModifiable(
           rho_CC, d_ice_labels->rho_CCLabel, indx, patch);
         fine_new_dw->getModifiable(
-          temp_CC, d_ice_labels->temp_CCLabel, indx, patch);
+          temp_CC, d_ice_labels->temperature_CCLabel, indx, patch);
         fine_new_dw->getModifiable(
-          vel_CC, d_ice_labels->vel_CCLabel, indx, patch);
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch);
         fine_new_dw->allocateAndPut(
           gamma, d_ice_labels->gammaLabel, indx, patch);
         fine_new_dw->allocateAndPut(
@@ -828,8 +828,8 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
                              vol_frac);
         } // boundary face loop
 
-        std::unique_ptr<customBC_localVars> BC_localVars =
-          std::make_unique<customBC_localVars>();
+        std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+          std::make_unique<CustomBCDriver::customBC_localVars>();
 #if 0
         // Worry about this later
         // the problem is that you don't know have delT for the finer level at this point in the cycle
@@ -924,7 +924,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
 
       //__________________________________
       //  Pressure boundary condition
-      customBC_localVars* notUsed = scinew customBC_localVars();
+      CustomBCDriver::customBC_localVars* notUsed = scinew CustomBCDriver::customBC_localVars();
 
       CCVariable<double> press_CC;
       std::vector<CCVariable<double>> placeHolder(0);
@@ -992,7 +992,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    1);
 
     task->requires(Task::NewDW,
-                   d_ice_labels->sp_vol_CCLabel,
+                   d_ice_labels->specificVolume_CCLabel,
                    0,
                    Task::CoarseLevel,
                    0,
@@ -1001,7 +1001,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    1);
 
     task->requires(Task::NewDW,
-                   d_ice_labels->temp_CCLabel,
+                   d_ice_labels->temperature_CCLabel,
                    0,
                    Task::CoarseLevel,
                    0,
@@ -1010,7 +1010,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    1);
 
     task->requires(Task::NewDW,
-                   d_ice_labels->vel_CCLabel,
+                   d_ice_labels->velocity_CCLabel,
                    0,
                    Task::CoarseLevel,
                    0,
@@ -1056,9 +1056,9 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
 
     task->computes(d_ice_labels->press_CCLabel, subset, Task::OutOfDomain);
     task->computes(d_ice_labels->rho_CCLabel);
-    task->computes(d_ice_labels->sp_vol_CCLabel);
-    task->computes(d_ice_labels->temp_CCLabel);
-    task->computes(d_ice_labels->vel_CCLabel);
+    task->computes(d_ice_labels->specificVolume_CCLabel);
+    task->computes(d_ice_labels->temperature_CCLabel);
+    task->computes(d_ice_labels->velocity_CCLabel);
     sched->addTask(task, patches, d_materialManager->allMaterials("ICE"));
 
     //__________________________________
@@ -1129,10 +1129,11 @@ AMRICE::refine(const ProcessorGroup*,
       new_dw->allocateAndPut(
         rho_CC, d_ice_labels->rho_CCLabel, indx, finePatch);
       new_dw->allocateAndPut(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, finePatch);
-      new_dw->allocateAndPut(temp, d_ice_labels->temp_CCLabel, indx, finePatch);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, finePatch);
       new_dw->allocateAndPut(
-        vel_CC, d_ice_labels->vel_CCLabel, indx, finePatch);
+        temp, d_ice_labels->temperature_CCLabel, indx, finePatch);
+      new_dw->allocateAndPut(
+        vel_CC, d_ice_labels->velocity_CCLabel, indx, finePatch);
 
       rho_CC.initialize(d_EVIL_NUM);
       sp_vol_CC.initialize(d_EVIL_NUM);
@@ -1150,7 +1151,7 @@ AMRICE::refine(const ProcessorGroup*,
                                    coarseLevel);
 
       CoarseToFineOperator<double>(sp_vol_CC,
-                                   d_ice_labels->sp_vol_CCLabel,
+                                   d_ice_labels->specificVolume_CCLabel,
                                    indx,
                                    new_dw,
                                    invRefineRatio,
@@ -1159,7 +1160,7 @@ AMRICE::refine(const ProcessorGroup*,
                                    coarseLevel);
 
       CoarseToFineOperator<double>(temp,
-                                   d_ice_labels->temp_CCLabel,
+                                   d_ice_labels->temperature_CCLabel,
                                    indx,
                                    new_dw,
                                    invRefineRatio,
@@ -1168,7 +1169,7 @@ AMRICE::refine(const ProcessorGroup*,
                                    coarseLevel);
 
       CoarseToFineOperator<Vector>(vel_CC,
-                                   d_ice_labels->vel_CCLabel,
+                                   d_ice_labels->velocity_CCLabel,
                                    indx,
                                    new_dw,
                                    invRefineRatio,
@@ -1472,41 +1473,43 @@ AMRICE::coarsen(const ProcessorGroup*,
 
       // coarsen
       bool computesAve = false;
-      fineToCoarseOperator<double>(mass_adv,
-                                   computesAve,
-                                   d_ice_labels->mass_advLabel,
-                                   indx,
-                                   new_dw,
-                                   coarsePatch,
-                                   coarseLevel,
-                                   fineLevel);
+      AMRCoarsenRefine::fineToCoarseOperator<double>(
+        mass_adv,
+        computesAve,
+        d_ice_labels->mass_advLabel,
+        indx,
+        new_dw,
+        coarsePatch,
+        coarseLevel,
+        fineLevel);
 
-      fineToCoarseOperator<double>(sp_vol_adv,
-                                   computesAve,
-                                   d_ice_labels->sp_vol_advLabel,
-                                   indx,
-                                   new_dw,
-                                   coarsePatch,
-                                   coarseLevel,
-                                   fineLevel);
+      AMRCoarsenRefine::fineToCoarseOperator<double>(
+        sp_vol_adv,
+        computesAve,
+        d_ice_labels->sp_vol_advLabel,
+        indx,
+        new_dw,
+        coarsePatch,
+        coarseLevel,
+        fineLevel);
 
-      fineToCoarseOperator<double>(eng_adv,
-                                   computesAve,
-                                   d_ice_labels->eng_advLabel,
-                                   indx,
-                                   new_dw,
-                                   coarsePatch,
-                                   coarseLevel,
-                                   fineLevel);
+      AMRCoarsenRefine::fineToCoarseOperator<double>(eng_adv,
+                                                     computesAve,
+                                                     d_ice_labels->eng_advLabel,
+                                                     indx,
+                                                     new_dw,
+                                                     coarsePatch,
+                                                     coarseLevel,
+                                                     fineLevel);
 
-      fineToCoarseOperator<Vector>(mom_adv,
-                                   computesAve,
-                                   d_ice_labels->mom_advLabel,
-                                   indx,
-                                   new_dw,
-                                   coarsePatch,
-                                   coarseLevel,
-                                   fineLevel);
+      AMRCoarsenRefine::fineToCoarseOperator<Vector>(mom_adv,
+                                                     computesAve,
+                                                     d_ice_labels->mom_advLabel,
+                                                     indx,
+                                                     new_dw,
+                                                     coarsePatch,
+                                                     coarseLevel,
+                                                     fineLevel);
 
       //__________________________________
       // pressure
@@ -1517,14 +1520,15 @@ AMRICE::coarsen(const ProcessorGroup*,
           press_CC, d_ice_labels->press_CCLabel, 0, coarsePatch);
         computesAve = true;
 
-        fineToCoarseOperator<double>(press_CC,
-                                     computesAve,
-                                     d_ice_labels->press_CCLabel,
-                                     0,
-                                     new_dw,
-                                     coarsePatch,
-                                     coarseLevel,
-                                     fineLevel);
+        AMRCoarsenRefine::fineToCoarseOperator<double>(
+          press_CC,
+          computesAve,
+          d_ice_labels->press_CCLabel,
+          0,
+          new_dw,
+          coarsePatch,
+          coarseLevel,
+          fineLevel);
       }
 
       //__________________________________
@@ -1549,14 +1553,14 @@ AMRICE::coarsen(const ProcessorGroup*,
                   q_CC_adv, tvar->var_adv, indx, coarsePatch);
                 computesAve = false;
 
-                fineToCoarseOperator<double>(q_CC_adv,
-                                             computesAve,
-                                             tvar->var_adv,
-                                             indx,
-                                             new_dw,
-                                             coarsePatch,
-                                             coarseLevel,
-                                             fineLevel);
+                AMRCoarsenRefine::fineToCoarseOperator<double>(q_CC_adv,
+                                                               computesAve,
+                                                               tvar->var_adv,
+                                                               indx,
+                                                               new_dw,
+                                                               coarsePatch,
+                                                               coarseLevel,
+                                                               fineLevel);
               }
             }
           }
@@ -2499,8 +2503,9 @@ AMRICE::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 
   t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, matls_sub, gac, 1, OldTG);
   t->requires(
-    Task::NewDW, d_ice_labels->temp_CCLabel, matls_sub, gac, 1, OldTG);
-  t->requires(Task::NewDW, d_ice_labels->vel_CCLabel, matls_sub, gac, 1, OldTG);
+    Task::NewDW, d_ice_labels->temperature_CCLabel, matls_sub, gac, 1, OldTG);
+  t->requires(
+    Task::NewDW, d_ice_labels->velocity_CCLabel, matls_sub, gac, 1, OldTG);
   t->requires(
     Task::NewDW, d_ice_labels->vol_frac_CCLabel, matls_sub, gac, 1, OldTG);
   t->requires(Task::NewDW,
@@ -2512,8 +2517,8 @@ AMRICE::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
               OldTG);
 
   t->computes(d_ice_labels->mag_grad_rho_CCLabel);
-  t->computes(d_ice_labels->mag_grad_temp_CCLabel);
-  t->computes(d_ice_labels->mag_div_vel_CCLabel);
+  t->computes(d_ice_labels->mag_grad_temperature_CCLabel);
+  t->computes(d_ice_labels->mag_div_velocity_CCLabel);
   t->computes(d_ice_labels->mag_grad_vol_frac_CCLabel);
   t->computes(d_ice_labels->mag_grad_press_CCLabel, d_press_matl);
 
@@ -2618,11 +2623,13 @@ AMRICE::errorEstimate(const ProcessorGroup*,
       new_dw->allocateAndPut(
         mag_grad_rho_CC[indx], d_ice_labels->mag_grad_rho_CCLabel, indx, patch);
       new_dw->allocateAndPut(mag_grad_temp_CC[indx],
-                             d_ice_labels->mag_grad_temp_CCLabel,
+                             d_ice_labels->mag_grad_temperature_CCLabel,
                              indx,
                              patch);
-      new_dw->allocateAndPut(
-        mag_div_vel_CC[indx], d_ice_labels->mag_div_vel_CCLabel, indx, patch);
+      new_dw->allocateAndPut(mag_div_vel_CC[indx],
+                             d_ice_labels->mag_div_velocity_CCLabel,
+                             indx,
+                             patch);
       new_dw->allocateAndPut(mag_grad_vol_frac_CC[indx],
                              d_ice_labels->mag_grad_vol_frac_CCLabel,
                              indx,
@@ -2658,8 +2665,9 @@ AMRICE::errorEstimate(const ProcessorGroup*,
       constCCVariable<Vector> vel_CC;
 
       new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, gac, 1);
-      new_dw->get(temp_CC, d_ice_labels->temp_CCLabel, indx, patch, gac, 1);
-      new_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, gac, 1);
+      new_dw->get(
+        temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, gac, 1);
+      new_dw->get(vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, gac, 1);
       new_dw->get(
         vol_frac_CC, d_ice_labels->vol_frac_CCLabel, indx, patch, gac, 1);
 

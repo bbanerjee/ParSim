@@ -142,7 +142,7 @@ ICE::scheduleSetupRHS(SchedulerP& sched,
   }
 
   t->requires(pNewDW, d_ice_labels->sumKappaLabel, press_matl, oims, gn, 0);
-  t->requires(pNewDW, d_ice_labels->sp_vol_CCLabel, gn, 0);
+  t->requires(pNewDW, d_ice_labels->specificVolume_CCLabel, gn, 0);
   t->requires(pNewDW, d_ice_labels->speedSound_CCLabel, gn, 0);
   t->requires(pNewDW, d_ice_labels->vol_frac_CCLabel, gac, 2);
   t->requires(Task::NewDW, d_ice_labels->uvel_FCMELabel, gac, 2);
@@ -224,7 +224,7 @@ ICE::scheduleUpdatePressure(SchedulerP& sched,
   t->requires(Task::ParentOldDW, d_ice_labels->delTLabel, getLevel(patches));
   t->requires(
     Task::ParentNewDW, d_ice_labels->press_equil_CCLabel, press_matl, oims, gn);
-  t->requires(Task::ParentNewDW, d_ice_labels->sp_vol_CCLabel, gn);
+  t->requires(Task::ParentNewDW, d_ice_labels->specificVolume_CCLabel, gn);
   t->requires(
     Task::OldDW, d_ice_labels->sum_imp_delPLabel, press_matl, oims, gn);
 
@@ -284,7 +284,7 @@ ICE::scheduleRecomputeVel_FC(SchedulerP& sched,
     pNewDW = Task::ParentNewDW;
   }
 
-  t->requires(pNewDW, d_ice_labels->sp_vol_CCLabel, /*all_matls*/ gac, 1);
+  t->requires(pNewDW, d_ice_labels->specificVolume_CCLabel, /*all_matls*/ gac, 1);
   t->requires(
     Task::NewDW, d_ice_labels->imp_delPLabel, press_matl, oims, gac, 1);
   t->requires(Task::OldDW, d_ice_labels->uvel_FCLabel, gn, 0);
@@ -395,7 +395,7 @@ ICE::scheduleImplicitPressureSolve(SchedulerP& sched,
   // common Variables
   t->requires(Task::OldDW, d_ice_labels->timeStepLabel);
   t->requires(Task::NewDW, d_ice_labels->vol_frac_CCLabel, gac, 2);
-  t->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, gac, 1);
+  t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, gac, 1);
   t->requires(Task::NewDW, d_ice_labels->rhsLabel, one_matl, oims, gn, 0);
   // t->requires( Task::OldDW, d_ice_labels->initialGuessLabel,  one_matl,
   // oims,gac,1);
@@ -700,7 +700,7 @@ ICE::setupRHS(const ProcessorGroup*,
       new_dw->get(wvel_FC, d_ice_labels->wvel_FCMELabel, indx, patch, gac, 2);
       pNewDW->get(
         vol_frac, d_ice_labels->vol_frac_CCLabel, indx, patch, gac, 2);
-      pNewDW->get(sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, gn, 0);
+      pNewDW->get(sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, gn, 0);
       pNewDW->get(
         speedSound, d_ice_labels->speedSound_CCLabel, indx, patch, gn, 0);
 
@@ -915,7 +915,7 @@ ICE::updatePressure(const ProcessorGroup*,
       Material* matl = d_materialManager->getMaterial(m);
       int indx       = matl->getDWIndex();
       parent_new_dw->get(
-        sp_vol_CC[m], d_ice_labels->sp_vol_CCLabel, indx, patch, gn, 0);
+        sp_vol_CC[m], d_ice_labels->specificVolume_CCLabel, indx, patch, gn, 0);
     }
     // set boundary conditions on imp_delP
     set_imp_DelP_BC(imp_delP, patch, d_ice_labels->imp_delPLabel, new_dw);
@@ -932,8 +932,8 @@ ICE::updatePressure(const ProcessorGroup*,
     }
     //__________________________________
     //  set boundary conditions
-    std::unique_ptr<customBC_localVars> BC_localVars =
-      std::make_unique<customBC_localVars>();
+    std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+      std::make_unique<CustomBCDriver::customBC_localVars>();
 
     preprocess_CustomBCs("imp_update_press_CC",
                          parent_old_dw,

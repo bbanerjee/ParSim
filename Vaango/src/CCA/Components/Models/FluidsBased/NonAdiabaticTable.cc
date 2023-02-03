@@ -312,13 +312,13 @@ void NonAdiabaticTable::scheduleInitialize(SchedulerP& sched,
   Task* t = scinew Task("NonAdiabaticTable::initialize", this, 
                         &NonAdiabaticTable::initialize);
 
-  t->modifies(lb->sp_vol_CCLabel);
+  t->modifies(lb->specificVolume_CCLabel);
   t->modifies(lb->rho_micro_CCLabel);
   t->modifies(lb->rho_CCLabel);
   t->modifies(lb->specific_heatLabel);
   t->modifies(lb->gammaLabel);
   t->modifies(lb->thermalCondLabel);
-  t->modifies(lb->temp_CCLabel);
+  t->modifies(lb->temperature_CCLabel);
   t->modifies(lb->viscosityLabel);
   
   t->computes(d_scalar->scalar_CCLabel);
@@ -351,9 +351,9 @@ void NonAdiabaticTable::initialize(const ProcessorGroup*,
     new_dw->getModifiable(thermalCond, lb->thermalCondLabel,  indx,patch);
     new_dw->getModifiable(viscosity,   lb->viscosityLabel,    indx,patch);
     new_dw->getModifiable(rho_CC,      lb->rho_CCLabel,       indx,patch);
-    new_dw->getModifiable(sp_vol,      lb->sp_vol_CCLabel,    indx,patch);
+    new_dw->getModifiable(sp_vol,      lb->specificVolume_CCLabel,    indx,patch);
     new_dw->getModifiable(rho_micro,   lb->rho_micro_CCLabel, indx,patch);
-    new_dw->getModifiable(temp, lb->temp_CCLabel, indx, patch);
+    new_dw->getModifiable(temp, lb->temperature_CCLabel, indx, patch);
     //__________________________________
     //  initialize the scalar field in a region
     f.initialize(0);
@@ -602,7 +602,7 @@ void NonAdiabaticTable::scheduleComputeModelSources(SchedulerP& sched,
   t->requires(Task::OldDW, mi->delT_Label,           level.get_rep());
   t->requires(Task::OldDW, d_scalar->scalar_CCLabel, gac,1); 
   t->requires(Task::OldDW, mi->rho_CCLabel,          gn);
-  t->requires(Task::OldDW, mi->temp_CCLabel,         gn);
+  t->requires(Task::OldDW, mi->temperature_CCLabel,         gn);
   t->requires(Task::OldDW, cumulativeEnergyReleased_CCLabel, gn);
 
   t->requires(Task::NewDW, lb->specific_heatLabel,   gn);
@@ -654,7 +654,7 @@ void NonAdiabaticTable::computeModelSources(const ProcessorGroup*,
 
       old_dw->get(f_old,    d_scalar->scalar_CCLabel,   matl, patch, gn, 0);
       old_dw->get(rho_CC,   mi->rho_CCLabel,            matl, patch, gn, 0);
-      old_dw->get(oldTemp,  mi->temp_CCLabel,           matl, patch, gn, 0);
+      old_dw->get(oldTemp,  mi->temperature_CCLabel,           matl, patch, gn, 0);
       old_dw->get(eReleased, cumulativeEnergyReleased_CCLabel,
                                                         matl, patch, gn, 0);
       new_dw->get(cv,       lb->specific_heatLabel,     matl, patch, gn, 0);

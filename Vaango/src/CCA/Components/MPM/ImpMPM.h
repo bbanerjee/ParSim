@@ -564,9 +564,9 @@ private:
 private:
   MaterialManagerP d_materialManager{ nullptr };
 
-  std::unique_ptr<MPMLabel> d_mpmLabels{ nullptr };
+  std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
   std::unique_ptr<ImpMPMLabel> d_impmpmLabels{ nullptr };
-  std::unique_ptr<ImpMPMFlags> d_mpmFlags{ nullptr };
+  std::unique_ptr<ImpMPMFlags> d_mpm_flags{ nullptr };
   std::unique_ptr<DeformationGradientComputer> d_defGradComputer{ nullptr };
   std::unique_ptr<ImplicitHeatConductionTasks> d_heatConductionTasks{ nullptr };
   std::unique_ptr<Solver> d_solver{ nullptr };

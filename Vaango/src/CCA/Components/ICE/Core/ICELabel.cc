@@ -38,6 +38,7 @@ using namespace Uintah;
 ICELabel::ICELabel()
 {
   // shortcuts
+  const TypeDescription* CC_int    = CCVariable<int>::getTypeDescription();
   const TypeDescription* CC_double = CCVariable<double>::getTypeDescription();
   const TypeDescription* CC_Vector = CCVariable<Vector>::getTypeDescription();
 
@@ -77,17 +78,18 @@ ICELabel::ICELabel()
   TMV_CCLabel            = VarLabel::create("TMV_CC", CC_double);
   press_CCLabel          = VarLabel::create("press_CC", CC_double);
   press_equil_CCLabel    = VarLabel::create("press_equil_CC", CC_double);
+  eq_press_itersLabel    = VarLabel::create("eq_press_iters", CC_int);
   delP_DilatateLabel     = VarLabel::create("delP_Dilatate", CC_double);
   delP_MassXLabel        = VarLabel::create("delP_MassX", CC_double);
   sum_rho_CCLabel        = VarLabel::create("sum_rho_CC", CC_double);
   compressibilityLabel   = VarLabel::create("compressiblity", CC_double);
   sumKappaLabel          = VarLabel::create("sumKappa", CC_double);
   rho_CCLabel            = VarLabel::create("rho_CC", CC_double);
-  temp_CCLabel           = VarLabel::create("temp_CC", CC_double);
-  vel_CCLabel            = VarLabel::create("vel_CC", CC_Vector);
+  temperature_CCLabel    = VarLabel::create("temp_CC", CC_double);
+  velocity_CCLabel       = VarLabel::create("vel_CC", CC_Vector);
   velTau_CCLabel         = VarLabel::create("velTau_CC", CC_Vector);
   rho_micro_CCLabel      = VarLabel::create("rho_micro_CC", CC_double);
-  sp_vol_CCLabel         = VarLabel::create("sp_vol_CC", CC_double);
+  specificVolume_CCLabel = VarLabel::create("sp_vol_CC", CC_double);
   DLabel                 = VarLabel::create("D", CC_Vector);
   speedSound_CCLabel     = VarLabel::create("speedSound_CC", CC_double);
   vol_frac_CCLabel       = VarLabel::create("vol_frac_CC", CC_double);
@@ -213,9 +215,10 @@ ICELabel::ICELabel()
     "AMR_SyncTaskgraph", CCVariable<int>::getTypeDescription());
 
   // magnitude of the gradient of q_CC
-  mag_grad_rho_CCLabel  = VarLabel::create("mag_grad_rho_CC", CC_double);
-  mag_grad_temp_CCLabel = VarLabel::create("mag_grad_temp_CC", CC_double);
-  mag_div_vel_CCLabel   = VarLabel::create("mag_div_vel_CC", CC_double);
+  mag_grad_rho_CCLabel = VarLabel::create("mag_grad_rho_CC", CC_double);
+  mag_grad_temperature_CCLabel =
+    VarLabel::create("mag_grad_temp_CC", CC_double);
+  mag_div_velocity_CCLabel = VarLabel::create("mag_div_vel_CC", CC_double);
   mag_grad_vol_frac_CCLabel =
     VarLabel::create("mag_grad_vol_frac_CC", CC_double);
   mag_grad_press_CCLabel = VarLabel::create("mag_grad_press_CC", CC_double);
@@ -277,19 +280,20 @@ ICELabel::~ICELabel()
   VarLabel::destroy(press_CCLabel);
   VarLabel::destroy(TMV_CCLabel);
   VarLabel::destroy(press_equil_CCLabel);
+  VarLabel::destroy(eq_press_itersLabel);
   VarLabel::destroy(delP_DilatateLabel);
   VarLabel::destroy(delP_MassXLabel);
   VarLabel::destroy(rho_CCLabel);
   VarLabel::destroy(sum_rho_CCLabel);
   VarLabel::destroy(compressibilityLabel);
   VarLabel::destroy(sumKappaLabel);
-  VarLabel::destroy(temp_CCLabel);
+  VarLabel::destroy(temperature_CCLabel);
   VarLabel::destroy(temp_CC_XchangeLabel);
-  VarLabel::destroy(vel_CCLabel);
+  VarLabel::destroy(velocity_CCLabel);
   VarLabel::destroy(velTau_CCLabel);
   VarLabel::destroy(vel_CC_XchangeLabel);
   VarLabel::destroy(rho_micro_CCLabel);
-  VarLabel::destroy(sp_vol_CCLabel);
+  VarLabel::destroy(specificVolume_CCLabel);
   VarLabel::destroy(DLabel);
   VarLabel::destroy(speedSound_CCLabel);
   VarLabel::destroy(vol_frac_CCLabel);
@@ -402,8 +406,8 @@ ICELabel::~ICELabel()
   VarLabel::destroy(AMR_SyncTaskgraphLabel);
   // magnitude of the gradient of ()
   VarLabel::destroy(mag_grad_rho_CCLabel);
-  VarLabel::destroy(mag_grad_temp_CCLabel);
-  VarLabel::destroy(mag_div_vel_CCLabel);
+  VarLabel::destroy(mag_grad_temperature_CCLabel);
+  VarLabel::destroy(mag_div_velocity_CCLabel);
   VarLabel::destroy(mag_grad_vol_frac_CCLabel);
   VarLabel::destroy(mag_grad_press_CCLabel);
 

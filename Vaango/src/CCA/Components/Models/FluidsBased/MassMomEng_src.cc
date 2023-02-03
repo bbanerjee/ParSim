@@ -159,7 +159,7 @@ void MassMomEng_src::scheduleComputeModelSources(SchedulerP& sched,
   t->modifies(mi->modelVol_srcLabel);
   
   t->requires(Task::OldDW, mi->delT_Label,        level.get_rep());
-  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,   Ghost::None,0);
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,   Ghost::None,0);
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, Ghost::None,0);
   
   t->computes(MassMomEng_src::totalMass_srcLabel);
@@ -208,7 +208,7 @@ void MassMomEng_src::computeModelSources(const ProcessorGroup*,
       new_dw->getModifiable(mom_src,  mi->modelMom_srcLabel,  indx, patch);
       new_dw->getModifiable(eng_src,  mi->modelEng_srcLabel,  indx, patch);
       new_dw->getModifiable(vol_src,  mi->modelVol_srcLabel,  indx, patch);
-      new_dw->get(sp_vol_CC,          Ilb->sp_vol_CCLabel,    indx, patch, Ghost::None,0);
+      new_dw->get(sp_vol_CC,          Ilb->specificVolume_CCLabel,    indx, patch, Ghost::None,0);
       new_dw->get(vol_frac,           Ilb->vol_frac_CCLabel,  indx, patch, Ghost::None,0);
     
       //__________________________________

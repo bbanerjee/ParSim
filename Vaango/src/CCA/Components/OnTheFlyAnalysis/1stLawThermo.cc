@@ -280,7 +280,7 @@ void FirstLawThermo::scheduleDoAnalysis(SchedulerP   & sched,
   sched_TimeVars( t0, level, FL_lb->lastCompTimeLabel, false );
 
   t0->requires( Task::NewDW, I_lb->rho_CCLabel,        ice_ss, gn );
-  t0->requires( Task::NewDW, I_lb->temp_CCLabel,       ice_ss, gn );
+  t0->requires( Task::NewDW, I_lb->temperature_CCLabel,       ice_ss, gn );
   t0->requires( Task::NewDW, I_lb->specific_heatLabel, ice_ss, gn );
   t0->requires( Task::NewDW, I_lb->gammaLabel,         ice_ss, gn );
   t0->requires( Task::NewDW, I_lb->uvel_FCMELabel,     ice_ss, gn );
@@ -371,7 +371,7 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
       ICEMaterial* ice_matl = (ICEMaterial*) m_materialManager->getMaterial( "ICE", m);
       int indx = ice_matl->getDWIndex();
       new_dw->get(rho_CC,  I_lb->rho_CCLabel,       indx, patch, m_gn,0);
-      new_dw->get(temp_CC, I_lb->temp_CCLabel,      indx, patch, m_gn,0);
+      new_dw->get(temp_CC, I_lb->temperature_CCLabel,      indx, patch, m_gn,0);
       new_dw->get(cv,      I_lb->specific_heatLabel,indx, patch, m_gn,0);
       new_dw->get(uvel_FC, I_lb->uvel_FCMELabel,    indx, patch, m_gn,0);
       new_dw->get(vvel_FC, I_lb->vvel_FCMELabel,    indx, patch, m_gn,0);

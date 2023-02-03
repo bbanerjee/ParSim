@@ -129,7 +129,7 @@ void vorticity::scheduleDoAnalysis(SchedulerP  & sched,
 
   Ghost::GhostType gac = Ghost::AroundCells;
 
-  t->requires( Task::NewDW, I_lb->vel_CCLabel, d_matl_sub, gac,1);
+  t->requires( Task::NewDW, I_lb->velocity_CCLabel, d_matl_sub, gac,1);
   t->computes( vorticityLabel, d_matl_sub);
 
 #ifdef HAVE_VISIT
@@ -160,7 +160,7 @@ void vorticity::doAnalysis(const ProcessorGroup * pg,
     constCCVariable<Vector> vel_CC;
 
     int indx = d_matl->getDWIndex();
-    new_dw->get(vel_CC,               I_lb->vel_CCLabel, indx,patch,gac, 1);
+    new_dw->get(vel_CC,               I_lb->velocity_CCLabel, indx,patch,gac, 1);
     new_dw->allocateAndPut( vorticity, vorticityLabel,   indx,patch);
 
     vorticity.initialize(Vector(0.0));

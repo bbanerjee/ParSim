@@ -290,7 +290,7 @@ void Mixing3::scheduleComputeModelSources(SchedulerP& sched,
   t->modifies(mi->modelEng_srcLabel);
   t->requires(Task::OldDW, mi->rho_CCLabel,   Ghost::None);
   t->requires(Task::OldDW, mi->press_CCLabel, Ghost::None);
-  t->requires(Task::OldDW, mi->temp_CCLabel,  Ghost::None);
+  t->requires(Task::OldDW, mi->temperature_CCLabel,  Ghost::None);
   t->requires(Task::OldDW, mi->delT_Label,    level.get_rep());
   
   for(vector<Stream*>::iterator iter = streams.begin();
@@ -421,7 +421,7 @@ void Mixing3::computeModelSources(const ProcessorGroup*,
       constCCVariable<double>cv;
       old_dw->get(density,     mi->rho_CCLabel,        matl, patch, Ghost::None, 0);
       old_dw->get(pressure,    mi->press_CCLabel,      matl, patch, Ghost::None, 0);
-      old_dw->get(temperature, mi->temp_CCLabel,       matl, patch, Ghost::None, 0);
+      old_dw->get(temperature, mi->temperature_CCLabel,       matl, patch, Ghost::None, 0);
       new_dw->get(cv,          mi->specific_heatLabel, matl, patch, Ghost::None, 0);
     
       CCVariable<double> energySource;

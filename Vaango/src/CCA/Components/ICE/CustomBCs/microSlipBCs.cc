@@ -138,14 +138,14 @@ void addRequires_MicroSlip(Task         * t,
 
   if(where == "velFC_Exchange"){
     t->requires(Task::OldDW, lb->rho_CCLabel,   ice_matls, gn,0);
-    t->requires(Task::OldDW, lb->vel_CCLabel,   ice_matls, gn,0);
-    t->requires(Task::OldDW, lb->temp_CCLabel,  ice_matls, gn,0);
+    t->requires(Task::OldDW, lb->velocity_CCLabel,   ice_matls, gn,0);
+    t->requires(Task::OldDW, lb->temperature_CCLabel,  ice_matls, gn,0);
     t->requires(Task::NewDW, lb->viscosityLabel,ice_matls, gn,0);
     t->requires(Task::NewDW, lb->press_CCLabel, press_matl,oims,gn, 0);
   }
   if(where == "imp_velFC_Exchange"){
     t->requires(Task::ParentOldDW, lb->rho_CCLabel,   ice_matls, gn,0);
-    t->requires(Task::ParentOldDW, lb->vel_CCLabel,   ice_matls, gn,0);
+    t->requires(Task::ParentOldDW, lb->velocity_CCLabel,   ice_matls, gn,0);
     t->requires(Task::ParentNewDW, lb->viscosityLabel,ice_matls, gn,0);
     t->requires(Task::ParentNewDW, lb->press_CCLabel, press_matl,oims,gn, 0);
   }
@@ -166,7 +166,7 @@ void addRequires_MicroSlip(Task         * t,
     t->requires(Task::NewDW, lb->specific_heatLabel, ice_matls, gn);
     t->requires(Task::NewDW, lb->thermalCondLabel,   ice_matls, gn);
     t->requires(Task::NewDW, lb->viscosityLabel,     ice_matls, gn);
-    // requires(Task::NewDW, lb->vel_CCLabel,        ice_matls, gn);
+    // requires(Task::NewDW, lb->velocity_CCLabel,        ice_matls, gn);
     // requires(Task::NewDW, lb->rho_CCLabel,        ice_matls, gn);
   }
 }
@@ -262,8 +262,8 @@ void  preprocess_MicroSlip_BCs(DataWarehouse    * old_dw,
 #if 0
     setMicroSlipBcs = true;
     old_dw->get(lv->rho_CC,     lb->rho_CCLabel,        indx,patch,gn,0);
-    old_dw->get(lv->vel_CC,     lb->vel_CCLabel,        indx,patch,gn,0);
-    old_dw->get(lv->temp_CC,    lb->temp_CCLabel,       indx,patch,gn,0);
+    old_dw->get(lv->vel_CC,     lb->velocity_CCLabel,        indx,patch,gn,0);
+    old_dw->get(lv->temp_CC,    lb->temperature_CCLabel,       indx,patch,gn,0);
     new_dw->get(lv->viscosity,  lb->viscosityLabel,     indx,patch,gn,0);
     new_dw->get(lv->press_CC,   lb->press_CCLabel,      0,   patch,gn,0);
 #endif
@@ -285,8 +285,8 @@ void  preprocess_MicroSlip_BCs(DataWarehouse    * old_dw,
   if(where == "Advection"){
     setMicroSlipBcs = true;
     new_dw->get(lv->rho_CC,        lb->rho_CCLabel,        indx,patch,gn,0);
-    new_dw->get(lv->vel_CC,        lb->vel_CCLabel,        indx,patch,gn,0);
-    new_dw->get(lv->temp_CC,       lb->temp_CCLabel,       indx,patch,gn,0);
+    new_dw->get(lv->vel_CC,        lb->velocity_CCLabel,        indx,patch,gn,0);
+    new_dw->get(lv->temp_CC,       lb->temperature_CCLabel,       indx,patch,gn,0);
     new_dw->get(lv->gamma,         lb->gammaLabel,         indx,patch,gn,0);
     new_dw->get(lv->specific_heat, lb->specific_heatLabel, indx,patch,gn,0);
     new_dw->get(lv->thermalCond,   lb->thermalCondLabel,   indx,patch,gn,0);

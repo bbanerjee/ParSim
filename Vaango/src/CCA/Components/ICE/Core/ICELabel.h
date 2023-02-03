@@ -45,18 +45,19 @@ public:
   const VarLabel* TMV_CCLabel;
   const VarLabel* press_CCLabel;
   const VarLabel* press_equil_CCLabel;
+  const VarLabel* eq_press_itersLabel;
   const VarLabel* delP_DilatateLabel;
   const VarLabel* delP_MassXLabel;
   const VarLabel* rho_micro_CCLabel;
-  const VarLabel* sp_vol_CCLabel;
+  const VarLabel* specificVolume_CCLabel;
   const VarLabel* DLabel;
   const VarLabel* sum_rho_CCLabel;
   const VarLabel* compressibilityLabel;
   const VarLabel* sumKappaLabel;
   const VarLabel* rho_CCLabel;
-  const VarLabel* temp_CCLabel;
+  const VarLabel* temperature_CCLabel;
   const VarLabel* temp_CC_XchangeLabel;
-  const VarLabel* vel_CCLabel;
+  const VarLabel* velocity_CCLabel;
   const VarLabel* velTau_CCLabel;
   const VarLabel* vel_CC_XchangeLabel;
   const VarLabel* speedSound_CCLabel;
@@ -168,8 +169,8 @@ public:
   // AMR variables
   const VarLabel* AMR_SyncTaskgraphLabel;
   const VarLabel* mag_grad_rho_CCLabel;
-  const VarLabel* mag_grad_temp_CCLabel;
-  const VarLabel* mag_div_vel_CCLabel;
+  const VarLabel* mag_grad_temperature_CCLabel;
+  const VarLabel* mag_div_velocity_CCLabel;
   const VarLabel* mag_grad_vol_frac_CCLabel;
   const VarLabel* mag_grad_press_CCLabel;
 

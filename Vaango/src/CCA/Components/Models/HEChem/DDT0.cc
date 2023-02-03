@@ -321,8 +321,8 @@ void DDT0::scheduleComputeModelSources(SchedulerP& sched,
   // Requires
   //__________________________________
   t->requires(Task::OldDW, mi->delT_Label,        level.get_rep());
-  t->requires(Task::OldDW, Ilb->temp_CCLabel,     ice_matls, oms, gn);
-  t->requires(Task::NewDW, Ilb->temp_CCLabel,     mpm_matls, oms, gn);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,     ice_matls, oms, gn);
+  t->requires(Task::NewDW, Ilb->temperature_CCLabel,     mpm_matls, oms, gn);
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, all_matls, oms, gn);
   if(d_useCrackModel){
     t->requires(Task::OldDW, Mlb->pXLabel,        mpm_matls,  gn);
@@ -337,8 +337,8 @@ void DDT0::scheduleComputeModelSources(SchedulerP& sched,
 
   //__________________________________
   // Reactants
-  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,   react_matl, gn);
-  t->requires(Task::NewDW, MIlb->vel_CCLabel,     react_matl, gn);
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,   react_matl, gn);
+  t->requires(Task::NewDW, MIlb->velocity_CCLabel,     react_matl, gn);
   t->requires(Task::NewDW, Ilb->rho_CCLabel,      react_matl, gn);
   t->requires(Task::NewDW, Mlb->gMassLabel,       react_matl, gac,1);
 
@@ -430,10 +430,10 @@ void DDT0::computeModelSources(const ProcessorGroup*,
    
     //__________________________________
     // Reactant data
-    new_dw->get(rctTemp,       MIlb->temp_CCLabel,    m0,patch,gn, 0);
-    new_dw->get(rctvel_CC,     MIlb->vel_CCLabel,     m0,patch,gn, 0);
+    new_dw->get(rctTemp,       MIlb->temperature_CCLabel,    m0,patch,gn, 0);
+    new_dw->get(rctvel_CC,     MIlb->velocity_CCLabel,     m0,patch,gn, 0);
     new_dw->get(rctRho,        Ilb->rho_CCLabel,      m0,patch,gn, 0);
-    new_dw->get(rctSpvol,      Ilb->sp_vol_CCLabel,   m0,patch,gn, 0);
+    new_dw->get(rctSpvol,      Ilb->specificVolume_CCLabel,   m0,patch,gn, 0);
     new_dw->get(rctMass_NC,    Mlb->gMassLabel,       m0,patch,gac,1);
     new_dw->get(rctVolFrac,    Ilb->vol_frac_CCLabel, m0,patch,gn, 0);
     if(d_useCrackModel){
@@ -455,9 +455,9 @@ void DDT0::computeModelSources(const ProcessorGroup*,
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       int indx = matl->getDWIndex();
       if(ice_matl){
-        old_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gn,0);
+        old_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gn,0);
       }else {
-        new_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gn,0);
+        new_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gn,0);
       }
       new_dw->get(vol_frac_CC[m], Ilb->vol_frac_CCLabel, indx, patch,gn,0);
     }

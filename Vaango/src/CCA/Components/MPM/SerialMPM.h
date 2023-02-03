@@ -142,13 +142,13 @@ public:
   void
   setMPMLabel(MPMLabel* Mlb)
   {
-    d_mpmLabels.reset(Mlb);
+    d_mpm_labels.reset(Mlb);
   };
 
   void
   setWithICE()
   {
-    d_mpmFlags->d_withICE = true;
+    d_mpm_flags->d_withICE = true;
   };
 
 public:
@@ -694,9 +694,9 @@ protected:
   IntegratorType d_integrator;
   MaterialSubset* d_loadCurveIndex{ nullptr };
 
-  std::unique_ptr<MPMLabel> d_mpmLabels{ nullptr };
+  std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
   std::unique_ptr<CZLabel> d_czLabels{ nullptr };
-  std::unique_ptr<MPMFlags> d_mpmFlags{ nullptr };
+  std::unique_ptr<MPMFlags> d_mpm_flags{ nullptr };
 
   std::unique_ptr<DeformationGradientComputer> d_defGradComputer{ nullptr };
   std::unique_ptr<CohesiveZoneTasks> d_cohesiveZoneTasks{ nullptr };

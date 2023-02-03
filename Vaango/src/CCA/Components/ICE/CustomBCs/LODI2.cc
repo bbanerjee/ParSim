@@ -235,7 +235,7 @@ addRequires_Lodi(Task* t,
 
   if (where == "EqPress") {
     setLODI_bcs = true;
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     // requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
     // requires(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
     // requires(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
@@ -247,7 +247,7 @@ addRequires_Lodi(Task* t,
   } else if (where == "update_press_CC") {
     setLODI_bcs = true;
     // t->requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     t->requires(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
     t->requires(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
     /*`==========TESTING==========*/
@@ -255,7 +255,7 @@ addRequires_Lodi(Task* t,
     /*===========TESTING==========`*/
   } else if (where == "implicitPressureSolve") {
     setLODI_bcs = true;
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     t->requires(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
     t->requires(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
     /*`==========TESTING==========*/
@@ -266,7 +266,7 @@ addRequires_Lodi(Task* t,
   else if (where == "imp_update_press_CC") {
     setLODI_bcs = true;
     whichDW     = Task::ParentNewDW;
-    t->requires(Task::ParentOldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::ParentOldDW, lb->velocity_CCLabel, ice_matls, gn);
     t->requires(Task::ParentNewDW, lb->speedSound_CCLabel, ice_matls, gn);
     t->requires(Task::ParentNewDW, lb->rho_CCLabel, ice_matls, gn);
     // t->requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
@@ -282,8 +282,8 @@ addRequires_Lodi(Task* t,
 
     /*`==========TESTING==========*/
     t->requires(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->temp_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     /*===========TESTING==========`*/
 
     t->computes(lb->vel_CC_XchangeLabel);
@@ -292,16 +292,16 @@ addRequires_Lodi(Task* t,
     setLODI_bcs = true;
     t->requires(Task::NewDW, lb->press_CCLabel, press_matl, oims, gn, 0);
     t->requires(Task::NewDW, lb->gammaLabel, ice_matls, gn);
-    // requires(Task::NewDW, lb->vel_CCLabel,       ice_matls, gn);
+    // requires(Task::NewDW, lb->velocity_CCLabel,       ice_matls, gn);
     // requires(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
     // requires(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
     /*`==========TESTING==========*/
     t->requires(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->temp_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     /*===========TESTING==========`*/
 
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
   } else {
     throw InternalError(
       "ERROR:ICE: addRequires_Lodi: no preprocessing for this task (" + where +
@@ -366,7 +366,7 @@ preprocess_Lodi_BCs(DataWarehouse* old_dw,
   //    Equilibration pressure  ICE & MPMICE
   if (where == "EqPress") {
     setLodiBcs = true;
-    old_dw->get(lv->vel_CC, lb->vel_CCLabel, indx, patch, gn, 0);
+    old_dw->get(lv->vel_CC, lb->velocity_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->press_CC, lb->press_equil_CCLabel, 0, patch, gn, 0);
     new_dw->get(lv->rho_CC, lb->rho_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->speedSound, lb->speedSound_CCLabel, indx, patch, gn, 0);
@@ -384,7 +384,7 @@ preprocess_Lodi_BCs(DataWarehouse* old_dw,
   //    update pressure (explicit and implicit)
   else if (where == "update_press_CC") {
     setLodiBcs = true;
-    old_dw->get(lv->vel_CC, lb->vel_CCLabel, indx, patch, gn, 0);
+    old_dw->get(lv->vel_CC, lb->velocity_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->press_CC, lb->press_CCLabel, 0, patch, gn, 0);
     new_dw->get(lv->rho_CC, lb->rho_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->speedSound, lb->speedSound_CCLabel, indx, patch, gn, 0);
@@ -396,7 +396,7 @@ preprocess_Lodi_BCs(DataWarehouse* old_dw,
   } else if (where == "imp_update_press_CC") {
     setLodiBcs                = true;
     DataWarehouse* sub_new_dw = new_dw->getOtherDataWarehouse(Task::NewDW);
-    old_dw->get(lv->vel_CC, lb->vel_CCLabel, indx, patch, gn, 0);
+    old_dw->get(lv->vel_CC, lb->velocity_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->rho_CC, lb->rho_CCLabel, indx, patch, gn, 0);
     new_dw->get(lv->speedSound, lb->speedSound_CCLabel, indx, patch, gn, 0);
     sub_new_dw->get(lv->press_CC, lb->press_CCLabel, 0, patch, gn, 0);
@@ -418,8 +418,8 @@ preprocess_Lodi_BCs(DataWarehouse* old_dw,
       new_dw->get(lv->speedSound, lb->speedSound_CCLabel, indx, patch, gn, 0);
 
       /*`==========TESTING==========*/
-      old_dw->get(lv->vel_old, lb->vel_CCLabel, indx, patch, gn, 0);
-      old_dw->get(lv->temp_old, lb->temp_CCLabel, indx, patch, gn, 0);
+      old_dw->get(lv->vel_old, lb->velocity_CCLabel, indx, patch, gn, 0);
+      old_dw->get(lv->temp_old, lb->temperature_CCLabel, indx, patch, gn, 0);
       /*===========TESTING==========`*/
     }
   }
@@ -431,14 +431,14 @@ preprocess_Lodi_BCs(DataWarehouse* old_dw,
       setLodiBcs = true;
       // gv->Li_scale = 1.0;
       new_dw->get(lv->rho_CC, lb->rho_CCLabel, indx, patch, gn, 0);
-      new_dw->get(lv->vel_CC, lb->vel_CCLabel, indx, patch, gn, 0);
+      new_dw->get(lv->vel_CC, lb->velocity_CCLabel, indx, patch, gn, 0);
       new_dw->get(lv->speedSound, lb->speedSound_CCLabel, indx, patch, gn, 0);
       new_dw->get(lv->gamma, lb->gammaLabel, indx, patch, gn, 0);
       new_dw->get(lv->press_CC, lb->press_CCLabel, 0, patch, gn, 0);
       /*`==========TESTING==========*/
       old_dw->get(lv->rho_old, lb->rho_CCLabel, indx, patch, gn, 0);
-      old_dw->get(lv->vel_old, lb->vel_CCLabel, indx, patch, gn, 0);
-      old_dw->get(lv->temp_old, lb->temp_CCLabel, indx, patch, gn, 0);
+      old_dw->get(lv->vel_old, lb->velocity_CCLabel, indx, patch, gn, 0);
+      old_dw->get(lv->temp_old, lb->temperature_CCLabel, indx, patch, gn, 0);
       /*===========TESTING==========`*/
     }
   } else {

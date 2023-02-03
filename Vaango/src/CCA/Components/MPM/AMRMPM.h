@@ -560,7 +560,7 @@ private:
                           const double* oodx,
                           constNCVariable<Vector>& gVelocity)
   {
-    for (int k = 0; k < d_mpmFlags->d_8or27; k++) {
+    for (int k = 0; k < d_mpm_flags->d_8or27; k++) {
       const Vector& gvel = gVelocity[ni[k]];
       for (int j = 0; j < 3; j++) {
         double d_SXoodx = d_S[k][j] * oodx[j];

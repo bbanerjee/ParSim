@@ -250,13 +250,13 @@ void Simple_Burn::scheduleComputeModelSources(SchedulerP& sched,
   const MaterialSet* all_matls = d_mat_manager->allMaterials();
   const MaterialSubset* all_matls_sub = all_matls->getUnion();  
   Task::MaterialDomainSpec oms = Task::OutOfDomain;  //outside of mymatl set.
-  t->requires(Task::OldDW, Ilb->temp_CCLabel,      all_matls_sub, oms, gac,1);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,      all_matls_sub, oms, gac,1);
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  all_matls_sub, oms, gac,1);
 
   t->requires( Task::OldDW, mi->delT_Label,       level.get_rep());
   //__________________________________
   // Products
-  t->requires(Task::OldDW,  Ilb->temp_CCLabel,    prod_matl, gn);       
+  t->requires(Task::OldDW,  Ilb->temperature_CCLabel,    prod_matl, gn);       
   t->requires(Task::NewDW,  Ilb->vol_frac_CCLabel,prod_matl, gn);       
   t->requires(Task::NewDW,  Ilb->TempX_FCLabel,   prod_matl, gac,2);    
   t->requires(Task::NewDW,  Ilb->TempY_FCLabel,   prod_matl, gac,2);    
@@ -267,9 +267,9 @@ void Simple_Burn::scheduleComputeModelSources(SchedulerP& sched,
   
   //__________________________________
   // Reactants
-  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,   react_matl, gn);
-  t->requires(Task::NewDW, MIlb->vel_CCLabel,     react_matl, gn);
-  t->requires(Task::NewDW, MIlb->temp_CCLabel,    react_matl, gn);
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,   react_matl, gn);
+  t->requires(Task::NewDW, MIlb->velocity_CCLabel,     react_matl, gn);
+  t->requires(Task::NewDW, MIlb->temperature_CCLabel,    react_matl, gn);
   t->requires(Task::NewDW, MIlb->cMassLabel,      react_matl, gn);
   t->requires(Task::NewDW, Mlb->gMassLabel,       react_matl, gac,1);  
 
@@ -348,10 +348,10 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
    
     //__________________________________
     // Reactant data
-    new_dw->get(solidTemp,       MIlb->temp_CCLabel, m0,patch,gn, 0);
+    new_dw->get(solidTemp,       MIlb->temperature_CCLabel, m0,patch,gn, 0);
     new_dw->get(solidMass,       MIlb->cMassLabel,   m0,patch,gn, 0);
-    new_dw->get(solidSp_vol,     Ilb->sp_vol_CCLabel,m0,patch,gn,0);
-    new_dw->get(vel_CC,          MIlb->vel_CCLabel,  m0,patch,gn, 0);
+    new_dw->get(solidSp_vol,     Ilb->specificVolume_CCLabel,m0,patch,gn,0);
+    new_dw->get(vel_CC,          MIlb->velocity_CCLabel,  m0,patch,gn, 0);
     new_dw->get(NCsolidMass,     Mlb->gMassLabel,    m0,patch,gac,1);
 
     //__________________________________
@@ -359,7 +359,7 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
     new_dw->get(gasTempX_FC,      Ilb->TempX_FCLabel,m1,patch,gac,2);
     new_dw->get(gasTempY_FC,      Ilb->TempY_FCLabel,m1,patch,gac,2);
     new_dw->get(gasTempZ_FC,      Ilb->TempZ_FCLabel,m1,patch,gac,2);
-    old_dw->get(gasTemp,          Ilb->temp_CCLabel, m1,patch,gn, 0);
+    old_dw->get(gasTemp,          Ilb->temperature_CCLabel, m1,patch,gn, 0);
     new_dw->get(gasVol_frac,      Ilb->vol_frac_CCLabel,  m1, patch,gn, 0);
     //__________________________________
     //   Misc.
@@ -382,7 +382,7 @@ void Simple_Burn::computeModelSources(const ProcessorGroup*,
     for (int m = 0; m < numAllMatls; m++) {
       Material* matl = d_mat_manager->getMaterial(m);
       int indx = matl->getDWIndex();
-      old_dw->get(temp_CC[m],       MIlb->temp_CCLabel,    indx, patch, gac, 1);
+      old_dw->get(temp_CC[m],       MIlb->temperature_CCLabel,    indx, patch, gac, 1);
       new_dw->get(vol_frac_CC[m],   Ilb->vol_frac_CCLabel, indx, patch, gac, 1);
     }
 

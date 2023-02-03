@@ -208,7 +208,7 @@ void BinaryProperties::scheduleInitialize(SchedulerP   & sched,
 
   t->requires(Task::NewDW, Ilb->timeStepLabel );
 
-  t->modifies( Ilb->sp_vol_CCLabel);
+  t->modifies( Ilb->specificVolume_CCLabel);
   t->modifies( Ilb->rho_micro_CCLabel);
   t->modifies( Ilb->rho_CCLabel);
   t->modifies( Ilb->specific_heatLabel);
@@ -254,7 +254,7 @@ void BinaryProperties::initialize(const ProcessorGroup *,
 
     new_dw->allocateAndPut(f, d_scalar->scalar_CCLabel, indx, patch);
     new_dw->getModifiable( rho_CC,      Ilb->rho_CCLabel,       indx,patch );
-    new_dw->getModifiable( sp_vol,      Ilb->sp_vol_CCLabel,    indx,patch );
+    new_dw->getModifiable( sp_vol,      Ilb->specificVolume_CCLabel,    indx,patch );
     new_dw->getModifiable( rho_micro,   Ilb->rho_micro_CCLabel, indx,patch );
     new_dw->getModifiable( gamma,       Ilb->gammaLabel,        indx,patch );
     new_dw->getModifiable( cv,          Ilb->specific_heatLabel,indx,patch );

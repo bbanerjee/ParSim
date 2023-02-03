@@ -414,7 +414,7 @@ MPMLabel::MPMLabel()
   massBurnFractionLabel = VarLabel::create(
     "massBurnFraction", NCVariable<double>::getTypeDescription());
 
-  gSp_volLabel =
+  gSpecificVolumeLabel =
     VarLabel::create("g.sp_vol", NCVariable<double>::getTypeDescription());
 
   gSp_vol_srcLabel =
@@ -868,7 +868,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(gStressLabel);
   VarLabel::destroy(gSurfNormLabel);
   VarLabel::destroy(gTemperatureLabel);
-  VarLabel::destroy(gSp_volLabel);
+  VarLabel::destroy(gSpecificVolumeLabel);
   VarLabel::destroy(gSp_vol_srcLabel);
   VarLabel::destroy(gTemperatureNoBCLabel);
   VarLabel::destroy(gTemperatureStarLabel);

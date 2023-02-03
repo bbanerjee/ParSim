@@ -291,12 +291,12 @@ void Unsteady_Burn::scheduleComputeModelSources(SchedulerP& sched,
     const MaterialSubset* mpm_matls = d_mat_manager->allMPMMaterials()->getUnion();
   */
   t->requires(Task::OldDW, mi->delT_Label,        level.get_rep());
-  t->requires(Task::OldDW, Ilb->temp_CCLabel,     gac,1);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,     gac,1);
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, gac,1);
   /*     Products     */
   /*     Reactants    */
-  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,    react_matl, gn);
-  t->requires(Task::NewDW, MIlb->vel_CCLabel,      react_matl, gn);
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
+  t->requires(Task::NewDW, MIlb->velocity_CCLabel,      react_matl, gn);
   t->requires(Task::NewDW, MIlb->cMassLabel,       react_matl, gn);
   t->requires(Task::NewDW, MIlb->gMassLabel,       react_matl, gac,1);
   t->requires(Task::OldDW, Mlb->pXLabel,           react_matl, gp,ngc_p);
@@ -405,10 +405,10 @@ void Unsteady_Burn::computeModelSources(const ProcessorGroup*,
     old_dw->get(OldTs,                   TsLabel, m0, patch, gac, 1);
     old_dw->get(OldBeta,               BetaLabel, m0, patch, gac, 1);
 
-    old_dw->get(solidTemp,       MIlb->temp_CCLabel,    m0, patch, gac, 1);
+    old_dw->get(solidTemp,       MIlb->temperature_CCLabel,    m0, patch, gac, 1);
     new_dw->get(solidMass,       MIlb->cMassLabel,      m0, patch, gn,  0);
-    new_dw->get(solidSp_vol,     Ilb->sp_vol_CCLabel,   m0, patch, gn,  0);   
-    new_dw->get(vel_CC,          MIlb->vel_CCLabel,     m0, patch, gn,  0);
+    new_dw->get(solidSp_vol,     Ilb->specificVolume_CCLabel,   m0, patch, gn,  0);   
+    new_dw->get(vel_CC,          MIlb->velocity_CCLabel,     m0, patch, gn,  0);
     new_dw->get(NCsolidMass,     MIlb->gMassLabel,      m0, patch, gac, 1);
  
     /* for burning surface definition (BoundaryParticles) */
@@ -447,7 +447,7 @@ void Unsteady_Burn::computeModelSources(const ProcessorGroup*,
     for(int m = 0; m < numAllMatls; m++){
       Material* matl = d_mat_manager->getMaterial(m);
       int indx = matl->getDWIndex();
-      old_dw->get(temp_CC[m],     MIlb->temp_CCLabel,    indx, patch, gac, 1);
+      old_dw->get(temp_CC[m],     MIlb->temperature_CCLabel,    indx, patch, gac, 1);
       new_dw->get(vol_frac_CC[m], Ilb->vol_frac_CCLabel, indx, patch, gac, 1);
     }
 

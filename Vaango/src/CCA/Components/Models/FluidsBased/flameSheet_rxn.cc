@@ -295,7 +295,7 @@ void flameSheet_rxn::scheduleComputeModelSources(SchedulerP& sched,
   Ghost::GhostType  gac = Ghost::AroundCells; 
   t->modifies(mi->modelEng_srcLabel);
   t->requires(Task::OldDW, mi->rho_CCLabel,         gn);
-  t->requires(Task::OldDW, mi->temp_CCLabel,        gn);
+  t->requires(Task::OldDW, mi->temperature_CCLabel,        gn);
   t->requires(Task::NewDW, mi->specific_heatLabel,  gn);
   t->requires(Task::NewDW, mi->gammaLabel,          gn);
   t->requires(Task::OldDW, d_scalar->scalar_CCLabel, gac,1);
@@ -335,7 +335,7 @@ void flameSheet_rxn::computeModelSources(const ProcessorGroup*,
     CCVariable<double> f_src;
     
     old_dw->get(rho_CC,      mi->rho_CCLabel,         indx, patch, gn, 0);
-    old_dw->get(Temp_CC,     mi->temp_CCLabel,        indx, patch, gn, 0);
+    old_dw->get(Temp_CC,     mi->temperature_CCLabel,        indx, patch, gn, 0);
     new_dw->get(cv,          mi->specific_heatLabel,  indx, patch, gn, 0);
     new_dw->get(gamma,       mi->gammaLabel,          indx, patch, gn, 0);
     new_dw->getModifiable(energySource,   

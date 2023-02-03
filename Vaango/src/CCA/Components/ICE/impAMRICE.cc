@@ -261,7 +261,7 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
     // common Variables
     t->requires(Task::OldDW, d_ice_labels->delTLabel, level.get_rep());
     t->requires(Task::NewDW, d_ice_labels->vol_frac_CCLabel, patches, gac, 2);
-    t->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, patches, gac, 1);
+    t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, patches, gac, 1);
     t->requires(
       Task::NewDW, d_ice_labels->rhsLabel, patches, tl, one_matl, oims, gn, 0);
     t->requires(Task::NewDW, d_ice_labels->uvel_FCLabel, patches, gn, 0);
@@ -309,10 +309,10 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
     //__________________________________
     // ImplicitVel_FC
     t->requires(
-      Task::OldDW, d_ice_labels->vel_CCLabel, patches, ice_matls, gac, 1);
+      Task::OldDW, d_ice_labels->velocity_CCLabel, patches, ice_matls, gac, 1);
     if (mpm_matls) {
       t->requires(
-        Task::NewDW, d_ice_labels->vel_CCLabel, patches, mpm_matls, gac, 1);
+        Task::NewDW, d_ice_labels->velocity_CCLabel, patches, mpm_matls, gac, 1);
     }
 
     //__________________________________

@@ -29,9 +29,9 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 
-using namespace std;
-
 namespace Uintah {
+
+namespace CustomBCDriver {
 //__________________________________
 // Function~  add the computes and requires for each of the custom BC
 //______________________________________________________________________
@@ -182,5 +182,7 @@ delete_CustomBCs(customBC_globalVars* gv, customBC_localVars* lv)
 
   delete lv;
 }
+
+} // namespace CustomBCDriver
 
 } // namespace Uintah

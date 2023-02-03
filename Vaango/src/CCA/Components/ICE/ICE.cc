@@ -122,7 +122,7 @@ ICE::ICE(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
   d_conservationTest->onOff = false;
 
   d_customInitialize_basket = std::make_unique<customInitialize_basket>();
-  d_BC_globalVars           = std::make_unique<customBC_globalVars>();
+  d_BC_globalVars = std::make_unique<CustomBCDriver::customBC_globalVars>();
   d_BC_globalVars->lodi     = std::make_unique<Lodi_globalVars>();
   d_BC_globalVars->slip     = std::make_unique<slip_globalVars>();
   d_BC_globalVars->mms      = std::make_unique<mms_globalVars>();
@@ -555,10 +555,10 @@ ICE::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   Task::MaterialDomainSpec oims = Task::OutOfDomain; // outside of ice matlSet.
 
-  t->computes(d_ice_labels->vel_CCLabel);
+  t->computes(d_ice_labels->velocity_CCLabel);
   t->computes(d_ice_labels->rho_CCLabel);
-  t->computes(d_ice_labels->temp_CCLabel);
-  t->computes(d_ice_labels->sp_vol_CCLabel);
+  t->computes(d_ice_labels->temperature_CCLabel);
+  t->computes(d_ice_labels->specificVolume_CCLabel);
   t->computes(d_ice_labels->vol_frac_CCLabel);
   t->computes(d_ice_labels->rho_micro_CCLabel);
   t->computes(d_ice_labels->speedSound_CCLabel);
@@ -612,7 +612,7 @@ ICE::scheduleInitialize(const LevelP& level, SchedulerP& sched)
       Task::NewDW, d_ice_labels->specific_heatLabel, ice_matls_sub, d_gn);
 
     t2->modifies(d_ice_labels->rho_micro_CCLabel);
-    t2->modifies(d_ice_labels->temp_CCLabel);
+    t2->modifies(d_ice_labels->temperature_CCLabel);
     t2->modifies(d_ice_labels->press_CCLabel, d_press_matl, oims);
 
     sched->addTask(t2, level->eachPatch(), ice_matls);
@@ -686,12 +686,13 @@ ICE::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
   const MaterialSet* ice_matls = d_materialManager->allMaterials("ICE");
   Task::SearchTG OldTG         = Task::SearchTG::OldTG;
 
-  t->requires(Task::NewDW, d_ice_labels->vel_CCLabel, d_gac, 1, OldTG);
+  t->requires(Task::NewDW, d_ice_labels->velocity_CCLabel, d_gac, 1, OldTG);
   t->requires(Task::NewDW, d_ice_labels->speedSound_CCLabel, d_gac, 1, OldTG);
   t->requires(Task::NewDW, d_ice_labels->thermalCondLabel, d_gn, 0, OldTG);
   t->requires(Task::NewDW, d_ice_labels->gammaLabel, d_gn, 0, OldTG);
   t->requires(Task::NewDW, d_ice_labels->specific_heatLabel, d_gn, 0, OldTG);
-  t->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, d_gn, 0, OldTG);
+  t->requires(
+    Task::NewDW, d_ice_labels->specificVolume_CCLabel, d_gn, 0, OldTG);
   t->requires(Task::NewDW, d_ice_labels->viscosityLabel, d_gn, 0, OldTG);
 
   t->computes(d_ice_labels->delTLabel, level.get_rep());
@@ -910,8 +911,11 @@ ICE::scheduleComputeThermoTransportProperties(SchedulerP& sched,
                         this,
                         &ICE::computeThermoTransportProperties);
 
-  t->requires(
-    Task::OldDW, d_ice_labels->temp_CCLabel, ice_matls->getUnion(), d_gn, 0);
+  t->requires(Task::OldDW,
+              d_ice_labels->temperature_CCLabel,
+              ice_matls->getUnion(),
+              d_gn,
+              0);
 
   t->computes(d_ice_labels->viscosityLabel);
   t->computes(d_ice_labels->thermalCondLabel);
@@ -961,15 +965,15 @@ ICE::scheduleComputePressure(SchedulerP& sched,
   t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
   t->requires(Task::OldDW, d_ice_labels->press_CCLabel, press_matl, oims, d_gn);
   t->requires(Task::OldDW, d_ice_labels->rho_CCLabel, d_gn);
-  t->requires(Task::OldDW, d_ice_labels->temp_CCLabel, d_gn);
-  t->requires(Task::OldDW, d_ice_labels->sp_vol_CCLabel, d_gn);
+  t->requires(Task::OldDW, d_ice_labels->temperature_CCLabel, d_gn);
+  t->requires(Task::OldDW, d_ice_labels->specificVolume_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->gammaLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->specific_heatLabel, d_gn);
 
   t->computes(d_ice_labels->f_theta_CCLabel);
   t->computes(d_ice_labels->speedSound_CCLabel);
   t->computes(d_ice_labels->vol_frac_CCLabel);
-  t->computes(d_ice_labels->sp_vol_CCLabel);
+  t->computes(d_ice_labels->specificVolume_CCLabel);
   t->computes(d_ice_labels->rho_CCLabel);
   t->computes(d_ice_labels->compressibilityLabel);
   t->computes(d_ice_labels->sumKappaLabel, press_matl, oims);
@@ -1002,10 +1006,12 @@ ICE::scheduleComputeTempFC(SchedulerP& sched,
     Task* t = scinew Task("ICE::computeTempFC", this, &ICE::computeTempFC);
 
     t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, /*all_matls*/ d_gac, 1);
-    t->requires(Task::OldDW, d_ice_labels->temp_CCLabel, ice_matls, d_gac, 1);
+    t->requires(
+      Task::OldDW, d_ice_labels->temperature_CCLabel, ice_matls, d_gac, 1);
 
     if (mpm_matls) {
-      t->requires(Task::NewDW, d_ice_labels->temp_CCLabel, mpm_matls, d_gac, 1);
+      t->requires(
+        Task::NewDW, d_ice_labels->temperature_CCLabel, mpm_matls, d_gac, 1);
     }
 
     t->computes(d_ice_labels->TempX_FCLabel);
@@ -1036,12 +1042,13 @@ ICE::scheduleComputeVel_FC(SchedulerP& sched,
   t->requires(
     Task::NewDW, d_ice_labels->press_equil_CCLabel, press_matl, oims, d_gac, 1);
   t->requires(
-    Task::NewDW, d_ice_labels->sp_vol_CCLabel, /*all_matls*/ d_gac, 1);
+    Task::NewDW, d_ice_labels->specificVolume_CCLabel, /*all_matls*/ d_gac, 1);
   t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, /*all_matls*/ d_gac, 1);
-  t->requires(Task::OldDW, d_ice_labels->vel_CCLabel, ice_matls, d_gac, 1);
+  t->requires(Task::OldDW, d_ice_labels->velocity_CCLabel, ice_matls, d_gac, 1);
 
   if (mpm_matls) {
-    t->requires(Task::NewDW, d_ice_labels->vel_CCLabel, mpm_matls, d_gac, 1);
+    t->requires(
+      Task::NewDW, d_ice_labels->velocity_CCLabel, mpm_matls, d_gac, 1);
   }
 
   t->computes(d_ice_labels->uvel_FCLabel);
@@ -1131,7 +1138,7 @@ ICE::scheduleUpdateVolumeFraction(SchedulerP& sched,
     Task* task = scinew Task(
       "ICE::updateVolumeFraction", this, &ICE::updateVolumeFraction);
 
-    task->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, d_gn);
+    task->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, d_gn);
     task->requires(Task::NewDW, d_ice_labels->rho_CCLabel, d_gn);
     task->requires(Task::NewDW, d_ice_labels->modelVol_srcLabel, d_gn);
     task->requires(Task::NewDW, d_ice_labels->compressibilityLabel, d_gn);
@@ -1170,7 +1177,7 @@ ICE::scheduleComputeDelPressAndUpdatePressCC(
   task->requires(Task::NewDW, d_ice_labels->uvel_FCMELabel, d_gac, 2);
   task->requires(Task::NewDW, d_ice_labels->vvel_FCMELabel, d_gac, 2);
   task->requires(Task::NewDW, d_ice_labels->wvel_FCMELabel, d_gac, 2);
-  task->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, d_gn);
+  task->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, d_gn);
   task->requires(Task::NewDW, d_ice_labels->rho_CCLabel, d_gn);
   task->requires(Task::NewDW, d_ice_labels->speedSound_CCLabel, d_gn);
   task->requires(
@@ -1247,7 +1254,7 @@ ICE::scheduleVelTau_CC(SchedulerP& sched,
 
   Task* t = scinew Task("ICE::VelTau_CC", this, &ICE::VelTau_CC);
 
-  t->requires(Task::OldDW, d_ice_labels->vel_CCLabel, d_gn, 0);
+  t->requires(Task::OldDW, d_ice_labels->velocity_CCLabel, d_gn, 0);
   t->computes(d_ice_labels->velTau_CCLabel);
 
   sched->addTask(t, patches, ice_matls);
@@ -1367,10 +1374,11 @@ ICE::scheduleAccumulateEnergySourceSinks(SchedulerP& sched,
   t->requires(
     Task::NewDW, d_ice_labels->delP_DilatateLabel, press_matl, oims, d_gn);
   t->requires(Task::NewDW, d_ice_labels->compressibilityLabel, d_gn);
-  t->requires(Task::OldDW, d_ice_labels->temp_CCLabel, ice_matls, d_gac, 1);
+  t->requires(
+    Task::OldDW, d_ice_labels->temperature_CCLabel, ice_matls, d_gac, 1);
   t->requires(Task::NewDW, d_ice_labels->thermalCondLabel, ice_matls, d_gac, 1);
   t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, d_gac, 1);
-  t->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, d_gac, 1);
+  t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, d_gac, 1);
   t->requires(Task::NewDW, d_ice_labels->vol_frac_CCLabel, d_gac, 1);
 
   if (d_with_mpm) {
@@ -1400,8 +1408,8 @@ ICE::scheduleComputeLagrangianValues(SchedulerP& sched,
 
   t->requires(Task::NewDW, d_ice_labels->specific_heatLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, d_gn);
-  t->requires(Task::OldDW, d_ice_labels->vel_CCLabel, d_gn);
-  t->requires(Task::OldDW, d_ice_labels->temp_CCLabel, d_gn);
+  t->requires(Task::OldDW, d_ice_labels->velocity_CCLabel, d_gn);
+  t->requires(Task::OldDW, d_ice_labels->temperature_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->mom_source_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->int_eng_source_CCLabel, d_gn);
 
@@ -1439,9 +1447,9 @@ ICE::scheduleComputeLagrangianSpecificVolume(SchedulerP& sched,
   Task::MaterialDomainSpec oims = Task::OutOfDomain; // outside of ice matlSet.
 
   t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
-  t->requires(Task::OldDW, d_ice_labels->temp_CCLabel, ice_matls, d_gn);
+  t->requires(Task::OldDW, d_ice_labels->temperature_CCLabel, ice_matls, d_gn);
   t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, d_gn);
-  t->requires(Task::NewDW, d_ice_labels->sp_vol_CCLabel, d_gn);
+  t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->Tdot_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->f_theta_CCLabel, d_gn);
   t->requires(Task::NewDW, d_ice_labels->compressibilityLabel, d_gn);
@@ -1449,7 +1457,8 @@ ICE::scheduleComputeLagrangianSpecificVolume(SchedulerP& sched,
   t->requires(Task::NewDW, d_ice_labels->vol_frac_CCLabel, d_gac, 1);
 
   if (mpm_matls) {
-    t->requires(Task::NewDW, d_ice_labels->temp_CCLabel, mpm_matls, d_gn);
+    t->requires(
+      Task::NewDW, d_ice_labels->temperature_CCLabel, mpm_matls, d_gn);
   }
 
   t->requires(
@@ -1538,7 +1547,7 @@ ICE::scheduleMaxMach_on_Lodi_BC_Faces(SchedulerP& sched,
     Task* task = scinew Task(
       "ICE::maxMach_on_Lodi_BC_Faces", this, &ICE::maxMach_on_Lodi_BC_Faces);
 
-    task->requires(Task::OldDW, d_ice_labels->vel_CCLabel, d_gn);
+    task->requires(Task::OldDW, d_ice_labels->velocity_CCLabel, d_gn);
     task->requires(Task::OldDW, d_ice_labels->speedSound_CCLabel, d_gn);
 
     // loop over the Lodi face and add computes for maxMach
@@ -1698,17 +1707,17 @@ ICE::scheduleConservedtoPrimitive_Vars(SchedulerP& sched,
     task, "Advection", d_ice_labels.get(), ice_matlsub, d_BC_globalVars.get());
 
   task->modifies(d_ice_labels->rho_CCLabel, whichTG);
-  task->modifies(d_ice_labels->sp_vol_CCLabel, whichTG);
+  task->modifies(d_ice_labels->specificVolume_CCLabel, whichTG);
 
   if (where == "afterAdvection") {
-    task->computes(d_ice_labels->temp_CCLabel);
-    task->computes(d_ice_labels->vel_CCLabel);
+    task->computes(d_ice_labels->temperature_CCLabel);
+    task->computes(d_ice_labels->velocity_CCLabel);
     task->computes(d_ice_labels->machLabel);
   }
 
   if (where == "finalizeTimestep") {
-    task->modifies(d_ice_labels->temp_CCLabel, whichTG);
-    task->modifies(d_ice_labels->vel_CCLabel, whichTG);
+    task->modifies(d_ice_labels->temperature_CCLabel, whichTG);
+    task->modifies(d_ice_labels->velocity_CCLabel, whichTG);
     task->modifies(d_ice_labels->machLabel, whichTG);
   }
 
@@ -1751,8 +1760,9 @@ ICE::scheduleTestConservation(SchedulerP& sched,
 
     t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
     t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, ice_matls, d_gn);
-    t->requires(Task::NewDW, d_ice_labels->vel_CCLabel, ice_matls, d_gn);
-    t->requires(Task::NewDW, d_ice_labels->temp_CCLabel, ice_matls, d_gn);
+    t->requires(Task::NewDW, d_ice_labels->velocity_CCLabel, ice_matls, d_gn);
+    t->requires(
+      Task::NewDW, d_ice_labels->temperature_CCLabel, ice_matls, d_gn);
     t->requires(Task::NewDW, d_ice_labels->specific_heatLabel, ice_matls, d_gn);
     t->requires(Task::NewDW, d_ice_labels->uvel_FCMELabel, ice_matls, d_gn);
     t->requires(Task::NewDW, d_ice_labels->vvel_FCMELabel, ice_matls, d_gn);
@@ -1863,9 +1873,10 @@ ICE::actuallyComputeStableTimestep(const ProcessorGroup*,
 
       new_dw->get(
         speedSound, d_ice_labels->speedSound_CCLabel, indx, patch, d_gac, 1);
-      new_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gac, 1);
       new_dw->get(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+        vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gac, 1);
+      new_dw->get(
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(
         viscosity, d_ice_labels->viscosityLabel, indx, patch, d_gn, 0);
       new_dw->get(
@@ -2131,17 +2142,17 @@ ICE::actuallyInitialize(const ProcessorGroup*,
       new_dw->allocateAndPut(
         rho_micro[indx], d_ice_labels->rho_micro_CCLabel, indx, patch);
       new_dw->allocateAndPut(
-        sp_vol_CC[indx], d_ice_labels->sp_vol_CCLabel, indx, patch);
+        sp_vol_CC[indx], d_ice_labels->specificVolume_CCLabel, indx, patch);
       new_dw->allocateAndPut(
         rho_CC[indx], d_ice_labels->rho_CCLabel, indx, patch);
       new_dw->allocateAndPut(
-        Temp_CC[indx], d_ice_labels->temp_CCLabel, indx, patch);
+        Temp_CC[indx], d_ice_labels->temperature_CCLabel, indx, patch);
       new_dw->allocateAndPut(
         speedSound[indx], d_ice_labels->speedSound_CCLabel, indx, patch);
       new_dw->allocateAndPut(
         vol_frac_CC[indx], d_ice_labels->vol_frac_CCLabel, indx, patch);
       new_dw->allocateAndPut(
-        vel_CC[indx], d_ice_labels->vel_CCLabel, indx, patch);
+        vel_CC[indx], d_ice_labels->velocity_CCLabel, indx, patch);
     }
 
     double p_ref = getRefPress();
@@ -2366,7 +2377,8 @@ ICE::computeThermoTransportProperties(const ProcessorGroup*,
       int indx = ice_matl->getDWIndex();
 
       constCCVariable<double> temp_CC;
-      old_dw->get(temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+      old_dw->get(
+        temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
 
       CCVariable<double> viscosity, thermalCond, gamma, cv;
       new_dw->allocateAndPut(
@@ -2480,10 +2492,15 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
     for (size_t m = 0; m < numMatls; m++) {
       int indx = d_materialManager->getMaterial("ICE", m)->getDWIndex();
 
-      old_dw->get(Temp[m], d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
-      old_dw->get(rho_CC[m], d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
       old_dw->get(
-        sp_vol_CC[m], d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+        Temp[m], d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
+      old_dw->get(rho_CC[m], d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
+      old_dw->get(sp_vol_CC[m],
+                  d_ice_labels->specificVolume_CCLabel,
+                  indx,
+                  patch,
+                  d_gn,
+                  0);
       new_dw->get(
         cv[m], d_ice_labels->specific_heatLabel, indx, patch, d_gn, 0);
       new_dw->get(gamma[m], d_ice_labels->gammaLabel, indx, patch, d_gn, 0);
@@ -2494,7 +2511,7 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
       new_dw->allocateAndPut(
         rho_CC_new[m], d_ice_labels->rho_CCLabel, indx, patch);
       new_dw->allocateAndPut(
-        sp_vol_new[m], d_ice_labels->sp_vol_CCLabel, indx, patch);
+        sp_vol_new[m], d_ice_labels->specificVolume_CCLabel, indx, patch);
       new_dw->allocateAndPut(
         f_theta[m], d_ice_labels->f_theta_CCLabel, indx, patch);
       new_dw->allocateAndPut(
@@ -2708,8 +2725,8 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
     }
 
     // - update Boundary conditions
-    std::unique_ptr<customBC_localVars> BC_localVars =
-      std::make_unique<customBC_localVars>();
+    std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+      std::make_unique<CustomBCDriver::customBC_localVars>();
 
     preprocess_CustomBCs("EqPress",
                          old_dw,
@@ -2802,9 +2819,10 @@ ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
       static_cast<ICEMaterial*>(d_materialManager->getMaterial("ICE", 0));
     int indx = ice_matl->getDWIndex();
 
-    old_dw->get(Temp, d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+    old_dw->get(Temp, d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
     old_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
-    old_dw->get(sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+    old_dw->get(
+      sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gn, 0);
     new_dw->get(cv, d_ice_labels->specific_heatLabel, indx, patch, d_gn, 0);
     new_dw->get(gamma, d_ice_labels->gammaLabel, indx, patch, d_gn, 0);
 
@@ -2820,7 +2838,7 @@ ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
     new_dw->allocateAndPut(
       vol_frac, d_ice_labels->vol_frac_CCLabel, indx, patch);
     new_dw->allocateAndPut(
-      sp_vol_new, d_ice_labels->sp_vol_CCLabel, indx, patch);
+      sp_vol_new, d_ice_labels->specificVolume_CCLabel, indx, patch);
     new_dw->allocateAndPut(f_theta, d_ice_labels->f_theta_CCLabel, indx, patch);
     new_dw->allocateAndPut(
       speedSound, d_ice_labels->speedSound_CCLabel, indx, patch);
@@ -2854,8 +2872,8 @@ ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
 
     // - apply Boundary conditions
     std::vector<constCCVariable<double>> placeHolder(0);
-    std::unique_ptr<customBC_localVars> BC_localVars =
-      std::make_unique<customBC_localVars>();
+    std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+      std::make_unique<CustomBCDriver::customBC_localVars>();
 
     preprocess_CustomBCs("EqPress",
                          old_dw,
@@ -2941,10 +2959,12 @@ ICE::computeTempFC(const ProcessorGroup*,
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       if (ice_matl) {
         new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gac, 1);
-        old_dw->get(Temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gac, 1);
+        old_dw->get(
+          Temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gac, 1);
       } else {
         new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gac, 1);
-        new_dw->get(Temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gac, 1);
+        new_dw->get(
+          Temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gac, 1);
       }
 
       SFCXVariable<double> TempX_FC;
@@ -3098,13 +3118,15 @@ ICE::computeVel_FC(const ProcessorGroup*,
       constCCVariable<Vector> vel_CC;
       if (ice_matl) {
         new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gac, 1);
-        old_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gac, 1);
+        old_dw->get(
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gac, 1);
       } else {
         new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gac, 1);
-        new_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gac, 1);
+        new_dw->get(
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gac, 1);
       }
       new_dw->get(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gac, 1);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gac, 1);
 
       SFCXVariable<double> uvel_FC, grad_P_XFC;
       SFCYVariable<double> vvel_FC, grad_P_YFC;
@@ -3272,7 +3294,7 @@ ICE::updateVel_FC(const ProcessorGroup*,
 
       constCCVariable<double> sp_vol_CC;
       pNewDW->get(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gac, 1);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gac, 1);
 
       constSFCXVariable<double> uvel_FC_old;
       constSFCYVariable<double> vvel_FC_old;
@@ -3431,8 +3453,12 @@ ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
       new_dw->get(
         vol_frac, d_ice_labels->vol_frac_CCLabel, indx, patch, d_gac, 2);
       new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
-      new_dw->get(
-        sp_vol_CC[m], d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+      new_dw->get(sp_vol_CC[m],
+                  d_ice_labels->specificVolume_CCLabel,
+                  indx,
+                  patch,
+                  d_gn,
+                  0);
       new_dw->get(
         speedSound, d_ice_labels->speedSound_CCLabel, indx, patch, d_gn, 0);
 
@@ -3534,8 +3560,8 @@ ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
 
     //__________________________________
     //  set boundary conditions
-    std::unique_ptr<customBC_localVars> BC_localVars =
-      std::make_unique<customBC_localVars>();
+    std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+      std::make_unique<CustomBCDriver::customBC_localVars>();
     preprocess_CustomBCs("update_press_CC",
                          old_dw,
                          new_dw,
@@ -3737,7 +3763,7 @@ ICE::updateVolumeFraction(const ProcessorGroup*,
         f_theta[m], d_ice_labels->f_theta_CCLabel, indx, patch);
       new_dw->get(rho_CC[m], d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(
-        sp_vol[m], d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+        sp_vol[m], d_ice_labels->specificVolume_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(
         modVolSrc[m], d_ice_labels->modelVol_srcLabel, indx, patch, d_gn, 0);
       new_dw->get(
@@ -3840,7 +3866,7 @@ ICE::VelTau_CC(const ProcessorGroup*,
       constCCVariable<Vector> vel_CC;
       CCVariable<Vector> velTau_CC;
 
-      old_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gn, 0);
+      old_dw->get(vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gn, 0);
       new_dw->allocateAndPut(
         velTau_CC, d_ice_labels->velTau_CCLabel, indx, patch);
 
@@ -4240,7 +4266,7 @@ ICE::accumulateEnergySourceSinks(const ProcessorGroup*,
       int indx = matl->getDWIndex();
 
       new_dw->get(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gac, 1);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gac, 1);
       new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gac, 1);
       new_dw->get(
         kappa, d_ice_labels->compressibilityLabel, indx, patch, d_gn, 0);
@@ -4266,7 +4292,7 @@ ICE::accumulateEnergySourceSinks(const ProcessorGroup*,
           new_dw->get(
             thermalCond, d_ice_labels->thermalCondLabel, indx, patch, d_gac, 1);
           old_dw->get(
-            Temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gac, 1);
+            Temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gac, 1);
 
           bool use_vol_frac = true; // include vol_frac in diffusion calc.
           scalarDiffusionOperator(new_dw,
@@ -4355,8 +4381,10 @@ ICE::computeLagrangianValues(const ProcessorGroup*,
 
         new_dw->get(cv, d_ice_labels->specific_heatLabel, indx, patch, d_gn, 0);
         new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
-        old_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gn, 0);
-        old_dw->get(temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+        old_dw->get(
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gn, 0);
+        old_dw->get(
+          temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
         new_dw->get(
           mom_source, d_ice_labels->mom_source_CCLabel, indx, patch, d_gn, 0);
         new_dw->get(int_eng_source,
@@ -4556,11 +4584,11 @@ ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
 
       if (ice_matl) {
         old_dw->get(
-          Temp_CC[m], d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+          Temp_CC[m], d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
       }
       if (mpm_matl) {
         new_dw->get(
-          Temp_CC[m], d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+          Temp_CC[m], d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
       }
     }
 
@@ -4576,8 +4604,12 @@ ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
 
       if (ice_matl) {
         if_mpm_matl_ignore[m] = 1.0;
-        new_dw->get(
-          sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+        new_dw->get(sp_vol_CC,
+                    d_ice_labels->specificVolume_CCLabel,
+                    indx,
+                    patch,
+                    d_gn,
+                    0);
         new_dw->get(cv, d_ice_labels->specific_heatLabel, indx, patch, d_gn, 0);
 
         for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
@@ -4613,7 +4645,7 @@ ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
       }
 
       new_dw->get(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch, d_gn, 0);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(rho_CC, d_ice_labels->rho_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(f_theta, d_ice_labels->f_theta_CCLabel, indx, patch, d_gn, 0);
       new_dw->get(
@@ -4831,7 +4863,8 @@ ICE::maxMach_on_Lodi_BC_Faces(const ProcessorGroup*,
 
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       if (ice_matl) {
-        old_dw->get(vel_CC[m], d_ice_labels->vel_CCLabel, indx, patch, d_gn, 0);
+        old_dw->get(
+          vel_CC[m], d_ice_labels->velocity_CCLabel, indx, patch, d_gn, 0);
         old_dw->get(speedSound[m],
                     d_ice_labels->speedSound_CCLabel,
                     indx,
@@ -5116,11 +5149,13 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
         int_eng_adv, d_ice_labels->eng_advLabel, indx, patch, d_gn, 0);
 
       new_dw->getModifiable(
-        sp_vol_CC, d_ice_labels->sp_vol_CCLabel, indx, patch);
+        sp_vol_CC, d_ice_labels->specificVolume_CCLabel, indx, patch);
       new_dw->getModifiable(rho_CC, d_ice_labels->rho_CCLabel, indx, patch);
 
-      new_dw->allocateAndPut(temp_CC, d_ice_labels->temp_CCLabel, indx, patch);
-      new_dw->allocateAndPut(vel_CC, d_ice_labels->vel_CCLabel, indx, patch);
+      new_dw->allocateAndPut(
+        temp_CC, d_ice_labels->temperature_CCLabel, indx, patch);
+      new_dw->allocateAndPut(
+        vel_CC, d_ice_labels->velocity_CCLabel, indx, patch);
       new_dw->allocateAndPut(mach, d_ice_labels->machLabel, indx, patch);
 
       rho_CC.initialize(-d_EVIL_NUM);
@@ -5197,8 +5232,8 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
 
       //__________________________________
       // set the boundary conditions
-      std::unique_ptr<customBC_localVars> BC_localVars =
-        std::make_unique<customBC_localVars>();
+      std::unique_ptr<CustomBCDriver::customBC_localVars> BC_localVars =
+        std::make_unique<CustomBCDriver::customBC_localVars>();
       preprocess_CustomBCs("Advection",
                            old_dw,
                            new_dw,
@@ -5389,7 +5424,8 @@ ICE::TestConservation(const ProcessorGroup*,
           static_cast<ICEMaterial*>(d_materialManager->getMaterial("ICE", m));
         int indx = ice_matl->getDWIndex();
 
-        new_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gn, 0);
+        new_dw->get(
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gn, 0);
 
         for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
           IntVector c = *iter;
@@ -5420,7 +5456,8 @@ ICE::TestConservation(const ProcessorGroup*,
           static_cast<ICEMaterial*>(d_materialManager->getMaterial("ICE", m));
         int indx = ice_matl->getDWIndex();
 
-        new_dw->get(temp_CC, d_ice_labels->temp_CCLabel, indx, patch, d_gn, 0);
+        new_dw->get(
+          temp_CC, d_ice_labels->temperature_CCLabel, indx, patch, d_gn, 0);
         new_dw->get(cv, d_ice_labels->specific_heatLabel, indx, patch, d_gn, 0);
 
         for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
@@ -5455,7 +5492,8 @@ ICE::TestConservation(const ProcessorGroup*,
           static_cast<ICEMaterial*>(d_materialManager->getMaterial("ICE", m));
         int indx = ice_matl->getDWIndex();
 
-        new_dw->get(vel_CC, d_ice_labels->vel_CCLabel, indx, patch, d_gn, 0);
+        new_dw->get(
+          vel_CC, d_ice_labels->velocity_CCLabel, indx, patch, d_gn, 0);
 
         for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
           IntVector c    = *iter;

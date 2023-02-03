@@ -185,9 +185,9 @@ void TestModel::scheduleComputeModelSources(SchedulerP& sched,
     t->requires( NDW,mi->specific_heatLabel, matl0->thisMaterial(), gn);
   } 
                                   // All matls
-  t->requires( DW,  mi->vel_CCLabel,    matl0->thisMaterial(), gn);
-  t->requires( DW,  mi->temp_CCLabel,   matl0->thisMaterial(), gn); 
-  t->requires( NDW, mi->sp_vol_CCLabel, matl0->thisMaterial(), gn);
+  t->requires( DW,  mi->velocity_CCLabel,    matl0->thisMaterial(), gn);
+  t->requires( DW,  mi->temperature_CCLabel,   matl0->thisMaterial(), gn); 
+  t->requires( NDW, mi->specificVolume_CCLabel, matl0->thisMaterial(), gn);
   
   t->computes(TestModel::totalMassXLabel);
   t->computes(TestModel::totalIntEngXLabel);
@@ -267,9 +267,9 @@ void TestModel::computeModelSources(const ProcessorGroup*,
     constCCVariable<Vector> vel_0;    // MPM  pull from new_dw
     constCCVariable<double> temp_0;   // ICE  pull from old_dw
     constCCVariable<double> sp_vol_0;
-    dw  ->  get(vel_0,    mi->vel_CCLabel,    m0, patch, gn, 0);    
-    dw  ->  get(temp_0,   mi->temp_CCLabel,   m0, patch, gn, 0);    
-    new_dw->get(sp_vol_0, mi->sp_vol_CCLabel, m0, patch, gn, 0);
+    dw  ->  get(vel_0,    mi->velocity_CCLabel,    m0, patch, gn, 0);    
+    dw  ->  get(temp_0,   mi->temperature_CCLabel,   m0, patch, gn, 0);    
+    new_dw->get(sp_vol_0, mi->specificVolume_CCLabel, m0, patch, gn, 0);
     
     double trate = d_rate*dt;
     if(trate > 1){

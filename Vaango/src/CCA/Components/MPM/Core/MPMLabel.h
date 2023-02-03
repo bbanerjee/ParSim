@@ -160,7 +160,7 @@ public:
   const VarLabel* gContactLabel;
   const VarLabel* gTemperatureRateLabel; // for heat conduction
   const VarLabel* gTemperatureLabel;     // for heat conduction
-  const VarLabel* gSp_volLabel;          // specific volume
+  const VarLabel* gSpecificVolumeLabel;          // specific volume
   const VarLabel* gSp_vol_srcLabel;      // specific volume
   const VarLabel* gTemperatureNoBCLabel; // for heat conduction
   const VarLabel* gTemperatureStarLabel; // for heat conduction

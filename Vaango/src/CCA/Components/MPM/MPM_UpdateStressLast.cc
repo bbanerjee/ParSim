@@ -50,7 +50,7 @@ void
 MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
                                           SchedulerP& sched)
 {
-  if (!d_mpmFlags->doMPMOnLevel(level->getIndex(),
+  if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
                                 level->getGrid()->numLevels())) {
     return;
   }
@@ -70,10 +70,10 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
   scheduleMomentumExchangeIntegrated(sched, patches, matls);
   scheduleSetGridBoundaryConditions(sched, patches, matls);
-  if (d_mpmFlags->d_prescribeDeformation) {
+  if (d_mpm_flags->d_prescribeDeformation) {
     scheduleSetPrescribedMotion(sched, patches, matls);
   }
-  if (d_mpmFlags->d_useXPIC) {
+  if (d_mpm_flags->d_useXPIC) {
     scheduleComputeXPICVelocities(sched, patches, matls);
   }
   d_heatConductionTasks->scheduleCompute(sched, patches, matls);
@@ -84,10 +84,10 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
   scheduleUpdateErosionParameter(sched, patches, matls);
   scheduleFindRogueParticles(sched, patches, matls);
   scheduleInsertParticles(sched, patches, matls);
-  if (d_mpmFlags->d_refineParticles) {
+  if (d_mpm_flags->d_refineParticles) {
     scheduleAddParticles(sched, patches, matls);
   }
-  if (d_mpmFlags->d_computeScaleFactor) {
+  if (d_mpm_flags->d_computeScaleFactor) {
     scheduleComputeParticleScaleFactor(sched, patches, matls);
   }
   scheduleParticleRelocation(sched, level, patches, matls);
@@ -100,7 +100,7 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(
   const MaterialSet* matls)
 
 {
-  if (!d_mpmFlags->doMPMOnLevel(getLevel(patches)->getIndex(),
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
@@ -113,96 +113,96 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(
                         this,
                         &MPM_UpdateStressLast::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_mpmLabels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_mpmLabels->delTLabel);
+  t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
 
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
   t->requires(Task::NewDW,
-              d_mpmLabels->gAccelerationLabel,
+              d_mpm_labels->gAccelerationLabel,
               gac,
               d_numGhostNodes);
   t->requires(Task::NewDW,
-              d_mpmLabels->gVelocityStarLabel,
+              d_mpm_labels->gVelocityStarLabel,
               gac,
               d_numGhostNodes);
-  if (d_mpmFlags->d_useXPIC) {
+  if (d_mpm_flags->d_useXPIC) {
     t->requires(Task::NewDW,
-                d_mpmLabels->gVelocityXPICLabel,
+                d_mpm_labels->gVelocityXPICLabel,
                 gac,
                 d_numGhostNodes);
-    t->requires(Task::OldDW, d_mpmLabels->pVelocityXPICLabel, gnone);
+    t->requires(Task::OldDW, d_mpm_labels->pVelocityXPICLabel, gnone);
   }
   t->requires(Task::NewDW,
-              d_mpmLabels->gTemperatureRateLabel,
+              d_mpm_labels->gTemperatureRateLabel,
               gac,
               d_numGhostNodes);
   t->requires(Task::NewDW,
-              d_mpmLabels->frictionalWorkLabel,
+              d_mpm_labels->frictionalWorkLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::OldDW, d_mpmLabels->pXLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pMassLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pParticleIDLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pTemperatureLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pVelocityLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pDispLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pSizeLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pVolumeLabel, gnone);
-  t->requires(Task::OldDW, d_mpmLabels->pDefGradLabel, gnone);
-  if (d_mpmFlags->d_useLoadCurves) {
-    t->requires(Task::OldDW, d_mpmLabels->pLoadCurveIDLabel, Ghost::None);
+  t->requires(Task::OldDW, d_mpm_labels->pXLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pParticleIDLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pTemperatureLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, gnone);
+  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, gnone);
+  if (d_mpm_flags->d_useLoadCurves) {
+    t->requires(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
   }
-  if (d_mpmFlags->d_withICE) {
-    t->requires(Task::NewDW, d_mpmLabels->dTdt_NCLabel, gac, d_numGhostNodes);
+  if (d_mpm_flags->d_withICE) {
+    t->requires(Task::NewDW, d_mpm_labels->dTdt_NCLabel, gac, d_numGhostNodes);
     t->requires(Task::NewDW,
-                d_mpmLabels->massBurnFractionLabel,
+                d_mpm_labels->massBurnFractionLabel,
                 gac,
                 d_numGhostNodes);
   }
 
-  t->computes(d_mpmLabels->pDispLabel_preReloc);
-  t->computes(d_mpmLabels->pVelocityLabel_preReloc);
-  t->computes(d_mpmLabels->pXLabel_preReloc);
-  t->computes(d_mpmLabels->pParticleIDLabel_preReloc);
-  t->computes(d_mpmLabels->pTemperatureLabel_preReloc);
-  t->computes(d_mpmLabels->pTempPreviousLabel_preReloc); // for thermal stress
-  t->computes(d_mpmLabels->pMassLabel_preReloc);
-  t->computes(d_mpmLabels->pSizeLabel_preReloc);
+  t->computes(d_mpm_labels->pDispLabel_preReloc);
+  t->computes(d_mpm_labels->pVelocityLabel_preReloc);
+  t->computes(d_mpm_labels->pXLabel_preReloc);
+  t->computes(d_mpm_labels->pParticleIDLabel_preReloc);
+  t->computes(d_mpm_labels->pTemperatureLabel_preReloc);
+  t->computes(d_mpm_labels->pTempPreviousLabel_preReloc); // for thermal stress
+  t->computes(d_mpm_labels->pMassLabel_preReloc);
+  t->computes(d_mpm_labels->pSizeLabel_preReloc);
 
   //__________________________________
   //  reduction variables
-  if (d_mpmFlags->d_reductionVars->momentum) {
-    t->computes(d_mpmLabels->TotalMomentumLabel);
+  if (d_mpm_flags->d_reductionVars->momentum) {
+    t->computes(d_mpm_labels->TotalMomentumLabel);
   }
-  if (d_mpmFlags->d_reductionVars->KE) {
-    t->computes(d_mpmLabels->KineticEnergyLabel);
+  if (d_mpm_flags->d_reductionVars->KE) {
+    t->computes(d_mpm_labels->KineticEnergyLabel);
   }
-  if (d_mpmFlags->d_reductionVars->thermalEnergy) {
-    t->computes(d_mpmLabels->ThermalEnergyLabel);
+  if (d_mpm_flags->d_reductionVars->thermalEnergy) {
+    t->computes(d_mpm_labels->ThermalEnergyLabel);
   }
-  if (d_mpmFlags->d_reductionVars->centerOfMass) {
-    t->computes(d_mpmLabels->CenterOfMassPositionLabel);
+  if (d_mpm_flags->d_reductionVars->centerOfMass) {
+    t->computes(d_mpm_labels->CenterOfMassPositionLabel);
   }
-  if (d_mpmFlags->d_reductionVars->mass) {
-    t->computes(d_mpmLabels->TotalMassLabel);
+  if (d_mpm_flags->d_reductionVars->mass) {
+    t->computes(d_mpm_labels->TotalMassLabel);
   }
-  if (d_mpmFlags->d_withColor) {
-    t->requires(Task::OldDW, d_mpmLabels->pColorLabel, Ghost::None);
-    t->computes(d_mpmLabels->pColorLabel_preReloc);
+  if (d_mpm_flags->d_withColor) {
+    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
+    t->computes(d_mpm_labels->pColorLabel_preReloc);
   }
 
   // Carry Forward particle refinement flag
-  if (d_mpmFlags->d_refineParticles) {
-    t->requires(Task::OldDW, d_mpmLabels->pRefinedLabel, Ghost::None);
-    t->computes(d_mpmLabels->pRefinedLabel_preReloc);
+  if (d_mpm_flags->d_refineParticles) {
+    t->requires(Task::OldDW, d_mpm_labels->pRefinedLabel, Ghost::None);
+    t->computes(d_mpm_labels->pRefinedLabel_preReloc);
   }
 
   MaterialSubset* z_matl = scinew MaterialSubset();
   z_matl->add(0);
   z_matl->addReference();
-  t->requires(Task::OldDW, d_mpmLabels->NC_CCweightLabel, z_matl, Ghost::None);
-  t->computes(d_mpmLabels->NC_CCweightLabel, z_matl);
+  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->computes(d_mpm_labels->NC_CCweightLabel, z_matl);
 
   sched->addTask(t, patches, matls);
 
@@ -229,7 +229,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
               cout_doing,
               "Doing interpolateToParticlesAndUpdate");
 
-    auto interpolator        = d_mpmFlags->d_interpolator->clone(patch);
+    auto interpolator        = d_mpm_flags->d_interpolator->clone(patch);
     auto num_influence_nodes = interpolator->size();
     std::vector<IntVector> ni(num_influence_nodes);
     std::vector<double> S(num_influence_nodes);
@@ -243,7 +243,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
     double ke = 0;
 
     delt_vartype delT;
-    old_dw->get(delT, d_mpmLabels->delTLabel, getLevel(patches));
+    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
 
     /*
     Material* reactant;
@@ -257,16 +257,16 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
     */
 
     double move_particles = 1.;
-    if (!d_mpmFlags->d_doGridReset) {
+    if (!d_mpm_flags->d_doGridReset) {
       move_particles = 0.;
     }
 
     // Copy NC_CCweight (only material 0)
     constNCVariable<double> NC_CCweight;
     NCVariable<double> NC_CCweight_new;
-    old_dw->get(NC_CCweight, d_mpmLabels->NC_CCweightLabel, 0, patch, gnone, 0);
+    old_dw->get(NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gnone, 0);
     new_dw->allocateAndPut(NC_CCweight_new,
-                           d_mpmLabels->NC_CCweightLabel,
+                           d_mpm_labels->NC_CCweightLabel,
                            0,
                            patch);
     NC_CCweight_new.copyData(NC_CCweight);
@@ -281,103 +281,103 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
       // Copy particle IDs
       constParticleVariable<long64> pParticleID;
       ParticleVariable<long64> pParticleID_new;
-      old_dw->get(pParticleID, d_mpmLabels->pParticleIDLabel, pset);
+      old_dw->get(pParticleID, d_mpm_labels->pParticleIDLabel, pset);
       new_dw->allocateAndPut(pParticleID_new,
-                             d_mpmLabels->pParticleIDLabel_preReloc,
+                             d_mpm_labels->pParticleIDLabel_preReloc,
                              pset);
       pParticleID_new.copyData(pParticleID);
 
       // Copy color
-      if (d_mpmFlags->d_withColor) {
+      if (d_mpm_flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double> pColor_new;
-        old_dw->get(pColor, d_mpmLabels->pColorLabel, pset);
+        old_dw->get(pColor, d_mpm_labels->pColorLabel, pset);
         new_dw->allocateAndPut(pColor_new,
-                               d_mpmLabels->pColorLabel_preReloc,
+                               d_mpm_labels->pColorLabel_preReloc,
                                pset);
         pColor_new.copyData(pColor);
       }
 
       // Copy refined
-      if (d_mpmFlags->d_refineParticles) {
+      if (d_mpm_flags->d_refineParticles) {
         constParticleVariable<int> pRefined;
         ParticleVariable<int> pRefined_new;
-        old_dw->get(pRefined, d_mpmLabels->pRefinedLabel, pset);
+        old_dw->get(pRefined, d_mpm_labels->pRefinedLabel, pset);
         new_dw->allocateAndPut(pRefined_new,
-                               d_mpmLabels->pRefinedLabel_preReloc,
+                               d_mpm_labels->pRefinedLabel_preReloc,
                                pset);
         pRefined_new.copyData(pRefined);
       }
 
       // Get particle variables
       constParticleVariable<double> pMass, pTemperature, pVolume;
-      old_dw->get(pMass, d_mpmLabels->pMassLabel, pset);
-      old_dw->get(pVolume, d_mpmLabels->pVolumeLabel, pset);
-      old_dw->get(pTemperature, d_mpmLabels->pTemperatureLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pTemperature, d_mpm_labels->pTemperatureLabel, pset);
 
       constParticleVariable<Point> pX;
-      old_dw->get(pX, d_mpmLabels->pXLabel, pset);
+      old_dw->get(pX, d_mpm_labels->pXLabel, pset);
 
       constParticleVariable<Vector> pVelocity, pDisp;
-      old_dw->get(pVelocity, d_mpmLabels->pVelocityLabel, pset);
-      old_dw->get(pDisp, d_mpmLabels->pDispLabel, pset);
+      old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
+      old_dw->get(pDisp, d_mpm_labels->pDispLabel, pset);
 
       constParticleVariable<Vector> pVelocityXPIC;
-      if (d_mpmFlags->d_useXPIC) {
-        new_dw->get(pVelocityXPIC, d_mpmLabels->pVelocityXPICLabel, pset);
+      if (d_mpm_flags->d_useXPIC) {
+        new_dw->get(pVelocityXPIC, d_mpm_labels->pVelocityXPICLabel, pset);
       }
 
       constParticleVariable<Matrix3> pDefGrad, pSize;
-      old_dw->get(pDefGrad, d_mpmLabels->pDefGradLabel, pset);
-      old_dw->get(pSize, d_mpmLabels->pSizeLabel, pset);
+      old_dw->get(pDefGrad, d_mpm_labels->pDefGradLabel, pset);
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
 
       // Allocate updated particle variables
       ParticleVariable<double> pMass_new, pTemp_new, pTempPrev_new;
-      new_dw->allocateAndPut(pMass_new, d_mpmLabels->pMassLabel_preReloc, pset);
+      new_dw->allocateAndPut(pMass_new, d_mpm_labels->pMassLabel_preReloc, pset);
       new_dw->allocateAndPut(pTemp_new,
-                             d_mpmLabels->pTemperatureLabel_preReloc,
+                             d_mpm_labels->pTemperatureLabel_preReloc,
                              pset);
       new_dw->allocateAndPut(pTempPrev_new,
-                             d_mpmLabels->pTempPreviousLabel_preReloc,
+                             d_mpm_labels->pTempPreviousLabel_preReloc,
                              pset);
 
       ParticleVariable<Point> pX_new;
-      new_dw->allocateAndPut(pX_new, d_mpmLabels->pXLabel_preReloc, pset);
+      new_dw->allocateAndPut(pX_new, d_mpm_labels->pXLabel_preReloc, pset);
 
       ParticleVariable<Vector> pVelocity_new, pDisp_new;
       new_dw->allocateAndPut(pVelocity_new,
-                             d_mpmLabels->pVelocityLabel_preReloc,
+                             d_mpm_labels->pVelocityLabel_preReloc,
                              pset);
-      new_dw->allocateAndPut(pDisp_new, d_mpmLabels->pDispLabel_preReloc, pset);
+      new_dw->allocateAndPut(pDisp_new, d_mpm_labels->pDispLabel_preReloc, pset);
 
       ParticleVariable<Matrix3> pSize_new;
-      new_dw->allocateAndPut(pSize_new, d_mpmLabels->pSizeLabel_preReloc, pset);
+      new_dw->allocateAndPut(pSize_new, d_mpm_labels->pSizeLabel_preReloc, pset);
 
       // Get grid variables
       constNCVariable<double> gTemperatureRate, frictionTempRate;
       new_dw->get(gTemperatureRate,
-                  d_mpmLabels->gTemperatureRateLabel,
+                  d_mpm_labels->gTemperatureRateLabel,
                   dwi,
                   patch,
                   gac,
                   d_numGhostParticles);
       new_dw->get(frictionTempRate,
-                  d_mpmLabels->frictionalWorkLabel,
+                  d_mpm_labels->frictionalWorkLabel,
                   dwi,
                   patch,
                   gac,
                   d_numGhostParticles);
 
       constNCVariable<double> dTdt, massBurnFrac;
-      if (d_mpmFlags->d_withICE) {
+      if (d_mpm_flags->d_withICE) {
         new_dw->get(dTdt,
-                    d_mpmLabels->dTdt_NCLabel,
+                    d_mpm_labels->dTdt_NCLabel,
                     dwi,
                     patch,
                     gac,
                     d_numGhostParticles);
         new_dw->get(massBurnFrac,
-                    d_mpmLabels->massBurnFractionLabel,
+                    d_mpm_labels->massBurnFractionLabel,
                     dwi,
                     patch,
                     gac,
@@ -398,22 +398,22 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
 
       constNCVariable<Vector> gVelocityStar, gAcceleration;
       new_dw->get(gVelocityStar,
-                  d_mpmLabels->gVelocityStarLabel,
+                  d_mpm_labels->gVelocityStarLabel,
                   dwi,
                   patch,
                   gac,
                   d_numGhostParticles);
       new_dw->get(gAcceleration,
-                  d_mpmLabels->gAccelerationLabel,
+                  d_mpm_labels->gAccelerationLabel,
                   dwi,
                   patch,
                   gac,
                   d_numGhostParticles);
 
       constNCVariable<Vector> gVelocityXPIC;
-      if (d_mpmFlags->d_useXPIC) {
+      if (d_mpm_flags->d_useXPIC) {
         new_dw->get(gVelocityXPIC,
-                    d_mpmLabels->gVelocityXPICLabel,
+                    d_mpm_labels->gVelocityXPICLabel,
                     dwi,
                     patch,
                     gac,
@@ -451,17 +451,17 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
           IntVector node = ni[k];
           velocity += gVelocityStar[node] * S[k];
           acceleration += gAcceleration[node] * S[k];
-          if (d_mpmFlags->d_useXPIC) {
+          if (d_mpm_flags->d_useXPIC) {
             velocityXPIC += gVelocityXPIC[node] * S[k];
           }
-          fricTempRate = frictionTempRate[node] * d_mpmFlags->d_addFrictionWork;
+          fricTempRate = frictionTempRate[node] * d_mpm_flags->d_addFrictionWork;
           tempRate +=
             (gTemperatureRate[node] + dTdt[node] + fricTempRate) * S[k];
           burnFraction += massBurnFrac[node] * S[k];
         }
 
         // Update the particle's position and velocity
-        if (d_mpmFlags->d_useXPIC) {
+        if (d_mpm_flags->d_useXPIC) {
           pX_new[idx] = pX[idx] + velocity * delT -
                         0.5 *
                           (acceleration * delT + pVelocity[idx] -
@@ -499,7 +499,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
 
       // If load curves are being used with VelocityBC then apply
       // these BCs to the boundary particles
-      if (d_mpmFlags->d_useLoadCurves) {
+      if (d_mpm_flags->d_useLoadCurves) {
 
         std::vector<VelocityBC*> vbcP;
         bool do_VelocityBCs = false;
@@ -519,12 +519,12 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
 
           // Get the current time
           simTime_vartype simTimeVar;
-          old_dw->get(simTimeVar, d_mpmLabels->simulationTimeLabel);
+          old_dw->get(simTimeVar, d_mpm_labels->simulationTimeLabel);
           double time = simTimeVar;
 
           // Get the load curve data
           constParticleVariable<int> pLoadCurveID;
-          old_dw->get(pLoadCurveID, d_mpmLabels->pLoadCurveIDLabel, pset);
+          old_dw->get(pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, pset);
 
           // Iterate over the particles
           for (auto idx : *pset) {
@@ -553,7 +553,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
       // file, set their velocity back to the velocity that it came into
       // this step with
       for (auto idx : *pset) {
-        if ((pMass_new[idx] <= d_mpmFlags->d_minPartMass) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass) ||
             (pTemp_new[idx] < 0.0)) {
           delset->addParticle(idx);
 #ifdef CHECK_PARTICLE_DELETION
@@ -571,8 +571,8 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
 #endif
         }
 
-        if (pVelocity_new[idx].length() > d_mpmFlags->d_maxVel) {
-          if (d_mpmFlags->d_deleteRogueParticles) {
+        if (pVelocity_new[idx].length() > d_mpm_flags->d_maxVel) {
+          if (d_mpm_flags->d_deleteRogueParticles) {
             delset->addParticle(idx);
             proc0cout << "\n Warning: particle " << pParticleID[idx]
                       << " hit speed ceiling #1. Deleting particle."
@@ -581,7 +581,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
             if (pVelocity_new[idx].length() >= pVelocity[idx].length()) {
               pVelocity_new[idx] =
                 (pVelocity_new[idx] / pVelocity_new[idx].length()) *
-                (d_mpmFlags->d_maxVel * .9);
+                (d_mpm_flags->d_maxVel * .9);
               proc0cout << "\n Warning: particle " << pParticleID[idx]
                         << " hit speed ceiling #1. Modifying particle velocity "
                            "accordingly."
@@ -610,24 +610,24 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(
     // DON'T MOVE THESE!!!
     //__________________________________
     //  reduction variables
-    if (d_mpmFlags->d_reductionVars->mass) {
-      new_dw->put(sum_vartype(totalmass), d_mpmLabels->TotalMassLabel);
+    if (d_mpm_flags->d_reductionVars->mass) {
+      new_dw->put(sum_vartype(totalmass), d_mpm_labels->TotalMassLabel);
     }
-    if (d_mpmFlags->d_reductionVars->volDeformed) {
+    if (d_mpm_flags->d_reductionVars->volDeformed) {
       new_dw->put(sum_vartype(partvoldef),
-                  d_mpmLabels->TotalVolumeDeformedLabel);
+                  d_mpm_labels->TotalVolumeDeformedLabel);
     }
-    if (d_mpmFlags->d_reductionVars->momentum) {
-      new_dw->put(sumvec_vartype(totalMom), d_mpmLabels->TotalMomentumLabel);
+    if (d_mpm_flags->d_reductionVars->momentum) {
+      new_dw->put(sumvec_vartype(totalMom), d_mpm_labels->TotalMomentumLabel);
     }
-    if (d_mpmFlags->d_reductionVars->KE) {
-      new_dw->put(sum_vartype(ke), d_mpmLabels->KineticEnergyLabel);
+    if (d_mpm_flags->d_reductionVars->KE) {
+      new_dw->put(sum_vartype(ke), d_mpm_labels->KineticEnergyLabel);
     }
-    if (d_mpmFlags->d_reductionVars->thermalEnergy) {
-      new_dw->put(sum_vartype(thermal_energy), d_mpmLabels->ThermalEnergyLabel);
+    if (d_mpm_flags->d_reductionVars->thermalEnergy) {
+      new_dw->put(sum_vartype(thermal_energy), d_mpm_labels->ThermalEnergyLabel);
     }
-    if (d_mpmFlags->d_reductionVars->centerOfMass) {
-      new_dw->put(sumvec_vartype(CMX), d_mpmLabels->CenterOfMassPositionLabel);
+    if (d_mpm_flags->d_reductionVars->centerOfMass) {
+      new_dw->put(sumvec_vartype(CMX), d_mpm_labels->CenterOfMassPositionLabel);
     }
 
     // std::cout << "Solid mass lost this timestep = " << massLost << std::endl;

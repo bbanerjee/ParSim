@@ -203,13 +203,13 @@ void lodi_getVars_pressBC( const Patch* patch,
     MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial*>(matl);
 
     if(ice_matl){                // I C E
-      old_dw->get(Temp_CC[m],     lb->temp_CCLabel,       indx,patch,gn,0);
+      old_dw->get(Temp_CC[m],     lb->temperature_CCLabel,       indx,patch,gn,0);
       new_dw->get(f_theta_CC[m],  lb->f_theta_CCLabel,    indx,patch,gn,0);
       new_dw->get(gamma[m],       lb->gammaLabel,         indx,patch,gn,0);
       new_dw->get(cv[m],          lb->specific_heatLabel, indx,patch,gn,0);
     }
     if(mpm_matl){                // M P M
-      new_dw->get(Temp_CC[m],     lb->temp_CCLabel,    indx,patch,gn,0);
+      new_dw->get(Temp_CC[m],     lb->temperature_CCLabel,    indx,patch,gn,0);
       new_dw->get(f_theta_CC[m],  lb->f_theta_CCLabel, indx,patch,gn,0);
     }
     lodi_vars->f_theta[m] = f_theta_CC[m];
@@ -765,9 +765,9 @@ void  lodi_bc_preprocess( const Patch* patch,
   //__________________________________
   //   get the data LODI needs from old dw
   new_dw->get(gamma,        lb->gammaLabel,       indx,patch,gn ,0);
-  old_dw->get(temp_old,     lb->temp_CCLabel,     indx,patch,gac,1);
+  old_dw->get(temp_old,     lb->temperature_CCLabel,     indx,patch,gac,1);
   old_dw->get(rho_old,      lb->rho_CCLabel,      indx,patch,gac,1);
-  old_dw->get(vel_old,      lb->vel_CCLabel,      indx,patch,gac,1);
+  old_dw->get(vel_old,      lb->velocity_CCLabel,      indx,patch,gac,1);
   old_dw->get(press_old,    lb->press_CCLabel,    0,   patch,gac,2);
   old_dw->get(vol_frac_old, lb->vol_frac_CCLabel, indx,patch,gac,2);
 

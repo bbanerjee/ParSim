@@ -132,7 +132,7 @@ void ScalarExch::sched_AddExch_VelFC( SchedulerP            & sched,
   }
 
   // All matls
-  t->requires( pNewDW,      Ilb->sp_vol_CCLabel,  gac,   1);
+  t->requires( pNewDW,      Ilb->specificVolume_CCLabel,  gac,   1);
   t->requires( pNewDW,      Ilb->vol_frac_CCLabel,gac,   1);
   t->requires( Task::NewDW, Ilb->uvel_FCLabel,    gaf_X, 1);
   t->requires( Task::NewDW, Ilb->vvel_FCLabel,    gaf_Y, 1);
@@ -332,7 +332,7 @@ void ScalarExch::addExch_VelFC( const ProcessorGroup * pg,
       Material* matl = d_matlManager->getMaterial( m );
       int indx = matl->getDWIndex();
 
-      pNewDW->get( sp_vol_CC[m],    Ilb->sp_vol_CCLabel,  indx, patch, gac,   1 );
+      pNewDW->get( sp_vol_CC[m],    Ilb->specificVolume_CCLabel,  indx, patch, gac,   1 );
       pNewDW->get( vol_frac_CC[m],  Ilb->vol_frac_CCLabel,indx, patch, gac,   1 );
       new_dw->get( uvel_FC[m],      Ilb->uvel_FCLabel,    indx, patch, gaf_X, 1 );
       new_dw->get( vvel_FC[m],      Ilb->vvel_FCLabel,    indx, patch, gaf_Y, 1 );
@@ -438,14 +438,14 @@ void ScalarExch::sched_AddExch_Vel_Temp_CC( SchedulerP           & sched,
     t->requires( Task::NewDW, d_isSurfaceCellLabel, d_zero_matl, gac, 1 );
   }
                                 // I C E
-  t->requires(Task::OldDW,  Ilb->temp_CCLabel,      ice_matls, gn);
+  t->requires(Task::OldDW,  Ilb->temperature_CCLabel,      ice_matls, gn);
   t->requires(Task::NewDW,  Ilb->specific_heatLabel,ice_matls, gn);
   t->requires(Task::NewDW,  Ilb->gammaLabel,        ice_matls, gn);
                                 // A L L  M A T L S
   t->requires(Task::NewDW,  Ilb->mass_L_CCLabel,    gn);
   t->requires(Task::NewDW,  Ilb->mom_L_CCLabel,     gn);
   t->requires(Task::NewDW,  Ilb->int_eng_L_CCLabel, gn);
-  t->requires(Task::NewDW,  Ilb->sp_vol_CCLabel,    gn);
+  t->requires(Task::NewDW,  Ilb->specificVolume_CCLabel,    gn);
   t->requires(Task::NewDW,  Ilb->vol_frac_CCLabel,  gn);
 
   computesRequires_CustomBCs(t, "CC_Exchange", Ilb, ice_matls, BC_globalVars);
@@ -455,8 +455,8 @@ void ScalarExch::sched_AddExch_Vel_Temp_CC( SchedulerP           & sched,
   t->computes(Ilb->eng_L_ME_CCLabel);
 
   if (mpm_matls && mpm_matls->size() > 0){
-    t->modifies(Ilb->temp_CCLabel, mpm_matls);
-    t->modifies(Ilb->vel_CCLabel,  mpm_matls);
+    t->modifies(Ilb->temperature_CCLabel, mpm_matls);
+    t->modifies(Ilb->velocity_CCLabel,  mpm_matls);
   }
   sched->addTask(t, patches, all_matls);
 }
@@ -563,15 +563,15 @@ void ScalarExch::addExch_Vel_Temp_CC( const ProcessorGroup * pg,
 
       if(mpm_matl){                 // M P M
         CCVariable<double> oldTemp;
-        new_dw->getCopy(oldTemp,          Ilb->temp_CCLabel,indx,patch,gn,0);
-        new_dw->getModifiable(vel_CC[m],  Ilb->vel_CCLabel, indx,patch);
-        new_dw->getModifiable(Temp_CC[m], Ilb->temp_CCLabel,indx,patch);
+        new_dw->getCopy(oldTemp,          Ilb->temperature_CCLabel,indx,patch,gn,0);
+        new_dw->getModifiable(vel_CC[m],  Ilb->velocity_CCLabel, indx,patch);
+        new_dw->getModifiable(Temp_CC[m], Ilb->temperature_CCLabel,indx,patch);
         old_temp[m] = oldTemp;
         cv[m].initialize(mpm_matl->getSpecificHeat());
       }
       if(ice_matl){                 // I C E
         constCCVariable<double> cv_ice;
-        old_dw->get(old_temp[m],   Ilb->temp_CCLabel,      indx, patch,gn,0);
+        old_dw->get(old_temp[m],   Ilb->temperature_CCLabel,      indx, patch,gn,0);
         new_dw->get(cv_ice,        Ilb->specific_heatLabel,indx, patch,gn,0);
         new_dw->get(gamma[m],      Ilb->gammaLabel,        indx, patch,gn,0);
 
@@ -581,7 +581,7 @@ void ScalarExch::addExch_Vel_Temp_CC( const ProcessorGroup * pg,
       }                             // A L L  M A T L S
 
       new_dw->get(mass_L[m],        Ilb->mass_L_CCLabel,   indx, patch,gn, 0);
-      new_dw->get(sp_vol_CC[m],     Ilb->sp_vol_CCLabel,   indx, patch,gn, 0);
+      new_dw->get(sp_vol_CC[m],     Ilb->specificVolume_CCLabel,   indx, patch,gn, 0);
       new_dw->get(mom_L[m],         Ilb->mom_L_CCLabel,    indx, patch,gn, 0);
       new_dw->get(int_eng_L[m],     Ilb->int_eng_L_CCLabel,indx, patch,gn, 0);
       new_dw->get(vol_frac_CC[m],   Ilb->vol_frac_CCLabel, indx, patch,gn, 0);
@@ -846,7 +846,7 @@ void ScalarExch::addExch_Vel_Temp_CC_1matl( const ProcessorGroup * pg,
     ICEMaterial* ice_matl = (ICEMaterial*) d_matlManager->getMaterial( "ICE", 0);
     int indx = ice_matl->getDWIndex();
 
-    old_dw->get(old_temp,  Ilb->temp_CCLabel,      indx, patch, gn, 0);
+    old_dw->get(old_temp,  Ilb->temperature_CCLabel,      indx, patch, gn, 0);
     new_dw->get(cv,        Ilb->specific_heatLabel,indx, patch, gn, 0);
     new_dw->get(gamma,     Ilb->gammaLabel,        indx, patch, gn, 0);
     new_dw->get(mass_L,    Ilb->mass_L_CCLabel,    indx, patch, gn, 0);

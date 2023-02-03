@@ -153,7 +153,7 @@ void addRequires_inletVel(Task* t,
   //std::cout << " addRequires_inletVel: " << recursive <<  " where: " << where << endl;
   
   if(where == "implicitPressureSolve"){
-    t->requires(Task::OldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
   }
   else if(where == "velFC_Exchange"){
     
@@ -164,7 +164,7 @@ void addRequires_inletVel(Task* t,
       pOldDW  = Task::ParentOldDW;
     }
   
-    t->requires(pOldDW, lb->vel_CCLabel, ice_matls, gn);
+    t->requires(pOldDW, lb->velocity_CCLabel, ice_matls, gn);
   }
 }
 
@@ -197,7 +197,7 @@ void  preprocess_inletVelocity_BCs(DataWarehouse* old_dw,
       pOldDW  = old_dw->getOtherDataWarehouse(Task::ParentOldDW); 
     }
     
-    pOldDW->get(local->vel_CC, lb->vel_CCLabel, indx, patch,Ghost::None,0);
+    pOldDW->get(local->vel_CC, lb->velocity_CCLabel, indx, patch,Ghost::None,0);
   }
   
   if( where == "CC_Exchange" ) {

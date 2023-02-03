@@ -196,7 +196,7 @@ void SlipExch::sched_AddExch_VelFC(SchedulerP           & sched,
 
   // All matls
   t->requires( pNewDW,      Ilb->rho_CCLabel,     gac,   1);
-  t->requires( pNewDW,      Ilb->sp_vol_CCLabel,  gac,   1);
+  t->requires( pNewDW,      Ilb->specificVolume_CCLabel,  gac,   1);
   t->requires( pNewDW,      Ilb->vol_frac_CCLabel,gac,   1);
   t->requires( Task::NewDW, Ilb->uvel_FCLabel,    gaf_X, 1);
   t->requires( Task::NewDW, Ilb->vvel_FCLabel,    gaf_Y, 1);
@@ -205,8 +205,8 @@ void SlipExch::sched_AddExch_VelFC(SchedulerP           & sched,
   t->requires( pNewDW,      d_meanFreePathLabel,   ice_matls,  gac, 1 );
   t->requires( pNewDW,      d_surfaceNormLabel,    mpm_matls,  gac, 1 );
   t->requires( pNewDW,      d_isSurfaceCellLabel,  d_zero_matl,gac, 1 );
-  t->requires( pOldDW,      Ilb->vel_CCLabel,      ice_matls,  gac, 1 );
-  t->requires( pNewDW,      Ilb->vel_CCLabel,      mpm_matls,  gac, 1 );
+  t->requires( pOldDW,      Ilb->velocity_CCLabel,      ice_matls,  gac, 1 );
+  t->requires( pNewDW,      Ilb->velocity_CCLabel,      mpm_matls,  gac, 1 );
 
   computesRequires_CustomBCs(t, "velFC_Exchange", Ilb, ice_matls,
                              BC_globalVars, recursion);
@@ -436,7 +436,7 @@ void SlipExch::addExch_VelFC(const ProcessorGroup  * pg,
       int indx = matl->getDWIndex();
 
       // retreive from dw
-      pNewDW->get( sp_vol_CC[m],   Ilb->sp_vol_CCLabel,  indx, patch,gac, 1);
+      pNewDW->get( sp_vol_CC[m],   Ilb->specificVolume_CCLabel,  indx, patch,gac, 1);
       pNewDW->get( vol_frac_CC[m], Ilb->vol_frac_CCLabel,indx, patch,gac, 1);
 
       new_dw->get( uvel_FC[m],     Ilb->uvel_FCLabel,    indx, patch,gaf_X, 1);
@@ -444,12 +444,12 @@ void SlipExch::addExch_VelFC(const ProcessorGroup  * pg,
       new_dw->get( wvel_FC[m],     Ilb->wvel_FCLabel,    indx, patch,gaf_Z, 1);
 
       if(mpm_matl) {
-        pNewDW->get( vel_CC[m],         Ilb->vel_CCLabel, indx, patch,gac, 1);
+        pNewDW->get( vel_CC[m],         Ilb->velocity_CCLabel, indx, patch,gac, 1);
         pNewDW->get( surfaceNorm[m], d_surfaceNormLabel,  indx, patch,gac, 1);
       }
 
       if(ice_matl) {
-        pOldDW->get( vel_CC[m],          Ilb->vel_CCLabel, indx, patch,gac, 1);
+        pOldDW->get( vel_CC[m],          Ilb->velocity_CCLabel, indx, patch,gac, 1);
         pNewDW->get( meanFreePath[m], d_meanFreePathLabel, indx, patch,gac, 1);
       }
 
@@ -709,7 +709,7 @@ void SlipExch::sched_AddExch_Vel_Temp_CC(SchedulerP           & sched,
   t->requires( Task::NewDW,  d_surfaceNormLabel,    mpm_matls,   gn, 0 );
   t->requires( Task::NewDW,  d_isSurfaceCellLabel,  d_zero_matl, gn, 0 );
                                 // I C E
-  t->requires( Task::OldDW,  Ilb->temp_CCLabel,       ice_matls, gn );
+  t->requires( Task::OldDW,  Ilb->temperature_CCLabel,       ice_matls, gn );
   t->requires( Task::NewDW,  Ilb->specific_heatLabel, ice_matls, gn );
   t->requires( Task::NewDW,  Ilb->gammaLabel,         ice_matls, gn );
   t->requires( Task::NewDW,  d_meanFreePathLabel,     ice_matls, gn );
@@ -717,7 +717,7 @@ void SlipExch::sched_AddExch_Vel_Temp_CC(SchedulerP           & sched,
   t->requires( Task::NewDW,  Ilb->mass_L_CCLabel,    gn );
   t->requires( Task::NewDW,  Ilb->mom_L_CCLabel,     gn );
   t->requires( Task::NewDW,  Ilb->int_eng_L_CCLabel, gn );
-  t->requires( Task::NewDW,  Ilb->sp_vol_CCLabel,    gn );
+  t->requires( Task::NewDW,  Ilb->specificVolume_CCLabel,    gn );
   t->requires( Task::NewDW,  Ilb->vol_frac_CCLabel,  gn );
 
   computesRequires_CustomBCs(t, "CC_Exchange", Ilb, ice_matls, BC_globalVars);
@@ -727,8 +727,8 @@ void SlipExch::sched_AddExch_Vel_Temp_CC(SchedulerP           & sched,
   t->computes( Ilb->eng_L_ME_CCLabel );
   t->computes( d_vel_CCTransLabel );
 
-  t->modifies( Ilb->temp_CCLabel, mpm_matls );
-  t->modifies( Ilb->vel_CCLabel,  mpm_matls );
+  t->modifies( Ilb->temperature_CCLabel, mpm_matls );
+  t->modifies( Ilb->velocity_CCLabel,  mpm_matls );
 
   sched->addTask(t, patches, all_matls);
 }
@@ -799,9 +799,9 @@ void SlipExch::addExch_Vel_Temp_CC(const ProcessorGroup * pg,
         new_dw->get( surfaceNorm[m],     d_surfaceNormLabel, indx, patch, gn, 0);
 
         CCVariable<double> oldTempMPM;
-        new_dw->getCopy(       oldTempMPM, Ilb->temp_CCLabel,indx, patch, gn,0 );
-        new_dw->getModifiable( vel_CC[m],  Ilb->vel_CCLabel, indx, patch, gn,0 );
-        new_dw->getModifiable( Temp_CC[m], Ilb->temp_CCLabel,indx, patch, gn,0 );
+        new_dw->getCopy(       oldTempMPM, Ilb->temperature_CCLabel,indx, patch, gn,0 );
+        new_dw->getModifiable( vel_CC[m],  Ilb->velocity_CCLabel, indx, patch, gn,0 );
+        new_dw->getModifiable( Temp_CC[m], Ilb->temperature_CCLabel,indx, patch, gn,0 );
 
         old_temp[m] = oldTempMPM;
         cv[m].initialize(mpm_matl->getSpecificHeat());
@@ -809,7 +809,7 @@ void SlipExch::addExch_Vel_Temp_CC(const ProcessorGroup * pg,
 
       if(ice_matl){                 // I C E
         constCCVariable<double> cv_ice;
-        old_dw->get( old_temp[m],     Ilb->temp_CCLabel,      indx, patch, gn, 0 );
+        old_dw->get( old_temp[m],     Ilb->temperature_CCLabel,      indx, patch, gn, 0 );
         new_dw->get( cv_ice,          Ilb->specific_heatLabel,indx, patch, gn, 0 );
         new_dw->get( gamma[m],        Ilb->gammaLabel,        indx, patch, gn, 0 );
         new_dw->get( meanFreePath[m], d_meanFreePathLabel,    indx, patch, gn, 0 );
@@ -821,7 +821,7 @@ void SlipExch::addExch_Vel_Temp_CC(const ProcessorGroup * pg,
                                  // A L L  M A T L S
 
       new_dw->get( mass_L[m],        Ilb->mass_L_CCLabel,   indx, patch, gn, 0 );
-      new_dw->get( sp_vol_CC[m],     Ilb->sp_vol_CCLabel,   indx, patch, gn, 0 );
+      new_dw->get( sp_vol_CC[m],     Ilb->specificVolume_CCLabel,   indx, patch, gn, 0 );
       new_dw->get( mom_L[m],         Ilb->mom_L_CCLabel,    indx, patch, gn, 0 );
       new_dw->get( int_eng_L[m],     Ilb->int_eng_L_CCLabel,indx, patch, gn, 0 );
       new_dw->get( vol_frac_CC[m],   Ilb->vol_frac_CCLabel, indx, patch, gn, 0 );
@@ -1008,8 +1008,8 @@ void SlipExch::schedComputeMeanFreePath(SchedulerP       & sched,
   printSchedule(patches, dbgExch, tName);
 
   Ghost::GhostType  gn = Ghost::None;
-  t->requires(Task::OldDW, Ilb->temp_CCLabel,       gn);
-  t->requires(Task::OldDW, Ilb->sp_vol_CCLabel,     gn);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,       gn);
+  t->requires(Task::OldDW, Ilb->specificVolume_CCLabel,     gn);
   t->requires(Task::NewDW, Ilb->gammaLabel,         gn);
   t->requires(Task::NewDW, Ilb->specific_heatLabel, gn);
 
@@ -1043,8 +1043,8 @@ void SlipExch::computeMeanFreePath(const ProcessorGroup *,
       constCCVariable<double> cv;
       CCVariable<double>      meanFreePath;
 
-      old_dw->get(temp,   Ilb->temp_CCLabel,      indx,patch, gn,0);
-      old_dw->get(sp_vol, Ilb->sp_vol_CCLabel,    indx,patch, gn,0);
+      old_dw->get(temp,   Ilb->temperature_CCLabel,      indx,patch, gn,0);
+      old_dw->get(sp_vol, Ilb->specificVolume_CCLabel,    indx,patch, gn,0);
       new_dw->get(gamma,  Ilb->gammaLabel,        indx,patch, gn,0);
       new_dw->get(cv,     Ilb->specific_heatLabel,indx,patch, gn,0);
 

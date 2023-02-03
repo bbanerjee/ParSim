@@ -60,7 +60,6 @@ public:
                   const PatchSet* patches,
                   const MaterialSet* matls);
 
-private:
   void
   scheduleComputeHeatExchange(SchedulerP& sched,
                               const PatchSet* patches,

@@ -119,7 +119,7 @@ public:
   void
   setMPMLabel(MPMLabel* labels)
   {
-    d_mpmLabels.reset(labels);
+    d_mpm_labels.reset(labels);
   };
 
   enum IntegratorType

@@ -218,9 +218,9 @@ void LightTime::scheduleComputeModelSources(SchedulerP& sched,
   //__________________________________
   // Reactants
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
-  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,    react_matl, gn);
-  t->requires(Task::OldDW, Ilb->vel_CCLabel,       react_matl, gn);
-  t->requires(Task::OldDW, Ilb->temp_CCLabel,      react_matl, gn);
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
+  t->requires(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
   t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
   t->requires(Task::NewDW, Ilb->specific_heatLabel,react_matl, gn);
 
@@ -283,10 +283,10 @@ void LightTime::computeModelSources(const ProcessorGroup*,
    
     //__________________________________
     // Reactant data
-    old_dw->get(rctTemp,       Ilb->temp_CCLabel,      m0,patch,gn, 0);
-    old_dw->get(rctvel_CC,     Ilb->vel_CCLabel,       m0,patch,gn, 0);
+    old_dw->get(rctTemp,       Ilb->temperature_CCLabel,      m0,patch,gn, 0);
+    old_dw->get(rctvel_CC,     Ilb->velocity_CCLabel,       m0,patch,gn, 0);
     new_dw->get(rctRho,        Ilb->rho_CCLabel,       m0,patch,gn, 0);
-    new_dw->get(rctSpvol,      Ilb->sp_vol_CCLabel,    m0,patch,gn, 0);
+    new_dw->get(rctSpvol,      Ilb->specificVolume_CCLabel,    m0,patch,gn, 0);
     new_dw->get(vol_frac_rct,  Ilb->vol_frac_CCLabel,  m0,patch,gn, 0);
     new_dw->get(cv_reactant,   Ilb->specific_heatLabel,m0,patch,gn, 0);
     new_dw->allocateAndPut(Fr, reactedFractionLabel,   m0,patch);

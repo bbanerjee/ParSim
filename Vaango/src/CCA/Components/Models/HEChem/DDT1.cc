@@ -426,8 +426,8 @@ void DDT1::scheduleComputeModelSources(SchedulerP& sched,
   // Requires
   //__________________________________
   t1->requires(Task::OldDW, mi->delT_Label,            level.get_rep());
-  t1->requires(Task::OldDW, Ilb->temp_CCLabel,         ice_matls, oms, gac,1);
-  t1->requires(Task::NewDW, MIlb->temp_CCLabel,        mpm_matls, oms, gac,1);
+  t1->requires(Task::OldDW, Ilb->temperature_CCLabel,         ice_matls, oms, gac,1);
+  t1->requires(Task::NewDW, MIlb->temperature_CCLabel,        mpm_matls, oms, gac,1);
   t1->requires(Task::NewDW, Ilb->vol_frac_CCLabel,     all_matls, oms, gac,1);
   t1->requires(Task::OldDW, Mlb->pXLabel,              mpm_matls,  gn);
  
@@ -441,8 +441,8 @@ void DDT1::scheduleComputeModelSources(SchedulerP& sched,
 
   //__________________________________
   // Reactants
-  t1->requires(Task::NewDW, Ilb->sp_vol_CCLabel,       react_matl, gn);
-  t1->requires(Task::NewDW, MIlb->vel_CCLabel,         react_matl, gn);
+  t1->requires(Task::NewDW, Ilb->specificVolume_CCLabel,       react_matl, gn);
+  t1->requires(Task::NewDW, MIlb->velocity_CCLabel,         react_matl, gn);
   t1->requires(Task::NewDW, Ilb->rho_CCLabel,          react_matl, gn);
   t1->requires(Task::NewDW, Mlb->gMassLabel,           react_matl, gac,1);
   t1->requires(Task::NewDW, numPPCLabel,               react_matl, gac,1);
@@ -480,8 +480,8 @@ void DDT1::scheduleComputeModelSources(SchedulerP& sched,
   // Requires
   //__________________________________
   t2->requires(Task::OldDW, mi->delT_Label,            level.get_rep());
-  t2->requires(Task::OldDW, Ilb->temp_CCLabel,         ice_matls, oms, gac,1);
-  t2->requires(Task::NewDW, MIlb->temp_CCLabel,        mpm_matls, oms, gac,1);
+  t2->requires(Task::OldDW, Ilb->temperature_CCLabel,         ice_matls, oms, gac,1);
+  t2->requires(Task::NewDW, MIlb->temperature_CCLabel,        mpm_matls, oms, gac,1);
   t2->requires(Task::NewDW, Ilb->vol_frac_CCLabel,     all_matls, oms, gac,1);
   
   
@@ -494,8 +494,8 @@ void DDT1::scheduleComputeModelSources(SchedulerP& sched,
 
   //__________________________________
   // Reactants
-  t2->requires(Task::NewDW, Ilb->sp_vol_CCLabel,       react_matl, gn);
-  t2->requires(Task::NewDW, MIlb->vel_CCLabel,         react_matl, gn);
+  t2->requires(Task::NewDW, Ilb->specificVolume_CCLabel,       react_matl, gn);
+  t2->requires(Task::NewDW, MIlb->velocity_CCLabel,         react_matl, gn);
   t2->requires(Task::NewDW, Ilb->rho_CCLabel,          react_matl, gn);
   t2->requires(Task::NewDW, Mlb->gMassLabel,           react_matl, gac,1);
   t2->requires(Task::NewDW, numPPCLabel,               react_matl, gac,1);
@@ -676,9 +676,9 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       int indx = matl->getDWIndex();
       if(ice_matl){
-        old_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gac,1);
+        old_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gac,1);
       }else {
-        new_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gac,1);
+        new_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gac,1);
       }
       new_dw->get(vol_frac_CC[m], Ilb->vol_frac_CCLabel, indx, patch,gac,1);
     }
@@ -1024,10 +1024,10 @@ void DDT1::computeModelSources(const ProcessorGroup*,
     /* Gets and Computes */
     //__________________________________
     // Reactant data
-    new_dw->get(rctTemp,       MIlb->temp_CCLabel,      m0,patch,gac, 1);
-    new_dw->get(rctvel_CC,     MIlb->vel_CCLabel,       m0,patch,gn,  0);
+    new_dw->get(rctTemp,       MIlb->temperature_CCLabel,      m0,patch,gac, 1);
+    new_dw->get(rctvel_CC,     MIlb->velocity_CCLabel,       m0,patch,gn,  0);
     new_dw->get(rctRho,        Ilb->rho_CCLabel,        m0,patch,gn,  0);
-    new_dw->get(rctSpvol,      Ilb->sp_vol_CCLabel,     m0,patch,gn,  0);
+    new_dw->get(rctSpvol,      Ilb->specificVolume_CCLabel,     m0,patch,gn,  0);
     new_dw->get(rctMass_NC,    Mlb->gMassLabel,         m0,patch,gac, 1);
     new_dw->get(rctVolFrac,    Ilb->vol_frac_CCLabel,   m0,patch,gac, 1);
     new_dw->get(detonating,    detonatingLabel,         m0,patch,gn,  0);
@@ -1050,9 +1050,9 @@ void DDT1::computeModelSources(const ProcessorGroup*,
       ICEMaterial* ice_matl = dynamic_cast<ICEMaterial*>(matl);
       int indx = matl->getDWIndex();
       if(ice_matl){
-        old_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gac,1);
+        old_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gac,1);
       }else {
-        new_dw->get(temp_CC[m],   MIlb->temp_CCLabel,    indx, patch,gac,1);
+        new_dw->get(temp_CC[m],   MIlb->temperature_CCLabel,    indx, patch,gac,1);
       }
       new_dw->get(vol_frac_CC[m], Ilb->vol_frac_CCLabel, indx, patch,gac,1);
     }

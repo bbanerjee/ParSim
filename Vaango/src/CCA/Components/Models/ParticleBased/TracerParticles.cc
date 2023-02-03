@@ -1252,7 +1252,7 @@ void TracerParticles::sched_moveParticles(SchedulerP  & sched,
   t->requires( Task::OldDW, pDispLabel,     d_matl_mss, d_gn );
   t->requires( Task::OldDW, pIDLabel,       d_matl_mss, d_gn );
 
-  t->requires( Task::OldDW, Ilb->vel_CCLabel, d_matl_mss, d_gn );   // hardwired to use ICE's velocity
+  t->requires( Task::OldDW, Ilb->velocity_CCLabel, d_matl_mss, d_gn );   // hardwired to use ICE's velocity
 
   t->computes( pXLabel_preReloc,        d_matl_mss );
   t->computes( pDispLabel_preReloc,     d_matl_mss );
@@ -1297,7 +1297,7 @@ void TracerParticles::moveParticles(const ProcessorGroup  *,
     ParticleSubset* pset   = old_dw->getParticleSubset( matlIndx, patch );
     ParticleSubset* delset = scinew ParticleSubset(0, matlIndx, patch);
 
-    old_dw->get( vel_CC,           Ilb->vel_CCLabel, matlIndx, patch, d_gn, 0);
+    old_dw->get( vel_CC,           Ilb->velocity_CCLabel, matlIndx, patch, d_gn, 0);
     old_dw->get( pX_old,           pXLabel,              pset );
     old_dw->get( pDisp_old,        pDispLabel,           pset );
     old_dw->get( pID_old,          pIDLabel,             pset );

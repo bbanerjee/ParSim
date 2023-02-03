@@ -880,7 +880,7 @@ private:
 
   //__________________________________
   // Misc
-  std::unique_ptr<customBC_globalVars> d_BC_globalVars;
+  std::unique_ptr<CustomBCDriver::customBC_globalVars> d_BC_globalVars;
   std::unique_ptr<customInitialize_basket> d_customInitialize_basket;
 
   std::unique_ptr<Advector> d_advector{ nullptr };

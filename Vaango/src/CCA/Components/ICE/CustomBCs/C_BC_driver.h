@@ -37,6 +37,7 @@
 namespace Uintah {
 class DataWarehouse;
 
+namespace CustomBCDriver {
 //_____________________________________________________________
 // This struct contains misc. variables that are needed by the
 // the different custom boundary conditions and are considered global
@@ -143,6 +144,8 @@ preprocess_CustomBCs(const std::string& where,
 
 void
 delete_CustomBCs(customBC_globalVars* global, customBC_localVars* local);
+
+} // namespace CustomBCDriver
 
 } // End namespace Uintah
 #endif

@@ -33,10 +33,11 @@
 
 using Uintah::IntVector;
 
-
 namespace Uintah {
 
 static Uintah::DebugStream cout_dbg("AMR_CoarsenRefine", false);
+
+namespace AMRCoarsenRefine {
 //______________________________________________________________________
 //
 template<typename T>
@@ -172,15 +173,8 @@ fineToCoarseOperator(CCVariable<T>& q_CC,
       inv_RR = 1.0 / ((double)(r_Ratio.x() * r_Ratio.y() * r_Ratio.z()));
     }
 
-    coarsenDriver_std(cl,
-                      ch,
-                      fl,
-                      fh,
-                      r_Ratio,
-                      inv_RR,
-                      coarseLevel,
-                      fine_q_CC,
-                      q_CC);
+    coarsenDriver_std(
+      cl, ch, fl, fh, r_Ratio, inv_RR, coarseLevel, fine_q_CC, q_CC);
   }
   //  cout_dbg.setActive(false);// turn off the switch for cout_dbg  (turn off
   //  tsanitizer warnings)
@@ -283,4 +277,5 @@ fineToCoarseOperator<Vector>(CCVariable<Vector>& q_CC,
                              const Level* coarseLevel,
                              const Level* fineLevel);
 
+} // namespace AMRCoarsenRefine
 } // end namespace Uintah

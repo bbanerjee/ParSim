@@ -240,7 +240,7 @@ void SimpleRxn::scheduleInitialize(SchedulerP& sched,
   cout_doing << "SIMPLERXN::scheduleInitialize " << std::endl;
   Task* t = scinew Task("SimpleRxn::initialize", this, &SimpleRxn::initialize);
 
-  t->modifies(lb->sp_vol_CCLabel);
+  t->modifies(lb->specificVolume_CCLabel);
   t->modifies(lb->rho_micro_CCLabel);
   t->modifies(lb->rho_CCLabel);
   t->modifies(lb->specific_heatLabel);
@@ -272,7 +272,7 @@ void SimpleRxn::initialize(const ProcessorGroup*,
     constCCVariable<double> Temp;
     new_dw->allocateAndPut(f, d_scalar->scalar_CCLabel, indx, patch);
     new_dw->getModifiable(rho_CC,      lb->rho_CCLabel,       indx,patch);
-    new_dw->getModifiable(sp_vol,      lb->sp_vol_CCLabel,    indx,patch);
+    new_dw->getModifiable(sp_vol,      lb->specificVolume_CCLabel,    indx,patch);
     new_dw->getModifiable(rho_micro,   lb->rho_micro_CCLabel, indx,patch);
     new_dw->getModifiable(gamma,       lb->gammaLabel,        indx,patch);
     new_dw->getModifiable(cv,          lb->specific_heatLabel,indx,patch);
@@ -455,7 +455,7 @@ void SimpleRxn::scheduleComputeModelSources(SchedulerP& sched,
   t->requires(Task::NewDW, d_scalar->diffusionCoefLabel, gac,1);
   t->requires(Task::OldDW, d_scalar->scalar_CCLabel,     gac,1); 
   t->requires(Task::OldDW, mi->rho_CCLabel,    gn);
-  t->requires(Task::OldDW, mi->temp_CCLabel,   gn);
+  t->requires(Task::OldDW, mi->temperature_CCLabel,   gn);
   
   
   t->modifies(mi->modelMom_srcLabel);

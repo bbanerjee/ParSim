@@ -416,7 +416,7 @@ get_rho_micro(std::vector<CCVariable<double>>& rho_micro,
               const string& which_Var,
               MaterialManagerP& materialManager,
               DataWarehouse* new_dw,
-              customBC_globalVars* globalVars,
+              CustomBCDriver::customBC_globalVars* globalVars,
               const bool isNotInitialTimeStep)
 {
   BC_dbg << "         get_rho_micro: (" << which_Var << ")" << endl;
@@ -596,8 +596,8 @@ setBC(CCVariable<double>& press_CC,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep)
 {
   if (patch->hasBoundaryFaces() == false) {
@@ -780,8 +780,8 @@ setBC(CCVariable<double>& var_CC,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse*,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep)
 {
 
@@ -957,8 +957,8 @@ setBC(CCVariable<Vector>& var_CC,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse*,
-      customBC_globalVars* globalVars,
-      customBC_localVars* localVars,
+      CustomBCDriver::customBC_globalVars* globalVars,
+      CustomBCDriver::customBC_localVars* localVars,
       const bool isNotInitialTimeStep)
 {
   if (patch->hasBoundaryFaces() == false) {
@@ -1520,8 +1520,10 @@ setBC(CCVariable<double>& var,
       DataWarehouse* new_dw,
       const bool isNotInitialTimeStep)
 {
-  customBC_globalVars* globalVars = scinew customBC_globalVars();
-  customBC_localVars* localVars   = scinew customBC_localVars();
+  CustomBCDriver::customBC_globalVars* globalVars =
+    scinew CustomBCDriver::customBC_globalVars();
+  CustomBCDriver::customBC_localVars* localVars =
+    scinew CustomBCDriver::customBC_localVars();
   constCCVariable<double> placeHolder;
 
   setBC(var,
@@ -1554,8 +1556,10 @@ setBC(CCVariable<double>& press_CC,
       const bool isNotInitialTimeStep)
 {
 
-  customBC_globalVars* globalVars = scinew customBC_globalVars();
-  customBC_localVars* localVars   = scinew customBC_localVars();
+  CustomBCDriver::customBC_globalVars* globalVars =
+    scinew CustomBCDriver::customBC_globalVars();
+  CustomBCDriver::customBC_localVars* localVars =
+    scinew CustomBCDriver::customBC_localVars();
 
   setBC(press_CC,
         rho_micro,
@@ -1584,8 +1588,10 @@ setBC(CCVariable<Vector>& variable,
       DataWarehouse* new_dw,
       const bool isNotInitialTimeStep)
 {
-  customBC_globalVars* globalVars = scinew customBC_globalVars();
-  customBC_localVars* localVars   = scinew customBC_localVars();
+  CustomBCDriver::customBC_globalVars* globalVars =
+    scinew CustomBCDriver::customBC_globalVars();
+  CustomBCDriver::customBC_localVars* localVars =
+    scinew CustomBCDriver::customBC_localVars();
 
   setBC(variable,
         type,
