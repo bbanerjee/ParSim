@@ -42,6 +42,8 @@ namespace Vaango
       PeridynamicsLabel();
       ~PeridynamicsLabel();
 
+      const Uintah::VarLabel* timeStepLabel;
+      const Uintah::VarLabel* simulationTimeLabel;
       const Uintah::VarLabel* delTLabel;
       
       // non PermanentParticleState

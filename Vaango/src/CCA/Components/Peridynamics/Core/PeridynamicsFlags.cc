@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Vaango;

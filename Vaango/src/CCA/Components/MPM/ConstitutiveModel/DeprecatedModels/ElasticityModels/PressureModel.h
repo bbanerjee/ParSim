@@ -28,7 +28,7 @@
 #define __PRESSURE_MODEL_H__
 
 #include "DeformationState.h"
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <Core/Math/Matrix3.h>
 
 namespace Uintah {

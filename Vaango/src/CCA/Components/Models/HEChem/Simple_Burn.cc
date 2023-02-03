@@ -66,7 +66,7 @@
 #include<CCA/Components/MPMICE/Core/MPMICELabel.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <CCA/Components/ICE/Core/BoundaryCond.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <iostream>
 #include <Core/Util/DebugStream.h>
 

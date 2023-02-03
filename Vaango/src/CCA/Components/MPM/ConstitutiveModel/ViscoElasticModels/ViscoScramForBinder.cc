@@ -47,7 +47,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScramForBinder.h>
 #include <CCA/Components/MPM/Crack/FractureDefine.h>
 #include <CCA/Ports/DataWarehouse.h>

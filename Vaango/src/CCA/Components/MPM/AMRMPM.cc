@@ -25,7 +25,7 @@
 #include <CCA/Components/MPM/AMRMPM.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 

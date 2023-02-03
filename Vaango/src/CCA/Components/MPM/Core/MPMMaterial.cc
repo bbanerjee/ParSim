@@ -30,7 +30,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/AMRMPMLabel.h>
 #include <CCA/Components/MPM/Core/HydroMPMLabel.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>

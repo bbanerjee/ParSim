@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticImplicit.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Components/MPM/Core/MPMUtils.h>
 #include <CCA/Ports/DataWarehouse.h>

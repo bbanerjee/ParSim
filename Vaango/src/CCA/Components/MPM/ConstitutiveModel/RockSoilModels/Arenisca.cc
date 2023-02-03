@@ -80,7 +80,7 @@ porosity).
 // #define CSM_FORCE_MASSIVE_SUBCYCLING 10
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>

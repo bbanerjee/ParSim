@@ -24,9 +24,9 @@
 
 #include <CCA/Components/Peridynamics/MaterialModels/PolarOrthotropicLinearElasticStateModel.h>
 
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype

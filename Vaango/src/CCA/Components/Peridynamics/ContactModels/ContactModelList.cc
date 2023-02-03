@@ -23,8 +23,8 @@
  */
 
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelList.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
 
 using namespace Vaango;
 

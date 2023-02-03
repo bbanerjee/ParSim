@@ -27,12 +27,9 @@
 
 SET(Vaango_CCA_Components_Peridynamics_SRCS
   Peridynamics.cc
-  PeridynamicsFlags.cc
-  PeridynamicsLabel.cc
-  PeridynamicsMaterial.cc
-  PeridynamicsDomainBoundCond.cc
 )
 
+add_subdirectory(Core)
 add_subdirectory(FamilyComputer)
 add_subdirectory(ParticleCreator)
 add_subdirectory(ParticleBC)
@@ -49,7 +46,6 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions

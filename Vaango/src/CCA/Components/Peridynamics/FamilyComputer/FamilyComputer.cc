@@ -23,9 +23,9 @@
  */
 
 #include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
 
 
 #include <Core/Grid/Variables/VarLabel.h>

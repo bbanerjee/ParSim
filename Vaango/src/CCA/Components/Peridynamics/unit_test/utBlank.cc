@@ -29,8 +29,8 @@
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
-#include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsDomainBoundCond.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>

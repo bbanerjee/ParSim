@@ -23,9 +23,9 @@
  */
 
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 #include <CCA/Components/Peridynamics/ParticleBC/ParticleLoadBCFactory.h>

@@ -26,7 +26,7 @@
 #ifndef __VAANGO_CCA_COMPONENTS_MPM_BASIC_DAMAGE_MODEL_H__
 #define __VAANGO_CCA_COMPONENTS_MPM_BASIC_DAMAGE_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/MaterialManagerP.h>

@@ -28,7 +28,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
-  MPMMaterial.cc                
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")

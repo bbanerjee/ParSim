@@ -44,7 +44,9 @@ public:
   virtual ~Material(); 
 
   Material(const Material& mat) = delete;
+  Material(Material&& mat) = delete;
   Material& operator=(const Material& mat) = delete;
+  Material& operator=(Material&& mat) = delete;
 
   virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
 

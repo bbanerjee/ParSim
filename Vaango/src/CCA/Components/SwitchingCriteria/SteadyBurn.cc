@@ -26,7 +26,7 @@
 
 #include <CCA/Components/SwitchingCriteria/SteadyBurn.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPMICE/Core/MPMICELabel.h>
 

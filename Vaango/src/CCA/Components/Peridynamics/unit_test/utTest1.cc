@@ -24,8 +24,8 @@
 
 #include <CCA/Components/Peridynamics/unit_test/utBlank.h>
 
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 #include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Components/MPM/Contact/Contact.h>

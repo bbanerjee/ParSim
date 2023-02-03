@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsDomainBoundCond.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>

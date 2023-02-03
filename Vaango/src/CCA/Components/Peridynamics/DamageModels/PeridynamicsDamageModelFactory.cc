@@ -25,8 +25,8 @@
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModelFactory.h>
 
 #include <CCA/Components/Peridynamics/DamageModels/SphericalStrainEnergyDamageModel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>

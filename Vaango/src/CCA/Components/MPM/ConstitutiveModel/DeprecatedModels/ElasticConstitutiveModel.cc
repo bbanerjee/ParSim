@@ -56,7 +56,7 @@
 
 #include "ElasticConstitutiveModel.h"
 #include "ConstitutiveModelFactory.h"
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/ParticleVariable.h>

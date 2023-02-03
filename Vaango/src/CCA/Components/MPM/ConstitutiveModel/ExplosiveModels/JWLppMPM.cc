@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include<CCA/Components/MPM/Core/MPMLabel.h>

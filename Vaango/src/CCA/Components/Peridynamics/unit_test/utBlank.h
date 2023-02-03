@@ -25,8 +25,8 @@
 #ifndef Vaango_Peridynamics_ut_utBlank_h
 #define Vaango_Peridynamics_ut_utBlank_h
 
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/GradientComputer/PeridynamicsDefGradComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/BondInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/ParticleInternalForceComputer.h>

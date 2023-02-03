@@ -23,8 +23,8 @@
  */
 
 #include <CCA/Components/Peridynamics/ContactModels/SingleVelocityContact.h>
-#include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
@@ -119,7 +119,7 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
 
   // Check that only peridynamics bodies are being considered in this simulation
   // **TODO** Add the possibility of MPM and Peridynamics materials interacting
-  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumMaterials("Peridynamics");
   ASSERTEQ(numBodies, matls->size());
 
   for (int p=0; p<patches->size(); p++) {
@@ -191,7 +191,7 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
                                                   DataWarehouse* old_dw,
                                                   DataWarehouse* new_dw)
 {
-  int numBodies = d_mat_manager->getNumPeridynamicsMatls();
+  int numBodies = d_mat_manager->getNumMaterials("Peridynamics");
   ASSERTEQ(numBodies, matls->size());
 
   for (int p = 0; p < patches->size(); p++) {

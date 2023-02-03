@@ -27,7 +27,7 @@
 // SpecifiedBodyContact.cc
 #include <CCA/Components/MPM/Contact/SpecifiedBodyContact.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMBoundCond.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 

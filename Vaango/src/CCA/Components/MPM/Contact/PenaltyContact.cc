@@ -24,7 +24,7 @@
  */
 
 #include <CCA/Components/MPM/Contact/PenaltyContact.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <Core/Grid/Labels/MPMLabel.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/NCVariable.h>

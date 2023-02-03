@@ -25,7 +25,7 @@
 #ifndef __DEFORMATION_GRADIENT_COMPUTER_H__
 #define __DEFORMATION_GRADIENT_COMPUTER_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>

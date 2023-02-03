@@ -42,7 +42,7 @@
 #include <CCA/Components/ICE/SpecificHeatModel/SpecificHeat.h>
 #include <CCA/Components/ICE/TurbulenceModel/Turbulence.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 
 #include <CCA/Components/Models/FluidsBased/FluidsBasedModel.h>
 #include <CCA/Components/Models/HEChem/HEChemModel.h>

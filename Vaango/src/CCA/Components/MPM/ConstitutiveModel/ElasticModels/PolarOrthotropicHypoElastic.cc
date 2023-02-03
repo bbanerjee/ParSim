@@ -26,7 +26,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/PolarOrthotropicHypoElastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include<CCA/Components/MPM/Core/MPMLabel.h>
 
