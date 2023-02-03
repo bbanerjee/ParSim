@@ -72,7 +72,7 @@ WARNING
 
 ****************************************/
 
-class RigidMPM : public SerialMPM
+class RigidMPM final : public SerialMPM
 {
 public:
   RigidMPM(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);

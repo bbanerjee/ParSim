@@ -29,7 +29,6 @@ SET(Vaango_MPMICE_Core_SRCS
 
 SET(Vaango_CCA_Components_MPMICE_SRCS
   MPMICE.cc
-  MPMICEDebug.cc
   ${Vaango_MPMICE_Core_SRCS}
 )
 

@@ -169,7 +169,7 @@ public:
 
   // Optionally schedule a task that determines the next delt T value.
   virtual void
-  scheduleComputeStableTimeStep(const LevelP& level, SchedulerP& scheduler) = 0;
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP& scheduler) = 0;
 
   // Reduce the system wide values such as the next delta T.
   virtual void

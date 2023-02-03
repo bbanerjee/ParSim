@@ -133,10 +133,6 @@ public:
   virtual void
   scheduleInitialize(const LevelP& level, SchedulerP& scheduler) = 0;
 
-  virtual void
-  scheduleInitializeAddedMaterial(const LevelP& level,
-                                  SchedulerP& scheduler) = 0;
-
   // On a restart, schedule an initialization task
   virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& scheduler) = 0;
@@ -250,8 +246,8 @@ public:
   needRecompile(const GridP& grid) = 0;
 
   // Instruct component to add a new material
-  virtual void
-  addMaterial(const ProblemSpecP& params, GridP& grid) = 0;
+  //virtual void
+  //addMaterial(const ProblemSpecP& params, GridP& grid) = 0;
 
   // Labels for access value in the data warehouse.
   virtual const VarLabel*
