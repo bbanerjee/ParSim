@@ -133,18 +133,18 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       constParticleVariable<Short27> pgCode;
       constParticleVariable<Point> px;
       constParticleVariable<Matrix3> pSize;
-      constParticleVariable<double> pmass;
+      constParticleVariable<double> pMass;
       constParticleVariable<double> pstrainenergydensity;
       constParticleVariable<double> pkineticenergydensity;
-      constParticleVariable<Matrix3> pstress, pdispgrads, pvelgrads,
+      constParticleVariable<Matrix3> pstress, pDisplacementgrads, pvelgrads,
         pDefGrad;
 
       ParticleSubset* pset = old_dw->getParticleSubset(
         dwi, patch, Ghost::AroundNodes, NGP, lb->pXLabel);
 
-      new_dw->get(pmass, lb->pMassLabel_preReloc, pset);
+      new_dw->get(pMass, lb->pMassLabel_preReloc, pset);
       new_dw->get(pstress, lb->pStressLabel_preReloc, pset);
-      new_dw->get(pdispgrads, lb->pDispGradsLabel_preReloc, pset);
+      new_dw->get(pDisplacementgrads, lb->pDispGradsLabel_preReloc, pset);
       new_dw->get(
         pstrainenergydensity, lb->pStrainEnergyDensityLabel_preReloc, pset);
 
@@ -203,23 +203,23 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
 
           for (int k = 0; k < n8or27; k++) {
             if (patch->containsNode(ni[k])) {
-              double pmassTimesS = pmass[idx] * S[k];
+              double pMassTimesS = pMass[idx] * S[k];
               if (pgCode[idx][k] == 1) {
-                ggridstress[ni[k]] += pstress[idx] * pmassTimesS;
-                gdispgrads[ni[k]] += pdispgrads[idx] * pmassTimesS;
-                gvelgrads[ni[k]] += pvelgrads[idx] * pmassTimesS;
+                ggridstress[ni[k]] += pstress[idx] * pMassTimesS;
+                gdispgrads[ni[k]] += pDisplacementgrads[idx] * pMassTimesS;
+                gvelgrads[ni[k]] += pvelgrads[idx] * pMassTimesS;
                 gstrainenergydensity[ni[k]] +=
-                  pstrainenergydensity[idx] * pmassTimesS;
+                  pstrainenergydensity[idx] * pMassTimesS;
                 gkineticenergydensity[ni[k]] +=
-                  pkineticenergydensity[idx] * pmassTimesS;
+                  pkineticenergydensity[idx] * pMassTimesS;
               } else if (pgCode[idx][k] == 2) {
-                Ggridstress[ni[k]] += pstress[idx] * pmassTimesS;
-                Gdispgrads[ni[k]] += pdispgrads[idx] * pmassTimesS;
-                Gvelgrads[ni[k]] += pvelgrads[idx] * pmassTimesS;
+                Ggridstress[ni[k]] += pstress[idx] * pMassTimesS;
+                Gdispgrads[ni[k]] += pDisplacementgrads[idx] * pMassTimesS;
+                Gvelgrads[ni[k]] += pvelgrads[idx] * pMassTimesS;
                 Gstrainenergydensity[ni[k]] +=
-                  pstrainenergydensity[idx] * pmassTimesS;
+                  pstrainenergydensity[idx] * pMassTimesS;
                 Gkineticenergydensity[ni[k]] +=
-                  pkineticenergydensity[idx] * pmassTimesS;
+                  pkineticenergydensity[idx] * pMassTimesS;
               }
             }
           } // End of loop over k

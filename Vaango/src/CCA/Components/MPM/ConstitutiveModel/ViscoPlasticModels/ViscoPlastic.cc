@@ -452,16 +452,16 @@ ViscoPlastic::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
 
     // Compute wave speed at each particle, store the maximum
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
-      pvelocity_idx = Vector(0.0, 0.0, 0.0);
+      pVelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
   }
 
   WaveSpeed       = dx / WaveSpeed;

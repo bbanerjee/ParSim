@@ -135,7 +135,7 @@ PeridynamicsLabel::PeridynamicsLabel()
     "g.volume", Uintah::NCVariable<double>::getTypeDescription());
 
   gpVelocityStarLabel = Uintah::VarLabel::create(
-    "g.pvelocitystar",
+    "g.pVelocitystar",
     Uintah::NCVariable<Uintah::Vector>::getTypeDescription());
   gpAccelerationLabel = Uintah::VarLabel::create(
     "g.pacceleration",

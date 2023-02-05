@@ -558,7 +558,7 @@ ElasticPlasticHP::computeStableTimestep(const Patch* patch,
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
   for (auto idx : *pset) {
 
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       double c_dil = std::sqrt(modulus * pVolume[idx] / pMass[idx]);
       Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;

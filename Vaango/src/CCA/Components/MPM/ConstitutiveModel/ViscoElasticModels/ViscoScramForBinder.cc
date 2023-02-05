@@ -325,13 +325,13 @@ ViscoScramForBinder::computeStableTimestep(const Patch* patch,
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
   constParticleVariable<Statedata> pStatedata;
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pStatedata, pStatedataLabel, pset);
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   int N = d_initialData.numMaxwellElements;
   double G = 0.0;
@@ -345,10 +345,10 @@ ViscoScramForBinder::computeStableTimestep(const Patch* patch,
   for (; iter != pset->end(); iter++) {
     particleIndex idx = *iter;
 
-    double c_dil = sqrt((k + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    double c_dil = sqrt((k + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
 

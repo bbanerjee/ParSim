@@ -397,12 +397,12 @@ ViscoTransIsoHyper::computeStableTimestep(const Patch* patch,
   int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -414,11 +414,11 @@ ViscoTransIsoHyper::computeStableTimestep(const Patch* patch,
 
   for (int idx : *pset) {
     // this is valid only for F=Identity
-    c_dil = std::sqrt((Bulk + 2. / 3. * c1) * pvolume[idx] / pmass[idx]);
+    c_dil = std::sqrt((Bulk + 2. / 3. * c1) * pVolume[idx] / pMass[idx]);
 
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -469,10 +469,10 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Point> px;
     constParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<Matrix3> pDefGrad;
-    constParticleVariable<double> pmass, fail_old;
-    constParticleVariable<double> pvolume;
+    constParticleVariable<double> pMass, fail_old;
+    constParticleVariable<double> pVolume;
     ParticleVariable<double> stretch, fail;
-    constParticleVariable<Vector> pvelocity, pfiberdir;
+    constParticleVariable<Vector> pVelocity, pfiberdir;
     ParticleVariable<Vector> pfiberdir_carry;
 
     ParticleVariable<Matrix3> pstress, ElasticStress; // visco
@@ -488,8 +488,8 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(fail_old, pFailureLabel, pset);
@@ -502,7 +502,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
     old_dw->get(history5_old, pHistory5Label, pset);
     old_dw->get(history6_old, pHistory6Label, pset);
 
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     constParticleVariable<Matrix3> velGrad;
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
@@ -615,7 +615,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
 
       // Compute deformed volume and local wave speed
       double rho_cur = rho_orig / J;
-      // pvolume[idx]=pmass[idx]/rho_cur;
+      // pVolume[idx]=pMass[idx]/rho_cur;
       c_dil = std::sqrt((Bulk + 1. / 3. * shear) / rho_cur);
 
       //________________________________Failure and stress terms
@@ -793,14 +793,14 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
             c6 * log(lambda_tilde);
       }
 
-      double e = (U + W) * pvolume[idx] / J;
+      double e = (U + W) * pVolume[idx] / J;
       se += e;
 
-      Vector pvelocity_idx = pvelocity[idx];
+      Vector pVelocity_idx = pVelocity[idx];
 
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {

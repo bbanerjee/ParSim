@@ -641,24 +641,24 @@ Arenisca::computeStableTimestep(
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
 
   // Get particles mass, volume, and velocity
-  constParticleVariable<double> pmass, pvolume;
+  constParticleVariable<double> pMass, pVolume;
   constParticleVariable<long64> pParticleID;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   // loop over the particles in the patch
   for (int idx : *pset) {
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
-    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * (pvolume[idx] / pmass[idx]));
+    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * (pVolume[idx] / pMass[idx]));
 
-    WaveSpeed = Vector(Max(c_dil + std::abs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + std::abs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + std::abs(pvelocity[idx].z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil + std::abs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + std::abs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
   }
 
   // Compute the stable timestep based on maximum value of
@@ -691,7 +691,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
     subcycling_characteristic_number = d_cm.subcycling_characteristic_number,
                B0 = d_cm.B0, G0 = d_cm.G0;
 
-  // Compute kinematics variables (pDefGrad_new, pvolume, pLocalized_new,
+  // Compute kinematics variables (pDefGrad_new, pVolume, pLocalized_new,
   // pVelGrad_new)
   // computeKinematics(patches, matl, old_dw, new_dw);
 
@@ -715,14 +715,14 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<int> pLocalized, pAreniscaFlag;
     constParticleVariable<double> peakI1IDist, pScratchDouble1, pScratchDouble2,
       pPorePressure,
-      pmass, // used for stable timestep
+      pMass, // used for stable timestep
       pevp,
       pevv,  // EG
       pev0,  // JG
       peqps, // Hamid
       peve, pCapX, pCapXDY, pKappa, pZeta, pZetaDY, pIota, pIotaDY;
     constParticleVariable<long64> pParticleID;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Matrix3> pScratchMatrix, pep, pDefGrad, pStress_old,
       pStressQS_old, pBackStress, pBackStressIso;
 
@@ -737,7 +737,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
                 pScratchDouble2Label,
                 pset);                                    // initializeCMData()
     old_dw->get(pPorePressure, pPorePressureLabel, pset); // initializeCMData()
-    old_dw->get(pmass, lb->pMassLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pevp, pevpLabel, pset);       // initializeCMData()
     old_dw->get(pevv, pevvLabel, pset);       // initializeCMData()
     old_dw->get(pev0, pev0Label, pset);       // initializeCMData()
@@ -751,7 +751,7 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pIota, pIotaLabel, pset);     // initializeCMData()
     old_dw->get(pIotaDY, pIotaDYLabel, pset); // initializeCMData()
     old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pScratchMatrix,
                 pScratchMatrixLabel,
                 pset);                // initializeCMData()
@@ -763,10 +763,10 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
     // Get the particle variables from interpolateToParticlesAndUpdate() in
     // SerialMPM
 
-    constParticleVariable<double> pvolume;
+    constParticleVariable<double> pVolume;
     constParticleVariable<Matrix3> pVelGrad_new, pDefGrad_new;
 
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
@@ -1442,28 +1442,28 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
-      double rho_cur = pmass[idx] / pvolume[idx];
+      double rho_cur = pMass[idx] / pVolume[idx];
       c_dil          = sqrt((bulk + four_third * shear) / rho_cur);
 #ifdef JC_DEBUG_SMALL_TIMESTEP
-      if (c_dil + std::abs(pvelocity[idx].x()) > WaveSpeed.x()) {
+      if (c_dil + std::abs(pVelocity[idx].x()) > WaveSpeed.x()) {
         idvel.x(idx);
         vbulk.x(bulk);
         vshear.x(shear);
       }
-      if (c_dil + std::abs(pvelocity[idx].y()) > WaveSpeed.y()) {
+      if (c_dil + std::abs(pVelocity[idx].y()) > WaveSpeed.y()) {
         idvel.y(idx);
         vbulk.y(bulk);
         vshear.y(shear);
       }
-      if (c_dil + std::abs(pvelocity[idx].z()) > WaveSpeed.z()) {
+      if (c_dil + std::abs(pVelocity[idx].z()) > WaveSpeed.z()) {
         idvel.z(idx);
         vbulk.z(bulk);
         vshear.z(shear);
       }
 #endif
-      WaveSpeed = Vector(Max(c_dil + std::abs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + std::abs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + std::abs(pvelocity[idx].z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Max(c_dil + std::abs(pVelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + std::abs(pVelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -1476,11 +1476,11 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
 
       // Compute the averaged stress
       // T2D: change to use this, check on improved energy conservation
-      //  Matrix3 AvgStressVol = (pStress_new[idx]*pvolume[idx] +
-      //  pStress_old[idx]*pvolume_old[idx])*0.5;
+      //  Matrix3 AvgStressVol = (pStress_new[idx]*pVolume[idx] +
+      //  pStress_old[idx]*pVolume_old[idx])*0.5;
       // not this
       Matrix3 AvgStressVol =
-        (pStress_new[idx] + pStress_old[idx]) * pvolume[idx] * 0.5;
+        (pStress_new[idx] + pStress_old[idx]) * pVolume[idx] * 0.5;
 
 #ifdef JC_DEBUG_PARTICLE // Print plastic work //T2D UNFINISHED aka wrong!!
       // Verify plastic work is positive
@@ -1532,15 +1532,15 @@ Arenisca::computeStressTensor(const PatchSubset* patches,
     // std::cout <<"delT_new="<<delT_new;
     // std::cout <<"dx="<<dx<<endl;
     if (delT_new == WaveSpeed.x()) {
-      std::cout << "pvel.x=" << pvelocity[idvel.x()].x()
+      std::cout << "pvel.x=" << pVelocity[idvel.x()].x()
                 << ",wavespeed.x=" << WaveSpeed.x() << ",bulk=" << vbulk.x()
                 << ",rho=" << rho_cur[idvel.x()] << std::endl;
     } else if (delT_new == WaveSpeed.y()) {
-      std::cout << "pvel.y: " << pvelocity[idvel.y()].y()
+      std::cout << "pvel.y: " << pVelocity[idvel.y()].y()
                 << ",wavespeed.y=" << WaveSpeed.y() << ",bulk=" << vbulk.y()
                 << ",rho=" << rho_cur[idvel.y()] << std::endl;
     } else if (delT_new == WaveSpeed.z()) {
-      std::cout << "pvel.z: " << pvelocity[idvel.z()].z()
+      std::cout << "pvel.z: " << pVelocity[idvel.z()].z()
                 << ",wavespeed.z=" << WaveSpeed.z() << ",bulk=" << vbulk.z()
                 << ",rho=" << rho_cur[idvel.z()] << std::endl;
     } else {

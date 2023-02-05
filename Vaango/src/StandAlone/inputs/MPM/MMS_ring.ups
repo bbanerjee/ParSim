@@ -19,7 +19,7 @@ Note:  In order to use this input file effectively, some changes
 must be made to the source tree.  Specifically, one must change
 MPM/ParticleCreator/ParticleCreator.cc at about line 552 in rev. 42515:
 
-+//  pvelocity[i]    = (*obj)->getInitialVelocity();
++//  pVelocity[i]    = (*obj)->getInitialVelocity();
 +  double r=p.x();
 +  double ri = 0.5;
 +  double ro = 1.0;
@@ -29,7 +29,7 @@ MPM/ParticleCreator/ParticleCreator.cc at about line 552 in rev. 42515:
 +  double c2=(3*(ro+ri))/((ro*ro)*(ro-3.*ri));
 +  double c3=(-2)/(ro*ro*(ro-3.*ri));
 +   
-+  pvelocity[i]    = Vector(c*M_PI*A*(1.)*(c3*r*r*r + c2*r*r + c1*r),0.,0.);
++  pVelocity[i]    = Vector(c*M_PI*A*(1.)*(c3*r*r*r + c2*r*r + c1*r),0.,0.);
 
 MPM/ConstitutiveModel/CompNeoHook.cc, around line 277:
 

@@ -74,11 +74,11 @@ namespace Vaango {
   protected:
 
     Uintah::ParticleVariable<Uintah::Point> position;
-    Uintah::ParticleVariable<Uintah::Vector> pvelocity, pexternalforce;
+    Uintah::ParticleVariable<Uintah::Vector> pVelocity, pExternalForce;
     Uintah::ParticleVariable<Uintah::Matrix3> pSize;
-    Uintah::ParticleVariable<double> pmass, pvolume;
-    Uintah::ParticleVariable<Uintah::long64> pparticleID;
-    Uintah::ParticleVariable<Uintah::Vector> pdisp;
+    Uintah::ParticleVariable<double> pMass, pVolume;
+    Uintah::ParticleVariable<Uintah::long64> pParticleID;
+    Uintah::ParticleVariable<Uintah::Vector> pDisplacement;
 
     PeridynamicsLabel* d_varLabel;
     PeridynamicsFlags* d_flags;

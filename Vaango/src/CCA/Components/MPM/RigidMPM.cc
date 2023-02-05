@@ -350,16 +350,16 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;
       ParticleVariable<Point> pxnew, pxx;
-      constParticleVariable<Vector> pvelocity;
+      constParticleVariable<Vector> pVelocity;
       constParticleVariable<Matrix3> pSize;
-      ParticleVariable<Vector> pvelocitynew;
+      ParticleVariable<Vector> pVelocitynew;
       ParticleVariable<Matrix3> pSizeNew;
-      constParticleVariable<double> pmass, pTemperature;
-      ParticleVariable<double> pmassNew, pTempNew;
+      constParticleVariable<double> pMass, pTemperature;
+      ParticleVariable<double> pMassNew, pTempNew;
       constParticleVariable<long64> pids;
       ParticleVariable<long64> pids_new;
-      constParticleVariable<Vector> pdisp;
-      ParticleVariable<Vector> pdispnew;
+      constParticleVariable<Vector> pDisplacement;
+      ParticleVariable<Vector> pDisplacementnew;
       constParticleVariable<Matrix3> pDeformationMeasure;
 
       // for thermal stress analysis
@@ -373,18 +373,18 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pdisp, d_mpm_labels->pDispLabel, pset);
-      old_dw->get(pmass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pDisplacement, d_mpm_labels->pDispLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
       old_dw->get(pids, d_mpm_labels->pParticleIDLabel, pset);
-      old_dw->get(pvelocity, d_mpm_labels->pVelocityLabel, pset);
+      old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
       old_dw->get(pTemperature, d_mpm_labels->pTemperatureLabel, pset);
-      new_dw->allocateAndPut(pvelocitynew,
+      new_dw->allocateAndPut(pVelocitynew,
                              d_mpm_labels->pVelocityLabel_preReloc,
                              pset);
       new_dw->allocateAndPut(pxnew, d_mpm_labels->pXLabel_preReloc, pset);
       new_dw->allocateAndPut(pxx, d_mpm_labels->pXXLabel, pset);
-      new_dw->allocateAndPut(pdispnew, d_mpm_labels->pDispLabel_preReloc, pset);
-      new_dw->allocateAndPut(pmassNew, d_mpm_labels->pMassLabel_preReloc, pset);
+      new_dw->allocateAndPut(pDisplacementnew, d_mpm_labels->pDispLabel_preReloc, pset);
+      new_dw->allocateAndPut(pMassNew, d_mpm_labels->pMassLabel_preReloc, pset);
       new_dw->allocateAndPut(pids_new,
                              d_mpm_labels->pParticleIDLabel_preReloc,
                              pset);
@@ -488,22 +488,22 @@ RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           acc += gacceleration[ni[k]] * S[k];
         }
         pTempNew[idx]     = pTemperature[idx] + tempRate * delT;
-        pvelocitynew[idx] = pvelocity[idx] + acc * delT;
+        pVelocitynew[idx] = pVelocity[idx] + acc * delT;
         // If there is no adiabatic heating, add the plastic temperature
         // to the particle temperature
 
         // Update the particle's position and velocity
-        pxnew[idx]    = px[idx] + pvelocity[idx] * delT;
-        pdispnew[idx] = pvelocity[idx] * delT;
-        pmassNew[idx] = pmass[idx];
+        pxnew[idx]    = px[idx] + pVelocity[idx] * delT;
+        pDisplacementnew[idx] = pVelocity[idx] * delT;
+        pMassNew[idx] = pMass[idx];
         // pxx is only useful if we're not in normal grid resetting mode.
         pxx[idx]         = px[idx];
         pTempPreNew[idx] = pTemperature[idx]; // for thermal stress
 
-        thermal_energy += pTempNew[idx] * pmass[idx] * Cp;
-        ke += .5 * pmass[idx] * pvelocitynew[idx].length2();
-        CMX = CMX + (pxnew[idx] * pmass[idx]).asVector();
-        total_mom += pvelocitynew[idx] * pmass[idx];
+        thermal_energy += pTempNew[idx] * pMass[idx] * Cp;
+        ke += .5 * pMass[idx] * pVelocitynew[idx].length2();
+        CMX = CMX + (pxnew[idx] * pMass[idx]).asVector();
+        total_mom += pVelocitynew[idx] * pMass[idx];
       }
 
       //__________________________________

@@ -212,24 +212,24 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
         particleIndex pidx = start + count;
         debug_loop << "GUVPartCreator::create::pidx = " << pidx << std::endl;
 
-        pvelocity[pidx] = (*obj)->getInitialVelocity();
+        pVelocity[pidx] = (*obj)->getInitialVelocity();
         ptemperature[pidx] = (*obj)->getInitialTemperature();
         psp_vol[pidx] = 1.0 / matl->getInitialDensity();
-        pdisp[pidx] = zero;
-        pexternalforce[pidx] = zero;
-        debug_loop << "GUVPartCreator::create::velocity = " << pvelocity[pidx]
+        pDisplacement[pidx] = zero;
+        pExternalForce[pidx] = zero;
+        debug_loop << "GUVPartCreator::create::velocity = " << pVelocity[pidx]
                    << " temperature = " << ptemperature[pidx]
-                   << " sp_vol = " << psp_vol[pidx] << " disp = " << pdisp[pidx]
-                   << " externalforce = " << pexternalforce[pidx] << std::endl;
+                   << " sp_vol = " << psp_vol[pidx] << " disp = " << pDisplacement[pidx]
+                   << " externalforce = " << pExternalForce[pidx] << std::endl;
 
         position[pidx] = p;
         pSize[pidx] = size;
-        pvolume[pidx] = *voliter;
+        pVolume[pidx] = *voliter;
         ++voliter;
-        pmass[pidx] = matl->getInitialDensity() * pvolume[pidx];
+        pMass[pidx] = matl->getInitialDensity() * pVolume[pidx];
         debug_loop << "GUVPartCreator::create::position = " << position[pidx]
-                   << " size = " << pSize[pidx] << " volume = " << pvolume[pidx]
-                   << " mass = " << pmass[pidx] << std::endl;
+                   << " size = " << pSize[pidx] << " volume = " << pVolume[pidx]
+                   << " mass = " << pMass[pidx] << std::endl;
 
         pType[pidx] = *typeiter;
         ++typeiter;
@@ -244,7 +244,7 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
                          << " Thick0 = " << pThick0[pidx]
                          << " Normal = " << pNormal[pidx]
                          << " Normal0 = " << pNormal0[pidx]
-                         << " volume = " << pvolume[pidx] << std::endl;
+                         << " volume = " << pVolume[pidx] << std::endl;
 
         long64 cellID = ((long64)cell_idx.x() << 16) |
                         ((long64)cell_idx.y() << 32) |
@@ -252,9 +252,9 @@ GUVParticleCreator::createParticles(MPMMaterial* matl,
         short int& myCellNAPID = cellNAPID[cell_idx];
         ASSERT(myCellNAPID < 0x7fff);
         myCellNAPID++;
-        pparticleID[pidx] = cellID | (long64)myCellNAPID;
+        pParticleID[pidx] = cellID | (long64)myCellNAPID;
         debug_loop << "GUVPartCreator::create::particleID = "
-                   << pparticleID[pidx] << std::endl;
+                   << pParticleID[pidx] << std::endl;
         count++;
       }
 

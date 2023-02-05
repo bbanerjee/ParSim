@@ -256,11 +256,11 @@ SoilFoam::computeStableTimestep(const Patch* patch,
   int matlindex = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(matlindex, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -271,10 +271,10 @@ SoilFoam::computeStableTimestep(const Patch* patch,
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
     // double E = 9.0*bulk/(3.0*bulk/G + 1.0);
-    c_dil     = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil     = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -321,10 +321,10 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
     constParticleVariable<Matrix3> pDefGrad_new, velGrad;
-    constParticleVariable<double> pmass, ptemperature, sv_min, p_sv_min;
-    constParticleVariable<double> pvolume;
+    constParticleVariable<double> pMass, ptemperature, sv_min, p_sv_min;
+    constParticleVariable<double> pVolume;
     ParticleVariable<double> sv_min_new, p_sv_min_new;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Matrix3> pSize;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -332,8 +332,8 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(sv_min, sv_minLabel, pset);
     old_dw->get(p_sv_min, p_sv_minLabel, pset);
@@ -341,12 +341,12 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
 
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
 
-    constParticleVariable<Matrix3> pdispGrads;
+    constParticleVariable<Matrix3> pDisplacementGrads;
     constParticleVariable<double> pstrainEnergyDensity;
     ParticleVariable<Matrix3> pvelGrads;
-    ParticleVariable<Matrix3> pdispGrads_new;
+    ParticleVariable<Matrix3> pDisplacementGrads_new;
     ParticleVariable<double> pstrainEnergyDensity_new;
     ParticleVariable<double> pdTdt, p_q;
 
@@ -371,7 +371,7 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       // get the volumetric part of the deformation
       double J          = pDefGrad_new[idx].Determinant();
       double rho_cur    = rho_orig / J;
-      double vol_strain = log(pvolume[idx] / (pmass[idx] / rho_orig));
+      double vol_strain = log(pVolume[idx] / (pMass[idx] / rho_orig));
       double pres;
 
       // Traditional method for mat5
@@ -437,15 +437,15 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume[idx] * delT;
+                 pVolume[idx] * delT;
 
       se += e;
 
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {

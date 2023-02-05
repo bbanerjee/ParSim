@@ -238,11 +238,11 @@ NonLocalDruckerPrager::computeStableTimestep(const Patch* patch,
   int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -253,10 +253,10 @@ NonLocalDruckerPrager::computeStableTimestep(const Patch* patch,
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
 
-    c_dil     = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil     = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -299,10 +299,10 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
-    constParticleVariable<double> pmass;
-    constParticleVariable<double> pvolume;
+    constParticleVariable<double> pMass;
+    constParticleVariable<double> pVolume;
     ParticleVariable<double> p_q;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> eta_old;
@@ -322,16 +322,16 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
                            pset);
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);
     old_dw->get(eta_old, etaLabel, pset);
     old_dw->get(eta_nl_old, eta_nlLabel, pset);
     old_dw->get(k_o_dist, k_o_distLabel, pset);
 
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
 
@@ -764,9 +764,9 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
       // store the maximum
 
       c_dil     = sqrt((bulk + (4.0 / 3.0) * shear) / (rho_cur[idx]));
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -783,7 +783,7 @@ NonLocalDruckerPrager::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume[idx] * delT;
+                 pVolume[idx] * delT;
 
       se += e;
 

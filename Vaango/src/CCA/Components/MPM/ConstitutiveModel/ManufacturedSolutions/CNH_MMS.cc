@@ -110,7 +110,7 @@ CNH_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
       ParticleVariable<double> pdTdt, pVolume;
       ParticleVariable<Matrix3> pDefGrad, pStress;
       constParticleVariable<Point> px;
-      constParticleVariable<Vector> pdisp;
+      constParticleVariable<Vector> pDisplacement;
       double mu = d_initialData.Shear;
       double bulk = d_initialData.Bulk;
       double lambda = (3. * bulk - 2. * mu) / 3.;
@@ -123,13 +123,13 @@ CNH_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
       new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel, pset);
       new_dw->allocateAndPut(pStress, lb->pStressLabel, pset);
       new_dw->get(px, lb->pXLabel, pset);
-      new_dw->get(pdisp, lb->pDispLabel, pset);
+      new_dw->get(pDisplacement, lb->pDispLabel, pset);
 
       // To fix : For a material that is initially stressed we need to
       // modify the stress tensors to comply with the initial stress state
       for (int idx : *pset) {
         pdTdt[idx] = 0.0;
-        Point X = px[idx] - pdisp[idx];
+        Point X = px[idx] - pDisplacement[idx];
         double Fxx = 1.;
         double Fyy = 1. + A * M_PI * cos(M_PI * X.y()) * sin(2. / 3. * M_PI);
         double Fzz = 1. + A * M_PI * cos(M_PI * X.z()) * sin(4. / 3. * M_PI);
@@ -192,12 +192,12 @@ CNH_MMS::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   int dwi = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -206,10 +206,10 @@ CNH_MMS::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   double bulk = d_initialData.Bulk;
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * mu / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4. * mu / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -237,22 +237,22 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pmass, pcolor;
-    ParticleVariable<double> pvolume_new;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<double> pMass, pcolor;
+    ParticleVariable<double> pVolume_new;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pdTdt;
     delt_vartype delT;
 
     // Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
-    new_dw->getModifiable(pvolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->getModifiable(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     if (flag->d_withColor) {
       old_dw->get(pcolor, lb->pColorLabel, pset);
@@ -279,7 +279,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
       double J = pDefGrad_new[idx].Determinant();
 
       // Get the deformed volume
-      pvolume_new[idx] = (pmass[idx] / rho_orig) * J;
+      pVolume_new[idx] = (pMass[idx] / rho_orig) * J;
 
       // Compute local wave speed
       double rho_cur = rho_orig / J;
@@ -296,10 +296,10 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
       // compute the total stress (volumetric + deviatoric)
       pstress[idx] = (Identity * p + Shear) / J;
 
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
     }
 
     WaveSpeed = dx / WaveSpeed;

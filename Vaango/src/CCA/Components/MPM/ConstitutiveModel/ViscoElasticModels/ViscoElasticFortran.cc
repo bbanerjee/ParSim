@@ -463,12 +463,12 @@ ViscoElasticFortran::computeStableTimestep(const Patch* patch,
   Vector dx            = patch->dCell();
   int matID            = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -477,10 +477,10 @@ ViscoElasticFortran::computeStableTimestep(const Patch* patch,
   double bulk = d_param.K;
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil     = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    waveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), waveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), waveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), waveSpeed.z()));
+    c_dil     = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    waveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), waveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), waveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), waveSpeed.z()));
   }
   waveSpeed       = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();

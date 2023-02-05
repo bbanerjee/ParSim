@@ -1461,8 +1461,8 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       // Create arrays for the particle data
       constParticleVariable<Point> px;
-      constParticleVariable<double> pmass, pvolume, pTemperature;
-      constParticleVariable<Vector> pvelocity, pexternalforce, pdisp;
+      constParticleVariable<double> pMass, pVolume, pTemperature;
+      constParticleVariable<Vector> pVelocity, pExternalForce, pDisplacement;
       constParticleVariable<Matrix3> pSize;
       constParticleVariable<Matrix3> pDeformationMeasure;
 
@@ -1473,18 +1473,18 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                                                        d_mpm_labels->pXLabel);
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pmass, d_mpm_labels->pMassLabel, pset);
-      old_dw->get(pvolume, d_mpm_labels->pVolumeLabel, pset);
-      old_dw->get(pvelocity, d_mpm_labels->pVelocityLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
       old_dw->get(pTemperature, d_mpm_labels->pTemperatureLabel, pset);
       old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
-      new_dw->get(pexternalforce, d_mpm_labels->pExtForceLabel_preReloc, pset);
+      new_dw->get(pExternalForce, d_mpm_labels->pExtForceLabel_preReloc, pset);
       old_dw->get(pDeformationMeasure, d_mpm_labels->pDefGradLabel, pset);
 
       // for FractureMPM
       constParticleVariable<Short27> pgCode;
       new_dw->get(pgCode, d_mpm_labels->pgCodeLabel, pset);
-      old_dw->get(pdisp, d_mpm_labels->pDispLabel, pset);
+      old_dw->get(pDisplacement, d_mpm_labels->pDispLabel, pset);
 
       // Create arrays for the grid data
       NCVariable<double> gMass;
@@ -1619,32 +1619,32 @@ FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                                          pSize[idx],
                                          pDeformationMeasure[idx]);
 
-        pmom = pvelocity[idx] * pmass[idx];
-        total_mom += pvelocity[idx] * pmass[idx];
+        pmom = pVelocity[idx] * pMass[idx];
+        total_mom += pVelocity[idx] * pMass[idx];
 
         // Add each particles contribution to the local mass & velocity
         // Must use the node indices
         for (int k = 0; k < d_mpm_flags->d_8or27; k++) {
           if (patch->containsNode(ni[k])) {
             if (pgCode[idx][k] == 1) { // above crack
-              gMass[ni[k]] += pmass[idx] * S[k];
+              gMass[ni[k]] += pMass[idx] * S[k];
               gVelocity[ni[k]] += pmom * S[k];
-              gVolume[ni[k]] += pvolume[idx] * S[k];
-              gexternalforce[ni[k]] += pexternalforce[idx] * S[k];
-              gTemperature[ni[k]] += pTemperature[idx] * pmass[idx] * S[k];
+              gVolume[ni[k]] += pVolume[idx] * S[k];
+              gexternalforce[ni[k]] += pExternalForce[idx] * S[k];
+              gTemperature[ni[k]] += pTemperature[idx] * pMass[idx] * S[k];
               // gexternalheatrate[ni[k]] += pexternalheatrate[idx]      * S[k];
               gnumnearparticles[ni[k]] += 1.0;
-              gSp_vol[ni[k]] += pSp_vol * pmass[idx] * S[k];
-              gdisplacement[ni[k]] += pdisp[idx] * pmass[idx] * S[k];
+              gSp_vol[ni[k]] += pSp_vol * pMass[idx] * S[k];
+              gdisplacement[ni[k]] += pDisplacement[idx] * pMass[idx] * S[k];
             } else if (pgCode[idx][k] == 2) { // below crack
-              Gmass[ni[k]] += pmass[idx] * S[k];
+              Gmass[ni[k]] += pMass[idx] * S[k];
               Gvelocity[ni[k]] += pmom * S[k];
-              Gvolume[ni[k]] += pvolume[idx] * S[k];
-              Gexternalforce[ni[k]] += pexternalforce[idx] * S[k];
-              GTemperature[ni[k]] += pTemperature[idx] * pmass[idx] * S[k];
+              Gvolume[ni[k]] += pVolume[idx] * S[k];
+              Gexternalforce[ni[k]] += pExternalForce[idx] * S[k];
+              GTemperature[ni[k]] += pTemperature[idx] * pMass[idx] * S[k];
               // Gexternalheatrate[ni[k]] += pexternalheatrate[idx]      * S[k];
-              GSp_vol[ni[k]] += pSp_vol * pmass[idx] * S[k];
-              Gdisplacement[ni[k]] += pdisp[idx] * pmass[idx] * S[k];
+              GSp_vol[ni[k]] += pSp_vol * pMass[idx] * S[k];
+              Gdisplacement[ni[k]] += pDisplacement[idx] * pMass[idx] * S[k];
             }
           }
         } // End of loop over k
@@ -1783,7 +1783,7 @@ FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
       ParticleVariable<double> p_q;
       constParticleVariable<Matrix3> pSize;
       constParticleVariable<Point> px;
-      constParticleVariable<double> pmass, pvol;
+      constParticleVariable<double> pMass, pvol;
       constParticleVariable<Matrix3> pDeformationMeasure;
 
       new_dw->get(gVelocity,
@@ -1793,7 +1793,7 @@ FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
                   Ghost::AroundCells,
                   d_numGhostNodes);
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pmass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
       new_dw->get(pvol, d_mpm_labels->pVolumeLabel, pset);
       old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
       new_dw->allocateAndPut(p_q, d_mpm_labels->p_qLabel, pset);
@@ -1852,10 +1852,10 @@ FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
         double DTrace = D.Trace();
         p_q[idx]      = 0.0;
         if (DTrace < 0.) {
-          c_dil    = sqrt(K * pvol[idx] / pmass[idx]);
+          c_dil    = sqrt(K * pvol[idx] / pMass[idx]);
           p_q[idx] = (C0 * fabs(c_dil * DTrace * dx_ave) +
                       C1 * (DTrace * DTrace * dx_ave * dx_ave)) *
-                     (pmass[idx] / pvol[idx]);
+                     (pMass[idx] / pvol[idx]);
         }
       }
     }
@@ -2008,7 +2008,7 @@ FractureMPM::computeInternalForce(const ProcessorGroup*,
       // Create arrays for the particle position, volume
       // and the constitutive model
       constParticleVariable<Point> px;
-      constParticleVariable<double> pvol, pmass;
+      constParticleVariable<double> pvol, pMass;
       constParticleVariable<double> p_pressure;
       constParticleVariable<double> p_q;
       constParticleVariable<Matrix3> pstress;
@@ -2025,7 +2025,7 @@ FractureMPM::computeInternalForce(const ProcessorGroup*,
                                                        d_mpm_labels->pXLabel);
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pmass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
       old_dw->get(pvol, d_mpm_labels->pVolumeLabel, pset);
       old_dw->get(pstress, d_mpm_labels->pStressLabel, pset);
       old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
@@ -2096,7 +2096,7 @@ FractureMPM::computeInternalForce(const ProcessorGroup*,
           pSize[idx],
           pDeformationMeasure[idx]);
 
-        stressmass = pstress[idx] * pmass[idx];
+        stressmass = pstress[idx] * pMass[idx];
         // stresspress = pstress[idx] + Id*p_pressure[idx];
         stresspress = pstress[idx] + Id * p_pressure[idx] - Id * p_q[idx];
         partvoldef += pvol[idx];
@@ -2725,16 +2725,16 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;
       ParticleVariable<Point> pxnew, pxx;
-      constParticleVariable<Vector> pvelocity;
+      constParticleVariable<Vector> pVelocity;
       constParticleVariable<Matrix3> pSize;
-      ParticleVariable<Vector> pvelocitynew;
+      ParticleVariable<Vector> pVelocitynew;
       ParticleVariable<Matrix3> pSizeNew;
-      constParticleVariable<double> pmass, pTemperature;
-      ParticleVariable<double> pmassNew, pvolume, pTempNew;
+      constParticleVariable<double> pMass, pTemperature;
+      ParticleVariable<double> pMassNew, pVolume, pTempNew;
       constParticleVariable<long64> pids;
       ParticleVariable<long64> pids_new;
-      constParticleVariable<Vector> pdisp;
-      ParticleVariable<Vector> pdispnew;
+      constParticleVariable<Vector> pDisplacement;
+      ParticleVariable<Vector> pDisplacementnew;
       ParticleVariable<double> pkineticEnergyDensity;
       constParticleVariable<Matrix3> pDeformationMeasure;
 
@@ -2750,10 +2750,10 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pdisp, d_mpm_labels->pDispLabel, pset);
-      old_dw->get(pmass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pDisplacement, d_mpm_labels->pDispLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
       old_dw->get(pids, d_mpm_labels->pParticleIDLabel, pset);
-      old_dw->get(pvelocity, d_mpm_labels->pVelocityLabel, pset);
+      old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
       old_dw->get(pTemperature, d_mpm_labels->pTemperatureLabel, pset);
       new_dw->get(pDeformationMeasure,
                   d_mpm_labels->pDefGradLabel_preReloc,
@@ -2761,14 +2761,14 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       // for thermal stress analysis
       new_dw->get(pTempCurrent, d_mpm_labels->pTempCurrentLabel, pset);
-      new_dw->getModifiable(pvolume, d_mpm_labels->pVolumeLabel_preReloc, pset);
-      new_dw->allocateAndPut(pvelocitynew,
+      new_dw->getModifiable(pVolume, d_mpm_labels->pVolumeLabel_preReloc, pset);
+      new_dw->allocateAndPut(pVelocitynew,
                              d_mpm_labels->pVelocityLabel_preReloc,
                              pset);
       new_dw->allocateAndPut(pxnew, d_mpm_labels->pXLabel_preReloc, pset);
       new_dw->allocateAndPut(pxx, d_mpm_labels->pXXLabel, pset);
-      new_dw->allocateAndPut(pdispnew, d_mpm_labels->pDispLabel_preReloc, pset);
-      new_dw->allocateAndPut(pmassNew, d_mpm_labels->pMassLabel_preReloc, pset);
+      new_dw->allocateAndPut(pDisplacementnew, d_mpm_labels->pDispLabel_preReloc, pset);
+      new_dw->allocateAndPut(pMassNew, d_mpm_labels->pMassLabel_preReloc, pset);
       new_dw->allocateAndPut(pids_new,
                              d_mpm_labels->pParticleIDLabel_preReloc,
                              pset);
@@ -2942,10 +2942,10 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         // Update the particle's position and velocity
         pxnew[idx]        = px[idx] + vel * delT * move_particles;
-        pdispnew[idx]     = pdisp[idx] + vel * delT;
-        pvelocitynew[idx] = pvelocity[idx] + acc * delT;
+        pDisplacementnew[idx]     = pDisplacement[idx] + vel * delT;
+        pVelocitynew[idx] = pVelocity[idx] + acc * delT;
         // pxx is only useful if we're not in normal grid resetting mode.
-        pxx[idx]         = px[idx] + pdispnew[idx];
+        pxx[idx]         = px[idx] + pDisplacementnew[idx];
         pTempNew[idx]    = pTemperature[idx] + tempRate * delT;
         pTempPreNew[idx] = pTempCurrent[idx]; // for thermal stress
 
@@ -2957,19 +2957,19 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         double rho;
-        if (pvolume[idx] > 0.) {
-          rho = pmass[idx] / pvolume[idx];
+        if (pVolume[idx] > 0.) {
+          rho = pMass[idx] / pVolume[idx];
         } else {
           rho = rho_init;
         }
-        pkineticEnergyDensity[idx] = 0.5 * rho * pvelocitynew[idx].length2();
-        pmassNew[idx]              = Max(pmass[idx] * (1. - burnFraction), 0.);
-        pvolume[idx]               = pmassNew[idx] / rho;
+        pkineticEnergyDensity[idx] = 0.5 * rho * pVelocitynew[idx].length2();
+        pMassNew[idx]              = Max(pMass[idx] * (1. - burnFraction), 0.);
+        pVolume[idx]               = pMassNew[idx] / rho;
 
-        thermal_energy += pTemperature[idx] * pmass[idx] * Cp;
-        ke += .5 * pmass[idx] * pvelocitynew[idx].length2();
-        CMX = CMX + (pxnew[idx] * pmass[idx]).asVector();
-        totalMom += pvelocitynew[idx] * pmass[idx];
+        thermal_energy += pTemperature[idx] * pMass[idx] * Cp;
+        ke += .5 * pMass[idx] * pVelocitynew[idx].length2();
+        CMX = CMX + (pxnew[idx] * pMass[idx]).asVector();
+        totalMom += pVelocitynew[idx] * pMass[idx];
       }
 
       // Delete particles whose mass is too small (due to combustion)
@@ -2979,11 +2979,11 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         particleIndex idx = *iter;
-        if (pmassNew[idx] <= d_mpm_flags->d_minPartMass) {
+        if (pMassNew[idx] <= d_mpm_flags->d_minPartMass) {
           delset->addParticle(idx);
         }
-        if (pvelocitynew[idx].length() > d_mpm_flags->d_maxVel) {
-          pvelocitynew[idx] = pvelocity[idx];
+        if (pVelocitynew[idx].length() > d_mpm_flags->d_maxVel) {
+          pVelocitynew[idx] = pVelocity[idx];
         }
       }
 
@@ -3173,24 +3173,24 @@ FractureMPM::refine(const ProcessorGroup*,
 
         // Create arrays for the particle data
         ParticleVariable<Point> px;
-        ParticleVariable<double> pmass, pvolume, pTemperature;
-        ParticleVariable<Vector> pvelocity, pexternalforce, pSize, pdisp;
+        ParticleVariable<double> pMass, pVolume, pTemperature;
+        ParticleVariable<Vector> pVelocity, pExternalForce, pSize, pDisplacement;
         ParticleVariable<int> pLoadCurve;
         ParticleVariable<long64> pID;
         ParticleVariable<Matrix3> pdeform, pstress;
 
         new_dw->allocateAndPut(px, d_mpm_labels->pXLabel, pset);
-        new_dw->allocateAndPut(pmass, d_mpm_labels->pMassLabel, pset);
-        new_dw->allocateAndPut(pvolume, d_mpm_labels->pVolumeLabel, pset);
-        new_dw->allocateAndPut(pvelocity, d_mpm_labels->pVelocityLabel, pset);
+        new_dw->allocateAndPut(pMass, d_mpm_labels->pMassLabel, pset);
+        new_dw->allocateAndPut(pVolume, d_mpm_labels->pVolumeLabel, pset);
+        new_dw->allocateAndPut(pVelocity, d_mpm_labels->pVelocityLabel, pset);
         new_dw->allocateAndPut(pTemperature,
                                d_mpm_labels->pTemperatureLabel,
                                pset);
-        new_dw->allocateAndPut(pexternalforce,
+        new_dw->allocateAndPut(pExternalForce,
                                d_mpm_labels->pExternalForceLabel,
                                pset);
         new_dw->allocateAndPut(pID, d_mpm_labels->pParticleIDLabel, pset);
-        new_dw->allocateAndPut(pdisp, d_mpm_labels->pDispLabel, pset);
+        new_dw->allocateAndPut(pDisplacement, d_mpm_labels->pDispLabel, pset);
         new_dw->allocateAndPut(pdeform, d_mpm_labels->pDefGradLabel, pset);
         new_dw->allocateAndPut(pstress, d_mpm_labels->pStressLabel, pset);
         if (d_mpm_flags->d_useLoadCurves) {

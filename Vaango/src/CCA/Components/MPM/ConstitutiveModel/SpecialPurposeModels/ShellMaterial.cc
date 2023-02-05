@@ -408,11 +408,11 @@ ShellMaterial::computeStableTimestep(const Patch* patch,
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
 
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -424,10 +424,10 @@ ShellMaterial::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
 
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4.0 * mu / 3.0) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4.0 * mu / 3.0) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   Vector dx = patch->dCell();
   WaveSpeed = dx / WaveSpeed;

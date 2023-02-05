@@ -1245,11 +1245,11 @@ HyperelasticPlastic::computeStableTimestep(const Patch* patch,
   int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pMass, pvolume;
+  constParticleVariable<double> pMass, pVolume;
   constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
@@ -1262,7 +1262,7 @@ HyperelasticPlastic::computeStableTimestep(const Patch* patch,
     // Compute wave speed at each particle, store the maximum
     Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
-      c_dil = sqrt((bulk + 4. * mu / 3.) * pvolume[idx] / pMass[idx]);
+      c_dil = sqrt((bulk + 4. * mu / 3.) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
       pVelocity_idx = Vector(0.0, 0.0, 0.0);
@@ -1602,7 +1602,7 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->getOtherDataWarehouse(Task::ParentOldDW);
 
   // Particle and grid variables
-  constParticleVariable<double> pVol, pMass, pvolumeold;
+  constParticleVariable<double> pVol, pMass, pVolumeold;
   constParticleVariable<Point> px;
   constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad_old, pBeBar;
@@ -1642,7 +1642,7 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
-    parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    parent_old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     parent_old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
     parent_old_dw->get(pBeBar, bElBarLabel, pset);
 

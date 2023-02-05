@@ -598,19 +598,19 @@ void FirstLawThermo::compute_MPM_Contributions(const ProcessorGroup * pg,
       MPMMaterial* mpm_matl = (MPMMaterial*) m_materialManager->getMaterial( "MPM",  m );
       int dwi = mpm_matl->getDWIndex();
 
-      constParticleVariable<double> pmassNew;
+      constParticleVariable<double> pMassNew;
       constParticleVariable<double> pTempNew;
 
       ParticleSubset* pset = old_dw->getParticleSubset( dwi, patch );
       new_dw->get( pTempNew, M_lb->pTemperatureLabel_preReloc, pset );
-      new_dw->get( pmassNew, M_lb->pMassLabel_preReloc,        pset );
+      new_dw->get( pMassNew, M_lb->pMassLabel_preReloc,        pset );
 
       double Cp = d_mpm_specificHeat[dwi];
 
       for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
         particleIndex idx = *iter;
 
-        MPM_totalIntEng += pTempNew[idx] * pmassNew[idx] * Cp;
+        MPM_totalIntEng += pTempNew[idx] * pMassNew[idx] * Cp;
       }
     }  // matl loop
 

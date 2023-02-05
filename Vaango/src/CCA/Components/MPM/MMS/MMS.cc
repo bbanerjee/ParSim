@@ -36,11 +36,11 @@ using namespace Uintah;
 //=====================================================================================
 void
 MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
-                              ParticleVariable<Vector> &pvelocity,
+                              ParticleVariable<Vector> &pVelocity,
                               ParticleVariable<Matrix3> &pSize,
-                              ParticleVariable<Vector> &pdisp,
-                              ParticleVariable<double> &pmass,
-                              ParticleVariable<double> &pvolume ,
+                              ParticleVariable<Vector> &pDisplacement,
+                              ParticleVariable<double> &pMass,
+                              ParticleVariable<double> &pVolume ,
                               Point p, 
                               Vector dxcc, 
                               Matrix3 size , 
@@ -53,32 +53,32 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
   if (mms_type == "GeneralizedVortex") {
 
     initGeneralizedVortex(flags, pidx, p, dxcc, size, 
-                          pvolume, pmass, position, pvelocity, pdisp, pSize);
+                          pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   } else if (mms_type == "AxisAligned" || mms_type == "AxisAligned3L") {
 
     initAxisAligned(flags, pidx, p, dxcc, size, 
-                    pvolume, pmass, position, pvelocity, pdisp, pSize);
+                    pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   } else if (mms_type == "ExpandingRing") {
 
     initExpandingRing(flags, pidx, p, dxcc, size, 
-                      pvolume, pmass, position, pvelocity, pdisp, pSize);
+                      pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   } else if (mms_type == "UniaxialStrainHarmonic") {
 
     initUniaxialStrainHarmonic(flags, pidx, p, dxcc, size, 
-                               pvolume, pmass, position, pvelocity, pdisp, pSize);
+                               pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   } else if (mms_type == "UniaxialStrainHomogeneousLinear") {
 
     initUniaxialStrainHomogeneousLinear(flags, pidx, p, dxcc, size, 
-                                        pvolume, pmass, position, pvelocity, pdisp, pSize);
+                                        pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   } else if (mms_type == "UniaxialStrainHomogeneousQuadratic") {
 
     initUniaxialStrainHomogeneousQuadratic(flags, pidx, p, dxcc, size, 
-                                           pvolume, pmass, position, pvelocity, pdisp, pSize);
+                                           pVolume, pMass, position, pVelocity, pDisplacement, pSize);
 
   }
 }
@@ -156,11 +156,11 @@ MMS::initGeneralizedVortex(const MPMFlags* flags,
                            const Point& p,
                            const Vector& dxcc,
                            const Matrix3& size,
-                           ParticleVariable<double>& pvolume,
-                           ParticleVariable<double>& pmass,
+                           ParticleVariable<double>& pVolume,
+                           ParticleVariable<double>& pMass,
                            ParticleVariable<Point>& position,
-                           ParticleVariable<Vector>& pvelocity,
-                           ParticleVariable<Vector>& pdisp,
+                           ParticleVariable<Vector>& pVelocity,
+                           ParticleVariable<Vector>& pDisplacement,
                            ParticleVariable<Matrix3>& pSize)
 {
   double t = 0.0;
@@ -175,15 +175,15 @@ MMS::initGeneralizedVortex(const MPMFlags* flags,
   position[pidx] = p;
   if (flags->d_axisymmetric) {
     // assume unit radian extent in the circumferential direction
-    pvolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
+    pVolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
   } else {
     // standard voxel volume
-    pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+    pVolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
-  pvelocity[pidx]    = Vector(u,v,w);
+  pVelocity[pidx]    = Vector(u,v,w);
   pSize[pidx]        = size;
-  pmass[pidx]        = rho0*pvolume[pidx];
-  pdisp[pidx]        = Vector(0.,0.,0.);
+  pMass[pidx]        = rho0*pVolume[pidx];
+  pDisplacement[pidx]        = Vector(0.,0.,0.);
 }
 
 void 
@@ -203,16 +203,16 @@ MMS::extForceGeneralizedVortex(const MPMFlags* flags,
   double A = 1.0;
 
   constParticleVariable<Point>  px;
-  constParticleVariable<Vector> pdisp;
-  constParticleVariable<double> pmass;
+  constParticleVariable<Vector> pDisplacement;
+  constParticleVariable<double> pMass;
   old_dw->get(px,             lb->pXLabel,             pset);
-  old_dw->get(pdisp,          lb->pDispLabel,          pset);
-  old_dw->get(pmass,          lb->pMassLabel,          pset);
+  old_dw->get(pDisplacement,          lb->pDispLabel,          pset);
+  old_dw->get(pMass,          lb->pMassLabel,          pset);
 
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
     particleIndex idx = *iter;
-    double X = px[idx].x()-pdisp[idx].x();
-    double Y = px[idx].y()-pdisp[idx].y();
+    double X = px[idx].x()-pDisplacement[idx].x();
+    double Y = px[idx].y()-pDisplacement[idx].y();
 
     double R = sqrt(X*X + Y*Y);
     double theta = atan2(Y,X);
@@ -229,7 +229,7 @@ MMS::extForceGeneralizedVortex(const MPMFlags* flags,
     double bx = cos(beta)*br - sin(beta)*bt;
     double by = sin(beta)*br + cos(beta)*bt;
 
-    pExtForce[idx] = (pmass[idx]*Vector(bx,by,bz));
+    pExtForce[idx] = (pMass[idx]*Vector(bx,by,bz));
   }
 }
 
@@ -242,11 +242,11 @@ MMS::initAxisAligned(const MPMFlags* flags,
                      const Point& p,
                      const Vector& dxcc,
                      const Matrix3& size,
-                     ParticleVariable<double>& pvolume,
-                     ParticleVariable<double>& pmass,
+                     ParticleVariable<double>& pVolume,
+                     ParticleVariable<double>& pMass,
                      ParticleVariable<Point>& position,
-                     ParticleVariable<Vector>& pvelocity,
-                     ParticleVariable<Vector>& pdisp,
+                     ParticleVariable<Vector>& pVelocity,
+                     ParticleVariable<Vector>& pDisplacement,
                      ParticleVariable<Matrix3>& pSize)
 {
   /* Vector dx = patch->dCell();             // you need to normalize the variable A by the 
@@ -274,19 +274,19 @@ MMS::initAxisAligned(const MPMFlags* flags,
   position[pidx] = p+disp;
   if (flags->d_axisymmetric) {
     // assume unit radian extent in the circumferential direction
-    pvolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
+    pVolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
   } else {
     // standard voxel volume
-    pvolume[pidx]  = J*size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+    pVolume[pidx]  = J*size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
 
   pSize[pidx] = Matrix3(size(0,0)*Fxx,0.,0.,
                         0.,size(1,1)*Fyy,0.,
                         0.,0.,size(2,2)*Fzz);
 
-  pvelocity[pidx]    = Vector(u,v,w);
-  pmass[pidx]        = rho0*pvolume[pidx]/J;
-  pdisp[pidx]        = disp;
+  pVelocity[pidx]    = Vector(u,v,w);
+  pMass[pidx]        = rho0*pVolume[pidx]/J;
+  pDisplacement[pidx]        = disp;
 }
 
 void 
@@ -308,17 +308,17 @@ MMS::extForceAxisAligned(const MPMFlags* flags,
   double A=0.05;
 
   constParticleVariable<Point>  px;
-  constParticleVariable<Vector> pdisp;
-  constParticleVariable<double> pmass;
+  constParticleVariable<Vector> pDisplacement;
+  constParticleVariable<double> pMass;
   old_dw->get(px,             lb->pXLabel,             pset);
-  old_dw->get(pdisp,          lb->pDispLabel,          pset);
-  old_dw->get(pmass,          lb->pMassLabel,          pset);
+  old_dw->get(pDisplacement,          lb->pDispLabel,          pset);
+  old_dw->get(pMass,          lb->pMassLabel,          pset);
 
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
     particleIndex idx = *iter;
-    double X = px[idx].x()-pdisp[idx].x();
-    double Y = px[idx].y()-pdisp[idx].y();
-    double Z = px[idx].z()-pdisp[idx].z();
+    double X = px[idx].x()-pDisplacement[idx].x();
+    double Y = px[idx].y()-pDisplacement[idx].y();
+    double Z = px[idx].z()-pDisplacement[idx].z();
 
     double U = A*sin(M_PI*X)*sin(M_PI*c*time);
     double V = A*sin(M_PI*Y)*sin(M_PI*((2./3.)+c*time));
@@ -334,7 +334,7 @@ MMS::extForceAxisAligned(const MPMFlags* flags,
     double by=(M_PI*M_PI)*V*(mu/rho0-c*c-(lam*(K-1.)-mu)/(rho0*Fyy*Fyy));
     double bz=(M_PI*M_PI)*W*(mu/rho0-c*c-(lam*(K-1.)-mu)/(rho0*Fzz*Fzz));
 
-    pExtForce[idx] = pmass[idx]*Vector(bx,by,bz);
+    pExtForce[idx] = pMass[idx]*Vector(bx,by,bz);
   }
 
 }
@@ -348,11 +348,11 @@ MMS::initExpandingRing(const MPMFlags* flags,
                        const Point& p,
                        const Vector& dxcc,
                        const Matrix3& size,
-                       ParticleVariable<double>& pvolume,
-                       ParticleVariable<double>& pmass,
+                       ParticleVariable<double>& pVolume,
+                       ParticleVariable<double>& pMass,
                        ParticleVariable<Point>& position,
-                       ParticleVariable<Vector>& pvelocity,
-                       ParticleVariable<Vector>& pdisp,
+                       ParticleVariable<Vector>& pVelocity,
+                       ParticleVariable<Vector>& pDisplacement,
                        ParticleVariable<Matrix3>& pSize)
 {
   // std::cout << "Entered the ER loop " << std::endl;
@@ -373,15 +373,15 @@ MMS::initExpandingRing(const MPMFlags* flags,
   position[pidx] = p;
   if (flags->d_axisymmetric) {
     // assume unit radian extent in the circumferential direction
-    pvolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
+    pVolume[pidx]  = p.x()*(size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
   } else {
     // standard voxel volume
-    pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+    pVolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   }
   pSize[pidx]        = size;
-  pvelocity[pidx]    = Vector(u,v,w);
-  pmass[pidx]        = rho*pvolume[pidx];
-  pdisp[pidx]        = Vector(0.,0.,0.);
+  pVelocity[pidx]    = Vector(u,v,w);
+  pMass[pidx]        = rho*pVolume[pidx];
+  pDisplacement[pidx]        = Vector(0.,0.,0.);
 }
 
 void 
@@ -406,16 +406,16 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
   double c3 = -2./(pow(ro,2)*(ro - 3.*ri)); 
 
   constParticleVariable<Point>  px;
-  constParticleVariable<Vector> pdisp;
-  constParticleVariable<double> pmass;
+  constParticleVariable<Vector> pDisplacement;
+  constParticleVariable<double> pMass;
   old_dw->get(px,             lb->pXLabel,             pset);
-  old_dw->get(pdisp,          lb->pDispLabel,          pset);
-  old_dw->get(pmass,          lb->pMassLabel,          pset);
+  old_dw->get(pDisplacement,          lb->pDispLabel,          pset);
+  old_dw->get(pMass,          lb->pMassLabel,          pset);
 
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
     particleIndex idx = *iter;
-    double X = px[idx].x()-pdisp[idx].x();
-    double Y = px[idx].y()-pdisp[idx].y();
+    double X = px[idx].x()-pDisplacement[idx].x();
+    double Y = px[idx].y()-pDisplacement[idx].y();
     // std::cout << "time :: " << time << std::endl;
     double t = time;
 
@@ -474,7 +474,7 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
                   mu*(XYAsinct*c2pc3*lenSq*term3-XYAsinct*c2pc3*len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0))*1.0/pow(pow(lenSq,2.0)*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)-lenSq*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0),2.0)*(YAsinct*Xc3Xc2*term1+XAsinct*Yc3Yc2*term2)*(Y*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0)*2.0-Y*lenSq*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)*4.0+(Y*term4*2.0+ASq*Y*c3Sq*sinctSq*lenSq*6.0)*lenSq*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)*2.0-ASq*Y*c2c3*sinctSq*pow(lenSq,2.0)*term3*2.0E1)-
                   mu*(XYAsinct*c2pc3*lenSq*term3-XYAsinct*c2pc3*len*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0))*1.0/pow(pow(lenSq,2.0)*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)-lenSq*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0),2.0)*(pow(term1,2.0)+ASq*XSq*sinctSq*pow(Yc3Yc2,2.0)-1.0)*(X*pow(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0,2.0)*2.0-X*lenSq*pow(A*c2*sinct*3.0+ASq*c1c2*sinctSq*3.0+ASq*c2c3*sinctSq*lenSq*5.0,2.0)*4.0+(X*term4*2.0+ASq*X*c3Sq*sinctSq*lenSq*6.0)*lenSq*(lenSq*term4+c1*Asinct*2.0+ASq*c1Sq*sinctSq+1.0)*2.0-ASq*X*c2c3*sinctSq*pow(lenSq,2.0)*term3*2.0E1))/rho-A*(C*C)*(M_PI*M_PI)*Y*1.0/(rb*rb)*sinct*c1c3c2*(1.0/4.0);
     double bz = 0.0;
-    pExtForce[idx] = pmass[idx]*Vector(bx,by,bz);
+    pExtForce[idx] = pMass[idx]*Vector(bx,by,bz);
   }
 }
 
@@ -487,11 +487,11 @@ MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
                                 const Point& p,
                                 const Vector& dxcc,
                                 const Matrix3& size,
-                                ParticleVariable<double>& pvolume,
-                                ParticleVariable<double>& pmass,
+                                ParticleVariable<double>& pVolume,
+                                ParticleVariable<double>& pMass,
                                 ParticleVariable<Point>& position,
-                                ParticleVariable<Vector>& pvelocity,
-                                ParticleVariable<Vector>& pdisp,
+                                ParticleVariable<Vector>& pVelocity,
+                                ParticleVariable<Vector>& pDisplacement,
                                 ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
@@ -511,11 +511,11 @@ MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
   double v0 = omega*alpha*std::sin(omega*X/cp);
 
   // Initialize particle variables
-  pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  pmass[pidx]     = rho0*pvolume[pidx];
-  pvelocity[pidx] = Vector(v0, 0.0, 0.0);
-  pdisp[pidx]     = Vector(u0, 0.0, 0.0);
-  position[pidx]  = p + pdisp[pidx];
+  pVolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pMass[pidx]     = rho0*pVolume[pidx];
+  pVelocity[pidx] = Vector(v0, 0.0, 0.0);
+  pDisplacement[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pDisplacement[pidx];
   pSize[pidx]     = size;
 }
 
@@ -600,11 +600,11 @@ MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
                                          const Point& p,
                                          const Vector& dxcc,
                                          const Matrix3& size,
-                                         ParticleVariable<double>& pvolume,
-                                         ParticleVariable<double>& pmass,
+                                         ParticleVariable<double>& pVolume,
+                                         ParticleVariable<double>& pMass,
                                          ParticleVariable<Point>& position,
-                                         ParticleVariable<Vector>& pvelocity,
-                                         ParticleVariable<Vector>& pdisp,
+                                         ParticleVariable<Vector>& pVelocity,
+                                         ParticleVariable<Vector>& pDisplacement,
                                          ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
@@ -621,11 +621,11 @@ MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
   double v0 = alpha0*X;
 
   // Initialize particle variables
-  pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  pmass[pidx]     = rho0*pvolume[pidx];
-  pvelocity[pidx] = Vector(v0, 0.0, 0.0);
-  pdisp[pidx]     = Vector(u0, 0.0, 0.0);
-  position[pidx]  = p + pdisp[pidx];
+  pVolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pMass[pidx]     = rho0*pVolume[pidx];
+  pVelocity[pidx] = Vector(v0, 0.0, 0.0);
+  pDisplacement[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pDisplacement[pidx];
   pSize[pidx]     = size;
 }
 
@@ -659,11 +659,11 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
                                             const Point& p,
                                             const Vector& dxcc,
                                             const Matrix3& size,
-                                            ParticleVariable<double>& pvolume,
-                                            ParticleVariable<double>& pmass,
+                                            ParticleVariable<double>& pVolume,
+                                            ParticleVariable<double>& pMass,
                                             ParticleVariable<Point>& position,
-                                            ParticleVariable<Vector>& pvelocity,
-                                            ParticleVariable<Vector>& pdisp,
+                                            ParticleVariable<Vector>& pVelocity,
+                                            ParticleVariable<Vector>& pDisplacement,
                                             ParticleVariable<Matrix3>& pSize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
@@ -681,11 +681,11 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
   double v0 = 2.0*alpha0*X*t;
 
   // Initialize particle variables
-  pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  pmass[pidx]     = rho0*pvolume[pidx];
-  pvelocity[pidx] = Vector(v0, 0.0, 0.0);
-  pdisp[pidx]     = Vector(u0, 0.0, 0.0);
-  position[pidx]  = p + pdisp[pidx];
+  pVolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pMass[pidx]     = rho0*pVolume[pidx];
+  pVelocity[pidx] = Vector(v0, 0.0, 0.0);
+  pDisplacement[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pDisplacement[pidx];
   pSize[pidx]     = size;
 }
 

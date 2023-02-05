@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,56 +24,58 @@
  */
 
 #include <CCA/Components/Peridynamics/ContactModels/SingleVelocityContact.h>
+
 #include <CCA/Components/Peridynamics/Core/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/Core/PeridynamicsMaterial.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
 
-#include <vector>
-#include <Core/Geometry/Vector.h>
 #include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Vector.h>
+#include <vector>
 
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
 
-#include <vector>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <vector>
 
 using namespace Vaango;
 
-using Uintah::ProcessorGroup;
-using Uintah::ProblemSpecP;
-using Uintah::SchedulerP;
-using Uintah::PatchSubset;
-using Uintah::MaterialSubset;
-using Uintah::PatchSet;
-using Uintah::MaterialSet;
 using Uintah::DataWarehouse;
 using Uintah::MaterialManagerP;
+using Uintah::MaterialSet;
+using Uintah::MaterialSubset;
+using Uintah::PatchSet;
+using Uintah::PatchSubset;
+using Uintah::ProblemSpecP;
+using Uintah::ProcessorGroup;
+using Uintah::SchedulerP;
 
-using Uintah::Task;
-using Uintah::Patch;
 using Uintah::Ghost;
 using Uintah::NodeIterator;
+using Uintah::Patch;
+using Uintah::Task;
 
 using Uintah::delt_vartype;
 
-using Uintah::NCVariable;
 using Uintah::constNCVariable;
+using Uintah::NCVariable;
 using Uintah::Vector;
 
 SingleVelocityContact::SingleVelocityContact(const ProcessorGroup* myworld,
-                                             ProblemSpecP& ps, 
-                                             MaterialManagerP& ss, 
+                                             ProblemSpecP& ps,
+                                             MaterialManagerP& ss,
                                              PeridynamicsLabel* labels,
                                              PeridynamicsFlags* flags)
   : ContactModelBase(myworld, labels, flags, ps)
@@ -80,11 +83,9 @@ SingleVelocityContact::SingleVelocityContact(const ProcessorGroup* myworld,
   d_mat_manager = ss;
 }
 
-SingleVelocityContact::~SingleVelocityContact()
-{
-}
+SingleVelocityContact::~SingleVelocityContact() {}
 
-void 
+void
 SingleVelocityContact::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP contact_ps = ps->appendChild("ContactModel");
@@ -92,14 +93,16 @@ SingleVelocityContact::outputProblemSpec(ProblemSpecP& ps)
   d_bodiesThatCanInteract.outputProblemSpec(contact_ps);
 }
 
-void 
-SingleVelocityContact::addComputesAndRequiresInterpolated(SchedulerP & sched,
-                                                          const PatchSet* patches,
-                                                          const MaterialSet* ms)
+void
+SingleVelocityContact::addComputesAndRequiresInterpolated(
+  SchedulerP& sched,
+  const PatchSet* patches,
+  const MaterialSet* ms)
 {
-  Task * t = scinew Task("SingleVelocityContact::exchangeMomentumInterpolated", 
-                      this, &SingleVelocityContact::exchangeMomentumInterpolated);
-  
+  Task* t = scinew Task("SingleVelocityContact::exchangeMomentumInterpolated",
+                        this,
+                        &SingleVelocityContact::exchangeMomentumInterpolated);
+
   const MaterialSubset* mss = ms->getUnion();
   t->requires(Task::NewDW, d_labels->gMassLabel, Ghost::None);
 
@@ -108,7 +111,7 @@ SingleVelocityContact::addComputesAndRequiresInterpolated(SchedulerP & sched,
   sched->addTask(t, patches, ms);
 }
 
-void 
+void
 SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
                                                     const PatchSubset* patches,
                                                     const MaterialSubset* matls,
@@ -122,61 +125,65 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
   int numBodies = d_mat_manager->getNumMaterials("Peridynamics");
   ASSERTEQ(numBodies, matls->size());
 
-  for (int p=0; p<patches->size(); p++) {
+  for (int p = 0; p < patches->size(); p++) {
 
     const Patch* patch = patches->get(p);
-    Vector centerOfMassVelocity(0.0,0.0,0.0);
+    Vector centerOfMassVelocity(0.0, 0.0, 0.0);
 
     // Retrieve necessary data from DataWarehouse
-    std::vector<constNCVariable<double> > gMass(numBodies);
-    std::vector<NCVariable<Vector> > gVelocity(numBodies);
-    for (int m=0; m<matls->size(); m++) {
+    std::vector<constNCVariable<double>> gMass(numBodies);
+    std::vector<NCVariable<Vector>> gVelocity(numBodies);
+    for (int m = 0; m < matls->size(); m++) {
       int matlIndex = matls->get(m);
-      new_dw->get(gMass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
-      new_dw->getModifiable(gVelocity[m], d_labels->gVelocityLabel, matlIndex, patch);
+      new_dw->get(
+        gMass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
+      new_dw->getModifiable(
+        gVelocity[m], d_labels->gVelocityLabel, matlIndex, patch);
     }
 
-    for(NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
 
       IntVector c = *iter;
 
-      Vector centerOfMassMom(0,0,0);
-      double centerOfMassMass=0.0;
+      Vector centerOfMassMom(0, 0, 0);
+      double centerOfMassMass = 0.0;
 
-      for(int n = 0; n < numBodies; n++){
-        if(d_bodiesThatCanInteract.requested(n)) {
+      for (int n = 0; n < numBodies; n++) {
+        if (d_bodiesThatCanInteract.requested(n)) {
           centerOfMassMom += gVelocity[n][c] * gMass[n][c];
-          centerOfMassMass += gMass[n][c]; 
+          centerOfMassMass += gMass[n][c];
         }
       }
 
       // Set each field's velocity equal to the center of mass velocity
-      centerOfMassVelocity = centerOfMassMom/centerOfMassMass;
-      for(int n = 0; n < numBodies; n++) {
-        if(d_bodiesThatCanInteract.requested(n)) {
+      centerOfMassVelocity = centerOfMassMom / centerOfMassMass;
+      for (int n = 0; n < numBodies; n++) {
+        if (d_bodiesThatCanInteract.requested(n)) {
           gVelocity[n][c] = centerOfMassVelocity;
         }
       }
     }
 
-    for(int m=0;m<matls->size();m++){
+    for (int m = 0; m < matls->size(); m++) {
       int matlIndex = matls->get(m);
       PeridynamicsDomainBoundCond bc;
-      bc.setBoundaryCondition(patch, matlIndex, "Symmetric",gVelocity[m],interp_type);
+      bc.setBoundaryCondition(
+        patch, matlIndex, "Symmetric", gVelocity[m], interp_type);
     }
   }
 }
 
-void 
-SingleVelocityContact::addComputesAndRequiresIntegrated(SchedulerP & sched,
+void
+SingleVelocityContact::addComputesAndRequiresIntegrated(SchedulerP& sched,
                                                         const PatchSet* patches,
-                                                        const MaterialSet* ms) 
+                                                        const MaterialSet* ms)
 {
-  Task * t = scinew Task("SingleVelocityContact::exchangeMomentumIntegrated", 
-                      this, &SingleVelocityContact::exchangeMomentumIntegrated);
-  
+  Task* t = scinew Task("SingleVelocityContact::exchangeMomentumIntegrated",
+                        this,
+                        &SingleVelocityContact::exchangeMomentumIntegrated);
+
   const MaterialSubset* mss = ms->getUnion();
-  t->requires(Task::OldDW, d_labels->delTLabel);    
+  t->requires(Task::OldDW, d_labels->delTLabel);
   t->requires(Task::NewDW, d_labels->gMassLabel, Ghost::None);
 
   t->modifies(d_labels->gVelocityStarLabel, mss);
@@ -184,7 +191,7 @@ SingleVelocityContact::addComputesAndRequiresIntegrated(SchedulerP & sched,
   sched->addTask(t, patches, ms);
 }
 
-void 
+void
 SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
                                                   const PatchSubset* patches,
                                                   const MaterialSubset* matls,
@@ -198,45 +205,46 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
 
     const Patch* patch = patches->get(p);
 
-    Vector zero(0.0,0.0,0.0);
-    Vector centerOfMassVelocity(0.0,0.0,0.0);
-    Vector centerOfMassMom(0.0,0.0,0.0);
+    Vector zero(0.0, 0.0, 0.0);
+    Vector centerOfMassVelocity(0.0, 0.0, 0.0);
+    Vector centerOfMassMom(0.0, 0.0, 0.0);
     double centerOfMassMass;
 
     // Retrieve necessary data from DataWarehouse
-    std::vector<constNCVariable<double> > gMass(numBodies);
-    std::vector<NCVariable<Vector> > gVelocity_star(numBodies);
+    std::vector<constNCVariable<double>> gMass(numBodies);
+    std::vector<NCVariable<Vector>> gVelocity_star(numBodies);
 
-    for(int m=0; m < matls->size();m++){
-     int matlIndex = matls->get(m);
-     new_dw->get(gMass[m],d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
-     new_dw->getModifiable(gVelocity_star[m],d_labels->gVelocityStarLabel, matlIndex,patch);
+    for (int m = 0; m < matls->size(); m++) {
+      int matlIndex = matls->get(m);
+      new_dw->get(
+        gMass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
+      new_dw->getModifiable(
+        gVelocity_star[m], d_labels->gVelocityStarLabel, matlIndex, patch);
     }
 
     delt_vartype delT;
     old_dw->get(delT, d_labels->delTLabel, getLevel(patches));
-    
-    for(NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++){
+
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
 
-      centerOfMassMom=zero;
-      centerOfMassMass=0.0; 
-      for(int  n = 0; n < numBodies; n++){
-        if(d_bodiesThatCanInteract.requested(n)) {
+      centerOfMassMom  = zero;
+      centerOfMassMass = 0.0;
+      for (int n = 0; n < numBodies; n++) {
+        if (d_bodiesThatCanInteract.requested(n)) {
           centerOfMassMom += gVelocity_star[n][c] * gMass[n][c];
-          centerOfMassMass += gMass[n][c]; 
+          centerOfMassMass += gMass[n][c];
         }
       }
 
       // Set each field's velocity equal to the center of mass velocity
-      centerOfMassVelocity = centerOfMassMom/centerOfMassMass;
-      for(int  n = 0; n < numBodies; n++){
-        if(d_bodiesThatCanInteract.requested(n)) {
-          //Vector dvdt = (centerOfMassVelocity - gVelocity_star[n][c])/delT;
+      centerOfMassVelocity = centerOfMassMom / centerOfMassMass;
+      for (int n = 0; n < numBodies; n++) {
+        if (d_bodiesThatCanInteract.requested(n)) {
+          // Vector dvdt = (centerOfMassVelocity - gVelocity_star[n][c])/delT;
           gVelocity_star[n][c] = centerOfMassVelocity;
         }
       }
     }
   }
 }
-

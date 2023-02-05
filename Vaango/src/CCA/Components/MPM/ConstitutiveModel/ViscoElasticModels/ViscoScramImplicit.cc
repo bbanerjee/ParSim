@@ -25,6 +25,8 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScramImplicit.h>
+
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
@@ -34,7 +36,6 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Rand48.h>
@@ -136,34 +137,34 @@ ViscoScramImplicit::ViscoScramImplicit(const ViscoScramImplicit* cm)
   : ConstitutiveModel(cm)
   , ImplicitCM(cm)
 {
-  d_bulk = cm->d_bulk;
-  d_random = cm->d_random;
-  d_useModifiedEOS = cm->d_useModifiedEOS;
+  d_bulk              = cm->d_bulk;
+  d_random            = cm->d_random;
+  d_useModifiedEOS    = cm->d_useModifiedEOS;
   d_doTimeTemperature = cm->d_doTimeTemperature;
-  d_useObjectiveRate = cm->d_useObjectiveRate;
+  d_useObjectiveRate  = cm->d_useObjectiveRate;
 
-  d_initialData.PR = cm->d_initialData.PR;
-  d_initialData.CoefThermExp = cm->d_initialData.CoefThermExp;
-  d_initialData.CrackParameterA = cm->d_initialData.CrackParameterA;
-  d_initialData.CrackPowerValue = cm->d_initialData.CrackPowerValue;
+  d_initialData.PR                 = cm->d_initialData.PR;
+  d_initialData.CoefThermExp       = cm->d_initialData.CoefThermExp;
+  d_initialData.CrackParameterA    = cm->d_initialData.CrackParameterA;
+  d_initialData.CrackPowerValue    = cm->d_initialData.CrackPowerValue;
   d_initialData.CrackMaxGrowthRate = cm->d_initialData.CrackMaxGrowthRate;
-  d_initialData.StressIntensityF = cm->d_initialData.StressIntensityF;
-  d_initialData.CrackFriction = cm->d_initialData.CrackFriction;
+  d_initialData.StressIntensityF   = cm->d_initialData.StressIntensityF;
+  d_initialData.CrackFriction      = cm->d_initialData.CrackFriction;
   d_initialData.InitialCrackRadius = cm->d_initialData.InitialCrackRadius;
-  d_initialData.CrackGrowthRate = cm->d_initialData.CrackGrowthRate;
-  d_initialData.G[0] = cm->d_initialData.G[0];
-  d_initialData.G[1] = cm->d_initialData.G[1];
-  d_initialData.G[2] = cm->d_initialData.G[2];
-  d_initialData.G[3] = cm->d_initialData.G[3];
-  d_initialData.G[4] = cm->d_initialData.G[4];
-  d_initialData.RTau[0] = cm->d_initialData.RTau[0];
-  d_initialData.RTau[1] = cm->d_initialData.RTau[1];
-  d_initialData.RTau[2] = cm->d_initialData.RTau[2];
-  d_initialData.RTau[3] = cm->d_initialData.RTau[3];
-  d_initialData.RTau[4] = cm->d_initialData.RTau[4];
-  d_initialData.Beta = cm->d_initialData.Beta;
-  d_initialData.Gamma = cm->d_initialData.Gamma;
-  d_initialData.DCp_DTemperature = cm->d_initialData.DCp_DTemperature;
+  d_initialData.CrackGrowthRate    = cm->d_initialData.CrackGrowthRate;
+  d_initialData.G[0]               = cm->d_initialData.G[0];
+  d_initialData.G[1]               = cm->d_initialData.G[1];
+  d_initialData.G[2]               = cm->d_initialData.G[2];
+  d_initialData.G[3]               = cm->d_initialData.G[3];
+  d_initialData.G[4]               = cm->d_initialData.G[4];
+  d_initialData.RTau[0]            = cm->d_initialData.RTau[0];
+  d_initialData.RTau[1]            = cm->d_initialData.RTau[1];
+  d_initialData.RTau[2]            = cm->d_initialData.RTau[2];
+  d_initialData.RTau[3]            = cm->d_initialData.RTau[3];
+  d_initialData.RTau[4]            = cm->d_initialData.RTau[4];
+  d_initialData.Beta               = cm->d_initialData.Beta;
+  d_initialData.Gamma              = cm->d_initialData.Gamma;
+  d_initialData.DCp_DTemperature   = cm->d_initialData.DCp_DTemperature;
 
   // Time-temperature data for relaxtion time calculation
   d_tt.T0_WLF = cm->d_tt.T0_WLF;
@@ -317,16 +318,17 @@ ViscoScramImplicit::initializeCMData(const Patch* patch,
 
   for (int idx : *pset) {
     pVolChangeHeatRate[idx] = 0.0;
-    pViscousHeatRate[idx] = 0.0;
-    pCrackHeatRate[idx] = 0.0;
-    pCrackRadius[idx] = d_initialData.InitialCrackRadius;
+    pViscousHeatRate[idx]   = 0.0;
+    pCrackHeatRate[idx]     = 0.0;
+    pCrackRadius[idx]       = d_initialData.InitialCrackRadius;
     for (auto& DevStres : pStatedata[idx].DevStress) {
       DevStres = zero;
     }
-    if (d_random)
+    if (d_random) {
       pRand[idx] = drand48();
-    else
+    } else {
       pRand[idx] = .5;
+    }
     pStrainRate[idx] = zero;
   }
 }
@@ -345,7 +347,8 @@ void
 ViscoScramImplicit::allocateCMDataAdd(DataWarehouse* new_dw,
                                       ParticleSubset* addset,
                                       ParticleLabelVariableMap* newState,
-                                      ParticleSubset* delset, DataWarehouse*)
+                                      ParticleSubset* delset,
+                                      DataWarehouse*)
 {
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
@@ -386,7 +389,8 @@ ViscoScramImplicit::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-ViscoScramImplicit::computeStableTimestep(const Patch*, const MPMMaterial*,
+ViscoScramImplicit::computeStableTimestep(const Patch*,
+                                          const MPMMaterial*,
                                           DataWarehouse*)
 {
   // Not used in the implicit models
@@ -397,7 +401,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
                                                 const MPMMaterial* matl,
                                                 DataWarehouse* old_dw,
                                                 DataWarehouse* new_dw,
-                                                Solver* solver, const bool)
+                                                Solver* solver,
+                                                const bool)
 
 {
   for (int pp = 0; pp < patches->size(); pp++) {
@@ -407,7 +412,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     std::vector<IntVector> ni(interpolator->size());
     std::vector<Vector> d_S(interpolator->size());
 
-    IntVector lowIndex = patch->getNodeLowIndex();
+    IntVector lowIndex  = patch->getNodeLowIndex();
     IntVector highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
     Array3<int> l2g(lowIndex, highIndex);
     solver->copyL2G(l2g, patch);
@@ -419,7 +424,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 
     Identity.Identity();
 
-    Vector dx = patch->dCell();
+    Vector dx      = patch->dCell();
     double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
 
     int dwi = matl->getDWIndex();
@@ -431,8 +436,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress_new;
     constParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pvolumeold, pmass;
-    constParticleVariable<double> pvolume_deformed;
+    constParticleVariable<double> pVolumeold, pMass;
+    constParticleVariable<double> pVolume_deformed;
     ParticleVariable<double> pdTdt;
 
     DataWarehouse* parent_old_dw =
@@ -441,11 +446,11 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pstress, lb->pStressLabel, pset);
-    parent_old_dw->get(pmass, lb->pMassLabel, pset);
-    parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    parent_old_dw->get(pMass, lb->pMassLabel, pset);
+    parent_old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
-    new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(dispGrad, lb->pDispGradLabel_preReloc, pset);
 
@@ -463,7 +468,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 
     if (matl->getIsRigid()) {
       for (int idx : *pset) {
-        pdTdt[idx] = 0;
+        pdTdt[idx]       = 0;
         pstress_new[idx] = Matrix3(0.0);
       }
     } else {
@@ -471,13 +476,13 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         pdTdt[idx] = 0.;
 
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx],
-                                                  pDefGrad[idx]);
+        interpolator->findCellAndShapeDerivatives(
+          px[idx], ni, d_S, pSize[idx], pDefGrad[idx]);
         int dof[24];
         loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
 
         // Calculate the strain (here called D), and deviatoric rate DPrime
-        Matrix3 e = (dispGrad[idx] + dispGrad[idx].Transpose()) * .5;
+        Matrix3 e      = (dispGrad[idx] + dispGrad[idx].Transpose()) * .5;
         Matrix3 ePrime = e - Identity * onethird * e.Trace();
 
         // This is the (updated) Cauchy stress
@@ -488,8 +493,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         // get the volumetric part of the deformation
         double J = pDefGrad_new[idx].Determinant();
 
-        double E = 9. * K * G / (3. * K + G);
-        double PR = (3. * K - E) / (6. * K);
+        double E   = 9. * K * G / (3. * K + G);
+        double PR  = (3. * K - E) / (6. * K);
         double C11 = E * (1. - PR) / ((1. + PR) * (1. - 2. * PR));
         double C12 = E * PR / ((1. + PR) * (1. - 2. * PR));
         double C44 = G;
@@ -547,10 +552,10 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         double kgeo[24][24];
         BnltDBnl(Bnl, sig, kgeo);
 
-        double volold = (pmass[idx] / rho_orig);
+        double volold = (pMass[idx] / rho_orig);
         double volnew = volold * J;
 
-        // pvolume_deformed[idx] = volnew;
+        // pVolume_deformed[idx] = volnew;
 
         for (int ii = 0; ii < 24; ii++) {
           for (int jj = 0; jj < 24; jj++) {
@@ -567,7 +572,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         solver->fillMatrix(24, dof, 24, dof, v);
       }
     }
-    //delete interpolator;
+    // delete interpolator;
   }
 }
 
@@ -579,7 +584,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 
 {
   for (int pp = 0; pp < patches->size(); pp++) {
-    double se = 0.0;
+    double se          = 0.0;
     const Patch* patch = patches->get(pp);
     Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     // double Jinc;
@@ -594,12 +599,11 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     // Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
-    int dwi = matl->getDWIndex();
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Placeholder stuff for viscoscram goes here
     constParticleVariable<double> pCrackRadius;
-    constParticleVariable<Vector> pVelocity;
     ParticleVariable<Matrix3> pStrainRate_new;
     ParticleVariable<double> pVolHeatRate_new, pVeHeatRate_new;
     ParticleVariable<double> pCrHeatRate_new, pCrackRadius_new;
@@ -609,10 +613,10 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pCrackRadius, pCrackRadiusLabel, pset);
 
     // Allocate arrays for the updated particle data for the current patch
-    new_dw->allocateAndPut(pVolHeatRate_new, pVolChangeHeatRateLabel_preReloc,
-                           pset);
-    new_dw->allocateAndPut(pVeHeatRate_new, pViscousHeatRateLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pVolHeatRate_new, pVolChangeHeatRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pVeHeatRate_new, pViscousHeatRateLabel_preReloc, pset);
     new_dw->allocateAndPut(pCrHeatRate_new, pCrackHeatRateLabel_preReloc, pset);
     new_dw->allocateAndPut(pCrackRadius_new, pCrackRadiusLabel_preReloc, pset);
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
@@ -627,37 +631,37 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
     constParticleVariable<Matrix3> pDefGrad_new, dispGrad;
-    constParticleVariable<double> pvolume;
-    constParticleVariable<double> pvolume_deformed;
+    constParticleVariable<double> pVolume;
+    constParticleVariable<double> pVolume_deformed;
     ParticleVariable<double> pdTdt;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     delt_vartype delT;
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(pvolume, lb->pVolumeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pVolume, lb->pVolumeLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-    new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(dispGrad, lb->pDispGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress_new, lb->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    double G = d_G;
+    double G    = d_G;
     double bulk = d_bulk;
 
     // Carry Forward the ViscoScram variables
     for (int idx : *pset) {
       pCrackRadius_new[idx] = pCrackRadius[idx];
       pVolHeatRate_new[idx] = 0.0;
-      pVeHeatRate_new[idx] = 0.0;
-      pCrHeatRate_new[idx] = 0.0;
-      pdTdt[idx] = 0.0;
+      pVeHeatRate_new[idx]  = 0.0;
+      pCrHeatRate_new[idx]  = 0.0;
+      pdTdt[idx]            = 0.0;
     }
 
     if (matl->getIsRigid()) {
@@ -667,8 +671,8 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     } else {
       for (int idx : *pset) {
         // Calculate the strain (here called D), and deviatoric rate DPrime
-        Matrix3 D = (dispGrad[idx] + dispGrad[idx].Transpose()) * .5;
-        Matrix3 DPrime = D - Identity * onethird * D.Trace();
+        Matrix3 D            = (dispGrad[idx] + dispGrad[idx].Transpose()) * .5;
+        Matrix3 DPrime       = D - Identity * onethird * D.Trace();
         pStrainRate_new[idx] = D / delT;
 
         // This is the (updated) Cauchy stress
@@ -684,7 +688,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
            D(2, 2) * AvgStress(2, 2) +
            2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                  D(1, 2) * AvgStress(1, 2))) *
-          pvolume_deformed[idx] * delT;
+          pVolume_deformed[idx] * delT;
 
         se += e;
       }
@@ -694,13 +698,15 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
       }
     }
-    //delete interpolator;
+    // delete interpolator;
   }
 }
 
 void
-ViscoScramImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patches, const bool,
+ViscoScramImplicit::addComputesAndRequires(Task* task,
+                                           const MPMMaterial* matl,
+                                           const PatchSet* patches,
+                                           const bool,
                                            const bool) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -712,8 +718,8 @@ ViscoScramImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::ParentOldDW, lb->pDefGradLabel, matlset, Ghost::None);
 
   task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDispGradLabel_preReloc, matlset,
-                 Ghost::None);
+  task->requires(
+    Task::NewDW, lb->pDispGradLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
@@ -721,11 +727,12 @@ ViscoScramImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ViscoScramImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+ViscoScramImplicit::addComputesAndRequires(Task* task,
+                                           const MPMMaterial* matl,
                                            const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gnone        = Ghost::None;
 
   task->requires(Task::OldDW, lb->delTLabel);
   task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
@@ -756,12 +763,14 @@ ViscoScramImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
-ViscoScramImplicit::computeRhoMicroCM(double pressure, const double p_ref,
+ViscoScramImplicit::computeRhoMicroCM(double pressure,
+                                      const double p_ref,
                                       const MPMMaterial* matl,
-                                      double temperature, double rho_guess)
+                                      double temperature,
+                                      double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
-  double p_gauge = pressure - p_ref;
+  double p_gauge  = pressure - p_ref;
   double rho_cur;
 
   rho_cur = rho_orig / (1 - p_gauge / d_bulk);
@@ -770,17 +779,20 @@ ViscoScramImplicit::computeRhoMicroCM(double pressure, const double p_ref,
 }
 
 void
-ViscoScramImplicit::computePressEOSCM(const double rho_cur, double& pressure,
-                                      const double p_ref, double& dp_drho,
-                                      double& tmp, const MPMMaterial* matl,
+ViscoScramImplicit::computePressEOSCM(const double rho_cur,
+                                      double& pressure,
+                                      const double p_ref,
+                                      double& dp_drho,
+                                      double& tmp,
+                                      const MPMMaterial* matl,
                                       double temperature)
 {
   double rho_orig = matl->getInitialDensity();
 
   double p_g = d_bulk * (1.0 - rho_orig / rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho = d_bulk * rho_orig / (rho_cur * rho_cur);
-  tmp = d_bulk / rho_cur;
+  pressure   = p_ref + p_g;
+  dp_drho    = d_bulk * rho_orig / (rho_cur * rho_cur);
+  tmp        = d_bulk / rho_cur;
 }
 
 double

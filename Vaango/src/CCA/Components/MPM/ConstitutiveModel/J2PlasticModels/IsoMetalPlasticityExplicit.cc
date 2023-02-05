@@ -610,16 +610,16 @@ IsoMetalPlasticityExplicit::computeStableTimestep(const Patch* patch,
   for (auto idx : *pset) {
 
     // Compute wave speed at each particle, store the maximum
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVol_new[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
-      pvelocity_idx = Vector(0.0, 0.0, 0.0);
+      pVelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    waveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), waveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity_idx.y()), waveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity_idx.z()), waveSpeed.z()));
+    waveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), waveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity_idx.y()), waveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity_idx.z()), waveSpeed.z()));
   }
 
   waveSpeed       = dx / waveSpeed;

@@ -610,11 +610,11 @@ ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
       ParticleSubset* pset;
       pset = old_dw->getParticleSubset(matlindex, patch);
       constParticleVariable<Point> px;
-      constParticleVariable<double> pvolume;
+      constParticleVariable<double> pVolume;
       constParticleVariable<double> ptemperature;
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pvolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
       old_dw->get(ptemperature, d_mpm_labels->pTemperatureLabel, pset);
 
       double v[64];
@@ -647,11 +647,11 @@ ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
           for (int jj = 0; jj < 8; jj++) {
             // Thermal inertia terms
             if (d_HC_transient) {
-              kHC[ii][jj] += S[jj] * S[ii] * Cp * rho * pvolume[idx] / dt;
+              kHC[ii][jj] += S[jj] * S[ii] * Cp * rho * pVolume[idx] / dt;
             }
             for (int dir = 0; dir < 3; dir++) {
               kHC[ii][jj] += d_S[jj][dir] * d_S[ii][dir] *
-                             (K / (dx[dir] * dx[dir])) * pvolume[idx];
+                             (K / (dx[dir] * dx[dir])) * pVolume[idx];
             }
           }
         }
@@ -734,10 +734,10 @@ ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
       ParticleSubset* pset;
       pset = old_dw->getParticleSubset(dwi, patch);
       constParticleVariable<Point> px;
-      constParticleVariable<double> pvolume;
+      constParticleVariable<double> pVolume;
 
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
-      old_dw->get(pvolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
 
       int dof[8];
       double Cp  = mpm_matl->getSpecificHeat();
@@ -763,7 +763,7 @@ ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
           for (int jj = 0; jj < 8; jj++) {
             // Thermal inertia terms
             if (d_HC_transient) {
-              v += S[jj] * S[ii] * Cp * rho * pvolume[idx] *
+              v += S[jj] * S[ii] * Cp * rho * pVolume[idx] *
                      temperature[ni[jj]] / dt +
                    gextheatrate[ni[ii]];
             }

@@ -383,7 +383,7 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
         ParticleSubset* pset_coarse;
         constParticleVariable<Point> px_coarse;
         constParticleVariable<Vector> pflux_coarse;
-        constParticleVariable<double> pmass_coarse;
+        constParticleVariable<double> pMass_coarse;
 
         // coarseLow and coarseHigh cannot lie outside of the coarse patch
         IntVector cl = Max(cl_tmp, coarsePatch->getCellLowIndex());
@@ -394,7 +394,7 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
 
         // coarse level data
         old_dw->get(px_coarse, d_lb->pXLabel, pset_coarse);
-        old_dw->get(pmass_coarse, d_lb->pMassLabel, pset_coarse);
+        old_dw->get(pMass_coarse, d_lb->pMassLabel, pset_coarse);
         new_dw->get(pflux_coarse, d_lb->diffusion->pFlux_preReloc, pset_coarse);
 
         for (ParticleSubset::iterator iter = pset_coarse->begin();
@@ -417,10 +417,10 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
             fineNode = ni[k];
             if (finePatch->containsNode(fineNode)) {
               double Cdot_cond =
-                Dot(div[k], pflux_coarse[idx]) * pmass_coarse[idx];
+                Dot(div[k], pflux_coarse[idx]) * pMass_coarse[idx];
               //               double Cdot_cond = Dot(div[k],
               //               pflux_coarse[idx]);
-              //                                    /*      * pmass_coarse[idx];
+              //                                    /*      * pMass_coarse[idx];
               //                                    */
               gConcRate[fineNode] -= Cdot_cond;
             } // contains node

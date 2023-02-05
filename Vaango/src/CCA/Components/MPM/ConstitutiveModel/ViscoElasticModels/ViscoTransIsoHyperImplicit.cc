@@ -454,12 +454,12 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     constParticleVariable<Matrix3> pSize;
     constParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<Matrix3> pDefGrad;
-    constParticleVariable<double> pmass, pvolumeold;
-    constParticleVariable<double> pvolume_deformed;
+    constParticleVariable<double> pMass, pVolumeold;
+    constParticleVariable<double> pVolume_deformed;
     ParticleVariable<double> stretch;
     ParticleVariable<double> fail;
     constParticleVariable<double> fail_old;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Vector> pfiberdir;
 
     ParticleVariable<Matrix3> pstress, ElasticStress; // visco
@@ -477,9 +477,9 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
 
     pset = parent_old_dw->getParticleSubset(dwi, patch);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(pmass, lb->pMassLabel, pset);
+    parent_old_dw->get(pMass, lb->pMassLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
-    parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    parent_old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
     parent_old_dw->get(fail_old, pFailureLabel, pset);
@@ -491,7 +491,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     parent_old_dw->get(history5_old, pHistory5Label, pset);
     parent_old_dw->get(history6_old, pHistory6Label, pset);
 
-    new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
@@ -901,9 +901,9 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         }
         double kgeo[24][24];
         BnltDBnl(Bnl, sig, kgeo);
-        double volold = (pmass[idx] / rho_orig);
+        double volold = (pMass[idx] / rho_orig);
         double volnew = volold * J;
-        // pvolume_deformed[idx] = volnew;
+        // pVolume_deformed[idx] = volnew;
         for (int ii = 0; ii < 24; ii++) {
           for (int jj = 0; jj < 24; jj++) {
             kmat[ii][jj] *= volold;
@@ -958,13 +958,13 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     constParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<Matrix3> pDefGrad;
     ParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pvolumeold;
-    constParticleVariable<double> pvolume_deformed;
+    constParticleVariable<double> pVolumeold;
+    constParticleVariable<double> pVolume_deformed;
 
     ParticleVariable<double> stretch;
     ParticleVariable<double> fail;
     constParticleVariable<double> fail_old;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Vector> pfiberdir;
     ParticleVariable<Vector> pfiberdir_carry;
 
@@ -980,7 +980,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     old_dw->get(pfiberdir, lb->pFiberDirLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(fail_old, pFailureLabel, pset);
@@ -993,7 +993,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     old_dw->get(history5_old, pHistory5Label, pset);
     old_dw->get(history6_old, pHistory6Label, pset);
 
-    new_dw->get(pvolume_deformed, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_deformed, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
@@ -1177,7 +1177,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
                        history5[idx] * y5 + history6[idx] * y6 +
                        ElasticStress[idx];
 
-        // pvolume_deformed[idx] = pvolumeold[idx]*Jinc;
+        // pVolume_deformed[idx] = pVolumeold[idx]*Jinc;
       } // end loop over particles
     }   // isn't rigid
     // delete interpolator;

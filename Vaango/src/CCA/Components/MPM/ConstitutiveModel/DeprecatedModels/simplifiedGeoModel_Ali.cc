@@ -235,11 +235,11 @@ simplifiedGeoModel::computeStableTimestep(const Patch* patch,
   int dwi = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -250,10 +250,10 @@ simplifiedGeoModel::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
-    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -304,9 +304,9 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
-    constParticleVariable<double> pmass;
-    ParticleVariable<double> pvolume,p_q;
-    constParticleVariable<Vector> pvelocity,pSize;
+    constParticleVariable<double> pMass;
+    ParticleVariable<double> pVolume,p_q;
+    constParticleVariable<Vector> pVelocity,pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double>  pPlasticStrain_new;
@@ -336,13 +336,13 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pBackStressIso_new,pBackStressIsoLabel_preReloc,pset);
     Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px,                  lb->pXLabel,                        pset);
-    old_dw->get(pmass,               lb->pMassLabel,                     pset);
+    old_dw->get(pMass,               lb->pMassLabel,                     pset);
     old_dw->get(pSize,               lb->pSizeLabel,                     pset);
-    old_dw->get(pvelocity,           lb->pVelocityLabel,                 pset);
+    old_dw->get(pVelocity,           lb->pVelocityLabel,                 pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel,       pset);
     old_dw->get(stress_old,             lb->pStressLabel,                pset);
     new_dw->allocateAndPut(stress_new,  lb->pStressLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pvolume,  lb->pVolumeLabel_preReloc,          pset);
+    new_dw->allocateAndPut(pVolume,  lb->pVolumeLabel_preReloc,          pset);
     new_dw->allocateAndPut(pdTdt,    lb->pdTdtLabel_preReloc,            pset);
     new_dw->allocateAndPut(defGrad_new,
                                   lb->pDeformationMeasureLabel_preReloc, pset);
@@ -414,7 +414,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       }
 
       // Update particle volumes
-      pvolume[idx]=(pmass[idx]/rho_orig)*J;
+      pVolume[idx]=(pMass[idx]/rho_orig)*J;
       rho_cur = rho_orig/J;
 
       // Initialize dT/dt to zero
@@ -736,9 +736,9 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
       c_dil = sqrt((bulk+four_third*shear)/(rho_cur));
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+fabs(pVelocity[idx].x()),WaveSpeed.x()),
+                       Max(c_dil+fabs(pVelocity[idx].y()),WaveSpeed.y()),
+                       Max(c_dil+fabs(pVelocity[idx].z()),WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z())*one_third;
@@ -754,7 +754,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
                   D(2,2)*AvgStress(2,2) +
               2.*(D(0,1)*AvgStress(0,1) +
                   D(0,2)*AvgStress(0,2) +
-                  D(1,2)*AvgStress(1,2))) * pvolume[idx]*delT;
+                  D(1,2)*AvgStress(1,2))) * pVolume[idx]*delT;
       se += e;
 
     }  // end loop over particles
@@ -813,9 +813,9 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
-    constParticleVariable<double> pmass;
-    ParticleVariable<double> pvolume, p_q;
-    constParticleVariable<Vector> pvelocity, pSize;
+    constParticleVariable<double> pMass;
+    ParticleVariable<double> pVolume, p_q;
+    constParticleVariable<Vector> pVelocity, pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double> pPlasticStrain_new;
@@ -849,13 +849,13 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
                            pset);
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);
     new_dw->allocateAndPut(stress_new, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->allocateAndPut(pVolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(defGrad_new, lb->pDeformationMeasureLabel_preReloc,
                            pset);
@@ -913,7 +913,7 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       }
 
       // Update particle volumes
-      pvolume[idx] = (pmass[idx] / rho_orig) * J;
+      pVolume[idx] = (pMass[idx] / rho_orig) * J;
       rho_cur = rho_orig / J;
 
       // Initialize dT/dt to zero
@@ -998,9 +998,9 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
       c_dil = sqrt((bulk + four_third * shear) / (rho_cur));
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
@@ -1015,7 +1015,7 @@ simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume[idx] * delT;
+                 pVolume[idx] * delT;
       se += e;
 
     } // end loop over particles

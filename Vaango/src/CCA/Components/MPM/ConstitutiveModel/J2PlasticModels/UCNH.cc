@@ -472,11 +472,11 @@ UCNH::computeStableTimestep(const Patch* patch,
   int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pMass, pvolume;
+  constParticleVariable<double> pMass, pVolume;
   constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
@@ -489,7 +489,7 @@ UCNH::computeStableTimestep(const Patch* patch,
     // Compute wave speed at each particle, store the maximum
     Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
-      c_dil = sqrt((bulk + 4. * mu / 3.) * pvolume[idx] / pMass[idx]);
+      c_dil = sqrt((bulk + 4. * mu / 3.) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
       pVelocity_idx = Vector(0.0, 0.0, 0.0);
@@ -740,7 +740,7 @@ UCNH::computeStressTensor(const PatchSubset* patches,
       if (std::isnan(pStress[idx].Norm())) {
         std::cerr << "particle = " << idx << " velGrad = " << pVelGrad[idx] << "\n";
         std::cerr << " stress = " << pStress[idx] << "\n";
-        std::cerr << " pmass = " << pMass[idx] << " pvol = " << pVolume_new[idx]
+        std::cerr << " pMass = " << pMass[idx] << " pvol = " << pVolume_new[idx]
              << "\n";
         std::cerr << " delgamma = " << delgamma << " ftrial = " << fTrial
              << " mubar = " << muBar << " K = " << K << "\n";
@@ -854,7 +854,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->getOtherDataWarehouse(Task::ParentOldDW);
 
   // Particle and grid variables
-  constParticleVariable<double> pVol, pMass, pvolumeold;
+  constParticleVariable<double> pVol, pMass, pVolumeold;
   constParticleVariable<Point> px;
   constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pBeBar;
@@ -894,7 +894,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
-    parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    parent_old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pBeBar, bElBarLabel, pset);
 

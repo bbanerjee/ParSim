@@ -426,9 +426,9 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
       // int indx = peridynamic_matl->getDWIndex();
 
       // Create particles
-      particleIndex numParticles = peridynamic_matl->countParticles(patch);
+      particleIndex numParticles =
+        peridynamic_matl->createParticles(cellNAPID, patch, new_dw);
       totalParticles += numParticles;
-      peridynamic_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
 
       // Initialize deformation gradient and shape
       d_defGradComputer->initialize(patch, peridynamic_matl, new_dw);

@@ -48,6 +48,8 @@ class GeometryObject;
 
 namespace Vaango {
 
+using particleIndex = int;
+
 class PeridynamicsFlags;
 class PeridynamicsLabel;
 class PeridynamicsDamageModel;
@@ -56,7 +58,6 @@ class ParticleCreator;
 
 class PeridynamicsMaterial : public Uintah::Material
 {
-
 public:
   // Default Constructor
   PeridynamicsMaterial();
@@ -99,11 +100,8 @@ public:
     return d_density;
   }
 
-  Uintah::particleIndex
-  countParticles(const Uintah::Patch* patch);
-  void
-  createParticles(Uintah::particleIndex numParticles,
-                  Uintah::CCVariable<short int>& cellNAPID,
+  particleIndex
+  createParticles(Uintah::CCVariable<short int>& cellNAPID,
                   const Uintah::Patch* patch,
                   Uintah::DataWarehouse* new_dw);
 
@@ -118,7 +116,7 @@ private:
 
   double d_density{0.0};
 
-  std::vector<Uintah::GeometryObject*> d_geom_objs;
+  std::vector<std::shared_ptr<Uintah::GeometryObject>> d_geom_objs;
 
   ///////////////////////////////////////////////////////////////////////////
   //

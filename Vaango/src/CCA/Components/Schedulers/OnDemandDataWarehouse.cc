@@ -1810,6 +1810,56 @@ OnDemandDataWarehouse::getParticleSubset(int matlIndex,
   return newsubset;
 }
 
+/* For peridynamics:
+   Create a particle subset for a subset of a patch and its
+   neighboring patches defined by a local lowIndex and a local highIndex.
+   If the particles are contained outside the current patch, use the
+   numGhostCells to get the outside particles */
+ParticleSubset*
+OnDemandDataWarehouse::getParticleSubset(int matlIndex,
+                                         const Patch* patch,
+                                         IntVector localLowIndex,
+                                         IntVector localHighIndex,
+                                         Ghost::GhostType ghostType,
+                                         int numGhostCells,
+                                         const VarLabel* posVar)
+{
+  // First find the total extents for the particles
+  IntVector lowIndex, highIndex;
+  patch->computeVariableExtents(Patch::CellBased,
+                                posVar->getBoundaryLayer(),
+                                ghostType,
+                                numGhostCells,
+                                lowIndex,
+                                highIndex);
+
+  // Check that the local lowIndex and local highIndex are contained in the
+  // variable extents for the patch + extra cells
+  if (localLowIndex.x() < lowIndex.x() || localLowIndex.y() < lowIndex.y() ||
+      localLowIndex.z() < lowIndex.z()) {
+    std::ostringstream msg_str;
+    msg_str << "getParticleSubset: Cannot get variable in the local range ("
+            << localLowIndex << " , " << localHighIndex << ")" << std::endl;
+    msg_str << "Variable's window is (" << lowIndex << " - " << highIndex << ")"
+            << std::endl;
+    SCI_THROW(InternalError(msg_str.str(), __FILE__, __LINE__));
+  }
+
+  if (localHighIndex.x() > highIndex.x() ||
+      localHighIndex.y() > highIndex.y() ||
+      localHighIndex.z() > highIndex.z()) {
+    std::ostringstream msg_str;
+    msg_str << "getParticleSubset: Cannot get variable in the local range ("
+            << localLowIndex << " , " << localHighIndex << ")" << std::endl;
+    msg_str << "Variable's window is (" << lowIndex << " - " << highIndex << ")"
+            << std::endl;
+    SCI_THROW(InternalError(msg_str.str(), __FILE__, __LINE__));
+  }
+
+  return getParticleSubset(
+    matlIndex, localLowIndex, localHighIndex, patch, posVar);
+}
+
 // Get the particle index values of a set of ParticleIDs
 void
 OnDemandDataWarehouse::getParticleIndex(

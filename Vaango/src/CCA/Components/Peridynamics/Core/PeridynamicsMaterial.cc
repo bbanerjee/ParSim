@@ -137,7 +137,7 @@ PeridynamicsMaterial::standardInitialization(
 
     //    piece_num++;
     d_geom_objs.push_back(
-      scinew Uintah::GeometryObject(mainpiece, geom_obj_ps, geom_obj_data));
+      std::make_shared<Uintah::GeometryObject>(mainpiece, geom_obj_ps, geom_obj_data));
   }
 }
 
@@ -153,10 +153,6 @@ PeridynamicsMaterial::~PeridynamicsMaterial()
   delete d_materialModel;
   delete d_particle_creator;
   delete d_damageModel;
-
-  for (int i = 0; i < (int)d_geom_objs.size(); i++) {
-    delete d_geom_objs[i];
-  }
 }
 
 /*
@@ -196,20 +192,13 @@ PeridynamicsMaterial::getDamageModel() const
   return d_damageModel;
 }
 
-Uintah::particleIndex
-PeridynamicsMaterial::countParticles(const Uintah::Patch* patch)
-{
-  return d_particle_creator->countParticles(patch, d_geom_objs);
-}
-
-void
-PeridynamicsMaterial::createParticles(Uintah::particleIndex numParticles,
-                                      Uintah::CCVariable<short int>& cellNAPID,
+particleIndex
+PeridynamicsMaterial::createParticles(Uintah::CCVariable<short int>& cellNAPID,
                                       const Uintah::Patch* patch,
                                       Uintah::DataWarehouse* new_dw)
 {
-  d_particle_creator->createParticles(
-    this, numParticles, cellNAPID, patch, new_dw, d_geom_objs);
+  return d_particle_creator->createParticles(
+    this, cellNAPID, patch, new_dw, d_geom_objs);
 }
 
 ParticleCreator*

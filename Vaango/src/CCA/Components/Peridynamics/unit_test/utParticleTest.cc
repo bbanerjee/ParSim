@@ -209,12 +209,12 @@ void utParticleTest::initialize(const ProcessorGroup*,
       int matl = matls->get(m);
 
       Uintah::ParticleVariable<Uintah::Point> px;
-      Uintah::ParticleVariable<double> pmass;
+      Uintah::ParticleVariable<double> pMass;
       Uintah::ParticleVariable<Uintah::long64> pids;
 
       ParticleSubset* subset = new_dw->createParticleSubset(numParticles,matl,patch);
       new_dw->allocateAndPut(px,      d_labels->pPositionLabel,      subset);
-      new_dw->allocateAndPut(pmass,   d_labels->pMassLabel,          subset);
+      new_dw->allocateAndPut(pMass,   d_labels->pMassLabel,          subset);
       new_dw->allocateAndPut(pids,    d_labels->pParticleIDLabel,    subset);
 
       for (int i = 0; i < numParticles; i++) {
@@ -223,7 +223,7 @@ void utParticleTest::initialize(const ProcessorGroup*,
           (((float) rand()) / RAND_MAX * ( high.z() - low.z()-1) + low.z()));
         px[i] = pos;
         pids[i] = patch->getID()*numParticles+i;
-        pmass[i] = ((float) rand()) / RAND_MAX * 10;
+        pMass[i] = ((float) rand()) / RAND_MAX * 10;
       }
     }
   }
@@ -244,16 +244,16 @@ void utParticleTest::timeAdvance(const ProcessorGroup*,
       // Get the arrays of particle values to be changed
       Uintah::constParticleVariable<Uintah::Point> px;
       Uintah::ParticleVariable<Uintah::Point> pxnew;
-      Uintah::constParticleVariable<double> pmass;
-      Uintah::ParticleVariable<double> pmassnew;
+      Uintah::constParticleVariable<double> pMass;
+      Uintah::ParticleVariable<double> pMassnew;
       Uintah::constParticleVariable<Uintah::long64> pids;
       Uintah::ParticleVariable<Uintah::long64> pidsnew;
 
-      old_dw->get(pmass, d_labels->pMassLabel,               pset);
+      old_dw->get(pMass, d_labels->pMassLabel,               pset);
       old_dw->get(px,    d_labels->pPositionLabel,           pset);
       old_dw->get(pids,  d_labels->pParticleIDLabel,         pset);
 
-      new_dw->allocateAndPut(pmassnew, d_labels->pMassLabel_preReloc,       pset);
+      new_dw->allocateAndPut(pMassnew, d_labels->pMassLabel_preReloc,       pset);
       new_dw->allocateAndPut(pxnew,    d_labels->pPositionLabel_preReloc,   pset);
       new_dw->allocateAndPut(pidsnew,  d_labels->pParticleIDLabel_preReloc, pset);
 
@@ -262,11 +262,11 @@ void utParticleTest::timeAdvance(const ProcessorGroup*,
         Uintah::Point pos( px[i].x() + .25, px[i].y(), px[i].z());
         pxnew[i] = pos;
         pidsnew[i] = pids[i];
-        pmassnew[i] = pmass[i] *.9;
+        pMassnew[i] = pMass[i] *.9;
         if (d_doOutput)
           std::cout << " Patch " << patch->getID() << ": ID " 
                << pidsnew[i] << ", pos " << pxnew[i] 
-               << ", mass " << pmassnew[i] << std::endl;
+               << ", mass " << pMassnew[i] << std::endl;
       }
       new_dw->deleteParticles(delset);
     }

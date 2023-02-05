@@ -259,12 +259,12 @@ MWViscoElastic::computeStableTimestep(const Patch* patch,
   Vector dx = patch->dCell();
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -278,10 +278,10 @@ MWViscoElastic::computeStableTimestep(const Patch* patch,
 
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * shear / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4. * shear / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -321,16 +321,16 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<Matrix3> pstress_e_new, pstress_ve_new;
     ParticleVariable<Matrix3> pstress_ve_d_new, pstress_e_d_new;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<double> pmass, ptemperature;
+    constParticleVariable<double> pMass, ptemperature;
     constParticleVariable<double> pstress_ve_v, pstress_e_v;
     ParticleVariable<double> pstress_ve_v_new, pstress_e_v_new;
-    constParticleVariable<Vector> pvelocity;
+    constParticleVariable<Vector> pVelocity;
     constParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pdTdt, p_q;
 
     constParticleVariable<Matrix3> pDefGrad_new, velGrad;
-    constParticleVariable<double> pvolume_new;
-    new_dw->get(pvolume_new, lb->pVolumeLabel_preReloc, pset);
+    constParticleVariable<double> pVolume_new;
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
 
@@ -356,8 +356,8 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pstress_e_v, pStress_e_vLabel, pset);
     old_dw->get(pstress_e_d, pStress_e_dLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
@@ -413,22 +413,22 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
       double ee = (pstress_ve_d_new[idx].NormSquared() / 4 / ve_shear +
                    pstress_e_d_new[idx].NormSquared() / 4 / e_shear +
                    p * p / 2 / (ve_bulk + e_bulk)) *
-                  pvolume_new[idx];
+                  pVolume_new[idx];
 
       ve = ve +
            (pstress_ve_d_new[idx].NormSquared() / d_viscosity) *
-             pvolume_new[idx] * delT;
+             pVolume_new[idx] * delT;
 
       double e = ee + ve;
 
       se += e;
 
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      c_dil = sqrt((bulk + 4. * shear / 3.) * pvolume_new[idx] / pmass[idx]);
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      c_dil = sqrt((bulk + 4. * shear / 3.) * pVolume_new[idx] / pMass[idx]);
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;

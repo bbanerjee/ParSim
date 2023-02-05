@@ -291,14 +291,14 @@ GUVMaterial::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
 
   constParticleVariable<int> pType;
-  constParticleVariable<double> pThick, pmass, pvolume;
-  constParticleVariable<Vector> pNormal, pvelocity;
+  constParticleVariable<double> pThick, pMass, pVolume;
+  constParticleVariable<Vector> pNormal, pVelocity;
   new_dw->get(pType, lb->pTypeLabel, pset);
   new_dw->get(pNormal, lb->pNormalLabel, pset);
   new_dw->get(pThick, lb->pThickTopLabel, pset);
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -321,13 +321,13 @@ GUVMaterial::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
     // Compute wave speed at each particle, store the maximum
     if (pType[idx] == Lipid)
       c_dil =
-        sqrt((K_lipid + 4.0 * mu_lipid / 3.0) * pvolume[idx] / pmass[idx]);
+        sqrt((K_lipid + 4.0 * mu_lipid / 3.0) * pVolume[idx] / pMass[idx]);
     else
-      c_dil = sqrt((K_cholesterol + 4.0 * mu_cholesterol / 3.0) * pvolume[idx] /
-                   pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      c_dil = sqrt((K_cholesterol + 4.0 * mu_cholesterol / 3.0) * pVolume[idx] /
+                   pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   Vector dx = patch->dCell();
   WaveSpeed = dx / WaveSpeed;

@@ -172,13 +172,13 @@ ParticleTest1::initialize(const ProcessorGroup*,
       int matl         = matls->get(m);
 
       ParticleVariable<Point> px;
-      ParticleVariable<double> pmass;
+      ParticleVariable<double> pMass;
       ParticleVariable<long64> pids;
 
       ParticleSubset* subset =
         new_dw->createParticleSubset(numParticles, matl, patch);
       new_dw->allocateAndPut(px, d_labels->pXLabel, subset);
-      new_dw->allocateAndPut(pmass, d_labels->pMassLabel, subset);
+      new_dw->allocateAndPut(pMass, d_labels->pMassLabel, subset);
       new_dw->allocateAndPut(pids, d_labels->pParticleIDLabel, subset);
 
       for (int i = 0; i < numParticles; i++) {
@@ -188,7 +188,7 @@ ParticleTest1::initialize(const ProcessorGroup*,
           (((float)rand()) / RAND_MAX * (high.z() - low.z() - 1) + low.z()));
         px[i]    = pos;
         pids[i]  = patch->getID() * numParticles + i;
-        pmass[i] = ((float)rand()) / RAND_MAX * 10;
+        pMass[i] = ((float)rand()) / RAND_MAX * 10;
       }
     }
   }
@@ -211,16 +211,16 @@ ParticleTest1::timeAdvance(const ProcessorGroup*,
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> px;
       ParticleVariable<Point> pxnew;
-      constParticleVariable<double> pmass;
-      ParticleVariable<double> pmassnew;
+      constParticleVariable<double> pMass;
+      ParticleVariable<double> pMassnew;
       constParticleVariable<long64> pids;
       ParticleVariable<long64> pidsnew;
 
-      old_dw->get(pmass, d_labels->pMassLabel, pset);
+      old_dw->get(pMass, d_labels->pMassLabel, pset);
       old_dw->get(px, d_labels->pXLabel, pset);
       old_dw->get(pids, d_labels->pParticleIDLabel, pset);
 
-      new_dw->allocateAndPut(pmassnew, d_labels->pMassLabel_preReloc, pset);
+      new_dw->allocateAndPut(pMassnew, d_labels->pMassLabel_preReloc, pset);
       new_dw->allocateAndPut(pxnew, d_labels->pXLabel_preReloc, pset);
       new_dw->allocateAndPut(pidsnew, d_labels->pParticleIDLabel_preReloc, pset);
 
@@ -229,10 +229,10 @@ ParticleTest1::timeAdvance(const ProcessorGroup*,
         Point pos(px[i].x() + .25, px[i].y(), px[i].z());
         pxnew[i]    = pos;
         pidsnew[i]  = pids[i];
-        pmassnew[i] = pmass[i] * .9;
+        pMassnew[i] = pMass[i] * .9;
         if (d_doOutput) {
           std::cout << " Patch " << patch->getID() << ": ID " << pidsnew[i]
-                    << ", pos " << pxnew[i] << ", mass " << pmassnew[i] << std::endl;
+                    << ", pos " << pxnew[i] << ", mass " << pMassnew[i] << std::endl;
         }
       }
       new_dw->deleteParticles(delset);
