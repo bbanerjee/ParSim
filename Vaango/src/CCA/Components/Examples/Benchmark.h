@@ -81,6 +81,7 @@ public:
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
   {
   }
+
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
 

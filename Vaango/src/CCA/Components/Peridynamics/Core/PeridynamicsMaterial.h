@@ -108,13 +108,19 @@ public:
   ParticleCreator*
   getParticleCreator();
 
-private:
-  PeridynamicsLabel* d_varLabel{nullptr};
-  PeridynamicsMaterialModel* d_materialModel{nullptr};
-  PeridynamicsDamageModel* d_damageModel{nullptr};
-  ParticleCreator* d_particle_creator{nullptr};
+  /*!  Create a copy of the material without the associated geometry */
+  void
+  copyWithoutGeom(Uintah::ProblemSpecP& ps,
+                  const PeridynamicsMaterial* mat,
+                  PeridynamicsFlags* flags);
 
-  double d_density{0.0};
+private:
+  PeridynamicsLabel* d_varLabel{ nullptr };
+  PeridynamicsMaterialModel* d_materialModel{ nullptr };
+  PeridynamicsDamageModel* d_damageModel{ nullptr };
+  ParticleCreator* d_particle_creator{ nullptr };
+
+  double d_density{ 0.0 };
 
   std::vector<std::shared_ptr<Uintah::GeometryObject>> d_geom_objs;
 

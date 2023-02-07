@@ -27,6 +27,7 @@
 
 SET(Vaango_CCA_Components_Peridynamics_SRCS
   ${Vaango_CCA_Components_Peridynamics_SRCS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsCommon.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsFlags.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsLabel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsMaterial.cc

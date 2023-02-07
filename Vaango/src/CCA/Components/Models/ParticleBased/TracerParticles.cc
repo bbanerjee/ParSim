@@ -409,7 +409,7 @@ TracerParticles::problemSetup(GridP&, const bool isRestart)
       }
 
       // create the labels associated with this scalar
-      auto S          = make_unique<scalar>();
+      auto S          = std::make_unique<scalar>();
       std::string ln  = name;
       std::string lnP = ln + "+";
 

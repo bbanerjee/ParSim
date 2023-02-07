@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,23 +23,23 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_vorticity_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_vorticity_h
+
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Output.h>
-#include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <map>
 #include <vector>
 
 namespace Uintah {
 
-  class ICELabel;
+class ICELabel;
 
 /**************************************
 
@@ -65,58 +66,60 @@ DESCRIPTION
 WARNING
 
 ****************************************/
-  class vorticity : public AnalysisModule {
-  public:
-    vorticity(const ProcessorGroup* myworld,
-              const MaterialManagerP materialManager,
-              const ProblemSpecP& module_spec);
+class vorticity : public AnalysisModule
+{
+public:
+  vorticity(const ProcessorGroup* myworld,
+            const MaterialManagerP& materialManager,
+            const ProblemSpecP& module_spec);
 
-    vorticity();
+  vorticity() = default;
 
-    virtual ~vorticity();
+  virtual ~vorticity();
 
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid,
-                              std::vector<std::vector<const VarLabel* > > &PState,
-                              std::vector<std::vector<const VarLabel* > > &PState_preReloc);
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               std::vector<std::vector<const VarLabel*>>& PState,
+               std::vector<std::vector<const VarLabel*>>& PState_preReloc);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps){};
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps){};
 
-    virtual void scheduleInitialize(SchedulerP& sched,
-                                    const LevelP& level){};
+  virtual void
+  scheduleInitialize(SchedulerP& sched, const LevelP& level){};
 
-    virtual void scheduleRestartInitialize(SchedulerP& sched,
-                                           const LevelP& level){};
+  virtual void
+  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level){};
 
-    virtual void scheduleDoAnalysis(SchedulerP& sched,
-                                    const LevelP& level);
+  virtual void
+  scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
 
-    virtual void scheduleDoAnalysis_preReloc(SchedulerP& sched,
-                                    const LevelP& level) {};
+  virtual void
+  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level){};
 
-  private:
+private:
+  void
+  doAnalysis(const ProcessorGroup* pg,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
 
-    void doAnalysis(const ProcessorGroup* pg,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
+  // general labels
+  VarLabel* vorticityLabel;
 
+  ICELabel* I_lb;
 
-    // general labels
-    VarLabel* vorticityLabel;
+  //__________________________________
+  // global constants
+  const Material* d_matl{ nullptr };
+  MaterialSet* d_matl_set{ nullptr };
+  const MaterialSubset* d_matl_sub{ nullptr };
 
-    ICELabel* I_lb;
-
-    //__________________________________
-    // global constants
-    const Material      * d_matl      {nullptr};
-    MaterialSet         * d_matl_set  {nullptr};
-    const MaterialSubset* d_matl_sub  {nullptr};
-
-    bool required;
-  };
-}
+  bool required;
+};
+} // namespace Uintah
 
 #endif

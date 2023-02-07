@@ -35,27 +35,6 @@
  *
  */
 
-/*
- *  Support for printing out Tecplot data added by Patric Hu
- *  Department of Mechanical Enginerring, U of U, 2003.
- *
- *  Currently it only supports CCVariables.
- *
- * Usage of converting Uintah data archive to a tecplot data file
- * puda -tecplot <i_xd> <uda directory> :
- *       print all CCVariables into different tecplot data files
- * puda -tecplot <i_xd> <CCVariable's Name> <uda directory>:
- *       print one CCVariable into a tecplot data file
- * puda -tecplot <i_xd> <tskip> <uda directory>:
- *       print all CCVariables into different tecplot data files
- *       by every tskip time steps
- * puda -tecplot <i_xd> <CCVariable's Name> <tskip> <uda directory>:
- *       print one CCVariable into a tecplot data file
- *       by every tskip time steps
- * i_xd may be i_1d, i_2d, i_3d for 1D, 2D and 3D problem
- *
- */
-
 #include <StandAlone/tools/puda/puda.h>
 
 #include <Core/DataArchive/DataArchive.h>
@@ -82,7 +61,6 @@
 #include <StandAlone/tools/puda/monica1.h>
 #include <StandAlone/tools/puda/monica2.h>
 #include <StandAlone/tools/puda/rtdata.h>
-#include <StandAlone/tools/puda/tecplot.h>
 #include <StandAlone/tools/puda/util.h>
 #include <StandAlone/tools/puda/varsummary.h>
 
@@ -107,97 +85,113 @@ using namespace Uintah;
 /////////////////////////////////////////////////////////////////
 // Pre-declarations:
 //
-void printParticleVariable(DataArchive* da, string particleVariable,
-                           unsigned long time_step_lower,
-                           unsigned long time_step_upper, int mat);
+void
+printParticleVariable(DataArchive* da,
+                      string particleVariable,
+                      unsigned long time_step_lower,
+                      unsigned long time_step_upper,
+                      int mat);
 
 /////////////////////////////////////////////////////////////////
 
 void
 usage(const std::string& badarg, const std::string& progname)
 {
-  if (badarg != "")
-    std::cerr <<  "Error parsing argument: " << badarg << "\n";
-  std::cerr <<  "Usage: " << progname << " [options] <archive file>\n\n";
-  std::cerr <<  "Valid options are:\n";
-  std::cerr <<  "  -h[elp]\n";
-  std::cerr <<  "  -timesteps\n";
-  std::cerr <<  "  -gridstats\n";
-  std::cerr <<  "  -listvariables\n";
-  std::cerr <<  "  -varsummary\n";
-  std::cerr <<  "  -brief               (Makes varsummary print out a subset of "
-          "information.)\n";
-  std::cerr <<  "  -jim1\n";
-  std::cerr <<  "  -jim2\n";
-  std::cerr <<  "  -jacquie              (finds burn rate vs pressure)\n";
+  if (badarg != "") {
+    std::cerr << "Error parsing argument: " << badarg << "\n";
+  }
+  std::cerr << "Usage: " << progname << " [options] <archive file>\n\n";
+  std::cerr << "Valid options are:\n";
+  std::cerr << "  -h[elp]\n";
+  std::cerr << "  -timesteps\n";
+  std::cerr << "  -gridstats\n";
+  std::cerr << "  -listvariables\n";
+  std::cerr << "  -varsummary\n";
+  std::cerr << "  -brief               (Makes varsummary print out a subset of "
+               "information.)\n";
+  std::cerr << "  -jim1\n";
+  std::cerr << "  -jim2\n";
+  std::cerr << "  -jacquie              (finds burn rate vs pressure)\n";
   cerr
     << "  -monica1             (Finds the maximum pressure in the domain.)\n";
-  std::cerr <<  "  -monica2             (Finds the sum of the cell centered kinetic "
-          "energy in the domain.)\n";
-  std::cerr <<  "  -AA_MMS_1            (1D periodic bar MMS)\n";
-  std::cerr <<  "  -AA_MMS_2            (3D Axis aligned MMS)\n";
-  std::cerr <<  "  -GV_MMS              (GeneralizedVortex MMS)\n"; // MMS
-  std::cerr <<  "  -ER_MMS              (Expanding Ring MMS)\n";
-  std::cerr <<  "  -US_MMS              (Uniaxial strain MMS)\n";
-  std::cerr <<  "  -partvar <variable name>\n";
-  std::cerr <<  "  -asci\n";
-  std::cerr <<  "  -tecplot <variable name>\n";
-  std::cerr <<  "  -no_extra_cells      (Excludes extra cells when iterating over "
-          "cells.\n";
-  std::cerr <<  "                        Default is to include extra cells.)\n";
-  std::cerr <<  "  -cell_stresses\n";
-  std::cerr <<  "  -rtdata <output directory>\n";
-  std::cerr <<  "  -PTvar\n";
-  std::cerr <<  "  -ptonly              (prints out only the point location)\n";
-  std::cerr <<  "  -patch               (outputs patch id with data)\n";
-  std::cerr <<  "  -material            (outputs material number with data)\n";
-  std::cerr <<  "  -NCvar               (double | float | point | vector)\n";
-  std::cerr <<  "  -CCvar               (double | float | point | vector)\n";
-  std::cerr <<  "  -verbose             (prints status of output)\n";
-  std::cerr <<  "  -timesteplow <int>   (only outputs timestep from int)\n";
-  std::cerr <<  "  -timestephigh <int>  (only outputs timesteps upto int)\n";
-  std::cerr <<  "  -matl,mat <int>      (only outputs data for matl)\n";
-  std::cerr <<  "  -pic                 (prints particle ids of all particles  in "
-          "cell\n";
-  std::cerr <<  "                        <i> <j> <k> [ints] on the specified "
-          "timesteps)\n";
-  std::cerr <<  "  -pol                 (prints out average of all particles in a "
-          "cell over an\n";
-  std::cerr <<  "                       entire line on a line of cells and is called "
-          "with:\n";
-  std::cerr <<  "                       <axis: [x,y,z]> <ortho1> <ortho2> <average; "
-          "default=true>\n";
-  std::cerr <<  "                       <stressSplitting; default=false>\n";
-  std::cerr <<  "                       'ortho1' and 'ortho2' inidicate the "
-          "coordinates in the plane\n";
-  std::cerr <<  "                       orthogonal to 'axis'.  'average' tells "
-          "whether to average\n";
-  std::cerr <<  "                       over all particles in the cell, or just to "
-          "use the first\n";
-  std::cerr <<  "                       particle encountered.  'stressSplitting' "
-          "only takes affect\n";
-  std::cerr <<  "                       if the particle variable is p.stress, and "
-          "splits the stress\n";
-  std::cerr <<  "                       into hydrostatic and deviatoric parts.)\n";
-  std::cerr <<  "*NOTE* to use -PTvar or -NVvar -rtdata must be used\n";
-  std::cerr <<  "*NOTE* ptonly, patch, material, timesteplow, timestephigh "
-       << "are used in conjuntion with -PTvar.\n\n";
+  std::cerr
+    << "  -monica2             (Finds the sum of the cell centered kinetic "
+       "energy in the domain.)\n";
+  std::cerr << "  -AA_MMS_1            (1D periodic bar MMS)\n";
+  std::cerr << "  -AA_MMS_2            (3D Axis aligned MMS)\n";
+  std::cerr << "  -GV_MMS              (GeneralizedVortex MMS)\n"; // MMS
+  std::cerr << "  -ER_MMS              (Expanding Ring MMS)\n";
+  std::cerr << "  -US_MMS              (Uniaxial strain MMS)\n";
+  std::cerr << "  -partvar <variable name>\n";
+  std::cerr << "  -asci\n";
+  std::cerr
+    << "  -no_extra_cells      (Excludes extra cells when iterating over "
+       "cells.\n";
+  std::cerr << "                        Default is to include extra cells.)\n";
+  std::cerr << "  -cell_stresses\n";
+  std::cerr << "  -rtdata <output directory>\n";
+  std::cerr << "  -PTvar\n";
+  std::cerr << "  -ptonly              (prints out only the point location)\n";
+  std::cerr << "  -patch               (outputs patch id with data)\n";
+  std::cerr << "  -material            (outputs material number with data)\n";
+  std::cerr << "  -NCvar               (double | float | point | vector)\n";
+  std::cerr << "  -CCvar               (double | float | point | vector)\n";
+  std::cerr << "  -verbose             (prints status of output)\n";
+  std::cerr << "  -timesteplow <int>   (only outputs timestep from int)\n";
+  std::cerr << "  -timestephigh <int>  (only outputs timesteps upto int)\n";
+  std::cerr << "  -matl,mat <int>      (only outputs data for matl)\n";
+  std::cerr
+    << "  -pic                 (prints particle ids of all particles  in "
+       "cell\n";
+  std::cerr << "                        <i> <j> <k> [ints] on the specified "
+               "timesteps)\n";
+  std::cerr
+    << "  -pol                 (prints out average of all particles in a "
+       "cell over an\n";
+  std::cerr
+    << "                       entire line on a line of cells and is called "
+       "with:\n";
+  std::cerr
+    << "                       <axis: [x,y,z]> <ortho1> <ortho2> <average; "
+       "default=true>\n";
+  std::cerr << "                       <stressSplitting; default=false>\n";
+  std::cerr << "                       'ortho1' and 'ortho2' inidicate the "
+               "coordinates in the plane\n";
+  std::cerr << "                       orthogonal to 'axis'.  'average' tells "
+               "whether to average\n";
+  std::cerr
+    << "                       over all particles in the cell, or just to "
+       "use the first\n";
+  std::cerr
+    << "                       particle encountered.  'stressSplitting' "
+       "only takes affect\n";
+  std::cerr
+    << "                       if the particle variable is p.stress, and "
+       "splits the stress\n";
+  std::cerr
+    << "                       into hydrostatic and deviatoric parts.)\n";
+  std::cerr << "*NOTE* to use -PTvar or -NVvar -rtdata must be used\n";
+  std::cerr << "*NOTE* ptonly, patch, material, timesteplow, timestephigh "
+            << "are used in conjuntion with -PTvar.\n\n";
 
-  std::cerr <<  "USAGE IS NOT FINISHED\n\n";
+  std::cerr << "USAGE IS NOT FINISHED\n\n";
   exit(1);
 }
 
 void
-gridstats(DataArchive* da, const bool tslow_set, const bool tsup_set,
-          unsigned long& time_step_lower, unsigned long& time_step_upper)
+gridstats(DataArchive* da,
+          const bool tslow_set,
+          const bool tsup_set,
+          unsigned long& time_step_lower,
+          unsigned long& time_step_upper)
 {
   std::vector<int> index;
   std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
 
-  findTimestep_loopLimits(tslow_set, tsup_set, times, time_step_lower,
-                          time_step_upper);
+  findTimestep_loopLimits(
+    tslow_set, tsup_set, times, time_step_lower, time_step_upper);
 
   for (unsigned long t = time_step_lower; t <= time_step_upper; t++) {
     double time = times[t];
@@ -220,8 +214,8 @@ gridstats(DataArchive* da, const bool tslow_set, const bool tsup_set,
 
     for (int l = 0; l < grid->numLevels(); l++) {
       LevelP level = grid->getLevel(l);
-      std::cout << "Level: index " << level->getIndex() << ", id " << level->getID()
-           << "\n";
+      std::cout << "Level: index " << level->getIndex() << ", id "
+                << level->getID() << "\n";
 
       IntVector rr(level->getRefinementRatio());
       std::cout << "       refinement ratio: " << rr << "\n";
@@ -239,15 +233,16 @@ gridstats(DataArchive* da, const bool tslow_set, const bool tsup_set,
       std::cout << "dx:                   " << level->dCell() << "\n";
 
       for (Level::const_patchIterator iter = level->patchesBegin();
-           iter != level->patchesEnd(); iter++) {
+           iter != level->patchesEnd();
+           iter++) {
         const Patch* patch = *iter;
         std::cout << *patch << "\n";
         std::cout << "\t   BC types: x- " << patch->getBCType(Patch::xminus)
-             << ", x+ " << patch->getBCType(Patch::xplus) << ", y- "
-             << patch->getBCType(Patch::yminus) << ", y+ "
-             << patch->getBCType(Patch::yplus) << ", z- "
-             << patch->getBCType(Patch::zminus) << ", z+ "
-             << patch->getBCType(Patch::zplus) << "\n";
+                  << ", x+ " << patch->getBCType(Patch::xplus) << ", y- "
+                  << patch->getBCType(Patch::yminus) << ", y+ "
+                  << patch->getBCType(Patch::yplus) << ", z- "
+                  << patch->getBCType(Patch::zminus) << ", z+ "
+                  << patch->getBCType(Patch::zplus) << "\n";
       }
     }
   }
@@ -263,12 +258,12 @@ main(int argc, char** argv)
 
   CommandLineFlags clf;
 
-  int mat = -1; // not part of clf
+  int mat   = -1; // not part of clf
   int cellx = -1, celly = -1, cellz = -1;
-  char axis = 'n';
-  int ortho1 = -1;
-  int ortho2 = -1;
-  bool doPOLAverage = true;
+  char axis             = 'n';
+  int ortho1            = -1;
+  int ortho2            = -1;
+  bool doPOLAverage     = true;
   bool doPOLStressSplit = false;
 
   // set defaults for cout.
@@ -284,23 +279,6 @@ main(int argc, char** argv)
     } else if (s == "-no_extra_cells" || s == "-no_extracells" ||
                s == "-no_ExtraCells") {
       clf.use_extra_cells = false;
-    } else if (s == "-tecplot") {
-      clf.do_tecplot = true;
-      if (argc == 4) {
-        clf.do_all_ccvars = true;
-        clf.i_xd = argv[i + 1];
-        clf.tskip = 1;
-      } else if (argc == 5) {
-        clf.do_all_ccvars = true;
-        clf.i_xd = argv[i + 1];
-        clf.tskip = atoi(argv[i + 2]);
-      } else if (argc == 6) {
-        clf.i_xd = argv[i + 1];
-        clf.ccVarInput = argv[i + 2];
-        clf.tskip = atoi(argv[i + 3]);
-        if (clf.ccVarInput[0] == '-')
-          usage("-tecplot <i_xd> <ccVariable name> <tskip> ", argv[0]);
-      }
     } else if (s == "-gridstats" || s == "-gridStats" || s == "-grid_stats") {
       clf.do_gridstats = true;
     } else if (s == "-listvariables" || s == "-listVariables" ||
@@ -338,7 +316,7 @@ main(int argc, char** argv)
         return 0;
       }
 
-      axis = *argv[++i];
+      axis   = *argv[++i];
       ortho1 = strtoul(argv[++i], (char**)nullptr, 10);
       ortho2 = strtoul(argv[++i], (char**)nullptr, 10);
 
@@ -400,37 +378,41 @@ main(int argc, char** argv)
     } else if (s == "-NCvar") {
       if (++i < argc) {
         s = argv[i];
-        if (s == "double")
+        if (s == "double") {
           clf.do_NCvar_double = true;
-        else if (s == "float")
+        } else if (s == "float") {
           clf.do_NCvar_float = true;
-        else if (s == "point")
+        } else if (s == "point") {
           clf.do_NCvar_point = true;
-        else if (s == "vector")
+        } else if (s == "vector") {
           clf.do_NCvar_vector = true;
-        else if (s == "matrix3")
+        } else if (s == "matrix3") {
           clf.do_NCvar_matrix3 = true;
-        else
+        } else {
           usage("-NCvar", argv[0]);
-      } else
+        }
+      } else {
         usage("-NCvar", argv[0]);
+      }
     } else if (s == "-CCvar") {
       if (++i < argc) {
         s = argv[i];
-        if (s == "double")
+        if (s == "double") {
           clf.do_CCvar_double = true;
-        else if (s == "float")
+        } else if (s == "float") {
           clf.do_CCvar_float = true;
-        else if (s == "point")
+        } else if (s == "point") {
           clf.do_CCvar_point = true;
-        else if (s == "vector")
+        } else if (s == "vector") {
           clf.do_CCvar_vector = true;
-        else if (s == "matrix3")
+        } else if (s == "matrix3") {
           clf.do_CCvar_matrix3 = true;
-        else
+        } else {
           usage("-CCvar", argv[0]);
-      } else
+        }
+      } else {
         usage("-CCvar", argv[0]);
+      }
     } else if (s == "-PTvar") {
       clf.do_PTvar = true;
     } else if (s == "-ptonly") {
@@ -442,9 +424,9 @@ main(int argc, char** argv)
         usage("-mat", argv[0]);
         return 0;
       }
-      clf.matl_jim = strtoul(argv[++i], (char**)nullptr, 10);
+      clf.matl_jim    = strtoul(argv[++i], (char**)nullptr, 10);
       clf.do_material = true;
-      mat = clf.matl_jim;
+      mat             = clf.matl_jim;
 
     } else if (s == "-verbose") {
       clf.do_verbose = true;
@@ -455,7 +437,7 @@ main(int argc, char** argv)
         return 0;
       }
       clf.time_step_lower = strtoul(argv[++i], (char**)nullptr, 10);
-      clf.tslow_set = true;
+      clf.tslow_set       = true;
     } else if (s == "-timestephigh" || s == "-timeStepHigh" ||
                s == "-timestep_high") {
       if (i + 1 >= argc) {
@@ -463,7 +445,7 @@ main(int argc, char** argv)
         return 0;
       }
       clf.time_step_upper = strtoul(argv[++i], (char**)nullptr, 10);
-      clf.tsup_set = true;
+      clf.tsup_set        = true;
     } else if (s == "-timestepinc" || s == "-timestepInc" ||
                s == "-timestep_inc") {
       if (i + 1 >= argc) {
@@ -485,7 +467,7 @@ main(int argc, char** argv)
   }
 
   if (clf.filebase == "") {
-    std::cerr <<  "No archive file specified\n";
+    std::cerr << "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -505,14 +487,18 @@ main(int argc, char** argv)
       cout.setf(ios::scientific, ios::floatfield);
       cout.precision(16);
 
-      for (int i = 0; i < (int)index.size(); i++)
+      for (int i = 0; i < (int)index.size(); i++) {
         std::cout << index[i] << ": " << times[i] << "\n";
+      }
     }
     //__________________________________
 
     //    DO GRIDSTATS
     if (clf.do_gridstats) {
-      gridstats(da, clf.tslow_set, clf.tsup_set, clf.time_step_lower,
+      gridstats(da,
+                clf.tslow_set,
+                clf.tsup_set,
+                clf.time_step_lower,
                 clf.time_step_upper);
     }
 
@@ -520,8 +506,9 @@ main(int argc, char** argv)
     //  LIST VARIABLES
     if (clf.do_listvars) {
       std::vector<std::string> vars;
+      std::vector<int> num_matl;
       std::vector<const Uintah::TypeDescription*> types;
-      da->queryVariables(vars, types);
+      da->queryVariables(vars, num_matl, types);
       std::cout << "There are " << vars.size() << " variables:\n";
       for (int i = 0; i < (int)vars.size(); i++) {
         std::cout << vars[i] << ": " << types[i]->getName() << "\n";
@@ -537,23 +524,23 @@ main(int argc, char** argv)
       if (!clf.tslow_set) {
         clf.time_step_lower = 0;
       } else if (clf.time_step_lower >= times.size()) {
-        std::cerr <<  "timesteplow must be between 0 and " << times.size() - 1
-             << "\n";
+        std::cerr << "timesteplow must be between 0 and " << times.size() - 1
+                  << "\n";
         abort();
       }
       if (!clf.tsup_set) {
         clf.time_step_upper = times.size() - 1;
       } else if (clf.time_step_upper >= times.size()) {
-        std::cerr <<  "timestephigh must be between 0 and " << times.size() - 1
-             << "\n";
+        std::cerr << "timestephigh must be between 0 and " << times.size() - 1
+                  << "\n";
         abort();
       }
-      printParticleVariable(da, clf.particleVariable, clf.time_step_lower,
-                            clf.time_step_upper, mat);
+      printParticleVariable(da,
+                            clf.particleVariable,
+                            clf.time_step_lower,
+                            clf.time_step_upper,
+                            mat);
     }
-#if 0
-    tecplot();
-#endif
     //______________________________________________________________________
     //              V A R S U M M A R Y   O P T I O N
     if (clf.do_varsummary) {
@@ -604,7 +591,10 @@ main(int argc, char** argv)
     }
 
     if (clf.do_asci) {
-      asci(da, clf.tslow_set, clf.tsup_set, clf.time_step_lower,
+      asci(da,
+           clf.tslow_set,
+           clf.tsup_set,
+           clf.time_step_lower,
            clf.time_step_upper);
     }
 
@@ -612,8 +602,9 @@ main(int argc, char** argv)
     //	       DO CELL STRESSES
     if (clf.do_cell_stresses) {
       std::vector<std::string> vars;
+      std::vector<int> num_matl;
       std::vector<const Uintah::TypeDescription*> types;
-      da->queryVariables(vars, types);
+      da->queryVariables(vars, num_matl, types);
       ASSERTEQ(vars.size(), types.size());
 
       std::cout << "There are " << vars.size() << " variables:\n";
@@ -624,8 +615,11 @@ main(int argc, char** argv)
 
       std::cout << "There are " << index.size() << " timesteps:\n";
 
-      findTimestep_loopLimits(clf.tslow_set, clf.tsup_set, times,
-                              clf.time_step_lower, clf.time_step_upper);
+      findTimestep_loopLimits(clf.tslow_set,
+                              clf.tsup_set,
+                              times,
+                              clf.time_step_lower,
+                              clf.time_step_upper);
 
       // obtain the desired timesteps
       unsigned long t = 0, start_time = 0, stop_time = 0;
@@ -646,7 +640,7 @@ main(int argc, char** argv)
         stop_time--;
       } else {
         start_time = t - 1;
-        stop_time = t - 1;
+        stop_time  = t - 1;
       }
       // end of timestep acquisition
 
@@ -660,25 +654,29 @@ main(int argc, char** argv)
 
           // only dumps out data if it is variable g.stressFS
           if (var == "g.stressFS") {
-            const Uintah::TypeDescription* td = types[v];
+            const Uintah::TypeDescription* td      = types[v];
             const Uintah::TypeDescription* subtype = td->getSubType();
-            std::cout << "\tVariable: " << var << ", type " << td->getName() << "\n";
+            std::cout << "\tVariable: " << var << ", type " << td->getName()
+                      << "\n";
             for (int l = 0; l < grid->numLevels(); l++) {
               LevelP level = grid->getLevel(l);
               for (Level::const_patchIterator iter = level->patchesBegin();
-                   iter != level->patchesEnd(); iter++) {
+                   iter != level->patchesEnd();
+                   iter++) {
                 const Patch* patch = *iter;
                 std::cout << "\t\tPatch: " << patch->getID() << "\n";
                 ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
                 // loop over materials
                 for (ConsecutiveRangeSet::iterator matlIter = matls.begin();
-                     matlIter != matls.end(); matlIter++) {
+                     matlIter != matls.end();
+                     matlIter++) {
                   int matl = *matlIter;
-                  if (mat != -1 && matl != mat)
+                  if (mat != -1 && matl != mat) {
                     continue;
+                  }
 
                   // dumps header and variable info to file
-                   std::ostringstream fnum, pnum, matnum;
+                  std::ostringstream fnum, pnum, matnum;
                   string filename;
                   unsigned long timestepnum = t + 1;
                   fnum << setw(4) << setfill('0') << timestepnum;
@@ -701,8 +699,8 @@ main(int argc, char** argv)
                           NCVariable<Matrix3> value;
                           da->query(value, var, matl, patch, t);
                           std::cout << "\t\t\t\t" << td->getName() << " over "
-                               << value.getLowIndex() << " to "
-                               << value.getHighIndex() << "\n";
+                                    << value.getLowIndex() << " to "
+                                    << value.getHighIndex() << "\n";
                           IntVector dx(value.getHighIndex() -
                                        value.getLowIndex());
                           if (dx.x() && dx.y() && dx.z()) {
@@ -723,11 +721,11 @@ main(int argc, char** argv)
                           }
                         } break;
                         default:
-                          std::cerr <<  "No Matrix3 Subclass available."
-                               << static_cast<std::underlying_type<
-                                    TypeDescription::Type>::type>(
-                                    subtype->getType())
-                               << "\n";
+                          std::cerr << "No Matrix3 Subclass available."
+                                    << static_cast<std::underlying_type<
+                                         TypeDescription::Type>::type>(
+                                         subtype->getType())
+                                    << "\n";
                           break;
                       }
                       break;
@@ -743,11 +741,14 @@ main(int argc, char** argv)
                 }
               }
             }
-          } else
-            std::cout << "No g.stressFS variables avaliable at time " << t << ".\n";
+          } else {
+            std::cout << "No g.stressFS variables avaliable at time " << t
+                      << ".\n";
+          }
         }
-        if (start_time == stop_time)
+        if (start_time == stop_time) {
           t++;
+        }
       }
     } // end do_cell_stresses
 
@@ -757,10 +758,10 @@ main(int argc, char** argv)
       rtdata(da, clf);
     }
   } catch (Exception& e) {
-    std::cerr <<  "Caught exception: " << e.message() << "\n";
+    std::cerr << "Caught exception: " << e.message() << "\n";
     abort();
   } catch (...) {
-    std::cerr <<  "Caught unknown exception\n";
+    std::cerr << "Caught unknown exception\n";
     abort();
   }
 } // end main()
@@ -770,23 +771,27 @@ main(int argc, char** argv)
 // Print ParticleVariable
 //
 void
-printParticleVariable(DataArchive* da, string particleVariable,
+printParticleVariable(DataArchive* da,
+                      string particleVariable,
                       unsigned long time_step_lower,
-                      unsigned long time_step_upper, int mat)
+                      unsigned long time_step_upper,
+                      int mat)
 {
   // Check if the particle variable is available
   std::vector<std::string> vars;
+  std::vector<int> num_matl;
   std::vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
   bool variableFound = false;
   for (unsigned int v = 0; v < vars.size(); v++) {
     std::string var = vars[v];
-    if (var == particleVariable)
+    if (var == particleVariable) {
       variableFound = true;
+    }
   }
   if (!variableFound) {
-    std::cerr <<  "Variable " << particleVariable << " not found\n";
+    std::cerr << "Variable " << particleVariable << " not found\n";
     exit(1);
   }
 
@@ -812,15 +817,15 @@ printParticleVariable(DataArchive* da, string particleVariable,
 
       // Loop thru all the patches
       Level::const_patchIterator iter = level->patchesBegin();
-      int patchIndex = 0;
+      int patchIndex                  = 0;
       for (; iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         ++patchIndex;
 
         // Loop thru all the variables
         for (int v = 0; v < (int)vars.size(); v++) {
-          std::string var = vars[v];
-          const Uintah::TypeDescription* td = types[v];
+          std::string var                        = vars[v];
+          const Uintah::TypeDescription* td      = types[v];
           const Uintah::TypeDescription* subtype = td->getSubType();
 
           // Check if the variable is a ParticleVariable
@@ -832,8 +837,9 @@ printParticleVariable(DataArchive* da, string particleVariable,
             ConsecutiveRangeSet::iterator matlIter = matls.begin();
             for (; matlIter != matls.end(); matlIter++) {
               int matl = *matlIter;
-              if (mat != -1 && matl != mat)
+              if (mat != -1 && matl != mat) {
                 continue;
+              }
 
               // Find the name of the variable
               if (var == particleVariable) {
@@ -931,8 +937,9 @@ printParticleVariable(DataArchive* da, string particleVariable,
                         if (useParticleID) {
                           std::cout << " " << pid[*iter];
                         }
-                        std::cout << " " << value[*iter](0) << " " << value[*iter](1)
-                             << " " << value[*iter](2) << "\n";
+                        std::cout << " " << value[*iter](0) << " "
+                                  << value[*iter](1) << " " << value[*iter](2)
+                                  << "\n";
                       }
                     }
                   } break;
@@ -956,8 +963,9 @@ printParticleVariable(DataArchive* da, string particleVariable,
                           std::cout << time << " " << patchIndex << " " << matl;
                         }
                         std::cout << " " << pid[*iter];
-                        std::cout << " " << value[*iter][0] << " " << value[*iter][1]
-                             << " " << value[*iter][2] << "\n";
+                        std::cout << " " << value[*iter][0] << " "
+                                  << value[*iter][1] << " " << value[*iter][2]
+                                  << "\n";
                       }
                     }
                   } break;

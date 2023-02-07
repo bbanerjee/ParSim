@@ -70,9 +70,8 @@ PerPatch<FileInfoP>::readNormal(std::istream& in, bool swapBytes)
   // Note if swap bytes for FileInfoP is implemente then this
   // template specialization can be deleted as the general template
   // will work.
-  SCI_THROW(InternalError("Swap bytes for FileInfoP is not implemented",
-                          __FILE__,
-                          __LINE__));
+  SCI_THROW(InternalError(
+    "Swap bytes for FileInfoP is not implemented", __FILE__, __LINE__));
 
   ssize_t linesize = (ssize_t)(sizeof(FileInfoP));
 

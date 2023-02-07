@@ -95,7 +95,9 @@ public:
   copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat, MPMFlags* flags);
 
   void
-  deleteGeomObjects();
+  deleteGeomObjects() {
+    d_geom_objs.clear();
+  }
 
   int
   nullGeomObject() const;

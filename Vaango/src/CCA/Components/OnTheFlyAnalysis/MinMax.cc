@@ -63,7 +63,7 @@ Dout dout_OTF_MM("MinMax",
 ______________________________________________________________________*/
 
 MinMax::MinMax(const ProcessorGroup* myworld,
-               const MaterialManagerP materialManager,
+               const MaterialManagerP& materialManager,
                const ProblemSpecP& module_spec)
   : AnalysisModule(myworld, materialManager, module_spec)
 {
@@ -72,9 +72,8 @@ MinMax::MinMax(const ProcessorGroup* myworld,
   d_lb->lastCompTimeLabel =
     VarLabel::create("lastCompTime_minMax", max_vartype::getTypeDescription());
 
-  d_lb->fileVarsStructLabel =
-    VarLabel::create("FileInfo_minMax",
-                     PerPatch<FileInfoP>::getTypeDescription());
+  d_lb->fileVarsStructLabel = VarLabel::create(
+    "FileInfo_minMax", PerPatch<FileInfoP>::getTypeDescription());
 }
 
 //______________________________________________________________________
@@ -124,9 +123,8 @@ MinMax::problemSetup(const ProblemSpecP&,
 
   ProblemSpecP vars_ps = m_module_spec->findBlock("Variables");
   if (!vars_ps) {
-    throw ProblemSetupException("MinMax: Couldn't find <Variables> tag",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "MinMax: Couldn't find <Variables> tag", __FILE__, __LINE__);
   }
 
   // find the material to extract data from.
@@ -399,12 +397,8 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
 
   // Tell the scheduler to not copy this variable to a new AMR grid and
   // do not checkpoint it.
-  sched->overrideVariableBehavior("FileInfo_minMax",
-                                  false,
-                                  false,
-                                  false,
-                                  true,
-                                  true);
+  sched->overrideVariableBehavior(
+    "FileInfo_minMax", false, false, false, true, true);
 
   Ghost::GhostType gn = Ghost::None;
   const Level* level  = levelP.get_rep();
@@ -460,14 +454,10 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
 
       MaterialSubset* matSubSet = d_analyzeVars[i].matSubSet;
 
-      t1->requires(Task::NewDW,
-                   d_analyzeVars[i].reductionMinLabel,
-                   level,
-                   matSubSet);
-      t1->requires(Task::NewDW,
-                   d_analyzeVars[i].reductionMaxLabel,
-                   level,
-                   matSubSet);
+      t1->requires(
+        Task::NewDW, d_analyzeVars[i].reductionMinLabel, level, matSubSet);
+      t1->requires(
+        Task::NewDW, d_analyzeVars[i].reductionMaxLabel, level, matSubSet);
     }
   }
 
@@ -542,26 +532,19 @@ MinMax::computeMinMax(const ProcessorGroup* pg,
 
             case TypeDescription::Type::double_type: { // CC double
               GridIterator iter = patch->getCellIterator();
-              findMinMax<constCCVariable<double>, double>(new_dw,
-                                                          label,
-                                                          indx,
-                                                          patch,
-                                                          iter);
+              findMinMax<constCCVariable<double>, double>(
+                new_dw, label, indx, patch, iter);
               break;
             }
             case TypeDescription::Type::Vector: { // CC Vector
               GridIterator iter = patch->getCellIterator();
-              findMinMax<constCCVariable<Vector>, Vector>(new_dw,
-                                                          label,
-                                                          indx,
-                                                          patch,
-                                                          iter);
+              findMinMax<constCCVariable<Vector>, Vector>(
+                new_dw, label, indx, patch, iter);
               break;
             }
             default:
-              throw InternalError("MinMax: invalid data type",
-                                  __FILE__,
-                                  __LINE__);
+              throw InternalError(
+                "MinMax: invalid data type", __FILE__, __LINE__);
           }
           break;
 
@@ -570,53 +553,37 @@ MinMax::computeMinMax(const ProcessorGroup* pg,
 
             case TypeDescription::Type::double_type: { // NC double
               GridIterator iter = patch->getNodeIterator();
-              findMinMax<constNCVariable<double>, double>(new_dw,
-                                                          label,
-                                                          indx,
-                                                          patch,
-                                                          iter);
+              findMinMax<constNCVariable<double>, double>(
+                new_dw, label, indx, patch, iter);
               break;
             }
             case TypeDescription::Type::Vector: { // NC Vector
               GridIterator iter = patch->getNodeIterator();
-              findMinMax<constNCVariable<Vector>, Vector>(new_dw,
-                                                          label,
-                                                          indx,
-                                                          patch,
-                                                          iter);
+              findMinMax<constNCVariable<Vector>, Vector>(
+                new_dw, label, indx, patch, iter);
               break;
             }
             default:
-              throw InternalError("MinMax: invalid data type",
-                                  __FILE__,
-                                  __LINE__);
+              throw InternalError(
+                "MinMax: invalid data type", __FILE__, __LINE__);
           }
           break;
         case TypeDescription::Type::SFCXVariable: { // SFCX double
           GridIterator iter = patch->getSFCXIterator();
-          findMinMax<constSFCXVariable<double>, double>(new_dw,
-                                                        label,
-                                                        indx,
-                                                        patch,
-                                                        iter);
+          findMinMax<constSFCXVariable<double>, double>(
+            new_dw, label, indx, patch, iter);
           break;
         }
         case TypeDescription::Type::SFCYVariable: { // SFCY double
           GridIterator iter = patch->getSFCYIterator();
-          findMinMax<constSFCYVariable<double>, double>(new_dw,
-                                                        label,
-                                                        indx,
-                                                        patch,
-                                                        iter);
+          findMinMax<constSFCYVariable<double>, double>(
+            new_dw, label, indx, patch, iter);
           break;
         }
         case TypeDescription::Type::SFCZVariable: { // SFCZ double
           GridIterator iter = patch->getSFCZIterator();
-          findMinMax<constSFCZVariable<double>, double>(new_dw,
-                                                        label,
-                                                        indx,
-                                                        patch,
-                                                        iter);
+          findMinMax<constSFCZVariable<double>, double>(
+            new_dw, label, indx, patch, iter);
           break;
         }
         default:
@@ -790,9 +757,8 @@ MinMax::doAnalysis(const ProcessorGroup* pg,
             break;
           }
           default:
-            throw InternalError("MinMax: invalid data type",
-                                __FILE__,
-                                __LINE__);
+            throw InternalError(
+              "MinMax: invalid data type", __FILE__, __LINE__);
         }
         fflush(fp);
       } // label names
@@ -862,14 +828,10 @@ MinMax::findMinMax(DataWarehouse* new_dw,
   const VarLabel* meMin = VarLabel::find(VLmin, "ERROR  MinMax::findMinMax");
   const VarLabel* meMax = VarLabel::find(VLmax, "ERROR  MinMax::findMinMax");
 
-  new_dw->put(ReductionVariable<Ttype, Reductions::Max<Ttype>>(maxQ),
-              meMax,
-              level,
-              indx);
-  new_dw->put(ReductionVariable<Ttype, Reductions::Min<Ttype>>(minQ),
-              meMin,
-              level,
-              indx);
+  new_dw->put(
+    ReductionVariable<Ttype, Reductions::Max<Ttype>>(maxQ), meMax, level, indx);
+  new_dw->put(
+    ReductionVariable<Ttype, Reductions::Min<Ttype>>(minQ), meMin, level, indx);
 }
 
 //______________________________________________________________________
@@ -895,7 +857,8 @@ MinMax::createFile(const string& filename, const string& levelIndex, FILE*& fp)
   DOUTR(dout_OTF_MM,
         d_myworld->myRank() << " MinMax:Created file " << filename);
 
-  cout << "OnTheFlyAnalysis MinMax results are located in " << filename << std::endl;
+  cout << "OnTheFlyAnalysis MinMax results are located in " << filename
+       << std::endl;
 }
 
 //______________________________________________________________________

@@ -25,55 +25,61 @@
 #ifndef __VAANGO_PERIDYNAMICS_FLAGS_H__
 #define __VAANGO_PERIDYNAMICS_FLAGS_H__
 
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/Output.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/Grid/Ghost.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class PeridynamicsFlags
-    \brief A structure that store the flags used for a Peridynamics simulation
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class PeridynamicsFlags
+  \brief A structure that store the flags used for a Peridynamics simulation
+*/
+/////////////////////////////////////////////////////////////////////////////
 
+class PeridynamicsFlags
+{
 
-  class PeridynamicsFlags {
-
-  public:
-
-    enum IntegratorType {
-      ForwardEuler,
-      VelocityVerlet,
-      BackwardEuler,
-      None
-    };
-
-    const Uintah::ProcessorGroup* d_myworld;
-
-    Uintah::Vector d_gravity;
-    std::string d_integratorType; // Explicit or implicit time integration
-    IntegratorType d_integrator;
-    double d_numCellsInHorizon;
-    bool d_useLoadCurves;
-
-    PeridynamicsFlags(const Uintah::ProcessorGroup* myworld);
-
-    virtual ~PeridynamicsFlags();
-
-    virtual void readPeridynamicsFlags(Uintah::ProblemSpecP& ps, Uintah::Output* dataArchive);
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-
-  private:
-
-    PeridynamicsFlags(const PeridynamicsFlags& state);
-    PeridynamicsFlags& operator=(const PeridynamicsFlags& state);
-    
+public:
+  enum IntegratorType
+  {
+    ForwardEuler,
+    VelocityVerlet,
+    BackwardEuler,
+    None
   };
+
+  const Uintah::ProcessorGroup* d_myworld;
+
+  Uintah::Vector d_gravity;
+  std::string d_integratorType; // Explicit or implicit time integration
+  IntegratorType d_integrator;
+  double d_numCellsInHorizon{1.0};
+  bool d_useLoadCurves{false};
+  bool d_createNewParticles{false};
+
+  // So all components can know how many particle ghost cells to ask for
+  Uintah::Ghost::GhostType particle_ghost_type{ Uintah::Ghost::None };
+  int particle_ghost_layer{ 0 };
+
+  PeridynamicsFlags(const Uintah::ProcessorGroup* myworld);
+
+  virtual ~PeridynamicsFlags();
+
+  virtual void
+  readPeridynamicsFlags(Uintah::ProblemSpecP& ps, Uintah::Output* dataArchive);
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP& ps);
+
+private:
+  PeridynamicsFlags(const PeridynamicsFlags& state);
+  PeridynamicsFlags&
+  operator=(const PeridynamicsFlags& state);
+};
 
 } // End namespace Vaango
 
-#endif  // __VAANGO_PERIDYNAMICS_FLAGS_H__ 
-
+#endif // __VAANGO_PERIDYNAMICS_FLAGS_H__

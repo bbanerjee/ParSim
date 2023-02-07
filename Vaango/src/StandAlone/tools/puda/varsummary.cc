@@ -127,19 +127,22 @@ class MinMaxInfoBase
 public:
   // Prints out the min/max values for each level.
   virtual ~MinMaxInfoBase(){};
-  virtual void display() = 0;
+  virtual void
+  display() = 0;
 };
 
-template <class T>
+template<class T>
 class MinMaxInfo : public MinMaxInfoBase
 {
 
 public:
-  void initializeMinMax(int startingIndex);
+  void
+  initializeMinMax(int startingIndex);
 
   // Makes sure that our storage vector<> is large enough to hold the data for
   // the current level.
-  void verifyNumberOfLevels(unsigned int levelIndex)
+  void
+  verifyNumberOfLevels(unsigned int levelIndex)
   {
     unsigned int numLevels = levelIndex + 1;
     if (min_.size() < numLevels) {
@@ -152,9 +155,11 @@ public:
   }
 
   // Updates the stored min_/max_ values based on the passed in min/max.
-  void updateMinMax(int levelIndex, T& min, T& max);
+  void
+  updateMinMax(int levelIndex, T& min, T& max);
 
-  virtual void display();
+  virtual void
+  display();
 
 private:
   std::vector<T> min_, max_; // One per level of the variable.
@@ -163,31 +168,31 @@ private:
 /////////////////////////////////////////////////////////////////////
 // display()
 
-template <class Type>
+template<class Type>
 void
 MinMaxInfo<Type>::display()
 {
   std::cout << "\n";
   for (unsigned int level = 0; level < min_.size(); level++) {
     std::cout << "   Level " << level << ": Min/Max: " << min_[level] << ", "
-         << max_[level] << "\n";
+              << max_[level] << "\n";
   }
 }
 
-template <>
+template<>
 void
 MinMaxInfo<Matrix3>::display()
 {
   for (unsigned int level = 0; level < min_.size(); level++) {
     std::cout << "Level " << level << ": Min/Max: " << min_[0].Norm() << ", "
-         << max_[0].Norm() << "\n";
+              << max_[0].Norm() << "\n";
   }
 }
 
 /////////////////////////////////////////////////////////////////////
 // updateMinMax()
 
-template <>
+template<>
 void
 MinMaxInfo<Point>::updateMinMax(int levelIndex, Point& min, Point& max)
 {
@@ -195,7 +200,7 @@ MinMaxInfo<Point>::updateMinMax(int levelIndex, Point& min, Point& max)
   max_[levelIndex] = Max(max_[levelIndex], max);
 }
 
-template <class Type>
+template<class Type>
 void
 MinMaxInfo<Type>::updateMinMax(int levelIndex, Type& min, Type& max)
 {
@@ -206,7 +211,7 @@ MinMaxInfo<Type>::updateMinMax(int levelIndex, Type& min, Type& max)
 /////////////////////////////////////////////////////////////////////
 // initializeMinMax()
 
-template <>
+template<>
 void
 MinMaxInfo<Point>::initializeMinMax(int startingIndex)
 {
@@ -218,7 +223,7 @@ MinMaxInfo<Point>::initializeMinMax(int startingIndex)
   }
 }
 
-template <>
+template<>
 void
 MinMaxInfo<Vector>::initializeMinMax(int startingIndex)
 {
@@ -228,18 +233,25 @@ MinMaxInfo<Vector>::initializeMinMax(int startingIndex)
   }
 }
 
-template <>
+template<>
 void
 MinMaxInfo<Matrix3>::initializeMinMax(int startingIndex)
 {
   for (unsigned int level = startingIndex; level < min_.size(); level++) {
-    min_[level] = Matrix3(DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX,
-                          DBL_MAX, DBL_MAX, DBL_MAX);
+    min_[level] = Matrix3(DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX,
+                          DBL_MAX);
     max_[level] = Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
   }
 }
 
-template <class Type>
+template<class Type>
 void
 MinMaxInfo<Type>::initializeMinMax(int startingIndex)
 {
@@ -263,7 +275,8 @@ displayGlobalMinMax()
   std::cout << "Global Min/Max are:\n\n";
 
   for (map<std::string, MinMaxInfoBase*>::iterator iter = globalMinMax.begin();
-       iter != globalMinMax.end(); iter++) {
+       iter != globalMinMax.end();
+       iter++) {
 
     std::cout << iter->first << ": ";
     iter->second->display();
@@ -279,22 +292,29 @@ displayGlobalMinMax()
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-template <class Type>
+template<class Type>
 void
-printMinMax(CommandLineFlags& clf, const string& var, int matl,
-            const Patch* patch, const Uintah::TypeDescription* td, Type* min,
-            Type* max, IntVector* c_min = nullptr, IntVector* c_max = nullptr,
-            int minCnt = -1, int maxCnt = -1)
+printMinMax(CommandLineFlags& clf,
+            const string& var,
+            int matl,
+            const Patch* patch,
+            const Uintah::TypeDescription* td,
+            Type* min,
+            Type* max,
+            IntVector* c_min = nullptr,
+            IntVector* c_max = nullptr,
+            int minCnt       = -1,
+            int maxCnt       = -1)
 {
-   std::stringstream ss;
+  std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
-  MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
+  MinMaxInfoBase* mmBase   = globalMinMax[ss.str()];
   MinMaxInfo<Type>* mmInfo = dynamic_cast<MinMaxInfo<Type>*>(mmBase);
   if (mmInfo == nullptr) {
-    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
-    // for Type: " << td->getName() << "\n";
-    mmInfo = new MinMaxInfo<Type>();
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl
+    // << " for Type: " << td->getName() << "\n";
+    mmInfo                 = new MinMaxInfo<Type>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
@@ -312,32 +332,39 @@ printMinMax(CommandLineFlags& clf, const string& var, int matl,
   }
   mmInfo->updateMinMax(patch->getLevel()->getIndex(), *min, *max);
   if (c_min != nullptr && !clf.be_brief) {
-    std::cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~" << minCnt
-         << ")\n";
+    std::cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~"
+              << minCnt << ")\n";
   }
   if (c_max != nullptr && !clf.be_brief) {
-    std::cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~" << maxCnt
-         << ")\n";
+    std::cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~"
+              << maxCnt << ")\n";
   }
 
 } // end printMinMax()
 
-template <>
+template<>
 void
-printMinMax<Matrix3>(CommandLineFlags& clf, const string& var, int matl,
-                     const Patch* patch, const Uintah::TypeDescription* td,
-                     Matrix3* min, Matrix3* max, IntVector* c_min,
-                     IntVector* c_max, int minCnt, int maxCnt)
+printMinMax<Matrix3>(CommandLineFlags& clf,
+                     const string& var,
+                     int matl,
+                     const Patch* patch,
+                     const Uintah::TypeDescription* td,
+                     Matrix3* min,
+                     Matrix3* max,
+                     IntVector* c_min,
+                     IntVector* c_max,
+                     int minCnt,
+                     int maxCnt)
 {
-   std::stringstream ss;
+  std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
-  MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
+  MinMaxInfoBase* mmBase      = globalMinMax[ss.str()];
   MinMaxInfo<Matrix3>* mmInfo = dynamic_cast<MinMaxInfo<Matrix3>*>(mmBase);
   if (mmInfo == nullptr) {
-    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
-    // for Type: " << td->getName() << "\n";
-    mmInfo = new MinMaxInfo<Matrix3>();
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl
+    // << " for Type: " << td->getName() << "\n";
+    mmInfo                 = new MinMaxInfo<Matrix3>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
@@ -366,22 +393,29 @@ printMinMax<Matrix3>(CommandLineFlags& clf, const string& var, int matl,
   mmInfo->updateMinMax(patch->getLevel()->getIndex(), *min, *max);
 
 } // end printMinMax()
-template <>
+template<>
 void
-printMinMax<Vector>(CommandLineFlags& clf, const string& var, int matl,
-                    const Patch* patch, const Uintah::TypeDescription* td,
-                    Vector* min, Vector* max, IntVector* c_min,
-                    IntVector* c_max, int minCnt, int maxCnt)
+printMinMax<Vector>(CommandLineFlags& clf,
+                    const string& var,
+                    int matl,
+                    const Patch* patch,
+                    const Uintah::TypeDescription* td,
+                    Vector* min,
+                    Vector* max,
+                    IntVector* c_min,
+                    IntVector* c_max,
+                    int minCnt,
+                    int maxCnt)
 {
-   std::stringstream ss;
+  std::stringstream ss;
   ss << var << " (matl: " << matl << ")";
 
-  MinMaxInfoBase* mmBase = globalMinMax[ss.str()];
+  MinMaxInfoBase* mmBase     = globalMinMax[ss.str()];
   MinMaxInfo<Vector>* mmInfo = dynamic_cast<MinMaxInfo<Vector>*>(mmBase);
   if (mmInfo == nullptr) {
-    // std::cout << "Creating new data store for " << var << ", malt: " << matl << "
-    // for Type: " << td->getName() << "\n";
-    mmInfo = new MinMaxInfo<Vector>();
+    // std::cout << "Creating new data store for " << var << ", malt: " << matl
+    // << " for Type: " << td->getName() << "\n";
+    mmInfo                 = new MinMaxInfo<Vector>();
     globalMinMax[ss.str()] = mmInfo;
   }
   mmInfo->verifyNumberOfLevels(patch->getLevel()->getIndex());
@@ -398,16 +432,16 @@ printMinMax<Vector>(CommandLineFlags& clf, const string& var, int matl,
 
   if (minMagnitude > maxMagnitude) {
     IntVector* c_temp = c_min;
-    c_min = c_max;
-    c_max = c_temp;
+    c_min             = c_max;
+    c_max             = c_temp;
 
-    double temp = minMagnitude;
+    double temp  = minMagnitude;
     minMagnitude = maxMagnitude;
     maxMagnitude = temp;
 
     int cntTemp = minCnt;
-    minCnt = maxCnt;
-    maxCnt = cntTemp;
+    minCnt      = maxCnt;
+    maxCnt      = cntTemp;
   }
 
   ((MinMaxInfo<Vector>*)mmInfo)
@@ -422,7 +456,8 @@ printMinMax<Vector>(CommandLineFlags& clf, const string& var, int matl,
 ////////////////////////////////////////////////////////////////////////////////////
 // Returns the appropriate iterator depending on the type (td) of the variable.
 GridIterator
-getIterator(const Uintah::TypeDescription* td, const Patch* patch,
+getIterator(const Uintah::TypeDescription* td,
+            const Patch* patch,
             bool use_extra_cells)
 {
   switch (td->getType()) {
@@ -438,17 +473,22 @@ getIterator(const Uintah::TypeDescription* td, const Patch* patch,
     case Uintah::TypeDescription::Type::SFCZVariable:
       return GridIterator(patch->getSFCZIterator());
     default:
-      std::cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
+      std::cout << "ERROR: Don't know how to handle type: " << td->getName()
+                << "\n";
       exit(1);
   }
 } // end getIterator()
 
 ////////////////////////////////////////////////////////////////////////////////////
 //
-template <class Tvar, class Ttype>
+template<class Tvar, class Ttype>
 void
-findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
-           int timestep, CommandLineFlags& clf)
+findMinMax(DataArchive* da,
+           const string& var,
+           int matl,
+           const Patch* patch,
+           int timestep,
+           CommandLineFlags& clf)
 {
   Tvar value;
 
@@ -462,7 +502,7 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
 
     if (!clf.be_brief) {
       std::cout << "\t\t\t\t" << td->getName() << " over " << iter.begin()
-           << " (inclusive) to " << iter.end() << " (excluive)\n";
+                << " (inclusive) to " << iter.end() << " (excluive)\n";
     }
 
     Ttype min, max;
@@ -472,8 +512,8 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
     int maxCnt = 1;
 
     // Set initial values:
-    max = value[*iter];
-    min = max;
+    max   = value[*iter];
+    min   = max;
     c_max = *iter;
     c_min = c_max;
 
@@ -491,11 +531,11 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
       }
 
       if (val < min) {
-        c_min = *iter;
+        c_min  = *iter;
         minCnt = 1;
       }
       if (val > max) {
-        c_max = *iter;
+        c_max  = *iter;
         maxCnt = 1;
       }
 
@@ -507,8 +547,17 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
       max = Max(max, val);
     }
 
-    printMinMax<Ttype>(clf, var, matl, patch, td->getSubType(), &min, &max,
-                       &c_min, &c_max, minCnt, maxCnt);
+    printMinMax<Ttype>(clf,
+                       var,
+                       matl,
+                       patch,
+                       td->getSubType(),
+                       &min,
+                       &max,
+                       &c_min,
+                       &c_max,
+                       minCnt,
+                       maxCnt);
 
   } // end if( dx dy dz )
 
@@ -518,10 +567,14 @@ findMinMax(DataArchive* da, const string& var, int matl, const Patch* patch,
 ///
 /// Particle Variable FindMinMax
 ///
-template <class Tvar, class Ttype>
+template<class Tvar, class Ttype>
 void
-findMinMaxPV(DataArchive* da, const string& var, int matl, const Patch* patch,
-             int timestep, CommandLineFlags& clf)
+findMinMaxPV(DataArchive* da,
+             const string& var,
+             int matl,
+             const Patch* patch,
+             int timestep,
+             CommandLineFlags& clf)
 {
   Tvar value;
 
@@ -531,13 +584,13 @@ findMinMaxPV(DataArchive* da, const string& var, int matl, const Patch* patch,
   ParticleSubset* pset = value.getParticleSubset();
   if (!clf.be_brief) {
     std::cout << "\t\t\t\t" << td->getName() << " over " << pset->numParticles()
-         << " particles\n";
+              << " particles\n";
   }
   if (pset->numParticles() > 0) {
     Ttype min, max;
     ParticleSubset::iterator iter = pset->begin();
-    max = value[*iter++];
-    min = max;
+    max                           = value[*iter++];
+    min                           = max;
     for (; iter != pset->end(); iter++) {
       // Forced to cast to (T) so that the non-ambiguous min/max function is
       // used.
@@ -557,13 +610,15 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
   cout.precision(16);
 
   std::vector<std::string> vars;
+  std::vector<int> num_matl;
   std::vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
 
   std::cout << "There are " << vars.size() << " variables:\n";
-  for (int i = 0; i < (int)vars.size(); i++)
+  for (int i = 0; i < (int)vars.size(); i++) {
     std::cout << "  " << vars[i] << ": " << types[i]->getName() << std::endl;
+  }
   std::cout << "\n";
 
   std::vector<int> index;
@@ -579,32 +634,38 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
 
   std::cout << "\n";
 
-  findTimestep_loopLimits(clf.tslow_set, clf.tsup_set, times,
-                          clf.time_step_lower, clf.time_step_upper);
+  findTimestep_loopLimits(clf.tslow_set,
+                          clf.tsup_set,
+                          times,
+                          clf.time_step_lower,
+                          clf.time_step_upper);
 
   for (unsigned long t = clf.time_step_lower; t <= clf.time_step_upper; t++) {
     double time = times[t];
 
-    std::cout << "------------------------------------------------------------------"
-            "----\n";
+    std::cout
+      << "------------------------------------------------------------------"
+         "----\n";
     std::cout << "Time = " << time << std::endl;
     std::cout << "\n";
     GridP grid = da->queryGrid(t);
     for (int v = 0; v < (int)vars.size(); v++) {
-      string var = vars[v];
-      const Uintah::TypeDescription* td = types[v];
+      string var                             = vars[v];
+      const Uintah::TypeDescription* td      = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
       if (!clf.be_brief) {
-        std::cout << "\tVariable: " << var << ", type " << td->getName() << std::endl;
+        std::cout << "\tVariable: " << var << ", type " << td->getName()
+                  << std::endl;
       }
       for (int l = 0; l < grid->numLevels(); l++) {
         LevelP level = grid->getLevel(l);
         if (!clf.be_brief) {
           std::cout << "\t    Level: " << level->getIndex() << ", id "
-               << level->getID() << std::endl;
+                    << level->getID() << std::endl;
         }
         for (Level::const_patchIterator iter = level->patchesBegin();
-             iter != level->patchesEnd(); iter++) {
+             iter != level->patchesEnd();
+             iter++) {
           const Patch* patch = *iter;
           if (!clf.be_brief) {
             std::cout << "\t\tPatch: " << patch->getID() << std::endl;
@@ -612,10 +673,12 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
           ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
           // loop over materials
           for (ConsecutiveRangeSet::iterator matlIter = matls.begin();
-               matlIter != matls.end(); matlIter++) {
+               matlIter != matls.end();
+               matlIter++) {
             int matl = *matlIter;
-            if (mat != -1 && matl != mat)
+            if (mat != -1 && matl != mat) {
               continue;
+            }
             if (!clf.be_brief) {
               std::cout << "\t\t\tMaterial: " << matl << std::endl;
             }
@@ -630,18 +693,18 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMaxPV<ParticleVariable<float>, float>(da, var, matl,
-                                                                 patch, t, clf);
+                    findMinMaxPV<ParticleVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::int_type: {
-                    findMinMaxPV<ParticleVariable<int>, int>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMaxPV<ParticleVariable<int>, int>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::Point: {
-                    findMinMaxPV<ParticleVariable<Point>, Point>(da, var, matl,
-                                                                 patch, t, clf);
+                    findMinMaxPV<ParticleVariable<Point>, Point>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::Vector: {
@@ -660,8 +723,8 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   default:
-                    std::cerr <<  "Particle Variable of unknown type: "
-                         << subtype->getName() << std::endl;
+                    std::cerr << "Particle Variable of unknown type: "
+                              << subtype->getName() << std::endl;
                     break;
                 }
                 break;
@@ -670,36 +733,39 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
               case Uintah::TypeDescription::Type::NCVariable:
                 switch (subtype->getType()) {
                   case Uintah::TypeDescription::Type::double_type: {
-                    findMinMax<NCVariable<double>, double>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<NCVariable<double>, double>(
+                      da, var, matl, patch, t, clf);
                   } break;
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMax<NCVariable<float>, float>(da, var, matl, patch,
-                                                         t, clf);
+                    findMinMax<NCVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                   } break;
                   case Uintah::TypeDescription::Type::Point: {
-                    std::cout << "I don't think these type of variables exist... "
-                            "and I don't think the original\n";
-                    std::cout << "puda was handling them correctly... If we need "
-                            "them, we will need to figure out\n";
+                    std::cout
+                      << "I don't think these type of variables exist... "
+                         "and I don't think the original\n";
+                    std::cout
+                      << "puda was handling them correctly... If we need "
+                         "them, we will need to figure out\n";
                     std::cout << "how to deal with them properly\n";
                     exit(1);
                     // findMinMax<NCVariable<Point>,Point>( da, var, matl,
                     // patch, time, clf );
                   } break;
                   case Uintah::TypeDescription::Type::Vector: {
-                    findMinMax<NCVariable<Vector>, Vector>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<NCVariable<Vector>, Vector>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::Matrix3: {
-                    findMinMax<NCVariable<Matrix3>, Matrix3>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMax<NCVariable<Matrix3>, Matrix3>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   default:
-                    std::cerr <<  "NC Variable of unknown type: "
-                         << subtype->getName() << std::endl;
+                    std::cerr
+                      << "NC Variable of unknown type: " << subtype->getName()
+                      << std::endl;
                     break;
                 }
                 break;
@@ -708,25 +774,27 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
               case Uintah::TypeDescription::Type::CCVariable:
                 switch (subtype->getType()) {
                   case Uintah::TypeDescription::Type::int_type: {
-                    findMinMax<CCVariable<int>, int>(da, var, matl, patch, t,
-                                                     clf);
+                    findMinMax<CCVariable<int>, int>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::double_type: {
-                    findMinMax<CCVariable<double>, double>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<CCVariable<double>, double>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMax<CCVariable<float>, float>(da, var, matl, patch,
-                                                         t, clf);
+                    findMinMax<CCVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::Point: {
-                    std::cout << "I don't think these type of variables exist... "
-                            "and I don't think the original\n";
-                    std::cout << "puda was handling them correctly if they do... If "
-                            "we need them, we will need to\n";
+                    std::cout
+                      << "I don't think these type of variables exist... "
+                         "and I don't think the original\n";
+                    std::cout
+                      << "puda was handling them correctly if they do... If "
+                         "we need them, we will need to\n";
                     std::cout << "figure out how to deal with them properly\n";
                     exit(1);
                     // findMinMax<NCVariable<Point>,Point>( da, var, matl,
@@ -734,18 +802,19 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                     break;
                   }
                   case Uintah::TypeDescription::Type::Vector: {
-                    findMinMax<CCVariable<Vector>, Vector>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<CCVariable<Vector>, Vector>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::Matrix3: {
-                    findMinMax<CCVariable<Matrix3>, Matrix3>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMax<CCVariable<Matrix3>, Matrix3>(
+                      da, var, matl, patch, t, clf);
                     break;
                   } break;
                   default:
-                    std::cerr <<  "CC Variable of unknown type: "
-                         << subtype->getName() << std::endl;
+                    std::cerr
+                      << "CC Variable of unknown type: " << subtype->getName()
+                      << std::endl;
                     break;
                 }
                 break;
@@ -754,13 +823,13 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
               case Uintah::TypeDescription::Type::SFCXVariable:
                 switch (subtype->getType()) {
                   case Uintah::TypeDescription::Type::double_type: {
-                    findMinMax<SFCXVariable<double>, double>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMax<SFCXVariable<double>, double>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMax<SFCXVariable<float>, float>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<SFCXVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   default:
@@ -778,13 +847,13 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
               case Uintah::TypeDescription::Type::SFCYVariable:
                 switch (subtype->getType()) {
                   case Uintah::TypeDescription::Type::double_type: {
-                    findMinMax<SFCYVariable<double>, double>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMax<SFCYVariable<double>, double>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMax<SFCYVariable<float>, float>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<SFCYVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   default:
@@ -802,13 +871,13 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
               case Uintah::TypeDescription::Type::SFCZVariable:
                 switch (subtype->getType()) {
                   case Uintah::TypeDescription::Type::double_type: {
-                    findMinMax<SFCZVariable<double>, double>(da, var, matl,
-                                                             patch, t, clf);
+                    findMinMax<SFCZVariable<double>, double>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   case Uintah::TypeDescription::Type::float_type: {
-                    findMinMax<SFCZVariable<float>, float>(da, var, matl, patch,
-                                                           t, clf);
+                    findMinMax<SFCZVariable<float>, float>(
+                      da, var, matl, patch, t, clf);
                     break;
                   }
                   default:
@@ -824,7 +893,8 @@ Uintah::varsummary(DataArchive* da, CommandLineFlags& clf, int mat)
                 //__________________________________
                 //  BULLET PROOFING
               default:
-                std::cerr <<  "Variable of unknown type: " << td->getName() << std::endl;
+                std::cerr << "Variable of unknown type: " << td->getName()
+                          << std::endl;
                 break;
 
             } // end switch( type )

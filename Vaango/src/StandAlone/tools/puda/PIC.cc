@@ -46,15 +46,14 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <StandAlone/tools/puda/PIC.h>
 
 #include <StandAlone/tools/puda/util.h>
 
 #include <Core/DataArchive/DataArchive.h>
 
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
 #include <vector>
 
 using namespace Uintah;
@@ -63,57 +62,65 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////
 //              P I C   O P T I O N
-//  Takes a cell index and prints all the particle ids that live in that 
+//  Takes a cell index and prints all the particle ids that live in that
 //  cell for each timestep.
 
 void
-Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
+Uintah::PIC(DataArchive* da, CommandLineFlags& clf, int cx, int cy, int cz)
 {
 
   std::vector<std::string> vars;
+  std::vector<int> num_matl;
   std::vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
-  for(int i=0;i<(int)vars.size();i++)
+  for (int i = 0; i < (int)vars.size(); i++) {
     std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
-      
+  }
+
   std::vector<int> index;
   std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
-  for( int i = 0; i < (int)index.size(); i++ ) {
+  for (int i = 0; i < (int)index.size(); i++) {
     std::cout << index[i] << ": " << times[i] << std::endl;
   }
-      
-  findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
-      
-  for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
+
+  findTimestep_loopLimits(clf.tslow_set,
+                          clf.tsup_set,
+                          times,
+                          clf.time_step_lower,
+                          clf.time_step_upper);
+
+  for (unsigned long t = clf.time_step_lower; t <= clf.time_step_upper;
+       t += clf.time_step_inc) {
     double time = times[t];
     std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
-     std::ostringstream fnum;
+    std::ostringstream fnum;
     string filename;
-    fnum << cx << "." << cy << "." << cz << ".time." << setw(4) << setfill('0') << t/clf.time_step_inc;
+    fnum << cx << "." << cy << "." << cz << ".time." << setw(4) << setfill('0')
+         << t / clf.time_step_inc;
     string partroot("partIds.index.");
     filename = partroot + fnum.str();
     ofstream partfile(filename.c_str());
 
     // Cell to find
-    IntVector cell(cx,cy,cz);
+    IntVector cell(cx, cy, cz);
 
-    for(int l=0;l<grid->numLevels();l++){
+    for (int l = 0; l < grid->numLevels(); l++) {
       LevelP level = grid->getLevel(l);
 
       // Find the patch on which the cell lives
       // don't include extra cells -> false
-      const Patch * patch = level->getPatchFromIndex(cell, true);
-      if(patch != nullptr)
-      {
-        std::cout << "Cell found on patch: " << patch->getID() << " on level: " << level << std::endl;   
+      const Patch* patch = level->getPatchFromIndex(cell, true);
+      if (patch != nullptr) {
+        std::cout << "Cell found on patch: " << patch->getID()
+                  << " on level: " << level << std::endl;
       } else {
-         continue;
+        continue;
       }
 
       int matl = clf.matl_jim;
@@ -124,20 +131,19 @@ Uintah::PIC( DataArchive * da, CommandLineFlags & clf, int cx, int cy, int cz )
       ParticleVariable<Vector> value_vel;
       ParticleVariable<Matrix3> value_strs;
       da->query(value_pID, "p.particleID", matl, patch, t);
-      da->query(value_pos, "p.x",          matl, patch, t);
+      da->query(value_pos, "p.x", matl, patch, t);
       ParticleSubset* pset = value_pos.getParticleSubset();
-      if(pset->numParticles() > 0){
+      if (pset->numParticles() > 0) {
         ParticleSubset::iterator iter = pset->begin();
-        for(;iter != pset->end(); iter++){
+        for (; iter != pset->end(); iter++) {
           IntVector ci;
           patch->findCell(value_pos[*iter], ci);
 
-          if(ci.x() == cell.x() && ci.y() == cell.y() && ci.z() == cell.z())
-          {
+          if (ci.x() == cell.x() && ci.y() == cell.y() && ci.z() == cell.z()) {
             partfile << value_pID[*iter] << std::endl;
           }
         } // for
-      }  //if
-    }   // for levels
+      }   // if
+    }     // for levels
   }
 } // end PIC()

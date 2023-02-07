@@ -122,8 +122,9 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   }
 
   std::vector<std::string> vars;
+  std::vector<int> num_matl;
   std::vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
   std::cout << "There are " << vars.size() << " variables:\n";
       

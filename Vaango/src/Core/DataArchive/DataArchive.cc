@@ -60,6 +60,15 @@
 #include <sys/param.h>
 #include <unistd.h>
 
+namespace {
+// Usage: export SCI_DEBUG="BC_dbg:+"
+// There can be multiple DataArchives so must be static.
+static Uintah::Dout DA_dbg{ "DA_dbg",
+                            "DataArchive",
+                            "DataArchive debug info",
+                            false };
+} // namespace
+
 namespace Uintah {
 
 DataArchive::DataArchive(const std::string& filebase,
@@ -713,11 +722,8 @@ DataArchive::setupQueryPIDX(PIDX_access& access,
   // cout << Uintah::Parallel::getMPIRank() << ": open pidx file: " <<
   // idxFilename << ", looking for var: " << name << "\n";
 
-  int ret = PIDX_file_open(idxFilename.c_str(),
-                           PIDX_MODE_RDONLY,
-                           access,
-                           global_size,
-                           &idxFile);
+  int ret = PIDX_file_open(
+    idxFilename.c_str(), PIDX_MODE_RDONLY, access, global_size, &idxFile);
   // PIDXOutputContext::checkReturnCode( ret,"DataArchive::setupQueryPIDX() -
   // PIDX_file_open failure", __FILE__, __LINE__ );
   if (ret != PIDX_success) {
@@ -823,9 +829,8 @@ DataArchive::queryPIDX(BufferAndSizeTuple* data,
   //      << ", time index " << timeIndex << "\n";
 
   if (d_file_format != PIDX) {
-    throw InternalError("queryPIDX() called on non-PIDX data archive",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "queryPIDX() called on non-PIDX data archive", __FILE__, __LINE__);
   }
 
   //__________________________________
@@ -851,9 +856,8 @@ DataArchive::queryPIDX(BufferAndSizeTuple* data,
 
   if (!patch) {
     // bullet proofing
-    throw InternalError("Error: queryPIDX() requires a non-null patch.",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Error: queryPIDX() requires a non-null patch.", __FILE__, __LINE__);
   }
   // cout << Uintah::Parallel::getMPIRank() << ": starting pidx portion of
   // query()\n";
@@ -967,11 +971,8 @@ DataArchive::queryPIDX(BufferAndSizeTuple* data,
     //      << ", patchsize: " << patchSize[0] << ", " << patchSize[1] << ", "
     //      << patchSize[2] << "\n";
 
-    ret = PIDX_variable_read_data_layout(varDesc,
-                                         patchOffset,
-                                         patchSize,
-                                         data->buffer,
-                                         PIDX_row_major);
+    ret = PIDX_variable_read_data_layout(
+      varDesc, patchOffset, patchSize, data->buffer, PIDX_row_major);
 
     PIDXOutputContext::checkReturnCode(
       ret,
@@ -1038,14 +1039,8 @@ DataArchive::queryPIDXSerial(Variable& var,
       __LINE__);
   }
 
-  bool found = setupQueryPIDX(access,
-                              idxFile,
-                              varDesc,
-                              level,
-                              td,
-                              name,
-                              matlIndex,
-                              timeIndex);
+  bool found = setupQueryPIDX(
+    access, idxFile, varDesc, level, td, name, matlIndex, timeIndex);
   if (!found) {
     return false;
   }
@@ -1209,9 +1204,8 @@ DataArchive::query(Variable& var,
         << "VARIABLE NOT FOUND: " << name << ", material index " << matlIndex
         << ", patch " << patch->getID() << ", time index " << index
         << "\nPlease make sure the correct material index is specified\n";
-      throw InternalError("DataArchive::query:Variable not found",
-                          __FILE__,
-                          __LINE__);
+      throw InternalError(
+        "DataArchive::query:Variable not found", __FILE__, __LINE__);
     }
 
     int pos = std::distance(timedata.d_datafileInfoIndex.begin(), iter);
@@ -1224,9 +1218,8 @@ DataArchive::query(Variable& var,
   // Allocate memory for grid or particle variables
   if (td->getType() == TypeDescription::Type::ParticleVariable) {
     if (dfi->numParticles == -1) {
-      throw InternalError("DataArchive::query:Cannot get numParticles",
-                          __FILE__,
-                          __LINE__);
+      throw InternalError(
+        "DataArchive::query:Cannot get numParticles", __FILE__, __LINE__);
     }
 
     if (patch->isVirtual()) {
@@ -1269,10 +1262,8 @@ DataArchive::query(Variable& var,
     if (fd == -1) {
       std::cerr << "Error opening file: " << data_filename.c_str()
                 << ", errno=" << errno << '\n';
-      throw ErrnoException("DataArchive::query (open call)",
-                           errno,
-                           __FILE__,
-                           __LINE__);
+      throw ErrnoException(
+        "DataArchive::query (open call)", errno, __FILE__, __LINE__);
     }
 
     off_t ls = lseek(fd, dfi->start, SEEK_SET);
@@ -1280,10 +1271,8 @@ DataArchive::query(Variable& var,
     if (ls == -1) {
       std::cerr << "Error lseek - file: " << data_filename.c_str()
                 << ", errno=" << errno << '\n';
-      throw ErrnoException("DataArchive::query (lseek call)",
-                           errno,
-                           __FILE__,
-                           __LINE__);
+      throw ErrnoException(
+        "DataArchive::query (lseek call)", errno, __FILE__, __LINE__);
     }
 
     InputContext ic(fd, data_filename.c_str(), dfi->start);
@@ -1306,10 +1295,8 @@ DataArchive::query(Variable& var,
     if (s == -1) {
       std::cerr << "Error closing file: " << data_filename.c_str()
                 << ", errno=" << errno << '\n';
-      throw ErrnoException("DataArchive::query (close call)",
-                           errno,
-                           __FILE__,
-                           __LINE__);
+      throw ErrnoException(
+        "DataArchive::query (close call)", errno, __FILE__, __LINE__);
     }
   }
 
@@ -1343,27 +1330,17 @@ DataArchive::query(Variable& var,
       VarData& varinfo            = td.d_varInfo[name];
       const TypeDescription* type = TypeDescription::lookupType(varinfo.type);
       IntVector low, high;
-      patch->computeVariableExtents(type->getType(),
-                                    varinfo.boundaryLayer,
-                                    gt,
-                                    numGhostcells,
-                                    low,
-                                    high);
-      queryRegion(var,
-                  name,
-                  matlIndex,
-                  patch->getLevel(),
-                  timeIndex,
-                  low,
-                  high);
+      patch->computeVariableExtents(
+        type->getType(), varinfo.boundaryLayer, gt, numGhostcells, low, high);
+      queryRegion(
+        var, name, matlIndex, patch->getLevel(), timeIndex, low, high);
     } else {
       std::cerr
         << "VARIABLE NOT FOUND: " << name << ", material index " << matlIndex
         << ", patch " << patch->getID() << ", time index " << timeIndex
         << "\nPlease make sure the correct material index is specified\n";
-      throw InternalError("DataArchive::query:Variable not found",
-                          __FILE__,
-                          __LINE__);
+      throw InternalError(
+        "DataArchive::query:Variable not found", __FILE__, __LINE__);
     }
     return true;
   }
@@ -1701,12 +1678,8 @@ DataArchive::restartInitialize(int index,
           // cout << Uintah::Parallel::getMPIRank() << ": calling query() on: "
           // << var_name << "\n";
 
-          found = query(*red_var,
-                        varMapIter->first,
-                        -1,
-                        nullptr,
-                        timestep_index,
-                        &data);
+          found = query(
+            *red_var, varMapIter->first, -1, nullptr, timestep_index, &data);
           if (!found) {
             // cout << "Warning: " << *label << " (reduction var) not found...
             // skipping.\n";
@@ -1791,13 +1764,8 @@ DataArchive::restartInitialize(int index,
                 // (void*)(data->buffer))
                 //      << " and size: " << data->size << "\n";
 
-                queryPIDX(data,
-                          varDesc,
-                          type,
-                          var_name,
-                          matl,
-                          patch,
-                          timestep_index);
+                queryPIDX(
+                  data, varDesc, type, var_name, matl, patch, timestep_index);
 
 #if 0
                 if( data->buffer == nullptr ) {
@@ -1826,9 +1794,8 @@ DataArchive::restartInitialize(int index,
                 // dataBufferMap.size()
                 //      << " and map is: " << &dataBufferMap << "\n";
               } else {
-                throw InternalError("DataArchive - should never get here",
-                                    __FILE__,
-                                    __LINE__);
+                throw InternalError(
+                  "DataArchive - should never get here", __FILE__, __LINE__);
               }
             } // end if this is my patch
           }   // end for patch
@@ -1955,9 +1922,8 @@ DataArchive::restartInitialize(int index,
     } // end for lev_num
 
 #else
-    throw InternalError("Asked to read a PIDX UDA, but PIDX not configured.",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Asked to read a PIDX UDA, but PIDX not configured.", __FILE__, __LINE__);
 #endif
   } // end PIDX reading else
 } // end restartInitialize
@@ -2166,8 +2132,7 @@ DataArchive::TimeData::TimeData(DataArchive* da,
   , d_parent_da(da)
 {
   d_ts_directory = timestepPathAndFilename.substr(
-    0,
-    timestepPathAndFilename.find_last_of('/') + 1);
+    0, timestepPathAndFilename.find_last_of('/') + 1);
 }
 
 DataArchive::TimeData::~TimeData()
@@ -2185,9 +2150,8 @@ DataArchive::TimeData::init()
 
   if (ts_file == nullptr) {
     // FIXME: add more info to exception.
-    throw ProblemSetupException("Failed to open timestep file.",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Failed to open timestep file.", __FILE__, __LINE__);
   }
 
   // Handle endianness and number of bits
@@ -2198,9 +2162,8 @@ DataArchive::TimeData::init()
 
   if (endianness == "" || numbits == -1) {
     // This will only happen on a very old UDA.
-    throw ProblemSetupException("endianness and/or numbits missing",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "endianness and/or numbits missing", __FILE__, __LINE__);
   }
 
   d_swapBytes = endianness != string(Uintah::endianness());
@@ -2228,9 +2191,8 @@ DataArchive::TimeData::init()
   }
 
   if (!found) {
-    throw InternalError("Cannot find <Data> in timestep file",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Cannot find <Data> in timestep file", __FILE__, __LINE__);
   }
 
   bool done = false;
@@ -2377,21 +2339,18 @@ DataArchive::TimeData::parseFile(const string& filename,
       }
       long start;
       if (!vnode->get("start", start)) {
-        throw InternalError("DataArchive::query:Cannot get start",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "DataArchive::query:Cannot get start", __FILE__, __LINE__);
       }
       long end;
       if (!vnode->get("end", end)) {
-        throw InternalError("DataArchive::query:Cannot get end",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "DataArchive::query:Cannot get end", __FILE__, __LINE__);
       }
       string filename;
       if (!vnode->get("filename", filename)) {
-        throw InternalError("DataArchive::query:Cannot get filename",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "DataArchive::query:Cannot get filename", __FILE__, __LINE__);
       }
 
       // not required
@@ -2498,9 +2457,8 @@ DataArchive::TimeData::parsePatch(const Patch* patch)
     // first attempt.  Future attemps could perhaps be smarter.
     if (!patchinfo.parsed && patchIndex < (int)d_xmlParsed[levelIndex].size() &&
         !d_xmlParsed[levelIndex][patchIndex]) {
-      parseFile(d_xmlFilenames[levelIndex][patchIndex],
-                levelIndex,
-                levelBasePatchID);
+      parseFile(
+        d_xmlFilenames[levelIndex][patchIndex], levelIndex, levelBasePatchID);
       d_xmlParsed[levelIndex][patchIndex] = true;
     }
 
@@ -2508,9 +2466,8 @@ DataArchive::TimeData::parsePatch(const Patch* patch)
     if (!patchinfo.parsed) {
       for (unsigned proc = 0; proc < d_xmlFilenames[levelIndex].size();
            proc++) {
-        parseFile(d_xmlFilenames[levelIndex][proc],
-                  levelIndex,
-                  levelBasePatchID);
+        parseFile(
+          d_xmlFilenames[levelIndex][proc], levelIndex, levelBasePatchID);
         d_xmlParsed[levelIndex][proc] = true;
       }
     }
@@ -2525,9 +2482,8 @@ DataArchive::getOldDelt(int restart_index)
   TimeData& timedata = getTimeData(restart_index);
   FILE* fp           = fopen(timedata.d_ts_path_and_filename.c_str(), "r");
   if (fp == nullptr) {
-    throw InternalError("DataArchive::setOldDelt() failed open datafile.",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "DataArchive::setOldDelt() failed open datafile.", __FILE__, __LINE__);
   }
   // Note, old UDAs had a <delt> flag, but that was deprecated long ago in
   // favor of the <oldDelt> flag which is what we are going to look for here.

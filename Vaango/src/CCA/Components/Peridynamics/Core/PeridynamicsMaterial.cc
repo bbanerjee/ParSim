@@ -136,8 +136,8 @@ PeridynamicsMaterial::standardInitialization(
     }
 
     //    piece_num++;
-    d_geom_objs.push_back(
-      std::make_shared<Uintah::GeometryObject>(mainpiece, geom_obj_ps, geom_obj_data));
+    d_geom_objs.push_back(std::make_shared<Uintah::GeometryObject>(
+      mainpiece, geom_obj_ps, geom_obj_data));
   }
 }
 
@@ -205,4 +205,15 @@ ParticleCreator*
 PeridynamicsMaterial::getParticleCreator()
 {
   return d_particle_creator;
+}
+
+void
+PeridynamicsMaterial::copyWithoutGeom(Uintah::ProblemSpecP& ps,
+                                      const PeridynamicsMaterial* mat,
+                                      PeridynamicsFlags* flags)
+{
+  d_density = mat->d_density;
+
+  // Check to see which ParticleCreator object we need
+  d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 }

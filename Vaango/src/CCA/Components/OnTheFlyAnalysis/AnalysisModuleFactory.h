@@ -44,7 +44,7 @@ private:
 public:
   static std::vector<std::unique_ptr<AnalysisModule>>
   create(const ProcessorGroup* myworld,
-         const MaterialManagerP materialManager,
+         const MaterialManagerP& materialManager,
          const ProblemSpecP& prob_spec);
 };
 } // namespace Uintah

@@ -68,7 +68,9 @@ public:
   scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override
+  {
+  }
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
@@ -77,7 +79,7 @@ public:
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
   virtual void
-  outputProblemSpec(Uintah::ProblemSpecP&)
+  outputProblemSpec(Uintah::ProblemSpecP&) override
   {
   }
 
@@ -173,6 +175,6 @@ protected:
   Step d_rk4steps[4];
 };
 
-}
+} // namespace Uintah
 
 #endif

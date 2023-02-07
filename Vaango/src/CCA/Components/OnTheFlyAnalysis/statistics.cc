@@ -54,7 +54,7 @@ Dout dbg_OTF_stats("statistics_dbg",
 
 //______________________________________________________________________
 statistics::statistics(const ProcessorGroup* myworld,
-                       const MaterialManagerP materialManager,
+                       const MaterialManagerP& materialManager,
                        const ProblemSpecP& module_spec)
   : AnalysisModule(myworld, materialManager, module_spec)
 {
@@ -126,9 +126,8 @@ statistics::problemSetup(
 
   // Start time < stop time
   if (d_startTime > d_stopTime) {
-    throw ProblemSetupException("\n ERROR:statistics: startTime > stopTime. \n",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "\n ERROR:statistics: startTime > stopTime. \n", __FILE__, __LINE__);
   }
 
   // debugging
@@ -183,9 +182,8 @@ statistics::problemSetup(
 
   ProblemSpecP vars_ps = m_module_spec->findBlock("Variables");
   if (!vars_ps) {
-    throw ProblemSetupException("statistics: Couldn't find <Variables> tag",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "statistics: Couldn't find <Variables> tag", __FILE__, __LINE__);
   }
 
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze");
@@ -424,9 +422,8 @@ statistics::initialize(const ProcessorGroup*,
           break;
         }
         default: {
-          throw InternalError("statistics: invalid data type",
-                              __FILE__,
-                              __LINE__);
+          throw InternalError(
+            "statistics: invalid data type", __FILE__, __LINE__);
         }
       }
     } // loop over Qstat
@@ -460,9 +457,8 @@ statistics::scheduleRestartInitialize(SchedulerP& sched, const LevelP& level)
   const PatchSubset* myPatches = ps->getSubset(rank);
   const Patch* firstPatch      = myPatches->get(0);
 
-  Task* t = scinew Task("statistics::restartInitialize",
-                        this,
-                        &statistics::restartInitialize);
+  Task* t = scinew Task(
+    "statistics::restartInitialize", this, &statistics::restartInitialize);
 
   bool addTask = false;
 
@@ -536,10 +532,8 @@ statistics::restartInitialize(const ProcessorGroup*,
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches,
-              patch,
-              dout_OTF_stats,
-              "Doing statistics::restartInitialize");
+    printTask(
+      patches, patch, dout_OTF_stats, "Doing statistics::restartInitialize");
 
     for (unsigned int i = 0; i < d_Qstats.size(); i++) {
       Qstats Q = d_Qstats[i];
@@ -554,9 +548,8 @@ statistics::restartInitialize(const ProcessorGroup*,
           break;
         }
         default: {
-          throw InternalError("statistics: invalid data type",
-                              __FILE__,
-                              __LINE__);
+          throw InternalError(
+            "statistics: invalid data type", __FILE__, __LINE__);
         }
       }
     } // loop over Qstat
@@ -728,9 +721,8 @@ statistics::doAnalysis(const ProcessorGroup* pg,
           break;
         }
         default: {
-          throw InternalError("statistics: invalid data type",
-                              __FILE__,
-                              __LINE__);
+          throw InternalError(
+            "statistics: invalid data type", __FILE__, __LINE__);
         }
       }
     } // qstats loop
@@ -753,11 +745,13 @@ statistics::computeStatsWrapper(DataWarehouse* old_dw,
 
   if (now < d_startTime || now > d_stopTime) {
 
-    //    proc0cout << " IGNORING------------DataAnalysis: Statistics" << std::endl;
+    //    proc0cout << " IGNORING------------DataAnalysis: Statistics" <<
+    //    std::endl;
     allocateAndZeroStats<T>(new_dw, patch, Q);
     carryForwardSums(old_dw, new_dw, patches, Q);
   } else {
-    //    proc0cout << " Computing------------DataAnalysis: Statistics" << std::endl;
+    //    proc0cout << " Computing------------DataAnalysis: Statistics" <<
+    //    std::endl;
 
     computeStats<T>(old_dw, new_dw, patch, Q);
   }
@@ -1031,7 +1025,8 @@ statistics::allocateAndZeroSums(DataWarehouse* new_dw,
     allocateAndZero<T>(new_dw, Q.Qsum3_Label, matl, patch);
     allocateAndZero<T>(new_dw, Q.Qsum4_Label, matl, patch);
     //    proc0cout << "    Statistics: " << Q.Q_Label->getName() << "
-    //    initializing high order sums on patch: " << patch->getID() << std::endl;
+    //    initializing high order sums on patch: " << patch->getID() <<
+    //    std::endl;
   }
 }
 

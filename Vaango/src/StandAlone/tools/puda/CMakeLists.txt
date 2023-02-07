@@ -35,7 +35,6 @@ ADD_EXECUTABLE(puda
   POL.cc         
   AA_MMS.cc      
   rtdata.cc      
-  tecplot.cc     
   util.cc        
   varsummary.cc  
   puda.cc        

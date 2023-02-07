@@ -48,7 +48,7 @@ class Relocate
   using VarLabel2DVector = std::vector<std::vector<const VarLabel*>>;
 
 public:
-  Relocate();
+  Relocate() = default;
   virtual ~Relocate();
 
   void

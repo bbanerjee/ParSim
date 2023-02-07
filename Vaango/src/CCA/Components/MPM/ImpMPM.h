@@ -130,7 +130,9 @@ public:
   scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
 
   virtual double
-  recomputeDelT(double new_dt);
+  recomputeDelT(double dt) {
+    return dt * d_mpm_flags->d_delTDecreaseFactor;
+  }
 
   void
   scheduleSwitchTest(const LevelP& level, SchedulerP& sched);

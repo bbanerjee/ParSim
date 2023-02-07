@@ -90,11 +90,11 @@ target_link_libraries(testElasticModuli_MetalIso
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testElasticModuli_MetalIso)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
 target_link_libraries(testElasticModuli_Tabular

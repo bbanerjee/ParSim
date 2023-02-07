@@ -43,6 +43,7 @@ add_subdirectory(WallShearStressModel)
 add_library(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
 
 SET(LIBS
+  ICE_Core
   Vaango_CCA_Components_Models
   Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_CCA_Ports

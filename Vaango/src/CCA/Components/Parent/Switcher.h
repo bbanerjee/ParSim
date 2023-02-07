@@ -90,9 +90,6 @@ public:
   virtual void
   scheduleFinalizeTimestep(const LevelP& level, SchedulerP& sched);
 
-  virtual void
-  switchApplication(const ProblemSpecP& restart_prob_spec, const GridP& grid);
-
   virtual bool
   needRecompile(const GridP& grid);
 

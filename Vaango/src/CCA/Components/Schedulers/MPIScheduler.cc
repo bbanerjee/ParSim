@@ -98,7 +98,7 @@ Uintah::Dout g_task_level(
   "MPIScheduler",
   "output task name and each level's beginning patch when done",
   false);
-}
+} // namespace
 
 namespace Uintah {
 
@@ -231,19 +231,15 @@ MPIScheduler::verifyChecksum()
         " (Uintah::MPI::Allreduce) Checking checksum of " << checksum);
 
   int result_checksum;
-  Uintah::MPI::Allreduce(&checksum,
-                         &result_checksum,
-                         1,
-                         MPI_INT,
-                         MPI_MIN,
-                         d_myworld->getComm());
+  Uintah::MPI::Allreduce(
+    &checksum, &result_checksum, 1, MPI_INT, MPI_MIN, d_myworld->getComm());
 
   if (checksum != result_checksum) {
     std::cerr << "Failed task checksum comparison! Not all processes are "
                  "executing the same taskgraph \n";
-    std::cerr << " Rank- " << my_rank << " of "
-              << d_myworld->nRanks() - 1 << ": has sum " << checksum
-              << " and global is " << result_checksum << '\n';
+    std::cerr << " Rank- " << my_rank << " of " << d_myworld->nRanks() - 1
+              << ": has sum " << checksum << " and global is "
+              << result_checksum << '\n';
     Uintah::MPI::Abort(d_myworld->getComm(), 1);
   }
 
@@ -370,10 +366,8 @@ MPIScheduler::runReductionTask(DetailedTask* task)
 
   OnDemandDataWarehouse* dw = d_dws[mod->mapDataWarehouse()].get();
   ASSERT(task->getTask()->m_comm >= 0);
-  dw->reduceMPI(mod->var,
-                mod->reduction_level,
-                mod->matls,
-                task->getTask()->m_comm);
+  dw->reduceMPI(
+    mod->var, mod->reduction_level, mod->matls, task->getTask()->m_comm);
   task->done(d_dws);
 }
 
@@ -404,7 +398,8 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
 
     for (DetailedDep* req = batch->head; req != nullptr; req = req->m_next) {
 
-      if ((req->m_comm_condition == DetailedDep::FirstIteration && iteration > 0) ||
+      if ((req->m_comm_condition == DetailedDep::FirstIteration &&
+           iteration > 0) ||
           (req->m_comm_condition == DetailedDep::SubsequentIterations &&
            iteration == 0) ||
           (d_not_copy_data_vars.count(req->m_req->var->getName()) > 0)) {
@@ -463,11 +458,9 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
         // on an output task (and only on one) we require particle variables
         // from the NewDW
         if (req->m_to_tasks.front()->getTask()->getType() == Task::Output) {
-          posDW =
-            d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get();
+          posDW = d_dws[req->m_req->task->mapDataWarehouse(Task::NewDW)].get();
         } else {
-          posDW =
-            d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get();
+          posDW = d_dws[req->m_req->task->mapDataWarehouse(Task::OldDW)].get();
         }
         posLabel = d_reloc_new_pos_label;
       }
@@ -515,8 +508,8 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
       }
 
       //---------------------------------------------------------------------------
-      // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
-      // MPI_Donesome - APH 07/20/16
+      // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome
+      // & MPI_Donesome - APH 07/20/16
       //---------------------------------------------------------------------------
       CommRequestPool::iterator comm_sends_iter =
         d_sends.emplace(new SendHandle(mpibuff.takeSendlist()));
@@ -628,9 +621,9 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
       // Create the MPI type
       for (DetailedDep* req = batch->head; req != 0; req = req->m_next) {
 
-        OnDemandDataWarehouse* dw =
-          d_dws[req->m_req->mapDataWarehouse()].get();
-        if ((req->m_comm_condition == DetailedDep::FirstIteration && iteration > 0) ||
+        OnDemandDataWarehouse* dw = d_dws[req->m_req->mapDataWarehouse()].get();
+        if ((req->m_comm_condition == DetailedDep::FirstIteration &&
+             iteration > 0) ||
             (req->m_comm_condition == DetailedDep::SubsequentIterations &&
              iteration == 0) ||
             (d_not_copy_data_vars.count(req->m_req->var->getName()) > 0)) {
@@ -677,8 +670,8 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
         // the load balancer is used to determine where data was in the old dw
         // on the prev timestep pass it in if the particle data is on the old dw
         if (!d_reloc_new_pos_label && d_parent_scheduler) {
-          posDW = d_dws[req->m_req->task->mapDataWarehouse(Task::ParentOldDW)]
-                    .get();
+          posDW =
+            d_dws[req->m_req->task->mapDataWarehouse(Task::ParentOldDW)].get();
         } else {
           // on an output task (and only on one) we require particle variables
           // from the NewDW
@@ -699,11 +692,9 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
         dw->recvMPI(batch, mpibuff, posDW, req, d_load_balancer);
 
         if (!req->isNonDataDependency()) {
-          d_task_graphs[d_current_task_graph]->getDetailedTasks()->setScrubCount(
-            req->m_req,
-            req->m_matl,
-            req->m_from_patch,
-            d_dws);
+          d_task_graphs[d_current_task_graph]
+            ->getDetailedTasks()
+            ->setScrubCount(req->m_req, req->m_matl, req->m_from_patch, d_dws);
         }
       }
 
@@ -723,9 +714,8 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
 
         if (!buf) {
           printf("postMPIRecvs() - ERROR, the receive MPI buffer is nullptr\n");
-          SCI_THROW(InternalError("The receive MPI buffer is nullptr",
-                                  __FILE__,
-                                  __LINE__));
+          SCI_THROW(InternalError(
+            "The receive MPI buffer is nullptr", __FILE__, __LINE__));
         }
 
         int from = batch->from_task->getAssignedResourceIndex();
@@ -737,8 +727,8 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
                 << ", length: " << count << " (bytes)");
 
         //---------------------------------------------------------------------------
-        // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome &
-        // MPI_Donesome - APH 07/20/16
+        // New way of managing single MPI requests - avoids
+        // Uintah::MPI::Waitsome & MPI_Donesome - APH 07/20/16
         //---------------------------------------------------------------------------
         CommRequestPool::iterator comd_d_recvsiter =
           d_recvs.emplace(new RecvHandle(p_mpibuff, pBatchRecvHandler));
@@ -900,10 +890,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
   if (d_reloc_new_pos_label && d_dws[d_dw_map[Task::OldDW]] != nullptr) {
     d_dws[d_dw_map[Task::OldDW]]->exchangeParticleQuantities(
-      dts,
-      d_load_balancer,
-      d_reloc_new_pos_label,
-      iteration);
+      dts, d_load_balancer, d_reloc_new_pos_label, iteration);
   }
 
   bool abort       = false;
@@ -1012,7 +999,8 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
         // Go through all materials since getting an MPMMaterial
         // correctly would depend on MPM
-        for (unsigned int m = 0; m < d_materialManager->getNumMaterials(); m++) {
+        for (unsigned int m = 0; m < d_materialManager->getNumMaterials();
+             m++) {
           if (dw->haveParticleSubset(m, patch)) {
             numParticles += dw->getParticleSubset(m, patch)->numParticles();
           }
@@ -1028,6 +1016,21 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   }
 
   RuntimeStats::report(d_myworld->getComm());
+}
+
+//  Take the various timers and compute the net results
+void
+MPIScheduler::computeNetRuntimeStats()
+{
+  if (d_runtime_stats) {
+    // don't count output time
+    (*d_runtime_stats)[TaskExecTime] +=
+      d_mpi_info[TotalTask] - (*d_runtime_stats)[TotalIOTime];
+    (*d_runtime_stats)[TaskLocalCommTime] +=
+      d_mpi_info[TotalRecv] + d_mpi_info[TotalSend];
+    (*d_runtime_stats)[TaskWaitCommTime] += d_mpi_info[TotalWait];
+    (*d_runtime_stats)[TaskReduceCommTime] += d_mpi_info[TotalReduce];
+  }
 }
 
 void
@@ -1241,34 +1244,14 @@ MPIScheduler::outputTimingStats(const char* label)
     double max_volume;
 
     // do SUM and MAX reduction for m_num_messages and m_message_volume
-    Uintah::MPI::Reduce(&d_num_messages,
-                        &total_messages,
-                        1,
-                        MPI_UNSIGNED,
-                        MPI_SUM,
-                        0,
-                        my_comm);
-    Uintah::MPI::Reduce(&d_message_volume,
-                        &total_volume,
-                        1,
-                        MPI_DOUBLE,
-                        MPI_SUM,
-                        0,
-                        my_comm);
-    Uintah::MPI::Reduce(&d_num_messages,
-                        &max_messages,
-                        1,
-                        MPI_UNSIGNED,
-                        MPI_MAX,
-                        0,
-                        my_comm);
-    Uintah::MPI::Reduce(&d_message_volume,
-                        &max_volume,
-                        1,
-                        MPI_DOUBLE,
-                        MPI_MAX,
-                        0,
-                        my_comm);
+    Uintah::MPI::Reduce(
+      &d_num_messages, &total_messages, 1, MPI_UNSIGNED, MPI_SUM, 0, my_comm);
+    Uintah::MPI::Reduce(
+      &d_message_volume, &total_volume, 1, MPI_DOUBLE, MPI_SUM, 0, my_comm);
+    Uintah::MPI::Reduce(
+      &d_num_messages, &max_messages, 1, MPI_UNSIGNED, MPI_MAX, 0, my_comm);
+    Uintah::MPI::Reduce(
+      &d_message_volume, &max_volume, 1, MPI_DOUBLE, MPI_MAX, 0, my_comm);
 
     if (my_rank == 0) {
       std::ostringstream message;

@@ -68,7 +68,7 @@ AnalysisModuleFactory::~AnalysisModuleFactory() {}
 //
 std::vector<std::unique_ptr<AnalysisModule>>
 AnalysisModuleFactory::create(const ProcessorGroup* myworld,
-                              const MaterialManagerP materialManager,
+                              const MaterialManagerP& materialManager,
                               const ProblemSpecP& prob_spec)
 {
   // the factory can use either of these xml tags

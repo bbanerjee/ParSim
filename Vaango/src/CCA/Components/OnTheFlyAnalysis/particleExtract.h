@@ -22,24 +22,22 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_particleExtract_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_particleExtract_h
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Ports/Output.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <map>
 #include <vector>
 
 namespace Uintah {
-
 
 /**************************************
 
@@ -66,81 +64,88 @@ DESCRIPTION
 WARNING
 
 ****************************************/
-  class particleExtract : public AnalysisModule {
+class particleExtract : public AnalysisModule
+{
+public:
+  particleExtract(const ProcessorGroup* myworld,
+                  const MaterialManagerP& materialManager,
+                  const ProblemSpecP& module_spec);
+
+  particleExtract() = default;
+
+  virtual ~particleExtract();
+
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               std::vector<std::vector<const VarLabel*>>& PState,
+               std::vector<std::vector<const VarLabel*>>& PState_preReloc);
+
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps){};
+
+  virtual void
+  scheduleInitialize(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level);
+
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  doAnalysis_preReloc(const ProcessorGroup* pg,
+                      const PatchSubset* patches,
+                      const MaterialSubset*,
+                      DataWarehouse*,
+                      DataWarehouse* new_dw);
+
+  void
+  doAnalysis(const ProcessorGroup* pg,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  createFile(std::string& filename, FILE*& fp);
+
+  bool
+  doMPMOnLevel(int level, int numLevels);
+
+  // general labels
+  class particleExtractLabel
+  {
   public:
-    particleExtract(const ProcessorGroup* myworld,
-                    const MaterialManagerP materialManager,
-                    const ProblemSpecP& module_spec);
-
-    particleExtract();
-
-    virtual ~particleExtract();
-
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid,
-                              std::vector<std::vector<const VarLabel* > > &PState,
-                              std::vector<std::vector<const VarLabel* > > &PState_preReloc);
-
-    virtual void outputProblemSpec(ProblemSpecP& ps){};
-
-    virtual void scheduleInitialize(SchedulerP& sched,
-                                    const LevelP& level);
-
-    virtual void scheduleRestartInitialize(SchedulerP& sched,
-                                           const LevelP& level);
-
-    virtual void scheduleDoAnalysis(SchedulerP& sched,
-                                    const LevelP& level);
-
-    virtual void scheduleDoAnalysis_preReloc(SchedulerP& sched,
-                                    const LevelP& level);
-
-  private:
-
-    void initialize(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-    void doAnalysis_preReloc(const ProcessorGroup* pg,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-    void doAnalysis(const ProcessorGroup* pg,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-    void createFile(std::string& filename, FILE*& fp);
-
-    bool doMPMOnLevel(int level, int numLevels);
-
-
-    // general labels
-    class particleExtractLabel {
-    public:
-      VarLabel* lastWriteTimeLabel;
-      VarLabel* filePointerLabel;
-      VarLabel* filePointerLabel_preReloc;
-    };
-
-    particleExtractLabel* m_lb;
-    MPMLabel* M_lb;
-
-    //__________________________________
-    // global constants
-    double d_colorThreshold;
-    std::vector<VarLabel*> d_varLabels;
-
-    const Material* d_matl        {nullptr};
-    MaterialSet   * d_matl_set    {nullptr};
-    MaterialSubset* d_matl_subset {nullptr};
+    VarLabel* lastWriteTimeLabel;
+    VarLabel* filePointerLabel;
+    VarLabel* filePointerLabel_preReloc;
   };
-}
+
+  particleExtractLabel* m_lb;
+  MPMLabel* M_lb;
+
+  //__________________________________
+  // global constants
+  double d_colorThreshold;
+  std::vector<VarLabel*> d_varLabels;
+
+  const Material* d_matl{ nullptr };
+  MaterialSet* d_matl_set{ nullptr };
+  MaterialSubset* d_matl_subset{ nullptr };
+};
+} // namespace Uintah
 
 #endif

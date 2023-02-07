@@ -29,8 +29,11 @@
 
 namespace Uintah {
 
-  void swapbytes( Uintah::FileInfoP& ) {
-    SCI_THROW(InternalError("Swap bytes for FileInfoP is not implemented", __FILE__, __LINE__));
-  }
+void
+swapbytes(Uintah::FileInfoP&)
+{
+  SCI_THROW(InternalError(
+    "Swap bytes for FileInfoP is not implemented", __FILE__, __LINE__));
+}
 
 } // End namespace Uintah

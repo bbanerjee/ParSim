@@ -570,7 +570,6 @@ private:
       }
     }
   };
-
 };
 
 } // end namespace Uintah

@@ -52,7 +52,7 @@ Dout dbg_OTF_FLT("FirstLawThermo_dbg",  "OnTheFlyAnalysis", "Displays detailed d
 
 //______________________________________________________________________
 FirstLawThermo::FirstLawThermo(const ProcessorGroup* myworld,
-                               const MaterialManagerP materialManager,
+                               const MaterialManagerP& materialManager,
                                const ProblemSpecP& module_spec)
 
   : AnalysisModule(myworld, materialManager, module_spec)

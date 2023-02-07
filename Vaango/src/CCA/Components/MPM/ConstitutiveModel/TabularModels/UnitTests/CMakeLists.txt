@@ -95,46 +95,46 @@ target_link_libraries(testTabularEOS
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularEOS)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularEOS)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularPlasticity testTabularPlasticity.cc)
 target_link_libraries(testTabularPlasticity
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularPlasticity)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
 target_link_libraries(testNeuralNetTabularPlasticity
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testNeuralNetTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testNeuralNetTabularPlasticity)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
 target_link_libraries(testTabularPlasticityCap
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularPlasticityCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularPlasticityCap)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 

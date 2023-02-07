@@ -66,10 +66,8 @@ set(UDA2VIS_LIBS
   Vaango_Core_Parallel      
   Vaango_CCA_Ports          
   Vaango_CCA_Components_ProblemSpecification 
-  Vaango_Core_Basis        
   Vaango_Core_Containers   
   Vaango_Core_Datatypes    
-         
   ${XML2_LIBRARY}
   ${Z_LIBRARY}
   ${M_LIBRARY}

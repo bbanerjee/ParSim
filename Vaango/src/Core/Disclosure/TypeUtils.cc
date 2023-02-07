@@ -283,6 +283,12 @@ fun_getZeroValue(Vector* val)
 }
 
 void
+fun_getLargeValue(bool* val)
+{
+  *val = true;
+}
+
+void
 fun_getLargeValue(long64* val)
 {
   *val = LONG_MAX;
@@ -298,6 +304,11 @@ fun_getLargeValue(double* val)
   *val = DBL_MAX;
 }
 
+void
+fun_getSmallValue(bool* val)
+{
+  *val = false;
+}
 void
 fun_getSmallValue(long64* val)
 {

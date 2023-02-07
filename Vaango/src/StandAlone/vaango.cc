@@ -35,7 +35,6 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Tracker/TrackerClient.h>
 
 #include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
 #include <CCA/Components/SimulationController/AMRSimulationController.h>
@@ -47,7 +46,7 @@
 #include <CCA/Components/Solvers/HypreSolver.h>
 #endif
 
-#include <CCA/Components/ReduceUda/UdaReducer.h>
+#include <CCA/Components/PostProcessUda/PostProcessUda.h>
 #include <CCA/Components/DataArchiver/DataArchiver.h>
 #include <CCA/Components/Solvers/SolverFactory.h>
 #include <CCA/Components/Regridder/RegridderFactory.h>

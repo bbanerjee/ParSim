@@ -220,6 +220,42 @@ ReductionVariable<bool, Reductions::And<bool>>::putMPIData(
 
 template<>
 void
+ReductionVariable<bool, Reductions::Or<bool>>::getMPIInfo(
+  int& count,
+  MPI_Datatype& datatype,
+  MPI_Op& op)
+{
+  datatype = MPI_CHAR;
+  count    = 1;
+  op       = MPI_LOR;
+}
+
+template<>
+void
+ReductionVariable<bool, Reductions::Or<bool>>::getMPIData(
+  std::vector<char>& data,
+  int& index)
+{
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
+  char* ptr = reinterpret_cast<char*>(&data[index]);
+  *ptr      = *(d_value.get());
+  index += sizeof(char);
+}
+
+template<>
+void
+ReductionVariable<bool, Reductions::Or<bool>>::putMPIData(
+  std::vector<char>& data,
+  int& index)
+{
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
+  char* ptr = reinterpret_cast<char*>(&data[index]);
+  d_value     = std::make_shared<bool>(*ptr);
+  index += sizeof(char);
+}
+
+template<>
+void
 ReductionVariable<long64, Reductions::Sum<long64>>::getMPIInfo(
   int& count,
   MPI_Datatype& datatype,

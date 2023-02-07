@@ -159,9 +159,9 @@ SchedulerCommon::releaseComponents()
   releasePort("output");
   releasePort("simulation");
 
-  d_load_balancer    = nullptr;
-  d_output           = nullptr;
-  d_simulator        = nullptr;
+  d_load_balancer   = nullptr;
+  d_output          = nullptr;
+  d_simulator       = nullptr;
   d_materialManager = nullptr;
 }
 
@@ -2128,6 +2128,37 @@ SchedulerCommon::scheduleTaskMonitoring(const LevelP& level)
   }
 
   addTask(t, level->eachPatch(), d_materialManager->allMaterials());
+}
+
+// Schedule the recording of the task monitoring attribute
+// values. This task should be the last task so that the writing is
+// done after all task have been executed.
+void
+SchedulerCommon::scheduleTaskMonitoring(const PatchSet* patches)
+{
+  if (!d_monitoring) {
+    return;
+  }
+
+  // Create and schedule a task that will record each of the
+  // tasking monitoring attributes.
+  Task* t = scinew Task("SchedulerCommon::recordTaskMonitoring",
+                        this,
+                        &SchedulerCommon::recordTaskMonitoring);
+
+  // Ghost::GhostType gn = Ghost::None;
+
+  for (unsigned int i = 0; i < 2; ++i) {
+    for (const auto& it : d_monitoring_tasks[i]) {
+      t->computes(it.second, d_dummy_matl.get(), Task::OutOfDomain);
+
+      overrideVariableBehavior(
+        it.second->getName(), false, false, true, true, true);
+      // treatAsOld copyData noScrub notCopyData noCheckpoint
+    }
+  }
+
+  addTask(t, patches, d_materialManager->allMaterials());
 }
 
 // Record the global task monitoring attribute values into the data

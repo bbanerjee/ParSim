@@ -22,28 +22,26 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_MinMax_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_MinMax_h
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Output.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/LevelP.h>
 #include <Core/Grid/MaterialManager.h>
-#include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/GridIterator.h>
+#include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Variables/GridIterator.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <map>
 #include <vector>
 
 namespace Uintah {
-
 
 /**************************************
 GENERAL INFORMATION
@@ -57,99 +55,105 @@ GENERAL INFORMATION
    Department of Mechanical Engineering
    University of Utah
 ****************************************/
-  class MinMax : public AnalysisModule {
+class MinMax : public AnalysisModule
+{
+public:
+  MinMax(const ProcessorGroup* myworld,
+         const MaterialManagerP& materialManager,
+         const ProblemSpecP& module_spec);
+  MinMax() = default;
+
+  virtual ~MinMax();
+
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               std::vector<std::vector<const VarLabel*>>& PState,
+               std::vector<std::vector<const VarLabel*>>& PState_preReloc);
+
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps){};
+
+  virtual void
+  scheduleInitialize(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level){};
+
+private:
+  bool
+  isRightLevel(const int myLevel, const int L_indx, const Level* level);
+
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  computeMinMax(const ProcessorGroup* pg,
+                const PatchSubset* patches,
+                const MaterialSubset*,
+                DataWarehouse* old_dw,
+                DataWarehouse* new_dw);
+
+  void
+  doAnalysis(const ProcessorGroup* pg,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  createFile(const std::string& filename,
+             const std::string& levelIndex,
+             FILE*& fp);
+
+  template<class Tvar, class Ttype>
+  void
+  findMinMax(DataWarehouse* new_dw,
+             const VarLabel* varLabel,
+             const int indx,
+             const Patch* patch,
+             GridIterator iter);
+
+  // general labels
+  class MinMaxLabel
+  {
   public:
-
-    MinMax(const ProcessorGroup* myworld,
-           const MaterialManagerP materialManager,
-           const ProblemSpecP& module_spec);
-    MinMax();
-
-    virtual ~MinMax();
-
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid,
-                              std::vector<std::vector<const VarLabel* > > &PState,
-                              std::vector<std::vector<const VarLabel* > > &PState_preReloc);
-
-    virtual void outputProblemSpec(ProblemSpecP& ps){};
-
-    virtual void scheduleInitialize(SchedulerP& sched,
-                                    const LevelP& level);
-
-    virtual void scheduleRestartInitialize(SchedulerP& sched,
-                                           const LevelP& level);
-
-    virtual void scheduleDoAnalysis(SchedulerP& sched,
-                                    const LevelP& level);
-
-    virtual void scheduleDoAnalysis_preReloc(SchedulerP& sched,
-                                    const LevelP& level) {};
-
-  private:
-
-    bool isRightLevel( const int myLevel,
-                       const int L_indx,
-                       const Level * level);
-
-    void initialize(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-    void computeMinMax(const ProcessorGroup* pg,
-                       const PatchSubset* patches,
-                       const MaterialSubset*,
-                       DataWarehouse* old_dw,
-                       DataWarehouse* new_dw);
-
-    void doAnalysis(const ProcessorGroup* pg,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-    void createFile(const std::string& filename,
-                    const std::string& levelIndex,
-                    FILE*& fp );
-
-    template <class Tvar, class Ttype>
-    void findMinMax( DataWarehouse*  new_dw,
-                     const VarLabel* varLabel,
-                     const int       indx,
-                     const Patch*    patch,
-                     GridIterator    iter );
-
-
-    // general labels
-    class MinMaxLabel {
-    public:
-      VarLabel* lastCompTimeLabel;
-      VarLabel* fileVarsStructLabel;
-    };
-
-    MinMaxLabel* d_lb;
-
-    //__________________________________
-    // global constants always begin with "d_"
-
-    struct varProperties {
-      VarLabel* label;
-      VarLabel* reductionMinLabel;
-      VarLabel* reductionMaxLabel;
-      int matl;
-      int level;
-      MaterialSubset * matSubSet;
-    };
-
-    std::vector<varProperties> d_analyzeVars;
-
-    const Material *   d_matl       {nullptr};
-    MaterialSet    *   d_matl_set   {nullptr};
-    std::vector<bool>  d_firstPassThrough;
+    VarLabel* lastCompTimeLabel;
+    VarLabel* fileVarsStructLabel;
   };
-}
+
+  MinMaxLabel* d_lb;
+
+  //__________________________________
+  // global constants always begin with "d_"
+
+  struct varProperties
+  {
+    VarLabel* label;
+    VarLabel* reductionMinLabel;
+    VarLabel* reductionMaxLabel;
+    int matl;
+    int level;
+    MaterialSubset* matSubSet;
+  };
+
+  std::vector<varProperties> d_analyzeVars;
+
+  const Material* d_matl{ nullptr };
+  MaterialSet* d_matl_set{ nullptr };
+  std::vector<bool> d_firstPassThrough;
+};
+} // namespace Uintah
 
 #endif

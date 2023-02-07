@@ -25,9 +25,9 @@
 
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 
-#include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/Scheduler.h>
+#include <CCA/Ports/SimulationInterface.h>
 
 #include <sstream>
 
@@ -37,7 +37,7 @@ using std::ostringstream;
 //______________________________________________________________________
 //
 AnalysisModule::AnalysisModule(const ProcessorGroup* myworld,
-                               const MaterialManagerP materialManager,
+                               const MaterialManagerP& materialManager,
                                const ProblemSpecP& module_spec)
   : UintahParallelComponent(myworld)
 {
@@ -104,25 +104,22 @@ AnalysisModule::getComponents()
   m_simulator = dynamic_cast<SimulationInterface*>(getPort("simulator"));
 
   if (!m_simulator) {
-    throw InternalError("dynamic_cast of 'm_simulator' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'm_simulator' failed!", __FILE__, __LINE__);
   }
 
   m_scheduler = dynamic_cast<Scheduler*>(getPort("scheduler"));
 
   if (!m_scheduler) {
-    throw InternalError("dynamic_cast of 'm_scheduler' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'm_scheduler' failed!", __FILE__, __LINE__);
   }
 
   d_output = dynamic_cast<Output*>(getPort("output"));
 
   if (!d_output) {
-    throw InternalError("dynamic_cast of 'd_output' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
   }
 }
 //______________________________________________________________________
@@ -135,8 +132,8 @@ AnalysisModule::releaseComponents()
   releasePort("output");
 
   m_simulator = nullptr;
-  m_scheduler   = nullptr;
-  d_output      = nullptr;
+  m_scheduler = nullptr;
+  d_output    = nullptr;
 }
 
 //______________________________________________________________________

@@ -53,7 +53,7 @@ class AnalysisModule : public UintahParallelComponent
 {
 public:
   AnalysisModule(const ProcessorGroup* myworld,
-                 const MaterialManagerP materialManager,
+                 const MaterialManagerP& materialManager,
                  const ProblemSpecP& module_spec);
 
   virtual ~AnalysisModule();

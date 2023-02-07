@@ -140,11 +140,6 @@ protected:
   friend class MPMArches;
 
   virtual void
-  materialProblemSetup(const ProblemSpecP& prob_spec,
-                       const GridP grid,
-                       MPMFlags* flags);
-
-  virtual void
   actuallyInitialize(const ProcessorGroup*,
                      const PatchSubset* patches,
                      const MaterialSubset* matls,
@@ -325,7 +320,7 @@ protected:
                                      const MaterialSet*);
 
   virtual void
-  scheduleComputeHeatExchange(SchedulerP&, const PatchSet*, const MaterialSet*);
+  scheduleComputeHeatExchange(SchedulerP&, const PatchSet*, const MaterialSet*) {}
 
   virtual void
   scheduleMomentumExchangeInterpolated(SchedulerP&,
@@ -362,10 +357,14 @@ protected:
   virtual void
   scheduleComputeInternalHeatRate(SchedulerP&,
                                   const PatchSet*,
-                                  const MaterialSet*);
+                                  const MaterialSet*)
+  {
+  }
 
   virtual void
-  scheduleSolveHeatEquations(SchedulerP&, const PatchSet*, const MaterialSet*);
+  scheduleSolveHeatEquations(SchedulerP&, const PatchSet*, const MaterialSet*)
+  {
+  }
 
   virtual void
   scheduleComputeAndIntegrateAcceleration(SchedulerP&,
@@ -375,7 +374,9 @@ protected:
   virtual void
   scheduleIntegrateTemperatureRate(SchedulerP&,
                                    const PatchSet*,
-                                   const MaterialSet*);
+                                   const MaterialSet*)
+  {
+  }
 
   virtual void
   scheduleMomentumExchangeIntegrated(SchedulerP&,
@@ -394,14 +395,6 @@ protected:
   scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
                                           const PatchSet*,
                                           const MaterialSet*);
-
-  void
-  scheduleAddNewParticles(SchedulerP&, const PatchSet*, const MaterialSet*);
-
-  void
-  scheduleConvertLocalizedParticles(SchedulerP&,
-                                    const PatchSet*,
-                                    const MaterialSet*);
 
   // for Fracture ----------------------------------
   virtual void
@@ -440,9 +433,9 @@ protected:
                            const MaterialSet* matls);
 
 private:
-  FractureMPM(const FractureMPM&);
+  FractureMPM(const FractureMPM&) = delete;
   FractureMPM&
-  operator=(const FractureMPM&);
+  operator=(const FractureMPM&) = delete;
 };
 
 } // end namespace Uintah

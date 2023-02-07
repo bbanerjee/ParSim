@@ -448,10 +448,14 @@ protected:
                                      const MaterialSet*);
 
   void
-  readPrescribedDeformations(string filename);
+  readPrescribedDeformations(string filename) {
+    SerialMPM::readPrescribedDeformations(filename);
+  }
 
   void
-  readInsertParticlesFile(string filename);
+  readInsertParticlesFile(string filename) {
+    SerialMPM::readInsertParticlesFile(filename);
+  }
 
 };
 

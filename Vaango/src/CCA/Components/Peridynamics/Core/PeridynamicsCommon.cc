@@ -41,11 +41,11 @@ std::map<int, T>
 PeridynamicsCommon::initializeMap(const T& val)
 {
   std::map<int, T> myMap;
-  int numPeridynamicsMatls = d_mat_manager->getNumMaterials("Peridynamics");
+  int numPeridynamicsMatls = s_mat_manager->getNumMaterials("Peridynamics");
 
   for (int m = 0; m < numPeridynamicsMatls; m++) {
     PeridynamicsMaterial* mpm_matl = static_cast<PeridynamicsMaterial*>(
-      d_mat_manager->getMaterial("Peridynamics", m));
+      s_mat_manager->getMaterial("Peridynamics", m));
 
     int dwi    = mpm_matl->getDWIndex();
     myMap[dwi] = val;
@@ -127,7 +127,7 @@ PeridynamicsCommon::materialProblemSetup(const Uintah::ProblemSpecP& prob_spec,
       std::shared_ptr<PeridynamicsMaterial> mat_copy =
         std::make_shared<PeridynamicsMaterial>();
       mat_copy->copyWithoutGeom(ps, mat.get(), d_pd_flags);
-      d_mat_manager->registerMaterial("Peridynamics", mat_copy);
+      s_mat_manager->registerMaterial("Peridynamics", mat_copy);
     }
   }
 }

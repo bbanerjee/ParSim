@@ -22,25 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_planeExtract_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_planeExtract_h
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Output.h>
-#include <Core/Grid/Variables/VarTypes.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <map>
 #include <vector>
 
 namespace Uintah {
-
 
 /**************************************
 
@@ -67,125 +65,141 @@ DESCRIPTION
 WARNING
 
 ****************************************/
-  class planeExtract : public AnalysisModule {
-  public:
-    planeExtract(const ProcessorGroup* myworld,
-                 const MaterialManagerP materialManager,
-                 const ProblemSpecP& module_spec);
+class planeExtract : public AnalysisModule
+{
+public:
+  planeExtract(const ProcessorGroup* myworld,
+               const MaterialManagerP& materialManager,
+               const ProblemSpecP& module_spec);
 
-    planeExtract();
+  planeExtract() = default;
 
-    virtual ~planeExtract();
+  virtual ~planeExtract();
 
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid,
-                              std::vector<std::vector<const VarLabel* > > &PState,
-                              std::vector<std::vector<const VarLabel* > > &PState_preReloc);
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               std::vector<std::vector<const VarLabel*>>& PState,
+               std::vector<std::vector<const VarLabel*>>& PState_preReloc);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps){};
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps){};
 
-    virtual void scheduleInitialize(SchedulerP& sched,
-                                    const LevelP& level);
+  virtual void
+  scheduleInitialize(SchedulerP& sched, const LevelP& level);
 
-    virtual void scheduleRestartInitialize(SchedulerP& sched,
-                                           const LevelP& level);
+  virtual void
+  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level);
 
-    virtual void scheduleDoAnalysis(SchedulerP& sched,
-                                    const LevelP& level);
+  virtual void
+  scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
 
-    virtual void scheduleDoAnalysis_preReloc(SchedulerP& sched,
-                                    const LevelP& level) {};
+  virtual void
+  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level){};
 
-  private:
-
-    enum PlaneType {XY=0, XZ=1, YZ=2, NONE=-9};
-
-    void initialize( const ProcessorGroup*,
-                     const PatchSubset* patches,
-                     const MaterialSubset*,
-                     DataWarehouse*,
-                     DataWarehouse* new_dw );
-
-    void doAnalysis( const ProcessorGroup* pg,
-                     const PatchSubset* patches,
-                     const MaterialSubset*,
-                     DataWarehouse*,
-                     DataWarehouse* new_dw );
-
-    void createFile( const std::string& filename,
-                     const VarLabel* varLabel,
-                     const int matl,
-                     const double time,
-                     FILE*& fp );
-
-
-    template <class Tvar>      /* double */
-    void writeDataD( DataWarehouse*  new_dw,
-                     const VarLabel* varLabel,
-                     const int       indx,
-                     const Patch*    patch,
-                     const Vector&   offset,
-                     CellIterator    iter,
-                     FILE*     fp );
-
-    template <class Tvar>     /* Vector */
-    void writeDataV( DataWarehouse*  new_dw,
-                     const VarLabel* varLabel,
-                     const int       indx,
-                     const Patch*    patch,
-                     const Vector&   offset,
-                     CellIterator    iter,
-                     FILE*     fp );
-
-    template <class Tvar>     /* integer */
-    void writeDataI( DataWarehouse*  new_dw,
-                     const VarLabel* varLabel,
-                     const int       indx,
-                     const Patch*    patch,
-                     const Vector&   offset,
-                     CellIterator    iter,
-                     FILE*     fp );
-
-    template <class Tvar>     /* Stencil7 */
-    void writeDataS7( DataWarehouse*  new_dw,
-                      const VarLabel* varLabel,
-                      const int       indx,
-                      const Patch*    patch,
-                      const Vector&   offset,
-                      CellIterator    iter,
-                      FILE*     fp );
-
-    CellIterator getIterator( const Uintah::TypeDescription* td,
-                              const Patch* patch,
-                              const IntVector& start_idx,
-                              const IntVector& end_idx  );
-
-    // general labels
-    class planeExtractLabel {
-    public:
-      VarLabel* lastWriteTimeLabel;
-      VarLabel* fileVarsStructLabel;
-    };
-
-    planeExtractLabel* d_lb;
-
-    struct plane{
-      std::string  name;
-      Point   startPt;
-      Point   endPt;
-      PlaneType planeType;
-
-    };
-
-    //__________________________________
-    // global constants
-
-    std::vector<VarLabel*> d_varLabels;
-    std::vector<int>       d_varMatl;
-    std::vector<plane*>    d_planes;
-    MaterialSet     * d_matl_set      {nullptr};
+private:
+  enum PlaneType
+  {
+    XY   = 0,
+    XZ   = 1,
+    YZ   = 2,
+    NONE = -9
   };
-}
+
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  doAnalysis(const ProcessorGroup* pg,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  createFile(const std::string& filename,
+             const VarLabel* varLabel,
+             const int matl,
+             const double time,
+             FILE*& fp);
+
+  template<class Tvar> /* double */
+  void
+  writeDataD(DataWarehouse* new_dw,
+             const VarLabel* varLabel,
+             const int indx,
+             const Patch* patch,
+             const Vector& offset,
+             CellIterator iter,
+             FILE* fp);
+
+  template<class Tvar> /* Vector */
+  void
+  writeDataV(DataWarehouse* new_dw,
+             const VarLabel* varLabel,
+             const int indx,
+             const Patch* patch,
+             const Vector& offset,
+             CellIterator iter,
+             FILE* fp);
+
+  template<class Tvar> /* integer */
+  void
+  writeDataI(DataWarehouse* new_dw,
+             const VarLabel* varLabel,
+             const int indx,
+             const Patch* patch,
+             const Vector& offset,
+             CellIterator iter,
+             FILE* fp);
+
+  template<class Tvar> /* Stencil7 */
+  void
+  writeDataS7(DataWarehouse* new_dw,
+              const VarLabel* varLabel,
+              const int indx,
+              const Patch* patch,
+              const Vector& offset,
+              CellIterator iter,
+              FILE* fp);
+
+  CellIterator
+  getIterator(const Uintah::TypeDescription* td,
+              const Patch* patch,
+              const IntVector& start_idx,
+              const IntVector& end_idx);
+
+  // general labels
+  class planeExtractLabel
+  {
+  public:
+    VarLabel* lastWriteTimeLabel;
+    VarLabel* fileVarsStructLabel;
+  };
+
+  planeExtractLabel* d_lb;
+
+  struct plane
+  {
+    std::string name;
+    Point startPt;
+    Point endPt;
+    PlaneType planeType;
+  };
+
+  //__________________________________
+  // global constants
+
+  std::vector<VarLabel*> d_varLabels;
+  std::vector<int> d_varMatl;
+  std::vector<plane*> d_planes;
+  MaterialSet* d_matl_set{ nullptr };
+};
+} // namespace Uintah
 
 #endif

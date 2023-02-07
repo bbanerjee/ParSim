@@ -50,15 +50,21 @@
 #include <Core/Parallel/Parallel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Util/DOUT.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/RWS.h>
 
 #include <iostream>
 #include <string>
 
-namespace Uintah {
+namespace {
+Uintah::Dout dout_gpf("GeometryPieceFactory",
+                      "GeometryPieceFactory",
+                      "GeometryPieceFactory debug stream",
+                      false);
+}
 
-static DebugStream dbg("GeometryPieceFactory", false);
+namespace Uintah {
 
 void
 GeometryPieceFactory::create(const ProblemSpecP& ps,
@@ -75,9 +81,10 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
       child->getAttribute("name", go_label);
     }
 
-    dbg << "---------------------------------------------------------------: "
-           "go_label: "
-        << go_label << "\n";
+    DOUTR(dout_gpf,
+          "---------------------------------------------------------------: "
+          "go_label: "
+            << go_label);
 
     if (go_label != "") {
       ProblemSpecP childBlock = child->findBlock();
@@ -104,12 +111,14 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
       }
 
       if (goHasInfo) {
-        dbg << "Creating new GeometryPiece: " << go_label
-            << " (of type: " << go_type << ")\n";
+        DOUTR(dout_gpf,
+              "Creating new GeometryPiece: " << go_label << " (of type: "
+                                             << go_type << ")");
       } else {
         if (referencedPiece != nullptr) {
-          dbg << "Referencing GeometryPiece: " << go_label
-              << " (of type: " << go_type << ")\n";
+          DOUTR(dout_gpf,
+                "Referencing GeometryPiece: " << go_label << " (of type: "
+                                              << go_type << ")");
           objs.push_back(referencedPiece);
         } else {
           std::cout << "Error... couldn't find the referenced GeomPiece: "
@@ -134,7 +143,8 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
       }
 
     } else {
-      dbg << "Creating non-labeled GeometryPiece of type '" << go_type << "'\n";
+      DOUTR(dout_gpf,
+            "Creating non-labeled GeometryPiece of type '" << go_type << "'");
     }
 
     GeometryPieceP newGeomPiece = nullptr;
@@ -211,7 +221,7 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
     objs.push_back(newGeomPiece);
 
   } // end for( child )
-  dbg << "Done creating geometry objects\n";
+  DOUTR(dout_gpf, "Done creating geometry objects");
 }
 
 void
@@ -219,22 +229,6 @@ GeometryPieceFactory::resetFactory()
 {
   s_unnamedPieces.clear();
   s_namedPieces.clear();
-}
-
-void
-GeometryPieceFactory::resetGeometryPiecesOutput()
-{
-  dbg << "resetGeometryPiecesOutput()\n";
-
-  for (auto& piece : s_unnamedPieces) {
-    piece->resetOutput();
-    dbg << "  - Reset: " << piece->getName() << "\n";
-  }
-
-  for (auto& piece : s_namedPieces) {
-    piece.second->resetOutput();
-    dbg << "  - Reset: " << piece.second->getName() << "\n";
-  }
 }
 
 bool
@@ -389,6 +383,123 @@ GeometryPieceFactory::findInsidePoints(const Uintah::Patch* const patch)
       std::pair<int, std::vector<Point>>(patch->getID(), insidePoints));
     s_insidePointsMap.insert(std::pair<std::string, PatchIDInsidePointsMapT>(
       geomName, patchIDInsidePoints));
+  }
+}
+
+const std::map<std::string, GeometryPieceP>&
+GeometryPieceFactory::getNamedGeometryPieces()
+{
+  return s_namedPieces;
+}
+
+//  Recursively search through the problem spec for geometry pieces
+//  that have already been created.  This is tricky and confusing code. Consider
+//  two cases: Case A is easy but with Case B the geom_object must be
+//  recursively searched.
+//
+//   CASE A
+//         <geom_object>
+//           <box label="mpm_box">
+//             <min>[1, 1, 1]</min>
+//             <max>[1.5, 1.5, 1.5]</max>
+//           </box>
+//         </geom_object>
+//   CASE B
+//         <geom_object>
+//           <difference>                    << start recursive search
+//             <box label="domain">
+//               <min>[-1, -1, -1]</min>
+//               <max>[4, 4, 4]</max>
+//             </box>
+//             <box label="mpm_box"/>         << no childBlock or goLabel
+//           </difference>
+//         </geom_object>
+//
+//   returns a negative integer if any of the geom pieces was not found.
+//   returns a positive integer if all of the geom pieces were found.
+//
+//______________________________________________________________________
+
+int
+GeometryPieceFactory::geometryPieceExists(const ProblemSpecP& ps,
+                                          const bool isTopLevel /* true */)
+{
+
+  int nFoundPieces = 0;
+  for (ProblemSpecP child = ps->findBlock(); child != nullptr;
+       child              = child->findNextBlock()) {
+
+    bool hasChildBlock = false;
+    if (child->findBlock()) {
+      hasChildBlock = true;
+    }
+
+    string go_label;
+
+    // search for either a label or name.
+    if (!child->getAttribute("label", go_label)) {
+      child->getAttribute("name", go_label);
+    }
+
+    //
+    if (go_label == "") {
+
+      if (hasChildBlock) { // This could be either a <difference> or
+                           // <intersection > node, dig deeper
+        nFoundPieces += geometryPieceExists(child, false);
+      }
+      continue;
+    }
+
+    // Is this child a geometry piece
+    GeometryPieceP referencedPiece = s_namedPieces[go_label];
+
+    if (referencedPiece.get() != nullptr) {
+      nFoundPieces += 1;
+      continue;
+    }
+
+    // Does the child have the spec of a geom_piece?
+    // See if there is any data for this node (that is not in a sub-block)
+    // If the spec exists then the geom_piece doesn't exist
+    string data = child->getNodeValue();
+    remove_lt_white_space(data);
+
+    bool has_go_spec = (hasChildBlock || data != "");
+    if (has_go_spec) {
+      nFoundPieces -= INT_MAX;
+    }
+
+    if (isTopLevel) {
+      break;
+    }
+  }
+
+  return nFoundPieces;
+}
+
+//------------------------------------------------------------------
+
+void
+GeometryPieceFactory::resetGeometryPiecesOutput()
+{
+  DOUTR(dout_gpf,
+        "resetGeometryPiecesOutput() unnamedPieces.size()"
+          << s_unnamedPieces.size() << " namedPieces.end() "
+          << s_namedPieces.size());
+
+  for (unsigned int pos = 0; pos < s_unnamedPieces.size(); pos++) {
+    s_unnamedPieces[pos]->resetOutput();
+    DOUTR(dout_gpf, "  - Reset: " << s_unnamedPieces[pos]->getName());
+  }
+
+  std::map<std::string, GeometryPieceP>::const_iterator iter =
+    s_namedPieces.begin();
+
+  while (iter != s_namedPieces.end()) {
+    DOUTR(dout_gpf, "  - Reset: " << iter->second->getName());
+    iter->second->resetOutput();
+    iter++;
   }
 }
 

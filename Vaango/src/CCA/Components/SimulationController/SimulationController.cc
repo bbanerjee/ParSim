@@ -84,7 +84,7 @@ Uintah::Dout g_comp_indv_stats("ComponentIndividualStats",
                                "Individual component stats",
                                false);
 
-Uintah::Dout g_app_stats("SimulationStats",
+Uintah::Dout g_app_stats("AggSimulationStats",
                          "SimulationController",
                          "Aggregated simulation stats",
                          false);

@@ -64,15 +64,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace {
-// Usage: export SCI_DEBUG="BC_dbg:+"
-// There can be multiple DataArchives so must be static.
-inline static Uintah::Dout DA_dbg{ "DA_dbg",
-                                   "DataArchive",
-                                   "DataArchive debug info",
-                                   false };
-}
-
 namespace Uintah {
 
 class VarLabel;
@@ -679,14 +670,12 @@ DataArchive::query(std::vector<T>& values,
     }
   }
   if (type == nullptr) {
-    throw InternalError("Unable to determine variable type",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Unable to determine variable type", __FILE__, __LINE__);
   }
   if (type->getType() != TypeDescription::Type::ParticleVariable) {
-    throw InternalError("Variable type is not ParticleVariable",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Variable type is not ParticleVariable", __FILE__, __LINE__);
   }
   // find the first timestep
   int ts = 0;
@@ -706,12 +695,8 @@ DataArchive::query(std::vector<T>& values,
     findPatchAndIndex(grid, patch, idx, particleID, matlIndex, levelIndex, ts);
     //    std::cerr <<" Patch = 0x"<<hex<<patch<<dec<<", index = "<<idx;
     if (patch == nullptr) {
-      throw VariableNotFoundInGrid(name,
-                                   particleID,
-                                   matlIndex,
-                                   "DataArchive::query",
-                                   __FILE__,
-                                   __LINE__);
+      throw VariableNotFoundInGrid(
+        name, particleID, matlIndex, "DataArchive::query", __FILE__, __LINE__);
     }
 
     ParticleVariable<T> var;
@@ -720,9 +705,8 @@ DataArchive::query(std::vector<T>& values,
     // std::cerr <<" time = "<<t<<",  value = "<<var[idx]<<std::endl;
     values.push_back(var[idx]);
   }
-  DOUT(DA_dbg,
-       "DataArchive::query(values) completed in " << timer().seconds()
-                                                  << " seconds");
+  std::cerr << "DataArchive::query(values) completed in " << timer().seconds()
+            << " seconds";
 }
 
 template<class T>
@@ -758,9 +742,8 @@ DataArchive::query(std::vector<T>& values,
     }
   }
   if (type == nullptr) {
-    throw InternalError("Unable to determine variable type",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "Unable to determine variable type", __FILE__, __LINE__);
   }
 
   // find the first timestep
@@ -855,12 +838,8 @@ DataArchive::query(std::vector<T>& values,
       }
     }
     if (patch == nullptr) {
-      throw VariableNotFoundInGrid(name,
-                                   loc,
-                                   matlIndex,
-                                   "DataArchive::query",
-                                   __FILE__,
-                                   __LINE__);
+      throw VariableNotFoundInGrid(
+        name, loc, matlIndex, "DataArchive::query", __FILE__, __LINE__);
     }
 
     switch (type->getType()) {
@@ -901,9 +880,8 @@ DataArchive::query(std::vector<T>& values,
     // std::cerr << "DataArchive::query:data extracted" << std::endl;
   }
 
-  DOUT(DA_dbg,
-       "DataArchive::query(values) completed in " << timer().seconds()
-                                                  << " seconds");
+  std::cerr << "DataArchive::query(values) completed in " << timer().seconds()
+            << " seconds\n";
 }
 
 } // end namespace Uintah
