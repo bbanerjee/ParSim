@@ -63,7 +63,7 @@ namespace Uintah {
     virtual void scheduleRestartInitialize(SchedulerP&,
                                            const LevelP& level){};
 
-    virtual void scheduleComputeStableTimeStep(SchedulerP   & scheduler,
+    virtual void scheduleComputeStableTimestep(SchedulerP   & scheduler,
                                                const LevelP & level){};
 
     virtual void scheduleRefine(const PatchSet * patches,

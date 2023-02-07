@@ -118,6 +118,11 @@ public:
           DataWarehouse* coarseDW,
           DataWarehouse* fineDW);
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 private:
   void
   initialize(const ProcessorGroup*,

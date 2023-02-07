@@ -49,7 +49,7 @@ porosity).
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/SoilModelBrannon.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_SoilModelBrannon.h>
 #include <CCA/Ports/DataWarehouse.h>

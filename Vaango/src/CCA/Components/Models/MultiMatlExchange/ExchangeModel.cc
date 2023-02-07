@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/Models/MultiMatlExchange/ExchangeModel.h>
-#include <CCA/Components/MPM/Materials/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/Scheduler.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>

@@ -73,7 +73,7 @@ class SphereShellPiece : public ShellGeometryPiece {
 
   //////////
   // Destructor
-  virtual ~SphereShellPiece();
+  virtual ~SphereShellPiece() = default;
 
   static const std::string TYPE_NAME;
   virtual std::string

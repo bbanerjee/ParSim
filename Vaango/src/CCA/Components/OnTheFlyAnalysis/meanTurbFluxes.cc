@@ -144,7 +144,7 @@ meanTurbFluxes::problemSetup(
   //  <material>   atmosphere </material>
   const Material* matl;
   if (m_module_spec->findBlock("material")) {
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   } else {
     throw ProblemSetupException(
       "ERROR:AnalysisModule:momentumAnalysis: Missing <material> tag. \n",

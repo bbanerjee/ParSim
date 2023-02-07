@@ -162,10 +162,10 @@ public:
   //  Variables
 protected:
   SimulationInterface* m_simulator{ nullptr };
-  Output* m_output{ nullptr };
+  Output* d_output{ nullptr };
   Scheduler* m_scheduler{ nullptr };
 
-  MaterialManagerP m_materialManager{ nullptr };
+  MaterialManagerP d_materialManager{ nullptr };
   ProblemSpecP m_module_spec{ nullptr };
 
   const VarLabel* m_timeStepLabel{ nullptr };

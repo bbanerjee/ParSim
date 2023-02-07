@@ -55,7 +55,7 @@ namespace Vaango {
 
     SingleVelocityContact(const Uintah::ProcessorGroup* myworld,
                           Uintah::ProblemSpecP& ps,
-                          Uintah::MaterialManagerP& d_sS,
+                          Uintah::MaterialManagerP& mat_manager,
                           PeridynamicsLabel* labels,
                           PeridynamicsFlags* flags);
          
@@ -82,15 +82,11 @@ namespace Vaango {
     virtual void addComputesAndRequiresIntegrated(Uintah::SchedulerP & sched,
                                                   const Uintah::PatchSet* patches,
                                                   const Uintah::MaterialSet* matls);
-  protected:
-
-    Uintah::MaterialManagerP    d_mat_manager;
-
   private:
          
     // Prevent copying of this class
-    SingleVelocityContact(const SingleVelocityContact &con);
-    SingleVelocityContact& operator=(const SingleVelocityContact &con);
+    SingleVelocityContact(const SingleVelocityContact &con) = delete;
+    SingleVelocityContact& operator=(const SingleVelocityContact &con) = delete;
 
   };
 } // End namespace Vaango

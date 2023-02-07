@@ -76,6 +76,11 @@ public:
   virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 protected:
   struct Step
   {

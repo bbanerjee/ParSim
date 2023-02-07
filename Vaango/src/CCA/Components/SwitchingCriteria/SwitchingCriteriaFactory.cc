@@ -42,7 +42,7 @@
 
 namespace Uintah {
 
-std::unique_ptr<SwitchingCriteria>
+std::shared_ptr<SwitchingCriteria>
 SwitchingCriteriaFactory::create(ProblemSpecP& ps,
                                  [[maybe_unused]] const ProcessorGroup* world)
 {
@@ -57,20 +57,20 @@ SwitchingCriteriaFactory::create(ProblemSpecP& ps,
   }
 
   if (criteria == "none" || criteria == "None" || criteria == "NONE") {
-    return std::make_unique<None>();
+    return std::make_shared<None>();
   } else if (criteria == "timestep" || criteria == "Timestep" ||
              criteria == "TIMESTEP") {
-    return std::make_unique<TimestepNumber>(switch_ps);
+    return std::make_shared<TimestepNumber>(switch_ps);
   } else if (criteria == "SimpleBurn" || criteria == "Simple_Burn" ||
              criteria == "simpleBurn" || criteria == "simple_Burn") {
-    return std::make_unique<SimpleBurnCriteria>(switch_ps);
+    return std::make_shared<SimpleBurnCriteria>(switch_ps);
   } else if (criteria == "SteadyBurn" || criteria == "Steady_Burn" ||
              criteria == "steadyBurn" || criteria == "steady_Burn") {
-    return std::make_unique<SteadyBurnCriteria>(switch_ps);
+    return std::make_shared<SteadyBurnCriteria>(switch_ps);
   } else if (criteria == "SteadyState" || criteria == "steadystate") {
-    return std::make_unique<SteadyState>(switch_ps);
+    return std::make_shared<SteadyState>(switch_ps);
   } else if (criteria == "DDT1") {
-    return std::make_unique<DDT1Criterion>(switch_ps);
+    return std::make_shared<DDT1Criterion>(switch_ps);
   } else {
     std::ostringstream warn;
     warn << "\n ERROR:\n Unknown switching criteria (" << criteria << ")\n";

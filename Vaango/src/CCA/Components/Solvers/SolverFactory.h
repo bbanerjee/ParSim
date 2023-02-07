@@ -72,7 +72,7 @@ class SolverFactory
 {
 public:
   // This function contains switches for all known solvers.
-  static std::unique_ptr<SolverInterface>
+  static std::shared_ptr<SolverInterface>
   create(ProblemSpecP& ps,
          const ProcessorGroup* world,
          std::string solveName = "");

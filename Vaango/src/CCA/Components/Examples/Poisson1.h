@@ -75,6 +75,11 @@ public:
   {
   }
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 private:
   void
   initialize(const ProcessorGroup*,
@@ -102,6 +107,6 @@ private:
   const VarLabel* d_phi_label;
   const VarLabel* d_residual_label;
 };
-}
+} // namespace Uintah
 
 #endif

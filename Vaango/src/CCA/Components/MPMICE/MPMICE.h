@@ -30,7 +30,7 @@
 #include <CCA/Components/SimulationCommon/SimulationCommon.h>
 
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Components/MPM/RigidMPM.h>

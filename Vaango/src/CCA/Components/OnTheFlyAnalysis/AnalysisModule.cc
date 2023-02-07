@@ -41,7 +41,7 @@ AnalysisModule::AnalysisModule(const ProcessorGroup* myworld,
                                const ProblemSpecP& module_spec)
   : UintahParallelComponent(myworld)
 {
-  m_materialManager = materialManager;
+  d_materialManager = materialManager;
   m_module_spec     = module_spec;
 
   // for fileinfo pointers
@@ -117,10 +117,10 @@ AnalysisModule::getComponents()
                         __LINE__);
   }
 
-  m_output = dynamic_cast<Output*>(getPort("output"));
+  d_output = dynamic_cast<Output*>(getPort("output"));
 
-  if (!m_output) {
-    throw InternalError("dynamic_cast of 'm_output' failed!",
+  if (!d_output) {
+    throw InternalError("dynamic_cast of 'd_output' failed!",
                         __FILE__,
                         __LINE__);
   }
@@ -136,7 +136,7 @@ AnalysisModule::releaseComponents()
 
   m_simulator = nullptr;
   m_scheduler   = nullptr;
-  m_output      = nullptr;
+  d_output      = nullptr;
 }
 
 //______________________________________________________________________

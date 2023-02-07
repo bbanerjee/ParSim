@@ -24,10 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
-#include<CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Patch.h>
@@ -43,7 +43,8 @@ MPMCommon::initializeMap(const T& val)
   int numMPMMatls = s_materialManager->getNumMaterials("MPM");
 
   for (int m = 0; m < numMPMMatls; m++) {
-    MPMMaterial* mpm_matl = s_materialManager->getMaterial("MPM", m);
+    MPMMaterial* mpm_matl =
+      static_cast<MPMMaterial*>(s_materialManager->getMaterial("MPM", m));
 
     int dwi    = mpm_matl->getDWIndex();
     myMap[dwi] = val;
@@ -51,12 +52,10 @@ MPMCommon::initializeMap(const T& val)
   return myMap;
 }
 
-template<>
-std::map<int, double>
+template std::map<int, double>
 MPMCommon::initializeMap(const double& val);
 
-template<>
-std::map<int, Vector>
+template std::map<int, Vector>
 MPMCommon::initializeMap(const Vector& val);
 
 MPMCommon::MPMCommon(const MaterialManagerP matManager)
@@ -97,8 +96,8 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
       // so we have to manually restore the value.
       index_val = DEFAULT_VALUE;
     }
-    // std::cout << "Material attribute = " << index_val << ", " << index << ", " <<
-    // id << "\n";
+    // std::cout << "Material attribute = " << index_val << ", " << index << ",
+    // " << id << "\n";
 
     // Create and register as an MPM material
     std::shared_ptr<MPMMaterial> mat =

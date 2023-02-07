@@ -25,7 +25,7 @@
 #ifndef __EQUATION_OF_STATE_TEMPLATED_H__
 #define __EQUATION_OF_STATE_TEMPLATED_H__
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
 
 #include <Core/Math/Matrix3.h>

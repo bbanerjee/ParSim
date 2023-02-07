@@ -118,7 +118,7 @@ DynamicMPIScheduler::createSubScheduler()
 {
   DynamicMPIScheduler* newsched = scinew DynamicMPIScheduler(d_myworld, this);
   newsched->setComponents(this);
-  newsched->d_material_manager = d_material_manager;
+  newsched->d_materialManager = d_materialManager;
 
   newsched->m_num_schedulers += 1;
   m_num_schedulers += 1;

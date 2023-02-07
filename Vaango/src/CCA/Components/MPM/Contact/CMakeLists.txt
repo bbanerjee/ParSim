@@ -41,34 +41,17 @@ SET(Vaango_CCA_Components_MPM_Contact_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
 )
 
-SET(Vaango_CCA_Components_MPM_SRCS
-  ${Vaango_CCA_Components_MPM_SRCS}
-  ${Vaango_CCA_Components_MPM_Contact_SRCS}
-  PARENT_SCOPE
-)
+set(LIBS
+    ${LIBS}
+    Vaango_Core_OS
+    MPM_Core
+   )
 
-#SET(LIBS
-#  ${LIBS}
-#  Vaango_CCA_Ports
-#  Vaango_Core_Grid
-#  Vaango_Core_Util
-#  Vaango_Core_ProblemSpec
-#  Vaango_Core_Parallel
-#  Vaango_Core_Exceptions
-#  Vaango_Core_GeometryPiece
-#  Vaango_Core_Math
-#  MPM_ParticleCreator
-#  MPM_GradientComputer
-#  MPM_ConstitutiveModel
-#  MPM_PhysicalBC
-#  MPM_MMS
-#  MPM_Diffusion
-#  ${XML2_LIBRARY}
-#  ${VT_LIBRARY}
-#  ${M_LIBRARY}
-#  ${MPI_LIBRARY}
-#)
-#
-#add_library(Vaango_CCA_Components_MPM_Contact ${Vaango_CCA_Components_MPM_Contact_SRCS})
-#
-#target_link_libraries(Vaango_CCA_Components_MPM_Contact ${LIBS})
+add_library(MPM_Contact 
+            ${Vaango_CCA_Components_MPM_Contact_SRCS})
+
+target_link_libraries(MPM_Contact ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_Contact)
+ENDIF(BUILD_SHARED_LIBS)

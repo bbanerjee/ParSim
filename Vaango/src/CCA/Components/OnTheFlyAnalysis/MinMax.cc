@@ -114,7 +114,7 @@ MinMax::problemSetup(const ProblemSpecP&,
 {
   DOUTR(dout_OTF_MM, "Doing  MinMax::problemSetup");
 
-  int numMatls = m_materialManager->getNumMaterials();
+  int numMatls = d_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -132,7 +132,7 @@ MinMax::problemSetup(const ProblemSpecP&,
   // find the material to extract data from.
   if (m_module_spec->findBlock("material")) {
     d_matl =
-      m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+      d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   } else {
     throw ProblemSetupException(
       "ERROR:AnalysisModule:MinMax: Missing <material> tag. \n",
@@ -370,7 +370,7 @@ MinMax::initialize(const ProcessorGroup*,
     new_dw->put(fileInfo, d_lb->fileVarsStructLabel, 0, patch);
 
     if (patch->getGridIndex() == 0) { // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR* check = opendir(udaDir.c_str());
@@ -652,7 +652,7 @@ MinMax::doAnalysis(const ProcessorGroup* pg,
 
   //__________________________________
   // create the directory structure
-  const std::string udaPath   = m_output->getOutputLocation();
+  const std::string udaPath   = d_output->getOutputLocation();
   const std::string levelIndx = to_string(L_indx);
   const std::string path      = "MinMax/L-" + levelIndx;
 

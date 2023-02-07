@@ -41,7 +41,7 @@ class SwitchingCriteriaFactory
 public:
   // this function has a switch for all known SwitchingCriteria
 
-  static std::unique_ptr<SwitchingCriteria>
+  static std::shared_ptr<SwitchingCriteria>
   create(ProblemSpecP& ps, const ProcessorGroup* world);
 };
 } // End namespace Uintah

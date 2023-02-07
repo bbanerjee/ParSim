@@ -25,7 +25,7 @@
 
 #include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Materials/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/Scheduler.h>
@@ -175,8 +175,8 @@ void SolidReactionModel::problemSetup(GridP& grid,
       }
     }
 
-    reactant = m_materialManager->parseAndLookupMaterial(d_params, "fromMaterial");
-    product  = m_materialManager->parseAndLookupMaterial(d_params, "toMaterial");
+    reactant = d_materialManager->parseAndLookupMaterial(d_params, "fromMaterial");
+    product  = d_materialManager->parseAndLookupMaterial(d_params, "toMaterial");
 
     //__________________________________
     //  define the materialSet
@@ -198,7 +198,7 @@ void SolidReactionModel::scheduleInitialize(SchedulerP&,
 }
 
 
-void SolidReactionModel::scheduleComputeStableTimeStep(SchedulerP& sched,
+void SolidReactionModel::scheduleComputeStableTimestep(SchedulerP& sched,
                                                        const LevelP& level)
 {
    // None necessary... 
@@ -327,8 +327,8 @@ void SolidReactionModel::computeModelSources(const ProcessorGroup*,
 
         // Get the specific heat, this is the value from the input file
         double cv_rct = -1.0;
-        MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(m_materialManager->getMaterial(m0));
-        ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(m_materialManager->getMaterial(m0));
+        MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_materialManager->getMaterial(m0));
+        ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_materialManager->getMaterial(m0));
         if(mpm_matl) {
             cv_rct = mpm_matl->getSpecificHeat();
         } else if(ice_matl){
@@ -371,10 +371,10 @@ void SolidReactionModel::computeModelSources(const ProcessorGroup*,
 
         //__________________________________
         //  set symetric BC
-        setBC(mass_src_0, "set_if_sym_BC",patch, m_materialManager, m0, new_dw, isNotInitialTimeStep);
-        setBC(mass_src_1, "set_if_sym_BC",patch, m_materialManager, m1, new_dw, isNotInitialTimeStep);
-        setBC(delF,       "set_if_sym_BC",patch, m_materialManager, m0, new_dw, isNotInitialTimeStep);
-        setBC(Fr,         "set_if_sym_BC",patch, m_materialManager, m0, new_dw, isNotInitialTimeStep);
+        setBC(mass_src_0, "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
+        setBC(mass_src_1, "set_if_sym_BC",patch, d_materialManager, m1, new_dw, isNotInitialTimeStep);
+        setBC(delF,       "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
+        setBC(Fr,         "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
     }
     //__________________________________
     //save total quantities

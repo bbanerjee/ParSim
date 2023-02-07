@@ -117,7 +117,7 @@ statistics::problemSetup(
 {
   DOUTR(dout_OTF_stats, "Doing statistics::problemSetup");
 
-  int numMatls = m_materialManager->getNumMaterials();
+  int numMatls = d_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -148,7 +148,7 @@ statistics::problemSetup(
   Material* matl = nullptr;
 
   if (m_module_spec->findBlock("material")) {
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   } else {
     throw ProblemSetupException(
       "ERROR:AnalysisModule:statistics: Missing <material> tag. \n",
@@ -282,13 +282,13 @@ statistics::problemSetup(
     std::string kurtosis = "kurtosis_" + name;
     ostringstream mesg;
     mesg << "";
-    if (!m_output->isLabelSaved(variance)) {
+    if (!d_output->isLabelSaved(variance)) {
       mesg << variance;
     }
-    if (!m_output->isLabelSaved(skew) && d_doHigherOrderStats) {
+    if (!d_output->isLabelSaved(skew) && d_doHigherOrderStats) {
       mesg << " " << skew;
     }
-    if (!m_output->isLabelSaved(kurtosis) && d_doHigherOrderStats) {
+    if (!d_output->isLabelSaved(kurtosis) && d_doHigherOrderStats) {
       mesg << " " << kurtosis;
     }
 

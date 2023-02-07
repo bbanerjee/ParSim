@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,36 +24,40 @@
 
 
 #include <CCA/Components/Models/HEChem/ZeroOrder.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <CCA/Ports/Scheduler.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/Variables/CCVariable.h>
+
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
-#include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
 #include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Variables/CellIterator.h>
+#include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include<CCA/Components/ICE/Core/ICELabel.h>
-#include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/ICE/Core/BoundaryCond.h>
-#include <iostream>
+#include <CCA/Components/ICE/Core/ICELabel.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
 
-using namespace Uintah;
+#include <iostream>
 
+using namespace Uintah;
+using namespace std;
 //__________________________________
 //  setenv SCI_DEBUG "MODELS_DOING_COUT:+"
 //  MODELS_DOING_COUT:   dumps when tasks are scheduled and performed
 static DebugStream cout_doing("MODELS_DOING_COUT", false);
 
 ZeroOrder::ZeroOrder(const ProcessorGroup* myworld, 
-             ProblemSpecP& params,
-             const ProblemSpecP& prob_spec)
-  : ModelInterface(myworld), d_params(params), d_prob_spec(prob_spec)
+                     const MaterialManagerP& materialManager,
+                     const ProblemSpecP& params,
+                     const ProblemSpecP& prob_spec)
+  : HEChemModel(myworld, materialManager),
+    d_params(params), d_prob_spec(prob_spec)
 {
   mymatls = 0;
-  Ilb  = scinew ICELabel();
+  Ilb = scinew ICELabel();
   d_saveConservedVars = scinew saveConservedVars();
   
   //__________________________________
@@ -92,7 +72,8 @@ ZeroOrder::ZeroOrder(const ProcessorGroup* myworld,
   totalHeatReleasedLabel= VarLabel::create( "totalHeatReleased",
                                             sum_vartype::getTypeDescription() );
 }
-
+//______________________________________________________________________
+//
 ZeroOrder::~ZeroOrder()
 {
   delete Ilb;
@@ -108,28 +89,25 @@ ZeroOrder::~ZeroOrder()
 }
 //______________________________________________________________________
 //
-void ZeroOrder::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
+void ZeroOrder::problemSetup(GridP&,
+                              const bool isRestart)
 {
-  d_mat_manager = sharedState;
-  bool defaultActive=true;
-  d_params->getWithDefault("Active",          d_active, defaultActive);
-  d_params->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
+  ProblemSpecP ZO_ps = d_params->findBlock("ZeroOrder");
+  ZO_ps->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
   
-  d_params->require("ThresholdPressure", d_threshold_pressure);
-  d_params->require("fromMaterial",fromMaterial);
-  d_params->require("toMaterial",  toMaterial);
-  d_params->require("G",    d_G);
-  d_params->require("b",    d_b);
-  d_params->require("E0",   d_E0);
-  d_params->require("rho0", d_rho0);
+  ZO_ps->require("ThresholdPressure", d_threshold_pressure);
+  ZO_ps->require("fromMaterial",fromMaterial);
+  ZO_ps->require("toMaterial",  toMaterial);
+  ZO_ps->require("G",    d_G);
+  ZO_ps->require("b",    d_b);
+  ZO_ps->require("E0",   d_E0);
+  ZO_ps->require("rho0", d_rho0);
 
   //__________________________________
   //  Are we saving the total burned mass and total burned energy
   ProblemSpecP DA_ps = d_prob_spec->findBlock("DataArchiver");
-  for (ProblemSpecP child = DA_ps->findBlock("save");
-       child != 0;
-       child = child->findNextBlock("save") ){
-    std::map<std::string,string> var_attr;
+  for (ProblemSpecP child = DA_ps->findBlock("save"); child != nullptr; child = child->findNextBlock("save") ){
+    map<string,string> var_attr;
     child->getAttributes(var_attr);
     
     if (var_attr["label"] == "totalMassBurned"){
@@ -140,56 +118,14 @@ void ZeroOrder::problemSetup(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
     }
   }
   
-  if(d_active){
-    matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-    matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
+  matl0 = d_materialManager->parseAndLookupMaterial(ZO_ps, "fromMaterial");
+  matl1 = d_materialManager->parseAndLookupMaterial(ZO_ps, "toMaterial");
 
-    //__________________________________
-    //  define the materialSet
-    mymatls = scinew MaterialSet();
-
-    std::vector<int> m;
-    m.push_back(0);                       // needed for the pressure and NC_CCWeight
-    m.push_back(matl0->getDWIndex());
-    m.push_back(matl1->getDWIndex());
-
-    mymatls->addAll_unique(m);            // elimiate duplicate entries
-    mymatls->addReference(); 
-  }
-}
-//______________________________________________________________________
-//
-void ZeroOrder::outputProblemSpec(ProblemSpecP& ps)
-{
-  ProblemSpecP model_ps = ps->appendChild("Model");
-  model_ps->setAttribute("type","ZeroOrder");
-
-  model_ps->appendElement("Active",d_active);
-  model_ps->appendElement("ThresholdPressure",d_threshold_pressure);
-  model_ps->appendElement("ThresholdVolFrac", d_threshold_volFrac);
-  model_ps->appendElement("fromMaterial",fromMaterial);
-  model_ps->appendElement("toMaterial",toMaterial);
-  model_ps->appendElement("G",    d_G);
-  model_ps->appendElement("b",    d_b);
-  model_ps->appendElement("E0",   d_E0);
-  model_ps->appendElement("rho0", d_rho0);
-  
-}
-
-//______________________________________________________________________
-//
-void ZeroOrder::activateModel(GridP&, MaterialManagerP& mat_manager, ModelSetup*)
-{
-  d_active=true;
-
-  matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-  matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
- 
   //__________________________________
   //  define the materialSet
   mymatls = scinew MaterialSet();
 
-  std::vector<int> m;
+  vector<int> m;
   m.push_back(0);                       // needed for the pressure and NC_CCWeight
   m.push_back(matl0->getDWIndex());
   m.push_back(matl1->getDWIndex());
@@ -197,20 +133,36 @@ void ZeroOrder::activateModel(GridP&, MaterialManagerP& mat_manager, ModelSetup*
   mymatls->addAll_unique(m);            // elimiate duplicate entries
   mymatls->addReference(); 
 }
+//______________________________________________________________________
+//
+void ZeroOrder::outputProblemSpec(ProblemSpecP& ps)
+{
+  ProblemSpecP model_ps = ps->appendChild("Model");
+  model_ps->setAttribute("type","ZeroOrder");
+  ProblemSpecP ZO_ps = model_ps->appendChild("ZeroOrder");
+  
+  ZO_ps->appendElement("ThresholdPressure",d_threshold_pressure);
+  ZO_ps->appendElement("ThresholdVolFrac", d_threshold_volFrac);
+  ZO_ps->appendElement("fromMaterial",fromMaterial);
+  ZO_ps->appendElement("toMaterial",toMaterial);
+  ZO_ps->appendElement("G",    d_G);
+  ZO_ps->appendElement("b",    d_b);
+  ZO_ps->appendElement("E0",   d_E0);
+  ZO_ps->appendElement("rho0", d_rho0);
+  
+}
 
 //______________________________________________________________________
 //     
 void ZeroOrder::scheduleInitialize(SchedulerP&,
-                                   const LevelP&,
-                                   const ModelInfo*)
+                                   const LevelP&)
 {
   // None necessary...
 }
 //______________________________________________________________________
 //      
 void ZeroOrder::scheduleComputeStableTimestep(SchedulerP&,
-                                              const LevelP&,
-                                              const ModelInfo*)
+                                              const LevelP&)
 {
   // None necessary...
 }
@@ -218,55 +170,53 @@ void ZeroOrder::scheduleComputeStableTimestep(SchedulerP&,
 //______________________________________________________________________
 //     
 void ZeroOrder::scheduleComputeModelSources(SchedulerP& sched,
-                                            const LevelP& level,
-                                            const ModelInfo* mi)
+                                            const LevelP& level)
 {
-  if(d_active){
-    Task* t = scinew Task("ZeroOrder::computeModelSources", this, 
-                          &ZeroOrder::computeModelSources, mi);
-    cout_doing << "ZeroOrder::scheduleComputeModelSources "<<  endl;  
-   
-    Ghost::GhostType  gn  = Ghost::None;
-    const MaterialSubset* react_matl = matl0->thisMaterial();
-    const MaterialSubset* prod_matl  = matl1->thisMaterial();
-    MaterialSubset* one_matl     = scinew MaterialSubset();
-    one_matl->add(0);
-    one_matl->addReference();
-    MaterialSubset* press_matl   = one_matl;
-  
-    t->requires(Task::OldDW, mi->delT_Label,         level.get_rep());
-    //__________________________________
-    // Products
-    t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
-  
-    //__________________________________
-    // Reactants
-    t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
-    t->requires(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
-    t->requires(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
-    t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
-    t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+  Task* t = scinew Task("ZeroOrder::computeModelSources", this, 
+                        &ZeroOrder::computeModelSources);
+  cout_doing << "ZeroOrder::scheduleComputeModelSources "<<  endl;  
 
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
-    t->computes(reactedFractionLabel, react_matl);
-    t->computes(delFLabel,            react_matl);
+  Ghost::GhostType  gn  = Ghost::None;
+  const MaterialSubset* react_matl = matl0->thisMaterial();
+  const MaterialSubset* prod_matl  = matl1->thisMaterial();
+  MaterialSubset* one_matl     = scinew MaterialSubset();
+  one_matl->add(0);
+  one_matl->addReference();
+  MaterialSubset* press_matl   = one_matl;
 
-    t->modifies(mi->modelMass_srcLabel);
-    t->modifies(mi->modelMom_srcLabel);
-    t->modifies(mi->modelEng_srcLabel);
-    t->modifies(mi->modelVol_srcLabel); 
-    
-    if(d_saveConservedVars->mass ){
-      t->computes(ZeroOrder::totalMassBurnedLabel);
-    }
-    if(d_saveConservedVars->energy){
-      t->computes(ZeroOrder::totalHeatReleasedLabel);
-    } 
-    sched->addTask(t, level->eachPatch(), mymatls);
+  t->requires(Task::OldDW, Ilb->timeStepLabel );
+  t->requires(Task::OldDW, Ilb->delTLabel,         level.get_rep());
+  //__________________________________
+  // Products
+  t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
 
-    if (one_matl->removeReference())
-      delete one_matl;
+  //__________________________________
+  // Reactants
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
+  t->requires(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
+  t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
+  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+
+  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
+  t->computes(reactedFractionLabel, react_matl);
+  t->computes(delFLabel,            react_matl);
+
+  t->modifies(Ilb->modelMass_srcLabel);
+  t->modifies(Ilb->modelMom_srcLabel);
+  t->modifies(Ilb->modelEng_srcLabel);
+  t->modifies(Ilb->modelVol_srcLabel); 
+
+  if(d_saveConservedVars->mass ){
+    t->computes(ZeroOrder::totalMassBurnedLabel);
   }
+  if(d_saveConservedVars->energy){
+    t->computes(ZeroOrder::totalHeatReleasedLabel);
+  } 
+  sched->addTask(t, level->eachPatch(), mymatls);
+
+  if (one_matl->removeReference())
+    delete one_matl;
 }
 //______________________________________________________________________
 //
@@ -274,12 +224,16 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
                                     const PatchSubset* patches,
                                     const MaterialSubset*,
                                     DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw,
-                                    const ModelInfo* mi)
+                                    DataWarehouse* new_dw)
 {
+  timeStep_vartype timeStep;
+  old_dw->get(timeStep, Ilb->timeStepLabel );
+
+  bool isNotInitialTimeStep = (timeStep > 0);
+
   delt_vartype delT;
   const Level* level = getLevel(patches);
-  old_dw->get(delT, mi->delT_Label, level);
+  old_dw->get(delT, Ilb->delTLabel, level);
 
   int m0 = matl0->getDWIndex(); /* reactant material */
   int m1 = matl1->getDWIndex(); /* product material */
@@ -290,21 +244,21 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
     const Patch* patch = patches->get(p);  
     
     cout_doing << "Doing computeModelSources on patch "<< patch->getID()
-               <<"\t\t\t\t  ZeroOrder" << std::endl;
+               <<"\t\t\t\t  ZeroOrder" << endl;
     CCVariable<double> mass_src_0, mass_src_1, mass_0;
     CCVariable<Vector> momentum_src_0, momentum_src_1;
     CCVariable<double> energy_src_0, energy_src_1;
     CCVariable<double> sp_vol_src_0, sp_vol_src_1;
 
-    new_dw->getModifiable(mass_src_0,    mi->modelMass_srcLabel,  m0,patch);
-    new_dw->getModifiable(momentum_src_0,mi->modelMom_srcLabel,   m0,patch);
-    new_dw->getModifiable(energy_src_0,  mi->modelEng_srcLabel,   m0,patch);
-    new_dw->getModifiable(sp_vol_src_0,  mi->modelVol_srcLabel,   m0,patch);
+    new_dw->getModifiable(mass_src_0,    Ilb->modelMass_srcLabel,  m0,patch);
+    new_dw->getModifiable(momentum_src_0,Ilb->modelMom_srcLabel,   m0,patch);
+    new_dw->getModifiable(energy_src_0,  Ilb->modelEng_srcLabel,   m0,patch);
+    new_dw->getModifiable(sp_vol_src_0,  Ilb->modelVol_srcLabel,   m0,patch);
 
-    new_dw->getModifiable(mass_src_1,    mi->modelMass_srcLabel,  m1,patch);
-    new_dw->getModifiable(momentum_src_1,mi->modelMom_srcLabel,   m1,patch);
-    new_dw->getModifiable(energy_src_1,  mi->modelEng_srcLabel,   m1,patch);
-    new_dw->getModifiable(sp_vol_src_1,  mi->modelVol_srcLabel,   m1,patch);
+    new_dw->getModifiable(mass_src_1,    Ilb->modelMass_srcLabel,  m1,patch);
+    new_dw->getModifiable(momentum_src_1,Ilb->modelMom_srcLabel,   m1,patch);
+    new_dw->getModifiable(energy_src_1,  Ilb->modelEng_srcLabel,   m1,patch);
+    new_dw->getModifiable(sp_vol_src_1,  Ilb->modelVol_srcLabel,   m1,patch);
 
     constCCVariable<double> press_CC, cv_reactant,rctVolFrac;
     constCCVariable<double> rctTemp,rctRho,rctSpvol,prodRho;
@@ -338,8 +292,8 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
 
     // Get the specific heat, this is the value from the input file
     double cv_rct = -1.0; 
-    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_mat_manager->getMaterial(m0));
-    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_mat_manager->getMaterial(m0));
+    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_materialManager->getMaterial(m0));
+    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_materialManager->getMaterial(m0));
     if(mpm_matl) {
       cv_rct = mpm_matl->getSpecificHeat();
     } else if(ice_matl){
@@ -388,10 +342,10 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_mat_manager, m1, new_dw);
-    setBC(delF,       "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
-    setBC(Fr,         "set_if_sym_BC",patch, d_mat_manager, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_materialManager, m1, new_dw, isNotInitialTimeStep);
+    setBC(delF,       "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
+    setBC(Fr,         "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
   }
   //__________________________________
   //save total quantities
@@ -401,33 +355,4 @@ void ZeroOrder::computeModelSources(const ProcessorGroup*,
   if(d_saveConservedVars->energy){
     new_dw->put(sum_vartype(totalHeatReleased), ZeroOrder::totalHeatReleasedLabel);
   }
-}
-//______________________________________________________________________
-//
-void ZeroOrder::scheduleModifyThermoTransportProperties(SchedulerP&,
-                                                        const LevelP&,
-                                                        const MaterialSet*)
-{
-  // do nothing      
-}
-void ZeroOrder::computeSpecificHeat(CCVariable<double>&,
-                                    const Patch*,   
-                                    DataWarehouse*, 
-                                    const int)      
-{
-  //do nothing
-}
-//______________________________________________________________________
-//
-void ZeroOrder::scheduleErrorEstimate(const LevelP&,
-                                      SchedulerP&)
-{
-  // Not implemented yet
-}
-//__________________________________
-void ZeroOrder::scheduleTestConservation(SchedulerP&,
-                                         const PatchSet*,                      
-                                         const ModelInfo*)                     
-{
-  // Not implemented yet
 }

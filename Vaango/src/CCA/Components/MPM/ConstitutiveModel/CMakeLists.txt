@@ -28,6 +28,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
+  MPMMaterial.cc                 
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
@@ -68,12 +69,12 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  MPM_Core
   MPM_ParticleCreator
   MPM_GradientComputer
   ${XML2_LIBRARY}

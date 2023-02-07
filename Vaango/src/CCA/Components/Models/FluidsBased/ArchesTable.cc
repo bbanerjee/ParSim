@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,18 +29,17 @@
 #include <Core/IO/UintahZlibUtil.h>
 
 #include <Core/Math/MiscMath.h>
-#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
+#include <Core/Util/Timers/Timers.hpp>
 
 #include <iostream>
-#include <fstream>
 
 #define MAXINDEPENDENTS 100
 
 // TODO:  Interpolation could be a lot faster
 // TODO: parentheses in expressions, other ops in expressions
 
-
+using namespace std;
 using namespace Uintah;
 
 static DebugStream cerr_dbg("ARCHES_TABLE", true);
@@ -51,45 +50,44 @@ ArchesTable::ArchesTable(ProblemSpecP& params)
   params->require("filename", filename_);
 
   // Parse default values
-  for (ProblemSpecP child = params->findBlock("defaultValue"); child != 0;
-       child = child->findNextBlock("defaultValue")) {
+  for (ProblemSpecP child = params->findBlock("defaultValue"); child != nullptr; child = child->findNextBlock("defaultValue")) {
     DefaultValue* df = scinew DefaultValue;
-    if(!child->getAttribute("name", df->name))
+    if(!child->getAttribute("name", df->name)) {
       throw ProblemSetupException("No name for defaultValue", __FILE__, __LINE__);
+    }
     child->get(df->value);
     defaults.push_back(df);
   }
 
   // Parse constant values
-  for (ProblemSpecP child = params->findBlock("constantValue"); child != 0;
-       child = child->findNextBlock("constantValue")) {
+  for (ProblemSpecP child = params->findBlock("constantValue"); child != nullptr; child = child->findNextBlock("constantValue")) {
     Dep* dep = scinew Dep(Dep::ConstantValue);
-    if(!child->getAttribute("name", dep->name))
+    if(!child->getAttribute("name", dep->name)) {
       throw ProblemSetupException("No name for constantValue", __FILE__, __LINE__);
+    }
     child->get(dep->constantValue);
     deps.push_back(dep);
   }
 
   // Parse derived values
-  for (ProblemSpecP child = params->findBlock("derivedValue"); child != 0;
-       child = child->findNextBlock("derivedValue")) {
+  for (ProblemSpecP child = params->findBlock("derivedValue"); child != nullptr; child = child->findNextBlock("derivedValue")) {
     Dep* dep = scinew Dep(Dep::DerivedValue);
-    if(!child->getAttribute("name", dep->name))
+    if(!child->getAttribute("name", dep->name)) {
       throw ProblemSetupException("No expression for derivedValue", __FILE__, __LINE__);
-
+    }
     child->get(dep->expr_string);
     string expr = dep->expr_string;
     string::iterator beg = expr.begin();
     string::iterator end = expr.end();
     dep->expression = parse_addsub(beg, end);
     if(beg != end || !dep->expression){
-      std::cerr <<  "expression = " << dep->expression << '\n';
+      cerr << "expression = " << dep->expression << '\n';
       if(beg != end)
-        std::cerr <<  "next=" << *beg << '\n';
-      std::cerr <<  "Error parsing expression:\n" << expr << '\n';
+        cerr << "next=" << *beg << '\n';
+      cerr << "Error parsing expression:\n" << expr << '\n';
       for(string::iterator skip = expr.begin(); skip != beg; skip++)
-        std::cerr <<  ' ';
-      std::cerr <<  "^\n";
+        cerr << ' ';
+      cerr << "^\n";
       throw ProblemSetupException("Error parsing expression", __FILE__, __LINE__);
     }
     deps.push_back(dep);
@@ -301,24 +299,25 @@ void
 ArchesTable::setup(const bool cerrSwitch)
 {
   cerr_dbg.setActive(cerrSwitch);
-  double start = Time::currentSeconds();
+
+  Timers::Simple timer;
+  timer.start();
+
   // Read the index...
-
-
   gzFile gzFp = gzopen( filename_.c_str(), "r" );
 
   if( gzFp == nullptr ) {
     // If errno is 0, then not enough memory to uncompress file.
-    std::cout << "Error: gz open failed for file: '" << filename_ << "'.  (Errno: " << errno << ")\n";
+    cout << "Error: gz open failed for file: '" << filename_ << "'.  (Errno: " << errno << ")\n";
     throw ProblemSetupException("Unable to open the given input file: " + filename_, __FILE__, __LINE__);
   }
 
-  cerr_dbg << "Reading reaction table: " << filename_ << std::endl;
+  cerr_dbg << "Reading reaction table: " << filename_ << endl;
   int nvars = getInt( gzFp );
   cerr_dbg << "Reading " << nvars << " variables : ";
 
-  std::vector<Ind*> in_inds(nvars);
-  std::vector<int> axis_sizes(nvars);
+  vector<Ind*> in_inds(nvars);
+  vector<int> axis_sizes(nvars);
 
   // Read the names.
   for( int i = 0; i < nvars; i++ ) {
@@ -343,7 +342,7 @@ ArchesTable::setup(const bool cerrSwitch)
   // Set up the axes.
   // The first variable may have different weights for each dependent
   // variable
-  std::vector<InterpAxis*> in_axes(nvars);
+  vector<InterpAxis*> in_axes(nvars);
   long stride = axis_sizes[0];
   in_axes[0] = 0;
   for( int i = nvars-1; i >= 1; i-- ) {
@@ -354,7 +353,7 @@ ArchesTable::setup(const bool cerrSwitch)
   long size = stride;
 
   int ndeps = getInt( gzFp );
-  std::vector<Dep*> in_deps(ndeps);
+  vector<Dep*> in_deps(ndeps);
   for(int j=0;j<ndeps;j++) {
     Dep* dep = scinew Dep(Dep::TableValue);
     
@@ -410,7 +409,7 @@ ArchesTable::setup(const bool cerrSwitch)
     in_deps[i]->axes[0]->finalize();
 
   // Map the desired variables to the input variables
-  std::vector<int> axis_map(inds.size(), -1);
+  vector<int> axis_map(inds.size(), -1);
   for(int i=0;i<static_cast<int>(inds.size());i++) {
     Ind* ind = inds[i];
     // Look in the alias map
@@ -427,7 +426,7 @@ ArchesTable::setup(const bool cerrSwitch)
   }
 
   // Create the new axes
-  std::vector<InterpAxis*> new_axes(inds.size());
+  vector<InterpAxis*> new_axes(inds.size());
   long newstride = 1;
   long firststride = 0;
   for(int i=0;i<static_cast<int>(inds.size());i++){
@@ -447,8 +446,8 @@ ArchesTable::setup(const bool cerrSwitch)
   // Down-slice the table if necessary
   int dim_diff = in_inds.size()-inds.size();
   long interp_size = 1<<dim_diff;
-  long* idx = scinew long[interp_size];
-  double* w =scinew double[interp_size];
+  long* idx = scinew   long[interp_size];
+  double* w = scinew double[interp_size];
 
   for(int idep=0;idep<static_cast<int>(deps.size());idep++){
     Dep* dep = deps[idep];
@@ -549,7 +548,7 @@ ArchesTable::setup(const bool cerrSwitch)
     }
 
     // Interpolate...
-    std::vector<int> n(inds.size(), 0);
+    vector<int> n(inds.size(), 0);
     for(int i=0;i<newsize;i++){
       double sum = 0;
       long iidx = 0;
@@ -581,8 +580,10 @@ ArchesTable::setup(const bool cerrSwitch)
   }
 
   // Free up the input deps
-  delete [] idx;
-  delete [] w;
+  gzclose( gzFp );
+  
+  delete[] idx;
+  delete[] w;
   for(int i=0;i<(int)in_inds.size();i++)
     delete in_inds[i];
   for(int i=1;i<(int)in_axes.size();i++)
@@ -604,20 +605,21 @@ ArchesTable::setup(const bool cerrSwitch)
 
     cerr_dbg << "Evaluating: " << dep->name << '\n';
     dep->data =scinew double[newsize];
-    std::vector<InterpAxis*> axes;
+    vector<InterpAxis*> axes;
     evaluate(dep->expression, axes, dep->data, newsize);
     for(int i=0;i<static_cast<int>(axes.size());i++)
       dep->addAxis(axes[i]);
   }
   file_read_ = true;
-  double dt = Time::currentSeconds()-start;
-  cerr_dbg << "Read and interpolated table in " << dt << " seconds\n";
+
+  cerr_dbg << "Read and interpolated table in " << timer().seconds()
+           << " seconds\n";
 }
 
 void
 ArchesTable::checkAxes( const vector<InterpAxis*> & a,
                         const vector<InterpAxis*> & b,
-                        std::vector<InterpAxis*> &       out_axes)
+                        vector<InterpAxis*> &       out_axes)
 {
   // If either of the axes are empty, use the ohter one...
   if(a.size() == 0) {
@@ -650,8 +652,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
   switch(expr->op) {
   case '+':
     {
-      std::vector<InterpAxis*> axes1;
-      std::vector<InterpAxis*> axes2;
+      vector<InterpAxis*> axes1;
+      vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -665,8 +667,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '-':
     {
-      std::vector<InterpAxis*> axes1;
-      std::vector<InterpAxis*> axes2;
+      vector<InterpAxis*> axes1;
+      vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -680,8 +682,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '*':
     {
-      std::vector<InterpAxis*> axes1;
-      std::vector<InterpAxis*> axes2;
+      vector<InterpAxis*> axes1;
+      vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -695,8 +697,8 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
     break;
   case '/':
     {
-      std::vector<InterpAxis*> axes1;
-      std::vector<InterpAxis*> axes2;
+      vector<InterpAxis*> axes1;
+      vector<InterpAxis*> axes2;
       double* data1 =scinew double[size];
       double* data2 =scinew double[size];
       evaluate(expr->child1, axes1, data1, size);
@@ -761,7 +763,7 @@ ArchesTable::evaluate(Expr* expr, vector<InterpAxis*>& out_axes,
 void
 ArchesTable::interpolate( int index, CCVariable<double>& result,
                           const CellIterator& in_iter,
-                          std::vector<constCCVariable<double> >& independents )
+                          vector<constCCVariable<double> >& independents )
 {
   Dep* dep = deps[index];
   switch(dep->type) {
@@ -797,9 +799,9 @@ ArchesTable::interpolate( int index, CCVariable<double>& result,
                 idx=0;
               } else {
                 cerr.precision(17);
-                std::cerr <<  "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
-                std::cerr <<  "index=" << index << ", fraction=" << index-idx << '\n';
-                std::cerr <<  "last value=" << axis->weights[axis->weights.size()-1] << '\n';
+                cerr << "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
+                cerr << "index=" << index << ", fraction=" << index-idx << '\n';
+                cerr << "last value=" << axis->weights[axis->weights.size()-1] << '\n';
                 throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
               }
             }
@@ -816,7 +818,7 @@ ArchesTable::interpolate( int index, CCVariable<double>& result,
                 value = axis->weights[h];
               else {
                 cerr.precision(17);
-                std::cerr <<  *iter << ", value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
+                cerr << *iter << ", value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
                 throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
               }
             }
@@ -878,8 +880,8 @@ ArchesTable::interpolate( int index, vector<double>& independents )
     if(axis->uniform){
       double index = (value-axis->weights[0])/axis->dx;
       if(index < 0 || index >= axis->weights.size()){
-        std::cerr <<  "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
-        std::cerr <<  "index=" << index << '\n';
+        cerr << "value=" << value << ", start=" << axis->weights[0] << ", dx=" << axis->dx << '\n';
+        cerr << "index=" << index << '\n';
         throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
       }
       int idx = (int)index;
@@ -896,7 +898,7 @@ ArchesTable::interpolate( int index, vector<double>& independents )
           value = axis->weights[h];
         else {
           cerr.precision(17);
-          std::cerr <<  "value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
+          cerr << "value=" << value << ", low=" << axis->weights[l] << ", high=" << axis->weights[h] << "\n";
           throw InternalError("Interpolate outside range of table", __FILE__, __LINE__);
         }
       }
@@ -1056,7 +1058,7 @@ void
 ArchesTable::Dep::outputProblemSpec(ProblemSpecP& ps)
 {
   if (type == Dep::ConstantValue) {
-     std::stringstream ss;
+    stringstream ss;
     ss << constantValue;
     ProblemSpecP cv_ps = ps->appendElement("constantValue",ss.str());
     cv_ps->setAttribute("name",name);

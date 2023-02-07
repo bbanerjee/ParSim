@@ -94,7 +94,7 @@ void lineExtract::problemSetup(const ProblemSpecP& ,
 {
   DOUTR( dout_OTF_LE, "Doing lineExtract::problemSetup" );
 
-  int numMatls  = m_materialManager->getNumMaterials();
+  int numMatls  = d_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -109,7 +109,7 @@ void lineExtract::problemSetup(const ProblemSpecP& ,
 
   // find the material to extract data from.  Default is matl 0.
   if(m_module_spec->findBlock("material") ){
-    d_matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    d_matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:lineExtract: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -299,7 +299,7 @@ void lineExtract::initialize(const ProcessorGroup *,
     new_dw->put(fileInfo,    m_lb->fileVarsStructLabel, 0, patch);
 
     if( patch->getGridIndex() == 0 ){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -537,7 +537,7 @@ void lineExtract::doAnalysis(const ProcessorGroup * pg,
       for (unsigned int l =0 ; l < d_lines.size(); l++) {
 
         // create the directory structure
-        const string udaDir    = m_output->getOutputLocation();
+        const string udaDir    = d_output->getOutputLocation();
         const string levelIndx = to_string( level->getIndex() );
         const string path      =   d_lines[l]->name + "/L-" + levelIndx;
 

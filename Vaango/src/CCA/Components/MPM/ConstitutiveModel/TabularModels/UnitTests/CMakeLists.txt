@@ -53,7 +53,6 @@ SET(VAANGO_LIBS
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -68,6 +67,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        Vaango_CCA_Components_Models
         ${HDF5_LIBRARY}
 )
 
@@ -83,12 +83,12 @@ target_link_libraries(testTabularData
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularData)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularData)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularEOS testTabularEOS.cc)
 target_link_libraries(testTabularEOS

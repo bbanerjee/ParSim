@@ -655,7 +655,7 @@ DataArchiver::restartSetup(Dir& restartFromDir,
 void
 DataArchiver::postProcessUdaSetup(Dir& fromDir)
 {
-  DOUTR(g_DA_dbg, " Doing: DataArchiver::postProcessUdaSetup");
+  DOUTR(g_DA_dbg, " Doing: DataArchiver::postprocessUdaSetup");
 
   // copy files
   if (d_writeMeta) {

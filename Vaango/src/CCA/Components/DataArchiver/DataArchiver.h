@@ -266,7 +266,7 @@ public:
 
   //! Get the directory of the current time step for outputting info.
   virtual const std::string&
-  getLastTimestepOutputLocation() const
+  getLastTimeStepOutputLocation() const
   {
     return d_lastTimeStepLocation;
   }

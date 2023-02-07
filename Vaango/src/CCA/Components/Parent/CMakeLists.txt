@@ -46,6 +46,7 @@ SET(LIBS
   ${COMPONENTS}_ProblemSpecification
   ${COMPONENTS}_Solvers
   ${COMPONENTS}_SwitchingCriteria
+  ${COMPONENTS}_SimulationCommon
   ${XML2_LIBRARY}
 )
 

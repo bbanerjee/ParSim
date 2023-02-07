@@ -28,7 +28,7 @@
 #define __ELASTICITY_MODEL_H__
 
 #include "ElasticityState.h"
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/ParticleVariable.h>

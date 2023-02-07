@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 //#include </usr/include/valgrind/callgrind.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/simpleGeoModel_BB.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>

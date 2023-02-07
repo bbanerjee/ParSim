@@ -42,7 +42,7 @@
 #include <CCA/Components/ICE/SpecificHeatModel/SpecificHeat.h>
 #include <CCA/Components/ICE/TurbulenceModel/Turbulence.h>
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <CCA/Components/Models/FluidsBased/FluidsBasedModel.h>
 #include <CCA/Components/Models/HEChem/HEChemModel.h>
@@ -677,7 +677,7 @@ ICE::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
 void
 ICE::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  printSchedule(level, m_ice_tasks, " ICE::scheduleComputeStableTimeStep");
+  printSchedule(level, m_ice_tasks, " ICE::scheduleComputeStableTimestep");
 
   Task* t = scinew Task("ICE::actuallyComputeStableTimestep",
                         this,

@@ -308,7 +308,7 @@ setBC(T& vel_FC,
                                         bound_ptr,
                                         cell_dx,
                                         materialManager,
-                                        globalVars->mms,
+                                        globalVars->mms.get(),
                                         localVars->mms);
           }
           //__________________________________
@@ -319,7 +319,7 @@ setBC(T& vel_FC,
                                          vel_FC,
                                          bound_ptr,
                                          materialManager,
-                                         globalVars->sine,
+                                         globalVars->sine.get(),
                                          localVars->sine);
           }
           //__________________________________
@@ -333,7 +333,7 @@ setBC(T& vel_FC,
                                                   bc_kind,
                                                   value,
                                                   localVars->inletVel,
-                                                  globalVars->inletVel);
+                                                  globalVars->inletVel.get());
           }
 
           //__________________________________

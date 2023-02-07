@@ -94,7 +94,7 @@ void vorticity::problemSetup(const ProblemSpecP& ,
 
   // determine which material index to compute
   if(m_module_spec->findBlock("material") ){
-    d_matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    d_matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:vorticity: Missing <material> tag. \n", __FILE__, __LINE__);

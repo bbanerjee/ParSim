@@ -82,11 +82,11 @@ public:
   operator=(SchedulerCommon&&) = delete;
 
   virtual void
-  setComponents(UintahParallelComponent* comp);
+  setComponents(UintahParallelComponent* comp) override;
   virtual void
-  getComponents();
+  getComponents() override;
   virtual void
-  releaseComponents();
+  releaseComponents() override;
 
   virtual SimulationInterface*
   getSimulator()
@@ -463,7 +463,7 @@ protected:
   LoadBalancer* d_load_balancer{ nullptr };
   Output* d_output{ nullptr };
 
-  MaterialManagerP d_material_manager{ nullptr };
+  MaterialManagerP d_materialManager{ nullptr };
   std::vector<OnDemandDataWarehouseUP> d_dws;
   std::vector<std::unique_ptr<TaskGraph>> d_task_graphs;
 

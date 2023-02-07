@@ -23,14 +23,11 @@
 # IN THE SOFTWARE.
 #
 
-SET(Vaango_MPMICE_Core_SRCS
-    Core/MPMICELabel.cc
-   )
-
 SET(Vaango_CCA_Components_MPMICE_SRCS
   MPMICE.cc
-  ${Vaango_MPMICE_Core_SRCS}
 )
+
+add_subdirectory(Core)
 
 add_library(Vaango_CCA_Components_MPMICE ${Vaango_CCA_Components_MPMICE_SRCS})
 

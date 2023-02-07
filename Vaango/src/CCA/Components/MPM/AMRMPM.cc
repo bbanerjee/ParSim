@@ -25,7 +25,7 @@
 #include <CCA/Components/MPM/AMRMPM.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 
@@ -412,14 +412,14 @@ void
 AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 {
   if (d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                               level->getGrid()->numLevels())) {
+                                level->getGrid()->numLevels())) {
     proc0cout << "doMPMOnLevel = " << level->getIndex() << std::endl;
   } else {
     proc0cout << "DontDoMPMOnLevel = " << level->getIndex() << std::endl;
   }
 
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -1140,7 +1140,7 @@ AMRMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -2319,7 +2319,7 @@ AMRMPM::scheduleComputeStressTensor(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -2381,7 +2381,7 @@ AMRMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -2441,7 +2441,7 @@ AMRMPM::scheduleComputeInternalForce(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -2902,7 +2902,7 @@ AMRMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -3026,7 +3026,7 @@ AMRMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -3137,7 +3137,7 @@ AMRMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 {
   const Level* level = getLevel(patches);
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
-                                level->getGrid()->numLevels())) {
+                                 level->getGrid()->numLevels())) {
     return;
   }
 
@@ -3408,7 +3408,8 @@ AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           vel += gVelocity_star[node] * S[k];
           acc += gAcceleration[node] * S[k];
 
-          fricTempRate = frictionTempRate[node] * d_mpm_flags->d_addFrictionWork;
+          fricTempRate =
+            frictionTempRate[node] * d_mpm_flags->d_addFrictionWork;
           tempRate +=
             (gTemperatureRate[node] + dTdt[node] + fricTempRate) * S[k];
         }
@@ -3489,7 +3490,7 @@ AMRMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
@@ -3554,7 +3555,7 @@ AMRMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
                                     const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
@@ -3631,7 +3632,7 @@ AMRMPM::scheduleAddParticles(SchedulerP& sched,
                              const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-                                getLevel(patches)->getGrid()->numLevels())) {
+                                 getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 

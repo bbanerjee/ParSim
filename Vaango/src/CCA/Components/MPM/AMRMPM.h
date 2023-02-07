@@ -478,8 +478,8 @@ protected:
 
   const VarLabel* pDbgLabel; // debugging labels
   const VarLabel* gSumSLabel;
-  const VarLabel* gZOINETLabel{nullptr};
-  const VarLabel* gZOISWBLabel{nullptr};
+  const VarLabel* gZOINETLabel{ nullptr };
+  const VarLabel* gZOISWBLabel{ nullptr };
   const VarLabel* RefineFlagXMaxLabel;
   const VarLabel* RefineFlagXMinLabel;
   const VarLabel* RefineFlagYMaxLabel;
@@ -489,7 +489,7 @@ protected:
 
   std::vector<MPMPhysicalBC*> d_physicalBCs;
   std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{ nullptr };
-  SwitchingCriteria* d_switchCriteria{nullptr};
+  SwitchingCriteria* d_switchCriteria{ nullptr };
 
 private:
   std::string d_CFI_interpolator; // user can override interpolator at CFI
@@ -571,60 +571,6 @@ private:
     }
   };
 
-  //--------------- Reaction Diffusion -----------------------
-  void
-  scheduleCoarsenNodalScalarData_CFI(SchedulerP&,
-                                     const PatchSet*,
-                                     const MaterialSet*);
-
-  void
-  coarsenNodalScalarData_CFI(const ProcessorGroup*,
-                             const PatchSubset* patches,
-                             const MaterialSubset* matls,
-                             DataWarehouse* old_dw,
-                             DataWarehouse* new_dw);
-
-  virtual void
-  scheduleConcInterpolated(SchedulerP& sched,
-                           const PatchSet* patches,
-                           const MaterialSet* matls);
-
-  virtual void
-  scheduleComputeFlux(SchedulerP&, const PatchSet*, const MaterialSet*);
-
-  virtual void
-  computeFlux(const ProcessorGroup*,
-              const PatchSubset* patches,
-              const MaterialSubset* matls,
-              DataWarehouse* old_dw,
-              DataWarehouse* new_dw);
-
-  virtual void
-  scheduleComputeDivergence(SchedulerP&, const PatchSet*, const MaterialSet*);
-
-  virtual void
-  computeDivergence(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw,
-                    DataWarehouse* new_dw);
-
-  virtual void
-  scheduleComputeDivergence_CFI(SchedulerP&,
-                                const PatchSet*,
-                                const MaterialSet*);
-
-  virtual void
-  computeDivergence_CFI(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw);
-
-  virtual void
-  scheduleDiffusionInterfaceDiv(SchedulerP& sched,
-                                const PatchSet* patches,
-                                const MaterialSet* matls);
 };
 
 } // end namespace Uintah

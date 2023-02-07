@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/GeometrySpecification/GeometryObject.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/ParticleCreator/GUVParticleCreator.h>

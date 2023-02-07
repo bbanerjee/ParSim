@@ -32,7 +32,5 @@ target_link_libraries(SimpleMath
         Vaango_Core_Math          
         Vaango_Core_ProblemSpec   
         Vaango_Core_Parallel      
-        Vaango_Core_Persistent  
-              
         Vaango_Core_Containers
 )

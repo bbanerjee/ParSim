@@ -36,7 +36,7 @@ namespace Uintah {
 ModelInterface::ModelInterface(const ProcessorGroup* my_world,
                                MaterialManagerP mat_manager)
   : UintahParallelComponent(my_world)
-  , d_material_manager(mat_manager)
+  , d_materialManager(mat_manager)
 {
 }
 
@@ -62,33 +62,29 @@ ModelInterface::getComponents()
   d_simulator = dynamic_cast<SimulationInterface*>(getPort("simulator"));
 
   if (!d_simulator) {
-    throw InternalError("dynamic_cast of 'd_simulator' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_simulator' failed!", __FILE__, __LINE__);
   }
 
   d_scheduler = dynamic_cast<Scheduler*>(getPort("scheduler"));
 
   if (!d_scheduler) {
-    throw InternalError("dynamic_cast of 'd_scheduler' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_scheduler' failed!", __FILE__, __LINE__);
   }
 
   d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
 
   if (isDynamicRegridding() && !d_regridder) {
-    throw InternalError("dynamic_cast of 'd_regridder' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_regridder' failed!", __FILE__, __LINE__);
   }
 
   d_output = dynamic_cast<Output*>(getPort("output"));
 
   if (!d_output) {
-    throw InternalError("dynamic_cast of 'd_output' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
   }
 }
 

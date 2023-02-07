@@ -25,7 +25,7 @@
 
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_particleExtract_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_particleExtract_h
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
 #include <CCA/Ports/Output.h>

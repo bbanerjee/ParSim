@@ -98,8 +98,9 @@ int main(int argc, char** argv)
     //______________________________________________________________________
     //              V A R S U M M A R Y   O P T I O N
     std::vector<std::string> vars;
+    std::vector<int> num_matls;
     std::vector<const Uintah::TypeDescription*> types;
-    da->queryVariables(vars, types);
+    da->queryVariables(vars, num_matls, types);
     ASSERTEQ(vars.size(), types.size());
     //cout << "There are " << vars.size() << " variables:\n";
     //for(int i=0;i<(int)vars.size();i++) {

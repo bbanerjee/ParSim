@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -265,9 +266,10 @@ main(int argc, char** argv)
     }
     
     std::vector<std::string> vars;
+    std::vector<int> num_matl;
     std::vector<const Uintah::TypeDescription*> types;
 
-    archive->queryVariables(vars, types);
+    archive->queryVariables(vars, num_matl, types);
     ASSERTEQ(vars.size(), types.size());
     if (verbose) std::cout << "There are " << vars.size() << " variables:\n";
     bool var_found = false;

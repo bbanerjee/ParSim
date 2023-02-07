@@ -52,7 +52,7 @@ class VarLabel;
 class Output : public UintahParallelPort
 {
 public:
-  Output() = default;
+  Output()          = default;
   virtual ~Output() = default;
 
   // Disallow copy and move
@@ -67,8 +67,10 @@ public:
   // Methods for managing the components attached via the ports.
   virtual void
   setComponents(UintahParallelComponent* comp) = 0;
+
   virtual void
   getComponents() = 0;
+
   virtual void
   releaseComponents() = 0;
 
@@ -92,7 +94,7 @@ public:
 
   // set timeinfoFlags
   virtual void
-  postprocessUdaSetup(Dir& fromDir) = 0;
+  postProcessUdaSetup(Dir& fromDir) = 0;
 
   virtual bool
   needRecompile(const GridP& grid) = 0;
@@ -115,7 +117,7 @@ public:
 
   // Call this after the timestep has been executed.
   virtual void
-  findNext_OutputCheckPoint_TimeStep(bool restart, const GridP& grid) = 0;
+  findNext_OutputCheckPointTimeStep(bool restart, const GridP& grid) = 0;
 
   //! Called after a time step recompute where delta t is adjusted
   //! to make sure an output and/or checkpoint time step is needed.
@@ -125,10 +127,6 @@ public:
   // update or write to the xml files
   virtual void
   writeto_xml_files(const GridP& grid) = 0;
-
-  virtual void
-  writeto_xml_files(std::map<std::string, std::pair<std::string, std::string>>&
-                      modifiedVars) = 0;
 
   virtual const std::string
   getOutputLocation() const = 0;
@@ -207,14 +205,6 @@ public:
   setSaveAsUDA() = 0;
   virtual void
   setSaveAsPIDX() = 0;
-
-  //! Called by the in situ VisIt to output and checkpoint on
-  //! demand.
-  virtual void
-  outputTimeStep(const GridP& grid, SchedulerP& sched, bool previous) = 0;
-
-  virtual void
-  checkpointTimeStep(const GridP& grid, SchedulerP& sched, bool previous) = 0;
 
   virtual void
   maybeLastTimeStep(bool val) = 0;

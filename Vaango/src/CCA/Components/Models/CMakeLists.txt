@@ -31,7 +31,6 @@ SET(Vaango_CCA_Components_Models_SRCS
 
 SET(LIBS
   Vaango_CCA_Ports
-  Vaango_CCA_Components_ICE
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -46,15 +45,15 @@ SET(LIBS
 )
 
 IF(ICE)
-  SET(LIBS ${LIBS} Vaango_CCA_Components_ICE)
+  SET(LIBS ${LIBS} ICE_Core)
   add_subdirectory(FluidsBased)
   add_subdirectory(ParticleBased)
 ENDIF(ICE)
 IF(MPM)
-  SET(LIBS ${LIBS} Vaango_CCA_Components_MPM)
+  SET(LIBS ${LIBS} MPM_Core)
 ENDIF(MPM)
 IF(MPM AND ICE)
-  SET(LIBS ${LIBS} Vaango_CCA_Components_MPMICE)
+  SET(LIBS ${LIBS} MPMICE_Core)
   add_subdirectory(HEChem)
   add_subdirectory(SolidReactionModel)
   add_subdirectory(MultiMatlExchange)

@@ -91,7 +91,7 @@ void flatPlate_heatFlux::problemSetup(const ProblemSpecP& ,
     VarLabel::create("total_heatRate", sum_vartype::getTypeDescription());
 
   // determine which material index to compute
-  d_matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+  d_matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
 
   vector<int> m(1);
   m[0] = d_matl->getDWIndex();

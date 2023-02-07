@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,71 +28,69 @@
 
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class   NullContact
-    \brief   The default scenario where contact detection is inactive.
-    \author  
-    \warning 
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class   NullContact
+  \brief   The default scenario where contact detection is inactive.
+  \author
+  \warning
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class NullContact : public ContactModelBase {
+class NullContact : public ContactModelBase
+{
 
-  public:
+public:
+  NullContact(const Uintah::ProcessorGroup* myworld,
+              const Uintah::MaterialManagerP& mat_manager,
+              PeridynamicsLabel* labels,
+              PeridynamicsFlags* flags);
 
-    NullContact(const Uintah::ProcessorGroup* myworld,
-                Uintah::MaterialManagerP& ss, 
-                PeridynamicsLabel* labels,
-                PeridynamicsFlags* flags);
-      
-    virtual ~NullContact();
+  virtual ~NullContact();
 
-    void outputProblemSpec(Uintah::ProblemSpecP& ps);
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps);
 
-    void exchangeMomentumInterpolated(const Uintah::ProcessorGroup*,
-                                      const Uintah::PatchSubset* patches,
-                                      const Uintah::MaterialSubset* matls,
-                                      Uintah::DataWarehouse* old_dw,
-                                      Uintah::DataWarehouse* new_dw);
+  void
+  exchangeMomentumInterpolated(const Uintah::ProcessorGroup*,
+                               const Uintah::PatchSubset* patches,
+                               const Uintah::MaterialSubset* matls,
+                               Uintah::DataWarehouse* old_dw,
+                               Uintah::DataWarehouse* new_dw);
 
-    void exchangeMomentumIntegrated(const Uintah::ProcessorGroup*,
-                                    const Uintah::PatchSubset* patches,
-                                    const Uintah::MaterialSubset* matls,
-                                    Uintah::DataWarehouse* old_dw,
-                                    Uintah::DataWarehouse* new_dw);
-      
-    void addComputesAndRequiresInterpolated(Uintah::SchedulerP & sched,
-                                            const Uintah::PatchSet* patches,
-                                            const Uintah::MaterialSet* matls);
+  void
+  exchangeMomentumIntegrated(const Uintah::ProcessorGroup*,
+                             const Uintah::PatchSubset* patches,
+                             const Uintah::MaterialSubset* matls,
+                             Uintah::DataWarehouse* old_dw,
+                             Uintah::DataWarehouse* new_dw);
 
-    void addComputesAndRequiresIntegrated(Uintah::SchedulerP & sched,
-                                          const Uintah::PatchSet* patches,
-                                          const Uintah::MaterialSet* matls);
+  void
+  addComputesAndRequiresInterpolated(Uintah::SchedulerP& sched,
+                                     const Uintah::PatchSet* patches,
+                                     const Uintah::MaterialSet* matls);
 
-  private:
-      
-    Uintah::MaterialManagerP 
- d_mat_manager;
+  void
+  addComputesAndRequiresIntegrated(Uintah::SchedulerP& sched,
+                                   const Uintah::PatchSet* patches,
+                                   const Uintah::MaterialSet* matls);
 
-    // Prevent copying 
-    NullContact(const NullContact &con);
-    NullContact& operator=(const NullContact &con);
-      
-  };
+private:
+  // Prevent copying
+  NullContact(const NullContact& con) = delete;
+  NullContact&
+  operator=(const NullContact& con) = delete;
+};
 } // End namespace Vaango
-    
-
 
 #endif /* __VAANGO_nullptr_CONTACT_H__ */
-

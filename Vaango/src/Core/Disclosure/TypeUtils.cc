@@ -272,6 +272,11 @@ fun_getZeroValue(long64* val)
   *val = 0;
 }
 void
+fun_getZeroValue(double* val)
+{
+  *val = 0.0;
+}
+void
 fun_getZeroValue(Vector* val)
 {
   *val = Vector(0, 0, 0);

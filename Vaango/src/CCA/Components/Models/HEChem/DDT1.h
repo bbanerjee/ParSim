@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,8 +27,10 @@
 #ifndef Packages_Uintah_CCA_Components_Models_DDT1_h
 #define Packages_Uintah_CCA_Components_Models_DDT1_h
 
-#include <CCA/Ports/ModelInterface.h>
+#include <CCA/Components/Models/HEChem/HEChemModel.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/Grid/Variables/NCVariable.h>
 
 namespace Uintah {
   class ICELabel;
@@ -90,79 +68,67 @@ WARNING
 
 ****************************************/
 
-  class DDT1 : public ModelInterface {
+  class DDT1 : public HEChemModel {
   public:
-    DDT1(const ProcessorGroup* myworld, ProblemSpecP& params,
-                const ProblemSpecP& prob_spec);
+    DDT1(const ProcessorGroup* myworld,
+         const MaterialManagerP& materialManager,
+         const ProblemSpecP& params,
+         const ProblemSpecP& prob_spec);
 
     virtual ~DDT1();
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void problemSetup(GridP& grid, MaterialManagerP& mat_manager,
-			      ModelSetup* setup);
+    virtual void problemSetup(GridP& grid,
+                               const bool isRestart);
 
       
     virtual void scheduleInitialize(SchedulerP&,
-				    const LevelP& level,
-				    const ModelInfo*);
+                                    const LevelP& level);
 
-    virtual void initialize(const ProcessorGroup*,
-                            const PatchSubset*,
-                            const MaterialSubset*,
-                            DataWarehouse*,
-                            DataWarehouse*);
-
-    virtual void restartInitialize() {}
+    virtual void scheduleRestartInitialize(SchedulerP&,
+                                           const LevelP& level){};
       
     virtual void scheduleComputeStableTimestep(SchedulerP&,
-					       const LevelP& level,
-					       const ModelInfo*);
+                                               const LevelP& level);
       
  
     virtual void scheduleComputeModelSources(SchedulerP&,
-						   const LevelP& level,
-						   const ModelInfo*);
+                                             const LevelP& level);
                                              
-    virtual void scheduleModifyThermoTransportProperties(SchedulerP&,
-                                               const LevelP&,
-                                               const MaterialSet*);
-                                               
-   virtual void computeSpecificHeat(CCVariable<double>&,
-                                    const Patch*,
-                                    DataWarehouse*,
-                                    const int);
-                                    
-   virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
-                                      SchedulerP& sched);
-
+   virtual void scheduleRefine( const PatchSet* patches,
+                                SchedulerP& sched );
                                              
-   virtual void scheduleTestConservation(SchedulerP&,
-                                         const PatchSet* patches,
-                                         const ModelInfo* mi);
-
-
   private:    
+  
+    void initialize(const ProcessorGroup*,
+                    const PatchSubset*,
+                    const MaterialSubset*,
+                    DataWarehouse*,
+                    DataWarehouse*);
+
+    bool isDoubleEqual(double a, double b);
+    
+    void problemSetup_BulletProofing(ProblemSpecP& ps);
+    
+    
     void computeBurnLogic(const ProcessorGroup*, 
                           const PatchSubset*,
                           const MaterialSubset*, 
                           DataWarehouse*, 
-                          DataWarehouse*, 
-                          const ModelInfo*);
+                          DataWarehouse*);
                              
     void computeModelSources(const ProcessorGroup*, 
                              const PatchSubset*,
                              const MaterialSubset*, 
                              DataWarehouse*, 
-                             DataWarehouse*, 
-                             const ModelInfo*);
+                             DataWarehouse*);
       
     void computeNumPPC(const ProcessorGroup*, 
                        const PatchSubset*,
                        const MaterialSubset*, 
                        DataWarehouse*, 
-                       DataWarehouse*, 
-                       const ModelInfo*);
+                       DataWarehouse*);
       
     double computeBurnedMass(double To, 
                              double& Ts,  
@@ -170,16 +136,23 @@ WARNING
                              double Vc,
                              double surfArea, 
                              double delT, 
-                             double solidMass);
+                             double solidMass,
+                             const double min_mass_in_a_cell);
     
-    double computeInductionAngle(IntVector *nodeIdx, 
+    double computeInductionAngle( IntVector *nodeIdx, 
                                   constNCVariable<double> &rctMass_NC, 
                                   constNCVariable<double> &NC_CCweight, 
                                   Vector &dx, 
                                   double& cos_theta, 
                                   double& theta,
                                   Point hotcellCord, 
-                                  Point cellCord);  
+                                  Point cellCord);
+
+    void refine( const ProcessorGroup*,
+                 const PatchSubset* patches,
+                 const MaterialSubset* /*matls*/,
+                 DataWarehouse* ,
+                 DataWarehouse* new_dw );
       
     DDT1(const DDT1&);
     DDT1& operator=(const DDT1&);
@@ -205,26 +178,29 @@ WARNING
     const VarLabel* inductionTimeLabel;
     const VarLabel* countTimeLabel;
     const VarLabel* BurningCriteriaLabel;
-    enum typeofBurning{ NOTDEFINED, WARMINGUP, CONDUCTIVE, CONVECTIVE, ONSURFACE };
-
-    const VarLabel* pCrackRadiusLabel;
+    const VarLabel* adjOutIntervalsLabel;
     
-    ProblemSpecP d_prob_spec;
-    ProblemSpecP d_params;
-    const Material* d_matl0;
-    const Material* d_matl1;
-    const Material* d_matl2;
-    MaterialManagerP 
- d_mat_manager;   
+    enum typeofBurning{ NOTDEFINED, WARMINGUP, CONDUCTIVE, CONVECTIVE, ONSURFACE };
+    enum {ZERO, PRESSURE_EXCEEDED, DETONATION_DETECTED};
 
-    ICELabel* Ilb;
-    MPMICELabel* MIlb;
-    MPMLabel* Mlb;
-    MaterialSet* d_mymatls;
-    MaterialSubset* d_one_matl;
+    const VarLabel* pCrackRadiusLabel {nullptr};
+    
+    ProblemSpecP d_params {nullptr};
+    ProblemSpecP d_prob_spec {nullptr};
+
+    const Material* d_matl0 {nullptr};
+    const Material* d_matl1 {nullptr};
+    const Material* d_matl2 {nullptr};
+
+    ICELabel* Ilb {nullptr};
+    MPMICELabel* MIlb {nullptr};
+    MPMLabel* Mlb {nullptr};
+    MaterialSet* d_mymatls {nullptr};
+    MaterialSubset* d_one_matl {nullptr};
    
+    double d_max_initial_delt;
 
-    string fromMaterial, toMaterial, burnMaterial;
+    std::string fromMaterial, toMaterial, burnMaterial;
     // Detonation Model
     double d_G;
     double d_b;
@@ -239,45 +215,43 @@ WARNING
     double d_crackVolThreshold; // for cracking
 
     // Burn Model
-    double R ;  /* IdealGasConst      */
-    double Ac;  /* PreExpCondPh       */
-    double Ec;  /* ActEnergyCondPh in unit of Temperature    */
-    double Bg;  /* PreExpGasPh        */
-    double Qc;  /* CondPhaseHeat      */
-    double Qg;  /* GasPhaseHeat       */
-    double Kg;  /* HeatConductGasPh   */
-    double Kc;  /* HeatConductCondPh  */
-    double Cp;  /* SpecificHeatCondPh */
-    double MW;  /* MoleWeightGasPh    */
-    double BP;  /* Number of Particles at Boundary          */
+    double d_R ;  /* IdealGasConst      */
+    double d_Ac;  /* PreExpCondPh       */
+    double d_Ec;  /* ActEnergyCondPh in unit of Temperature    */
+    double d_Bg;  /* PreExpGasPh        */
+    double d_Qc;  /* CondPhaseHeat      */
+    double d_Qg;  /* GasPhaseHeat       */
+    double d_Kg;  /* HeatConductGasPh   */
+    double d_Kc;  /* HeatConductCondPh  */
+    double d_Cp;  /* SpecificHeatCondPh */
+    double d_MW;  /* MoleWeightGasPh    */
+    double d_BP;  /* Number of Particles at Boundary          */
     double d_thresholdPress_SB; /*Threshold Press for burning */
-    double ignitionTemp;        /* IgnitionTemp  */
+    double d_ignitionTemp;        /* IgnitionTemp  */
     
     //Induction Model
     bool   d_useInductionTime;
     double d_IC; /* Ignition time constant                           IgnitionConst */
     double d_Fb; /* Preexponential for suface flame spread equation  PreexpoConst */
     double d_Fc; /* exponent term for suface flame spread equaiton   ExponentialConst */
-    double d_PS; /* P0 for surface flame spread equation             PressureShift */  
-      
-    double MIN_MASS_IN_A_CELL;
+    double d_PS; /* P0 for surface flame spread equation             PressureShift */
     
-    double CC1; /* CC1 = Ac*R*Kc*Ec/Cp        */
-    double CC2; /* CC2 = Qc/Cp/2              */
-    double CC3; /* CC3 = 4*Kg*Bg*W*W/Cp/R/R;  */
-    double CC4; /* CC4 = Qc/Cp                */
-    double CC5; /* CC5 = Qg/Cp                */
+    double d_CC1; /* d_CC1 = Ac*R*Kc*Ec/Cp        */
+    double d_CC2; /* d_CC2 = Qc/Cp/2              */
+    double d_CC3; /* d_CC3 = 4*Kg*Bg*W*W/Cp/R/R;  */
+    double d_CC4; /* d_CC4 = Qc/Cp                */
+    double d_CC5; /* d_CC5 = Qg/Cp                */
       
     /* C's, IL & IR, Tmin & Tmax are updated in UpdateConstants function  */
     // Structure used to pass values into the iterator.  This is used to 
     //   prevent global definitions that may be corrupted by 
     //   multiple versions working on the same variables.
     typedef struct {
-      double C1; /* C1 = CC1 / Vc, (Vc = Condensed Phase Specific Volume) */
-      double C2; /* C2 = To + CC2     */
-      double C3; /* C3 = CC3 * P * P  */
-      double C4; /* C4 = To + CC4     */
-      double C5; /* C5 = CC5 * C3     */
+      double C1; /* C1 = d_CC1 / Vc, (Vc = Condensed Phase Specific Volume) */
+      double C2; /* C2 = To + d_CC2     */
+      double C3; /* C3 = d_CC3 * P * P  */
+      double C4; /* C4 = To + d_CC4     */
+      double C5; /* C5 = d_CC5 * C3     */
           
       double Tmin, Tmax; /* define the range of Ts */
       double IL, IR;     /* for interval update, left values and right values */
@@ -285,7 +259,7 @@ WARNING
       
     void UpdateConstants(double To, double P, double Vc, IterationVariables *iter);
     double F_Ts(double Ts, IterationVariables *iter); /* function Ts = Ts(m(Ts))    */                    
-    double Ts_m(double m, IterationVariables *iter); /* function Ts = Ts(m)    */
+    double Ts_m(double m, IterationVariables *iter);  /* function Ts = Ts(m)    */
     double m_Ts(double Ts, IterationVariables *iter); /* function  m = m(Ts)    */
       
     double Func(double Ts, IterationVariables *iter);  /* function f = Ts - F_Ts(Ts) */
@@ -297,8 +271,8 @@ WARNING
       
     bool d_is_mpm_matl;  // Is matl 0 a mpm_matl?
     double d_cv_0;      //specific heat
+    
     // flags for the conservation test
-      
     struct saveConservedVars{
         bool onOff;
         bool mass;
@@ -306,10 +280,21 @@ WARNING
     };
     saveConservedVars* d_saveConservedVars;
       
+    //__________________________________
+    // struct used to adjust the I/O intervals based 
+    // on either a pressure threshold exceeded or a detonation has been detected
+    struct adj_IO{                  // pressure_switch
+      bool onOff;                   // is this option on or off?
+      double timestepsLeft;         // timesteps left until sus shuts down
+      double pressThreshold;
+      double output_interval;       // output interval in physical seconds
+      double chkPt_interval;        // checkpoing interval in physical seconds
+      ~adj_IO(){};
+    };  
+    adj_IO* d_adj_IO_Press;
+    adj_IO* d_adj_IO_Det;  
       
-    static const double EPSILON;   /* stop epsilon for Bisection-Newton method */   
-    #define d_SMALL_NUM 1e-100
-    #define d_TINY_RHO 1e-12
+    static const double d_EPSILON;   /* stop epsilon for Bisection-Newton method */   
   };
 }
 

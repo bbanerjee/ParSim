@@ -257,7 +257,7 @@ AMRSimulationController::run()
     // NOTE: It is called BEFORE d_simulator->prepareForNextTimeStep
     // because at this point the delT, nextDelT, time step, sim time,
     // and all wall times are all in sync.
-    d_output->findNext_OutputCheckPoint_TimeStep(first && d_restarting,
+    d_output->findNext_OutputCheckPointTimeStep(first && d_restarting,
                                                  d_current_gridP);
 
     // Reset the runtime performance stats.
@@ -977,7 +977,7 @@ AMRSimulationController::compileTaskGraph(int totalFine)
   d_output->sched_allOutputTasks(d_current_gridP, d_scheduler, true);
 
   // Update the system var (time step and simulation time). Must be
-  // done after the output and after scheduleComputeStableTimeStep.
+  // done after the output and after scheduleComputeStableTimestep.
   d_simulator->scheduleUpdateSystemVars(
     d_current_gridP,
     d_loadBalancer->getPerProcessorPatchSet(d_current_gridP),

@@ -23,10 +23,27 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-set(Vaango_CCA_Components_ICE_SRCS
-  ${Vaango_CCA_Components_ICE_SRCS}
+set(Vaango_CCA_Components_ICE_Core_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryCond.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/Diffusion.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ICELabel.cc
-  PARENT_SCOPE
 )
+
+add_library(ICE_Core ${Vaango_CCA_Components_ICE_Core_SRCS})
+
+target_link_libraries(ICE_Core
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Exceptions
+  Vaango_Core_Math
+  ${XML2_LIBRARY}
+  ${M_LIBRARY}
+  ${MPI_LIBRARY}
+)
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_ICE_Core)
+ENDIF(BUILD_SHARED_LIBS)

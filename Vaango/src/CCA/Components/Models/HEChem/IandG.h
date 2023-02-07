@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,7 +26,8 @@
 #ifndef Packages_Uintah_CCA_Components_Models_IandG_h
 #define Packages_Uintah_CCA_Components_Models_IandG_h
 
-#include <CCA/Ports/ModelInterface.h>
+#include <CCA/Components/Models/HEChem/HEChemModel.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
 
 namespace Uintah {
@@ -84,53 +61,37 @@ WARNING
 
 ****************************************/
 
-  class IandG : public ModelInterface {
+  class IandG : public HEChemModel {
   public:
-    IandG(const ProcessorGroup* myworld, ProblemSpecP& params);
+    IandG(const ProcessorGroup* myworld,
+          const MaterialManagerP& materialManager,
+          const ProblemSpecP& params);
+    
     virtual ~IandG();
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void problemSetup(GridP& grid, MaterialManagerP& mat_manager,
-                              ModelSetup* setup);
+    virtual void problemSetup(GridP& grid,
+                               const bool isRestart);
       
     virtual void scheduleInitialize(SchedulerP&,
-                                    const LevelP& level,
-                                    const ModelInfo*);
+                                    const LevelP& level);
 
-    virtual void restartInitialize() {}
-      
+    virtual void scheduleRestartInitialize(SchedulerP&,
+                                           const LevelP& level){};
  
     virtual void scheduleComputeStableTimestep(SchedulerP&,
-                                               const LevelP& level,
-                                               const ModelInfo*);
+                                               const LevelP& level);
       
     virtual void scheduleComputeModelSources(SchedulerP&,
-                                                   const LevelP& level,
-                                                   const ModelInfo*);
+                                             const LevelP& level);
                                              
-    virtual void scheduleModifyThermoTransportProperties(SchedulerP&,
-                                               const LevelP&,
-                                               const MaterialSet*);
-                                               
-   virtual void computeSpecificHeat(CCVariable<double>&,
-                                    const Patch*,
-                                    DataWarehouse*,
-                                    const int);
-                                    
-   virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
-                                      SchedulerP& sched);
-                                      
-   virtual void scheduleTestConservation(SchedulerP&,
-                                         const PatchSet* patches,
-                                         const ModelInfo* mi);
   private:    
     void computeModelSources(const ProcessorGroup*, 
                              const PatchSubset* patches,
-                               const MaterialSubset* matls, 
+                             const MaterialSubset* matls, 
                              DataWarehouse*, 
-                               DataWarehouse* new_dw, 
-                             const ModelInfo*);
+                             DataWarehouse* new_dw);
 
     IandG(const IandG&);
     IandG& operator=(const IandG&);
@@ -140,11 +101,9 @@ WARNING
     const VarLabel* IandGterm2Label;   // diagnostic labels
     const VarLabel* IandGterm3Label;   // diagnostic labels
 
-    ProblemSpecP params;
+    ProblemSpecP d_params;
     const Material* matl0;
     const Material* matl1;
-    MaterialManagerP 
- d_mat_manager;   
 
     ICELabel* Ilb;
     MaterialSet* mymatls;
@@ -167,9 +126,6 @@ WARNING
     double d_rho0;
     double d_E0;
     double d_threshold_pressure;
-
-    #define d_SMALL_NUM 1e-100
-    #define d_TINY_RHO 1e-12
   };
 }
 

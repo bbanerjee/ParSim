@@ -42,7 +42,7 @@
 
 using namespace Uintah;
 
-std::unique_ptr<SolverInterface>
+std::shared_ptr<SolverInterface>
 SolverFactory::create(ProblemSpecP& ps,
                       const ProcessorGroup* world,
                       std::string solverName)
@@ -59,10 +59,10 @@ SolverFactory::create(ProblemSpecP& ps,
   proc0cout << "Linear Solver: \t\t" << solverName << std::endl;
 
   if (solverName == "CGSolver") {
-    return std::make_unique<CGSolver>(world);
+    return std::make_shared<CGSolver>(world);
   } else if (solverName == "HypreSolver" || solverName == "hypre") {
 #if HAVE_HYPRE
-    return std::make_unique<HypreSolver2>(world);
+    return std::make_shared<HypreSolver2>(world);
 #else
     std::ostringstream msg;
     msg << "\nERROR<Solver>: Hypre solver not available, Hypre was not "
@@ -71,7 +71,7 @@ SolverFactory::create(ProblemSpecP& ps,
 #endif
   } else if (solverName == "AMRSolver" || solverName == "hypreamr") {
 #if HAVE_HYPRE
-    return std::make_unique<AMRSolver>(world);
+    return std::make_shared<AMRSolver>(world);
 #else
     std::ostringstream msg;
     msg << "\nERROR<Solver>: Hypre 1.9.0b solver not available, Hypre not "

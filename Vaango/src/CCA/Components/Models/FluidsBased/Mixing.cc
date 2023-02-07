@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,44 +22,51 @@
  * IN THE SOFTWARE.
  */
 
-
+#include <CCA/Components/Models/FluidsBased/FluidsBasedModel.h>
 #include <CCA/Components/Models/FluidsBased/Mixing.h>
+
+#include <CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Ports/Scheduler.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/Box.h>
-#include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/GeometryPiece/GeometryPieceFactory.h>
+#include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
 #include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/GeometryPiece/GeometryPieceFactory.h>
-#include <Core/GeometryPiece/UnionGeometryPiece.h>
-#include <Core/Exceptions/ParameterNotFound.h>
-#include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
 using namespace Uintah;
+using namespace std;
 
-
-Mixing::Mixing(const ProcessorGroup* myworld, ProblemSpecP& params)
-  : ModelInterface(myworld), params(params)
+Mixing::Mixing(const ProcessorGroup* myworld,
+               const MaterialManagerP& materialManager,
+               const ProblemSpecP& params)
+  : FluidsBasedModel(myworld, materialManager)
+  , d_params(params)
 {
+  Ilb = scinew ICELabel();
+
   mymatls = 0;
 }
 
 Mixing::~Mixing()
 {
-  if(mymatls && mymatls->removeReference())
+  delete Ilb;
+  if (mymatls && mymatls->removeReference()) {
     delete mymatls;
-  for(vector<Stream*>::iterator iter = streams.begin();
-      iter != streams.end(); iter++){
+  }
+  for (vector<Stream*>::iterator iter = streams.begin(); iter != streams.end();
+       iter++) {
     Stream* stream = *iter;
     VarLabel::destroy(stream->massFraction_CCLabel);
     VarLabel::destroy(stream->massFraction_source_CCLabel);
-    for(vector<Region*>::iterator iter = stream->regions.begin();
-        iter != stream->regions.end(); iter++){
+    for (vector<Region*>::iterator iter = stream->regions.begin();
+         iter != stream->regions.end();
+         iter++) {
       Region* region = *iter;
       delete region;
     }
@@ -73,75 +79,79 @@ Mixing::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
   ps->require("massFraction", initialMassFraction);
 }
 
-void Mixing::outputProblemSpec(ProblemSpecP& ps)
+void
+Mixing::outputProblemSpec(ProblemSpecP& ps)
 {
 
   ProblemSpecP model_ps = ps->appendChild("Model");
-  model_ps->setAttribute("type","Mixing");
+  model_ps->setAttribute("type", "Mixing");
 
-  model_ps->appendElement("material",matl->getName());
+  model_ps->appendElement("material", std::string(matl->getName()));
 
-
-  for (vector<Stream*>::const_iterator s_it = streams.begin(); 
-       s_it != streams.end(); s_it++) {
+  for (vector<Stream*>::const_iterator s_it = streams.begin();
+       s_it != streams.end();
+       s_it++) {
     ProblemSpecP stream_ps = model_ps->appendChild("stream");
-    stream_ps->setAttribute("name",(*s_it)->name);
+    stream_ps->setAttribute("name", (*s_it)->name);
     (*s_it)->props.outputProblemSpec(stream_ps);
 
     for (vector<Region*>::const_iterator r_it = (*s_it)->regions.begin();
-         r_it != (*s_it)->regions.end(); r_it++) {
+         r_it != (*s_it)->regions.end();
+         r_it++) {
       ProblemSpecP geom_ps = stream_ps->appendChild("geom_object");
       (*r_it)->piece->outputProblemSpec(geom_ps);
     }
   }
 
-  for (vector<Reaction*>::const_iterator r_it = reactions.begin(); 
-       r_it != reactions.end(); r_it++) {
+  for (vector<Reaction*>::const_iterator r_it = reactions.begin();
+       r_it != reactions.end();
+       r_it++) {
     ProblemSpecP reaction_ps = model_ps->appendChild("reaction");
-    reaction_ps->appendElement("from",(*r_it)->fromStream);
-    reaction_ps->appendElement("to",(*r_it)->toStream);
-
+    reaction_ps->appendElement("from", (*r_it)->fromStream);
+    reaction_ps->appendElement("to", (*r_it)->toStream);
   }
-
 }
 
-void Mixing::problemSetup(GridP& grid, MaterialManagerP& mat_manager,
-                          ModelSetup* setup)
+void
+Mixing::problemSetup(GridP&, const bool isRestart)
 {
-  matl = sharedState->parseAndLookupMaterial(params, "material");
+  matl = d_materialManager->parseAndLookupMaterial(d_params, "material");
 
-  std::vector<int> m(1);
-  m[0] = matl->getDWIndex();
+  vector<int> m(1);
+  m[0]    = matl->getDWIndex();
   mymatls = scinew MaterialSet();
   mymatls->addAll(m);
   mymatls->addReference();
 
   // Parse the streams
   int index = 0;
-  for (ProblemSpecP child = params->findBlock("stream"); child != 0;
-       child = child->findNextBlock("stream")) {
+  for (ProblemSpecP child = d_params->findBlock("stream"); child != nullptr;
+       child              = child->findNextBlock("stream")) {
     Stream* stream = scinew Stream();
-    stream->index = index++;
+    stream->index  = index++;
     child->getAttribute("name", stream->name);
-    string mfname = "massFraction-"+stream->name;
-    stream->massFraction_CCLabel = VarLabel::create(mfname, CCVariable<double>::getTypeDescription());
-    string mfsname = "massFractionSource-"+stream->name;
-    stream->massFraction_source_CCLabel = VarLabel::create(mfsname, CCVariable<double>::getTypeDescription());
+    string mfname = "massFraction-" + stream->name;
+    stream->massFraction_CCLabel =
+      VarLabel::create(mfname, CCVariable<double>::getTypeDescription());
+    string mfsname = "massFractionSource-" + stream->name;
+    stream->massFraction_source_CCLabel =
+      VarLabel::create(mfsname, CCVariable<double>::getTypeDescription());
     stream->props.parse(child);
 
     int count = 0;
     for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
-         geom_obj_ps != 0;
-         geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
-      
-      std::vector<GeometryPieceP> pieces;
-      GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
-      
+         geom_obj_ps != nullptr;
+         geom_obj_ps = geom_obj_ps->findNextBlock("geom_object")) {
+
+      vector<GeometryPieceP> pieces;
+      GeometryPieceFactory::create(geom_obj_ps, pieces);
+
       GeometryPieceP mainpiece;
-      if(pieces.size() == 0){
-        throw ParameterNotFound("No piece specified in geom_object", __FILE__, __LINE__);
-      } else if(pieces.size() > 1){
-        mainpiece = scinew UnionGeometryPiece(pieces);
+      if (pieces.size() == 0) {
+        throw ParameterNotFound(
+          "No piece specified in geom_object", __FILE__, __LINE__);
+      } else if (pieces.size() > 1) {
+        mainpiece = std::make_shared<UnionGeometryPiece>(pieces);
       } else {
         mainpiece = pieces[0];
       }
@@ -149,136 +159,153 @@ void Mixing::problemSetup(GridP& grid, MaterialManagerP& mat_manager,
       stream->regions.push_back(scinew Region(mainpiece, geom_obj_ps));
       count++;
     }
-    if(count == 0)
-      throw ProblemSetupException("Variable: "+stream->name+" does not have any initial value regions",
-                                  __FILE__, __LINE__);
+    if (count == 0) {
+      throw ProblemSetupException("Variable: " + stream->name +
+                                    " does not have any initial value regions",
+                                  __FILE__,
+                                  __LINE__);
+    }
 
-    setup->registerTransportedVariable(mymatls,
-                                       stream->massFraction_CCLabel,
-                                       stream->massFraction_source_CCLabel);
+    registerTransportedVariable(mymatls,
+                                stream->massFraction_CCLabel,
+                                stream->massFraction_source_CCLabel);
+
     streams.push_back(stream);
   }
-  if(streams.size() == 0)
-    throw ProblemSetupException("Mixing specified with no streams!", __FILE__, __LINE__);
+  if (streams.size() == 0) {
+    throw ProblemSetupException(
+      "Mixing specified with no streams!", __FILE__, __LINE__);
+  }
 
-  for (ProblemSpecP child = params->findBlock("reaction"); child != 0;
-       child = child->findNextBlock("reaction")) {
+  for (ProblemSpecP child = d_params->findBlock("reaction"); child != nullptr;
+       child              = child->findNextBlock("reaction")) {
     Reaction* rxn = scinew Reaction();
     string from;
     child->require("from", from);
-    std::vector<Stream*>::iterator iter = streams.begin();
-    for(;iter != streams.end(); iter++)
-      if((*iter)->name == from)
+    vector<Stream*>::iterator iter = streams.begin();
+    for (; iter != streams.end(); iter++) {
+      if ((*iter)->name == from) {
         break;
-    if(iter == streams.end())
-      throw ProblemSetupException("Reaction needs stream: "+from+" but not found", __FILE__, __LINE__);
+      }
+    }
+    if (iter == streams.end()) {
+      throw ProblemSetupException("Reaction needs stream: " + from +
+                                    " but not found",
+                                  __FILE__,
+                                  __LINE__);
+    }
 
     string to;
     child->require("to", to);
-    for(;iter != streams.end(); iter++)
-      if((*iter)->name == to)
+    for (; iter != streams.end(); iter++) {
+      if ((*iter)->name == to) {
         break;
-    if(iter == streams.end())
-      throw ProblemSetupException("Reaction needs stream: "+to+" but not found", __FILE__, __LINE__);
+      }
+    }
+    if (iter == streams.end()) {
+      throw ProblemSetupException(
+        "Reaction needs stream: " + to + " but not found", __FILE__, __LINE__);
+    }
     rxn->fromStream = (*iter)->index;
-    rxn->toStream = (*iter)->index;
+    rxn->toStream   = (*iter)->index;
 
     child->require("energyRelease", rxn->energyRelease);
     child->require("rate", rxn->rate);
 
     reactions.push_back(rxn);
   }
-  if(reactions.size() > 1)
-    throw ProblemSetupException("More than one reaction not finished", __FILE__, __LINE__);
-
-//  setup.registerMixer(matl);
+  if (reactions.size() > 1) {
+    throw ProblemSetupException(
+      "More than one reaction not finished", __FILE__, __LINE__);
+  }
+  //  setup.registerMixer(matl);
 }
 
-void Mixing::scheduleInitialize(SchedulerP& sched,
-                                const LevelP& level,
-                                const ModelInfo*)
+void
+Mixing::scheduleInitialize(SchedulerP& sched, const LevelP& level)
 {
-  Task* t = scinew Task("Mixing::initialize",
-                        this, &Mixing::initialize);
-  for(vector<Stream*>::iterator iter = streams.begin();
-      iter != streams.end(); iter++){
+  Task* t = scinew Task("Mixing::initialize", this, &Mixing::initialize);
+  for (vector<Stream*>::iterator iter = streams.begin(); iter != streams.end();
+       iter++) {
     Stream* stream = *iter;
     t->computes(stream->massFraction_CCLabel);
   }
   sched->addTask(t, level->eachPatch(), mymatls);
 }
 
-void Mixing::initialize(const ProcessorGroup*, 
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse*,
-                        DataWarehouse* new_dw)
+void
+Mixing::initialize(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse*,
+                   DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    for(int m=0;m<matls->size();m++){
+    for (int m = 0; m < matls->size(); m++) {
       int matl = matls->get(m);
       CCVariable<double> sum;
       new_dw->allocateTemporary(sum, patch);
       sum.initialize(0);
-      for(vector<Stream*>::iterator iter = streams.begin();
-          iter != streams.end(); iter++){
+      for (vector<Stream*>::iterator iter = streams.begin();
+           iter != streams.end();
+           iter++) {
         Stream* stream = *iter;
         CCVariable<double> mf;
         new_dw->allocateAndPut(mf, stream->massFraction_CCLabel, matl, patch);
         mf.initialize(0);
-        for(vector<Region*>::iterator iter = stream->regions.begin();
-            iter != stream->regions.end(); iter++){
+        for (vector<Region*>::iterator iter = stream->regions.begin();
+             iter != stream->regions.end();
+             iter++) {
           Region* region = *iter;
-          //Box b1 = region->piece->getBoundingBox();
-          //Box b2 = patch->getBox();
-          //Box b = b1.intersect(b2);
-   
-          for(CellIterator iter = patch->getExtraCellIterator();
-              !iter.done(); iter++){
- 
+          // Box b1 = region->piece->getBoundingBox();
+          // Box b2 = patch->getBox();
+          // Box b = b1.intersect(b2);
+
+          for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
+               iter++) {
+
             Point p = patch->cellPosition(*iter);
-            if(region->piece->inside(p))
+            if (region->piece->inside(p)) {
               mf[*iter] = region->initialMassFraction;
+            }
           } // Over cells
-        } // Over regions
-        for(CellIterator iter = patch->getExtraCellIterator();
-            !iter.done(); iter++)
+        }   // Over regions
+        for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
+             iter++) {
           sum[*iter] += mf[*iter];
+        }
       } // Over streams
-      for(CellIterator iter = patch->getExtraCellIterator();
-          !iter.done(); iter++){
-        if(sum[*iter] != 1.0){
-           std::ostringstream msg;
+      for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
+           iter++) {
+        if (sum[*iter] != 1.0) {
+          ostringstream msg;
           msg << "Initial massFraction != 1.0: value=";
           msg << sum[*iter] << " at " << *iter;
           throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
         }
       } // Over cells
-    } // Over matls
+    }   // Over matls
   }
 }
-      
-void Mixing::scheduleComputeStableTimestep(SchedulerP&,
-                                           const LevelP&,
-                                           const ModelInfo*)
+
+void
+Mixing::scheduleComputeStableTimestep(SchedulerP&, const LevelP&)
 {
   // None necessary...
 }
-      
 
-void Mixing::scheduleComputeModelSources(SchedulerP& sched,
-                                              const LevelP& level,
-                                              const ModelInfo* mi)
+void
+Mixing::scheduleComputeModelSources(SchedulerP& sched, const LevelP& level)
 {
-  Task* t = scinew Task("Mixing::computeModelSources",this, 
-                        &Mixing::computeModelSources, mi);
-  t->modifies(mi->modelEng_srcLabel);
-  t->requires(Task::OldDW, mi->rho_CCLabel, Ghost::None);
-  t->requires(Task::OldDW, mi->delT_Label,  level.get_rep());
-  
-  for(vector<Stream*>::iterator iter = streams.begin();
-      iter != streams.end(); iter++){
+  Task* t = scinew Task(
+    "Mixing::computeModelSources", this, &Mixing::computeModelSources);
+  t->modifies(Ilb->modelEng_srcLabel);
+  t->requires(Task::OldDW, Ilb->rho_CCLabel, Ghost::None);
+  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
+
+  for (vector<Stream*>::iterator iter = streams.begin(); iter != streams.end();
+       iter++) {
     Stream* stream = *iter;
     t->requires(Task::OldDW, stream->massFraction_CCLabel, Ghost::None);
     t->modifies(stream->massFraction_source_CCLabel);
@@ -287,61 +314,66 @@ void Mixing::scheduleComputeModelSources(SchedulerP& sched,
   sched->addTask(t, level->eachPatch(), mymatls);
 }
 
-void Mixing::computeModelSources(const ProcessorGroup*, 
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* matls,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw,
-                                   const ModelInfo* mi)
+void
+Mixing::computeModelSources(const ProcessorGroup*,
+                            const PatchSubset* patches,
+                            const MaterialSubset* matls,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    for(int m=0;m<matls->size();m++){
+    for (int m = 0; m < matls->size(); m++) {
       int matl = matls->get(m);
 
-      for(vector<Reaction*>::iterator iter = reactions.begin();
-          iter != reactions.end(); iter++){
+      for (vector<Reaction*>::iterator iter = reactions.begin();
+           iter != reactions.end();
+           iter++) {
         Reaction* rxn = *iter;
-        Stream* from = streams[rxn->fromStream];
+        Stream* from  = streams[rxn->fromStream];
         constCCVariable<double> from_mf;
-        old_dw->get(from_mf, from->massFraction_CCLabel, matl, patch, Ghost::None, 0);
+        old_dw->get(
+          from_mf, from->massFraction_CCLabel, matl, patch, Ghost::None, 0);
         Stream* to = streams[rxn->toStream];
         constCCVariable<double> to_mf;
-        old_dw->get(to_mf, to->massFraction_CCLabel, matl, patch, Ghost::None, 0);
+        old_dw->get(
+          to_mf, to->massFraction_CCLabel, matl, patch, Ghost::None, 0);
 
         constCCVariable<double> density;
-        old_dw->get(density, mi->rho_CCLabel, matl, patch, Ghost::None, 0);
+        old_dw->get(density, Ilb->rho_CCLabel, matl, patch, Ghost::None, 0);
 
-        Vector dx = patch->dCell();
-        double volume = dx.x()*dx.y()*dx.z();
+        Vector dx     = patch->dCell();
+        double volume = dx.x() * dx.y() * dx.z();
 
         delt_vartype delT;
-        old_dw->get(delT, mi->delT_Label,getLevel(patches) );
+        old_dw->get(delT, Ilb->delTLabel, getLevel(patches));
         double dt = delT;
 
         CCVariable<double> energySource;
-        new_dw->getModifiable(energySource,   mi->modelEng_srcLabel,
-                              matl, patch);
+        new_dw->getModifiable(
+          energySource, Ilb->modelEng_srcLabel, matl, patch);
 
         CCVariable<double> mass_source_from;
-        new_dw->getModifiable(mass_source_from, from->massFraction_source_CCLabel,
-                              matl, patch);
+        new_dw->getModifiable(
+          mass_source_from, from->massFraction_source_CCLabel, matl, patch);
         CCVariable<double> mass_source_to;
-        new_dw->getModifiable(mass_source_to, to->massFraction_source_CCLabel,
-                              matl, patch);
+        new_dw->getModifiable(
+          mass_source_to, to->massFraction_source_CCLabel, matl, patch);
 
-        double max = dt*rxn->rate;
-        for(CellIterator iter = patch->getExtraCellIterator(); !iter.done(); iter++){
-          IntVector idx = *iter;
-          double mass = density[idx]*volume;
-          double moles_from = from_mf[idx]*mass/from->props.molecularWeight;
-          double moles_rxn = Min(moles_from, max);
-          double release = moles_rxn * rxn->energyRelease;
-          std::cerr <<  "idx=" << idx << ", moles_rxn=" << moles_rxn << ", release=" << release << '\n';
+        double max = dt * rxn->rate;
+        for (CellIterator iter = patch->getExtraCellIterator(); !iter.done();
+             iter++) {
+          IntVector idx     = *iter;
+          double mass       = density[idx] * volume;
+          double moles_from = from_mf[idx] * mass / from->props.molecularWeight;
+          double moles_rxn  = Min(moles_from, max);
+          double release    = moles_rxn * rxn->energyRelease;
+          cerr << "idx=" << idx << ", moles_rxn=" << moles_rxn
+               << ", release=" << release << '\n';
           // Convert energy to temperature...
           energySource[idx] += release;
 
-          double mass_rxn = moles_rxn*to->props.molecularWeight;
+          double mass_rxn = moles_rxn * to->props.molecularWeight;
 
           // Modify the mass fractions
           mass_source_from[idx] -= mass_rxn;
@@ -352,31 +384,31 @@ void Mixing::computeModelSources(const ProcessorGroup*,
   }
 }
 
-
 //______________________________________________________________________
-void Mixing::scheduleModifyThermoTransportProperties(SchedulerP&,
-                                                     const LevelP&,
-                                                     const MaterialSet*)
+void
+Mixing::scheduleModifyThermoTransportProperties(SchedulerP&,
+                                                const LevelP&,
+                                                const MaterialSet*)
 {
-  // do nothing      
+  // do nothing
 }
-void Mixing::computeSpecificHeat(CCVariable<double>&,
-                                 const Patch*,
-                                 DataWarehouse*,
-                                 const int)
+void
+Mixing::computeSpecificHeat(CCVariable<double>&,
+                            const Patch*,
+                            DataWarehouse*,
+                            const int)
 {
 }
 //______________________________________________________________________
 //
-void Mixing::scheduleErrorEstimate(const LevelP&,
-                                   SchedulerP&)
+void
+Mixing::scheduleErrorEstimate(const LevelP&, SchedulerP&)
 {
   // Not implemented yet
 }
 //__________________________________
-void Mixing::scheduleTestConservation(SchedulerP&,
-                                      const PatchSet*,
-                                      const ModelInfo*)
+void
+Mixing::scheduleTestConservation(SchedulerP&, const PatchSet*)
 {
   // Not implemented yet
 }

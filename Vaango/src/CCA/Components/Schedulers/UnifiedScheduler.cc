@@ -1429,8 +1429,8 @@ UnifiedScheduler::runTasks(int thread_id)
           // desired but not sure of the effect of not calling it and doing
           // an out of sync output or checkpoint.
 
-          if ((m_output->isOutputTimeStep() ||
-               m_output->isCheckpointTimeStep()) ||
+          if ((d_output->isOutputTimeStep() ||
+               d_output->isCheckpointTimeStep()) ||
               ((readyTask->getTask()->getName() !=
                 "DataArchiver::outputVariables") &&
                (readyTask->getTask()->getName() !=
@@ -5698,8 +5698,8 @@ UnifiedScheduler::findIntAndExtGpuDependencies(DetailedTask* dtask,
         // an out of sync output or checkpoint.
 
         if (req->m_to_tasks.front()->getTask()->getType() == Task::Output &&
-            !m_output->isOutputTimeStep() &&
-            !m_output->isCheckpointTimeStep()) {
+            !d_output->isOutputTimeStep() &&
+            !d_output->isCheckpointTimeStep()) {
           if (gpu_stats.active()) {
             cerrLock.lock();
             {

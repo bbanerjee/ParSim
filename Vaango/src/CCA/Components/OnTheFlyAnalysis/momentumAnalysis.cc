@@ -128,7 +128,7 @@ void momentumAnalysis::problemSetup(const ProblemSpecP& ,
 
   // find the material to extract data from.
   if(m_module_spec->findBlock("material") ){
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:momentumAnalysis: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -244,7 +244,7 @@ void momentumAnalysis::initialize( const ProcessorGroup *,
     new_dw->put(fileInfo,    labels->fileVarsStruct, 0, patch);
 
     if(patch->getGridIndex() == 0){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -550,7 +550,7 @@ void momentumAnalysis::doAnalysis(const ProcessorGroup * pg,
       myFiles = fileInfo.get().get_rep()->files;
     }
 
-    string udaDir = m_output->getOutputLocation();
+    string udaDir = d_output->getOutputLocation();
     string filename = udaDir + "/" + "momentumAnalysis.dat";
     FILE *fp=nullptr;
 

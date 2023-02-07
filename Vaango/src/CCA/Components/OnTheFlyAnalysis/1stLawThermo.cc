@@ -25,7 +25,7 @@
 #include <CCA/Components/OnTheFlyAnalysis/1stLawThermo.h>
 #include <CCA/Components/OnTheFlyAnalysis/FileInfoVar.h>
 #include <CCA/Components/ICE/Materials/ICEMaterial.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/Scheduler.h>
 
 #include <Core/Grid/Box.h>
@@ -231,7 +231,7 @@ FirstLawThermo::initialize( const ProcessorGroup *,
     new_dw->put(fileInfo,    FL_lb->fileVarsStructLabel, 0, patch);
 
     if(patch->getGridIndex() == 0){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -273,8 +273,8 @@ void FirstLawThermo::scheduleDoAnalysis(SchedulerP   & sched,
                      this,&FirstLawThermo::compute_ICE_Contributions );
 
   Ghost::GhostType  gn  = Ghost::None;
-  const MaterialSet* all_matls = m_materialManager->allMaterials();
-  const MaterialSet* ice_matls = m_materialManager->allMaterials( "ICE" );
+  const MaterialSet* all_matls = d_materialManager->allMaterials();
+  const MaterialSet* ice_matls = d_materialManager->allMaterials( "ICE" );
   const MaterialSubset* ice_ss = ice_matls->getUnion();
 
   sched_TimeVars( t0, level, FL_lb->lastCompTimeLabel, false );
@@ -297,7 +297,7 @@ void FirstLawThermo::scheduleDoAnalysis(SchedulerP   & sched,
   Task* t1 = scinew Task( "FirstLawThermo::compute_MPM_Contributions",
                      this,&FirstLawThermo::compute_MPM_Contributions );
 
-  const MaterialSet* mpm_matls = m_materialManager->allMaterials( "MPM" );
+  const MaterialSet* mpm_matls = d_materialManager->allMaterials( "MPM" );
   const MaterialSubset* mpm_ss = mpm_matls->getUnion();
 
   sched_TimeVars( t1, level, FL_lb->lastCompTimeLabel, false );
@@ -361,14 +361,14 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
     Vector dx = patch->dCell();
     double vol = dx.x() * dx.y() * dx.z();
 
-    int numICEmatls = m_materialManager->getNumMaterials( "ICE" );
+    int numICEmatls = d_materialManager->getNumMaterials( "ICE" );
 
     double ICE_totalIntEng = 0.0;
     double total_flux      = 0.0;
 
     for (int m = 0; m < numICEmatls; m++ ) {
 
-      ICEMaterial* ice_matl = (ICEMaterial*) m_materialManager->getMaterial( "ICE", m);
+      ICEMaterial* ice_matl = (ICEMaterial*) d_materialManager->getMaterial( "ICE", m);
       int indx = ice_matl->getDWIndex();
       new_dw->get(rho_CC,  I_lb->rho_CCLabel,       indx, patch, m_gn,0);
       new_dw->get(temp_CC, I_lb->temperature_CCLabel,      indx, patch, m_gn,0);
@@ -591,11 +591,11 @@ void FirstLawThermo::compute_MPM_Contributions(const ProcessorGroup * pg,
 
     //__________________________________
     //  compute the thermal energy of the solids
-    int    numMPMMatls     = m_materialManager->getNumMaterials( "MPM" );
+    int    numMPMMatls     = d_materialManager->getNumMaterials( "MPM" );
     double MPM_totalIntEng = 0.0;
 
     for(int m = 0; m < numMPMMatls; m++){
-      MPMMaterial* mpm_matl = (MPMMaterial*) m_materialManager->getMaterial( "MPM",  m );
+      MPMMaterial* mpm_matl = (MPMMaterial*) d_materialManager->getMaterial( "MPM",  m );
       int dwi = mpm_matl->getDWIndex();
 
       constParticleVariable<double> pMassNew;
@@ -662,7 +662,7 @@ void FirstLawThermo::doAnalysis(const ProcessorGroup * pg,
       myFiles = fileInfo.get().get_rep()->files;
     }
 
-    string udaDir = m_output->getOutputLocation();
+    string udaDir = d_output->getOutputLocation();
     string filename = udaDir + "/" + "1stLawThermo.dat";
     FILE *fp=nullptr;
 

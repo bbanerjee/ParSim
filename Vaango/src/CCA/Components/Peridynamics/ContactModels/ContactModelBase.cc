@@ -26,14 +26,15 @@
 
 using namespace Vaango;
 
-ContactModelBase::ContactModelBase(const Uintah::ProcessorGroup* myworld, 
-                                   PeridynamicsLabel* labels, 
-                                   PeridynamicsFlags* flags, 
+ContactModelBase::ContactModelBase(const Uintah::ProcessorGroup* myworld,
+                                   const Uintah::MaterialManagerP& mat_manager,
+                                   PeridynamicsLabel* labels,
+                                   PeridynamicsFlags* flags,
                                    Uintah::ProblemSpecP ps)
-  : Uintah::UintahParallelComponent(myworld), d_labels(labels), d_flags(flags), d_bodiesThatCanInteract(ps)
+  : d_mat_manager(mat_manager)
+  , d_labels(labels)
+  , d_flags(flags)
 {
 }
 
-ContactModelBase::~ContactModelBase()
-{
-}
+ContactModelBase::~ContactModelBase() {}

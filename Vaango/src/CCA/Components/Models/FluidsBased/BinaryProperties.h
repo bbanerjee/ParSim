@@ -90,7 +90,7 @@ WARNING
     virtual void scheduleRestartInitialize(SchedulerP&,
                                            const LevelP& level){};
 
-    virtual void scheduleComputeStableTimeStep(SchedulerP&,
+    virtual void scheduleComputeStableTimestep(SchedulerP&,
                                                const LevelP& level);
 
     virtual void scheduleComputeModelSources(SchedulerP&,

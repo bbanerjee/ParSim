@@ -69,7 +69,6 @@ set(UDA2VIS_LIBS
   Vaango_Core_Basis        
   Vaango_Core_Containers   
   Vaango_Core_Datatypes    
-  Vaango_Core_Persistent   
          
   ${XML2_LIBRARY}
   ${Z_LIBRARY}

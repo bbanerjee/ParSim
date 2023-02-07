@@ -27,7 +27,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulomb.h>
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombClassic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombSheng.h>
 

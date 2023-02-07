@@ -88,7 +88,7 @@ void particleExtract::problemSetup(const ProblemSpecP& ,
   DOUTR(dout_OTF_partEx, "Doing particleExtract::problemSetup");
 
   if(m_module_spec->findBlock("material") ){
-    d_matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    d_matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:particleExtract: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -222,7 +222,7 @@ void particleExtract::initialize(const ProcessorGroup *,
 
 
     if(patch->getGridIndex() == 0){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -366,7 +366,7 @@ particleExtract::doAnalysis( const ProcessorGroup * pg,
 
   //__________________________________
   //
-  const string udaDir = m_output->getOutputLocation();
+  const string udaDir = d_output->getOutputLocation();
   const string path = "particleExtract/L-" + to_string( level->getIndex() );
 
   createDirectory( 0777, udaDir, path );

@@ -87,6 +87,11 @@ public:
   virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 private:
   void
   initialize(const ProcessorGroup*,

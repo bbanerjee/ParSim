@@ -109,7 +109,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
   DOUTR(dout_OTF_spatialAvg, "Doing spatialAvg::problemSetup");
 
 
-  int numMatls  = m_materialManager->getNumMaterials();
+  int numMatls  = d_materialManager->getNumMaterials();
 
   proc0cout << "__________________________________Data Analysis module: spatialAvg" << std::endl;
   proc0cout << "         Computing spatial average for all of the variables listed"<< std::endl;
@@ -157,7 +157,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
   Material* matl = nullptr;
 
   if(m_module_spec->findBlock("material") ){
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:spatialAvg: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -227,7 +227,7 @@ void spatialAvg::problemSetup(const ProblemSpecP &,
     std::string variance = "spatialAvg_variance_"+ name;
     ostringstream mesg;
     mesg << "";
-    if( !m_output->isLabelSaved( variance ) ){
+    if( !d_output->isLabelSaved( variance ) ){
       mesg << variance;
     }
 

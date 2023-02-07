@@ -111,7 +111,7 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
 {
   DOUTR(dbg_OTF_TF, "turbulentFluxes::problemSetup" );
 
-  int numMatls  = m_materialManager->getNumMaterials();
+  int numMatls  = d_materialManager->getNumMaterials();
 
   //__________________________________
   //  Bulletproofing, no adaptivity
@@ -154,7 +154,7 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
   Material* matl = nullptr;
 
   if(m_module_spec->findBlock("material") ){
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:turbulentFluxes: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -287,7 +287,7 @@ void turbulentFluxes::problemSetup(const ProblemSpecP &,
   for ( unsigned int i =0 ; i < m_VarLabelNames.size(); i++ ) {
     std::string name = m_VarLabelNames[i];
 
-    if( !m_output->isLabelSaved( name ) ){
+    if( !d_output->isLabelSaved( name ) ){
       warn << "\t" << name << "\n";
     }
   }

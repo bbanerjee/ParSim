@@ -213,6 +213,14 @@ MaterialManager::originalAllMaterials() const
   return d_all_materialsets_old.get();
 }
 
+void
+MaterialManager::setOriginalMatlsFromRestart(MaterialSet* matls)
+{
+  d_all_materialsets_old->removeReference();
+  d_all_materialsets_old.reset(matls);
+  d_all_materialsets_old->addReference();
+}
+
 Material*
 MaterialManager::parseAndLookupMaterial(ProblemSpecP& params,
                                         const std::string& name) const

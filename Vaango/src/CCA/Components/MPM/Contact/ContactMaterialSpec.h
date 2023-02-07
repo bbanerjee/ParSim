@@ -37,7 +37,6 @@
 #include <vector>
 
 namespace Uintah {
-using namespace Uintah;
 
 /**************************************
 

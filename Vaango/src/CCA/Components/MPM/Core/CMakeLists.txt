@@ -29,7 +29,6 @@ SET(Vaango_MPM_Core_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMDiffusionLabel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMFlags.cc	  
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMLabel.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/MPMMaterial.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMUtils.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ImpMPMLabel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ImpMPMFlags.cc
@@ -39,9 +38,11 @@ SET(Vaango_MPM_Core_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ShellMPMLabel.cc
 )
 
-SET(Vaango_CCA_Components_MPM_SRCS
-    ${Vaango_CCA_Components_MPM_SRCS}
-    ${Vaango_MPM_Core_SRCS}
-    PARENT_SCOPE
-)
+add_library(MPM_Core ${Vaango_MPM_Core_SRCS})
+
+target_link_libraries(MPM_Core ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_Core)
+ENDIF(BUILD_SHARED_LIBS)
 

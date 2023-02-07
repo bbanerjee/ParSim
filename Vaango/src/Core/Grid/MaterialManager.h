@@ -48,17 +48,20 @@ class VarLabel;
 class Material;
 class EmptyMaterial;
 
-class MaterialManager : public RefCounted {
- public:
+class MaterialManager : public RefCounted
+{
+public:
   MaterialManager();
   ~MaterialManager();
 
   MaterialManager(const MaterialManager&) = delete;
+
   MaterialManager&
   operator=(const MaterialManager&) = delete;
 
   void
   clearMaterials();
+
   void
   finalizeMaterials();
 
@@ -74,35 +77,45 @@ class MaterialManager : public RefCounted {
 
   const MaterialSet*
   allMaterials(const std::string& name) const;
+
   const MaterialSet*
   allMaterials() const;
 
   size_t
   getNumMaterials(const std::string& name) const;
+
   size_t
-  getNumMaterials() const {
+  getNumMaterials() const
+  {
     return d_all_materials.size();
   }
 
   Material*
   getMaterial(const std::string& name, std::uint32_t index) const;
+
   Material*
-  getMaterial(std::uint32_t index) const {
+  getMaterial(std::uint32_t index) const
+  {
     return index < d_all_materials.size() ? d_all_materials[index].get()
                                           : nullptr;
   }
 
   const MaterialSubset*
-  getAllInOneMaterial() const {
+  getAllInOneMaterial() const
+  {
     return d_all_in_one_material.get();
   }
+
   const MaterialSet*
   originalAllMaterials() const;
+
+  void
+  setOriginalMatlsFromRestart(MaterialSet* matls);
 
   Material*
   parseAndLookupMaterial(ProblemSpecP& params, const std::string& name) const;
 
- private:
+private:
   void
   registerMaterial(const std::shared_ptr<Material>& material);
   void
@@ -117,7 +130,7 @@ class MaterialManager : public RefCounted {
   std::map<std::string, std::vector<std::shared_ptr<Material>>> d_materials;
   std::map<std::string, Material*> d_named_materials;
 
-  std::unique_ptr<MaterialSet> d_all_materialsets{nullptr};
+  std::unique_ptr<MaterialSet> d_all_materialsets{ nullptr };
   std::map<std::string, std::unique_ptr<MaterialSet>> d_materialsets;
 
   // The switcher needs to clear the materials, but don't
@@ -126,13 +139,13 @@ class MaterialManager : public RefCounted {
   std::vector<Material*> d_materials_old;
 
   // Keep track of all the original materials if switching
-  std::unique_ptr<MaterialSet> d_all_materialsets_old{nullptr};
-  std::unique_ptr<MaterialSubset> d_all_in_one_material{nullptr};
+  std::unique_ptr<MaterialSet> d_all_materialsets_old{ nullptr };
+  std::unique_ptr<MaterialSubset> d_all_in_one_material{ nullptr };
 
   inline static int s_count = 0;
 
-};  // end class MaterialManager
+}; // end class MaterialManager
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  //__CORE_GRID_MATERIAL_MANAGER_H__
+#endif //__CORE_GRID_MATERIAL_MANAGER_H__

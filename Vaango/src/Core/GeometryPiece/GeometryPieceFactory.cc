@@ -60,13 +60,10 @@ namespace Uintah {
 
 static DebugStream dbg("GeometryPieceFactory", false);
 
-// Static class variable definition:
-std::map<std::string, GeometryPieceP> GeometryPieceFactory::s_namedPieces;
-std::vector<GeometryPieceP> GeometryPieceFactory::s_unnamedPieces;
-
 void
 GeometryPieceFactory::create(const ProblemSpecP& ps,
-                             std::vector<GeometryPieceP>& objs) {
+                             std::vector<GeometryPieceP>& objs)
+{
   for (ProblemSpecP child = ps->findBlock(); child != 0;
        child              = child->findNextBlock()) {
     std::string go_type = child->getNodeName();
@@ -118,7 +115,7 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
           std::cout << "Error... couldn't find the referenced GeomPiece: "
                     << go_label << " (" << go_type << ")\n";
           throw ProblemSetupException(
-              "Referenced GeomPiece does not exist", __FILE__, __LINE__);
+            "Referenced GeomPiece does not exist", __FILE__, __LINE__);
         }
 
         // Verify that the referenced piece is of the same type as
@@ -129,9 +126,9 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
                     << "is not of the same type as this new object: '"
                     << go_type << "'!\n";
           throw ProblemSetupException(
-              "Referenced GeomPiece is not of the same type as original",
-              __FILE__,
-              __LINE__);
+            "Referenced GeomPiece is not of the same type as original",
+            __FILE__,
+            __LINE__);
         }
         continue;
       }
@@ -184,7 +181,7 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
                go_type == "scalar" || go_type == "color" ||
                go_type == "volumeFraction") {
       // Ignoring.
-      continue;  // restart loop to avoid accessing name of empty object
+      continue; // restart loop to avoid accessing name of empty object
 
     } else {
       // Perhaps it is a shell piece... let's find out:
@@ -195,7 +192,7 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
           std::cerr << "WARNING: Unknown Geometry Piece Type "
                     << "(" << go_type << ")\n";
         }
-        continue;  // restart loop to avoid accessing name of empty object
+        continue; // restart loop to avoid accessing name of empty object
       }
     }
     // Look for the "name" of the object.  (Can also be referenced as "label").
@@ -213,18 +210,20 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
 
     objs.push_back(newGeomPiece);
 
-  }  // end for( child )
+  } // end for( child )
   dbg << "Done creating geometry objects\n";
 }
 
 void
-GeometryPieceFactory::resetFactory() {
+GeometryPieceFactory::resetFactory()
+{
   s_unnamedPieces.clear();
   s_namedPieces.clear();
 }
 
 void
-GeometryPieceFactory::resetGeometryPiecesOutput() {
+GeometryPieceFactory::resetGeometryPiecesOutput()
+{
   dbg << "resetGeometryPiecesOutput()\n";
 
   for (auto& piece : s_unnamedPieces) {
@@ -238,4 +237,159 @@ GeometryPieceFactory::resetGeometryPiecesOutput() {
   }
 }
 
-}  // end namespace Uintah
+bool
+GeometryPieceFactory::foundInsidePoints(const std::string geomPieceName,
+                                        const int patchID)
+{
+  typedef std::map<int, std::vector<Point>> PatchIDInsidePointsMapT;
+
+  if (s_insidePointsMap.find(geomPieceName) != s_insidePointsMap.end()) {
+    // we found this geometry, lets see if we find this patch
+    PatchIDInsidePointsMapT& thisPatchIDInsidePoints =
+      s_insidePointsMap[geomPieceName];
+
+    if (thisPatchIDInsidePoints.find(patchID) !=
+        thisPatchIDInsidePoints.end()) {
+      // we found this patch ID
+      return true;
+    }
+  }
+  return false;
+}
+
+const std::vector<Point>&
+GeometryPieceFactory::getInsidePoints(const Uintah::Patch* const patch)
+{
+  typedef std::map<std::string, GeometryPieceP> NameGeomPiecesMapT;
+  const int patchID = patch->getID();
+
+  if (s_allInsidePointsMap.find(patchID) != s_allInsidePointsMap.end()) {
+    return s_allInsidePointsMap[patchID];
+  }
+
+  // loop over all geometry objects
+  std::vector<Point> allInsidePoints;
+  NameGeomPiecesMapT::iterator geomIter;
+
+  for (geomIter = s_namedPieces.begin(); geomIter != s_namedPieces.end();
+       ++geomIter) {
+    GeometryPieceP geomPiece = geomIter->second;
+
+    const string geomName = geomPiece->getName();
+    const std::vector<Point>& thisGeomInsidePoints =
+      getInsidePoints(geomName, patch);
+
+    allInsidePoints.insert(allInsidePoints.end(),
+                           thisGeomInsidePoints.begin(),
+                           thisGeomInsidePoints.end());
+  }
+
+  s_allInsidePointsMap.insert(
+    std::pair<int, std::vector<Point>>(patchID, allInsidePoints));
+  return s_allInsidePointsMap[patchID];
+}
+
+const std::vector<Point>&
+GeometryPieceFactory::getInsidePoints(const std::string geomPieceName,
+                                      const Uintah::Patch* const patch)
+{
+  typedef std::map<int, std::vector<Point>> PatchIDInsidePointsMapT;
+
+  const int patchID = patch->getID();
+
+  if (s_insidePointsMap.find(geomPieceName) != s_insidePointsMap.end()) {
+    // we found this geometry, lets see if we find this patch
+    PatchIDInsidePointsMapT& patchIDInsidePoints =
+      s_insidePointsMap[geomPieceName];
+
+    if (patchIDInsidePoints.find(patchID) == patchIDInsidePoints.end()) {
+      // we did not find this patch. check if there are any points in this
+      // patch.
+      GeometryPieceP geomPiece = s_namedPieces[geomPieceName];
+      std::vector<Point> insidePoints;
+
+      for (Uintah::CellIterator iter(patch->getCellIterator()); !iter.done();
+           iter++) {
+        IntVector iCell = *iter;
+
+        Point p             = patch->getCellPosition(iCell);
+        const bool isInside = geomPiece->inside(p, false);
+
+        if (isInside) {
+          insidePoints.push_back(p);
+        }
+      }
+      patchIDInsidePoints.insert(
+        std::pair<int, std::vector<Point>>(patch->getID(), insidePoints));
+    }
+  } else {
+    // if we did not find this geometry piece
+    std::vector<Point> insidePoints;
+    std::map<int, std::vector<Point>> patchIDInsidePoints;
+    GeometryPieceP geomPiece = s_namedPieces[geomPieceName];
+
+    for (Uintah::CellIterator iter(patch->getCellIterator()); !iter.done();
+         iter++) {
+      IntVector iCell = *iter;
+
+      Point p             = patch->getCellPosition(iCell);
+      const bool isInside = geomPiece->inside(p, false);
+
+      if (isInside) {
+        insidePoints.push_back(p);
+      }
+    }
+    patchIDInsidePoints.insert(
+      std::pair<int, std::vector<Point>>(patch->getID(), insidePoints));
+    s_insidePointsMap.insert(std::pair<std::string, PatchIDInsidePointsMapT>(
+      geomPieceName, patchIDInsidePoints));
+  }
+  // at this point, we can GUARANTEE that there is a vector of points associated
+  // with this geometry and patch. This vector could be empty.
+  return s_insidePointsMap[geomPieceName][patchID];
+}
+
+void
+GeometryPieceFactory::findInsidePoints(const Uintah::Patch* const patch)
+{
+  typedef std::map<std::string, GeometryPieceP> NameGeomPiecesMapT;
+  typedef std::map<int, std::vector<Point>> PatchIDInsidePointsMapT;
+
+  const int patchID = patch->getID();
+
+  // loop over all geometry objects
+  NameGeomPiecesMapT::iterator geomIter;
+  for (geomIter = s_namedPieces.begin(); geomIter != s_namedPieces.end();
+       ++geomIter) {
+
+    std::vector<Point> insidePoints;
+    std::map<int, std::vector<Point>> patchIDInsidePoints;
+
+    GeometryPieceP geomPiece   = geomIter->second;
+    const std::string geomName = geomPiece->getName();
+
+    // check if we already found the inside points for this patch
+    if (foundInsidePoints(geomName, patchID)) {
+      continue;
+    }
+
+    for (Uintah::CellIterator iter(patch->getCellIterator()); !iter.done();
+         iter++) {
+      IntVector iCell = *iter;
+
+      Point p             = patch->getCellPosition(iCell);
+      const bool isInside = geomPiece->inside(p, false);
+
+      if (isInside) {
+        insidePoints.push_back(p);
+      }
+    }
+
+    patchIDInsidePoints.insert(
+      std::pair<int, std::vector<Point>>(patch->getID(), insidePoints));
+    s_insidePointsMap.insert(std::pair<std::string, PatchIDInsidePointsMapT>(
+      geomName, patchIDInsidePoints));
+  }
+}
+
+} // end namespace Uintah

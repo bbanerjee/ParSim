@@ -1537,6 +1537,18 @@ ProblemSpec::getNextSibling()
   }
 }
 
+ProblemSpecP
+ProblemSpec::getParent()
+{
+  xmlNode* d = d_node->parent;
+
+  if (d) {
+    return scinew ProblemSpec(d, false);
+  } else {
+    return nullptr;
+  }
+}
+
 std::string
 ProblemSpec::getNodeValue()
 {

@@ -27,7 +27,7 @@
 #ifndef __INTERNAL_VARIABLE_MODEL_H__
 #define __INTERNAL_VARIABLE_MODEL_H__
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>

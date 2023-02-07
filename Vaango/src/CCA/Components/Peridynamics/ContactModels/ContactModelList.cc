@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,19 +29,19 @@
 
 using namespace Vaango;
 
-using Uintah::ProcessorGroup;
-using Uintah::ProblemSpecP;
-using Uintah::SchedulerP;
-using Uintah::PatchSubset;
+using Uintah::DataWarehouse;
+using Uintah::MaterialSet;
 using Uintah::MaterialSubset;
 using Uintah::PatchSet;
-using Uintah::MaterialSet;
-using Uintah::DataWarehouse;
+using Uintah::PatchSubset;
+using Uintah::ProblemSpecP;
+using Uintah::ProcessorGroup;
+using Uintah::SchedulerP;
 
-ContactModelList::ContactModelList(const Uintah::ProcessorGroup* myworld, 
+ContactModelList::ContactModelList(const Uintah::ProcessorGroup* myworld,
                                    PeridynamicsLabel* labels,
                                    PeridynamicsFlags* flags)
-  : ContactModelBase(myworld, labels, flags, 0)
+  : ContactModelBase(myworld, nullptr, labels, flags, nullptr)
 {
 }
 
@@ -51,7 +52,7 @@ ContactModelList::~ContactModelList()
   }
 }
 
-void 
+void
 ContactModelList::outputProblemSpec(ProblemSpecP& ps)
 {
   for (auto iter = d_modelList.begin(); iter != d_modelList.end(); iter++) {
@@ -90,9 +91,9 @@ ContactModelList::exchangeMomentumIntegrated(const ProcessorGroup* pg,
 }
 
 void
-ContactModelList::addComputesAndRequiresInterpolated(SchedulerP & sched,
+ContactModelList::addComputesAndRequiresInterpolated(SchedulerP& sched,
                                                      const PatchSet* patches,
-                                                     const MaterialSet* matls) 
+                                                     const MaterialSet* matls)
 {
   for (auto iter = d_modelList.begin(); iter != d_modelList.end(); iter++) {
     (*iter)->addComputesAndRequiresInterpolated(sched, patches, matls);
@@ -100,9 +101,9 @@ ContactModelList::addComputesAndRequiresInterpolated(SchedulerP & sched,
 }
 
 void
-ContactModelList::addComputesAndRequiresIntegrated(SchedulerP & sched,
+ContactModelList::addComputesAndRequiresIntegrated(SchedulerP& sched,
                                                    const PatchSet* patches,
-                                                   const MaterialSet* matls) 
+                                                   const MaterialSet* matls)
 {
   for (auto iter = d_modelList.begin(); iter != d_modelList.end(); iter++) {
     (*iter)->addComputesAndRequiresIntegrated(sched, patches, matls);

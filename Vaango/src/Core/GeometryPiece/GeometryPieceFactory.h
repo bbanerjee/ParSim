@@ -28,6 +28,7 @@
 #define __CORE_GEOMETRY_GEOMETRY_PIECE_FACTORY_H__
 
 #include <Core/GeometryPiece/GeometryPiece.h>
+#include <Core/Grid/Patch.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <map>
@@ -36,8 +37,9 @@
 
 namespace Uintah {
 
-class GeometryPieceFactory {
- public:
+class GeometryPieceFactory
+{
+public:
   // this function has a switch for all known go_types
   // and calls the proper class' readParameters()
   // addMaterial() calls this
@@ -57,7 +59,43 @@ class GeometryPieceFactory {
   static void
   resetGeometryPiecesOutput();
 
- private:
+  // does the geometry piece already exist in the map
+  static int
+  geometryPieceExists(const ProblemSpecP& ps, const bool isTopLevel = true);
+
+  /*
+   *  \brief Returns a map of all the named geometry pieces. This maps the
+   geometry name to the GeometryPiece.
+   */
+  const static std::map<std::string, GeometryPieceP>&
+  getNamedGeometryPieces();
+
+  /*
+   *  \brief Finds the inside points for ALL geometry pieces. This can be called
+   for example in a pre-processing step.
+   */
+  static void
+  findInsidePoints(const Uintah::Patch* const patch);
+
+  /*
+   *  \brief Finds and returns a reference to a vector that contains the points
+   inside the geomPieceName on the specified patch. The points are of type
+   Uintah::Point. If no points are found, then an empty vector is store. If
+   points were already found by previous call, then this returns a reference to
+   the points that were already found (which avoids additional computation).
+   */
+  const static std::vector<Point>&
+  getInsidePoints(const std::string geomPieceName,
+                  const Uintah::Patch* const patch);
+
+  /*
+   *  \brief Finds and returns a reference to a vector that contains the points
+  inside ALL the named geometries that live on patch.
+   */
+  const static std::vector<Point>&
+  getInsidePoints(const Uintah::Patch* const patch);
+
+private:
   // This variable records all named GeometryPieces, so that if they
   // are referenced a 2nd time, they don't have to be rebuilt.
   //
@@ -65,10 +103,25 @@ class GeometryPieceFactory {
   // they do, they won't be executing at the same time (in different
   // threads)... If this is not the case, then this variable should
   // be locked...
-  static std::map<std::string, GeometryPieceP> s_namedPieces;
-  static std::vector<GeometryPieceP> s_unnamedPieces;
+  inline static std::map<std::string, GeometryPieceP> s_namedPieces;
+  inline static std::vector<GeometryPieceP> s_unnamedPieces;
+
+  // geompiece name -> (patchID, inside points vector)
+  inline static std::map<std::string, std::map<int, std::vector<Point>>>
+    s_insidePointsMap;
+
+  // patchID -> insidePoints. returns ALL points inside geometries for a given
+  // patch
+  inline static std::map<int, std::vector<Point>> s_allInsidePointsMap;
+
+  /*
+   *  \brief A private helper function to check whether we already looked for
+   the inside points for this patch and geometry or not.
+   */
+  static bool
+  foundInsidePoints(const std::string geomName, const int patchID);
 };
 
-}  // End namespace Uintah
+} // End namespace Uintah
 
 #endif /* __CORE_GEOMETRY_GEOMETRY_PIECE_FACTORY_H__ */

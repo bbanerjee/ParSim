@@ -63,7 +63,7 @@ private:
   int errno_;
 
   ErrnoException&
-  operator=(const ErrnoException&);
+  operator=(const ErrnoException&) = delete;
 };
 
 } // End namespace Uintah

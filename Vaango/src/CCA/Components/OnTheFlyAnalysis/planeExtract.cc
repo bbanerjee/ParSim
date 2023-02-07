@@ -79,7 +79,7 @@ void planeExtract::problemSetup(const ProblemSpecP& ,
 {
   DOUTR(dbg_OTF_PE , "Doing problemSetup \t\t\t\tplaneExtract" );
 
-  int numMatls  = m_materialManager->getNumMaterials();
+  int numMatls  = d_materialManager->getNumMaterials();
 
   //__________________________________
   //  Read in timing information
@@ -98,7 +98,7 @@ void planeExtract::problemSetup(const ProblemSpecP& ,
   const Material* matl = nullptr;
 
   if(m_module_spec->findBlock("material") ){
-    matl = m_materialManager->parseAndLookupMaterial(m_module_spec, "material");
+    matl = d_materialManager->parseAndLookupMaterial(m_module_spec, "material");
   }
   else {
     throw ProblemSetupException("ERROR:AnalysisModule:planeExtract: Missing <material> tag. \n", __FILE__, __LINE__);
@@ -278,7 +278,7 @@ void planeExtract::initialize(const ProcessorGroup*,
 
 
     if(patch->getGridIndex() == 0){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -349,7 +349,7 @@ void planeExtract::doAnalysis(const ProcessorGroup* pg,
   }
 
    //  find udaPath, timestep and levelIndex for creating directories
-   const string udaPath    = m_output->getOutputLocation();
+   const string udaPath    = d_output->getOutputLocation();
    const string levelIndex = to_string( level->getIndex() );
 
    ostringstream tname;

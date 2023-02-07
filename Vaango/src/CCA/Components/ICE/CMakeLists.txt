@@ -43,6 +43,7 @@ add_subdirectory(WallShearStressModel)
 add_library(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
 
 SET(LIBS
+  Vaango_CCA_Components_Models
   Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_CCA_Ports
   Vaango_Core_Grid
@@ -52,7 +53,6 @@ SET(LIBS
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  Vaango_Core_Math
   ${XML2_LIBRARY}
   ${MPI_LIBRARY}
   ${M_LIBRARY}

@@ -220,7 +220,7 @@ PostProcessUda::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 {
   // Misc setup calls
   Dir fromDir(d_udaDir);
-  d_output->postprocessUdaSetup(fromDir);
+  d_output->postProcessUdaSetup(fromDir);
 
   //__________________________________
   //    PostProcess modules
@@ -373,7 +373,7 @@ PostProcessUda::readDataArchive(const ProcessorGroup* pg,
 //______________________________________________________________________
 //
 void
-PostProcessUda::scheduleComputeStableTimeStep(const LevelP& level,
+PostProcessUda::scheduleComputeStableTimestep(const LevelP& level,
                                               SchedulerP& sched)
 {
   Task* t = scinew Task(

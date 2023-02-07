@@ -109,6 +109,11 @@ public:
                           bool needCoarseOld,
                           bool needCoarseNew);
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 private:
   void
   initialize(const ProcessorGroup*,

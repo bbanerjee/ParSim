@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,29 +23,16 @@
 # IN THE SOFTWARE.
 #
 
-SET(Vaango_CCA_Components_Models_SRCS
-  ${Vaango_CCA_Components_Models_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesTable.cc    
-  ${CMAKE_CURRENT_SOURCE_DIR}/TableInterface.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/TableFactory.cc 
-)
-if(ICE)
-  SET(Vaango_CCA_Components_Models_SRCS
-    ${Vaango_CCA_Components_Models_SRCS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/AdiabaticTable.cc     
-    ${CMAKE_CURRENT_SOURCE_DIR}/flameSheet_rxn.cc     
-    ${CMAKE_CURRENT_SOURCE_DIR}/MaterialProperties.cc 
-    ${CMAKE_CURRENT_SOURCE_DIR}/Mixing.cc             
-    ${CMAKE_CURRENT_SOURCE_DIR}/NonAdiabaticTable.cc  
-    ${CMAKE_CURRENT_SOURCE_DIR}/PassiveScalar.cc      
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestModel.cc          
-    ${CMAKE_CURRENT_SOURCE_DIR}/MassMomEng_src.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/BinaryProperties.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/FluidsBasedModel.cc
-  )
-endif(ICE)
-SET(Vaango_CCA_Components_Models_SRCS
-  ${Vaango_CCA_Components_Models_SRCS}
-  PARENT_SCOPE
+SET(Vaango_MPMICE_Core_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/MPMICELabel.cc
+   )
+
+add_library(MPMICE_Core ${Vaango_MPMICE_Core_SRCS})
+
+target_link_libraries(MPMICE_Core
+  Vaango_Core_Grid
 )
 
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPMICE_Core)
+ENDIF(BUILD_SHARED_LIBS)

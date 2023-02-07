@@ -28,23 +28,25 @@
  */
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace Uintah {
 
 class UintahParallelPort;
 class ProcessorGroup;
 
-class UintahParallelComponent {
-  struct PortRecord {
+class UintahParallelComponent
+{
+  struct PortRecord
+  {
     PortRecord(UintahParallelPort* conn);
     std::vector<UintahParallelPort*> connections;
   };
   std::map<std::string, std::unique_ptr<PortRecord>> portmap;
 
- public:
+public:
   UintahParallelComponent(const ProcessorGroup* myworld);
   virtual ~UintahParallelComponent() noexcept(false);
 
@@ -53,22 +55,28 @@ class UintahParallelComponent {
 
   UintahParallelPort*
   getPort(const std::string& name);
+
   UintahParallelPort*
   getPort(const std::string& name, unsigned int i);
+
   void
   releasePort(const std::string& name);
+
   unsigned int
   numConnections(const std::string& name);
 
-  /*
-  virtual void setComponents( UintahParallelComponent* comp ) = 0;
-  virtual void getComponents() = 0;
-  virtual void releaseComponents() = 0;
-  */
+  virtual void
+  setComponents(UintahParallelComponent* comp) = 0;
 
- protected:
+  virtual void
+  getComponents() = 0;
+
+  virtual void
+  releaseComponents() = 0;
+
+protected:
   const ProcessorGroup* d_myworld;
 };
-}  // End namespace Uintah
+} // End namespace Uintah
 
-#endif  //__CORE_PARALLEL_UNITAHPARALLELCOMPONENT_H__
+#endif //__CORE_PARALLEL_UNITAHPARALLELCOMPONENT_H__

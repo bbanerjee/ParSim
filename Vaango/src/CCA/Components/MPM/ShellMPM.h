@@ -27,7 +27,7 @@
 #ifndef UINTAH_HOMEBREW_SHELLMPM_H
 #define UINTAH_HOMEBREW_SHELLMPM_H
 
-#include <CCA/Components/MPM/Core/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/SerialMPM.h>
 
 namespace Uintah {

@@ -66,7 +66,7 @@ public:
   }
 
   virtual void
-  scheduleComputeStableTimeStep(const LevelP&, SchedulerP&);
+  scheduleComputeStableTimestep(const LevelP&, SchedulerP&);
 
   virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
@@ -90,6 +90,12 @@ public:
 
   GridP
   getGrid(const GridP& currentGrid);
+
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
   //______________________________________________________________________
   //
 private:

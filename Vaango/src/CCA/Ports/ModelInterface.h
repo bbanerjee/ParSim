@@ -57,22 +57,27 @@ public:
   virtual ~ModelInterface() = default;
 
   // Disallow copy and move
-  ModelInterface(const ModelInterface&);
-  ModelInterface(ModelInterface&&);
+  ModelInterface(const ModelInterface&) = delete;
+  ModelInterface(ModelInterface&&)      = delete;
   ModelInterface&
-  operator=(const ModelInterface&);
+  operator=(const ModelInterface&) = delete;
   ModelInterface&
-  operator=(ModelInterface&&);
+  operator=(ModelInterface&&) = delete;
 
   // Methods for managing the components attached via the ports.
   virtual void
-  setComponents([[maybe_unused]] UintahParallelComponent* comp){};
+  setComponents([[maybe_unused]] UintahParallelComponent* comp) override
+  {
+  }
+
   virtual void
   setComponents(SimulationInterface* comp);
+
   virtual void
-  getComponents();
+  getComponents() override;
+
   virtual void
-  releaseComponents();
+  releaseComponents() override;
 
   virtual void
   problemSetup(GridP& grid, const bool is_restart) = 0;
@@ -123,7 +128,7 @@ protected:
   Regridder* d_regridder{ nullptr };
   Output* d_output{ nullptr };
 
-  MaterialManagerP d_material_manager{ nullptr };
+  MaterialManagerP d_materialManager{ nullptr };
 
   bool d_AMR{ false };
   bool d_dynamic_regridding{ false };

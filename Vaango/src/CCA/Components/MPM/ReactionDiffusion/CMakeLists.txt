@@ -53,6 +53,13 @@ SET(Vaango_CCA_Components_MPM_Diffusion_SRCS
   ${MPM_Diffusion_DiffusionModels_SRCS}
 )
 
+set(LIBS 
+    ${LIBS} 
+    Vaango_Core_OS
+    MPM_Core 
+    MPM_Contact
+   )
+
 add_library(MPM_Diffusion ${Vaango_CCA_Components_MPM_Diffusion_SRCS})
 
 target_link_libraries(MPM_Diffusion ${LIBS})

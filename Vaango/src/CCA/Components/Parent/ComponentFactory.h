@@ -27,27 +27,28 @@
 #ifndef Packages_Uintah_CCA_Components_Parent_ComponentFactory_h
 #define Packages_Uintah_CCA_Components_Parent_ComponentFactory_h
 
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
 
+#include <string>
 
 namespace Uintah {
 
-  class ProcessorGroup;
-  class UintahParallelComponent;
+class ProcessorGroup;
+class UintahParallelComponent;
 
-  class ComponentFactory  {
-  
-  public:
-    // this function has a switch for all known components
-    
-    static UintahParallelComponent* create(ProblemSpecP& ps, const ProcessorGroup* world, 
-                                           bool doAMR, std::string uda);
+class ComponentFactory
+{
 
+public:
+  // this function has a switch for all known components
 
-  };
+  static UintahParallelComponent*
+  create(ProblemSpecP& ps,
+         const ProcessorGroup* world,
+         const MaterialManagerP& mat_manager,
+         std::string uda);
+};
 } // End namespace Uintah
-
 
 #endif

@@ -80,6 +80,11 @@ public:
   virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 protected:
   virtual void
   addRefineDependencies(Task* /*task*/,

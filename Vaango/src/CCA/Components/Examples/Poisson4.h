@@ -80,6 +80,11 @@ public:
   {
   }
 
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP&)
+  {
+  }
+
 private:
   void
   initialize(const ProcessorGroup*,

@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,138 +27,170 @@
 #ifndef Packages_Uintah_CCA_Components_Switcher_h
 #define Packages_Uintah_CCA_Components_Switcher_h
 
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Util/DebugStream.h>
 
 #include <map>
 #include <set>
-using std::map;
-using std::set;
 
 namespace Uintah {
-  class Switcher : public UintahParallelComponent, public SimulationInterface {
-  public:
-    Switcher( const ProcessorGroup* myworld, ProblemSpecP& ups, bool doAMR, const string & uda );
-    virtual ~Switcher();
+class Switcher : public SimulationCommon
+{
+public:
+  Switcher(const ProcessorGroup* myworld,
+           const MaterialManagerP& mat_manager,
+           ProblemSpecP& ups,
+           const std::string& uda);
 
-    virtual void problemSetup(const ProblemSpecP& params, 
-                              const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid,
-                              MaterialManagerP&);
+  virtual ~Switcher();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-    virtual void outputPS(Dir& dir);
-    virtual void scheduleInitialize(            const LevelP& level, SchedulerP& sched);
-    virtual void scheduleComputeStableTimestep( const LevelP& level, SchedulerP& sched);
-    virtual void scheduleTimeAdvance(           const LevelP& level, SchedulerP& sched);
+  Switcher(const Switcher&) = delete;
+  Switcher(Switcher&&)      = delete;
+  Switcher&
+  operator=(const Switcher&) = delete;
+  Switcher&
+  operator=(Switcher&&) = delete;
 
-    virtual void scheduleSwitchTest(            const LevelP& level, SchedulerP& sched);
-    virtual void scheduleInitNewVars(           const LevelP& level, SchedulerP& sched);
-    virtual void scheduleCarryOverVars(         const LevelP& level, SchedulerP& sched);
-    virtual void scheduleSwitchInitialization(  const LevelP& level, SchedulerP& sched);
-    virtual void scheduleFinalizeTimestep(      const LevelP& level, SchedulerP& sched);
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid) override;
 
-    virtual bool needRecompile(double time, double delt, const GridP& grid);
-    virtual void scheduleRestartInitialize(const LevelP& level,
-			   	           SchedulerP& sched) {}
-    virtual void restartInitialize();
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-    virtual bool restartableTimesteps();
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched) override;
 
-    virtual double recomputeTimestep(double);
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
+  virtual void
+  scheduleComputeStableTimestep(const LevelP& level,
+                                SchedulerP& sched) override;
 
-    // direct component to add a new material
-    virtual void addMaterial( const ProblemSpecP& params, 
-                              GridP& grid,
-                              MaterialManagerP& mat_manager );
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP& sched);
 
-    virtual void scheduleInitializeAddedMaterial( const LevelP & level,
-                                                  SchedulerP   & scheduler );
+  virtual void
+  scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
 
+  virtual void
+  scheduleInitNewVars(const LevelP& level, SchedulerP& sched);
 
+  virtual void
+  scheduleCarryOverVars(const LevelP& level, SchedulerP& sched);
 
+  virtual void
+  scheduleSwitchInitialization(const LevelP& level, SchedulerP& sched);
 
-    // AMR
-    virtual void scheduleRefineInterface(const LevelP& fineLevel,
-                                         SchedulerP& scheduler,
-                                         bool needCoarseOld, 
-                                         bool needCoarseNew);
-                                         
-    virtual void scheduleRefine (const PatchSet* patches,  SchedulerP& sched); 
-    
-    virtual void scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
+  virtual void
+  scheduleFinalizeTimestep(const LevelP& level, SchedulerP& sched);
 
-    virtual void scheduleInitialErrorEstimate(const LevelP& coarseLevel,SchedulerP& sched);
-                                               
-    virtual void scheduleErrorEstimate(       const LevelP& coarseLevel,SchedulerP& sched);
+  virtual void
+  switchApplication(const ProblemSpecP& restart_prob_spec, const GridP& grid);
 
+  virtual bool
+  needRecompile(const GridP& grid);
 
-    enum switchState { idle, switching };
-  private:
-    void switchTest(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual double
+  recomputeDelT(double delT);
 
-    void initNewVars(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw);
+  // AMR
+  virtual void
+  scheduleRefineInterface(const LevelP& fineLevel,
+                          SchedulerP& scheduler,
+                          bool needCoarseOld,
+                          bool needCoarseNew);
 
-    void carryOverVars(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw);
-                    
-    void readSwitcherState( const ProblemSpecP&, 
-                            MaterialManagerP& mat_manager );
+  virtual void
+  scheduleRefine(const PatchSet* patches, SchedulerP& sched);
 
-    ProblemSpecP d_master_ups;
+  virtual void
+  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
 
-    switchState d_switchState;
+  virtual void
+  scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
 
-    // since tasks are scheduled per-level, we can't turn the switch flag off
-    // until they all are done, and since we need to turn it off during compilation,
-    // we need to keep track of which levels we've switched
-    std::vector<bool> d_doSwitching;
+  virtual void
+  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
 
-    bool d_restarting;
-
-    SimulationInterface* d_sim;
-
-    MaterialManagerP 
- d_mat_manager;
-    unsigned int d_numComponents;
-    unsigned int d_componentIndex;
-    
-    struct initVars{
-      std::vector<std::string>            varNames;
-      std::vector<std::string>            matlSetNames;
-      std::vector<const MaterialSet*> matls;
-      std::vector<int>               levels;
-      std::vector<VarLabel*>         varLabels;
-    };
-    
-    std::map<int, initVars*> d_initVars;
-    
-    set<const VarLabel*, VarLabel::Compare> d_computedVars;
-    
-
-    std::vector<std::string>          d_in_file;                  // contains the name of all the subcomponent inputfiles
-    std::vector<std::string>          d_carryOverVars;
-    std::vector<VarLabel*>       d_carryOverVarLabels;
-    std::vector<MaterialSubset*> d_carryOverVarMatls;
-    std::vector<bool>            d_carryOverFinestLevelOnly; // either all levels or finest only
-    std::vector<vector<bool> >   d_doCarryOverVarPerLevel;   // size to numlevels
-
-    Switcher(const Switcher&);
-    Switcher& operator=(const Switcher&);
-	 
+  enum class switchState
+  {
+    idle,
+    switching
   };
 
-}
+private:
+  void
+  switchTest(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw);
+
+  void
+  initNewVars(const ProcessorGroup*,
+              const PatchSubset* patches,
+              const MaterialSubset* matls,
+              DataWarehouse* old_dw,
+              DataWarehouse* new_dw);
+
+  void
+  carryOverVars(const ProcessorGroup*,
+                const PatchSubset* patches,
+                const MaterialSubset* matls,
+                DataWarehouse* old_dw,
+                DataWarehouse* new_dw);
+
+  void
+  readSwitcherState(const ProblemSpecP&, MaterialManagerP& mat_manager);
+
+  void
+  switchSimulator(const ProblemSpecP& restart_prob_spec, const GridP& grid);
+
+private:
+  ProblemSpecP d_master_ups{ nullptr };
+  const VarLabel* d_switch_label{ nullptr };
+  switchState d_switchState{ switchState::idle };
+
+  // since tasks are scheduled per-level, we can't turn the switch flag off
+  // until they all are done, and since we need to turn it off during
+  // compilation, we need to keep track of which levels we've switched
+  std::vector<bool> d_doSwitching;
+  bool d_restarting{ false };
+
+  SimulationInterface* d_simulator{ nullptr };
+  unsigned int d_numComponents{ 0 };
+  unsigned int d_componentIndex{ 0 };
+
+  struct initVars
+  {
+    std::vector<std::string> varNames;
+    std::vector<std::string> matlSetNames;
+    std::vector<const MaterialSet*> matls;
+    std::vector<int> levels;
+    std::vector<VarLabel*> varLabels;
+  };
+
+  std::map<int, std::unique_ptr<initVars>> d_initVars;
+  std::set<const VarLabel*, VarLabel::Compare> d_computedVars;
+
+  // contains the name of all the subcomponent inputfiles
+  std::vector<std::string> d_in_file;
+  std::vector<std::string> d_carryOverVars;
+  std::vector<VarLabel*> d_carryOverVarLabels;
+  std::vector<MaterialSubset*> d_carryOverVarMatls;
+  // either all levels or finest only
+  std::vector<bool> d_carryOverFinestLevelOnly;
+  std::vector<std::vector<bool>> d_doCarryOverVarPerLevel; // size to numlevels
+
+  static DebugStream switcher_dbg;
+};
+
+} // namespace Uintah
 
 #endif

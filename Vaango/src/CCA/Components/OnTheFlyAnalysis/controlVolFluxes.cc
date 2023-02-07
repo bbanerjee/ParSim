@@ -147,7 +147,7 @@ void controlVolFluxes::problemSetup(const ProblemSpecP& ,
     throw ProblemSetupException("ERROR: Couldn't find <material> xml tag", __FILE__, __LINE__);
   }
 
-  Material* matl= m_materialManager->parseAndLookupMaterial( m_module_spec, "material" );
+  Material* matl= d_materialManager->parseAndLookupMaterial( m_module_spec, "material" );
   m_matIdx = matl->getDWIndex();
 
   vector<int> m;
@@ -262,7 +262,7 @@ void controlVolFluxes::initialize( const ProcessorGroup *,
     //__________________________________
     //  does the uda exist?
     if(patch->getGridIndex() == 0){   // only need to do this once
-      string udaDir = m_output->getOutputLocation();
+      string udaDir = d_output->getOutputLocation();
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
@@ -524,7 +524,7 @@ void controlVolFluxes::doAnalysis(const ProcessorGroup * pg,
       myFiles = fileInfo.get().get_rep()->files;
     }
 
-    string udaDir = m_output->getOutputLocation();
+    string udaDir = d_output->getOutputLocation();
 
     //__________________________________
     //  loop over control volumes

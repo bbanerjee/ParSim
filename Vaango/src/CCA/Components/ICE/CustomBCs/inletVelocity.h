@@ -123,7 +123,7 @@ namespace Uintah {
 
   const Level* level = patch->getLevel();
   int vDir = gv->verticalDir;              // vertical direction
-  int pDir = patch->getFaceAxes(face)[0];  // principal direction
+  [[maybe_unused]] int pDir = patch->getFaceAxes(face)[0];  // principal direction
   double d          = gv->gridMin(vDir);
   double gridHeight = gv->gridMax(vDir);
 

@@ -75,12 +75,11 @@ using Uintah::Vector;
 
 SingleVelocityContact::SingleVelocityContact(const ProcessorGroup* myworld,
                                              ProblemSpecP& ps,
-                                             MaterialManagerP& ss,
+                                             MaterialManagerP& mat_manager,
                                              PeridynamicsLabel* labels,
                                              PeridynamicsFlags* flags)
-  : ContactModelBase(myworld, labels, flags, ps)
+  : ContactModelBase(myworld, mat_manager, labels, flags, ps)
 {
-  d_mat_manager = ss;
 }
 
 SingleVelocityContact::~SingleVelocityContact() {}
