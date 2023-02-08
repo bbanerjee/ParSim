@@ -60,7 +60,7 @@ public:
    */
 
   ///< Pointer to the single simulation Regridder instance>
-  static RegridderCommon*
+  static std::unique_ptr<RegridderCommon>
   create(ProblemSpecP& ps, const ProcessorGroup* world);
 };
 

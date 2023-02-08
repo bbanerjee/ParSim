@@ -36,10 +36,10 @@
 
 using namespace Uintah;
 
-RegridderCommon*
+std::unique_ptr<RegridderCommon>
 RegridderFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
 {
-  RegridderCommon* regridder = nullptr;
+  std::unique_ptr<RegridderCommon> regridder = nullptr;
 
   // Parse the AMR/Regridder portion of the input file
   ProblemSpecP amrPS = ps->findBlock("AMR");
@@ -57,9 +57,9 @@ RegridderFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
       proc0cout << "Using Regridder " << regridderName << std::endl;
 
       if (regridderName == "Tiled") {
-        regridder = scinew TiledRegridder(world);
+        return std::make_unique<TiledRegridder>(world);
       } else if (regridderName == "SingleLevel") {
-        regridder = scinew SingleLevelRegridder(world);
+        return std::make_unique<SingleLevelRegridder>(world);
       }
     }
 

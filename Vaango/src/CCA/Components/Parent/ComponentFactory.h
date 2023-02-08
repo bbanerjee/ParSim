@@ -43,7 +43,7 @@ class ComponentFactory
 public:
   // this function has a switch for all known components
 
-  static UintahParallelComponent*
+  static std::unique_ptr<UintahParallelComponent>
   create(ProblemSpecP& ps,
          const ProcessorGroup* world,
          const MaterialManagerP& mat_manager,

@@ -122,10 +122,10 @@ Switcher::Switcher(const ProcessorGroup* myworld,
     simComponents.insert(sim_comp);
 
     // create simulation port and attach it switcher component
-    UintahParallelComponent* comp =
+    std::unique_ptr<UintahParallelComponent> comp =
       ComponentFactory::create(subCompUps, myworld, d_materialManager, "");
 
-    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp);
+    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp.get());
     attachPort("simulator", sim);
 
     // create solver  port and attach it to the switcher component

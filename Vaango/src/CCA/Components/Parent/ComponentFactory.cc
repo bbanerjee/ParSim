@@ -75,7 +75,7 @@
 
 using namespace Uintah;
 
-UintahParallelComponent*
+std::unique_ptr<UintahParallelComponent>
 ComponentFactory::create(ProblemSpecP& ps,
                          const ProcessorGroup* world,
                          const MaterialManagerP& mat_manager,
@@ -117,34 +117,34 @@ ComponentFactory::create(ProblemSpecP& ps,
 
   proc0cout << "Simulation Component: \t'" << sim_comp << "'\n";
   if (sim_comp == "peridynamics") {
-    return scinew Vaango::Peridynamics(world, mat_manager);
+    return std::make_unique<Vaango::Peridynamics>(world, mat_manager);
   }
 
 #ifndef NO_MPM
   if (sim_comp == "mpm" || sim_comp == "MPM") {
-    return scinew SerialMPM(world, mat_manager);
+    return std::make_unique<SerialMPM>(world, mat_manager);
   }
   if (sim_comp == "mpm_usl" || sim_comp == "MPM_USL") {
-    return scinew MPM_UpdateStressLast(world, mat_manager);
+    return std::make_unique<MPM_UpdateStressLast>(world, mat_manager);
   }
   if (sim_comp == "uofu_mpm" || sim_comp == "UofU_MPM") {
-    return scinew UofU_MPM(world, mat_manager);
+    return std::make_unique<UofU_MPM>(world, mat_manager);
   }
   if (sim_comp == "mpmf" || sim_comp == "fracturempm" ||
       sim_comp == "FRACTUREMPM") {
-    return scinew FractureMPM(world, mat_manager);
+    return std::make_unique<FractureMPM>(world, mat_manager);
   }
   if (sim_comp == "rmpm" || sim_comp == "rigidmpm" || sim_comp == "RIGIDMPM") {
-    return scinew RigidMPM(world, mat_manager);
+    return std::make_unique<RigidMPM>(world, mat_manager);
   }
   if (sim_comp == "amrmpm" || sim_comp == "AMRmpm" || sim_comp == "AMRMPM") {
-    return scinew AMRMPM(world, mat_manager);
+    return std::make_unique<AMRMPM>(world, mat_manager);
   }
   if (sim_comp == "smpm" || sim_comp == "shellmpm" || sim_comp == "SHELLMPM") {
-    return scinew ShellMPM(world, mat_manager);
+    return std::make_unique<ShellMPM>(world, mat_manager);
   }
   if (sim_comp == "impm" || sim_comp == "IMPM") {
-    return scinew ImpMPM(world, mat_manager);
+    return std::make_unique<ImpMPM>(world, mat_manager);
   }
 #else
   turned_off_options += "MPM ";
@@ -158,12 +158,12 @@ ComponentFactory::create(ProblemSpecP& ps,
 
     if (doAMR) {
       if (doImplicitSolver) {
-        return scinew impAMRICE(world, mat_manager);
+        return std::make_unique<impAMRICE>(world, mat_manager);
       } else {
-        return scinew AMRICE(world, mat_manager);
+        return std::make_unique<AMRICE>(world, mat_manager);
       }
     } else {
-      return scinew ICE(world, mat_manager);
+      return std::make_unique<ICE>(world, mat_manager);
     }
   }
 #else
@@ -171,77 +171,77 @@ ComponentFactory::create(ProblemSpecP& ps,
 #endif
 #if !defined(NO_MPM) && !defined(NO_ICE)
   if (sim_comp == "mpmice" || sim_comp == "MPMICE") {
-    return scinew MPMICE(world, mat_manager, MPMType::STAND_MPMICE, doAMR);
+    return std::make_unique<MPMICE>(world, mat_manager, MPMType::STAND_MPMICE, doAMR);
   }
   if (sim_comp == "smpmice" || sim_comp == "shellmpmice" ||
       sim_comp == "SHELLMPMICE") {
-    return scinew MPMICE(world, mat_manager, MPMType::SHELL_MPMICE, doAMR);
+    return std::make_unique<MPMICE>(world, mat_manager, MPMType::SHELL_MPMICE, doAMR);
   }
   if (sim_comp == "rmpmice" || sim_comp == "rigidmpmice" ||
       sim_comp == "RIGIDMPMICE") {
-    return scinew MPMICE(world, mat_manager, MPMType::RIGID_MPMICE, doAMR);
+    return std::make_unique<MPMICE>(world, mat_manager, MPMType::RIGID_MPMICE, doAMR);
   }
 #else
   turned_off_options += "MPMICE ";
 #endif
   if (sim_comp == "burger" || sim_comp == "BURGER") {
-    return scinew Burger(world, mat_manager);
+    return std::make_unique<Burger>(world, mat_manager);
   }
   if (sim_comp == "wave" || sim_comp == "WAVE") {
     if (doAMR) {
-      return scinew AMRWave(world, mat_manager);
+      return std::make_unique<AMRWave>(world, mat_manager);
     } else {
-      return scinew Wave(world, mat_manager);
+      return std::make_unique<Wave>(world, mat_manager);
     }
   }
   if (sim_comp == "poisson1" || sim_comp == "POISSON1") {
-    return scinew Poisson1(world, mat_manager);
+    return std::make_unique<Poisson1>(world, mat_manager);
   }
 
 #ifdef HAVE_CUDA
   if (sim_comp == "poissongpu1" || sim_comp == "POISSONGPU1") {
-    return scinew PoissonGPU1(world, mat_manager);
+    return std::make_unique<PoissonGPU1>(world, mat_manager);
   }
   if (sim_comp == "gpuschedulertest" || sim_comp == "GPUSCHEDULERTEST") {
-    return scinew GPUSchedulerTest(world, mat_manager);
+    return std::make_unique<GPUSchedulerTest>(world, mat_manager);
   }
   if (sim_comp == "unifiedschedulertest" ||
       sim_comp == "UNIFIEDSCHEDULERTEST") {
-    return scinew UnifiedSchedulerTest(world, mat_manager);
+    return std::make_unique<UnifiedSchedulerTest>(world, mat_manager);
   }
 #endif
 
   if (sim_comp == "regriddertest" || sim_comp == "REGRIDDERTEST") {
-    return scinew RegridderTest(world, mat_manager);
+    return std::make_unique<RegridderTest>(world, mat_manager);
   }
   if (sim_comp == "poisson2" || sim_comp == "POISSON2") {
-    return scinew Poisson2(world, mat_manager);
+    return std::make_unique<Poisson2>(world, mat_manager);
   }
   if (sim_comp == "poisson3" || sim_comp == "POISSON3") {
-    return scinew Poisson3(world, mat_manager);
+    return std::make_unique<Poisson3>(world, mat_manager);
   }
   if (sim_comp == "poisson4" || sim_comp == "POISSON4") {
-    return scinew Poisson4(world, mat_manager);
+    return std::make_unique<Poisson4>(world, mat_manager);
   }
   if (sim_comp == "benchmark" || sim_comp == "BENCHMARK") {
-    return scinew Benchmark(world, mat_manager);
+    return std::make_unique<Benchmark>(world, mat_manager);
   }
   if (sim_comp == "particletest" || sim_comp == "PARTICLETEST") {
-    return scinew ParticleTest1(world, mat_manager);
+    return std::make_unique<ParticleTest1>(world, mat_manager);
   }
   if (sim_comp == "solvertest" || sim_comp == "SOLVERTEST") {
-    return scinew SolverTest1(world, mat_manager);
+    return std::make_unique<SolverTest1>(world, mat_manager);
   }
 #ifdef HAVE_HYPRE
   if (sim_comp == "solvertest2" || sim_comp == "SOLVERTEST2") {
-    return scinew SolverTest2(world, mat_manager);
+    return std::make_unique<SolverTest2>(world, mat_manager);
   }
 #endif
   if (sim_comp == "switcher" || sim_comp == "SWITCHER") {
-    return scinew Switcher(world, mat_manager, ps, uda);
+    return std::make_unique<Switcher>(world, mat_manager, ps, uda);
   }
   if (sim_comp == "postprocessUda") {
-    return scinew PostProcessUda(world, mat_manager, uda);
+    return std::make_unique<PostProcessUda>(world, mat_manager, uda);
   }
   throw ProblemSetupException(
     "Unknown simulationComponent ('" + sim_comp +

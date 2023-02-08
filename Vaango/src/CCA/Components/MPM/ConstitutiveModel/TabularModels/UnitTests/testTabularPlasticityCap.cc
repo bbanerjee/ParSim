@@ -367,11 +367,11 @@ TEST(TabularPlasticityCapTest, singleParticleTest)
     std::unique_ptr<SimulationController> ctl =
       std::make_unique<AMRSimulationController>(world, ups);
 
-    UintahParallelComponent* simComp =
+    std::unique_ptr<UintahParallelComponent> simComp =
       ComponentFactory::create(ups, world, nullptr, "");
 
     SimulationInterface* simulator =
-      dynamic_cast<SimulationInterface*>(simComp);
+      dynamic_cast<SimulationInterface*>(simComp.get());
     simulator->problemSetup(ups);
     ctl->attachPort("simulator", simulator);
 
@@ -433,7 +433,6 @@ TEST(TabularPlasticityCapTest, singleParticleTest)
     sched->removeReference();
 
     delete sched;
-    delete simComp;
 
   } catch (ProblemSetupException& e) {
     std::cout << e.message() << std::endl;

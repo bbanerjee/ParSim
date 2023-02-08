@@ -30,17 +30,20 @@
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-ADD_EXECUTABLE(vaango vaango.cc)
+set(VAANGO_UTILS_SRC
+    Utils/vaango_utils.cc
+    Utils/vaango_options.cc
+)
+
+ADD_EXECUTABLE(vaango vaango.cc ${VAANGO_UTILS_SRC})
 ADD_EXECUTABLE(compare_uda compare_uda.cc)
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
