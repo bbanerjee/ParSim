@@ -73,7 +73,7 @@ public:
   clone() const = 0;
 
   virtual const TypeDescription*
-  virtualGetTypeDescription() const override;
+  virtualGetTypeDescription() const override = 0;
 
   virtual RefCounted*
   getRefCounted() override;
@@ -89,26 +89,32 @@ public:
   virtual bool
   copyOut(void* dst) const override = 0;
 
+  virtual void*
+  getBasePointer() const = 0;
+
   virtual void
   emitNormal(std::ostream& out,
              const IntVector& l,
              const IntVector& h,
              ProblemSpecP varnode,
-             bool outputDoubleAsFloat) override;
+             bool outputDoubleAsFloat) override = 0;
 
   virtual void
-  readNormal(std::istream& in, bool swapbytes) override;
+  readNormal(std::istream& in, bool swapbytes) override = 0;
 
   virtual void
   allocate(const Patch* patch, const IntVector& boundary) override;
 
+  virtual void
+  print(std::ostream&) const = 0;
+
 protected:
-  SoleVariableBase(const SoleVariableBase&);
+  SoleVariableBase(const SoleVariableBase&) = default;
   SoleVariableBase();
 
 private:
   SoleVariableBase&
-  operator=(const SoleVariableBase&);
+  operator=(const SoleVariableBase&) = delete;
 };
 } // End namespace Uintah
 

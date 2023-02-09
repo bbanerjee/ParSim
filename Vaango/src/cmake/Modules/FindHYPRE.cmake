@@ -33,7 +33,13 @@ find_path(HYPRE_INCLUDE NAMES HYPRE.h)
 find_library(HYPRE_LIBRARY NAMES HYPRE)
 if(HYPRE_LIBRARY)
   set(HYPRE_FOUND)
+  file(READ ${HYPRE_INCLUDE}/HYPRE_config.h versions)
+  string(REGEX MATCH "#define PACKAGE_VERSION \"([0-9]*)\.([0-9]*)\.([0-9]*)\"" tmp ${versions})
+  set(HYPRE_VERSION_MAJOR ${CMAKE_MATCH_1})
+  set(HYPRE_VERSION_MINOR ${CMAKE_MATCH_2})
+  set(HYPRE_VERSION_PATCH ${CMAKE_MATCH_3})
   message(STATUS "HYPRE found: INCLUDE Path = ${HYPRE_INCLUDE} LIBRARY Path: ${HYPRE_LIBRARY}")
+  message(STATUS "Hypre version: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}.${HYPRE_VERSION_PATCH}")
 else()
   set(HYPRE_LIBRARY "")
   message(FATAL_ERROR "HYPRE not found: INCLUDE Path = ${HYPRE_INCLUDE} LIBRARY Path: ${HYPRE_LIBRARY}")
@@ -87,7 +93,7 @@ endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(HYPRE DEFAULT_MSG HYPRE_LIBRARY HYPRE_INCLUDE)
 
-mark_as_advanced(HYPRE_INCLUDE HYPRE_LIBRARY)
+mark_as_advanced(HYPRE_INCLUDE HYPRE_LIBRARY HYPRE_VERSION_MAJOR HYPRE_VERSION_MINOR HYPRE_VERSION_PATCH)
 
 
 

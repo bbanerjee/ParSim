@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -43,7 +43,6 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Util/DebugStream.h>
 
 #include <iomanip>
@@ -82,12 +81,12 @@ namespace Uintah {
     case PrecondAMG:       break; // Not implemented yet
     case PrecondFAC:       break; // Not implemented yet
     default:
-       std::ostringstream msg;
+      ostringstream msg;
       msg << "Unknown preconditionertype in newHyprePrecond: " << precondType;
       
       throw InternalError( msg.str(), __FILE__, __LINE__ );
     }
-     std::ostringstream msg;
+    ostringstream msg;
     msg << "Preconditioner not yet implemented in newHyprePrecond: " << precondType;
     throw InternalError( msg.str(), __FILE__, __LINE__ );
   } 

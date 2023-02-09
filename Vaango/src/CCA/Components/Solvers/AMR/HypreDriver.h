@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,7 @@
 /*--------------------------------------------------------------------------
   CLASS
   HypreDriver
-   
+
   Wrapper of a Hypre solver for a particular variable type.
 
   GENERAL INFORMATION
@@ -40,13 +40,13 @@
   University of Utah
 
   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
   KEYWORDS
   HYPRE_Struct, HYPRE_SStruct, HYPRE_ParCSR,
   HypreSolverBase, HypreSolverParams, RefCounted, solve, AMRSolver.
 
-  DESCRIPTION 
+  DESCRIPTION
   Class HypreDriver is a wrapper for calling Hypre solvers
   and preconditioners. It allows access to multiple Hypre interfaces:
   Struct (structured grid), SStruct (composite AMR grid), ParCSR
@@ -76,23 +76,23 @@
   of the linear system objects, and getSolution() -- getting the solution
   vector back to Uintah.
   * This interface is written for Hypre 1.9.0b (released 2005). However,
-  it may still work with the Struct solvers in earlier Hypre versions (e.g., 
+  it may still work with the Struct solvers in earlier Hypre versions (e.g.,
   1.7.7).
   --------------------------------------------------------------------------*/
 
-#include <Core/Util/Timers/Timers.hpp>
-#include <Core/Util/RefCounted.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Grid.h>
-#include <Core/Exceptions/ConvergenceFailure.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Parallel/Parallel.h>
 #include <CCA/Components/Solvers/HypreTypes.h>
 #include <CCA/Components/Solvers/MatrixUtil.h>
 #include <CCA/Components/Solvers/AMR/HypreSolvers/HypreSolverBase.h>
 #include <CCA/Components/Solvers/AMR/HyprePreconds/HyprePrecondBase.h>
-#include <Core/Util/DebugStream.h>
+#include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Grid/Task.h>
+#include <Core/Grid/Grid.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/Parallel/Parallel.h>
+#include <Core/Util/DebugStream.h>
+#include <Core/Util/RefCounted.h>
+#include <Core/Util/Timers/Timers.hpp>
 
 namespace Uintah {
 
@@ -100,7 +100,7 @@ namespace Uintah {
   class HypreSolverParams;
   class VarLabel;
   class Level;
-  
+
   class HypreDriver : public RefCounted {
 
     //========================== PUBLIC SECTION ==========================
@@ -124,7 +124,7 @@ namespace Uintah {
       _guess_label(guess), _which_guess_dw(which_guess_dw),
       _params(params), _interface(interface),
       _perProcPatches(perProcPatches)
-      {}    
+      {}
     virtual ~HypreDriver(void) {}
     virtual void cleanup() = 0;
 
@@ -142,7 +142,7 @@ namespace Uintah {
     const HYPRE_ParCSRMatrix& getAPar(void) const { return _HA_Par; }
     const HYPRE_ParVector&    getBPar(void) const { return _HB_Par; }
     const HYPRE_ParVector&    getXPar(void) const { return _HX_Par; }
-    
+
     // Utilities, HYPRE data printouts
     bool         isConvertable(const HypreInterface& to);
     virtual void printMatrix(const std::string& fileName = "Matrix") = 0;
@@ -157,8 +157,8 @@ namespace Uintah {
                  DataWarehouse* old_dw,
                  DataWarehouse* new_dw,
                  Handle<HypreDriver>);
-                 
-   
+
+
     virtual void gatherSolutionVector(void) = 0;
 
     virtual void makeLinearSystem_CC(const int matl);
@@ -233,7 +233,7 @@ namespace Uintah {
                        Handle<HypreDriver>)
 
     {
-      DebugStream cout_doing("HYPRE_DOING_COUT", false);
+      DebugStream cout_doing("SOLVER_DOING_COUT", false);
       DebugStream cout_dbg("HYPRE_DBG", false);
       int mpiRank = Parallel::getMPIRank();
       cout_doing << mpiRank<< " HypreDriver::solve() BEGIN" << "\n";
@@ -248,26 +248,27 @@ namespace Uintah {
       _A_dw = new_dw->getOtherDataWarehouse(_which_A_dw);
       _b_dw = new_dw->getOtherDataWarehouse(_which_b_dw);
       _guess_dw = new_dw->getOtherDataWarehouse(_which_guess_dw);
-    
+
       // Check parameter correctness
       cout_dbg << mpiRank << " Checking arguments and parameters ... ";
       SolverType solverType = getSolverType(_params->solverTitle);
       const int numLevels = new_dw->getGrid()->numLevels();
-      
+
       if ((solverType == FAC) && (numLevels < 2)) {
         throw InternalError("FAC solver needs at least 2 levels",
                             __FILE__, __LINE__);
       }
 
+      Timers::Simple timer;
+      timer.start();
+
       for(int m = 0; m < matls->size(); m++){
         int matl = matls->get(m);
-        double tstart = Uintah::Time::currentSeconds();
-        
-       
+
         // Initialize the preconditioner and solver
         PrecondType precondType   = getPrecondType(_params->precondTitle);
         HyprePrecondBase* precond = newHyprePrecond(precondType);
-        
+
         SolverType solverType = getSolverType(_params->solverTitle);
         HypreSolverBase* solver = newHypreSolver(solverType,this,precond);
 
@@ -276,51 +277,56 @@ namespace Uintah {
           precond->setSolver(solver);
           precond->setup();
         }
-        
+
         //__________________________________
-        //Construct Hypre linear system 
+        //Construct Hypre linear system
         cout_dbg << mpiRank << " Making linear system" << "\n";
         _requiresPar = solver->requiresPar();
 
         makeLinearSystem_CC(matl);
-        
+
         printMatrix("Matrix");
         printRHS("RHS");
-        
+
         //__________________________________
         // Solve the linear system
-      
+
         cout_dbg << mpiRank << " Solving the linear system" << "\n";
-        double solve_start = Uintah::Time::currentSeconds();
+
+        Timers::Simple solve_timer;
+        solve_timer.start();
+
         // Setup & solve phases
-        [[maybe_unused]] int timeSolve = hypre_InitializeTiming("Solver Setup");
+        int timeSolve = hypre_InitializeTiming("Solver Setup");
+        (void) timeSolve;  // Removes an unused var warning
+
         hypre_BeginTiming(timeSolve);
-        
-        solver->solve();  
+
+        solver->solve();
         gatherSolutionVector();
-        
+
         hypre_EndTiming(timeSolve);
-        hypre_PrintTiming("Setup phase time", MPI_COMM_WORLD);
+        hypre_PrintTiming("Setup phase time", _pg->getComm());
         hypre_FinalizeTiming(timeSolve);
         hypre_ClearTiming();
-        timeSolve = 0; 
-        
-        double solve_dt = Uintah::Time::currentSeconds()-solve_start;
-        
+        timeSolve = 0;
+
+        solve_timer.stop();
+
         //__________________________________
         // Check if converged,
         const HypreSolverBase::Results& results = solver->getResults();
         double finalResNorm = results.finalResNorm;
         int numIterations = results.numIterations;
-        
-        if ((finalResNorm > _params->tolerance) ||(finite(finalResNorm) == 0)) {
-          if (_params->restart){
+
+        if ((finalResNorm > _params->tolerance) ||(std::isfinite(finalResNorm) == 0)) {
+          if (_params->recompute){
             if(pg->myRank() == 0)
-              std::cout << "AMRSolver not converged in " << numIterations 
+              std::cout << "AMRSolver not converged in " << numIterations
                         << " iterations, final residual= " << finalResNorm
                         << ", requesting smaller timestep\n";
-            //new_dw->abortTimestep();
-            //new_dw->restartTimestep();
+            // new_dw->put( bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
+            // new_dw->put( bool_or_vartype(true), VarLabel::find(recomputeTimeStep_name));
           } else {
             throw ConvergenceFailure("AMRSolver variable: "
                                      +_X_label->getName()+", solver: "
@@ -330,25 +336,29 @@ namespace Uintah {
                                      _params->tolerance,__FILE__,__LINE__);
           }
         } // if (finalResNorm is ok)
-        
+
         //__________________________________
         // Push the solution back into Uintah
         getSolution_CC(matl);
         printSolution("Solution");
-                
-        double dt = Uintah::Time::currentSeconds()-tstart;
-        if(pg->myRank() == 0){
-          std::cerr << "Solve of " << _X_label->getName() 
+
+        timer.stop();
+
+        if(pg->myRank() == 0) {
+          std::cerr << "Solve of " << _X_label->getName()
                     << " on level " << _level->getIndex()
-                    << " completed in " << dt 
-                    << " seconds (solve only: " << solve_dt 
+                    << " completed in " << timer().seconds()
+                    << " seconds (solve only: " << solve_timer().seconds()
                     << " seconds, " << numIterations
                     << " iterations, residual=" << finalResNorm << ")\n";
         }
-          
+
         delete solver;
         delete precond;
+
+        timer.reset( true );
       } // for m (matls loop)
+
       cout_doing << mpiRank<<" HypreDriver::solve() END" << "\n";
       cleanup();
     } // end solve()

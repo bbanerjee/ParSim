@@ -62,6 +62,10 @@
 #include <sci_defs/cuda_defs.h>
 #include <sci_defs/uintah_defs.h>
 
+#ifdef HAVE_HYPRE
+#include <CCA/Components/Examples/SolverTest2.h>
+#endif
+
 #ifdef HAVE_CUDA
 #include <CCA/Components/Examples/GPUSchedulerTest.h>
 #include <CCA/Components/Examples/PoissonGPU1.h>

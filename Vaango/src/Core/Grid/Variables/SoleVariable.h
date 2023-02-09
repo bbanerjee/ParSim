@@ -74,20 +74,21 @@ class SoleVariable : public SoleVariableBase
 {
 public:
   inline SoleVariable()
-    : SoleVariableBase()
+    : value(std::make_shared<T>())
   {
   }
+
   inline SoleVariable(T value)
-    : SoleVariableBase()
-    , value(value)
+    : value(std::make_shared<T>(value))
   {
   }
+
   inline SoleVariable(const SoleVariable<T>& copy)
-    : SoleVariableBase()
-    , value(copy.value)
+    : value(copy.value)
   {
   }
-  virtual ~SoleVariable();
+
+  virtual ~SoleVariable() = default;
 
   const TypeDescription*
   virtualGetTypeDescription() const override
@@ -98,23 +99,39 @@ public:
   static const TypeDescription*
   getTypeDescription();
 
-  inline operator T() const { return value; }
+  inline operator T() const { return *value; }
+
   inline T&
   get()
   {
-    return value;
+    return *value;
   }
+
   inline const T&
   get() const
   {
-    return value;
+    return *value;
   }
 
   void
-  setData(const T&);
+  setData(const T& val)
+  {
+    value = std::make_shared<T>(val);
+  }
 
   virtual SoleVariableBase*
-  clone() const override;
+  clone() const override
+  {
+    return scinew SoleVariable<T>(*this);
+  }
+
+  SoleVariable<T>&
+  operator=(const SoleVariable<T>& copy)
+  {
+    value = copy.value;
+    return *this;
+  };
+
   virtual void
   copyPointer(Variable&) override;
 
@@ -124,14 +141,20 @@ public:
               void*& ptr) const override
   {
     elems   = "1";
-    totsize = sizeof(T);
-    ptr     = (void*)&value;
+    totsize = getDataSize();
+    ptr     = getBasePointer();
   }
 
   virtual size_t
   getDataSize() const override
   {
     return sizeof(T);
+  }
+
+  virtual void*
+  getBasePointer() const
+  {
+    return value.get();
   }
 
   virtual bool
@@ -143,13 +166,66 @@ public:
     return (retVal == dst) ? true : false;
   }
 
+  virtual void
+  emitNormal(std::ostream& out,
+             const IntVector& l,
+             const IntVector& h,
+             ProblemSpecP /*varnode*/,
+             bool outputDoubleAsFloat)
+  {
+    ssize_t linesize = (ssize_t)(sizeof(T));
+
+    out.write((char*)(value.get()), linesize);
+  }
+
+  virtual void
+  readNormal(std::istream& in, bool swapBytes)
+  {
+    ssize_t linesize = (ssize_t)(sizeof(T));
+
+    T val;
+
+    in.read((char*)&val, linesize);
+
+    if (swapBytes) {
+      Uintah::swapbytes(val);
+    }
+
+    value = std::make_shared<T>(val);
+  }
+
+  void
+  print(std::ostream& out) const
+  {
+    out << *(value.get());
+  }
+
+  // Static variable whose entire purpose is to cause the
+  // (instantiated) type of this class to be registered with the
+  // Core/Disclosure/TypeDescription class when this class' object
+  // code is originally loaded from the shared library.  The
+  // 'registerMe' variable is not used for anything else in the
+  // program.
+  static TypeDescription::Register registerMe;
+
 private:
-  SoleVariable<T>&
-  operator=(const SoleVariable<T>& copy);
+  inline static TypeDescription* td{ nullptr };
   static Variable*
-  maker();
-  T value;
+  maker()
+  {
+    return scinew SoleVariable<T>();
+  };
+
+  std::shared_ptr<T> value;
 };
+
+// The following line is the initialization (creation) of the
+// 'registerMe' static variable (for each version of CCVariable
+// (double, int, etc)).  Note, the 'registerMe' variable is created
+// when the object code is initially loaded (usually during intial
+// program load by the operating system).
+template<class T>
+TypeDescription::Register SoleVariable<T>::registerMe(getTypeDescription());
 
 template<class T>
 const TypeDescription*
@@ -166,26 +242,6 @@ SoleVariable<T>::getTypeDescription()
 }
 
 template<class T>
-Variable*
-SoleVariable<T>::maker()
-{
-  //    return scinew SoleVariable<T>();
-  return 0;
-}
-
-template<class T>
-SoleVariable<T>::~SoleVariable()
-{
-}
-
-template<class T>
-SoleVariableBase*
-SoleVariable<T>::clone() const
-{
-  return scinew SoleVariable<T>(*this);
-}
-
-template<class T>
 void
 SoleVariable<T>::copyPointer(Variable& copy)
 {
@@ -195,21 +251,6 @@ SoleVariable<T>::copyPointer(Variable& copy)
       "Type mismatch in sole variable", __FILE__, __LINE__));
   }
   *this = *c;
-}
-
-template<class T>
-SoleVariable<T>&
-SoleVariable<T>::operator=(const SoleVariable<T>& copy)
-{
-  value = copy.value;
-  return *this;
-}
-
-template<class T>
-void
-SoleVariable<T>::setData(const T& val)
-{
-  value = val;
 }
 } // End namespace Uintah
 

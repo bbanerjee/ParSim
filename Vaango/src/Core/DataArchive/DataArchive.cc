@@ -427,7 +427,7 @@ DataArchive::queryGrid(int index, const ProblemSpecP& ups, bool assignBCs)
   } else {
     // Determine if the grid is written in ASCII xml, or in binary.
     unsigned int marker = -1;
-    fread(&marker, sizeof(marker), 1, fp_grid);
+    [[maybe_unused]] size_t dat = fread(&marker, sizeof(marker), 1, fp_grid);
 
     if (marker == GRID_MAGIC_NUMBER) {
       grid_xml_is_binary = true;

@@ -181,12 +181,8 @@ Grid::parsePatchFromFile(FILE* fp,
     interiorHighIndex = highIndex;
   }
 
-  level->addPatch(lowIndex,
-                  highIndex,
-                  interiorLowIndex,
-                  interiorHighIndex,
-                  this,
-                  id);
+  level->addPatch(
+    lowIndex, highIndex, interiorLowIndex, interiorHighIndex, this, id);
 
   procMapForLevel.push_back(
     proc); // corresponds to DataArchive original
@@ -440,19 +436,19 @@ Grid::readLevelsFromFileBinary(FILE* fp, std::vector<std::vector<int>>& procMap)
   double anchor[3], cell_spacing[3];
   int l_id;
 
-  fread(&num_levels, sizeof(int), 1, fp);
+  [[maybe_unused]] auto len = fread(&num_levels, sizeof(int), 1, fp);
 
   for (int lev = 0; lev < num_levels; lev++) {
-    fread(&num_patches, sizeof(int), 1, fp); // Number of Patches -  100
-    fread(&num_cells, sizeof(long), 1, fp);  // Number of Cells   - 8000
-    fread(extra_cells, sizeof(int), 3, fp);  // Extra Cell Info   - [1,1,1]
-    fread(anchor, sizeof(double), 3, fp);    // Anchor Info       - [0,0,0]
-    fread(period, sizeof(int), 3, fp);       //
-    fread(&l_id, sizeof(int), 1, fp);        // ID of Level       -    0
-    fread(cell_spacing,
-          sizeof(double),
-          3,
-          fp); // Cell Spacing      - [0.1,0.1,0.1]
+    len = fread(&num_patches, sizeof(int), 1, fp); // Number of Patches -  100
+    len = fread(&num_cells, sizeof(long), 1, fp);  // Number of Cells   - 8000
+    len = fread(extra_cells, sizeof(int), 3, fp); // Extra Cell Info   - [1,1,1]
+    len = fread(anchor, sizeof(double), 3, fp);   // Anchor Info       - [0,0,0]
+    len = fread(period, sizeof(int), 3, fp);      //
+    len = fread(&l_id, sizeof(int), 1, fp);       // ID of Level       -    0
+    len = fread(cell_spacing,
+                sizeof(double),
+                3,
+                fp); // Cell Spacing      - [0.1,0.1,0.1]
 
     bool foundPeriodicBoundaries = false;
     if (period[0] != 0 || period[1] != 0 || period[2] != 0) {
@@ -475,45 +471,42 @@ Grid::readLevelsFromFileBinary(FILE* fp, std::vector<std::vector<int>>& procMap)
       int low_index[3], high_index[3], i_low_index[3], i_high_index[3];
       double lower[3], upper[3];
 
-      fread(&p_id, sizeof(int), 1, fp);
-      fread(&rank, sizeof(int), 1, fp);
-      fread(low_index, sizeof(int), 3, fp);  // <lowIndex>[-1,-1,-1]</lowIndex>
-      fread(high_index, sizeof(int), 3, fp); // <highIndex>[20,20,4]</highIndex>
-      fread(i_low_index,
-            sizeof(int),
-            3,
-            fp); // <interiorLowIndex></interiorLowIndex>
-      fread(i_high_index,
-            sizeof(int),
-            3,
-            fp); // <interiorHighIndex>[20,20,3]</interiorHighIndex>
-      fread(&nnodes, sizeof(int), 1, fp); // <nnodes>2646</nnodes>
-      fread(
+      [[maybe_unused]] auto len = fread(&p_id, sizeof(int), 1, fp);
+      len                       = fread(&rank, sizeof(int), 1, fp);
+      len =
+        fread(low_index, sizeof(int), 3, fp); // <lowIndex>[-1,-1,-1]</lowIndex>
+      len = fread(
+        high_index, sizeof(int), 3, fp); // <highIndex>[20,20,4]</highIndex>
+      len = fread(i_low_index,
+                  sizeof(int),
+                  3,
+                  fp); // <interiorLowIndex></interiorLowIndex>
+      len = fread(i_high_index,
+                  sizeof(int),
+                  3,
+                  fp); // <interiorHighIndex>[20,20,3]</interiorHighIndex>
+      len = fread(&nnodes, sizeof(int), 1, fp); // <nnodes>2646</nnodes>
+      len = fread(
         lower,
         sizeof(double),
         3,
         fp); // <lower>[-0.025000000000000001,-0.025000000000000001,-0.049999999999999996]</lower>
-      fread(upper,
-            sizeof(double),
-            3,
-            fp); // <upper>[0.5,0.5,0.19999999999999998]</upper>
-      fread(&total_cells, sizeof(int), 1, fp); // <totalCells>2205</totalCells>
+      len = fread(upper,
+                  sizeof(double),
+                  3,
+                  fp); // <upper>[0.5,0.5,0.19999999999999998]</upper>
+      len = fread(
+        &total_cells, sizeof(int), 1, fp); // <totalCells>2205</totalCells>
 
       const IntVector lowIndex(low_index[0], low_index[1], low_index[2]);
       const IntVector highIndex(high_index[0], high_index[1], high_index[2]);
-      const IntVector interiorLowIndex(i_low_index[0],
-                                       i_low_index[1],
-                                       i_low_index[2]);
-      const IntVector interiorHighIndex(i_high_index[0],
-                                        i_high_index[1],
-                                        i_high_index[2]);
+      const IntVector interiorLowIndex(
+        i_low_index[0], i_low_index[1], i_low_index[2]);
+      const IntVector interiorHighIndex(
+        i_high_index[0], i_high_index[1], i_high_index[2]);
 
-      level->addPatch(lowIndex,
-                      highIndex,
-                      interiorLowIndex,
-                      interiorHighIndex,
-                      this,
-                      p_id);
+      level->addPatch(
+        lowIndex, highIndex, interiorLowIndex, interiorHighIndex, this, p_id);
 
       procMapForLevel.push_back(rank);
 
@@ -966,9 +959,7 @@ Grid::problemSetup(const ProblemSpecP& params,
         std::cerr << std::setprecision(16) << "diff=" << diff_lower << '\n';
 
         throw ProblemSetupException(
-          "Box lower corner does not coincide with grid",
-          __FILE__,
-          __LINE__);
+          "Box lower corner does not coincide with grid", __FILE__, __LINE__);
       }
 
       if (diff_upper > max_component_upper * epsilon) {
@@ -978,9 +969,7 @@ Grid::problemSetup(const ProblemSpecP& params,
         std::cerr << "upper2=" << upper2 << '\n';
         std::cerr << "diff=" << diff_upper << '\n';
         throw ProblemSetupException(
-          "Box upper corner does not coincide with grid",
-          __FILE__,
-          __LINE__);
+          "Box upper corner does not coincide with grid", __FILE__, __LINE__);
       }
 
       IntVector resolution(highCell - lowCell);
@@ -1010,9 +999,8 @@ Grid::problemSetup(const ProblemSpecP& params,
         // autoPatchValue must be >= 1, else it will generate fewer patches than
         // processors, and fail
         if (autoPatchValue < 1) {
-          throw ProblemSetupException("autoPatch value must be greater than 1",
-                                      __FILE__,
-                                      __LINE__);
+          throw ProblemSetupException(
+            "autoPatch value must be greater than 1", __FILE__, __LINE__);
         }
 
         patchAttributes.clear();
@@ -1167,7 +1155,7 @@ operator<<(std::ostream& out, const Grid& grid)
   }
   return out;
 }
-}
+} // namespace Uintah
 
 // This is O(p).
 bool
@@ -1371,9 +1359,8 @@ void
 Grid::setExtraCells(const IntVector& ex)
 {
   if (numLevels() > 0) {
-    throw ProblemSetupException("Cannot set extraCells after grid setup",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Cannot set extraCells after grid setup", __FILE__, __LINE__);
     return;
   }
   d_extraCells = ex;

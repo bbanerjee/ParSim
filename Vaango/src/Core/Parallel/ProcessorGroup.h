@@ -29,6 +29,7 @@
 
 #include <Core/Parallel/UintahMPI.h>
 #include <vector>
+#include <string>
 
 namespace Uintah {
 

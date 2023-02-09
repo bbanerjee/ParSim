@@ -98,7 +98,7 @@ Uintah::DebugStream dbgPIDX("DataArchiverPIDX",
                             false);
 #endif
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -133,16 +133,14 @@ DataArchiver::getComponents()
 {
   d_simulator = dynamic_cast<SimulationInterface*>(getPort("simulator"));
   if (!d_simulator) {
-    throw InternalError("dynamic_cast of 'd_simulator' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_simulator' failed!", __FILE__, __LINE__);
   }
 
   d_load_balancer = dynamic_cast<LoadBalancer*>(getPort("load balancer"));
   if (!d_load_balancer) {
-    throw InternalError("dynamic_cast of 'd_load_balancer' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_load_balancer' failed!", __FILE__, __LINE__);
   }
 }
 
@@ -484,7 +482,8 @@ DataArchiver::outputProblemSpec(ProblemSpecP& root_ps)
 }
 
 void
-DataArchiver::initializeOutput(const ProblemSpecP& params, [[maybe_unused]] const GridP& grid)
+DataArchiver::initializeOutput(const ProblemSpecP& params,
+                               [[maybe_unused]] const GridP& grid)
 {
   if (d_outputInterval == 0.0 && d_outputTimeStepInterval == 0 &&
       d_checkpointInterval == 0.0 && d_checkpointTimeStepInterval == 0 &&
@@ -566,11 +565,8 @@ DataArchiver::restartSetup(Dir& restartFromDir,
   d_outputInitTimeStep = false;
   if (d_writeMeta && !fromScratch) {
     // partial copy of dat files
-    copyDatFiles(restartFromDir,
-                 d_outputDir,
-                 startTimeStep,
-                 timestep,
-                 removeOldDir);
+    copyDatFiles(
+      restartFromDir, d_outputDir, startTimeStep, timestep, removeOldDir);
 
     copySection(restartFromDir, d_outputDir, "index.xml", "restarts");
     copySection(restartFromDir, d_outputDir, "index.xml", "variables");
@@ -578,11 +574,8 @@ DataArchiver::restartSetup(Dir& restartFromDir,
 
     // partial copy of index.xml and timestep directories and
     // similarly for checkpoints
-    copyTimeSteps(restartFromDir,
-                  d_outputDir,
-                  startTimeStep,
-                  timestep,
-                  removeOldDir);
+    copyTimeSteps(
+      restartFromDir, d_outputDir, startTimeStep, timestep, removeOldDir);
 
     Dir checkpointsFromDir = restartFromDir.getSubdir("checkpoints");
     bool areCheckpoints    = true;
@@ -596,10 +589,8 @@ DataArchiver::restartSetup(Dir& restartFromDir,
                     timestep,
                     removeOldDir,
                     areCheckpoints);
-      copySection(checkpointsFromDir,
-                  d_checkpointsDir,
-                  "index.xml",
-                  "variables");
+      copySection(
+        checkpointsFromDir, d_checkpointsDir, "index.xml", "variables");
       copySection(checkpointsFromDir, d_checkpointsDir, "index.xml", "globals");
     }
 
@@ -614,9 +605,8 @@ DataArchiver::restartSetup(Dir& restartFromDir,
 
         // Something strange happened... let's test the filesystem...
         std::stringstream error_stream;
-        if (!testFilesystem(restartFromDir.getName(),
-                            error_stream,
-                            Parallel::getMPIRank())) {
+        if (!testFilesystem(
+              restartFromDir.getName(), error_stream, Parallel::getMPIRank())) {
 
           std::cout << error_stream.str();
           std::cout.flush();
@@ -716,9 +706,8 @@ DataArchiver::postProcessUdaSetup(Dir& fromDir)
     while (variable != nullptr) {
       std::string varname;
       if (!variable->getAttribute("name", varname)) {
-        throw InternalError("global variable name attribute not found",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "global variable name attribute not found", __FILE__, __LINE__);
       }
 
       std::list<SaveNameItem>::iterator it = d_saveLabelNames.begin();
@@ -854,9 +843,8 @@ DataArchiver::copyTimeSteps(Dir& fromDir,
 
       std::string hrefNode = attributes["href"];
       if (hrefNode == "") {
-        throw InternalError("timestep href attribute not found",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "timestep href attribute not found", __FILE__, __LINE__);
       }
 
       std::string::size_type href_pos = hrefNode.find_first_of("/");
@@ -923,9 +911,8 @@ DataArchiver::copyDatFiles(Dir& fromDir,
       std::string hrefNode = attributes["href"];
 
       if (hrefNode == "") {
-        throw InternalError("global variable href attribute not found",
-                            __FILE__,
-                            __LINE__);
+        throw InternalError(
+          "global variable href attribute not found", __FILE__, __LINE__);
       }
       const char* href = hrefNode.c_str();
 
@@ -1084,9 +1071,8 @@ DataArchiver::sched_allOutputTasks(const GridP& grid,
   if ((d_outputInterval > 0.0 || d_outputTimeStepInterval > 0) &&
       (delT != 0 || d_outputInitTimeStep)) {
 
-    Task* task = scinew Task("DataArchiver::outputGlobalVars",
-                             this,
-                             &DataArchiver::outputGlobalVars);
+    Task* task = scinew Task(
+      "DataArchiver::outputGlobalVars", this, &DataArchiver::outputGlobalVars);
 
     for (size_t i = 0; i < d_saveGlobalLabels.size(); i++) {
       SaveItem& saveItem = d_saveGlobalLabels[i];
@@ -1155,10 +1141,8 @@ DataArchiver::setOutputTimeStep(bool val, const GridP& grid)
 
     // Create the output timestep directories
     if (d_isOutputTimeStep && d_outputFileFormat != PIDX) {
-      makeTimeStepDirs(d_outputDir,
-                       d_saveLabels,
-                       grid,
-                       &d_lastTimeStepLocation);
+      makeTimeStepDirs(
+        d_outputDir, d_saveLabels, grid, &d_lastTimeStepLocation);
 
       d_outputTimeStepDirs.push_back(d_lastTimeStepLocation);
     }
@@ -1174,10 +1158,8 @@ DataArchiver::setCheckpointTimeStep(bool val, const GridP& grid)
     // Create the output checkpoint directories
     if (d_isCheckpointTimeStep) {
       std::string timestepDir;
-      makeTimeStepDirs(d_checkpointsDir,
-                       d_checkpointLabels,
-                       grid,
-                       &timestepDir);
+      makeTimeStepDirs(
+        d_checkpointsDir, d_checkpointLabels, grid, &timestepDir);
       d_checkpointTimeStepDirs.push_back(timestepDir);
 
       std::string iname = d_checkpointsDir.getName() + "/index.xml";
@@ -1217,9 +1199,8 @@ DataArchiver::setCheckpointTimeStep(bool val, const GridP& grid)
                       << "' in DataArchiver.cc::beginOutputTimeStep()\n\n";
             std::stringstream error_stream;
 
-            if (!testFilesystem(expiredDir.getName(),
-                                error_stream,
-                                Parallel::getMPIRank())) {
+            if (!testFilesystem(
+                  expiredDir.getName(), error_stream, Parallel::getMPIRank())) {
               std::cout << error_stream.str();
               std::cout.flush();
               // The file system just gave us some problems...
@@ -1312,10 +1293,11 @@ DataArchiver::beginOutputTimeStep(const GridP& grid)
 } // end beginOutputTimeStep
 
 void
-DataArchiver::makeTimeStepDirs(Dir& baseDir,
-                               [[maybe_unused]] std::vector<DataArchiver::SaveItem>& saveLabels,
-                               const GridP& grid,
-                               string* pTimeStepDir /* passed back */)
+DataArchiver::makeTimeStepDirs(
+  Dir& baseDir,
+  [[maybe_unused]] std::vector<DataArchiver::SaveItem>& saveLabels,
+  const GridP& grid,
+  string* pTimeStepDir /* passed back */)
 {
   int numLevels    = grid->numLevels();
   int dir_timestep = getTimeStepTopLevel();
@@ -1345,8 +1327,9 @@ DataArchiver::makeTimeStepDirs(Dir& baseDir,
 }
 
 void
-DataArchiver::findNext_OutputCheckPointTimeStep(const bool restart,
-                                                [[maybe_unused]] const GridP& grid)
+DataArchiver::findNext_OutputCheckPointTimeStep(
+  const bool restart,
+  [[maybe_unused]] const GridP& grid)
 {
   const int timeStep   = d_simulator->getTimeStep();
   const double simTime = d_simulator->getSimTime();
@@ -1763,9 +1746,8 @@ DataArchiver::writeto_xml_files(const GridP& grid)
         if (n->getNodeName() == "timestep") {
           int readtimestep;
           if (!n->get(readtimestep)) {
-            throw InternalError("Error parsing timestep number",
-                                __FILE__,
-                                __LINE__);
+            throw InternalError(
+              "Error parsing timestep number", __FILE__, __LINE__);
           }
           if (readtimestep == dir_timestep) {
             found = true;
@@ -1903,8 +1885,9 @@ DataArchiver::writeto_xml_files(const GridP& grid)
                                << std::setfill('0') << dir_timestep
                                << "/timestep.xml";
 
-        symlink(ts_with_xml_dirname.str().c_str(),
-                ts_without_xml_dirname.str().c_str());
+        [[maybe_unused]] int res =
+          symlink(ts_with_xml_dirname.str().c_str(),
+                  ts_without_xml_dirname.str().c_str());
       }
 
       if (save_io_timestep_xml_file) {
@@ -2226,19 +2209,15 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
   xmlTextWriterSetIndent(writer_grid, 2);
 
   const std::string MY_ENCODING = "UTF-8";
-  xmlTextWriterStartDocument(writer_grid,
-                             nullptr,
-                             MY_ENCODING.c_str(),
-                             nullptr);
+  xmlTextWriterStartDocument(
+    writer_grid, nullptr, MY_ENCODING.c_str(), nullptr);
 
   xmlTextWriterStartElement(writer_grid, BAD_CAST "Grid");
 
   //__________________________________
   //  output level information
-  xmlTextWriterWriteFormatElement(writer_grid,
-                                  BAD_CAST "numLevels",
-                                  "%d",
-                                  numLevels);
+  xmlTextWriterWriteFormatElement(
+    writer_grid, BAD_CAST "numLevels", "%d", numLevels);
 
   for (int l = 0; l < numLevels; ++l) {
     LevelP level = grid->getLevel(l);
@@ -2255,18 +2234,12 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
                                       level->getPeriodicBoundaries().z());
     }
 
-    xmlTextWriterWriteFormatElement(writer_grid,
-                                    BAD_CAST "numPatches",
-                                    "%d",
-                                    level->numPatches());
-    xmlTextWriterWriteFormatElement(writer_grid,
-                                    BAD_CAST "totalCells",
-                                    "%ld",
-                                    level->totalCells());
-    xmlTextWriterWriteFormatElement(writer_grid,
-                                    BAD_CAST "totalCells",
-                                    "%ld",
-                                    level->totalCells());
+    xmlTextWriterWriteFormatElement(
+      writer_grid, BAD_CAST "numPatches", "%d", level->numPatches());
+    xmlTextWriterWriteFormatElement(
+      writer_grid, BAD_CAST "totalCells", "%ld", level->totalCells());
+    xmlTextWriterWriteFormatElement(
+      writer_grid, BAD_CAST "totalCells", "%ld", level->totalCells());
 
     if (level->getExtraCells() != IntVector(0, 0, 0)) {
       xmlTextWriterWriteFormatElement(writer_grid,
@@ -2282,10 +2255,8 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
                                     level->getAnchor().x(),
                                     level->getAnchor().y(),
                                     level->getAnchor().z());
-    xmlTextWriterWriteFormatElement(writer_grid,
-                                    BAD_CAST "id",
-                                    "%d",
-                                    level->getID());
+    xmlTextWriterWriteFormatElement(
+      writer_grid, BAD_CAST "id", "%d", level->getID());
 
     xmlTextWriterWriteFormatElement(writer_grid,
                                     BAD_CAST "cellspacing",
@@ -2314,10 +2285,8 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
 
       xmlTextWriterStartElement(writer_grid, BAD_CAST "Patch");
 
-      xmlTextWriterWriteFormatElement(writer_grid,
-                                      BAD_CAST "id",
-                                      "%d",
-                                      patch->getID());
+      xmlTextWriterWriteFormatElement(
+        writer_grid, BAD_CAST "id", "%d", patch->getID());
       xmlTextWriterWriteFormatElement(writer_grid, BAD_CAST "proc", "%d", proc);
       xmlTextWriterWriteFormatElement(writer_grid,
                                       BAD_CAST "lowIndex",
@@ -2347,10 +2316,8 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
                                         patch->getCellHighIndex().y(),
                                         patch->getCellHighIndex().z());
       }
-      xmlTextWriterWriteFormatElement(writer_grid,
-                                      BAD_CAST "nnodes",
-                                      "%d",
-                                      patch->getNumExtraNodes());
+      xmlTextWriterWriteFormatElement(
+        writer_grid, BAD_CAST "nnodes", "%d", patch->getNumExtraNodes());
       xmlTextWriterWriteFormatElement(writer_grid,
                                       BAD_CAST "lower",
                                       "[%.17g,%.17g,%.17g]",
@@ -2363,10 +2330,8 @@ DataArchiver::writeGridTextWriter(const bool hasGlobals,
                                       box.upper().x(),
                                       box.upper().y(),
                                       box.upper().z());
-      xmlTextWriterWriteFormatElement(writer_grid,
-                                      BAD_CAST "totalCells",
-                                      "%d",
-                                      patch->getNumExtraCells());
+      xmlTextWriterWriteFormatElement(
+        writer_grid, BAD_CAST "totalCells", "%d", patch->getNumExtraCells());
       xmlTextWriterEndElement(writer_grid); // Close Patch
     }
     xmlTextWriterEndElement(writer_grid); // Close Level
@@ -2417,12 +2382,10 @@ DataArchiver::writeDataTextWriter(
       xmlTextWriterStartElement(data_writer,
                                 BAD_CAST "Datafile"); // Open <Datafile>
 
-      xmlTextWriterWriteAttribute(data_writer,
-                                  BAD_CAST "href",
-                                  BAD_CAST pname.str().c_str());
-      xmlTextWriterWriteAttribute(data_writer,
-                                  BAD_CAST "proc",
-                                  BAD_CAST procID.str().c_str());
+      xmlTextWriterWriteAttribute(
+        data_writer, BAD_CAST "href", BAD_CAST pname.str().c_str());
+      xmlTextWriterWriteAttribute(
+        data_writer, BAD_CAST "proc", BAD_CAST procID.str().c_str());
 
       xmlTextWriterEndElement(data_writer); // Close <Datafile>
     }
@@ -2431,9 +2394,8 @@ DataArchiver::writeDataTextWriter(
   if (hasGlobals) {
     xmlTextWriterStartElement(data_writer,
                               BAD_CAST "Datafile"); // Open <Datafile>
-    xmlTextWriterWriteAttribute(data_writer,
-                                BAD_CAST "href",
-                                BAD_CAST "global.xml");
+    xmlTextWriterWriteAttribute(
+      data_writer, BAD_CAST "href", BAD_CAST "global.xml");
     xmlTextWriterEndElement(data_writer); // Close <Datafile>
   }
 
@@ -2554,10 +2516,8 @@ DataArchiver::createPIDXCommunicator(std::vector<SaveItem>& saveLabels,
       color = 1;
     }
 
-    MPI_Comm_split(d_myworld->getComm(),
-                   color,
-                   d_myworld->myRank(),
-                   &(d_pidxComms[i]));
+    MPI_Comm_split(
+      d_myworld->getComm(), color, d_myworld->myRank(), &(d_pidxComms[i]));
 
     // if (color == 1) {
     //   int nsize;
@@ -3052,10 +3012,8 @@ DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
             if (s == -1) {
               std::cerr << "fstat error - file: " << filename
                         << ", errno=" << errno << '\n';
-              throw ErrnoException("DataArchiver::output (stat call)",
-                                   errno,
-                                   __FILE__,
-                                   __LINE__);
+              throw ErrnoException(
+                "DataArchiver::output (stat call)", errno, __FILE__, __LINE__);
             }
             ASSERTEQ(oc.cur, st.st_size);
 #endif
@@ -3070,10 +3028,8 @@ DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
       if (s == -1) {
         std::cerr << "Error closing file: " << filename << ", errno=" << errno
                   << '\n';
-        throw ErrnoException("DataArchiver::output (close call)",
-                             errno,
-                             __FILE__,
-                             __LINE__);
+        throw ErrnoException(
+          "DataArchiver::output (close call)", errno, __FILE__, __LINE__);
       }
 
       doc->output(xmlFilename.c_str());
@@ -3125,15 +3081,8 @@ DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
 
         Dir myDir = ldir.getSubdir(dirName);
 
-        totalBytes += saveLabels_PIDX(pg,
-                                      patches,
-                                      dw,
-                                      type,
-                                      saveTheseLabels,
-                                      TD,
-                                      ldir,
-                                      dirName,
-                                      doc);
+        totalBytes += saveLabels_PIDX(
+          pg, patches, dw, type, saveTheseLabels, TD, ldir, dirName, doc);
       }
     }
 
@@ -3171,15 +3120,16 @@ DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
 
 //  output only the savedLabels of a specified type description in PIDX format.
 size_t
-DataArchiver::saveLabels_PIDX([[maybe_unused]] const ProcessorGroup* pg,
-                              [[maybe_unused]] const PatchSubset* patches,
-                              [[maybe_unused]] DataWarehouse* new_dw,
-                              [[maybe_unused]] int type,
-                              [[maybe_unused]] std::vector<SaveItem>& saveLabels,
-                              [[maybe_unused]] const TypeDescription::Type TD,
-                              [[maybe_unused]] Dir ldir, // uda/timestep/levelIndex
-                              [[maybe_unused]] const std::string& dirName, // CCVars, SFC*Vars
-                              [[maybe_unused]] ProblemSpecP& doc)
+DataArchiver::saveLabels_PIDX(
+  [[maybe_unused]] const ProcessorGroup* pg,
+  [[maybe_unused]] const PatchSubset* patches,
+  [[maybe_unused]] DataWarehouse* new_dw,
+  [[maybe_unused]] int type,
+  [[maybe_unused]] std::vector<SaveItem>& saveLabels,
+  [[maybe_unused]] const TypeDescription::Type TD,
+  [[maybe_unused]] Dir ldir,                   // uda/timestep/levelIndex
+  [[maybe_unused]] const std::string& dirName, // CCVars, SFC*Vars
+  [[maybe_unused]] ProblemSpecP& doc)
 {
 
   size_t totalBytesSaved = 0;
@@ -3261,11 +3211,8 @@ DataArchiver::saveLabels_PIDX([[maybe_unused]] const ProcessorGroup* pg,
                     type);
 
   } else {
-    pidx.initializeParticles(full_idxFilename,
-                             timeStep,
-                             d_pidxComms[levelid],
-                             level_size,
-                             type);
+    pidx.initializeParticles(
+      full_idxFilename, timeStep, d_pidxComms[levelid], level_size, type);
 
     PIDX_physical_point physical_global_size;
     IntVector zlo = { 0, 0, 0 };
@@ -3493,12 +3440,8 @@ DataArchiver::saveLabels_PIDX([[maybe_unused]] const ProcessorGroup* pg,
             // consolidate this code with the code below.
             //
 
-            new_dw->emitPIDX(pidx,
-                             label,
-                             matlIndex,
-                             patch,
-                             patch_buffer[vcm][p],
-                             arraySize);
+            new_dw->emitPIDX(
+              pidx, label, matlIndex, patch, patch_buffer[vcm][p], arraySize);
 
             PIDX_physical_point physical_local_offset, physical_local_size;
             PIDX_set_physical_point(
@@ -3527,12 +3470,8 @@ DataArchiver::saveLabels_PIDX([[maybe_unused]] const ProcessorGroup* pg,
             patch_buffer[vcm][p] = (unsigned char*)malloc(arraySize);
             memset(patch_buffer[vcm][p], 0, arraySize);
 
-            new_dw->emitPIDX(pidx,
-                             label,
-                             matlIndex,
-                             patch,
-                             patch_buffer[vcm][p],
-                             arraySize);
+            new_dw->emitPIDX(
+              pidx, label, matlIndex, patch, patch_buffer[vcm][p], arraySize);
 
             IntVector extra_cells = patch->getExtraCells();
 
@@ -3768,10 +3707,8 @@ DataArchiver::makeVersionedDir()
       } else {
         int code = rmdir(dirName.c_str());
         if (code != 0) {
-          throw ErrnoException("DataArchiver.cc: rmdir failed",
-                               errno,
-                               __FILE__,
-                               __LINE__);
+          throw ErrnoException(
+            "DataArchiver.cc: rmdir failed", errno, __FILE__, __LINE__);
         }
       }
     } else {
@@ -4000,10 +3937,8 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   for (auto& [label_name, label_set_map] : label_map) {
     VarLabel* var = VarLabel::find(label_name);
     if (var == nullptr) {
-      throw ProblemSetupException(label_name +
-                                    " variable not found to checkpoint.",
-                                  __FILE__,
-                                  __LINE__);
+      throw ProblemSetupException(
+        label_name + " variable not found to checkpoint.", __FILE__, __LINE__);
     }
 
     saveItem.label = var;
@@ -4033,9 +3968,8 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   if (!hasDelT) {
     VarLabel* var = VarLabel::find(delT_name);
     if (var == nullptr) {
-      throw ProblemSetupException("delT variable not found to checkpoint.",
-                                  __FILE__,
-                                  __LINE__);
+      throw ProblemSetupException(
+        "delT variable not found to checkpoint.", __FILE__, __LINE__);
     }
     saveItem.label = var;
     saveItem.matlSet.clear();
@@ -4521,11 +4455,8 @@ DataArchiver::setupSharedFileSystem()
 
     // Broadcast test filename length, and then broadcast the actual name.
     Uintah::MPI::Bcast(&outlen, 1, MPI_INT, 0, d_myworld->getComm());
-    Uintah::MPI::Bcast(const_cast<char*>(outbuf),
-                       outlen,
-                       MPI_CHAR,
-                       0,
-                       d_myworld->getComm());
+    Uintah::MPI::Bcast(
+      const_cast<char*>(outbuf), outlen, MPI_CHAR, 0, d_myworld->getComm());
     fs_test_file_name = test_filename_stream.str();
   } else {
     d_writeMeta = false; // Only rank 0 will emit meta data...
@@ -4575,11 +4506,8 @@ DataArchiver::setupSharedFileSystem()
     int outlen         = (int)strlen(outbuf);
 
     Uintah::MPI::Bcast(&outlen, 1, MPI_INT, 0, d_myworld->getComm());
-    Uintah::MPI::Bcast(const_cast<char*>(outbuf),
-                       outlen,
-                       MPI_CHAR,
-                       0,
-                       d_myworld->getComm());
+    Uintah::MPI::Bcast(
+      const_cast<char*>(outbuf), outlen, MPI_CHAR, 0, d_myworld->getComm());
   } else {
 
     // Receive the name of the UDA from rank 0...
@@ -4654,11 +4582,8 @@ DataArchiver::setupLocalFileSystems()
     int outlen              = (int)strlen(outbuf);
 
     Uintah::MPI::Bcast(&outlen, 1, MPI_INT, 0, d_myworld->getComm());
-    Uintah::MPI::Bcast(const_cast<char*>(outbuf),
-                       outlen,
-                       MPI_CHAR,
-                       0,
-                       d_myworld->getComm());
+    Uintah::MPI::Bcast(
+      const_cast<char*>(outbuf), outlen, MPI_CHAR, 0, d_myworld->getComm());
     basename = test_string;
   } else {
     int inlen;
@@ -4678,10 +4603,8 @@ DataArchiver::setupLocalFileSystems()
   // This will be an empty file, everything is encoded in the name anyway
   FILE* tmpout = fopen(fname.c_str(), "w");
   if (!tmpout) {
-    throw ErrnoException("fopen failed for " + fname,
-                         errno,
-                         __FILE__,
-                         __LINE__);
+    throw ErrnoException(
+      "fopen failed for " + fname, errno, __FILE__, __LINE__);
   }
   fprintf(tmpout, "\n");
   if (fflush(tmpout) != 0) {
@@ -4768,12 +4691,8 @@ DataArchiver::setupLocalFileSystems()
   int nunique;
   // This is an AllReduce, not a reduce.  This is necessary to
   // ensure that all processors wait before they remove the tmp files
-  Uintah::MPI::Allreduce(&count,
-                         &nunique,
-                         1,
-                         MPI_INT,
-                         MPI_SUM,
-                         d_myworld->getComm());
+  Uintah::MPI::Allreduce(
+    &count, &nunique, 1, MPI_INT, MPI_SUM, d_myworld->getComm());
   if (d_myworld->myRank() == 0) {
     std::cerr << "Discovered " << nunique << " unique filesystems in "
               << timer().seconds() << " seconds\n";

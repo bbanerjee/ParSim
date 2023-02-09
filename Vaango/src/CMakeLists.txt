@@ -641,6 +641,9 @@ if (HYPRE)
   find_package(HYPRE REQUIRED)
   set(HAVE_HYPRE "yes")
   set(DEF_HYPRE "#define HAVE_HYPRE 1")
+  set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+  set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+  set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
 endif()
 
 #-----------------------------------------------------------------------------

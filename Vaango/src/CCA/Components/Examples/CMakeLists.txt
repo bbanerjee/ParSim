@@ -54,6 +54,14 @@ set(Examples_LIBS
   Vaango_Core_Parallel
 )
 
+if (HAVE_HYPRE)
+  SET(Vaango_CCA_Components_Examples_SRCS
+    ${Vaango_CCA_Components_Examples_SRCS}
+    SolverTest2.cc       
+  )
+endif (HAVE_HYPRE)
+
+
 if (CUDA)
   SET(Vaango_CCA_Components_Examples_SRCS
     ${Vaango_CCA_Components_Examples_SRCS}

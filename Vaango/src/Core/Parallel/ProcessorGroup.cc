@@ -28,6 +28,7 @@
 #include <Core/Parallel/Parallel.h>
 
 #include <iostream>
+#include <string>
 #include <map>
 
 namespace Uintah {
