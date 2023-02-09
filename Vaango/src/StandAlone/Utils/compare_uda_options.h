@@ -22,41 +22,76 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VAANGO_STANDALONE_UTILS_VAANGO_UTILS_H__
-#define __VAANGO_STANDALONE_UTILS_VAANGO_UTILS_H__
+#ifndef __VAANGO_STANDALONE_UTILS_COMPARE_UDA_OPTIONS_H__
+#define __VAANGO_STANDALONE_UTILS_COMPARE_UDA_OPTIONS_H__
+
+#include <Core/Geometry/IntVector.h>
 
 #include <string>
-
-#include <sci_defs/git_info.h>
+#include <vector>
 
 namespace Vaango {
 namespace Utils {
+namespace Options {
 
 void
-start_mpi();
+compare_uda_parse(int argc, char** argv);
 
 void
-stop_mpi_and_exit(int flag = 2, const std::string& msg = "");
+compare_uda_usage(const std::string& badarg, const std::string& progname);
+
+bool
+tolerance_as_warnings();
+
+bool
+tolerance_error();
+
+bool
+concise();
+
+bool
+sort_variables();
+
+bool
+include_extra_cells();
+
+bool
+strict_types();
+
+int
+uda_levels(int level);
+
+double
+abs_tolerance();
+
+double
+rel_tolerance();
+
+const std::string&
+filebase_1();
+
+const std::string&
+filebase_2();
+
+const std::vector<std::string>&
+ignore_vars();
+
+const std::vector<std::string>&
+compare_vars();
 
 void
-stop_mpi_with_abort();
+abort_uncomparable(std::ostringstream& warn);
 
 void
-print_active_debug_streams();
+tolerance_failure();
 
-void
-check_gpus();
+//  parse user input and create a vector of strings.  Deliminiter is ","
+std::vector<std::string>
+parseVector(const char* input);
 
-void
-display_git_info(bool show_git_diff, bool show_git_status);
 
-void
-display_config_info(bool show_config_cmd);
-
-void
-check_malloc();
-
+} // namespace Options
 } // namespace Utils
 } // namespace Vaango
 
-#endif //__VAANGO_STANDALONE_UTILS_VAANGO_UTILS_H__
+#endif //__VAANGO_STANDALONE_UTILS_VAANGO_OPTIONS_H__

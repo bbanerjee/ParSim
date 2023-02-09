@@ -35,8 +35,16 @@ set(VAANGO_UTILS_SRC
     Utils/vaango_options.cc
 )
 
+set(COMPARE_UDA_UTILS_SRC
+    Utils/compare_uda_utils.cc
+    Utils/compare_uda_options.cc
+    Utils/MaterialParticleVarData.cc
+    Utils/MaterialParticleData.cc
+    Utils/FieldComparator.cc
+)
+
 ADD_EXECUTABLE(vaango vaango.cc ${VAANGO_UTILS_SRC})
-ADD_EXECUTABLE(compare_uda compare_uda.cc)
+ADD_EXECUTABLE(compare_uda compare_uda.cc ${COMPARE_UDA_UTILS_SRC})
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 
