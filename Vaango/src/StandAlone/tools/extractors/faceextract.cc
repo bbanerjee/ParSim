@@ -265,7 +265,7 @@ printData(DataArchive* archive,
 
       // find out which patch it's on (to keep the printing in sorted order.
       // alternatively, we could just iterate through the patches)
-      int p = 0;
+      size_t p = 0;
       for (; p < patches.size(); p++) {
         IntVector low  = patches[p]->getExtraCellLowIndex();
         IntVector high = patches[p]->getExtraCellHighIndex();
@@ -278,7 +278,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_xm = 0;
+      size_t p_xm = 0;
       for (; p_xm < patches.size(); p_xm++) {
         IntVector low  = patches[p_xm]->getExtraCellLowIndex();
         IntVector high = patches[p_xm]->getExtraCellHighIndex();
@@ -291,7 +291,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_ym = 0;
+      size_t p_ym = 0;
       for (; p_ym < patches.size(); p_ym++) {
         IntVector low  = patches[p_ym]->getExtraCellLowIndex();
         IntVector high = patches[p_ym]->getExtraCellHighIndex();
@@ -304,7 +304,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_zm = 0;
+      size_t p_zm = 0;
       for (; p_zm < patches.size(); p_zm++) {
         IntVector low  = patches[p_zm]->getExtraCellLowIndex();
         IntVector high = patches[p_zm]->getExtraCellHighIndex();
@@ -317,7 +317,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_xp = 0;
+      size_t p_xp = 0;
       for (; p_xp < patches.size(); p_xp++) {
         IntVector low  = patches[p_xp]->getExtraCellLowIndex();
         IntVector high = patches[p_xp]->getExtraCellHighIndex();
@@ -330,7 +330,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_yp = 0;
+      size_t p_yp = 0;
       for (; p_yp < patches.size(); p_yp++) {
         IntVector low  = patches[p_yp]->getExtraCellLowIndex();
         IntVector high = patches[p_yp]->getExtraCellHighIndex();
@@ -343,7 +343,7 @@ printData(DataArchive* archive,
         cellNotFound = true;
         continue;
       }
-      int p_zp = 0;
+      size_t p_zp = 0;
       for (; p_zp < patches.size(); p_zp++) {
         IntVector low  = patches[p_zp]->getExtraCellLowIndex();
         IntVector high = patches[p_zp]->getExtraCellHighIndex();

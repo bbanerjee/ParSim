@@ -43,6 +43,21 @@ print(std::ostream& out, const T& t)
   out << t;
 }
 
+template void
+print(std::ostream& out, const int& t);
+
+template void
+print(std::ostream& out, const float& t);
+
+template void
+print(std::ostream& out, const double& t);
+
+template void
+print(std::ostream& out, const Uintah::Matrix3& t);
+
+template void
+print(std::ostream& out, const Uintah::Stencil7& t);
+
 // must override Vector's output in order to use the ostream's precision
 void
 print(std::ostream& out, const Uintah::Vector& t)
@@ -55,13 +70,6 @@ void
 print(std::ostream& out, const Uintah::Point& t)
 {
   out << "[" << t.x() << ", " << t.y() << ", " << t.z() << "]";
-}
-
-void
-print(std::ostream& out, const Uintah::Stencil7& a)
-{
-  out << "A.p: " << a.p << " A.w: " << a.w << " A.e: " << a.e << " A.s: " << a.s
-      << " A.n: " << a.n << " A.b: " << a.b << " A.t: " << a.t;
 }
 
 void

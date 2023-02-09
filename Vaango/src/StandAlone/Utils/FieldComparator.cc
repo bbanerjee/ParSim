@@ -357,6 +357,20 @@ SpecificFieldComparator<Uintah::SFCZVariable<int>, Uintah::CellIterator>::
                 double);
 
 template void
+SpecificFieldComparator<Uintah::NCVariable<Uintah::Stencil7>,
+                        Uintah::CellIterator>::
+  compareFields(Uintah::DataArchive*,
+                Uintah::DataArchive*,
+                const std::string&,
+                Uintah::ConsecutiveRangeSet,
+                Uintah::Patch const*,
+                Uintah::Array3<Uintah::Patch const*> const&,
+                double,
+                int,
+                double,
+                double);
+
+template void
 SpecificFieldComparator<Uintah::CCVariable<Uintah::Stencil7>,
                         Uintah::CellIterator>::
   compareFields(Uintah::DataArchive*,

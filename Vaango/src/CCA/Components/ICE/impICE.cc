@@ -966,7 +966,7 @@ ICE::updatePressure(const ProcessorGroup*,
     bool rts = new_dw->recomputeTimeStep();
 
     if (!areAllValuesPositive(press_CC, neg_cell) && !rts) {
-      ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR ICE::updatePressure cell " << neg_cell
            << " negative pressure\n ";
       throw InvalidValue(warn.str(), __FILE__, __LINE__);
@@ -1148,7 +1148,7 @@ ICE::implicitPressureSolve(const ProcessorGroup* pg,
   ParentOldDW->get(timeStepVar, d_ice_labels->timeStepLabel);
   double timeStep = timeStepVar;
 
-  ostringstream fname;
+  std::ostringstream fname;
   fname << "." << proc << "." << timeStep << "." << counter;
   d_solver->getParameters()->setOutputFileName(fname.str());
 
@@ -1271,7 +1271,7 @@ ICE::implicitPressureSolve(const ProcessorGroup* pg,
   //  BULLET PROOFING
   if ((counter == d_max_iter_implicit) && (max_RHS > d_outer_iter_tolerance) &&
       counter > 1) {
-    ostringstream s;
+    std::ostringstream s;
     s << "ERROR ICE::implicitPressureSolve, the maximum number of outer"
       << " iterations was reached. \n "
       << "Try either increasing the max_outer_iterations "

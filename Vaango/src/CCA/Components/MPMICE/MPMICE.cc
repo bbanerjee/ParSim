@@ -198,7 +198,7 @@ MPMICE::problemSetup(const ProblemSpecP& prob_spec,
 
   // Validate input
   if (isAMR() && !isLockstepAMR()) {
-    ostringstream msg;
+    std::ostringstream msg;
     msg << "\n ERROR: You must add \n"
         << " <useLockStep> true </useLockStep> \n"
         << " inside of the <AMR> section for MPMICE and AMR. \n";

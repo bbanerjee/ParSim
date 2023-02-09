@@ -120,17 +120,17 @@ display_git_info(bool show_git_diff, bool show_git_status)
       std::string cmd =
         "cd " + sdir + "; git --no-pager diff  --no-color --minimal";
       std::cout << "\n git diff::\n";
-      std::system(cmd.c_str());
+      [[maybe_unused]] auto stat = std::system(cmd.c_str());
     }
 
     if (show_git_status) {
       std::string cmd = "cd " + sdir + "; git status  --branch --short";
       std::cout << "\n git status --branch --short::\n";
-      std::system(cmd.c_str());
+      [[maybe_unused]] auto stat = std::system(cmd.c_str());
 
       cmd = "cd " + sdir + "; git log -1  --format=\"%ad %an %H\" | cat";
       std::cout << "\n git log -1::\n";
-      std::system(cmd.c_str());
+      stat = std::system(cmd.c_str());
     }
     std::cout << "::GIT\n";
   }
@@ -143,7 +143,7 @@ display_config_info(bool show_config_cmd)
     std::string odir = std::string(Uintah::sci_getenv("SCIRUN_OBJDIR"));
     std::string cmd  = "cd " + odir + "; sed -n '7'p config.log ";
     std::cout << "Configure Command::\n";
-    std::system(cmd.c_str());
+    [[maybe_unused]] auto status = std::system(cmd.c_str());
     std::cout << "\n\n";
   }
 }

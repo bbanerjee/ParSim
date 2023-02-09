@@ -53,7 +53,7 @@ TurbulenceFactory::create(ProblemSpecP& ps, MaterialManagerP& materialManager)
     } else if (turbulence_model == "Germano") {
       return std::make_unique<DynamicModel>(turb_ps, materialManager);
     } else {
-      ostringstream warn;
+      std::ostringstream warn;
       warn << "ERROR ICE: Unknown turbulence model (" << turbulence_model
            << " )\n"
            << "Valid models are:\n"

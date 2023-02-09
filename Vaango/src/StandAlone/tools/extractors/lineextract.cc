@@ -554,7 +554,7 @@ printData_PV(DataArchive* archive,
       // query all the data and compute the average up front
       std::vector<Variable*> vars(patches.size());
       std::vector<Variable*> ave(patches.size());
-      for (int p = 0; p < patches.size(); p++) {
+      for (size_t p = 0; p < patches.size(); p++) {
         vars[p] = scinew ParticleVariable<T>;
         ave[p]  = scinew CCVariable<T>;
 
@@ -589,7 +589,7 @@ printData_PV(DataArchive* archive,
 
           // find out which patch it's on (to keep the printing in sorted order.
           // alternatively, we could just iterate through the patches)
-          int p = 0;
+          size_t p = 0;
           for (; p < patches.size(); p++) {
             IntVector low  = patches[p]->getExtraCellLowIndex();
             IntVector high = patches[p]->getExtraCellHighIndex();
@@ -626,7 +626,8 @@ printData_PV(DataArchive* archive,
       if (use_cellIndex_file) {
         for (int i = 0; i < (int)cells.size(); i++) {
           IntVector c = cells[i];
-          int p       = 0;
+
+          size_t p = 0;
 
           for (; p < patches.size(); p++) {
             IntVector low  = patches[p]->getExtraCellLowIndex();

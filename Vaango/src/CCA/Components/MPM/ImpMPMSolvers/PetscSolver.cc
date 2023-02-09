@@ -112,20 +112,20 @@ MPMPetscSolver::initialize()
       argv[i] = args[i];
     }
   }
-  PetscInitialize(&argc, &argv, PETSC_nullptr, PETSC_nullptr);
+  PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
 #ifdef USE_SPOOLES
   PetscOptionsSetValue("-mat_spooles_ordering", "BestOfNDandMS");
   PetscOptionsSetValue("-mat_spooles_symmetryflag", "0");
 #endif
 #if 0
-  PetscOptionsSetValue("-options_table", PETSC_nullptr);
+  PetscOptionsSetValue("-options_table", PETSC_NULL);
   PetscOptionsSetValue("-mat_superlu_dist_iterrefine", "TRUE");
-  PetscOptionsSetValue("-mat_superlu_dist_statprint", PETSC_nullptr);
-  PetscOptionsSetValue("-log_summary", PETSC_nullptr);
-  PetscOptionsSetValue("-log_info", PETSC_nullptr);
-  PetscOptionsSetValue("-trmalloc", PETSC_nullptr);
-  PetscOptionsSetValue("-trmalloc_log", PETSC_nullptr);
-  PetscOptionsSetValue("-trdump", PETSC_nullptr);
+  PetscOptionsSetValue("-mat_superlu_dist_statprint", PETSC_NULL);
+  PetscOptionsSetValue("-log_summary", PETSC_NULL);
+  PetscOptionsSetValue("-log_info", PETSC_NULL);
+  PetscOptionsSetValue("-trmalloc", PETSC_NULL);
+  PetscOptionsSetValue("-trmalloc_log", PETSC_NULL);
+  PetscOptionsSetValue("-trdump", PETSC_NULL);
 #endif
   PetscPopSignalHandler();
 
@@ -214,7 +214,7 @@ MPMPetscSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
     Patch::selectType neighbors;
     level->selectPatches(lowIndex, highIndex, neighbors);
     // For each neighbor and myself
-    for (int i = 0; i < neighbors.size(); i++) {
+    for (size_t i = 0; i < neighbors.size(); i++) {
       const Patch* neighbor = neighbors[i];
       IntVector plow(0, 0, 0), phigh(0, 0, 0);
       if (n8or27 == 8) {
@@ -397,7 +397,7 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
     // This one works
     MatCreateMPIAIJ(PETSC_COMM_WORLD, numlrows, numlcolumns, globalrows,
                     globalcolumns, PETSC_DEFAULT, diag, 
-                    PETSC_DEFAULT,PETSC_nullptr, &d_A);
+                    PETSC_DEFAULT,PETSC_NULL, &d_A);
 #endif
 
   // This one is much faster
@@ -422,7 +422,7 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
     if (diag[i] == 1) {
       onnz[i] = 0;
     }
-    diag[i] = min(diag[i], DIAG_MAX);
+    diag[i] = std::min(diag[i], DIAG_MAX);
   }
 
 #if defined(USE_SPOOLES) || defined(USE_SUPERLU)
@@ -684,9 +684,9 @@ MPMPetscSolver::removeFixedDOF()
   finalizeMatrix();
 
 #if 0
-  MatTranspose(d_A,PETSC_nullptr);
+  MatTranspose(d_A,PETSC_NULL);
   MatZeroRows(d_A,is,&one);
-  MatTranspose(d_A,PETSC_nullptr);
+  MatTranspose(d_A,PETSC_NULL);
 #endif
 
   PetscScalar one = 1.0;

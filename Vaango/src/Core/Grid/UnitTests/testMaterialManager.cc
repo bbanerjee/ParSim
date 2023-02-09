@@ -47,7 +47,10 @@ TEST(MaterialTest, construction) {
 
   // Set the matID
   mat.setDWIndex(5);
+
+#if SCI_ASSERTION_LEVEL >= 3
   EXPECT_ANY_THROW({ mat.setDWIndex(6); });
+#endif
 
   // Get the matID
   int id = mat.getDWIndex();

@@ -608,7 +608,7 @@ impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
   //  BULLET PROOFING
   if ((counter == d_max_iter_implicit) && (max_RHS > d_outer_iter_tolerance) &&
       counter > 1) {
-    ostringstream s;
+    std::ostringstream s;
     s << "ERROR impAMRICE::implicitPressureSolve, the maximum number of outer"
       << " iterations was reached. \n "
       << "Try either increasing the max_outer_iterations "

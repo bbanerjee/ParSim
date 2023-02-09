@@ -49,9 +49,6 @@ void
 print(std::ostream& out, const Uintah::Point& t);
 
 void
-print(std::ostream& out, const Uintah::Stencil7& t);
-
-void
 displayProblemLocation(std::ostream& out,
                        const std::string& var,
                        int matl,
