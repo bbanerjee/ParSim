@@ -145,7 +145,7 @@ SchedulerCommon::getComponents()
       "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
   }
 
-  d_simulator = dynamic_cast<SimulationInterface*>(getPort("simulation"));
+  d_simulator = dynamic_cast<SimulationInterface*>(getPort("simulator"));
   if (!d_simulator) {
     throw InternalError(
       "dynamic_cast of 'd_simulator' failed!", __FILE__, __LINE__);
@@ -157,7 +157,7 @@ SchedulerCommon::releaseComponents()
 {
   releasePort("load balancer");
   releasePort("output");
-  releasePort("simulation");
+  releasePort("simulator");
 
   d_load_balancer   = nullptr;
   d_output          = nullptr;

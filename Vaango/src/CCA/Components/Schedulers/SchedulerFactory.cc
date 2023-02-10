@@ -62,7 +62,7 @@ SchedulerFactory::create(const ProblemSpecP& ps, const ProcessorGroup* world)
 #if defined(UINTAH_ENABLE_KOKKOS) && !defined(HAVE_CUDA)
     scheduler = "KokkosOpenMP";
 #else
-    if (!(Uintah::Parallel::getNumThreads() > 0)) {
+    if (Uintah::Parallel::getNumThreads() > 0) {
       scheduler = "Unified";
     } else {
       scheduler = "MPI";

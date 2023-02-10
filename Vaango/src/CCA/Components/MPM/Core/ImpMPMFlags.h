@@ -49,8 +49,10 @@ public:
 
   virtual ~ImpMPMFlags() = default;
 
-  virtual void readMPMFlags(ProblemSpecP& ps, Output* dataArchive);
-  virtual void outputProblemSpec(ProblemSpecP& ps);
+  virtual void
+  readMPMFlags(ProblemSpecP& ps, Output* dataArchive);
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps);
 
   bool d_projectHeatSource;
   bool d_doMechanics;
@@ -68,7 +70,8 @@ public:
 
 private:
   ImpMPMFlags(const ImpMPMFlags& state);
-  ImpMPMFlags& operator=(const ImpMPMFlags& state);
+  ImpMPMFlags&
+  operator=(const ImpMPMFlags& state);
 };
 
 } // End namespace Uintah

@@ -119,7 +119,7 @@ MaterialManager::finalizeMaterials()
 
 void
 MaterialManager::registerMaterial(const std::string& name,
-                                  const std::shared_ptr<Material>& material)
+                                  std::shared_ptr<Material> material)
 {
   d_materials[name].push_back(material);
   registerMaterial(material);
@@ -127,7 +127,7 @@ MaterialManager::registerMaterial(const std::string& name,
 
 void
 MaterialManager::registerMaterial(const std::string& name,
-                                  const std::shared_ptr<Material>& material,
+                                  std::shared_ptr<Material> material,
                                   unsigned int index)
 {
   d_materials[name].push_back(material);
@@ -135,7 +135,7 @@ MaterialManager::registerMaterial(const std::string& name,
 }
 
 void
-MaterialManager::registerMaterial(const std::shared_ptr<Material>& material)
+MaterialManager::registerMaterial(std::shared_ptr<Material> material)
 {
   material->setDWIndex((int)d_all_materials.size());
   d_all_materials.push_back(material);
@@ -146,7 +146,7 @@ MaterialManager::registerMaterial(const std::shared_ptr<Material>& material)
 }
 
 void
-MaterialManager::registerMaterial(const std::shared_ptr<Material>& material,
+MaterialManager::registerMaterial(std::shared_ptr<Material> material,
                                   std::uint32_t index)
 {
   if (d_all_materials.size() <= index) {
@@ -163,8 +163,7 @@ MaterialManager::registerMaterial(const std::shared_ptr<Material>& material,
 }
 
 void
-MaterialManager::registerEmptyMaterial(
-  const std::shared_ptr<EmptyMaterial>& material)
+MaterialManager::registerEmptyMaterial(std::shared_ptr<EmptyMaterial> material)
 {
   d_empty_materials.push_back(material);
   registerMaterial(material);

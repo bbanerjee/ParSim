@@ -84,7 +84,7 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     std::string index("");
     ps->getAttribute("index", index);
 
-    constexpr int DEFAULT_VALUE = -1;
+    const int DEFAULT_VALUE = -1;
     std::stringstream id(index);
     int index_val = DEFAULT_VALUE;
     id >> index_val;
@@ -109,9 +109,9 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     // Index_val = -1 means that we don't register the material by its
     // index number.
     if (index_val > -1) {
-      s_materialManager->registerMaterial("MPM", mat, index_val);
+      s_materialManager->registerMaterial("MPM", std::move(mat), index_val);
     } else {
-      s_materialManager->registerMaterial("MPM", mat);
+      s_materialManager->registerMaterial("MPM", std::move(mat));
     }
 
     // If new particles are to be created, create a copy of each material
@@ -119,7 +119,7 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     if (flags->d_createNewParticles) {
       std::shared_ptr<MPMMaterial> mat_copy = std::make_shared<MPMMaterial>();
       mat_copy->copyWithoutGeom(ps, mat.get(), d_flags);
-      s_materialManager->registerMaterial("MPM", mat_copy);
+      s_materialManager->registerMaterial("MPM", std::move(mat_copy));
     }
   }
 }

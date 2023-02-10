@@ -113,9 +113,8 @@ static DebugStream cout_dbg("IMPM_Debug", false);
 ImpMPM::ImpMPM(const ProcessorGroup* myworld,
                const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
-  , MPMCommon(mat_manager)
+  , MPMCommon(d_materialManager)
 {
-  d_materialManager = mat_manager;
   d_mpm_labels       = std::make_unique<MPMLabel>();
   d_impmpmLabels    = std::make_unique<ImpMPMLabel>();
   d_mpm_flags        = std::make_unique<ImpMPMFlags>(myworld);

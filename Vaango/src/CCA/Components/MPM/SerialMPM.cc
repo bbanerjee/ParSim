@@ -126,7 +126,7 @@ static DebugStream cout_damage("Damage", false);
 SerialMPM::SerialMPM(const ProcessorGroup* myworld,
                      const MaterialManagerP& materialManager)
   : SimulationCommon(myworld, materialManager)
-  , MPMCommon(materialManager)
+  , MPMCommon(d_materialManager)
 {
   d_mpm_labels = std::make_unique<MPMLabel>();
   d_czLabels  = std::make_unique<CZLabel>();

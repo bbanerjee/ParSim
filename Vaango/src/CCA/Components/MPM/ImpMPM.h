@@ -564,8 +564,6 @@ private:
                           DataWarehouse* new_dw);
 
 private:
-  MaterialManagerP d_materialManager{ nullptr };
-
   std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
   std::unique_ptr<ImpMPMLabel> d_impmpmLabels{ nullptr };
   std::unique_ptr<ImpMPMFlags> d_mpm_flags{ nullptr };

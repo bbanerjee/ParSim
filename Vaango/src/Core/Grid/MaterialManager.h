@@ -67,13 +67,13 @@ public:
 
   void
   registerMaterial(const std::string& name,
-                   const std::shared_ptr<Material>& material);
+                   std::shared_ptr<Material> material);
   void
   registerMaterial(const std::string& name,
-                   const std::shared_ptr<Material>& material,
+                   std::shared_ptr<Material> material,
                    std::uint32_t index);
   void
-  registerEmptyMaterial(const std::shared_ptr<EmptyMaterial>& material);
+  registerEmptyMaterial(std::shared_ptr<EmptyMaterial> material);
 
   const MaterialSet*
   allMaterials(const std::string& name) const;
@@ -117,9 +117,9 @@ public:
 
 private:
   void
-  registerMaterial(const std::shared_ptr<Material>& material);
+  registerMaterial(std::shared_ptr<Material> material);
   void
-  registerMaterial(const std::shared_ptr<Material>& material,
+  registerMaterial(std::shared_ptr<Material> material,
                    unsigned int index);
 
   Material*

@@ -704,8 +704,6 @@ protected:
   std::unique_ptr<HeatConductionTasks> d_heatConductionTasks{ nullptr };
   std::vector<std::unique_ptr<AnalysisModule>> d_analysisModules;
 
-  MaterialManagerP d_materialManager{ nullptr };
-
   // Ports
   SwitchingCriteria* d_switchCriteria{ nullptr };
 
