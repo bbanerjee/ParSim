@@ -35,6 +35,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace Uintah {
@@ -104,11 +105,11 @@ public:
 
   // eliminate copy, assignment, and move
   TaskGraph(const TaskGraph&) = delete;
-  TaskGraph&
-  operator=(const TaskGraph&) = delete;
-  TaskGraph(TaskGraph&&)      = delete;
-  TaskGraph&
-  operator=(TaskGraph&&) = delete;
+  auto
+  operator=(const TaskGraph&) -> TaskGraph& = delete;
+  TaskGraph(TaskGraph&&)                    = delete;
+  auto
+  operator=(TaskGraph&&) -> TaskGraph& = delete;
 
   /// Clears the TaskGraph and deletes all tasks.
   void
@@ -127,26 +128,26 @@ public:
   /// DetailedTask for each PatchSubset and MaterialSubset in a Task,
   /// where a Task may have many PatchSubsets and MaterialSubsets.).
   /// Sorts using topologicalSort.
-  DetailedTasks*
+  auto
   createDetailedTasks(bool useInternalDeps,
                       const GridP& grid,
                       const GridP& oldGrid,
-                      const bool hasDistalReqs = false);
+                      const bool hasDistalReqs = false) -> DetailedTasks*;
 
-  inline DetailedTasks*
-  getDetailedTasks()
+  inline auto
+  getDetailedTasks() -> DetailedTasks*
   {
     return d_detailed_tasks;
   }
 
-  inline Scheduler::tgType
-  getType() const
+  [[nodiscard]] inline auto
+  getType() const -> Scheduler::tgType
   {
     return d_type;
   }
 
-  inline int
-  getIndex()
+  inline auto
+  getIndex() -> int
   {
     return d_index;
   }
@@ -167,11 +168,11 @@ public:
   void
   nullSort(std::vector<Task*>& tasks);
 
-  int
-  getNumTasks() const;
+  [[nodiscard]] auto
+  getNumTasks() const -> int;
 
-  Task*
-  getTask(int i);
+  auto
+  getTask(int i) -> Task*;
 
   void
   remapTaskDWs(int dwmap[]);
@@ -193,20 +194,20 @@ public:
     d_current_iteration = iter;
   }
 
-  int
-  getNumTaskPhases()
+  auto
+  getNumTaskPhases() -> int
   {
     return d_num_task_phases;
   }
 
-  std::vector<std::shared_ptr<Task>>&
-  getTasks()
+  auto
+  getTasks() -> std::vector<std::shared_ptr<Task>>&
   {
     return d_tasks;
   }
 
-  inline bool
-  getDistalRequires() const
+  [[nodiscard]] inline auto
+  getDistalRequires() const -> bool
   {
     return d_has_distal_requires;
   }
@@ -243,17 +244,17 @@ private:
 
   /// find the processor that a variable (req) is on given patch and
   /// material.
-  int
+  auto
   findVariableLocation(Task::Dependency* req,
                        const Patch* patch,
                        int matl,
-                       int iteration);
+                       int iteration) -> int;
 
 private:
   struct LabelLevel
   {
-    LabelLevel(const std::string& key, const int level)
-      : m_key(key)
+    LabelLevel(std::string key, const int level)
+      : m_key(std::move(key))
       , m_level(level)
     {
     }
@@ -261,8 +262,8 @@ private:
     std::string m_key{};
     int m_level{};
 
-    bool
-    operator<(const LabelLevel& rhs) const
+    auto
+    operator<(const LabelLevel& rhs) const -> bool
     {
       if (this->m_level < rhs.m_level) {
         return true;
@@ -293,7 +294,7 @@ private:
   // does this TG contain requires with halo > MAX_HALO_DEPTH
   bool d_has_distal_requires{ false };
 
-  std::vector<std::shared_ptr<Task>> d_tasks{};
+  std::vector<std::shared_ptr<Task>> d_tasks;
 
   ///////////////////////////////////////////////////////////////////////
   // Archived code for topological sort
@@ -303,14 +304,10 @@ public:
   struct GraphSortInfo
   {
 
-    GraphSortInfo()
-      : m_visited{ false }
-      , m_sorted{ false }
-    {
-    }
+    GraphSortInfo() {}
 
-    bool m_visited;
-    bool m_sorted;
+    bool m_visited{ false };
+    bool m_sorted{ false };
   };
 
   using CompMap          = std::multimap<const VarLabel*, Task::Dependency*>;
@@ -330,8 +327,9 @@ private:
                      LevelReductionTasksMap& reductionTasks,
                      bool modifies);
 
-  bool
-  overlaps(const Task::Dependency* comp, const Task::Dependency* req) const;
+  auto
+  overlaps(const Task::Dependency* comp, const Task::Dependency* req) const
+    -> bool;
 
   /// Helper function for processTasks, processing the dependencies
   /// for the given task in the dependency list whose head is req.

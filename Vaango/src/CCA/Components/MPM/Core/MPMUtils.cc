@@ -24,12 +24,10 @@
 
 #include <CCA/Components/MPM/Core/MPMUtils.h>
 
-namespace Uintah {
+namespace Uintah::Util {
 
-namespace Util {
-
-Vector
-face_norm(Patch::FaceType f)
+auto
+face_norm(Patch::FaceType f) -> Vector
 {
   switch (f) {
     case Patch::xminus:
@@ -49,8 +47,8 @@ face_norm(Patch::FaceType f)
   }
 }
 
-std::pair<IntVector, IntVector>
-getPatchLoHiNodes(const Patch* patch, int n8or27)
+auto
+getPatchLoHiNodes(const Patch* patch, int n8or27) -> std::pair<IntVector, IntVector>
 {
   Uintah::IntVector lowIndex(0, 0, 0), highIndex(0, 0, 0);
   if (n8or27 == 8) {
@@ -90,6 +88,5 @@ removeDuplicatePatches(Level::selectType& array)
   array.resize(newLength);
 }
 
-} // namespace Util
 } // end namespace Uintah
 

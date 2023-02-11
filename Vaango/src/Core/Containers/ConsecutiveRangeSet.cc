@@ -36,7 +36,7 @@ const ConsecutiveRangeSet ConsecutiveRangeSet::all(
   INT_MAX - 1 /* -1 to avoid overflow */);
 
 ConsecutiveRangeSet::ConsecutiveRangeSet(std::list<int>& set)
-  : size_(0) // set to zero just to start
+
 {
   set.sort();
   set.unique();
@@ -45,7 +45,7 @@ ConsecutiveRangeSet::ConsecutiveRangeSet(std::list<int>& set)
     return; // empty set
   }
 
-  std::list<int>::iterator it = set.begin();
+  auto it = set.begin();
   Range range(*it, *it);
 
   std::list<Range> rangeSet;
@@ -73,14 +73,13 @@ ConsecutiveRangeSet::ConsecutiveRangeSet(int low, int high)
     std::cerr << "Warning, initializing ConsectuiveRangeSet with a high of\n"
               << "INT_MAX may cause overflow.\n";
   }
-  rangeSet_.push_back(Range(low, high));
+  rangeSet_.emplace_back(low, high);
   setSize();
 }
 
 // initialize a range set with a string formatted like: "1, 2-8, 10, 15-30"
 ConsecutiveRangeSet::ConsecutiveRangeSet(const std::string& setstr) noexcept(
   false)
-  : size_(0) // set to zero just to start
 {
   std::istringstream in(setstr);
   std::list<Range> rangeSet;
@@ -129,12 +128,12 @@ ConsecutiveRangeSet::ConsecutiveRangeSet(const std::string& setstr) noexcept(
             __FILE__,
             __LINE__);
         }
-        rangeSet.push_back(Range(lastNumber, n));
+        rangeSet.emplace_back(lastNumber, n);
         isInterval    = false;
         hasLastNumber = false;
       } else {
         if (hasLastNumber) {
-          rangeSet.push_back(Range(lastNumber, lastNumber));
+          rangeSet.emplace_back(lastNumber, lastNumber);
         }
         lastNumber    = n;
         hasLastNumber = true;
@@ -142,7 +141,7 @@ ConsecutiveRangeSet::ConsecutiveRangeSet(const std::string& setstr) noexcept(
     }
   }
   if (hasLastNumber) {
-    rangeSet.push_back(Range(lastNumber, lastNumber));
+    rangeSet.emplace_back(lastNumber, lastNumber);
   }
 
   rangeSet.sort();
@@ -152,7 +151,7 @@ ConsecutiveRangeSet::ConsecutiveRangeSet(const std::string& setstr) noexcept(
     return; // empty set - nothing to do
   }
 
-  std::list<Range>::iterator it = rangeSet.begin();
+  auto it = rangeSet.begin();
   std::list<Range>::iterator tmp_it;
   int last_high = (*it).high();
   for (it++; it != rangeSet.end(); it++) {
@@ -177,7 +176,7 @@ void
 ConsecutiveRangeSet::addInOrder(int value) noexcept(false)
 {
   if (rangeSet_.size() == 0) {
-    rangeSet_.push_back(Range(value, value));
+    rangeSet_.emplace_back(value, value);
   } else {
     Range& range   = rangeSet_.back();
     int last_value = (int)(range.low_ + range.extent_);
@@ -192,7 +191,7 @@ ConsecutiveRangeSet::addInOrder(int value) noexcept(false)
         range.extent_++;
       } else {
         // end of range
-        rangeSet_.push_back(Range(value, value));
+        rangeSet_.emplace_back(value, value);
       }
     } else {
       return; // value == last_value -- don't increment the size
@@ -204,15 +203,15 @@ ConsecutiveRangeSet::addInOrder(int value) noexcept(false)
 void
 ConsecutiveRangeSet::setSize()
 {
-  size_                           = 0;
-  std::vector<Range>::iterator it = rangeSet_.begin();
+  size_   = 0;
+  auto it = rangeSet_.begin();
   for (; it != rangeSet_.end(); it++) {
     size_ += (*it).extent_ + 1;
   }
 }
 
-ConsecutiveRangeSet::iterator&
-ConsecutiveRangeSet::iterator::operator++()
+auto
+ConsecutiveRangeSet::iterator::operator++() -> ConsecutiveRangeSet::iterator&
 {
   // check to see if it is already at the end
   CHECKARRAYBOUNDS(range_, 0, (long)set_->rangeSet_.size());
@@ -225,11 +224,11 @@ ConsecutiveRangeSet::iterator::operator++()
   return *this;
 }
 
-bool
-ConsecutiveRangeSet::operator==(const ConsecutiveRangeSet& set2) const
+auto
+ConsecutiveRangeSet::operator==(const ConsecutiveRangeSet& set2) const -> bool
 {
-  std::vector<Range>::const_iterator it  = rangeSet_.begin();
-  std::vector<Range>::const_iterator it2 = set2.rangeSet_.begin();
+  auto it  = rangeSet_.begin();
+  auto it2 = set2.rangeSet_.begin();
   for (; it != rangeSet_.end() && it2 != set2.rangeSet_.end(); it++, it2++) {
     if (*it != *it2) {
       return false;
@@ -242,15 +241,16 @@ ConsecutiveRangeSet::operator==(const ConsecutiveRangeSet& set2) const
   return true;
 }
 
-ConsecutiveRangeSet
+auto
 ConsecutiveRangeSet::intersected(const ConsecutiveRangeSet& set2) const
+  -> ConsecutiveRangeSet
 {
   std::list<Range> newRangeSet;
   Range range(0, 0);
 
   // note that the sets are in sorted order
-  std::vector<Range>::const_iterator it  = rangeSet_.begin();
-  std::vector<Range>::const_iterator it2 = set2.rangeSet_.begin();
+  auto it  = rangeSet_.begin();
+  auto it2 = set2.rangeSet_.begin();
   while (it != rangeSet_.end() && it2 != set2.rangeSet_.end()) {
     while ((*it).low_ > (*it2).high()) {
       it2++;
@@ -282,8 +282,9 @@ ConsecutiveRangeSet::intersected(const ConsecutiveRangeSet& set2) const
   return ConsecutiveRangeSet(newRangeSet.begin(), newRangeSet.end());
 }
 
-ConsecutiveRangeSet
+auto
 ConsecutiveRangeSet::unioned(const ConsecutiveRangeSet& set2) const
+  -> ConsecutiveRangeSet
 {
   std::list<Range> newRangeSet;
   Range range(0, 0);
@@ -296,8 +297,8 @@ ConsecutiveRangeSet::unioned(const ConsecutiveRangeSet& set2) const
   }
 
   // note that the sets are in sorted order
-  std::vector<Range>::const_iterator it  = rangeSet_.begin();
-  std::vector<Range>::const_iterator it2 = set2.rangeSet_.begin();
+  auto it  = rangeSet_.begin();
+  auto it2 = set2.rangeSet_.begin();
   newRangeSet.push_back(((*it).low_ < (*it2).low_) ? *it++ : *it2++);
 
   while (it != rangeSet_.end() || it2 != set2.rangeSet_.end()) {
@@ -327,16 +328,16 @@ ConsecutiveRangeSet::unioned(const ConsecutiveRangeSet& set2) const
   return ConsecutiveRangeSet(newRangeSet.begin(), newRangeSet.end());
 }
 
-std::string
-ConsecutiveRangeSet::toString() const
+auto
+ConsecutiveRangeSet::toString() const -> std::string
 {
   std::ostringstream stream;
   stream << *this; // << '\0';
   return stream.str();
 }
 
-std::string
-ConsecutiveRangeSet::expandedString() const
+auto
+ConsecutiveRangeSet::expandedString() const -> std::string
 {
   std::ostringstream stream;
   iterator it = begin();
@@ -360,11 +361,10 @@ ConsecutiveRangeSet::Range::Range(int low, int high)
   }
 }
 
-std::ostream&
-operator<<(std::ostream& out, const ConsecutiveRangeSet& set)
+auto
+operator<<(std::ostream& out, const ConsecutiveRangeSet& set) -> std::ostream&
 {
-  std::vector<ConsecutiveRangeSet::Range>::const_iterator it =
-    set.rangeSet_.begin();
+  auto it = set.rangeSet_.begin();
 
   if (it == set.rangeSet_.end()) {
     return out; // empty set
@@ -378,8 +378,8 @@ operator<<(std::ostream& out, const ConsecutiveRangeSet& set)
   return out;
 }
 
-ConsecutiveRangeSet::iterator
-ConsecutiveRangeSet::find(int n)
+auto
+ConsecutiveRangeSet::find(int n) -> ConsecutiveRangeSet::iterator
 {
   int start  = 0;
   int middle = rangeSet_.size() / 2;

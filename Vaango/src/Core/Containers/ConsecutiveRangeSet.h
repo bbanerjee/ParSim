@@ -45,6 +45,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Uintah {
@@ -72,10 +73,9 @@ DESCRIPTION
 class ConsecutiveRangeSetException : public Exception
 {
 public:
-  ConsecutiveRangeSetException(const std::string& msg,
-                               const char* file,
-                               int line)
-    : Exception(), msg_(msg)
+  ConsecutiveRangeSetException(std::string msg, const char* file, int line)
+    : Exception()
+    , msg_(std::move(msg))
   {
 
     std::ostringstream s;
@@ -90,25 +90,27 @@ public:
   }
 
   ConsecutiveRangeSetException(const ConsecutiveRangeSetException& copy)
-    : Exception(), msg_(copy.msg_)
+    : Exception()
+    , msg_(copy.msg_)
   {
   }
 
-  ConsecutiveRangeSetException
+  auto
   operator=(const ConsecutiveRangeSetException& copy)
+    -> ConsecutiveRangeSetException
   {
     msg_ = copy.msg_;
     return *this;
   }
 
-  virtual const char*
-  message() const
+  [[nodiscard]] const char*
+  message() const override
   {
     return msg_.c_str();
   }
 
-  virtual const char*
-  type() const
+  [[nodiscard]] const char*
+  type() const override
   {
     return "ConsecutiveRangeSetException";
   }
@@ -119,8 +121,9 @@ private:
 
 class ConsecutiveRangeSet
 {
-  friend std::ostream&
-  operator<<(std::ostream& out, const ConsecutiveRangeSet& set);
+  friend auto
+  operator<<(std::ostream& out, const ConsecutiveRangeSet& set)
+    -> std::ostream&;
 
 public:
   class iterator
@@ -133,42 +136,31 @@ public:
     {
     }
 
-    iterator(const iterator& it2)
-      : set_{ it2.set_ }
-      , range_{ it2.range_ }
-      , offset_{ it2.offset_ }
-    {
-    }
+    iterator(const iterator& it2) = default;
 
-    iterator&
-    operator=(const iterator& it2)
-    {
-      set_    = it2.set_;
-      range_  = it2.range_;
-      offset_ = it2.offset_;
-      return *this;
-    }
+    auto
+    operator=(const iterator& it2) -> iterator& = default;
 
-    inline int
-    operator*() noexcept(false);
+    inline auto
+    operator*() noexcept(false) -> int;
 
-    bool
-    operator==(const iterator& it2) const
+    auto
+    operator==(const iterator& it2) const -> bool
     {
       return range_ == it2.range_ && offset_ == it2.offset_;
     }
 
-    bool
-    operator!=(const iterator& it2) const
+    auto
+    operator!=(const iterator& it2) const -> bool
     {
       return !(*this == it2);
     }
 
-    iterator&
-    operator++();
+    auto
+    operator++() -> iterator&;
 
-    inline iterator
-    operator++(int);
+    inline auto
+    operator++(int) -> iterator;
 
   private:
     const ConsecutiveRangeSet* set_{ nullptr };
@@ -182,33 +174,26 @@ public:
     Range(int low, int high);
 
     Range(const Range& r2)
-      : low_{ r2.low_ }
-      , extent_{ r2.extent_ }
-    {
-    }
 
-    Range&
-    operator=(const Range& r2)
-    {
-      low_    = r2.low_;
-      extent_ = r2.extent_;
-      return *this;
-    }
+      = default;
 
-    bool
-    operator==(const Range& r2) const
+    auto
+    operator=(const Range& r2) -> Range& = default;
+
+    auto
+    operator==(const Range& r2) const -> bool
     {
       return low_ == r2.low_ && extent_ == r2.extent_;
     }
 
-    bool
-    operator!=(const Range& r2) const
+    auto
+    operator!=(const Range& r2) const -> bool
     {
       return low_ != r2.low_ || extent_ != r2.extent_;
     }
 
-    bool
-    operator<(const Range& r2) const
+    auto
+    operator<(const Range& r2) const -> bool
     {
       return low_ < r2.low_;
     }
@@ -216,8 +201,8 @@ public:
     inline void
     display(std::ostream& out) const;
 
-    int
-    high() const
+    [[nodiscard]] auto
+    high() const -> int
     {
       return (int)(low_ + extent_);
     }
@@ -237,21 +222,12 @@ public:
   // initialize a range set with a string formatted like: "1, 2-8, 10, 15-30"
   ConsecutiveRangeSet(const std::string& setstr) noexcept(false);
 
-  ConsecutiveRangeSet(const ConsecutiveRangeSet& set2)
-    : rangeSet_{ set2.rangeSet_ }
-    , size_{ set2.size_ }
-  {
-  }
+  ConsecutiveRangeSet(const ConsecutiveRangeSet& set2) = default;
 
   ~ConsecutiveRangeSet() = default;
 
-  ConsecutiveRangeSet&
-  operator=(const ConsecutiveRangeSet& set2)
-  {
-    rangeSet_ = set2.rangeSet_;
-    size_     = set2.size_;
-    return *this;
-  }
+  auto
+  operator=(const ConsecutiveRangeSet& set2) -> ConsecutiveRangeSet& = default;
 
   // Add to the range set, asserting that value is greater or equal
   // to anything already in the set (if it is equal to something already
@@ -268,58 +244,58 @@ public:
     }
   }
 
-  bool
-  operator==(const ConsecutiveRangeSet& set2) const;
+  auto
+  operator==(const ConsecutiveRangeSet& set2) const -> bool;
 
-  bool
-  operator!=(const ConsecutiveRangeSet& set2) const
+  auto
+  operator!=(const ConsecutiveRangeSet& set2) const -> bool
   {
     return !(*this == set2);
   }
 
   // obtain the intersection of two sets
-  ConsecutiveRangeSet
-  intersected(const ConsecutiveRangeSet& set2) const;
+  [[nodiscard]] auto
+  intersected(const ConsecutiveRangeSet& set2) const -> ConsecutiveRangeSet;
 
   // obtain the union of two sets
-  ConsecutiveRangeSet
-  unioned(const ConsecutiveRangeSet& set2) const;
+  [[nodiscard]] auto
+  unioned(const ConsecutiveRangeSet& set2) const -> ConsecutiveRangeSet;
 
   // Could implement binary search on the range set, but this
   // wasn't needed so I didn't do it.  Perhaps in the future if
   // needed. -- Wayne
   // I needed it, so I implemented it.  -- Bryan
-  iterator
-  find(int n);
+  auto
+  find(int n) -> iterator;
 
-  inline iterator
-  begin() const
+  [[nodiscard]] inline auto
+  begin() const -> iterator
   {
     return iterator(this, 0, 0);
   }
 
-  inline iterator
-  end() const
+  [[nodiscard]] inline auto
+  end() const -> iterator
   {
     return iterator(this, (int)rangeSet_.size(), 0);
   }
 
-  unsigned long
-  size() const
+  [[nodiscard]] auto
+  size() const -> unsigned long
   {
     return size_;
   }
 
-  std::string
-  toString() const;
+  [[nodiscard]] auto
+  toString() const -> std::string;
 
   // return a space separated list of integers
-  std::string
-  expandedString() const;
+  [[nodiscard]] auto
+  expandedString() const -> std::string;
 
   // used for debugging
-  int
-  getNumRanges()
+  auto
+  getNumRanges() -> int
   {
     return (int)rangeSet_.size();
   }
@@ -342,15 +318,15 @@ private:
   unsigned long size_{ 0 }; // sum of range (extent+1)'s
 };
 
-inline int
-ConsecutiveRangeSet::iterator::operator*() noexcept(false)
+inline auto
+ConsecutiveRangeSet::iterator::operator*() noexcept(false) -> int
 {
   CHECKARRAYBOUNDS(range_, 0, (long)set_->rangeSet_.size());
   return set_->rangeSet_[range_].low_ + offset_;
 }
 
-inline ConsecutiveRangeSet::iterator
-ConsecutiveRangeSet::iterator::operator++(int)
+inline auto
+ConsecutiveRangeSet::iterator::operator++(int) -> ConsecutiveRangeSet::iterator
 {
   iterator oldit(*this);
   ++(*this);

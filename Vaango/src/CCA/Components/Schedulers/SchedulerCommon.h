@@ -72,92 +72,97 @@ public:
 
 public:
   SchedulerCommon(const ProcessorGroup* myworld);
-  virtual ~SchedulerCommon();
+  ~SchedulerCommon() override;
 
   SchedulerCommon(const SchedulerCommon&) = delete;
   SchedulerCommon(SchedulerCommon&&)      = delete;
-  SchedulerCommon&
-  operator=(const SchedulerCommon&) = delete;
-  SchedulerCommon&
-  operator=(SchedulerCommon&&) = delete;
+  auto
+  operator=(const SchedulerCommon&) -> SchedulerCommon& = delete;
+  auto
+  operator=(SchedulerCommon&&) -> SchedulerCommon& = delete;
 
-  virtual void
+  void
   setComponents(UintahParallelComponent* comp) override;
-  virtual void
+  void
   getComponents() override;
-  virtual void
+  void
   releaseComponents() override;
 
-  virtual SimulationInterface*
-  getSimulator()
+  SimulationInterface*
+  getSimulator() override
   {
     return d_simulator;
   };
-  virtual LoadBalancer*
-  getLoadBalancer()
+
+  LoadBalancer*
+  getLoadBalancer() override
   {
     return d_load_balancer;
   };
-  virtual Output*
-  getOutput()
+
+  Output*
+  getOutput() override
   {
     return d_output;
   }
 
-  virtual void
+  void
   problemSetup(const ProblemSpecP& prob_spec,
-               const MaterialManagerP& mat_manager);
+               const MaterialManagerP& mat_manager) override;
 
-  virtual void
-  doEmitTaskGraphDocs();
+  void
+  doEmitTaskGraphDocs() override;
 
-  virtual void
+  void
   checkMemoryUse(unsigned long& mem_use,
                  unsigned long& high_water,
-                 unsigned long& max_mem_use);
+                 unsigned long& max_mem_use) override;
 
   // sbrk memory start location (for memory tracking)
-  virtual void
-  setStartAddr(char* start)
+  void
+  setStartAddr(char* start) override
   {
     s_start_addr = start;
   }
-  virtual char*
-  getStartAddr()
+
+  char*
+  getStartAddr() override
   {
     return s_start_addr;
   }
-  virtual void
-  resetMaxMemValue();
-
-  virtual void
-  initialize(int num_old_dw = 1, int num_new_dw = 1);
-
-  virtual void
-  setParentDWs(DataWarehouse* parent_old_dw, DataWarehouse* parent_new_dw);
-
-  virtual void
-  clearMappings();
-
-  virtual void
-  mapDataWarehouse(Task::WhichDW, int dw_tag);
 
   void
-  compile();
+  resetMaxMemValue() override;
+
+  void
+  initialize(int num_old_dw = 1, int num_new_dw = 1) override;
+
+  void
+  setParentDWs(DataWarehouse* parent_old_dw,
+               DataWarehouse* parent_new_dw) override;
+
+  void
+  clearMappings() override;
+
+  void
+  mapDataWarehouse(Task::WhichDW, int dw_tag) override;
+
+  void
+  compile() override;
 
   /// For more complicated models
-  virtual void
-  addTaskGraph(Scheduler::tgType type, int index /* = -1 */);
+  void
+  addTaskGraph(Scheduler::tgType type, int index /* = -1 */) override;
 
-  virtual TaskGraph*
-  getTaskGraph(unsigned int index)
+  TaskGraph*
+  getTaskGraph(unsigned int index) override
   {
     ASSERT(index < d_task_graphs.size());
     return d_task_graphs[index].get();
   }
 
-  virtual int
-  getNumTaskGraphs()
+  int
+  getNumTaskGraphs() override
   {
     return d_task_graphs.size();
   }
@@ -165,69 +170,70 @@ public:
   // The number of task graphs is the number of task graphs that
   // will be used for all time steps excdept the initial time step,
   // where there is only one task graph.
-  virtual void
-  setNumTaskGraphs(const int num_task_graphs)
+  void
+  setNumTaskGraphs(const int num_task_graphs) override
   {
     ASSERT(num_task_graphs >= 1);
     d_num_task_graphs = num_task_graphs;
   }
 
-  virtual void
+  void
   addTask(Task* task,
           const PatchSet* patches,
           const MaterialSet* materials,
-          const int tg_num = -1);
-
-  virtual bool
-  useSmallMessages()
+          const int tg_num = -1) override;
+  bool
+  useSmallMessages() override
   {
     return d_use_small_messages;
   }
 
   /// Get all of the requires needed from the old data warehouse
   /// (carried forward).
-  virtual const std::vector<const Task::Dependency*>&
-  getInitialRequires() const
+  const std::vector<const Task::Dependency*>&
+  getInitialRequires() const override
   {
     return d_init_requires;
   }
-  virtual const std::set<const VarLabel*, VarLabel::Compare>&
-  getInitialRequiredVars() const
+
+  const std::set<const VarLabel*, VarLabel::Compare>&
+  getInitialRequiredVars() const override
   {
     return d_init_required_vars;
   }
-  virtual const std::set<const VarLabel*, VarLabel::Compare>&
-  getComputedVars() const
+
+  const std::set<const VarLabel*, VarLabel::Compare>&
+  getComputedVars() const override
   {
     return d_computed_vars;
   }
 
-  virtual DataWarehouse*
-  get_dw(int idx);
+  DataWarehouse*
+  get_dw(int idx) override;
 
-  virtual DataWarehouse*
-  getLastDW();
+  DataWarehouse*
+  getLastDW() override;
 
-  virtual void
-  logMemoryUse();
+  void
+  logMemoryUse() override;
 
-  virtual void
-  advanceDataWarehouse(const GridP& grid, bool initialization = false);
+  void
+  advanceDataWarehouse(const GridP& grid, bool initialization = false) override;
 
-  virtual void
-  fillDataWarehouses(const GridP& grid);
+  void
+  fillDataWarehouses(const GridP& grid) override;
 
-  virtual void
+  void
   replaceDataWarehouse(int index,
                        const GridP& grid,
-                       bool initialization = false);
+                       bool initialization = false) override;
 
   // Get the SuperPatch (set of connected patches making a larger rectangle)
   // for the given label and patch and find the largest extents encompassing
   // the expected ghost cells (requiredLow, requiredHigh) and the requested
   // ghost cells as well (requestedLow, requestedHigh) for each of the
   // patches.  Required and requested will besame if requestedNumGCells = 0.
-  virtual const std::vector<const Patch*>*
+  const std::vector<const Patch*>*
   getSuperPatchExtents(const VarLabel* label,
                        int matl_index,
                        const Patch* patch,
@@ -236,24 +242,24 @@ public:
                        IntVector& required_low,
                        IntVector& required_high,
                        IntVector& requested_low,
-                       IntVector& requested_high) const;
+                       IntVector& requested_high) const override;
 
   // Makes and returns a map that maps strings to VarLabels of
   // that name and a list of material indices for which that
   // variable is valid (at least according to d_allcomps).
-  virtual std::unique_ptr<Scheduler::VarLabelMaterialMap>
-  makeVarLabelMaterialMap();
+  std::unique_ptr<Scheduler::VarLabelMaterialMap>
+  makeVarLabelMaterialMap() override;
 
-  virtual bool
-  isOldDW(int idx) const;
+  bool
+  isOldDW(int idx) const override;
 
-  virtual bool
-  isNewDW(int idx) const;
+  bool
+  isNewDW(int idx) const override;
 
   // Only called by the SimulationController, and only once, and only
   // if the simulation has been "restarted."
-  virtual void
-  setGeneration(int id)
+  void
+  setGeneration(int id) override
   {
     d_generation = id;
   }
@@ -269,14 +275,14 @@ public:
 
   // Schedule particle relocation without the need to supply pre_relocation
   // variables. Use with caution until as this requires further testing (tsaad).
-  virtual void
+  void
   scheduleParticleRelocation(
     const LevelP& coarsest_level_with_particles,
     const VarLabel* position_label,
     const std::vector<std::vector<const VarLabel*>>& other_labels,
-    const MaterialSet* materials);
+    const MaterialSet* materials) override;
 
-  virtual void
+  void
   scheduleParticleRelocation(
     const LevelP& coarsest_level_with_particles,
     const VarLabel* old_position_label,
@@ -284,26 +290,26 @@ public:
     const VarLabel* new_postion_label,
     const std::vector<std::vector<const VarLabel*>>& new_other_labels,
     const VarLabel* particle_id_label,
-    const MaterialSet* materials);
+    const MaterialSet* materials) override;
 
-  virtual void
-  setPositionVar(const VarLabel* pos_label)
+  void
+  setPositionVar(const VarLabel* pos_label) override
   {
     d_reloc_new_pos_label = pos_label;
   }
 
-  virtual void
-  scheduleAndDoDataCopy(const GridP& grid);
+  void
+  scheduleAndDoDataCopy(const GridP& grid) override;
 
   // Clear the recorded task monitoring attribute values.
-  virtual void
-  clearTaskMonitoring();
+  void
+  clearTaskMonitoring() override;
 
   // Schedule the recording of the task monitoring attribute values.
-  virtual void
-  scheduleTaskMonitoring(const LevelP& level);
-  virtual void
-  scheduleTaskMonitoring(const PatchSet* patches);
+  void
+  scheduleTaskMonitoring(const LevelP& level) override;
+  void
+  scheduleTaskMonitoring(const PatchSet* patches) override;
 
   // Record the task monitoring attribute values.
   virtual void
@@ -314,91 +320,92 @@ public:
                        DataWarehouse* new_dw);
 
   //! override default behavior of copying, scrubbing, and such
-  virtual void
+  void
   overrideVariableBehavior(const std::string& var,
                            bool treat_as_old,
                            bool copy_data,
                            bool no_scrub,
                            bool not_copy_data  = false,
-                           bool not_checkpoint = false);
+                           bool not_checkpoint = false) override;
 
-  const std::set<std::string>&
-  getNoScrubVars()
+  auto
+  getNoScrubVars() -> const std::set<std::string>&
   {
     return d_no_scrub_vars;
   }
 
-  const std::set<std::string>&
-  getCopyDataVars()
+  auto
+  getCopyDataVars() -> const std::set<std::string>&
   {
     return d_copy_data_vars;
   }
 
-  const std::set<std::string>&
-  getNotCopyDataVars()
+  auto
+  getNotCopyDataVars() -> const std::set<std::string>&
   {
     return d_not_copy_data_vars;
   }
 
-  virtual const std::set<std::string>&
-  getNotCheckPointVars() const
+  const std::set<std::string>&
+  getNotCheckPointVars() const override
   {
     return d_not_checkpoint_vars;
   }
 
-  virtual bool
-  useInternalDeps();
+  virtual auto
+  useInternalDeps() -> bool;
 
   int
-  getMaxGhost() const
+  getMaxGhost() const override
   {
     return d_max_ghost_cells;
   }
 
   int
-  getMaxDistalGhost() const
+  getMaxDistalGhost() const override
   {
     return d_max_distal_ghost_cells;
   }
 
   int
-  getMaxLevelOffset() const
+  getMaxLevelOffset() const override
   {
     return d_max_level_offset;
   }
 
   bool
-  isCopyDataTimestep() const
+  isCopyDataTimestep() const override
   {
     return d_is_copy_data_timestep;
   }
 
   bool
-  copyTimestep() const
+  copyTimestep() const override
   {
     return (d_is_copy_data_timestep || d_is_init_timestep);
   }
 
   void
-  setInitTimestep(bool is_init_timestep)
+  setInitTimestep(bool is_init_timestep) override
   {
     d_is_init_timestep = is_init_timestep;
   }
 
   void
-  setRestartInitTimestep(bool is_restart_init_timestep)
+  setRestartInitTimestep(bool is_restart_init_timestep) override
   {
     d_is_restart_init_timestep = is_restart_init_timestep;
   }
 
-  virtual bool
-  isRestartInitTimestep() const
+  bool
+  isRestartInitTimestep() const override
   {
     return d_is_restart_init_timestep;
   }
 
   void
-  setRuntimeStats(ReductionInfoMapper<RuntimeStatsEnum, double>* runtime_stats)
+  setRuntimeStats(
+    ReductionInfoMapper<RuntimeStatsEnum, double>* runtime_stats) override
   {
     d_runtime_stats = runtime_stats;
   };

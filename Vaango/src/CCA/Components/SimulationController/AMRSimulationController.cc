@@ -258,7 +258,7 @@ AMRSimulationController::run()
     // because at this point the delT, nextDelT, time step, sim time,
     // and all wall times are all in sync.
     d_output->findNext_OutputCheckPointTimeStep(first && d_restarting,
-                                                 d_current_gridP);
+                                                d_current_gridP);
 
     // Reset the runtime performance stats.
     resetStats();
@@ -285,8 +285,8 @@ AMRSimulationController::run()
 #endif
 
     if (dbg_barrier.active()) {
-      for (int i = 0; i < 5; i++) {
-        m_barrier_times[i] = 0;
+      for (double& barrier_time : m_barrier_times) {
+        barrier_time = 0;
       }
     }
 
@@ -414,9 +414,9 @@ AMRSimulationController::run()
       std::ostringstream mesg;
       if (d_myworld->myRank() == 0) {
         mesg << "Barrier Times: ";
-        for (int i = 0; i < 5; ++i) {
-          avg[i] /= d_myworld->nRanks();
-          mesg << "[" << avg[i] << "]"
+        for (double& val : avg) {
+          val /= d_myworld->nRanks();
+          mesg << "[" << val << "]"
                << "  ";
         }
         DOUT(dbg_barrier, mesg.str())
@@ -733,8 +733,8 @@ AMRSimulationController::executeTimeStep(int totalFine)
   }
 }
 
-bool
-AMRSimulationController::doRegridding(bool initialTimeStep)
+auto
+AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
 {
   Timers::Simple regriddingTimer; // Regridding time
 

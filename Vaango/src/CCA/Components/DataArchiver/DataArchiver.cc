@@ -710,7 +710,7 @@ DataArchiver::postProcessUdaSetup(Dir& fromDir)
           "global variable name attribute not found", __FILE__, __LINE__);
       }
 
-      std::list<SaveNameItem>::iterator it = d_saveLabelNames.begin();
+      auto it = d_saveLabelNames.begin();
       while (it != d_saveLabelNames.end()) {
         if ((*it).labelName == varname) {
           it = d_saveLabelNames.erase(it);
@@ -1074,10 +1074,8 @@ DataArchiver::sched_allOutputTasks(const GridP& grid,
     Task* task = scinew Task(
       "DataArchiver::outputGlobalVars", this, &DataArchiver::outputGlobalVars);
 
-    for (size_t i = 0; i < d_saveGlobalLabels.size(); i++) {
-      SaveItem& saveItem = d_saveGlobalLabels[i];
-
-      const MaterialSubset* mss = saveItem.getMaterialSubset(0);
+    for (auto& saveItem : d_saveGlobalLabels) {
+      const MaterialSubset* mss = saveItem.getMaterialSubset(nullptr);
       task->requires(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
     }
 
@@ -1104,10 +1102,8 @@ DataArchiver::sched_allOutputTasks(const GridP& grid,
                   &DataArchiver::outputVariables,
                   CHECKPOINT_GLOBAL);
 
-    for (size_t i = 0; i < d_checkpointReductionLabels.size(); i++) {
-      SaveItem& saveItem = d_checkpointReductionLabels[i];
-
-      const MaterialSubset* mss = saveItem.getMaterialSubset(0);
+    for (auto& saveItem : d_checkpointReductionLabels) {
+      const MaterialSubset* mss = saveItem.getMaterialSubset(nullptr);
       task->requires(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
     }
 
@@ -1630,7 +1626,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
   // contains either the base vis dump directory, or the base
   // checkpoint directory, or both (if we doing both a checkpoint and
   // a vis dump on the same timestep).
-  for (int i = 0; i < static_cast<int>(baseDirs.size()); i++) {
+  for (auto& baseDir : baseDirs) {
 
     // to save the list of vars. up to 2, since in checkpoints, there are two
     // types of vars
@@ -1643,7 +1639,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
       bool dumpingCheckpoint         = false;
       bool save_io_timestep_xml_file = false;
 
-      if (baseDirs[i] == &d_outputDir) {
+      if (baseDir == &d_outputDir) {
         savelist.push_back(&d_saveLabels);
 
         if (d_outputFileFormat == PIDX) {
@@ -1662,7 +1658,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
         } else {
           save_io_timestep_xml_file = true; // Always save for a legacy UDA
         }
-      } else if (baseDirs[i] == &d_checkpointsDir) {
+      } else if (baseDir == &d_checkpointsDir) {
         dumpingCheckpoint = true;
         hasGlobals        = (d_checkpointReductionLabels.size() > 0);
         savelist.push_back(&d_checkpointLabels);
@@ -1671,7 +1667,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
         throw "DataArchiver::writeto_xml_files(): Unknown directory!";
       }
 
-      std::string iname     = baseDirs[i]->getName() + "/index.xml";
+      std::string iname     = baseDir->getName() + "/index.xml";
       ProblemSpecP indexDoc = loadDocument(iname);
 
       // if this timestep isn't already in index.xml, add it in
@@ -1681,17 +1677,17 @@ DataArchiver::writeto_xml_files(const GridP& grid)
       ASSERT(indexDoc != nullptr);
 
       // output data pointers
-      for (size_t j = 0; j < savelist.size(); j++) {
+      for (auto& j : savelist) {
         string variableSection =
-          savelist[j] == &d_checkpointReductionLabels ? "globals" : "variables";
+          j == &d_checkpointReductionLabels ? "globals" : "variables";
 
         ProblemSpecP vs = indexDoc->findBlock(variableSection);
         if (vs == nullptr) {
           vs = indexDoc->appendChild(variableSection.c_str());
         }
 
-        for (size_t k = 0; k < savelist[j]->size(); k++) {
-          const VarLabel* var = (*savelist[j])[k].label;
+        for (size_t k = 0; k < j->size(); k++) {
+          const VarLabel* var = (*j)[k].label;
           bool found          = false;
 
           for (ProblemSpecP n = vs->getFirstChild(); n != nullptr;
@@ -1715,12 +1711,12 @@ DataArchiver::writeto_xml_files(const GridP& grid)
             newElem->setAttribute(
               "type",
               TranslateVariableType(var->typeDescription()->getName(),
-                                    baseDirs[i] != &d_outputDir));
+                                    baseDir != &d_outputDir));
             newElem->setAttribute("name", var->getName());
 
             // Save number of materials associated with this variable...
-            SaveItem& saveItem          = (*savelist[j])[k];
-            const MaterialSubset* matls = saveItem.getMaterialSubset(0);
+            SaveItem& saveItem          = (*j)[k];
+            const MaterialSubset* matls = saveItem.getMaterialSubset(nullptr);
 
             newElem->setAttribute("numMaterials",
                                   std::to_string(matls->size()));
@@ -1737,7 +1733,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
       ProblemSpecP ts = indexDoc->findBlock("timesteps");
       if (ts == nullptr) {
         ts                      = indexDoc->appendChild("timesteps");
-        firstCheckpointTimeStep = (&d_checkpointsDir == baseDirs[i]);
+        firstCheckpointTimeStep = (&d_checkpointsDir == baseDir);
       }
 
       bool found = false;
@@ -1806,8 +1802,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
         // With AMR, we're not guaranteed that a rank has work on a
         // given level.  Quick check to see that, so we don't create a
         // node that points to no data.
-        std::string grid_path =
-          baseDirs[i]->getName() + "/" + tname.str() + "/";
+        std::string grid_path = baseDir->getName() + "/" + tname.str() + "/";
 
 #if XML_TEXTWRITER
         writeGridTextWriter(hasGlobals, grid_path, grid);
@@ -1828,7 +1823,7 @@ DataArchiver::writeto_xml_files(const GridP& grid)
         outputProblemSpec(rootElem);
 
         std::string name =
-          baseDirs[i]->getName() + "/" + tname.str() + "/timestep.xml";
+          baseDir->getName() + "/" + tname.str() + "/timestep.xml";
         rootElem->output(name.c_str());
 
         // output input.xml & input.xml.orig
@@ -2529,20 +2524,20 @@ DataArchiver::createPIDXCommunicator(std::vector<SaveItem>& saveLabels,
 #endif
 
 // be sure to call releaseDocument on the value returned
-ProblemSpecP
-DataArchiver::loadDocument(string xmlName)
+auto
+DataArchiver::loadDocument(string xmlName) -> ProblemSpecP
 {
   return ProblemSpecReader().readInputFile(xmlName);
 }
 
-const std::string
-DataArchiver::getOutputLocation() const
+auto
+DataArchiver::getOutputLocation() const -> const std::string
 {
   return d_outputDir.getName();
 }
 
-bool
-DataArchiver::doesOutputDirExist() const
+auto
+DataArchiver::doesOutputDirExist() const -> bool
 {
   return d_outputDir.exists();
 }
@@ -2702,7 +2697,7 @@ DataArchiver::outputGlobalVars(const ProcessorGroup*,
       }
 
       // Output the global var for this material index.
-      new_dw->print(out, var, 0, matlIndex);
+      new_dw->print(out, var, nullptr, matlIndex);
       out << std::endl;
     }
   }
@@ -3119,7 +3114,7 @@ DataArchiver::outputVariables([[maybe_unused]] const ProcessorGroup* pg,
 } // end output()
 
 //  output only the savedLabels of a specified type description in PIDX format.
-size_t
+auto
 DataArchiver::saveLabels_PIDX(
   [[maybe_unused]] const ProcessorGroup* pg,
   [[maybe_unused]] const PatchSubset* patches,
@@ -3129,7 +3124,7 @@ DataArchiver::saveLabels_PIDX(
   [[maybe_unused]] const TypeDescription::Type TD,
   [[maybe_unused]] Dir ldir,                   // uda/timestep/levelIndex
   [[maybe_unused]] const std::string& dirName, // CCVars, SFC*Vars
-  [[maybe_unused]] ProblemSpecP& doc)
+  [[maybe_unused]] ProblemSpecP& doc) -> size_t
 {
 
   size_t totalBytesSaved = 0;
@@ -3592,9 +3587,10 @@ DataArchiver::saveLabels_PIDX(
 } // end saveLabels_PIDX();
 
 //  Return a vector of saveItems with a common typeDescription
-std::vector<DataArchiver::SaveItem>
+auto
 DataArchiver::findAllVariablesWithType(const std::vector<SaveItem>& saveLabels,
                                        const TypeDescription::Type type)
+  -> std::vector<DataArchiver::SaveItem>
 {
   std::vector<SaveItem> myItems;
   for (const auto& save_item : saveLabels) {
@@ -3770,8 +3766,7 @@ DataArchiver::initSaveLabels(SchedulerP& sched, bool initTimeStep)
   d_saveLabels.clear();
   d_saveLabels.reserve(d_saveLabelNames.size());
 
-  Scheduler::VarLabelMaterialMap* pLabelMatlMap;
-  pLabelMatlMap = sched->makeVarLabelMaterialMap().get();
+  auto pLabelMatlMap = sched->makeVarLabelMaterialMap();
 
   for (const auto& saveLabel : d_saveLabelNames) {
 
@@ -3794,8 +3789,7 @@ DataArchiver::initSaveLabels(SchedulerP& sched, bool initTimeStep)
       var->setCompressionMode(saveLabel.compressionMode);
     }
 
-    Scheduler::VarLabelMaterialMap::iterator found =
-      pLabelMatlMap->find(var->getName());
+    auto found = pLabelMatlMap->find(var->getName());
 
     if (found == pLabelMatlMap->end()) {
       if (initTimeStep) {
@@ -3845,7 +3839,6 @@ DataArchiver::initSaveLabels(SchedulerP& sched, bool initTimeStep)
   }
 
   // d_saveLabelNames.clear();
-  delete pLabelMatlMap;
   DOUTR(g_DA_dbg, "end of initSaveLabels\n");
 }
 
@@ -3873,8 +3866,9 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   for (const auto& dep : initreqs) {
 
     // define patchset
-    const PatchSubset* patchSubset =
-      (dep->patches != 0) ? dep->patches : dep->task->getPatchSet()->getUnion();
+    const PatchSubset* patchSubset = (dep->patches != nullptr)
+                                       ? dep->patches
+                                       : dep->task->getPatchSet()->getUnion();
 
     // adjust the patchSubset if the dependency requires coarse or fine level
     // patches
@@ -3923,11 +3917,9 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
     matls.addInOrder(matSubset->getVector().begin(),
                      matSubset->getVector().end());
 
-    for (ConsecutiveRangeSet::iterator liter = levels.begin();
-         liter != levels.end();
-         liter++) {
+    for (int level : levels) {
       ConsecutiveRangeSet& unionedVarMatls =
-        label_map[dep->var->getName()][*liter];
+        label_map[dep->var->getName()][level];
       unionedVarMatls = unionedVarMatls.unioned(matls);
     }
   }
@@ -4004,10 +3996,8 @@ DataArchiver::SaveItem::setMaterials(int level_id,
     std::vector<int> matlVec;
     matlVec.reserve(matls.size());
 
-    for (ConsecutiveRangeSet::iterator iter = matls.begin();
-         iter != matls.end();
-         iter++) {
-      matlVec.push_back(*iter);
+    for (int matl : matls) {
+      matlVec.push_back(matl);
     }
 
     m->addAll(matlVec);
@@ -4017,13 +4007,14 @@ DataArchiver::SaveItem::setMaterials(int level_id,
 }
 
 //  Find the materials to output on this level for this saveItem
-const MaterialSubset*
+auto
 DataArchiver::SaveItem::getMaterialSubset(const Level* level) const
+  -> const MaterialSubset*
 {
   // search done by absolute level, or relative to end of levels (-1
   // finest, -2 second finest,...)
-  std::map<int, MaterialSetP>::const_iterator iter = matlSet.end();
-  const MaterialSubset* var_matls                  = nullptr;
+  auto iter                       = matlSet.end();
+  const MaterialSubset* var_matls = nullptr;
 
   if (level) {
     int L_index   = level->getIndex();
@@ -4052,8 +4043,8 @@ DataArchiver::SaveItem::getMaterialSubset(const Level* level) const
   return var_matls;
 }
 
-bool
-DataArchiver::needRecompile(const GridP& /*grid*/)
+auto
+DataArchiver::needRecompile(const GridP& /*grid*/) -> bool
 {
   bool retVal = false;
 
@@ -4094,8 +4085,9 @@ DataArchiver::recompile([[maybe_unused]] const GridP& grid)
 #endif
 }
 
-string
+auto
 DataArchiver::TranslateVariableType(string type, bool isThisCheckpoint)
+  -> string
 {
   if (d_outputDoubleAsFloat && !isThisCheckpoint) {
     if (type == "CCVariable<double>") {
@@ -4115,8 +4107,8 @@ DataArchiver::TranslateVariableType(string type, bool isThisCheckpoint)
   return type;
 }
 
-bool
-DataArchiver::isLabelSaved(const string& label) const
+auto
+DataArchiver::isLabelSaved(const string& label) const -> bool
 {
   if (d_outputInterval == 0.0 && d_outputTimeStepInterval == 0) {
     return false;
@@ -4284,8 +4276,8 @@ DataArchiver::copy_outputProblemSpec(Dir& fromDir, Dir& toDir)
 }
 
 // Check to see if a output directory exists for this time step
-bool
-DataArchiver::outputTimeStepExists(unsigned int dir_timestep)
+auto
+DataArchiver::outputTimeStepExists(unsigned int dir_timestep) -> bool
 {
   if (dir_timestep == (unsigned int)-1) {
     return true;
@@ -4306,8 +4298,8 @@ DataArchiver::outputTimeStepExists(unsigned int dir_timestep)
 }
 
 // Check to see if a checkpoint exists for this time step
-bool
-DataArchiver::checkpointTimeStepExists(unsigned int dir_timestep)
+auto
+DataArchiver::checkpointTimeStepExists(unsigned int dir_timestep) -> bool
 {
   if (dir_timestep == (unsigned int)-1) {
     return true;
@@ -4329,8 +4321,8 @@ DataArchiver::checkpointTimeStepExists(unsigned int dir_timestep)
 
 // If your using reduceUda then use use a mapping that's defined in
 // reduceUdaSetup()
-int
-DataArchiver::getTimeStepTopLevel()
+auto
+DataArchiver::getTimeStepTopLevel() -> int
 {
   const int timestep =
     d_simulator->getTimeStep() -

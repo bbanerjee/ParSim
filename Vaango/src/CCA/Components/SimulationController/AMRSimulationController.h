@@ -37,19 +37,19 @@ class AMRSimulationController : public SimulationController
 public:
   AMRSimulationController(const ProcessorGroup* myworld, ProblemSpecP pspec);
 
-  virtual ~AMRSimulationController() = default;
+  ~AMRSimulationController() override = default;
 
   // eliminate copy, assignment and move
   AMRSimulationController(const AMRSimulationController&) = delete;
   AMRSimulationController(AMRSimulationController&&)      = delete;
 
-  AMRSimulationController&
-  operator=(const AMRSimulationController&) = delete;
-  AMRSimulationController&
-  operator=(AMRSimulationController&&) = delete;
+  auto
+  operator=(const AMRSimulationController&) -> AMRSimulationController& = delete;
+  auto
+  operator=(AMRSimulationController&&) -> AMRSimulationController& = delete;
 
-  virtual void
-  run();
+  void
+  run() override;
 
 protected:
   //! Set up, compile, and execute initial timestep
@@ -61,14 +61,14 @@ protected:
   executeTimeStep(int totalFine);
 
   //! If doing AMR do the regridding
-  bool
-  doRegridding(bool initialTimeStep);
+  auto
+  doRegridding(bool initialTimeStep) -> bool;
 
   void
   compileTaskGraph(int totalFine);
 
-  bool
-  doRegridding(GridP& grid, bool initialTimestep);
+  auto
+  doRegridding(GridP& grid, bool initialTimestep) -> bool;
 
   //! recursively schedule refinement, coarsening, and time advances for
   //! finer levels - compensating for time refinement.  Builds one taskgraph

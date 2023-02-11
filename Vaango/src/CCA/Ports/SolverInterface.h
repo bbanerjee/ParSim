@@ -58,8 +58,8 @@ public:
     d_solve_on_extra_cells = s;
   }
 
-  bool
-  getSolveOnExtraCells() const
+  [[nodiscard]] auto
+  getSolveOnExtraCells() const -> bool
   {
     return d_solve_on_extra_cells;
   }
@@ -70,8 +70,8 @@ public:
     d_use_stencil_4 = s;
   }
 
-  bool
-  getUseStencil4() const
+  [[nodiscard]] auto
+  getUseStencil4() const -> bool
   {
     return d_use_stencil_4;
   }
@@ -82,8 +82,8 @@ public:
     d_symmetric = s;
   }
 
-  bool
-  getSymmetric() const
+  [[nodiscard]] auto
+  getSymmetric() const -> bool
   {
     return d_symmetric;
   }
@@ -94,8 +94,8 @@ public:
     d_residual_normalization_factor = s;
   }
 
-  double
-  getResidualNormalizationFactor() const
+  [[nodiscard]] auto
+  getResidualNormalizationFactor() const -> double
   {
     return d_residual_normalization_factor;
   }
@@ -107,8 +107,8 @@ public:
     d_recomputable_timestep = s;
   }
 
-  bool
-  getRecomputeTimestepOnFailure() const
+  [[nodiscard]] auto
+  getRecomputeTimestepOnFailure() const -> bool
   {
     return d_recomputable_timestep;
   }
@@ -134,8 +134,8 @@ public:
     d_setup_frequency = freq;
   }
 
-  int
-  getSetupFrequency() const
+  [[nodiscard]] auto
+  getSetupFrequency() const -> int
   {
     return d_setup_frequency;
   }
@@ -145,8 +145,8 @@ public:
     d_update_coef_frequency = freq;
   }
 
-  int
-  getUpdateCoefFrequency() const
+  [[nodiscard]] auto
+  getUpdateCoefFrequency() const -> int
   {
     return d_update_coef_frequency;
   }
@@ -159,8 +159,8 @@ public:
     d_which_old_dw = dw;
   }
 
-  Task::WhichDW
-  getWhichOldDW() const
+  [[nodiscard]] auto
+  getWhichOldDW() const -> Task::WhichDW
   {
     return d_which_old_dw;
   }
@@ -169,16 +169,15 @@ private:
   bool d_use_stencil_4{ false };
   bool d_symmetric{ true };
   bool d_solve_on_extra_cells{ false };
-  double d_residual_normalization_factor{ 1.0d };
+  double d_residual_normalization_factor{ 1.0 };
   bool d_recomputable_timestep{ false };
   std::string d_output_file_name;
   int d_setup_frequency{ 1 };       // delete matrix and recreate it and update
                                     // coefficients. Needed if Stencil changes.
   int d_update_coef_frequency{ 1 }; // do not modify matrix stencil/sparsity -
                                     // only change values of coefficients
-  Task::WhichDW d_which_old_dw{
-    Task::OldDW
-  }; // DataWarehouse either old_dw or parent_old_dw
+  // DataWarehouse either old_dw or parent_old_dw
+  Task::WhichDW d_which_old_dw{ Task::OldDW };
 };
 
 class SolverInterface : public UintahParallelPort
@@ -186,10 +185,10 @@ class SolverInterface : public UintahParallelPort
 public:
   SolverInterface() = default;
 
-  virtual ~SolverInterface()
+  ~SolverInterface() override
   {
-    for (size_t i = 0; i < d_var_labels.size(); ++i) {
-      VarLabel::destroy(d_var_labels[i]);
+    for (auto& d_var_label : d_var_labels) {
+      VarLabel::destroy(d_var_label);
     }
   }
 
@@ -197,10 +196,10 @@ public:
   SolverInterface(const SolverInterface&) = delete;
   SolverInterface(SolverInterface&&)      = delete;
 
-  SolverInterface&
-  operator=(const SolverInterface&) = delete;
-  SolverInterface&
-  operator=(SolverInterface&&) = delete;
+  auto
+  operator=(const SolverInterface&) -> SolverInterface& = delete;
+  auto
+  operator=(SolverInterface&&) -> SolverInterface& = delete;
 
   // Methods for managing the components attached via the ports.
   virtual void
@@ -215,8 +214,8 @@ public:
   virtual void
   readParameters(ProblemSpecP& params, const std::string& name) = 0;
 
-  virtual SolverParameters*
-  getParameters() = 0;
+  virtual auto
+  getParameters() -> SolverParameters* = 0;
 
   virtual void
   scheduleInitialize(const LevelP& level,
@@ -242,8 +241,8 @@ public:
                 Task::WhichDW which_guess_dw,
                 bool is_first_solve = true) = 0;
 
-  virtual std::string
-  getName() = 0;
+  virtual auto
+  getName() -> std::string = 0;
 
   /**
    \brief Enforces solvability condition on periodic problems or in domains
@@ -281,7 +280,6 @@ public:
                             const double refValue);
 
 private:
-
   std::vector<VarLabel*> d_var_labels;
 
   /**
@@ -348,6 +346,6 @@ private:
                      const VarLabel* bLabel,
                      VarLabel* rhsIntegralLabel);
 };
-}
+} // namespace Uintah
 
 #endif //__VAANGO_CCA_Ports_SolverInterace_h__

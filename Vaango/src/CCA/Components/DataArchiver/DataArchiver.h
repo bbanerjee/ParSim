@@ -60,34 +60,36 @@ public:
 public:
   DataArchiver(const ProcessorGroup* myworld, int udaSuffix = -1);
 
-  virtual ~DataArchiver();
+  ~DataArchiver() override;
 
   // Disallow copy and move
   DataArchiver(const DataArchiver&) = delete;
   DataArchiver(DataArchiver&&)      = delete;
-  DataArchiver&
-  operator=(const DataArchiver&) = delete;
-  DataArchiver&
-  operator=(DataArchiver&&) = delete;
+  auto
+  operator=(const DataArchiver&) -> DataArchiver& = delete;
+  auto
+  operator=(DataArchiver&&) -> DataArchiver& = delete;
 
   // Methods for managing the components attached via the ports.
-  virtual void
-  setComponents([[maybe_unused]] UintahParallelComponent* parent){};
+  void
+  setComponents([[maybe_unused]] UintahParallelComponent* parent) override
+  {
+  }
 
-  virtual void
-  getComponents();
+  void
+  getComponents() override;
 
-  virtual void
-  releaseComponents();
+  void
+  releaseComponents() override;
 
   //! Sets up when the DataArchiver will output and what data, according
   //! to params.  Also stores state to keep track of time and timesteps
   //! in the simulation.  (If you only need to use DataArchiver to copy
   //! data, then you can pass a nullptr MaterialManager
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_ps,
-               const MaterialManagerP& mat_manager);
+               const MaterialManagerP& mat_manager) override;
 
   virtual void
   outputProblemSpec(ProblemSpecP& root_ps);
@@ -95,8 +97,8 @@ public:
   //! This function will set up the output for the simulation.  As part
   //! of this it will output the input.xml and index.xml in the uda
   //! directory.  Call after calling all problemSetups.
-  virtual void
-  initializeOutput(const ProblemSpecP& params, const GridP& grid);
+  void
+  initializeOutput(const ProblemSpecP& params, const GridP& grid) override;
 
   //! Call this when restarting from a checkpoint after calling
   //! problemSetup.  This will copy timestep directories and dat
@@ -105,19 +107,19 @@ public:
   //! appropriately to continue smoothly from that timestep.
   //! If timestep is negative, then all timesteps will getg copied
   //! if they are to be copied at all (fromScratch is false).
-  virtual void
+  void
   restartSetup(Dir& restartFromDir,
                int startTimestep,
                int timestep,
                double time,
                bool fromScratch,
-               bool removeOldDir);
+               bool removeOldDir) override;
 
   //! Call this after calling problemSetup.  It will copy the data
   //! and checkpoint files over and make it ignore
   //! dumping reduction variables.
-  virtual void
-  postProcessUdaSetup(Dir& fromDir);
+  void
+  postProcessUdaSetup(Dir& fromDir) override;
 
   //! Copy a section between udas' index.xml.
   void
@@ -134,54 +136,56 @@ public:
   //! If it is, setup directories and xml files that we need to output.
   //! Call once per timestep, and if recompiling,
   //! after all the other tasks are scheduled.
-  virtual void
+  void
   finalizeTimeStep(const GridP&,
                    SchedulerP&,
                    bool recompile  = false,
-                   int addMaterial = 0);
+                   int addMaterial = 0) override;
 
   //! schedule the output tasks if we are recompiling the taskgraph.
-  virtual void
-  sched_allOutputTasks(const GridP&, SchedulerP&, bool recompile = false);
+  void
+  sched_allOutputTasks(const GridP&,
+                       SchedulerP&,
+                       bool recompile = false) override;
 
   //! Find the next times to output
   //! Call after timestep has completed.
-  virtual void
-  findNext_OutputCheckPointTimeStep(bool restart, const GridP&);
+  void
+  findNext_OutputCheckPointTimeStep(bool restart, const GridP&) override;
 
   // Called after a time step recompute where delta t is adjusted
   // to make sure an output and/or checkpoint time step is needed.
-  virtual void
-  recompute_OutputCheckPointTimeStep();
+  void
+  recompute_OutputCheckPointTimeStep() override;
 
   //! Write metadata to xml files.
   //! Call after timestep has completed.
-  virtual void
-  writeto_xml_files(const GridP& grid);
+  void
+  writeto_xml_files(const GridP& grid) override;
 
   //! Returns as a string the name of the top of the output directory.
-  virtual const std::string
-  getOutputLocation() const;
+  const std::string
+  getOutputLocation() const override;
 
   // Returns bool, does the outputdir exist
-  virtual bool
-  doesOutputDirExist() const;
+  bool
+  doesOutputDirExist() const override;
 
   // Normally saved vars are scrubbed if not needed for the next
   // time step. Bypass scubbing when running in situ or if wanting
   // to save the previous time step.
-  virtual void
-  setScrubSavedVariables(bool val)
+  void
+  setScrubSavedVariables(bool val) override
   {
     d_scrubSavedVariables = val;
   };
 
   //! Asks if we need to recompile the task graph.
-  virtual bool
-  needRecompile(const GridP& grid);
+  bool
+  needRecompile(const GridP& grid) override;
 
-  virtual void
-  recompile(const GridP& grid);
+  void
+  recompile(const GridP& grid) override;
 
   //! The task that handles the outputting.  Scheduled in finalizeTimestep.
   //! Handles outputs and checkpoints and differentiates between them in the
@@ -205,123 +209,123 @@ public:
                    DataWarehouse* new_dw);
 
   // Get the time the next output will occur
-  virtual double
-  getNextOutputTime() const
+  double
+  getNextOutputTime() const override
   {
     return d_nextOutputTime;
   }
 
   // Get the time step the next output will occur
-  virtual int
-  getNextOutputTimeStep() const
+  int
+  getNextOutputTimeStep() const override
   {
     return d_nextOutputTimeStep;
   }
 
   // Pushes output back by one time step.
-  virtual void
-  postponeNextOutputTimeStep()
+  void
+  postponeNextOutputTimeStep() override
   {
     ++d_nextOutputTimeStep;
   }
 
   // Get the time/time step/wall time of the next checkpoint will occur
-  virtual double
-  getNextCheckpointTime() const
+  double
+  getNextCheckpointTime() const override
   {
     return d_nextCheckpointTime;
   }
 
-  virtual int
-  getNextCheckpointTimeStep() const
+  int
+  getNextCheckpointTimeStep() const override
   {
     return d_nextCheckpointTimeStep;
   }
 
-  virtual int
-  getNextCheckpointWallTime() const
+  int
+  getNextCheckpointWallTime() const override
   {
     return d_nextCheckpointWallTime;
   }
 
   // Returns true if data will be output this time step
-  virtual void
-  setOutputTimeStep(bool val, const GridP& grid);
+  void
+  setOutputTimeStep(bool val, const GridP& grid) override;
 
-  virtual bool
-  isOutputTimeStep() const
+  bool
+  isOutputTimeStep() const override
   {
     return d_isOutputTimeStep;
   }
 
   // Returns true if data will be checkpointed this time step
-  virtual void
-  setCheckpointTimeStep(bool val, const GridP& grid);
+  void
+  setCheckpointTimeStep(bool val, const GridP& grid) override;
 
-  virtual bool
-  isCheckpointTimeStep() const
+  bool
+  isCheckpointTimeStep() const override
   {
     return d_isCheckpointTimeStep;
   }
 
   //! Get the directory of the current time step for outputting info.
-  virtual const std::string&
-  getLastTimeStepOutputLocation() const
+  const std::string&
+  getLastTimeStepOutputLocation() const override
   {
     return d_lastTimeStepLocation;
   }
 
   bool
-  isLabelSaved(const std::string& label) const;
+  isLabelSaved(const std::string& label) const override;
 
   //! Allow a component to define the output and checkpoint interval on the fly.
   void
-  setOutputInterval(double inv);
+  setOutputInterval(double inv) override;
 
   double
-  getOutputInterval() const
+  getOutputInterval() const override
   {
     return d_outputInterval;
   }
 
   void
-  setOutputTimeStepInterval(int inv);
+  setOutputTimeStepInterval(int inv) override;
 
   int
-  getOutputTimeStepInterval() const
+  getOutputTimeStepInterval() const override
   {
     return d_outputTimeStepInterval;
   }
 
   void
-  setCheckpointInterval(double inv);
+  setCheckpointInterval(double inv) override;
 
   double
-  getCheckpointInterval() const
+  getCheckpointInterval() const override
   {
     return d_checkpointInterval;
   }
 
   void
-  setCheckpointTimeStepInterval(int inv);
+  setCheckpointTimeStepInterval(int inv) override;
 
   int
-  getCheckpointTimeStepInterval() const
+  getCheckpointTimeStepInterval() const override
   {
     return d_checkpointTimeStepInterval;
   }
 
   void
-  setCheckpointWallTimeInterval(int inv);
+  setCheckpointWallTimeInterval(int inv) override;
 
   int
-  getCheckpointWallTimeInterval() const
+  getCheckpointWallTimeInterval() const override
   {
     return d_checkpointWallTimeInterval;
   }
 
   bool
-  savingAsPIDX() const
+  savingAsPIDX() const override
   {
     return (d_outputFileFormat == PIDX);
   }
@@ -329,82 +333,84 @@ public:
   // Instructs the DataArchive to save data using the original UDA format or
   // using PIDX.
   void
-  setSaveAsUDA()
+  setSaveAsUDA() override
   {
     d_outputFileFormat = UDA;
   }
 
   void
-  setSaveAsPIDX()
+  setSaveAsPIDX() override
   {
     d_outputFileFormat = PIDX;
   }
 
   void
-  maybeLastTimeStep(bool val)
+  maybeLastTimeStep(bool val) override
   {
     d_maybeLastTimeStep = val;
   };
 
   bool
-  maybeLastTimeStep()
+  maybeLastTimeStep() override
   {
     return d_maybeLastTimeStep;
   };
 
   void
-  setSwitchState(bool val)
+  setSwitchState(bool val) override
   {
     d_switchState = val;
   }
+
   bool
-  getSwitchState() const
+  getSwitchState() const override
   {
     return d_switchState;
   }
 
   void
-  setElapsedWallTime(double val);
+  setElapsedWallTime(double val) override;
 
   double
-  getElapsedWallTime() const
+  getElapsedWallTime() const override
   {
     return d_elapsedWallTime;
   };
 
   void
-  setCheckpointCycle(int val);
+  setCheckpointCycle(int val) override;
 
   double
-  getCheckpointCycle() const
+  getCheckpointCycle() const override
   {
     return d_checkpointCycle;
   };
 
   void
-  setUseLocalFileSystems(bool val)
+  setUseLocalFileSystems(bool val) override
   {
     d_useLocalFileSystems = val;
   };
 
   bool
-  getUseLocalFileSystems() const
+  getUseLocalFileSystems() const override
   {
     return d_useLocalFileSystems;
   };
 
   void
-  setRuntimeStats(ReductionInfoMapper<RuntimeStatsEnum, double>* runtimeStats)
+  setRuntimeStats(
+    ReductionInfoMapper<RuntimeStatsEnum, double>* runtimeStats) override
   {
     d_runtimeStats = runtimeStats;
   };
 
   // Returns true if an output or checkpoint exists for the time step
   bool
-  outputTimeStepExists(unsigned int ts);
+  outputTimeStepExists(unsigned int ts) override;
 
   bool
-  checkpointTimeStepExists(unsigned int ts);
+  checkpointTimeStepExists(unsigned int ts) override;
 
 public:
   //! problemSetup parses the ups file into a list of these
@@ -426,14 +432,14 @@ public:
                  ConsecutiveRangeSet& prevMatls,
                  MaterialSetP& prevMatlSet);
 
-    const MaterialSet*
-    getMaterialSet(int level_id) const
+    [[nodiscard]] auto
+    getMaterialSet(int level_id) const -> const MaterialSet*
     {
       return matlSet.at(level_id).get_rep();
     }
 
-    const MaterialSubset*
-    getMaterialSubset(const Level* level) const;
+    auto
+    getMaterialSubset(const Level* level) const -> const MaterialSubset*;
 
     const VarLabel* label;
 
@@ -464,7 +470,7 @@ private:
 #endif
 
   // output the all of the saveLabels in PIDX format
-  size_t
+  auto
   saveLabels_PIDX(const ProcessorGroup* pg,
                   const PatchSubset* patches,
                   DataWarehouse* new_dw,
@@ -473,13 +479,14 @@ private:
                   const TypeDescription::Type TD,
                   Dir ldir,                   // uda/timeStep/levelIndex
                   const std::string& dirName, // CCVars, SFC*Vars
-                  ProblemSpecP& doc);
+                  ProblemSpecP& doc) -> size_t;
 
   // Searches through "saveLabels" and returns all the SaveItems that are of the
   // same "type".
-  std::vector<DataArchiver::SaveItem>
+  auto
   findAllVariablesWithType(const std::vector<SaveItem>& saveLabels,
-                           const TypeDescription::Type type);
+                           const TypeDescription::Type type)
+    -> std::vector<DataArchiver::SaveItem>;
 
   // bulletproofing so user can't save unsupported var type
   void
@@ -516,8 +523,8 @@ private:
   //     Non PIDX
   //! returns a ProblemSpecP reading the xml file xmlName.
   //! You will need to that you need to call ProblemSpec::releaseDocument
-  ProblemSpecP
-  loadDocument(std::string xmlName);
+  auto
+  loadDocument(std::string xmlName) -> ProblemSpecP;
 
   //! creates the uda directory with a trailing version suffix
   void
@@ -794,8 +801,8 @@ private:
 
   // returns either the top level timestep or if reduceUda is used
   // a value from the index.xml file
-  int
-  getTimeStepTopLevel();
+  auto
+  getTimeStepTopLevel() -> int;
 
   // Normally saved vars are scrubbed if not needed for the next
   // time step. By pass scubbing when running in situ or if wanting
@@ -812,8 +819,8 @@ private:
   unsigned int d_outputGlobalVarsFrequency{ 1 };
   unsigned int d_outputGlobalVarsOnTimeStep{ 0 };
 
-  std::string
-  TranslateVariableType(std::string type, bool isThisCheckpoint);
+  auto
+  TranslateVariableType(std::string type, bool isThisCheckpoint) -> std::string;
   ReductionInfoMapper<RuntimeStatsEnum, double>* d_runtimeStats;
 
 #ifdef HAVE_PIDX
