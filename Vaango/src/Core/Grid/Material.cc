@@ -41,8 +41,8 @@ Material::Material(ProblemSpecP& ps) {
 }
 
 Material::~Material() {
-  if (d_mat_subset.get()) {
-    d_mat_subset->removeReference();
+  if (d_mat_subset && d_mat_subset->removeReference()) {
+    delete d_mat_subset;
   }
 }
 
@@ -68,9 +68,8 @@ Material::getDWIndex() const {
 void
 Material::setDWIndex(int idx) {
 
-  ASSERT(!d_mat_subset.get());
-  d_mat_subset = std::make_unique<MaterialSubset>();
-
+  ASSERT(!d_mat_subset);
+  d_mat_subset = scinew MaterialSubset();
   d_mat_subset->addReference();
   d_mat_subset->add(idx);
 

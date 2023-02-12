@@ -52,12 +52,12 @@ class MaterialManager : public RefCounted
 {
 public:
   MaterialManager();
-  ~MaterialManager();
+  ~MaterialManager() override;
 
   MaterialManager(const MaterialManager&) = delete;
 
-  MaterialManager&
-  operator=(const MaterialManager&) = delete;
+  auto
+  operator=(const MaterialManager&) -> MaterialManager& = delete;
 
   void
   clearMaterials();
@@ -66,8 +66,8 @@ public:
   finalizeMaterials();
 
   void
-  registerMaterial(const std::string& name,
-                   std::shared_ptr<Material> material);
+  registerMaterial(const std::string& name, std::shared_ptr<Material> material);
+
   void
   registerMaterial(const std::string& name,
                    std::shared_ptr<Material> material,
@@ -75,72 +75,79 @@ public:
   void
   registerEmptyMaterial(std::shared_ptr<EmptyMaterial> material);
 
-  const MaterialSet*
-  allMaterials(const std::string& name) const;
+  auto
+  allMaterials(const std::string& name) const -> const MaterialSet*;
 
-  const MaterialSet*
-  allMaterials() const;
+  auto
+  allMaterials() const -> const MaterialSet*;
 
-  size_t
-  getNumMaterials(const std::string& name) const;
+  auto
+  getNumMaterials(const std::string& name) const -> size_t;
 
-  size_t
-  getNumMaterials() const
+  auto
+  getNumMaterials() const -> size_t
   {
     return d_all_materials.size();
   }
 
-  Material*
-  getMaterial(const std::string& name, std::uint32_t index) const;
+  auto
+  getMaterial(const std::string& name, std::uint32_t index) const -> Material*;
 
-  Material*
-  getMaterial(std::uint32_t index) const
+  auto
+  getMaterial(std::uint32_t index) const -> Material*
   {
     return index < d_all_materials.size() ? d_all_materials[index].get()
                                           : nullptr;
   }
 
-  const MaterialSubset*
-  getAllInOneMaterial() const
+  auto
+  getAllInOneMaterial() const -> const MaterialSubset*
   {
-    return d_all_in_one_material.get();
+    return d_all_in_one_material;
   }
 
-  const MaterialSet*
-  originalAllMaterials() const;
+  auto
+  originalAllMaterials() const -> const MaterialSet*;
 
   void
   setOriginalMatlsFromRestart(MaterialSet* matls);
 
-  Material*
-  parseAndLookupMaterial(ProblemSpecP& params, const std::string& name) const;
+  auto
+  parseAndLookupMaterial(ProblemSpecP& params, const std::string& name) const
+    -> Material*;
 
 private:
   void
   registerMaterial(std::shared_ptr<Material> material);
+
   void
-  registerMaterial(std::shared_ptr<Material> material,
-                   unsigned int index);
+  registerMaterial(std::shared_ptr<Material> material, std::uint32_t index);
 
-  Material*
-  getMaterialByName(const std::string& name) const;
+  auto
+  getMaterialByName(const std::string& name) const -> Material*;
 
-  std::vector<std::shared_ptr<Material>> d_all_materials;
+  // Named materials
+  std::map<std::string, std::shared_ptr<Material>> d_named_materials;
+
+  // All empty materials
   std::vector<std::shared_ptr<EmptyMaterial>> d_empty_materials;
-  std::map<std::string, std::vector<std::shared_ptr<Material>>> d_materials;
-  std::map<std::string, Material*> d_named_materials;
 
-  std::unique_ptr<MaterialSet> d_all_materialsets{ nullptr };
-  std::map<std::string, std::unique_ptr<MaterialSet>> d_materialsets;
+  // All materials from simulator components
+  std::vector<std::shared_ptr<Material>> d_all_materials;
+  MaterialSet* d_all_materialsets{ nullptr };
+
+  // Materials from each simulator component
+  std::map<std::string, std::vector<std::shared_ptr<Material>>> d_materials;
+  std::map<std::string, MaterialSet*> d_materialsets;
 
   // The switcher needs to clear the materials, but don't
   // delete them or there might be VarLabel problems when
   // CMs are destroyed.  Store them here until the end.
-  std::vector<Material*> d_materials_old;
+  std::vector<std::shared_ptr<Material>> d_materials_old;
 
   // Keep track of all the original materials if switching
-  std::unique_ptr<MaterialSet> d_all_materialsets_old{ nullptr };
-  std::unique_ptr<MaterialSubset> d_all_in_one_material{ nullptr };
+  MaterialSet* d_all_materialsets_old{ nullptr };
+  MaterialSubset* d_all_in_one_material{ nullptr };
 
   inline static int s_count = 0;
 

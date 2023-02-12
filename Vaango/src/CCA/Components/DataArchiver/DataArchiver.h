@@ -661,7 +661,7 @@ private:
   // better way to synchronize tasks, we should do that...
   VarLabel* d_sync_io_label;
 
-  std::unique_ptr<MaterialSubset> d_tmpMatSubset{ nullptr };
+  MaterialSubset* d_tmpMatSubset{ nullptr };
 
 private:
   //! i.e., filebase.000

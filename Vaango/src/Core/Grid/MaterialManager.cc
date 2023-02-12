@@ -32,6 +32,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <sstream>
+#include <iostream>
 
 namespace Uintah {
 
@@ -48,44 +49,55 @@ MaterialManager::MaterialManager()
 MaterialManager::~MaterialManager()
 {
   clearMaterials();
+
+  if (d_all_materialsets_old && d_all_materialsets_old->removeReference()) {
+    delete d_all_materialsets_old;
+  }
+
   s_count--;
 }
 
 void
 MaterialManager::clearMaterials()
 {
-  if (d_all_materialsets) {
-    d_all_materialsets->removeReference();
-  }
-  if (d_all_materialsets_old) {
-    d_all_materialsets_old->removeReference();
-  }
-  if (d_all_in_one_material) {
-    d_all_in_one_material->removeReference();
+  for (auto& material : d_all_materials) {
+    d_materials_old.push_back(material);
   }
 
-  for (size_t i = 0; i < d_all_materials.size(); i++) {
-    d_materials_old.push_back(d_all_materials[i].get());
+  if (d_all_materialsets && d_all_materialsets->removeReference()) {
+    delete d_all_materialsets;
+  }
+  d_all_materialsets = nullptr;
+
+  if (d_all_in_one_material && d_all_in_one_material->removeReference()) {
+    delete d_all_in_one_material;
+  }
+  d_all_in_one_material = nullptr;
+
+  for (auto& [material_name, material] : d_materials) {
+    if (d_materialsets[material_name] &&
+        d_materialsets[material_name]->removeReference()) {
+      delete d_materialsets[material_name];
+    }
+    d_materials[material_name].clear();
+    d_materialsets[material_name] = nullptr;
   }
 
   d_all_materials.clear();
   d_empty_materials.clear();
   d_named_materials.clear();
-
-  for (auto& [material_name, material] : d_materials) {
-    if (d_materialsets[material_name]) {
-      d_materialsets[material_name]->removeReference();
-    }
-    material.clear();
-  }
 }
 
 void
 MaterialManager::finalizeMaterials()
 {
   // All materials
-  d_all_materialsets = std::make_unique<MaterialSet>();
+  if (d_all_materialsets && d_all_materialsets->removeReference()) {
+    delete d_all_materialsets;
+  }
+  d_all_materialsets = scinew MaterialSet();
   d_all_materialsets->addReference();
+
   std::vector<int> all_materialsvec(d_all_materials.size());
   for (size_t i = 0; i < d_all_materials.size(); i++) {
     all_materialsvec[i] = d_all_materials[i]->getDWIndex();
@@ -94,19 +106,30 @@ MaterialManager::finalizeMaterials()
 
   // Original all_materials (before switch using Switcher)
   if (d_all_materialsets_old == nullptr) {
-    d_all_materialsets_old = std::make_unique<MaterialSet>();
+    d_all_materialsets_old = scinew MaterialSet();
     d_all_materialsets_old->addReference();
     d_all_materialsets_old->addAll(all_materialsvec);
   }
 
   // All materials in one:  a material that represents all materials
   // (i.e. summed over all materials -- the whole enchilada)
-  d_all_in_one_material = std::make_unique<MaterialSubset>();
+  if (d_all_in_one_material && d_all_in_one_material->removeReference()) {
+    delete d_all_in_one_material;
+  }
+  d_all_in_one_material = scinew MaterialSubset();
   d_all_in_one_material->addReference();
-  d_all_in_one_material->add((int)d_all_materials.size());
+  d_all_in_one_material->add(static_cast<int>(d_all_materials.size()));
+
+  for (auto& [material_name, materialset] : d_materialsets) {
+    if (materialset && materialset->removeReference()) {
+      delete materialset;
+    }
+  }
 
   for (auto& [material_name, material] : d_materials) {
-    d_materialsets[material_name] = std::make_unique<MaterialSet>();
+    std::cout << "name = " << material_name << " material = " << &material
+      << " size = " << material.size() << __FILE__ << __LINE__ << std::endl;
+    d_materialsets[material_name] = scinew MaterialSet();
     d_materialsets[material_name]->addReference();
 
     std::vector<int> materialsvec(material.size());
@@ -128,7 +151,7 @@ MaterialManager::registerMaterial(const std::string& name,
 void
 MaterialManager::registerMaterial(const std::string& name,
                                   std::shared_ptr<Material> material,
-                                  unsigned int index)
+                                  std::uint32_t index)
 {
   d_materials[name].push_back(material);
   registerMaterial(material, index);
@@ -141,7 +164,7 @@ MaterialManager::registerMaterial(std::shared_ptr<Material> material)
   d_all_materials.push_back(material);
   if (material->hasName()) {
     d_named_materials[static_cast<std::string>(material->getName())] =
-      material.get();
+      material;
   }
 }
 
@@ -158,7 +181,7 @@ MaterialManager::registerMaterial(std::shared_ptr<Material> material,
 
   if (material->hasName()) {
     d_named_materials[static_cast<std::string>(material->getName())] =
-      material.get();
+      material;
   }
 }
 
@@ -169,24 +192,25 @@ MaterialManager::registerEmptyMaterial(std::shared_ptr<EmptyMaterial> material)
   registerMaterial(material);
 }
 
-const MaterialSet*
+auto
 MaterialManager::allMaterials(const std::string& name) const
+  -> const MaterialSet*
 {
   if (d_materialsets.find(name) != d_materialsets.end()) {
-    return d_materialsets.at(name).get();
+    return d_materialsets.at(name);
   }
   return nullptr;
 }
 
-const MaterialSet*
-MaterialManager::allMaterials() const
+auto
+MaterialManager::allMaterials() const -> const MaterialSet*
 {
   ASSERT(d_all_materialsets != nullptr);
-  return d_all_materialsets.get();
+  return d_all_materialsets;
 }
 
-size_t
-MaterialManager::getNumMaterials(const std::string& name) const
+auto
+MaterialManager::getNumMaterials(const std::string& name) const -> size_t
 {
   if (d_materials.find(name) != d_materials.end()) {
     return d_materials.at(name).size();
@@ -194,8 +218,9 @@ MaterialManager::getNumMaterials(const std::string& name) const
   return 0;
 }
 
-Material*
+auto
 MaterialManager::getMaterial(const std::string& name, std::uint32_t index) const
+  -> Material*
 {
   if (d_materials.find(name) != d_materials.end()) {
     if (index < d_materials.at(name).size()) {
@@ -205,24 +230,25 @@ MaterialManager::getMaterial(const std::string& name, std::uint32_t index) const
   return nullptr;
 }
 
-const MaterialSet*
-MaterialManager::originalAllMaterials() const
+auto
+MaterialManager::originalAllMaterials() const -> const MaterialSet*
 {
   ASSERT(d_all_materialsets_old != nullptr);
-  return d_all_materialsets_old.get();
+  return d_all_materialsets_old;
 }
 
 void
 MaterialManager::setOriginalMatlsFromRestart(MaterialSet* matls)
 {
   d_all_materialsets_old->removeReference();
-  d_all_materialsets_old.reset(matls);
+  d_all_materialsets_old = matls;
   d_all_materialsets_old->addReference();
 }
 
-Material*
+auto
 MaterialManager::parseAndLookupMaterial(ProblemSpecP& params,
                                         const std::string& name) const
+  -> Material*
 {
   // for single material problems return matl 0
   Material* result = getMaterial(0);
@@ -249,12 +275,12 @@ MaterialManager::parseAndLookupMaterial(ProblemSpecP& params,
   return result;
 }
 
-Material*
-MaterialManager::getMaterialByName(const std::string& name) const
+auto
+MaterialManager::getMaterialByName(const std::string& name) const -> Material*
 {
   auto iter = d_named_materials.find(name);
   if (iter != d_named_materials.end()) {
-    return iter->second;
+    return iter->second.get();
   }
   return nullptr;
 }

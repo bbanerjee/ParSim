@@ -636,8 +636,10 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
     }
 
     for (int m = 0; m < matls->size(); m++) {
+      cout_dbg << "Before get material\n";
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      cout_dbg << "After get material\n";
 
       if (!d_mpm_flags->d_doGridReset) {
         NCVariable<Vector> gDisplacement;
@@ -722,6 +724,8 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
 
   // For diffusion
   d_diffusionTasks->actuallyInitializeReductionVars(new_dw);
+
+  cout_dbg << "Completed actuallyinitialize\n";
 }
 
 void

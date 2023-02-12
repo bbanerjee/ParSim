@@ -933,7 +933,7 @@ Task::doit(DetailedTask* dtask,
            const ProcessorGroup* pg,
            const PatchSubset* patches,
            const MaterialSubset* matls,
-           std::vector<DataWarehouseP>& dws,
+           std::vector<DataWarehouseSP>& dws,
            void* oldTaskGpuDW,
            void* newTaskGpuDW,
            void* stream,
@@ -1203,14 +1203,14 @@ Task::mapDataWarehouse(WhichDW dw) const
 
 //__________________________________
 DataWarehouse*
-Task::mapDataWarehouse(WhichDW dw, std::vector<DataWarehouseP>& dws) const
+Task::mapDataWarehouse(WhichDW dw, std::vector<DataWarehouseSP>& dws) const
 {
   ASSERTRANGE(dw, 0, Task::TotalDWs);
   if (m_dwmap[dw] == Task::NoDW) {
     return 0;
   } else {
     ASSERTRANGE(m_dwmap[dw], 0, (int)dws.size());
-    return dws[m_dwmap[dw]].get_rep();
+    return dws[m_dwmap[dw]].get();
   }
 }
 

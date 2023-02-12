@@ -36,8 +36,8 @@
 
 #include <CCA/Components/MPM/Core/AMRMPMLabel.h>
 #include <CCA/Components/MPM/Core/HydroMPMLabel.h>
-#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Core/MPMDiffusionLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <CCA/Components/MPM/MMS/MMS.h>
 
@@ -84,12 +84,13 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl, MPMFlags* flags)
   registerPermanentParticleState(matl);
 }
 
-particleIndex
+auto
 ParticleCreator::createParticles(MPMMaterial* matl,
                                  CCVariable<short int>& cellNAPID,
                                  const Patch* patch,
                                  DataWarehouse* new_dw,
                                  const VecGeometryObjectSP& geom_objs)
+  -> particleIndex
 {
   ObjectVars obj_vars;
   particleIndex numParticles = 0;
@@ -118,7 +119,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
     // Special case exception for SpecialGeomPieces
     // (includes FileGP, SmoothGP, AbaqusGP, CorrugatedGP etc.)
-    SpecialGeomPiece* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
+    auto* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
 
     // Set up pointers to SpecialGeometryPiece particle data
     const std::vector<double>* pVolumes        = nullptr;
@@ -238,14 +239,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       particleIndex pidx = start + count;
 
       // std::cout << "Point["<<pidx<<"]="<<point<<" Cell = "<<cell_idx<<endl;
-      initializeParticle(patch,
-                         obj.get(),
-                         matl,
-                         point,
-                         cell_idx,
-                         pidx,
-                         cellNAPID,
-                         pvars);
+      initializeParticle(
+        patch, obj.get(), matl, point, cell_idx, pidx, cellNAPID, pvars);
 
       // Again, everything below exists for SpecialGeometryPiece only
       if (sgp) {
@@ -368,8 +363,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 // Get the LoadCurveID applicable for this material point
 // WARNING : Should be called only once per particle during a simulation
 // because it updates the number of particles to which a BC is applied.
-int
-ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
+auto
+ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp) -> int
 {
   int ret = 0;
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
@@ -377,24 +372,24 @@ ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
 
     // std::cerr << " BC Type = " << bcType << std::endl;
     if (bcType == "Pressure") {
-      PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
+      auto* pbc = dynamic_cast<PressureBC*>(bc.get());
       if (pbc->flagMaterialPoint(pp, dxpp)) {
         // std::cout << "\t surface particle; flagged material pt" << std::endl;
         ret = pbc->loadCurveID();
       }
     } else if (bcType == "Velocity") {
-      VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
+      auto* vbc = dynamic_cast<VelocityBC*>(bc.get());
       if (vbc->flagMaterialPoint(pp, dxpp)) {
         // std::cout << "\t surface particle; flagged material pt" << std::endl;
         ret = vbc->loadCurveID();
       }
     } else if (bcType == "Moment") {
-      MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
+      auto* pbc = dynamic_cast<MomentBC*>(bc.get());
       if (pbc->flagMaterialPoint(pp, dxpp)) {
         ret = pbc->loadCurveID();
       }
     } else if (bcType == "HeatFlux") {
-      HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
+      auto* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
       if (hfbc->flagMaterialPoint(pp, dxpp)) {
         ret = hfbc->loadCurveID();
       }
@@ -410,19 +405,19 @@ ParticleCreator::printPhysicalBCs()
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
     if (bcType == "Pressure") {
-      PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
+      auto* pbc = dynamic_cast<PressureBC*>(bc.get());
       std::cerr << *pbc << std::endl;
     }
     if (bcType == "Velocity") {
-      VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
+      auto* vbc = dynamic_cast<VelocityBC*>(bc.get());
       std::cerr << *vbc << std::endl;
     }
     if (bcType == "Moment") {
-      MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
+      auto* pbc = dynamic_cast<MomentBC*>(bc.get());
       std::cerr << *pbc << std::endl;
     }
     if (bcType == "HeatFlux") {
-      HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
+      auto* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
       std::cerr << *hfbc << std::endl;
     }
   }
@@ -439,7 +434,7 @@ ParticleCreator::applyForceBC(const Vector& dxpp,
 
     // std::cerr << " BC Type = " << bcType << std::endl;
     if (bcType == "Force") {
-      ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
+      auto* fbc = dynamic_cast<ForceBC*>(bc.get());
 
       Box fbcBox(fbc->getLowerRange() - dxpp, fbc->getUpperRange() + dxpp);
 
@@ -454,12 +449,12 @@ ParticleCreator::applyForceBC(const Vector& dxpp,
   }
 }
 
-ParticleSubset*
+auto
 ParticleCreator::allocateVariables(particleIndex numParticles,
                                    int dwi,
                                    const Patch* patch,
                                    DataWarehouse* new_dw,
-                                   ParticleVars& pvars)
+                                   ParticleVars& pvars) -> ParticleSubset*
 {
 
   ParticleSubset* subset =
@@ -468,28 +463,23 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.pDisp, d_mpm_labels->pDispLabel, subset);
   new_dw->allocateAndPut(pvars.pVelocity, d_mpm_labels->pVelocityLabel, subset);
   new_dw->allocateAndPut(pvars.pAcc, d_mpm_labels->pAccelerationLabel, subset);
-  new_dw->allocateAndPut(pvars.pExternalForce,
-                         d_mpm_labels->pExternalForceLabel,
-                         subset);
+  new_dw->allocateAndPut(
+    pvars.pExternalForce, d_mpm_labels->pExternalForceLabel, subset);
   new_dw->allocateAndPut(pvars.pMass, d_mpm_labels->pMassLabel, subset);
   new_dw->allocateAndPut(pvars.pVolume, d_mpm_labels->pVolumeLabel, subset);
-  new_dw->allocateAndPut(pvars.pTemperature,
-                         d_mpm_labels->pTemperatureLabel,
-                         subset);
-  new_dw->allocateAndPut(pvars.pParticleID,
-                         d_mpm_labels->pParticleIDLabel,
-                         subset);
+  new_dw->allocateAndPut(
+    pvars.pTemperature, d_mpm_labels->pTemperatureLabel, subset);
+  new_dw->allocateAndPut(
+    pvars.pParticleID, d_mpm_labels->pParticleIDLabel, subset);
   new_dw->allocateAndPut(pvars.pSize, d_mpm_labels->pSizeLabel, subset);
   new_dw->allocateAndPut(pvars.pFiberDir, d_mpm_labels->pFiberDirLabel, subset);
   // for thermal stress
-  new_dw->allocateAndPut(pvars.pTempPrevious,
-                         d_mpm_labels->pTempPreviousLabel,
-                         subset);
+  new_dw->allocateAndPut(
+    pvars.pTempPrevious, d_mpm_labels->pTempPreviousLabel, subset);
 
   if (d_useLoadCurves) {
-    new_dw->allocateAndPut(pvars.pLoadCurveID,
-                           d_mpm_labels->pLoadCurveIDLabel,
-                           subset);
+    new_dw->allocateAndPut(
+      pvars.pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, subset);
   }
   if (d_withColor) {
     new_dw->allocateAndPut(pvars.pColor, d_mpm_labels->pColorLabel, subset);
@@ -501,23 +491,19 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   // For AMR
   new_dw->allocateAndPut(pvars.pRefined, d_mpm_labels->pRefinedLabel, subset);
   if (d_flags->d_AMR) {
-    new_dw->allocateAndPut(pvars.pLastLevel,
-                           d_mpm_labels->pLastLevelLabel,
-                           subset);
+    new_dw->allocateAndPut(
+      pvars.pLastLevel, d_mpm_labels->pLastLevelLabel, subset);
   }
 
   // For body force calculation
-  new_dw->allocateAndPut(pvars.pBodyForceAcc,
-                         d_mpm_labels->pBodyForceAccLabel,
-                         subset);
-  new_dw->allocateAndPut(pvars.pCoriolisImportance,
-                         d_mpm_labels->pCoriolisImportanceLabel,
-                         subset);
+  new_dw->allocateAndPut(
+    pvars.pBodyForceAcc, d_mpm_labels->pBodyForceAccLabel, subset);
+  new_dw->allocateAndPut(
+    pvars.pCoriolisImportance, d_mpm_labels->pCoriolisImportanceLabel, subset);
 
   // For switching between implicit and explicit
-  new_dw->allocateAndPut(pvars.pExternalHeatFlux,
-                         d_mpm_labels->pExternalHeatFluxLabel,
-                         subset);
+  new_dw->allocateAndPut(
+    pvars.pExternalHeatFlux, d_mpm_labels->pExternalHeatFluxLabel, subset);
 
   // For friction contact
   new_dw->allocateAndPut(pvars.pSurface, d_mpm_labels->pSurfLabel, subset);
@@ -530,7 +516,6 @@ ParticleCreator::createPoints(const Patch* patch,
                               GeometryObject* obj,
                               ObjectVars& obj_vars)
 {
-
   GeometryPieceP piece = obj->getPiece();
   Box b2               = patch->getExtraBox();
   IntVector ppc        = obj->getInitialData_IntVector("res");
@@ -558,7 +543,7 @@ ParticleCreator::createPoints(const Patch* patch,
   // AMR stuff
   const Level* curLevel = patch->getLevel();
   bool hasFiner         = curLevel->hasFinerLevel();
-  Level* fineLevel      = 0;
+  Level* fineLevel      = nullptr;
   if (hasFiner) {
     fineLevel = (Level*)curLevel->getFinerLevel().get_rep();
   }
@@ -573,7 +558,7 @@ ParticleCreator::createPoints(const Patch* patch,
       bool includeExtraCells = false;
       const Patch* patchExists =
         fineLevel->getPatchFromPoint(CC, includeExtraCells);
-      if (patchExists != 0) {
+      if (patchExists != nullptr) {
         continue;
       }
     }
@@ -585,9 +570,8 @@ ParticleCreator::createPoints(const Patch* patch,
           IntVector idx(ix, iy, iz);
           Point p = lower + dxpp * idx;
           if (!b2.contains(p)) {
-            throw InternalError("Particle created outside of patch?",
-                                __FILE__,
-                                __LINE__);
+            throw InternalError(
+              "Particle created outside of patch?", __FILE__, __LINE__);
           }
           if (piece->inside(p)) {
             Vector p1(p(0), p(1), p(2));
@@ -595,7 +579,9 @@ ParticleCreator::createPoints(const Patch* patch,
             p(0) = p1[0];
             p(1) = p1[1];
             p(2) = p1[2];
-            obj_vars.points.at(obj).push_back(p);
+
+            // Adds a key to obj_vars if it doesn't exist
+            obj_vars.points[obj].push_back(p);
           }
         } // z
       }   // y
@@ -804,10 +790,10 @@ ParticleCreator::initializeParticle(const Patch* patch,
   myCellNAPID++;
 }
 
-particleIndex
+auto
 ParticleCreator::countAndCreateParticles(const Patch* patch,
                                          GeometryObject* obj,
-                                         ObjectVars& obj_vars)
+                                         ObjectVars& obj_vars) -> particleIndex
 {
   GeometryPieceP piece = obj->getPiece();
   Box b1               = piece->getBoundingBox();
@@ -835,10 +821,10 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   // If the object is a SpecialGeomPiece (e.g. FileGeometryPiece or
   // SmoothCylGeomPiece) then use the particle creators in that
   // class to do the counting
-  SpecialGeomPiece* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
+  auto* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
   if (sgp) {
-    int numPts             = 0;
-    FileGeometryPiece* fgp = dynamic_cast<FileGeometryPiece*>(piece.get());
+    int numPts = 0;
+    auto* fgp  = dynamic_cast<FileGeometryPiece*>(piece.get());
     if (fgp) {
       if (d_useCPTI) {
         proc0cout << "*** Reading CPTI file ***" << std::endl;
@@ -927,14 +913,14 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   return static_cast<particleIndex>(obj_vars.points[obj].size());
 }
 
-vector<const VarLabel*>
-ParticleCreator::returnParticleState()
+auto
+ParticleCreator::returnParticleState() -> vector<const VarLabel*>
 {
   return particle_state;
 }
 
-vector<const VarLabel*>
-ParticleCreator::returnParticleStatePreReloc()
+auto
+ParticleCreator::returnParticleStatePreReloc() -> vector<const VarLabel*>
 {
   return particle_state_preReloc;
 }
@@ -1090,34 +1076,12 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
         d_hydrompm_labels->pFluidVelocityLabel_preReloc);
     }
   }
-
-  if (d_withGaussSolver) {
-    particle_state.push_back(d_amrmpm_labels->pPosChargeLabel);
-    particle_state_preReloc.push_back(
-      d_amrmpm_labels->pPosChargeLabel_preReloc);
-
-    particle_state.push_back(d_amrmpm_labels->pNegChargeLabel);
-    particle_state_preReloc.push_back(
-      d_amrmpm_labels->pNegChargeLabel_preReloc);
-
-    particle_state.push_back(d_amrmpm_labels->pPosChargeGradLabel);
-    particle_state_preReloc.push_back(
-      d_amrmpm_labels->pPosChargeGradLabel_preReloc);
-
-    particle_state.push_back(d_amrmpm_labels->pNegChargeGradLabel);
-    particle_state_preReloc.push_back(
-      d_amrmpm_labels->pNegChargeGradLabel_preReloc);
-
-    particle_state.push_back(d_amrmpm_labels->pPermittivityLabel);
-    particle_state_preReloc.push_back(
-      d_amrmpm_labels->pPermittivityLabel_preReloc);
-  }
 }
 
-int
+auto
 ParticleCreator::checkForSurface(const GeometryPieceP piece,
                                  const Point p,
-                                 const Vector dxpp)
+                                 const Vector dxpp) -> int
 {
 
   //  Check the candidate points which surround the point just passed
@@ -1161,10 +1125,10 @@ ParticleCreator::checkForSurface(const GeometryPieceP piece,
   }
 }
 
-double
+auto
 ParticleCreator::checkForSurface2(const GeometryPieceP piece,
                                   const Point p,
-                                  const Vector dxpp)
+                                  const Vector dxpp) -> double
 {
 
   //  Check the candidate points which surround the point just passed

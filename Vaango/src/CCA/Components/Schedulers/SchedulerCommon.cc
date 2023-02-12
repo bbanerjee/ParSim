@@ -97,15 +97,17 @@ SchedulerCommon::~SchedulerCommon()
 {
   // list of vars used for AMR regridding
   for (auto& label_material : d_label_matls) {
-    for (auto& [label, material] : label_material) {
-      material->removeReference();
+    for (auto& [label, materialset] : label_material) {
+      if (materialset->removeReference()) {
+        delete materialset;
+      }
     }
   }
   d_label_matls.clear();
 
   if (d_monitoring) {
-    if (d_dummy_matl) {
-      d_dummy_matl->removeReference();
+    if (d_dummy_matl && d_dummy_matl->removeReference()) {
+      delete d_dummy_matl;
     }
 
     // Loop through the global (0) and local (1) tasks
@@ -489,7 +491,7 @@ SchedulerCommon::setupTaskMonitoring(const ProblemSpecP& params)
   d_monitoring = (d_monitoring_tasks[0].size() || d_monitoring_tasks[1].size());
 
   if (d_monitoring) {
-    d_dummy_matl = std::make_unique<MaterialSubset>();
+    d_dummy_matl = scinew MaterialSubset();
     d_dummy_matl->add(0);
     d_dummy_matl->addReference();
   }
@@ -1077,7 +1079,7 @@ SchedulerCommon::advanceDataWarehouse(const GridP& grid,
     // first datawarehouse -- indicate that it is the "initialization" dw.
     int generation = d_generation++;
 
-    d_dws[1] = std::make_unique<OnDemandDataWarehouse>(
+    d_dws[1] = std::make_shared<OnDemandDataWarehouse>(
       d_myworld, this, generation, grid, true /* initialization dw */);
   } else {
     for (int i = d_num_old_dws; i < static_cast<int>(d_dws.size()); i++) {
@@ -1429,12 +1431,11 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
                                     : dep->task->getMaterialSet()->getUnion();
 
           // if var was already found, make a union of the materials
-          std::unique_ptr<MaterialSubset> matls =
-            std::make_unique<MaterialSubset>(matSubset->getVector());
+          MaterialSubset* matls = scinew MaterialSubset(matSubset->getVector());
           matls->addReference();
 
           MaterialSubset* union_matls;
-          union_matls = (d_label_matls[level][dep->var]).get();
+          union_matls = d_label_matls[level][dep->var];
 
           if (union_matls) {
             for (int i = 0; i < union_matls->size(); i++) {
@@ -1442,9 +1443,12 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
                 matls->add(union_matls->get(i));
               }
             }
+            if (union_matls->removeReference()) {
+              delete union_matls;
+            }
           }
           matls->sort();
-          d_label_matls[level][dep->var] = std::move(matls);
+          d_label_matls[level][dep->var] = matls;
         }
       }
     }
@@ -1589,7 +1593,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
 
       for (auto& [label, mat_subset] : d_label_matls[level]) {
         const VarLabel* var   = label;
-        MaterialSubset* matls = mat_subset.get();
+        MaterialSubset* matls = mat_subset;
 
         data_tasks.back()->requires(Task::OldDW,
                                     var,
@@ -1622,7 +1626,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
 
       for (auto& [label, mat_subset] : d_label_matls[level]) {
         const VarLabel* var   = label;
-        MaterialSubset* matls = mat_subset.get();
+        MaterialSubset* matls = mat_subset;
 
         data_tasks.back()->requires(Task::OldDW,
                                     var,
@@ -1755,7 +1759,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*,
     for (auto& [var_label, material_subset] :
          d_label_matls[old_level->getIndex()]) {
       const VarLabel* label     = var_label;
-      MaterialSubset* var_matls = material_subset.get();
+      MaterialSubset* var_matls = material_subset;
 
       // get the low/high for what we'll need to get
       Patch::VariableBasis basis =
@@ -2109,7 +2113,7 @@ SchedulerCommon::scheduleTaskMonitoring(const LevelP& level)
 
   for (auto& d_monitoring_task : d_monitoring_tasks) {
     for (const auto& [task_name, var_label] : d_monitoring_task) {
-      t->computes(var_label, d_dummy_matl.get(), Task::OutOfDomain);
+      t->computes(var_label, d_dummy_matl, Task::OutOfDomain);
 
       // treatAsOld copyData noScrub notCopyData noCheckpoint
       overrideVariableBehavior(
@@ -2140,7 +2144,7 @@ SchedulerCommon::scheduleTaskMonitoring(const PatchSet* patches)
 
   for (auto& d_monitoring_task : d_monitoring_tasks) {
     for (const auto& it : d_monitoring_task) {
-      t->computes(it.second, d_dummy_matl.get(), Task::OutOfDomain);
+      t->computes(it.second, d_dummy_matl, Task::OutOfDomain);
 
       overrideVariableBehavior(
         it.second->getName(), false, false, true, true, true);

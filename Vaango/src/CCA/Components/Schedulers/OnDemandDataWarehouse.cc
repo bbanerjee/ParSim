@@ -1126,14 +1126,14 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
                                  const int nComm)
 {
   // *Warning* This pointer is deleted when tmpmatls goes out of scope
-  std::unique_ptr<MaterialSubset> tmpmatls{ nullptr };
+  MaterialSubset* tmpmatls{ nullptr };
 
   const MaterialSubset* matls = inmatls;
   if (!matls) {
-    tmpmatls = std::make_unique<MaterialSubset>();
+    tmpmatls = scinew MaterialSubset();
     tmpmatls->add(-1);
-    matls = tmpmatls.get();
-  }
+    matls = tmpmatls;
+  } 
 
   // Count the number of data elements in the reduction array
   int nmatls            = matls->size();
@@ -4242,7 +4242,7 @@ OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
 void
 OnDemandDataWarehouse::pushRunningTask(
   const Task* task,
-  std::vector<OnDemandDataWarehouseUP>* dws)
+  std::vector<OnDemandDataWarehouseSP>* dws)
 {
   std::lock_guard<Uintah::MasterLock> push_lock(g_running_tasks_lock);
 

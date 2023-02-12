@@ -232,9 +232,9 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
                         &SpecifiedBodyContact::exchangeMomentum,
                         gVelocity_label);
 
-  std::shared_ptr<MaterialSubset> z_matl = std::make_shared<MaterialSubset>();
-  z_matl->add(0);
-  z_matl->addReference();
+  MaterialSubset* zero_matl = scinew MaterialSubset();
+  zero_matl->add(0);
+  zero_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
   t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
@@ -244,7 +244,7 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
   t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
   t->requires(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
   t->requires(
-    Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl.get(), Ghost::None);
+    Task::OldDW, d_mpm_labels->NC_CCweightLabel, zero_matl, Ghost::None);
 
   t->modifies(gVelocity_label, mss);
 
@@ -252,8 +252,7 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
   //  and the global matlsubset
   const MaterialSubset* global_mss = t->getGlobalMatlSubset();
 
-  std::shared_ptr<MaterialSubset> reduction_mss =
-    std::make_shared<MaterialSubset>();
+  MaterialSubset* reduction_mss = scinew MaterialSubset();
   reduction_mss->addReference();
   reduction_mss->add(global_mss->get(0));
 
@@ -264,19 +263,22 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
     }
   }
 
-  t->computes(d_mpm_labels->RigidReactionForceLabel, reduction_mss.get());
-  t->computes(d_mpm_labels->RigidReactionTorqueLabel, reduction_mss.get());
+  t->computes(d_mpm_labels->RigidReactionForceLabel, reduction_mss);
+  t->computes(d_mpm_labels->RigidReactionTorqueLabel, reduction_mss);
 
   if (d_mpm_flags->d_reductionVars->sumTransmittedForce) {
-    t->computes(d_mpm_labels->SumTransmittedForceLabel,
-                reduction_mss.get(),
-                Task::OutOfDomain);
+    t->computes(
+      d_mpm_labels->SumTransmittedForceLabel, reduction_mss, Task::OutOfDomain);
   }
 
   sched->addTask(t, patches, matls);
 
-  z_matl->removeReference();
-  reduction_mss->removeReference();
+  if (zero_matl && zero_matl->removeReference()) {
+    delete zero_matl;
+  }
+  if (reduction_mss && reduction_mss->removeReference()) {
+    delete reduction_mss;
+  };
 }
 
 void

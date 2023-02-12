@@ -571,7 +571,7 @@ public: // class Task
                     const ProcessorGroup* pg,
                     const PatchSubset*,
                     const MaterialSubset*,
-                    std::vector<DataWarehouseP>& dws,
+                    std::vector<DataWarehouseSP>& dws,
                     void* oldTaskGpuDW,
                     void* newTaskGpuDW,
                     void* stream,
@@ -735,7 +735,7 @@ public: // class Task
 
   int mapDataWarehouse(WhichDW dw) const;
   DataWarehouse* mapDataWarehouse(WhichDW dw,
-                                  std::vector<DataWarehouseP>& dws) const;
+                                  std::vector<DataWarehouseSP>& dws) const;
 
   int getSortedOrder() const { return m_sorted_order; }
 

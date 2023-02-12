@@ -56,7 +56,7 @@ class LocallyComputedPatchVarMap;
 
 using mm = VarLabelMatl<Level, DataWarehouse>;
 using LabelMaterialMap =
-  std::map<const VarLabel*, std::unique_ptr<MaterialSubset>, VarLabel::Compare>;
+  std::map<const VarLabel*, MaterialSubset*, VarLabel::Compare>;
 using VarLabelMaterialListMap = std::map<std::string, std::list<int>>;
 using ReductionTasksMap =
   std::map<VarLabelMatl<Level, DataWarehouse>, std::shared_ptr<Task>>;
@@ -471,7 +471,7 @@ protected:
   Output* d_output{ nullptr };
 
   MaterialManagerP d_materialManager{ nullptr };
-  std::vector<OnDemandDataWarehouseUP> d_dws;
+  std::vector<OnDemandDataWarehouseSP> d_dws;
   std::vector<std::unique_ptr<TaskGraph>> d_task_graphs;
 
   //! These are so we can track certain variables over the taskgraph's
@@ -488,7 +488,7 @@ protected:
   std::vector<Task::WhichDW> d_tracking_dws;
 
   // Optional task monitoring.
-  std::unique_ptr<MaterialSubset> d_dummy_matl{ nullptr };
+  MaterialSubset* d_dummy_matl{ nullptr };
 
   bool d_monitoring{ false };          // Monitoring on/off.
   bool d_monitoring_per_cell{ false }; // Record the task runtime attributes

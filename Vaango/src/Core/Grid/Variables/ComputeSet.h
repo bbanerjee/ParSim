@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <memory>
 
 namespace Uintah {
 
@@ -71,6 +72,9 @@ typedef ComputeSet<const Patch*> PatchSet;
 typedef ComputeSet<int> MaterialSet;
 typedef ComputeSubset<const Patch*> PatchSubset;
 typedef ComputeSubset<int> MaterialSubset;
+
+using MaterialSetSP = std::shared_ptr<MaterialSet>;
+using MaterialSubsetSP = std::shared_ptr<MaterialSubset>;
 
 template <class T>
 class ComputeSubset : public RefCounted

@@ -97,7 +97,7 @@ Uintah::Dout g_app_indv_stats("SimulationIndividualStats",
                               "Individual simulation stats",
                               false);
 
-}
+} // namespace
 namespace Uintah {
 
 SimulationController::SimulationController(const ProcessorGroup* myworld,
@@ -145,52 +145,39 @@ SimulationController::SimulationController(const ProcessorGroup* myworld,
 
   d_runtime_stats.insert(CompilationTime, std::string("Compilation"), timeStr);
   d_runtime_stats.insert(RegriddingTime, std::string("Regridding"), timeStr);
-  d_runtime_stats.insert(RegriddingCompilationTime,
-                         std::string("RegriddingCompilation"),
-                         timeStr);
-  d_runtime_stats.insert(RegriddingCopyDataTime,
-                         std::string("RegriddingCopyData"),
-                         timeStr);
-  d_runtime_stats.insert(LoadBalancerTime,
-                         std::string("LoadBalancer"),
-                         timeStr);
+  d_runtime_stats.insert(
+    RegriddingCompilationTime, std::string("RegriddingCompilation"), timeStr);
+  d_runtime_stats.insert(
+    RegriddingCopyDataTime, std::string("RegriddingCopyData"), timeStr);
+  d_runtime_stats.insert(
+    LoadBalancerTime, std::string("LoadBalancer"), timeStr);
 
   d_runtime_stats.insert(TaskExecTime, std::string("TaskExec"), timeStr);
-  d_runtime_stats.insert(TaskLocalCommTime,
-                         std::string("TaskLocalComm"),
-                         timeStr);
-  d_runtime_stats.insert(TaskWaitCommTime,
-                         std::string("TaskWaitCommTime"),
-                         timeStr);
-  d_runtime_stats.insert(TaskReduceCommTime,
-                         std::string("TaskReduceCommTime"),
-                         timeStr);
-  d_runtime_stats.insert(TaskWaitThreadTime,
-                         std::string("TaskWaitThread"),
-                         timeStr);
+  d_runtime_stats.insert(
+    TaskLocalCommTime, std::string("TaskLocalComm"), timeStr);
+  d_runtime_stats.insert(
+    TaskWaitCommTime, std::string("TaskWaitCommTime"), timeStr);
+  d_runtime_stats.insert(
+    TaskReduceCommTime, std::string("TaskReduceCommTime"), timeStr);
+  d_runtime_stats.insert(
+    TaskWaitThreadTime, std::string("TaskWaitThread"), timeStr);
 
   d_runtime_stats.insert(XMLIOTime, std::string("XMLIO"), timeStr);
   d_runtime_stats.insert(OutputIOTime, std::string("OutputIO"), timeStr);
-  d_runtime_stats.insert(OutputGlobalIOTime,
-                         std::string("OutputGlobalIO"),
-                         timeStr);
-  d_runtime_stats.insert(CheckpointIOTime,
-                         std::string("CheckpointIO"),
-                         timeStr);
-  d_runtime_stats.insert(CheckpointGlobalIOTime,
-                         std::string("CheckpointGlobalIO"),
-                         timeStr);
+  d_runtime_stats.insert(
+    OutputGlobalIOTime, std::string("OutputGlobalIO"), timeStr);
+  d_runtime_stats.insert(
+    CheckpointIOTime, std::string("CheckpointIO"), timeStr);
+  d_runtime_stats.insert(
+    CheckpointGlobalIOTime, std::string("CheckpointGlobalIO"), timeStr);
   d_runtime_stats.insert(TotalIOTime, std::string("TotalIO"), timeStr);
 
-  d_runtime_stats.insert(OutputIORate,
-                         std::string("OutputIORate"),
-                         "MBytes/sec");
-  d_runtime_stats.insert(OutputGlobalIORate,
-                         std::string("OutputGlobalIORate"),
-                         "MBytes/sec");
-  d_runtime_stats.insert(CheckpointIORate,
-                         std::string("CheckpointIORate"),
-                         "MBytes/sec");
+  d_runtime_stats.insert(
+    OutputIORate, std::string("OutputIORate"), "MBytes/sec");
+  d_runtime_stats.insert(
+    OutputGlobalIORate, std::string("OutputGlobalIORate"), "MBytes/sec");
+  d_runtime_stats.insert(
+    CheckpointIORate, std::string("CheckpointIORate"), "MBytes/sec");
   d_runtime_stats.insert(CheckpointGlobalIORate,
                          std::string("CheckpointGlobalIORate"),
                          "MBytes/sec");
@@ -198,21 +185,17 @@ SimulationController::SimulationController(const ProcessorGroup* myworld,
   d_runtime_stats.insert(NumTasks, std::string("NumberOfTasks"), "tasks");
   d_runtime_stats.insert(NumPatches, std::string("NumberOfPatches"), "patches");
   d_runtime_stats.insert(NumCells, std::string("NumberOfCells"), "cells");
-  d_runtime_stats.insert(NumParticles,
-                         std::string("NumberOfParticles"),
-                         "paticles");
+  d_runtime_stats.insert(
+    NumParticles, std::string("NumberOfParticles"), "paticles");
 
   d_runtime_stats.insert(SCIMemoryUsed, std::string("SCIMemoryUsed"), bytesStr);
-  d_runtime_stats.insert(SCIMemoryMaxUsed,
-                         std::string("SCIMemoryMaxUsed"),
-                         bytesStr);
-  d_runtime_stats.insert(SCIMemoryHighwater,
-                         std::string("SCIMemoryHighwater"),
-                         bytesStr);
+  d_runtime_stats.insert(
+    SCIMemoryMaxUsed, std::string("SCIMemoryMaxUsed"), bytesStr);
+  d_runtime_stats.insert(
+    SCIMemoryHighwater, std::string("SCIMemoryHighwater"), bytesStr);
   d_runtime_stats.insert(MemoryUsed, std::string("MemoryUsed"), bytesStr);
-  d_runtime_stats.insert(MemoryResident,
-                         std::string("MemoryResident"),
-                         bytesStr);
+  d_runtime_stats.insert(
+    MemoryResident, std::string("MemoryResident"), bytesStr);
 
   d_runtime_stats.calculateRankMinimum(true);
   d_runtime_stats.calculateRankStdDev(true);
@@ -234,46 +217,41 @@ SimulationController::setPostProcessFlags()
 }
 
 void
-SimulationController::getComponents(void)
+SimulationController::getComponents()
 {
   d_simulator = dynamic_cast<SimulationInterface*>(getPort("simulator"));
   if (!d_simulator) {
-    throw InternalError("dynamic_cast of 'd_simulator' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_simulator' failed!", __FILE__, __LINE__);
   }
 
   d_loadBalancer = dynamic_cast<LoadBalancer*>(getPort("load balancer"));
   if (!d_loadBalancer) {
-    throw InternalError("dynamic_cast of 'd_loadBalancer' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_loadBalancer' failed!", __FILE__, __LINE__);
   }
 
   d_output = dynamic_cast<Output*>(getPort("output"));
   if (!d_output) {
-    throw InternalError("dynamic_cast of 'd_output' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
   }
 
   d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
   if (d_simulator->isDynamicRegridding() && !d_regridder) {
-    throw InternalError("dynamic_cast of 'd_regridder' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_regridder' failed!", __FILE__, __LINE__);
   }
 
   d_scheduler = dynamic_cast<Scheduler*>(getPort("scheduler"));
   if (!d_scheduler) {
-    throw InternalError("dynamic_cast of 'd_scheduler' failed!",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "dynamic_cast of 'd_scheduler' failed!", __FILE__, __LINE__);
   }
 }
 
 void
-SimulationController::releaseComponents(void)
+SimulationController::releaseComponents()
 {
   releasePort("simulator");
   releasePort("load balancer");
@@ -314,10 +292,8 @@ SimulationController::restartArchiveSetup()
     Dir restartFromDir(d_from_dir);
     Dir checkpointRestartDir = restartFromDir.getSubdir("checkpoints");
 
-    d_restart_archive =
-      std::make_shared<DataArchive>(checkpointRestartDir.getName(),
-                                    d_myworld->myRank(),
-                                    d_myworld->nRanks());
+    d_restart_archive = std::make_shared<DataArchive>(
+      checkpointRestartDir.getName(), d_myworld->myRank(), d_myworld->nRanks());
 
     std::vector<int> indices;
     std::vector<double> times;
@@ -371,9 +347,8 @@ SimulationController::outputSetup()
   // Set up the output - needs to be done before the application is setup.
   d_output->setRuntimeStats(&d_runtime_stats);
 
-  d_output->problemSetup(d_ups,
-                         d_restart_ps,
-                         d_simulator->getMaterialManagerP());
+  d_output->problemSetup(
+    d_ups, d_restart_ps, d_simulator->getMaterialManagerP());
 }
 
 void
@@ -417,9 +392,8 @@ SimulationController::gridSetup()
   }
 
   if (d_current_gridP->numLevels() == 0) {
-    throw InternalError("No problem (no levels in grid) specified.",
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      "No problem (no levels in grid) specified.", __FILE__, __LINE__);
   }
 
   // Print out metadata
@@ -429,20 +403,19 @@ SimulationController::gridSetup()
 }
 
 void
-SimulationController::regridderSetup(void)
+SimulationController::regridderSetup()
 {
   // Set up the regridder.
   // Do this step before fully setting up the application interface so that the
   // Switcher (being an application) can reset the state of the regridder.
   if (d_regridder) {
-    d_regridder->problemSetup(d_ups,
-                              d_current_gridP,
-                              d_simulator->getMaterialManagerP());
+    d_regridder->problemSetup(
+      d_ups, d_current_gridP, d_simulator->getMaterialManagerP());
   }
 }
 
 void
-SimulationController::schedulerSetup(void)
+SimulationController::schedulerSetup()
 {
   // Now that the grid is completely set up, set up the scheduler.
   d_scheduler->setRuntimeStats(&d_runtime_stats);
@@ -459,7 +432,7 @@ SimulationController::schedulerSetup(void)
 }
 
 void
-SimulationController::loadBalancerSetup(void)
+SimulationController::loadBalancerSetup()
 {
   // Set up the load balancer.
   d_loadBalancer->setRuntimeStats(&d_runtime_stats);
@@ -475,13 +448,12 @@ SimulationController::loadBalancerSetup(void)
 
   // In addition, do this step after regridding setup as the minimum
   // patch size that the regridder will create will be known.
-  d_loadBalancer->problemSetup(d_ups,
-                               d_current_gridP,
-                               d_simulator->getMaterialManagerP());
+  d_loadBalancer->problemSetup(
+    d_ups, d_current_gridP, d_simulator->getMaterialManagerP());
 }
 
 void
-SimulationController::simulatorSetup(void)
+SimulationController::simulatorSetup()
 {
   // Pass the m_restart_ps to the component's problemSetup.  For
   // restarting, pull the <MaterialProperties> from the m_restart_ps.
@@ -658,13 +630,11 @@ SimulationController::ReportStats(const ProcessorGroup*,
                            d_myworld);
 
     // Reduce the MPI runtime stats.
-    MPIScheduler* mpiScheduler =
-      dynamic_cast<MPIScheduler*>(d_scheduler.get_rep());
+    auto* mpiScheduler = dynamic_cast<MPIScheduler*>(d_scheduler.get_rep());
 
     if (mpiScheduler) {
-      mpiScheduler->d_mpi_info.reduce(d_regridder &&
-                                        d_regridder->useDynamicDilation(),
-                                      d_myworld);
+      mpiScheduler->d_mpi_info.reduce(
+        d_regridder && d_regridder->useDynamicDilation(), d_myworld);
     }
   }
 
@@ -675,9 +645,8 @@ SimulationController::ReportStats(const ProcessorGroup*,
     d_simulator->getSimulationStats().calculateNodeMaximum(true);
     d_simulator->getSimulationStats().calculateNodeStdDev(true);
 
-    d_simulator->reduceSimulationStats(d_regridder &&
-                                         d_regridder->useDynamicDilation(),
-                                       d_myworld);
+    d_simulator->reduceSimulationStats(
+      d_regridder && d_regridder->useDynamicDilation(), d_myworld);
   }
 
   // Update the moving average and get the wall time for this time step.
@@ -719,7 +688,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
     int hrs_setw =
       std::fmax(2, floor(log10(hrs.count()))); // hrs can be a large number
 
-    std::ios orgFormat(NULL); // keep track of
+    std::ios orgFormat(nullptr); // keep track of
     orgFormat.copyfmt(message);
 
     message
@@ -871,7 +840,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
 
         // This code is here in case one wants to write to disk the
         // stats. Currently theses are written via Dout.
-        if (1) {
+        if (true) {
           DOUT(true, message.str());
         }
         // else if( 1 ) {
@@ -1006,8 +975,7 @@ SimulationController::getMemoryStats(bool create /* = false */)
     }
 
     *mallocPerProcStream << "Proc " << d_myworld->myRank() << "   ";
-    *mallocPerProcStream << "TimeStep " << d_simulator->getTimeStep()
-                         << "   ";
+    *mallocPerProcStream << "TimeStep " << d_simulator->getTimeStep() << "   ";
 
     if (ProcessInfo::isSupported(ProcessInfo::MEM_SIZE)) {
       *mallocPerProcStream << "Size " << ProcessInfo::getMemoryUsed() << "   ";

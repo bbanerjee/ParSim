@@ -56,7 +56,7 @@ public:
 
   void setDWIndex(int);
 
-  const MaterialSubset* thisMaterial() const { return d_mat_subset.get(); }
+  const MaterialSubset* thisMaterial() const { return d_mat_subset; }
 
   bool hasName() const { return d_have_name; }
   std::string_view getName() const { return d_name; }
@@ -64,7 +64,7 @@ public:
 protected:
   // Index associated with this material's spot in the DW
   int d_dwindex{ -1 };
-  std::unique_ptr<MaterialSubset> d_mat_subset{ nullptr };
+  MaterialSubset* d_mat_subset{ nullptr };
 
 private:
   bool d_have_name{ false };

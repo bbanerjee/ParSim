@@ -74,19 +74,19 @@ public:
                                    // for N time steps.
   Timers::Simple InSitu;           // In-situ time for previous time step
 
-  int
-  getWindow(void)
+  auto
+  getWindow() -> int
   {
     return AVERAGE_WINDOW;
   };
   void
-  resetWindow(void)
+  resetWindow()
   {
     d_num_samples = 0;
   };
 
-  Timers::nanoseconds
-  updateExpMovingAverage(void)
+  auto
+  updateExpMovingAverage() -> Timers::nanoseconds
   {
 
     Timers::nanoseconds laptime = TimeStep.lap();
@@ -111,8 +111,8 @@ public:
 
   } // end Timers::nanoseconds
 
-  double
-  GetWallTime()
+  auto
+  GetWallTime() -> double
   {
     return d_wall_timer().seconds();
   };
@@ -131,26 +131,26 @@ class SimulationController : public UintahParallelComponent
 public:
   SimulationController(const ProcessorGroup* myworld, ProblemSpecP pspec);
 
-  virtual ~SimulationController() = default;
+  ~SimulationController() override = default;
 
   // eliminate copy, assignment and move
   SimulationController(const SimulationController&) = delete;
   SimulationController(SimulationController&&)      = delete;
 
-  SimulationController&
-  operator=(const SimulationController&) = delete;
-  SimulationController&
-  operator=(SimulationController&&) = delete;
+  auto
+  operator=(const SimulationController&) -> SimulationController& = delete;
+  auto
+  operator=(SimulationController&&) -> SimulationController& = delete;
 
   // Methods for managing the components attached via the ports.
-  virtual void
-  setComponents([[maybe_unused]] UintahParallelComponent* comp){};
+  void
+  setComponents([[maybe_unused]] UintahParallelComponent* comp) override{};
 
-  virtual void
-  getComponents();
+  void
+  getComponents() override;
 
-  virtual void
-  releaseComponents();
+  void
+  releaseComponents() override;
 
   //! Notifies (before calling run) the SimulationController
   //! that this is simulation is a restart.
@@ -168,56 +168,56 @@ public:
   void
   setPostProcessFlags();
 
-  ProblemSpecP
-  getProblemSpecP()
+  auto
+  getProblemSpecP() -> ProblemSpecP
   {
     return d_ups;
   }
 
-  ProblemSpecP
-  getGridProblemSpecP()
+  auto
+  getGridProblemSpecP() -> ProblemSpecP
   {
     return d_grid_ps;
   }
 
-  SchedulerP
-  getSchedulerP()
+  auto
+  getSchedulerP() -> SchedulerP
   {
     return d_scheduler;
   }
 
-  LoadBalancer*
-  getLoadBalancer()
+  auto
+  getLoadBalancer() -> LoadBalancer*
   {
     return d_loadBalancer;
   }
 
-  Output*
-  getOutput()
+  auto
+  getOutput() -> Output*
   {
     return d_output;
   }
 
-  SimulationInterface*
-  getSimulationInterface()
+  auto
+  getSimulationInterface() -> SimulationInterface*
   {
     return d_simulator;
   }
 
-  Regridder*
-  getRegridder()
+  auto
+  getRegridder() -> Regridder*
   {
     return d_regridder;
   }
 
-  WallTimers*
-  getWallTimers()
+  auto
+  getWallTimers() -> WallTimers*
   {
     return &d_wall_timers;
   }
 
-  bool
-  getRecompileTaskGraph() const
+  [[nodiscard]] auto
+  getRecompileTaskGraph() const -> bool
   {
     return d_recompile_taskgraph;
   }
@@ -239,8 +239,8 @@ public:
               DataWarehouse*,
               bool header);
 
-  ReductionInfoMapper<RuntimeStatsEnum, double>&
-  getRuntimeStats()
+  auto
+  getRuntimeStats() -> ReductionInfoMapper<RuntimeStatsEnum, double>&
   {
     return d_runtime_stats;
   };
@@ -274,7 +274,7 @@ protected:
   finalSetup();
 
   void
-  resetStats(void);
+  resetStats();
 
   void
   getMemoryStats(bool create = false);

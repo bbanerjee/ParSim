@@ -290,9 +290,9 @@ MPIScheduler::runTask(DetailedTask* dtask, int iteration)
     printTrackedVars(dtask, SchedulerCommon::PRINT_BEFORE_EXEC);
   }
 
-  std::vector<DataWarehouseP> plain_old_dws(d_dws.size());
+  std::vector<DataWarehouseSP> plain_old_dws(d_dws.size());
   for (size_t i = 0; i < d_dws.size(); i++) {
-    plain_old_dws[i] = d_dws[i].get();
+    plain_old_dws[i] = d_dws[i];
   }
 
   DOUTR(g_task_run, " Running task:   " << *dtask);

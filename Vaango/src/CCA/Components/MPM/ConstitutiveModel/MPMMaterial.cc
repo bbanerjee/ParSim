@@ -152,32 +152,22 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   // Step 3 -- Loop through all of the pieces in this geometry object
   // int piece_num = 0;
   std::list<GeometryObject::DataItem> geom_obj_data;
-  geom_obj_data.push_back(
-    GeometryObject::DataItem("res", GeometryObject::IntVector));
-  geom_obj_data.push_back(
-    GeometryObject::DataItem("temperature", GeometryObject::Double));
-  geom_obj_data.push_back(
-    GeometryObject::DataItem("velocity", GeometryObject::Vector));
-  geom_obj_data.push_back(GeometryObject::DataItem("affineTransformation_A0",
-                                                   GeometryObject::Vector));
-  geom_obj_data.push_back(GeometryObject::DataItem("affineTransformation_A1",
-                                                   GeometryObject::Vector));
-  geom_obj_data.push_back(GeometryObject::DataItem("affineTransformation_A2",
-                                                   GeometryObject::Vector));
-  geom_obj_data.push_back(
-    GeometryObject::DataItem("affineTransformation_b", GeometryObject::Vector));
-  geom_obj_data.push_back(
-    GeometryObject::DataItem("volumeFraction", GeometryObject::Double));
+  geom_obj_data.emplace_back("res", GeometryObject::IntVector);
+  geom_obj_data.emplace_back("temperature", GeometryObject::Double);
+  geom_obj_data.emplace_back("velocity", GeometryObject::Vector);
+  geom_obj_data.emplace_back("affineTransformation_A0", GeometryObject::Vector);
+  geom_obj_data.emplace_back("affineTransformation_A1", GeometryObject::Vector);
+  geom_obj_data.emplace_back("affineTransformation_A2", GeometryObject::Vector);
+  geom_obj_data.emplace_back("affineTransformation_b", GeometryObject::Vector);
+  geom_obj_data.emplace_back("volumeFraction", GeometryObject::Double);
 
   if (flags->d_withColor) {
-    geom_obj_data.push_back(
-      GeometryObject::DataItem("color", GeometryObject::Double));
+    geom_obj_data.emplace_back("color", GeometryObject::Double);
   }
 
   // ReactiveFlow Diffusion Component
   if (flags->d_doScalarDiffusion) {
-    geom_obj_data.push_back(
-      GeometryObject::DataItem("concentration", GeometryObject::Double));
+    geom_obj_data.emplace_back("concentration", GeometryObject::Double);
   }
 
   for (ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
@@ -188,9 +178,8 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
 
     GeometryPieceP mainpiece;
     if (pieces.size() == 0) {
-      throw ParameterNotFound("No piece specified in geom_object",
-                              __FILE__,
-                              __LINE__);
+      throw ParameterNotFound(
+        "No piece specified in geom_object", __FILE__, __LINE__);
     } else if (pieces.size() > 1) {
       mainpiece = std::make_shared<UnionGeometryPiece>(pieces);
     } else {
@@ -203,7 +192,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   }
 }
 
-MPMMaterial::~MPMMaterial() {}
+MPMMaterial::~MPMMaterial() = default;
 
 void
 MPMMaterial::registerParticleState(std::vector<VarLabelVector>& state,
@@ -213,8 +202,8 @@ MPMMaterial::registerParticleState(std::vector<VarLabelVector>& state,
   state_preReloc.push_back(d_particle_creator->returnParticleStatePreReloc());
 }
 
-ProblemSpecP
-MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
+auto
+MPMMaterial::outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP
 {
   ProblemSpecP mpm_ps = Material::outputProblemSpec(ps);
   mpm_ps->appendElement("density", d_density);
@@ -268,8 +257,8 @@ MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 }
 
-ConstitutiveModel*
-MPMMaterial::getConstitutiveModel() const
+auto
+MPMMaterial::getConstitutiveModel() const -> ConstitutiveModel*
 {
   // Return the pointer to the constitutive model associated
   // with this material
@@ -277,8 +266,8 @@ MPMMaterial::getConstitutiveModel() const
   return d_cm.get();
 }
 
-Vaango::BasicDamageModel*
-MPMMaterial::getBasicDamageModel() const
+auto
+MPMMaterial::getBasicDamageModel() const -> Vaango::BasicDamageModel*
 {
   // Return the pointer to the basic damage model associated
   // with this material
@@ -286,68 +275,64 @@ MPMMaterial::getBasicDamageModel() const
   return d_basicDamageModel.get();
 }
 
-ScalarDiffusionModel*
-MPMMaterial::getScalarDiffusionModel() const
+auto
+MPMMaterial::getScalarDiffusionModel() const -> ScalarDiffusionModel*
 {
   return d_sdm.get();
 }
 
-particleIndex
+auto
 MPMMaterial::createParticles(CCVariable<short int>& cellNAPID,
                              const Patch* patch,
-                             DataWarehouse* new_dw)
+                             DataWarehouse* new_dw) -> particleIndex
 {
-  return d_particle_creator->createParticles(this,
-                                             cellNAPID,
-                                             patch,
-                                             new_dw,
-                                             d_geom_objs);
+  return d_particle_creator->createParticles(
+    this, cellNAPID, patch, new_dw, d_geom_objs);
 }
 
-ParticleCreator*
-MPMMaterial::getParticleCreator()
+auto
+MPMMaterial::getParticleCreator() -> ParticleCreator*
 {
   return d_particle_creator.get();
 }
 
-double
-MPMMaterial::getInitialDensity() const
+auto
+MPMMaterial::getInitialDensity() const -> double
 {
   return d_density;
 }
 
-double
-MPMMaterial::getInitialCp() const
+auto
+MPMMaterial::getInitialCp() const -> double
 {
   return d_Cp;
 }
 
-double
-MPMMaterial::getInitialCv() const
+auto
+MPMMaterial::getInitialCv() const -> double
 {
   return d_Cv;
 }
 
-double
-MPMMaterial::getRoomTemperature() const
+auto
+MPMMaterial::getRoomTemperature() const -> double
 {
   return d_troom;
 }
 
-double
-MPMMaterial::getMeltTemperature() const
+auto
+MPMMaterial::getMeltTemperature() const -> double
 {
   return d_tmelt;
 }
 
-int
-MPMMaterial::nullGeomObject() const
+auto
+MPMMaterial::nullGeomObject() const -> int
 {
   int count = 0;
   for (const auto& object : d_geom_objs) {
     GeometryPieceP piece = object->getPiece();
-    NullGeometryPiece* null_piece =
-      dynamic_cast<NullGeometryPiece*>(piece.get());
+    auto* null_piece     = dynamic_cast<NullGeometryPiece*>(piece.get());
     if (null_piece) {
       return count;
     }

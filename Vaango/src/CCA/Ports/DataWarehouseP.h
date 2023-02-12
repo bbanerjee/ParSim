@@ -46,6 +46,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <memory>
 
 #ifndef UINTAH_HOMEBREW_DataWarehouseP_H
 #define UINTAH_HOMEBREW_DataWarehouseP_H
@@ -55,6 +56,10 @@ namespace Uintah {
 template<class T> class Handle;
 class DataWarehouse;
 typedef Handle<DataWarehouse> DataWarehouseP;
+
+using DataWarehouseSP = std::shared_ptr<DataWarehouse>;
+using DataWarehouseUP = std::unique_ptr<DataWarehouse>;
+
 
 } // End namespace Uintah
 

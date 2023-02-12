@@ -78,8 +78,8 @@ public:
 
   // Prevent copying of this class
   MPMMaterial(const MPMMaterial& mpmm) = delete;
-  MPMMaterial&
-  operator=(const MPMMaterial& mpmm) = delete;
+  auto
+  operator=(const MPMMaterial& mpmm) -> MPMMaterial& = delete;
 
   // void registerParticleState(MaterialManager* ss) override;
   using VarLabelVector = std::vector<const VarLabel*>;
@@ -87,55 +87,56 @@ public:
   registerParticleState(std::vector<VarLabelVector>& state,
                         std::vector<VarLabelVector>& state_preReloc);
 
-  ProblemSpecP
-  outputProblemSpec(ProblemSpecP& ps) override;
+  auto
+  outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP override;
 
   /*!  Create a copy of the material without the associated geometry */
   void
   copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat, MPMFlags* flags);
 
   void
-  deleteGeomObjects() {
+  deleteGeomObjects()
+  {
     d_geom_objs.clear();
   }
 
-  int
-  nullGeomObject() const;
+  [[nodiscard]] auto
+  nullGeomObject() const -> int;
 
-  ConstitutiveModel*
-  getConstitutiveModel() const;
+  [[nodiscard]] auto
+  getConstitutiveModel() const -> ConstitutiveModel*;
 
-  Vaango::BasicDamageModel*
-  getBasicDamageModel() const;
+  [[nodiscard]] auto
+  getBasicDamageModel() const -> Vaango::BasicDamageModel*;
 
-  ScalarDiffusionModel*
-  getScalarDiffusionModel() const;
+  [[nodiscard]] auto
+  getScalarDiffusionModel() const -> ScalarDiffusionModel*;
 
-  particleIndex
+  auto
   createParticles(CCVariable<short int>& cellNAPID,
                   const Patch*,
-                  DataWarehouse* new_dw);
+                  DataWarehouse* new_dw) -> particleIndex;
 
-  ParticleCreator*
-  getParticleCreator();
+  auto
+  getParticleCreator() -> ParticleCreator*;
 
-  double
-  getInitialDensity() const;
+  [[nodiscard]] auto
+  getInitialDensity() const -> double;
 
   // Get the specific heats at room temperature
-  double
-  getInitialCp() const;
-  double
-  getInitialCv() const;
+  [[nodiscard]] auto
+  getInitialCp() const -> double;
+  [[nodiscard]] auto
+  getInitialCv() const -> double;
 
   // for temperature dependent plasticity models
-  double
-  getRoomTemperature() const;
-  double
-  getMeltTemperature() const;
+  [[nodiscard]] auto
+  getRoomTemperature() const -> double;
+  [[nodiscard]] auto
+  getMeltTemperature() const -> double;
 
-  bool
-  getIsRigid() const
+  [[nodiscard]] auto
+  getIsRigid() const -> bool
   {
     return d_is_rigid;
   }
@@ -145,39 +146,39 @@ public:
     d_is_rigid = is_rigid;
   }
 
-  bool
-  doBasicDamage() const
+  [[nodiscard]] auto
+  doBasicDamage() const -> bool
   {
     return d_doBasicDamage;
   }
 
-  bool
-  getIncludeFlowWork() const
+  [[nodiscard]] auto
+  getIncludeFlowWork() const -> bool
   {
     return d_includeFlowWork;
   }
 
-  double
-  getSpecificHeat() const
+  [[nodiscard]] auto
+  getSpecificHeat() const -> double
   {
     return d_specificHeat;
   }
-  double
-  getThermalConductivity() const
+  [[nodiscard]] auto
+  getThermalConductivity() const -> double
   {
     return d_thermalConductivity;
   }
 
   // For scalar diffusion
-  bool
-  doConcReduction()
+  auto
+  doConcReduction() -> bool
   {
     return d_doConcReduction;
   };
 
   // For MPMICE
-  double
-  getGamma() const;
+  [[nodiscard]] auto
+  getGamma() const -> double;
   void
   initializeCCVariables(CCVariable<double>& rhom,
                         CCVariable<double>& rhC,

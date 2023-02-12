@@ -124,14 +124,14 @@ public:
 
   void
   doit(const ProcessorGroup* pg,
-       std::vector<OnDemandDataWarehouseUP>& oddws,
-       std::vector<DataWarehouseP>& dws,
+       std::vector<OnDemandDataWarehouseSP>& oddws,
+       std::vector<DataWarehouseSP>& dws,
        Task::CallBackEvent event = Task::CPU);
 
   // Called after doit and MPI data sent (packed in buffers) finishes.
   // Handles internal dependencies and scrubbing. Called after doit finishes.
   void
-  done(std::vector<OnDemandDataWarehouseUP>& dws);
+  done(std::vector<OnDemandDataWarehouseSP>& dws);
 
   std::string
   getName() const;
@@ -363,7 +363,7 @@ protected:
 private:
   // called by done()
   void
-  scrub(std::vector<OnDemandDataWarehouseUP>& dws);
+  scrub(std::vector<OnDemandDataWarehouseSP>& dws);
 
   // Called when prerequisite tasks (dependencies) call done.
   void

@@ -115,7 +115,7 @@ DataArchiver::DataArchiver(const ProcessorGroup* myworld, int udaSuffix)
   d_sync_io_label =
     VarLabel::create("sync_io_vl", CCVariable<float>::getTypeDescription());
 
-  d_tmpMatSubset = std::make_unique<MaterialSubset>();
+  d_tmpMatSubset = scinew MaterialSubset();
   d_tmpMatSubset->add(-1);
   d_tmpMatSubset->addReference();
 }
@@ -125,7 +125,9 @@ DataArchiver::~DataArchiver()
   DOUTR(g_DA_dbg, "DataArchiver::~DataArchiver()");
   VarLabel::destroy(d_sync_io_label);
 
-  d_tmpMatSubset->removeReference();
+  if (d_tmpMatSubset && d_tmpMatSubset->removeReference()) {
+    delete d_tmpMatSubset;
+  }
 }
 
 void
@@ -3906,7 +3908,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
     // Special case (hack) so sole variables have a material index of -1.
     else if (dep->var->typeDescription()->getType() ==
              TypeDescription::Type::SoleVariable) {
-      matSubset = d_tmpMatSubset.get();
+      matSubset = d_tmpMatSubset;
     } else {
       matSubset = dep->task->getMaterialSet()->getUnion();
     }

@@ -62,21 +62,21 @@ public:
 
   using VecGeometryObjectSP = std::vector<std::shared_ptr<GeometryObject>>;
 
-  virtual particleIndex
+  virtual auto
   createParticles(MPMMaterial* matl,
                   CCVariable<short int>& cellNAPID,
                   const Patch*,
                   DataWarehouse* new_dw,
-                  const VecGeometryObjectSP& objects);
+                  const VecGeometryObjectSP& objects) -> particleIndex;
 
   virtual void
   registerPermanentParticleState(MPMMaterial* matl);
 
-  std::vector<const VarLabel*>
-  returnParticleState();
+  auto
+  returnParticleState() -> std::vector<const VarLabel*>;
 
-  std::vector<const VarLabel*>
-  returnParticleStatePreReloc();
+  auto
+  returnParticleStatePreReloc() -> std::vector<const VarLabel*>;
 
   using GeomName   = std::pair<std::string, GeometryObject*>;
   using GeomPoint  = std::map<GeometryObject*, std::vector<Point>>;
@@ -145,15 +145,16 @@ public:
   };
 
 protected:
-  virtual ParticleSubset*
+  virtual auto
   allocateVariables(particleIndex numParticles,
                     int dwi,
                     const Patch* patch,
                     DataWarehouse* new_dw,
-                    ParticleVars& pvars);
+                    ParticleVars& pvars) -> ParticleSubset*;
 
-  virtual particleIndex
-  countAndCreateParticles(const Patch*, GeometryObject* obj, ObjectVars& vars);
+  virtual auto
+  countAndCreateParticles(const Patch*, GeometryObject* obj, ObjectVars& vars)
+    -> particleIndex;
 
   void
   createPoints(const Patch* patch, GeometryObject* obj, ObjectVars& vars);
@@ -171,14 +172,14 @@ protected:
   //////////////////////////////////////////////////////////////////////////
   /*! Get the LoadCurveID applicable for this material point */
   //////////////////////////////////////////////////////////////////////////
-  int
-  getLoadCurveID(const Point& pp, const Vector& dxpp);
+  auto
+  getLoadCurveID(const Point& pp, const Vector& dxpp) -> int;
 
-  IntVector
+  auto
   getLoadCurveID(const Point& pp,
                  const Vector& dxpp,
                  Vector& areacomps,
-                 int mat_id);
+                 int mat_id) -> IntVector;
 
   //////////////////////////////////////////////////////////////////////////
   /*! Print MPM physical boundary condition information */
@@ -195,28 +196,28 @@ protected:
                const double& pMass,
                Vector& pExtForce);
 
-  int
-  checkForSurface(const GeometryPieceP piece, const Point p, const Vector dxpp);
+  auto
+  checkForSurface(const GeometryPieceP piece, const Point p, const Vector dxpp)
+    -> int;
 
-  double
-  checkForSurface2(const GeometryPieceP piece,
-                   const Point p,
-                   const Vector dxpp);
+  auto
+  checkForSurface2(const GeometryPieceP piece, const Point p, const Vector dxpp)
+    -> double;
 
-  std::unique_ptr<MPMLabel> d_mpm_labels;
-  std::unique_ptr<AMRMPMLabel> d_amrmpm_labels;
-  std::unique_ptr<HydroMPMLabel> d_hydrompm_labels;
-  MPMFlags* d_flags;
+  std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
+  std::unique_ptr<AMRMPMLabel> d_amrmpm_labels{ nullptr };
+  std::unique_ptr<HydroMPMLabel> d_hydrompm_labels{ nullptr };
+  MPMFlags* d_flags{ nullptr };
 
-  bool d_useLoadCurves;
-  bool d_useLoadCurvesVector;
-  bool d_withColor;
-  bool d_doScalarDiffusion;
-  bool d_artificialViscosity;
-  bool d_computeScaleFactor;
-  bool d_useCPTI;
-  bool d_withGaussSolver;
-  bool d_coupledFlow;
+  bool d_useLoadCurves{ false };
+  bool d_useLoadCurvesVector{ false };
+  bool d_withColor{ false };
+  bool d_doScalarDiffusion{ false };
+  bool d_artificialViscosity{ false };
+  bool d_computeScaleFactor{ false };
+  bool d_useCPTI{ false };
+  bool d_withGaussSolver{ false };
+  bool d_coupledFlow{ false };
 
   std::vector<const VarLabel*> particle_state, particle_state_preReloc;
 };

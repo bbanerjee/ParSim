@@ -44,7 +44,8 @@ public:
   AMRSimulationController(AMRSimulationController&&)      = delete;
 
   auto
-  operator=(const AMRSimulationController&) -> AMRSimulationController& = delete;
+  operator=(const AMRSimulationController&)
+    -> AMRSimulationController& = delete;
   auto
   operator=(AMRSimulationController&&) -> AMRSimulationController& = delete;
 

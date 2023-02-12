@@ -351,7 +351,7 @@ DetailedTasks::computeLocalTasks()
 }
 
 void
-DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseUP>& dws,
+DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseSP>& dws,
                                 int dwmap[])
 {
   DOUT(g_scrubbing_dbg,
@@ -435,7 +435,7 @@ void
 DetailedTasks::setScrubCount(const Task::Dependency* req,
                              int matl,
                              const Patch* patch,
-                             std::vector<OnDemandDataWarehouseUP>& dws)
+                             std::vector<OnDemandDataWarehouseSP>& dws)
 {
   ASSERT(!patch->isVirtual());
   DataWarehouse::ScrubMode scrubmode =

@@ -124,7 +124,7 @@ public:
   makeDWKeyDatabase();
 
   void
-  copyoutDWKeyDatabase(OnDemandDataWarehouseP dws)
+  copyoutDWKeyDatabase(OnDemandDataWarehouse* dws)
   {
     dws->copyKeyDB(m_var_keyDB, m_level_keyDB);
   }
@@ -152,7 +152,7 @@ public:
   computeLocalTasks();
 
   void
-  initializeScrubs(std::vector<OnDemandDataWarehouseUP>& dws, int dwmap[]);
+  initializeScrubs(std::vector<OnDemandDataWarehouseSP>& dws, int dwmap[]);
 
   void
   possiblyCreateDependency(DetailedTask* from,
@@ -227,7 +227,7 @@ public:
   setScrubCount(const Task::Dependency* req,
                 int matl,
                 const Patch* patch,
-                std::vector<OnDemandDataWarehouseUP>& dws);
+                std::vector<OnDemandDataWarehouseSP>& dws);
 
   int
   getExtraCommunication()

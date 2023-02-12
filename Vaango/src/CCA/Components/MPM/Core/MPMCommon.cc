@@ -103,15 +103,18 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     std::shared_ptr<MPMMaterial> mat =
       std::make_shared<MPMMaterial>(ps, s_materialManager, d_flags, is_restart);
 
+    // Add particle state
+    mat->registerParticleState(d_particleState, d_particleState_preReloc);
+
     // When doing restart, we need to make sure that we load the materials
     // in the same order that they were initially created.  Restarts will
     // ALWAYS have an index number as in <material index = "0">.
     // Index_val = -1 means that we don't register the material by its
     // index number.
     if (index_val > -1) {
-      s_materialManager->registerMaterial("MPM", std::move(mat), index_val);
+      s_materialManager->registerMaterial("MPM", mat, index_val);
     } else {
-      s_materialManager->registerMaterial("MPM", std::move(mat));
+      s_materialManager->registerMaterial("MPM", mat);
     }
 
     // If new particles are to be created, create a copy of each material
@@ -119,7 +122,7 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     if (flags->d_createNewParticles) {
       std::shared_ptr<MPMMaterial> mat_copy = std::make_shared<MPMMaterial>();
       mat_copy->copyWithoutGeom(ps, mat.get(), d_flags);
-      s_materialManager->registerMaterial("MPM", std::move(mat_copy));
+      s_materialManager->registerMaterial("MPM", mat_copy);
     }
   }
 }

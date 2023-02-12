@@ -644,7 +644,7 @@ public:
 
   // must be called by the thread that will run the test
   void
-  pushRunningTask(const Task* task, std::vector<OnDemandDataWarehouseUP>* dws);
+  pushRunningTask(const Task* task, std::vector<OnDemandDataWarehouseSP>* dws);
 
   void
   popRunningTask();
@@ -707,7 +707,7 @@ private:
 
     RunningTaskInfo() = default;
 
-    RunningTaskInfo(const Task* task, std::vector<OnDemandDataWarehouseUP>* dws)
+    RunningTaskInfo(const Task* task, std::vector<OnDemandDataWarehouseSP>* dws)
       : d_task(task)
       , d_dws(dws)
     {
@@ -730,7 +730,7 @@ private:
     }
 
     const Task* d_task{ nullptr };
-    std::vector<OnDemandDataWarehouseUP>* d_dws{ nullptr };
+    std::vector<OnDemandDataWarehouseSP>* d_dws{ nullptr };
     VarAccessMap d_accesses{};
   };
 
