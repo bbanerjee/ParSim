@@ -108,15 +108,15 @@ public:
 
     // Copy constructor
     ParticleBndSpec(const ParticleBndSpec& rhs) = default;
-    ParticleBndSpec&
-    operator=(const ParticleBndSpec& rhs) = default;
+    auto
+    operator=(const ParticleBndSpec& rhs) -> ParticleBndSpec& = default;
 
     /*
      *  \brief Checks whether a particle boundary condition has been specified
      * on this BCGeometry
      */
-    bool
-    hasParticleBC() const
+    [[nodiscard]] auto
+    hasParticleBC() const -> bool
     {
       return (bndType != ParticleBndSpec::NOTSET);
     }
@@ -134,19 +134,19 @@ public:
   BCGeomBase(const BCGeomBase& rhs);
 
   /// Assignment operator
-  BCGeomBase&
-  operator=(const BCGeomBase& rhs);
+  auto
+  operator=(const BCGeomBase& rhs) -> BCGeomBase&;
 
   /// Destructor
   virtual ~BCGeomBase();
 
   /// Equality test
-  virtual bool
-  operator==(const BCGeomBase&) const = 0;
+  virtual auto
+  operator==(const BCGeomBase&) const -> bool = 0;
 
   /// Make a clone
-  virtual BCGeomBase*
-  clone() = 0;
+  virtual auto
+  clone() -> std::shared_ptr<BCGeomBase> = 0;
 
   /// Get the boundary condition data
   virtual void
@@ -158,7 +158,7 @@ public:
 
   /// For old boundary conditions
   virtual void
-  addBC(BoundCondBaseP bc) = 0;
+  addBC(BoundCondBaseSP bc) = 0;
 
   /// Allows a component to add a boundary condition, which already has an
   /// iterator.
@@ -169,7 +169,7 @@ public:
   //  this function forces the boundary conditions to be set regardless of the
   //  inherited object's special properties.
   virtual void
-  sudoAddBC(BoundCondBaseP& bc) = 0;
+  sudoAddBC(BoundCondBaseSP& bc) = 0;
 
   void
   getCellFaceIterator(Iterator& b_ptr);
@@ -177,16 +177,16 @@ public:
   void
   getNodeFaceIterator(Iterator& b_ptr);
 
-  bool
-  hasIterator()
+  auto
+  hasIterator() -> bool
   {
     return (d_cells.size() > 0);
   }
 
   /// Determine if a point is inside the geometry where the boundary
   /// condition is applied.
-  virtual bool
-  inside(const Point& p) const = 0;
+  [[nodiscard]] virtual auto
+  inside(const Point& p) const -> bool = 0;
 
   /// Print out the type of boundary condition -- debugging
   virtual void
@@ -214,8 +214,8 @@ public:
   printLimits() const;
 
   /// Get the name for this boundary specification
-  string
-  getBCName()
+  auto
+  getBCName() -> string
   {
     return d_bcname;
   };
@@ -227,8 +227,8 @@ public:
 
   /// Get the type for this boundary specification (type is usually associated
   /// with a user-friendly boundary type such as Wall, Inlet, Outflow...
-  std::string
-  getBndType()
+  auto
+  getBndType() -> std::string
   {
     return d_bndtype;
   }
@@ -239,8 +239,8 @@ public:
   }
 
   // Particle-related functionality
-  ParticleBndSpec
-  getParticleBndSpec()
+  auto
+  getParticleBndSpec() -> ParticleBndSpec
   {
     return d_particleBndSpec;
   }
@@ -251,20 +251,20 @@ public:
     d_particleBndSpec = pBndSpec;
   }
 
-  bool
-  hasParticleBC()
+  auto
+  hasParticleBC() -> bool
   {
     return d_particleBndSpec.hasParticleBC();
   }
 
-  double
-  surfaceArea()
+  auto
+  surfaceArea() -> double
   {
     return d_surfaceArea;
   }
 
-  Point
-  getOrigin()
+  auto
+  getOrigin() -> Point
   {
     return d_origin;
   }
@@ -283,8 +283,13 @@ template<class T>
 class cmp_type
 {
 public:
-  bool
-  operator()(const BCGeomBase* p)
+  auto
+  operator()(const std::shared_ptr<BCGeomBase>& p) -> bool
+  {
+    return (typeid(T) == typeid(*p.get()));
+  }
+  auto
+  operator()(const BCGeomBase* p) -> bool
   {
     return (typeid(T) == typeid(*p));
   }
@@ -294,8 +299,13 @@ template<class T>
 class not_type
 {
 public:
-  bool
-  operator()(const BCGeomBase* p)
+  auto
+  operator()(const std::shared_ptr<BCGeomBase>& p) -> bool
+  {
+    return (typeid(T) != typeid(*p.get()));
+  }
+  auto
+  operator()(const BCGeomBase* p) -> bool
   {
     return (typeid(T) != typeid(*p));
   }
@@ -305,6 +315,11 @@ template<typename T>
 class delete_object
 {
 public:
+  void
+  operator()(std::shared_ptr<T>& ptr)
+  {
+    ptr = nullptr;
+  }
   void
   operator()(T* ptr)
   {

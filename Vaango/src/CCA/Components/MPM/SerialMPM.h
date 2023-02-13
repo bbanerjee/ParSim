@@ -77,67 +77,68 @@ public:
 public:
   SerialMPM(const ProcessorGroup* myworld, const MaterialManagerP& matManager);
 
-  virtual ~SerialMPM() noexcept(false);
+  ~SerialMPM() noexcept(false) override;
 
   // No copy or move allowed
   SerialMPM(const SerialMPM&) = delete;
   SerialMPM(SerialMPM&&)      = delete;
-  SerialMPM&
-  operator=(const SerialMPM&) = delete;
-  SerialMPM&
-  operator=(SerialMPM&&) = delete;
+  auto
+  operator=(const SerialMPM&) -> SerialMPM& = delete;
+  auto
+  operator=(SerialMPM&&) -> SerialMPM& = delete;
 
-  virtual double
-  recomputeDelT(double delT)
+  double
+  recomputeDelT(double delT) override
   {
     return delT * 0.1;
   }
 
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid);
+               GridP& grid) override;
 
-  virtual void
-  outputProblemSpec(ProblemSpecP& ps);
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-  virtual void
-  scheduleInitialize(const LevelP& level, SchedulerP&);
+  void
+  scheduleInitialize(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+  void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
   virtual void
   scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched);
 
-  virtual void
-  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
+  void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+  void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler);
+  void
+  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler) override;
 
-  virtual void
+  void
   scheduleRefineInterface(const LevelP& fineLevel,
                           SchedulerP& scheduler,
                           bool needCoarse,
-                          bool needFine);
+                          bool needFine) override;
 
-  virtual void
-  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
+  void
+  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched) override;
 
   /// Schedule to mark flags for AMR regridding
-  virtual void
-  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
+  void
+  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched) override;
 
   /// Schedule to mark initial flags for AMR regridding
   void
-  scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
+  scheduleInitialErrorEstimate(const LevelP& coarseLevel,
+                               SchedulerP& sched) override;
 
-  virtual void
-  scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
+  void
+  scheduleSwitchTest(const LevelP& level, SchedulerP& sched) override;
 
   void
   setMPMLabel(MPMLabel* Mlb)

@@ -59,58 +59,58 @@ public:
   UnionBCData(const UnionBCData& bc);
 
   /// Assignment operator
-  UnionBCData&
-  operator=(const UnionBCData& bc);
+  auto
+  operator=(const UnionBCData& bc) -> UnionBCData&;
 
   /// Constructor taking the problem specification
   UnionBCData(ProblemSpecP& ps);
 
   /// Destructor
-  virtual ~UnionBCData();
+  ~UnionBCData() override;
 
-  virtual bool
-  operator==(const BCGeomBase&) const;
+  bool
+  operator==(const BCGeomBase&) const override;
 
   /// Clone the boundary condition -- allocates memory
-  UnionBCData*
-  clone();
+  std::shared_ptr<BCGeomBase>
+  clone() override;
 
   /// Get the boundary condition data
   void
-  getBCData(BCData& bc) const;
+  getBCData(BCData& bc) const override;
 
   /// Add the boundary condition data -- no longer used.
   void
-  addBCData(BCData& bc);
+  addBCData(BCData& bc) override;
 
   /// Add the old boundary condition data -- no longer used.
   void
-  addBC(BoundCondBaseP bc);
+  addBC(BoundCondBaseSP bc) override;
 
   void
-  sudoAddBC(BoundCondBaseP& bc);
+  sudoAddBC(BoundCondBaseSP& bc) override;
 
   /// Add the boundary condition geometry
   void
-  addBCData(BCGeomBase* bc);
+  addBCData(std::shared_ptr<BCGeomBase> bc);
 
   /// Determines if a point is inside the collection of boundary condition
   /// geometries.
-  bool
-  inside(const Point& p) const;
+  [[nodiscard]] bool
+  inside(const Point& p) const override;
 
   /// Print out the boundary condition geometry types.
-  virtual void
-  print();
+  void
+  print() override;
 
   /// Determine the cell and node boundary iterators.
-  virtual void
+  void
   determineIteratorLimits(Patch::FaceType face,
                           const Patch* patch,
-                          std::vector<Point>& test_pts);
+                          std::vector<Point>& test_pts) override;
 
 private:
-  std::vector<BCGeomBase*> child;
+  std::vector<std::shared_ptr<BCGeomBase>> child;
   friend class BoundCondReader;
 };
 

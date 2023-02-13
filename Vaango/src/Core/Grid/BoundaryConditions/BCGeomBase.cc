@@ -73,8 +73,8 @@ BCGeomBase::BCGeomBase(const BCGeomBase& rhs)
   d_origin          = rhs.d_origin;
 }
 
-BCGeomBase&
-BCGeomBase::operator=(const BCGeomBase& rhs)
+auto
+BCGeomBase::operator=(const BCGeomBase& rhs) -> BCGeomBase&
 {
   if (this == &rhs) {
     return *this;
@@ -91,7 +91,7 @@ BCGeomBase::operator=(const BCGeomBase& rhs)
   return *this;
 }
 
-BCGeomBase::~BCGeomBase() {}
+BCGeomBase::~BCGeomBase() = default;
 
 void
 BCGeomBase::getCellFaceIterator(Iterator& b_ptr)
@@ -124,7 +124,7 @@ BCGeomBase::determineIteratorLimits(Patch::FaceType face,
 
   Iterator cell_itr(cells), node_itr(nodes);
 
-  std::vector<Point>::const_iterator pts = test_pts.begin();
+  auto pts = test_pts.begin();
 
   std::vector<IntVector> vec_cells;
   for (cell_itr.reset(); !cell_itr.done(); cell_itr++, pts++) {
@@ -237,7 +237,7 @@ BCGeomBase::determineInteriorBndIteratorLimits(const Patch::FaceType face,
 
   GridIterator cells(lpts, hpts);
   Iterator cell_itr(cells);
-  std::vector<Point>::const_iterator pts = test_pts.begin();
+  auto pts = test_pts.begin();
 
   std::vector<IntVector> vec_cells;
 

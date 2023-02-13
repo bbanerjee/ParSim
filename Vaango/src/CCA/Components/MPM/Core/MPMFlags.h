@@ -132,8 +132,11 @@ public:
   bool d_GEVelProj;                    // Flag for adaptive mesh refinement
   bool d_refineParticles;              // Flag for refinement
   bool d_useXPIC{ false };             // Use XPIC (Nairn et al.) algorithm
-  bool d_updateStressLast{ true };
+  bool d_updateStressLast{ false };
   bool d_deleteGeometryObjects{ false };
+
+  // For hydro-mechanical coupling
+  bool d_coupledFlow{ false };
 
   // For scalar diffusion
   double d_autoCycleMin{ 0.1 };

@@ -62,7 +62,7 @@ ImplicitHeatConduction::ImplicitHeatConduction(
   do_IHC         = d_mpm_flags->d_doImplicitHeatConduction;
   d_HC_transient = d_mpm_flags->d_doTransientImplicitHeatConduction;
 
-  d_one_matl = std::make_unique<MaterialSubset>();
+  d_one_matl = scinew MaterialSubset();
   d_one_matl->add(0);
   d_one_matl->addReference();
 
@@ -77,7 +77,10 @@ ImplicitHeatConduction::ImplicitHeatConduction(
 
 ImplicitHeatConduction::~ImplicitHeatConduction()
 {
-  d_one_matl->removeReference();
+  if (d_one_matl && d_one_matl->removeReference()) {
+    delete d_one_matl;
+  }
+
   if (do_IHC) {
     d_perproc_patches->removeReference();
     std::cout << "Freeing patches!!\n";
@@ -140,7 +143,7 @@ ImplicitHeatConduction::scheduleApplyHCBoundaryConditions(
                           this,
                           &ImplicitHeatConduction::applyHCBoundaryConditions);
 
-    t->computes(d_mpm_labels->gTemperatureStarLabel, d_one_matl.get());
+    t->computes(d_mpm_labels->gTemperatureStarLabel, d_one_matl);
     t->requires(
       Task::NewDW, d_mpm_labels->gExternalHeatFluxLabel, Ghost::None, 0);
 
@@ -197,7 +200,7 @@ ImplicitHeatConduction::scheduleFormHCQ(SchedulerP& sched,
     t->requires(Task::OldDW, d_mpm_labels->delTLabel);
     t->requires(Task::NewDW,
                 d_mpm_labels->gTemperatureLabel,
-                d_one_matl.get(),
+                d_one_matl,
                 Ghost::AroundCells,
                 1);
     t->requires(
@@ -223,7 +226,7 @@ ImplicitHeatConduction::scheduleAdjustHCQAndHCKForBCs(SchedulerP& sched,
     Ghost::GhostType gnone = Ghost::None;
 
     t->requires(
-      Task::NewDW, d_mpm_labels->gTemperatureStarLabel, d_one_matl.get(), gnone, 0);
+      Task::NewDW, d_mpm_labels->gTemperatureStarLabel, d_one_matl, gnone, 0);
 
     t->setType(Task::OncePerProc);
     sched->addTask(t, patches, matls);
@@ -241,7 +244,7 @@ ImplicitHeatConduction::scheduleSolveForTemp(SchedulerP& sched,
 
 #if 0
   Ghost::GhostType  gnone = Ghost::None;
-  t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel,d_one_matl.get(),gnone,0);
+  t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel,d_one_matl,gnone,0);
 #endif
 
     t->setType(Task::OncePerProc);
@@ -262,8 +265,8 @@ ImplicitHeatConduction::scheduleGetTemperatureIncrement(
 
     t->requires(Task::OldDW, d_mpm_labels->delTLabel);
     t->requires(
-      Task::NewDW, d_mpm_labels->gTemperatureLabel, d_one_matl.get(), Ghost::None, 0);
-    t->computes(d_mpm_labels->gTemperatureRateLabel, d_one_matl.get());
+      Task::NewDW, d_mpm_labels->gTemperatureLabel, d_one_matl, Ghost::None, 0);
+    t->computes(d_mpm_labels->gTemperatureRateLabel, d_one_matl);
 
     t->setType(Task::OncePerProc);
     sched->addTask(t, patches, matls);
@@ -272,7 +275,7 @@ ImplicitHeatConduction::scheduleGetTemperatureIncrement(
                           this,
                           &ImplicitHeatConduction::fillgTemperatureRate);
 
-    t->computes(d_mpm_labels->gTemperatureRateLabel, d_one_matl.get());
+    t->computes(d_mpm_labels->gTemperatureRateLabel, d_one_matl);
 
     sched->addTask(t, patches, matls);
   }
@@ -453,7 +456,7 @@ ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
           Iterator nbound_ptr;
           Iterator nu; // not used
 
-          BoundCondBaseP temp_bcs = patch->getArrayBCValues(
+          BoundCondBaseSP temp_bcs = patch->getArrayBCValues(
             face, matl, "Temperature", nu, nbound_ptr, child);
           BoundCond<double>::BoundCondP bc =
             std::dynamic_pointer_cast<BoundCond<double>>(temp_bcs);

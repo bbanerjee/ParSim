@@ -56,12 +56,12 @@ RectangleBCData::RectangleBCData(Point& low, Point& up)
 {
 }
 
-RectangleBCData::~RectangleBCData() {}
+RectangleBCData::~RectangleBCData() = default;
 
-bool
-RectangleBCData::operator==(const BCGeomBase& rhs) const
+auto
+RectangleBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const RectangleBCData* p_rhs = dynamic_cast<const RectangleBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const RectangleBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -70,10 +70,10 @@ RectangleBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-RectangleBCData*
+std::shared_ptr<BCGeomBase>
 RectangleBCData::clone()
 {
-  return scinew RectangleBCData(*this);
+  return std::make_shared<RectangleBCData>(*this);
 }
 
 void
@@ -83,13 +83,13 @@ RectangleBCData::addBCData(BCData& bc)
 }
 
 void
-RectangleBCData::addBC(BoundCondBaseP bc)
+RectangleBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
 void
-RectangleBCData::sudoAddBC(BoundCondBaseP& bc)
+RectangleBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   d_bc.setBCValues(bc);
 }
@@ -100,8 +100,8 @@ RectangleBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-RectangleBCData::inside(const Point& p) const
+auto
+RectangleBCData::inside(const Point& p) const -> bool
 {
   if (d_min.x() == d_max.x()) {
     if (p.y() <= d_max.y() && p.y() >= d_min.y() && p.z() <= d_max.z() &&

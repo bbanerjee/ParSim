@@ -195,7 +195,7 @@ private:
 
   std::unique_ptr<ThermalContact> thermalContactModel{ nullptr };
   std::unique_ptr<ImplicitHeatConduction> heatConductionModel{ nullptr };
-  std::shared_ptr<MaterialSubset> d_loadCurveIndex{ nullptr };
+  MaterialSubset* d_loadCurveIndex{ nullptr };
 };
 
 } // End of namespace Uintah

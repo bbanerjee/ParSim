@@ -176,9 +176,67 @@ public:
     return d_doConcReduction;
   };
 
+  // For activating particle insertion
+  [[nodiscard]] auto
+  getActivationTime() const -> double
+  {
+    return d_activation_time;
+  }
+
+  [[nodiscard]] auto
+  isActive() const -> bool
+  {
+    return d_is_active;
+  }
+
+  void
+  setActive(bool flag)
+  {
+    d_is_active = flag;
+  }
+
+  // Rigid material that transmitss force
+  [[nodiscard]] auto
+  isRigidForceTransmittingMaterial() const -> bool
+  {
+    return d_is_force_transmitting_material;
+  }
+
+  void
+  setAsRigidForceTransmittingMaterial(bool flag)
+  {
+    d_is_force_transmitting_material = flag;
+  }
+
+  // For hydromechanical coupling
+  [[nodiscard]] auto
+  getWaterDensity() const -> double
+  {
+    return d_waterdensity;
+  }
+
+  [[nodiscard]] auto
+  getPorosity() const -> double
+  {
+    return d_porosity;
+  }
+
+  [[nodiscard]] auto
+  getPermeability() const -> double
+  {
+    return d_permeability;
+  }
+
+  [[nodiscard]] auto
+  getInitialPorePressure() const -> double
+  {
+    return d_initial_porepressure;
+  }
+
   // For MPMICE
   [[nodiscard]] auto
   getGamma() const -> double;
+
   void
   initializeCCVariables(CCVariable<double>& rhom,
                         CCVariable<double>& rhC,
@@ -204,11 +262,12 @@ private:
                          const bool isRestart);
 
 private:
-  std::unique_ptr<MPMLabel> d_lb;
-  std::unique_ptr<ConstitutiveModel> d_cm;
-  std::unique_ptr<ParticleCreator> d_particle_creator;
-  std::unique_ptr<ScalarDiffusionModel> d_sdm;
-  std::unique_ptr<Vaango::BasicDamageModel> d_basicDamageModel;
+  const MPMFlags* d_flags{ nullptr };
+  std::unique_ptr<MPMLabel> d_lb{ nullptr };
+  std::unique_ptr<ConstitutiveModel> d_cm{ nullptr };
+  std::unique_ptr<ParticleCreator> d_particle_creator{ nullptr };
+  std::unique_ptr<ScalarDiffusionModel> d_sdm{ nullptr };
+  std::unique_ptr<Vaango::BasicDamageModel> d_basicDamageModel{ nullptr };
   std::vector<std::shared_ptr<GeometryObject>> d_geom_objs;
 
   bool d_doBasicDamage{ false };
@@ -229,6 +288,20 @@ private:
 
   // For scalar diffusion
   bool d_doConcReduction{ false };
+
+  // For rigid-body force transmission
+  bool d_is_force_transmitting_material{ false };
+
+  // For activating inserted particles
+  bool d_is_active{ true };
+  double d_activation_time{ 0.0 };
+
+  // For hydromechanical coupling
+  double d_waterdensity{ 0.0 }, d_porosity{ 0.0 }, d_permeability{ 0.0 },
+    d_initial_porepressure{ 0.0 };
+
+  // For triangulated surfaces
+  bool d_all_triangle_geometry{ true };
 };
 
 } // End namespace Uintah

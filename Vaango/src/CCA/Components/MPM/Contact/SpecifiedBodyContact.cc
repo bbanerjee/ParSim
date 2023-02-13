@@ -227,6 +227,10 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
                                              const MaterialSet* matls,
                                              const VarLabel* gVelocity_label)
 {
+  if (gVelocity_label == d_mpm_labels->gVelocityLabel) {
+    return;
+  }
+
   Task* t = scinew Task("SpecifiedBodyContact::exchangeMomentum",
                         this,
                         &SpecifiedBodyContact::exchangeMomentum,

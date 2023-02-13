@@ -315,7 +315,7 @@ MPMLabel::MPMLabel()
     VarLabel::create("g.massall", NCVariable<double>::getTypeDescription());
 
   gPositionLabel =
-    VarLabel::create("g.position", NCVariable<Vector>::getTypeDescription());
+    VarLabel::create("g.position", NCVariable<Point>::getTypeDescription());
 
   gVelocityLabel =
     VarLabel::create("g.velocity", NCVariable<Vector>::getTypeDescription());

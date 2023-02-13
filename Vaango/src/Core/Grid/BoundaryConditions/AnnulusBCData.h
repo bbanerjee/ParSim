@@ -61,44 +61,44 @@ public:
   AnnulusBCData(Point& p, double inRadius, double outRadius);
 
   /// Destructor
-  virtual ~AnnulusBCData();
+  ~AnnulusBCData() override;
 
-  virtual bool
-  operator==(const BCGeomBase&) const;
+  bool
+  operator==(const BCGeomBase&) const override;
 
   /// Clone the boundary condition geometry -- allocates memory.
-  AnnulusBCData*
-  clone();
+  std::shared_ptr<BCGeomBase>
+  clone() override;
 
   /// Add the boundary condition data
   void
-  addBCData(BCData& bc);
+  addBCData(BCData& bc) override;
 
   /// Add the old boundary condition data -- no longer used.
   void
-  addBC(BoundCondBaseP bc);
+  addBC(BoundCondBaseSP bc) override;
 
   // Add boundary condition within a scheduled task.
   void
-  sudoAddBC(BoundCondBaseP& bc);
+  sudoAddBC(BoundCondBaseSP& bc) override;
 
   /// Get the boundary condition data
   void
-  getBCData(BCData& bc) const;
+  getBCData(BCData& bc) const override;
 
   /// Determines if a point is inside the circle
-  bool
-  inside(const Point& p) const;
+  [[nodiscard]] bool
+  inside(const Point& p) const override;
 
   /// Print out the boundary condition geometry type.
-  virtual void
-  print();
+  void
+  print() override;
 
   /// Determine the cell and node centered iterators
-  virtual void
+  void
   determineIteratorLimits(Patch::FaceType face,
                           const Patch* patch,
-                          std::vector<Point>& test_pts);
+                          std::vector<Point>& test_pts) override;
 
 private:
   BCData d_bc;

@@ -41,7 +41,7 @@ Uintah::Dout bc_dbg{ "EllipseBC_dbg",
                      "Ellipse BC debug info",
                      false };
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -64,12 +64,12 @@ EllipseBCData::EllipseBCData(Point& p,
 {
 }
 
-EllipseBCData::~EllipseBCData() {}
+EllipseBCData::~EllipseBCData() = default;
 
-bool
-EllipseBCData::operator==(const BCGeomBase& rhs) const
+auto
+EllipseBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const EllipseBCData* p_rhs = dynamic_cast<const EllipseBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const EllipseBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -82,10 +82,10 @@ EllipseBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-EllipseBCData*
+std::shared_ptr<BCGeomBase>
 EllipseBCData::clone()
 {
-  return scinew EllipseBCData(*this);
+  return std::make_shared<EllipseBCData>(*this);
 }
 
 void
@@ -95,13 +95,13 @@ EllipseBCData::addBCData(BCData& bc)
 }
 
 void
-EllipseBCData::addBC(BoundCondBaseP bc)
+EllipseBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
 void
-EllipseBCData::sudoAddBC(BoundCondBaseP& bc)
+EllipseBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   d_bc.setBCValues(bc);
 }
@@ -112,8 +112,8 @@ EllipseBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-EllipseBCData::inside(const Point& p) const
+auto
+EllipseBCData::inside(const Point& p) const -> bool
 {
   Point f1(d_origin);
   Point f2(d_origin);

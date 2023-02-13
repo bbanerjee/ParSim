@@ -198,14 +198,14 @@ getBCKind(const Patch* patch,
 {
   bc_kind = "NotSet";
 
-  const BCDataArray* bcd = patch->getBCDataArray(face);
+  const auto& bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
   //
-  BoundCondBaseP bc = bcd->getBoundCondData(mat_id, desc, child);
+  BoundCondBaseSP bc = bcd->getBoundCondData(mat_id, desc, child);
 
-  if (bc != 0) {
+  if (bc != nullptr) {
     bc_kind    = bc->getBCType();
     face_label = bc->getBCFaceName();
   }

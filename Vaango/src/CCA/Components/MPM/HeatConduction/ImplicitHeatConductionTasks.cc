@@ -75,7 +75,7 @@ void
 ImplicitHeatConductionTasks::scheduleInitializeHeatFluxBCs(const LevelP& level,
                                                            SchedulerP& sched)
 {
-  d_loadCurveIndex = std::make_shared<MaterialSubset>();
+  d_loadCurveIndex = scinew MaterialSubset();
   d_loadCurveIndex->add(0);
   d_loadCurveIndex->addReference();
 
@@ -97,7 +97,7 @@ ImplicitHeatConductionTasks::scheduleInitializeHeatFluxBCs(const LevelP& level,
       &ImplicitHeatConductionTasks::countMaterialPointsPerLoadCurve);
     t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex.get(),
+                d_loadCurveIndex,
                 Task::OutOfDomain);
     sched->addTask(t, level->eachPatch(), d_mat_manager->allMaterials("MPM"));
 
@@ -110,14 +110,16 @@ ImplicitHeatConductionTasks::scheduleInitializeHeatFluxBCs(const LevelP& level,
     t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->requires(Task::NewDW,
                 d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex.get(),
+                d_loadCurveIndex,
                 Task::OutOfDomain,
                 Ghost::None);
     t->modifies(d_mpm_labels->pExternalHeatFluxLabel);
     sched->addTask(t, level->eachPatch(), d_mat_manager->allMaterials("MPM"));
   }
 
-  d_loadCurveIndex->removeReference();
+  if (d_loadCurveIndex && d_loadCurveIndex->removeReference()) {
+    delete d_loadCurveIndex;
+  };
 }
 
 void

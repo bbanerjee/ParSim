@@ -56,26 +56,26 @@ public:
 
   virtual ~BoundCondBase() = default;
 
-  BoundCondBaseP
-  clone()
+  auto
+  clone() -> BoundCondBaseSP
   {
     return std::shared_ptr<BoundCondBase>(cloneImpl());
   }
 
-  const std::string
-  getBCVariable() const
+  [[nodiscard]] auto
+  getBCVariable() const -> const std::string&
   {
     return d_variable;
   }
 
-  const std::string
-  getBCType() const
+  [[nodiscard]] auto
+  getBCType() const -> const std::string&
   {
     return d_type;
   }
 
-  const std::string
-  getBCFaceName() const
+  [[nodiscard]] auto
+  getBCFaceName() const -> const std::string&
   {
     return d_face_label;
   }
@@ -86,20 +86,20 @@ public:
    *  \brief  Returns a BoundCondValueTypeEnum that designates the data type
    * associated with the value of this boundary condition.
    */
-  BoundCondValueTypeEnum
-  getValueType() const
+  [[nodiscard]] auto
+  getValueType() const -> BoundCondValueTypeEnum
   {
     return d_value_type;
   }
 
 protected:
-  virtual BoundCondBase*
+  virtual std::shared_ptr<BoundCondBase>
   cloneImpl() = 0;
 
 protected:
   std::string d_variable{ "none" }; // Pressure, Density, etc
 
-  std::string d_type{ "" };     // Dirichlet, Neumann, etc
+  std::string d_type{ "" }; // Dirichlet, Neumann, etc
 
   // holds the user specified name of the bc
   // face: left-wall, ox-inlet,...

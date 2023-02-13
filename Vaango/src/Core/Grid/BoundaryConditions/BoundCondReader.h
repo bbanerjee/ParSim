@@ -93,17 +93,17 @@ public:
   /// Destructor
   ~BoundCondReader() = default;
 
-  bool
+  [[nodiscard]] auto
   is_on_face(const int dir,
              const Point p,
-             const std::vector<Point>& points) const;
+             const std::vector<Point>& points) const -> bool;
 
-  bool
+  [[nodiscard]] auto
   isPtOnFace(const int dir,
              const int plusMinusFaces,
              const Point pt,
              const std::vector<Point>& grid_LoPts,
-             const std::vector<Point>& grid_HiPts) const;
+             const std::vector<Point>& grid_HiPts) const -> bool;
 
   void
   whichPatchFace(const std::string fc,
@@ -129,10 +129,11 @@ public:
   /// Read in the geometric tags: side, circle, and rectangle.  Performs
   /// error checking if the tag is not present or if the circle and rectangle
   /// tags are not specified correctly.
-  BCGeomBase*
+  auto
   createBoundaryConditionFace(ProblemSpecP& ps,
                               const ProblemSpecP& grid_ps,
-                              Patch::FaceType& face_side);
+                              Patch::FaceType& face_side)
+    -> std::shared_ptr<BCGeomBase>;
 
   /*!
   \author  Tony Saad
@@ -149,11 +150,12 @@ public:
 
   \todo    Handle unions and differences.
   */
-  BCGeomBase*
+  auto
   createInteriorBndBoundaryConditionFace(ProblemSpecP& ps,
                                          const ProblemSpecP& grid_ps,
                                          Patch::FaceType& face_side,
-                                         const LevelP level);
+                                         const LevelP level)
+    -> std::shared_ptr<BCGeomBase>;
 
   /// Combine the boundary conditions for a given face into union and
   /// difference operations for the face.  Multiple circles and rectangles
@@ -167,19 +169,21 @@ public:
   bulletProofing();
 
   ///
-  bool
-  compareBCData(BCGeomBase* b1, BCGeomBase* b2);
+  auto
+  compareBCData(std::shared_ptr<BCGeomBase> b1, std::shared_ptr<BCGeomBase> b2)
+    -> bool;
 
   /// not used
-  const BCDataArray
-  getBCDataArray(Patch::FaceType& face) const;
+  auto
+  getBCDataArray(Patch::FaceType& face) const -> const BCDataArray;
 
 private:
   friend class Level;
   friend class Patch;
 
-  std::map<Patch::FaceType, BCDataArray> d_BCReaderData;
-  std::map<Patch::FaceType, BCDataArray> d_interiorBndBCReaderData;
+  std::map<Patch::FaceType, std::shared_ptr<BCDataArray>> d_BCReaderData;
+  std::map<Patch::FaceType, std::shared_ptr<BCDataArray>>
+    d_interiorBndBCReaderData;
 
   void
   readDomainBCs(ProblemSpecP& ps, const ProblemSpecP& grid_ps);
@@ -188,56 +192,59 @@ private:
                      const ProblemSpecP& grid_ps,
                      const LevelP level);
 
-  BCGeomBase*
+  auto
   createSideBC(const std::map<std::string, std::string>& values,
-               Patch::FaceType& face_side) const;
+               Patch::FaceType& face_side) const -> std::shared_ptr<BCGeomBase>;
 
-  BCGeomBase*
+  auto
   createCircleBC(const std::map<std::string, std::string>& values,
                  const std::vector<Point>& grid_LoPts,
                  const std::vector<Point>& grid_HiPts,
-                 Patch::FaceType& face_side) const;
+                 Patch::FaceType& face_side) const
+    -> std::shared_ptr<BCGeomBase>;
 
-  BCGeomBase*
+  auto
   createAnnulusBC(const std::map<std::string, std::string>& values,
                   const std::vector<Point>& grid_LoPts,
                   const std::vector<Point>& grid_HiPts,
-                  Patch::FaceType& face_side) const;
+                  Patch::FaceType& face_side) const
+    -> std::shared_ptr<BCGeomBase>;
 
-  BCGeomBase*
+  auto
   createEllipseBC(const std::map<std::string, std::string>& values,
                   const std::vector<Point>& grid_LoPts,
                   const std::vector<Point>& grid_HiPts,
-                  Patch::FaceType& face_side) const;
+                  Patch::FaceType& face_side) const
+    -> std::shared_ptr<BCGeomBase>;
 
-  BCGeomBase*
+  auto
   createRectangleBC(const std::map<std::string, std::string>& values,
                     const std::vector<Point>& grid_LoPts,
                     const std::vector<Point>& grid_HiPts,
-                    Patch::FaceType& face_side) const;
+                    Patch::FaceType& face_side) const
+    -> std::shared_ptr<BCGeomBase>;
 
-  BCGeomBase*
+  auto
   createRectangulusBC(const std::map<std::string, std::string>& values,
                       const std::vector<Point>& grid_LoPts,
                       const std::vector<Point>& grid_HiPts,
-                      Patch::FaceType& face_side) const;
+                      Patch::FaceType& face_side) const
+    -> std::shared_ptr<BCGeomBase>;
 };
 
 } // End namespace Uintah
 
-namespace Uintah {
-namespace BCReaderUtils {
+namespace Uintah::BCReaderUtils {
 
 void
-print(BCGeomBase* p);
+print(std::shared_ptr<BCGeomBase> p);
 
-Point
+auto
 moveToClosestNode(const LevelP level,
                   const int facedir,
                   const int plusMinusFaces,
-                  const Point& p0);
+                  const Point& p0) -> Point;
 
-} // namespace BCReaderUtils
-} // End namespace Uintah
+} // namespace Uintah::BCReaderUtils
 
 #endif //__CORE_GRID_BOUNDARYCONDITIONS_BOUNDARYCONDITIONREADER_H__

@@ -145,7 +145,7 @@ AMRMPM::AMRMPM(const ProcessorGroup* myworld,
 
   d_amrmpmLabels = std::make_unique<AMRMPMLabel>();
 
-  d_oneMaterial = std::make_unique<MaterialSubset>();
+  d_oneMaterial = scinew MaterialSubset();
   d_oneMaterial->add(0);
   d_oneMaterial->addReference();
 }
@@ -161,7 +161,9 @@ AMRMPM::~AMRMPM()
   VarLabel::destroy(RefineFlagYMinLabel);
   VarLabel::destroy(RefineFlagZMinLabel);
 
-  d_oneMaterial->removeReference();
+  if (d_oneMaterial && d_oneMaterial->removeReference()) {
+    delete d_oneMaterial;
+  }
 
   d_refineGeomObjs.clear();
 }
@@ -445,8 +447,8 @@ AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(d_mpm_labels->pRefinedLabel);
   t->computes(d_mpm_labels->pLastLevelLabel);
   t->computes(d_mpm_labels->delTLabel, level.get_rep());
-  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial.get());
-  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial);
+  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial);
 
   // Needed for switch from explicit to implicit MPM
   t->computes(d_mpm_labels->pExternalHeatFluxLabel);
@@ -812,7 +814,7 @@ AMRMPM::schedulePartitionOfUnity(SchedulerP& sched,
   t->computes(d_mpm_labels->pSizeLabel_preReloc);
   t->computes(d_mpm_labels->pLastLevelLabel_preReloc);
   t->computes(d_mpm_labels->pPartitionUnityLabel);
-  t->computes(d_mpm_labels->MPMRefineCellLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->MPMRefineCellLabel, d_oneMaterial);
 
   sched->addTask(t, patches, matls);
 }
@@ -942,7 +944,7 @@ AMRMPM::scheduleComputeZoneOfInfluence(SchedulerP& sched,
     Task* t = scinew Task(
       "AMRMPM::computeZoneOfInfluence", this, &AMRMPM::computeZoneOfInfluence);
 
-    t->computes(d_mpm_labels->gZOILabel, d_oneMaterial.get());
+    t->computes(d_mpm_labels->gZOILabel, d_oneMaterial);
 
     sched->addTask(t, patches, matls);
   }
@@ -1397,7 +1399,7 @@ AMRMPM::scheduleInterpolateParticlesToGrid_CFI(SchedulerP& sched,
     // cells but somehow it works.
     t->requires(Task::NewDW,
                 d_mpm_labels->gZOILabel,
-                d_oneMaterial.get(),
+                d_oneMaterial,
                 Ghost::None,
                 0);
     t->requires(Task::OldDW,
@@ -2651,7 +2653,7 @@ AMRMPM::scheduleComputeInternalForce_CFI(SchedulerP& sched,
     // cells but somehow it works.
     t->requires(Task::NewDW,
                 d_mpm_labels->gZOILabel,
-                d_oneMaterial.get(),
+                d_oneMaterial,
                 Ghost::None,
                 0);
     t->requires(Task::OldDW,
@@ -3201,9 +3203,9 @@ AMRMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   t->requires(Task::OldDW,
               d_mpm_labels->NC_CCweightLabel,
-              d_oneMaterial.get(),
+              d_oneMaterial,
               Ghost::None);
-  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial);
 
   d_diffusionTasks->scheduleInterpolateToParticlesAndUpdate(t);
 
@@ -3658,7 +3660,7 @@ AMRMPM::scheduleAddParticles(SchedulerP& sched,
   t->modifies(d_mpm_labels->pScaleFactorLabel_preReloc);
   t->modifies(d_mpm_labels->pLastLevelLabel_preReloc);
   t->modifies(d_mpm_labels->pVelGradLabel_preReloc);
-  t->modifies(d_mpm_labels->MPMRefineCellLabel, d_oneMaterial.get());
+  t->modifies(d_mpm_labels->MPMRefineCellLabel, d_oneMaterial);
 
   // For body force + coriolis importance
   t->modifies(d_mpm_labels->pBodyForceAccLabel_preReloc);
@@ -3676,9 +3678,9 @@ AMRMPM::scheduleAddParticles(SchedulerP& sched,
 
   t->requires(Task::OldDW,
               d_mpm_labels->pCellNAPIDLabel,
-              d_oneMaterial.get(),
+              d_oneMaterial,
               Ghost::None);
-  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial);
 
   size_t numMatls = d_materialManager->getNumMaterials("MPM");
   for (size_t m = 0; m < numMatls; m++) {
@@ -4228,7 +4230,7 @@ AMRMPM::scheduleReduceFlagsExtents(SchedulerP& sched,
 
     t->requires(Task::NewDW,
                 d_mpm_labels->MPMRefineCellLabel,
-                d_oneMaterial.get(),
+                d_oneMaterial,
                 Ghost::None);
 
     t->computes(RefineFlagXMaxLabel);
@@ -4329,7 +4331,7 @@ AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(d_mpm_labels->pRefinedLabel);
   t->computes(d_mpm_labels->pSizeLabel);
   // t->computes(d_mpm_labels->pVelGradLabel);
-  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->pCellNAPIDLabel, d_oneMaterial);
   t->computes(d_mpm_labels->NC_CCweightLabel);
 
   // Debugging Scalar
@@ -4510,7 +4512,7 @@ AMRMPM::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  d_mpm_labels->MPMRefineCellLabel,
                  0,
                  Task::FineLevel,
-                 d_oneMaterial.get(),
+                 d_oneMaterial,
                  oims,
                  gn,
                  0,
@@ -4524,7 +4526,7 @@ AMRMPM::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
   task->requires(Task::NewDW, RefineFlagZMinLabel);
 
   task->modifies(
-    d_mpm_labels->MPMRefineCellLabel, d_oneMaterial.get(), oims, OldTG);
+    d_mpm_labels->MPMRefineCellLabel, d_oneMaterial, oims, OldTG);
 
   sched->addTask(task, patch_set, all_matls);
 }
@@ -4757,7 +4759,7 @@ void AMRMPM::scheduleInterpolateToParticlesAndUpdate_CFI(SchedulerP& sched,
     t->requires(Task::OldDW, d_mpm_labels->pXLabel, gn);
     t->requires(Task::NewDW, d_mpm_labels->gVelocityStarLabel, allPatches, Task::FineLevel,allMatls,   ND, gn,0);
     t->requires(Task::NewDW, d_mpm_labels->gAccelerationLabel, allPatches, Task::FineLevel,allMatls,   ND, gn,0);
-    t->requires(Task::NewDW, d_mpm_labels->gZOILabel,          allPatches, Task::FineLevel,d_oneMaterial.get(), ND, gn,0);
+    t->requires(Task::NewDW, d_mpm_labels->gZOILabel,          allPatches, Task::FineLevel,d_oneMaterial, ND, gn,0);
     
     t->modifies(d_mpm_labels->pXLabel_preReloc);
     t->modifies(d_mpm_labels->pDispLabel_preReloc);
@@ -4968,7 +4970,7 @@ AMRMPM::scheduleDebug_CFI(SchedulerP& sched,
                 d_mpm_labels->gZOILabel,
                 allPatches,
                 Task::FineLevel,
-                d_oneMaterial.get(),
+                d_oneMaterial,
                 Task::NormalDomain,
                 gn,
                 0);

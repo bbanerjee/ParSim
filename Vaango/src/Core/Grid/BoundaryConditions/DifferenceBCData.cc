@@ -44,10 +44,11 @@ Uintah::Dout bc_dbg{ "DiffBC_dbg",
                      "Grid Diff BC debug info",
                      false };
 
-}
+} // namespace
 namespace Uintah {
 
-DifferenceBCData::DifferenceBCData(BCGeomBase* p1, BCGeomBase* p2)
+DifferenceBCData::DifferenceBCData(std::shared_ptr<BCGeomBase> p1,
+                                   std::shared_ptr<BCGeomBase> p2)
   : BCGeomBase()
   , left(p1->clone())
   , right(p2->clone())
@@ -61,8 +62,8 @@ DifferenceBCData::DifferenceBCData(const DifferenceBCData& rhs)
   right = rhs.right->clone();
 }
 
-DifferenceBCData&
-DifferenceBCData::operator=(const DifferenceBCData& rhs)
+auto
+DifferenceBCData::operator=(const DifferenceBCData& rhs) -> DifferenceBCData&
 {
   BCGeomBase::operator=(rhs);
 
@@ -70,28 +71,19 @@ DifferenceBCData::operator=(const DifferenceBCData& rhs)
     return *this;
   }
 
-  // Delete the lhs
-  delete right;
-  delete left;
-
   // Copy the rhs to the lhs
-
   left  = rhs.left->clone();
   right = rhs.right->clone();
 
   return *this;
 }
 
-DifferenceBCData::~DifferenceBCData()
-{
-  delete left;
-  delete right;
-}
+DifferenceBCData::~DifferenceBCData() {}
 
-bool
-DifferenceBCData::operator==(const BCGeomBase& rhs) const
+auto
+DifferenceBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const DifferenceBCData* p_rhs = dynamic_cast<const DifferenceBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const DifferenceBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -100,10 +92,10 @@ DifferenceBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-DifferenceBCData*
+std::shared_ptr<BCGeomBase>
 DifferenceBCData::clone()
 {
-  return scinew DifferenceBCData(*this);
+  return std::make_shared<DifferenceBCData>(*this);
 }
 
 void
@@ -112,12 +104,12 @@ DifferenceBCData::addBCData([[maybe_unused]] BCData& bc)
 }
 
 void
-DifferenceBCData::addBC([[maybe_unused]] BoundCondBaseP bc)
+DifferenceBCData::addBC([[maybe_unused]] BoundCondBaseSP bc)
 {
 }
 
 void
-DifferenceBCData::sudoAddBC(BoundCondBaseP& bc)
+DifferenceBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   left->sudoAddBC(bc);
 }
@@ -128,8 +120,8 @@ DifferenceBCData::getBCData(BCData& bc) const
   left->getBCData(bc);
 }
 
-bool
-DifferenceBCData::inside(const Point& p) const
+auto
+DifferenceBCData::inside(const Point& p) const -> bool
 {
   return (left->inside(p) && !right->inside(p));
 }

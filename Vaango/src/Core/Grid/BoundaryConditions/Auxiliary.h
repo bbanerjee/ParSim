@@ -85,13 +85,13 @@ WARNING
 
   class AuxiliaryBoundCond : public BoundCondBase  {
   public:
-    AuxiliaryBoundCond():BoundCondBase("Auxiliary") {};
+    AuxiliaryBoundCond():BoundCondBase("Auxiliary") = default;;
     AuxiliaryBoundCond(ProblemSpecP&) {d_type = "Auxiliary";};
-    virtual ~AuxiliaryBoundCond() {};
-    virtual AuxiliaryBoundCond* clone() {
+    ~AuxiliaryBoundCond() override = default;;
+    virtual auto clone() -> AuxiliaryBoundCond* {
       return scinew AuxiliaryBoundCond(*this);
     };
-    virtual string getKind() const {return "auxiliary";};
+    [[nodiscard]] virtual string getKind() const {return "auxiliary";};
   private:
 #if 0
     AuxiliaryBoundCond(const AuxiliaryBoundCond&);

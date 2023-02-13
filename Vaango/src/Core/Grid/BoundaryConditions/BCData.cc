@@ -52,8 +52,8 @@ BCData::BCData(const BCData& rhs)
   }
 }
 
-BCData&
-BCData::operator=(const BCData& rhs)
+auto
+BCData::operator=(const BCData& rhs) -> BCData&
 {
   if (this == &rhs) {
     return *this;
@@ -70,8 +70,8 @@ BCData::operator=(const BCData& rhs)
   return *this;
 }
 
-bool
-BCData::operator==(const BCData& rhs)
+auto
+BCData::operator==(const BCData& rhs) -> bool
 {
   if (d_BCData.size() != rhs.d_BCData.size()) {
     return false;
@@ -86,8 +86,8 @@ BCData::operator==(const BCData& rhs)
   return true;
 }
 
-bool
-BCData::operator<(const BCData& rhs) const
+auto
+BCData::operator<(const BCData& rhs) const -> bool
 {
   if (d_BCData.size() < rhs.d_BCData.size()) {
     return true;
@@ -97,15 +97,15 @@ BCData::operator<(const BCData& rhs) const
 }
 
 void
-BCData::setBCValues(BoundCondBaseP bc)
+BCData::setBCValues(BoundCondBaseSP bc)
 {
   if (!find(bc->getBCVariable())) {
     d_BCData.push_back(bc->clone());
   }
 }
 
-const BoundCondBaseP
-BCData::cloneBCValues(const std::string& var_name) const
+auto
+BCData::cloneBCValues(const std::string& var_name) const -> const BoundCondBaseSP
 {
   // The default location for BCs defined for all materials is mat_id = -1.
   // Need to first check the actual mat_id specified.  If this is not found,
@@ -119,8 +119,8 @@ BCData::cloneBCValues(const std::string& var_name) const
   return nullptr;
 }
 
-const BoundCondBase*
-BCData::getBCValues(const std::string& var_name) const
+auto
+BCData::getBCValues(const std::string& var_name) const -> const BoundCondBase*
 {
   // The default location for BCs defined for all materials is mat_id = -1.
   // Need to first check the actual mat_id specified.  If this is not found,
@@ -133,14 +133,14 @@ BCData::getBCValues(const std::string& var_name) const
   return nullptr;
 }
 
-const std::vector<BoundCondBaseP>&
-BCData::getBCData() const
+auto
+BCData::getBCData() const -> const std::vector<BoundCondBaseSP>&
 {
   return d_BCData;
 }
 
-bool
-BCData::find(const std::string& var_name) const
+auto
+BCData::find(const std::string& var_name) const -> bool
 {
   for (const auto& bc : d_BCData) {
     if (bc->getBCVariable() == var_name) {
@@ -150,8 +150,8 @@ BCData::find(const std::string& var_name) const
   return false;
 }
 
-bool
-BCData::find(const std::string& bc_type, const std::string& bc_variable) const
+auto
+BCData::find(const std::string& bc_type, const std::string& bc_variable) const -> bool
 {
   const BoundCondBase* bc = getBCValues(bc_variable);
 

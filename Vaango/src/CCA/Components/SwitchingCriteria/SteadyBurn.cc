@@ -82,7 +82,7 @@ SteadyBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   Task* t = scinew Task("switchTest", this, &SteadyBurnCriteria::switchTest);
 
-  std::unique_ptr<MaterialSubset> one_matl = std::make_unique<MaterialSubset>();
+  auto* one_matl = scinew MaterialSubset();
   one_matl->addReference();
   one_matl->add(0);
 
@@ -96,15 +96,17 @@ SteadyBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
     t->requires(Task::OldDW, d_ice_labels->vol_frac_CCLabel, mpm_matls, gac, 1);
     t->requires(Task::NewDW, d_mpm_labels->gMassLabel, mpm_matls, gan, 2);
     t->requires(Task::OldDW, d_mpm_labels->pXLabel, mpm_matls, gan, 1);
-    t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel, one_matl.get(), gan, 2);
-    t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, one_matl.get(), gan, 2);
+    t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel, one_matl, gan, 2);
+    t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, one_matl, gan, 2);
   }
 
   t->computes(d_switch_label);
 
   sched->addTask(t, level->eachPatch(), d_mat_manager->allMaterials());
 
-  one_matl->removeReference();
+  if (one_matl && one_matl->removeReference()) {
+    delete one_matl;
+  }
 }
 
 //  This task uses similar logic in the HEChem/steadyBurn.cc

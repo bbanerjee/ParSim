@@ -93,7 +93,7 @@ RegridderCommon::RegridderCommon(const ProcessorGroup* pg)
     VarLabel::create("refinePatchFlag", PerPatch<int>::getTypeDescription());
 
   // refine matl subset, only done on matl 0 (matl independent)
-  d_refine_flag_matls = std::make_unique<MaterialSubset>();
+  d_refine_flag_matls = scinew MaterialSubset();
   d_refine_flag_matls->addReference();
   d_refine_flag_matls->add(0);
 
@@ -119,7 +119,9 @@ RegridderCommon::~RegridderCommon()
   //}
   filters.clear();
 
-  d_refine_flag_matls->removeReference();
+  if (d_refine_flag_matls && d_refine_flag_matls->removeReference()) {
+    delete d_refine_flag_matls;
+  }
 }
 
 void
@@ -168,7 +170,7 @@ const MaterialSubset*
 RegridderCommon::refineFlagMaterials() const
 {
   ASSERT(d_refine_flag_matls != 0);
-  return d_refine_flag_matls.get();
+  return d_refine_flag_matls;
 }
 
 bool
@@ -819,23 +821,23 @@ RegridderCommon::scheduleDilation(const LevelP& level, bool isLockstepAMR)
 
   dilate_stability_task->requires(Task::NewDW,
                                   d_refineFlagLabel,
-                                  d_refine_flag_matls.get(),
+                                  d_refine_flag_matls,
                                   Ghost::AroundCells,
                                   ngc_stability);
   dilate_regrid_task->requires(Task::NewDW,
                                d_refineFlagLabel,
-                               d_refine_flag_matls.get(),
+                               d_refine_flag_matls,
                                Ghost::AroundCells,
                                ngc_regrid);
 
   const MaterialSet* all_matls = d_mat_manager->allMaterials();
 
   dilate_stability_task->computes(d_dilatedCellsStabilityLabel,
-                                  d_refine_flag_matls.get());
+                                  d_refine_flag_matls);
   d_scheduler->addTask(dilate_stability_task, level->eachPatch(), all_matls);
 
   dilate_regrid_task->computes(d_dilatedCellsRegridLabel,
-                               d_refine_flag_matls.get());
+                               d_refine_flag_matls);
   d_scheduler->addTask(dilate_regrid_task, level->eachPatch(), all_matls);
 }
 
@@ -979,9 +981,9 @@ RegridderCommon::scheduleInitializeErrorEstimate(const LevelP& level)
                            this,
                            &RegridderCommon::initializeErrorEstimate);
 
-  task->computes(d_refineFlagLabel, d_refine_flag_matls.get());
-  task->computes(d_oldRefineFlagLabel, d_refine_flag_matls.get());
-  task->computes(d_refinePatchFlagLabel, d_refine_flag_matls.get());
+  task->computes(d_refineFlagLabel, d_refine_flag_matls);
+  task->computes(d_oldRefineFlagLabel, d_refine_flag_matls);
+  task->computes(d_refinePatchFlagLabel, d_refine_flag_matls);
 
   d_scheduler->addTask(task, level->eachPatch(), d_mat_manager->allMaterials());
 }

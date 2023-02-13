@@ -79,7 +79,7 @@ SimpleBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   Task* t = scinew Task("switchTest", this, &SimpleBurnCriteria::switchTest);
 
-  std::unique_ptr<MaterialSubset> one_matl = std::make_unique<MaterialSubset>();
+  auto* one_matl = scinew MaterialSubset();
   one_matl->addReference();
   one_matl->add(0);
 
@@ -89,12 +89,12 @@ SimpleBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
     t->requires(Task::NewDW, d_mpm_labels->gMassLabel, gac, 1);
     t->requires(Task::NewDW,
                 d_mpm_labels->gTemperatureLabel,
-                one_matl.get(),
+                one_matl,
                 gac,
                 1);
     t->requires(Task::OldDW,
                 d_mpm_labels->NC_CCweightLabel,
-                one_matl.get(),
+                one_matl,
                 gac,
                 1);
   }
@@ -103,7 +103,9 @@ SimpleBurnCriteria::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   sched->addTask(t, level->eachPatch(), d_mat_manager->allMaterials());
 
-  one_matl->removeReference();
+  if (one_matl && one_matl->removeReference()) {
+    delete one_matl;
+  }
 }
 
 //  This task uses similar logic in the HEChem/simpleBurn.cc

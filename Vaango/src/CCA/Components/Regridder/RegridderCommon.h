@@ -225,7 +225,7 @@ protected:
   SimulationInterface* d_simulator{ nullptr };
 
   MaterialManagerP d_mat_manager{ nullptr };
-  std::unique_ptr<MaterialSubset> d_refine_flag_matls{ nullptr };
+  MaterialSubset* d_refine_flag_matls{ nullptr };
 
   ///< If false, do not regrid (stick with what you have)
   bool d_isAdaptive{ false };

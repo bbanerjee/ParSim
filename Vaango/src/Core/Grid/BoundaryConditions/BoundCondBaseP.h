@@ -30,7 +30,7 @@
 namespace Uintah {
 
   class BoundCondBase;
-  typedef std::shared_ptr<BoundCondBase> BoundCondBaseP;
+  typedef std::shared_ptr<BoundCondBase> BoundCondBaseSP;
 }
 
 #endif

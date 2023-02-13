@@ -46,25 +46,25 @@ public:
 
   BCData(const BCData&);
 
-  BCData&
-  operator=(const BCData&);
+  auto
+  operator=(const BCData&) -> BCData&;
 
-  bool
-  operator==(const BCData&);
+  auto
+  operator==(const BCData&) -> bool;
 
-  bool
-  operator<(const BCData&) const;
+  auto
+  operator<(const BCData&) const -> bool;
 
   void
-  setBCValues(BoundCondBaseP bc);
+  setBCValues(BoundCondBaseSP bc);
 
   /**
    * \brief Clones the boundary conditions associated with this boundary.
    *   This is a deep copy and the user is responsible for deleting the newly
    *   created variable.
    */
-  const BoundCondBaseP
-  cloneBCValues(const std::string& type) const;
+  [[nodiscard]] auto
+  cloneBCValues(const std::string& type) const -> const BoundCondBaseSP;
 
   /**
    *  \author Tony Saad
@@ -73,8 +73,8 @@ public:
    * this boundary. This is a lightweight access to the BCValues and does not
    * perform a deep copy.
    */
-  const BoundCondBase*
-  getBCValues(const std::string& type) const;
+  [[nodiscard]] auto
+  getBCValues(const std::string& type) const -> const BoundCondBase*;
 
   /**
        *  \author Tony Saad
@@ -86,17 +86,17 @@ public:
      BoundCondBase. This boundary specification corresponds to all the spec
      within a given <Face> xml tag in the input file.
        */
-  const std::vector<BoundCondBaseP>&
-  getBCData() const;
+  [[nodiscard]] auto
+  getBCData() const -> const std::vector<BoundCondBaseSP>&;
 
   void
   print() const;
 
-  bool
-  find(const std::string& type) const;
+  [[nodiscard]] auto
+  find(const std::string& type) const -> bool;
 
-  bool
-  find(const std::string& bc_type, const std::string& bc_variable) const;
+  [[nodiscard]] auto
+  find(const std::string& bc_type, const std::string& bc_variable) const -> bool;
 
   void
   combine(BCData& from);
@@ -105,7 +105,7 @@ private:
   // The map is for the name of the
   // bc type and then the actual bc data, i.e.
   // "Velocity", VelocityBoundCond
-  std::vector<BoundCondBaseP> d_BCData;
+  std::vector<BoundCondBaseSP> d_BCData;
 };
 } // End namespace Uintah
 

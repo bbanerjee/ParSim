@@ -54,12 +54,12 @@ SideBCData::SideBCData()
   d_bcname = "NotSet";
 }
 
-SideBCData::~SideBCData() {}
+SideBCData::~SideBCData() = default;
 
-bool
-SideBCData::operator==(const BCGeomBase& rhs) const
+auto
+SideBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const SideBCData* p_rhs = dynamic_cast<const SideBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const SideBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -68,10 +68,10 @@ SideBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-SideBCData*
+std::shared_ptr<BCGeomBase>
 SideBCData::clone()
 {
-  return scinew SideBCData(*this);
+  return std::make_shared<SideBCData>(*this);
 }
 
 void
@@ -81,13 +81,13 @@ SideBCData::addBCData(BCData& bc)
 }
 
 void
-SideBCData::addBC(BoundCondBaseP bc)
+SideBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
 void
-SideBCData::sudoAddBC(BoundCondBaseP& bc)
+SideBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   d_bc.setBCValues(bc);
 }
@@ -98,8 +98,8 @@ SideBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-SideBCData::inside([[maybe_unused]] const Point& p) const
+auto
+SideBCData::inside([[maybe_unused]] const Point& p) const -> bool
 {
   return true;
 }

@@ -123,11 +123,11 @@ SteadyState::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   Task* t = scinew Task("switchTest", this, &SteadyState::switchTest);
 
-  std::unique_ptr<MaterialSubset> container = std::make_unique<MaterialSubset>();
+  auto* container = scinew MaterialSubset();
   container->addReference();
   container->add(d_material);
 
-  t->requires(Task::NewDW, d_heatRateCCLabel, container.get(), Ghost::None);
+  t->requires(Task::NewDW, d_heatRateCCLabel, container, Ghost::None);
   t->requires(Task::OldDW, d_heatFluxSumLabel);
   t->requires(Task::OldDW, d_delTLabel);
 
@@ -139,7 +139,9 @@ SteadyState::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   scheduleDummy(level, sched);
 
-  container->removeReference();
+  if (container && container->removeReference()) {
+    delete container;
+  }
 }
 
 void

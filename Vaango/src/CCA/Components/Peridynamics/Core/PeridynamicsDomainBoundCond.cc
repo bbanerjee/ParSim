@@ -37,7 +37,7 @@ using Uintah::NCVariable;
 using Uintah::Iterator;
 using Uintah::NodeIterator;
 using Uintah::BoundCondBase;
-using Uintah::BoundCondBaseP;
+using Uintah::BoundCondBaseSP;
 using Uintah::BoundCond;
 
 using Uintah::Vector;
@@ -80,7 +80,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         Iterator nbound_ptr, dummy;
 
-        BoundCondBaseP bcb = 
+        BoundCondBaseSP bcb = 
           patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
         if (!bcb) continue;
 
@@ -159,7 +159,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         // Get the BC data array
         Iterator nbound_ptr, dummy;
-        BoundCondBaseP bcb = 
+        BoundCondBaseSP bcb = 
           patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
         if (!bcb) continue;
 

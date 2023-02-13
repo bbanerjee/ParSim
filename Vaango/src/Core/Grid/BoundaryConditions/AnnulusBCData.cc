@@ -56,12 +56,12 @@ AnnulusBCData::AnnulusBCData(Point& p, double inRadius, double outRadius)
 {
 }
 
-AnnulusBCData::~AnnulusBCData() {}
+AnnulusBCData::~AnnulusBCData() = default;
 
-bool
-AnnulusBCData::operator==(const BCGeomBase& rhs) const
+auto
+AnnulusBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const AnnulusBCData* p_rhs = dynamic_cast<const AnnulusBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const AnnulusBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -72,10 +72,10 @@ AnnulusBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-AnnulusBCData*
+std::shared_ptr<BCGeomBase>
 AnnulusBCData::clone()
 {
-  return scinew AnnulusBCData(*this);
+  return std::make_shared<AnnulusBCData>(*this);
 }
 
 void
@@ -85,13 +85,13 @@ AnnulusBCData::addBCData(BCData& bc)
 }
 
 void
-AnnulusBCData::addBC(BoundCondBaseP bc)
+AnnulusBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
 void
-AnnulusBCData::sudoAddBC(BoundCondBaseP& bc)
+AnnulusBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   d_bc.setBCValues(bc);
 }
@@ -102,8 +102,8 @@ AnnulusBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-AnnulusBCData::inside(const Point& p) const
+auto
+AnnulusBCData::inside(const Point& p) const -> bool
 {
   Vector diff = p - d_origin;
 

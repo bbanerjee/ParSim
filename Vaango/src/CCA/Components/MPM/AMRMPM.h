@@ -497,7 +497,7 @@ private:
   std::unique_ptr<AMRMPMLabel> d_amrmpmLabels{ nullptr };
 
   // matlsubset for zone of influence
-  std::unique_ptr<MaterialSubset> d_oneMaterial{ nullptr };
+  MaterialSubset* d_oneMaterial{ nullptr };
 
   std::vector<std::unique_ptr<GeometryObject>> d_refineGeomObjs;
 

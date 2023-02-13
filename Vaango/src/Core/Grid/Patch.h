@@ -295,7 +295,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell low index excluding extra
+   * Returns the staggered face centered on X cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -305,7 +305,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell low index excluding extra
+   * Returns the staggered face centered on X cell low index excluding extra
    * cells. ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -315,7 +315,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell high index excluding extra
+   * Returns the staggered face centered on X cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -326,7 +326,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell high index excluding extra
+   * Returns the staggered face centered on X cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -337,7 +337,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Y cell low index excluding extra
+   * Returns the staggered face centered on Y cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -347,7 +347,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Y cell low index excluding extra
+   * Returns the staggered face centered on Y cell low index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -357,7 +357,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Y cell high index excluding extra
+   * Returns the staggered face centered on Y cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -368,7 +368,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Y cell high index excluding extra
+   * Returns the staggered face centered on Y cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -379,7 +379,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Z cell low index excluding extra
+   * Returns the staggered face centered on Z cell low index excluding extra
    * cells
    */
   IntVector
@@ -389,7 +389,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Z cell low index excluding extra
+   * Returns the staggered face centered on Z cell low index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   IntVector
@@ -399,7 +399,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Z cell high index excluding extra
+   * Returns the staggered face centered on Z cell high index excluding extra
    * cells
    */
   IntVector
@@ -410,7 +410,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on Z cell high index excluding extra
+   * Returns the staggered face centered on Z cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   IntVector
@@ -421,7 +421,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell low index including extra
+   * Returns the staggered face centered on X cell low index including extra
    * cells
    */
   inline IntVector
@@ -431,7 +431,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell low index including extra
+   * Returns the staggered face centered on X cell low index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -441,7 +441,7 @@ public:
   }
 
   /**
-   * Returns the staggared face centered on X cell high index including extra
+   * Returns the staggered face centered on X cell high index including extra
    * cells
    */
   inline IntVector
@@ -1169,9 +1169,8 @@ public:
       case zplus:
         return IntVector(0, 0, 1);
       default:
-        throw Uintah::InternalError("Invalid FaceIteratorType Specified",
-                                    __FILE__,
-                                    __LINE__);
+        throw Uintah::InternalError(
+          "Invalid FaceIteratorType Specified", __FILE__, __LINE__);
     }
   }
 
@@ -1195,9 +1194,8 @@ public:
       case zplus:
         return static_cast<BCType>(d_patchState.zplus);
       default:
-        throw Uintah::InternalError("Invalid FaceType Specified",
-                                    __FILE__,
-                                    __LINE__);
+        throw Uintah::InternalError(
+          "Invalid FaceType Specified", __FILE__, __LINE__);
     }
   }
 
@@ -1283,7 +1281,7 @@ public:
 
   bool inline hasInteriorBoundaryFaces() const
   {
-    return d_interiorBndArrayBCS != 0;
+    return d_interiorBndArrayBCS.size() != 0u;
   }
 
   /**
@@ -1353,9 +1351,8 @@ public:
       case zplus:
         return IntVector(2, 0, 1);
       default:
-        throw Uintah::InternalError("Invalid FaceType Specified",
-                                    __FILE__,
-                                    __LINE__);
+        throw Uintah::InternalError(
+          "Invalid FaceType Specified", __FILE__, __LINE__);
     };
   }
 
@@ -1888,11 +1885,8 @@ public:
                   IntVector& h)
   {
     bool basisMustExist = (gtype != Ghost::None);
-    getGhostOffsets(translateTypeToBasis(basis, basisMustExist),
-                    gtype,
-                    numGhostCells,
-                    l,
-                    h);
+    getGhostOffsets(
+      translateTypeToBasis(basis, basisMustExist), gtype, numGhostCells, l, h);
   }
 
   /**
@@ -2036,12 +2030,12 @@ public:
   setBCType(FaceType face, BCType newbc);
 
   void
-  setArrayBCValues(FaceType face, BCDataArray* bc);
+  setArrayBCValues(FaceType face, std::shared_ptr<BCDataArray> bc);
 
   void
-  setInteriorBndArrayBCValues(FaceType face, BCDataArray* bc);
+  setInteriorBndArrayBCValues(FaceType face, std::shared_ptr<BCDataArray> bc);
 
-  const BCDataArray*
+  const std::shared_ptr<BCDataArray>
   getBCDataArray(Patch::FaceType face) const;
 
   /**
@@ -2049,13 +2043,13 @@ public:
    *  \date    September, 2015
    *  Allows a component to alter or add a boundary condition.
    */
-  BCDataArray*
+  std::shared_ptr<BCDataArray>
   getModifiableBCDataArray(Patch::FaceType face) const;
 
-  const BCDataArray*
+  const std::shared_ptr<BCDataArray>
   getInteriorBndBCDataArray(Patch::FaceType face) const;
 
-  const BoundCondBaseP
+  const BoundCondBaseSP
   getArrayBCValues(FaceType face,
                    int mat_id,
                    const std::string& type,
@@ -2063,7 +2057,7 @@ public:
                    Iterator& e_ptr,
                    int child) const;
 
-  const BoundCondBaseP
+  const BoundCondBaseSP
   getInteriorBndArrayBCValues(FaceType face,
                               int mat_id,
                               const std::string& type,
@@ -2078,7 +2072,10 @@ public:
          const std::string& bc_variable) const;
 
   void
-  initializeBoundaryConditions();
+  initializeBoundaryConditions() {
+    d_arrayBCS.clear();
+    d_interiorBndArrayBCS.clear();
+  }
 
   /*****end boundary condition ****/
 
@@ -2236,8 +2233,8 @@ private:
     d_level_index = idx;
   }
 
-  std::vector<BCDataArray*>* d_arrayBCS{ nullptr };
-  std::vector<BCDataArray*>* d_interiorBndArrayBCS{ nullptr };
+  std::vector<std::shared_ptr<BCDataArray>> d_arrayBCS{ 6 };
+  std::vector<std::shared_ptr<BCDataArray>> d_interiorBndArrayBCS{ 6 };
 
   /********************
       The following are needed in order to use Patch as a Box in

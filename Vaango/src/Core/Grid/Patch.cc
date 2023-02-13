@@ -126,25 +126,7 @@ Patch::Patch(const Patch* realPatch, const IntVector& virtualOffset)
   d_patchState.zplus  = realPatch->getBCType(zplus);
 }
 
-Patch::~Patch()
-{
-  for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
-       face                 = Patch::nextFace(face)) {
-    if (d_arrayBCS) {
-      delete (*d_arrayBCS)[face];
-    }
-  }
-
-  if (d_arrayBCS) {
-    d_arrayBCS->clear();
-    delete d_arrayBCS;
-  }
-
-  if (d_interiorBndArrayBCS) {
-    d_interiorBndArrayBCS->clear();
-    delete d_interiorBndArrayBCS;
-  }
-}
+Patch::~Patch() {}
 
 /**
  * Returns the 8 nodes found around the point pos
@@ -257,11 +239,8 @@ Patch::possiblyAddBC(
 
     if (getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->getBCName() ==
         faceName) {
-      BoundCondBaseP bc = BoundCondFactory::customBC(mat_id,
-                                                     faceName,
-                                                     bc_value,
-                                                     bcFieldName,
-                                                     bc_kind);
+      BoundCondBaseSP bc = BoundCondFactory::customBC(
+        mat_id, faceName, bc_value, bcFieldName, bc_kind);
       getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->sudoAddBC(bc);
     }
   }
@@ -391,48 +370,44 @@ Patch::printPatchBCs(std::ostream& out) const
 }
 
 void
-Patch::setArrayBCValues(Patch::FaceType face, BCDataArray* bc)
+Patch::setArrayBCValues(Patch::FaceType face, std::shared_ptr<BCDataArray> bc)
 {
   // At this point need to set up the iterators for each BCData type:
   // Side, Rectangle, Circle, Difference, and Union.
-  BCDataArray* bctmp = bc->clone();
-  bctmp->determineIteratorLimits(face, this);
-  (*d_arrayBCS)[face] = bctmp->clone();
-  delete bctmp;
+  if (bc == nullptr) {
+    d_arrayBCS[face] = nullptr;
+  } else {
+    auto bctmp = bc->clone();
+    bctmp->determineIteratorLimits(face, this);
+    d_arrayBCS[face] = bctmp->clone();
+  }
 }
 
 void
-Patch::setInteriorBndArrayBCValues(Patch::FaceType face, BCDataArray* bc)
+Patch::setInteriorBndArrayBCValues(Patch::FaceType face,
+                                   std::shared_ptr<BCDataArray> bc)
 {
   // At this point need to set up the iterators for each BCData type:
   // Side, Rectangle, Circle, Difference, and Union.
-  BCDataArray* bctmp = bc->clone();
-  bctmp->determineInteriorBndIteratorLimits(face, this);
-  (*d_interiorBndArrayBCS)[face] = bctmp->clone();
-  delete bctmp;
+  if (bc == nullptr) {
+    d_interiorBndArrayBCS[face] = nullptr;
+  } else {
+    auto bctmp = bc->clone();
+    bctmp->determineInteriorBndIteratorLimits(face, this);
+    d_interiorBndArrayBCS[face] = bctmp->clone();
+  }
 }
 
-const BCDataArray*
+const std::shared_ptr<BCDataArray>
 Patch::getBCDataArray(Patch::FaceType face) const
 {
-  if (d_arrayBCS) {
-    if ((*d_arrayBCS)[face]) {
-      return (*d_arrayBCS)[face];
-    } else {
-      std::ostringstream msg;
-      msg << "face = " << face << "\n";
-      SCI_THROW(InternalError("d_arrayBCS[face] has not been allocated",
-                              __FILE__,
-                              __LINE__));
-    }
+  if (d_arrayBCS[face]) {
+    return d_arrayBCS[face];
   } else {
+    std::ostringstream msg;
+    msg << "face = " << face << "\n";
     SCI_THROW(InternalError(
-      "Error: d_arrayBCs not allocated. This means that no boundary conditions "
-      "were found. If you are solving a periodic problem, please add a "
-      "<periodic> tag to your input file to avoid this error. Otherwise, add a "
-      "<BoundaryConditions> block.",
-      __FILE__,
-      __LINE__));
+      "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
 }
 
@@ -441,56 +416,35 @@ Patch::getBCDataArray(Patch::FaceType face) const
  *  \date    September, 2015
  *  Allows a component to alter or add a boundary condition.
  */
-BCDataArray*
+std::shared_ptr<BCDataArray>
 Patch::getModifiableBCDataArray(Patch::FaceType face) const
 {
-  if (d_arrayBCS) {
-    if ((*d_arrayBCS)[face]) {
-      return (*d_arrayBCS)[face];
-    } else {
-      std::ostringstream msg;
-      msg << "face = " << face << std::endl;
-      SCI_THROW(InternalError("d_arrayBCS[face] has not been allocated",
-                              __FILE__,
-                              __LINE__));
-    }
+  if (d_arrayBCS[face]) {
+    return d_arrayBCS[face];
   } else {
+    std::ostringstream msg;
+    msg << "face = " << face << std::endl;
     SCI_THROW(InternalError(
-      "Error: d_arrayBCs not allocated. This means that no boundary conditions "
-      "were found. If you are solving a periodic problem, please add a "
-      "<periodic> tag to your input file to avoid this error. Otherwise, add a "
-      "<BoundaryConditions> block.",
-      __FILE__,
-      __LINE__));
+      "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
 }
 
-const BCDataArray*
+const std::shared_ptr<BCDataArray>
 Patch::getInteriorBndBCDataArray(Patch::FaceType face) const
 {
-  if (d_interiorBndArrayBCS) {
-    if ((*d_interiorBndArrayBCS)[face]) {
-      return (*d_interiorBndArrayBCS)[face];
-    } else {
-      std::ostringstream msg;
-      msg << "face = " << face << std::endl;
-      SCI_THROW(
-        InternalError("d_interiorBndArrayBCS[face] has not been allocated",
-                      __FILE__,
-                      __LINE__));
-    }
+  if (d_interiorBndArrayBCS[face]) {
+    return d_interiorBndArrayBCS[face];
   } else {
-    SCI_THROW(InternalError(
-      "Error: d_interiorBndArrayBCS not allocated. This means that no boundary "
-      "conditions were found. If you are solving a periodic problem, please "
-      "add a <periodic> tag to your input file to avoid this error. Otherwise, "
-      "add a <BoundaryConditions> block.",
-      __FILE__,
-      __LINE__));
+    std::ostringstream msg;
+    msg << "face = " << face << std::endl;
+    SCI_THROW(
+      InternalError("d_interiorBndArrayBCS[face] has not been allocated",
+                    __FILE__,
+                    __LINE__));
   }
 }
 
-const BoundCondBaseP
+const BoundCondBaseSP
 Patch::getArrayBCValues(Patch::FaceType face,
                         int mat_id,
                         const string& type,
@@ -498,10 +452,10 @@ Patch::getArrayBCValues(Patch::FaceType face,
                         Iterator& node_ptr,
                         int child) const
 {
-  BCDataArray* bcd = (*d_arrayBCS)[face];
+  auto bcd = d_arrayBCS[face];
   if (bcd) {
     bcd->print();
-    const BoundCondBaseP& bc = bcd->getBoundCondData(mat_id, type, child);
+    const auto& bc = bcd->getBoundCondData(mat_id, type, child);
     if (bc) {
       bcd->getCellFaceIterator(mat_id, cell_ptr, child);
       bcd->getNodeFaceIterator(mat_id, node_ptr, child);
@@ -512,7 +466,7 @@ Patch::getArrayBCValues(Patch::FaceType face,
   }
 }
 
-const BoundCondBaseP
+const BoundCondBaseSP
 Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
                                    int mat_id,
                                    const string& type,
@@ -520,10 +474,10 @@ Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
                                    Iterator& node_ptr,
                                    int child) const
 {
-  BCDataArray* bcd = (*d_interiorBndArrayBCS)[face];
+  auto bcd = d_interiorBndArrayBCS[face];
   if (bcd) {
     bcd->print();
-    const BoundCondBaseP& bc = bcd->getBoundCondData(mat_id, type, child);
+    const auto& bc = bcd->getBoundCondData(mat_id, type, child);
     if (bc) {
       bcd->getCellFaceIterator(mat_id, cell_ptr, child);
       bcd->getNodeFaceIterator(mat_id, node_ptr, child);
@@ -540,23 +494,16 @@ Patch::haveBC(FaceType face,
               const string& bc_type,
               const string& bc_variable) const
 {
-  if (d_arrayBCS == nullptr) {
-    return false;
-  }
-
-  BCDataArray* itr = (*d_arrayBCS)[face];
-
+  auto itr = d_arrayBCS[face];
   if (itr) {
 #if 0
     std::cout << "Inside haveBC" << "\n";
     ubc->print();
 #endif
-    BCDataArray::bcDataArrayType::const_iterator v_itr;
-    std::vector<BCGeomBase*>::const_iterator it;
 
-    v_itr = itr->d_BCDataArray.find(mat_id);
+    auto v_itr = itr->d_BCDataArray.find(mat_id);
     if (v_itr != itr->d_BCDataArray.end()) {
-      for (it = v_itr->second.begin(); it != v_itr->second.end(); ++it) {
+      for (auto it = v_itr->second.begin(); it != v_itr->second.end(); ++it) {
         BCData bc;
         (*it)->getBCData(bc);
         bool found_variable = bc.find(bc_type, bc_variable);
@@ -568,7 +515,7 @@ Patch::haveBC(FaceType face,
     // Check the mat_it = "all" case
     v_itr = itr->d_BCDataArray.find(-1);
     if (v_itr != itr->d_BCDataArray.end()) {
-      for (it = v_itr->second.begin(); it != v_itr->second.end(); ++it) {
+      for (auto it = v_itr->second.begin(); it != v_itr->second.end(); ++it) {
         BCData bc;
         (*it)->getBCData(bc);
         bool found_variable = bc.find(bc_type, bc_variable);
@@ -619,9 +566,8 @@ Patch::getFace(FaceType face,
       h.z(hh.z() + outsideOffset.z());
       break;
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::getFace",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::getFace", __FILE__, __LINE__));
   }
 }
 
@@ -642,9 +588,8 @@ Patch::faceDirection(FaceType face) const
     case zplus:
       return IntVector(0, 0, 1);
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::faceDirection",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::faceDirection", __FILE__, __LINE__));
   }
 }
 
@@ -665,9 +610,8 @@ Patch::getFaceName(FaceType face)
     case zplus:
       return "zplus";
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::faceName",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::faceName", __FILE__, __LINE__));
   }
 }
 
@@ -707,9 +651,8 @@ Patch::getFaceExtraNodes(FaceType face,
       h.z(horig.z() + offset);
       break;
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::getFaceExtraNodes",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::getFaceExtraNodes", __FILE__, __LINE__));
   }
 }
 
@@ -746,9 +689,8 @@ Patch::getFaceNodes(FaceType face, int offset, IntVector& l, IntVector& h) const
       h.z(horig.z() + offset);
       break;
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::getFaceNodes",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::getFaceNodes", __FILE__, __LINE__));
   }
 }
 
@@ -783,9 +725,8 @@ Patch::getFaceCells(FaceType face, int offset, IntVector& l, IntVector& h) const
       h.z(horig.z() + offset);
       break;
     default:
-      SCI_THROW(InternalError("Illegal FaceType in Patch::getFaceCells",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Illegal FaceType in Patch::getFaceCells", __FILE__, __LINE__));
   }
 }
 
@@ -822,9 +763,8 @@ Patch::getCellIterator(const Box& b) const
   // high is the inclusive upper bound on the index.  In order for
   // the iterator to work properly we need in increment all the
   // indices by 1.
-  IntVector high(RoundDown(u.x()) + 1,
-                 RoundDown(u.y()) + 1,
-                 RoundDown(u.z()) + 1);
+  IntVector high(
+    RoundDown(u.x()) + 1, RoundDown(u.y()) + 1, RoundDown(u.z()) + 1);
   low  = Max(low, getExtraCellLowIndex());
   high = Min(high, getExtraCellHighIndex());
   return CellIterator(low, high);
@@ -847,9 +787,8 @@ Patch::getCellCenterIterator(const Box& b) const
   u -= Vector(0.5, 0.5, 0.5);
   // This will return an empty iterator when the box is degerate.
   IntVector low(RoundUp(l.x()), RoundUp(l.y()), RoundUp(l.z()));
-  IntVector high(RoundDown(u.x()) + 1,
-                 RoundDown(u.y()) + 1,
-                 RoundDown(u.z()) + 1);
+  IntVector high(
+    RoundDown(u.x()) + 1, RoundDown(u.y()) + 1, RoundDown(u.z()) + 1);
   low  = Max(low, getExtraCellLowIndex());
   high = Min(high, getExtraCellHighIndex());
   return CellIterator(low, high);
@@ -986,9 +925,8 @@ Patch::getFaceIterator(const FaceType& face,
       }
       break;
     default:
-      throw InternalError("Invalid FaceIteratorType Specified",
-                          __FILE__,
-                          __LINE__);
+      throw InternalError(
+        "Invalid FaceIteratorType Specified", __FILE__, __LINE__);
   }
   return CellIterator(lowPt, highPt);
 }
@@ -1081,9 +1019,8 @@ Patch::getEdgeCellIterator(const FaceType& face0,
       patchExtraLow  = IntVector(0, 0, 0);
       patchExtraHigh = IntVector(0, 0, 0);
 
-      throw Uintah::InternalError("Invalid EdgeIteratorType Specified",
-                                  __FILE__,
-                                  __LINE__);
+      throw Uintah::InternalError(
+        "Invalid EdgeIteratorType Specified", __FILE__, __LINE__);
   };
   std::vector<IntVector> loPt(2), hiPt(2);
 
@@ -1459,11 +1396,8 @@ Patch::computeVariableExtentsWithBoundaryCheck(
     // no neighboring patches.  This will extend outside the domain's extents,
     // which is OK. This is the key difference between computeExtents.
     IntVector ghostLowOffset, ghostHighOffset;
-    getGhostOffsets(basis,
-                    gtype,
-                    numGhostCells,
-                    ghostLowOffset,
-                    ghostHighOffset);
+    getGhostOffsets(
+      basis, gtype, numGhostCells, ghostLowOffset, ghostHighOffset);
 
     IntVector ghostLow  = low - ghostLowOffset;
     IntVector ghostHigh = high + ghostHighOffset;
@@ -1490,12 +1424,8 @@ Patch::computeVariableExtentsWithBoundaryCheck(
     high = Uintah::Min(ghostHigh, levelHigh);
   } else {
     // Do it the usual way
-    computeVariableExtents(basis,
-                           boundaryLayer,
-                           gtype,
-                           numGhostCells,
-                           low,
-                           high);
+    computeVariableExtents(
+      basis, boundaryLayer, gtype, numGhostCells, low, high);
   }
 }
 
@@ -2106,34 +2036,6 @@ Patch::getCornerCells(vector<IntVector>& cells, const FaceType& face) const
       } // end z face loop
     }   // end y face loop
   }     // end x face loop
-}
-
-void
-Patch::initializeBoundaryConditions()
-{
-  if (d_arrayBCS) {
-    for (unsigned int i = 0; i < 6; ++i) {
-      delete (*d_arrayBCS)[i];
-    }
-    d_arrayBCS->clear();
-    delete d_arrayBCS;
-  }
-  d_arrayBCS = scinew vector<BCDataArray*>(6);
-  for (unsigned int i = 0; i < 6; ++i) {
-    (*d_arrayBCS)[i] = nullptr;
-  }
-
-  if (d_interiorBndArrayBCS) {
-    for (unsigned int i = 0; i < 6; ++i) {
-      delete (*d_interiorBndArrayBCS)[i];
-    }
-    d_interiorBndArrayBCS->clear();
-    delete d_interiorBndArrayBCS;
-  }
-  d_interiorBndArrayBCS = scinew vector<BCDataArray*>(6);
-  for (unsigned int i = 0; i < 6; ++i) {
-    (*d_interiorBndArrayBCS)[i] = nullptr;
-  }
 }
 
 //__________________________________

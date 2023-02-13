@@ -43,7 +43,7 @@ Uintah::Dout bc_dbg{ "UnionBC_dbg",
                      "Grid Union BC debug info",
                      false };
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -54,27 +54,19 @@ UnionBCData::UnionBCData()
 
 UnionBCData::~UnionBCData()
 {
-  for (std::vector<BCGeomBase*>::const_iterator bc = child.begin();
-       bc != child.end();
-       ++bc) {
-    delete (*bc);
-  }
-
   child.clear();
 }
 
 UnionBCData::UnionBCData(const UnionBCData& mybc)
   : BCGeomBase(mybc)
 {
-
-  std::vector<BCGeomBase*>::const_iterator itr;
-  for (itr = mybc.child.begin(); itr != mybc.child.end(); ++itr) {
-    child.push_back((*itr)->clone());
+  for (auto& bc : mybc.child) {
+    child.push_back(bc->clone());
   }
 }
 
-UnionBCData&
-UnionBCData::operator=(const UnionBCData& rhs)
+auto
+UnionBCData::operator=(const UnionBCData& rhs) -> UnionBCData&
 {
   BCGeomBase::operator=(rhs);
 
@@ -83,25 +75,20 @@ UnionBCData::operator=(const UnionBCData& rhs)
   }
 
   // Delete the lhs
-  std::vector<BCGeomBase*>::const_iterator itr;
-  for (itr = child.begin(); itr != child.end(); ++itr) {
-    delete *itr;
-  }
-
   child.clear();
 
   // copy the rhs to the lhs
-  for (itr = rhs.child.begin(); itr != rhs.child.end(); ++itr) {
-    child.push_back((*itr)->clone());
+  for (auto& bc : rhs.child) {
+    child.push_back(bc->clone());
   }
 
   return *this;
 }
 
-bool
-UnionBCData::operator==(const BCGeomBase& rhs) const
+auto
+UnionBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const UnionBCData* p_rhs = dynamic_cast<const UnionBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const UnionBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -114,10 +101,10 @@ UnionBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-UnionBCData*
-UnionBCData::clone()
+auto
+UnionBCData::clone() -> std::shared_ptr<BCGeomBase>
 {
-  return scinew UnionBCData(*this);
+  return std::make_shared<UnionBCData>(*this);
 }
 
 void
@@ -126,20 +113,20 @@ UnionBCData::addBCData([[maybe_unused]] BCData& bc)
 }
 
 void
-UnionBCData::addBC([[maybe_unused]] BoundCondBaseP bc)
+UnionBCData::addBC([[maybe_unused]] BoundCondBaseSP bc)
 {
 }
 
 void
-UnionBCData::sudoAddBC(BoundCondBaseP& bc)
+UnionBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
-  for (unsigned int i = 0; i < child.size(); i++) {
-    child[i]->sudoAddBC(bc); // or add to zero element only?
+  for (auto& i : child) {
+    i->sudoAddBC(bc); // or add to zero element only?
   }
 }
 
 void
-UnionBCData::addBCData(BCGeomBase* bc)
+UnionBCData::addBCData(std::shared_ptr<BCGeomBase> bc)
 {
   child.push_back(bc);
 }
@@ -150,13 +137,11 @@ UnionBCData::getBCData(BCData& bc) const
   child[0]->getBCData(bc);
 }
 
-bool
-UnionBCData::inside(const Point& p) const
+auto
+UnionBCData::inside(const Point& p) const -> bool
 {
-  for (std::vector<BCGeomBase*>::const_iterator i = child.begin();
-       i != child.end();
-       ++i) {
-    if ((*i)->inside(p)) {
+  for (auto i : child) {
+    if (i->inside(p)) {
       return true;
     }
   }
@@ -167,10 +152,8 @@ void
 UnionBCData::print()
 {
   DOUT(bc_dbg, "Geometry type = " << typeid(this).name());
-  for (std::vector<BCGeomBase*>::const_iterator i = child.begin();
-       i != child.end();
-       ++i) {
-    (*i)->print();
+  for (auto i : child) {
+    i->print();
   }
 }
 
@@ -183,27 +166,22 @@ UnionBCData::determineIteratorLimits(Patch::FaceType face,
   std::cout << "UnionBC determineIteratorLimits()" << std::endl;
 #endif
 
-  for (std::vector<BCGeomBase*>::const_iterator bc = child.begin();
-       bc != child.end();
-       ++bc) {
-    (*bc)->determineIteratorLimits(face, patch, test_pts);
+  for (auto bc : child) {
+    bc->determineIteratorLimits(face, patch, test_pts);
   }
 
   UnionIterator cells;
   UnionIterator nodes;
-  for (std::vector<BCGeomBase*>::const_iterator bc = child.begin();
-       bc != child.end();
-       ++bc) {
+  for (auto bc : child) {
     Iterator cell_itr, node_itr;
-    (*bc)->getCellFaceIterator(cell_itr);
-    (*bc)->getNodeFaceIterator(node_itr);
+    bc->getCellFaceIterator(cell_itr);
+    bc->getNodeFaceIterator(node_itr);
     Iterator base_ci, base_ni;
     cells = UnionIterator(base_ci, cell_itr);
     nodes = UnionIterator(base_ni, node_itr);
   }
   d_cells = UnionIterator(cells);
   d_nodes = UnionIterator(nodes);
-
 
 #if 0
   IntVector l,h;

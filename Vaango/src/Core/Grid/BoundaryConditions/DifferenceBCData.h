@@ -58,55 +58,55 @@ public:
   DifferenceBCData(const DifferenceBCData& rhs);
 
   /// Assignment operator
-  DifferenceBCData&
-  operator=(const DifferenceBCData& bc);
+  auto
+  operator=(const DifferenceBCData& bc) -> DifferenceBCData&;
 
   /// Constructor with two boundary condition geometries.  The second
   /// argument is subtracted from the first argument.
-  DifferenceBCData(BCGeomBase* p1, BCGeomBase* p2);
+  DifferenceBCData(std::shared_ptr<BCGeomBase> p1, std::shared_ptr<BCGeomBase> p2);
 
   /// Destructor
-  virtual ~DifferenceBCData();
+  ~DifferenceBCData() override;
 
-  virtual bool
-  operator==(const BCGeomBase&) const;
+  bool
+  operator==(const BCGeomBase&) const override;
 
   /// Clone the boundary condition geometry -- allocates memory.
-  DifferenceBCData*
-  clone();
+  std::shared_ptr<BCGeomBase>
+  clone() override;
 
   /// Get the boundary condition data
   void
-  getBCData(BCData& bc) const;
+  getBCData(BCData& bc) const override;
 
   /// Add the boundary condition data -- no longer used.
   void
-  addBCData(BCData& bc);
+  addBCData(BCData& bc) override;
 
   /// Add the old boundary condition data -- no longer used.
   void
-  addBC(BoundCondBaseP bc);
+  addBC(BoundCondBaseSP bc) override;
 
   void
-  sudoAddBC(BoundCondBaseP& bc);
+  sudoAddBC(BoundCondBaseSP& bc) override;
 
   /// Determine if a point is inside the object.
-  bool
-  inside(const Point& p) const;
+  [[nodiscard]] bool
+  inside(const Point& p) const override;
 
   /// Print out the boundary condition geometry types.
-  virtual void
-  print();
+  void
+  print() override;
 
   /// Determine the cell and node boundary iterators.
-  virtual void
+  void
   determineIteratorLimits(Patch::FaceType face,
                           const Patch* patch,
-                          std::vector<Point>& test_pts);
+                          std::vector<Point>& test_pts) override;
 
 private:
-  BCGeomBase* left;
-  BCGeomBase* right;
+  std::shared_ptr<BCGeomBase> left;
+  std::shared_ptr<BCGeomBase> right;
 
   friend class BCReader;
 };

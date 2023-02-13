@@ -571,8 +571,8 @@ private:
   std::unique_ptr<ImplicitHeatConductionTasks> d_heatConductionTasks{ nullptr };
   std::unique_ptr<Solver> d_solver{ nullptr };
 
-  std::shared_ptr<MaterialSubset> d_oneMaterial{ nullptr };
-  std::shared_ptr<MaterialSubset> d_loadCurveIndex{ nullptr };
+  MaterialSubset* d_oneMaterial{ nullptr };
+  MaterialSubset* d_loadCurveIndex{ nullptr };
 
   const PatchSet* d_perprocPatches{ nullptr };
   SwitchingCriteria* d_switchCriteria{ nullptr };

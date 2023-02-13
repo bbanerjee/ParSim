@@ -44,6 +44,7 @@
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/NullGeometryPiece.h>
+#include <Core/GeometryPiece/TriGeometryPiece.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/MaterialManager.h>
@@ -73,6 +74,7 @@ MPMMaterial::MPMMaterial(ProblemSpecP& ps,
                          MPMFlags* flags,
                          bool isRestart)
   : Material(ps)
+  , d_flags(flags)
 {
   d_lb = std::make_unique<MPMLabel>();
   standardInitialization(ps, matManager, flags, isRestart);
@@ -149,6 +151,37 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   d_includeFlowWork = false;
   ps->get("includeFlowWork", d_includeFlowWork);
 
+  // For scalar diffusion
+  // This is used for the autocycleflux boundary conditions
+  d_doConcReduction = false;
+  ps->get("do_conc_reduction", d_doConcReduction);
+
+  // For activating materials if needed
+  d_is_active = true;
+  ps->get("is_active", d_is_active);
+  d_activation_time = 0.0;
+  ps->get("activation_time", d_activation_time);
+
+  // Material is force transmitting (moves according to sum of forces)
+  d_is_force_transmitting_material = false;
+  ps->get("is_force_transmitting_material", d_is_force_transmitting_material);
+  flags->d_reductionVars->sumTransmittedForce = true;
+
+  // Also use for Darcy momentum exchange model
+  ps->get("permeability", d_permeability);
+
+  // For MPM hydro-mechanical coupling
+  if (flags->d_coupledFlow) {
+    // Rigid material does not require porosity and permeability
+    if (!ps->findBlockWithAttributeValue(
+          "constitutive_model", "type", "rigid")) {
+      ps->require("water_density", d_waterdensity);
+      ps->require("porosity", d_porosity);
+      d_initial_porepressure = 0.0;
+      ps->get("initial_pore_pressure", d_initial_porepressure);
+    }
+  }
+
   // Step 3 -- Loop through all of the pieces in this geometry object
   // int piece_num = 0;
   std::list<GeometryObject::DataItem> geom_obj_data;
@@ -170,11 +203,24 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
     geom_obj_data.emplace_back("concentration", GeometryObject::Double);
   }
 
+  // If this ia a restart, don't create geometry
+  if (isRestart) {
+    return;
+  }
+
+  // Create the geometry pieces
   for (ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0;
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object")) {
     std::vector<GeometryPieceP> pieces;
     GeometryPieceFactory::create(geom_obj_ps, pieces);
+
+    // Tag if a triangle geometry piece exists in this set of objects
+    for (const auto& geom_piece : pieces) {
+      if (!static_cast<TriGeometryPiece*>(geom_piece.get())) {
+        d_all_triangle_geometry = false;
+      }
+    }
 
     GeometryPieceP mainpiece;
     if (pieces.size() == 0) {
@@ -186,7 +232,6 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
       mainpiece = pieces[0];
     }
 
-    //    piece_num++;
     d_geom_objs.push_back(
       std::make_shared<GeometryObject>(mainpiece, geom_obj_ps, geom_obj_data));
   }
@@ -213,11 +258,27 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP
   mpm_ps->appendElement("room_temp", d_troom);
   mpm_ps->appendElement("melt_temp", d_tmelt);
   mpm_ps->appendElement("is_rigid", d_is_rigid);
+
   mpm_ps->appendElement("includeFlowWork", d_includeFlowWork);
+
+  mpm_ps->appendElement("do_conc_reduction", d_doConcReduction);
 
   mpm_ps->appendElement("do_basic_damage", d_doBasicDamage);
   if (d_doBasicDamage) {
     d_basicDamageModel->outputProblemSpecDamage(mpm_ps);
+  }
+  mpm_ps->appendElement("is_force_transmitting_material",
+                        d_is_force_transmitting_material);
+  mpm_ps->appendElement("is_active", d_is_active);
+  mpm_ps->appendElement("activation_time", d_activation_time);
+
+  mpm_ps->appendElement("permeability", d_permeability);
+
+  // For MPM hydro-mechanical coupling
+  if (d_flags->d_coupledFlow) {
+    mpm_ps->appendElement("water_density", d_waterdensity);
+    mpm_ps->appendElement("porosity", d_porosity);
+    mpm_ps->appendElement("initial_pore_pressure", d_initial_porepressure);
   }
 
   d_cm->outputProblemSpec(mpm_ps);
@@ -252,6 +313,20 @@ MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,
   d_troom               = mat->d_troom;
   d_tmelt               = mat->d_tmelt;
   d_is_rigid            = mat->d_is_rigid;
+
+  d_includeFlowWork = mat->d_includeFlowWork;
+  d_doConcReduction = mat->d_doConcReduction;
+
+  d_is_force_transmitting_material = mat->d_is_force_transmitting_material;
+  d_is_active                      = mat->d_is_active;
+  d_activation_time                = mat->d_activation_time;
+
+  d_permeability = mat->d_permeability;
+  if (d_flags->d_coupledFlow) {
+    d_waterdensity         = mat->d_waterdensity;
+    d_porosity             = mat->d_porosity;
+    d_initial_porepressure = mat->d_initial_porepressure;
+  }
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);

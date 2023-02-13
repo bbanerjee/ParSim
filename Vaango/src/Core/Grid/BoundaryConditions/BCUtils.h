@@ -47,7 +47,7 @@ is_BC_specified(const ProblemSpecP& prob_spec,
     - BC_kind ( Dirichlet, symmetry, Neumann.....)
  ---------------------------------------------------------------------  */
 template<class T>
-bool
+auto
 getIteratorBCValueBCKind(const Patch* patch,
                          const Patch::FaceType face,
                          const int child,
@@ -55,7 +55,7 @@ getIteratorBCValueBCKind(const Patch* patch,
                          const int mat_id,
                          T& bc_value,
                          Iterator& bound_ptr,
-                         std::string& bc_kind)
+                         std::string& bc_kind) -> bool
 {
   bc_value     = T(-9);
   bc_kind      = "NotSet";
@@ -69,12 +69,12 @@ getIteratorBCValueBCKind(const Patch* patch,
     foundBC  = true;
   }
 
-  const BCDataArray* bcd = patch->getBCDataArray(face);
+  const auto& bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
   if (!foundBC) {
-    BoundCondBaseP bc = bcd->getBoundCondData(mat_id, desc, child);
+    BoundCondBaseSP bc = bcd->getBoundCondData(mat_id, desc, child);
     typename BoundCond<T>::BoundCondP new_bcs =
       std::dynamic_pointer_cast<BoundCond<T>>(bc);
 
@@ -88,7 +88,7 @@ getIteratorBCValueBCKind(const Patch* patch,
   //__________________________________
   // Symmetry
   if (!foundBC) {
-    BoundCondBaseP bc = bcd->getBoundCondData(mat_id, "Symmetric", child);
+    BoundCondBaseSP bc = bcd->getBoundCondData(mat_id, "Symmetric", child);
     string test       = bc->getBCType();
 
     if (test == "symmetry") {
@@ -114,14 +114,14 @@ getIteratorBCValueBCKind(const Patch* patch,
 }
 
 template<class T>
-bool
+auto
 getIteratorBCValue(const Patch* patch,
                    const Patch::FaceType face,
                    const int child,
                    const std::string& desc,
                    const int mat_id,
                    T& bc_value,
-                   Iterator& bound_ptr)
+                   Iterator& bound_ptr) -> bool
 {
   bool foundBC = false;
 
@@ -130,7 +130,7 @@ getIteratorBCValue(const Patch* patch,
   //  non-symmetric BCs
   // find the bc_value and kind
   if (!foundBC) {
-    BoundCondBaseP bc = bcd->getBoundCondData(mat_id, desc, child);
+    BoundCondBaseSP bc = bcd->getBoundCondData(mat_id, desc, child);
     typename BoundCond<T>::BoundCondP new_bcs =
       std::dynamic_pointer_cast<BoundCond<T>>(bc);
 
@@ -164,17 +164,17 @@ getIteratorBCValue(const Patch* patch,
    other utilities, to anticipate the datatype expected for this variable.
    */
 template<class T>
-bool
+auto
 getBCValue(const Patch* patch,
            const Patch::FaceType face,
            const int child,
            const std::string& desc,
            const int mat_id,
-           T& bc_value)
+           T& bc_value) -> bool
 {
   bool foundBC = false;
 
-  const BoundCondBaseP bc;
+  const BoundCondBaseSP bc;
   const BoundCond<T>* new_bcs;
   const BCDataArray* bcd = patch->getBCDataArray(face);
   //__________________________________
@@ -205,13 +205,13 @@ getBCKind(const Patch* patch,
 //______________________________________________________________________
 //  Neumann BC:  CCVariable
 template<class T>
-int
+auto
 setNeumannBC_CC(const Patch* patch,
                 const Patch::FaceType face,
                 CCVariable<T>& var,
                 Iterator& bound_ptr,
                 T& value,
-                const Vector& cell_dx)
+                const Vector& cell_dx) -> int
 {
   Uintah::IntVector oneCell = patch->faceDirection(face);
   Uintah::IntVector dir     = patch->getFaceAxes(face);
@@ -239,8 +239,8 @@ setNeumannBC_CC(const Patch* patch,
 //______________________________________________________________________
 //  Dirichlet BC:    CCVariable
 template<class T>
-int
-setDirichletBC_CC(CCVariable<T>& var, Iterator& bound_ptr, T& value)
+auto
+setDirichletBC_CC(CCVariable<T>& var, Iterator& bound_ptr, T& value) -> int
 {
   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
     var[*bound_ptr] = value;

@@ -38,29 +38,29 @@ class BoundCondFactory
 {
 public:
   // this function has a switch for all known BC_types
-  static BoundCondBaseP
-  create(ProblemSpecP& ps, int& mat_id, const std::string face_label);
+  static auto
+  create(ProblemSpecP& ps, int& mat_id, const std::string face_label) -> BoundCondBaseSP;
 
-  static BoundCondBaseP
+  static auto
   customBC(int mat_id,
            const std::string face_label,
            double value,
            std::string label,
-           std::string var);
+           std::string var) -> BoundCondBaseSP;
 
-  static BoundCondBaseP
+  static auto
   customBC(int mat_id,
            const std::string face_label,
            Vector value,
            std::string label,
-           std::string var);
+           std::string var) -> BoundCondBaseSP;
 
-  static BoundCondBaseP
+  static auto
   customBC(int mat_id,
            const std::string face_label,
            std::string value,
            std::string label,
-           std::string var);
+           std::string var) -> BoundCondBaseSP;
 };
 
 } // End namespace Uintah

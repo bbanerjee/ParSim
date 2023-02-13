@@ -119,7 +119,7 @@ ImpMPM::ImpMPM(const ProcessorGroup* myworld,
   d_impmpmLabels    = std::make_unique<ImpMPMLabel>();
   d_mpm_flags        = std::make_unique<ImpMPMFlags>(myworld);
 
-  d_oneMaterial = std::make_shared<MaterialSubset>();
+  d_oneMaterial = scinew MaterialSubset();
   d_oneMaterial->add(0);
   d_oneMaterial->addReference();
 }
@@ -131,11 +131,12 @@ ImpMPM::~ImpMPM()
     std::cout << "Freeing patches!!\n";
   }
 
-  if (d_oneMaterial) {
-    d_oneMaterial->removeReference();
+  if (d_oneMaterial && d_oneMaterial->removeReference()) {
+    delete d_oneMaterial;
   }
-  if (d_loadCurveIndex) {
-    d_loadCurveIndex->removeReference();
+
+  if (d_loadCurveIndex && d_loadCurveIndex->removeReference()) {
+    delete d_loadCurveIndex;
   }
 
   MPMPhysicalBCFactory::clean();
@@ -392,9 +393,9 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     t->computes(d_mpm_labels->gDisplacementLabel);
   }
 
-  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial);
   if (!d_mpm_flags->d_tempSolve) {
-    t->computes(d_mpm_labels->gTemperatureLabel, d_oneMaterial.get());
+    t->computes(d_mpm_labels->gTemperatureLabel, d_oneMaterial);
   }
 
   d_perprocPatches = d_loadBalancer->getPerProcessorPatchSet(level);
@@ -578,7 +579,7 @@ ImpMPM::printParticleCount(const ProcessorGroup* pg,
 void
 ImpMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
 {
-  d_loadCurveIndex = std::make_shared<MaterialSubset>();
+  d_loadCurveIndex = scinew MaterialSubset();
   d_loadCurveIndex->add(0);
   d_loadCurveIndex->addReference();
 
@@ -598,7 +599,7 @@ ImpMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
                           &ImpMPM::countMaterialPointsPerLoadCurve);
     t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex.get(),
+                d_loadCurveIndex,
                 Task::OutOfDomain);
     sched->addTask(t,
                    level->eachPatch(),
@@ -613,7 +614,7 @@ ImpMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->requires(Task::NewDW,
                 d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex.get(),
+                d_loadCurveIndex,
                 Task::OutOfDomain,
                 Ghost::None);
     t->modifies(d_mpm_labels->pExternalForceLabel);
@@ -863,12 +864,12 @@ ImpMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 
   scheduleInterpolateParticlesToGrid(sched,
                                      d_perprocPatches,
-                                     d_oneMaterial.get(),
+                                     d_oneMaterial,
                                      matls);
 
   d_heatConductionTasks->scheduleProjectHeatSource(sched,
                                                    d_perprocPatches,
-                                                   d_oneMaterial.get(),
+                                                   d_oneMaterial,
                                                    matls);
 
   scheduleFindSurfaceParticles(sched, d_perprocPatches, matls);
@@ -1223,7 +1224,7 @@ ImpMPM::applyExternalLoads(const ProcessorGroup*,
 void
 ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                            const PatchSet* patches,
-                                           const MaterialSubset* d_oneMaterial,
+                                           const MaterialSubset* oneMaterial,
                                            const MaterialSet* matls)
 {
   printSchedule(patches,
@@ -1272,14 +1273,14 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
   t->requires(Task::OldDW,
               d_mpm_labels->NC_CCweightLabel,
-              d_oneMaterial,
+              oneMaterial,
               Ghost::AroundCells,
               1);
 
   if (!d_mpm_flags->d_tempSolve) {
     t->requires(Task::OldDW,
                 d_mpm_labels->gTemperatureLabel,
-                d_oneMaterial,
+                oneMaterial,
                 Ghost::None,
                 0);
   }
@@ -1302,17 +1303,17 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(d_mpm_labels->gExternalForceLabel);
   t->computes(d_mpm_labels->gInternalForceLabel);
   t->computes(d_mpm_labels->TotalMassLabel);
-  t->computes(d_mpm_labels->gTemperatureLabel, d_oneMaterial);
+  t->computes(d_mpm_labels->gTemperatureLabel, oneMaterial);
   t->computes(d_mpm_labels->gExternalHeatRateLabel);
   t->computes(d_mpm_labels->gExternalHeatFluxLabel);
-  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial);
+  t->computes(d_mpm_labels->NC_CCweightLabel, oneMaterial);
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
 
   d_heatConductionTasks->scheduleProjectHeatSource(sched,
                                                    patches,
-                                                   d_oneMaterial,
+                                                   oneMaterial,
                                                    matls);
 }
 
@@ -2055,7 +2056,7 @@ ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
             Iterator nbound_ptr;
             Iterator nu; // not used;
 
-            BoundCondBaseP vel_bcs = patch->getArrayBCValues(face,
+            BoundCondBaseSP vel_bcs = patch->getArrayBCValues(face,
                                                              matID,
                                                              "Velocity",
                                                              nu,
@@ -2082,7 +2083,7 @@ ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
               }
             }
 
-            BoundCondBaseP sym_bcs = patch->getArrayBCValues(face,
+            BoundCondBaseSP sym_bcs = patch->getArrayBCValues(face,
                                                              matID,
                                                              "Symmetric",
                                                              nu,
@@ -3774,7 +3775,7 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::AroundCells, 1);
   t->requires(Task::NewDW,
               d_mpm_labels->gTemperatureRateLabel,
-              d_oneMaterial.get(),
+              d_oneMaterial,
               Ghost::AroundCells,
               1);
 
@@ -4270,7 +4271,7 @@ ImpMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     t->computes(d_mpm_labels->pLoadCurveIDLabel);
   }
 
-  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial.get());
+  t->computes(d_mpm_labels->NC_CCweightLabel, d_oneMaterial);
 
   sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
 

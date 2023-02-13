@@ -79,7 +79,7 @@ DDT1Criterion::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
                 "Switching Criteria:DDT1Criterion::scheduleSwitchTest");
   Task* t = scinew Task("switchTest", this, &DDT1Criterion::switchTest);
 
-  std::unique_ptr<MaterialSubset> one_matl = std::make_unique<MaterialSubset>();
+  auto* one_matl = scinew MaterialSubset();
   one_matl->addReference();
   one_matl->add(0);
 
@@ -95,12 +95,12 @@ DDT1Criterion::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
     t->requires(Task::OldDW, d_mpm_labels->pXLabel, mpm_matls, gan, 1);
     t->requires(Task::NewDW,
                 d_mpm_labels->gTemperatureLabel,
-                one_matl.get(),
+                one_matl,
                 gan,
                 2);
     t->requires(Task::OldDW,
                 d_mpm_labels->NC_CCweightLabel,
-                one_matl.get(),
+                one_matl,
                 gan,
                 2);
   }
@@ -109,7 +109,9 @@ DDT1Criterion::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials());
 
-  one_matl->removeReference();
+  if (one_matl && one_matl->removeReference()) {
+    delete one_matl;
+  }
 }
 
 //  This task uses similar logic in the HEChem/DDT1.cc

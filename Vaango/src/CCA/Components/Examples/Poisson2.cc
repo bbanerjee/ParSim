@@ -140,7 +140,7 @@ Poisson2::initialize(const ProcessorGroup*,
           for (int child = 0; child < numChildren; child++) {
             Iterator nbound_ptr, nu;
 
-            BoundCondBaseP bcb =
+            BoundCondBaseSP bcb =
               patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
 
             BoundCond<double>::BoundCondP bc =

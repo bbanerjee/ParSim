@@ -39,7 +39,7 @@ Uintah::Dout bc_dbg{ "RectangulusBC_dbg",
                      "Grid Side BC debug info",
                      false };
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -60,12 +60,12 @@ RectangulusBCData::RectangulusBCData(Point& low_in,
 {
 }
 
-RectangulusBCData::~RectangulusBCData() {}
+RectangulusBCData::~RectangulusBCData() = default;
 
-bool
-RectangulusBCData::operator==(const BCGeomBase& rhs) const
+auto
+RectangulusBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
-  const RectangulusBCData* p_rhs = dynamic_cast<const RectangulusBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const RectangulusBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -77,10 +77,10 @@ RectangulusBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-RectangulusBCData*
-RectangulusBCData::clone()
+auto
+RectangulusBCData::clone() -> std::shared_ptr<BCGeomBase>
 {
-  return scinew RectangulusBCData(*this);
+  return std::make_shared<RectangulusBCData>(*this);
 }
 
 void
@@ -90,13 +90,13 @@ RectangulusBCData::addBCData(BCData& bc)
 }
 
 void
-RectangulusBCData::addBC(BoundCondBaseP bc)
+RectangulusBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
 void
-RectangulusBCData::sudoAddBC(BoundCondBaseP& bc)
+RectangulusBCData::sudoAddBC(BoundCondBaseSP& bc)
 {
   d_bc.setBCValues(bc);
 }
@@ -107,8 +107,8 @@ RectangulusBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-RectangulusBCData::inside(const Point& p) const
+auto
+RectangulusBCData::inside(const Point& p) const -> bool
 {
   if (d_min_out.x() == d_max_out.x() &&
       d_min_in.x() == d_max_in.x()) { // x face inlet

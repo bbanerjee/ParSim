@@ -176,7 +176,7 @@ private:
   const MPMFlags* d_mpm_flags{ nullptr };
   const PatchSet* d_perproc_patches{ nullptr };
 
-  std::unique_ptr<MaterialSubset> d_one_matl{ nullptr };
+  MaterialSubset* d_one_matl{ nullptr };
   std::unique_ptr<Solver> d_HC_solver{ nullptr };
 
   bool do_IHC{ false };

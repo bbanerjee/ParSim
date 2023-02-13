@@ -39,10 +39,10 @@
 
 namespace Uintah {
 
-BoundCondBaseP
+auto
 BoundCondFactory::create(ProblemSpecP& child,
                          int& mat_id,
-                         const std::string face_label)
+                         const std::string face_label) -> BoundCondBaseSP
 
 {
   std::map<std::string, std::string> bc_attr;
@@ -86,7 +86,7 @@ BoundCondFactory::create(ProblemSpecP& child,
       __LINE__));
   }
 
-  BoundCondBaseP bc;
+  BoundCondBaseSP bc;
 
   if (attrPS) {
     ProblemSpec::InputType theInputType = child->getInputType(valAttribute);
@@ -186,12 +186,12 @@ BoundCondFactory::create(ProblemSpecP& child,
   return bc;
 }
 
-BoundCondBaseP
+auto
 BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            double value,
                            const std::string label,
-                           const std::string var)
+                           const std::string var) -> BoundCondBaseSP
 {
   return std::make_shared<BoundCond<double>>(label,
                                              var,
@@ -200,12 +200,12 @@ BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                                              BoundCondBase::DOUBLE_TYPE);
 }
 
-BoundCondBaseP
+auto
 BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            const Vector value,
                            const std::string label,
-                           const std::string var)
+                           const std::string var) -> BoundCondBaseSP
 {
   return std::make_shared<BoundCond<Vector>>(label,
                                              var,
@@ -214,12 +214,12 @@ BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                                              BoundCondBase::VECTOR_TYPE);
 }
 
-BoundCondBaseP
+auto
 BoundCondFactory::customBC([[maybe_unused]] int mat_id,
                            const std::string face_label,
                            const std::string value,
                            const std::string label,
-                           const std::string var)
+                           const std::string var) -> BoundCondBaseSP
 {
   return std::make_shared<BoundCond<std::string>>(label,
                                                   var,

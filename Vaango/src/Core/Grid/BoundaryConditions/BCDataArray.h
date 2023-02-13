@@ -69,20 +69,22 @@ public:
   BCDataArray(const BCDataArray& bc);
 
   /// Assignment operator
-  BCDataArray&
-  operator=(const BCDataArray& bc);
+  auto
+  operator=(const BCDataArray& bc) -> BCDataArray&;
 
-  /// Make a clone of self.  Must use delete to free.
-  BCDataArray*
-  clone();
+  /// Make a clone of self.
+  auto
+  clone() -> std::shared_ptr<BCDataArray>;
 
   /// Get the boundary condition data for a given material and a given
   /// type for a given child.
-  const BoundCondBaseP
-  getBoundCondData(int mat_id, const std::string type, int ichild) const;
+  [[nodiscard]] auto
+  getBoundCondData(int mat_id, const std::string type, int ichild) const
+    -> const BoundCondBaseSP;
 
-  bool
-  checkForBoundCondData(int& mat_id, const std::string& type, int ichild);
+  auto
+  checkForBoundCondData(int& mat_id, const std::string& type, int ichild)
+    -> bool;
 
   /// Determine the iterator limits.
   void
@@ -99,7 +101,7 @@ public:
 
   /// Add boundary condition data
   void
-  addBCData(int mat_id, BCGeomBase* bc);
+  addBCData(int mat_id, std::shared_ptr<BCGeomBase> bc);
 
   /// Combine the duplicate BCGeometryTypes into a single BCGeometryType
   void
@@ -116,26 +118,27 @@ public:
   getNodeFaceIterator(int mat_id, Iterator& b_ptr, int ichild) const;
 
   /// Return the number of children in the vector<BCGeomBase*>.
-  int
-  getNumberChildren(int mat_id) const;
+  [[nodiscard]] auto
+  getNumberChildren(int mat_id) const -> int;
 
   /// Get the ith child.
-  BCGeomBase*
-  getChild(int mat_id, int ichild) const;
+  [[nodiscard]] auto
+  getChild(int mat_id, int ichild) const -> std::shared_ptr<BCGeomBase>;
 
   /// Print out the various boundary condition geometry types.
   void
   print() const;
 
-  std::vector<BCGeomBase*>
-  getBCGeom(int matl_index)
+  auto
+  getBCGeom(int matl_index) -> std::vector<std::shared_ptr<BCGeomBase>>
   {
     return d_BCDataArray[matl_index];
   }
 
   /// The map is for the mat_id.  -1 is for mat_id = "all", 0, for
   /// mat_id = "0", etc.
-  using bcDataArrayType = std::map<int, std::vector<BCGeomBase*>>;
+  using bcDataArrayType =
+    std::map<int, std::vector<std::shared_ptr<BCGeomBase>>>;
 
 private:
   bcDataArrayType d_BCDataArray;
@@ -150,8 +153,8 @@ private:
 /// Sorts along the x axis
 struct ltiv_x
 {
-  bool
-  operator()(const IntVector& i1, const IntVector& i2)
+  auto
+  operator()(const IntVector& i1, const IntVector& i2) -> bool
   {
     if (i2.x() < i1.x()) {
       return false;
@@ -170,8 +173,8 @@ struct ltiv_x
 /// Sorts along the y axis
 struct ltiv_y
 {
-  bool
-  operator()(const IntVector& i1, const IntVector& i2)
+  auto
+  operator()(const IntVector& i1, const IntVector& i2) -> bool
   {
     if (i2.y() < i1.y()) {
       return false;
@@ -190,8 +193,8 @@ struct ltiv_y
 /// Sorts along the z axis
 struct ltiv_z
 {
-  bool
-  operator()(const IntVector& i1, const IntVector& i2)
+  auto
+  operator()(const IntVector& i1, const IntVector& i2) -> bool
   {
     if (i2.z() < i1.z()) {
       return false;
@@ -211,8 +214,8 @@ struct ltiv_z
 /// IntVectors.
 struct ltiv_xyz
 {
-  bool
-  operator()(const IntVector& i1, const IntVector& i2)
+  auto
+  operator()(const IntVector& i1, const IntVector& i2) -> bool
   {
     if (i1.x() < i2.x() && i1.y() < i2.y() && i1.z() < i2.z()) {
       return true;

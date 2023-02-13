@@ -127,8 +127,6 @@ MaterialManager::finalizeMaterials()
   }
 
   for (auto& [material_name, material] : d_materials) {
-    std::cout << "name = " << material_name << " material = " << &material
-      << " size = " << material.size() << __FILE__ << __LINE__ << std::endl;
     d_materialsets[material_name] = scinew MaterialSet();
     d_materialsets[material_name]->addReference();
 

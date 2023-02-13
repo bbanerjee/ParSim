@@ -52,13 +52,13 @@ CircleBCData::CircleBCData(Point& p, double radius)
 {
 }
 
-CircleBCData::~CircleBCData() {}
+CircleBCData::~CircleBCData() = default;
 
-bool
-CircleBCData::operator==(const BCGeomBase& rhs) const
+auto
+CircleBCData::operator==(const BCGeomBase& rhs) const -> bool
 {
 
-  const CircleBCData* p_rhs = dynamic_cast<const CircleBCData*>(&rhs);
+  const auto* p_rhs = dynamic_cast<const CircleBCData*>(&rhs);
 
   if (p_rhs == nullptr) {
     return false;
@@ -68,10 +68,10 @@ CircleBCData::operator==(const BCGeomBase& rhs) const
   }
 }
 
-CircleBCData*
+std::shared_ptr<BCGeomBase>
 CircleBCData::clone()
 {
-  return scinew CircleBCData(*this);
+  return std::make_shared<CircleBCData>(*this);
 }
 
 void
@@ -81,12 +81,12 @@ CircleBCData::addBCData(BCData& bc)
 }
 
 void
-CircleBCData::addBC(BoundCondBaseP bc)
+CircleBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
-void CircleBCData::sudoAddBC(BoundCondBaseP& bc) 
+void CircleBCData::sudoAddBC(BoundCondBaseSP& bc) 
 {
   d_bc.setBCValues(bc);
 }
@@ -97,8 +97,8 @@ CircleBCData::getBCData(BCData& bc) const
   bc = d_bc;
 }
 
-bool
-CircleBCData::inside(const Point& p) const
+auto
+CircleBCData::inside(const Point& p) const -> bool
 {
   Vector diff = p - d_origin;
   if (diff.length() > d_radius) {

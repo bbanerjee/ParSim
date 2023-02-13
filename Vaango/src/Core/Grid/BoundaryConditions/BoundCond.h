@@ -52,7 +52,8 @@ class BoundCond : public BoundCondBase
 public:
   using BoundCondP = std::shared_ptr<BoundCond<T>>;
 
-  BoundCond(){};
+  BoundCond() = default;
+  ;
 
   BoundCond(const std::string& var_name,
             const std::string& type,
@@ -67,31 +68,31 @@ public:
     d_value_type = val_type;
   }
 
-  virtual ~BoundCond() = default;
+  ~BoundCond() override = default;
 
-  BoundCondP
-  clone()
+  auto
+  clone() -> BoundCondP
   {
     return BoundCondP(cloneImpl());
   };
 
-  T
-  getValue() const
+  auto
+  getValue() const -> T
   {
     return d_value;
   };
 
-  const std::string
-  getType() const
+  [[nodiscard]] auto
+  getType() const -> const std::string
   {
     return d_type;
   };
 
 protected:
-  virtual BoundCond*
-  cloneImpl()
+  std::shared_ptr<BoundCondBase>
+  cloneImpl() override
   {
-    return scinew BoundCond(*this);
+    return std::make_shared<BoundCond>(*this);
   }
 
 protected:
@@ -123,17 +124,17 @@ public:
     d_variable = var_name;
   }
 
-  BoundCondP
-  clone()
+  auto
+  clone() 
   {
-    return BoundCondP(cloneImpl());
+    return cloneImpl();
   }
 
 protected:
-  virtual BoundCond*
-  cloneImpl()
+  std::shared_ptr<BoundCondBase> 
+  cloneImpl() override
   {
-    return scinew BoundCond(*this);
+    return std::make_shared<BoundCond>(*this);
   }
 
 protected:
