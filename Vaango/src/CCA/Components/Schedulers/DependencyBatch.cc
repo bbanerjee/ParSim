@@ -2,7 +2,6 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,74 +29,106 @@
 
 #include <sstream>
 
+
 namespace Uintah {
+
 
 namespace {
 
-Dout g_received_dbg("DependencyBatch",
-                    "DependencyBatch",
-                    "report when a DependencyBatch is received",
-                    false);
+  Dout g_received_dbg( "DependencyBatch", "DependencyBatch", "report when a DependencyBatch is received", false );
 
-Uintah::MasterLock g_dep_batch_mutex{};
+  Uintah::MasterLock g_dep_batch_mutex{};
 
 }
 
-DependencyBatch::DependencyBatch(int to,
-                                 DetailedTask* fromTask,
-                                 DetailedTask* toTask)
-  : from_task(fromTask)
-  , to_rank(to)
+
+//_____________________________________________________________________________
+//
+DependencyBatch::DependencyBatch( int            to
+                                , DetailedTask * fromTask
+                                , DetailedTask * toTask
+                                )
+  : m_from_task(fromTask)
+  , m_to_rank(to)
 {
-  to_tasks.push_back(toTask);
+  m_to_tasks.push_back(toTask);
 }
 
-DependencyBatch::~DependencyBatch() {}
 
+//_____________________________________________________________________________
+//
+DependencyBatch::~DependencyBatch()
+{
+  DetailedDep* dep = m_head;
+  while (dep) {
+    DetailedDep* tmp = dep->m_next;
+    delete dep;
+    dep = tmp;
+  }
+}
+
+//_____________________________________________________________________________
+//
 void
 DependencyBatch::reset()
 {
-  d_received = false;
-  d_made_mpi_request.store(false, std::memory_order_relaxed);
+  m_received = false;
+  m_made_mpi_request.store(false, std::memory_order_relaxed);
 }
 
+//_____________________________________________________________________________
+//
 bool
 DependencyBatch::makeMPIRequest()
 {
   bool expected_val = false;
-  return d_made_mpi_request.compare_exchange_strong(
-    expected_val, true, std::memory_order_seq_cst);
+  return m_made_mpi_request.compare_exchange_strong(expected_val, true, std::memory_order_seq_cst);
 }
 
+//_____________________________________________________________________________
+//
 void
-DependencyBatch::received([[maybe_unused]] const ProcessorGroup* pg)
+DependencyBatch::received( const ProcessorGroup * pg )
 {
   std::lock_guard<Uintah::MasterLock> dep_batch_lock(g_dep_batch_mutex);
 
-  d_received = true;
+  m_received = true;
 
   // set all the toVars to valid, meaning the MPI has been completed
-  for (auto& to_var : d_to_vars) {
-    to_var->setValid();
+  for (auto iter = m_to_vars.begin(); iter != m_to_vars.end(); ++iter) {
+    (*iter)->setValid();
   }
 
   // prepare for placement into the external ready queue
-  for (auto& to_task : to_tasks) {
+  for (auto iter = m_to_tasks.begin(); iter != m_to_tasks.end(); ++iter) {
     // if the count is 0, the task will add itself to the external ready queue
-    to_task->decrementExternalDepCount();
-    to_task->checkExternalDepCount();
+    (*iter)->decrementExternalDepCount();
+    (*iter)->checkExternalDepCount();
   }
 
   // clear the variables that have outstanding MPI as they are completed now.
-  d_to_vars.clear();
+  m_to_vars.clear();
+
+  // Debug only.
+  if (g_received_dbg) {
+    std::ostringstream message;
+    message << "Received batch message " << m_message_tag << " from task " << *m_from_task << "\n";
+    for (DetailedDep* dep = m_head; dep != nullptr; dep = dep->m_next) {
+      message << "\tSatisfying " << *dep << "\n";
+    }
+    DOUTR(true, message.str());
+  }
 }
 
-void
-DependencyBatch::addVar(Variable* var)
+//_____________________________________________________________________________
+//
+void DependencyBatch::addVar( Variable * var )
 {
   std::lock_guard<Uintah::MasterLock> dep_batch_lock(g_dep_batch_mutex);
 
-  d_to_vars.push_back(var);
+  m_to_vars.push_back(var);
 }
 
+
 } // namespace Uintah
+

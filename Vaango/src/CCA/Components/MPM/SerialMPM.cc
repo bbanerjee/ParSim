@@ -2832,15 +2832,19 @@ SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {
-  printSchedule(patches, cout_doing, "SerialMPM::scheduleFindSurfaceParticles");
+  printSchedule(patches, cout_doing, "MPM::scheduleFindSurfaceParticles");
 
   Task* t = scinew Task(
     "MPM::findSurfaceParticles", this, &SerialMPM::findSurfaceParticles);
 
-  Ghost::GhostType gp = Ghost::AroundNodes;
-  int ngc_p           = d_numGhostParticles;
-
-  t->requires(Task::OldDW, d_mpm_labels->pSurfLabel, gp, ngc_p);
+  t->requires(Task::OldDW,
+              d_mpm_labels->pStressLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->requires(Task::OldDW,
+              d_mpm_labels->pSurfLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
   t->computes(d_mpm_labels->pSurfLabel_preReloc);
 
   sched->addTask(t, patches, matls);
@@ -2865,7 +2869,14 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
       int matID = mpm_matl->getDWIndex();
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+      ParticleSubset* pset = old_dw->getParticleSubset(matID,
+                                                       patch,
+                                                       Ghost::AroundNodes,
+                                                       d_numGhostParticles,
+                                                       d_mpm_labels->pXLabel);
+
+      constParticleVariable<Matrix3> pStress_old;
+      old_dw->get(pStress_old, d_mpm_labels->pStressLabel, pset);
 
       constParticleVariable<double> pSurf_old;
       ParticleVariable<double> pSurf;

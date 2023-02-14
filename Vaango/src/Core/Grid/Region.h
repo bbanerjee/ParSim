@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,15 +29,12 @@
 
 #undef None
 
-#include   <string>
-#include   <vector>
-#include   <iosfwd>
-#include   <iostream>
-
+#include <string>
+#include <vector>
+#include <iosfwd>
+#include <iostream>
 
 namespace Uintah {
-
-  using Uintah::IntVector;
 
 /**************************************
       

@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_CCA_PORTS_SCHEDULER_H
-#define VAANGO_CCA_PORTS_SCHEDULER_H
+#ifndef CCA_PORTS_SCHEDULER_H
+#define CCA_PORTS_SCHEDULER_H
 
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Output.h>
@@ -55,21 +53,39 @@ class LoadBalancer;
 class TaskGraph;
 class Task;
 
+/**************************************
+
+CLASS
+   Scheduler
+
+
+GENERAL INFORMATION
+
+   Scheduler.h
+
+   Steven G. Parker
+   Department of Computer Science
+   University of Utah
+
+   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
+
+KEYWORDS
+   Scheduler
+
+
+DESCRIPTION
+
+
+****************************************/
+
 class Scheduler : public UintahParallelPort
 {
+
 public:
-  Scheduler() = default;
+  Scheduler();
 
-  virtual ~Scheduler() = default;
-
-  // eliminate copy, assignment and move
-  Scheduler(const Scheduler&) = delete;
-  Scheduler(Scheduler&&)      = delete;
-
-  Scheduler&
-  operator=(const Scheduler&) = delete;
-  Scheduler&
-  operator=(Scheduler&&) = delete;
+  virtual ~Scheduler();
 
   // Only called by the SimulationController, and only once, and only
   // if the simulation has been "restarted".
@@ -93,16 +109,16 @@ public:
 
   virtual void
   problemSetup(const ProblemSpecP& prob_spec,
-               const MaterialManagerP& mat_manager) = 0;
+               const MaterialManagerP& materialManager) = 0;
 
   virtual void
-  checkMemoryUse(unsigned long& mem_used,
+  checkMemoryUse(unsigned long& memUsed,
                  unsigned long& highwater,
-                 unsigned long& max_mem_used) = 0;
+                 unsigned long& maxMemUsed) = 0;
 
-  // sbrk memory start location (for memory tracking)
   virtual void
-  setStartAddr(char* start) = 0;
+  setStartAddr(
+    char* start) = 0; // sbrk memory start location (for memory tracking)
 
   virtual char*
   getStartAddr() = 0;
@@ -111,7 +127,7 @@ public:
   resetMaxMemValue() = 0;
 
   virtual void
-  initialize(int num_old_dw = 1, int num_new_dw = 1) = 0;
+  initialize(int numOldDW = 1, int numNewDW = 1) = 0;
 
   virtual void
   setParentDWs(DataWarehouse* parent_old_dw, DataWarehouse* parent_new_dw) = 0;
@@ -120,7 +136,7 @@ public:
   clearMappings() = 0;
 
   virtual void
-  mapDataWarehouse(Task::WhichDW, int dw_tag) = 0;
+  mapDataWarehouse(Task::WhichDW, int dwTag) = 0;
 
   virtual void
   doEmitTaskGraphDocs() = 0;
@@ -142,7 +158,6 @@ public:
 
   virtual void
   addTaskGraph(tgType type, int index = -1) = 0;
-
   virtual TaskGraph*
   getTaskGraph(unsigned int index) = 0;
 
@@ -156,10 +171,10 @@ public:
   useSmallMessages() = 0;
 
   virtual void
-  addTask(Task* task,
-          const PatchSet* patches,
-          const MaterialSet* materials,
-          int tgnum = -1) = 0;
+  addTask(Task* t,
+          const PatchSet*,
+          const MaterialSet*,
+          const int tgnum = -1) = 0;
 
   virtual const std::vector<const Task::Dependency*>&
   getInitialRequires() const = 0;
@@ -177,7 +192,7 @@ public:
   get_dw(int idx) = 0;
 
   virtual DataWarehouse*
-  getLastDW(void) = 0;
+  getLastDW() = 0;
 
   virtual bool
   isOldDW(int idx) const = 0;
@@ -199,6 +214,8 @@ public:
                        const GridP& grid,
                        bool initialization = false) = 0;
 
+  //        protected:
+
   virtual void
   setPositionVar(const VarLabel* posLabel) = 0;
 
@@ -212,6 +229,7 @@ public:
                              const VarLabel* particleIDLabel,
                              const MaterialSet* matls) = 0;
 
+  //////////
   // Schedule particle relocation without the need to provide pre-relocation
   // labels. Warning: This is experimental and has not been fully tested yet.
   // Use with caution (tsaad).
@@ -261,38 +279,46 @@ public:
   // that name and a list of material indices for which that
   // variable is valid (at least according to d_allcomps).
   using VarLabelMaterialMap = std::map<std::string, std::list<int>>;
-
-  virtual std::unique_ptr<VarLabelMaterialMap>
+  virtual VarLabelMaterialMap*
   makeVarLabelMaterialMap() = 0;
 
   virtual int
-  getMaxGhost() const = 0;
+  getMaxGhost() = 0;
 
   virtual int
-  getMaxDistalGhost() const = 0;
+  getMaxDistalGhost() = 0;
 
   virtual int
-  getMaxLevelOffset() const = 0;
+  getMaxLevelOffset() = 0;
 
   virtual bool
-  copyTimestep() const = 0;
+  copyTimestep() = 0;
 
   virtual bool
-  isCopyDataTimestep() const = 0;
+  isCopyDataTimestep() = 0;
 
   virtual void
   setInitTimestep(bool) = 0;
 
   virtual void
   setRestartInitTimestep(bool) = 0;
-
   virtual bool
   isRestartInitTimestep() const = 0;
 
   virtual void
   setRuntimeStats(
     ReductionInfoMapper<RuntimeStatsEnum, double>* runtimeStats) = 0;
+
+private:
+  // eliminate copy, assignment and move
+  Scheduler(const Scheduler&) = delete;
+  Scheduler&
+  operator=(const Scheduler&) = delete;
+  Scheduler(Scheduler&&)      = delete;
+  Scheduler&
+  operator=(Scheduler&&) = delete;
 };
+
 } // End namespace Uintah
 
-#endif
+#endif // CCA_PORTS_SCHEDULER_H

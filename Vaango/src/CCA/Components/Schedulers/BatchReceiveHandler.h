@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,31 +22,38 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef CCA_COMPONENTS_SCHEDULERS_BATCHRECEIVEHANDLER_H
+#define CCA_COMPONENTS_SCHEDULERS_BATCHRECEIVEHANDLER_H
+
 #include <CCA/Components/Schedulers/DependencyBatch.h>
 #include <CCA/Components/Schedulers/DetailedTasks.h>
 
 namespace Uintah {
 
-class BatchReceiveHandler
-{
+class BatchReceiveHandler {
 
 public:
-  BatchReceiveHandler(DependencyBatch* batch)
-    : d_dependency_batch(batch)
+
+  BatchReceiveHandler( DependencyBatch * batch )
+    : m_dep_batch(batch)
+  {}
+
+  BatchReceiveHandler( const BatchReceiveHandler & copy )
+    : m_dep_batch(copy.m_dep_batch)
+  {}
+
+  void finishedCommunication( const ProcessorGroup * pg )
   {
+    m_dep_batch->received(pg);
   }
 
-  BatchReceiveHandler(const BatchReceiveHandler& copy)
-    : d_dependency_batch(copy.d_dependency_batch)
-  {
-  }
-
-  void finishedCommunication(const ProcessorGroup* pg)
-  {
-    d_dependency_batch->received(pg);
-  }
-
+  
 private:
-  DependencyBatch* d_dependency_batch;
+  
+  DependencyBatch * m_dep_batch;
+
 };
-}
+
+}  // namespace Uintah
+
+#endif // CCA_COMPONENTS_SCHEDULERS_BATCHRECEIVEHANDLER_H

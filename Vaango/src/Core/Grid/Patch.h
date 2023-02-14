@@ -1,9 +1,10 @@
+#ifndef UINTAH_HOMEBREW_Patch_H
+#define UINTAH_HOMEBREW_Patch_H
+
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,30 +25,22 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __CORE_GRID_PATCH_H__
-#define __CORE_GRID_PATCH_H__
-
-#include <Core/Containers/SuperBox.h>
-
 #include <Core/Disclosure/TypeDescription.h>
-
-#include <Core/Exceptions/InternalError.h>
-
-#include <Core/Geometry/IntVector.h>
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/Vector.h>
-
 #include <Core/Grid/Ghost.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-
-#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
-
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/Iterator.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 
+#include <Core/Containers/SuperBox.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Point.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Malloc/Allocator.h>
+
+#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
 
 #undef None
 
@@ -55,6 +48,10 @@
 #include <map>
 #include <string>
 #include <vector>
+
+#if defined(__PGI) || defined(__GNUC__)
+#define WARNS_ABOUT_UNREACHABLE_STATEMENTS 1
+#endif
 
 namespace Uintah {
 
@@ -66,11 +63,39 @@ class Box;
 class BCDataArray;
 class BoundCondBase;
 
+/**************************************
+
+ CLASS
+ Patch
+
+ Short Description...
+
+ GENERAL INFORMATION
+
+ Patch.h
+
+ Steven G. Parker
+ Department of Computer Science
+ University of Utah
+
+ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
+
+ KEYWORDS
+ Patch
+
+ DESCRIPTION
+ Long description...
+
+ WARNING
+
+ ****************************************/
+
 class Patch
 {
 public:
   friend std::ostream&
-  operator<<(std::ostream& out, const Uintah::Patch& r);
+  operator<<(std::ostream& out, const Patch& r);
 
   enum BCType
   {
@@ -93,7 +118,6 @@ public:
     numFaces, // 6
     invalidFace
   };
-
   friend std::ostream&
   operator<<(std::ostream& out, const FaceType& face);
 
@@ -133,17 +157,16 @@ public:
     inline bool
     operator()(const Patch* p1, const Patch* p2) const
     {
-      return (p1 != nullptr && p2 != nullptr)
-               ? (p1->getID() < p2->getID())
-               : ((p2 != nullptr) ? true : false);
+      return (p1 != 0 && p2 != 0) ? (p1->getID() < p2->getID())
+                                  : ((p2 != 0) ? true : false);
     }
 
   private:
   };
 
-  using selectType = std::vector<const Patch*>;
+  typedef std::vector<const Patch*> selectType;
 
-  /**************New Public Interaface*******************
+  /**************New Public Interface*******************
    *
    * This block will be used to store the new public interface as it goes live
    *
@@ -166,7 +189,7 @@ public:
   inline IntVector
   getCellLowIndex(int ngc) const
   {
-    // if we have a neighbor subtract the number of ghost cells from the index
+    // If we have a neighbor subtract the number of ghost cells from the index
     return d_lowIndex - IntVector(getBCType(xminus) == Neighbor ? ngc : 0,
                                   getBCType(yminus) == Neighbor ? ngc : 0,
                                   getBCType(zminus) == Neighbor ? ngc : 0);
@@ -189,7 +212,7 @@ public:
   inline IntVector
   getCellHighIndex(int ngc) const
   {
-    // if we have a neighbor add the number of ghost cells to the index
+    // If we have a neighbor add the number of ghost cells to the index
     return d_highIndex + IntVector(getBCType(xplus) == Neighbor ? ngc : 0,
                                    getBCType(yplus) == Neighbor ? ngc : 0,
                                    getBCType(zplus) == Neighbor ? ngc : 0);
@@ -242,7 +265,7 @@ public:
   inline IntVector
   getNodeLowIndex(int ngn) const
   {
-    // if we have a neighbor subtract the number of ghost nodes from the index
+    // If we have a neighbor subtract the number of ghost nodes from the index
     return d_lowIndex - IntVector(getBCType(xminus) == Neighbor ? ngn : 0,
                                   getBCType(yminus) == Neighbor ? ngn : 0,
                                   getBCType(zminus) == Neighbor ? ngn : 0);
@@ -285,7 +308,7 @@ public:
   getExtraNodeHighIndex(int ngn = 0) const
   {
     IntVector ec = getExtraCells();
-    // if have a neighbor add the number of ghost nodes to the index
+    // If have a neighbor add the number of ghost nodes to the index
     // otherwise the number of extra nodes to the index and 1 for the plus face
     // node
     return d_highIndex +
@@ -295,7 +318,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index excluding extra
+   * Returns the staggared face centered on X cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -305,7 +328,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index excluding extra
+   * Returns the staggared face centered on X cell low index excluding extra
    * cells. ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -315,7 +338,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell high index excluding extra
+   * Returns the staggared face centered on X cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -326,7 +349,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell high index excluding extra
+   * Returns the staggared face centered on X cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -337,7 +360,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell low index excluding extra
+   * Returns the staggared face centered on Y cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -347,7 +370,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell low index excluding extra
+   * Returns the staggared face centered on Y cell low index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -357,7 +380,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell high index excluding extra
+   * Returns the staggared face centered on Y cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -368,7 +391,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell high index excluding extra
+   * Returns the staggared face centered on Y cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -379,7 +402,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell low index excluding extra
+   * Returns the staggared face centered on Z cell low index excluding extra
    * cells
    */
   IntVector
@@ -389,7 +412,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell low index excluding extra
+   * Returns the staggared face centered on Z cell low index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   IntVector
@@ -399,7 +422,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index excluding extra
+   * Returns the staggared face centered on Z cell high index excluding extra
    * cells
    */
   IntVector
@@ -410,7 +433,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index excluding extra
+   * Returns the staggared face centered on Z cell high index excluding extra
    * cells ngc specifies the number of ghost cells.
    */
   IntVector
@@ -421,7 +444,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index including extra
+   * Returns the staggared face centered on X cell low index including extra
    * cells
    */
   inline IntVector
@@ -431,7 +454,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index including extra
+   * Returns the staggared face centered on X cell low index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -441,7 +464,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell high index including extra
+   * Returns the staggared face centered on X cell high index including extra
    * cells
    */
   inline IntVector
@@ -452,7 +475,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell high index including extra
+   * Returns the staggared face centered on X cell high index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -463,7 +486,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell low index including extra
+   * Returns the staggared face centered on Y cell low index including extra
    * cells
    */
   inline IntVector
@@ -473,7 +496,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell low index including extra
+   * Returns the staggared face centered on Y cell low index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -483,7 +506,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell high index including extra
+   * Returns the staggared face centered on Y cell high index including extra
    * cells
    */
   inline IntVector
@@ -494,7 +517,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell high index including extra
+   * Returns the staggared face centered on Y cell high index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -505,7 +528,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell low index including extra
+   * Returns the staggared face centered on Z cell low index including extra
    * cells
    */
   inline IntVector
@@ -515,7 +538,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell low index including extra
+   * Returns the staggared face centered on Z cell low index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -525,7 +548,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index including extra
+   * Returns the staggared face centered on Z cell high index including extra
    * cells
    */
   inline IntVector
@@ -536,7 +559,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index including extra
+   * Returns the staggared face centered on Z cell high index including extra
    * cells ngc specifies the number of ghost cells.
    */
   inline IntVector
@@ -607,26 +630,19 @@ public:
   }
 
   /**
-   * Returns a staggered face centered on X cell iterator excluding extra cells
+   * Returns a staggared face centered on X (or Y or Z) cell iterator excluding
+   * extra cells
    */
   inline CellIterator
   getSFCXIterator() const
   {
     return CellIterator(getSFCXLowIndex(), getSFCXHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Y cell iterator excluding extra cells
-   */
   inline CellIterator
   getSFCYIterator() const
   {
     return CellIterator(getSFCYLowIndex(), getSFCYHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Z cell iterator excluding extra cells
-   */
   inline CellIterator
   getSFCZIterator() const
   {
@@ -634,26 +650,19 @@ public:
   }
 
   /**
-   * Returns a staggered face centered on X cell iterator including extra cells
+   * Returns a staggared face centered on X (or Y or Z) cell iterator including
+   * extra cells
    */
   inline CellIterator
   getExtraSFCXIterator() const
   {
     return CellIterator(getExtraSFCXLowIndex(), getExtraSFCXHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Y cell iterator including extra cells
-   */
   inline CellIterator
   getExtraSFCYIterator() const
   {
     return CellIterator(getExtraSFCYLowIndex(), getExtraSFCYHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Z cell iterator including extra cells
-   */
   inline CellIterator
   getExtraSFCZIterator() const
   {
@@ -706,7 +715,7 @@ public:
   inline IntVector
   getFortranCellLowIndex(int ngc) const
   {
-    // if we have a neighbor subtract the number of ghost cells from the index
+    // If we have a neighbor subtract the number of ghost cells from the index
     return d_lowIndex - IntVector(getBCType(xminus) == Neighbor ? ngc : 0,
                                   getBCType(yminus) == Neighbor ? ngc : 0,
                                   getBCType(zminus) == Neighbor ? ngc : 0);
@@ -729,7 +738,7 @@ public:
   inline IntVector
   getFortranCellHighIndex(int ngc) const
   {
-    // if we have a neighbor add the number of ghost cells to the index
+    // If we have a neighbor add the number of ghost cells to the index
     return d_highIndex - IntVector(1, 1, 1) +
            IntVector(getBCType(xplus) == Neighbor ? ngc : 0,
                      getBCType(yplus) == Neighbor ? ngc : 0,
@@ -784,7 +793,7 @@ public:
   inline IntVector
   getFortranNodeLowIndex(int ngn) const
   {
-    // if we have a neighbor subtract the number of ghost nodes from the index
+    // If we have a neighbor subtract the number of ghost nodes from the index
     return d_lowIndex - IntVector(getBCType(xminus) == Neighbor ? ngn : 0,
                                   getBCType(yminus) == Neighbor ? ngn : 0,
                                   getBCType(zminus) == Neighbor ? ngn : 0);
@@ -838,7 +847,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index excluding extra
+   * Returns the staggared face centered on X cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -848,7 +857,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell high index excluding extra
+   * Returns the staggared face centered on X cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -859,7 +868,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell low index excluding extra
+   * Returns the staggared face centered on Y cell low index excluding extra
    * cells
    */
   inline IntVector
@@ -869,7 +878,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Y cell high index excluding extra
+   * Returns the staggared face centered on Y cell high index excluding extra
    * cells
    */
   inline IntVector
@@ -880,7 +889,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell low index excluding extra
+   * Returns the staggared face centered on Z cell low index excluding extra
    * cells
    */
   IntVector
@@ -890,7 +899,7 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index excluding extra
+   * Returns the staggared face centered on Z cell high index excluding extra
    * cells
    */
   IntVector
@@ -901,51 +910,19 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on X cell low index including extra
-   * cells
+   * Returns the staggared face centered on X (or Y or Z) cell low index
+   * including extra cells
    */
   inline IntVector
   getFortranExtraSFCXLowIndex() const
   {
     return getFortranExtraCellLowIndex();
   }
-
-  /**
-   * Returns the staggered face centered on X cell high index including extra
-   * cells
-   */
-  inline IntVector
-  getFortranExtraSFCXHighIndex() const
-  {
-    return getFortranExtraCellHighIndex() +
-           IntVector(getBCType(xplus) == Neighbor ? 0 : 1, 0, 0);
-  }
-
-  /**
-   * Returns the staggered face centered on Y cell low index including extra
-   * cells
-   */
   inline IntVector
   getFortranExtraSFCYLowIndex() const
   {
     return getFortranExtraCellLowIndex();
   }
-
-  /**
-   * Returns the staggered face centered on Y cell high index including extra
-   * cells
-   */
-  inline IntVector
-  getFortranExtraSFCYHighIndex() const
-  {
-    return getFortranExtraCellHighIndex() +
-           IntVector(0, getBCType(yplus) == Neighbor ? 0 : 1, 0);
-  }
-
-  /**
-   * Returns the staggered face centered on Z cell low index including extra
-   * cells
-   */
   inline IntVector
   getFortranExtraSFCZLowIndex() const
   {
@@ -953,9 +930,21 @@ public:
   }
 
   /**
-   * Returns the staggered face centered on Z cell high index including extra
-   * cells
+   * Returns the staggared face centered on X (or Y or Z) cell high index
+   * including extra cells
    */
+  inline IntVector
+  getFortranExtraSFCXHighIndex() const
+  {
+    return getFortranExtraCellHighIndex() +
+           IntVector(getBCType(xplus) == Neighbor ? 0 : 1, 0, 0);
+  }
+  inline IntVector
+  getFortranExtraSFCYHighIndex() const
+  {
+    return getFortranExtraCellHighIndex() +
+           IntVector(0, getBCType(yplus) == Neighbor ? 0 : 1, 0);
+  }
   inline IntVector
   getFortranExtraSFCZHighIndex() const
   {
@@ -1028,26 +1017,19 @@ public:
   }
 
   /**
-   * Returns a staggered face centered on X cell iterator excluding extra cells
+   * Returns a staggared face centered on X (or Y or Z) cell iterator excluding
+   * extra cells
    */
   inline CellIterator
   getFortranSFCXIterator() const
   {
     return CellIterator(getFortranSFCXLowIndex(), getFortranSFCXHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Y cell iterator excluding extra cells
-   */
   inline CellIterator
   getFortranSFCYIterator() const
   {
     return CellIterator(getFortranSFCYLowIndex(), getFortranSFCYHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Z cell iterator excluding extra cells
-   */
   inline CellIterator
   getFortranSFCZIterator() const
   {
@@ -1055,7 +1037,8 @@ public:
   }
 
   /**
-   * Returns a staggered face centered on X cell iterator including extra cells
+   * Returns a staggared face centered on X (or Y or Z) cell iterator including
+   * extra cells
    */
   inline CellIterator
   getFortranExtraSFCXIterator() const
@@ -1063,20 +1046,12 @@ public:
     return CellIterator(getFortranExtraSFCXLowIndex(),
                         getFortranExtraSFCXHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Y cell iterator including extra cells
-   */
   inline CellIterator
   getFortranExtraSFCYIterator() const
   {
     return CellIterator(getFortranExtraSFCYLowIndex(),
                         getFortranExtraSFCYHighIndex());
   }
-
-  /**
-   * Returns a staggered face centered on Z cell iterator including extra cells
-   */
   inline CellIterator
   getFortranExtraSFCZIterator() const
   {
@@ -1140,8 +1115,7 @@ public:
   }
 
   /**
-   * Returns the dimension of the face
-   * x=0, y=1, z=2
+   * Returns the dimension of the face: x => 0, y => 1 , z => 2
    */
   static inline int
   getFaceDimension(const FaceType& face)
@@ -1169,8 +1143,11 @@ public:
       case zplus:
         return IntVector(0, 0, 1);
       default:
-        throw Uintah::InternalError(
+        throw InternalError(
           "Invalid FaceIteratorType Specified", __FILE__, __LINE__);
+#if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
+        return IntVector(0, 0, 0);
+#endif
     }
   }
 
@@ -1194,8 +1171,10 @@ public:
       case zplus:
         return static_cast<BCType>(d_patchState.zplus);
       default:
-        throw Uintah::InternalError(
-          "Invalid FaceType Specified", __FILE__, __LINE__);
+        throw InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+#if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
+        return None;
+#endif
     }
   }
 
@@ -1207,8 +1186,8 @@ public:
   {
     faces.clear();
 
-    // for each face
-    // if we don't have a neigbor add that face to the boundary vector
+    // For each face, if we don't have a neigbor, add that face to the boundary
+    // vector
     if (getBCType(xminus) == Neighbor) {
       faces.push_back(xminus);
     }
@@ -1240,7 +1219,7 @@ public:
   }
 
   /**
-   * sets the vector faces equal to the list of faces that are on the boundary
+   * Sets the vector faces equal to the list of faces that are on the boundary
    */
   inline void
   getBoundaryFaces(std::vector<FaceType>& faces) const
@@ -1281,7 +1260,12 @@ public:
 
   bool inline hasInteriorBoundaryFaces() const
   {
-    return d_interiorBndArrayBCS.size() != 0u;
+    for (auto& bc : d_interiorBndArrayBCS) {
+      if (bc != nullptr) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1295,8 +1279,8 @@ public:
   {
     faces.clear();
 
-    // for each face
-    // if we don't have a neigbor add that face to the boundary vector
+    // For each face, if we don't have a neigbor add that face to the boundary
+    // vector
     if (getBCType(xminus) == Coarse) {
       faces.push_back(xminus);
     }
@@ -1351,8 +1335,10 @@ public:
       case zplus:
         return IntVector(2, 0, 1);
       default:
-        throw Uintah::InternalError(
-          "Invalid FaceType Specified", __FILE__, __LINE__);
+        throw InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+#if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
+        return IntVector(0, 0, 0);
+#endif
     };
   }
 
@@ -1368,9 +1354,37 @@ public:
   inline void
   setGrid(Grid* grid)
   {
-    // set the grid pointer
     d_grid = grid;
   }
+
+  /*
+   void setBCType(FaceType face, BCType newbc)
+   {
+   switch(face)
+   {
+   case xminus:
+   d_patchState.xminus=newbc;
+   break;
+   case yminus:
+   d_patchState.yminus=newbc;
+   break;
+   case zminus:
+   d_patchState.zminus=newbc;
+   break;
+   case xplus:
+   d_patchState.xplus=newbc;
+   break;
+   case yplus:
+   d_patchState.yplus=newbc;
+   break;
+   case zplus:
+   d_patchState.zplus=newbc;
+   break;
+   default:
+   throw InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+   }
+   }
+   */
 
   /**
    * Returns the cell spacing Vector(dx,dy,dz)
@@ -1378,13 +1392,11 @@ public:
   inline Vector
   dCell() const
   {
-    // This will need to change for stretched grids
     return getLevel()->dCell();
   }
 
   /**
-   * Returns the cell volume dx*dy*dz. This will not work for stretched grids.
-   * Note: This function will throw an exception if the grid is stretched.
+   * Returns the cell volume dx*dy*dz.
    */
   inline double
   cellVolume() const
@@ -1393,11 +1405,10 @@ public:
   }
 
   /**
-   * Returns the cell area dx*dy. This will not work for stretched grids.
-   * Note: This function will throw an exception if the grid is stretched.
+   * Returns the cell area dx*dy.
    */
   inline double
-  cellArea(const Uintah::Patch::FaceType face) const
+  cellArea(const Patch::FaceType face) const
   {
     Vector unitNormal(0, 0, 0);
     switch (face) {
@@ -1427,7 +1438,6 @@ public:
   {
     return d_grid->getLevel(d_patchState.levelIndex).get_rep();
   }
-
   inline const LevelP&
   getLevelP() const
   {
@@ -1485,7 +1495,6 @@ public:
     IntVector c = getLevel()->getCellIndex(p);
     return containsIndex(l, h, c);
   }
-
   /**
    * Returns true if the point p is contained within the patch
    * excluding extra cells
@@ -1507,7 +1516,6 @@ public:
     return low.x() <= cell.x() && low.y() <= cell.y() && low.z() <= cell.z() &&
            high.x() > cell.x() && high.y() > cell.y() && high.z() > cell.z();
   }
-
   /**
    * Returns the cell that contains the point pos
    */
@@ -1532,8 +1540,7 @@ public:
   static void
   findNodesFromCell(const IntVector& cellIndex, IntVector nodeIndex[8]);
 
-  /**
-   * Returns true if the node idx is owned by this patch
+  /* Returns true if the node idx is owned by this patch
    * including extra cells
    */
   inline bool
@@ -1738,7 +1745,7 @@ public:
 
   /**
    * Returns an IntVector with 0 or 1 depending on
-   * if there are neighboring patches on high low faces.
+   * if there are neighboring patches on high faces.
    */
   IntVector
   noNeighborsHigh() const;
@@ -1752,7 +1759,7 @@ public:
 
   /**
    * Returns an IntVector with 0 or 1 depending on
-   * if there are neighboring patches on high low faces.
+   * if there are neighboring patches on high faces.
    */
   IntVector
   neighborsHigh() const;
@@ -1802,7 +1809,7 @@ public:
 
   /**
    * Returns the patches on the level offset by levelOffset of this level
-   * that overlap with this patch.
+   * that overlap with this patch.  This version is for CellBased applications
    */
   void
   getOtherLevelPatches(int levelOffset,
@@ -1827,9 +1834,10 @@ public:
    * Returns the patches on the finer level that overlap
    * this patch
    **/
-  void inline getFineLevelPatches(selectType& finePatches) const
+  void inline getFineLevelPatches(selectType& finePatches,
+                                  int levelOffset = 1) const
   {
-    getOtherLevelPatches(1, finePatches);
+    getOtherLevelPatches(levelOffset, finePatches);
   }
 
   /**
@@ -1988,7 +1996,7 @@ public:
   bool
   isVirtual() const
   {
-    return d_realPatch != nullptr;
+    return d_realPatch != 0;
   }
 
   /**
@@ -2029,15 +2037,29 @@ public:
   void
   setBCType(FaceType face, BCType newbc);
 
+  /*
+   IntVector getGhostSFCXLowIndex(const int numGC) const
+   {  return d_lowIndex-getGhostSFCXLowOffset(numGC, d_bctypes); }
+   IntVector getGhostSFCXHighIndex(const int numGC) const
+   {  return d_highIndex+getGhostSFCXHighOffset(numGC, d_bctypes); }
+   IntVector getGhostSFCYLowIndex(const int numGC) const
+   {  return d_lowIndex-getGhostSFCYLowOffset(numGC, d_bctypes); }
+   IntVector getGhostSFCYHighIndex(const int numGC) const
+   {  return d_highIndex+getGhostSFCYHighOffset(numGC, d_bctypes); }
+   IntVector getGhostSFCZLowIndex(const int numGC) const
+   {  return d_lowIndex-getGhostSFCZLowOffset(numGC, d_bctypes); }
+   IntVector getGhostSFCZHighIndex(const int numGC) const
+   {  return d_highIndex+getGhostSFCZHighOffset(numGC, d_bctypes); }
+   */
+
+  /*****Boundary condition code to be worked on by John******/
   void
   setArrayBCValues(FaceType face, std::shared_ptr<BCDataArray> bc);
-
   void
   setInteriorBndArrayBCValues(FaceType face, std::shared_ptr<BCDataArray> bc);
 
   const std::shared_ptr<BCDataArray>
   getBCDataArray(Patch::FaceType face) const;
-
   /**
    *  \author  Derek Harris
    *  \date    September, 2015
@@ -2072,10 +2094,7 @@ public:
          const std::string& bc_variable) const;
 
   void
-  initializeBoundaryConditions() {
-    d_arrayBCS.clear();
-    d_interiorBndArrayBCS.clear();
-  }
+  initializeBoundaryConditions();
 
   /*****end boundary condition ****/
 
@@ -2119,6 +2138,72 @@ public:
   }
 
   /*  End the section of unupdated functions */
+  /*  Bugged functions that are being kept around until fixed */
+  /**
+   * Replace with getFortranSFCXLowIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCXFORTLowIndex__Old() const;
+
+  /**
+   * Replace with getFortranSFCXHighIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCXFORTHighIndex__Old() const;
+
+  /**
+   * Replace with getFortranSFCYLowIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCYFORTLowIndex__Old() const;
+
+  /**
+   * Replace with getFortranSFCYHighIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCYFORTHighIndex__Old() const;
+
+  /**
+   * Replace with getFortranSFCZLowIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCZFORTLowIndex__Old() const;
+
+  /**
+   * Replace with getFortranSFCZHighIndex()
+   * This does not line up with the old call and transferring must be donw
+   * with care.  The old versions of this function was bugged and faces on
+   * the boundary of two patches were owned by the patch on the plus side of
+   * the face where it should have belonged to the patch on the minus side of
+   * the face.
+   */
+  IntVector
+  getSFCZFORTHighIndex__Old() const;
 
   /**
    *  \author  Derek Harris
@@ -2141,7 +2226,8 @@ public:
 protected:
   friend class Level;
   friend class NodeIterator;
-
+  //////////
+  // Insert Documentation Here:
   Patch(const Level*,
         const IntVector& d_lowIndex,
         const IntVector& d_highIndex,
@@ -2196,7 +2282,7 @@ private:
   PatchState d_patchState;
 
   /**
-   * This stores a pointer to the grid grids.
+   * This stores a pointer to this patch's grid.
    */
   Grid* d_grid{ nullptr };
 
@@ -2207,7 +2293,7 @@ private:
    */
   int d_id;
 
-  /**This section includes members that may be phased out in the future**/
+  /** This section includes members that may be phased out in the future... **/
 
   /**
    * A pointer to the real patch
@@ -2226,24 +2312,26 @@ private:
 
   int d_level_index{ -1 }; // I'm at this index in the Level vector;
 
-  // used only by friend class Level
+  // Used only by friend class 'Level'
   inline void
   setLevelIndex(int idx)
   {
     d_level_index = idx;
   }
 
+  // std::vector<BCDataArray*>* d_arrayBCS{nullptr};
+  // std::vector<BCDataArray*>* d_interiorBndArrayBCS{nullptr};
   std::vector<std::shared_ptr<BCDataArray>> d_arrayBCS{ 6 };
   std::vector<std::shared_ptr<BCDataArray>> d_interiorBndArrayBCS{ 6 };
 
   /********************
-      The following are needed in order to use Patch as a Box in
-      Core/Container/SuperBox.h (see
-      Core/Grid/Variables/LocallyComputedPatchVarMap.cc)
+   The following are needed in order to use Patch as a Box in
+   Core/Container/SuperBox.h (see
+   Core/Grid/Variables/LocallyComputedPatchVarMap.cc)
 
-      These are private so that other people don't try to use them.  Please
-      use the other more descriptive queries.
-  *********************/
+   These are private so that other people don't try to use them.  Please
+   use the other more descriptive queries.
+   *********************/
 
   friend struct InternalAreaSuperBoxEvaluator<const Patch*, int>;
   friend class SuperBox<const Patch*,
@@ -2311,4 +2399,4 @@ operator++(Patch::FaceType& face, int)
 
 } // End namespace Uintah
 
-#endif //__CORE_GRID_PATCH_H__
+#endif

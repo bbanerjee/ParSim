@@ -345,7 +345,7 @@ RegridderCommon::flaggedCellsOnFinestLevel(const GridP& grid)
   if (d_myworld->nRanks() > 1) {
     int thisproc = false;
     int allprocs;
-    for (Level::const_patchIterator iter = level->patchesBegin();
+    for (Level::const_patch_iterator iter = level->patchesBegin();
          iter != level->patchesEnd();
          iter++) {
       // here we assume that the per-patch has been set
@@ -368,7 +368,7 @@ RegridderCommon::flaggedCellsOnFinestLevel(const GridP& grid)
     rdbg << "RegridderCommon::flaggedCellsOnFinestLevel() END" << std::endl;
     return allprocs;
   } else {
-    for (Level::const_patchIterator iter = level->patchesBegin();
+    for (Level::const_patch_iterator iter = level->patchesBegin();
          iter != level->patchesEnd();
          iter++) {
       // here we assume that the per-patch has been set
@@ -643,7 +643,7 @@ RegridderCommon::GetFlaggedCells(const GridP& oldGrid,
 
   // This could be a problem because of extra cells.
 
-  for (Level::patchIterator patchIter = level->patchesBegin();
+  for (Level::patch_iterator patchIter = level->patchesBegin();
        patchIter != level->patchesEnd();
        patchIter++) {
     const Patch* patch = *patchIter;
@@ -669,7 +669,7 @@ RegridderCommon::GetFlaggedCells(const GridP& oldGrid,
   // This is only a first step, getting the dilation cells in serial.
   // This is a HUGE memory waste.
 
-  for (Level::patchIterator patchIter = level->patchesBegin();
+  for (Level::patch_iterator patchIter = level->patchesBegin();
        patchIter != level->patchesEnd();
        patchIter++) {
     const Patch* patch = *patchIter;

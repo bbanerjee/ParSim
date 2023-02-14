@@ -69,6 +69,7 @@
 #include <Core/Math/FastMatrix.h>
 
 #include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/MasterLock.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 #include <Core/Util/DebugStream.h>

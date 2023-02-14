@@ -89,7 +89,7 @@ Uintah::jim1(DataArchive* da, CommandLineFlags& clf)
     for (int l = 0; l < grid->numLevels(); l++) {
       LevelP level = grid->getLevel(l);
       //      std::cout << "Level: " <<  endl;
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
         const Patch* patch = *iter;

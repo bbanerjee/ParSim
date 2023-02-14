@@ -31,18 +31,16 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   DetailedTask.cc 
   DetailedTasks.cc 
   DynamicMPIScheduler.cc 
+  KokkosOpenMPScheduler.cc
   MemoryLog.cc 
   MPIScheduler.cc 
   OnDemandDataWarehouse.cc 
   Relocate.cc 
-  RelocateScatterRecord.cc 
-  RelocateMPIScatterRecord.cc 
-  RuntimeStats.cc 
+  RuntimeStats.cpp 
   SchedulerCommon.cc 
   SchedulerFactory.cc 
   SendState.cc 
   TaskGraph.cc 
-  TaskGraphCompTable.cc 
   UnifiedScheduler.cc 
 )
 

@@ -237,7 +237,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     
   } else {
     nparts = 0;
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials("p.x", patch, index_);
@@ -257,7 +257,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     os << "object " << ++fldwriter->dxobj_ << " class array rank 1 shape 3 items " << nparts;
     os << dmode << " data follows " << endl;;
     
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials("p.x", patch, index_);
@@ -341,7 +341,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     }
 
     int ipart(0);
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials(fieldname, patch, index_);

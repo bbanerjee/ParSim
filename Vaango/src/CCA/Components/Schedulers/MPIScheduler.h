@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,140 +22,137 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_CCA_COMPONENTS_SCHEDULERS_MPISCHEDULER_H
-#define VAANGO_CCA_COMPONENTS_SCHEDULERS_MPISCHEDULER_H
+#ifndef CCA_COMPONENTS_SCHEDULERS_MPISCHEDULER_H
+#define CCA_COMPONENTS_SCHEDULERS_MPISCHEDULER_H
 
-#include <CCA/Components/Schedulers/CommunicationList.h>
-#include <CCA/Components/Schedulers/DetailedTasks.h>
-#include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/SchedulerCommon.h>
+#include <CCA/Components/Schedulers/DetailedTask.h>
+#include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
+#include <CCA/Ports/DataWarehouseP.h>
 
-#include <Core/Grid/MaterialManagerP.h>
-
+#include <Core/Parallel/CommunicationList.hpp>
 #include <Core/Util/InfoMapper.h>
 #include <Core/Util/Timers/Timers.hpp>
 
 #include <fstream>
-#include <map>
 #include <vector>
 
 namespace Uintah {
 
-class MPIScheduler : public SchedulerCommon
-{
-public:
-  MPIScheduler(const ProcessorGroup* myworld,
-               MPIScheduler* inParentScheduler = 0);
+/**************************************
 
-  virtual ~MPIScheduler();
+CLASS
+   MPIScheduler
 
-  // eliminate copy, assignment and move
-  MPIScheduler(const MPIScheduler&) = delete;
-  MPIScheduler&
-  operator=(const MPIScheduler&) = delete;
-  MPIScheduler(MPIScheduler&&)   = delete;
-  MPIScheduler&
-  operator=(MPIScheduler&&) = delete;
 
-  virtual void
-  problemSetup(const ProblemSpecP& prob_spec, const MaterialManagerP& mat_manager);
+GENERAL INFORMATION
 
-  virtual void
-  execute(int tgnum = 0, int iteration = 0);
+   MPIScheduler.h
 
-  virtual SchedulerP
-  createSubScheduler();
+   Steven G. Parker
+   Department of Computer Science
+   University of Utah
 
-  virtual void
-  processMPIRecvs(int test_type);
+   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
-  void
-  postMPISends(DetailedTask* task, int iteration);
 
-  void
-  postMPIRecvs(DetailedTask* task,
-               bool only_old_recvs,
-               int abort_point,
-               int iteration);
+KEYWORDS
+   MPI Scheduler
 
-  void
-  runTask(DetailedTask* task, int iteration);
+DESCRIPTION
+   Static task ordering and deterministic execution with MPI. One MPI rank per CPU core.
 
-  void
-  runReductionTask(DetailedTask* task);
+****************************************/
 
-  void
-  compile()
-  {
-    d_num_messages   = 0;
-    d_message_volume = 0;
-    SchedulerCommon::compile();
-  }
+class MPIScheduler : public SchedulerCommon {
 
-  // Performs the reduction task. (In threaded, Unified scheduler, a single
-  // worker thread will execute this.)
-  virtual void
-  initiateReduction(DetailedTask* dtask);
+  public:
 
-  void
-  computeNetRuntimeStats();
+    MPIScheduler( const ProcessorGroup* myworld, MPIScheduler* parentScheduler = 0 );
 
-public:
-  // timing statistics for Uintah infrastructure overhead
-  enum TimingStatsEnum
-  {
-    TotalSend = 0,
-    TotalRecv,
-    TotalTest,
-    TotalWait,
-    TotalReduce,
-    TotalTask
-  };
+    virtual ~MPIScheduler();
 
-  enum
-  {
-    TEST,
-    WAIT_ONCE,
-    WAIT_ALL
-  };
+    virtual void problemSetup( const ProblemSpecP& prob_spec, const MaterialManagerP& materialManager );
 
-  ReductionInfoMapper<TimingStatsEnum, double> d_mpi_info;
-  MapInfoMapper<std::string, TaskStatsEnum, double> d_task_info;
+    virtual void execute( int tgnum = 0, int iteration = 0 );
 
-  MPIScheduler* d_parent_scheduler{ nullptr };
+    virtual SchedulerP createSubScheduler();
 
-protected:
-  virtual void
-  initiateTask(DetailedTask* task,
-               bool only_old_recvs,
-               int abort_point,
-               int iteration);
+    virtual void processMPIRecvs( int test_type );
 
-  virtual void
-  verifyChecksum();
+            void postMPISends( DetailedTask* dtask, int iteration );
 
-  void
-  emitTime(const char* label, double time);
+            void postMPIRecvs( DetailedTask* dtask, bool only_old_recvs, int abort_point, int iteration );
 
-  void
-  outputTimingStats(const char* label);
+            void runTask( DetailedTask* dtask, int iteration );
 
-protected:
-  CommRequestPool d_sends{};
-  CommRequestPool d_recvs{};
+    virtual void runReductionTask( DetailedTask* dtask );
 
-  std::vector<const char*> d_labels;
-  std::vector<double> d_times;
+    void compile() {
+      m_num_messages   = 0;
+      m_message_volume = 0;
+      SchedulerCommon::compile();
+    }
 
-  std::ofstream d_max_stats;
-  std::ofstream d_avg_stats;
+    // Performs the reduction task. (In threaded, Unified scheduler, a single worker thread will execute this.)
+    virtual void initiateReduction( DetailedTask* dtask );
 
-  std::atomic<unsigned int> d_num_messages{ 0 };
-  double d_message_volume{ 0.0 };
+    void computeNetRuntimeStats();
 
-  Timers::Simple d_exec_timer;
+    // timing statistics for Uintah infrastructure overhead
+    enum TimingStatsEnum {
+        TotalSend = 0
+      , TotalRecv
+      , TotalTest
+      , TotalWait
+      , TotalReduce
+      , TotalTask
+    };
+    
+    enum {
+        TEST
+      , WAIT_ONCE
+      , WAIT_ALL
+    };
+
+    ReductionInfoMapper< TimingStatsEnum, double > m_mpi_info;
+    MapInfoMapper< std::string, TaskStatsEnum, double > m_task_info;
+
+    MPIScheduler* m_parent_scheduler{nullptr};
+
+  protected:
+
+    virtual void initiateTask( DetailedTask * dtask, bool only_old_recvs, int abort_point, int iteration );
+
+    virtual void verifyChecksum();
+
+    void emitTime( const char* label, double time );
+
+    void outputTimingStats( const char* label );
+
+    CommRequestPool             m_sends{};
+    CommRequestPool             m_recvs{};
+
+    std::vector<const char*>    m_labels;
+    std::vector<double>         m_times;
+
+    std::ofstream               m_max_stats;
+    std::ofstream               m_avg_stats;
+
+    std::atomic<unsigned int>   m_num_messages{0};
+    double                      m_message_volume{0.0};
+
+    Timers::Simple              m_exec_timer;
+  
+  private:
+
+    // eliminate copy, assignment and move
+    MPIScheduler( const MPIScheduler & )            = delete;
+    MPIScheduler& operator=( const MPIScheduler & ) = delete;
+    MPIScheduler( MPIScheduler && )                 = delete;
+    MPIScheduler& operator=( MPIScheduler && )      = delete;
 };
 
 } // End namespace Uintah
 
-#endif
+#endif // End CCA_COMPONENTS_SCHEDULERS_MPISCHEDULER_H

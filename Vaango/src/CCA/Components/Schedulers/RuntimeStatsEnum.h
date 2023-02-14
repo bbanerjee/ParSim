@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2020 The University of Utah
- * Copyright (c) 2021-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,72 +25,84 @@
 #ifndef CCA_COMPONENTS_SCHEDULERS_RUNTIMESTATSENUMS_H
 #define CCA_COMPONENTS_SCHEDULERS_RUNTIMESTATSENUMS_H
 
+
 namespace Uintah {
 
-// timing statistics to test load balance
-enum RuntimeStatsEnum
-{
-  // These five enumerators are used in SimulationController::ReportStats to
-  // determine the overhead time.
-  CompilationTime = 0,
-  RegriddingTime,
-  RegriddingCompilationTime,
-  RegriddingCopyDataTime,
-  LoadBalancerTime
+/**************************************
+      
+    CLASS
+      RuntimeStatsEnum
+      
+      
+    GENERAL INFORMATION
+      
+      RunTimeStatsEnum.h
+      
+      
+    KEYWORDS
+      RuntimeStats Enumerations
+      
+    DESCRIPTION
+      RuntimeStats Enums to be used by Simulation Controller.
+      
+      
+****************************************/
 
-  // These five enumerators are used in SimulationController::ReportStats to
-  // determine task and comm overhead.
-  ,
-  TaskExecTime,
-  TaskLocalCommTime,
-  TaskWaitCommTime,
-  TaskReduceCommTime,
-  TaskWaitThreadTime
+  // timing statistics to test load balance
+  enum RuntimeStatsEnum
+  {
+    // These five enumerators are used in SimulationController::ReportStats to determine the overhead time.
+      CompilationTime = 0
+    , RegriddingTime
+    , RegriddingCompilationTime
+    , RegriddingCopyDataTime
+    , LoadBalancerTime
+    
+    // These five enumerators are used in SimulationController::ReportStats to determine task and comm overhead.
+    , TaskExecTime
+    , TaskLocalCommTime
+    , TaskWaitCommTime
+    , TaskReduceCommTime
+    , TaskWaitThreadTime
 
-  ,
-  XMLIOTime,
-  OutputIOTime,
-  OutputGlobalIOTime,
-  CheckpointIOTime,
-  CheckpointGlobalIOTime,
-  TotalIOTime
+    , XMLIOTime
+    , OutputIOTime
+    , OutputGlobalIOTime
+    , CheckpointIOTime
+    , CheckpointGlobalIOTime
+    , TotalIOTime
 
-  ,
-  OutputIORate,
-  OutputGlobalIORate,
-  CheckpointIORate,
-  CheckpointGlobalIORate
+    , OutputIORate
+    , OutputGlobalIORate
+    , CheckpointIORate
+    , CheckpointGlobalIORate
 
-  ,
-  SCIMemoryUsed,
-  SCIMemoryMaxUsed,
-  SCIMemoryHighwater
+    , SCIMemoryUsed
+    , SCIMemoryMaxUsed
+    , SCIMemoryHighwater
 
-  ,
-  MemoryUsed,
-  MemoryResident
+    , MemoryUsed
+    , MemoryResident
 
-  ,
-  NumTasks,
-  NumPatches,
-  NumCells,
-  NumParticles
+    , NumTasks
+    , NumPatches
+    , NumCells
+    , NumParticles
 
-};
+  };
 
-// timing statistics to test load balance
-enum TaskStatsEnum
-{
-  ExecTime,
-  WaitTime
-};
-
-// timing statistics for Uintah infrastructure overhead
-enum CommunicationStatsEnum
-{
-  CommPTPMsgTo,
-  CommPTPMsgFrom
-};
+  // timing statistics to test load balance
+  enum TaskStatsEnum
+  {
+      ExecTime
+    , WaitTime
+  };
+  
+  // timing statistics for Uintah infrastructure overhead
+  enum CommunicationStatsEnum {
+      CommPTPMsgTo
+    , CommPTPMsgFrom
+  };
 
 } // end namespace Uintah
 

@@ -163,7 +163,7 @@ SingleLevelRegridder::regrid(Grid* oldGrid, [[maybe_unused]] int timeStep)
       // Other levels:
       // The level's patch layout does not change so just copy the patches ->
       // tiles
-      for (Level::const_patchIterator p = oldGrid->getLevel(l)->patchesBegin();
+      for (Level::const_patch_iterator p = oldGrid->getLevel(l)->patchesBegin();
            p != oldGrid->getLevel(l)->patchesEnd();
            p++) {
         IntVector me = TiledRegridder::computeTileIndex((*p)->getCellLowIndex(),

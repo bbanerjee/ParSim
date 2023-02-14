@@ -284,7 +284,7 @@ ParticleLoadBalancer::collectParticles(const Grid* grid,
   // along with the patch number in particleList
   for (int l = 0; l < grid->numLevels(); l++) {
     const LevelP& level = grid->getLevel(l);
-    for (Level::const_patchIterator iter = level->patchesBegin();
+    for (Level::const_patch_iterator iter = level->patchesBegin();
          iter != level->patchesEnd();
          iter++) {
       Patch* patch = *iter;
@@ -900,7 +900,7 @@ ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid,
         int myrank = d_myworld->myRank();
         if (myrank == 0) {
           LevelP curLevel                 = grid->getLevel(0);
-          Level::const_patchIterator iter = curLevel->patchesBegin();
+          Level::const_patch_iterator iter = curLevel->patchesBegin();
           lb << "  Changing the Load Balance\n";
 
           for (size_t i = 0; i < d_processor_assignment.size(); i++) {

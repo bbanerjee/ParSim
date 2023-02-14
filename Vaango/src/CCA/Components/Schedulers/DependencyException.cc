@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,49 +25,44 @@
 #include <CCA/Components/Schedulers/DependencyException.h>
 #include <sstream>
 
-namespace Uintah {
+using namespace Uintah;
+using namespace std;
 
 DependencyException::DependencyException(const Task* task,
                                          const VarLabel* label,
-                                         int matlIndex,
+                                               int matlIndex,
                                          const Patch* patch,
-                                         string has,
-                                         string needs,
-                                         [[maybe_unused]] const char* file,
-                                         [[maybe_unused]] int line)
-  : Exception()
-  , d_task(task)
-  , d_label(label)
-  , d_mat_index(matlIndex)
-  , d_patch(patch)
+                                               string has,
+                                               string needs,
+                                         const char* file, int line)
+  : task_(task), label_(label), matlIndex_(matlIndex), patch_(patch)
 {
-  d_msg = makeMessage(d_task, d_label, d_mat_index, d_patch, has, needs);
+  d_msg = makeMessage( task_, label_, matlIndex_, patch_, has, needs);
 
 #ifdef EXCEPTIONS_CRASH
-  std::cout << "A DependencyException exception was thrown.\n";
-  std::cout << file << ":" << line << "\n";
-  std::cout << d_msg << "\n";
+  cout << "A DependencyException exception was thrown.\n";
+  cout << file << ":" << line << "\n";
+  cout << d_msg << "\n";
 #endif
 }
 
-string
-DependencyException::makeMessage(const Task* task,
-                                 const VarLabel* label,
-                                 int matlIndex,
-                                 const Patch* patch,
-                                 string has,
-                                 string needs)
+string DependencyException::makeMessage(const Task* task,
+                                        const VarLabel* label,
+                                              int matlIndex,
+                                        const Patch* patch,
+                                              string has,
+                                              string needs)
 {
-  std::ostringstream str;
+  ostringstream str;
   str << "Task Dependency Error: (" << has << ") has no corresponding (";
   str << needs << ") for " << label->getName();
   if (patch) {
     str << " on patch " << patch->getID();
     str << ", Level-" << patch->getLevel()->getIndex();
   }
-
+  
   str << ", for material " << matlIndex;
-
+  
   if (task != 0) {
     str << " in task " << task->getName();
   }
@@ -77,25 +71,21 @@ DependencyException::makeMessage(const Task* task,
 }
 
 DependencyException::DependencyException(const DependencyException& copy)
-  : Exception()
-  , d_task(copy.d_task)
-  , d_label(copy.d_label)
-  , d_mat_index(copy.d_mat_index)
-  , d_patch(copy.d_patch)
-  , d_msg(copy.d_msg)
+  : task_(copy.task_),
+    label_(copy.label_),
+    matlIndex_(copy.matlIndex_),
+    patch_(copy.patch_),
+    d_msg(copy.d_msg)
 {
 }
 
-const char*
-DependencyException::message() const
+const char* DependencyException::message() const
 {
   return d_msg.c_str();
 }
 
-const char*
-DependencyException::type() const
+const char* DependencyException::type() const
 {
   return "Uintah::Exceptions::DependencyException";
 }
 
-} // namespace Uintah

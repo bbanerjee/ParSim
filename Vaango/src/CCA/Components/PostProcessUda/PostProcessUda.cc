@@ -353,14 +353,14 @@ PostProcessUda::readDataArchive(const ProcessorGroup* pg,
 
     proc0cout << "    OLD_DW  ";
     old_dw->unfinalize();
-    d_dataArchive->postprocess_ReadUda(
+    d_dataArchive->postProcess_ReadUda(
       pg, d_simTimestep - 1, grid, patches, old_dw, d_loadBalancer);
     old_dw->refinalize();
   }
 
   // new dw
   proc0cout << "    NEW_DW\n";
-  d_dataArchive->postprocess_ReadUda(
+  d_dataArchive->postProcess_ReadUda(
     pg, d_simTimestep, grid, patches, new_dw, d_loadBalancer);
   d_simTimestep++;
 

@@ -119,7 +119,7 @@ Uintah::ER_MMS(DataArchive* da, CommandLineFlags& clf)
       double A = 0.1;
       //__________________________________
       // Patch loop
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
 

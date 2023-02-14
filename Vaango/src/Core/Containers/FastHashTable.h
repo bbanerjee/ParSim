@@ -178,9 +178,9 @@ FastHashTable<Key>::insert(Key* k)
     /* Build a new table... */
     rehash(2 * hash_size + 1);
   }
-  int h    = k->hash % hash_size;
+  int h    = k->m_hash % hash_size;
   Key* bin = table[h];
-  k->next  = bin;
+  k->m_next  = bin;
   table[h] = k;
 }
 
@@ -190,8 +190,8 @@ inline Key*
 FastHashTable<Key>::lookup(const Key* key) const
 {
   if (table) {
-    int h = key->hash % hash_size;
-    for (Key* p = table[h]; p != 0; p = p->next) {
+    int h = key->m_hash % hash_size;
+    for (Key* p = table[h]; p != 0; p = p->m_next) {
       if (*p == *key) {
         return p;
       }
@@ -204,7 +204,7 @@ template<class Key>
 inline Key*
 FastHashTable<Key>::nextMatch(const Key* key, const Key* from) const
 {
-  for (Key* p = from->next; p != 0; p = p->next) {
+  for (Key* p = from->m_next; p != 0; p = p->m_next) {
     if (*p == *key) {
       return p;
     }
@@ -306,7 +306,7 @@ FastHashTable<Key>::~FastHashTable()
     for (int i = 0; i < hash_size; i++) {
       Key* p = table[i];
       while (p) {
-        Key* next = p->next;
+        Key* next = p->m_next;
         delete p;
         p = next;
       }
@@ -324,7 +324,7 @@ FastHashTable<Key>::remove_all()
     for (int i = 0; i < hash_size; i++) {
       Key* p = table[i];
       while (p) {
-        Key* next = p->next;
+        Key* next = p->m_next;
         delete p;
         p = next;
       }
@@ -352,9 +352,9 @@ FastHashTable<Key>::rehash(int newsize)
   for (int i = 0; i < oldsize; i++) {
     Key* p = oldtab[i];
     while (p) {
-      Key* next = p->next;
-      int h     = p->hash % hash_size;
-      p->next   = table[h];
+      Key* next = p->m_next;
+      int h     = p->m_hash % hash_size;
+      p->m_next   = table[h];
       table[h]  = p;
       p         = next;
     }
@@ -410,7 +410,7 @@ void
 FastHashTableIter<Key>::operator++()
 {
   ASSERT(current_key != 0);
-  current_key = current_key->next;
+  current_key = current_key->m_next;
   while (current_key == 0 && ++current_index < hash_table->hash_size) {
     current_key = hash_table->table[current_index];
   }

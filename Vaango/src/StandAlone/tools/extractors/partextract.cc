@@ -380,7 +380,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag)
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin();
+      Level::const_patch_iterator iter = level->patchesBegin();
       int patchIndex                  = 0;
       for (; iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;
@@ -647,7 +647,7 @@ getParticleStresses(DataArchive* da, int mat, long64 particleID, string flag)
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin();
+      Level::const_patch_iterator iter = level->patchesBegin();
       int patchIndex                  = 0;
       for (; iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;

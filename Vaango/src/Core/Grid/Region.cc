@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,91 +22,87 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/Region.h>
 
+#include <Core/Grid/Region.h>
 #include <iostream>
+
 #include <vector>
 
+using namespace std;
 using namespace Uintah;
 
-// This code was pulled from Box.cc
+
+//This code was pulled from Box.cc
 
 bool
 Region::overlaps(const Region& otherregion) const
 {
-  if (d_lowIndex.x() > otherregion.d_highIndex.x() ||
-      d_highIndex.x() < otherregion.d_lowIndex.x()) {
+  if(d_lowIndex.x() > otherregion.d_highIndex.x() || d_highIndex.x() < otherregion.d_lowIndex.x()) {
     return false;
   }
-  if (d_lowIndex.y() > otherregion.d_highIndex.y() ||
-      d_highIndex.y() < otherregion.d_lowIndex.y()) {
+  if(d_lowIndex.y() > otherregion.d_highIndex.y() || d_highIndex.y() < otherregion.d_lowIndex.y()) {
     return false;
   }
-  if (d_lowIndex.z() > otherregion.d_highIndex.z() ||
-      d_highIndex.z() < otherregion.d_lowIndex.z()) {
+  if(d_lowIndex.z() > otherregion.d_highIndex.z() || d_highIndex.z() < otherregion.d_lowIndex.z()) {
     return false;
   }
   return true;
 }
 
-// static
-std::vector<Region>
-Region::difference(const Region& b1, const Region& b2)
+//static 
+vector<Region> Region::difference(const Region& b1, const Region& b2)
 {
-  std::vector<Region> set1, set2;
+  vector<Region> set1, set2;
   set1.push_back(b1);
   set2.push_back(b2);
   return difference(set1, set2);
 }
 
-// static
-std::vector<Region>
-Region::difference(std::vector<Region>& region1, std::vector<Region>& region2)
+//static 
+vector<Region> Region::difference(vector<Region>& region1, vector<Region>& region2)
 {
-  std::vector<Region> searchSet(region1);
-  std::vector<Region> remainingRegions;
+  vector<Region> searchSet(region1);
+  vector<Region> remainingRegions;
 
   // loop over set2, as remainingRegiones will more than likely change
   for (unsigned i = 0; i < region2.size(); i++) {
-    for (std::vector<Region>::iterator iter = searchSet.begin();
-         iter != searchSet.end();
-         iter++) {
+    for (vector<Region>::iterator iter = searchSet.begin(); iter != searchSet.end(); iter++) {
       Region b1 = *iter;
       Region b2 = region2[i];
       if (b1.overlaps(b2)) {
-        // divide the difference space into up to 6 regions, 2 in each
-        // dimension. each pass, reduce the amount of space to take up.
-        Region intersection  = b1.intersect(b2);
+        // divide the difference space into up to 6 regions, 2 in each dimension.
+        // each pass, reduce the amount of space to take up.
+        Region intersection = b1.intersect(b2);
         Region leftoverSpace = b1;
         for (int dim = 0; dim < 3; dim++) {
           if (b1.d_lowIndex(dim) < intersection.d_lowIndex(dim)) {
-            Region tmp           = leftoverSpace;
-            tmp.d_lowIndex(dim)  = b1.d_lowIndex(dim);
+            Region tmp = leftoverSpace;
+            tmp.d_lowIndex(dim) = b1.d_lowIndex(dim);
             tmp.d_highIndex(dim) = intersection.d_lowIndex(dim);
-            if (tmp.getVolume() > 0) {
+            if(tmp.getVolume()>0)
               remainingRegions.push_back(tmp);
-            }
           }
           if (b1.d_highIndex(dim) > intersection.d_highIndex(dim)) {
-            Region tmp           = leftoverSpace;
-            tmp.d_lowIndex(dim)  = intersection.d_highIndex(dim);
+            Region tmp = leftoverSpace;
+            tmp.d_lowIndex(dim) = intersection.d_highIndex(dim);
             tmp.d_highIndex(dim) = b1.d_highIndex(dim);
-            if (tmp.getVolume() > 0) {
-              remainingRegions.push_back(tmp);
-            }
+            if(tmp.getVolume()>0)
+              remainingRegions.push_back(tmp);              
           }
-          leftoverSpace.d_lowIndex(dim)  = intersection.d_lowIndex(dim);
+          leftoverSpace.d_lowIndex(dim) = intersection.d_lowIndex(dim);
           leftoverSpace.d_highIndex(dim) = intersection.d_highIndex(dim);
         }
-      } else {
+      } 
+      else {
         remainingRegions.push_back(b1);
       }
     }
-
-    // update the search set to any remaining regions
+    
+    //update the search set to any remaining regions
     searchSet = remainingRegions;
     remainingRegions.clear();
   }
   return searchSet;
-  // return remainingRegions;
+  //return remainingRegions;
 }
+

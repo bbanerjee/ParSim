@@ -82,7 +82,7 @@ addParticleData(MaterialParticleDataMap& matlParticleDataMap,
                 LevelP level,
                 int timestep)
 {
-  Level::const_patchIterator iter;
+  Level::const_patch_iterator iter;
   for (iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
     const Patch* patch = *iter;
 
@@ -403,7 +403,7 @@ main(int argc, char** argv)
           ConsecutiveRangeSet matls;
 
           bool first = true;
-          Level::const_patchIterator iter;
+          Level::const_patch_iterator iter;
 
           //  bulletproofing does the variable exist in both DAs on this
           //  timestep? This problem mainly occurs if <outputInitTimestep> has
@@ -967,7 +967,7 @@ main(int argc, char** argv)
             }
           });
 
-          Level::const_patchIterator iter;
+          Level::const_patch_iterator iter;
           for (iter = level->patchesBegin(); iter != level->patchesEnd();
                iter++) {
             const Patch* patch = *iter;

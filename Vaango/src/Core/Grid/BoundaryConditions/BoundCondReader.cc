@@ -1366,12 +1366,6 @@ BoundCondReader::bulletProofing()
 
     for (auto& [id, bcgeom_vec] : original->d_BCDataArray) {
 
-      std::cout << "id = " << id << " bc = ";
-      for (auto& bcgeom : bcgeom_vec) {
-        std::cout << " : " << bcgeom << " : ";
-      }
-      std::cout << std::endl;
-
       // There must be 1 and only 1 side BC specified
       int nSides = std::count_if(
         bcgeom_vec.begin(), bcgeom_vec.end(), cmp_type<SideBCData>());

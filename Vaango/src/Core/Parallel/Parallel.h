@@ -89,6 +89,13 @@ public:
   static int
   getMPISize();
 
+  // Returns true if this process is using MPI
+  static bool
+  usingMPI()
+  {
+    return true;
+  }
+
   // Return true if this process is to use GPUs, false otherwise
   static bool
   usingDevice();

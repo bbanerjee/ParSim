@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,27 +22,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
-#define VAANGO_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
-
-#include <CCA/Ports/DataWarehouse.h>
+#ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
+#define UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
 
 #include <CCA/Components/Schedulers/DWDatabase.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/SendState.h>
+#include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Containers/FastHashTable.h>
-
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Variables/PSPatchMatlGhost.h>
 #include <Core/Grid/Variables/VarLabelMatl.h>
-
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Parallel/UintahMPI.h>
 
 #include <iosfwd>
 #include <map>
 #include <vector>
+
+using Uintah::FastHashTable;
+using Uintah::Max;
 
 namespace Uintah {
 
@@ -70,31 +68,47 @@ class ProcessorGroup;
 class SendState;
 class TypeDescription;
 
+/**************************************
+
+ CLASS
+
+   OnDemandDataWarehouse
+
+
+ GENERAL INFORMATION
+
+   OnDemandDataWarehouse.h
+
+   Steven G. Parker
+   Department of Computer Science
+   University of Utah
+
+   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
+
+ KEYWORDS
+   OnDemandDataWarehouse
+
+
+ ****************************************/
+
 class OnDemandDataWarehouse : public DataWarehouse
 {
 
 public:
   OnDemandDataWarehouse(const ProcessorGroup* myworld,
                         Scheduler* scheduler,
-                        int generation,
+                        const int generation,
                         const GridP& grid,
-                        bool isInitializationDW = false);
+                        const bool isInitializationDW = false);
 
   virtual ~OnDemandDataWarehouse();
 
   virtual bool
-  exists(const VarLabel*, int matIndex, const Patch* patch) const override;
+  exists(const VarLabel* label, int matlIndex, const Patch* patch) const;
 
   virtual bool
-  exists(const VarLabel*, int matIndex, const Level* level) const override;
-
-  // Returns a (const) pointer to the grid.  This pointer can then be
-  // used to (for example) get the number of levels in the grid.
-  virtual const Grid*
-  getGrid() override
-  {
-    return d_grid.get_rep();
-  }
+  exists(const VarLabel* label, int matlIndex, const Level* level) const;
 
   virtual ReductionVariableBase*
   getReductionVariable(const VarLabel* label,
@@ -107,6 +121,14 @@ public:
   virtual void
   doReserve();
 
+  // Returns a (const) pointer to the grid.  This pointer can then be
+  // used to (for example) get the number of levels in the grid.
+  virtual const Grid*
+  getGrid()
+  {
+    return m_grid.get_rep();
+  }
+
   // Generic put and allocate, passing Variable as a pointer rather than
   // by reference to avoid ambiguity with other put overloaded methods.
   virtual void
@@ -117,63 +139,48 @@ public:
   get(ReductionVariableBase& var,
       const VarLabel* label,
       const Level* level = nullptr,
-      int matIndex       = -1);
-
+      int matlIndex      = -1);
   // get a map filled with reductionVars
   // C++ doesn't allow templated Virtual method
-  template<typename DataType, typename ReductionVarType>
-  std::map<int, DataType>
-  getReductionVar(const VarLabel* label, const MaterialSubset* matls);
-
   template<class T>
   std::map<int, T>
   get_sum_vartypeT(const VarLabel* label, const MaterialSubset* matls);
-
-  // double
-  virtual std::map<int, double>
-  get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls) override;
-
+  virtual // double
+    std::map<int, double>
+    get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls);
   // Vector
   virtual std::map<int, Vector>
-  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls) override;
+  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls);
 
   virtual void
   put(const ReductionVariableBase& var,
       const VarLabel* label,
       const Level* level = nullptr,
-      int matIndex       = -1);
+      int matlIndex      = -1);
 
   // put a map filled with reductionVars
   // C++ doesn't allow templated Virtual methods
-  template<typename DataType, typename ReductionVarType>
-  void
-  putReductionVar(std::map<int, DataType>& reductionVars,
-                  const VarLabel* label,
-                  const MaterialSubset* matls);
-
   template<class T>
   void
-  put_sum_vartypeT(std::map<int, T>& reductionVars,
+  put_sum_vartypeT(std::map<int, T> reductionVars,
                    const VarLabel* label,
                    const MaterialSubset* matls);
-
   // Vector
   virtual void
   put_sum_vartype(std::map<int, Vector>& reductionVars,
                   const VarLabel* label,
-                  const MaterialSubset* matls) override;
-
+                  const MaterialSubset* matls);
   // double
   virtual void
   put_sum_vartype(std::map<int, double>& reductionVars,
                   const VarLabel* label,
-                  const MaterialSubset* matls) override;
+                  const MaterialSubset* matls);
 
   virtual void
-  override(const ReductionVariableBase&,
+  override(const ReductionVariableBase& var,
            const VarLabel* label,
            const Level* level = nullptr,
-           int matIndex       = -1);
+           int matlIndex      = -1);
 
   virtual void
   print(std::ostream& intout,
@@ -181,30 +188,33 @@ public:
         const Level* level,
         int matlIndex = -1);
 
+  //__________________________________
   // Sole Variables
+
   virtual bool
-  exists(const VarLabel* label) const;
+  exists(const VarLabel*) const;
 
   virtual void
-  get(SoleVariableBase&,
+  get(SoleVariableBase& var,
       const VarLabel* label,
       const Level* level = nullptr,
-      int matIndex       = -1);
+      int matlIndex      = -1);
 
   virtual void
-  put(const SoleVariableBase&,
+  put(const SoleVariableBase& var,
       const VarLabel* label,
       const Level* level = nullptr,
-      int matIndex       = -1);
+      int matlIndex      = -1);
 
   virtual void
-  override(const SoleVariableBase&,
+  override(const SoleVariableBase& var,
            const VarLabel* label,
            const Level* level = nullptr,
-           int matIndex       = -1);
+           int matlIndex      = -1);
 
   //__________________________________
   // Particle Variables
+
   virtual ParticleSubset*
   createParticleSubset(particleIndex numParticles,
                        int matlIndex,
@@ -216,7 +226,7 @@ public:
   deleteParticleSubset(ParticleSubset* pset);
 
   virtual void
-  saveParticleSubset(ParticleSubset*,
+  saveParticleSubset(ParticleSubset* psubset,
                      int matlIndex,
                      const Patch* patch,
                      IntVector low  = IntVector(0, 0, 0),
@@ -240,7 +250,7 @@ public:
                     const Patch* patch,
                     IntVector low,
                     IntVector high,
-                    const VarLabel* pos_label);
+                    const VarLabel* posvar);
 
   virtual ParticleSubset*
   getParticleSubset(int matlIndex, const Patch* patch);
@@ -248,15 +258,15 @@ public:
   virtual ParticleSubset*
   getDeleteSubset(int matlIndex, const Patch* patch);
 
-  virtual ParticleLabelVariableMap*
+  virtual std::map<const VarLabel*, ParticleVariableBase*>*
   getNewParticleState(int matlIndex, const Patch* patch);
 
   virtual ParticleSubset*
   getParticleSubset(int matlIndex,
                     const Patch* patch,
-                    Ghost::GhostType,
+                    Ghost::GhostType gtype,
                     int numGhostCells,
-                    const VarLabel* pos_label);
+                    const VarLabel* posvar);
 
   // returns the particle subset in the range of low->high
   // relPatch is used as the key and should be the patch you are querying from
@@ -269,6 +279,62 @@ public:
                     const VarLabel* posvar,
                     const Level* level = nullptr);
 
+  virtual void
+  allocateTemporary(ParticleVariableBase& var, ParticleSubset* pset);
+
+  virtual void
+  allocateAndPut(ParticleVariableBase& car,
+                 const VarLabel* label,
+                 ParticleSubset* pset);
+
+  virtual void
+  get(constParticleVariableBase& constVar,
+      const VarLabel* label,
+      ParticleSubset* pset);
+
+  virtual void
+  get(constParticleVariableBase& constVar,
+      const VarLabel* label,
+      int matlIndex,
+      const Patch* patch);
+
+  virtual void
+  getModifiable(ParticleVariableBase& var,
+                const VarLabel* label,
+                ParticleSubset* pset);
+
+  virtual void
+  put(ParticleVariableBase& var, const VarLabel* label, bool replace = false);
+
+  virtual ParticleVariableBase*
+  getParticleVariable(const VarLabel* label, ParticleSubset* pset);
+
+  virtual ParticleVariableBase*
+  getParticleVariable(const VarLabel* label, int matlIndex, const Patch* patch);
+  void
+  printParticleSubsets();
+
+  virtual void
+  getCopy(ParticleVariableBase& var,
+          const VarLabel* label,
+          ParticleSubset* pset);
+
+  virtual void
+  copyOut(ParticleVariableBase& var,
+          const VarLabel* label,
+          ParticleSubset* pset);
+
+  // Remove particles that are no longer relevant
+  virtual void
+  deleteParticles(ParticleSubset* delset);
+
+  using particleAddSetType = std::map<const VarLabel*, ParticleVariableBase*>;
+  virtual void
+  addParticles(const Patch* patch,
+               int matlIndex,
+               particleAddSetType* addedstate);
+
+  /****************************/
   /* Needed for peridynamics:
        Create a particle subset for a subset of a patch and its
        neighboring patches defined by a local lowIndex and a local highIndex.
@@ -304,64 +370,11 @@ public:
   getParticleIndex(const ParticleIDMap& partIDMap,
                    const long64& pParticleID,
                    particleIndex& pParticleIndex);
-
-  virtual void
-  allocateTemporary(ParticleVariableBase& var, ParticleSubset* pset);
-
-  virtual void
-  allocateAndPut(ParticleVariableBase& var,
-                 const VarLabel* label,
-                 ParticleSubset* pset);
-
-  virtual void
-  get(constParticleVariableBase& var,
-      const VarLabel* label,
-      ParticleSubset* pset);
-
-  virtual void
-  get(constParticleVariableBase& var,
-      const VarLabel* label,
-      int matlIndex,
-      const Patch* patch);
-
-  virtual void
-  getModifiable(ParticleVariableBase& var,
-                const VarLabel* label,
-                ParticleSubset* pset);
-
-  virtual void
-  put(ParticleVariableBase& var, const VarLabel* label, bool replace = false);
-
-  virtual ParticleVariableBase*
-  getParticleVariable(const VarLabel* label, ParticleSubset* pset);
-
-  virtual ParticleVariableBase*
-  getParticleVariable(const VarLabel* label, int matlIndex, const Patch* patch);
-
-  void
-  printParticleSubsets();
-
-  virtual void
-  getCopy(ParticleVariableBase& var,
-          const VarLabel* label,
-          ParticleSubset* pset);
-
-  virtual void
-  copyOut(ParticleVariableBase& var,
-          const VarLabel* label,
-          ParticleSubset* pset);
-
-  // Remove particles that are no longer relevant
-  virtual void
-  deleteParticles(ParticleSubset* delset);
-
-  virtual void
-  addParticles(const Patch* patch,
-               int matlIndex,
-               ParticleLabelVariableMap* addedstate);
+  /****************************/
 
   //__________________________________
   // Grid Variables
+
   virtual void
   print();
 
@@ -369,7 +382,7 @@ public:
   clear();
 
   void
-  get(constGridVariableBase& var,
+  get(constGridVariableBase& constVar,
       const VarLabel* label,
       int matlIndex,
       const Patch* patch,
@@ -407,7 +420,7 @@ public:
 
   // returns the constGridVariable for all patches on the level
   virtual void
-  getLevel(constGridVariableBase& var,
+  getLevel(constGridVariableBase& constGridVar,
            const VarLabel* label,
            int matlIndex,
            const Level* level);
@@ -422,7 +435,7 @@ public:
              int matlIndex = -1);
 
   virtual void
-  getRegion(constGridVariableBase& var,
+  getRegion(constGridVariableBase& constVar,
             const VarLabel* label,
             int matlIndex,
             const Level* level,
@@ -459,19 +472,21 @@ public:
   virtual void
   get(PerPatchBase& var,
       const VarLabel* label,
-      int matIndex,
+      int matlIndex,
       const Patch* patch);
 
   virtual void
   put(PerPatchBase& var,
       const VarLabel* label,
-      int matIndex,
+      int matlIndex,
       const Patch* patch,
       bool replace = false);
 
   virtual ScrubMode setScrubbing(ScrubMode);
 
+  //__________________________________
   // For related datawarehouses
+
   virtual DataWarehouse* getOtherDataWarehouse(Task::WhichDW);
 
   virtual void
@@ -511,23 +526,20 @@ public:
   finalize();
 
 #ifdef HAVE_CUDA
+
   static int
   getNumDevices();
-
   static void
   uintahSetCudaDevice(int deviceNum);
-
   static size_t
   getTypeDescriptionSize(const TypeDescription::Type& type);
-
   static GPUGridVariableBase*
   createGPUGridVariable(const TypeDescription::Type& type);
-
   static GPUPerPatchBase*
   createGPUPerPatch(const TypeDescription::Type& type);
-
   static GPUReductionVariableBase*
   createGPUReductionVariable(const TypeDescription::Type& type);
+
 #endif
 
   virtual void
@@ -537,7 +549,7 @@ public:
   refinalize();
 
   virtual size_t
-  emit(OutputContext& out,
+  emit(OutputContext& oc,
        const VarLabel* label,
        int matlIndex,
        const Patch* patch);
@@ -579,8 +591,8 @@ public:
             const MaterialSubset* matls,
             int nComm);
 
-  // Scrub counter manipulator functions -- when the scrub count goes to
-  // zero, the data is deleted
+  // Scrub counter manipulator functions -- when the scrub count goes to zero,
+  // the data is deleted
   void
   setScrubCount(const VarLabel* label,
                 int matlIndex,
@@ -598,10 +610,9 @@ public:
                    const FastHashTable<ScrubItem>* scrubcounts,
                    bool add);
 
-  // For timestep abort/restart
+  // For time step abort/recompute
   virtual bool
   abortTimeStep();
-
   virtual bool
   recomputeTimeStep();
 
@@ -612,7 +623,6 @@ public:
     IntVector low{};
     IntVector high{};
   };
-
   void
   getNeighborPatches(const VarLabel* label,
                      const Patch* patch,
@@ -644,7 +654,7 @@ public:
 
   // must be called by the thread that will run the test
   void
-  pushRunningTask(const Task* task, std::vector<OnDemandDataWarehouseSP>* dws);
+  pushRunningTask(const Task* task, std::vector<OnDemandDataWarehouseP>* dws);
 
   void
   popRunningTask();
@@ -657,14 +667,14 @@ public:
   ScrubMode
   getScrubMode() const
   {
-    return d_scrub_mode;
+    return m_scrub_mode;
   }
 
-  // The following is for support of regriding
+  // The following is for support of regridding
   virtual void
   getVarLabelMatlLevelTriples(std::vector<VarLabelMatl<Level>>& vars) const;
 
-  inline static bool s_combine_memory = false;
+  static bool s_combine_memory;
 
   friend class SchedulerCommon;
   friend class UnifiedScheduler;
@@ -678,21 +688,22 @@ private:
     ModifyAccess
   };
 
+  //__________________________________
+  // AccessInfo
   struct AccessInfo
   {
-
-    AccessInfo() = default;
+    AccessInfo() {}
 
     AccessInfo(AccessType type)
-      : accessType(type)
+      : accessType{ type }
     {
     }
 
     void
     encompassOffsets(IntVector low, IntVector high)
     {
-      lowOffset  = Max(low, lowOffset);
-      highOffset = Max(high, highOffset);
+      lowOffset  = Uintah::Max(low, lowOffset);
+      highOffset = Uintah::Max(high, highOffset);
     }
 
     AccessType accessType{ NoAccess };
@@ -700,42 +711,42 @@ private:
     IntVector highOffset{ 0, 0, 0 };
   };
 
+  //__________________________________
+  // RunningTaskInfo
   using VarAccessMap = std::map<VarLabelMatl<Patch>, AccessInfo>;
-
   struct RunningTaskInfo
   {
+    RunningTaskInfo() {}
 
-    RunningTaskInfo() = default;
-
-    RunningTaskInfo(const Task* task, std::vector<OnDemandDataWarehouseSP>* dws)
-      : d_task(task)
-      , d_dws(dws)
+    RunningTaskInfo(const Task* task, std::vector<OnDemandDataWarehouseP>* dws)
+      : m_task{ task }
+      , m_dws{ dws }
     {
     }
 
     RunningTaskInfo(const RunningTaskInfo& copy)
-      : d_task(copy.d_task)
-      , d_dws(copy.d_dws)
-      , d_accesses(copy.d_accesses)
+      : m_task{ copy.m_task }
+      , m_dws{ copy.m_dws }
+      , m_accesses{ copy.m_accesses }
     {
     }
 
     RunningTaskInfo&
     operator=(const RunningTaskInfo& copy)
     {
-      d_task     = copy.d_task;
-      d_dws      = copy.d_dws;
-      d_accesses = copy.d_accesses;
+      m_task     = copy.m_task;
+      m_dws      = copy.m_dws;
+      m_accesses = copy.m_accesses;
       return *this;
     }
 
-    const Task* d_task{ nullptr };
-    std::vector<OnDemandDataWarehouseSP>* d_dws{ nullptr };
-    VarAccessMap d_accesses{};
+    const Task* m_task{ nullptr };
+    std::vector<OnDemandDataWarehouseP>* m_dws{ nullptr };
+    VarAccessMap m_accesses{};
   };
 
   virtual DataWarehouse*
-  getOtherDataWarehouse(Task::WhichDW, RunningTaskInfo* info);
+  getOtherDataWarehouse(Task::WhichDW dw, RunningTaskInfo* info);
 
   void
   getGridVar(GridVariableBase& var,
@@ -748,8 +759,8 @@ private:
   inline Task::WhichDW
   getWhichDW(RunningTaskInfo* info);
 
-  // These will throw an exception if access is not allowed for the
-  // curent task.
+  // These will throw an exception if access is not allowed for the current
+  // task.
   inline void
   checkGetAccess(const VarLabel* label,
                  int matlIndex,
@@ -766,8 +777,7 @@ private:
   inline void
   checkModifyAccess(const VarLabel* label, int matlIndex, const Patch* patch);
 
-  // These will return false if access is not allowed for
-  // the current task.
+  // These will return false if access is not allowed for the current task.
   inline bool
   hasGetAccess(const Task* runningTask,
                const VarLabel* label,
@@ -781,8 +791,7 @@ private:
   hasPutAccess(const Task* runningTask,
                const VarLabel* label,
                int matlIndex,
-               const Patch* patch,
-               bool replace);
+               const Patch* patch);
 
   void
   checkAccesses(RunningTaskInfo* runningTaskInfo,
@@ -804,8 +813,10 @@ private:
                         int line);
 
 #ifdef HAVE_CUDA
+
   std::map<Patch*, bool> assignedPatches; // indicates where a given patch
                                           // should be stored in an accelerator
+
 #endif
 
   using psetDBType = std::multimap<PSPatchMatlGhost, ParticleSubset*>;
@@ -848,34 +859,34 @@ private:
   inline RunningTaskInfo*
   getCurrentTaskInfo();
 
-private:
   // holds info on the running task for each std::thread::id
-  std::map<std::thread::id, RunningTaskInfo> d_running_tasks{};
+  std::map<std::thread::id, RunningTaskInfo> m_running_tasks{};
 
-  ScrubMode d_scrub_mode{ DataWarehouse::ScrubNone };
+  ScrubMode m_scrub_mode{ DataWarehouse::ScrubNone };
 
-  DWDatabase<Patch> d_var_DB{};
-  DWDatabase<Level> d_level_DB{};
-  KeyDatabase<Patch> d_var_key_DB{};
-  KeyDatabase<Level> d_level_key_DB{};
+  DWDatabase<Patch> m_var_DB{};
+  DWDatabase<Level> m_level_DB{};
+  KeyDatabase<Patch> m_var_key_DB{};
+  KeyDatabase<Level> m_level_key_DB{};
 
-  psetDBType d_pset_DB{};
-  psetDBType d_delset_DB{};
-  psetAddDBType d_addset_DB{};
-  particleQuantityType d_foreign_particle_quantities{};
-  bool d_exchange_particle_quantities{ true };
+  psetDBType m_pset_db{};
+  psetDBType m_delset_DB{};
+  psetAddDBType m_addset_DB{};
+  particleQuantityType m_foreign_particle_quantities{};
+  bool m_exchange_particle_quantities{ true };
 
   // Keep track of when this DW sent some (and which) particle information to
   // another processor
-  SendState d_send_state;
+  SendState m_send_state{};
 
-  bool d_finalized{ false };
-  GridP d_grid{ nullptr };
+  bool m_finalized{ false };
+  GridP m_grid{ nullptr };
 
   // Is this the first DW -- created by the initialization timestep?
-  bool d_is_initialization_DW{ false };
-};
+  bool m_is_initialization_DW{ false };
+
+}; // end class OnDemandDataWarehouse
 
 } // end namespace Uintah
 
-#endif
+#endif // end #ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H

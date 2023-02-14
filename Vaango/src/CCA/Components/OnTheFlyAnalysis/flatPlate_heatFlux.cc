@@ -177,7 +177,7 @@ flatPlate_heatFlux::problemSetup(
   static bool initialized = false;
 
   if (d_simulator->getVisIt() && !initialized) {
-    ApplicationInterface::analysisVar aVar;
+    SimulationInterface::analysisVar aVar;
     aVar.component = "Analysis-FlatPlate";
     aVar.name      = M_lb->gHeatFluxLabel->getName();
     aVar.matl      = d_matl->getDWIndex();

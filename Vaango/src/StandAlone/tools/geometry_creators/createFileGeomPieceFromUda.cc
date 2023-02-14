@@ -224,7 +224,7 @@ readFileGeomParticleData(DataArchive* da,
     LevelP level = grid->getLevel(levelID);
 
     // Loop thru all the patches
-    Level::const_patchIterator patchIter = level->patchesBegin();
+    Level::const_patch_iterator patchIter = level->patchesBegin();
     for (; patchIter != level->patchesEnd(); patchIter++) {
 
       // Get patch

@@ -2,7 +2,6 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,12 +28,13 @@
 
 namespace Uintah {
 
-std::ostream&
-operator<<(std::ostream& arg_out, const DetailedDep& dep)
+std::ostream& operator<<(       std::ostream & arg_out
+                        , const DetailedDep  & dep
+                        )
 {
   std::ostringstream out;
 
-  out << dep.m_req->var->getName();
+  out << dep.m_req->m_var->getName();
 
   if (dep.isNonDataDependency()) {
     out << " non-data dependency";
@@ -42,8 +42,7 @@ operator<<(std::ostream& arg_out, const DetailedDep& dep)
     out << " from patch " << dep.m_from_patch->getID();
   }
 
-  out << ", matl " << dep.m_matl << ", low=" << dep.m_low
-      << ", high=" << dep.m_high;
+  out << ", matl " << dep.m_matl << ", low=" << dep.m_low << ", high=" << dep.m_high;
 
   arg_out << out.str();
 

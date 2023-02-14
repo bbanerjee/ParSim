@@ -1103,7 +1103,7 @@ DynamicLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int state)
         int myrank = d_myworld->myRank();
         if (myrank == 0) {
           LevelP curLevel                 = grid->getLevel(0);
-          Level::const_patchIterator iter = curLevel->patchesBegin();
+          Level::const_patch_iterator iter = curLevel->patchesBegin();
           lb << "  Changing the Load Balance\n";
 
           for (unsigned int i = 0; i < d_processor_assignment.size(); i++) {

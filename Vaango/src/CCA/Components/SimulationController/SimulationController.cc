@@ -633,7 +633,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
     auto* mpiScheduler = dynamic_cast<MPIScheduler*>(d_scheduler.get_rep());
 
     if (mpiScheduler) {
-      mpiScheduler->d_mpi_info.reduce(
+      mpiScheduler->m_mpi_info.reduce(
         d_regridder && d_regridder->useDynamicDilation(), d_myworld);
     }
   }

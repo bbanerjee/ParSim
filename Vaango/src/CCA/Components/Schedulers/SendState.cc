@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,35 +22,32 @@
  * IN THE SOFTWARE.
  */
 
+
 #include <CCA/Components/Schedulers/SendState.h>
-
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Grid/Variables/PSPatchMatlGhostRange.h>
 #include <Core/Grid/Variables/ParticleSubset.h>
-
+#include <Core/Grid/Variables/PSPatchMatlGhostRange.h>
 #include <Core/Parallel/CrowdMonitor.h>
 #include <Core/Parallel/Parallel.h>
+#include <Core/Exceptions/InternalError.h>
+
+using namespace Uintah;
 
 namespace {
 
 // Tags for each CrowdMonitor
-struct send_subsets_tag
-{};
+struct send_subsets_tag{};
 
 using send_subsets_monitor = Uintah::CrowdMonitor<send_subsets_tag>;
 
 }
 
-namespace Uintah {
 
 SendState::~SendState()
 {
   {
-    send_subsets_monitor sends_write_lock{
-      Uintah::CrowdMonitor<send_subsets_tag>::WRITER
-    };
-    for (auto iter = d_send_subsets.begin(); iter != d_send_subsets.end();
-         iter++) {
+    send_subsets_monitor sends_write_lock{ Uintah::CrowdMonitor<send_subsets_tag>::WRITER };
+
+    for (map_type::iterator iter = sendSubsets.begin(); iter != sendSubsets.end(); iter++) {
       if (iter->second->removeReference()) {
         delete iter->second;
       }
@@ -60,24 +56,21 @@ SendState::~SendState()
 }
 
 ParticleSubset*
-SendState::find_sendset(int dest,
-                        const Patch* patch,
-                        int matlIndex,
-                        IntVector low,
-                        IntVector high,
-                        int dwid /* =0 */) const
+SendState::find_sendset(       int         dest
+                       , const Patch     * patch
+                       ,       int         matlIndex
+                       ,       IntVector   low
+                       ,       IntVector   high
+                       ,       int         dwid /* =0 */
+                       ) const
 {
   {
-    send_subsets_monitor sends_write_lock{
-      Uintah::CrowdMonitor<send_subsets_tag>::READER
-    };
+    send_subsets_monitor sends_write_lock{ Uintah::CrowdMonitor<send_subsets_tag>::READER };
 
     ParticleSubset* ret;
-    auto iter = d_send_subsets.find(
-      std::make_pair(PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid),
-                     dest));
+    map_type::const_iterator iter = sendSubsets.find(std::make_pair(PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid), dest));
 
-    if (iter == d_send_subsets.end()) {
+    if (iter == sendSubsets.end()) {
       ret = nullptr;
     } else {
       ret = iter->second;
@@ -87,26 +80,25 @@ SendState::find_sendset(int dest,
 }
 
 void
-SendState::add_sendset(ParticleSubset* sendset,
-                       int dest,
-                       const Patch* patch,
-                       int matlIndex,
-                       IntVector low,
-                       IntVector high,
-                       int dwid /*=0*/)
+SendState::add_sendset(       ParticleSubset * sendset
+                      ,       int              dest
+                      , const Patch          * patch
+                      ,       int              matlIndex
+                      ,       IntVector        low
+                      ,       IntVector        high
+                      ,       int              dwid /*=0*/
+                      )
 {
   {
-    auto iter = d_send_subsets.find(
-      std::make_pair(PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid),
-                     dest));
-    if (iter != d_send_subsets.end()) {
-      std::cout << "sendSubset Already exists for sendset:" << *sendset
-                << " on patch:" << *patch << " matl:" << matlIndex << std::endl;
-      SCI_THROW(InternalError("sendSubset already exists", __FILE__, __LINE__));
+    send_subsets_monitor sends_write_lock{ Uintah::CrowdMonitor<send_subsets_tag>::WRITER };
+
+    map_type::iterator iter = sendSubsets.find(std::make_pair(PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid), dest));
+    if (iter != sendSubsets.end()) {
+      std::cout << "sendSubset already exists for sendset:" << *sendset << " on patch:"
+                << *patch << " matl:" << matlIndex << std::endl;
+      SCI_THROW(InternalError( "sendSubset already exists", __FILE__, __LINE__ ));
     }
-    d_send_subsets[std::make_pair(
-      PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid),
-      dest)] = sendset;
+    sendSubsets[std::make_pair(PSPatchMatlGhostRange(patch, matlIndex, low, high, dwid), dest)] = sendset;
     sendset->addReference();
   }
 }
@@ -115,28 +107,20 @@ void
 SendState::reset()
 {
   {
-    send_subsets_monitor sends_write_lock{
-      Uintah::CrowdMonitor<send_subsets_tag>::WRITER
-    };
+    send_subsets_monitor sends_write_lock{ Uintah::CrowdMonitor<send_subsets_tag>::WRITER };
 
-    d_send_subsets.clear();
+    sendSubsets.clear();
   }
 }
 
 void
-SendState::print()
+SendState::print() 
 {
   {
-    send_subsets_monitor sends_write_lock{
-      Uintah::CrowdMonitor<send_subsets_tag>::READER
-    };
+    send_subsets_monitor sends_write_lock{ Uintah::CrowdMonitor<send_subsets_tag>::READER };
 
-    for (auto iter = d_send_subsets.begin(); iter != d_send_subsets.end();
-         iter++) {
-      std::cout << Parallel::getMPIRank() << ' ' << *(iter->second)
-                << " src/dest: " << iter->first.second << std::endl;
+    for (map_type::iterator iter = sendSubsets.begin(); iter != sendSubsets.end(); iter++) {
+      std::cout << Parallel::getMPIRank() << ' ' << *(iter->second) << " src/dest: " << iter->first.second << std::endl;
     }
   }
 }
-
-} // namespace Uintah

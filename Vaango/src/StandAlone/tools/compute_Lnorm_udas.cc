@@ -301,7 +301,7 @@ void BuildCellToPatchMap(LevelP level,
   patchMap.resize(low, high);
   patchMap.initialize(0);
 
-  Level::const_patchIterator patch_iter;
+  Level::const_patch_iterator patch_iter;
   for(patch_iter = level->patchesBegin(); patch_iter != level->patchesEnd(); patch_iter++) {
     const Patch* patch = *patch_iter;
     
@@ -609,7 +609,7 @@ main(int argc, char** argv)
           dnorm->setNorms(0,0,0,0);
           vnorm->setNorms(zero,zero,zero,0);
                     
-          Level::const_patchIterator iter;
+          Level::const_patch_iterator iter;
           for(iter = level1->patchesBegin();iter != level1->patchesEnd(); iter++) {
             const Patch* patch = *iter;
 

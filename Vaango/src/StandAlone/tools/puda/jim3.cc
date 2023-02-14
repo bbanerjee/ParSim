@@ -117,7 +117,7 @@ Uintah::jim3(DataArchive* da, CommandLineFlags& clf)
       double min_eq_stress = 1e15;
       double max_eq_stress = -1e15;
       //      std::cout << "Level: " <<  endl;
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
         const Patch* patch = *iter;
@@ -148,7 +148,7 @@ Uintah::jim3(DataArchive* da, CommandLineFlags& clf)
         stress_bins[i] = min_eq_stress + ((double)i) * stress_interval;
       }
 
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
         const Patch* patch = *iter;

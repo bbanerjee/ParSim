@@ -296,7 +296,7 @@ KokkosOpenMPScheduler::execute( int tgnum       /* = 0 */
 
 
   //---------------------------------------------------------------------------
-  // New way of managing single MPI requests - avoids Uintah::MPI::Waitsome & MPI_Donesome - APH 07/20/16
+  // New way of managing single MPI requests - avoids MPI_Waitsome & MPI_Donesome - APH 07/20/16
   //---------------------------------------------------------------------------
   // wait on all pending requests
   auto ready_request = [](CommRequest const& r)->bool { return r.wait(); };

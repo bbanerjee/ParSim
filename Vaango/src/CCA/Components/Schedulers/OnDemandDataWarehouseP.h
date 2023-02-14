@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,17 +23,13 @@
  */
 
 
-#ifndef __CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__
-#define __CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__
-
-#include <memory>
+#ifndef UINTAH_HOMEBREW_OnDemandDataWarehouseP_H
+#define UINTAH_HOMEBREW_OnDemandDataWarehouseP_H
 
 namespace Uintah {
   class OnDemandDataWarehouse;
   template<class T> class Handle;
-  using OnDemandDataWarehouseP = Handle<OnDemandDataWarehouse>;
-  using OnDemandDataWarehouseUP = std::unique_ptr<OnDemandDataWarehouse>;
-  using OnDemandDataWarehouseSP = std::shared_ptr<OnDemandDataWarehouse>;
+  typedef Handle<OnDemandDataWarehouse> OnDemandDataWarehouseP;
 }
 
-#endif //__CCA_COMPONENTS_SCHEDULERS_ONDEMAND_DATAWAREHOUSE_P_H__
+#endif

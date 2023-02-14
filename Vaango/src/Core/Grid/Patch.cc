@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,10 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Grid/Patch.h>
-
 #include <Core/Exceptions/InvalidGrid.h>
-
 #include <Core/Grid/BoundaryConditions/BCData.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
@@ -35,26 +30,31 @@
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-
 #include <Core/Math/MiscMath.h>
 #include <Core/Math/Primes.h>
+#include <Core/Parallel/MasterLock.h>
 
 #include <atomic>
+#include <cstdio>
 #include <iostream>
 #include <map>
 #include <sstream>
-#include <vector>
 
-namespace Uintah {
+using namespace std;
+using namespace Uintah;
 
 static std::atomic<int32_t> ids{ 0 };
 static Uintah::MasterLock ids_init{};
 
-Patch::Patch([[maybe_unused]] const Level* level,
-             [[maybe_unused]] const IntVector& lowIndex,
-             [[maybe_unused]] const IntVector& highIndex,
+extern Uintah::MasterLock
+  coutLock; // Used to sync cout when output by multiple ranks
+
+Patch::Patch(const Level* level,
+             const IntVector& lowIndex,
+             const IntVector& highIndex,
              const IntVector& inLowIndex,
              const IntVector& inHighIndex,
              unsigned int levelIndex,
@@ -65,10 +65,10 @@ Patch::Patch([[maybe_unused]] const Level* level,
 {
 
   if (d_id == -1) {
-    d_id = ids.fetch_add(1, std::memory_order_relaxed);
+    d_id = ids.fetch_add(1, memory_order_relaxed);
   } else {
     if (d_id >= ids) {
-      ids.store(d_id + 1, std::memory_order_relaxed);
+      ids.store(d_id + 1, memory_order_relaxed);
     }
   }
 
@@ -93,7 +93,7 @@ Patch::Patch(const Patch* realPatch, const IntVector& virtualOffset)
   , d_arrayBCS(realPatch->d_arrayBCS)
   , d_interiorBndArrayBCS(realPatch->d_interiorBndArrayBCS)
 {
-  //  make the id be -1000 * realPatch id - some first come, first serve index
+  // make the id be -1000 * realPatch id - some first come, first serve index
   d_id                  = -1000 * realPatch->d_id; // temporary
   int index             = 1;
   int numVirtualPatches = 0;
@@ -101,7 +101,7 @@ Patch::Patch(const Patch* realPatch, const IntVector& virtualOffset)
   // set the level index
   d_patchState.levelIndex = realPatch->d_patchState.levelIndex;
 
-  for (Level::const_patchIterator iter = getLevel()->allPatchesBegin();
+  for (Level::const_patch_iterator iter = getLevel()->allPatchesBegin();
        iter != getLevel()->allPatchesEnd();
        iter++) {
     if ((*iter)->d_realPatch == d_realPatch) {
@@ -126,7 +126,32 @@ Patch::Patch(const Patch* realPatch, const IntVector& virtualOffset)
   d_patchState.zplus  = realPatch->getBCType(zplus);
 }
 
-Patch::~Patch() {}
+Patch::~Patch()
+{
+  /*
+  for(Patch::FaceType face = Patch::startFace;
+      face <= Patch::endFace; face=Patch::nextFace(face)) {
+    if ( d_arrayBCS)
+      delete (*d_arrayBCS)[face];
+
+    if (d_interiorBndArrayBCS) {
+      delete (*d_interiorBndArrayBCS)[face];
+    }
+  }
+
+  if (d_arrayBCS) {
+    d_arrayBCS->clear();
+    delete d_arrayBCS;
+  }
+
+  if (d_interiorBndArrayBCS) {
+    d_interiorBndArrayBCS->clear();
+    delete d_interiorBndArrayBCS;
+  }
+  */
+  d_arrayBCS.clear();
+  d_interiorBndArrayBCS.clear();
+}
 
 /**
  * Returns the 8 nodes found around the point pos
@@ -154,9 +179,9 @@ Patch::findCellNodes(const Point& pos, IntVector ni[8]) const
 void
 Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
 {
-  std::cerr << "findCellNodes27 appears to be incorrect.  You are using it at "
-               "your own risk"
-            << "\n";
+  cerr << "findCellNodes27 appears to be incorrect.  You are using it at your "
+          "own risk"
+       << endl;
   Point cellpos = getLevel()->positionToIndex(pos);
   int ix        = Floor(cellpos.x());
   int iy        = Floor(cellpos.y());
@@ -179,16 +204,15 @@ Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
     nnz = 2;
   }
 
-  ni[0] = IntVector(ix, iy, iz);
-  ni[1] = IntVector(ix + 1, iy, iz);
-  ni[2] = IntVector(ix + nnx, iy, iz);
-  ni[3] = IntVector(ix, iy + 1, iz);
-  ni[4] = IntVector(ix + 1, iy + 1, iz);
-  ni[5] = IntVector(ix + nnx, iy + 1, iz);
-  ni[6] = IntVector(ix, iy + nny, iz);
-  ni[7] = IntVector(ix + 1, iy + nny, iz);
-  ni[8] = IntVector(ix + nnx, iy + nny, iz);
-
+  ni[0]  = IntVector(ix, iy, iz);
+  ni[1]  = IntVector(ix + 1, iy, iz);
+  ni[2]  = IntVector(ix + nnx, iy, iz);
+  ni[3]  = IntVector(ix, iy + 1, iz);
+  ni[4]  = IntVector(ix + 1, iy + 1, iz);
+  ni[5]  = IntVector(ix + nnx, iy + 1, iz);
+  ni[6]  = IntVector(ix, iy + nny, iz);
+  ni[7]  = IntVector(ix + 1, iy + nny, iz);
+  ni[8]  = IntVector(ix + nnx, iy + nny, iz);
   ni[9]  = IntVector(ix, iy, iz + 1);
   ni[10] = IntVector(ix + 1, iy, iz + 1);
   ni[11] = IntVector(ix + nnx, iy, iz + 1);
@@ -198,7 +222,6 @@ Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
   ni[15] = IntVector(ix, iy + nny, iz + 1);
   ni[16] = IntVector(ix + 1, iy + nny, iz + 1);
   ni[17] = IntVector(ix + nnx, iy + nny, iz + 1);
-
   ni[18] = IntVector(ix, iy, iz + nnz);
   ni[19] = IntVector(ix + 1, iy, iz + nnz);
   ni[20] = IntVector(ix + nnx, iy, iz + nnz);
@@ -232,14 +255,12 @@ Patch::possiblyAddBC(
     return;
   }
   if (getModifiableBCDataArray(face)->checkForBoundCondData(
-        mat_id,
-        desc,
-        child)) { // avoid seg fault, when there are no boundary conditions on a
-                  // face
+        mat_id, desc, child)) { // avoid seg fault, when there are no boundary
+                                // conditions on a face
 
     if (getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->getBCName() ==
         faceName) {
-      BoundCondBaseSP bc = BoundCondFactory::customBC(
+      auto bc = BoundCondFactory::customBC(
         mat_id, faceName, bc_value, bcFieldName, bc_kind);
       getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->sudoAddBC(bc);
     }
@@ -298,26 +319,27 @@ Patch::findNodesFromCell(const IntVector& cellIndex, IntVector nodeIndex[8])
   nodeIndex[7] = IntVector(ix + 1, iy + 1, iz + 1);
 }
 
-std::ostream&
-operator<<(std::ostream& out, const Patch& r)
+namespace Uintah {
+ostream&
+operator<<(ostream& out, const Patch& r)
 {
-  Uintah::MasterLock lock;
-  lock.lock(); // needed to eliminate threadsanitizer warnings
-  out.setf(std::ios::scientific, std::ios::floatfield);
+  coutLock.lock(); // needed to eliminate threadsanitizer warnings
+  out.setf(ios::scientific, ios::floatfield);
   out.precision(4);
   out << "(Patch " << r.getID() << ", lowIndex=" << r.getExtraCellLowIndex()
       << ", highIndex=" << r.getExtraCellHighIndex() << ")";
-  out.setf(std::ios::scientific, std::ios::floatfield);
-  lock.unlock();
+  out.setf(ios::scientific, ios::floatfield);
+  coutLock.unlock();
   return out;
 }
 
-std::ostream&
-operator<<(std::ostream& out, const Patch::FaceType& face)
+ostream&
+operator<<(ostream& out, const Patch::FaceType& face)
 {
   out << Patch::getFaceName(face);
   return out;
 }
+} // namespace Uintah
 
 void
 Patch::performConsistencyCheck() const
@@ -325,7 +347,7 @@ Patch::performConsistencyCheck() const
   // make sure that the patch's size is at least [1,1,1]
   IntVector res(getExtraCellHighIndex() - getExtraCellLowIndex());
   if (res.x() < 1 || res.y() < 1 || res.z() < 1) {
-    std::ostringstream msg;
+    ostringstream msg;
     msg << "Degenerate patch: " << toString() << " (resolution=" << res << ")";
     SCI_THROW(InvalidGrid(msg.str(), __FILE__, __LINE__));
   }
@@ -362,12 +384,14 @@ Patch::setBCType(Patch::FaceType face, BCType newbc)
 }
 
 void
-Patch::printPatchBCs(std::ostream& out) const
+Patch::printPatchBCs(ostream& out) const
 {
   out << " BC types: x- " << getBCType(xminus) << ", x+ " << getBCType(xplus)
       << ", y- " << getBCType(yminus) << ", y+ " << getBCType(yplus) << ", z- "
-      << getBCType(zminus) << ", z+ " << getBCType(zplus) << "\n";
+      << getBCType(zminus) << ", z+ " << getBCType(zplus) << endl;
 }
+
+//-----------------------------------------------------------------------------------------------
 
 void
 Patch::setArrayBCValues(Patch::FaceType face, std::shared_ptr<BCDataArray> bc)
@@ -382,6 +406,8 @@ Patch::setArrayBCValues(Patch::FaceType face, std::shared_ptr<BCDataArray> bc)
     d_arrayBCS[face] = bctmp->clone();
   }
 }
+
+//-----------------------------------------------------------------------------------------------
 
 void
 Patch::setInteriorBndArrayBCValues(Patch::FaceType face,
@@ -398,14 +424,16 @@ Patch::setInteriorBndArrayBCValues(Patch::FaceType face,
   }
 }
 
+//-----------------------------------------------------------------------------------------------
+
 const std::shared_ptr<BCDataArray>
 Patch::getBCDataArray(Patch::FaceType face) const
 {
   if (d_arrayBCS[face]) {
     return d_arrayBCS[face];
   } else {
-    std::ostringstream msg;
-    msg << "face = " << face << "\n";
+    ostringstream msg;
+    msg << "face = " << face << endl;
     SCI_THROW(InternalError(
       "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
@@ -422,12 +450,14 @@ Patch::getModifiableBCDataArray(Patch::FaceType face) const
   if (d_arrayBCS[face]) {
     return d_arrayBCS[face];
   } else {
-    std::ostringstream msg;
-    msg << "face = " << face << std::endl;
+    ostringstream msg;
+    msg << "face = " << face << endl;
     SCI_THROW(InternalError(
       "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
 }
+
+//-----------------------------------------------------------------------------------------------
 
 const std::shared_ptr<BCDataArray>
 Patch::getInteriorBndBCDataArray(Patch::FaceType face) const
@@ -435,14 +465,16 @@ Patch::getInteriorBndBCDataArray(Patch::FaceType face) const
   if (d_interiorBndArrayBCS[face]) {
     return d_interiorBndArrayBCS[face];
   } else {
-    std::ostringstream msg;
-    msg << "face = " << face << std::endl;
+    ostringstream msg;
+    msg << "face = " << face << endl;
     SCI_THROW(
       InternalError("d_interiorBndArrayBCS[face] has not been allocated",
                     __FILE__,
                     __LINE__));
   }
 }
+
+//-----------------------------------------------------------------------------------------------
 
 const BoundCondBaseSP
 Patch::getArrayBCValues(Patch::FaceType face,
@@ -455,16 +487,18 @@ Patch::getArrayBCValues(Patch::FaceType face,
   auto bcd = d_arrayBCS[face];
   if (bcd) {
     bcd->print();
-    const auto& bc = bcd->getBoundCondData(mat_id, type, child);
+    const auto bc = bcd->getBoundCondData(mat_id, type, child);
     if (bc) {
       bcd->getCellFaceIterator(mat_id, cell_ptr, child);
       bcd->getNodeFaceIterator(mat_id, node_ptr, child);
     }
     return bc;
   } else {
-    return nullptr;
+    return 0;
   }
 }
+
+//-----------------------------------------------------------------------------------------------
 
 const BoundCondBaseSP
 Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
@@ -477,7 +511,7 @@ Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
   auto bcd = d_interiorBndArrayBCS[face];
   if (bcd) {
     bcd->print();
-    const auto& bc = bcd->getBoundCondData(mat_id, type, child);
+    const auto bc = bcd->getBoundCondData(mat_id, type, child);
     if (bc) {
       bcd->getCellFaceIterator(mat_id, cell_ptr, child);
       bcd->getNodeFaceIterator(mat_id, node_ptr, child);
@@ -488,6 +522,8 @@ Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
   }
 }
 
+//-----------------------------------------------------------------------------------------------
+
 bool
 Patch::haveBC(FaceType face,
               int mat_id,
@@ -495,9 +531,11 @@ Patch::haveBC(FaceType face,
               const string& bc_variable) const
 {
   auto itr = d_arrayBCS[face];
+
   if (itr) {
+
 #if 0
-    std::cout << "Inside haveBC" << "\n";
+    cout << "Inside haveBC" << endl;
     ubc->print();
 #endif
 
@@ -527,6 +565,8 @@ Patch::haveBC(FaceType face,
   }
   return false;
 }
+
+//-----------------------------------------------------------------------------------------------
 
 void
 Patch::getFace(FaceType face,
@@ -1022,7 +1062,7 @@ Patch::getEdgeCellIterator(const FaceType& face0,
       throw Uintah::InternalError(
         "Invalid EdgeIteratorType Specified", __FILE__, __LINE__);
   };
-  std::vector<IntVector> loPt(2), hiPt(2);
+  vector<IntVector> loPt(2), hiPt(2);
 
   loPt[0] = loPt[1] = patchExtraLow;
   hiPt[0] = hiPt[1] = patchExtraHigh;
@@ -1129,11 +1169,75 @@ Patch::getNodeIterator(const Box& b) const
   return NodeIterator(low, high);
 }
 
-/**
- * For AMR.  When there are weird patch configurations, sometimes patches can
- * overlap. Find the intersection betwen the patch and the desired dependency,
- * and then remove the intersection. If the overlap IS the intersection, set the
- * low to be equal to the high.
+// if next to a boundary then lowIndex = 2+celllowindex in the flow dir
+IntVector
+Patch::getSFCXFORTLowIndex__Old() const
+{
+  IntVector h(getFortranExtraCellLowIndex() +
+              IntVector(getBCType(xminus) == Neighbor ? 0 : 2,
+                        getBCType(yminus) == Neighbor ? 0 : 1,
+                        getBCType(zminus) == Neighbor ? 0 : 1));
+  return h;
+}
+// if next to a boundary then highindex = cellhighindex - 1 - 1(coz of fortran)
+IntVector
+Patch::getSFCXFORTHighIndex__Old() const
+{
+  IntVector h(getFortranExtraCellHighIndex() -
+              IntVector(getBCType(xplus) == Neighbor ? 0 : 1,
+                        getBCType(yplus) == Neighbor ? 0 : 1,
+                        getBCType(zplus) == Neighbor ? 0 : 1));
+  return h;
+}
+
+// if next to a boundary then lowIndex = 2+celllowindex
+IntVector
+Patch::getSFCYFORTLowIndex__Old() const
+{
+  IntVector h(getFortranExtraCellLowIndex() +
+              IntVector(getBCType(xminus) == Neighbor ? 0 : 1,
+                        getBCType(yminus) == Neighbor ? 0 : 2,
+                        getBCType(zminus) == Neighbor ? 0 : 1));
+  return h;
+}
+// if next to a boundary then highindex = cellhighindex - 1 - 1(coz of fortran)
+IntVector
+Patch::getSFCYFORTHighIndex__Old() const
+{
+  IntVector h(getFortranExtraCellHighIndex() -
+              IntVector(getBCType(xplus) == Neighbor ? 0 : 1,
+                        getBCType(yplus) == Neighbor ? 0 : 1,
+                        getBCType(zplus) == Neighbor ? 0 : 1));
+  return h;
+}
+
+// if next to a boundary then lowIndex = 2+celllowindex
+IntVector
+Patch::getSFCZFORTLowIndex__Old() const
+{
+  IntVector h(getFortranExtraCellLowIndex() +
+              IntVector(getBCType(xminus) == Neighbor ? 0 : 1,
+                        getBCType(yminus) == Neighbor ? 0 : 1,
+                        getBCType(zminus) == Neighbor ? 0 : 2));
+  return h;
+}
+// if next to a boundary then highindex = cellhighindex - 1 - 1(coz of fortran)
+IntVector
+Patch::getSFCZFORTHighIndex__Old() const
+{
+  IntVector h(getFortranExtraCellHighIndex() -
+              IntVector(getBCType(xplus) == Neighbor ? 0 : 1,
+                        getBCType(yplus) == Neighbor ? 0 : 1,
+                        getBCType(zplus) == Neighbor ? 0 : 1));
+  return h;
+}
+
+//______________________________________________________________________
+/*
+ * Needed for AMR inside corner patch configurations where patches can overlap.
+ * Find the intersection between the patches and remove the intersecting extra
+ * cells. If the overlap IS the intersection, set the low to be equal to the
+ * high.
  */
 void
 Patch::cullIntersection(VariableBasis basis,
@@ -1143,16 +1247,16 @@ Patch::cullIntersection(VariableBasis basis,
                         IntVector& region_high) const
 {
   /*
-  On inside corner patch configurations, with extra cells, patches can overlap
-  and the extra cells of one patch overlap the normal cell of another patch.
-  This method removes the overlapping extra cells.
+   On inside corner patch configurations, with extra cells, patches can overlap
+   and the extra cells of one patch overlap the normal cell of another patch.
+   This method removes the overlapping extra cells.
 
-  If a dimension of a neighbor's patch overlaps this patch by extra cells then
-  prune it back to its interior cells. If two or more cells overlap throw it out
-  entirely.  If there are 2+ different, the patches share only a line or point
-  and the patch's boundary conditions are basically as though there were no
-  patch there
-  */
+   If a dimension of a neighbor's patch overlaps this patch by extra cells then
+   prune it back to its interior cells. If two or more cells overlap throw it
+   out entirely.  If there are 2+ different, the patches share only a line or
+   point and the patch's boundary conditions are basically as though there were
+   no patch there
+   */
 
   if (neighbor == this) {
     return;
@@ -1204,7 +1308,8 @@ Patch::cullIntersection(VariableBasis basis,
     region_low = region_high; // caller will check for this case
   }
 }
-
+//______________________________________________________________________
+//
 void
 Patch::getGhostOffsets(VariableBasis basis,
                        Ghost::GhostType gtype,
@@ -1227,11 +1332,14 @@ Patch::getGhostOffsets(VariableBasis basis,
   }
 
   if (basis == CellBased) {
+    // cells around nodes/faces
     if (gtype == Ghost::AroundCells) {
-      // Cells around cells
       lowOffset = highOffset = g;
+    } else if (gtype > Ghost::AroundFaces) {
+      IntVector aroundDir = Ghost::getGhostTypeDir(gtype);
+      lowOffset           = g * (IntVector(1, 1, 1) - aroundDir);
+      highOffset          = g * aroundDir;
     } else {
-      // cells around nodes/faces
       IntVector aroundDir = Ghost::getGhostTypeDir(gtype);
       lowOffset           = g * aroundDir;
       highOffset          = lowOffset - aroundDir;
@@ -1429,6 +1537,8 @@ Patch::computeVariableExtentsWithBoundaryCheck(
   }
 }
 
+//______________________________________________________________________
+// d
 void
 Patch::getOtherLevelPatches(int levelOffset,
                             Patch::selectType& selected_patches,
@@ -1540,7 +1650,7 @@ Patch::getOtherLevelPatches55902(int levelOffset,
     low = low - IntVector(2, 2, 2);
   }
 
-  // std::cout << "  Patch:Golp: " << low-pc << " " << high+pc << std::endl;
+  // cout << "  Patch:Golp: " << low-pc << " " << high+pc << endl;
   Level::selectType patches;
   otherLevel->selectPatches(low - pc, high + pc, patches);
 
@@ -1601,7 +1711,7 @@ Patch::getOtherLevelPatchesNB(int levelOffset,
     low = low - IntVector(2, 2, 2);
   }
 
-  // std::cout << "  Patch:Golp: " << low-pc << " " << high+pc << "\n";
+  // cout << "  Patch:Golp: " << low-pc << " " << high+pc << endl;
   Level::selectType patches;
   otherLevel->selectPatches(low - pc, high + pc, patches);
 
@@ -1705,7 +1815,7 @@ Patch::neighborsHigh() const
 /**
  * Returns the low index for a variable of type basis with extraCells or
  * the boundaryLayer specified in boundaryLayer.  Boundary layers take
- * precidence over extra cells.
+ * precedence over extra cells.
  */
 IntVector
 Patch::getExtraLowIndex(VariableBasis basis,
@@ -1764,7 +1874,7 @@ Patch::getExtraLowIndex(VariableBasis basis,
 /**
  * Returns the high index for a variable of type basis with extraCells or
  * the boundaryLayer specified in boundaryLayer.  Boundary layers take
- * precidence over extra cells.
+ * precedence over extra cells.
  */
 IntVector
 Patch::getExtraHighIndex(VariableBasis basis,
@@ -2038,6 +2148,22 @@ Patch::getCornerCells(vector<IntVector>& cells, const FaceType& face) const
   }     // end x face loop
 }
 
+//-----------------------------------------------------------------------------------------------
+
+void
+Patch::initializeBoundaryConditions()
+{
+  for (unsigned int i = 0; i < 6; ++i) {
+    d_arrayBCS[i] = nullptr;
+  }
+
+  for (unsigned int i = 0; i < 6; ++i) {
+    d_interiorBndArrayBCS[i] = nullptr;
+  }
+}
+
+//-----------------------------------------------------------------------------------------------
+
 //__________________________________
 //  Returns a vector of Regions that
 // do not have any overlapping finer level cells.
@@ -2045,7 +2171,7 @@ Patch::getCornerCells(vector<IntVector>& cells, const FaceType& face) const
 // on coarse and fine levels.
 //
 //  usage:
-//  std::vector<Region> regions
+//  vector<Region> regions
 //  coarsePatch->getFinestRegionsOnPatch(regions)
 //
 //  for(vector<Region>::iterator
@@ -2058,7 +2184,7 @@ void
 Patch::getFinestRegionsOnPatch(vector<Region>& difference) const
 {
   const Level* level = getLevel();
-  std::vector<Region> coarsePatch_q, finePatch_q;
+  vector<Region> coarsePatch_q, finePatch_q;
   IntVector zero(0, 0, 0);
   finePatch_q.push_back(Region(zero, zero));
 
@@ -2084,5 +2210,3 @@ Patch::getFinestRegionsOnPatch(vector<Region>& difference) const
   // compute region of coarse patches that do not contain fine patches
   difference = Region::difference(coarsePatch_q, finePatch_q);
 }
-
-} // end namespace Uintah

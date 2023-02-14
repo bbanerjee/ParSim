@@ -55,7 +55,7 @@ namespace Uintah {
 
 template<class T> class Handle;
 class DataWarehouse;
-typedef Handle<DataWarehouse> DataWarehouseP;
+using DataWarehouseP = Handle<DataWarehouse>;
 
 using DataWarehouseSP = std::shared_ptr<DataWarehouse>;
 using DataWarehouseUP = std::unique_ptr<DataWarehouse>;

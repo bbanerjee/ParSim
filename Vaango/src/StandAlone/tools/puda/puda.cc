@@ -232,7 +232,7 @@ gridstats(DataArchive* da,
       std::cout << "Total Number of Cells:" << hi - lo << "\n";
       std::cout << "dx:                   " << level->dCell() << "\n";
 
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
         const Patch* patch = *iter;
@@ -660,7 +660,7 @@ main(int argc, char** argv)
                       << "\n";
             for (int l = 0; l < grid->numLevels(); l++) {
               LevelP level = grid->getLevel(l);
-              for (Level::const_patchIterator iter = level->patchesBegin();
+              for (Level::const_patch_iterator iter = level->patchesBegin();
                    iter != level->patchesEnd();
                    iter++) {
                 const Patch* patch = *iter;
@@ -816,7 +816,7 @@ printParticleVariable(DataArchive* da,
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin();
+      Level::const_patch_iterator iter = level->patchesBegin();
       int patchIndex                  = 0;
       for (; iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;

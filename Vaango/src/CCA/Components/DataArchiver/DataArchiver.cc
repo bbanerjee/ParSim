@@ -3868,15 +3868,15 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
   for (const auto& dep : initreqs) {
 
     // define patchset
-    const PatchSubset* patchSubset = (dep->patches != nullptr)
-                                       ? dep->patches
-                                       : dep->task->getPatchSet()->getUnion();
+    const PatchSubset* patchSubset = (dep->m_patches != nullptr)
+                                       ? dep->m_patches
+                                       : dep->m_task->getPatchSet()->getUnion();
 
     // adjust the patchSubset if the dependency requires coarse or fine level
     // patches
     constHandle<PatchSubset> patches;
-    if (dep->patches_dom == Task::CoarseLevel ||
-        dep->patches_dom == Task::FineLevel) {
+    if (dep->m_patches_dom == Task::CoarseLevel ||
+        dep->m_patches_dom == Task::FineLevel) {
       patches     = dep->getPatchesUnderDomain(patchSubset);
       patchSubset = patches.get_rep();
     }
@@ -3902,15 +3902,15 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
     // **********************************************************************
     const MaterialSubset* matSubset;
 
-    if (dep->matls) {
-      matSubset = dep->matls;
+    if (dep->m_matls) {
+      matSubset = dep->m_matls;
     }
     // Special case (hack) so sole variables have a material index of -1.
-    else if (dep->var->typeDescription()->getType() ==
+    else if (dep->m_var->typeDescription()->getType() ==
              TypeDescription::Type::SoleVariable) {
       matSubset = d_tmpMatSubset;
     } else {
-      matSubset = dep->task->getMaterialSet()->getUnion();
+      matSubset = dep->m_task->getMaterialSet()->getUnion();
     }
 
     // The matSubset is assumed to be in ascending order or
@@ -3921,7 +3921,7 @@ DataArchiver::initCheckpoints(SchedulerP& sched)
 
     for (int level : levels) {
       ConsecutiveRangeSet& unionedVarMatls =
-        label_map[dep->var->getName()][level];
+        label_map[dep->m_var->getName()][level];
       unionedVarMatls = unionedVarMatls.unioned(matls);
     }
   }

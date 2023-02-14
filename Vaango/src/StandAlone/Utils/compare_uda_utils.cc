@@ -366,7 +366,7 @@ buildPatchMap(Uintah::LevelP level,
   patchMap.resize(low, high);
   patchMap.initialize(0);
 
-  Uintah::Level::const_patchIterator iter;
+  Uintah::Level::const_patch_iterator iter;
   for (iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
     const Uintah::Patch* patch = *iter;
 

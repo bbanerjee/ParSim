@@ -249,7 +249,7 @@ namespace Uintah {
       pstrm << setw(8) << "XXXXXXXX" << endl;
       int nparts = 0;
   
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(Level::const_patch_iterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
     
@@ -347,7 +347,7 @@ namespace Uintah {
           *vit = 0.;
         
         std::cout << ", patch ";
-        for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+        for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
           const Patch* patch = *iter;
           
           std::cout << patch->getID() << " ";

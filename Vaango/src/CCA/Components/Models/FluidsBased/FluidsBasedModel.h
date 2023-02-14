@@ -67,7 +67,7 @@ WARNING
 
 namespace Uintah {
 
-  class ApplicationInterface;
+  class SimulationInterface;
   class Regridder;
   class Output;
 

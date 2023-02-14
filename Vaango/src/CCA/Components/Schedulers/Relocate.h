@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,119 +22,137 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __CCA_COMPONENTS_SCHEDULERS_RELOCATE_H__
-#define __CCA_COMPONENTS_SCHEDULERS_RELOCATE_H__
+#ifndef UINTAH_HOMEBREW_RELOCATE_H
+#define UINTAH_HOMEBREW_RELOCATE_H
 
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-
 #include <Core/Parallel/UintahMPI.h>
 
 #include <vector>
 
 namespace Uintah {
-class DataWarehouse;
-class LoadBalancer;
-class ProcessorGroup;
-class Scheduler;
-class VarLabel;
-class MPIScatterRecords;
+  class DataWarehouse;
+  class LoadBalancer;
+  class ProcessorGroup;
+  class Scheduler;
+  class VarLabel;
+  
+/**************************************
 
-class Relocate
-{
-  using VarLabel2DVector = std::vector<std::vector<const VarLabel*>>;
+CLASS
+   MPIRelocate
+   
+   Short description...
 
-public:
-  Relocate() = default;
-  virtual ~Relocate();
+GENERAL INFORMATION
 
-  void
-  scheduleParticleRelocation(Scheduler*,
-                             const ProcessorGroup* pg,
-                             LoadBalancer* lb,
-                             const LevelP& level,
-                             const VarLabel* old_posLabel,
-                             const VarLabel2DVector& old_labels,
-                             const VarLabel* new_posLabel,
-                             const VarLabel2DVector& new_labels,
-                             const VarLabel* particleIDLabel,
-                             const MaterialSet* matls);
+   Relocate.h
 
-  // Schedule particle relocation without the need to provide pre-relocation
-  // labels. Warning: This is experimental and has not been fully tested yet.
-  // Use with caution (tsaad).
-  void
-  scheduleParticleRelocation(Scheduler*,
-                             const ProcessorGroup* pg,
-                             LoadBalancer* lb,
-                             const LevelP& level,
-                             const VarLabel* posLabel,
-                             const VarLabel2DVector& otherLabels,
-                             const MaterialSet* matls);
+   Steven G. Parker
+   Department of Computer Science
+   University of Utah
 
-  const MaterialSet*
-  getMaterialSet() const
-  {
-    return d_reloc_matls;
-  }
+   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+  
 
-private:
+KEYWORDS
+   Scheduler_Brain_Damaged
 
-  // Callback function for particle relocation that doesn't use pre-Relocation
-  // variables.
-  void
-  relocateParticlesModifies(const ProcessorGroup* proc,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw,
-                            const Level* coarsestLevelwithParticles);
+DESCRIPTION
+   Long description...
+  
+WARNING
+  
+****************************************/
 
-  void
-  relocateParticles(const ProcessorGroup* proc,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw,
-                    DataWarehouse* new_dw,
-                    const Level* coarsestLevelwithParticles);
+  class MPIScatterRecords; // defined in .cc
 
-  void
-  exchangeParticles(const ProcessorGroup* proc,
-                    const PatchSubset* patches,
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw,
-                    DataWarehouse* new_dw,
-                    MPIScatterRecords* scatter_records,
-                    int total_reloc[3]);
+class Relocate {
 
-  void
-  findNeighboringPatches(const Patch* patch,
-                         const Level* level,
-                         const bool findFiner,
-                         const bool findCoarser,
-                         Patch::selectType& AllNeighborPatches);
+  public:
 
-  void
-  finalizeCommunication();
+    Relocate(){};
 
-private:
+    virtual ~Relocate();
+    
+    //////////
+    // Insert Documentation Here:
+    void scheduleParticleRelocation( Scheduler                                        *,
+                                     const ProcessorGroup                             * pg,
+                                     LoadBalancer                                     * lb,
+                                     const LevelP                                     & level,
+                                     const VarLabel                                   * old_posLabel,
+                                     const std::vector<std::vector<const VarLabel*> > & old_labels,
+                                     const VarLabel                                   * new_posLabel,
+                                     const std::vector<std::vector<const VarLabel*> > & new_labels,
+                                     const VarLabel                                   * particleIDLabel,
+                                     const MaterialSet                                * matls );
+    //////////
+    // Schedule particle relocation without the need to provide pre-relocation labels. Warning: This
+    // is experimental and has not been fully tested yet. Use with caution (tsaad).
+    void scheduleParticleRelocation(Scheduler                                        *,
+                                    const ProcessorGroup                             * pg,
+                                    LoadBalancer                                 * lb,
+                                    const LevelP                                     & level,
+                                    const VarLabel                                   * posLabel,
+                                    const std::vector<std::vector<const VarLabel*> > & otherLabels,
+                                    const MaterialSet                                * matls);
 
-  // varlabels created for the modifies version of relocation
-  std::vector<const Uintah::VarLabel*> d_destroy_me;
+    const MaterialSet* getMaterialSet() const { return m_reloc_matls;}
 
-  const VarLabel* d_reloc_old_pos_label{ nullptr };
-  VarLabel2DVector d_reloc_old_labels;
-  const VarLabel* d_reloc_new_pos_label{ nullptr };
-  VarLabel2DVector d_reloc_new_labels;
-  const VarLabel* d_particle_id_label{ nullptr };
-  const MaterialSet* d_reloc_matls{ nullptr };
-  LoadBalancer* d_load_balancer{ nullptr };
-  std::vector<char*> d_recv_buffers;
-  std::vector<char*> d_send_buffers;
-  std::vector<MPI_Request> d_send_requests;
+
+  private:
+
+    // varlabels created for the modifies version of relocation
+    std::vector<const Uintah::VarLabel*> m_destroyMe;
+    
+    //////////
+    // Callback function for particle relocation that doesn't use pre-Relocation variables.
+    void relocateParticlesModifies(const ProcessorGroup*,
+                                   const PatchSubset* patches,
+                                   const MaterialSubset* matls,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw,
+                                   const Level* coarsestLevelwithParticles);
+
+    void relocateParticles(const ProcessorGroup*,
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw,
+                           const Level* coarsestLevelwithParticles);
+
+    void exchangeParticles( const ProcessorGroup    *, 
+                            const PatchSubset       * patches,
+                            const MaterialSubset    * matls,
+                                  DataWarehouse     * old_dw,
+                                  DataWarehouse     * new_dw,
+                                  MPIScatterRecords * scatter_records, 
+                                  int                 total_reloc[3] );
+    
+    void findNeighboringPatches( const Patch       * patch,
+                                 const Level       * level,
+                                 const bool          findFiner,
+                                 const bool          findCoarser,
+                                 Patch::selectType & AllNeighborPatches);
+   
+    void finalizeCommunication();
+
+    const VarLabel                             * m_reloc_old_posLabel{ nullptr };
+    std::vector<std::vector<const VarLabel*> >   m_reloc_old_labels;
+    const VarLabel                             * m_reloc_new_posLabel{ nullptr };
+    std::vector<std::vector<const VarLabel*> >   m_reloc_new_labels;
+    const VarLabel                             * m_particleIDLabel{   nullptr };
+    const MaterialSet                          * m_reloc_matls{       nullptr };
+    LoadBalancer                               * m_lb{                nullptr };
+    std::vector<char*>                          m_recv_buffers;
+    std::vector<char*>                          m_send_buffers;
+    std::vector<MPI_Request>                    m_send_requests;
 
 };
-} // End namespace Uintah
 
-#endif // __CCA_COMPONENTS_SCHEDULERS_RELOCATE_H__
+} // End namespace Uintah
+   
+#endif

@@ -145,7 +145,7 @@ Uintah::UniaxialStrain_MMS(DataArchive* da, CommandLineFlags& clf)
 
       //__________________________________
       // Patch loop
-      for (Level::const_patchIterator iter = level->patchesBegin();
+      for (Level::const_patch_iterator iter = level->patchesBegin();
            iter != level->patchesEnd();
            iter++) {
 

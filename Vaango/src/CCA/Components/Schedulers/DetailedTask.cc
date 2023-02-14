@@ -2,7 +2,6 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
- * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,31 +44,33 @@
 #include <sstream>
 #include <string>
 
+using namespace Uintah;
+
+// declared in DetailedTasks.cc - used in both places to protect external ready
+// queue (hence, extern here)
+namespace Uintah {
+extern Uintah::MasterLock g_external_ready_mutex;
+extern Dout g_scrubbing_dbg;
+extern std::string g_var_scrub_dbg;
+extern int g_patch_scrub_dbg;
+} // namespace Uintah
+
 namespace {
 Uintah::MasterLock g_internal_dependency_mutex{};
 Uintah::MasterLock g_dtask_output_mutex{};
 
-Uintah::Dout g_internal_deps_dbg(
-  "InternalDeps",
-  "DetailedTask",
-  "info on internal (intra-nodal) data dependencies",
-  false);
-Uintah::Dout g_external_deps_dbg(
-  "ExternalDeps",
-  "DetailedTask",
-  "info on external (inter-nodal) data dependencies",
-  false);
+Dout g_internal_deps_dbg("InternalDeps",
+                         "DetailedTask",
+                         "info on internal (intra-nodal) data dependencies",
+                         false);
+Dout g_external_deps_dbg("ExternalDeps",
+                         "DetailedTask",
+                         "info on external (inter-nodal) data dependencies",
+                         false);
 } // namespace
 
-namespace Uintah {
-
-// declared in DetailedTasks.cc - used in both places to protect external ready
-// queue (hence, extern here)
-extern MasterLock g_external_ready_mutex;
-extern Dout g_scrubbing_dbg;
-extern std::string g_var_scrub_dbg;
-extern int g_patch_scrub_dbg;
-
+//_____________________________________________________________________________
+//
 DetailedTask::DetailedTask(Task* task,
                            const PatchSubset* patches,
                            const MaterialSubset* matls,
@@ -94,6 +95,8 @@ DetailedTask::DetailedTask(Task* task,
   }
 }
 
+//_____________________________________________________________________________
+//
 DetailedTask::~DetailedTask()
 {
   if (m_patches && m_patches->removeReference()) {
@@ -105,10 +108,12 @@ DetailedTask::~DetailedTask()
   }
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::doit(const ProcessorGroup* pg,
-                   std::vector<OnDemandDataWarehouseSP>& oddws,
-                   std::vector<DataWarehouseSP>& dws,
+                   std::vector<OnDemandDataWarehouseP>& oddws,
+                   std::vector<DataWarehouseP>& dws,
                    Task::CallBackEvent event /* = Task::CPU */
 )
 {
@@ -194,8 +199,10 @@ DetailedTask::doit(const ProcessorGroup* pg,
   }
 }
 
+//_____________________________________________________________________________
+//
 void
-DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
+DetailedTask::scrub(std::vector<OnDemandDataWarehouseP>& dws)
 {
   DOUTR(g_scrubbing_dbg,
         "  DetailedTask::Scrub, Starting scrub after task: " << *this);
@@ -209,8 +216,8 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
 
   // Decrement the scrub count for each of the required variables
   for (const Task::Dependency* req = task->getRequires(); req != nullptr;
-       req                         = req->next) {
-    TypeDescription::Type type = req->var->typeDescription()->getType();
+       req                         = req->m_next) {
+    TypeDescription::Type type = req->m_var->typeDescription()->getType();
     Patch::VariableBasis basis = Patch::translateTypeToBasis(type, false);
     if (type != TypeDescription::Type::ReductionVariable &&
         type != TypeDescription::Type::SoleVariable) {
@@ -219,9 +226,9 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
       DataWarehouse::ScrubMode scrubmode = dws[dw]->getScrubMode();
       if (scrubmode == DataWarehouse::ScrubComplete ||
           (scrubmode == DataWarehouse::ScrubNonPermanent &&
-           initialRequires.find(req->var) == initialRequires.end())) {
+           initialRequires.find(req->m_var) == initialRequires.end())) {
 
-        if (unscrubbables.find(req->var->getName()) != unscrubbables.end()) {
+        if (unscrubbables.find(req->m_var->getName()) != unscrubbables.end()) {
           continue;
         }
 
@@ -234,35 +241,35 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
           Patch::selectType neighbors;
           IntVector low, high;
 
-          if (req->patches_dom == Task::CoarseLevel ||
-              req->patches_dom == Task::FineLevel ||
-              req->num_ghost_cells == 0) {
+          if (req->m_patches_dom == Task::CoarseLevel ||
+              req->m_patches_dom == Task::FineLevel ||
+              req->m_num_ghost_cells == 0) {
             // we already have the right patches
             neighbors.push_back(patch);
           } else {
             patch->computeVariableExtents(type,
-                                          req->var->getBoundaryLayer(),
-                                          req->gtype,
-                                          req->num_ghost_cells,
+                                          req->m_var->getBoundaryLayer(),
+                                          req->m_gtype,
+                                          req->m_num_ghost_cells,
                                           neighbors,
                                           low,
                                           high);
           }
 
-          for (size_t i = 0; i < neighbors.size(); i++) {
+          for (unsigned int i = 0; i < neighbors.size(); i++) {
             const Patch* neighbor = neighbors[i];
 
-            if (req->patches_dom == Task::ThisLevel && patch != neighbor) {
+            if (req->m_patches_dom == Task::ThisLevel && patch != neighbor) {
               // don't scrub on AMR overlapping patches...
-              IntVector l = Max(
-                neighbor->getExtraLowIndex(basis, req->var->getBoundaryLayer()),
-                low);
+              IntVector l = Max(neighbor->getExtraLowIndex(
+                                  basis, req->m_var->getBoundaryLayer()),
+                                low);
               IntVector h = Min(neighbor->getExtraHighIndex(
-                                  basis, req->var->getBoundaryLayer()),
+                                  basis, req->m_var->getBoundaryLayer()),
                                 high);
 
               patch->cullIntersection(basis,
-                                      req->var->getBoundaryLayer(),
+                                      req->m_var->getBoundaryLayer(),
                                       neighbor->getRealPatch(),
                                       l,
                                       h);
@@ -272,7 +279,7 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
               }
             }
 
-            if (req->patches_dom == Task::FineLevel) {
+            if (req->m_patches_dom == Task::FineLevel) {
               // don't count if it only overlaps extra cells
               IntVector l = patch->getExtraLowIndex(basis, IntVector(0, 0, 0)),
                         h = patch->getExtraHighIndex(basis, IntVector(0, 0, 0));
@@ -293,9 +300,9 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
                 // (and not the previous timestep) which can have variables not
                 // exist in the OldDW.
                 count = dws[dw]->decrementScrubCount(
-                  req->var, matls->get(m), neighbor);
+                  req->m_var, matls->get(m), neighbor);
                 if (g_scrubbing_dbg &&
-                    (req->var->getName() == g_var_scrub_dbg ||
+                    (req->m_var->getName() == g_var_scrub_dbg ||
                      g_var_scrub_dbg == "") &&
                     (neighbor->getID() == g_patch_scrub_dbg ||
                      g_patch_scrub_dbg == -1)) {
@@ -303,8 +310,9 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
                   DOUTR(g_scrubbing_dbg,
                         "    decrementing scrub count for requires of "
                           << dws[dw]->getID() << "/" << neighbor->getID() << "/"
-                          << matls->get(m) << "/" << req->var->getName() << ": "
-                          << count << (count == 0 ? " - scrubbed\n" : "\n"));
+                          << matls->get(m) << "/" << req->m_var->getName()
+                          << ": " << count
+                          << (count == 0 ? " - scrubbed\n" : "\n"));
                 }
               } catch (UnknownVariable& e) {
                 std::cerr << "   BAD BOY FROM Task : " << *this << " scrubbing "
@@ -321,15 +329,15 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
 
   // Scrub modifies
   for (const Task::Dependency* mod = task->getModifies(); mod != nullptr;
-       mod                         = mod->next) {
+       mod                         = mod->m_next) {
     int dw                             = mod->mapDataWarehouse();
     DataWarehouse::ScrubMode scrubmode = dws[dw]->getScrubMode();
 
     if (scrubmode == DataWarehouse::ScrubComplete ||
         (scrubmode == DataWarehouse::ScrubNonPermanent &&
-         initialRequires.find(mod->var) == initialRequires.end())) {
+         initialRequires.find(mod->m_var) == initialRequires.end())) {
 
-      if (unscrubbables.find(mod->var->getName()) != unscrubbables.end()) {
+      if (unscrubbables.find(mod->m_var->getName()) != unscrubbables.end()) {
         continue;
       }
 
@@ -337,7 +345,7 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
         mod->getPatchesUnderDomain(getPatches());
       constHandle<MaterialSubset> matls =
         mod->getMaterialsUnderDomain(getMaterials());
-      TypeDescription::Type type = mod->var->typeDescription()->getType();
+      TypeDescription::Type type = mod->m_var->typeDescription()->getType();
 
       if (type != TypeDescription::Type::ReductionVariable &&
           type != TypeDescription::Type::SoleVariable) {
@@ -346,17 +354,17 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
 
           for (int m = 0; m < matls->size(); m++) {
             int count =
-              dws[dw]->decrementScrubCount(mod->var, matls->get(m), patch);
+              dws[dw]->decrementScrubCount(mod->m_var, matls->get(m), patch);
 
             if (g_scrubbing_dbg &&
-                (mod->var->getName() == g_var_scrub_dbg ||
+                (mod->m_var->getName() == g_var_scrub_dbg ||
                  g_var_scrub_dbg == "") &&
                 (patch->getID() == g_patch_scrub_dbg ||
                  g_patch_scrub_dbg == -1)) {
               DOUTR(g_scrubbing_dbg,
                     "    decrementing scrub count for modifies of "
                       << dws[dw]->getID() << "/" << patch->getID() << "/"
-                      << matls->get(m) << "/" << mod->var->getName() << ": "
+                      << matls->get(m) << "/" << mod->m_var->getName() << ": "
                       << count << (count == 0 ? " - scrubbed\n" : "\n"));
             }
           }
@@ -367,24 +375,24 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
 
   // Set the scrub count for each of the computes variables
   for (const Task::Dependency* comp = task->getComputes(); comp != nullptr;
-       comp                         = comp->next) {
-    TypeDescription::Type type = comp->var->typeDescription()->getType();
+       comp                         = comp->m_next) {
+    TypeDescription::Type type = comp->m_var->typeDescription()->getType();
 
     if (type != TypeDescription::Type::ReductionVariable &&
         type != TypeDescription::Type::SoleVariable) {
-      int whichdw                        = comp->whichdw;
+      int whichdw                        = comp->m_whichdw;
       int dw                             = comp->mapDataWarehouse();
       DataWarehouse::ScrubMode scrubmode = dws[dw]->getScrubMode();
 
       if (scrubmode == DataWarehouse::ScrubComplete ||
           (scrubmode == DataWarehouse::ScrubNonPermanent &&
-           initialRequires.find(comp->var) == initialRequires.end())) {
+           initialRequires.find(comp->m_var) == initialRequires.end())) {
         constHandle<PatchSubset> patches =
           comp->getPatchesUnderDomain(getPatches());
         constHandle<MaterialSubset> matls =
           comp->getMaterialsUnderDomain(getMaterials());
 
-        if (unscrubbables.find(comp->var->getName()) != unscrubbables.end()) {
+        if (unscrubbables.find(comp->m_var->getName()) != unscrubbables.end()) {
           continue;
         }
 
@@ -396,33 +404,33 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
             int count;
 
             if (m_task_group->getScrubCount(
-                  comp->var, matl, patch, whichdw, count)) {
+                  comp->m_var, matl, patch, whichdw, count)) {
 
               if (g_scrubbing_dbg &&
-                  (comp->var->getName() == g_var_scrub_dbg ||
+                  (comp->m_var->getName() == g_var_scrub_dbg ||
                    g_var_scrub_dbg == "") &&
                   (patch->getID() == g_patch_scrub_dbg ||
                    g_patch_scrub_dbg == -1)) {
                 DOUTR(true,
                       "    setting scrub count for computes of "
                         << dws[dw]->getID() << "/" << patch->getID() << "/"
-                        << matls->get(m) << "/" << comp->var->getName() << ": "
-                        << count);
+                        << matls->get(m) << "/" << comp->m_var->getName()
+                        << ": " << count);
               }
-              dws[dw]->setScrubCount(comp->var, matl, patch, count);
+              dws[dw]->setScrubCount(comp->m_var, matl, patch, count);
             } else {
               // Not in the scrub map, must be never needed...
               if (g_scrubbing_dbg &&
-                  (comp->var->getName() == g_var_scrub_dbg ||
+                  (comp->m_var->getName() == g_var_scrub_dbg ||
                    g_var_scrub_dbg == "") &&
                   (patch->getID() == g_patch_scrub_dbg ||
                    g_patch_scrub_dbg == -1)) {
                 DOUTR(true,
                       "   trashing variable immediately after compute: "
                         << dws[dw]->getID() << "/" << patch->getID() << "/"
-                        << matls->get(m) << "/" << comp->var->getName());
+                        << matls->get(m) << "/" << comp->m_var->getName());
               }
-              dws[dw]->scrub(comp->var, matl, patch);
+              dws[dw]->scrub(comp->m_var, matl, patch);
             }
           }
         }
@@ -431,15 +439,17 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseSP>& dws)
   }
 } // end scrub()
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::findRequiringTasks(const VarLabel* var,
                                  std::list<DetailedTask*>& requiringTasks)
 {
   // find external requires
   for (DependencyBatch* batch = getComputes(); batch != nullptr;
-       batch                  = batch->comp_next) {
-    for (DetailedDep* dep = batch->head; dep != nullptr; dep = dep->m_next) {
-      if (dep->m_req->var == var) {
+       batch                  = batch->m_comp_next) {
+    for (DetailedDep* dep = batch->m_head; dep != nullptr; dep = dep->m_next) {
+      if (dep->m_req->m_var == var) {
         requiringTasks.insert(
           requiringTasks.end(), dep->m_to_tasks.begin(), dep->m_to_tasks.end());
       }
@@ -458,13 +468,17 @@ DetailedTask::findRequiringTasks(const VarLabel* var,
   }
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::addComputes(DependencyBatch* comp)
 {
-  comp->comp_next = m_comp_head;
-  m_comp_head     = comp;
+  comp->m_comp_next = m_comp_head;
+  m_comp_head       = comp;
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTask::addRequires(DependencyBatch* req)
 {
@@ -472,13 +486,17 @@ DetailedTask::addRequires(DependencyBatch* req)
   return m_reqs.insert(std::make_pair(req, req)).second;
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::addInternalComputes(DependencyBatch* comp)
 {
-  comp->comp_next      = m_internal_comp_head;
+  comp->m_comp_next    = m_internal_comp_head;
   m_internal_comp_head = comp;
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTask::addInternalRequires(DependencyBatch* req)
 {
@@ -486,6 +504,7 @@ DetailedTask::addInternalRequires(DependencyBatch* req)
   return m_internal_reqs.insert(std::make_pair(req, req)).second;
 }
 
+//_____________________________________________________________________________
 // can be called in one of two places - when the last MPI Recv has completed, or
 // from MPIScheduler
 void
@@ -518,6 +537,8 @@ DetailedTask::checkExternalDepCount()
   }
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::resetDependencyCounts()
 {
@@ -529,6 +550,8 @@ DetailedTask::resetDependencyCounts()
   m_exec_timer.reset(true);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
                                     const VarLabel* var)
@@ -557,8 +580,10 @@ DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
   }
 }
 
+//_____________________________________________________________________________
+//
 void
-DetailedTask::done(std::vector<OnDemandDataWarehouseSP>& dws)
+DetailedTask::done(std::vector<OnDemandDataWarehouseP>& dws)
 {
   // Important to scrub first, before dealing with the internal dependencies
   scrub(dws);
@@ -586,6 +611,8 @@ DetailedTask::done(std::vector<OnDemandDataWarehouseSP>& dws)
   m_exec_timer.stop();
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::dependencySatisfied(InternalDependency* dep)
 {
@@ -619,11 +646,13 @@ DetailedTask::dependencySatisfied(InternalDependency* dep)
   }
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::emitEdges(ProblemSpecP edgesElement)
 {
   for (auto req_iter = m_reqs.begin(); req_iter != m_reqs.end(); ++req_iter) {
-    DetailedTask* fromTask = (*req_iter).first->from_task;
+    DetailedTask* fromTask = (*req_iter).first->m_from_task;
     ProblemSpecP edge      = edgesElement->appendChild("edge");
     edge->appendElement("source", fromTask->getName());
     edge->appendElement("target", getName());
@@ -645,6 +674,8 @@ DetailedTask::emitEdges(ProblemSpecP edgesElement)
   }
 }
 
+//_____________________________________________________________________________
+//
 class PatchIDIterator
 {
 
@@ -652,11 +683,6 @@ public:
   PatchIDIterator(const std::vector<const Patch*>::const_iterator& iter)
     : m_const_iter(iter)
   {
-  }
-
-  PatchIDIterator(const PatchIDIterator& iter2)
-  {
-    m_const_iter = iter2.m_const_iter;
   }
 
   PatchIDIterator&
@@ -669,8 +695,7 @@ public:
   int
   operator*()
   {
-    const Patch* patch =
-      *m_const_iter; // vector<Patch*>::iterator::operator*();
+    const Patch* patch = *m_const_iter; // vector<Patch*>::iterator::operator*();
     return patch ? patch->getID() : -1;
   }
 
@@ -691,6 +716,8 @@ private:
   std::vector<const Patch*>::const_iterator m_const_iter;
 };
 
+//_____________________________________________________________________________
+//
 std::string
 DetailedTask::getName() const
 {
@@ -716,6 +743,8 @@ DetailedTask::getName() const
 
   return m_name;
 }
+
+namespace Uintah {
 
 std::ostream&
 operator<<(std::ostream& out, const DetailedTask& dtask)
@@ -772,8 +801,12 @@ operator<<(std::ostream& out, const DetailedTask& dtask)
   return out;
 }
 
+} // end namespace Uintah
+
 #ifdef HAVE_CUDA
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::assignDevice(unsigned int device_id)
 {
@@ -781,6 +814,7 @@ DetailedTask::assignDevice(unsigned int device_id)
   deviceNums_.insert(device_id);
 }
 
+//_____________________________________________________________________________
 // For tasks where there are multiple devices for the task (i.e. data archiver
 // output tasks)
 std::set<unsigned int>
@@ -789,6 +823,8 @@ DetailedTask::getDeviceNums() const
   return deviceNums_;
 }
 
+//_____________________________________________________________________________
+//
 cudaStream_t*
 DetailedTask::getCudaStreamForThisTask(unsigned int device_id) const
 {
@@ -800,6 +836,8 @@ DetailedTask::getCudaStreamForThisTask(unsigned int device_id) const
   return nullptr;
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::setCudaStreamForThisTask(unsigned int device_id,
                                        cudaStream_t* stream)
@@ -830,12 +868,16 @@ DetailedTask::setCudaStreamForThisTask(unsigned int device_id,
   }
 };
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::clearCudaStreamsForThisTask()
 {
   d_cudaStreams.clear();
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTask::checkCudaStreamDoneForThisTask(unsigned int device_id) const
 {
@@ -907,6 +949,8 @@ DetailedTask::checkCudaStreamDoneForThisTask(unsigned int device_id) const
   }
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTask::checkAllCudaStreamsDoneForThisTask() const
 {
@@ -930,6 +974,8 @@ DetailedTask::checkAllCudaStreamsDoneForThisTask() const
   return true;
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::setTaskGpuDataWarehouse(const unsigned int whichDevice,
                                       Task::WhichDW DW,
@@ -950,6 +996,8 @@ DetailedTask::setTaskGpuDataWarehouse(const unsigned int whichDevice,
   }
 }
 
+//_____________________________________________________________________________
+//
 GPUDataWarehouse*
 DetailedTask::getTaskGpuDataWarehouse(const unsigned int whichDevice,
                                       Task::WhichDW DW)
@@ -961,6 +1009,8 @@ DetailedTask::getTaskGpuDataWarehouse(const unsigned int whichDevice,
   return nullptr;
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::deleteTaskGpuDataWarehouses()
 {
@@ -981,6 +1031,8 @@ DetailedTask::deleteTaskGpuDataWarehouses()
   }
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::clearPreparationCollections()
 {
@@ -991,12 +1043,16 @@ DetailedTask::clearPreparationCollections()
   varsBeingCopiedByTask.clear();
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::addTempHostMemoryToBeFreedOnCompletion(void* ptr)
 {
   taskHostMemoryPoolItems.push(ptr);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_id,
                                                      void* ptr)
@@ -1005,6 +1061,8 @@ DetailedTask::addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_id,
   taskCudaMemoryPoolItems.push_back(gpuItem);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTask::deleteTemporaryTaskVars()
 {
@@ -1024,5 +1082,3 @@ DetailedTask::deleteTemporaryTaskVars()
 }
 
 #endif // HAVE_CUDA
-
-} // namespace Uintah
