@@ -42,9 +42,8 @@ Dir::create(const std::string& name)
 {
   try {
     fs::create_directories(name);
-    fs::permissions(name,
-                    fs::perms::owner_all | fs::perms::group_all,
-                    fs::perm_options::add);
+    fs::permissions(
+      name, fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add);
   } catch (fs::filesystem_error& err) {
     throw InternalError("Dir::could not create directory: " + name + " " +
                           err.what(),
@@ -77,10 +76,8 @@ Dir::remove(bool throwOnError)
   try {
     fs::remove(d_name);
   } catch (fs::filesystem_error& err) {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
-                              err.what(),
-                            __FILE__,
-                            __LINE__);
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -111,10 +108,8 @@ Dir::forceRemove(bool throwOnError)
   try {
     fs::remove_all(d_name);
   } catch (fs::filesystem_error& err) {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
-                              err.what(),
-                            __FILE__,
-                            __LINE__);
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -133,10 +128,8 @@ Dir::remove(const std::string& filename, bool throwOnError)
   try {
     fs::remove(filepath);
   } catch (fs::filesystem_error& err) {
-    InternalError exception("Dir::remove()::rmdir: " + d_name + " " +
-                              err.what(),
-                            __FILE__,
-                            __LINE__);
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
     if (throwOnError) {
       throw exception;
     } else {
@@ -207,7 +200,8 @@ Dir::copy(Dir& destDir)
   try {
     fs::copy(d_name, destDir.d_name, copyOptions);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name,
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
+                          " " + err.what(),
                         __FILE__,
                         __LINE__);
   }
@@ -220,9 +214,8 @@ Dir::move(Dir& destDir)
   try {
     fs::rename(d_name, destDir.d_name);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(std::string("Dir::move failed to move: ") + d_name,
-                        __FILE__,
-                        __LINE__);
+    throw InternalError(
+      std::string("Dir::move failed to move: ") + d_name, __FILE__, __LINE__);
   }
   return;
 }
@@ -230,13 +223,20 @@ Dir::move(Dir& destDir)
 void
 Dir::copy(const std::string& filename, Dir& destDir)
 {
-  std::string filepath = d_name + "/" + filename;
+  fs::path filepath      = d_name;
+  fs::path dest_filepath = destDir.d_name;
+
+  filepath /= filename;
   try {
-    fs::copy(filepath, destDir.d_name + "/" + filename);
+    dest_filepath /= filename;
+    fs::copy_file(fs::absolute(filepath),
+                  fs::absolute(dest_filepath),
+                  fs::copy_options::overwrite_existing);
   } catch (fs::filesystem_error& err) {
-    throw InternalError(std::string("Dir::copy failed to copy: ") + filepath,
-                        __FILE__,
-                        __LINE__);
+    std::ostringstream msg;
+    msg << "Dir::copy failed to copy file: " << fs::absolute(filepath) << " to "
+        << fs::absolute(dest_filepath) << " with err " << err.what();
+    throw InternalError(msg.str(), __FILE__, __LINE__);
   }
   return;
 }
@@ -244,13 +244,18 @@ Dir::copy(const std::string& filename, Dir& destDir)
 void
 Dir::move(const std::string& filename, Dir& destDir)
 {
-  std::string filepath = d_name + "/" + filename;
+  fs::path filepath      = d_name;
+  fs::path dest_filepath = destDir.d_name;
+
+  filepath /= filename;
   try {
-    fs::rename(filepath, destDir.d_name + "/" + filename);
+    dest_filepath /= filename;
+    fs::rename(fs::absolute(filepath), fs::absolute(dest_filepath));
   } catch (fs::filesystem_error& err) {
-    throw InternalError(std::string("Dir::move failed to move: ") + filepath,
-                        __FILE__,
-                        __LINE__);
+    std::ostringstream msg;
+    msg << "Dir::move failed to move: " << fs::absolute(filepath) << " to "
+        << fs::absolute(dest_filepath);
+    throw InternalError(msg.str(), __FILE__, __LINE__);
   }
   return;
 }

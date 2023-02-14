@@ -505,6 +505,7 @@ DataArchiver::initializeOutput(const ProblemSpecP& params,
   if (d_writeMeta) {
 
     saveSVNinfo();
+
     // Create index.xml:
     string inputname = d_outputDir.getName() + "/input.xml";
     params->output(inputname.c_str());
@@ -4412,7 +4413,7 @@ DataArchiver::setupSharedFileSystem()
     }
 
     std::ostringstream test_filename_stream;
-    test_filename_stream << "sus_filesystem_test-" << hostname << "-"
+    test_filename_stream << "vaango_filesystem_test-" << hostname << "-"
                          << getpid();
 
     // Create the test file...

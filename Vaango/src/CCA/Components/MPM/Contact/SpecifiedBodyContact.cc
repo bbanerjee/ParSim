@@ -91,7 +91,7 @@ SpecifiedBodyContact::SpecifiedBodyContact(const ProcessorGroup* myworld,
 void
 SpecifiedBodyContact::readSpecifiedVelocityFile()
 {
-  if (d_filename != "none") {
+  if (d_filename != "") {
     std::ifstream is(d_filename.c_str());
     if (!is) {
       std::ostringstream err;

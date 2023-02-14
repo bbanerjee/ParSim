@@ -187,7 +187,7 @@ protected:
   bool d_include_rotation{ false };
   int d_rotation_axis{ -99 };
   bool d_rigid_velocity{ true };
-  std::string d_filename{ "none" };
+  std::string d_filename{ "" };
   IntVector d_direction{ 0, 0, 1 };
   std::vector<std::pair<double, Vector>> d_vel_profile;
   std::vector<std::pair<double, Vector>> d_rot_profile;
