@@ -194,23 +194,35 @@ Dir::getSubdir(const std::string& sub)
 }
 
 void
+Dir::copy_into(Dir& destDir)
+{
+  const auto copyOptions = fs::copy_options::recursive;
+  auto last_dir          = fs::absolute(d_name).filename();
+  auto dest_path         = fs::path(destDir.d_name);
+  dest_path /= last_dir;
+  try {
+    fs::copy(fs::absolute(d_name), fs::absolute(dest_path), copyOptions);
+  } catch (fs::filesystem_error& err) {
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
+                          " to " + destDir.d_name + " " + err.what(),
+                        __FILE__,
+                        __LINE__);
+  }
+  return;
+}
+
+void
 Dir::copy(Dir& destDir)
 {
   const auto copyOptions = fs::copy_options::recursive;
+  auto dest_path         = fs::path(destDir.d_name);
   try {
-    fs::copy(fs::absolute(d_name), fs::absolute(destDir.d_name), copyOptions);
+    fs::copy(fs::absolute(d_name), fs::absolute(dest_path), copyOptions);
   } catch (fs::filesystem_error& err) {
-    auto last_dir  = fs::absolute(d_name).filename();
-    auto dest_path = fs::path(destDir.d_name);
-    dest_path /= last_dir;
-    try {
-      fs::copy(fs::absolute(d_name), fs::absolute(dest_path), copyOptions);
-    } catch (fs::filesystem_error& err) {
-      throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
-                            " to " + destDir.d_name + " " + err.what(),
-                          __FILE__,
-                          __LINE__);
-    }
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
+                          " to " + destDir.d_name + " " + err.what(),
+                        __FILE__,
+                        __LINE__);
   }
   return;
 }
@@ -228,7 +240,7 @@ Dir::move(Dir& destDir)
       fs::rename(fs::absolute(d_name), fs::absolute(dest_path));
     } catch (fs::filesystem_error& err) {
       std::ostringstream msg;
-      msg <<  "Dir::move failed to move: " << d_name << " to " << dest_path
+      msg << "Dir::move failed to move: " << d_name << " to " << dest_path
           << " " << err.what();
       throw InternalError(msg.str(), __FILE__, __LINE__);
     }

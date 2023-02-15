@@ -59,6 +59,8 @@ public:
 
   // copy this directory to under the destination directory
   void
+  copy_into(Dir& destDir);
+  void
   copy(Dir& destDir);
   void
   move(Dir& destDir);

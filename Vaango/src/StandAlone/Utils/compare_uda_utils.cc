@@ -273,6 +273,7 @@ compareParticles(Uintah::DataArchive* da1,
   Uintah::ParticleSubset::iterator iter1 = pset1->begin();
   Uintah::ParticleSubset::iterator iter2 = pset2->begin();
 
+  bool premature_failure{ false };
   for (; iter1 != pset1->end() && iter2 != pset2->end(); iter1++, iter2++) {
     if (!Vaango::Utils::CompareUda::compare(
           var1[*iter1], var2[*iter2], abs_tolerance, rel_tolerance)) {
@@ -290,13 +291,16 @@ compareParticles(Uintah::DataArchive* da1,
 
       Vaango::Utils::Options::tolerance_failure();
       if (Vaango::Utils::Options::concise()) {
+        premature_failure = true;
         break;
       }
     }
   }
 
   // this should be true if both sets are the same size
-  ASSERT(iter1 == pset1->end() && iter2 == pset2->end());
+  if (!premature_failure) {
+    ASSERT(iter1 == pset1->end() && iter2 == pset2->end());
+  }
 }
 
 template<class T>
