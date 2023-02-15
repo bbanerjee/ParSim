@@ -41,7 +41,7 @@ Uintah::Dout BCData_dbg{ "BCData_dbg",
                          "Grid BC data debug info",
                          false };
 
-}
+} // namespace
 
 namespace Uintah {
 
@@ -105,7 +105,8 @@ BCData::setBCValues(BoundCondBaseSP bc)
 }
 
 auto
-BCData::cloneBCValues(const std::string& var_name) const -> const BoundCondBaseSP
+BCData::cloneBCValues(const std::string& var_name) const
+  -> const BoundCondBaseSP
 {
   // The default location for BCs defined for all materials is mat_id = -1.
   // Need to first check the actual mat_id specified.  If this is not found,
@@ -151,10 +152,10 @@ BCData::find(const std::string& var_name) const -> bool
 }
 
 auto
-BCData::find(const std::string& bc_type, const std::string& bc_variable) const -> bool
+BCData::find(const std::string& bc_type, const std::string& bc_variable) const
+  -> bool
 {
   const BoundCondBase* bc = getBCValues(bc_variable);
-
   if (bc) {
     if (bc->getBCType() == bc_type) {
       return true;
@@ -176,8 +177,8 @@ BCData::print() const
 {
   DOUT(BCData_dbg, "size of d_BCData = " << d_BCData.size());
   for (const auto& bc : d_BCData) {
-    DOUT(BCData_dbg, "BC = " << bc->getBCVariable()
-               << " type = " << bc->getBCType());
+    DOUT(BCData_dbg,
+         "BC = " << bc->getBCVariable() << " type = " << bc->getBCType());
   }
 }
 

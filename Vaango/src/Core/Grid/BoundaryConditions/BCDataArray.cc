@@ -57,18 +57,17 @@ namespace Uintah {
 BCDataArray::~BCDataArray()
 {
   // std::cout << "Calling BCDataArray destructor" << std::endl;
-  for ([[maybe_unused]] auto& [matid, vec] : d_BCDataArray) {
-    vec.clear();
+  for ([[maybe_unused]] auto& [matid, bcgeom_vec] : d_BCDataArray) {
+    bcgeom_vec.clear();
   }
   d_BCDataArray.clear();
 }
 
 BCDataArray::BCDataArray(const BCDataArray& mybc)
 {
-  for ([[maybe_unused]] auto& [mat_id, mybc_vec] : mybc.d_BCDataArray) {
-    auto d_BCDataArray_vec = d_BCDataArray[mat_id];
-    for (const auto& mybc : mybc_vec) {
-      d_BCDataArray_vec.push_back(mybc->clone());
+  for ([[maybe_unused]] auto& [mat_id, mybcgeom_vec] : mybc.d_BCDataArray) {
+    for (const auto& mybcgeom : mybcgeom_vec) {
+      d_BCDataArray[mat_id].push_back(mybcgeom->clone());
     }
   }
 }
@@ -81,16 +80,15 @@ BCDataArray::operator=(const BCDataArray& rhs) -> BCDataArray&
   }
 
   // Delete the lhs
-  for ([[maybe_unused]] auto& [mat_id, bc_objects] : d_BCDataArray) {
-    bc_objects.clear();
+  for ([[maybe_unused]] auto& [mat_id, bcgeom_vec] : d_BCDataArray) {
+    bcgeom_vec.clear();
   }
   d_BCDataArray.clear();
 
   // Copy the rhs to the lhs
-  for ([[maybe_unused]] auto& [mat_id, bc_objects] : rhs.d_BCDataArray) {
-    auto& d_BCDataArray_vec = d_BCDataArray[mat_id];
-    for (const auto& bc : bc_objects) {
-      d_BCDataArray_vec.push_back(bc->clone());
+  for ([[maybe_unused]] auto& [mat_id, bcgeom_vec] : rhs.d_BCDataArray) {
+    for (const auto& bcgeom : bcgeom_vec) {
+      d_BCDataArray[mat_id].push_back(bcgeom->clone());
     }
   }
   return *this;
@@ -152,11 +150,11 @@ BCDataArray::determineIteratorLimits(Patch::FaceType face, const Patch* patch)
     test_pts.emplace_back(p.x(), p.y(), p.z());
   }
 
-  for ([[maybe_unused]] auto& [matid, bc_objects] : d_BCDataArray) {
-    for (auto& bc_object : bc_objects) {
-      bc_object->determineIteratorLimits(face, patch, test_pts);
+  for ([[maybe_unused]] auto& [matid, bcgeom_vec] : d_BCDataArray) {
+    for (auto& bcgeom : bcgeom_vec) {
+      bcgeom->determineIteratorLimits(face, patch, test_pts);
 #if 0
-      bc_object->printLimits();
+      bcgeom->printLimits();
 #endif
     }
   }
@@ -184,10 +182,10 @@ BCDataArray::determineInteriorBndIteratorLimits(Patch::FaceType face,
                                                 const Patch* patch)
 {
   for ([[maybe_unused]] auto& [matid, bcgeom_vec] : d_BCDataArray) {
-    for (auto& bc : bcgeom_vec) {
-      bc->determineInteriorBndIteratorLimits(face, patch);
+    for (auto& bcgeom : bcgeom_vec) {
+      bcgeom->determineInteriorBndIteratorLimits(face, patch);
 #if 0
-      bc->printLimits();
+      bcgeom->printLimits();
 #endif
     }
   }
@@ -211,10 +209,10 @@ BCDataArray::determineInteriorBndIteratorLimits(Patch::FaceType face,
 }
 
 void
-BCDataArray::addBCData(int mat_id, std::shared_ptr<BCGeomBase> bc)
+BCDataArray::addBCData(int mat_id, std::shared_ptr<BCGeomBase> bcgeom)
 {
-  DOUT(BCDA_dbg, "addBCData ..." << mat_id << ":" << bc);
-  d_BCDataArray[mat_id].push_back(bc);
+  DOUT(BCDA_dbg, "addBCData ..." << mat_id << ":" << bcgeom);
+  d_BCDataArray[mat_id].push_back(bcgeom);
 }
 
 void
@@ -353,13 +351,35 @@ BCDataArray::combineBCGeometryTypes_NEW(int mat_id)
 }
 
 auto
-BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
+BCDataArray::getBoundCondData(int mat_id, const string& type, int ichild) const
   -> const BoundCondBaseSP
 {
   //  std::cout << "type = " << type << std::endl;
-  BCData new_bc, new_bc_all;
+
   // Need to check two scenarios -- the given mat_id and the all mat_id (-1)
   // Check the given mat_id
+  for (auto&& [id, bcgeom_vec] : d_BCDataArray) {
+    if (id == mat_id) {
+      BCData new_bc;
+      bcgeom_vec[ichild]->getBCData(new_bc);
+      if (new_bc.find(type)) {
+        return new_bc.cloneBCValues(type);
+      }
+    } else if (id == -1) {
+      // Check the mat_id = "all" case
+      if (ichild < (int)bcgeom_vec.size()) {
+        BCData new_bc;
+        bcgeom_vec[ichild]->getBCData(new_bc);
+        if (new_bc.find(type)) {
+          return new_bc.cloneBCValues(type);
+        }
+      }
+    }
+  }
+  return nullptr;
+
+  /*
+  BCData new_bc, new_bc_all;
   auto itr = d_BCDataArray.find(mat_id);
 
   if (itr != d_BCDataArray.end()) {
@@ -380,7 +400,7 @@ BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
       }
     }
   }
-  return nullptr;
+  */
 }
 
 auto
@@ -481,7 +501,7 @@ BCDataArray::print() const
     for (auto& bcgeom : bcgeom_vec) {
       DOUT(BCDA_dbg,
            "  BCGeometry Type = " << typeid(bcgeom.get()).name() << " "
-                                << bcgeom);
+                                  << bcgeom);
       bcgeom->print();
     }
   }

@@ -79,7 +79,7 @@ public:
   /// Get the boundary condition data for a given material and a given
   /// type for a given child.
   [[nodiscard]] auto
-  getBoundCondData(int mat_id, const std::string type, int ichild) const
+  getBoundCondData(int mat_id, const std::string& type, int ichild) const
     -> const BoundCondBaseSP;
 
   auto

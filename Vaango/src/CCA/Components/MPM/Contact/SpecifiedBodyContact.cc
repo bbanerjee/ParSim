@@ -152,9 +152,8 @@ SpecifiedBodyContact::readSpecifiedVelocityFile()
 void
 SpecifiedBodyContact::setContactMaterialAttributes()
 {
-  MPMMaterial* mpm_matl =
-    static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", d_material));
-  mpm_matl->setIsRigid(true);
+  static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", d_material))
+    ->setIsRigid(true);
 }
 
 void
@@ -513,8 +512,9 @@ SpecifiedBodyContact::computeNormalBasedExchange(
         gVelocity_star[mat][node] = new_vel;
       }
 
-      // std::cout << "After rigid contact: Node = " << c << " material = " << n
-      //           << " gVel = " << gVelocity_star[n][c] << "\n";
+      //std::cout << "After normal-based rigid contact: Node = " << node
+      //          << " material = " << mat
+      //          << " gVel = " << gVelocity_star[mat][node] << "\n";
     } // end for matls
   }   // end for NodeIterator
 }
@@ -619,7 +619,7 @@ SpecifiedBodyContact::computeDirectionBasedExchange(
 
       int matID = d_mat_manager->getMaterial("MPM", mat)->getDWIndex();
 
-      Vector master_vel = imposed.velocity;
+      Vector master_vel = gVelocity_star[d_material][node];
 
       Vector new_vel = gVelocity_star[mat][node];
       if (mat == d_material || d_direction[0]) {
@@ -645,8 +645,9 @@ SpecifiedBodyContact::computeDirectionBasedExchange(
         gVelocity_star[mat][node] = new_vel;
       }
 
-      // std::cout << "After rigid contact: Node = " << c << " material = " << n
-      //           << " gVel = " << gVelocity_star[n][c] << "\n";
+      //std::cout << "After direction-based rigid contact: Node = " << node
+      //          << " material = " << mat
+      //          << " gVel = " << gVelocity_star[mat][node] << "\n";
     } // end for matls
   }   // end for NodeIterator
 }

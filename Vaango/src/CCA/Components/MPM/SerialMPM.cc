@@ -5330,6 +5330,7 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
     cout_doing << "After compute def grad: new_dw\n";
     new_dw->print();
   }
+
   /*
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
