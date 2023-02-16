@@ -2873,10 +2873,10 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
       int matID = mpm_matl->getDWIndex();
 
       ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       Ghost::AroundNodes,
-                                                       d_numGhostParticles,
-                                                       d_mpm_labels->pXLabel);
+                                                       patch);
+                                                       //Ghost::AroundNodes,
+                                                       //d_numGhostParticles,
+                                                       //d_mpm_labels->pXLabel);
 
       constParticleVariable<Matrix3> pStress_old;
       old_dw->get(pStress_old, d_mpm_labels->pStressLabel, pset);

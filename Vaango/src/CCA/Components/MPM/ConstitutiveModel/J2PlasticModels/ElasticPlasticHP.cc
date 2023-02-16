@@ -346,6 +346,7 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_shear->outputProblemSpec(cm_ps);
   d_melt->outputProblemSpec(cm_ps);
   d_Cp->outputProblemSpec(cm_ps);
+  d_intvar->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("evolve_porosity", d_evolvePorosity);
   cm_ps->appendElement("initial_mean_porosity", d_porosity.f0);

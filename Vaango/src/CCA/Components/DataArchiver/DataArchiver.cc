@@ -868,8 +868,8 @@ DataArchiver::copyTimesteps(Dir& fromDir,
 
       // copy timestep directory
       Dir timestepDir = fromDir.getSubdir(href);
-      std::cout << "copying timestep " << timestep << " from "
-                << timestepDir.getName() << " to " << toDir.getName() << "\n";
+      //std::cout << "copying timestep " << timestep << " from "
+      //          << timestepDir.getName() << " to " << toDir.getName() << "\n";
       if (removeOld) {
         timestepDir.move(toDir);
       } else {
