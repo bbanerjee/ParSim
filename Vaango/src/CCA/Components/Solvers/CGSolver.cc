@@ -279,8 +279,8 @@ CGSolver::scheduleSolve(const LevelP& level,
   task->hasSubScheduler();
 
   if (d_params->getRecomputeTimestepOnFailure()) {
-    task->computes(VarLabel::find(abortTimeStep_name));
-    task->computes(VarLabel::find(recomputeTimeStep_name));
+    task->computes(VarLabel::find(abortTimestep_name));
+    task->computes(VarLabel::find(recomputeTimestep_name));
   }
 
   LoadBalancer* lb                = sched->getLoadBalancer();

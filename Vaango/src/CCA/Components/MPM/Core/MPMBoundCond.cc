@@ -63,7 +63,12 @@ MPMBoundCond::setBoundaryCondition(const Patch* patch,
     dbg_BC << " patch BC type = " << patch->getBCType(face) << "\n";
 
     if (patch->getBCType(face) == Patch::None) {
-      int numChildren = patch->getBCDataArray(face)->getNumberChildren(dwi);
+      auto& bc_data = patch->getBCDataArray(face);
+      if (bc_data == nullptr) {
+        continue;
+      }
+
+      int numChildren = bc_data->getNumberChildren(dwi);
 
       IntVector l(0, 0, 0), h(0, 0, 0), off(0, 0, 0);
 
@@ -104,9 +109,9 @@ MPMBoundCond::setBoundaryCondition(const Patch* patch,
             face, dwi, "Symmetric", nu, nbound_ptr, child);
 
           if (bcb) {
-            //std::cout << "bcb = " << bcb << " face = " << face << std::endl;
-            //std::cout << "type = " << bcb->getBCType() << std::endl;
-            //std::cout << " interp_type = " << interp_type << std::endl;
+            // std::cout << "bcb = " << bcb << " face = " << face << std::endl;
+            // std::cout << "type = " << bcb->getBCType() << std::endl;
+            // std::cout << " interp_type = " << interp_type << std::endl;
             if (bcb->getBCType() == "symmetry") {
               if (face == Patch::xplus || face == Patch::xminus) {
                 if (interp_type == "linear") {
@@ -274,9 +279,7 @@ MPMBoundCond::setBoundaryCondition(const Patch* patch,
           }
         }
       }
-    } else {
-      continue;
-    }
+    } // end if (patch->getBCType(face) == Patch::None)
   }
 }
 
@@ -291,7 +294,12 @@ MPMBoundCond::setBoundaryCondition(const Patch* patch,
        face                 = Patch::nextFace(face)) {
     IntVector oneCell = patch->faceDirection(face);
     if (patch->getBCType(face) == Patch::None) {
-      int numChildren = patch->getBCDataArray(face)->getNumberChildren(dwi);
+      auto& bc_data = patch->getBCDataArray(face);
+      if (bc_data == nullptr) {
+        continue;
+      }
+
+      int numChildren = bc_data->getNumberChildren(dwi);
       IntVector l(0, 0, 0), h(0, 0, 0);
       if (interp_type == "gimp" || interp_type == "3rdorderBS" ||
           interp_type == "cpdi") {
@@ -364,8 +372,6 @@ MPMBoundCond::setBoundaryCondition(const Patch* patch,
           }
         }
       } // child
-    } else {
-      continue;
-    }
+    } 
   }
 }

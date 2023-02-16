@@ -144,7 +144,7 @@ AMRSimulationController::run()
   //********************************************************************
 
   // Start the wall timer for the initialization time step
-  d_wall_timers.TimeStep.reset(true);
+  d_wall_timers.Timestep.reset(true);
 
   //---------------------------------------------------------------------
   // The order of the setup is important. See the individual component
@@ -186,7 +186,7 @@ AMRSimulationController::run()
 #endif
 
   // Setup, compile, and run the taskgraph for the initialization time step
-  doInitialTimeStep();
+  doInitialTimestep();
 
   // Update the profiler weights
   d_loadBalancer->finalizeContributions(d_current_gridP);
@@ -200,19 +200,19 @@ AMRSimulationController::run()
   //*******************************************************************
 
 #ifndef DISABLE_SCI_MALLOC
-  AllocatorSetDefaultTagLineNumber(d_simulator->getTimeStep());
+  AllocatorSetDefaultTagLineNumber(d_simulator->getTimestep());
 #endif
 
   // Set the timer for the main loop. This timer is sync'ed with the
   // simulation time to get a measurement of the simulation to wall time.
-  d_wall_timers.TimeStep.reset(true);
+  d_wall_timers.Timestep.reset(true);
 
   double walltime = d_wall_timers.GetWallTime();
 
   //**************************************************************************
   // The main time loop; here the specified problem is actually getting solved
   //**************************************************************************
-  while (!d_simulator->isLastTimeStep(walltime)) {
+  while (!d_simulator->isLastTimestep(walltime)) {
 
     // Perform a bunch of housekeeping operations at the top of the
     // loop. Performing them here assures that everything is ready
@@ -222,7 +222,7 @@ AMRSimulationController::run()
     // check to see if this iteration may be the last one. The
     // DataArchiver uses it for determining whether to output or
     // checkpoint the last time step.
-    // "maybeLastTimeStep" uses the wall time and is sync'd across all ranks.
+    // "maybeLastTimestep" uses the wall time and is sync'd across all ranks.
 
     // Get the wall time if is needed, otherwise ignore it.
     double predictedWalltime;
@@ -238,10 +238,10 @@ AMRSimulationController::run()
       predictedWalltime = 0;
     }
 
-    if (d_simulator->maybeLastTimeStep(predictedWalltime)) {
-      d_output->maybeLastTimeStep(true);
+    if (d_simulator->maybeLastTimestep(predictedWalltime)) {
+      d_output->maybeLastTimestep(true);
     } else {
-      d_output->maybeLastTimeStep(false);
+      d_output->maybeLastTimestep(false);
     }
 
     // Set the current wall time for this rank (i.e. this value is
@@ -250,14 +250,14 @@ AMRSimulationController::run()
     d_output->setElapsedWallTime(walltime);
 
     // Get the next output checkpoint time step. This step is not done
-    // in d_output->beginOutputTimeStep because the original values
+    // in d_output->beginOutputTimestep because the original values
     // are needed to compare with if there is a timestep restart so it
     // is performed here.
 
-    // NOTE: It is called BEFORE d_simulator->prepareForNextTimeStep
+    // NOTE: It is called BEFORE d_simulator->prepareForNextTimestep
     // because at this point the delT, nextDelT, time step, sim time,
     // and all wall times are all in sync.
-    d_output->findNext_OutputCheckPointTimeStep(first && d_restarting,
+    d_output->findNext_OutputCheckPointTimestep(first && d_restarting,
                                                 d_current_gridP);
 
     // Reset the runtime performance stats.
@@ -272,14 +272,14 @@ AMRSimulationController::run()
     // Increment (by one) the current time step number so components
     // know what time step they are on and get the delta T that will
     // be used.
-    d_simulator->prepareForNextTimeStep();
+    d_simulator->prepareForNextTimestep();
 
     /* Ready for next timestep */
 
 #ifdef USE_GPERFTOOLS
     if (gheapprofile.active()) {
       char heapename[512];
-      sprintf(heapename, "Timestep %d", d_simulator->getTimeStep());
+      sprintf(heapename, "Timestep %d", d_simulator->getTimestep());
       HeapProfilerDump(heapename);
     }
 #endif
@@ -293,14 +293,14 @@ AMRSimulationController::run()
     // Regridding
     if (d_regridder) {
 
-      d_simulator->setRegridTimeStep(false);
+      d_simulator->setRegridTimestep(false);
 
       // If not the first time step or restarting check for regridding
       if ((!first || d_restarting) &&
           d_regridder->needsToReGrid(d_current_gridP)) {
 
         proc0cout << " Need to regrid for next time step "
-                  << d_simulator->getTimeStep() << " "
+                  << d_simulator->getTimestep() << " "
                   << "at current sim time " << d_simulator->getSimTime()
                   << std::endl;
 
@@ -310,7 +310,7 @@ AMRSimulationController::run()
       // Covers single-level regridder case (w/ restarts)
       else if (d_regridder->doRegridOnce() && d_regridder->isAdaptive()) {
         proc0cout << " Regridding once for next time step "
-                  << d_simulator->getTimeStep() << " "
+                  << d_simulator->getTimestep() << " "
                   << "at current sim time " << d_simulator->getSimTime()
                   << std::endl;
 
@@ -363,7 +363,7 @@ AMRSimulationController::run()
     d_scheduler->advanceDataWarehouse(d_current_gridP);
 
 #ifndef DISABLE_SCI_MALLOC
-    AllocatorSetDefaultTagLineNumber(d_simulator->getTimeStep());
+    AllocatorSetDefaultTagLineNumber(d_simulator->getTimestep());
 #endif
 
     // Various components can request a recompile including the in
@@ -389,7 +389,7 @@ AMRSimulationController::run()
     } else {
       // This is not correct if we have switched to a different
       // component, since the delT will be wrong
-      d_output->finalizeTimeStep(d_current_gridP, d_scheduler, false);
+      d_output->finalizeTimestep(d_current_gridP, d_scheduler, false);
     }
 
     if (dbg_barrier.active()) {
@@ -399,7 +399,7 @@ AMRSimulationController::run()
     }
 
     // Execute the current time step, restarting if necessary.
-    executeTimeStep(totalFine);
+    executeTimestep(totalFine);
 
     // If debugging, output the barrier times.
     if (dbg_barrier.active()) {
@@ -435,7 +435,7 @@ AMRSimulationController::run()
     // Done with the first time step.
     if (first) {
       d_scheduler->setRestartInitTimestep(false);
-      d_simulator->setRestartTimeStep(false);
+      d_simulator->setRestartTimestep(false);
 
       first = false;
     }
@@ -465,7 +465,7 @@ AMRSimulationController::run()
 } // end run()
 
 void
-AMRSimulationController::doInitialTimeStep()
+AMRSimulationController::doInitialTimestep()
 {
   d_scheduler->mapDataWarehouse(Task::OldDW, 0);
   d_scheduler->mapDataWarehouse(Task::NewDW, 1);
@@ -595,7 +595,7 @@ AMRSimulationController::doInitialTimeStep()
       // Output tasks
       const bool recompile = true;
 
-      d_output->finalizeTimeStep(d_current_gridP, d_scheduler, recompile);
+      d_output->finalizeTimestep(d_current_gridP, d_scheduler, recompile);
 
       d_output->sched_allOutputTasks(d_current_gridP, d_scheduler, recompile);
 
@@ -636,10 +636,10 @@ AMRSimulationController::doInitialTimeStep()
   // ARS - FIX ME - SCHEDULE INSTEAD
   ReportStats(nullptr, nullptr, nullptr, nullptr, nullptr, true);
 
-} // end doInitialTimeStep()
+} // end doInitialTimestep()
 
 void
-AMRSimulationController::executeTimeStep(int totalFine)
+AMRSimulationController::executeTimestep(int totalFine)
 {
   // If the time step needs to be recomputed, this loop will execute
   // multiple times.
@@ -653,7 +653,7 @@ AMRSimulationController::executeTimeStep(int totalFine)
 
     // Standard data warehouse scrubbing.
     if (m_scrub_datawarehouse && d_loadBalancer->getNthRank() == 1) {
-      if (d_simulator->activeReductionVariable(recomputeTimeStep_name)) {
+      if (d_simulator->activeReductionVariable(recomputeTimestep_name)) {
         d_scheduler->get_dw(0)->setScrubbing(DataWarehouse::ScrubNonPermanent);
 
         static bool reported = false;
@@ -694,13 +694,13 @@ AMRSimulationController::executeTimeStep(int totalFine)
     //   scheduler->execute(), default index is 0
     else {
       int iteration =
-        (d_last_recompile_timeStep == d_simulator->getTimeStep()) ? 0 : 1;
+        (d_last_recompile_timeStep == d_simulator->getTimestep()) ? 0 : 1;
 
       d_scheduler->execute(tg_index, iteration);
     }
 
     //  If time step is to be recomputed adjust the delta T and recompute.
-    if (d_simulator->getReductionVariable(recomputeTimeStep_name)) {
+    if (d_simulator->getReductionVariable(recomputeTimestep_name)) {
 
       for (int i = 1; i <= totalFine; ++i) {
         d_scheduler->replaceDataWarehouse(i, d_current_gridP);
@@ -711,20 +711,20 @@ AMRSimulationController::executeTimeStep(int totalFine)
 
       // Use the recomputed DelT and check the need for performing an
       // output and checkpoint time step.
-      d_output->recompute_OutputCheckPointTimeStep();
+      d_output->recompute_OutputCheckPointTimestep();
 
       success = false;
-    } else if (d_simulator->getReductionVariable(abortTimeStep_name)) {
+    } else if (d_simulator->getReductionVariable(abortTimestep_name)) {
       proc0cout << "Time step aborted and cannot recompute it, "
                 // << "outputing and checkpointing the time step. "
                 << "Ending the simulation." << std::endl;
 
       d_simulator->setReductionVariable(
-        d_scheduler->getLastDW(), abortTimeStep_name, true);
+        d_scheduler->getLastDW(), abortTimestep_name, true);
 
       // This should be a for the previous time step.
-      // d_output->setOutputTimeStep( true, d_current_gridP );
-      // d_output->setCheckpointTimeStep( true, d_current_gridP );
+      // d_output->setOutputTimestep( true, d_current_gridP );
+      // d_output->setCheckpointTimestep( true, d_current_gridP );
 
       success = true;
     } else {
@@ -734,7 +734,7 @@ AMRSimulationController::executeTimeStep(int totalFine)
 }
 
 auto
-AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
+AMRSimulationController::doRegridding(bool initialTimestep) -> bool
 {
   Timers::Simple regriddingTimer; // Regridding time
 
@@ -742,14 +742,14 @@ AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
 
   bool retVal = false;
 
-  if (!initialTimeStep) {
+  if (!initialTimestep) {
     proc0cout << "_____________________________________________________________"
                  "_________\n";
   }
 
   GridP oldGrid = d_current_gridP;
   d_current_gridP =
-    d_regridder->regrid(oldGrid.get_rep(), d_simulator->getTimeStep());
+    d_regridder->regrid(oldGrid.get_rep(), d_simulator->getTimestep());
 
   if (dbg_barrier.active()) {
     m_barrier_timer.reset(true);
@@ -761,14 +761,14 @@ AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
 
   d_runtime_stats[RegriddingTime] += regriddingTimer().seconds();
 
-  d_simulator->setRegridTimeStep(false);
+  d_simulator->setRegridTimestep(false);
 
   int lbstate =
-    initialTimeStep ? LoadBalancer::INIT_LB : LoadBalancer::REGRID_LB;
+    initialTimestep ? LoadBalancer::INIT_LB : LoadBalancer::REGRID_LB;
 
   if (d_current_gridP != oldGrid) {
 
-    d_simulator->setRegridTimeStep(true);
+    d_simulator->setRegridTimestep(true);
 
     d_loadBalancer->possiblyDynamicallyReallocate(d_current_gridP, lbstate);
 
@@ -828,14 +828,14 @@ AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
 
     Timers::Simple schedulerTimer;
 
-    if (!initialTimeStep) {
+    if (!initialTimestep) {
       schedulerTimer.start();
       d_scheduler->scheduleAndDoDataCopy(d_current_gridP);
       schedulerTimer.stop();
     }
 
     proc0cout << "Done regridding for next time step "
-              << d_simulator->getTimeStep() << " "
+              << d_simulator->getTimestep() << " "
               << "at current sim time " << d_simulator->getSimTime() << ", "
               << "total time took "
               << regriddingTimer().seconds() + schedulerTimer().seconds()
@@ -843,7 +843,7 @@ AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
               << "regridding took " << regriddingTimer().seconds()
               << " seconds";
 
-    if (!initialTimeStep) {
+    if (!initialTimestep) {
       proc0cout << ", scheduling and copying took "
                 << schedulerTimer().seconds() << " seconds";
     }
@@ -853,7 +853,7 @@ AMRSimulationController::doRegridding(bool initialTimeStep) -> bool
     retVal = true;
   } // grid != oldGrid
 
-  if (!initialTimeStep) {
+  if (!initialTimestep) {
     proc0cout << "_____________________________________________________________"
                  "_________\n";
   }
@@ -873,7 +873,7 @@ AMRSimulationController::compileTaskGraph(int totalFine)
 
   d_output->recompile(d_current_gridP);
 
-  d_last_recompile_timeStep = d_simulator->getTimeStep();
+  d_last_recompile_timeStep = d_simulator->getTimestep();
 
   d_scheduler->initialize(1, totalFine);
   d_scheduler->fillDataWarehouses(d_current_gridP);
@@ -972,7 +972,7 @@ AMRSimulationController::compileTaskGraph(int totalFine)
   }
 
   // Output tasks
-  d_output->finalizeTimeStep(d_current_gridP, d_scheduler, true);
+  d_output->finalizeTimestep(d_current_gridP, d_scheduler, true);
 
   d_output->sched_allOutputTasks(d_current_gridP, d_scheduler, true);
 
@@ -1104,7 +1104,7 @@ AMRSimulationController::subCycleExecute(int startDW,
                                          [[maybe_unused]] bool rootCycle)
 {
   // there are 2n+1 taskgraphs, n for the basic timestep, n for intermediate
-  // timestep work, and 1 for the errorEstimate and stableTimeStep, where n
+  // timestep work, and 1 for the errorEstimate and stableTimestep, where n
   // is the number of levels.
 
   // amrout << "Start AMRSimulationController::subCycleExecute, level=" <<
@@ -1122,7 +1122,7 @@ AMRSimulationController::subCycleExecute(int startDW,
 
   DataWarehouse::ScrubMode oldScrubbing =
     (d_simulator->activeReductionVariable(
-      recomputeTimeStep_name) /*|| d_loadBalancer->isDynamic()*/)
+      recomputeTimestep_name) /*|| d_loadBalancer->isDynamic()*/)
       ? DataWarehouse::ScrubNonPermanent
       : DataWarehouse::ScrubComplete;
 
@@ -1157,7 +1157,7 @@ AMRSimulationController::subCycleExecute(int startDW,
 
     // iteration only matters if it's zero or greater than 0
     int iteration =
-      curDW + (d_last_recompile_timeStep == d_simulator->getTimeStep() ? 0 : 1);
+      curDW + (d_last_recompile_timeStep == d_simulator->getTimestep() ? 0 : 1);
 
     DOUT(dbg,
          d_myworld->myRank()

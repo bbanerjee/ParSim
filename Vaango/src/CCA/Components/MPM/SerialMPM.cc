@@ -1476,9 +1476,7 @@ SerialMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
                         this,
                         &SerialMPM::actuallyComputeStableTimestep);
   t->computes(d_mpm_labels->delTLabel, level.get_rep());
-
-  auto mpm_matls = d_materialManager->allMaterials("MPM");
-  sched->addTask(t, level->eachPatch(), mpm_matls);
+  sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials("MPM"));
 }
 
 /*!----------------------------------------------------------------------
@@ -2264,6 +2262,11 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   }
 
   d_diffusionTasks->scheduleInterpolateParticlesToGrid(t);
+
+  if (d_mpm_flags->d_withColor) {
+    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
+    t->computes(d_mpm_labels->gColorLabel);
+  }
 
   sched->addTask(t, patches, matls);
 }
@@ -6565,7 +6568,7 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
       new_dw->allocateAndPut(
         pScaleFactor, d_mpm_labels->pScaleFactorLabel_preReloc, pset);
 
-      if (d_output->isOutputTimeStep()) {
+      if (d_output->isOutputTimestep()) {
         Vector dx = patch->dCell();
 
         if (d_mpm_flags->d_interpolatorType != "cpdi" &&

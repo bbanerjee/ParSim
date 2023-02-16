@@ -556,7 +556,7 @@ ScalarExch::addExch_Vel_Temp_CC(
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   for (int p = 0; p < patches->size(); p++) {
@@ -864,7 +864,7 @@ ScalarExch::addExch_Vel_Temp_CC(
             new_dw,
             BC_globalVars,
             BC_localVars,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(Temp_CC[m],
             "Temperature",
             gamma[m],
@@ -875,7 +875,7 @@ ScalarExch::addExch_Vel_Temp_CC(
             new_dw,
             BC_globalVars,
             BC_localVars,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 #if SET_CFI_BC
 //      set_CFI_BC<Vector>(vel_CC[m],  patch);
 //      set_CFI_BC<double>(Temp_CC[m], patch);
@@ -910,7 +910,7 @@ ScalarExch::addExch_Vel_Temp_CC_1matl(
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   for (int p = 0; p < patches->size(); p++) {
@@ -996,7 +996,7 @@ ScalarExch::addExch_Vel_Temp_CC_1matl(
           new_dw,
           BC_globalVars,
           BC_localVars,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(Temp_CC,
           "Temperature",
           gamma,
@@ -1007,7 +1007,7 @@ ScalarExch::addExch_Vel_Temp_CC_1matl(
           new_dw,
           BC_globalVars,
           BC_localVars,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 #if SET_CFI_BC
 //      set_CFI_BC<Vector>(vel_CC[m],  patch);
 //      set_CFI_BC<double>(Temp_CC[m], patch);

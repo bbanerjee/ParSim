@@ -624,7 +624,7 @@ MinMax::doAnalysis(const ProcessorGroup* pg,
   const std::string path      = "MinMax/L-" + levelIndx;
 
   // A level could be created on a regrid
-  if (m_simulator->wasRegridLastTimeStep() || d_firstPassThrough[L_indx]) {
+  if (m_simulator->wasRegridLastTimestep() || d_firstPassThrough[L_indx]) {
     createDirectory(0777, udaPath, path);
     d_firstPassThrough[L_indx] = false;
   }

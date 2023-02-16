@@ -69,7 +69,7 @@ public:
   };
 
 public:
-  Timers::Simple TimeStep;         // Total time for all time steps
+  Timers::Simple Timestep;         // Total time for all time steps
   Timers::Simple ExpMovingAverage; // Execution exponential moving average
                                    // for N time steps.
   Timers::Simple InSitu;           // In-situ time for previous time step
@@ -89,7 +89,7 @@ public:
   updateExpMovingAverage() -> Timers::nanoseconds
   {
 
-    Timers::nanoseconds laptime = TimeStep.lap();
+    Timers::nanoseconds laptime = Timestep.lap();
 
     // Ignore the first sample as that is for initialization.
     if (d_num_samples) {
@@ -322,9 +322,9 @@ protected:
   ReductionInfoMapper<RuntimeStatsEnum, double> d_runtime_stats;
 
 private:
-  // For reporting stats Frequency > OnTimeStep
+  // For reporting stats Frequency > OnTimestep
   unsigned int d_reportStatsFrequency{ 1 };
-  unsigned int d_reportStatsOnTimeStep{ 0 };
+  unsigned int d_reportStatsOnTimestep{ 0 };
 
   // Percent time in overhead samples
   double d_overhead_values[OVERHEAD_WINDOW];

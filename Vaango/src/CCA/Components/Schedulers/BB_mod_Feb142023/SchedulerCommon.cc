@@ -218,7 +218,7 @@ SchedulerCommon::makeTaskGraphDoc([[maybe_unused]] const DetailedTasks* dtasks,
   // an output or checkpoint time step or not. That is probably not
   // desired. However, given this code is for debuging it probably
   // fine that it does not happen if doing an output of sync.
-  if (!d_output->isOutputTimeStep()) {
+  if (!d_output->isOutputTimestep()) {
     return;
   }
 
@@ -281,7 +281,7 @@ SchedulerCommon::finalizeNodes(int process /* = 0*/)
     return;
   }
 
-  std::string timestep_dir(d_output->getLastTimeStepOutputLocation());
+  std::string timestep_dir(d_output->getLastTimestepOutputLocation());
 
   std::ostringstream fname;
   fname << "/taskgraph_" << std::setw(5) << std::setfill('0') << process

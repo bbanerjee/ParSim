@@ -252,7 +252,7 @@ public:
 
   // Updates the time step and the delta T.
   virtual void
-  prepareForNextTimeStep();
+  prepareForNextTimestep();
 
   // Asks the application if it needs to be recompiled.
   virtual bool
@@ -263,7 +263,7 @@ public:
 
   // Labels for access value in the data warehouse.
   virtual const VarLabel*
-  getTimeStepLabel() const
+  getTimestepLabel() const
   {
     return d_timeStepLabel;
   }
@@ -326,39 +326,39 @@ public:
 
   // For restarting.
   virtual bool
-  isRestartTimeStep() const
+  isRestartTimestep() const
   {
     return d_isRestartTimestep;
   }
   virtual void
-  setRestartTimeStep(bool val)
+  setRestartTimestep(bool val)
   {
     d_isRestartTimestep = val;
   }
 
   // For regridding.
   virtual bool
-  isRegridTimeStep() const
+  isRegridTimestep() const
   {
-    return d_isRegridTimeStep;
+    return d_isRegridTimestep;
   }
   virtual void
-  setRegridTimeStep(bool val)
+  setRegridTimestep(bool val)
   {
-    d_isRegridTimeStep = val;
+    d_isRegridTimestep = val;
 
-    if (d_isRegridTimeStep) {
+    if (d_isRegridTimestep) {
       d_lastRegridTimestep = d_timeStep;
     }
   }
   virtual int
-  getLastRegridTimeStep()
+  getLastRegridTimestep()
   {
     return d_lastRegridTimestep;
   }
 
   virtual bool
-  wasRegridLastTimeStep() const
+  wasRegridLastTimestep() const
   {
     return ((d_timeStep - d_lastRegridTimestep - 1) == 0);
   }
@@ -623,12 +623,12 @@ public:
   }
 
   virtual void
-  setTimeStepsMax(int val)
+  setTimestepsMax(int val)
   {
     d_timeStepsMax = val;
   }
   virtual int
-  getTimeStepsMax() const
+  getTimestepsMax() const
   {
     return d_timeStepsMax;
   }
@@ -716,19 +716,19 @@ private:
   // beginning of a simulation.  The 'increment' function is called by
   // the SimulationController at the beginning of each time step.
   virtual void
-  setTimeStep(int timeStep);
+  setTimestep(int timeStep);
   virtual void
-  incrementTimeStep();
+  incrementTimestep();
   virtual int
-  getTimeStep() const
+  getTimestep() const
   {
     return d_timeStep;
   }
 
   virtual bool
-  isLastTimeStep(double walltime);
+  isLastTimestep(double walltime);
   virtual bool
-  maybeLastTimeStep(double walltime) const;
+  maybeLastTimestep(double walltime) const;
 
 protected:
   Scheduler* d_scheduler{ nullptr };
@@ -761,7 +761,7 @@ private:
 
   bool d_isRestartTimestep{ false };
 
-  bool d_isRegridTimeStep{ false };
+  bool d_isRegridTimestep{ false };
   // While it may not have been a "re"-grid, the original grid is
   // created on time step 0.
   int d_lastRegridTimestep{ 0 };

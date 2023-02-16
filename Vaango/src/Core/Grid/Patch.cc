@@ -429,6 +429,9 @@ Patch::setInteriorBndArrayBCValues(Patch::FaceType face,
 const std::shared_ptr<BCDataArray>
 Patch::getBCDataArray(Patch::FaceType face) const
 {
+  return d_arrayBCS[face];
+
+  /*
   if (d_arrayBCS[face]) {
     return d_arrayBCS[face];
   } else {
@@ -437,6 +440,7 @@ Patch::getBCDataArray(Patch::FaceType face) const
     SCI_THROW(InternalError(
       "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
+  */
 }
 
 /**
@@ -447,6 +451,9 @@ Patch::getBCDataArray(Patch::FaceType face) const
 std::shared_ptr<BCDataArray>
 Patch::getModifiableBCDataArray(Patch::FaceType face) const
 {
+  return d_arrayBCS[face];
+
+  /*
   if (d_arrayBCS[face]) {
     return d_arrayBCS[face];
   } else {
@@ -455,6 +462,7 @@ Patch::getModifiableBCDataArray(Patch::FaceType face) const
     SCI_THROW(InternalError(
       "d_arrayBCS[face] has not been allocated", __FILE__, __LINE__));
   }
+  */
 }
 
 //-----------------------------------------------------------------------------------------------

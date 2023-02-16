@@ -239,7 +239,7 @@ public:
 
   // Updates the tiem step and the delta T.
   virtual void
-  prepareForNextTimeStep() = 0;
+  prepareForNextTimestep() = 0;
 
   // Ask the component if it needs to be recompiled
   virtual bool
@@ -251,7 +251,7 @@ public:
 
   // Labels for access value in the data warehouse.
   virtual const VarLabel*
-  getTimeStepLabel() const = 0;
+  getTimestepLabel() const = 0;
   virtual const VarLabel*
   getSimTimeLabel() const = 0;
   virtual const VarLabel*
@@ -280,19 +280,19 @@ public:
 
   // For restarting.
   virtual bool
-  isRestartTimeStep() const = 0;
+  isRestartTimestep() const = 0;
   virtual void
-  setRestartTimeStep(bool val) = 0;
+  setRestartTimestep(bool val) = 0;
 
   // For regridding.
   virtual bool
-  isRegridTimeStep() const = 0;
+  isRegridTimestep() const = 0;
   virtual void
-  setRegridTimeStep(bool val) = 0;
+  setRegridTimestep(bool val) = 0;
   virtual int
-  getLastRegridTimeStep() = 0;
+  getLastRegridTimestep() = 0;
   virtual bool
-  wasRegridLastTimeStep() const = 0;
+  wasRegridLastTimestep() const = 0;
 
   // Some applications can set reduction variables
   virtual void
@@ -402,9 +402,9 @@ public:
   getSimTimeClampToOutput() const = 0;
 
   virtual void
-  setTimeStepsMax(int val) = 0;
+  setTimestepsMax(int val) = 0;
   virtual int
-  getTimeStepsMax() const = 0;
+  getTimestepsMax() const = 0;
 
   virtual void
   setWallTimeMax(double val) = 0;
@@ -452,16 +452,16 @@ private:
   // 'increment' function is called by the SimulationController at
   // the beginning of each time step.
   virtual void
-  setTimeStep(int timeStep) = 0;
+  setTimestep(int timeStep) = 0;
   virtual void
-  incrementTimeStep() = 0;
+  incrementTimestep() = 0;
   virtual int
-  getTimeStep() const = 0;
+  getTimestep() const = 0;
 
   virtual bool
-  isLastTimeStep(double walltime) = 0;
+  isLastTimestep(double walltime) = 0;
   virtual bool
-  maybeLastTimeStep(double walltime) const = 0;
+  maybeLastTimestep(double walltime) const = 0;
 };
 } // End namespace Uintah
 

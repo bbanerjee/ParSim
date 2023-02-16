@@ -555,7 +555,7 @@ PassiveScalar::initialize(const ProcessorGroup*,
   timeStep_vartype timeStep;
   new_dw->get(timeStep, VarLabel::find(timeStep_name));
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
 
@@ -763,7 +763,7 @@ PassiveScalar::initialize(const ProcessorGroup*,
           d_materialManager,
           indx,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
   } // patches
 }
 

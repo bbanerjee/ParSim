@@ -40,12 +40,12 @@ const std::string delT_name("delT");
 
 const std::string outputInterval_name("outputInterval");
 const std::string checkpointInterval_name("checkpointInterval");
-const std::string outputTimeStep_name("outputTimeStep");
-const std::string outputPreviousTimeStep_name("outputPreviousTimeStep");
-const std::string checkpointTimeStep_name("checkpointTimeStep");
-const std::string checkpointPreviousTimeStep_name("checkpointPreviousTimeStep");
-const std::string recomputeTimeStep_name("recomputeTimeStep");
-const std::string abortTimeStep_name("abortTimeStep");
+const std::string outputTimestep_name("outputTimestep");
+const std::string outputPreviousTimestep_name("outputPreviousTimestep");
+const std::string checkpointTimestep_name("checkpointTimestep");
+const std::string checkpointPreviousTimestep_name("checkpointPreviousTimestep");
+const std::string recomputeTimestep_name("recomputeTimestep");
+const std::string abortTimestep_name("abortTimestep");
 const std::string endSimulation_name("endSimulation");
 
 using timeStep_vartype = SoleVariable<unsigned int>;

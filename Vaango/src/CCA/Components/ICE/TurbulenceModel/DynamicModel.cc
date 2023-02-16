@@ -440,7 +440,7 @@ DynamicModel::computeVariance(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find(timeStep_name));
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   cout_doing << "Doing computeVariance "
              << "\t\t\t DynamicModel" << endl;
@@ -484,7 +484,7 @@ DynamicModel::computeVariance(const ProcessorGroup*,
             d_materialManager,
             matl,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
     }
   }
 }

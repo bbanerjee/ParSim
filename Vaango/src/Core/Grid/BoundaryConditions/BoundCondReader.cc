@@ -1241,6 +1241,9 @@ BoundCondReader::combineBCS()
 
     auto rearranged = std::make_shared<BCDataArray>();
     auto original   = d_BCReaderData[face];
+    if (original == nullptr) {
+      continue;
+    }
 
     original->print();
     DOUT(BCR_dbg, std::endl);
@@ -1344,7 +1347,11 @@ BoundCondReader::combineBCS()
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
     DOUT(BCR_dbg, "After Face . . .  " << face);
-    d_BCReaderData[face]->print();
+    const auto& data = d_BCReaderData[face];
+    if (data == nullptr) {
+      continue;
+    }
+    data->print();
   }
 }
 
@@ -1362,7 +1369,10 @@ BoundCondReader::bulletProofing()
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
 
-    auto original = d_BCReaderData[face];
+    auto& original = d_BCReaderData[face];
+    if (original == nullptr) {
+      continue;
+    }
 
     for (auto& [id, bcgeom_vec] : original->d_BCDataArray) {
 

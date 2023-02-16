@@ -108,7 +108,7 @@ ScalarDiffusionTasks::actuallyInitialize(const Patch* patch,
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
     ScalarDiffusionModel* sdm = mpm_matl->getScalarDiffusionModel();
-    sdm->initializeTimeStep(patch, mpm_matl, new_dw);
+    sdm->initializeTimestep(patch, mpm_matl, new_dw);
     sdm->initializeSDMData(patch, mpm_matl, new_dw);
   }
 }

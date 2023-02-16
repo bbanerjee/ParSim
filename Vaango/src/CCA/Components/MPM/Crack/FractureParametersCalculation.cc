@@ -121,7 +121,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
 
     // Detect if calculating fracture parameters or
     // doing crack propagation at this time step
-    DetectIfDoingFractureAnalysisAtThisTimeStep(time);
+    DetectIfDoingFractureAnalysisAtThisTimestep(time);
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
@@ -915,7 +915,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 }
 
 void
-Crack::DetectIfDoingFractureAnalysisAtThisTimeStep(double time)
+Crack::DetectIfDoingFractureAnalysisAtThisTimestep(double time)
 {
   static double timeforcalculateJK = -1.e-200;
   static double timeforpropagation = -1.e-200;

@@ -122,11 +122,11 @@ void SolverTest2::scheduleRestartInitialize(const LevelP& level,
 }
 //__________________________________
 // 
-void SolverTest2::scheduleComputeStableTimeStep(const LevelP& level,
+void SolverTest2::scheduleComputeStableTimestep(const LevelP& level,
                                           SchedulerP& sched)
 {
-  Task* task = scinew Task("computeStableTimeStep",this, 
-                           &SolverTest2::computeStableTimeStep);
+  Task* task = scinew Task("computeStableTimestep",this, 
+                           &SolverTest2::computeStableTimestep);
   task->computes(getDelTLabel(),level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
@@ -151,7 +151,7 @@ SolverTest2::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 }
 //__________________________________
 //
-void SolverTest2::computeStableTimeStep(const ProcessorGroup*,
+void SolverTest2::computeStableTimestep(const ProcessorGroup*,
                                   const PatchSubset* pss,
                                   const MaterialSubset*,
                                   DataWarehouse*, DataWarehouse* new_dw)

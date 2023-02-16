@@ -208,8 +208,8 @@ AMRSolver::scheduleSolve(const LevelP& level,
     task->requires(which_b_dw, b, subset, Ghost::None, 0);
   } // numLevels
 
-  // task->computes( VarLabel::find(abortTimeStep_name) );
-  // task->computes( VarLabel::find(recomputeTimeStep_name) );
+  // task->computes( VarLabel::find(abortTimestep_name) );
+  // task->computes( VarLabel::find(recomputeTimestep_name) );
 
   task->setType(Task::OncePerProc);
 

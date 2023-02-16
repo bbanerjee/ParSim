@@ -137,7 +137,7 @@ public:
   //! Call once per timestep, and if recompiling,
   //! after all the other tasks are scheduled.
   void
-  finalizeTimeStep(const GridP&,
+  finalizeTimestep(const GridP&,
                    SchedulerP&,
                    bool recompile  = false,
                    int addMaterial = 0) override;
@@ -151,12 +151,12 @@ public:
   //! Find the next times to output
   //! Call after timestep has completed.
   void
-  findNext_OutputCheckPointTimeStep(bool restart, const GridP&) override;
+  findNext_OutputCheckPointTimestep(bool restart, const GridP&) override;
 
   // Called after a time step recompute where delta t is adjusted
   // to make sure an output and/or checkpoint time step is needed.
   void
-  recompute_OutputCheckPointTimeStep() override;
+  recompute_OutputCheckPointTimestep() override;
 
   //! Write metadata to xml files.
   //! Call after timestep has completed.
@@ -217,16 +217,16 @@ public:
 
   // Get the time step the next output will occur
   int
-  getNextOutputTimeStep() const override
+  getNextOutputTimestep() const override
   {
-    return d_nextOutputTimeStep;
+    return d_nextOutputTimestep;
   }
 
   // Pushes output back by one time step.
   void
-  postponeNextOutputTimeStep() override
+  postponeNextOutputTimestep() override
   {
-    ++d_nextOutputTimeStep;
+    ++d_nextOutputTimestep;
   }
 
   // Get the time/time step/wall time of the next checkpoint will occur
@@ -237,9 +237,9 @@ public:
   }
 
   int
-  getNextCheckpointTimeStep() const override
+  getNextCheckpointTimestep() const override
   {
-    return d_nextCheckpointTimeStep;
+    return d_nextCheckpointTimestep;
   }
 
   int
@@ -250,29 +250,29 @@ public:
 
   // Returns true if data will be output this time step
   void
-  setOutputTimeStep(bool val, const GridP& grid) override;
+  setOutputTimestep(bool val, const GridP& grid) override;
 
   bool
-  isOutputTimeStep() const override
+  isOutputTimestep() const override
   {
-    return d_isOutputTimeStep;
+    return d_isOutputTimestep;
   }
 
   // Returns true if data will be checkpointed this time step
   void
-  setCheckpointTimeStep(bool val, const GridP& grid) override;
+  setCheckpointTimestep(bool val, const GridP& grid) override;
 
   bool
-  isCheckpointTimeStep() const override
+  isCheckpointTimestep() const override
   {
-    return d_isCheckpointTimeStep;
+    return d_isCheckpointTimestep;
   }
 
   //! Get the directory of the current time step for outputting info.
   const std::string&
-  getLastTimeStepOutputLocation() const override
+  getLastTimestepOutputLocation() const override
   {
-    return d_lastTimeStepLocation;
+    return d_lastTimestepLocation;
   }
 
   bool
@@ -289,12 +289,12 @@ public:
   }
 
   void
-  setOutputTimeStepInterval(int inv) override;
+  setOutputTimestepInterval(int inv) override;
 
   int
-  getOutputTimeStepInterval() const override
+  getOutputTimestepInterval() const override
   {
-    return d_outputTimeStepInterval;
+    return d_outputTimestepInterval;
   }
 
   void
@@ -307,12 +307,12 @@ public:
   }
 
   void
-  setCheckpointTimeStepInterval(int inv) override;
+  setCheckpointTimestepInterval(int inv) override;
 
   int
-  getCheckpointTimeStepInterval() const override
+  getCheckpointTimestepInterval() const override
   {
-    return d_checkpointTimeStepInterval;
+    return d_checkpointTimestepInterval;
   }
 
   void
@@ -345,15 +345,15 @@ public:
   }
 
   void
-  maybeLastTimeStep(bool val) override
+  maybeLastTimestep(bool val) override
   {
-    d_maybeLastTimeStep = val;
+    d_maybeLastTimestep = val;
   };
 
   bool
-  maybeLastTimeStep() override
+  maybeLastTimestep() override
   {
-    return d_maybeLastTimeStep;
+    return d_maybeLastTimestep;
   };
 
   void
@@ -407,10 +407,10 @@ public:
 
   // Returns true if an output or checkpoint exists for the time step
   bool
-  outputTimeStepExists(unsigned int ts) override;
+  outputTimestepExists(unsigned int ts) override;
 
   bool
-  checkpointTimeStepExists(unsigned int ts) override;
+  checkpointTimestepExists(unsigned int ts) override;
 
 public:
   //! problemSetup parses the ups file into a list of these
@@ -540,7 +540,7 @@ private:
   //! the necessary directories and xml files to begin the
   //! output timestep.
   void
-  makeTimeStepDirs(Dir& dir,
+  makeTimestepDirs(Dir& dir,
                    std::vector<SaveItem>& saveLabels,
                    const GridP& grid,
                    std::string* pTimestepDir /* passed back */);
@@ -555,7 +555,7 @@ private:
   //! Helper for finalizeTimestep - determines if, based on the current
   //! time and timestep, this will be an output or checkpoint timestep.
   void
-  beginOutputTimeStep(const GridP& grid);
+  beginOutputTimestep(const GridP& grid);
 
   //! helper for initializeOutput - writes the initial index.xml file,
   //! both setting the d_indexDoc var and writing it to disk.
@@ -569,7 +569,7 @@ private:
   //! helper for restartSetup - copies the timestep directories AND
   //! timestep entries in index.xml
   void
-  copyTimeSteps(Dir& fromDir,
+  copyTimesteps(Dir& fromDir,
                 Dir& toDir,
                 int startTimestep,
                 int maxTimestep,
@@ -616,8 +616,8 @@ private:
   //! This is if you want to pass in the uda extension on the command line
   int d_udaSuffix{ -1 };
 
-  bool d_isOutputTimeStep{ false };     //!< set if this is an output timestep
-  bool d_isCheckpointTimeStep{ false }; //!< set if a checkpoint timestep
+  bool d_isOutputTimestep{ false };     //!< set if this is an output timestep
+  bool d_isCheckpointTimestep{ false }; //!< set if a checkpoint timestep
 
   //! Wheter or not p.x is saved
   bool d_saveP_x{ false };
@@ -676,30 +676,30 @@ private:
   // Only one of these should be non-zero.  The value is read from the .ups
   // file.
   double d_outputInterval{ 0 };      // In seconds.
-  int d_outputTimeStepInterval{ 0 }; // Number of time steps.
+  int d_outputTimestepInterval{ 0 }; // Number of time steps.
 
   double d_nextOutputTime{ 0 };  // used when d_outputInterval != 0
-  int d_nextOutputTimeStep{ 0 }; // used when d_outputTimestepInterval != 0
+  int d_nextOutputTimestep{ 0 }; // used when d_outputTimestepInterval != 0
 
   // Output the last time step.
-  bool d_outputLastTimeStep{ false };
+  bool d_outputLastTimestep{ false };
 
   Dir d_outputDir; //!< top of uda dir
 
   //! Whether or not to save the initialization timestep
-  bool d_outputInitTimeStep{ false };
+  bool d_outputInitTimestep{ false };
 
   //! last timestep dir (filebase.000/t#)
-  std::string d_lastTimeStepLocation{ "invalid" };
+  std::string d_lastTimestepLocation{ "invalid" };
 
-  int d_lastOutputOfTimeStepXML{ -1 };
+  int d_lastOutputOfTimestepXML{ -1 };
 
   //! string for uda dir (actual dir will have postpended numbers
   // List of current output dirs
-  std::list<std::string> d_outputTimeStepDirs;
+  std::list<std::string> d_outputTimestepDirs;
 
   double d_elapsedWallTime{ 0 };
-  bool d_maybeLastTimeStep{ false };
+  bool d_maybeLastTimestep{ false };
 
   //! Whether or not particle vars are saved
   //! Requires p.x to be set
@@ -732,7 +732,7 @@ private:
 
   // Only one of these should be non-zero.
   double d_checkpointInterval{ 0 };      // In seconds.
-  int d_checkpointTimeStepInterval{ 0 }; // In seconds.
+  int d_checkpointTimestepInterval{ 0 }; // In seconds.
 
   // How much real time (in seconds) to wait for checkpoint can be
   // used with or without one of the above two.  WalltimeStart
@@ -749,18 +749,18 @@ private:
   Dir d_checkpointsDir{ "" };
 
   //! List of current checkpoint dirs
-  std::list<std::string> d_checkpointTimeStepDirs;
+  std::list<std::string> d_checkpointTimestepDirs;
   double d_nextCheckpointTime{ 0 }; //!< used when d_checkpointInterval != 0
 
   //!< used when d_checkpointTimestepInterval != 0
-  int d_nextCheckpointTimeStep{ 0 };
+  int d_nextCheckpointTimestep{ 0 };
 
   //!< used when d_checkpointWalltimeInterval != 0
   int d_nextCheckpointWallTime{ 0 };
 
-  bool d_outputPreviousTimeStep{ false };
-  bool d_checkpointPreviousTimeStep{ false };
-  bool d_checkpointLastTimeStep{ false };
+  bool d_outputPreviousTimestep{ false };
+  bool d_checkpointPreviousTimestep{ false };
+  bool d_checkpointLastTimestep{ false };
 
   //-----------------------------------------------------------
   // RNJ -
@@ -792,7 +792,7 @@ private:
   std::map<int, ProblemSpecP> d_CheckpointXMLDataDocs;
 
   //  used for migrating timestep directories
-  std::map<int, int> d_restartTimeStepIndices;
+  std::map<int, int> d_restartTimestepIndices;
 
   Dir d_fromDir{ "" }; // keep track of the original uda
 
@@ -802,7 +802,7 @@ private:
   // returns either the top level timestep or if reduceUda is used
   // a value from the index.xml file
   auto
-  getTimeStepTopLevel() -> int;
+  getTimestepTopLevel() -> int;
 
   // Normally saved vars are scrubbed if not needed for the next
   // time step. By pass scubbing when running in situ or if wanting
@@ -811,13 +811,13 @@ private:
 
   // The following four variables affect the global var output only.
   // For outputing the sim time and/or time step with the global vars
-  bool d_outputGlobalVarsTimeStep{ false };
+  bool d_outputGlobalVarsTimestep{ false };
   bool d_outputGlobalVarsSimTime{ true };
 
   // For modulating the output frequency global vars. By default
-  // they are output every time step. Note: Frequency > OnTimeStep
+  // they are output every time step. Note: Frequency > OnTimestep
   unsigned int d_outputGlobalVarsFrequency{ 1 };
-  unsigned int d_outputGlobalVarsOnTimeStep{ 0 };
+  unsigned int d_outputGlobalVarsOnTimestep{ 0 };
 
   auto
   TranslateVariableType(std::string type, bool isThisCheckpoint) -> std::string;

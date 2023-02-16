@@ -243,7 +243,7 @@ LightTime::computeModelSources(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   simTime_vartype simTimeVar;
   old_dw->get(simTimeVar, Ilb->simulationTimeLabel);
@@ -388,28 +388,28 @@ LightTime::computeModelSources(const ProcessorGroup*,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(mass_src_1,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m1,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(delF,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(Fr,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
   }
 }
 //______________________________________________________________________

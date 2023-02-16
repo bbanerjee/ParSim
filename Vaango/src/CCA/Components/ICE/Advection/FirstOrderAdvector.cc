@@ -147,7 +147,7 @@ FirstOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
   // -set the outflux slab vol in all cells = 0.0,
   // -request that the timestep be restarted.
   // -ignore if a timestep restart has already been requested
-  bool rts = new_dw->recomputeTimeStep();
+  bool rts = new_dw->recomputeTimestep();
 
   if (error && bulletProof_test && !rts) {
     std::vector<IntVector> badCells;
@@ -175,8 +175,8 @@ FirstOrderAdvector::inFluxOutFluxVolume(const SFCXVariable<double>& uvel_FC,
   } // if total_fluxout > vol
 
   if (error && bulletProof_test) {
-    new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
-    new_dw->put(bool_or_vartype(true), VarLabel::find(recomputeTimeStep_name));
+    new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimestep_name));
+    new_dw->put(bool_or_vartype(true), VarLabel::find(recomputeTimestep_name));
   }
 
   if (error && !bulletProof_test) {

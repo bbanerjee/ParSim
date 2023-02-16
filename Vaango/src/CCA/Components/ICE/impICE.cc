@@ -169,8 +169,8 @@ ICE::scheduleSetupRHS(SchedulerP& sched,
     t->modifies(d_ice_labels->rhsLabel, one_matl, oims);
   }
 
-  t->computes(VarLabel::find(abortTimeStep_name));
-  t->computes(VarLabel::find(recomputeTimeStep_name));
+  t->computes(VarLabel::find(abortTimestep_name));
+  t->computes(VarLabel::find(recomputeTimestep_name));
 
   sched->addTask(t, patches, all_matls);
 }
@@ -462,8 +462,8 @@ ICE::scheduleImplicitPressureSolve(SchedulerP& sched,
   t->modifies(d_ice_labels->vol_fracY_FCLabel);
   t->modifies(d_ice_labels->vol_fracZ_FCLabel);
 
-  t->computes(VarLabel::find(abortTimeStep_name));
-  t->computes(VarLabel::find(recomputeTimeStep_name));
+  t->computes(VarLabel::find(abortTimestep_name));
+  t->computes(VarLabel::find(recomputeTimestep_name));
 
   const PatchSet* perproc_patches =
     d_loadBalancer->getPerProcessorPatchSet(level);
@@ -642,7 +642,7 @@ ICE::setupRHS(const ProcessorGroup*,
     pOldDW->get(delT, d_ice_labels->delTLabel, level);
 
     std::unique_ptr<Advector> advector =
-      d_advector->clone(new_dw, patch, isRegridTimeStep());
+      d_advector->clone(new_dw, patch, isRegridTimestep());
 
     CCVariable<double> q_advected, rhs;
     CCVariable<double> sumAdvection, massExchTerm;
@@ -883,7 +883,7 @@ ICE::updatePressure(const ProcessorGroup*,
   timeStep_vartype timeStep;
   parent_old_dw->get(timeStep, d_ice_labels->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -956,14 +956,14 @@ ICE::updatePressure(const ProcessorGroup*,
           new_dw,
           d_BC_globalVars.get(),
           BC_localVars.get(),
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     delete_CustomBCs(d_BC_globalVars.get(), BC_localVars.get());
 
     //____ B U L L E T   P R O O F I N G----
     // ignore BP if a recompute time step has already been requested
     IntVector neg_cell;
-    bool rts = new_dw->recomputeTimeStep();
+    bool rts = new_dw->recomputeTimestep();
 
     if (!areAllValuesPositive(press_CC, neg_cell) && !rts) {
       std::ostringstream warn;
@@ -1239,7 +1239,7 @@ ICE::implicitPressureSolve(const ProcessorGroup* pg,
            "recompute was reached");
     }
     //  The solver or advection has requested to recompute the time step
-    if (subNewDW->recomputeTimeStep()) {
+    if (subNewDW->recomputeTimestep()) {
       DOUT(proc == 0,
            "\n  WARNING:  impICE:implicitPressureSolve time step recompute.");
       recomputeTimestep = true;
@@ -1261,9 +1261,9 @@ ICE::implicitPressureSolve(const ProcessorGroup* pg,
 
     if (recomputeTimestep) {
       ParentNewDW->put(bool_or_vartype(true),
-                       VarLabel::find(abortTimeStep_name));
+                       VarLabel::find(abortTimestep_name));
       ParentNewDW->put(bool_or_vartype(true),
-                       VarLabel::find(recomputeTimeStep_name));
+                       VarLabel::find(recomputeTimestep_name));
     }
   } // outer iteration loop
 

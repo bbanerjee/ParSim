@@ -285,8 +285,8 @@ ICE::problemSetup(const ProblemSpecP& prob_spec,
   }
 
   //__________________________________
-  // Pull out TimeStepControl data
-  ProblemSpecP tsc_ps = cfd_ice_ps->findBlock("TimeStepControl");
+  // Pull out TimestepControl data
+  ProblemSpecP tsc_ps = cfd_ice_ps->findBlock("TimestepControl");
   if (tsc_ps) {
     tsc_ps->require("Scheme_for_delT_calc", d_delT_scheme);
     tsc_ps->require("knob_for_speedSound", d_delT_speedSoundKnob);
@@ -1205,8 +1205,8 @@ ICE::scheduleComputeDelPressAndUpdatePressCC(
   task->computes(d_ice_labels->vol_fracY_FCLabel);
   task->computes(d_ice_labels->vol_fracZ_FCLabel);
 
-  task->computes(VarLabel::find(abortTimeStep_name));
-  task->computes(VarLabel::find(recomputeTimeStep_name));
+  task->computes(VarLabel::find(abortTimestep_name));
+  task->computes(VarLabel::find(recomputeTimestep_name));
 
   sched->addTask(task, patches, matls);
 }
@@ -1476,8 +1476,8 @@ ICE::scheduleComputeLagrangianSpecificVolume(SchedulerP& sched,
   t->computes(d_ice_labels->sp_vol_L_CCLabel);
   t->computes(d_ice_labels->sp_vol_src_CCLabel);
 
-  t->computes(VarLabel::find(abortTimeStep_name));
-  t->computes(VarLabel::find(recomputeTimeStep_name));
+  t->computes(VarLabel::find(abortTimestep_name));
+  t->computes(VarLabel::find(recomputeTimestep_name));
 
   sched->addTask(t, patches, matls);
 }
@@ -1646,8 +1646,8 @@ ICE::scheduleAdvectAndAdvanceInTime(SchedulerP& sched,
       }
     }
   }
-  task->computes(VarLabel::find(abortTimeStep_name));
-  task->computes(VarLabel::find(recomputeTimeStep_name));
+  task->computes(VarLabel::find(abortTimestep_name));
+  task->computes(VarLabel::find(recomputeTimestep_name));
 
   sched->addTask(task, patches, ice_matls);
 }
@@ -2051,7 +2051,7 @@ ICE::actuallyInitialize(const ProcessorGroup*,
   timeStep_vartype timeStep;
   new_dw->get(timeStep, d_ice_labels->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   int L_indx         = level->getIndex();
@@ -2190,35 +2190,35 @@ ICE::actuallyInitialize(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(rho_micro[indx],
             "Density",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(Temp_CC[indx],
             "Temperature",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(speedSound[indx],
             "zeroNeumann",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(vel_CC[indx],
             "Velocity",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(press_CC,
             rho_micro,
             placeHolder,
@@ -2229,7 +2229,7 @@ ICE::actuallyInitialize(const ProcessorGroup*,
             d_materialManager,
             0,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       SpecificHeat* cvModel = ice_matl->getSpecificHeatModel();
       if (cvModel != nullptr) {
@@ -2439,7 +2439,7 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   int L_indx         = level->getIndex();
@@ -2643,7 +2643,7 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
       //__________________________________
       //      BULLET PROOFING
       // ignore BP if a timestep restart has already been requested
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       std::string message;
       bool allTestsPassed{ true };
@@ -2750,7 +2750,7 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
           new_dw,
           d_BC_globalVars.get(),
           BC_localVars.get(),
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     delete_CustomBCs(d_BC_globalVars.get(), BC_localVars.get());
 
@@ -2803,7 +2803,7 @@ ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -2897,7 +2897,7 @@ ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
           new_dw,
           d_BC_globalVars.get(),
           BC_localVars.get(),
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     delete_CustomBCs(d_BC_globalVars.get(), BC_localVars.get());
 
@@ -3385,7 +3385,7 @@ ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   for (int p = 0; p < patches->size(); p++) {
@@ -3401,7 +3401,7 @@ ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
     double inv_vol = 1.0 / (dx.x() * dx.y() * dx.z());
 
     std::unique_ptr<Advector> advector =
-      d_advector->clone(new_dw, patch, isRegridTimeStep());
+      d_advector->clone(new_dw, patch, isRegridTimestep());
 
     CCVariable<double> q_advected;
     CCVariable<double> delP_Dilatate;
@@ -3584,7 +3584,7 @@ ICE::computeDelPressAndUpdatePressCC(const ProcessorGroup*,
           new_dw,
           d_BC_globalVars.get(),
           BC_localVars.get(),
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 #if SET_CFI_BC
     set_CFI_BC<double>(press_CC, patch);
 #endif
@@ -4506,7 +4506,7 @@ ICE::computeLagrangianValues(const ProcessorGroup*,
         // catch negative internal energies
         // ignore BP if timestep restart has already been requested
         IntVector neg_cell;
-        bool rts = new_dw->recomputeTimeStep();
+        bool rts = new_dw->recomputeTimestep();
         if (!areAllValuesPositive(int_eng_L, neg_cell) && !rts) {
           std::ostringstream warn;
           int idx = getLevel(patches)->getIndex();
@@ -4718,7 +4718,7 @@ ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
       //____ B U L L E T   P R O O F I N G----
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       if (!areAllValuesPositive(sp_vol_L, neg_cell) && !rts) {
         std::cout << "\nICE:WARNING......Negative specific Volume" << std::endl;
@@ -4739,9 +4739,9 @@ ICE::computeLagrangianSpecificVolume(const ProcessorGroup*,
         //        mat "<<indx
         //            << " cell " <<neg_cell << " sp_vol_L is negative\n";
         //        throw InvalidValue(warn.str(), __FILE__, __LINE__);
-        new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
+        new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimestep_name));
         new_dw->put(bool_or_vartype(true),
-                    VarLabel::find(recomputeTimeStep_name));
+                    VarLabel::find(recomputeTimestep_name));
       }
     } // end numALLMatl loop
   }   // patch loop
@@ -4760,7 +4760,7 @@ ICE::computeLagrangian_Transported_Vars(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -4819,7 +4819,7 @@ ICE::computeLagrangian_Transported_Vars(const ProcessorGroup*,
                     d_materialManager,
                     indx,
                     new_dw,
-                    isNotInitialTimeStep);
+                    isNotInitialTimestep);
 
               // multiply by mass so advection is conserved
               for (auto iter = patch->getExtraCellIterator(); !iter.done();
@@ -4943,7 +4943,7 @@ ICE::advectAndAdvanceInTime(const ProcessorGroup* /*pg*/,
     old_dw->get(delT, d_ice_labels->delTLabel, level);
 
     std::unique_ptr<Advector> advector =
-      d_advector->clone(new_dw, patch, isRegridTimeStep());
+      d_advector->clone(new_dw, patch, isRegridTimestep());
 
     CCVariable<double> q_advected;
     CCVariable<Vector> qV_advected;
@@ -5110,7 +5110,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
 
@@ -5203,7 +5203,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
                     d_materialManager,
                     indx,
                     new_dw,
-                    isNotInitialTimeStep);
+                    isNotInitialTimestep);
             }
           }
         }
@@ -5254,7 +5254,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
             new_dw,
             d_BC_globalVars.get(),
             BC_localVars.get(),
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(vel_CC,
             "Velocity",
             patch,
@@ -5263,7 +5263,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
             new_dw,
             d_BC_globalVars.get(),
             BC_localVars.get(),
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(temp_CC,
             "Temperature",
             gamma,
@@ -5274,7 +5274,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
             new_dw,
             d_BC_globalVars.get(),
             BC_localVars.get(),
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       setSpecificVolBC(sp_vol_CC,
                        "SpecificVol",
@@ -5297,7 +5297,7 @@ ICE::conservedtoPrimitive_Vars(const ProcessorGroup* /*pg*/,
       //____ B U L L E T   P R O O F I N G----
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       std::ostringstream base, warn;
       base << "ERROR ICE:(L-" << level->getIndex()

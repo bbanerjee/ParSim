@@ -238,7 +238,7 @@ DetailedTasks::assignMessageTags(unsigned int index)
     if (((taskPair.first == "All" && taskPair.second == "Tasks") &&
          g_message_tags_stats_dbg) ||
         0) {
-      unsigned int timeStep = m_sched_common->getSimulator()->getTimeStep();
+      unsigned int timeStep = m_sched_common->getSimulator()->getTimestep();
       double simTime        = m_sched_common->getSimulator()->getSimTime();
       std::string title = "Communication TG [" + std::to_string(index) + "] " +
                           "for task <" + taskPair.first + "|" +

@@ -339,8 +339,8 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
     t->modifies(d_ice_labels->vol_frac_Z_FC_fluxLabel, patches, all_matls_sub);
   }
 
-  t->computes(VarLabel::find(abortTimeStep_name));
-  t->computes(VarLabel::find(recomputeTimeStep_name));
+  t->computes(VarLabel::find(abortTimestep_name));
+  t->computes(VarLabel::find(recomputeTimestep_name));
 
   t->setType(Task::OncePerProc);
 
@@ -571,7 +571,7 @@ impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
       }
     }
     //  Solver has requested to recompute the time step
-    if (d_subsched->get_dw(3)->recomputeTimeStep()) {
+    if (d_subsched->get_dw(3)->recomputeTimestep()) {
       if (pg->myRank() == 0) {
         std::cout
           << "\nWARNING: The solver has requested to recompute the time step\n"
@@ -595,9 +595,9 @@ impAMRICE::multiLevelPressureSolve(const ProcessorGroup* pg,
     }
     if (recompute) {
       ParentNewDW->put(bool_or_vartype(true),
-                       VarLabel::find(abortTimeStep_name));
+                       VarLabel::find(abortTimestep_name));
       ParentNewDW->put(bool_or_vartype(true),
-                       VarLabel::find(recomputeTimeStep_name));
+                       VarLabel::find(recomputeTimestep_name));
       // return; - don't return - just break, some operations may require the
       // transfers below to complete
       break;

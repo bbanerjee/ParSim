@@ -62,7 +62,7 @@ ReadUDA::ReadUDA(const std::string& input_uda_name)
 
     // haven't loaded any timestep data yet
     d_stepInfo = nullptr;
-    d_currTimeStep = -1;
+    d_currTimestep = -1;
   } 
 }
 
@@ -404,14 +404,14 @@ readUDA::readVar(int timestate, int domain, const std::string& varname)
 void
 readUDA::activateTimestep(int ts)
 {
-  if (d_currTimeStep == ts) return;
+  if (d_currTimestep == ts) return;
 
   // get the uda grid for the new timestep
   setGrid(ts);
 
-  setTimeStepInfo(ts);
+  setTimestepInfo(ts);
 
-  d_currTimeStep = ts; 
+  d_currTimestep = ts; 
 }
 
 /*****************************************************************************
@@ -427,20 +427,20 @@ ReadUDA::setGrid(int timeStepNo)
 }
 
 /*****************************************************************************
- * Method: setTimeStepInfo
+ * Method: setTimestepInfo
  * Purpose: 
  *   Get all the information that may be needed for the current timestep,
  *   including variable/material info, and level/patch info
  *****************************************************************************/
 void
-ReadUDA::setTimeStepInfo(int timestep)
+ReadUDA::setTimestepInfo(int timestep)
 {
 
   // Reset timestep info
   if (d_stepInfo) {
     delete d_stepInfo;
   }
-  d_stepInfo = new TimeStepInfo();
+  d_stepInfo = new TimestepInfo();
 
   int numLevels = d_grid->numLevels();
   d_stepInfo->levelInfo.resize(numLevels);

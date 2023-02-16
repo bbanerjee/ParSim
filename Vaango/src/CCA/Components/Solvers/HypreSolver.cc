@@ -255,7 +255,7 @@ public:
     }
 
     hypre_solver_s = m_hypre_solverP.get().get_rep();
-    bool recompute = hypre_solver_s->isRecomputeTimeStep;
+    bool recompute = hypre_solver_s->isRecomputeTimestep;
 
     //__________________________________
     // timestep can come from the old_dw or parentOldDW
@@ -849,7 +849,7 @@ public:
       //__________________________________
       // clean up
       m_firstPassThrough                  = false;
-      hypre_solver_s->isRecomputeTimeStep = false;
+      hypre_solver_s->isRecomputeTimestep = false;
 
       if (timeStep == 1 || do_setup || recompute) {
         HYPRE_StructStencilDestroy(stencil);
@@ -901,9 +901,9 @@ public:
                     << ", requesting the time step be recomputed.\n";
 
           new_dw->put(bool_or_vartype(true),
-                      VarLabel::find(abortTimeStep_name));
+                      VarLabel::find(abortTimestep_name));
           new_dw->put(bool_or_vartype(true),
-                      VarLabel::find(recomputeTimeStep_name));
+                      VarLabel::find(recomputeTimestep_name));
         } else {
           throw ConvergenceFailure(
             "HypreSolver variable: " + m_X_label->getName() +
@@ -1257,7 +1257,7 @@ HypreSolver2::scheduleRestartInitialize(const LevelP& level,
 
 void
 HypreSolver2::allocateHypreMatrices(DataWarehouse* new_dw,
-                                    const bool isRecomputeTimeStep_in)
+                                    const bool isRecomputeTimestep_in)
 {
   SoleVariable<hypre_solver_structP> hypre_solverP;
   hypre_solver_struct* hypre_struct = scinew hypre_solver_struct;
@@ -1270,7 +1270,7 @@ HypreSolver2::allocateHypreMatrices(DataWarehouse* new_dw,
   hypre_struct->solver_type         = stringToSolverType(m_params->solvertype);
   hypre_struct->precond_solver_type = stringToSolverType(m_params->precondtype);
 
-  hypre_struct->isRecomputeTimeStep = isRecomputeTimeStep_in;
+  hypre_struct->isRecomputeTimestep = isRecomputeTimestep_in;
 
   hypre_solverP.setData(hypre_struct);
   new_dw->put(hypre_solverP, hypre_solver_label);
@@ -1491,8 +1491,8 @@ HypreSolver2::scheduleSolve(const LevelP& level,
   task->setType(Task::Hypre);
 
   if (m_params->getRecomputeTimestepOnFailure()) {
-    task->computes(VarLabel::find(abortTimeStep_name));
-    task->computes(VarLabel::find(recomputeTimeStep_name));
+    task->computes(VarLabel::find(abortTimestep_name));
+    task->computes(VarLabel::find(recomputeTimestep_name));
   }
 
   LoadBalancer* lb = sched->getLoadBalancer();

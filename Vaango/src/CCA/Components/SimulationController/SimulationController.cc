@@ -121,21 +121,21 @@ SimulationController::SimulationController(const ProcessorGroup* myworld,
 
     if (runtimeStats_ps) {
       runtimeStats_ps->get("frequency", d_reportStatsFrequency);
-      runtimeStats_ps->get("onTimeStep", d_reportStatsOnTimeStep);
+      runtimeStats_ps->get("onTimestep", d_reportStatsOnTimestep);
 
-      if (d_reportStatsOnTimeStep >= d_reportStatsFrequency) {
+      if (d_reportStatsOnTimestep >= d_reportStatsFrequency) {
         proc0cout << "Error: the frequency of reporting the run time stats "
                   << d_reportStatsFrequency << " "
                   << "is less than or equal to the time step ordinality "
-                  << d_reportStatsOnTimeStep << " "
+                  << d_reportStatsOnTimestep << " "
                   << ". Resetting the ordinality to ";
 
         if (d_reportStatsFrequency > 1) {
-          d_reportStatsOnTimeStep = 1;
+          d_reportStatsOnTimestep = 1;
         } else {
-          d_reportStatsOnTimeStep = 0;
+          d_reportStatsOnTimestep = 0;
         }
-        proc0cout << d_reportStatsOnTimeStep << std::endl;
+        proc0cout << d_reportStatsOnTimestep << std::endl;
       }
     }
   }
@@ -465,7 +465,7 @@ SimulationController::simulatorSetup()
   // Finalize the materials
   d_simulator->getMaterialManagerP()->finalizeMaterials();
 
-  d_simulator->setRestartTimeStep(d_restarting);
+  d_simulator->setRestartTimestep(d_restarting);
 }
 
 void
@@ -484,7 +484,7 @@ SimulationController::timeStateSetup()
 
     // Set the time step to the restart time step which is immediately
     // written to the DW.
-    d_simulator->setTimeStep(d_restart_timestep);
+    d_simulator->setTimestep(d_restart_timestep);
 
     // Set the simulation time to the restart simulation time which is
     // immediately written to the DW.
@@ -506,7 +506,7 @@ SimulationController::timeStateSetup()
     // delete d_restart_archive;
   } else {
     // Set the default time step to which is immediately written to the DW.
-    d_simulator->setTimeStep(d_simulator->getTimeStep());
+    d_simulator->setTimestep(d_simulator->getTimestep());
 
     // Set the default simulation time which is immediately written to the DW.
     d_simulator->setSimTime(d_simulator->getSimTime());
@@ -592,13 +592,13 @@ SimulationController::ReportStats(const ProcessorGroup*,
   }
 
   // Note: this check is split up so to be assured that the call to
-  // isLastTimeStep is last and called only when needed. Unfortunately,
+  // isLastTimestep is last and called only when needed. Unfortunately,
   // the greater the frequency the more often it will be called.
   else {
     if (header) {
       reportStats = true;
-    } else if (d_simulator->getTimeStep() % d_reportStatsFrequency ==
-               d_reportStatsOnTimeStep) {
+    } else if (d_simulator->getTimestep() % d_reportStatsFrequency ==
+               d_reportStatsOnTimestep) {
       reportStats = true;
     } else {
       // Get the wall time if is needed, otherwise ignore it.
@@ -609,7 +609,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
       } else {
         walltime = 0;
       }
-      reportStats = d_simulator->isLastTimeStep(walltime);
+      reportStats = d_simulator->isLastTimestep(walltime);
     }
   }
 
@@ -692,7 +692,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
     orgFormat.copyfmt(message);
 
     message
-      << std::left << "Timestep " << std::setw(8) << d_simulator->getTimeStep()
+      << std::left << "Timestep " << std::setw(8) << d_simulator->getTimestep()
       << "Time=" << std::setw(12) << d_simulator->getSimTime()
       << "Next delT=" << std::setw(12) << d_simulator->getNextDelT()
       << "Wall Time=" << std::setw(10)
@@ -827,7 +827,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
                                              "",
                                              d_myworld->myRank(),
                                              d_myworld->nRanks(),
-                                             d_simulator->getTimeStep(),
+                                             d_simulator->getTimestep(),
                                              d_simulator->getSimTime(),
                                              BaseInfoMapper::Dout,
                                              true);
@@ -870,7 +870,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
         d_myworld->myNode_nRanks(),
         d_myworld->myNode(),
         d_myworld->nNodes(),
-        d_simulator->getTimeStep(),
+        d_simulator->getTimestep(),
         d_simulator->getSimTime(),
         BaseInfoMapper::Dout,
         true);
@@ -882,7 +882,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
                                             "",
                                             d_myworld->myRank(),
                                             d_myworld->nRanks(),
-                                            d_simulator->getTimeStep(),
+                                            d_simulator->getTimestep(),
                                             d_simulator->getSimTime(),
                                             BaseInfoMapper::Dout);
     }
@@ -894,7 +894,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
         "",
         d_myworld->myRank(),
         d_myworld->nRanks(),
-        d_simulator->getTimeStep(),
+        d_simulator->getTimestep(),
         d_simulator->getSimTime(),
         BaseInfoMapper::Dout,
         false);
@@ -909,7 +909,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
         d_myworld->myNode_nRanks(),
         d_myworld->myNode(),
         d_myworld->nNodes(),
-        d_simulator->getTimeStep(),
+        d_simulator->getTimestep(),
         d_simulator->getSimTime(),
         BaseInfoMapper::Dout,
         false);
@@ -922,7 +922,7 @@ SimulationController::ReportStats(const ProcessorGroup*,
         "",
         d_myworld->myRank(),
         d_myworld->nRanks(),
-        d_simulator->getTimeStep(),
+        d_simulator->getTimestep(),
         d_simulator->getSimTime(),
         BaseInfoMapper::Dout);
     }
@@ -975,7 +975,7 @@ SimulationController::getMemoryStats(bool create /* = false */)
     }
 
     *mallocPerProcStream << "Proc " << d_myworld->myRank() << "   ";
-    *mallocPerProcStream << "TimeStep " << d_simulator->getTimeStep() << "   ";
+    *mallocPerProcStream << "Timestep " << d_simulator->getTimestep() << "   ";
 
     if (ProcessInfo::isSupported(ProcessInfo::MEM_SIZE)) {
       *mallocPerProcStream << "Size " << ProcessInfo::getMemoryUsed() << "   ";

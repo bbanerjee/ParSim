@@ -927,7 +927,7 @@ bool
 DynamicLoadBalancer::needRecompile(const GridP& grid)
 {
   const double simTime = d_simulator->getSimTime();
-  const int timestep   = d_simulator->getTimeStep();
+  const int timestep   = d_simulator->getTimestep();
 
   bool do_check = false;
 #if 1
@@ -1029,7 +1029,7 @@ DynamicLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int state)
   Timers::Simple timer;
   timer.start();
 
-  //const int timeStep   = d_simulator->getTimeStep();
+  //const int timeStep   = d_simulator->getTimestep();
   //const double simTime = d_simulator->getSimTime();
 
   bool changed = false;
@@ -1041,7 +1041,7 @@ DynamicLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid, int state)
     if (state != LoadBalancer::CHECK_LB) {
       force = true;
       if (d_lb_timeStep_interval != 0) {
-        d_last_lb_timeStep = d_simulator->getTimeStep();
+        d_last_lb_timeStep = d_simulator->getTimestep();
       } else if (d_lb_interval != 0) {
         d_last_lb_simTime = d_simulator->getSimTime();
       }

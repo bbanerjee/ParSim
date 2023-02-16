@@ -820,7 +820,7 @@ statistics::computeStats(DataWarehouse* old_dw,
     if ( c == d_monitorCell ){
       cout << "  stats:  " << d_monitorCell <<  setw(10)<< Q.Q_Label->getName() << " nTimestep: " << nTimesteps
            <<"\t timestep " << ts
-           << " d_startTimeStep: " << d_startTimeTimestep
+           << " d_startTimestep: " << d_startTimeTimestep
            <<"\t Q_var: " << me
            <<"\t Qsum: "  << Qsum[c]
            <<"\t Qmean: " << Qmean[c] << std::endl;

@@ -44,7 +44,7 @@ namespace Vaango {
     std::vector<double> d_cycleTimes;
 
     bool d_useExtraCells;
-    int d_currTimeStep;
+    int d_currTimestep;
 
     std::map<std::string, void_ref_ptr> d_mesh_domains;
     std::map<std::string, void_ref_ptr> d_mesh_boundaries;
@@ -92,7 +92,7 @@ namespace Vaango {
     /////////////////////////////////////////////////////////////////////
     // Get all the information that may be needed for the current timestep,
     // including variable/material info, and level/patch info
-    TimeStepInfo* getTimeStepInfo(DataArchive *archive, GridP grid, 
+    TimestepInfo* getTimestepInfo(DataArchive *archive, GridP grid, 
                                   int timestep, bool useExtraCells);
 
     /////////////////////////////////////////////////////////////////////

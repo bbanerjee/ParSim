@@ -683,7 +683,7 @@ AMRICE::CoarseToFineOperator(CCVariable<T>& q_CC,
   //____ B U L L E T   P R O O F I N G_______
   // All fine patch interior values must be initialized at this point
   // ignore BP if a recompute time step has already been requested
-  bool rts = new_dw->recomputeTimeStep();
+  bool rts = new_dw->recomputeTimestep();
 
   IntVector badCell;
   CellIterator iter = finePatch->getCellIterator();

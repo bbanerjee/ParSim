@@ -242,7 +242,7 @@ BinaryProperties::initialize(const ProcessorGroup*,
   timeStep_vartype timeStep;
   new_dw->get(timeStep, VarLabel::find(timeStep_name));
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -318,7 +318,7 @@ BinaryProperties::initialize(const ProcessorGroup*,
           d_materialManager,
           indx,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     //__________________________________
     // compute thermo-transport-physical quantities

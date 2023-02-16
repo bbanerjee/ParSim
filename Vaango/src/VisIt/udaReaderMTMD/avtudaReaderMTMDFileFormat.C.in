@@ -187,9 +187,9 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
     EXCEPTION1(InvalidDBTypeException, "The function getCycleTimes could not be located in the library!!!");
   }
 
-  getTimeStepInfo = (TimeStepInfo* (*)(DataArchive*, GridP*, int, bool)) dlsym(libHandle, "getTimeStepInfo");
+  getTimestepInfo = (TimestepInfo* (*)(DataArchive*, GridP*, int, bool)) dlsym(libHandle, "getTimestepInfo");
   if((error = dlerror()) != nullptr) {
-    EXCEPTION1(InvalidDBTypeException, "The function getTimeStepInfo could not be located in the library!!!");
+    EXCEPTION1(InvalidDBTypeException, "The function getTimestepInfo could not be located in the library!!!");
   }
 
   getGridData = (GridDataRaw* (*)(DataArchive*, GridP*, int, int, std::string, int, int, int[3], int[3])) dlsym(libHandle, "getGridData");
@@ -214,7 +214,7 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
 
   // haven't loaded any timestep data yet
   stepInfo = nullptr;  
-  currTimeStep = -1;
+  currTimestep = -1;
 }
 
 
@@ -281,7 +281,7 @@ avtudaReaderMTMDFileFormat::GetTime(int ts)
 void
 avtudaReaderMTMDFileFormat::ActivateTimestep(int ts)
 {
-  if (currTimeStep == ts)
+  if (currTimestep == ts)
     return;
 
   // get the uda grid for the new timestep
@@ -291,9 +291,9 @@ avtudaReaderMTMDFileFormat::ActivateTimestep(int ts)
 
   if (stepInfo)
     delete stepInfo;
-  stepInfo = (*getTimeStepInfo)(archive, grid, ts, useExtraCells);
+  stepInfo = (*getTimestepInfo)(archive, grid, ts, useExtraCells);
 
-  currTimeStep = ts; 
+  currTimestep = ts; 
 }
 
 

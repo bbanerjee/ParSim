@@ -3,7 +3,7 @@
 #  This script parses the output file from sus and 
 #  generates a data file used for scaling plots.  The data file is layed out
 #     
-#  fileName  #procs  startWallTime  endWallTime  totalSolve+SetupTime  totalSolveTime  AveTimePerTimeStep  aveTotalSolve+setup  aveSolveTime
+#  fileName  #procs  startWallTime  endWallTime  totalSolve+SetupTime  totalSolveTime  AveTimePerTimestep  aveTotalSolve+setup  aveSolveTime
 #    1         2         3             4                  5                  6                7                     8                9
 #  usage:
 #      extractSolverScalingData  <sus_output.1, sus_output_2, sus_output_3 >
@@ -45,9 +45,9 @@ foreach X ( $out[*] )
 
     #__________________________________
     # compute time spent in solver
-    @ endTimeStep = $endTimestep + 1 
+    @ endTimestep = $endTimestep + 1 
     
-    sed -n /"(timestep $startTimestep) *"/,/"(timestep $endTimeStep)"/p $X | grep Solve > $here/tmp
+    sed -n /"(timestep $startTimestep) *"/,/"(timestep $endTimestep)"/p $X | grep Solve > $here/tmp
     awk 'NR==1 {sum=$9}  ; NR > 1 {sum = sum + $9 };  END {print sum}'  $here/tmp >$here/totalSolveTime
     awk 'NR==1 {sum=$13} ; NR > 1 {sum = sum + $13 }; END {print sum}'  $here/tmp >$here/solveTime
 
@@ -65,7 +65,7 @@ end
 @ n = 1 + $endTimestep - $startTimestep
 
 echo " computing average mean time per timestep for $n timesteps"
-echo "#file procs startWallTime endWallTime totalSolve+SetupTime totalSolveTime AveTimePerTimeStep aveTotalSolve+setup aveSolveTime"> $here/data2
+echo "#file procs startWallTime endWallTime totalSolve+SetupTime totalSolveTime AveTimePerTimestep aveTotalSolve+setup aveSolveTime"> $here/data2
 
 awk -vnSteps=$n '{print ($4-$3)/nSteps}' $here/data >> $here/aveMeanTime
 awk -vnSteps=$n '{print ($5)/nSteps}'    $here/data >> $here/aveTotalSolveTime

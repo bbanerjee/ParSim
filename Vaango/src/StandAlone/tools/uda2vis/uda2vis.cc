@@ -202,14 +202,14 @@ getCycleTimes(DataArchive* archive)
 /////////////////////////////////////////////////////////////////////
 // Get all the information that may be needed for the current timestep,
 // including variable/material info, and level/patch info
-extern "C" TimeStepInfo*
-getTimeStepInfo(DataArchive* archive,
+extern "C" TimestepInfo*
+getTimestepInfo(DataArchive* archive,
                 GridP* grid,
                 int timestep,
                 bool useExtraCells)
 {
   int numLevels          = (*grid)->numLevels();
-  TimeStepInfo* stepInfo = new TimeStepInfo;
+  TimestepInfo* stepInfo = new TimestepInfo;
   stepInfo->levelInfo.resize(numLevels);
 
   // get variable information

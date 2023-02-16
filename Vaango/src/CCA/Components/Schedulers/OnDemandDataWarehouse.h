@@ -612,9 +612,9 @@ public:
 
   // For time step abort/recompute
   virtual bool
-  abortTimeStep();
+  abortTimestep();
   virtual bool
-  recomputeTimeStep();
+  recomputeTimestep();
 
   struct ValidNeighbors
   {

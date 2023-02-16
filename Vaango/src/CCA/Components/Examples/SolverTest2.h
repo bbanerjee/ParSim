@@ -80,7 +80,7 @@ public:
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
 
   virtual void
-  scheduleComputeStableTimeStep(const LevelP& level, SchedulerP&);
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
   virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
@@ -104,7 +104,7 @@ private:
              DataWarehouse* old_dw,
              DataWarehouse* new_dw);
   void
-  computeStableTimeStep(const ProcessorGroup*,
+  computeStableTimestep(const ProcessorGroup*,
                         const PatchSubset* patches,
                         const MaterialSubset* matls,
                         DataWarehouse* old_dw,

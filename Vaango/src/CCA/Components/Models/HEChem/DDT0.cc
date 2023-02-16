@@ -382,7 +382,7 @@ DDT0::computeModelSources(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   delt_vartype delT;
   const Level* level = getLevel(patches);
@@ -671,28 +671,28 @@ DDT0::computeModelSources(const ProcessorGroup*,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(mass_src_1,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m1,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(delF,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep); // I'm not sure you need these???? Todd
+          isNotInitialTimestep); // I'm not sure you need these???? Todd
     setBC(Fr,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
   }
   //__________________________________
   // save total quantities

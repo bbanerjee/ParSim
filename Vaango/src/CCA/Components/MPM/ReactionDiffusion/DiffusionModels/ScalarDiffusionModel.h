@@ -73,7 +73,7 @@ namespace Uintah {
 
     virtual void setIncludeHydroStress(bool value);
 
-    virtual void initializeTimeStep(const Patch         * patch,
+    virtual void initializeTimestep(const Patch         * patch,
                                     const MPMMaterial   * matl,
                                           DataWarehouse * new_dw
                                    );
@@ -152,7 +152,7 @@ namespace Uintah {
                                              DataWarehouse  * new_dw
                                       );
 
-    virtual double computeStableTimeStep(double Dif,
+    virtual double computeStableTimestep(double Dif,
                                          Vector dx
                                         ) const;
 

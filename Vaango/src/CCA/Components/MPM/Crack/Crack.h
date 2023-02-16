@@ -324,7 +324,7 @@ class Crack
     double Volume(const Point&,const Point&,const Point&,const Point&);
     
            // Private methods in FractureParametersCalculation.cc
-    void   DetectIfDoingFractureAnalysisAtThisTimeStep(double);
+    void   DetectIfDoingFractureAnalysisAtThisTimestep(double);
     void   FindJIntegralPath(const Point&,const Vector&,const Vector&,
                              const Vector&,double []);    
     bool   FindIntersectionJPathAndCrackPlane(const int&,const double& r,

@@ -19,7 +19,7 @@
   </Time>
 
   <DataArchiver>
-    <filebase>const_test_viscelastic_fortran.uda</filebase>
+    <filebase>const_test_viscoelastic_fortran.uda</filebase>
     <outputInterval>.01</outputInterval>
     <save label = "BndyForce_zminus"/>
     <save label = "BndyForce_zplus"/>

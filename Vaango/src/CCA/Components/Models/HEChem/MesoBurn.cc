@@ -449,7 +449,7 @@ MesoBurn::computeParticleVariables(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   delt_vartype delT;
   old_dw->get(delT, Ilb->delTLabel, getLevel(patches));
@@ -530,7 +530,7 @@ MesoBurn::computeParticleVariables(const ProcessorGroup*,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
   }
 }
 //__________________________________
@@ -545,7 +545,7 @@ MesoBurn::computeModelSources(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   delt_vartype delT;
   old_dw->get(delT, Ilb->delTLabel, getLevel(patches));
@@ -730,14 +730,14 @@ MesoBurn::computeModelSources(const ProcessorGroup*,
           d_materialManager,
           m0,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
     setBC(mass_src_1,
           "set_if_sym_BC",
           patch,
           d_materialManager,
           m1,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
   }
   //__________________________________
   // save total quantities

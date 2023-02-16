@@ -143,13 +143,13 @@ ScalarDiffusionModel::setIncludeHydroStress(bool value)
 }
 
 void
-ScalarDiffusionModel::initializeTimeStep(const Patch* patch,
+ScalarDiffusionModel::initializeTimestep(const Patch* patch,
                                          const MPMMaterial* matl,
                                          DataWarehouse* new_dw)
 {
   Vector dx       = patch->dCell();
   double timestep = 1.0e99;
-  timestep        = std::min(timestep, computeStableTimeStep(d_D0, dx));
+  timestep        = std::min(timestep, computeStableTimestep(d_D0, dx));
 
   new_dw->put(delt_vartype(timestep), d_lb->delTLabel, patch->getLevel());
 }
@@ -432,7 +432,7 @@ ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
 }
 
 double
-ScalarDiffusionModel::computeStableTimeStep(double Dif, Vector dx) const
+ScalarDiffusionModel::computeStableTimestep(double Dif, Vector dx) const
 {
   // For a Forward Euler timestep the limiting factor is
   // dt < dx^2 / 2*D.

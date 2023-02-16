@@ -291,7 +291,7 @@ DetailedTasks::assignMessageTags(unsigned int index)
          g_message_tags_task_stats_dbg) ||
 #endif
         0) {
-      unsigned int timeStep = m_sched_common->getSimulator()->getTimeStep();
+      unsigned int timeStep = m_sched_common->getSimulator()->getTimestep();
       double simTime        = m_sched_common->getSimulator()->getSimTime();
       std::string title = "Communication TG [" + std::to_string(index) + "] " +
                           "for task <" + taskPair.first + "|" +

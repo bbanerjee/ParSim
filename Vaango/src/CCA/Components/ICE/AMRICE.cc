@@ -704,7 +704,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
   timeStep_vartype timeStep;
   fine_old_dw->get(timeStep, d_ice_labels->timeStepLabel);
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* fineLevel   = getLevel(patches);
   const Level* coarseLevel = fineLevel->getCoarserLevel().get_rep();
@@ -834,7 +834,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
         // Worry about this later
         // the problem is that you don't know have delT for the finer level at this point in the cycle
         preprocess_CustomBCs("setBC_FineLevel",fine_old_dw, fine_new_dw, lb,  patch, 999,
-                             d_BC_globalVars.get(), BC_localVars.get(), isNotInitialTimeStep);
+                             d_BC_globalVars.get(), BC_localVars.get(), isNotInitialTimestep);
 #endif
 
         constCCVariable<double> placeHolder;
@@ -849,7 +849,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
               fine_new_dw,
               d_BC_globalVars.get(),
               BC_localVars.get(),
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
 
         setBC(vel_CC,
               "Velocity",
@@ -859,7 +859,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
               fine_new_dw,
               d_BC_globalVars.get(),
               BC_localVars.get(),
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
 
         setBC(temp_CC,
               "Temperature",
@@ -871,7 +871,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
               fine_new_dw,
               d_BC_globalVars.get(),
               BC_localVars.get(),
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
 
         setSpecificVolBC(sp_vol_CC[m],
                          "SpecificVol",
@@ -914,7 +914,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
                         d_materialManager,
                         indx,
                         fine_new_dw,
-                        isNotInitialTimeStep);
+                        isNotInitialTimestep);
                 }
               }
             }
@@ -944,7 +944,7 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
             fine_new_dw,
             d_BC_globalVars.get(),
             notUsed,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       delete_CustomBCs(d_BC_globalVars.get(), notUsed);
 
@@ -2420,7 +2420,7 @@ AMRICE::reflux_BP_check_CFI_cells(const ProcessorGroup*,
               //__________________________________
               // If the number of "marked" cells/numICEMatls != n_CFI_cells
               // ignore if a recompute time step has already been requested
-              bool rts = new_dw->recomputeTimeStep();
+              bool rts = new_dw->recomputeTimestep();
 
               if (n_touched_cells != n_CFI_cells && !rts) {
                 std::ostringstream warn;
@@ -2470,10 +2470,10 @@ AMRICE::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
   // get the time step from the new DW, i.e. DW(1).  Otherwise for a
   // normal time step get the time step from the new DW.
   timeStep_vartype timeStepVar(0);
-  if (sched->get_dw(0) && sched->get_dw(0)->exists(getTimeStepLabel())) {
-    sched->get_dw(0)->get(timeStepVar, getTimeStepLabel());
-  } else if (sched->get_dw(1) && sched->get_dw(1)->exists(getTimeStepLabel())) {
-    sched->get_dw(1)->get(timeStepVar, getTimeStepLabel());
+  if (sched->get_dw(0) && sched->get_dw(0)->exists(getTimestepLabel())) {
+    sched->get_dw(0)->get(timeStepVar, getTimestepLabel());
+  } else if (sched->get_dw(1) && sched->get_dw(1)->exists(getTimestepLabel())) {
+    sched->get_dw(1)->get(timeStepVar, getTimestepLabel());
   }
 
   bool initial = (timeStepVar == 0); // during initialization

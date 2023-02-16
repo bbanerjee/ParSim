@@ -288,11 +288,11 @@ namespace Vaango {
   }; // VariableInfo
 
 
-  class TimeStepInfo {
+  class TimestepInfo {
   public:
     std::vector<LevelInfo> levelInfo;
     std::vector<VariableInfo> varInfo;
-  }; // TimeStepInfo
+  }; // TimestepInfo
 
 
   class GridDataRaw {

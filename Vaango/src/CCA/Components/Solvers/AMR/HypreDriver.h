@@ -325,8 +325,8 @@ namespace Uintah {
               std::cout << "AMRSolver not converged in " << numIterations
                         << " iterations, final residual= " << finalResNorm
                         << ", requesting smaller timestep\n";
-            // new_dw->put( bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
-            // new_dw->put( bool_or_vartype(true), VarLabel::find(recomputeTimeStep_name));
+            // new_dw->put( bool_or_vartype(true), VarLabel::find(abortTimestep_name));
+            // new_dw->put( bool_or_vartype(true), VarLabel::find(recomputeTimestep_name));
           } else {
             throw ConvergenceFailure("AMRSolver variable: "
                                      +_X_label->getName()+", solver: "

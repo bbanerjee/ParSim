@@ -70,7 +70,7 @@ setBC(CCVariable<double>& var,
       DataWarehouse* new_dw,
       CustomBCDriver::customBC_globalVars* globalVars,
       CustomBCDriver::customBC_localVars* localVars,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 
 void
 setBC(CCVariable<double>& var,
@@ -79,7 +79,7 @@ setBC(CCVariable<double>& var,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 //__________________________________
 //  P R E S S U R E
 void
@@ -95,7 +95,7 @@ setBC(CCVariable<double>& press_CC,
       DataWarehouse* new_dw,
       CustomBCDriver::customBC_globalVars* globalVars,
       CustomBCDriver::customBC_localVars* localVars,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 
 void
 setBC(CCVariable<double>& press_CC,
@@ -108,7 +108,7 @@ setBC(CCVariable<double>& press_CC,
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 
 //__________________________________
 //    V E C T O R
@@ -121,7 +121,7 @@ setBC(CCVariable<Vector>& variable,
       DataWarehouse* new_dw,
       CustomBCDriver::customBC_globalVars* globalVars,
       CustomBCDriver::customBC_localVars* localVars,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 
 void
 setBC(CCVariable<Vector>& variable, // stub function
@@ -130,7 +130,7 @@ setBC(CCVariable<Vector>& variable, // stub function
       MaterialManagerP& materialManager,
       const int mat_id,
       DataWarehouse* new_dw,
-      const bool isNotInitialTimeStep);
+      const bool isNotInitialTimestep);
 
 //__________________________________
 //    SPECIFC VOLUME

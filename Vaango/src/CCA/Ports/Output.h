@@ -86,7 +86,7 @@ public:
   // problemSetup.
   virtual void
   restartSetup(Dir& restartFromDir,
-               int startTimeStep,
+               int startTimestep,
                int timestep,
                double time,
                bool fromScratch,
@@ -104,7 +104,7 @@ public:
 
   // Call this after all other tasks have been added to the scheduler
   virtual void
-  finalizeTimeStep(const GridP& grid,
+  finalizeTimestep(const GridP& grid,
                    SchedulerP& scheduler,
                    bool recompile  = false,
                    int addMaterial = 0) = 0;
@@ -117,12 +117,12 @@ public:
 
   // Call this after the timestep has been executed.
   virtual void
-  findNext_OutputCheckPointTimeStep(bool restart, const GridP& grid) = 0;
+  findNext_OutputCheckPointTimestep(bool restart, const GridP& grid) = 0;
 
   //! Called after a time step recompute where delta t is adjusted
   //! to make sure an output and/or checkpoint time step is needed.
   virtual void
-  recompute_OutputCheckPointTimeStep() = 0;
+  recompute_OutputCheckPointTimestep() = 0;
 
   // update or write to the xml files
   virtual void
@@ -140,31 +140,31 @@ public:
   virtual double
   getNextOutputTime() const = 0;
   virtual int
-  getNextOutputTimeStep() const = 0;
+  getNextOutputTimestep() const = 0;
 
   // Pushes output back by one time step.
   virtual void
-  postponeNextOutputTimeStep() = 0;
+  postponeNextOutputTimestep() = 0;
 
   // Get the time/timestep the next checkpoint will occur
   virtual double
   getNextCheckpointTime() const = 0;
   virtual int
-  getNextCheckpointTimeStep() const = 0;
+  getNextCheckpointTimestep() const = 0;
   virtual int
   getNextCheckpointWallTime() const = 0; // integer - seconds
 
   // Returns true if data will be output this timestep
   virtual void
-  setOutputTimeStep(bool val, const GridP& grid) = 0;
+  setOutputTimestep(bool val, const GridP& grid) = 0;
   virtual bool
-  isOutputTimeStep() const = 0;
+  isOutputTimestep() const = 0;
 
   // Returns true if data will be checkpointed this timestep
   virtual void
-  setCheckpointTimeStep(bool val, const GridP& grid) = 0;
+  setCheckpointTimestep(bool val, const GridP& grid) = 0;
   virtual bool
-  isCheckpointTimeStep() const = 0;
+  isCheckpointTimestep() const = 0;
 
   // Returns true if the label is being saved
   virtual bool
@@ -176,9 +176,9 @@ public:
   virtual double
   getOutputInterval() const = 0;
   virtual void
-  setOutputTimeStepInterval(int inv) = 0;
+  setOutputTimestepInterval(int inv) = 0;
   virtual int
-  getOutputTimeStepInterval() const = 0;
+  getOutputTimestepInterval() const = 0;
 
   // checkpoint interval
   virtual void
@@ -186,9 +186,9 @@ public:
   virtual double
   getCheckpointInterval() const = 0;
   virtual void
-  setCheckpointTimeStepInterval(int inv) = 0;
+  setCheckpointTimestepInterval(int inv) = 0;
   virtual int
-  getCheckpointTimeStepInterval() const = 0;
+  getCheckpointTimestepInterval() const = 0;
   virtual void
   setCheckpointWallTimeInterval(int inv) = 0;
   virtual int
@@ -207,9 +207,9 @@ public:
   setSaveAsPIDX() = 0;
 
   virtual void
-  maybeLastTimeStep(bool val) = 0;
+  maybeLastTimestep(bool val) = 0;
   virtual bool
-  maybeLastTimeStep() = 0;
+  maybeLastTimestep() = 0;
 
   virtual void
   setElapsedWallTime(double val) = 0;
@@ -233,7 +233,7 @@ public:
 
   // Get the directory of the current time step for outputting info.
   virtual const std::string&
-  getLastTimeStepOutputLocation() const = 0;
+  getLastTimestepOutputLocation() const = 0;
 
   virtual void
   setRuntimeStats(
@@ -241,9 +241,9 @@ public:
 
   // Returns trus if an output or checkpoint exists for the time step
   virtual bool
-  outputTimeStepExists(unsigned int ts) = 0;
+  outputTimestepExists(unsigned int ts) = 0;
   virtual bool
-  checkpointTimeStepExists(unsigned int ts) = 0;
+  checkpointTimestepExists(unsigned int ts) = 0;
 };
 
 } // End namespace Uintah

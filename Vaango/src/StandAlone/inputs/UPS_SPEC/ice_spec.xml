@@ -76,10 +76,10 @@
       <max_iteration_equilibration      spec="OPTIONAL INTEGER 'positive'" /> <!-- FIXME: what is default? -->
       <solution                         spec="OPTIONAL NO_DATA"
                                           attribute1="technique REQUIRED STRING 'EqForm'" />
-      <TimeStepControl                  spec="OPTIONAL NO_DATA" >
+      <TimestepControl                  spec="OPTIONAL NO_DATA" >
         <Scheme_for_delT_calc           spec="REQUIRED STRING 'aggressive, conservative'" />
         <knob_for_speedSound            spec="REQUIRED DOUBLE '0,1'" />
-      </TimeStepControl>
+      </TimestepControl>
     </ICE>        
   </CFD>
 

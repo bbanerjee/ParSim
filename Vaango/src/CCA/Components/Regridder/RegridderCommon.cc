@@ -181,7 +181,7 @@ RegridderCommon::needRecompile(const GridP& /*grid*/)
 
   if (d_dynamicDilation) {
     // make sure a semi-decent sample has been taken
-    if (d_simulator->getTimeStep() - d_dilationTimestep > 5) {
+    if (d_simulator->getTimestep() - d_dilationTimestep > 5) {
       // compute the average overhead
       int numDims     = d_load_balancer->getNumDims();
       int* activeDims = d_load_balancer->getActiveDims();
@@ -206,7 +206,7 @@ RegridderCommon::needRecompile(const GridP& /*grid*/)
                     << std::endl;
           d_cellRegridDilation = newDilation;
           // reset the dilation overhead
-          d_dilationTimestep = d_simulator->getTimeStep();
+          d_dilationTimestep = d_simulator->getTimestep();
           retval             = true;
         }
       }
@@ -227,7 +227,7 @@ RegridderCommon::needRecompile(const GridP& /*grid*/)
                     << std::endl;
           d_cellRegridDilation = newDilation;
           // reset the dilation overhead
-          d_dilationTimestep = d_simulator->getTimeStep();
+          d_dilationTimestep = d_simulator->getTimestep();
           retval             = true;
         }
       }
@@ -243,7 +243,7 @@ RegridderCommon::needsToReGrid(const GridP& oldGrid)
 {
   rdbg << "RegridderCommon::needsToReGrid() BGN" << std::endl;
 
-  int timeStepsSinceRegrid = d_simulator->getTimeStep() - d_lastRegridTimestep;
+  int timeStepsSinceRegrid = d_simulator->getTimestep() - d_lastRegridTimestep;
   int retval               = false;
 
   if (d_forceRegridding) {
@@ -326,7 +326,7 @@ RegridderCommon::needsToReGrid(const GridP& oldGrid)
   }
 
   if (retval == true) {
-    d_lastRegridTimestep = d_simulator->getTimeStep();
+    d_lastRegridTimestep = d_simulator->getTimestep();
   }
 
   rdbg << "RegridderCommon::needsToReGrid( " << retval << " ) END" << std::endl;

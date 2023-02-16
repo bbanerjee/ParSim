@@ -873,7 +873,7 @@
                 <Field name="doTimeCurve" type="bool">false</Field>
                 <Field name="createSpreadsheet" type="bool">false</Field>
                 <Field name="conciseOutput" type="bool">false</Field>
-                <Field name="showTimeStep" type="bool">true</Field>
+                <Field name="showTimestep" type="bool">true</Field>
                 <Field name="showMeshName" type="bool">true</Field>
                 <Field name="displayGlobalIds" type="bool">false</Field>
                 <Field name="floatFormat" type="string">%g</Field>

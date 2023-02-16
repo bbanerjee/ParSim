@@ -210,7 +210,7 @@ PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
   SimulationCommon::setSimTimeEndAtMax(false);
   SimulationCommon::setSimTimeClampToOutput(false);
 
-  SimulationCommon::setTimeStepsMax(d_udaTimes.size());
+  SimulationCommon::setTimestepsMax(d_udaTimes.size());
 }
 
 //______________________________________________________________________
@@ -265,7 +265,7 @@ PostProcessUda::sched_readDataArchive(const LevelP& level, SchedulerP& sched)
   Task* t = scinew Task(
     "PostProcessUda::readDataArchive", this, &PostProcessUda::readDataArchive);
 
-  t->requires(Task::OldDW, getTimeStepLabel());
+  t->requires(Task::OldDW, getTimestepLabel());
 
   GridP grid = level->getGrid();
   const PatchSet* perProcPatches =

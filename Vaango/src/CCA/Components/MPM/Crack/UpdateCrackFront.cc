@@ -170,8 +170,8 @@ Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
     MPI_Comm_rank(mpi_crack_comm, &pid);
     MPI_Comm_size(mpi_crack_comm, &patch_size);
 
-    delt_vartype curTimeStep;
-    old_dw->get(curTimeStep, lb->delTLabel, getLevel(patches));
+    delt_vartype curTimestep;
+    old_dw->get(curTimestep, lb->delTLabel, getLevel(patches));
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
@@ -386,7 +386,7 @@ Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
       // for crack geometry visualization
       if (saveCrackGeometry) {
         if (pid == 0) {
-          OutputCrackGeometry(m, curTimeStep);
+          OutputCrackGeometry(m, curTimestep);
         }
       }
 
@@ -400,7 +400,7 @@ void
 Crack::OutputCrackGeometry(const int& m, const int& timestep)
 {
   if (ce[m].size() > 0) { // for the materials with cracks
-    bool timeToDump = dataArchiver->isOutputTimeStep();
+    bool timeToDump = dataArchiver->isOutputTimestep();
     if (timeToDump) {
       // Create output files in format:
       // ce.matXXX.timestepYYYYY (crack elems)

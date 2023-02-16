@@ -600,10 +600,10 @@ public:
 
   // For timestep abort/restart
   virtual bool
-  abortTimeStep();
+  abortTimestep();
 
   virtual bool
-  recomputeTimeStep();
+  recomputeTimestep();
 
   struct ValidNeighbors
   {

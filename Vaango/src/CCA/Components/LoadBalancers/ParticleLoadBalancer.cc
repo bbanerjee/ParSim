@@ -736,7 +736,7 @@ bool
 ParticleLoadBalancer::needRecompile(const GridP& grid)
 {
   double time  = d_simulator->getSimTime();
-  int timestep = d_simulator->getTimeStep();
+  int timestep = d_simulator->getTimestep();
 
   bool do_check = false;
 #if 1
@@ -846,7 +846,7 @@ ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid,
   Timers::Simple timer;
   timer.start();
 
-  //const int timeStep   = d_simulator->getTimeStep();
+  //const int timeStep   = d_simulator->getTimestep();
   //const double simTime = d_simulator->getSimTime();
 
   bool changed = false;
@@ -858,7 +858,7 @@ ParticleLoadBalancer::possiblyDynamicallyReallocate(const GridP& grid,
     if (state != LoadBalancer::CHECK_LB) {
       force = true;
       if (d_lb_timeStep_interval != 0) {
-        d_last_lb_timeStep = d_simulator->getTimeStep();
+        d_last_lb_timeStep = d_simulator->getTimestep();
       } else if (d_lb_interval != 0) {
         d_last_lb_simTime = d_simulator->getSimTime();
       }

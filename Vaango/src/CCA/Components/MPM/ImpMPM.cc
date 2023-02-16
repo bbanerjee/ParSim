@@ -2632,9 +2632,9 @@ ImpMPM::iterate(const ProcessorGroup*,
     }
 
     if (restart_nan || restart_neg_residual || restart_num_iters) {
-      new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
+      new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimestep_name));
       new_dw->put(bool_or_vartype(true),
-                  VarLabel::find(recomputeTimeStep_name));
+                  VarLabel::find(recomputeTimestep_name));
       return;
     }
 
@@ -3234,9 +3234,9 @@ ImpMPM::formQ(const ProcessorGroup*,
         if (std::isnan(Q)) {
           std::cout << "RHS contains a nan, restarting timestep" << std::endl;
           new_dw->put(bool_or_vartype(true),
-                      VarLabel::find(abortTimeStep_name));
+                      VarLabel::find(abortTimestep_name));
           new_dw->put(bool_or_vartype(true),
-                      VarLabel::find(recomputeTimeStep_name));
+                      VarLabel::find(recomputeTimestep_name));
           return;
         }
       } // first time through non-rigid
@@ -3274,7 +3274,7 @@ ImpMPM::solveForDuCG(const ProcessorGroup* /*pg*/,
   }
 
   // if a recompute time step has already been called for don't do the solve
-  if (!new_dw->recomputeTimeStep()) {
+  if (!new_dw->recomputeTimestep()) {
     d_solver->assembleVector();
     d_solver->removeFixedDOF();
     std::vector<double> guess;

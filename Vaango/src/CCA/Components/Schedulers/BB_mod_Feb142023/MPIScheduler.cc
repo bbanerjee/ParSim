@@ -425,7 +425,7 @@ MPIScheduler::postMPISends(DetailedTask* task, int iteration)
       // desired but not sure of the effect of not calling it and doing
       // an out of sync output or checkpoint.
       if (req->m_to_tasks.front()->getTask()->getType() == Task::Output &&
-          !d_output->isOutputTimeStep() && !d_output->isCheckpointTimeStep()) {
+          !d_output->isOutputTimestep() && !d_output->isCheckpointTimestep()) {
         DOUTR(g_dbg, "   Ignoring non-output-timestep send for " << *req);
         continue;
       }
@@ -649,8 +649,8 @@ MPIScheduler::postMPIRecvs(DetailedTask* task,
         // desired but not sure of the effect of not calling it and doing
         // an out of sync output or checkpoint.
         if (req->m_to_tasks.front()->getTask()->getType() == Task::Output &&
-            !d_output->isOutputTimeStep() &&
-            !d_output->isCheckpointTimeStep()) {
+            !d_output->isOutputTimestep() &&
+            !d_output->isCheckpointTimestep()) {
           DOUTR(g_dbg, "   Ignoring non-output-timestep receive for " << *req);
           continue;
         }
@@ -885,7 +885,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
   DOUTR(g_dbg,
         ", MPI Scheduler executing taskgraph: "
-          << tgnum << ", timestep: " << d_simulator->getTimeStep() << " with "
+          << tgnum << ", timestep: " << d_simulator->getTimestep() << " with "
           << dts->numTasks() << " tasks (" << ntasks << " local)");
 
   if (d_reloc_new_pos_label && d_dws[d_dw_map[Task::OldDW]] != nullptr) {
@@ -940,7 +940,7 @@ MPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
     // ARS - FIXME CHECK THE WAREHOUSE
     OnDemandDataWarehouse* dw = d_dws[d_dws.size() - 1].get_rep();
-    if (!abort && dw && dw->abortTimeStep()) {
+    if (!abort && dw && dw->abortTimestep()) {
       // TODO - abort might not work with external queue...
       abort       = true;
       abort_point = task->getTask()->getSortedOrder();
@@ -1055,7 +1055,7 @@ MPIScheduler::outputTimingStats(const char* label)
     ++count;
 
     // Only output the exec times every N timesteps.
-    if (d_simulator->getTimeStep() % accumulate == 0) {
+    if (d_simulator->getTimestep() % accumulate == 0) {
 
       // Report which timesteps the values have been accumulated
       // over. If doing in situ monitoring the values will be reset to
@@ -1066,11 +1066,11 @@ MPIScheduler::outputTimingStats(const char* label)
 
       if (do_task_exec_stats) {
         preamble << "Reported values are for timestep : "
-                 << d_simulator->getTimeStep() << " ONLY";
+                 << d_simulator->getTimestep() << " ONLY";
       } else {
         preamble << "# Reported values are cumulative over " << count
-                 << " timesteps (" << d_simulator->getTimeStep() - (count - 1)
-                 << " through " << d_simulator->getTimeStep() << ")\n"
+                 << " timesteps (" << d_simulator->getTimestep() - (count - 1)
+                 << " through " << d_simulator->getTimestep() << ")\n"
                  << "# Tasks run inside a subscheduler are not included";
       }
 
@@ -1080,7 +1080,7 @@ MPIScheduler::outputTimingStats(const char* label)
                                         preamble.str(),
                                         my_rank,
                                         my_comm_size,
-                                        d_simulator->getTimeStep(),
+                                        d_simulator->getTimestep(),
                                         d_simulator->getSimTime(),
                                         BaseInfoMapper::Write_Last);
 
@@ -1090,7 +1090,7 @@ MPIScheduler::outputTimingStats(const char* label)
 
       // m_task_info.reportSummaryStats( "TaskStatsSummary", preamble.str(),
       //                                 my_rank, my_comm_size,
-      //                                 d_simulator->getTimeStep(),
+      //                                 d_simulator->getTimestep(),
       //                                 d_simulator->getSimTime(),
       //                                 BaseInfoMapper::Write_Last, false );
 
@@ -1197,7 +1197,7 @@ MPIScheduler::outputTimingStats(const char* label)
 
     for (size_t file = 0; file < files.size(); ++file) {
       std::ofstream& out = *files[file];
-      out << "TimeStep " << d_simulator->getTimeStep() << std::endl;
+      out << "Timestep " << d_simulator->getTimestep() << std::endl;
       for (size_t i = 0; i < (*data[file]).size(); i++) {
         out << label << ": " << d_labels[i] << ": ";
         int len = static_cast<int>(strlen(d_labels[i]) +

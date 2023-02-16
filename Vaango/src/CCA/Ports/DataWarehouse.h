@@ -523,9 +523,9 @@ public:
 
   // For timestep abort/restart
   virtual bool
-  abortTimeStep() = 0;
+  abortTimestep() = 0;
   virtual bool
-  recomputeTimeStep() = 0;
+  recomputeTimestep() = 0;
 
   virtual void
   reduceMPI(const VarLabel* label,

@@ -91,7 +91,7 @@ JGConcentrationDiffusion::computeFlux(const Patch* patch,
     particleIndex idx = *iter;
 
     pFlux[idx] = d_D0 * pConcGradient[idx];
-    timestep   = min(timestep, computeStableTimeStep(d_D0, dx));
+    timestep   = min(timestep, computeStableTimestep(d_D0, dx));
   } // End of Particle Loop
 
   new_dw->put(delt_vartype(timestep), d_lb->delTLabel, patch->getLevel());

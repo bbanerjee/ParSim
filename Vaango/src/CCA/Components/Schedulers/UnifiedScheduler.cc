@@ -824,7 +824,7 @@ UnifiedScheduler::execute( int tgnum       /* = 0 */
     m_thread_info.reportSummaryStats( "Thread", "",
                                       d_myworld->myRank(),
                                       d_myworld->nRanks(),
-                                      m_simulator->getTimeStep(),
+                                      m_simulator->getTimestep(),
                                       m_simulator->getSimTime(),
                                       BaseInfoMapper::Dout, false );
   }
@@ -834,7 +834,7 @@ UnifiedScheduler::execute( int tgnum       /* = 0 */
     m_thread_info.reportIndividualStats( "Thread", "",
                                          d_myworld->myRank(),
                                          d_myworld->nRanks(),
-                                         m_simulator->getTimeStep(),
+                                         m_simulator->getTimestep(),
                                          m_simulator->getSimTime(),
                                          BaseInfoMapper::Dout );
   }
@@ -1310,7 +1310,7 @@ UnifiedScheduler::runTasks( int thread_id )
           // desired but not sure of the effect of not calling it and doing
           // an out of sync output or checkpoint.
 
-          if ((m_output->isOutputTimeStep() || m_output->isCheckpointTimeStep())
+          if ((m_output->isOutputTimestep() || m_output->isCheckpointTimestep())
               || ((readyTask->getTask()->getName() != "DataArchiver::outputVariables")
                   && (readyTask->getTask()->getName() != "DataArchiver::outputVariables(checkpoint)"))) {
             initiateD2H(readyTask);
@@ -4430,7 +4430,7 @@ UnifiedScheduler::findIntAndExtGpuDependencies( DetailedTask * dtask
         // desired but not sure of the effect of not calling it and doing
         // an out of sync output or checkpoint.
         
-        if (req->m_to_tasks.front()->getTask()->getType() == Task::Output && !m_output->isOutputTimeStep() && !m_output->isCheckpointTimeStep()) {
+        if (req->m_to_tasks.front()->getTask()->getType() == Task::Output && !m_output->isOutputTimestep() && !m_output->isCheckpointTimestep()) {
           if (gpu_stats.active()) {
             cerrLock.lock();
             {

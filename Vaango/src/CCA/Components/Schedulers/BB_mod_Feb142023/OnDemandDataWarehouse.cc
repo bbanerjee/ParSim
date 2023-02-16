@@ -4558,15 +4558,15 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
 
 // For timestep abort/recomute
 bool
-OnDemandDataWarehouse::abortTimeStep()
+OnDemandDataWarehouse::abortTimestep()
 {
   // BJW - time step aborting does not work with MPI - disabling.
   if (d_myworld->nRanks() == 0) {
     Patch* patch = nullptr;
 
-    if (exists(VarLabel::find(abortTimeStep_name), -1, patch)) {
+    if (exists(VarLabel::find(abortTimestep_name), -1, patch)) {
       bool_or_vartype ats_var;
-      get(ats_var, VarLabel::find(abortTimeStep_name));
+      get(ats_var, VarLabel::find(abortTimestep_name));
       return bool(ats_var);
     } else {
       return false;
@@ -4577,13 +4577,13 @@ OnDemandDataWarehouse::abortTimeStep()
 }
 
 bool
-OnDemandDataWarehouse::recomputeTimeStep()
+OnDemandDataWarehouse::recomputeTimestep()
 {
   Patch* patch = nullptr;
 
-  if (exists(VarLabel::find(recomputeTimeStep_name), -1, patch)) {
+  if (exists(VarLabel::find(recomputeTimestep_name), -1, patch)) {
     bool_or_vartype rts_var;
-    get(rts_var, VarLabel::find(recomputeTimeStep_name));
+    get(rts_var, VarLabel::find(recomputeTimestep_name));
     return bool(rts_var);
   } else {
     return false;

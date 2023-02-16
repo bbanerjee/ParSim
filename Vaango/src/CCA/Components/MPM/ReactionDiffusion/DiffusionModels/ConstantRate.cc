@@ -176,7 +176,7 @@ ConstantRate::computeDivergence(const Patch* patch,
   Ghost::GhostType gn = Ghost::None;
 
   //*********Start - Used for testing purposes - CG *******
-  // int timestep = d_materialManager->getCurrentTopLevelTimeStep();
+  // int timestep = d_materialManager->getCurrentTopLevelTimestep();
   //*********End   - Used for testing purposes - CG *******
 
   constNCVariable<double> gMass;

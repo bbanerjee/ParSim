@@ -358,7 +358,7 @@ NonAdiabaticTable::initialize(const ProcessorGroup*,
   timeStep_vartype timeStep;
   new_dw->get(timeStep, VarLabel::find(timeStep_name));
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   cout_doing << "Doing Initialize \t\t\t\t\tADIABATIC_TABLE" << endl;
   for (int p = 0; p < patches->size(); p++) {
@@ -402,7 +402,7 @@ NonAdiabaticTable::initialize(const ProcessorGroup*,
           d_materialManager,
           indx,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     //__________________________________
     // initialize other properties
@@ -466,7 +466,7 @@ NonAdiabaticTable::initialize(const ProcessorGroup*,
           d_materialManager,
           indx,
           new_dw,
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     //__________________________________
     //  Dump out a header for the probe point files

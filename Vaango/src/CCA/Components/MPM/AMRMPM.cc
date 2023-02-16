@@ -3538,7 +3538,7 @@ AMRMPM::computeParticleScaleFactor(const ProcessorGroup*,
       new_dw->allocateAndPut(
         pScaleFactor, d_mpm_labels->pScaleFactorLabel_preReloc, pset);
 
-      if (d_output->isOutputTimeStep()) {
+      if (d_output->isOutputTimestep()) {
         Vector dx = patch->dCell();
         for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
              iter++) {

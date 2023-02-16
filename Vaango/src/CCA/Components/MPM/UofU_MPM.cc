@@ -4201,7 +4201,7 @@ UofU_MPM::computeParticleScaleFactor(const ProcessorGroup*,
       new_dw->allocateAndPut(
         pScaleFactor, d_mpm_labels->pScaleFactorLabel_preReloc, pset);
 
-      if (d_output->isOutputTimeStep()) {
+      if (d_output->isOutputTimestep()) {
         Vector dx = patch->dCell();
 
         if (d_mpm_flags->d_interpolatorType != "cpdi" &&

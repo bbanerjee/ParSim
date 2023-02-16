@@ -36,7 +36,7 @@ P.extraCells        = 1;                            % Number of ghost cells in e
 P.initTime          = 0.0;                          % Initial simulation time [sec]
 P.writeData         = 1;                            % output the final timestep to a .dat file
 P.delt_init         = 1e-20;                        % First timestep [sec]
-P.maxTimeSteps      = 100000                           % Maximum number of timesteps [dimensionless]
+P.maxTimesteps      = 100000                           % Maximum number of timesteps [dimensionless]
 P.UseProbeCells     = 1;                            % on/off switch for writing out data at probe locations
 P.probeLocations    = [ 0.4 0.5 0.6]
                                                     % physical locations of probe locations
@@ -178,8 +178,8 @@ end
 %     Time integration loop
 t = P.initTime + delT;
 tstep = 0;
-for tstep = 1:P.maxTimeSteps
-%while (tstep <= P.maxTimeSteps & t <= P.maxTime)
+for tstep = 1:P.maxTimesteps
+%while (tstep <= P.maxTimesteps & t <= P.maxTime)
   %tstep = tstep + 1;
   fprintf('\n_____________________________________tstep=%d, t=%e, prev. delT=%e\n', tstep, t, delT);
 

@@ -760,9 +760,9 @@ public:
       proc0cout << "    niters:   " << niter << "\n"
                 << "    residual: " << e << std::endl;
 
-      new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimeStep_name));
+      new_dw->put(bool_or_vartype(true), VarLabel::find(abortTimestep_name));
       new_dw->put(bool_or_vartype(true),
-                  VarLabel::find(recomputeTimeStep_name));
+                  VarLabel::find(recomputeTimestep_name));
     } else {
       throw ConvergenceFailure("CGSolve variable: " + X_label->getName(),
                                niter,

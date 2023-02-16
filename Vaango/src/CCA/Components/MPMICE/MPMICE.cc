@@ -324,7 +324,7 @@ MPMICE::actuallyInitialize(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   new_dw->get(timeStep, VarLabel::find(timeStep_name));
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -399,28 +399,28 @@ MPMICE::actuallyInitialize(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(rho_micro,
             "Density",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(Temp_CC,
             "Temperature",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(vel_CC,
             "Velocity",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
         IntVector c  = *iter;
@@ -912,7 +912,7 @@ MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find(timeStep_name));
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -1016,21 +1016,21 @@ MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(rho_CC,
             "Density",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(vel_CC,
             "Velocity",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       //  Set if symmetric Boundary conditions
       setBC(cmass,
             "set_if_sym_BC",
@@ -1038,20 +1038,20 @@ MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(sp_vol_CC,
             "set_if_sym_BC",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       //---- B U L L E T   P R O O F I N G------
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
       std::ostringstream warn;
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       int L = getLevel(patches)->getIndex();
       if (d_testForNegTemps_mpm) {
@@ -1190,7 +1190,7 @@ MPMICE::coarsenVariableCC(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* coarseLevel = getLevel(patches);
   const Level* fineLevel   = coarseLevel->getFinerLevel().get_rep();
@@ -1281,7 +1281,7 @@ MPMICE::coarsenVariableCC(const ProcessorGroup*,
               d_materialManager,
               indx,
               new_dw,
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
       } else if (variable->getName() == "rho_CC") {
         setBC(coarse_q_CC,
               "Density",
@@ -1289,7 +1289,7 @@ MPMICE::coarsenVariableCC(const ProcessorGroup*,
               d_materialManager,
               indx,
               new_dw,
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
       } else if (variable->getName() == "vel_CC") {
         setBC(coarse_q_CC,
               "Velocity",
@@ -1297,7 +1297,7 @@ MPMICE::coarsenVariableCC(const ProcessorGroup*,
               d_materialManager,
               indx,
               new_dw,
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
       } else if (variable->getName() == "c.mass" ||
                  variable->getName() == "sp_vol_CC" ||
                  variable->getName() == "mom_L_CC" ||
@@ -1308,7 +1308,7 @@ MPMICE::coarsenVariableCC(const ProcessorGroup*,
               d_materialManager,
               indx,
               new_dw,
-              isNotInitialTimeStep);
+              isNotInitialTimestep);
       }
     } // matls
   }   // coarse level
@@ -1588,7 +1588,7 @@ MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   const Level* level = getLevel(patches);
   int L_indx         = level->getIndex();
@@ -2104,7 +2104,7 @@ MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       //__________________________________
       //      BULLET PROOFING
       // ignore BP if timestep restart has already been requested
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       std::string message;
       bool allTestsPassed = true;
@@ -2215,7 +2215,7 @@ MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
           new_dw,
           d_ice->d_BC_globalVars.get(),
           BC_localVars.get(),
-          isNotInitialTimeStep);
+          isNotInitialTimestep);
 
     delete_CustomBCs(d_ice->d_BC_globalVars.get(), BC_localVars.get());
 
@@ -2709,7 +2709,7 @@ MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find(timeStep_name));
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -2861,20 +2861,20 @@ MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(int_eng_L,
             "set_if_sym_BC",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
 
       //---- B U L L E T   P R O O F I N G------
       // ignore BP if timestep restart has already been requested
       IntVector neg_cell;
       std::ostringstream warn;
-      bool rts = new_dw->recomputeTimeStep();
+      bool rts = new_dw->recomputeTimestep();
 
       if (d_testForNegTemps_mpm) {
         if (!areAllValuesPositive(int_eng_L, neg_cell) && !rts) {
@@ -2967,7 +2967,7 @@ MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find(timeStep_name));
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -3036,14 +3036,14 @@ MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(dVdt_CC,
             "set_if_sym_BC",
             patch,
             d_materialManager,
             indx,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
     }
   } // patches
 }
@@ -3380,7 +3380,7 @@ MPMICE::refine(const ProcessorGroup*,
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find(timeStep_name));
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -3426,21 +3426,21 @@ MPMICE::refine(const ProcessorGroup*,
             d_materialManager,
             dwi,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(Temp_CC,
             "Temperature",
             patch,
             d_materialManager,
             dwi,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       setBC(vel_CC,
             "Velocity",
             patch,
             d_materialManager,
             dwi,
             new_dw,
-            isNotInitialTimeStep);
+            isNotInitialTimestep);
       for (auto iter = patch->getExtraCellIterator(); !iter.done(); iter++) {
         sp_vol_CC[*iter] = 1.0 / rho_micro[*iter];
       }

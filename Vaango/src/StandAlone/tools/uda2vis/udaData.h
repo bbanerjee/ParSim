@@ -327,7 +327,7 @@ public:
 };
 
 
-class TimeStepInfo {
+class TimestepInfo {
 public:
   std::vector<LevelInfo> levelInfo;
   std::vector<VariableInfo> varInfo;

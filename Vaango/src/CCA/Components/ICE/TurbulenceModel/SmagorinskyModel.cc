@@ -183,7 +183,7 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, VarLabel::find( timeStep_name) );
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
   cout_doing << "Doing computeVariance "<< "\t\t\t Smagorinsky_Model" << endl;
   for(int p=0;p<patches->size();p++){
@@ -217,7 +217,7 @@ void Smagorinsky_Model::computeVariance(const ProcessorGroup*,
         df *= inv_dx;
         fvar[c] = scale * df.length2();
       }
-      setBC(fvar,s->scalarVariance->getName(),patch, d_materialManager, matl, new_dw, isNotInitialTimeStep);
+      setBC(fvar,s->scalarVariance->getName(),patch, d_materialManager, matl, new_dw, isNotInitialTimestep);
     }
   }
 }

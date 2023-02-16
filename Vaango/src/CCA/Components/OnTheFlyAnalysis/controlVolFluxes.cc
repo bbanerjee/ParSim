@@ -397,7 +397,7 @@ controlVolFluxes::integrate_Q_overCV(const ProcessorGroup* pg,
   const Level* level = getLevel(patches);
 
   // Ignore the task if a recompute time step has been requested upstream
-  bool rts      = new_dw->recomputeTimeStep();
+  bool rts      = new_dw->recomputeTimestep();
   bool itItTime = isItTime(old_dw, level, m_lb->lastCompTime);
 
   if (itItTime == false || rts) {
@@ -532,7 +532,7 @@ controlVolFluxes::doAnalysis(const ProcessorGroup* pg,
 {
 
   // Ignore the task if a recompute time step has been requested upstream
-  bool rts = new_dw->recomputeTimeStep();
+  bool rts = new_dw->recomputeTimestep();
 
   const Level* level = getLevel(patches);
   timeVars tv;

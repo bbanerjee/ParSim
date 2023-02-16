@@ -130,7 +130,7 @@ udaFileFormat::udaFileFormat(const char *filename)
 
   // haven't loaded any timestep data yet
   stepInfo = nullptr;  
-  currTimeStep = -1;
+  currTimestep = -1;
 }
 
 

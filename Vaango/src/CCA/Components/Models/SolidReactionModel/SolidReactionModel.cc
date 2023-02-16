@@ -264,7 +264,7 @@ void SolidReactionModel::computeModelSources(const ProcessorGroup*,
   timeStep_vartype timeStep;
   old_dw->get(timeStep, Ilb->timeStepLabel );
 
-  bool isNotInitialTimeStep = (timeStep > 0);
+  bool isNotInitialTimestep = (timeStep > 0);
 
     delt_vartype delT;
     const Level* level = getLevel(patches);
@@ -371,10 +371,10 @@ void SolidReactionModel::computeModelSources(const ProcessorGroup*,
 
         //__________________________________
         //  set symetric BC
-        setBC(mass_src_0, "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
-        setBC(mass_src_1, "set_if_sym_BC",patch, d_materialManager, m1, new_dw, isNotInitialTimeStep);
-        setBC(delF,       "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
-        setBC(Fr,         "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimeStep);
+        setBC(mass_src_0, "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
+        setBC(mass_src_1, "set_if_sym_BC",patch, d_materialManager, m1, new_dw, isNotInitialTimestep);
+        setBC(delF,       "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
+        setBC(Fr,         "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
     }
     //__________________________________
     //save total quantities

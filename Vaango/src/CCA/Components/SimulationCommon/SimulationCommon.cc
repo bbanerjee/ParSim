@@ -120,14 +120,14 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
   // immediately.
 
   // output time step
-  d_simReductionVars[outputTimeStep_name] =
+  d_simReductionVars[outputTimestep_name] =
       std::make_unique<SimulationReductionVariable>(
-          outputTimeStep_name, bool_or_vartype::getTypeDescription());
+          outputTimestep_name, bool_or_vartype::getTypeDescription());
 
   // checkpoint time step
-  d_simReductionVars[checkpointTimeStep_name] =
+  d_simReductionVars[checkpointTimestep_name] =
       std::make_unique<SimulationReductionVariable>(
-          checkpointTimeStep_name, bool_or_vartype::getTypeDescription());
+          checkpointTimestep_name, bool_or_vartype::getTypeDescription());
 
   // An application may adjust the output interval or the checkpoint
   // interval during a simulation.  For example in deflagration ->
@@ -147,14 +147,14 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
   // aborted or the simulation end early.
 
   // Recompute the time step
-  d_simReductionVars[recomputeTimeStep_name] =
+  d_simReductionVars[recomputeTimestep_name] =
       std::make_unique<SimulationReductionVariable>(
-          recomputeTimeStep_name, bool_or_vartype::getTypeDescription());
+          recomputeTimestep_name, bool_or_vartype::getTypeDescription());
 
   // Abort the time step
-  d_simReductionVars[abortTimeStep_name] =
+  d_simReductionVars[abortTimestep_name] =
       std::make_unique<SimulationReductionVariable>(
-          abortTimeStep_name, bool_or_vartype::getTypeDescription());
+          abortTimestep_name, bool_or_vartype::getTypeDescription());
 
   // End the simulation
   d_simReductionVars[endSimulation_name] =
@@ -462,11 +462,11 @@ SimulationCommon::scheduleReduceSystemVars(const GridP& grid,
   // the reduction var needs to be active for the reduction and
   // subsequent test.
   if (d_outputIfInvalidNextDelTFlag) {
-    activateReductionVariable(outputTimeStep_name, true);
+    activateReductionVariable(outputTimestep_name, true);
   }
 
   if (d_checkpointIfInvalidNextDelTFlag) {
-    activateReductionVariable(checkpointTimeStep_name, true);
+    activateReductionVariable(checkpointTimestep_name, true);
   }
 
   // The above three tasks are on a per proc basis any rank can make
@@ -544,11 +544,11 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
   // If delta T has been changed and if requested, for that change
   // output or checkpoint. Must be done before the reduction call.
   if (validDelT & d_outputIfInvalidNextDelTFlag) {
-    setReductionVariable(new_dw, outputTimeStep_name, true);
+    setReductionVariable(new_dw, outputTimestep_name, true);
   }
 
   if (validDelT & d_checkpointIfInvalidNextDelTFlag) {
-    setReductionVariable(new_dw, checkpointTimeStep_name, true);
+    setReductionVariable(new_dw, checkpointTimestep_name, true);
   }
 
   // Reduce the application specific reduction variables. If no value
@@ -567,12 +567,12 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
   if (patches->size() != 0) {
     const GridP grid = patches->get(0)->getLevel()->getGrid();
 
-    if (!isBenignReductionVariable(outputTimeStep_name)) {
-      d_output->setOutputTimeStep(true, grid);
+    if (!isBenignReductionVariable(outputTimestep_name)) {
+      d_output->setOutputTimestep(true, grid);
     }
 
-    if (!isBenignReductionVariable(checkpointTimeStep_name)) {
-      d_output->setCheckpointTimeStep(true, grid);
+    if (!isBenignReductionVariable(checkpointTimestep_name)) {
+      d_output->setCheckpointTimestep(true, grid);
     }
   }
 
@@ -665,7 +665,7 @@ SimulationCommon::updateSystemVars(const ProcessorGroup*,
                                    DataWarehouse* new_dw) {
   // If recomputing a time step do not update the time step or the simulation
   // time.
-  if (!getReductionVariable(recomputeTimeStep_name)) {
+  if (!getReductionVariable(recomputeTimestep_name)) {
     // Store the time step so it can be incremented at the top of the
     // time step where it is over written.
     new_dw->put(timeStep_vartype(d_timeStep), d_timeStepLabel);
@@ -795,10 +795,10 @@ SimulationCommon::recomputeDelT([[maybe_unused]] const double delT) {
 //______________________________________________________________________
 //
 void
-SimulationCommon::prepareForNextTimeStep() {
+SimulationCommon::prepareForNextTimestep() {
   // Increment (by one) the current time step number so components know
   // what time step they are on and get the delta T that will be used.
-  incrementTimeStep();
+  incrementTimestep();
 
   // Get the delta that will be used for the time step.
   delt_vartype delt_var;
@@ -987,7 +987,7 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
     // Adjust the next delta T to clamp the simulation time to the
     // output time.
     double nextOutput = d_output->getNextOutputTime();
-    if (!d_output->isOutputTimeStep() && nextOutput != 0 &&
+    if (!d_output->isOutputTimestep() && nextOutput != 0 &&
         d_simTime + d_delT + delTNext > nextOutput) {
       invalid |= CLAMP_TIME_TO_OUTPUT;
 
@@ -1005,7 +1005,7 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
     // Adjust the next delta T to clamp the simulation time to the
     // checkpoint time.
     double nextCheckpoint = d_output->getNextCheckpointTime();
-    if (!d_output->isCheckpointTimeStep() && nextCheckpoint != 0 &&
+    if (!d_output->isCheckpointTimestep() && nextCheckpoint != 0 &&
         d_simTime + d_delT + delTNext > nextCheckpoint) {
       invalid |= CLAMP_TIME_TO_CHECKPOINT;
 
@@ -1163,12 +1163,12 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
 //
 // Determines if the time step is the last one.
 bool
-SimulationCommon::isLastTimeStep(double walltime) {
+SimulationCommon::isLastTimestep(double walltime) {
   if (getReductionVariable(endSimulation_name)) {
     return true;
   }
 
-  if (getReductionVariable(abortTimeStep_name)) {
+  if (getReductionVariable(abortTimestep_name)) {
     return true;
   }
 
@@ -1203,7 +1203,7 @@ SimulationCommon::isLastTimeStep(double walltime) {
 // MaybeLast should be called before any time step work is done.
 
 bool
-SimulationCommon::maybeLastTimeStep(double walltime) const {
+SimulationCommon::maybeLastTimestep(double walltime) const {
   if (d_simTimeMax > 0 && d_simTime + d_delT >= d_simTimeMax) {
     return true;
   }
@@ -1231,7 +1231,7 @@ SimulationCommon::maybeLastTimeStep(double walltime) const {
 // see SimulationController::timeStateSetup().
 
 void
-SimulationCommon::setTimeStep(int timeStep) {
+SimulationCommon::setTimestep(int timeStep) {
   d_timeStep = timeStep;
 
   // Write the time step to the initial DW so apps can get to it when
@@ -1243,7 +1243,7 @@ SimulationCommon::setTimeStep(int timeStep) {
 //______________________________________________________________________
 //
 void
-SimulationCommon::incrementTimeStep() {
+SimulationCommon::incrementTimestep() {
   ++d_timeStep;
 
   // Write the new time to the new data warehouse as the scheduler has

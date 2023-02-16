@@ -55,15 +55,15 @@ public:
 protected:
   //! Set up, compile, and execute initial timestep
   void
-  doInitialTimeStep();
+  doInitialTimestep();
 
   //! Execute a time step
   void
-  executeTimeStep(int totalFine);
+  executeTimestep(int totalFine);
 
   //! If doing AMR do the regridding
   auto
-  doRegridding(bool initialTimeStep) -> bool;
+  doRegridding(bool initialTimestep) -> bool;
 
   void
   compileTaskGraph(int totalFine);

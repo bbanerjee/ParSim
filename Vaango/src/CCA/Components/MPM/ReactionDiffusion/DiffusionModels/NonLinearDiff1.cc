@@ -266,7 +266,7 @@ NonLinearDiff1::computeFlux(const Patch* patch,
 
     pFlux[idx]        = D * pConcGrad[idx];
     pDiffusivity[idx] = D;
-    timestep          = std::min(timestep, computeStableTimeStep(D, dx));
+    timestep          = std::min(timestep, computeStableTimestep(D, dx));
   } // End of Particle Loop
   new_dw->put(delt_vartype(timestep), d_lb->delTLabel, patch->getLevel());
 

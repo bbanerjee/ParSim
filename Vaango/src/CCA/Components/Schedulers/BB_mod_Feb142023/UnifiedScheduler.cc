@@ -881,7 +881,7 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
                                      "",
                                      d_myworld->myRank(),
                                      d_myworld->nRanks(),
-                                     d_simulator->getTimeStep(),
+                                     d_simulator->getTimestep(),
                                      d_simulator->getSimTime(),
                                      BaseInfoMapper::Dout,
                                      false);
@@ -893,7 +893,7 @@ UnifiedScheduler::execute(int tgnum /* = 0 */
                                         "",
                                         d_myworld->myRank(),
                                         d_myworld->nRanks(),
-                                        d_simulator->getTimeStep(),
+                                        d_simulator->getTimestep(),
                                         d_simulator->getSimTime(),
                                         BaseInfoMapper::Dout);
   }
@@ -1414,8 +1414,8 @@ UnifiedScheduler::runTasks(int thread_id)
           // desired but not sure of the effect of not calling it and doing
           // an out of sync output or checkpoint.
 
-          if ((d_output->isOutputTimeStep() ||
-               d_output->isCheckpointTimeStep()) ||
+          if ((d_output->isOutputTimestep() ||
+               d_output->isCheckpointTimestep()) ||
               ((readyTask->getTask()->getName() !=
                 "DataArchiver::outputVariables") &&
                (readyTask->getTask()->getName() !=
@@ -5626,8 +5626,8 @@ UnifiedScheduler::findIntAndExtGpuDependencies(DetailedTask* dtask,
         // an out of sync output or checkpoint.
 
         if (req->m_to_tasks.front()->getTask()->getType() == Task::Output &&
-            !d_output->isOutputTimeStep() &&
-            !d_output->isCheckpointTimeStep()) {
+            !d_output->isOutputTimestep() &&
+            !d_output->isCheckpointTimestep()) {
           if (gpu_stats.active()) {
             cerrLock.lock();
             {

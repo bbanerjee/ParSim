@@ -107,7 +107,7 @@ struct hypre_solver_struct : public RefCounted
 
   SolverType solver_type;
   SolverType precond_solver_type;
-  bool isRecomputeTimeStep;
+  bool isRecomputeTimestep;
 
   //  *_p = pointer
   HYPRE_StructSolver* solver_p = nullptr;
@@ -120,7 +120,7 @@ struct hypre_solver_struct : public RefCounted
   //
   hypre_solver_struct()
   {
-    isRecomputeTimeStep = false;
+    isRecomputeTimestep = false;
     solver_type         = smg;
     precond_solver_type = diagonal;
     solver_p            = 0;

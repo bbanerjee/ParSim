@@ -369,7 +369,7 @@ DynamicMPIScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 
     // ARS - FIXME CHECK THE WAREHOUSE
     OnDemandDataWarehouse* dw = d_dws[d_dws.size() - 1].get_rep();
-    if (!abort && dw && dw->abortTimeStep()) {
+    if (!abort && dw && dw->abortTimestep()) {
       // TODO - abort might not work with external queue...
       abort       = true;
       abort_point = task->getTask()->getSortedOrder();
