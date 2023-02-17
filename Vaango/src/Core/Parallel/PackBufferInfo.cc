@@ -51,8 +51,10 @@ PackBufferInfo::~PackBufferInfo()
 }
 
 void
-PackBufferInfo::get_type(void*& out_buf, int& out_count,
-                         MPI_Datatype& out_datatype, MPI_Comm comm)
+PackBufferInfo::get_type(void*& out_buf,
+                         int& out_count,
+                         MPI_Datatype& out_datatype,
+                         MPI_Comm comm)
 {
   ASSERT(count() > 0);
   if (!d_have_datatype) {
@@ -60,7 +62,7 @@ PackBufferInfo::get_type(void*& out_buf, int& out_count,
     int total_packed_size = 0;
     for (unsigned int i = 0; i < d_startbufs.size(); i++) {
       if (d_counts[i] > 0) {
-        MPI_Pack_size(d_counts[i], d_datatypes[i], comm, &packed_size);
+        Uintah::MPI::Pack_size(d_counts[i], d_datatypes[i], comm, &packed_size);
         total_packed_size += packed_size;
       }
     }
@@ -68,13 +70,13 @@ PackBufferInfo::get_type(void*& out_buf, int& out_count,
     d_packedBuffer = scinew PackedBuffer(total_packed_size);
     d_packedBuffer->addReference();
 
-    d_datatype = MPI_PACKED;
-    d_count = total_packed_size;
-    d_buffer = d_packedBuffer->getBuffer();
+    d_datatype      = MPI_PACKED;
+    d_count         = total_packed_size;
+    d_buffer        = d_packedBuffer->getBuffer();
     d_have_datatype = true;
   }
-  out_buf = d_buffer;
-  out_count = d_count;
+  out_buf      = d_buffer;
+  out_count    = d_count;
   out_datatype = d_datatype;
 }
 
@@ -94,15 +96,20 @@ PackBufferInfo::pack(MPI_Comm comm, int& out_count)
   ASSERT(d_have_datatype);
 
   int position = 0;
-  int bufsize = d_packedBuffer->getBufSize();
+  int bufsize  = d_packedBuffer->getBufSize();
 
   unsigned int bufIndex = 0;
   for (auto& startbuf : d_startbufs) {
     unsigned int count = d_counts[bufIndex];
     if (count > 0) {
       // pack into a contigious buffer
-      MPI_Pack(startbuf, count, d_datatypes[bufIndex], d_buffer, bufsize,
-               &position, comm);
+      Uintah::MPI::Pack(startbuf,
+                        count,
+                        d_datatypes[bufIndex],
+                        d_buffer,
+                        bufsize,
+                        &position,
+                        comm);
     }
     bufIndex++;
   }
@@ -123,15 +130,34 @@ PackBufferInfo::unpack(MPI_Comm comm, [[maybe_unused]] MPI_Status& status)
 
   unsigned long bufsize = d_packedBuffer->getBufSize();
 
-  int position = 0;
+  int position          = 0;
+  for (unsigned int i = 0; i < d_startbufs.size(); i++) {
+    if (d_counts[i] > 0) {
+      Uintah::MPI::Unpack(d_buffer,
+                          bufsize,
+                          &position,
+                          d_startbufs[i],
+                          d_counts[i],
+                          d_datatypes[i],
+                          comm);
+    }
+  }
+  /*
   unsigned int bufIndex = 0;
   for (auto& startbuf : d_startbufs) {
     unsigned int count = d_counts[bufIndex];
     if (count > 0) {
-      MPI_Unpack(d_buffer, bufsize, &position, startbuf, count,
-                 d_datatypes[bufIndex], comm);
+      Uintah::MPI::Unpack(d_buffer,
+                          bufsize,
+                          &position,
+                          startbuf,
+                          count,
+                          d_datatypes[bufIndex],
+                          comm);
     }
+    bufIndex++;
   }
+  */
 }
 
 } // end namespace Uintah

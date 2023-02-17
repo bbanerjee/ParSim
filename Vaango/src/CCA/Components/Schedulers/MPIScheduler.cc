@@ -544,7 +544,6 @@ void MPIScheduler::postMPIRecvs( DetailedTask * dtask
 
   DOUTR(g_dbg, " postMPIRecvs - task " << *dtask);
 
-
   if (m_tracking_vars_print_location & SchedulerCommon::PRINT_BEFORE_COMM) {
     printTrackedVars(dtask, SchedulerCommon::PRINT_BEFORE_COMM);
   }

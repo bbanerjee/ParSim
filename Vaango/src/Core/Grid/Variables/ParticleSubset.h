@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,27 +27,28 @@
 #ifndef PARTICLESUBSET_H
 #define PARTICLESUBSET_H
 
-#include <Core/Util/RefCounted.h>
-#include <Core/Grid/Ghost.h>
 #include <Core/Geometry/IntVector.h>
+#include <Core/Grid/Ghost.h>
+#include <Core/Util/RefCounted.h>
 
-#include <vector>
 #include <iostream>
-
+#include <vector>
 
 using std::ostream;
 using Uintah::IntVector;
 
 namespace Uintah {
-  typedef int particleIndex;
-  typedef int particleId;
-  class Patch;
+
+using particleIndex = int;
+using particleId    = int;
+
+class Patch;
 
 /**************************************
 
 CLASS
    ParticleSubset
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -58,158 +60,185 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Particle, ParticleSubset
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  class ParticleVariableBase;
+class ParticleVariableBase;
 
-  class ParticleSubset : public RefCounted {
-  public:
-    ParticleSubset( const unsigned int   num_particles,
-                    const int            matlIndex,
-                    const Patch        * patch );
+class ParticleSubset : public RefCounted
+{
+public:
+  ParticleSubset(const unsigned int num_particles,
+                 const int matlIndex,
+                 const Patch* patch);
 
-    ParticleSubset( const unsigned int        num_particles,
-                    const int                 matlIndex,
-                    const Patch             * patch,
-                    const Uintah::IntVector & low,
-                    const Uintah::IntVector & high);
+  ParticleSubset(const unsigned int num_particles,
+                 const int matlIndex,
+                 const Patch* patch,
+                 const Uintah::IntVector& low,
+                 const Uintah::IntVector& high);
 
-    ParticleSubset( const unsigned int                   num_particles,
-                    const int                            matlIndex,
-                    const Patch                        * patch,
-                    const Uintah::IntVector            & low,
-                    const Uintah::IntVector            & high,
-                    const std::vector<const Patch*>    & neighbors,
-                    const std::vector<ParticleSubset*> & subsets);
-    ParticleSubset();
-    ~ParticleSubset();
-    
-    //////////
-    // Insert Documentation Here:
-    bool operator==(const ParticleSubset& ps) const {
-      return d_numParticles == ps.d_numParticles && 
-        // a null patch means that there is no patch center for the pset
-        // (probably on an AMR copy data timestep)
-        (!d_patch || !ps.d_patch || d_patch == ps.d_patch) && 
-        d_matlIndex == ps.d_matlIndex && d_low == ps.d_low && d_high == ps.d_high;
+  ParticleSubset(const unsigned int num_particles,
+                 const int matlIndex,
+                 const Patch* patch,
+                 const Uintah::IntVector& low,
+                 const Uintah::IntVector& high,
+                 const std::vector<const Patch*>& neighbors,
+                 const std::vector<ParticleSubset*>& subsets);
+  ParticleSubset();
+  ~ParticleSubset();
+
+  bool
+  operator==(const ParticleSubset& ps) const
+  {
+    // a null patch means that there is no patch center for the pset
+    // (probably on an AMR copy data timestep)
+    bool A = (!d_patch || !ps.d_patch || d_patch == ps.d_patch);
+    bool B = (d_numParticles == ps.d_numParticles);
+    bool C = (d_matlIndex == ps.d_matlIndex);
+    bool D = (d_low == ps.d_low && d_high == ps.d_high);
+
+    return A && B && C && D;
+  }
+
+  void
+  addParticle(particleIndex idx)
+  {
+    if (d_numParticles >= d_allocatedSize) {
+      expand(1);
     }
-      
-    //////////
-    // Insert Documentation Here:
-    void addParticle( particleIndex idx ) {
-      if( d_numParticles >= d_allocatedSize )
-        expand( 1 );
-      d_particles[d_numParticles++] = idx;
-    }
-    particleIndex addParticles( unsigned int count );
+    d_particles[d_numParticles++] = idx;
+  }
 
-    void resize(particleIndex idx);
+  particleIndex
+  addParticles(unsigned int count);
 
-    typedef particleIndex* iterator;
-      
-    //////////
-    // Insert Documentation Here:
-    iterator begin() {
-      return d_particles;
-    }
-      
-    //////////
-    // Insert Documentation Here:
+  void
+  resize(particleIndex idx);
 
-    iterator end() {
-      return d_particles+d_numParticles;
-    }
-      
-    //////////
-    // Insert Documentation Here:
-    //    const particleIndex* getPointer() const
-    //    {
-    //      return d_particles;
-    //    }
-      
-    particleIndex* getPointer()
-    {
-      return d_particles;
-    }
-      
-    //////////
-    // Insert Documentation Here:
-    unsigned int numParticles() const {
-      return d_numParticles;
-    }
-      
-    //////////
-    // Insert Documentation Here:
-    void set(particleIndex idx, particleIndex value) {
-      d_particles[idx] = value;
-    }
+  using iterator = particleIndex*;
 
-    void setLow(const Uintah::IntVector low) {
-      d_low=low;
-    }
-    void setHigh(const Uintah::IntVector high) {
-      d_high=high;
-    }
+  iterator
+  begin()
+  {
+    return d_particles;
+  }
 
-    Uintah::IntVector getLow() const {
-      return d_low;
-    }
-    Uintah::IntVector getHigh() const {
-      return d_high;
-    }
-    const Patch* getPatch() const {
-      return d_patch;
-    }
-    int getMatlIndex() const {
-      return d_matlIndex;
-    }
+  iterator
+  end()
+  {
+    return d_particles + d_numParticles;
+  }
 
-    void expand( unsigned int minSizeIncrement );
+  particleIndex*
+  getPointer()
+  {
+    return d_particles;
+  }
 
-    // sort the set by particle IDs
-    void sort(ParticleVariableBase* particleIDs);
+  unsigned int
+  numParticles() const
+  {
+    return d_numParticles;
+  }
 
-    const std::vector<const Patch*>& getNeighbors() const {
-      return neighbors;
-    }
-    const std::vector<ParticleSubset*>& getNeighborSubsets() const {
-      return neighbor_subsets;
-    }
-    
-    friend std::ostream& operator<<(std::ostream& out, Uintah::ParticleSubset& pset);
+  void
+  set(particleIndex idx, particleIndex value)
+  {
+    d_particles[idx] = value;
+  }
 
-   private:
-    //////////
-    // Insert Documentation Here:
-    particleIndex * d_particles;
-    unsigned int    d_numParticles;
-    unsigned int    d_allocatedSize;
-    int             d_numExpansions;
+  void
+  setLow(const Uintah::IntVector low)
+  {
+    d_low = low;
+  }
 
-    int                 d_matlIndex;
-    const Patch       * d_patch;
-    Uintah::IntVector   d_low, d_high;
+  void
+  setHigh(const Uintah::IntVector high)
+  {
+    d_high = high;
+  }
 
-    std::vector<const Patch*>    neighbors;
-    std::vector<ParticleSubset*> neighbor_subsets;
+  Uintah::IntVector
+  getLow() const
+  {
+    return d_low;
+  }
 
-    void fillset();
+  Uintah::IntVector
+  getHigh() const
+  {
+    return d_high;
+  }
 
-    void init();
+  const Patch*
+  getPatch() const
+  {
+    return d_patch;
+  }
 
-    ParticleSubset( const ParticleSubset & copy );
-    ParticleSubset& operator=( const ParticleSubset & );
-  };
+  int
+  getMatlIndex() const
+  {
+    return d_matlIndex;
+  }
+
+  void
+  expand(unsigned int minSizeIncrement);
+
+  // sort the set by particle IDs
+  void
+  sort(ParticleVariableBase* particleIDs);
+
+  const std::vector<const Patch*>&
+  getNeighbors() const
+  {
+    return neighbors;
+  }
+
+  const std::vector<ParticleSubset*>&
+  getNeighborSubsets() const
+  {
+    return neighbor_subsets;
+  }
+
+  friend std::ostream&
+  operator<<(std::ostream& out, Uintah::ParticleSubset& pset);
+
+private:
+
+  particleIndex* d_particles;
+  unsigned int d_numParticles;
+  unsigned int d_allocatedSize;
+  int d_numExpansions;
+
+  int d_matlIndex;
+  const Patch* d_patch;
+  Uintah::IntVector d_low, d_high;
+
+  std::vector<const Patch*> neighbors;
+  std::vector<ParticleSubset*> neighbor_subsets;
+
+  void
+  fillset();
+
+  void
+  init();
+
+  ParticleSubset(const ParticleSubset& copy) = delete;
+  ParticleSubset&
+  operator=(const ParticleSubset&) = delete;
+};
 } // End namespace Uintah
 
 #endif

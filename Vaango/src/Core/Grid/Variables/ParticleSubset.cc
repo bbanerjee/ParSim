@@ -37,7 +37,6 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace Uintah;
 
 ParticleSubset::~ParticleSubset()
 {
@@ -94,8 +93,6 @@ ParticleSubset::ParticleSubset(
   , neighbors(neighbors)
   , neighbor_subsets(neighbor_subsets)
 {
-  // std::cout << "ParticleSubset contstructor called\n";
-  // WAIT_FOR_DEBUGGER();
   init();
   for (int i = 0; i < (int)neighbor_subsets.size(); i++) {
     neighbor_subsets[i]->addReference();

@@ -53,7 +53,8 @@ ParticleVariable<Point>::packMPI(void* buf,
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         Point p = d_pdata->data[*iter] - offset;
-        MPI_Pack(&p, 1, td->getMPIType(), buf, bufsize, bufpos, pg->getComm());
+        Uintah::MPI::Pack(
+          &p, 1, td->getMPIType(), buf, bufsize, bufpos, pg->getComm());
       }
     } else {
       SCI_THROW(InternalError("packMPI not finished\n", __FILE__, __LINE__));
@@ -101,10 +102,8 @@ ParticleVariable<Point>::gather(ParticleSubset* pset,
       dynamic_cast<ParticleVariable<Point>*>(srcs[i]);
 
     if (!srcptr) {
-      SCI_THROW(
-        TypeMismatchException("Type mismatch in ParticleVariable::gather",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(TypeMismatchException(
+        "Type mismatch in ParticleVariable::gather", __FILE__, __LINE__));
     }
 
     ParticleVariable<Point>& src = *srcptr;
@@ -151,9 +150,8 @@ ParticleVariable<double>::emitNormal(std::ostream& out,
     varnode->appendElement("numParticles", d_pset->numParticles());
   }
   if (!td->isFlat()) {
-    SCI_THROW(InternalError("Cannot yet write non-flat objects!\n",
-                            __FILE__,
-                            __LINE__));
+    SCI_THROW(InternalError(
+      "Cannot yet write non-flat objects!\n", __FILE__, __LINE__));
   } else {
     if (outputDoubleAsFloat) {
       // This could be optimized...

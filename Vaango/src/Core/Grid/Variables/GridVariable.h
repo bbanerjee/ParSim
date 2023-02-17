@@ -55,8 +55,11 @@ class GridVariable
   , public Array3<T>
 {
 public:
-  GridVariable() : GridVariableBase() {}
-  virtual ~GridVariable() {}
+  GridVariable()
+    : GridVariableBase()
+  {
+  }
+  virtual ~GridVariable() = default;
 
   inline void
   copyPointer(GridVariable<T>& copy)
@@ -97,6 +100,7 @@ public:
   copyPatch(const GridVariable<T>& src,
             const IntVector& lowIndex,
             const IntVector& highIndex);
+
   virtual void
   copyPatch(const GridVariableBase* src,
             const IntVector& lowIndex,
@@ -134,7 +138,9 @@ public:
            IntVector& strides) const override;
 
   virtual void
-  getSizeInfo(std::string& elems, unsigned long& totsize, void*& ptr) const override
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override
   {
     IntVector siz = this->size();
     std::ostringstream str;
@@ -217,13 +223,12 @@ public:
              ProblemSpecP /*varnode*/,
              bool outputDoubleAsFloat) override
   {
-    const TypeDescription* td = fun_getTypeDescription((T*) nullptr);
+    const TypeDescription* td = fun_getTypeDescription((T*)nullptr);
     if (td->isFlat()) {
       Array3<T>::write(out, l, h, outputDoubleAsFloat);
     } else {
-      SCI_THROW(InternalError("Cannot yet write non-flat objects!\n",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Cannot yet write non-flat objects!\n", __FILE__, __LINE__));
     }
   }
 
@@ -234,9 +239,8 @@ public:
     if (td->isFlat()) {
       Array3<T>::read(in, swapBytes);
     } else {
-      SCI_THROW(InternalError("Cannot yet read non-flat objects!\n",
-                              __FILE__,
-                              __LINE__));
+      SCI_THROW(InternalError(
+        "Cannot yet read non-flat objects!\n", __FILE__, __LINE__));
     }
   }
 
@@ -248,7 +252,8 @@ public:
 
 protected:
   GridVariable(const GridVariable<T>& copy)
-    : GridVariableBase(), Array3<T>(copy)
+    : GridVariableBase()
+    , Array3<T>(copy)
   {
   }
 
@@ -257,8 +262,9 @@ private:
     : Array3<T>(window)
   {
   }
+
   GridVariable<T>&
-  operator=(const GridVariable<T>&);
+  operator=(const GridVariable<T>&) = delete;
 };
 
 template<class T>
@@ -267,9 +273,8 @@ GridVariable<T>::copyPointer(Variable& copy)
 {
   GridVariable<T>* c = dynamic_cast<GridVariable<T>*>(&copy);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in Grid variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in Grid variable", __FILE__, __LINE__));
   }
   copyPointer(*c);
 }
@@ -280,9 +285,8 @@ GridVariable<T>::castFromBase(const GridVariableBase* srcptr)
 {
   const GridVariable<T>* c = dynamic_cast<const GridVariable<T>*>(srcptr);
   if (!c) {
-    SCI_THROW(TypeMismatchException("Type mismatch in CC variable",
-                                    __FILE__,
-                                    __LINE__));
+    SCI_THROW(TypeMismatchException(
+      "Type mismatch in CC variable", __FILE__, __LINE__));
   }
   return *c;
 }

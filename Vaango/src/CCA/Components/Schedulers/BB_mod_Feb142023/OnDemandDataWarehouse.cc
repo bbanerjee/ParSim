@@ -2077,6 +2077,8 @@ OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
       d_var_DB.get(label, matlIndex, neighborPatch, *neighborvars[i]);
     }
 
+    std::cout << "Label name = " << label.getName() << __FILE__ << ":" << __LINE << std::endl;
+
     // Note that when the neighbors are virtual patches (i.e. periodic
     // boundaries), then if var is a ParticleVariable<Point>, the points
     // of neighbors will be translated by its virtualOffset.

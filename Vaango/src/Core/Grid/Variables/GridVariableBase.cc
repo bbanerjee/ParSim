@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,38 +25,42 @@
  */
 
 #include <Core/Grid/Variables/GridVariableBase.h>
+
 #include <Core/Disclosure/TypeDescription.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/Geometry/IntVector.h>
 #include <Core/Parallel/BufferInfo.h>
 
-#include <Core/Geometry/IntVector.h>
-#include <Core/Exceptions/InternalError.h>
-
-
-using namespace Uintah;
 using namespace Uintah;
 
-
-void GridVariableBase::getMPIBuffer(BufferInfo& buffer,
-                                    const IntVector& low, const IntVector& high)
+void
+GridVariableBase::getMPIBuffer(BufferInfo& buffer,
+                               const IntVector& low,
+                               const IntVector& high)
 {
   const TypeDescription* td = virtualGetTypeDescription()->getSubType();
-  MPI_Datatype basetype=td->getMPIType();
+  MPI_Datatype basetype     = td->getMPIType();
   IntVector l, h, s, strides, dataLow;
   getSizes(l, h, dataLow, s, strides);
 
-  IntVector off = low - dataLow;
+  IntVector off  = low - dataLow;
   char* startbuf = (char*)getBasePointer();
-  startbuf += strides.x()*off.x()+strides.y()*off.y()+strides.z()*off.z();
-  IntVector d = high-low;
+  startbuf +=
+    strides.x() * off.x() + strides.y() * off.y() + strides.z() * off.z();
+  IntVector d = high - low;
+
   MPI_Datatype type1d;
-  MPI_Type_create_hvector(d.x(), 1, strides.x(), basetype, &type1d);
+  Uintah::MPI::Type_create_hvector(d.x(), 1, strides.x(), basetype, &type1d);
 
   MPI_Datatype type2d;
-  MPI_Type_create_hvector(d.y(), 1, strides.y(), type1d, &type2d);
-  MPI_Type_free(&type1d);
+  Uintah::MPI::Type_create_hvector(d.y(), 1, strides.y(), type1d, &type2d);
+  Uintah::MPI::Type_free(&type1d);
+
   MPI_Datatype type3d;
-  MPI_Type_create_hvector(d.z(), 1, strides.z(), type2d, &type3d);
-  MPI_Type_free(&type2d);
-  MPI_Type_commit(&type3d);
+  Uintah::MPI::Type_create_hvector(d.z(), 1, strides.z(), type2d, &type3d);
+  Uintah::MPI::Type_free(&type2d);
+
+  Uintah::MPI::Type_commit(&type3d);
+
   buffer.add(startbuf, 1, type3d, true);
 }

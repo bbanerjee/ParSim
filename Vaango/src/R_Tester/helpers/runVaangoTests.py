@@ -637,7 +637,7 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
     command = "/usr/bin/time -p %s/vaango %s %s" % (vaangodir, vaango_options, SVN_OPTIONS)
     mpimsg = ""
   else:
-    command = "/usr/bin/time -p %s %s %s/vaango %s %s -mpi" % (MPIHEAD, int(np), vaangodir, vaango_options, SVN_OPTIONS)
+    command = "/usr/bin/time -p %s %s %s/vaango %s %s " % (MPIHEAD, int(np), vaangodir, vaango_options, SVN_OPTIONS)
     mpimsg = " (mpi %s proc)" % (int(np))
 
   time0 =time()  #timer

@@ -408,7 +408,7 @@ def generateGS() :
                 np = int( np )
                 mpirun = "%s -np %s  " % (MPIRUN,np)
 
-                command = mpirun + MALLOC_FLAG + vaango + " -mpi " + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
+                command = mpirun + MALLOC_FLAG + vaango + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
             else :
                 command = vaango + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
 
