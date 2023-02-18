@@ -129,7 +129,8 @@ Switcher::Switcher(const ProcessorGroup* myworld,
     attachPort("simulator", sim);
 
     // create solver  port and attach it to the switcher component
-    std::shared_ptr<SolverInterface> solver = SolverFactory::create(subCompUps, myworld);
+    std::shared_ptr<SolverInterface> solver =
+      SolverFactory::create(subCompUps, myworld);
     attachPort("sub_solver", solver.get());
     comp->attachPort("solver", solver.get());
 
@@ -274,7 +275,8 @@ Switcher::~Switcher()
 void
 Switcher::problemSetup(const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       const std::string& input_ups_dir)
 {
   switcher_dbg << "Doing ProblemSetup \t\t\t\tSwitcher" << std::endl;
   if (restart_prob_spec) {

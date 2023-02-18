@@ -72,12 +72,13 @@ MPMMaterial::MPMMaterial()
 MPMMaterial::MPMMaterial(ProblemSpecP& ps,
                          MaterialManagerP& matManager,
                          MPMFlags* flags,
-                         bool isRestart)
+                         bool isRestart,
+                         const std::string& input_ups_dir)
   : Material(ps)
   , d_flags(flags)
 {
   d_lb = std::make_unique<MPMLabel>();
-  standardInitialization(ps, matManager, flags, isRestart);
+  standardInitialization(ps, matManager, flags, isRestart, input_ups_dir);
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 }
 
@@ -85,7 +86,8 @@ void
 MPMMaterial::standardInitialization(ProblemSpecP& ps,
                                     MaterialManagerP& matManager,
                                     MPMFlags* flags,
-                                    bool isRestart)
+                                    bool isRestart,
+                                    const std::string& input_ups_dir)
 
 {
   // Follow the layout of the input file
@@ -213,7 +215,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
        geom_obj_ps != 0;
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object")) {
     std::vector<GeometryPieceP> pieces;
-    GeometryPieceFactory::create(geom_obj_ps, pieces);
+    GeometryPieceFactory::create(geom_obj_ps, pieces, input_ups_dir);
 
     // Tag if a triangle geometry piece exists in this set of objects
     for (const auto& geom_piece : pieces) {

@@ -60,7 +60,8 @@ Burger::~Burger()
 void
 Burger::problemSetup(const ProblemSpecP& params,
                      const ProblemSpecP& restart_prob_spec,
-                     GridP& grid)
+                     GridP& grid,
+                     const std::string& input_ups_dir)
 {
   ProblemSpecP burger = params->findBlock("Burger");
   burger->require("delt", d_delT);
@@ -82,9 +83,8 @@ Burger::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 void
 Burger::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("Burger::computeStableTimestep",
-                           this,
-                           &Burger::computeStableTimestep);
+  Task* task = scinew Task(
+    "Burger::computeStableTimestep", this, &Burger::computeStableTimestep);
 
   task->computes(getDelTLabel(), level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());

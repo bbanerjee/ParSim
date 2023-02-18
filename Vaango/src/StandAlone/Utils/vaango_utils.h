@@ -32,6 +32,14 @@
 namespace Vaango {
 namespace Utils {
 
+inline static std::string s_input_ups_path{ "" };
+
+void
+set_input_ups_path(const std::string& path);
+
+const std::string&
+get_input_ups_path();
+
 void
 start_mpi();
 

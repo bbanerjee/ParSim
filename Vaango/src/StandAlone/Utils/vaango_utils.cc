@@ -30,8 +30,21 @@
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/Environment.h>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
 namespace Vaango {
 namespace Utils {
+
+void set_input_ups_path(const std::string& path)
+{
+  s_input_ups_path = fs::path(path).parent_path(); 
+}
+
+const std::string& get_input_ups_path() 
+{
+  return s_input_ups_path;
+}
 
 void
 start_mpi()

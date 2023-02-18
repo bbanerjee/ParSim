@@ -48,70 +48,53 @@ static DebugStream wave("Wave", false);
 Wave::Wave(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
 {
-  d_phi_label = VarLabel::create("phi",
-                                 CCVariable<double>::getTypeDescription(),
-                                 IntVector(1, 1, 1));
+  d_phi_label = VarLabel::create(
+    "phi", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_pi_label = VarLabel::create("pi", CCVariable<double>::getTypeDescription());
 
-  d_rk4steps[0].cur_dw = Task::OldDW;
-  d_rk4steps[0].curphi_label =
-    VarLabel::create("phi",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[0].cur_dw       = Task::OldDW;
+  d_rk4steps[0].curphi_label = VarLabel::create(
+    "phi", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[0].curpi_label =
     VarLabel::create("pi", CCVariable<double>::getTypeDescription());
-  d_rk4steps[0].newphi_label =
-    VarLabel::create("phi1",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[0].newphi_label = VarLabel::create(
+    "phi1", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[0].newpi_label =
     VarLabel::create("pi1", CCVariable<double>::getTypeDescription());
   d_rk4steps[0].stepweight  = 0.5;
   d_rk4steps[0].totalweight = 1 / 6.0;
 
-  d_rk4steps[1].cur_dw = Task::NewDW;
-  d_rk4steps[1].curphi_label =
-    VarLabel::create("phi1",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[1].cur_dw       = Task::NewDW;
+  d_rk4steps[1].curphi_label = VarLabel::create(
+    "phi1", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[1].curpi_label =
     VarLabel::create("pi1", CCVariable<double>::getTypeDescription());
-  d_rk4steps[1].newphi_label =
-    VarLabel::create("phi2",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[1].newphi_label = VarLabel::create(
+    "phi2", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[1].newpi_label =
     VarLabel::create("pi2", CCVariable<double>::getTypeDescription());
   d_rk4steps[1].stepweight  = 0.5;
   d_rk4steps[1].totalweight = 1 / 3.0;
 
-  d_rk4steps[2].cur_dw = Task::NewDW;
-  d_rk4steps[2].curphi_label =
-    VarLabel::create("phi2",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[2].cur_dw       = Task::NewDW;
+  d_rk4steps[2].curphi_label = VarLabel::create(
+    "phi2", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[2].curpi_label =
     VarLabel::create("pi2", CCVariable<double>::getTypeDescription());
-  d_rk4steps[2].newphi_label =
-    VarLabel::create("phi3",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[2].newphi_label = VarLabel::create(
+    "phi3", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[2].newpi_label =
     VarLabel::create("pi3", CCVariable<double>::getTypeDescription());
   d_rk4steps[2].stepweight  = 1.0;
   d_rk4steps[2].totalweight = 1 / 3.0;
 
-  d_rk4steps[3].cur_dw = Task::NewDW;
-  d_rk4steps[3].curphi_label =
-    VarLabel::create("phi3",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[3].cur_dw       = Task::NewDW;
+  d_rk4steps[3].curphi_label = VarLabel::create(
+    "phi3", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[3].curpi_label =
     VarLabel::create("pi3", CCVariable<double>::getTypeDescription());
-  d_rk4steps[3].newphi_label =
-    VarLabel::create("phi4",
-                     CCVariable<double>::getTypeDescription(),
-                     IntVector(1, 1, 1));
+  d_rk4steps[3].newphi_label = VarLabel::create(
+    "phi4", CCVariable<double>::getTypeDescription(), IntVector(1, 1, 1));
   d_rk4steps[3].newpi_label =
     VarLabel::create("pi4", CCVariable<double>::getTypeDescription());
   d_rk4steps[3].stepweight  = 0.0;
@@ -133,7 +116,8 @@ Wave::~Wave()
 void
 Wave::problemSetup(const ProblemSpecP& params,
                    const ProblemSpecP& restart_prob_spec,
-                   GridP& grid)
+                   GridP& grid,
+                   const std::string& input_ups_dir)
 {
   ProblemSpecP wave = params->findBlock("Wave");
 
@@ -141,16 +125,14 @@ Wave::problemSetup(const ProblemSpecP& params,
   if (d_initial_condition == "Chombo") {
     wave->require("radius", d_r0);
   } else {
-    throw ProblemSetupException("Unknown initial condition for Wave",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Unknown initial condition for Wave", __FILE__, __LINE__);
   }
 
   wave->require("integration", d_integration);
   if (d_integration != "Euler" && d_integration != "RK4") {
-    throw ProblemSetupException("Unknown integration method for Wave",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Unknown integration method for Wave", __FILE__, __LINE__);
   }
   std::shared_ptr<EmptyMaterial> d_mymat = std::make_shared<EmptyMaterial>();
   d_materialManager->registerEmptyMaterial(d_mymat);
@@ -204,9 +186,7 @@ Wave::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
       Step* s    = &d_rk4steps[i];
       Task* task = scinew Task("timeAdvance", this, &Wave::timeAdvanceRK4, s);
 
-      task->requires(Task::OldDW,
-                     getDelTLabel(),
-                     level.get_rep());
+      task->requires(Task::OldDW, getDelTLabel(), level.get_rep());
       task->requires(Task::OldDW, d_phi_label, Ghost::None);
       task->requires(Task::OldDW, d_pi_label, Ghost::None);
       task->requires(s->cur_dw, s->curphi_label, Ghost::AroundCells, 1);
@@ -219,12 +199,12 @@ Wave::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
       task->computes(s->newpi_label);
       task->modifies(d_phi_label);
       task->modifies(d_pi_label);
-      sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
+      sched->addTask(
+        task, level->eachPatch(), d_materialManager->allMaterials());
     }
   } else {
-    throw ProblemSetupException("Unknown integration method for wave",
-                                __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Unknown integration method for wave", __FILE__, __LINE__);
   }
 }
 
@@ -257,9 +237,8 @@ Wave::initialize(const ProcessorGroup*,
           phi[*iter]  = exp(-dist / (d_r0 * d_r0)) / (d_r0 * d_r0 * d_r0);
         }
       } else {
-        throw ProblemSetupException("Unknown initial condition for Wave",
-                                    __FILE__,
-                                    __LINE__);
+        throw ProblemSetupException(
+          "Unknown initial condition for Wave", __FILE__, __LINE__);
       }
     }
   }
@@ -340,9 +319,8 @@ Wave::timeAdvanceEuler(const ProcessorGroup*,
       Vector dx     = patch->dCell();
       double sumdx2 =
         -2 / (dx.x() * dx.x()) - 2 / (dx.y() * dx.y()) - 2 / (dx.z() * dx.z());
-      Vector inv_dx2(1. / (dx.x() * dx.x()),
-                     1. / (dx.y() * dx.y()),
-                     1. / (dx.z() * dx.z()));
+      Vector inv_dx2(
+        1. / (dx.x() * dx.x()), 1. / (dx.y() * dx.y()), 1. / (dx.z() * dx.z()));
       double maxphi = 0;
       double delt   = dt;
       for (CellIterator iter = patch->getCellIterator(); !iter.done(); iter++) {
@@ -414,12 +392,10 @@ Wave::setupRK4(const ProcessorGroup*,
       new_dw->allocateAndPut(newPi, d_pi_label, matl, patch);
 
       CellIterator iter = patch->getCellIterator();
-      newPhi.copyPatch(oldPhi,
-                       patch->getCellLowIndex(),
-                       patch->getCellHighIndex());
-      newPi.copyPatch(oldPi,
-                      patch->getCellLowIndex(),
-                      patch->getCellHighIndex());
+      newPhi.copyPatch(
+        oldPhi, patch->getCellLowIndex(), patch->getCellHighIndex());
+      newPi.copyPatch(
+        oldPi, patch->getCellLowIndex(), patch->getCellHighIndex());
     }
   }
 }
@@ -507,9 +483,8 @@ Wave::timeAdvanceRK4(const ProcessorGroup*,
       Vector dx = patch->dCell();
       double sumdx2 =
         -2 / (dx.x() * dx.x()) - 2 / (dx.y() * dx.y()) - 2 / (dx.z() * dx.z());
-      Vector inv_dx2(1. / (dx.x() * dx.x()),
-                     1. / (dx.y() * dx.y()),
-                     1. / (dx.z() * dx.z()));
+      Vector inv_dx2(
+        1. / (dx.x() * dx.x()), 1. / (dx.y() * dx.y()), 1. / (dx.z() * dx.z()));
       double dtstep  = dt * s->stepweight;
       double dttotal = dt * s->totalweight;
       for (CellIterator iter = patch->getCellIterator(); !iter.done(); iter++) {
@@ -525,8 +500,8 @@ Wave::timeAdvanceRK4(const ProcessorGroup*,
         totalPhi[c] += curPi[c] * dttotal;
         totalPi[c] += curlPhi * dttotal;
 
-        // std::cerr <<  c << "rhs phi=" << curPi[c] << ", rhs pi=" << curlPhi << ",
-        // phi=" << newPhi[c] << ", pi=" << newPi[c] << ", total phi=" <<
+        // std::cerr <<  c << "rhs phi=" << curPi[c] << ", rhs pi=" << curlPhi
+        // << ", phi=" << newPhi[c] << ", pi=" << newPi[c] << ", total phi=" <<
         // totalPhi[c] << ", total pi=" << totalPi[c] << ", dt=" << dt << ", "
         // << dtstep << ", " << dttotal << '\n'; sumPhi += newPhi[c];
       }

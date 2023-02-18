@@ -145,7 +145,8 @@ SerialMPM::~SerialMPM()
 void
 SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
                         const ProblemSpecP& restart_prob_spec,
-                        GridP& grid)
+                        GridP& grid,
+                        const std::string& input_ups_dir)
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
              << "\n";
@@ -239,7 +240,8 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   contactModel->setContactMaterialAttributes();
 
   // Creates MPM material w/ constitutive models and damage models
-  materialProblemSetup(restart_mat_ps, d_mpm_flags.get(), d_isRestart);
+  materialProblemSetup(
+    restart_mat_ps, d_mpm_flags.get(), d_isRestart, input_ups_dir);
 
   // Cohesize zones
   d_cohesiveZoneTasks = std::make_unique<CohesiveZoneTasks>(restart_mat_ps,
@@ -2264,7 +2266,8 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   d_diffusionTasks->scheduleInterpolateParticlesToGrid(t);
 
   if (d_mpm_flags->d_withColor) {
-    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
+    t->requires(
+      Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
     t->computes(d_mpm_labels->gColorLabel);
   }
 
@@ -2872,11 +2875,10 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
       int matID = mpm_matl->getDWIndex();
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch);
-                                                       //Ghost::AroundNodes,
-                                                       //d_numGhostParticles,
-                                                       //d_mpm_labels->pXLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+      // Ghost::AroundNodes,
+      // d_numGhostParticles,
+      // d_mpm_labels->pXLabel);
 
       constParticleVariable<Matrix3> pStress_old;
       old_dw->get(pStress_old, d_mpm_labels->pStressLabel, pset);

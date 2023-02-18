@@ -184,10 +184,12 @@ main(int argc, char* argv[], char* env[])
     // Read input file
     Uintah::ProblemSpecP ups = nullptr;
 
+    auto filename = Vaango::Utils::Options::uda_filename();
+    Vaango::Utils::set_input_ups_path(filename);
+
     try {
       ups = Uintah::ProblemSpecReader().readInputFile(
-        Vaango::Utils::Options::uda_filename(),
-        Vaango::Utils::Options::validate_ups());
+        filename, Vaango::Utils::Options::validate_ups());
     } catch (const Uintah::ProblemSetupException& err) {
       proc0cout << "\nERROR caught while parsing UPS file: "
                 << Vaango::Utils::Options::uda_filename()
@@ -197,7 +199,6 @@ main(int argc, char* argv[], char* env[])
     } catch (...) {
       // Bulletproofing.  Catches the case where a user accidentally specifies a
       // UDA directory instead of a UPS file.
-      auto filename = Vaango::Utils::Options::uda_filename();
       proc0cout << "\n";
       proc0cout << "ERROR - Failed to parse UPS file: " << filename << ".\n";
 
@@ -220,7 +221,8 @@ main(int argc, char* argv[], char* env[])
       Uintah::Parallel::getRootProcessorGroup();
 
     std::unique_ptr<Uintah::SimulationController> simController =
-      std::make_unique<Uintah::AMRSimulationController>(world, ups);
+      std::make_unique<Uintah::AMRSimulationController>(
+        world, ups, Vaango::Utils::get_input_ups_path());
 
     if (Vaango::Utils::Options::postprocess_uda()) {
       simController->setPostProcessFlags();

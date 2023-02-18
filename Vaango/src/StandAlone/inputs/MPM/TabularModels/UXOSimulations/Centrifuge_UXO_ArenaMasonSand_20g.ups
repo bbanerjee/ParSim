@@ -135,11 +135,11 @@
           <rotation_center> [0.0, 0.0, 7.0] </rotation_center>
           <rotation_axis> [-1.0, 0.0, 0.0] </rotation_axis>
           <!-- based on 10g @ R = 5.5 m, a = R omega^2 -->
-          <!-- <rotation_speed> 4.2 </rotation_speed>  -->
+          <!-- <rotation_speed_angular> 4.2 </rotation_speed_angular>  -->
           <!-- based on 20g @ R = 5.5 m, a = R omega^2 -->
-          <rotation_speed> 6.0 </rotation_speed>  
+          <rotation_speed_angular> 6.0 </rotation_speed_angular>  
           <!-- based on 30g @ R = 5.5 m, a = R omega^2 -->
-          <!-- <rotation_speed> 7.3 </rotation_speed> --> 
+          <!-- <rotation_speed_angular> 7.3 </rotation_speed_angular> --> 
           <body_reference_point> [0.0, 0.0, 0.0] </body_reference_point>
         </rotating_coordinate_system>
         <initialize_stress_using_body_force> true </initialize_stress_using_body_force>

@@ -35,7 +35,9 @@ namespace Uintah {
 class AMRSimulationController : public SimulationController
 {
 public:
-  AMRSimulationController(const ProcessorGroup* myworld, ProblemSpecP pspec);
+  AMRSimulationController(const ProcessorGroup* myworld,
+                          ProblemSpecP pspec,
+                          const std::string& input_ups_dir = "");
 
   ~AMRSimulationController() override = default;
 

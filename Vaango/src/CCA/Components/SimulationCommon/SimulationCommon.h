@@ -93,6 +93,7 @@ public:
   // Top level problem set up called by sus.
   virtual void
   problemSetup(const ProblemSpecP& prob_spec);
+
   virtual void
   problemSetupDeltaT(const ProblemSpecP& prob_spec);
 
@@ -100,7 +101,8 @@ public:
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid) = 0;
+               GridP& grid,
+               const std::string& input_ups_dir = "") = 0;
 
   // Called to add missing grid based UPS specs.
   virtual void

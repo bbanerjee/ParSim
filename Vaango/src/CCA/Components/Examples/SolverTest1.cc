@@ -65,7 +65,8 @@ SolverTest1::~SolverTest1()
 void
 SolverTest1::problemSetup(const ProblemSpecP& prob_spec,
                           const ProblemSpecP& restart_prob_spec,
-                          GridP& grid)
+                          GridP& grid,
+                          const std::string& input_ups_dir)
 {
   d_solver = dynamic_cast<SolverInterface*>(getPort("solver"));
   if (!d_solver) {
@@ -117,9 +118,8 @@ void
 SolverTest1::scheduleComputeStableTimestep(const LevelP& level,
                                            SchedulerP& sched)
 {
-  Task* task = scinew Task("computeStableTimestep",
-                           this,
-                           &SolverTest1::computeStableTimestep);
+  Task* task = scinew Task(
+    "computeStableTimestep", this, &SolverTest1::computeStableTimestep);
   task->computes(getDelTLabel(), level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
@@ -128,11 +128,8 @@ SolverTest1::scheduleComputeStableTimestep(const LevelP& level,
 void
 SolverTest1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("timeAdvance",
-                           this,
-                           &SolverTest1::timeAdvance,
-                           level,
-                           sched.get_rep());
+  Task* task = scinew Task(
+    "timeAdvance", this, &SolverTest1::timeAdvance, level, sched.get_rep());
   task->computes(d_labels->pressure_matrix);
   task->computes(d_labels->pressure_rhs);
 

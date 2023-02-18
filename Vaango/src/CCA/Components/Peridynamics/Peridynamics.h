@@ -88,7 +88,8 @@ public:
   virtual void
   problemSetup(const Uintah::ProblemSpecP& params,
                const Uintah::ProblemSpecP& restart_prob_spec,
-               Uintah::GridP& grid);
+               Uintah::GridP& grid,
+               const std::string& input_ups_dir = "");
 
   /*! Output writer for problem spec */
   virtual void

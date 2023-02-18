@@ -57,7 +57,8 @@ public:
   virtual void
   materialProblemSetup(const ProblemSpecP& prob_spec,
                        MPMFlags* flags,
-                       bool is_restart);
+                       bool is_restart,
+                       const std::string& input_ups_dir = "");
 
   // Used by the switcher
   virtual void

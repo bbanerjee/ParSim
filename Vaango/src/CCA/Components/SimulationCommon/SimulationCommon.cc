@@ -39,10 +39,10 @@ using namespace Uintah;
 namespace {
 
 Dout g_deltaT_warn_initial(
-    "DeltaTWarnInitial",
-    "SimulationCommon",
-    "Warn if the next delta T is greater than the initial maximum",
-    true);
+  "DeltaTWarnInitial",
+  "SimulationCommon",
+  "Warn if the next delta T is greater than the initial maximum",
+  true);
 Dout g_deltaT_warn_increase("DeltaTWarnIncrease",
                             "SimulationCommon",
                             "Warn if the next delta T is increases more than a "
@@ -53,32 +53,34 @@ Dout g_deltaT_warn_minimum("DeltaTWarnMinimum",
                            "Warn if the next delta T is less than the minimum",
                            true);
 Dout g_deltaT_warn_maximum(
-    "DeltaTWarnMaximum",
-    "SimulationCommon",
-    "Warn if the next delta T is greater than the maximum",
-    true);
+  "DeltaTWarnMaximum",
+  "SimulationCommon",
+  "Warn if the next delta T is greater than the maximum",
+  true);
 Dout g_deltaT_warn_clamp(
-    "DeltaTWarnClamp",
-    "SimulationCommon",
-    "Warn if the next delta T is clamped for output, checkpoint, or max time",
-    true);
+  "DeltaTWarnClamp",
+  "SimulationCommon",
+  "Warn if the next delta T is clamped for output, checkpoint, or max time",
+  true);
 
 Dout g_deltaT_prevalidate(
-    "DeltaTPreValidate",
-    "SimulationCommon",
-    "Before reducing validate the next delta T w/warnings for each rank ",
-    false);
+  "DeltaTPreValidate",
+  "SimulationCommon",
+  "Before reducing validate the next delta T w/warnings for each rank ",
+  false);
 Dout g_deltaT_prevalidate_sum("DeltaTPreValidateSum",
                               "SimulationCommon",
                               "Before reducing validate the next delta T "
                               "w/summary warning over all ranks ",
                               false);
 
-}  // namespace
+} // namespace
 
 SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
                                    const MaterialManagerP materialManager)
-    : UintahParallelComponent(myworld), d_materialManager(materialManager) {
+  : UintahParallelComponent(myworld)
+  , d_materialManager(materialManager)
+{
   // There should only be one MaterialManager. If there is a single
   // application the ComponentFactory will pass in a null pointer
   // which will trigger the MaterialManager to be created.
@@ -99,15 +101,15 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
 
   // Time Step
   d_timeStepLabel =
-      VarLabel::create(timeStep_name, timeStep_vartype::getTypeDescription());
+    VarLabel::create(timeStep_name, timeStep_vartype::getTypeDescription());
 
   // Simulation Time
   d_simulationTimeLabel =
-      VarLabel::create(simTime_name, simTime_vartype::getTypeDescription());
+    VarLabel::create(simTime_name, simTime_vartype::getTypeDescription());
 
   // delta t
   VarLabel* nonconstDelT =
-      VarLabel::create(delT_name, delt_vartype::getTypeDescription());
+    VarLabel::create(delT_name, delt_vartype::getTypeDescription());
   nonconstDelT->isReductionTask(false);
   d_delTLabel = nonconstDelT;
 
@@ -121,13 +123,13 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
 
   // output time step
   d_simReductionVars[outputTimestep_name] =
-      std::make_unique<SimulationReductionVariable>(
-          outputTimestep_name, bool_or_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      outputTimestep_name, bool_or_vartype::getTypeDescription());
 
   // checkpoint time step
   d_simReductionVars[checkpointTimestep_name] =
-      std::make_unique<SimulationReductionVariable>(
-          checkpointTimestep_name, bool_or_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      checkpointTimestep_name, bool_or_vartype::getTypeDescription());
 
   // An application may adjust the output interval or the checkpoint
   // interval during a simulation.  For example in deflagration ->
@@ -135,34 +137,35 @@ SimulationCommon::SimulationCommon(const ProcessorGroup* myworld,
 
   // output interval
   d_simReductionVars[outputInterval_name] =
-      std::make_unique<SimulationReductionVariable>(
-          outputInterval_name, min_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      outputInterval_name, min_vartype::getTypeDescription());
 
   // checkpoint interval
   d_simReductionVars[checkpointInterval_name] =
-      std::make_unique<SimulationReductionVariable>(
-          checkpointInterval_name, min_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      checkpointInterval_name, min_vartype::getTypeDescription());
 
   // An application may also request that the time step be recomputed,
   // aborted or the simulation end early.
 
   // Recompute the time step
   d_simReductionVars[recomputeTimestep_name] =
-      std::make_unique<SimulationReductionVariable>(
-          recomputeTimestep_name, bool_or_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      recomputeTimestep_name, bool_or_vartype::getTypeDescription());
 
   // Abort the time step
   d_simReductionVars[abortTimestep_name] =
-      std::make_unique<SimulationReductionVariable>(
-          abortTimestep_name, bool_or_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      abortTimestep_name, bool_or_vartype::getTypeDescription());
 
   // End the simulation
   d_simReductionVars[endSimulation_name] =
-      std::make_unique<SimulationReductionVariable>(
-          endSimulation_name, bool_or_vartype::getTypeDescription());
+    std::make_unique<SimulationReductionVariable>(
+      endSimulation_name, bool_or_vartype::getTypeDescription());
 }
 
-SimulationCommon::~SimulationCommon() {
+SimulationCommon::~SimulationCommon()
+{
   releaseComponents();
 
   VarLabel::destroy(d_timeStepLabel);
@@ -176,7 +179,8 @@ SimulationCommon::~SimulationCommon() {
 }
 
 void
-SimulationCommon::setComponents(UintahParallelComponent* comp) {
+SimulationCommon::setComponents(UintahParallelComponent* comp)
+{
   SimulationCommon* parent = dynamic_cast<SimulationCommon*>(comp);
 
   attachPort("scheduler", parent->d_scheduler);
@@ -189,45 +193,47 @@ SimulationCommon::setComponents(UintahParallelComponent* comp) {
 }
 
 void
-SimulationCommon::getComponents() {
+SimulationCommon::getComponents()
+{
   d_scheduler = dynamic_cast<Scheduler*>(getPort("scheduler"));
 
   if (!d_scheduler) {
     throw InternalError(
-        "dynamic_cast of 'd_scheduler' failed!", __FILE__, __LINE__);
+      "dynamic_cast of 'd_scheduler' failed!", __FILE__, __LINE__);
   }
 
   d_loadBalancer = dynamic_cast<LoadBalancer*>(getPort("load balancer"));
 
   if (!d_loadBalancer) {
     throw InternalError(
-        "dynamic_cast of 'd_loadBalancer' failed!", __FILE__, __LINE__);
+      "dynamic_cast of 'd_loadBalancer' failed!", __FILE__, __LINE__);
   }
 
   d_solver = dynamic_cast<SolverInterface*>(getPort("solver"));
 
   if (!d_solver) {
     throw InternalError(
-        "dynamic_cast of 'd_solver' failed!", __FILE__, __LINE__);
+      "dynamic_cast of 'd_solver' failed!", __FILE__, __LINE__);
   }
 
   d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
 
   if (isDynamicRegridding() && !d_regridder) {
     throw InternalError(
-        "dynamic_cast of 'd_regridder' failed!", __FILE__, __LINE__);
+      "dynamic_cast of 'd_regridder' failed!", __FILE__, __LINE__);
   }
 
   d_output = dynamic_cast<Output*>(getPort("output"));
 
   if (!d_output) {
     throw InternalError(
-        "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
+      "dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
   }
 }
 
 void
-SimulationCommon::releaseComponents() {
+SimulationCommon::releaseComponents()
+{
   releasePort("scheduler");
   releasePort("load balancer");
   releasePort("solver");
@@ -242,7 +248,8 @@ SimulationCommon::releaseComponents() {
 }
 
 void
-SimulationCommon::problemSetup(const ProblemSpecP& prob_spec) {
+SimulationCommon::problemSetup(const ProblemSpecP& prob_spec)
+{
   // Check for an AMR attribute with the grid.
   ProblemSpecP grid_ps = prob_spec->findBlock("Grid");
 
@@ -269,11 +276,10 @@ SimulationCommon::problemSetup(const ProblemSpecP& prob_spec) {
   ProblemSpecP time_ps = prob_spec->findBlock("Time");
 
   if (!time_ps) {
-    throw ProblemSetupException(
-        "ERROR SimulationTime \n"
-        "Can not find the <Time> block.",
-        __FILE__,
-        __LINE__);
+    throw ProblemSetupException("ERROR SimulationTime \n"
+                                "Can not find the <Time> block.",
+                                __FILE__,
+                                __LINE__);
   }
 
   // Sim time limits
@@ -310,15 +316,15 @@ SimulationCommon::problemSetup(const ProblemSpecP& prob_spec) {
 }
 
 void
-SimulationCommon::problemSetupDeltaT(const ProblemSpecP& prob_spec) {
+SimulationCommon::problemSetupDeltaT(const ProblemSpecP& prob_spec)
+{
   ProblemSpecP time_ps = prob_spec->findBlock("Time");
 
   if (!time_ps) {
-    throw ProblemSetupException(
-        "ERROR SimulationTime \n"
-        "Can not find the <Time> block.",
-        __FILE__,
-        __LINE__);
+    throw ProblemSetupException("ERROR SimulationTime \n"
+                                "Can not find the <Time> block.",
+                                __FILE__,
+                                __LINE__);
   }
 
   // Delta T limits
@@ -339,7 +345,7 @@ SimulationCommon::problemSetupDeltaT(const ProblemSpecP& prob_spec) {
   // The maximum delta T can increase as a percent over the previous value
   if (!time_ps->get("max_delt_increase", d_delTMaxIncrease)) {
     d_delTMaxIncrease = 0;
-  } else  // Can optionally output and/or checkpoint if exceeded
+  } else // Can optionally output and/or checkpoint if exceeded
   {
     tmp_ps = time_ps->findBlock("max_delt_increase");
     tmp_ps->getAttribute("output", flag);
@@ -357,7 +363,7 @@ SimulationCommon::problemSetupDeltaT(const ProblemSpecP& prob_spec) {
   // initial_delt_range
   if (!time_ps->get("delt_init", d_delTInitialMax)) {
     d_delTInitialMax = 0;
-  } else  // Can optionally output and/or checkpoint if exceeded
+  } else // Can optionally output and/or checkpoint if exceeded
   {
     tmp_ps = time_ps->findBlock("delt_init");
     tmp_ps->getAttribute("output", flag);
@@ -406,17 +412,19 @@ SimulationCommon::problemSetupDeltaT(const ProblemSpecP& prob_spec) {
 }
 
 void
-SimulationCommon::scheduleTimeAdvance(const LevelP&, SchedulerP&) {
+SimulationCommon::scheduleTimeAdvance(const LevelP&, SchedulerP&)
+{
   throw InternalError(
-      "scheduleTimeAdvance is not implemented for this application",
-      __FILE__,
-      __LINE__);
+    "scheduleTimeAdvance is not implemented for this application",
+    __FILE__,
+    __LINE__);
 }
 
 void
 SimulationCommon::scheduleReduceSystemVars(const GridP& grid,
                                            const PatchSet* perProcPatchSet,
-                                           SchedulerP& scheduler) {
+                                           SchedulerP& scheduler)
+{
   // Reduce the system vars which are on a per patch basis to a per
   // rank basis.
   Task* task = scinew Task("SimulationCommon::reduceSystemVars",
@@ -481,7 +489,8 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
                                    const PatchSubset* patches,
                                    const MaterialSubset* matls,
                                    DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw) {
+                                   DataWarehouse* new_dw)
+{
   ValidateFlag validDelT = 0;
 
   // The goal of this task is to line up the delT across all levels.
@@ -583,19 +592,21 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
 
   if (!isBenignReductionVariable(checkpointInterval_name)) {
     d_output->setCheckpointInterval(
-        getReductionVariable(checkpointInterval_name));
+      getReductionVariable(checkpointInterval_name));
   }
 
   checkReductionVars(pg, patches, matls, old_dw, new_dw);
 
-}  // end reduceSysVar()
+} // end reduceSysVar()
 
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleInitializeSystemVars([[maybe_unused]] const GridP& grid,
-                                               const PatchSet* perProcPatchSet,
-                                               SchedulerP& scheduler) {
+SimulationCommon::scheduleInitializeSystemVars(
+  [[maybe_unused]] const GridP& grid,
+  const PatchSet* perProcPatchSet,
+  SchedulerP& scheduler)
+{
   // Initialize the system vars which are on a per rank basis.
   Task* task = scinew Task("SimulationCommon::initializeSystemVars",
                            this,
@@ -608,9 +619,9 @@ SimulationCommon::scheduleInitializeSystemVars([[maybe_unused]] const GridP& gri
 
   // treatAsOld copyData noScrub notCopyData noCheckpoint
   scheduler->overrideVariableBehavior(
-      d_timeStepLabel->getName(), false, false, false, true, true);
+    d_timeStepLabel->getName(), false, false, false, true, true);
   scheduler->overrideVariableBehavior(
-      d_simulationTimeLabel->getName(), false, false, false, true, true);
+    d_simulationTimeLabel->getName(), false, false, false, true, true);
 
   scheduler->addTask(task, perProcPatchSet, d_materialManager->allMaterials());
 }
@@ -618,11 +629,13 @@ SimulationCommon::scheduleInitializeSystemVars([[maybe_unused]] const GridP& gri
 //______________________________________________________________________
 //
 void
-SimulationCommon::initializeSystemVars(const ProcessorGroup*,
-                                       [[maybe_unused]] const PatchSubset* patches,
-                                       const MaterialSubset* /*matls*/,
-                                       DataWarehouse* /*old_dw*/,
-                                       DataWarehouse* new_dw) {
+SimulationCommon::initializeSystemVars(
+  const ProcessorGroup*,
+  [[maybe_unused]] const PatchSubset* patches,
+  const MaterialSubset* /*matls*/,
+  DataWarehouse* /*old_dw*/,
+  DataWarehouse* new_dw)
+{
   // Initialize the time step.
   new_dw->put(timeStep_vartype(d_timeStep), d_timeStepLabel);
 
@@ -635,7 +648,8 @@ SimulationCommon::initializeSystemVars(const ProcessorGroup*,
 void
 SimulationCommon::scheduleUpdateSystemVars([[maybe_unused]] const GridP& grid,
                                            const PatchSet* perProcPatchSet,
-                                           SchedulerP& scheduler) {
+                                           SchedulerP& scheduler)
+{
   // Update the system vars which are on a per rank basis.
   Task* task = scinew Task("SimulationCommon::updateSystemVars",
                            this,
@@ -648,9 +662,9 @@ SimulationCommon::scheduleUpdateSystemVars([[maybe_unused]] const GridP& grid,
 
   // treatAsOld copyData noScrub notCopyData noCheckpoint
   scheduler->overrideVariableBehavior(
-      d_timeStepLabel->getName(), false, false, false, true, true);
+    d_timeStepLabel->getName(), false, false, false, true, true);
   scheduler->overrideVariableBehavior(
-      d_simulationTimeLabel->getName(), false, false, false, true, true);
+    d_simulationTimeLabel->getName(), false, false, false, true, true);
 
   scheduler->addTask(task, perProcPatchSet, d_materialManager->allMaterials());
 }
@@ -662,7 +676,8 @@ SimulationCommon::updateSystemVars(const ProcessorGroup*,
                                    [[maybe_unused]] const PatchSubset* patches,
                                    const MaterialSubset* /*matls*/,
                                    DataWarehouse* /*old_dw*/,
-                                   DataWarehouse* new_dw) {
+                                   DataWarehouse* new_dw)
+{
   // If recomputing a time step do not update the time step or the simulation
   // time.
   if (!getReductionVariable(recomputeTimestep_name)) {
@@ -684,7 +699,8 @@ SimulationCommon::updateSystemVars(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleRefine(const PatchSet*, SchedulerP&) {
+SimulationCommon::scheduleRefine(const PatchSet*, SchedulerP&)
+{
   throw InternalError("scheduleRefine not implemented for this application\n",
                       __FILE__,
                       __LINE__);
@@ -696,48 +712,53 @@ void
 SimulationCommon::scheduleRefineInterface(const LevelP&,
                                           SchedulerP&,
                                           bool,
-                                          bool) {
+                                          bool)
+{
   throw InternalError(
-      "scheduleRefineInterface is not implemented for this application\n",
-      __FILE__,
-      __LINE__);
+    "scheduleRefineInterface is not implemented for this application\n",
+    __FILE__,
+    __LINE__);
 }
 
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleCoarsen(const LevelP&, SchedulerP&) {
+SimulationCommon::scheduleCoarsen(const LevelP&, SchedulerP&)
+{
   throw InternalError(
-      "scheduleCoarsen is not implemented for this application\n",
-      __FILE__,
-      __LINE__);
+    "scheduleCoarsen is not implemented for this application\n",
+    __FILE__,
+    __LINE__);
 }
 
 //______________________________________________________________________
 //
 void
-SimulationCommon::scheduleErrorEstimate(const LevelP&, SchedulerP&) {
+SimulationCommon::scheduleErrorEstimate(const LevelP&, SchedulerP&)
+{
   throw InternalError(
-      "scheduleErrorEstimate is not implemented for this application",
-      __FILE__,
-      __LINE__);
+    "scheduleErrorEstimate is not implemented for this application",
+    __FILE__,
+    __LINE__);
 }
 
 //______________________________________________________________________
 //
 void
 SimulationCommon::scheduleInitialErrorEstimate(const LevelP& /*coarseLevel*/,
-                                               SchedulerP& /*sched*/) {
+                                               SchedulerP& /*sched*/)
+{
   throw InternalError(
-      "scheduleInitialErrorEstimate is not implemented for this application",
-      __FILE__,
-      __LINE__);
+    "scheduleInitialErrorEstimate is not implemented for this application",
+    __FILE__,
+    __LINE__);
 }
 
 //______________________________________________________________________
 //
 double
-SimulationCommon::getSubCycleProgress(DataWarehouse* fineDW) {
+SimulationCommon::getSubCycleProgress(DataWarehouse* fineDW)
+{
   // DWs are always created in order of time.
   int fineID      = fineDW->getID();
   int coarseNewID = fineDW->getOtherDataWarehouse(Task::CoarseNewDW)->getID();
@@ -756,7 +777,8 @@ SimulationCommon::getSubCycleProgress(DataWarehouse* fineDW) {
 //______________________________________________________________________
 //
 void
-SimulationCommon::recomputeDelT() {
+SimulationCommon::recomputeDelT()
+{
   // Get the new delT from the actual application.
 
   // Call the actual application method which if defined overrides the
@@ -786,7 +808,8 @@ SimulationCommon::recomputeDelT() {
 //______________________________________________________________________
 //
 double
-SimulationCommon::recomputeDelT([[maybe_unused]] const double delT) {
+SimulationCommon::recomputeDelT([[maybe_unused]] const double delT)
+{
   throw InternalError("recomputeDelT is not implemented for this application",
                       __FILE__,
                       __LINE__);
@@ -795,7 +818,8 @@ SimulationCommon::recomputeDelT([[maybe_unused]] const double delT) {
 //______________________________________________________________________
 //
 void
-SimulationCommon::prepareForNextTimestep() {
+SimulationCommon::prepareForNextTimestep()
+{
   // Increment (by one) the current time step number so components know
   // what time step they are on and get the delta T that will be used.
   incrementTimestep();
@@ -816,7 +840,8 @@ SimulationCommon::prepareForNextTimestep() {
 void
 SimulationCommon::setDelTForAllLevels(SchedulerP& scheduler,
                                       const GridP& grid,
-                                      const int totalFine) {
+                                      const int totalFine)
+{
   // Adjust the delT for each level and store it in all applicable dws.
   double delT_fine = d_delT;
   int skip         = totalFine;
@@ -854,7 +879,8 @@ SimulationCommon::setDelTForAllLevels(SchedulerP& scheduler,
 // visit_DeltaTVariableCallback().
 
 void
-SimulationCommon::setNextDelT(double delT, bool restart) {
+SimulationCommon::setNextDelT(double delT, bool restart)
+{
   // Restart - Check to see if the user has set a restart delT.
   if (restart && d_delTOverrideRestart) {
     proc0cout << "Overriding restart delT " << d_delT << " with "
@@ -883,7 +909,8 @@ SimulationCommon::setNextDelT(double delT, bool restart) {
 //______________________________________________________________________
 //
 ValidateFlag
-SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
+SimulationCommon::validateNextDelT(double& delTNext, unsigned int level)
+{
   // NOTE: This check is performed BEFORE the simulation time is
   // updated. As such, being that the time step has completed, the
   // actual simulation time is the current simulation time plus the
@@ -898,8 +925,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
   header << "WARNING ";
 
   // For the pre-validate report the rank and level.
-  if (g_deltaT_prevalidate)
+  if (g_deltaT_prevalidate) {
     header << "Rank-" << d_myworld->myRank() << " for level " << level << " ";
+  }
 
   header << "at time step " << d_timeStep << " and sim time "
          << d_simTime + d_delT << " : ";
@@ -914,7 +942,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
     invalid |= DELTA_T_MAX_INCREASE;
 
     if (g_deltaT_warn_increase) {
-      if (!message.str().empty()) message << std::endl;
+      if (!message.str().empty()) {
+        message << std::endl;
+      }
 
       message << header.str() << "lowering the next delT from " << delTNext
               << " to the maximum: " << delt_tmp
@@ -992,7 +1022,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
       invalid |= CLAMP_TIME_TO_OUTPUT;
 
       if (g_deltaT_warn_clamp) {
-        if (!message.str().empty()) message << std::endl;
+        if (!message.str().empty()) {
+          message << std::endl;
+        }
 
         message << header.str() << "lowering the next delT from " << delTNext
                 << " to " << nextOutput - (d_simTime + d_delT)
@@ -1029,7 +1061,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
     invalid |= CLAMP_TIME_TO_MAX;
 
     if (g_deltaT_warn_clamp) {
-      if (!message.str().empty()) message << std::endl;
+      if (!message.str().empty()) {
+        message << std::endl;
+      }
 
       message << header.str() << "lowering the next delT from " << delTNext
               << " to " << d_simTimeMax - (d_simTime + d_delT)
@@ -1091,7 +1125,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
       }
 
       if (g_deltaT_warn_minimum && (invalidAll & DELTA_T_MIN)) {
-        if (!message.str().empty()) message << std::endl;
+        if (!message.str().empty()) {
+          message << std::endl;
+        }
 
         message << header.str() << "for one or more ranks the next delta T was "
                 << "raised to the minimum: " << d_delTMin;
@@ -1140,7 +1176,9 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
         }
 
         if (invalidAll & CLAMP_TIME_TO_MAX) {
-          if (!message.str().empty()) message << std::endl;
+          if (!message.str().empty()) {
+            message << std::endl;
+          }
 
           message << header.str()
                   << "for one or more ranks the next delta T was "
@@ -1163,7 +1201,8 @@ SimulationCommon::validateNextDelT(double& delTNext, unsigned int level) {
 //
 // Determines if the time step is the last one.
 bool
-SimulationCommon::isLastTimestep(double walltime) {
+SimulationCommon::isLastTimestep(double walltime)
+{
   if (getReductionVariable(endSimulation_name)) {
     return true;
   }
@@ -1203,7 +1242,8 @@ SimulationCommon::isLastTimestep(double walltime) {
 // MaybeLast should be called before any time step work is done.
 
 bool
-SimulationCommon::maybeLastTimestep(double walltime) const {
+SimulationCommon::maybeLastTimestep(double walltime) const
+{
   if (d_simTimeMax > 0 && d_simTime + d_delT >= d_simTimeMax) {
     return true;
   }
@@ -1231,7 +1271,8 @@ SimulationCommon::maybeLastTimestep(double walltime) const {
 // see SimulationController::timeStateSetup().
 
 void
-SimulationCommon::setTimestep(int timeStep) {
+SimulationCommon::setTimestep(int timeStep)
+{
   d_timeStep = timeStep;
 
   // Write the time step to the initial DW so apps can get to it when
@@ -1243,7 +1284,8 @@ SimulationCommon::setTimestep(int timeStep) {
 //______________________________________________________________________
 //
 void
-SimulationCommon::incrementTimestep() {
+SimulationCommon::incrementTimestep()
+{
   ++d_timeStep;
 
   // Write the new time to the new data warehouse as the scheduler has
@@ -1259,7 +1301,8 @@ SimulationCommon::incrementTimestep() {
 // see SimulationController::timeStateSetup().
 
 void
-SimulationCommon::setSimTime(double simTime) {
+SimulationCommon::setSimTime(double simTime)
+{
   d_simTime = simTime;
 
   // Write the time step to the initial DW so apps can get to it when

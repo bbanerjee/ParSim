@@ -78,7 +78,7 @@ public:
   inline static const std::string TYPE_NAME{ "tri" };
 
 public:
-  TriGeometryPiece(ProblemSpecP&);
+  TriGeometryPiece(ProblemSpecP&, const std::string& input_ups_dir = "");
   virtual ~TriGeometryPiece() = default;
 
   TriGeometryPiece(const TriGeometryPiece&);
@@ -152,7 +152,6 @@ public:
   }
 
 private:
-
   void
   checkInput() const;
 

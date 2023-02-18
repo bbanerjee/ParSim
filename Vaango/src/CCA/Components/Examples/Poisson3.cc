@@ -48,12 +48,13 @@ using namespace Uintah;
 
 static DebugStream dbg("Poisson3", false);
 
-
-Poisson3::Poisson3(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
+Poisson3::Poisson3(const ProcessorGroup* myworld,
+                   const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
   , d_interpolator(2)
 {
-  d_phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  d_phi_label =
+    VarLabel::create("phi", NCVariable<double>::getTypeDescription());
   d_residual_label =
     VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
@@ -67,7 +68,8 @@ Poisson3::~Poisson3()
 void
 Poisson3::problemSetup(const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
   poisson->require("delt", d_delT);
@@ -92,9 +94,8 @@ Poisson3::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 void
 Poisson3::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("computeStableTimestep",
-                           this,
-                           &Poisson3::computeStableTimestep);
+  Task* task = scinew Task(
+    "computeStableTimestep", this, &Poisson3::computeStableTimestep);
   task->requires(Task::NewDW, d_residual_label, level.get_rep());
   task->computes(getDelTLabel(), level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
@@ -103,10 +104,8 @@ Poisson3::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 void
 Poisson3::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("timeAdvance",
-                           this,
-                           &Poisson3::timeAdvance,
-                           level->getIndex() != 0);
+  Task* task = scinew Task(
+    "timeAdvance", this, &Poisson3::timeAdvance, level->getIndex() != 0);
   if (level->getIndex() == 0) {
     task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
     task->computes(d_phi_label);
@@ -259,9 +258,8 @@ Poisson3::scheduleRefine(const LevelP& fineLevel, SchedulerP& sched)
                  d_interpolator.getMaxSupportRefine());
   task->computes(d_phi_label);
   task->computes(d_residual_label, fineLevel.get_rep());
-  sched->addTask(task,
-                 fineLevel->eachPatch(),
-                 d_materialManager->allMaterials());
+  sched->addTask(
+    task, fineLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -357,9 +355,8 @@ Poisson3::scheduleRefineInterface(const LevelP& fineLevel,
                    d_interpolator.getMaxSupportRefine());
   }
   task->computes(d_phi_label);
-  sched->addTask(task,
-                 fineLevel->eachPatch(),
-                 d_materialManager->allMaterials());
+  sched->addTask(
+    task, fineLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -410,9 +407,8 @@ Poisson3::refineInterface(const ProcessorGroup*,
           // interpolate
           for (size_t i = 0; i < coarsePatches.size(); i++) {
             const Patch* coarsePatch = coarsePatches[i];
-            IntVector l =
-              Max(coarseLevel->mapNodeToFiner(coarsePatch->getNodeLowIndex()),
-                  low);
+            IntVector l              = Max(
+              coarseLevel->mapNodeToFiner(coarsePatch->getNodeLowIndex()), low);
             IntVector h =
               Min(coarseLevel->mapNodeToFiner(coarsePatch->getNodeHighIndex()),
                   high);
@@ -448,11 +444,11 @@ Poisson3::refineInterface(const ProcessorGroup*,
                                  d_interpolator.getMaxSupportRefine());
               for (NodeIterator iter(l, h); !iter.done(); iter++) {
                 finePhi[*iter] = d_interpolator.refine(coarsePhi1,
-                                                      weight1,
-                                                      coarsePhi2,
-                                                      weight2,
-                                                      *iter,
-                                                      Interpolator::Inner);
+                                                       weight1,
+                                                       coarsePhi2,
+                                                       weight2,
+                                                       *iter,
+                                                       Interpolator::Inner);
               }
             }
           }
@@ -477,9 +473,8 @@ Poisson3::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  Ghost::AroundNodes,
                  d_interpolator.getMaxSupportCoarsen());
   task->modifies(d_phi_label);
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials());
+  sched->addTask(
+    task, coarseLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void

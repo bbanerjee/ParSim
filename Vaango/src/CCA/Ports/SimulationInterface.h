@@ -116,13 +116,15 @@ public:
   // Top level problem set up called by vaango.
   virtual void
   problemSetup(const ProblemSpecP& prob_spec) = 0;
+
   virtual void
   problemSetupDeltaT(const ProblemSpecP& prob_spec) = 0;
 
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid) = 0;
+               GridP& grid,
+               const std::string& input_ups_dir = "") = 0;
 
   virtual void
   preGridProblemSetup(const ProblemSpecP& params, GridP& grid) = 0;
@@ -246,8 +248,8 @@ public:
   needRecompile(const GridP& grid) = 0;
 
   // Instruct component to add a new material
-  //virtual void
-  //addMaterial(const ProblemSpecP& params, GridP& grid) = 0;
+  // virtual void
+  // addMaterial(const ProblemSpecP& params, GridP& grid) = 0;
 
   // Labels for access value in the data warehouse.
   virtual const VarLabel*

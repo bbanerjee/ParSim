@@ -75,7 +75,8 @@ public:
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid);
+               GridP& grid,
+               const std::string& input_ups_dir = "");
 
   virtual void
   scheduleInitialize(const LevelP& level, SchedulerP& scheduler);

@@ -145,7 +145,8 @@ ImpMPM::~ImpMPM()
 void
 ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
                      const ProblemSpecP& restart_prob_spec,
-                     GridP& grid)
+                     GridP& grid,
+                     const std::string& input_ups_dir)
 {
   cout_doing << " Doing ImpMPM::problemSetup " << std::endl;
 

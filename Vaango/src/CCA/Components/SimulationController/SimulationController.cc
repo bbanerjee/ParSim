@@ -101,9 +101,11 @@ Uintah::Dout g_app_indv_stats("SimulationIndividualStats",
 namespace Uintah {
 
 SimulationController::SimulationController(const ProcessorGroup* myworld,
-                                           ProblemSpecP ps)
+                                           ProblemSpecP ps,
+                                           const std::string& input_ups_dir)
   : UintahParallelComponent(myworld)
   , d_ups(ps)
+  , d_input_ups_dir(input_ups_dir)
 {
   // initialize the overhead percentage
   for (int i = 0; i < OVERHEAD_WINDOW; ++i) {
@@ -460,7 +462,8 @@ SimulationController::simulatorSetup()
   // If the properties are not available, then pull the properties
   // from the m_ups instead.  This step needs to be done before
   // DataArchive::restartInitialize.
-  d_simulator->problemSetup(d_ups, d_restart_ps, d_current_gridP);
+  d_simulator->problemSetup(
+    d_ups, d_restart_ps, d_current_gridP, d_input_ups_dir);
 
   // Finalize the materials
   d_simulator->getMaterialManagerP()->finalizeMaterials();

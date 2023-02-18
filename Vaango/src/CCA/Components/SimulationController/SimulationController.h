@@ -129,7 +129,9 @@ class SimulationController : public UintahParallelComponent
 {
 
 public:
-  SimulationController(const ProcessorGroup* myworld, ProblemSpecP pspec);
+  SimulationController(const ProcessorGroup* myworld,
+                       ProblemSpecP pspec,
+                       const std::string& input_ups_dir);
 
   ~SimulationController() override = default;
 
@@ -284,6 +286,8 @@ protected:
   ProblemSpecP d_restart_ps{ nullptr }; // Problem Spec for the Grid
 
   GridP d_current_gridP{ nullptr };
+
+  const std::string d_input_ups_dir{ "" };
 
   SimulationInterface* d_simulator{ nullptr };
   SchedulerP d_scheduler{ nullptr };

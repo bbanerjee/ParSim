@@ -72,7 +72,8 @@ AMRICE::~AMRICE() {}
 void
 AMRICE::problemSetup(const ProblemSpecP& params,
                      const ProblemSpecP& restart_prob_spec,
-                     GridP& grid)
+                     GridP& grid,
+                     const std::string& input_ups_dir)
 {
   cout_doing << d_myworld->myRank() << " Doing problemSetup  \t\t\t AMRICE"
              << '\n';
@@ -924,7 +925,8 @@ AMRICE::setBC_FineLevel(const ProcessorGroup*,
 
       //__________________________________
       //  Pressure boundary condition
-      CustomBCDriver::customBC_localVars* notUsed = scinew CustomBCDriver::customBC_localVars();
+      CustomBCDriver::customBC_localVars* notUsed =
+        scinew CustomBCDriver::customBC_localVars();
 
       CCVariable<double> press_CC;
       std::vector<CCVariable<double>> placeHolder(0);

@@ -87,7 +87,8 @@ public:
   void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid) override;
+               GridP& grid,
+               const std::string& input_ups_dir = "") override;
 
   void
   outputProblemSpec(ProblemSpecP& ps) override;

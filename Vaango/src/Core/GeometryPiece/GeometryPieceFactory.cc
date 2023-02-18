@@ -68,7 +68,8 @@ namespace Uintah {
 
 void
 GeometryPieceFactory::create(const ProblemSpecP& ps,
-                             std::vector<GeometryPieceP>& objs)
+                             std::vector<GeometryPieceP>& objs,
+                             const std::string& input_ups_dir)
 {
   for (ProblemSpecP child = ps->findBlock(); child != 0;
        child              = child->findNextBlock()) {
@@ -164,7 +165,7 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
     } else if (go_type == TorusGeometryPiece::TYPE_NAME) {
       newGeomPiece = std::make_shared<TorusGeometryPiece>(child);
     } else if (go_type == TriGeometryPiece::TYPE_NAME) {
-      newGeomPiece = std::make_shared<TriGeometryPiece>(child);
+      newGeomPiece = std::make_shared<TriGeometryPiece>(child, input_ups_dir);
     } else if (go_type == UnionGeometryPiece::TYPE_NAME) {
       newGeomPiece = std::make_shared<UnionGeometryPiece>(child);
     } else if (go_type == DifferenceGeometryPiece::TYPE_NAME) {

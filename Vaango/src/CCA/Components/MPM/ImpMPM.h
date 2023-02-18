@@ -89,7 +89,8 @@ public:
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& mat_ps,
-               GridP& grid);
+               GridP& grid,
+               const std::string& input_ups_dir = "");
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);

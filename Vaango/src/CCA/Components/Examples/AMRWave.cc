@@ -53,7 +53,8 @@ AMRWave::~AMRWave() {}
 void
 AMRWave::problemSetup(const ProblemSpecP& params,
                       const ProblemSpecP& restart_prob_spec,
-                      GridP& grid)
+                      GridP& grid,
+                      const std::string& input_ups_dir)
 {
   Wave::problemSetup(params, restart_prob_spec, grid);
 
@@ -108,9 +109,8 @@ AMRWave::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  Ghost::None,
                  0);
   task->modifies(d_pi_label);
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials());
+  sched->addTask(
+    task, coarseLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -155,9 +155,8 @@ AMRWave::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getRefinePatchFlagLabel(),
                  d_regridder->refineFlagMaterials());
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials());
+  sched->addTask(
+    task, coarseLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -192,14 +191,10 @@ AMRWave::errorEstimate(const ProcessorGroup*,
     CCVariable<int> refineFlag;
     PerPatch<PatchFlagP> refinePatchFlag;
 
-    new_dw->getModifiable(refineFlag,
-                          d_regridder->getRefineFlagLabel(),
-                          0,
-                          patch);
-    new_dw->get(refinePatchFlag,
-                d_regridder->getRefinePatchFlagLabel(),
-                0,
-                patch);
+    new_dw->getModifiable(
+      refineFlag, d_regridder->getRefineFlagLabel(), 0, patch);
+    new_dw->get(
+      refinePatchFlag, d_regridder->getRefinePatchFlagLabel(), 0, patch);
 
     PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
 
@@ -215,9 +210,8 @@ AMRWave::errorEstimate(const ProcessorGroup*,
       double thresh = refine_threshold / (dx.x() * dx.y() * dx.z());
       double sumdx2 =
         -2 / (dx.x() * dx.x()) - 2 / (dx.y() * dx.y()) - 2 / (dx.z() * dx.z());
-      Vector inv_dx2(1. / (dx.x() * dx.x()),
-                     1. / (dx.y() * dx.y()),
-                     1. / (dx.z() * dx.z()));
+      Vector inv_dx2(
+        1. / (dx.x() * dx.x()), 1. / (dx.y() * dx.y()), 1. / (dx.z() * dx.z()));
       int numFlag = 0;
       for (CellIterator iter = patch->getCellIterator(); !iter.done(); iter++) {
         const IntVector& c = *iter;
@@ -277,9 +271,8 @@ AMRWave::refineCell(CCVariable<double>& finevar,
   amrwave << "RefineCell on level " << fineLevel->getIndex() << " Fine Index "
           << fineIndex << " " << fineLevel->getCellPosition(fineIndex)
           << " coarse range = " << coarseStart << " "
-          << IntVector(coarseStart.x() + i,
-                       coarseStart.y() + j,
-                       coarseStart.z() + k)
+          << IntVector(
+               coarseStart.x() + i, coarseStart.y() + j, coarseStart.z() + k)
           << std::endl;
 
   // weights of each cell
@@ -398,12 +391,8 @@ AMRWave::refine(const ProcessorGroup*,
                         coarsePhiHigh);
       // amrwave << "   Calling getRegion for Pi: " << coarsePiLow << " " <<
       // coarsePiHigh << std::endl;
-      new_dw->getRegion(coarse_pi,
-                        d_pi_label,
-                        matl,
-                        coarseLevel,
-                        coarsePiLow,
-                        coarsePiHigh);
+      new_dw->getRegion(
+        coarse_pi, d_pi_label, matl, coarseLevel, coarsePiLow, coarsePiHigh);
 
       // simple linear interpolation (maybe)
       for (CellIterator iter(phi.getLowIndex(), phi.getHighIndex());
@@ -536,16 +525,10 @@ AMRWave::refineFaces(const Patch* finePatch,
 
       IntVector low, high;
       IntVector fineLow, fineHigh;
-      finePatch->getFace(face,
-                         IntVector(2, 2, 2),
-                         IntVector(2, 2, 2),
-                         low,
-                         high);
-      finePatch->getFace(face,
-                         IntVector(0, 0, 0),
-                         IntVector(1, 1, 1),
-                         fineLow,
-                         fineHigh);
+      finePatch->getFace(
+        face, IntVector(2, 2, 2), IntVector(2, 2, 2), low, high);
+      finePatch->getFace(
+        face, IntVector(0, 0, 0), IntVector(1, 1, 1), fineLow, fineHigh);
 
       // grab one more cell...
       IntVector coarseLow =
@@ -562,21 +545,13 @@ AMRWave::refineFaces(const Patch* finePatch,
       constCCVariable<double> coarse_new_var;
 
       if (subCycleProgress < 1.0 - 1e-10) {
-        coarse_old_dw->getRegion(coarse_old_var,
-                                 label,
-                                 matl,
-                                 coarseLevel,
-                                 coarseLow,
-                                 coarseHigh);
+        coarse_old_dw->getRegion(
+          coarse_old_var, label, matl, coarseLevel, coarseLow, coarseHigh);
       }
 
       if (subCycleProgress > 0.0) {
-        coarse_new_dw->getRegion(coarse_new_var,
-                                 label,
-                                 matl,
-                                 coarseLevel,
-                                 coarseLow,
-                                 coarseHigh);
+        coarse_new_dw->getRegion(
+          coarse_new_var, label, matl, coarseLevel, coarseLow, coarseHigh);
       }
 
       // loop across the face, and depending on where we are in time, use the

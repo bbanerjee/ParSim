@@ -34,20 +34,27 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
+#include <StandAlone/Utils/vaango_utils.h>
+
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+
+namespace fs = std::filesystem;
 
 namespace Uintah {
 
 using TriangleList = std::list<Triangle>;
 
-TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps)
+TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps,
+                                   const std::string& input_ups_dir)
 {
   d_name = "Unnamed Tri";
 
-  ps->require("file_name_prefix", d_file);
+  std::string filename{""};
+  ps->require("file_name_prefix", filename);
   ps->getWithDefault("file_type", d_fileType, "default");
 
   ps->getWithDefault("scaling_factor", d_scale_factor, 1.0);
@@ -62,6 +69,12 @@ TriGeometryPiece::TriGeometryPiece(ProblemSpecP& ps)
                  d_fileType.end(),
                  d_fileType.begin(),
                  [](unsigned char c) { return std::tolower(c); });
+
+  // Append path
+  auto tmp_file = fs::path(input_ups_dir);
+  tmp_file /= filename;
+  d_file = tmp_file;
+
   checkInput();
 
   if (d_fileType == "default") {
@@ -103,6 +116,7 @@ TriGeometryPiece::checkInput() const
       throw ProblemSetupException(err.str(), __FILE__, __LINE__);
     }
     source.close();
+
     f = d_file + ".tri";
     std::ifstream source1(f.c_str());
     if (!source) {

@@ -45,11 +45,13 @@
 
 using namespace Uintah;
 
-Poisson4::Poisson4(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
+Poisson4::Poisson4(const ProcessorGroup* myworld,
+                   const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
 {
 
-  d_phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  d_phi_label =
+    VarLabel::create("phi", NCVariable<double>::getTypeDescription());
   d_residual_label =
     VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
@@ -64,7 +66,8 @@ Poisson4::~Poisson4()
 void
 Poisson4::problemSetup(const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
 
@@ -91,9 +94,8 @@ Poisson4::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 void
 Poisson4::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("Poisson4::computeStableTimestep",
-                           this,
-                           &Poisson4::computeStableTimestep);
+  Task* task = scinew Task(
+    "Poisson4::computeStableTimestep", this, &Poisson4::computeStableTimestep);
 
   task->requires(Task::NewDW, d_residual_label);
   task->computes(getDelTLabel(), level.get_rep());

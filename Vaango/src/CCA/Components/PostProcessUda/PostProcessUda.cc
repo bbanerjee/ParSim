@@ -74,7 +74,8 @@ PostProcessUda::~PostProcessUda()
 void
 PostProcessUda::problemSetup(const ProblemSpecP& prob_spec,
                              const ProblemSpecP& restart_ps,
-                             GridP& grid)
+                             GridP& grid,
+                             const std::string& input_ups_dir)
 {
   //__________________________________
   //  Add a warning message

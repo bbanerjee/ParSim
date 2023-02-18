@@ -75,7 +75,8 @@ RegridderTest::~RegridderTest(void) {}
 void
 RegridderTest::problemSetup(const ProblemSpecP& params,
                             const ProblemSpecP& restart_prob_spec,
-                            GridP& grid)
+                            GridP& grid,
+                            const std::string& input_ups_dir)
 {
   d_material = std::make_shared<EmptyMaterial>();
   d_materialManager->registerEmptyMaterial(d_material);
@@ -108,22 +109,19 @@ RegridderTest::scheduleInitialize(const LevelP& level, SchedulerP& scheduler)
   Task* task = scinew Task("initialize", this, &RegridderTest::initialize);
   task->computes(d_densityLabel);
   task->computes(d_currentAngleLabel, (Level*)0);
-  scheduler->addTask(task,
-                     level->eachPatch(),
-                     d_materialManager->allMaterials());
+  scheduler->addTask(
+    task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
 RegridderTest::scheduleComputeStableTimestep(const LevelP& level,
                                              SchedulerP& scheduler)
 {
-  Task* task = scinew Task("computeStableTimestep",
-                           this,
-                           &RegridderTest::computeStableTimestep);
+  Task* task = scinew Task(
+    "computeStableTimestep", this, &RegridderTest::computeStableTimestep);
   task->computes(getDelTLabel(), level.get_rep());
-  scheduler->addTask(task,
-                     level->eachPatch(),
-                     d_materialManager->allMaterials());
+  scheduler->addTask(
+    task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -133,9 +131,8 @@ RegridderTest::scheduleTimeAdvance(const LevelP& level, SchedulerP& scheduler)
   task->requires(Task::OldDW, d_densityLabel, Ghost::AroundCells, 1);
   task->computes(d_oldDensityLabel);
   task->computes(d_densityLabel);
-  scheduler->addTask(task,
-                     level->eachPatch(),
-                     d_materialManager->allMaterials());
+  scheduler->addTask(
+    task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -163,10 +160,8 @@ void
 RegridderTest::scheduleInitialErrorEstimate(const LevelP& level,
                                             SchedulerP& scheduler)
 {
-  Task* task = scinew Task("initialErrorEstimate",
-                           this,
-                           &RegridderTest::errorEstimate,
-                           true);
+  Task* task = scinew Task(
+    "initialErrorEstimate", this, &RegridderTest::errorEstimate, true);
   task->requires(Task::NewDW, d_densityLabel, Ghost::AroundCells, 1);
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());
@@ -174,9 +169,8 @@ RegridderTest::scheduleInitialErrorEstimate(const LevelP& level,
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getRefinePatchFlagLabel(),
                  d_regridder->refineFlagMaterials());
-  scheduler->addTask(task,
-                     level->eachPatch(),
-                     d_materialManager->allMaterials());
+  scheduler->addTask(
+    task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -192,9 +186,8 @@ RegridderTest::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& scheduler)
                  Ghost::None,
                  0);
   task->modifies(d_densityLabel);
-  scheduler->addTask(task,
-                     coarseLevel->eachPatch(),
-                     d_materialManager->allMaterials());
+  scheduler->addTask(
+    task, coarseLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
 void
@@ -289,8 +282,8 @@ RegridderTest::timeAdvance(const ProcessorGroup*,
       // an exercise to get from the old and put in the new (via mpi amr)...
       constCCVariable<double> oldDWDensity;
       CCVariable<double> oldDensity;
-      old_dw
-        ->get(oldDWDensity, d_densityLabel, matl, patch, Ghost::AroundCells, 1);
+      old_dw->get(
+        oldDWDensity, d_densityLabel, matl, patch, Ghost::AroundCells, 1);
       new_dw->allocateAndPut(oldDensity, d_oldDensityLabel, matl, patch);
 
       for (CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
@@ -327,8 +320,8 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
     }
 
     d_oldCenterOfBall = d_centerOfBall;
-    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() center = " <<
-    // d_centerOfBall << std::endl;
+    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() center = "
+    // << d_centerOfBall << std::endl;
     d_centerOfBall = d_centerOfDomain;
     d_centerOfBall[0] += d_radiusOfOrbit * cos((pi * currentAngle) / 180.0);
     d_centerOfBall[1] += d_radiusOfOrbit * sin((pi * currentAngle) / 180.0);
@@ -347,8 +340,8 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
       }
     }
 
-    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() after  = " <<
-    // d_centerOfBall << std::endl;
+    // std::cerr <<  "RANDY: RegridderTest::scheduleErrorEstimate() after  = "
+    // << d_centerOfBall << std::endl;
   }
 
   for (int p = 0; p < patches->size(); p++) {
@@ -357,22 +350,16 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
         << patch->getID() << std::endl;
 
     CCVariable<int> refineFlag;
-    new_dw->getModifiable(refineFlag,
-                          d_regridder->getRefineFlagLabel(),
-                          0,
-                          patch);
+    new_dw->getModifiable(
+      refineFlag, d_regridder->getRefineFlagLabel(), 0, patch);
 
     CCVariable<int> oldRefineFlag;
-    new_dw->getModifiable(oldRefineFlag,
-                          d_regridder->getOldRefineFlagLabel(),
-                          0,
-                          patch);
+    new_dw->getModifiable(
+      oldRefineFlag, d_regridder->getOldRefineFlagLabel(), 0, patch);
 
     PerPatch<PatchFlagP> refinePatchFlag;
-    new_dw->get(refinePatchFlag,
-                d_regridder->getRefinePatchFlagLabel(),
-                0,
-                patch);
+    new_dw->get(
+      refinePatchFlag, d_regridder->getRefinePatchFlagLabel(), 0, patch);
     PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
 
     bool foundErrorOnPatch = false;
@@ -383,12 +370,8 @@ RegridderTest::errorEstimate(const ProcessorGroup*,
       constCCVariable<double> oldDensity;
       new_dw->get(density, d_densityLabel, matl, patch, Ghost::AroundCells, 1);
       if (!initial) {
-        new_dw->get(oldDensity,
-                    d_oldDensityLabel,
-                    matl,
-                    patch,
-                    Ghost::AroundCells,
-                    1);
+        new_dw->get(
+          oldDensity, d_oldDensityLabel, matl, patch, Ghost::AroundCells, 1);
       }
 
       for (CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {

@@ -134,7 +134,7 @@
         <rotating_coordinate_system>
           <rotation_center> [0.0, 0.0, 7.0] </rotation_center>
           <rotation_axis> [-1.0, 0.0, 0.0] </rotation_axis>
-          <rotation_speed> 4.2 </rotation_speed>  <!-- based on 10g @ R = 5.5 m -->
+          <rotation_speed_angular> 4.2 </rotation_speed_angular>  <!-- based on 10g @ R = 5.5 m -->
           <body_reference_point> [0.0, 0.0, 0.0] </body_reference_point>
         </rotating_coordinate_system>
     </MPM>

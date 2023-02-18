@@ -87,7 +87,7 @@
     <rotating_coordinate_system>
       <rotation_center> [-1.0, 0.0, 0.0] </rotation_center>
       <rotation_axis> [0.0, 0.0, 1.0] </rotation_axis>
-      <rotation_speed> 10.0 </rotation_speed>
+      <rotation_speed_angular> 10.0 </rotation_speed_angular>
       <body_reference_point> [0.0, 0.0, 0.0] </body_reference_point>
     </rotating_coordinate_system>
   </MPM>

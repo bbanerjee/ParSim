@@ -49,7 +49,8 @@ Poisson1::Poisson1(const ProcessorGroup* myworld,
   : SimulationCommon(myworld, mat_manager)
 {
 
-  d_phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  d_phi_label =
+    VarLabel::create("phi", NCVariable<double>::getTypeDescription());
   d_residual_label =
     VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
@@ -63,7 +64,8 @@ Poisson1::~Poisson1()
 void
 Poisson1::problemSetup(const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
 
@@ -86,9 +88,8 @@ Poisson1::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 void
 Poisson1::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("Poisson1::computeStableTimestep",
-                           this,
-                           &Poisson1::computeStableTimestep);
+  Task* task = scinew Task(
+    "Poisson1::computeStableTimestep", this, &Poisson1::computeStableTimestep);
 
   task->requires(Task::NewDW, d_residual_label);
   task->computes(getDelTLabel(), level.get_rep());

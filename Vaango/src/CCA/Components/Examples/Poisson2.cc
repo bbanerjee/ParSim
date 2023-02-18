@@ -46,10 +46,12 @@
 
 using namespace Uintah;
 
-Poisson2::Poisson2(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
+Poisson2::Poisson2(const ProcessorGroup* myworld,
+                   const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
 {
-  d_phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  d_phi_label =
+    VarLabel::create("phi", NCVariable<double>::getTypeDescription());
   d_residual_label =
     VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
@@ -63,7 +65,8 @@ Poisson2::~Poisson2()
 void
 Poisson2::problemSetup(const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
   poisson->require("delt", d_delt);
@@ -83,9 +86,8 @@ Poisson2::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 void
 Poisson2::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("computeStableTimestep",
-                           this,
-                           &Poisson2::computeStableTimestep);
+  Task* task = scinew Task(
+    "computeStableTimestep", this, &Poisson2::computeStableTimestep);
   task->computes(getDelTLabel(), level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
@@ -93,11 +95,8 @@ Poisson2::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 void
 Poisson2::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("timeAdvance",
-                           this,
-                           &Poisson2::timeAdvance,
-                           level,
-                           sched.get_rep());
+  Task* task = scinew Task(
+    "timeAdvance", this, &Poisson2::timeAdvance, level, sched.get_rep());
   task->hasSubScheduler();
   task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
   task->computes(d_phi_label);
@@ -182,9 +181,8 @@ Poisson2::timeAdvance(const ProcessorGroup* pg,
   task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
   task->computes(d_phi_label);
   task->computes(d_residual_label);
-  subsched->addTask(task,
-                    level->eachPatch(),
-                    d_materialManager->allMaterials());
+  subsched->addTask(
+    task, level->eachPatch(), d_materialManager->allMaterials());
 
   // Compile the scheduler
   subsched->advanceDataWarehouse(grid);

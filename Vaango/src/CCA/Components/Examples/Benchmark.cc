@@ -44,7 +44,8 @@
 
 using namespace Uintah;
 
-Benchmark::Benchmark(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager)
+Benchmark::Benchmark(const ProcessorGroup* myworld,
+                     const MaterialManagerP& mat_manager)
   : SimulationCommon(myworld, mat_manager)
 {
 
@@ -63,7 +64,8 @@ Benchmark::~Benchmark()
 void
 Benchmark::problemSetup(const ProblemSpecP& params,
                         const ProblemSpecP& restart_prob_spec,
-                        GridP& grid)
+                        GridP& grid,
+                        const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
 

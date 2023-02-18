@@ -72,7 +72,8 @@ public:
   explicit MPMMaterial(ProblemSpecP& ps,
                        MaterialManagerP& mats,
                        MPMFlags* flags,
-                       bool isRestart);
+                       bool isRestart,
+                       const std::string& input_ups_dir = "");
 
   ~MPMMaterial() override;
 
@@ -259,7 +260,8 @@ private:
   standardInitialization(ProblemSpecP& ps,
                          MaterialManagerP& mats,
                          MPMFlags* flags,
-                         const bool isRestart);
+                         const bool isRestart,
+                         const std::string& input_ups_dir = "");
 
 private:
   const MPMFlags* d_flags{ nullptr };

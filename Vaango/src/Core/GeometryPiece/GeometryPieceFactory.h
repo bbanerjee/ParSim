@@ -44,7 +44,9 @@ public:
   // and calls the proper class' readParameters()
   // addMaterial() calls this
   static void
-  create(const ProblemSpecP& ps, std::vector<GeometryPieceP>& objs);
+  create(const ProblemSpecP& ps,
+         std::vector<GeometryPieceP>& objs,
+         const std::string& input_ups_dir = "");
 
   // Clears out the saved geometry piece information...  In theory, this should
   // only be called by (and necessary for) the Switcher component (and only if

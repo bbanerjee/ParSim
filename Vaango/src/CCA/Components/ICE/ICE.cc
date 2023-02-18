@@ -68,8 +68,8 @@
 #include <Core/Math/Expon.h>
 #include <Core/Math/FastMatrix.h>
 
-#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/MasterLock.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 #include <Core/Util/DebugStream.h>
@@ -165,7 +165,8 @@ ICE::recomputeDelT(double delT)
 void
 ICE::problemSetup(const ProblemSpecP& prob_spec,
                   const ProblemSpecP& restart_prob_spec,
-                  GridP& grid)
+                  GridP& grid,
+                  const std::string& input_ups_dir)
 {
   DOUTR(m_ice_tasks, " ICE::problemSetup ");
 

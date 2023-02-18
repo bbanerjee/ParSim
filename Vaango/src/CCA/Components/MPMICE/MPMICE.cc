@@ -143,7 +143,8 @@ MPMICE::recomputeDelT(double delT)
 void
 MPMICE::problemSetup(const ProblemSpecP& prob_spec,
                      const ProblemSpecP& restart_prob_spec,
-                     GridP& grid)
+                     GridP& grid,
+                     const std::string& input_ups_dir)
 {
   cout_doing << "Doing MPMICE::problemSetup " << std::endl;
 
@@ -3527,18 +3528,14 @@ MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
   Task* t;
 
   switch (variable->typeDescription()->getSubType()->getType()) {
-    case TypeDescription::Type::double_type:
-      {
+    case TypeDescription::Type::double_type: {
       auto func = &MPMICE::refineVariableCC<double>;
       t         = scinew Task(taskName.str().c_str(), this, func, variable);
-      }
-      break;
-    case TypeDescription::Type::Vector:
-      {
+    } break;
+    case TypeDescription::Type::Vector: {
       auto func = &MPMICE::refineVariableCC<Vector>;
       t         = scinew Task(taskName.str().c_str(), this, func, variable);
-      }
-      break;
+    } break;
     default:
       throw InternalError(
         "Unknown variable type for refine", __FILE__, __LINE__);

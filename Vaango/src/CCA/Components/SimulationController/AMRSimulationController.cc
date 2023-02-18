@@ -103,9 +103,11 @@ Uintah::Dout gheapchecker("HeapChecker",
 
 namespace Uintah {
 
-AMRSimulationController::AMRSimulationController(const ProcessorGroup* myworld,
-                                                 ProblemSpecP pspec)
-  : SimulationController(myworld, pspec)
+AMRSimulationController::AMRSimulationController(
+  const ProcessorGroup* myworld,
+  ProblemSpecP pspec,
+  const std::string& input_ups_dir)
+  : SimulationController(myworld, pspec, input_ups_dir)
 {
 }
 

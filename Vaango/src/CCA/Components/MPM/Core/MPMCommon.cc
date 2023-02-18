@@ -67,7 +67,8 @@ MPMCommon::MPMCommon(const MaterialManagerP matManager)
 void
 MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
                                 MPMFlags* flags,
-                                bool is_restart)
+                                bool is_restart,
+                                const std::string& input_ups_dir)
 {
   d_flags = flags;
 
@@ -100,8 +101,8 @@ MPMCommon::materialProblemSetup(const ProblemSpecP& prob_spec,
     // " << id << "\n";
 
     // Create and register as an MPM material
-    std::shared_ptr<MPMMaterial> mat =
-      std::make_shared<MPMMaterial>(ps, s_materialManager, d_flags, is_restart);
+    std::shared_ptr<MPMMaterial> mat = std::make_shared<MPMMaterial>(
+      ps, s_materialManager, d_flags, is_restart, input_ups_dir);
 
     // Add particle state
     mat->registerParticleState(d_particleState, d_particleState_preReloc);
