@@ -24,14 +24,25 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Util/DOUT.hpp>
+
 #include <cmath>
 #include <iostream>
+
+namespace {
+
+Uintah::Dout g_dbg("IVBorjaP",
+                   "IntVar_BorjaPressure",
+                   "general info on borja pressure internal var",
+                   false);
+}
 
 using namespace Vaango;
 using namespace Uintah;
@@ -126,7 +137,7 @@ IntVar_BorjaPressure::addComputesAndRequires(Task* task,
 }
 
 /* Get one (possibly composite) internal variable */
-template <>
+template<>
 void
 IntVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
                                           DataWarehouse* old_dw,
@@ -136,7 +147,7 @@ IntVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
 }
 
 /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-template <>
+template<>
 std::vector<constParticleVariable<double>>
 IntVar_BorjaPressure::getInternalVariables(ParticleSubset* pset,
                                            DataWarehouse* old_dw)
@@ -150,7 +161,7 @@ IntVar_BorjaPressure::getInternalVariables(ParticleSubset* pset,
   return intVarVec;
 }
 
-template <>
+template<>
 void
 IntVar_BorjaPressure::allocateAndPutInternalVariable(
   ParticleSubset* pset,
@@ -160,7 +171,7 @@ IntVar_BorjaPressure::allocateAndPutInternalVariable(
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
 }
 
-template <>
+template<>
 void
 IntVar_BorjaPressure::evolveInternalVariable(
   Uintah::particleIndex pidx,
@@ -198,8 +209,8 @@ IntVar_BorjaPressure::computeInternalVariable(
   double strain_elast_v    = state->epse_v;
 
   // Calculate new p_c
-  double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
-                         (d_lambdatilde - d_kappatilde));
+  double pc = pc_n * std::exp(-(strain_elast_v_tr - strain_elast_v) /
+                              (d_lambdatilde - d_kappatilde));
   return pc;
 }
 
@@ -213,14 +224,12 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_CamClay.";
-    throw InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
+  //if (!state) {
+  //  std::ostringstream out;
+  //  out << "**ERROR** The correct ModelState object has not been passed."
+  //      << " Need ModelState_CamClay.";
+  //  throw InternalError(out.str(), __FILE__, __LINE__);
+  //}
 
   // Get old p_c
   double pc_n = state->p_c0;
@@ -231,8 +240,8 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
   double strain_elast_v    = state->epse_v;
 
   // Calculate  dp_c/depse_v
-  double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
-                         (d_lambdatilde - d_kappatilde));
+  double pc = pc_n * std::exp(-(strain_elast_v_tr - strain_elast_v) /
+                              (d_lambdatilde - d_kappatilde));
   return pc / (d_lambdatilde - d_kappatilde);
 }
 
