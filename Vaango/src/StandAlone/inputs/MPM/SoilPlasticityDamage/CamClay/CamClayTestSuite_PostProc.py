@@ -266,134 +266,32 @@ def get_epsilons(uda_path):
   return times, epsils
 
 
-def get_pKappa(uda_path):
-  #Extract stress history
-  print("Extracting kappa history...")
-  args = [partextract_exe, "-partvar", "p.kappa", uda_path]
-  F_kappa = tempfile.TemporaryFile()
+def get_pPc(uda_path):
+  #Extract history
+  print("Extracting p_c history...")
+  args = [partextract_exe, "-partvar", "p.p_c", uda_path]
+  F_pc = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
-  tmp = sub_proc.Popen(args, stdout=F_kappa, stderr=sub_proc.PIPE)
+  tmp = sub_proc.Popen(args, stdout=F_pc, stderr=sub_proc.PIPE)
   dummy = tmp.wait()
   print('Done.')
   #Read file back in
-  F_kappa.seek(0)
+  F_pc.seek(0)
   times = []
-  kappas = []
-  for line in F_kappa:
-    line = line.strip().split()
-    times.append(float(line[0]))
-    kappas.append(float(line[4]))
-  F_kappa.close()
-  return times, kappas
-
-
-def get_pPlasticStrainVol(uda_path):
+  pcs = []
   FAIL_NAN = False
-  #Extract stress history
-  print("Extracting plasticStrainVol history...")
-  args = [partextract_exe, "-partvar", "p.evp", uda_path]
-  F_plasticStrainVol = tempfile.TemporaryFile()
-  #open(os.path.split(uda_path)[0]+'/plasticStrainVolHistory.dat',"w+")
-  tmp = sub_proc.Popen(args, stdout=F_plasticStrainVol, stderr=sub_proc.PIPE)
-  dummy = tmp.wait()
-  print('Done.')
-  #Read file back in
-  F_plasticStrainVol.seek(0)
-  times = []
-  plasticStrainVol = []
-  for line in F_plasticStrainVol:
+  for line in F_pc:
     line = line.strip().split()
     times.append(float(line[0]))
-    plasticStrainVol.append(np.float64(line[4]))
-    if np.isnan(plasticStrainVol[-1]):
+    pcs.append(np.float64(line[4]))
+    if np.isnan(pcs[-1]):
       FAIL_NAN = True
-  F_plasticStrainVol.close()
   if FAIL_NAN:
     print(
-        "\ERROR: 'nan' encountered while retrieving p.evp, will not plot correctly."
+        "ERROR: 'nan' encountered while retrieving p.p_c, will not plot correctly."
     )
-  return times, plasticStrainVol
-
-
-def get_pElasticStrainVol(uda_path):
-  FAIL_NAN = False
-  #Extract elastic strain history
-  print("Extracting elasticStrainVol history...")
-  args = [partextract_exe, "-partvar", "p.eve", uda_path]
-  F_elasticStrainVol = tempfile.TemporaryFile()
-  #open(os.path.split(uda_path)[0]+'/elasticStrainVolHistory.dat',"w+")
-  tmp = sub_proc.Popen(args, stdout=F_elasticStrainVol, stderr=sub_proc.PIPE)
-  dummy = tmp.wait()
-  print('Done.')
-  #Read file back in
-  F_elasticStrainVol.seek(0)
-  times = []
-  elasticStrainVol = []
-  for line in F_elasticStrainVol:
-    line = line.strip().split()
-    times.append(float(line[0]))
-    elasticStrainVol.append(np.float64(line[4]))
-    if np.isnan(elasticStrainVol[-1]):
-      FAIL_NAN = True
-  F_elasticStrainVol.close()
-  if FAIL_NAN:
-    print(
-        "\ERROR: 'nan' encountered while retrieving p.eve, will not plot correctly."
-    )
-  return times, elasticStrainVol
-
-
-def get_totalStrainVol(uda_path):
-  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
-  times, elasticStrainVol = get_pElasticStrainVol(uda_path)
-
-  print('num plastic : ', len(plasticStrainVol))
-  print('num elastic : ', len(elasticStrainVol))
-
-  totalStrainVol = np.array(plasticStrainVol) + np.array(elasticStrainVol)
-  return times, totalStrainVol
-
-
-def get_capX(uda_path):
-  #Extract capX history
-  print("Extracting capX history...")
-  args = [partextract_exe, "-partvar", "p.CapX", uda_path]
-  F_capX = tempfile.TemporaryFile()
-  #open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
-  tmp = sub_proc.Popen(args, stdout=F_capX, stderr=sub_proc.PIPE)
-  dummy = tmp.wait()
-  print('Done.')
-  #Read file back in
-  F_capX.seek(0)
-  times = []
-  capX = []
-  for line in F_capX:
-    line = line.strip().split()
-    times.append(float(line[0]))
-    capX.append(float(line[4]))
-  F_capX.close()
-  return times, capX
-
-
-def get_zeta(uda_path):
-  #Extract zeta history
-  print("Extracting zeta history...")
-  args = [partextract_exe, "-partvar", "p.Zeta", uda_path]
-  F_zeta = tempfile.TemporaryFile()
-  #open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
-  tmp = sub_proc.Popen(args, stdout=F_zeta, stderr=sub_proc.PIPE)
-  dummy = tmp.wait()
-  print('Done.')
-  #Read file back in
-  F_zeta.seek(0)
-  times = []
-  zeta = []
-  for line in F_zeta:
-    line = line.strip().split()
-    times.append(float(line[0]))
-    zeta.append(float(line[4]))
-  F_zeta.close()
-  return times, zeta
+  F_pc.close()
+  return times, pcs
 
 
 def get_defTable(uda_path, working_dir):
@@ -451,7 +349,7 @@ def eqShear_vs_meanStress(xs,
                           ys,
                           Xlims=False,
                           Ylims=False,
-                          LINE_LABEL='Uintah',
+                          LINE_LABEL='Vaango',
                           GRID=True):
 
   ax1 = plt.subplot(111)
@@ -479,9 +377,6 @@ def eqShear_vs_meanStress(xs,
 
 
 def get_yield_surface(uda_path):
-  #Reads in FSLOPE, FSLOPE_p, PEAKI1, CR, and P0
-  #WILL ONLY WORK FOR SINGLE ELEMENT TESTS OR DECKS
-  #HAVING ONLY ONE ARENISCA SPECIFICATION
   try:
     ups_file = os.path.abspath(uda_path) + '/input.xml.orig'
     F_ups = open(ups_file, "r")
@@ -551,24 +446,6 @@ def get_yield_surface(uda_path):
   return material_dict
 
 
-def get_kappa(PEAKI1, P0, CR):
-  PEAKI1, P0, CR
-  kappa = PEAKI1 - CR * (PEAKI1 - P0)
-  return kappa
-
-
-def get_rs(nPoints, FSLOPE, PEAKI1, P0, CR):
-
-  kappa = get_kappa(PEAKI1, P0, CR)
-  I1s = np.linspace(PEAKI1, P0, nPoints)
-  rs = []
-  for I1 in I1s:
-    inner_root = (1.0 - (pow(kappa - I1, 2.0) / pow(kappa - P0, 2.0)))
-    r = FSLOPE * (I1 - PEAKI1) * np.sqrt(2.0 * inner_root)
-    rs.append(r)
-  return I1s, rs
-
-
 def I1_to_zbar(I1s):
   sqrt_3 = np.sqrt(3.0)
   if type(I1s) in [list, np.ndarray]:
@@ -583,67 +460,6 @@ def I1_to_zbar(I1s):
         '\nERROR: cannot compute zbar from I1. Invalid type.\n\ttype(I1)\t:\t',
         type(I1s))
     return None
-
-
-def plot_crush_curve(uda_path, I1lims=[-10000, 0]):
-  nPoints = 500
-  material_dict = get_yield_surface(uda_path)
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-
-  # Analytical solution for porosity vs. X for piece-wise crush curve
-  # compression
-  I1sC = np.linspace(I1lims[0] * 1.0e6, P0, nPoints)
-  porosityC = 1 - np.exp(-P3 * np.exp(P1 * (I1sC - P0)))
-  # tension
-  I1sT = np.linspace(P0, I1lims[1] * 1.0e6, nPoints)
-  porosityT = 1 - np.exp(-(I1sT / P0)**(P0 * P1 * P3) - P3 + 1)
-
-  # Scale down again
-  I1_c = []
-  for ii in I1sC:
-    I1_c.append(ii * 1.0e-6)
-  I1_t = []
-  for ii in I1sT:
-    I1_t.append(ii * 1.0e-6)
-
-  plt.plot(I1_c,
-           porosityC,
-           '--g',
-           linewidth=lineWidth + 1,
-           label='Analytical crush curve - Compression')
-  plt.hold(True)
-  plt.plot(I1_t,
-           porosityT,
-           '--b',
-           linewidth=lineWidth + 1,
-           label='Analytical crush curve - Tension')
-  #plt.ylabel(str_to_mathbf('I_{1} (MPa)'))
-  #plt.xlabel(str_to_mathbf('Porosity'))
-
-
-def plot_yield_surface_OLD(uda_path):
-  nPoints = 500
-  material_dict = get_yield_surface(uda_path)
-  FSLOPE = material_dict['FSLOPE']
-  #FSLOPE_p = material_dict['FSLOPE']
-  PEAKI1 = material_dict['PEAKI1']
-  CR = material_dict['CR']
-  P0 = material_dict['P0']
-  I1s, rs = get_rs(nPoints, FSLOPE, PEAKI1, P0, CR)
-  zbars = I1_to_zbar(I1s)
-  #WTF?
-  for i in range(len(rs)):
-    rs[i] = -rs[i]
-  #print(zbars)
-  #print(rs)
-  plt.plot(np.array(I1s) / 3.0,
-           rs,
-           '--k',
-           linewidth=lineWidth + 1,
-           label='Initial Yield Surface')
-  plt.plot(np.array(I1s) / 3.0, -np.array(rs), '--k', linewidth=lineWidth + 1)
 
 
 def J2VM(epsil_dot, dt, sig_Beg, K, G, tau_y):
@@ -718,93 +534,33 @@ def defTable_to_J2Solution(def_times,
   return analytical_times, analytical_sigmas, analytical_epsils
 
 
-def J2_at_Yield(uda_path):
-  material_dict = get_yield_surface(uda_path)
-  PEAKI1 = material_dict['PEAKI1']
-  FSLOPE = material_dict['FSLOPE']
-  #FSLOPE_p = material_dict['FSLOPE']
-  STREN = material_dict['STREN']
-  YSLOPE = material_dict['YSLOPE']
-  BETA = material_dict['BETA']
-  B0 = material_dict['B0']
-  B1 = material_dict['B1']
-  B2 = material_dict['B2']
-  B3 = material_dict['B3']
-  B4 = material_dict['B4']
-  G0 = material_dict['G0']
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-  CR = material_dict['CR']
-  fluid_B0 = material_dict['fluid_B0']
-  Pf0 = material_dict['P_f0']
-  T1 = material_dict['T1']
-  T2 = material_dict['T2']
-  subcyc_char_num = material_dict['subcycling char num']
-  #hardening_const = material_dict['hardening_constant']
-
-  kappa_initial = get_kappa(PEAKI1, P0, CR)
-  I1 = 0
-  I1_plus3Pf0 = I1 + 3.0 * Pf0
-  if I1_plus3Pf0 >= kappa_initial and I1_plus3Pf0 <= PEAKI1:
-    J2 = (FSLOPE**2) * ((I1 - PEAKI1 + 3.0 * Pf0)**2)
-  elif I1_plus3Pf0 >= P0 and I1_plus3Pf0 < kappa_initial:
-    J2 = ((FSLOPE**2) * ((I1 - PEAKI1 + 3.0 * Pf0)**2)) * (1.0 - (
-        (I1 + CR * FSLOPE * I1 - P0 - CR * FSLOPE * PEAKI1 + 3.0 * Pf0 +
-         3.0 * CR * FSLOPE * Pf0)**2 / ((CR**2) * (FSLOPE**2) *
-                                        (P0 - PEAKI1)**2)))
-  else:
-    J2 = 0.0
-  return J2
-
-
 def plot_yield_surface(uda_path, PLOT_TYPE='J2_vs_I1'):
   num_points = 500
   material_dict = get_yield_surface(uda_path)
-  PEAKI1 = material_dict['PEAKI1']
-  FSLOPE = material_dict['FSLOPE']
-  #FSLOPE_p = material_dict['FSLOPE']
-  STREN = material_dict['STREN']
-  YSLOPE = material_dict['YSLOPE']
-  BETA = material_dict['BETA']
-  B0 = material_dict['B0']
-  B1 = material_dict['B1']
-  B2 = material_dict['B2']
-  B3 = material_dict['B3']
-  B4 = material_dict['B4']
-  G0 = material_dict['G0']
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-  CR = material_dict['CR']
-  fluid_B0 = material_dict['fluid_B0']
-  Pf0 = material_dict['P_f0']
-  T1 = material_dict['T1']
-  T2 = material_dict['T2']
-  subcyc_char_num = material_dict['subcycling char num']
-  #hardening_const = material_dict['hardening_constant']
-  kappa_initial = get_kappa(PEAKI1, P0, CR)
-  I1s = np.linspace(P0 - 3.0 * Pf0, PEAKI1 - 3.0 * Pf0, num_points)
-  #print('Region 1:: ','I1 >= kappa initial-3.0*Pf0 : ',kappa_initial-3.0*Pf0,' ','I1 <= PEAKI1-3*Pf0 : ',PEAKI1-3.0*Pf0)
-  #print('Region 2:: ','I1 >= P0-3*Pf0 : ',P0-3.0*Pf0,' ','I1 < kappa_initial-3*Pf0 : ',kappa_initial-3.0*Pf0)
-  #print('Region 3:: Not Region 1 or 2')
+  p0 = material_dict['p0']
+  alpha = material_dict['alpha']
+  kappatilde = material_dict['kappatilde']
+  epse_v0 = material_dict['epse_v0']
+  mu0 = material_dict['mu0']
+  M = material_dict['M']
+  pc0 = material_dict['pc0']
+  lambdatilde = material_dict['lambdatilde']
 
-  #J2 versus I1
-  J2s = []
+  # Compute p/q
+  ps = np.linspace(p0, pc0, num_points)
+  qs = [M * np.sqrt(np.abs(p * (pc0 - p))) for p in ps]
+
+  # Convert to I1/J2
+  I1s = [3.0 * p for p in ps]
+  J2s = [q * q / 3 for q in qs]
+
+  # Convert to r/z
+  rs = [I1 / np.sqrt(3) for I1 in I1s]
+  zs = [np.sqrt(2.0 * J2) for J2 in J2s]
+
   PLOT = True
-  for I1 in I1s:
-    I1_plus3Pf0 = I1 + 3.0 * Pf0
-    if I1_plus3Pf0 >= kappa_initial and I1_plus3Pf0 <= PEAKI1:
-      J2 = (FSLOPE**2) * ((I1 - PEAKI1 + 3.0 * Pf0)**2)
-    elif I1_plus3Pf0 >= P0 and I1_plus3Pf0 < kappa_initial:
-      Ff = FSLOPE * (PEAKI1 - I1_plus3Pf0)
-      fc = np.sqrt(1.0 - ((kappa_initial - I1_plus3Pf0) /
-                          (kappa_initial - P0))**2)
-      J2 = (Ff * fc)**2
-    else:
-      J2 = 0.0
-    J2s.append(J2)
-
+  xs = []
+  ys = []
   if PLOT_TYPE == 'J2_vs_I1':
     xs = np.array(I1s) * 1.0e-6
     ys = np.array(J2s) * 1.0e-12
@@ -812,14 +568,14 @@ def plot_yield_surface(uda_path, PLOT_TYPE='J2_vs_I1'):
     xs = np.array(I1s) * 1.0e-6
     ys = np.sqrt(np.array(J2s)) * 1.0e-6
   elif PLOT_TYPE == 'r_vs_z':
-    xs = np.array(I1s) / np.sqrt(3.0) * 1.0e-6
-    ys = np.sqrt(2.0 * np.array(J2s)) * 1.0e-6
+    xs = np.array(rs) * 1.0e-6
+    ys = np.array(zs) * 1.0e-6
   elif PLOT_TYPE == 'q_vs_I1':
     xs = np.array(I1s) * 1.0e-6
-    ys = np.sqrt(3.0 * np.array(J2s)) * 1.0e-6
+    ys = np.array(qs) * 1.0e-6
   elif PLOT_TYPE == 'q_vs_p':
-    xs = np.array(I1s) / 3.0 * 1.0e-6
-    ys = np.sqrt(3.0 * np.array(J2s)) * 1.0e-6
+    xs = np.array(ps) * 1.0e-6
+    ys = np.array(qs) * 1.0e-6
   else:
     PLOT = False
     print(
@@ -835,344 +591,23 @@ def plot_yield_surface(uda_path, PLOT_TYPE='J2_vs_I1'):
 
 
 def test_yield_surface(uda_path):
-  plot_yield_surface_2(uda_path, 'J2_vs_I1')
+  plot_yield_surface(uda_path, 'J2_vs_I1')
   plt.show()
-  plot_yield_surface_2(uda_path, 'sqrtJ2_vs_I1')
+  plot_yield_surface(uda_path, 'sqrtJ2_vs_I1')
   plt.show()
-  plot_yield_surface_2(uda_path, 'r_vs_z')
+  plot_yield_surface(uda_path, 'r_vs_z')
   plt.show()
-  plot_yield_surface_2(uda_path, 'q_vs_I1')
+  plot_yield_surface(uda_path, 'q_vs_I1')
   plt.show()
-  plot_yield_surface_2(uda_path, 'q_vs_p')
+  plot_yield_surface(uda_path, 'q_vs_p')
   plt.show()
-
-
-def plot_yield_surface_updated(uda_path,
-                               ev_p,
-                               zeta=0.0,
-                               PLOT_TYPE='J2_vs_I1',
-                               COLOR='#0000ff'):
-  num_points = 500
-  material_dict = get_yield_surface(uda_path)
-  PEAKI1 = material_dict['PEAKI1']
-  FSLOPE = material_dict['FSLOPE']
-  #FSLOPE_p = material_dict['FSLOPE']
-  STREN = material_dict['STREN']
-  YSLOPE = material_dict['YSLOPE']
-  BETA = material_dict['BETA']
-  B0 = material_dict['B0']
-  B1 = material_dict['B1']
-  B2 = material_dict['B2']
-  B3 = material_dict['B3']
-  B4 = material_dict['B4']
-  G0 = material_dict['G0']
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-  CR = material_dict['CR']
-  fluid_B0 = material_dict['fluid_B0']
-  Pf0 = material_dict['P_f0']
-  T1 = material_dict['T1']
-  T2 = material_dict['T2']
-  subcyc_char_num = material_dict['subcycling char num']
-  #hardening_const = material_dict['hardening_constant']
-
-  # Set up constants
-  a1 = STREN
-  a2 = (FSLOPE - YSLOPE) / (STREN - YSLOPE * PEAKI1)
-  a3 = (STREN - YSLOPE * PEAKI1) * math.exp(-a2 * PEAKI1)
-  a4 = YSLOPE
-  phi_i = 1.0 - math.exp(-P3)
-  Km = B0 + B1
-  Kf = fluid_B0
-  C1 = Kf * (1.0 - phi_i) + Km * (phi_i)
-  print('Kf = ', Kf, ' Km = ', Km)
-  ev0 = 0.0
-  if (Kf != 0):
-    ev0 = C1 * Pf0 / (Kf * Km)
-
-  # compute capX
-  cap_X = computeCapX(ev_p, P3, P0, P1, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3,
-                      B4)
-  print("capX = ", cap_X)
-
-  # Compute kappa
-  kappa = PEAKI1 - CR * (PEAKI1 - cap_X)
-  kappa_initial = PEAKI1 - CR * (PEAKI1 - P0)
-  print("kappa = ", kappa, " kappa_initial = ", kappa_initial)
-
-  #I1s = np.linspace(P0-3.0*Pf0,PEAKI1-3.0*Pf0,num_points)
-  I1s = np.linspace(0.999 * cap_X - 3.0 * Pf0, PEAKI1 - 3.0 * Pf0, num_points)
-  #print('Region 1:: ','I1 >= kappa initial-3.0*Pf0 : ',kappa_initial-3.0*Pf0,' ','I1 <= PEAKI1-3*Pf0 : ',PEAKI1-3.0*Pf0)
-  #print('Region 2:: ','I1 >= P0-3*Pf0 : ',P0-3.0*Pf0,' ','I1 < kappa_initial-3*Pf0 : ',kappa_initial-3.0*Pf0)
-  #print('Region 3:: Not Region 1 or 2')
-
-  #J2 versus I1
-  J2s = []
-  PLOT = True
-  for I1 in I1s:
-    I1f = I1 + 3.0 * Pf0
-
-    # Compute F_f
-    I1_minus_zeta = I1f - zeta
-    Ff = a1 - a3 * math.exp(a2 * I1_minus_zeta) - a4 * (I1_minus_zeta)
-    Ff_sq = Ff**2
-
-    # Compute Fc
-    Fc_sq = 1.0
-    if (I1_minus_zeta < kappa) and (cap_X < I1_minus_zeta):
-      ratio = (kappa - I1_minus_zeta) / (kappa - cap_X)
-      Fc_sq = 1.0 - ratio**2
-
-    # Compute J2
-    J2 = Ff_sq * Fc_sq
-    J2s.append(J2)
-
-  print(len(I1s), len(J2s))
-  if PLOT_TYPE == 'J2_vs_I1':
-    xs = np.array(I1s) * 1.0e-6
-    ys = np.array(J2s) * 1.0e-12
-  elif PLOT_TYPE == 'sqrtJ2_vs_I1':
-    xs = np.array(I1s) * 1.0e-6
-    ys = np.sqrt(np.array(J2s)) * 1.0e-6
-  elif PLOT_TYPE == 'r_vs_z':
-    xs = np.array(I1s) / np.sqrt(3.0) * 1.0e-6
-    ys = np.sqrt(2.0 * np.array(J2s)) * 1.0e-6
-  elif PLOT_TYPE == 'q_vs_I1':
-    xs = np.array(I1s) * 1.0e-6
-    ys = np.sqrt(3.0 * np.array(J2s)) * 1.0e-6
-  elif PLOT_TYPE == 'q_vs_p':
-    xs = np.array(I1s) / 3.0 * 1.0e-6
-    ys = np.sqrt(3.0 * np.array(J2s)) * 1.0e-6
-  else:
-    PLOT = False
-    print(
-        '\nError: invalid plot type specified for updated yield surface plot.\n\tPLOT_TYPE:',
-        PLOT_TYPE)
-  if PLOT:
-    print(xs.shape, ys.shape)
-    ev_p_str = str(ev_p)
-    label_str = 'Yield surf. evp = ' + ev_p_str
-    line1 = plt.plot(xs, ys, '--b', linewidth=lineWidth + 1, label=label_str)
-    line2 = plt.plot(xs, -ys, '--b', linewidth=lineWidth + 1)
-    plt.setp(line1, color=COLOR)
-    plt.setp(line2, color=COLOR)
-
-
-def test_yield_surface(uda_path):
-  plot_yield_surface_2(uda_path, 'J2_vs_I1')
-  plt.show()
-  plot_yield_surface_2(uda_path, 'sqrtJ2_vs_I1')
-  plt.show()
-  plot_yield_surface_2(uda_path, 'r_vs_z')
-  plt.show()
-  plot_yield_surface_2(uda_path, 'q_vs_I1')
-  plt.show()
-  plot_yield_surface_2(uda_path, 'q_vs_p')
-  plt.show()
-
-
-###
-# Compute capX
-###
-def computeCapX(ev_p, P3, P0, P1, Kf, Km, ev_0, C1, phi_i, B0, B1, B2, B3, B4):
-
-  if (ev_p <= -P3):
-    return P0 * 1.0e12
-  if (ev_p <= 0.0):
-    capX = (P0 * P1 + math.log(1.0 + ev_p / P3)) / P1
-  else:
-    capX = P0 * math.pow(1.0 + ev_p, 1.0 / (P0 * P1 * P3))
-
-  if ((Kf != 0.0) and (ev_p <= ev_0)):
-    K_dry = B0 + B1 * math.exp(2.0 * B2 / capX)
-    #
-    if (ev_p < 0.0):
-      K_dry = K_dry - B3 * math.exp(B4 / ev_p)
-    #
-    K_sat, shear = computeElastic(0.5 * capX, ev_p, Kf, Km, ev_0, C1, phi_i, B0,
-                                  B1, B2, B3, B4, 0)
-    capX = capX * K_sat / K_dry
-
-  return capX
-
-
-###
-# Compute elastic
-###
-def computeElastic(I1, ev_p, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3, B4, G0):
-
-  bulk = B0
-  shear = G0
-
-  if (ev_p <= 0.0):
-
-    if (ev_p < 0.0):
-      bulk = bulk - B3 * math.exp(B4 / ev_p)
-
-    if (I1 < 0.0):
-      bulk = bulk + B1 * math.exp(B2 / I1)
-
-  if (ev_p <= ev0 and Kf != 0.0):
-    Kd = B0
-    if (ev_p < 0.0):
-      Kd = B0 - B3 * math.exp(B4 / ev_p)
-      C2 = math.exp(ev_p * Km / C1) * phi_i
-      phi = C2 / (-math.exp(ev_p * Kf / C1) * (phi_i - 1.0) + C2)
-      tmp = 1.0 - Kd / Km
-      bulk = Kd + tmp**2 / ((tmp - phi) / Km + (1.0 / Kf - 1.0 / Km) * phi)
-
-  return bulk, shear
 
 
 ### ----------
 #  Test Methods Below
 ### ----------
-def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
-  print("PostProc Test: 00 - Uniaxial Compression SHPB")
-
-  # Just get the name of the file without extension
-  file_name = os.path.splitext(expt_stress_file)[0]
-
-  # Read the experimental data
-  time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt = readExptStressData(
-      uda_path, expt_stress_file)
-
-  # Read the simulation data
-  times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(
-      uda_path)
-
-  # Get the model parameters
-  material_dict = get_yield_surface(uda_path)
-  param_text = material_dict['material string']
-
-  # Set up time points
-  analytical_times = np.linspace(0.0, 0.001, 10)
-
-  # Get snapshots of pq data (both expt and sim)
-  t_expt_snap, p_expt_snap = getDataTimeSnapshots(analytical_times, time_expt,
-                                                  pp_expt)
-  t_expt_snap, q_expt_snap = getDataTimeSnapshots(analytical_times, time_expt,
-                                                  qq_expt)
-  t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, pp_sim)
-  t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qq_sim)
-
-  ###PLOTTING
-  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
-
-  #----------------------------------------------------------------
-  # Plot the yield surface for test1
-  #----------------------------------------------------------------
-  # Set up figure
-  fig2 = plt.figure(2)
-  plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-
-  # Plot p vs. q simulation results
-  eqShear_vs_meanStress(-pp_sim, -qq_sim)
-
-  # Plot filled circles at time snapshots
-  for ii in range(0, len(t_sim_snap)):
-
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii) / len(t_sim_snap))
-    #xvals = np.array((p_sim_snap[ii], p_sim_snap[ii+1]))
-    #yvals = np.array((q_sim_snap[ii], q_sim_snap[ii+1]))
-    #plt.plot(xvals, yvals, '-', color=plt_color)
-    plt.plot(-p_sim_snap[ii], -q_sim_snap[ii], 'o', color=plt_color)
-
-  # Plot the experimental data
-  line1 = plt.plot(-pp_expt, -qq_expt, '--b', linewidth=2, label='Expt.')
-
-  # Plot filled circles at time snapshots
-  for ii in range(0, len(t_expt_snap)):
-
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii) / len(t_expt_snap))
-    #xvals = np.array((p_expt_snap[ii], p_expt_snap[ii+1]))
-    #yvals = np.array((q_expt_snap[ii], q_expt_snap[ii+1]))
-    #plt.plot(xvals, yvals, '-', color=plt_color)
-    plt.plot(-p_expt_snap[ii], -q_expt_snap[ii], 'v', color=plt_color)
-
-  # Plot yield surfaces
-  pp_expt_min = min(pp_expt)
-  qq_expt_min = min(qq_expt)
-  pMin, qMax = plotPQYieldSurfaceSim(uda_path,
-                                     analytical_times,
-                                     p_min_expt=pp_expt_min,
-                                     q_min_expt=qq_expt_min)
-
-  plt.title('Uniaxial strain SHPB ' + file_name)
-
-  # Create output file name
-  png_file_name = file_name + '_yield_surface'
-  savePNG(os.path.join(save_path, png_file_name), '1280x960')
-  #plt.show()
-
-  #---------------------------------------------------------------------------------
-  # Plot experimental and simulation data as a function of time
-  analytical_times = np.array(analytical_times) * 1.0e6
-  times = np.array(times) * 1.0e6
-  time_expt = np.array(time_expt) * 1.0e6
-  fig3 = plt.figure(3)
-  plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt,
-                        sigma_r_expt)
-  plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim,
-                       sigma_ar_sim)
-  axes = plt.gca()
-  axes.xaxis.set_major_formatter(formatter)
-  axes.yaxis.set_major_formatter(formatter)
-  plt.xlabel(str_to_mathbf('Time (micro sec)'))
-  plt.ylabel(str_to_mathbf('Axial and Radial Stress (MPa)'))
-  plt.grid(True)
-  plt.legend(loc='best', prop={'size': 10})
-  plt.title('Uniaxial strain SHPB ' + file_name)
-  png_file_name = file_name + '_sigma_time'
-  savePNG(os.path.join(save_path, png_file_name), '1280x960')
-
-  #---------------------------------------------------------------------------------
-  # Plot experimental and simulation data as a function of time
-  #analytical_times = np.array(analytical_times)*1.0e6
-  #times = np.array(times)*1.0e6
-  #time_expt = np.array(time_expt)*1.0e6
-  pp_expt = np.array(pp_expt) * (-1.0)
-  qq_expt = np.array(qq_expt) * (-1.0)
-  pp_sim = np.array(pp_sim) * (-1.0)
-  qq_sim = np.array(qq_sim) * (-1.0)
-  fig4 = plt.figure(4)
-  plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
-  plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
-  axes = plt.gca()
-  axes.xaxis.set_major_formatter(formatter)
-  axes.yaxis.set_major_formatter(formatter)
-  plt.xlabel(str_to_mathbf('Time (micro sec)'))
-  plt.ylabel(str_to_mathbf('Stress Invariants (MPa)'))
-  plt.grid(True)
-  plt.legend(loc='best', prop={'size': 10})
-  plt.title('Uniaxial strain SHPB' + file_name)
-  png_file_name = file_name + '_pq_time'
-  savePNG(os.path.join(save_path, png_file_name), '1280x960')
-
-  plt.show()
-
-
 def test01_postProc(uda_path, save_path, **kwargs):
-  print("Post Processing Test: 01 - Uniaxial Compression With Rotation")
-
-  # Read the experimental data
-  # file_name = 'Arena052212-035.expt'
-  # file_name_alt = 'Arena052212-026.expt'
-  # time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt = readExptStressData(
-  #     uda_path, file_name)
-  # time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt, pp_expt_alt, qq_expt_alt = readExptStressData(
-  #     uda_path, file_name_alt)
+  print("CamClay Test: 01 - Uniaxial Compression With Rotation")
 
   # Read the simulation data
   times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(
@@ -1189,11 +624,7 @@ def test01_postProc(uda_path, save_path, **kwargs):
   #analytical_times = [0.0, 0.1, 0.2, 0.5, 0.7, 1.0]
   analytical_times = np.linspace(0.0, 0.001, 15)
 
-  # Get snapshots of pq data (both expt and sim)
-  # t_expt_snap, p_expt_snap = getDataTimeSnapshots(analytical_times, time_expt,
-  #                                                 pp_expt)
-  # t_expt_snap, q_expt_snap = getDataTimeSnapshots(analytical_times, time_expt,
-  #                                                 qq_expt)
+  # Get snapshots of pq data (sim)
   t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, pp_sim)
   t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qq_sim)
 
@@ -1266,7 +697,7 @@ def test01_postProc(uda_path, save_path, **kwargs):
   #without rotation
   #plt.plot([0,1],[Sxx_max, Sxx_min],'-b',label='No rotation')
   #simulation results
-  plt.plot(times, Sxx, '-r', label='Uintah')
+  plt.plot(times, Sxx, '-r', label='Vaango')
   #guide lines
   #plt.plot([0,1],[0,0],'--g',label='Guide lines')
   #labels
@@ -1277,7 +708,7 @@ def test01_postProc(uda_path, save_path, **kwargs):
   ax1.yaxis.set_major_formatter(formatter)
   ax1.set_yticks(Sxx_ticks)
   plt.ylabel(str_to_mathbf('\sigma_{xx} (MPa)'))
-  plt.title('AreniscaTest 01:\nUniaxial Strain Compression')
+  plt.title('CamClay 01:\nUniaxial Strain Compression')
   plt.legend()
   savePNG(save_path + '/Test01_verificationPlot', '1280x960')
   if SHOW_ON_MAKE:
@@ -1293,6 +724,12 @@ def test01_postProc(uda_path, save_path, **kwargs):
   plt.subplots_adjust(right=0.75)
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
 
+  # Change sign
+  pp_sim = [-p for p in pp_sim]
+  qq_sim = [-q for q in qq_sim]
+  p_sim_snap = [-p for p in p_sim_snap]
+  q_sim_snap = [-q for q in q_sim_snap]
+
   # Plot p vs. q simulation results
   eqShear_vs_meanStress(pp_sim, qq_sim)
 
@@ -1303,44 +740,22 @@ def test01_postProc(uda_path, save_path, **kwargs):
     plt_color = cm.Paired(float(ii) / len(t_sim_snap))
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color)
 
-  # Plot the experimental data
-  #line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt. (35)')
-  #line2 = plt.plot(pp_expt_alt,
-  #                 qq_expt_alt,
-  #                 '--m',
-  #                 linewidth=2,
-  #                 label='Expt. (26)')
-
-  # Plot filled circles at time snapshots
-  #for ii in range(0, len(t_expt_snap)):
-
-    # Choose the Paired colormap
-    #plt_color = cm.Paired(float(ii) / len(t_expt_snap))
-    #plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color)
-
   # Plot yield surfaces
-  #pp_expt_min = min(pp_expt)
-  #qq_expt_min = min(qq_expt)
   pMin, qMax = plotPQYieldSurfaceSim(uda_path,
-                                     analytical_times,
-                                     p_min_expt=0,
-                                     q_min_expt=0)
+                                     analytical_times)
 
   plt.title(
-      'AreniscaTest: Dry Mason Sand: Uniaxial strain compression\n Yield surface evolution'
+      'CamClay: Uniaxial strain compression\n Yield surface evolution'
   )
   savePNG(save_path + '/Test01_yield_surface', '1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------
-  # Plot experimental and simulation data as a function of time
+  # Plot simulation data as a function of time
   fig3 = plt.figure(3)
   plt.clf()
   plt.subplots_adjust(right=0.75)
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  #plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt,
-  #                      sigma_r_expt)
-  #plotExptDataSigmaTime(fig3, analytical_times, time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt)
   plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim,
                        sigma_ar_sim)
   axes = plt.gca()
@@ -1356,14 +771,12 @@ def test01_postProc(uda_path, save_path, **kwargs):
   plt.clf()
   plt.subplots_adjust(right=0.75)
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  #plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
-  #plotExptDataPQTime(fig4, analytical_times, time_expt_alt, pp_expt_alt, qq_expt_alt)
   plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)
   axes.yaxis.set_major_formatter(formatter)
   plt.xlabel(str_to_mathbf('Time (sec)'))
-  plt.ylabel(str_to_mathbf('Stress (MPa)'))
+  plt.ylabel(str_to_mathbf('Stress invariants (p/q) (MPa)'))
   plt.grid(True)
   plt.legend(loc='best', prop={'size': 10})
   savePNG(save_path + '/Test01_pq_time', '1280x960')
@@ -1532,7 +945,7 @@ def test02_postProc(uda_path, save_path, **kwargs):
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title('AreniscaTest 02:\nVertex Treatment (plot a)')
+  plt.title('CamClay 02:\nVertex Treatment (plot a)')
   #plt.legend()
   savePNG(save_path + '/Test02_verificationPlot_a', '1280x960')
 
@@ -1563,13 +976,13 @@ def test02_postProc(uda_path, save_path, **kwargs):
            '-g',
            linewidth=lineWidth + 2,
            label='Analytical')
-  plt.plot(times, np.array(Sxx), '-r', label='Uintah')
+  plt.plot(times, np.array(Sxx), '-r', label='Vaango')
   #Add Yield Surface
   #Add Analytical
   plt.legend()
   plt.setp(ax1.get_xticklabels(), visible=False)
   plt.ylabel(str_to_mathbf('\sigma_{xx} (MPa)'))
-  plt.title('AreniscaTest 02:\nVertex Treatment (plot b)')
+  plt.title('CamClay 02:\nVertex Treatment (plot b)')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)
   ax1.set_xlim(0, endT)
@@ -1670,7 +1083,7 @@ def test03_postProc(uda_path, save_path, **kwargs):
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   #eqShear_vs_meanStress(ps,qs,Xlims,Ylims,)
   eqShear_vs_meanStress(ps, qs)
-  plt.title('AreniscaTest 03:\nUniaxial Strain Without Hardening')
+  plt.title('CamClay 03:\nUniaxial Strain Without Hardening')
 
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
@@ -1756,7 +1169,7 @@ def test04_postProc(uda_path, save_path, **kwargs):
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title('AreniscaTest 04:\nCurved Yield Surface')
+  plt.title('CamClay 04:\nCurved Yield Surface')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)
   #Add Analytical
@@ -1834,7 +1247,7 @@ def test05_postProc(uda_path, save_path, **kwargs):
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title('AreniscaTest 05:\nHydrostatic Compression Fixed Cap')
+  plt.title('CamClay 05:\nHydrostatic Compression Fixed Cap')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)
   #Add Analytical
@@ -1908,7 +1321,7 @@ def test06_postProc(uda_path, save_path, **kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   eqShear_vs_meanStress(ps, qs)
-  plt.title('AreniscaTest 06:\nUniaxial Strain Cap Evolution')
+  plt.title('CamClay 06:\nUniaxial Strain Cap Evolution')
 
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
@@ -1960,7 +1373,7 @@ def test07_postProc(uda_path, save_path, **kwargs):
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
 
   ax1 = eqShear_vs_meanStress(I1s, porosity)
-  plt.title('AreniscaTest 07:\nHydrostatic Compression with Fixed Cap')
+  plt.title('CamClay 07:\nHydrostatic Compression with Fixed Cap')
   plt.ylabel(str_to_mathbf('Porosity'))
   plt.xlabel(str_to_mathbf('I_{1}:first invariant of stress tensor (MPa)'))
   #plt.show()
@@ -2047,7 +1460,7 @@ def test08_postProc(uda_path, save_path, **kwargs):
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title('AreniscaTest 08:\nLoading/Unloading (plot a)')
+  plt.title('CamClay 08:\nLoading/Unloading (plot a)')
   plt.ylabel(str_to_mathbf('Pressure (MPa)'))
   plt.xlabel(str_to_mathbf('Time (s)'))
   ax1.xaxis.set_major_formatter(int_formatter)
@@ -2067,7 +1480,7 @@ def test08_postProc(uda_path, save_path, **kwargs):
   # Plot yield surfaces
   plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title('AreniscaTest 08:\nLoading/Unloading (plot b)')
+  plt.title('CamClay 08:\nLoading/Unloading (plot b)')
   plt.ylabel(str_to_mathbf('Total Volumetric Strain, \epsilon_{v}'))
   plt.xlabel(str_to_mathbf('Time (s)'))
   ax2.xaxis.set_major_formatter(int_formatter)
@@ -2084,7 +1497,7 @@ def test08_postProc(uda_path, save_path, **kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   eqShear_vs_meanStress(I1s, porosity, I1lims, (0, 1.25))
-  plt.title('AreniscaTest 08:\nLoading/Unloading (plot c)')
+  plt.title('CamClay 08:\nLoading/Unloading (plot c)')
   plt.ylabel(str_to_mathbf('Porosity'))
   plt.xlabel(str_to_mathbf('I_{1}:first invariant of stress tensor (Pa)'))
   plot_crush_curve(uda_path, I1lims)
@@ -2165,7 +1578,7 @@ def test09_postProc(uda_path, save_path, **kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   ax1 = eqShear_vs_meanStress(times, -np.array(ps))
-  plt.title('AreniscaTest 09:\nFluid EFfects (plot a)')
+  plt.title('CamClay 09:\nFluid EFfects (plot a)')
   plt.ylabel(str_to_mathbf('Pressure (Pa)'))
   plt.xlabel(str_to_mathbf('Time (s)'))
   ax1.xaxis.set_major_formatter(int_formatter)
@@ -2181,7 +1594,7 @@ def test09_postProc(uda_path, save_path, **kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   ax1 = eqShear_vs_meanStress(times, totalStrainVol)
-  plt.title('AreniscaTest 09:\nFluid EFfects (plot b)')
+  plt.title('CamClay 09:\nFluid EFfects (plot b)')
   plt.ylabel(str_to_mathbf('Total Volumetric Strain, \epsilon_{v}'))
   plt.xlabel(str_to_mathbf('Time (s)'))
   ax2.xaxis.set_major_formatter(int_formatter)
@@ -2198,7 +1611,7 @@ def test09_postProc(uda_path, save_path, **kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   eqShear_vs_meanStress(I1s, porosity, I1lims, (0, 1.25))
-  plt.title('AreniscaTest 09:\nFluid EFfects (plot c)')
+  plt.title('CamClay 09:\nFluid EFfects (plot c)')
   plt.ylabel(str_to_mathbf('Porosity'))
   plt.xlabel(str_to_mathbf('I_{1}:first invariant of stress tensor (Pa)'))
   plot_crush_curve(uda_path, I1lims)
@@ -2328,15 +1741,15 @@ def test10_postProc(uda_path, save_path, **kwargs):
   plt.plot(times,
            np.array(Sxx),
            '-r',
-           label=str_to_mathbf('Uintah \sigma_{xx}'))
+           label=str_to_mathbf('Vaango \sigma_{xx}'))
   plt.plot(times,
            np.array(Syy),
            '-g',
-           label=str_to_mathbf('Uintah \sigma_{yy}'))
+           label=str_to_mathbf('Vaango \sigma_{yy}'))
   plt.plot(times,
            np.array(Szz),
            '-b',
-           label=str_to_mathbf('Uintah \sigma_{zz}'))
+           label=str_to_mathbf('Vaango \sigma_{zz}'))
 
   ax1.set_xlim(0, 2.25)
   formatter_int = ticker.FormatStrFormatter('$\mathbf{%g}$')
@@ -2349,7 +1762,7 @@ def test10_postProc(uda_path, save_path, **kwargs):
   if BIG_FIGURE:
     plt.legend(loc='upper right', bbox_to_anchor=(1.38, 1.12))
     plt.title(
-        'AreniscaTest 10:\nTransient Stress Eigenvalues with Constant Eigenvectors'
+        'CamClay 10:\nTransient Stress Eigenvalues with Constant Eigenvectors'
     )
     savePNG(save_path + '/Test10_verificationPlot', '1280x960')
   else:
@@ -2425,13 +1838,13 @@ def test11_postProc(uda_path, save_path, **kwargs):
   ax1.yaxis.set_major_formatter(formatter)
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot a)')
+  plt.title('CamClay 11:\nUniaxial Strain J2 Plasticity (plot a)')
   plt.plot(np.array(analytical_e11),
            np.array(analytical_Sxx),
            '--g',
            linewidth=lineWidth + 1,
            label=str_to_mathbf('Analytical'))
-  plt.plot(np.array(exx), np.array(Sxx), '-r', label=str_to_mathbf('Uintah'))
+  plt.plot(np.array(exx), np.array(Sxx), '-r', label=str_to_mathbf('Vaango'))
   plt.xlabel(str_to_mathbf('\epsilon_{A}'))
   plt.ylabel(str_to_mathbf('\sigma_{A} (MPa)'))
   plt.legend()
@@ -2445,13 +1858,13 @@ def test11_postProc(uda_path, save_path, **kwargs):
   ax2.yaxis.set_major_formatter(formatter)
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot b)')
+  plt.title('CamClay 11:\nUniaxial Strain J2 Plasticity (plot b)')
   plt.plot(np.array(analytical_e11),
            np.array(analytical_Syy),
            '--g',
            linewidth=lineWidth + 1,
            label=str_to_mathbf('Analytical'))
-  plt.plot(np.array(exx), np.array(Syy), '-r', label=str_to_mathbf('Uintah'))
+  plt.plot(np.array(exx), np.array(Syy), '-r', label=str_to_mathbf('Vaango'))
   plt.xlabel(str_to_mathbf('\epsilon_{A}'))
   plt.ylabel(str_to_mathbf('\sigma_{L} (MPa)'))
   plt.legend()
@@ -2465,7 +1878,7 @@ def test11_postProc(uda_path, save_path, **kwargs):
   ax3.yaxis.set_major_formatter(formatter)
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot c)')
+  plt.title('CamClay 11:\nUniaxial Strain J2 Plasticity (plot c)')
   plt.plot(analytical_times,
            np.array(analytical_e11),
            '-g',
@@ -2494,7 +1907,7 @@ def test11_postProc(uda_path, save_path, **kwargs):
   ax4.yaxis.set_major_formatter(formatter)
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot d)')
+  plt.title('CamClay 11:\nUniaxial Strain J2 Plasticity (plot d)')
   plt.plot(analytical_times,
            np.array(analytical_Sxx),
            '-g',
@@ -2548,7 +1961,7 @@ def test12_postProc(uda_path, save_path, **kwargs):
   #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')
   #ax1=eqShear_vs_meanStress(I1s,porosity,I1lims,(0,0.6))
   plt.plot(totalStrainVol, pressure, '-b', label='Arenisca')
-  plt.title('AreniscaTest 12:\nNonlinear Elasticity')
+  plt.title('CamClay 12:\nNonlinear Elasticity')
   plt.ylabel(str_to_mathbf('p: pressure (MPa)'))
   plt.xlabel(str_to_mathbf('ev: compressive volumetric strain'))
   #ax1.set_xticks([0,0.005,0.010,0.015,0.020,0.025])
@@ -2674,7 +2087,7 @@ def test13_postProc(uda_path, save_path, **kwargs):
            '--',
            color='Red',
            label='Analytical solution for rate independent case.')
-  plt.title('AreniscaTest 13:')
+  plt.title('CamClay 13:')
   plt.ylabel(str_to_mathbf('\sigma_{xx}'))
   plt.xlabel(str_to_mathbf('\epsilon_{xx}'))
   #plt.ylabel(str_to_mathbf('\sigma_{xy}'))
@@ -2960,33 +2373,24 @@ def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim):
 def getAllInternalVariables(uda_path):
 
   # Get the internal variables
-  times, ev_e_list = get_pElasticStrainVol(uda_path)
-  times, ev_p_list = get_pPlasticStrainVol(uda_path)
-  times, capX_list = get_capX(uda_path)
-  times, kappa_list = get_pKappa(uda_path)
-  time_list, zeta_list = get_zeta(uda_path)
+  time_list, pc_list = get_pPc(uda_path)
 
-  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+  return pc_list, time_list
 
 
 #---------------------------------------------------------------------------------
 # Read the internal state variables from the UDA file:
-#    1) volumetric plastic strain
-#    2) capX
-#    3) kappa
-#    3) zeta
+#    1) elastic strain
+#    2) total strain
+#    2) pc
 #---------------------------------------------------------------------------------
 def getInternalVariables(uda_path, analytical_times):
 
   # Get the internal variables
-  ev_e, ev_p, capX, kappa, zeta, times = getAllInternalVariables(uda_path)
+  pc, times = getAllInternalVariables(uda_path)
 
   # Create a clean list containing the data as functions of time
-  ev_e_list = []
-  ev_p_list = []
-  capX_list = []
-  kappa_list = []
-  zeta_list = []
+  pc_list = []
   time_list = []
   an_times_add = list(analytical_times)
   an_times_add.append(times[len(times) - 1])
@@ -3000,23 +2404,15 @@ def getInternalVariables(uda_path, analytical_times):
       if (ss >= 0.0 and ss < 1.0):
         #print("ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta )
         time_list.append(ta)
-        ev_e_list.append((1 - ss) * ev_e[ii - 1] + ss * ev_e[ii])
-        ev_p_list.append((1 - ss) * ev_p[ii - 1] + ss * ev_p[ii])
-        capX_list.append((1 - ss) * capX[ii - 1] + ss * capX[ii])
-        kappa_list.append((1 - ss) * kappa[ii - 1] + ss * kappa[ii])
-        zeta_list.append((1 - ss) * zeta[ii - 1] + ss * zeta[ii])
+        pc_list.append((1 - ss) * pc[ii - 1] + ss * pc[ii])
     #    break
     #else:
     #  continue
 
   #print("time = ", time_list)
-  #print("ev_e = ", ev_e_list)
-  #print("ev_p = ", ev_p_list)
-  #print("cap_X = ", capX_list)
-  #print("kappa = ", kappa_list)
-  #print("zeta = ", zeta_list)
+  #print("pc = ", pc_list)
 
-  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+  return pc_list, time_list
 
 
 #-----------------------------------------------------------------------------
@@ -3033,81 +2429,50 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
     q_min_expt = kwargs['q_min_expt']
 
   # get the internal variables
-  ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list = getInternalVariables(
-      uda_path, time_points)
+  pc_list, time_list = getInternalVariables(uda_path, time_points)
 
   # Get material parameters
   material_dict = get_yield_surface(uda_path)
-  PEAKI1 = material_dict['PEAKI1']
-  FSLOPE = material_dict['FSLOPE']
-  STREN = material_dict['STREN']
-  YSLOPE = material_dict['YSLOPE']
-  Pf0 = material_dict['P_f0']
-
-  # Set up constants
-  a1 = STREN
-  a2 = (FSLOPE - YSLOPE) / (STREN - YSLOPE * PEAKI1)
-  a3 = (STREN - YSLOPE * PEAKI1) * math.exp(-a2 * PEAKI1)
-  a4 = YSLOPE
-
-  # Find min capX
-  minCapX = min(capX_list)
-  #print("min(CapX) = ", minCapX)
+  p0 = material_dict['p0']
+  alpha = material_dict['alpha']
+  kappatilde = material_dict['kappatilde']
+  epse_v0 = material_dict['epse_v0']
+  mu0 = material_dict['mu0']
+  M = material_dict['M']
+  pc0 = material_dict['pc0']
+  lambdatilde = material_dict['lambdatilde']
 
   # Find pmin and qmin
   pmin = 1.0e8
   qmax = -1.0e8
 
   # Loop through time snapshots
-  for ii, ev_p in enumerate(ev_p_list):
+  for ii, pc in enumerate(pc_list):
 
     # Get the internal variables
-    capX = capX_list[ii]
-    kappa = kappa_list[ii]
-    zeta = zeta_list[ii]
+    pc = pc_list[ii]
 
     # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii) / len(ev_p_list))
+    plt_color = cm.Paired(float(ii) / len(pc_list))
 
     # Create an array of I1 values
     num_points = 100
-    I1s = np.linspace(0.999 * minCapX - 3.0 * Pf0, PEAKI1 - 3.0 * Pf0,
-                      num_points)
-    J2s = []
+    ps = np.linspace(p0, pc, num_points)
+    qs = []
 
-    #J2 versus I1
-    for I1 in I1s:
+    #q versus p
+    for p in ps:
 
-      # Add the fluid pressure
-      I1f = I1 + 3.0 * Pf0
+      # Compute q
+      q = M * np.sqrt(np.abs(p * (p - pc)))
+      qs.append(q)
 
-      # Kinematic hardening shift
-      I1_minus_zeta = I1f - zeta
+      print("q = ", q, "p = ", p, "pc = ", pc)
 
-      # If I1 < capX or I1 > PEAKI1 move I1 to yield surface
-      if (I1_minus_zeta < capX):
-        I1_minus_zeta = 0.999999 * capX
-
-      if (I1_minus_zeta > PEAKI1):
-        I1_minus_zeta = 0.999999 * PEAKI1
-
-      # Compute F_f
-      Ff = a1 - a3 * math.exp(a2 * I1_minus_zeta) - a4 * (I1_minus_zeta)
-      Ff_sq = Ff**2
-
-      # Compute Fc
-      Fc_sq = 1.0
-      if (I1_minus_zeta < kappa):
-        #print("Computing cap")
-        ratio = (kappa - I1_minus_zeta) / (kappa - capX)
-        Fc_sq = 1.0 - ratio**2
-
-      # Compute J2
-      J2 = Ff_sq * Fc_sq
-      J2s.append(J2)
-
-    xs = np.array(I1s) / 3.0 * 1.0e-6
-    ys = np.sqrt(3.0 * np.array(J2s)) * 1.0e-6
+    xs = [-p * 1.0e-6 for p in ps]
+    ys = [q * 1.0e-6 for q in qs]
+    xs = np.array(xs)
+    ys = np.array(ys)
 
     if (min(xs) < pmin):
       pmin = min(xs)
@@ -3116,66 +2481,23 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
       qmax = max(ys)
 
     #print(xs.shape, ys.shape)
-    #print("ii = ", ii)
-    ev_e_str = "%.2g" % (-ev_e_list[ii])
-    ev_p_str = "%.2g" % (-ev_p)
-    time_str = "%.2g" % time_list[ii]
-    #print("ev_p " , ev_p_str)
+    pc_str = "%.2g" % (pc)
+    #print("pc " , pc_str)
+    #time_str = "%.2g" % time_list[ii]
     #print("time " , time_str)
 
-    #label_str = '$\epsilon_v^e$ = ' + ev_e_str + ' $\epsilon_v^p$ = ' + ev_p_str + ' $t$ = ' + time_str
-    label_str = ' $\epsilon_v^p$ = ' + ev_p_str
-    line1 = plt.plot(-xs, ys, '--b', linewidth=1, label=label_str)
-    line2 = plt.plot(-xs, -ys, '--b', linewidth=1)
+    label_str = ' $p_c$ = ' + pc_str
+    line1 = plt.plot(xs, ys, '--b', linewidth=1, label=label_str)
+    line2 = plt.plot(xs, -ys, '--b', linewidth=1)
     plt.setp(line1, color=plt_color)
     plt.setp(line2, color=plt_color)
     plt.legend(loc=2, prop={'size': 8})
 
   print("pmin = ", pmin, " qmax = ", qmax)
-  print("pmin_expt = ", p_min_expt, " qmin_expt = ", q_min_expt)
-  if (pmin > p_min_expt):
-    pmin = p_min_expt
-  if (qmax < -q_min_expt):
-    qmax = -q_min_expt
   axes = plt.gca()
   #axes.set_xlim([1.3*pmin, 1])
   #axes.set_ylim([-1.3*qmax, 1.3*qmax])
-  axes.set_xlim([-1, -1.3 * pmin])
-  axes.set_ylim([-1.3 * qmax, 1.3 * qmax])
+  #axes.set_xlim([-1, -1.3 * pmin])
+  #axes.set_ylim([-1.3 * qmax, 1.3 * qmax])
   return pmin, qmax
 
-
-def plotCrushCurveExptSim(uda_path, I1lims=[-10000, 0]):
-  nPoints = 500
-  material_dict = get_yield_surface(uda_path)
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-
-  # Analytical solution for porosity vs. X for piece-wise crush curve
-  # compression
-  I1sC = np.linspace(I1lims[0] * 1.0e6, P0, nPoints)
-  porosityC = 1 - np.exp(-P3 * np.exp(P1 * (I1sC - P0)))
-  # tension
-  I1sT = np.linspace(P0, I1lims[1] * 1.0e6, nPoints)
-  porosityT = 1 - np.exp(-(I1sT / P0)**(P0 * P1 * P3) - P3 + 1)
-
-  # Scale down again
-  I1_c = []
-  for ii in I1sC:
-    I1_c.append(ii * 1.0e-6)
-  I1_t = []
-  for ii in I1sT:
-    I1_t.append(ii * 1.0e-6)
-
-  plt.plot(I1_c,
-           porosityC,
-           '--g',
-           linewidth=lineWidth + 1,
-           label='Analytical crush curve - Compression')
-  plt.hold(True)
-  plt.plot(I1_t,
-           porosityT,
-           '--b',
-           linewidth=lineWidth + 1,
-           label='Analytical crush curve - Tension')
