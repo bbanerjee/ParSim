@@ -64,11 +64,12 @@
 
 namespace {
 
-Uintah::Dout g_cc_dbg("CamClayDbg",
-                      "CamClay",
-                      "general info on CamClay",
-                      false);
-}
+Uintah::Dout g_cc_dbg("CamClay", "CamClay", "general info on CamClay", false);
+Uintah::Dout g_cc_conv("CamClayConv",
+                       "CamClay",
+                       "convergence of CamClay",
+                       false);
+} // namespace
 
 using namespace Uintah;
 using namespace Vaango;
@@ -80,8 +81,6 @@ using namespace Vaango;
 //  bash     : export SCI_DEBUG="CamClay:+,CamClayDefGrad:+,CamClayConv:+" )
 //  default is OFF
 
-static DebugStream cout_CC("CamClay", false);
-static DebugStream cout_CC_Conv("CamClayConv", false);
 static DebugStream cout_CC_F("CamClayDefGrad", false);
 static DebugStream cout_CC_Eps("CamClayStrain", false);
 
@@ -385,8 +384,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
   // Newton iteration constants
   double tolr    = 1.0e-4; // 1e-4
-  double tolf    = 1.0e-6; // 1.0e-8;
-  int iter_break = 100;
+  double tolf    = 1.0e-8; // 1.0e-8;
+  int iter_break = 20;
 
   // Loop thru patches
   for (int patchIndex = 0; patchIndex < patches->size(); patchIndex++) {
@@ -504,6 +503,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       Matrix3 elasticStrain_old =
         (rotation_old.Transpose()) * (pElasticStrain_old[idx] * rotation_old);
 
+      DOUT(g_cc_dbg, "F = " << defGrad_new)
+      DOUT(g_cc_dbg, "Eps_e = " << elasticStrain_old)
+
       // Calc volumetric and deviatoric elastic strains at beginninging of
       // timestep (t_n)
       double strain_elast_v_n = elasticStrain_old.Trace();
@@ -585,6 +587,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double pc_n = d_intvar->computeInternalVariable("dummy", nullptr, &state);
       state.p_c   = pc_n;
 
+      DOUT(g_cc_dbg,
+           "p = " << state.p << " q = " << state.q << " p_c = " << state.p_c);
+
       //-----------------------------------------------------------------------
       // Stage 2: Elastic-plastic stress update
       //-----------------------------------------------------------------------
@@ -597,12 +602,13 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       Matrix3 nn = strain_elast_devtr * (sqrtTwoThird * oo_strain_elast_s_tr);
 
       // Calculate yield function
-      auto ftrial_a = d_yield->evalYieldCondition(&state);
-      double ftrial = ftrial_a.first;
-      double p_old  = p;
-      double q_old  = q;
-      double pc_old = pc_n;
-      double f_old  = ftrial;
+      auto [ftrial, status_trial] = d_yield->evalYieldCondition(&state);
+      double p_old                = p;
+      double q_old                = q;
+      double pc_old               = pc_n;
+      double f_old                = ftrial;
+
+      DOUT(g_cc_dbg, "ftrial = " << ftrial)
 
       small = 1.0e-8; // **WARNING** Should not be hard coded (use d_tol)
 
@@ -730,8 +736,10 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           //          << " delvoldev = " << delvoldev[0] << " , " <<
           //          delvoldev[1] << std::endl;
 
-          // Allow for line search step
-          double delgamma     = 0.0;
+          // Allow for line search step (not fully implemented)
+          double delgamma{ 0.0 };
+          double fyield{ 0.0 };
+          bool f_residuals_equal{ false };
           bool do_line_search = false;
           do {
 
@@ -752,29 +760,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             p  = d_eos->computePressure(matl, &state, zero, zero, 0.0);
             pc = d_intvar->computeInternalVariable("dummy", nullptr, &state);
 
-            if (std::isnan(p)) {
-              std::ostringstream desc;
-              desc << "idx = " << idx << " k = " << klocal
-                   << " epse_v = " << state.epse_v
-                   << " epse_s = " << state.epse_s << " p = " << p
-                   << " q = " << q << " pc = " << pc << " f = " << fyield
-                   << std::endl;
-              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
-                   << std::endl;
-              throw InvalidValue(desc.str(), __FILE__, __LINE__);
-            }
-            if (std::isnan(q)) {
-              std::ostringstream desc;
-              desc << "idx = " << idx << " k = " << klocal
-                   << " epse_v = " << state.epse_v
-                   << " epse_s = " << state.epse_s << " p = " << p
-                   << " q = " << q << " pc = " << pc << " f = " << fyield
-                   << std::endl;
-              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
-                   << std::endl;
-              throw InvalidValue(desc.str(), __FILE__, __LINE__);
-            }
-            if (std::isnan(pc)) {
+            if (std::isnan(p) || std::isnan(q) || std::isnan(pc)) {
               std::ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal
                    << " epse_v = " << state.epse_v
@@ -797,8 +783,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             dfdq = d_yield->df_dq(&state);
 
             // compute updated yield condition
-            auto fyield_a = d_yield->evalYieldCondition(&state);
-            fyield        = fyield_a.first;
+            auto [fyield_inner, status_inner] =
+              d_yield->evalYieldCondition(&state);
+            fyield = fyield_inner;
 
             // Calculate max value of f
             auto fmax = d_yield->evalYieldConditionMax(&state);
@@ -813,29 +800,33 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             rs = strain_elast_s - strain_elast_s_tr + delgamma * dfdq;
             rf = fyield;
 
-            if (cout_CC_Conv.active()) {
-              if (idx == 14811) {
-                cout_CC_Conv << "idx = " << idx << " k = " << klocal
-                             << " rv = " << rv << " rs = " << rs
-                             << " rf = " << rf << " rf_old = " << rf_old
-                             << " fmax = " << fmax << std::endl;
-                cout_CC_Conv << " rtolv = " << rtolv << " rtols = " << rtols
-                             << " rtolf = " << rtolf << " tolr = " << tolr
-                             << " tolf = " << tolf << std::endl;
-                cout_CC_Conv << " pqpc = [" << p << " " << q << " " << pc << "]"
-                             << " pqpc_old = [" << p_old << " " << q_old << " "
-                             << pc_old << "]"
-                             << " fold = " << f_old << std::endl;
-                cout_CC_Conv << " epsv = " << strain_elast_v
-                             << " epss = " << strain_elast_s
-                             << " f = " << fyield << std::endl;
-              }
+            if (idx == 1) {
+              DOUTALL(g_cc_conv,
+                      "idx = " << idx << " k = " << klocal << " rv = " << rv
+                               << " rs = " << rs << " rf = " << rf
+                               << " rf_old = " << rf_old << " fmax = " << fmax);
+              DOUTALL(g_cc_conv,
+                      " rtolv = " << rtolv << " rtols = " << rtols
+                                  << " rtolf = " << rtolf << " tolr = " << tolr
+                                  << " tolf = " << tolf);
+              DOUTALL(g_cc_conv,
+                      " pqpc = [" << p << " " << q << " " << pc << "]"
+                                  << " pqpc_old = [" << p_old << " " << q_old
+                                  << " " << pc_old << "]"
+                                  << " fold = " << f_old);
+              DOUTALL(g_cc_conv,
+                      " epsv = " << strain_elast_v << " epss = "
+                                 << strain_elast_s << " f = " << fyield);
             }
-            if (std::abs(rf / rf_old) > 1.0e-2) {
+
+            //std::cout << "rf = " << rf << " rf_old = " << rf_old << "\n";
+            if (std::abs(rf / rf_old) < 1.0e-2) {
+              do_line_search = false;
+            } else {
               if ((std::abs(rf) > std::abs(rf_old)) ||
                   (rf < 0.0 && std::abs(rf - rf_old) > fmax)) {
-                // std::cout << "idx = " << idx << " rf = " << rf << " rf_old =
-                // " << rf_old << std::endl;
+                //std::cout << "idx = " << idx << " rf = " << rf
+                //          << " rf_old = " << rf_old << std::endl;
                 do_line_search = true;
                 delvoldev[0] *= 0.5;
                 delvoldev[1] *= 0.5;
@@ -844,6 +835,12 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                 do_line_search = false;
               }
             }
+
+            if (std::abs(rf - rf_old) < tolr || std::abs(rf + rf_old) < tolr) {
+              f_residuals_equal = true;
+              do_line_search    = false;
+            }
+
           } while (do_line_search);
 
           // Get ready for next iteration
@@ -896,6 +893,10 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             }
           }
 
+          if (f_residuals_equal) {
+            break;
+          }
+
         } // End of Newton-Raphson while
 
         if ((delgamma < 0.0) && (std::abs(delgamma) > 1.0e-10)) {
@@ -920,7 +921,6 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
         // Update consolidation pressure
         pPc_new[idx] = pc;
-
       } else { // Elastic range
 
         // update stress from trial elastic strain
@@ -1228,11 +1228,10 @@ CamClay::checkNeedAddMPMMaterial(const PatchSubset* patches,
                                  DataWarehouse*,
                                  DataWarehouse* new_dw)
 {
-  if (cout_CC.active()) {
-    cout_CC << getpid() << "checkNeedAddMPMMaterial: In : Matl = " << matl
-            << " id = " << matl->getDWIndex()
-            << " patch = " << (patches->get(0))->getID();
-  }
+  DOUTALL(g_cc_dbg,
+          getpid() << "checkNeedAddMPMMaterial: In : Matl = " << matl
+                   << " id = " << matl->getDWIndex()
+                   << " patch = " << (patches->get(0))->getID());
 
   double need_add = 0.;
   new_dw->put(sum_vartype(need_add), lb->NeedAddMPMMaterialLabel);

@@ -389,8 +389,8 @@ if __name__ == "__main__":
         run_all_tests()
 
   TEST_METHODS = False
-  #POST_PROC_ONLY = True
-  POST_PROC_ONLY = False
+  POST_PROC_ONLY = True
+  #POST_PROC_ONLY = False
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)

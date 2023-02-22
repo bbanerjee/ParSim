@@ -1304,27 +1304,27 @@ def test01_postProc(uda_path, save_path, **kwargs):
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color)
 
   # Plot the experimental data
-  line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt. (35)')
-  line2 = plt.plot(pp_expt_alt,
-                   qq_expt_alt,
-                   '--m',
-                   linewidth=2,
-                   label='Expt. (26)')
+  #line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt. (35)')
+  #line2 = plt.plot(pp_expt_alt,
+  #                 qq_expt_alt,
+  #                 '--m',
+  #                 linewidth=2,
+  #                 label='Expt. (26)')
 
   # Plot filled circles at time snapshots
-  for ii in range(0, len(t_expt_snap)):
+  #for ii in range(0, len(t_expt_snap)):
 
     # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii) / len(t_expt_snap))
-    plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color)
+    #plt_color = cm.Paired(float(ii) / len(t_expt_snap))
+    #plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color)
 
   # Plot yield surfaces
-  pp_expt_min = min(pp_expt)
-  qq_expt_min = min(qq_expt)
+  #pp_expt_min = min(pp_expt)
+  #qq_expt_min = min(qq_expt)
   pMin, qMax = plotPQYieldSurfaceSim(uda_path,
                                      analytical_times,
-                                     p_min_expt=pp_expt_min,
-                                     q_min_expt=qq_expt_min)
+                                     p_min_expt=0,
+                                     q_min_expt=0)
 
   plt.title(
       'AreniscaTest: Dry Mason Sand: Uniaxial strain compression\n Yield surface evolution'
@@ -1338,8 +1338,8 @@ def test01_postProc(uda_path, save_path, **kwargs):
   plt.clf()
   plt.subplots_adjust(right=0.75)
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt,
-                        sigma_r_expt)
+  #plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt,
+  #                      sigma_r_expt)
   #plotExptDataSigmaTime(fig3, analytical_times, time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt)
   plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim,
                        sigma_ar_sim)
@@ -1356,7 +1356,7 @@ def test01_postProc(uda_path, save_path, **kwargs):
   plt.clf()
   plt.subplots_adjust(right=0.75)
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
+  #plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
   #plotExptDataPQTime(fig4, analytical_times, time_expt_alt, pp_expt_alt, qq_expt_alt)
   plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
   axes = plt.gca()
@@ -2754,7 +2754,8 @@ def readSimStressData(uda_path):
   for line in F_stress:
 
     # If the first word in the line is Error then exit
-    #print("Line = ", line)
+    line = line.decode()
+    print("Line = ", line)
     first_word = line.partition(' ')[0]
     if first_word == "Error":
       print("**ERROR** partextract failed to read the stress history data.")
