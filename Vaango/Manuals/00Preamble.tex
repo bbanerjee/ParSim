@@ -213,10 +213,13 @@
 \usetikzlibrary{patterns}
 \usetikzlibrary{intersections}
 \usetikzlibrary{calc}
+\usetikzlibrary{positioning}
 
 \usepackage{tcolorbox}
 \tcbuselibrary{most}
-\newtcolorbox{NoteBox}[1][]{%
+\tcbuselibrary{skins}
+
+\newtcolorbox{NoteBox}{%
   colback=yellow!50,
   colframe=yellow!20!black,
   before skip=2mm,after skip=3mm,
@@ -229,9 +232,9 @@
     \path[fill=yellow!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
     },
   drop fuzzy shadow,%
-  #1}
+  }
 
-\newtcolorbox{WarningBox}[1][]{%
+\newtcolorbox{WarningBox}{%
   colback=pink!50,
   colframe=pink!20!black,
   before skip=2mm,after skip=3mm,
@@ -244,10 +247,9 @@
     \path[fill=pink!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
     },
   drop fuzzy shadow,%
-  #1}
+  }
 
-\tcbuselibrary{skins}
-\newtcolorbox[auto counter,number within=chapter]{ExampleBox}[1][]{%
+\newtcolorbox[auto counter, number within=chapter]{ExampleBox}[1]{%
   enhanced,
   colback=white,
   colframe=green!65!black,
@@ -256,14 +258,12 @@
     \path[fill=blue!65,line width=.4mm] (frame.north west)--++(17mm,0)coordinate(n2)--++(0,8mm)--++(-20mm,0) arc (-90:90:-4mm)--cycle;
     \node at ([shift={(5mm,4mm)}]frame.north west){\color{white}{\textbf{\sffamily EXAMPLE}}};
     \path[fill=green!65!blue] ([xshift=.4mm]n2)--++(0,8mm)--++(7mm,0)--++(0,-8mm)--cycle;
-    \node at ([shift={(4mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
+    \node (A) at ([shift={(4mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
+    \node [right=0.5cm of A] {\itshape\textbf{\sffamily #1}};
     %\node at ([shift={(18mm,4mm)}]n2){\itshape\textbf{\sffamily Solution}};
-  },
-  #1}
+  }%
+  }
 
-\usetikzlibrary{calc}
-\usetikzlibrary{positioning}
-\tcbuselibrary{skins}
 \newtcolorbox[auto counter,number within=section]{SummaryBox}[2][]{%
   enhanced,
   colback=white,
@@ -275,8 +275,9 @@
     \path[fill=ocre] ([xshift=.4mm]n2)--++(0,8mm)--++(10mm,0)--++(0,-8mm)--cycle;
     \node (A) at ([shift={(5mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
     \node [right=0.5cm of A] {\itshape\textbf{\sffamily #2}};
-  },
-  #1}
+  }, %
+  %title=#1
+  }
 
 
 %--------------------------------------------------------------------------
@@ -405,6 +406,6 @@ keepaspectratio]{fire-container-explosion-scirun.png}%
   \expandafter\yy@#1;
 }
 \makeatother
-\newcommand{\version}{Version \MyYear{\the\year}.\MyMonth{\the\month}.\MyDay{\the\day}}
+\newcommand{\bbversion}{Version \MyYear{\the\year}.\MyMonth{\the\month}.\MyDay{\the\day}}
 
 

@@ -55,9 +55,13 @@ IntVar_BorjaPressure::IntVar_BorjaPressure(ProblemSpecP& ps,
 
   ParameterDict eosParams = (d_shear->getPressureModel())->getParameters();
   d_kappatilde            = eosParams["kappatilde"];
+  d_kappahat              = eosParams["kappahat"];
 
   ps->require("pc0", d_pc0);
   ps->require("lambdatilde", d_lambdatilde);
+
+  // Compute lambda_hat for large deformation
+  d_lambdahat = d_lambdatilde / (1.0 - d_lambdatilde);
 
   // Initialize internal variable labels for evolution
   pPcLabel =
@@ -73,7 +77,9 @@ IntVar_BorjaPressure::IntVar_BorjaPressure(const IntVar_BorjaPressure* cm)
 
   d_pc0         = cm->d_pc0;
   d_lambdatilde = cm->d_lambdatilde;
+  d_lambdahat   = cm->d_lambdahat;
   d_kappatilde  = cm->d_kappatilde;
+  d_kappahat    = cm->d_kappahat;
 
   // Initialize internal variable labels for evolution
   pPcLabel =
@@ -209,8 +215,8 @@ IntVar_BorjaPressure::computeInternalVariable(
   double strain_elast_v    = state->epse_v;
 
   // Calculate new p_c
-  double pc = pc_n * std::exp(-(strain_elast_v_tr - strain_elast_v) /
-                              (d_lambdatilde - d_kappatilde));
+  double pc = pc_n * std::exp((strain_elast_v_tr - strain_elast_v) /
+                              (d_kappahat - d_lambdahat));
   return pc;
 }
 
@@ -224,12 +230,12 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
-  //if (!state) {
-  //  std::ostringstream out;
-  //  out << "**ERROR** The correct ModelState object has not been passed."
-  //      << " Need ModelState_CamClay.";
-  //  throw InternalError(out.str(), __FILE__, __LINE__);
-  //}
+  // if (!state) {
+  //   std::ostringstream out;
+  //   out << "**ERROR** The correct ModelState object has not been passed."
+  //       << " Need ModelState_CamClay.";
+  //   throw InternalError(out.str(), __FILE__, __LINE__);
+  // }
 
   // Get old p_c
   double pc_n = state->p_c0;
@@ -240,9 +246,10 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
   double strain_elast_v    = state->epse_v;
 
   // Calculate  dp_c/depse_v
-  double pc = pc_n * std::exp(-(strain_elast_v_tr - strain_elast_v) /
-                              (d_lambdatilde - d_kappatilde));
-  return pc / (d_lambdatilde - d_kappatilde);
+  double pc = pc_n * std::exp((strain_elast_v_tr - strain_elast_v) /
+                              (d_kappahat - d_lambdahat));
+
+  return pc / (d_lambdahat - d_kappahat);
 }
 
 void

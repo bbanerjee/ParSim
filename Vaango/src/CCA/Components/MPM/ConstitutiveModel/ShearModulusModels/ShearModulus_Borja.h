@@ -68,6 +68,7 @@ private:
   double d_alpha;      // Coupling constant (shear-pressure)
   double d_p0;         // Reference pressure
   double d_kappatilde; // Reference compressibility
+  double d_kappahat;   // Large deformation compressibility
   double d_epse_v0;    // Reference volume strain
 
   ShearModulus_Borja&
@@ -153,6 +154,6 @@ private:
   double
   evalDqDepse_s(const double& epse_v, const double& epse_s) const;
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif // __BORJA_SHEAR_MODEL_H__

@@ -663,6 +663,29 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             dfdq * dqdepsev + dfdp * dpdepsev - state.p * dpcdepsev;
           double dr3_dx2 = dfdq * dqdepses + dfdp * dpdepses;
 
+#ifdef COMPARE_BORJA_TAMAGNINI
+          double M            = 1.05;
+          double alpha        = 60.0;
+          double eps_v0_e     = 0.0;
+          double kappa_tilde  = 0.018;
+          double lambda_tilde = 0.13;
+          double p0           = -9.0;
+          Matrix3 Amat_BT     = computeBorjaTamagniniAmatrix(lambda_tilde,
+                                                         kappa_tilde,
+                                                         strain_elast_v_k,
+                                                         eps_v0_e,
+                                                         p,
+                                                         pc,
+                                                         q,
+                                                         M,
+                                                         mu,
+                                                         p0,
+                                                         alpha,
+                                                         strain_elast_s_k,
+                                                         delgamma_k);
+          std::cout << "Amat_BT = " << Amat_BT << "\n";
+#endif
+
           FastMatrix A_MAT(2, 2), inv_A_MAT(2, 2);
           A_MAT(0, 0) = dr1_dx1;
           A_MAT(0, 1) = dr1_dx2;
@@ -678,6 +701,12 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
           C_MAT[0] = dr3_dx1;
           C_MAT[1] = dr3_dx2;
+
+          // std::cout << "A_MAT = ";
+          // A_MAT.print(std::cout);
+          // std::cout << "B_MAT = " << B_MAT[0] << " " << B_MAT[1] << "\n";
+          // std::cout << "C_MAT = " << C_MAT[0] << " " <<
+          // C_MAT[1] << "\n";
 
           rvs_vec[0] = rv;
           rvs_vec[1] = rs;
@@ -831,8 +860,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           if (klocal == iter_break) {
             std::ostringstream desc;
             desc << "**ERROR** Newton iterations did not converge" << std::endl
-                 << " idx = " << idx 
-                 << " rtolv = " << rtolv << "(tolr = " << tolr << ")"
+                 << " idx = " << idx << " rtolv = " << rtolv
+                 << "(tolr = " << tolr << ")"
                  << " rtols = " << rtols << "(tolr = " << tolr << ")"
                  << " rtolf = " << rtolf << "(tolf = " << tolf << ")"
                  << " klocal = " << klocal << std::endl;
@@ -959,6 +988,64 @@ CamClay::computeStressTensor(const PatchSubset* patches,
   }
 
   DOUTALL(g_cc_dbg, "Compute stress tensor done: " << getpid());
+}
+
+Matrix3
+CamClay::computeBorjaTamagniniAmatrix(double lambda_tilde,
+                                      double kappa_tilde,
+                                      double eps_v_e,
+                                      double eps_v0_e,
+                                      double p,
+                                      double p_c,
+                                      double q,
+                                      double M,
+                                      double mu_e,
+                                      double p0,
+                                      double alpha,
+                                      double eps_s_e,
+                                      double deltaPhi)
+{
+  // Already converted internally
+  double lambda_hat = lambda_tilde / (1.0 - lambda_tilde);
+  double kappa_hat  = kappa_tilde / (1.0 - kappa_tilde);
+  double theta      = 1.0 / (lambda_hat - kappa_hat);
+
+  double Omega = -(eps_v_e - eps_v0_e) / kappa_hat;
+
+  double del_p_f     = 2.0 * p - p_c;
+  double del_q_f     = 2.0 * q / (M * M);
+  double del_pc_f    = -p;
+  double del2_p_pc_f = -1.0;
+  double del2_q_pc_f = 0.0;
+  double D11_e       = -p / kappa_hat;
+  double D22_e       = 3.0 * mu_e;
+  double mu_vol      = p0 * alpha * std::exp(Omega);
+  double D12_e       = 3.0 * mu_vol * eps_s_e / kappa_hat;
+  double D21_e       = D12_e;
+  // double H11         = 2.0;
+  // double H22         = 2.0 / (M * M);
+  // double H12         = 0.0;
+  // double H21         = H12;
+  double G11 = 2.0 * D11_e;
+  double G12 = 2.0 * D12_e;
+  double G21 = 2.0 * D21_e / (M * M);
+  double G22 = 2.0 * D22_e / (M * M);
+  double K_p = theta * p_c;
+
+  Matrix3 A_mat;
+  A_mat(0, 0) = 1.0 + deltaPhi * (G11 + K_p * del2_p_pc_f);
+  A_mat(0, 1) = deltaPhi * G12;
+  A_mat(0, 2) = del_p_f;
+
+  A_mat(1, 0) = deltaPhi * (G21 + K_p * del2_q_pc_f);
+  A_mat(1, 1) = 1 + deltaPhi * G22;
+  A_mat(1, 2) = del_q_f;
+
+  A_mat(2, 0) = D11_e * del_p_f + D21_e * del_q_f + K_p * del_pc_f;
+  A_mat(2, 1) = D12_e * del_p_f + D22_e * del_q_f;
+  A_mat(2, 2) = 0.0;
+
+  return A_mat;
 }
 
 void

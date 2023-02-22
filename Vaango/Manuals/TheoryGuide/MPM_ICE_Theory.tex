@@ -104,7 +104,7 @@ specific volume and temperature).  If one attempts to equate the isotropic
 part of the Cauchy stress with the fluid pressure, there exist regions in
 pressure-volume space for which Eq.~\ref{eq:mmeos} has no physical solutions
 (because the gas pressure is only positive).  This can be seen schematically
-in Fig.~\ref{vpfig}, which sketches equations of state for a gas and a 
+in Fig.~\ref{fig:vpfig}, which sketches equations of state for a gas and a 
 solid, at an arbitrary temperature.
 
 Recall that the isothermal compressiblity is the negative slope of
@@ -657,11 +657,11 @@ the simulation ran for about 48 hours on 600 processors of a Linux
 cluster at Lawrence Livermore National Laboratory, which resulted in
 0.31 milliseconds of simulated time.
 
-Results from this simulation are shown in Fig.~\ref{figCookoff}.  In
+Results from this simulation are shown in Fig.~\ref{fig:figCookoff}.  In
 each panel, the container and explosive are depicted by isosurfaces,
-blue and red, respectively.  In Fig.~\ref{figCookoff:b}-\ref{figCookoff:e},
+blue and red, respectively.  In Fig.~\ref{fig:figCookoff:b}-\ref{fig:figCookoff:e},
 a volume rendering of the mass density of the product material of the
-reaction is also included.  Fig.~\ref{figCookoff:a} shows the initial
+reaction is also included.  Fig.~\ref{fig:figCookoff:a} shows the initial
 state of the geometry, while the remaining panels show the progression
 of the simulation at the times indicated in the captions.  The last
 two panels depict the same time, with the product gas removed in the
@@ -670,48 +670,51 @@ time.  Close comparison of the initial and final panels also reveals
 the reduction in size of the explosive pellet, due to the reaction.
 Product gas first begins to leave the container through a
 rupture where the side and end of the container
-meet(Fig.~\ref{figCookoff:c}), and ultimately
-also through a rupture in middle (Fig.~\ref{figCookoff:e}).  The
+meet(Fig.~\ref{fig:figCookoff:c}), and ultimately
+also through a rupture in middle (Fig.~\ref{fig:figCookoff:e}).  The
 formation of these openings is governed by material localization.
-\begin{figure}[t!]
- \centering
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_0_d.png}
-   \caption{t=0 $ms$}
-   \label{figCookoff:a}
- \end{subfigure}
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_46_c.png}
-   \caption{t=.137 $ms$}
-   \label{figCookoff:b}
- \end{subfigure}
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_98_c.png}
-   \caption{t=.203 $ms$}
-   \label{figCookoff:c}
- \end{subfigure}
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_129_c.png}
-   \caption{t=.259 $ms$}
-   \label{figCookoff:d}
- \end{subfigure}
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_172_c.png}
-   \caption{t=.312 $ms$}
-   \label{figCookoff:e}
- \end{subfigure}
- \begin{subfigure}[b]{0.3\textwidth}
-   \includegraphics[width=\textwidth]{Figs/mpmice/NE_172_d.png}
-   \caption{t=.312 $ms$}
-   \label{figCookoff:f}
- \end{subfigure}
- \caption{Time series of a steel container (blue) filled with deflagrating 
-          plastic bonded explosive(red).  A volume rendering of the mass 
-          density of the products of reaction is also shown, except in the 
-          final panel, where it is removed to more clearly show the regions 
-          where the container has failed. }
- \label{figCookoff}
- \end{figure}
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=\textwidth]{Figs/mpmice/NE_0_d.png}
+  \caption{t=0 $ms$}
+  \label{fig:figCookoff:a}
+\end{figure}
+
+\begin{figure}[htbp!]
+   \centering
+   \begin{subfigure}{0.3\textwidth}
+     \includegraphics[width=\textwidth]{Figs/mpmice/NE_46_c.png}
+     \caption{t=.137 $ms$}
+     \label{fig:figCookoff:b}
+   \end{subfigure}
+   \begin{subfigure}{0.3\textwidth}
+     \includegraphics[width=\textwidth]{Figs/mpmice/NE_98_c.png}
+     \caption{t=.203 $ms$}
+     \label{fig:figCookoff:c}
+   \end{subfigure}
+   \begin{subfigure}{0.3\textwidth}
+     \includegraphics[width=\textwidth]{Figs/mpmice/NE_129_c.png}
+     \caption{t=.259 $ms$}
+     \label{fig:figCookoff:d}
+   \end{subfigure}
+   \begin{subfigure}{0.3\textwidth}
+     \includegraphics[width=\textwidth]{Figs/mpmice/NE_172_c.png}
+     \caption{t=.312 $ms$}
+     \label{fig:figCookoff:e}
+   \end{subfigure}
+   \begin{subfigure}{0.3\textwidth}
+     \includegraphics[width=\textwidth]{Figs/mpmice/NE_172_d.png}
+     \caption{t=.312 $ms$}
+     \label{fig:figCookoff:f}
+   \end{subfigure}
+   \caption{Time series of a steel container (blue) filled with deflagrating 
+            plastic bonded explosive(red).  A volume rendering of the mass 
+            density of the products of reaction is also shown, except in the 
+            final panel, where it is removed to more clearly show the regions 
+            where the container has failed. }
+   \label{fig:figCookoff}
+\end{figure}
 
 Since no surface tracking is required in this method, there is no
 requirement to track the creation of the new surfaces that occur

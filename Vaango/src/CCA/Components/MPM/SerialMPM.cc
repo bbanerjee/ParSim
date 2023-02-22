@@ -4263,18 +4263,36 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
 
       gAcceleration.initialize(Vector(0.0));
 
+      // std::cout << " tval = ";
+      // for (auto tval : d_prescribedTimes) {
+      //   std::cout << tval << ", ";
+      // }
+      // std::cout << "\n";
+
       // Get F and Q from file by interpolating between available times
       auto t_upper_iter = std::upper_bound(
         d_prescribedTimes.begin(), d_prescribedTimes.end(), time);
 
-      auto t_upper_index = t_upper_iter - d_prescribedTimes.begin();
-      if (t_upper_iter == d_prescribedTimes.end()) {
-        t_upper_index = --t_upper_iter - d_prescribedTimes.begin();
+      double ss{ 0.0 };
+      double t_lower{ 0.0 };
+      double t_upper{ 0.0 };
+      int t_upper_index{ 0 };
+      if (t_upper_iter == d_prescribedTimes.begin()) {
+        t_lower       = *t_upper_iter;
+        t_upper       = *(t_upper_iter + 1);
+        ss            = (time - t_lower) / (t_upper - t_lower);
+        t_upper_index = 1;
+      } else if (t_upper_iter == d_prescribedTimes.end()) {
+        t_lower       = *(t_upper_iter - 2);
+        t_upper       = *(t_upper_iter - 1);
+        ss            = (time - t_lower) / (t_upper - t_lower);
+        t_upper_index = t_upper_iter - 1 - d_prescribedTimes.begin();
+      } else {
+        t_lower       = *(t_upper_iter - 1);
+        t_upper       = *t_upper_iter;
+        ss            = (time - t_lower) / (t_upper - t_lower);
+        t_upper_index = t_upper_iter - d_prescribedTimes.begin();
       }
-
-      auto t_lower = *(t_upper_iter - 1);
-      auto t_upper = *t_upper_iter;
-      auto ss      = (time - t_lower) / (t_upper - t_lower);
 
       // Interpolate to get the deformation gradient at the current time:
       auto F_lower = d_prescribedF[t_upper_index - 1];

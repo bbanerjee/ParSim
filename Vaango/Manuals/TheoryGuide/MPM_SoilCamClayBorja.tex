@@ -73,7 +73,7 @@ For plasticity we use a Cam-Clay yield function of the form
 where $M$ is the slope of the critical state line and the consolidation pressure $p_c$ is an internal variable that 
 evolves according to 
 \[
-   \frac{1}{p_c}\,\Deriv{p_c}{t} = \frac{1}{\lambdatilde - \kappatilde}\,\Deriv{\Ve^p_v}{t} \,.
+   \frac{1}{p_c}\,\Deriv{p_c}{t} = \frac{1}{\kappatilde - \lambdatilde}\,\Deriv{\Ve^p_v}{t} \,.
 \]
 The derivatives of $f$ that are of interest are
 \[
@@ -84,11 +84,11 @@ The derivatives of $f$ that are of interest are
 \]
 If we integrate the equation for $p_c$ from $t_{n}$ to $t_{n+1}$, we can show that
 \[
-   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^e)_\Trial - (\Ve_v^e)_{n+1}}{\lambdatilde - \kappatilde}\right] \,.
+   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^e)_\Trial - (\Ve_v^e)_{n+1}}{\kappatilde - \lambdatilde}\right] \,.
 \]
 The derivative of $p_c$ that is of interest is
 \[
-   \Partial{p_c}{(\Ve_v^e)_{n+1}} = -\frac{(p_c)_n}{\lambdatilde-\kappatilde}\,\exp\left[\frac{(\Ve^e_v)_\Trial - (\Ve_v^e)_{n+1}}{\lambdatilde-\kappatilde}\right] \,.
+   \Partial{p_c}{(\Ve_v^e)_{n+1}} = -\frac{(p_c)_n}{\kappatilde - \lambdatilde}\,\exp\left[\frac{(\Ve^e_v)_\Trial - (\Ve_v^e)_{n+1}}{\kappatilde - \lambdatilde}\right] = \frac{(p_c)_{n+1}}{\lambdatilde-\kappatilde} \,.
 \]
 
 \section{Stress update based Rich Reguiero's notes}
@@ -176,11 +176,11 @@ For elasto-plasticity we start with a yield function of the form
 \[
    f = \left(\frac{q}{M}\right)^2 + p(p-p_c) \le 0 
    \quad \text{where} \quad
-  \frac{1}{p_c}\,\Deriv{p_c}{t} = \frac{1}{\lambdatilde- \kappatilde}\,\Deriv{\Ve_v^p}{t} \,.
+  \frac{1}{p_c}\,\Deriv{p_c}{t} = \frac{1}{\kappatilde-\lambdatilde}\,\Deriv{\Ve_v^p}{t} \,.
 \]
 Integrating the ODE for $p_c$ with the initial condition $p_c(t_n) = (p_c)_n$, at $t = t_{n+1}$, 
 \[
-   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^p)_{n+1} - (\Ve_v^p)_n}{\lambdatilde - \kappatilde}\right] \,.
+   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^p)_{n+1} - (\Ve_v^p)_n}{\kappatilde-\lambdatilde}\right] \,.
 \]
 From the additive decomposition of the strain into elastic and plastic parts, and if the elastic trial 
 strain is defined as 
@@ -196,7 +196,7 @@ we have
 \]
 Therefore we can write
 \[
-   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^e)_\Trial - (\Ve_v^e)_{n+1}}{\lambdatilde - \kappatilde}\right] \,.
+   (p_c)_{n+1} = (p_c)_n \exp\left[\frac{(\Ve_v^e)_\Trial - (\Ve_v^e)_{n+1}}{\kappatilde-\lambdatilde}\right] \,.
 \]
 The flow rule is assumed to be given by
 \[
@@ -387,7 +387,7 @@ for smooth yield functions.  Let us define the residual as
     (\Ve_s^e)_{n+1} -  (\Ve_s^e)_\Trial + \Delta\gamma\,\left[\Partial{f}{q}\right]_{n+1} \\
     f_{n+1} \end{bmatrix} =: \begin{bmatrix} r_1 \\ r_2 \\ r_3 \end{bmatrix}
    \quad \text{where} \quad
-   \Mx = \begin{bmatrix} (\Ve_v^e)_{n+1} \\ (\Ve_s^e)_{n+1} \\ f_{n+1} \end{bmatrix} 
+   \Mx = \begin{bmatrix} (\Ve_v^e)_{n+1} \\ (\Ve_s^e)_{n+1} \\ \Delta\gamma \end{bmatrix} 
         =: \begin{bmatrix} x_1 \\ x_2 \\ x_3 \end{bmatrix} \,.
 \]
 The Newton root finding algorithm is :
@@ -418,8 +418,8 @@ Let's do the terms one by one.  For the first row,
 where
 \[
   \Bal
-   \Partial{p}{\Ve_v^e} & = -\frac{p_0\,\beta}{\kappatilde}\,\exp\left[-\frac{\Ve_v^e - \Ve_{v0}^e}{\kappatilde}\right] = \frac{p}{\kappatilde} \quad, \quad
-   \Partial{p_c}{\Ve_v^e} = \frac{(p_c)_n}{\kappatilde-\lambdatilde}\,\exp\left[\frac{\Ve_v^e - (\Ve_{v}^e)_\Trial}{\kappatilde-\lambdatilde}\right] \quad \Tand \\
+   \Partial{p}{\Ve_v^e} & = -\frac{p_0\,\beta}{\kappatilde}\,\exp\left[-\frac{\Ve_v^e - \Ve_{v0}^e}{\kappatilde}\right] = -\frac{p}{\kappatilde} \quad, \quad
+   \Partial{p_c}{\Ve_v^e} = \frac{(p_c)_{n+1}}{\lambdatilde-\kappatilde} \quad \Tand \\
    \Partial{p}{\Ve_s^e} & = \frac{3\,p_0\,\alpha\,\Ve_s^e}{\kappatilde}\,\exp\left[-\frac{\Ve_v^e - \Ve_{v0}^e}{\kappatilde}\right] \,.
   \Eal
 \]

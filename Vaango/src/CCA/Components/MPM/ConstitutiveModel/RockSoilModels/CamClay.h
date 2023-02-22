@@ -28,12 +28,16 @@
 #define __CAM_CLAY_PLASTIC_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
 #include <cmath>
 
 namespace Uintah {
@@ -65,144 +69,202 @@ public:
   ////////////////////////////////////////////////////////////////////////
   explicit CamClay(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   explicit CamClay(const CamClay* cm);
-  CamClay& operator=(const CamClay& cm) = delete;
+  CamClay&
+  operator=(const CamClay& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
   ~CamClay() override;
 
-  ModelType modelType() const override
+  ModelType
+  modelType() const override
   {
     return ModelType::RATE_FORM;
   }
 
-  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  std::unique_ptr<ConstitutiveModel> clone() override;
+  std::unique_ptr<ConstitutiveModel>
+  clone() override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Computes and requires for the initialization of the model */
   ////////////////////////////////////////////////////////////////////////
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
+  void
+  addInitialComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief initialize  each particle's constitutive model data */
   ////////////////////////////////////////////////////////////////////////
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
+  void
+  initializeCMData(const Patch* patch,
+                   const MPMMaterial* matl,
+                   DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief compute stable timestep for this patch */
   ////////////////////////////////////////////////////////////////////////
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
+  virtual void
+  computeStableTimestep(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw);
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Computes ad requires for each time step */
   ////////////////////////////////////////////////////////////////////////
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
+  void
+  addComputesAndRequires(Task* task,
+                         const MPMMaterial* matl,
+                         const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute stress at each particle in the patch
   */
   ////////////////////////////////////////////////////////////////////////
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
+  void
+  computeStressTensor(const PatchSubset* patches,
+                      const MPMMaterial* matl,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool, const bool) const override{};
+  void
+  addComputesAndRequires(Task*,
+                         const MPMMaterial*,
+                         const PatchSet*,
+                         const bool,
+                         const bool) const override{};
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief carry forward CM data for RigidMPM */
   ////////////////////////////////////////////////////////////////////////
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+  void
+  carryForward(const PatchSubset* patches,
+               const MPMMaterial* matl,
+               DataWarehouse* old_dw,
+               DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
-                                  const PatchSet* patches) const override{};
+  void
+  addRequiresDamageParameter(Task* task,
+                             const MPMMaterial* matl,
+                             const PatchSet* patches) const override{};
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
-                          int dwi, DataWarehouse* old_dw,
-                          DataWarehouse* new_dw) override{};
+  void
+  getDamageParameter(const Patch* patch,
+                     ParticleVariable<int>& damage,
+                     int dwi,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw) override{};
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief allocate CM data requires */
   ////////////////////////////////////////////////////////////////////////
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 Uintah::MPMLabel* lb) const override;
+  void
+  allocateCMDataAddRequires(Task* task,
+                            const MPMMaterial* matl,
+                            const PatchSet* patch,
+                            Uintah::MPMLabel* lb) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief allocate cm data add */
   ////////////////////////////////////////////////////////////////////////
-  void allocateCMDataAdd(
-    DataWarehouse* new_dw, ParticleSubset* subset,
-    ParticleLabelVariableMap* newState,
-    ParticleSubset* delset, DataWarehouse* old_dw) override;
+  void
+  allocateCMDataAdd(DataWarehouse* new_dw,
+                    ParticleSubset* subset,
+                    ParticleLabelVariableMap* newState,
+                    ParticleSubset* delset,
+                    DataWarehouse* old_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void scheduleCheckNeedAddMPMMaterial(Task* task, const MPMMaterial* matl,
-                                       const PatchSet* patches) const override;
+  void
+  scheduleCheckNeedAddMPMMaterial(Task* task,
+                                  const MPMMaterial* matl,
+                                  const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void checkNeedAddMPMMaterial(const PatchSubset* patches,
-                               const MPMMaterial* matl, DataWarehouse* old_dw,
-                               DataWarehouse* new_dw) override;
+  void
+  checkNeedAddMPMMaterial(const PatchSubset* patches,
+                          const MPMMaterial* matl,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief initialize  each particle's constitutive model data */
   ////////////////////////////////////////////////////////////////////////
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
+  void
+  addParticleState(std::vector<const VarLabel*>& from,
+                   std::vector<const VarLabel*>& to) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
+  double
+  computeRhoMicroCM(double pressure,
+                    const double p_ref,
+                    const MPMMaterial* matl,
+                    double temperature,
+                    double rho_guess) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
+  void
+  computePressEOSCM(double rho_m,
+                    double& press_eos,
+                    double p_ref,
+                    double& dp_drho,
+                    double& ss_new,
+                    const MPMMaterial* matl,
+                    double temperature) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
-  double getCompressibility() override;
+  double
+  getCompressibility() override;
 
 private:
-
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
   std::shared_ptr<Vaango::IntVar_BorjaPressure> d_intvar;
 
-  void initializeLocalMPMLabels();
+  void
+  initializeLocalMPMLabels();
 
+  /* Check againt Borja-Tamagnini matrices*/
+  Matrix3
+  computeBorjaTamagniniAmatrix(double lambda_hat,
+                               double kappa_hat,
+                               double eps_v_e,
+                               double eps_v0_e,
+                               double p,
+                               double p_c,
+                               double q,
+                               double M,
+                               double mu,
+                               double p0,
+                               double alpha,
+                               double eps_s_e,
+                               double deltaPhi);
 };
 
 } // End namespace Uintah

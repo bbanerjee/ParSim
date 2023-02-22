@@ -46,10 +46,10 @@ namespace Vaango {
 
   The consolidation presure (p_c) is defined by the rate equation
 
-         1/p_c dp_c/dt = 1/(lambdatilde - kappatilde) depsp_v/dt
+         1/p_c dp_c/dt = 1/(lambdahat - kappahat) depsp_v/dt
 
-         where lambdatilde = material constant
-               kappatilde = material constant
+         where lambdahat = material constant
+               kappahat = material constant
                epsp_v = volumetric plastic strain
 
   The incremental update of the consolidation pressure is given by
@@ -82,7 +82,9 @@ private:
   // Model parameters
   double d_pc0;
   double d_lambdatilde;
+  double d_lambdahat;
   double d_kappatilde;
+  double d_kappahat;
 
   // Prevent copying of this class
   // copy constructor
@@ -108,7 +110,9 @@ public:
     std::map<std::string, double> params;
     params["pc0"]         = d_pc0;
     params["lambdatilde"] = d_lambdatilde;
+    params["lambdahat"]   = d_lambdahat;
     params["kappatilde"]  = d_kappatilde;
+    params["kappahat"]    = d_kappahat;
     return params;
   }
 
@@ -140,27 +144,27 @@ public:
                          const Uintah::PatchSet* patches) override;
 
   /* Get one (possibly composite) internal variable */
-  template <typename T>
+  template<typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template <typename T>
+  template<typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
   /* Allocate one (possibly composite) internal variable */
-  template <typename T>
+  template<typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
                                  Uintah::ParticleVariable<T>& intvar);
 
   /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
-  template <typename T>
+  template<typename T>
   void
   allocateAndPutInternalVariable(
     Uintah::ParticleSubset* pset,
@@ -168,7 +172,7 @@ public:
     std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   /*! \brief Compute the internal variable */
-  template <typename T>
+  template<typename T>
   void
   evolveInternalVariable(Uintah::particleIndex pidx,
                          const ModelStateBase* state,
@@ -212,6 +216,6 @@ public:
   }
 };
 
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif // __BORJA_PRESSURE_INT_VAR_MODEL_H__
