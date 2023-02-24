@@ -389,7 +389,7 @@ def get_yield_surface(uda_path):
   tmp_string = r'$\mathbf{\underline{Material\phantom{1}Properties:}}$' + '\n'
 
   sorted_list_tuples = sorted(material_dict.items())
-  print(sorted_list_tuples)
+  #print(sorted_list_tuples)
   sorted_dict = {}
   for key, value in sorted_list_tuples:
     if '_' in key:
@@ -572,8 +572,8 @@ def test01_postProc(uda_path, save_path, **kwargs):
   times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(
       uda_path)
 
-  print(times)
-  print(sigmas)
+  #print(times)
+  #print(sigmas)
 
   # Get the model parameters
   material_dict = get_yield_surface(uda_path)
@@ -1244,8 +1244,8 @@ def test08_postProc(uda_path, save_path, **kwargs):
   plt.subplots_adjust(right=0.75, left=0.15)
   param_text = material_dict['material string']
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
-  print(len(times))
-  print(len(ps))
+  #print(len(times))
+  #print(len(ps))
   ax1 = eqShear_vs_meanStress(times, np.array(ps))
 
   # Plot yield surfaces

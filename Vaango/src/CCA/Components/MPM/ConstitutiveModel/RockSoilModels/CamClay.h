@@ -28,8 +28,8 @@
 #define __CAM_CLAY_PLASTIC_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
@@ -242,6 +242,19 @@ public:
   getCompressibility() override;
 
 private:
+  enum class SolveStatus {
+    OK,
+    INVALID_VALUE,
+    CONVERGENCE_FAILURE
+  };
+
+  inline static const Matrix3 one{
+    1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0
+  };
+  inline static const Matrix3 zero{ 0.0 };
+  static const double sqrtThreeTwo;
+  static const double sqrtTwoThird;
+
   Vaango::MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
@@ -249,6 +262,30 @@ private:
 
   void
   initializeLocalMPMLabels();
+
+  /* Do the main Newton solve loop */
+  std::tuple<CamClay::SolveStatus, int, double, double, std::string>
+  doNewtonSolve(particleIndex idx,
+                const MPMMaterial* matl,
+                double ftrial,
+                const Matrix3& strain_elast_tr,
+                double strain_elast_v_tr,
+                double strain_elast_s_tr,
+                const Matrix3& elasticStrain_old,
+                double& delgamma_old,
+                double& strain_elast_v,
+                double& strain_elast_s,
+                Vaango::ModelState_CamClay& state);
+
+  /* Compute delta gamma incremenet for each newton iteration*/
+  std::tuple<double, std::vector<double>>
+  computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
+                             double delgamma_k,
+                             double dfdp,
+                             double dfdq,
+                             double rv,
+                             double rs,
+                             double rf);
 
   /* Check againt Borja-Tamagnini matrices*/
   Matrix3
