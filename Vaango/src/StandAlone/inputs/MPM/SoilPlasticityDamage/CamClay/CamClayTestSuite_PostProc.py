@@ -168,6 +168,7 @@ def get_ps_and_qs(sigmas):
     ps.append(sigma_I1(sigma) / 3.0)
   return ps, qs
 
+
 def get_pScalar(uda_path, varname):
   #Extract history
   print("Extracting", varname, "history...")
@@ -188,11 +189,11 @@ def get_pScalar(uda_path, varname):
     if np.isnan(values[-1]):
       FAIL_NAN = True
   if FAIL_NAN:
-    print(
-        "ERROR: 'nan' encountered while retrieving", varname, ", will not plot correctly."
-    )
+    print("ERROR: 'nan' encountered while retrieving", varname,
+          ", will not plot correctly.")
   F_scalar.close()
   return times, values
+
 
 def get_pTensor(uda_path, varname):
   NAN_FAIL = False
@@ -215,7 +216,8 @@ def get_pTensor(uda_path, varname):
     line = line.decode()
     first_word = line.partition(' ')[0]
     if first_word == "Error":
-      print("**ERROR** partextract failed to read the", varname, "history data.")
+      print("**ERROR** partextract failed to read the", varname,
+            "history data.")
       print("          It generated the following message:")
       print(line)
       sys.exit("Stopping program.")
@@ -238,8 +240,10 @@ def get_pTensor(uda_path, varname):
           NAN_FAIL = True
   F_tensor.close()
   if NAN_FAIL:
-    print("\nERROR: 'nan's found reading in", varname, ". Will not plot correctly")
+    print("\nERROR: 'nan's found reading in", varname,
+          ". Will not plot correctly")
   return times, values
+
 
 def get_epsilons(uda_path):
   #Assumes no shear strains
@@ -250,7 +254,6 @@ def get_epsilons(uda_path):
         np.array([[np.log(F[0][0]), 0, 0], [0, np.log(F[1][1]), 0],
                   [0, 0, np.log(F[2][2])]]))
   return times, epsils
-
 
 
 def get_defTable(uda_path, working_dir):
@@ -700,12 +703,9 @@ def test01_postProc(uda_path, save_path, **kwargs):
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color)
 
   # Plot yield surfaces
-  pMin, qMax = plotPQYieldSurfaceSim(uda_path,
-                                     analytical_times)
+  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times)
 
-  plt.title(
-      'CamClay: Uniaxial strain compression\n Yield surface evolution'
-  )
+  plt.title('CamClay: Uniaxial strain compression\n Yield surface evolution')
   savePNG(save_path + '/Test01_yield_surface', '1280x960')
   #plt.show()
 
@@ -810,7 +810,7 @@ def test02_postProc(uda_path, save_path, **kwargs):
       round(Szz_max - 4 * Szz_tick_int, 1)
   ]
 
-  analytical_times = [0,1,3.0/2.0,2.0,5.0/2.0,3.0]
+  analytical_times = [0, 1, 3.0 / 2.0, 2.0, 5.0 / 2.0, 3.0]
   pc_list = []
   an_times_add = list(analytical_times)
   an_times_add.append(times[len(times) - 1])
@@ -906,8 +906,8 @@ def test03_postProc(uda_path, save_path, **kwargs):
   material_dict = get_yield_surface(uda_path)
 
   # Scale the data
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
 
   # Find min/max values
   ps_min = min(ps)
@@ -965,8 +965,8 @@ def test04_postProc(uda_path, save_path, **kwargs):
   ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas)
 
   # Scale the data
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
 
   # Find min/max values
   ps_min = min(ps)
@@ -1023,8 +1023,8 @@ def test05_postProc(uda_path, save_path, **kwargs):
   ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas)
 
   # Scale the data
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
 
   # Find min/max values
   ps_min = min(ps)
@@ -1081,8 +1081,8 @@ def test06_postProc(uda_path, save_path, **kwargs):
   ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas)
 
   # Scale the data
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
 
   # Find min/max values
   ps_min = min(ps)
@@ -1140,8 +1140,8 @@ def test07_postProc(uda_path, save_path, **kwargs):
 
   # Scale the data
   ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas)
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
 
   # Find min/max values
   ps_min = min(ps)
@@ -1191,12 +1191,13 @@ def test08_postProc(uda_path, save_path, **kwargs):
   times, totalStrain = get_pTensor(uda_path, "p.strain")
   times, elasticStrain = get_pTensor(uda_path, "p.elasticStrain")
   times, pcs = get_pScalar(uda_path, "p.p_c")
+  print(pcs)
 
   # Scale the stress data
   ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas)
-  ps = [-p*1.0e-6 for p in ps_unscaled]
-  qs = [-q*1.0e-6 for q in qs_unscaled]
-  I1s = [-3.0*p*1.0e6 for p in ps_unscaled]
+  ps = [-p * 1.0e-6 for p in ps_unscaled]
+  qs = [-q * 1.0e-6 for q in qs_unscaled]
+  I1s = [-3.0 * p * 1.0e6 for p in ps_unscaled]
 
   # Find min/max values
   I1s_min = min(I1s)
@@ -1209,7 +1210,9 @@ def test08_postProc(uda_path, save_path, **kwargs):
   print("ps_max = ", ps_max)
 
   # Compute volumetric strains
-  plasticStrain = [eps - eps_e for eps in totalStrain for eps_e in elasticStrain]
+  plasticStrain = [
+      eps - eps_e for eps in totalStrain for eps_e in elasticStrain
+  ]
   plasticStrainVol = [eps_p.trace() for eps_p in plasticStrain]
   #elasticStrainVol = [eps_e.trace() for eps_e in elasticStrain]
   totalStrainVol = [eps.trace() for eps in totalStrain]
@@ -1248,9 +1251,6 @@ def test08_postProc(uda_path, save_path, **kwargs):
   #print(len(ps))
   ax1 = eqShear_vs_meanStress(times, np.array(ps))
 
-  # Plot yield surfaces
-  plotPQYieldSurfaceSim(uda_path, analytical_times)
-
   plt.title('CamClay 08:\nLoading/Unloading (plot a)')
   plt.ylabel(str_to_mathbf('Pressure (MPa)'))
   plt.xlabel(str_to_mathbf('Time (s)'))
@@ -1268,9 +1268,6 @@ def test08_postProc(uda_path, save_path, **kwargs):
   plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
   ax1 = eqShear_vs_meanStress(times, totalStrainVol)
 
-  # Plot yield surfaces
-  plotPQYieldSurfaceSim(uda_path, analytical_times)
-
   plt.title('CamClay 08:\nLoading/Unloading (plot b)')
   plt.ylabel(str_to_mathbf('Total Volumetric Strain, \epsilon_{v}'))
   plt.xlabel(str_to_mathbf('Time (s)'))
@@ -1279,7 +1276,190 @@ def test08_postProc(uda_path, save_path, **kwargs):
   ax2.tick_params(axis='both', labelsize='small')
   savePNG(save_path + '/Test08_verificationPlot_b', '1280x960')
 
+  #----------------------------------------------------------------
+  # Plot the yield surface for test1
+  #----------------------------------------------------------------
+  # Get snapshots of pq data (sim)
+  t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, ps)
+  t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qs)
+
+  # Set up figure
+  fig3 = plt.figure(3)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77, 0.70, param_text, ha='left', va='top', size='x-small')
+
+  # Plot p vs. q simulation results
+  eqShear_vs_meanStress(ps, qs)
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_sim_snap) - 1):
+
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii) / len(t_sim_snap))
+    plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color)
+
+  # Plot yield surfaces
+  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times)
+
+  plt.title(
+      'CamClay Test 08: Hydrostatic loading-unloading yield surface evolution')
+  savePNG(save_path + '/Test08_verificationPlot_c', '1280x960')
+
   plt.show()
+
+
+def test09_postProc(uda_path, save_path, **kwargs):
+  print("Post Processing Test: 09 - Multi-axial Loading and Unloading")
+
+  # Read the stress simulation data
+  times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(
+      uda_path)
+  times, pc_sim = get_pScalar(uda_path, "p.p_c")
+  times, totalStrain = get_pTensor(uda_path, "p.strain")
+  times, elasticStrain = get_pTensor(uda_path, "p.elasticStrain")
+
+  # Change sign
+  pp_sim = [-p for p in pp_sim]
+  qq_sim = [-q for q in qq_sim]
+  pc_sim = [-pc for pc in pc_sim]
+
+  # Compute volumetric strains
+  plasticStrain = [
+      np.subtract(eps, eps_e) for (eps, eps_e) in zip(totalStrain, elasticStrain)
+  ]
+  print(totalStrain[100])
+  print(elasticStrain[100])
+  print(plasticStrain[100])
+  ev_p_sim = [np.trace(eps_p) for eps_p in plasticStrain]
+  ev_e_sim = [np.trace(eps_e) for eps_e in elasticStrain]
+  print(ev_p_sim[100])
+  print(ev_e_sim[100])
+  print(pp_sim[100])
+
+  # Change sign
+  ev_e_sim = [-ev for ev in ev_e_sim]
+  ev_p_sim = [-ev for ev in ev_p_sim]
+
+  # Set up time points
+  analytical_times = np.linspace(0.0, times[-1], 15)
+
+  # Get snapshots of data
+  t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, pp_sim)
+  t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qq_sim)
+  t_sim_snap, pc_sim_snap = getDataTimeSnapshots(analytical_times, times,
+                                                 pc_sim)
+
+  # Get the model parameters
+  material_dict = get_yield_surface(uda_path)
+  param_text = material_dict['material string']
+
+  # Find the plot limits
+  Sxx = []
+  Syy = []
+  for sigma in sigmas:
+    Sxx.append(sigma[0][0])
+    Syy.append(sigma[1][1])
+
+  # Find min/max values
+  Sxx_min = min(Sxx)
+  Syy_min = min(Syy)
+  Sxx_max = max(Sxx)
+  Syy_max = max(Syy)
+  print("Sxx_min = ", Sxx_min)
+  print("Sxx_max = ", Sxx_max)
+  print("Syy_min = ", Syy_min)
+  print("Syy_max = ", Syy_max)
+
+  ###PLOTTING
+  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
+  param_text = material_dict['material string']
+  compression = 'positive'
+
+  #----------------------------------------------------------------
+  # Plot the yield surface
+  #----------------------------------------------------------------
+  # Set up figure
+  fig1 = plt.figure(1)
+  plt.clf()
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')
+
+  # Plot p vs. q simulation results
+  eqShear_vs_meanStress(pp_sim, qq_sim)
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_sim_snap)):
+
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii) / len(t_sim_snap))
+    plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color)
+
+  # Plot yield surface
+  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times)
+
+  savePNG(save_path + '/MultiaxialStrainLoadUnload_yield_surface', '1280x960')
+  #plt.show()
+
+  #---------------------------------------------------------------------------------
+  # Plot experimental and simulation data as a function of time
+  fig2 = plt.figure(2)
+  plt.clf()
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')
+  plotSimDataSigmaTime(fig2, analytical_times, times, sigma_a_sim, sigma_r_sim,
+                       sigma_ar_sim)
+
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)'))
+  plt.ylabel(str_to_mathbf('Stress (Pa)'))
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size': 10})
+  savePNG(save_path + '/MultiaxialStrainLoadUnload_sigma_time', '1280x960')
+
+  fig3 = plt.figure(3)
+  plt.clf()
+
+  plotSimDataSigmaEps(fig3,
+                      analytical_times,
+                      times,
+                      pp_sim,
+                      ev_e_sim,
+                      ev_p_sim)
+
+  plt_color = cm.Paired(1)
+  #plt.plot(ev_hydrostat, pbar_hydrostat, '-', color=plt_color, label='Experimental data')
+
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  #axes.set_xlim([0, 0.5])
+  #axes.set_ylim([0, 1.2*max(pbar_hydrostat)])
+  plt.xlabel(str_to_mathbf('Strain '))
+  plt.ylabel(str_to_mathbf('Stress (Pa)'))
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size': 10})
+  savePNG(save_path + '/MultiaxialStrainLoadUnload_pbar_evbar', '1280x960')
+  #plt.show()
+
+  fig4 = plt.figure(4)
+  plt.clf()
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')
+  plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)'))
+  plt.ylabel(str_to_mathbf('Stress (Pa)'))
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size': 8})
+  savePNG(save_path + '/MultiaxialStrainLoadUnload_pq_time', '1280x960')
+
+  plt.show()
+
 
 #-----------------------------------------------------------------------------------
 # Read the experimental stress data and compute p,q
@@ -1491,6 +1671,30 @@ def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim,
 
 
 #-----------------------------------------------------------------------------------
+# Plot the sim data as a function of stress vs strain
+#-----------------------------------------------------------------------------------
+def plotSimDataSigmaEps(fig,
+                        time_snapshots,
+                        time_sim,
+                        pp_sim,
+                        ev_e_sim,
+                        ev_p_sim):
+
+  # Get snapshots from data
+  time_snap, pp_snap = getDataTimeSnapshots(time_snapshots, time_sim, pp_sim)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  ev_sim = list(map(lambda ev_e, ev_p: ev_e + ev_p, ev_e_sim, ev_p_sim))
+
+  # Plot sigma_a vs. time
+  plt.plot(ev_sim, pp_sim, '--r', label='Simulation')
+
+  return time_snap, pp_snap
+
+
+#-----------------------------------------------------------------------------------
 # Plot the expt data (pq) as a function of time (aasume MPa)
 #-----------------------------------------------------------------------------------
 def plotExptDataPQTime(fig, time_snapshots, time_expt, p_expt, q_expt):
@@ -1681,4 +1885,3 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
   #axes.set_xlim([-1, -1.3 * pmin])
   #axes.set_ylim([-1.3 * qmax, 1.3 * qmax])
   return pmin, qmax
-

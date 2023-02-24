@@ -32,11 +32,7 @@ POST_PROCESS_LIST = [
     'CamClay_06_UniaxialStrainCapEvolution.ups',
     'CamClay_07_HydrostaticCompressionCapEvolution.ups',
     'CamClay_08_LoadingUnloading.ups',
-    'CamClay_09_FluidFilledPoreSpace.ups',
-    'CamClay_10_TransientStressEigenvaluesConstVectors.ups',
-    'CamClay_11_UniaxialStrainJ2plasticity.ups',
-    'CamClay_12_NonlinearElasticity.ups',
-    'CamClay_13_UniaxialStrainRateDependence.ups',
+    'CamClay_09_MultiaxialStrainLoadUnload.ups',
 ]
 
 # get the current directory (will be working directory)
@@ -96,7 +92,8 @@ TEST_LIST = [
       #TEST_LIST[4], #Test 05
       #TEST_LIST[5], #Test 06
       #TEST_LIST[6], #Test 07
-      TEST_LIST[7], #Test 08
+      #TEST_LIST[7], #Test 08
+      TEST_LIST[8], #Test 08
 ]
 ### --------------------- ###
 
@@ -315,6 +312,8 @@ def post_proc(test, uda_path, save_path):
       test07_postProc(uda_path, save_path)
     if test_name == 'CamClay_08_LoadingUnloading.ups':
       test08_postProc(uda_path, save_path)
+    if test_name == 'CamClay_09_MultiaxialStrainLoadUnload.ups':
+      test09_postProc(uda_path, save_path)
   else:
     print('\nERROR: test: ', test, '\n\tNot on post processing list.\n')
 
