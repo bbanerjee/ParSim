@@ -242,7 +242,8 @@ public:
   getCompressibility() override;
 
 private:
-  enum class SolveStatus {
+  enum class SolveStatus
+  {
     OK,
     INVALID_VALUE,
     CONVERGENCE_FAILURE
@@ -262,6 +263,42 @@ private:
 
   void
   initializeLocalMPMLabels();
+
+  /* Do elastic update */
+  std::tuple<Matrix3, Matrix3, Matrix3, double, double>
+  elasticUpdate(const Matrix3& strain_elast_tr,
+                const Matrix3& nn,
+                double pDeltaGamma_old,
+                double pPc_old,
+                const Vaango::ModelState_CamClay& state);
+
+  /* Do plastic update */
+  std::
+    tuple<Matrix3, Matrix3, Matrix3, double, double, SolveStatus, std::string>
+    plasticUpdate(particleIndex idx,
+                  const MPMMaterial* matl,
+                  double ftrial,
+                  const Matrix3& elasticStrain_old,
+                  const Matrix3& strain_elast_tr,
+                  double strain_elast_v_tr,
+                  double strain_elast_s_tr,
+                  const Matrix3& nn,
+                  double pDeltaGamma_old,
+                  double pPc_old,
+                  Vaango::ModelState_CamClay& state);
+
+  /* Compute the trial state */
+  std::tuple<Matrix3, Matrix3, Vaango::ModelState_CamClay>
+  computeTrialState(particleIndex idx,
+                    const MPMMaterial* matl,
+                    double delT,
+                    const Matrix3& rateOfDef_new,
+                    const Matrix3& elasticStrain_old,
+                    double pVol_new,
+                    double pMass,
+                    double pPc,
+                    double rho_0,
+                    double rho_cur);
 
   /* Do the main Newton solve loop */
   std::tuple<CamClay::SolveStatus, int, double, double, std::string>

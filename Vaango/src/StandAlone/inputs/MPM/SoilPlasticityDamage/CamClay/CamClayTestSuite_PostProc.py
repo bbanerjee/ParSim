@@ -1349,7 +1349,7 @@ def readSimStressData(uda_path):
 
     # If the first word in the line is Error then exit
     line = line.decode()
-    print("Line = ", line)
+    #print("Line = ", line)
     first_word = line.partition(' ')[0]
     if first_word == "Error":
       print("**ERROR** partextract failed to read the stress history data.")
