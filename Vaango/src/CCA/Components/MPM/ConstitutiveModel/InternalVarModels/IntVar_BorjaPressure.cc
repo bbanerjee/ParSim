@@ -217,6 +217,19 @@ IntVar_BorjaPressure::computeInternalVariable(
   // Calculate new p_c
   double pc = pc_n * std::exp((strain_elast_v_tr - strain_elast_v) /
                               (d_kappahat - d_lambdahat));
+
+#ifdef CATCH_NOT_FINITE
+  if (!std::isfinite(pc)) {
+    std::ostringstream desc;
+    desc << "pc = " << pc << " pc_n = " << pc_n
+         << " strain_elast_tr = " << strain_elast_v_tr
+         << " strain_elast_v = " << strain_elast_v
+         << " kappahat = " << d_kappahat << " lambdahat = " << d_lambdahat
+         << "\n";
+    throw InvalidValue(desc.str(), __FILE__, __LINE__);
+  }
+#endif
+
   return pc;
 }
 

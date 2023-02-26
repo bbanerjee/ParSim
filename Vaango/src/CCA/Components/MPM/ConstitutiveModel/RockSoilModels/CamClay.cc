@@ -501,7 +501,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       // Set up substepping (default is 1 step)
       double c_dil{ 0.0 };
       double bulk{ 0.0 };
-      double delT = delT_orig;
+      double delT      = delT_orig;
       int num_substeps = 1;
       for (int step = 0; step < num_substeps; step++) {
 
@@ -882,12 +882,24 @@ CamClay::doNewtonSolve(particleIndex idx,
     auto [deldelgamma, delvoldev] =
       computeDeltaGammaIncrement(state, delgamma_k, dfdp, dfdq, rv, rs, rf);
 
+    if (std::abs(delvoldev[0]) > 10.0 * std::abs(strain_elast_v_k) &&
+        std::abs(delvoldev[0]) > 1.0e-4) {
+      std::ostringstream desc;
+      desc << "**WARNING** Increment of elastic volumetric strain too large.\n";
+      desc << "delvoldev[0] = " << delvoldev[0]
+           << " strain_elast_v_k = " << strain_elast_v_k << "\n";
+      return std::make_tuple(SolveStatus::CONVERGENCE_FAILURE,
+                             klocal,
+                             delvoldev[0],
+                             strain_elast_v_k,
+                             desc.str());
+    }
+
     // Allow for line search step (not fully implemented)
     double delgamma_local{ 0.0 };
     bool f_residuals_equal{ false };
     bool do_line_search = false;
     do {
-
       // update
       strain_elast_v = strain_elast_v_k + delvoldev[0];
       strain_elast_s = strain_elast_s_k + delvoldev[1];
@@ -913,6 +925,7 @@ CamClay::doNewtonSolve(particleIndex idx,
              << " p = " << p << " q = " << q << " pc = " << pc
              << " f = " << fyield << std::endl;
         desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << std::endl;
+        desc << " deldelgamma = " << deldelgamma << " mu = " << mu << std::endl;
         desc << __FILE__ << " : " << __LINE__ << std::endl;
         return std::make_tuple(
           SolveStatus::INVALID_VALUE, iter_break, rtolf, tolf, desc.str());
@@ -931,6 +944,17 @@ CamClay::doNewtonSolve(particleIndex idx,
       // compute updated yield condition
       auto [fyield_inner, status_inner] = d_yield->evalYieldCondition(&state);
       fyield                            = fyield_inner;
+
+#ifdef CATCH_NOT_FINITE
+      if (!std::isfinite(fyield)) {
+        std::ostringstream desc;
+        desc << "mu = " << state.shearModulus << " p = " << state.p
+             << " q = " << state.q << " p_c = " << state.p_c
+             << " dfdp = " << dfdp << " dfdq = " << dfdq
+             << " fyield = " << fyield << "\n";
+        throw InvalidValue(desc.str(), __FILE__, __LINE__);
+      }
+#endif
 
       // Calculate max value of f
       auto fmax = d_yield->evalYieldConditionMax(&state);
@@ -1131,12 +1155,6 @@ CamClay::computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
   C_MAT[0] = dr3_dx1;
   C_MAT[1] = dr3_dx2;
 
-  // std::cout << "A_MAT = ";
-  // A_MAT.print(std::cout);
-  // std::cout << "B_MAT = " << B_MAT[0] << " " << B_MAT[1] << "\n";
-  // std::cout << "C_MAT = " << C_MAT[0] << " " <<
-  // C_MAT[1] << "\n";
-
   rvs_vec[0] = rv;
   rvs_vec[1] = rs;
 
@@ -1154,9 +1172,23 @@ CamClay::computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
   delvoldev[0] = -Ainvrvs[0] - AinvB[0] * deldelgamma;
   delvoldev[1] = -Ainvrvs[1] - AinvB[1] * deldelgamma;
 
-  // std::cout << "deldelgamma = " << deldelgamma
-  //          << " delvoldev = " << delvoldev[0] << " , " <<
-  //          delvoldev[1] << std::endl;
+  if (std::isnan(deldelgamma)) {
+    std::ostringstream desc;
+    desc << "A_MAT = ";
+    A_MAT.print(desc);
+    desc << "A_MAT_inv = ";
+    inv_A_MAT.print(desc);
+    desc << "B_MAT = " << B_MAT[0] << " " << B_MAT[1] << "\n";
+    desc << "C_MAT = " << C_MAT[0] << " " << C_MAT[1] << "\n";
+    desc << "rv = " << rv << " rs = " << rs << " rf = " << rf << "\n";
+    desc << "deldelgamma = " << deldelgamma << " delvoldev = " << delvoldev[0]
+         << " , " << delvoldev[1] << std::endl;
+    desc << "delvoldev[0] = " << -Ainvrvs[0] << " - " << AinvB[0] * deldelgamma
+         << "\n";
+    desc << "state.q = " << state.q << " state.p " << state.p
+         << " state.pc = " << state.p_c << "\n";
+    throw InvalidValue(desc.str(), __FILE__, __LINE__);
+  }
 
   return std::make_tuple(deldelgamma, delvoldev);
 }

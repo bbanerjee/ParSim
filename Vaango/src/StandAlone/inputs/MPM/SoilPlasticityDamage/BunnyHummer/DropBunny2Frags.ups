@@ -161,7 +161,7 @@
         <lower>[-0.44, -0.95, -0.76]</lower>
         <upper>[-0.23, -0.78, -0.62]</upper>
         <resolution>[50,50,50]</resolution>
-        <patches>[1,1,1]</patches>
+        <patches>[2,2,1]</patches>
         <extraCells>[1,1,1]</extraCells>
       </Box>
     </Level>
