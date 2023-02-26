@@ -560,16 +560,17 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                                      state);
 
           if (status == SolveStatus::CONVERGENCE_FAILURE) {
-            std::cout << msg << std::endl;
-            std::cout << "Increasing number of substeps\n";
             step = 0;
             num_substeps *= 2;
             delT = delT_orig / num_substeps;
-            continue;
-            if (num_substeps > 64) {
+            std::cout << msg << std::endl;
+            std::cout << "Increasing number of substeps to " << num_substeps
+                      << "\n";
+            if (num_substeps > 2048) {
               throw ConvergenceFailure(
                 msg, num_substeps, delT, delT_orig, __FILE__, __LINE__);
             }
+            continue;
           } else {
             pStress_new[idx]        = stress_new;
             pStrain_new[idx]        = eps_new;
@@ -882,12 +883,18 @@ CamClay::doNewtonSolve(particleIndex idx,
     auto [deldelgamma, delvoldev] =
       computeDeltaGammaIncrement(state, delgamma_k, dfdp, dfdq, rv, rs, rf);
 
-    if (std::abs(delvoldev[0]) > 10.0 * std::abs(strain_elast_v_k) &&
-        std::abs(delvoldev[0]) > 1.0e-4) {
+    if ((std::abs(delvoldev[0]) > 10.0 * std::abs(strain_elast_v_k) &&
+         std::abs(delvoldev[0]) > 1.0) ||
+        delgamma_k > 100.0) {
       std::ostringstream desc;
-      desc << "**WARNING** Increment of elastic volumetric strain too large.\n";
-      desc << "delvoldev[0] = " << delvoldev[0]
+      desc << "**WARNING** Increment of elastic volumetric strain or "
+              "deltagamma too large.\n";
+      desc << "idx = " << idx << " klocal = " << klocal
+           << " delvoldev[0] = " << delvoldev[0]
            << " strain_elast_v_k = " << strain_elast_v_k << "\n";
+      desc << "fyield = " << fyield << " strain_elast_v = " << strain_elast_v
+           << " strain_elast_s = " << strain_elast_s
+           << " delgamma = " << delgamma << "\n";
       return std::make_tuple(SolveStatus::CONVERGENCE_FAILURE,
                              klocal,
                              delvoldev[0],
@@ -1172,7 +1179,7 @@ CamClay::computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
   delvoldev[0] = -Ainvrvs[0] - AinvB[0] * deldelgamma;
   delvoldev[1] = -Ainvrvs[1] - AinvB[1] * deldelgamma;
 
-  if (std::isnan(deldelgamma)) {
+  if (std::isnan(deldelgamma) || deldelgamma == 0.0) {
     std::ostringstream desc;
     desc << "A_MAT = ";
     A_MAT.print(desc);
@@ -1187,6 +1194,10 @@ CamClay::computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
          << "\n";
     desc << "state.q = " << state.q << " state.p " << state.p
          << " state.pc = " << state.p_c << "\n";
+    desc << "delgamma_k = " << delgamma_k << "\n";
+    desc << "dpdepsev = " << dpdepsev << " dpdepses = " << dpdepses
+         << " dqdepses = " << dqdepses << " dpcdepsev = " << dpcdepsev << "\n";
+    desc << " d2fdqdepsv = " << d2fdqdepsv << " d2fdqdepss = " << d2fdqdepss;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
 
