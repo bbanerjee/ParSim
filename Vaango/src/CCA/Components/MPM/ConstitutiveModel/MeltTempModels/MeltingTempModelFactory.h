@@ -29,6 +29,8 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
+
 namespace Uintah {
 
 // Forward declarations
@@ -39,15 +41,18 @@ class MeltingTempModel;
  *  \author  Biswajit Banerjee,
  *  \author  C-SAFE and Department of Mechanical Engineering,
  *  \author  University of Utah.
-*/
+ */
 
 class MeltingTempModelFactory
 {
 
 public:
   //! Create a melting temp model from the input file problem specification.
-  static std::unique_ptr<MeltingTempModel> create(ProblemSpecP& ps);
-  static std::unique_ptr<MeltingTempModel> createCopy(const MeltingTempModel* yc);
+  static std::unique_ptr<MeltingTempModel>
+  create(ProblemSpecP& ps);
+
+  static std::unique_ptr<MeltingTempModel>
+  createCopy(const MeltingTempModel* yc);
 };
 } // End namespace Uintah
 

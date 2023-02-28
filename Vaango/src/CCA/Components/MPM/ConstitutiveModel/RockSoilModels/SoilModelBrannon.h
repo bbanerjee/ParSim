@@ -89,6 +89,7 @@ public:
   // constructor
   SoilModelBrannon(ProblemSpecP& ps, MPMFlags* flag);
   SoilModelBrannon(const SoilModelBrannon* cm);
+  SoilModelBrannon(const SoilModelBrannon& cm) = delete;
   SoilModelBrannon& operator=(const SoilModelBrannon& cm) = delete;
 
   // destructor
@@ -185,7 +186,8 @@ public:
 private:
 
   CMData d_cm;
-  Vaango::IntVar_SoilBrannon* d_intvar;
+  //std::unique_ptr<Vaango::IntVar_SoilBrannon> d_intvar;
+  std::unique_ptr<Vaango::InternalVariableModel> d_intvar;
 
   void initializeLocalMPMLabels();
 

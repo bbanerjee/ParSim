@@ -330,8 +330,9 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
     // Get and allocate the hydrostatic strength
     constParticleVariable<double> pCapX;
     ParticleVariable<double> pCapX_new;
-    d_capX->getInternalVariable(pset, old_dw, pCapX);
-    d_capX->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
+    auto capX = static_cast<IntVar_TabularCap*>(d_capX.get());
+    capX->getInternalVariable(pset, old_dw, pCapX);
+    capX->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
 
     // Set up global particle variables to be read and written
     delt_vartype delT;

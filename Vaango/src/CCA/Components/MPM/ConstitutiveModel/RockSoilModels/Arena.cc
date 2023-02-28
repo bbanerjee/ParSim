@@ -252,8 +252,8 @@ Arena::checkInputParameters()
 Arena::Arena(const Arena* cm)
   : ConstitutiveModel(cm)
 {
-  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
-  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic.get());
+  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
 
   // Density-based scaling
   d_modulus_scale_fac = cm->d_modulus_scale_fac;
@@ -418,9 +418,6 @@ Arena::~Arena()
   VarLabel::destroy(pCoherenceLabel_preReloc);
   VarLabel::destroy(pTGrowLabel);
   VarLabel::destroy(pTGrowLabel_preReloc);
-
-  delete d_yield;
-  delete d_elastic;
 }
 
 // adds problem specification values to checkpoint data for restart
@@ -476,7 +473,7 @@ Arena::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 Arena::clone()
 {
-  return std::make_unique<Arena>(*this);
+  return std::make_unique<Arena>(this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

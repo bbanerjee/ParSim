@@ -25,14 +25,18 @@
  */
 
 #include "SpecificHeatModelFactory.h"
+
 #include "ConstantCp.h"
 #include "CopperCp.h"
 #include "SteelCp.h"
+
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 

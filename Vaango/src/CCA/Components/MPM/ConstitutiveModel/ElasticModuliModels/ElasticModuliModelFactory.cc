@@ -42,7 +42,7 @@
 
 using namespace Vaango;
 
-ElasticModuliModel*
+std::unique_ptr<ElasticModuliModel>
 ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
 {
   Uintah::ProblemSpecP child = ps->findBlock("elastic_moduli_model");
@@ -63,69 +63,69 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
   }
 
   if (mat_type == "constant")
-    return (scinew ElasticModuli_Constant(child));
+    return (std::make_unique<ElasticModuli_Constant>(child));
   else if (mat_type == "arenisca")
-    return (scinew ElasticModuli_Arenisca(child));
+    return (std::make_unique<ElasticModuli_Arenisca>(child));
   else if (mat_type == "arena")
-    return (scinew ElasticModuli_Arena(child));
+    return (std::make_unique<ElasticModuli_Arena>(child));
   else if (mat_type == "arena_mixture")
-    return (scinew ElasticModuli_ArenaMixture(child));
+    return (std::make_unique<ElasticModuli_ArenaMixture>(child));
   else if (mat_type == "tabular")
-    return (scinew ElasticModuli_Tabular(child));
+    return (std::make_unique<ElasticModuli_Tabular>(child));
   else if (mat_type == "tabular_bulk")
-    return (scinew ElasticModuli_Tabular_Bulk(child));
+    return (std::make_unique<ElasticModuli_Tabular_Bulk>(child));
   else if (mat_type == "tabular_bulk_pressure")
-    return (scinew ElasticModuli_Tabular_BulkPressure(child));
+    return (std::make_unique<ElasticModuli_Tabular_BulkPressure>(child));
   else if (mat_type == "neural_net")
-    return (scinew ElasticModuli_NeuralNet(child));
+    return (std::make_unique<ElasticModuli_NeuralNet>(child));
   else if (mat_type == "neural_net_bulk")
-    return (scinew ElasticModuli_NeuralNet_Bulk(child));
+    return (std::make_unique<ElasticModuli_NeuralNet_Bulk>(child));
   else if (mat_type == "support_vector")
-    return (scinew ElasticModuli_SupportVector(child));
+    return (std::make_unique<ElasticModuli_SupportVector>(child));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
-    return (scinew ElasticModuli_Constant(child));
+    return (std::make_unique<ElasticModuli_Constant>(child));
   }
 }
 
-ElasticModuliModel*
+std::unique_ptr<ElasticModuliModel>
 ElasticModuliModelFactory::createCopy(const ElasticModuliModel* model)
 {
   if (dynamic_cast<const ElasticModuli_Constant*>(model))
-    return (scinew ElasticModuli_Constant(
+    return (std::make_unique<ElasticModuli_Constant>(
       dynamic_cast<const ElasticModuli_Constant*>(model)));
   else if (dynamic_cast<const ElasticModuli_Arenisca*>(model))
-    return (scinew ElasticModuli_Arenisca(
+    return (std::make_unique<ElasticModuli_Arenisca>(
       dynamic_cast<const ElasticModuli_Arenisca*>(model)));
   else if (dynamic_cast<const ElasticModuli_Arena*>(model))
-    return (scinew ElasticModuli_Arena(
+    return (std::make_unique<ElasticModuli_Arena>(
       dynamic_cast<const ElasticModuli_Arena*>(model)));
   else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(model))
-    return (scinew ElasticModuli_ArenaMixture(
+    return (std::make_unique<ElasticModuli_ArenaMixture>(
       dynamic_cast<const ElasticModuli_ArenaMixture*>(model)));
   else if (dynamic_cast<const ElasticModuli_Tabular*>(model))
-    return (scinew ElasticModuli_Tabular(
+    return (std::make_unique<ElasticModuli_Tabular>(
       dynamic_cast<const ElasticModuli_Tabular*>(model)));
   else if (dynamic_cast<const ElasticModuli_Tabular_Bulk*>(model))
-    return (scinew ElasticModuli_Tabular_Bulk(
+    return (std::make_unique<ElasticModuli_Tabular_Bulk>(
       dynamic_cast<const ElasticModuli_Tabular_Bulk*>(model)));
   else if (dynamic_cast<const ElasticModuli_Tabular_BulkPressure*>(model))
-    return (scinew ElasticModuli_Tabular_BulkPressure(
+    return (std::make_unique<ElasticModuli_Tabular_BulkPressure>(
       dynamic_cast<const ElasticModuli_Tabular_BulkPressure*>(model)));
   else if (dynamic_cast<const ElasticModuli_NeuralNet*>(model))
-    return (scinew ElasticModuli_NeuralNet(
+    return (std::make_unique<ElasticModuli_NeuralNet>(
       dynamic_cast<const ElasticModuli_NeuralNet*>(model)));
   else if (dynamic_cast<const ElasticModuli_NeuralNet_Bulk*>(model))
-    return (scinew ElasticModuli_NeuralNet_Bulk(
+    return (std::make_unique<ElasticModuli_NeuralNet_Bulk>(
       dynamic_cast<const ElasticModuli_NeuralNet_Bulk*>(model)));
   else if (dynamic_cast<const ElasticModuli_SupportVector*>(model))
-    return (scinew ElasticModuli_SupportVector(
+    return (std::make_unique<ElasticModuli_SupportVector>(
       dynamic_cast<const ElasticModuli_SupportVector*>(model)));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
-    return (scinew ElasticModuli_Constant(
+    return (std::make_unique<ElasticModuli_Constant>(
       dynamic_cast<const ElasticModuli_Constant*>(model)));
   }
 }

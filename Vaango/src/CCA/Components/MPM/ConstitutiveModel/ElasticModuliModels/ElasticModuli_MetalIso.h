@@ -73,7 +73,7 @@ private:
   std::unique_ptr<MPMEquationOfState> d_eos;
 
   /* For tangent shear modulus parameters */
-  ShearModulusModel* d_shear;
+  std::unique_ptr<ShearModulusModel> d_shear;
 
   double d_Km, d_Gm, d_rho0;
 

@@ -28,7 +28,8 @@
 #define _PLASTIC_FLOW_STRESS_MODELFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
+
+#include <memory>
 
 namespace Uintah {
 
@@ -41,6 +42,7 @@ public:
   // this function has a switch for all known mat_types
   static std::unique_ptr<FlowStressModel>
   create(ProblemSpecP& ps);
+
   static std::unique_ptr<FlowStressModel>
   createCopy(const FlowStressModel* pm);
 };

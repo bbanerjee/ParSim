@@ -28,7 +28,8 @@
 #define _BB_KINEMATIC_HARDENING_MODELFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
+
+#include <memory>
 
 namespace Vaango {
 
@@ -41,8 +42,10 @@ public:
   // this function has a switch for all known mat_types
   static std::unique_ptr<KinematicHardeningModel>
   create(Uintah::ProblemSpecP& ps);
+
   static std::unique_ptr<KinematicHardeningModel>
   create(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+
   static std::unique_ptr<KinematicHardeningModel>
   createCopy(const KinematicHardeningModel* pm);
 };

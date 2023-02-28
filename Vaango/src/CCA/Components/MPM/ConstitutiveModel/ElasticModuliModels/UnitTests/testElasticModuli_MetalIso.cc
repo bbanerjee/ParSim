@@ -89,7 +89,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkConstantShear)
 
   // Constructors
   ElasticModuli_MetalIso model(ps);
-  ElasticModuli_MetalIso model_copy(model);
+  ElasticModuli_MetalIso model_copy(&model);
 
   auto eos_model = scinew DefaultHypoElasticEOS(ps_eos);
   auto shear_model = scinew ShearModulus_Constant(ps_shear, nullptr);

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,6 +28,7 @@
 #define _ELASTICITY_MODEL_FACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <memory>
 
 namespace Vaango {
 
@@ -37,15 +38,18 @@ class ElasticModuliModel;
 /*! \class ElasticModuliModelFactory
  *  \brief Creates instances of elasticity Models
  *  \author  Biswajit Banerjee,
-*/
+ */
 
 class ElasticModuliModelFactory
 {
 
 public:
   //! Create a elastic modulus model from the input file problem specification.
-  static ElasticModuliModel* create(Uintah::ProblemSpecP& ps);
-  static ElasticModuliModel* createCopy(const ElasticModuliModel* yc);
+  static std::unique_ptr<ElasticModuliModel>
+  create(Uintah::ProblemSpecP& ps);
+
+  static std::unique_ptr<ElasticModuliModel>
+  createCopy(const ElasticModuliModel* yc);
 };
 } // End namespace Vaango
 

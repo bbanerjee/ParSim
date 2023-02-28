@@ -25,16 +25,21 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModelFactory.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardening_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardening_Armstrong.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardening_None.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardening_Prager.h>
+
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
+
 using std::cerr;
 using std::endl;
 using std::ifstream;
@@ -98,7 +103,7 @@ KinematicHardeningModelFactory::create(ProblemSpecP& ps,
   }
 }
 
-KinematicHardeningModel*
+std::unique_ptr<KinematicHardeningModel>
 KinematicHardeningModelFactory::createCopy(const KinematicHardeningModel* pm)
 {
   if (dynamic_cast<const KinematicHardening_None*>(pm)) {

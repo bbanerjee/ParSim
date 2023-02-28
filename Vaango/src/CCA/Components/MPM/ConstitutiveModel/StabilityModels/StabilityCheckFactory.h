@@ -29,6 +29,8 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
+
 namespace Uintah {
 
 // Forward declarations

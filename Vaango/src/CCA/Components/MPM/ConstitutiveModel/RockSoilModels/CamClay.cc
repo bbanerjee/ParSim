@@ -99,7 +99,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos.get());
   if (!d_shear) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
@@ -116,7 +116,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
         << " default type is 'borja_consolidation_pressure'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_shared<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear);
+  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(intvar_ps, d_shear.get());
   if (!d_intvar) {
     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
@@ -139,10 +139,10 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 CamClay::CamClay(const CamClay* cm)
   : ConstitutiveModel(cm)
 {
-  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos);
-  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_intvar = std::make_shared<Vaango::IntVar_BorjaPressure>(cm->d_intvar.get());
+  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
+  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear.get());
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
+  d_intvar = std::make_unique<Vaango::IntVar_BorjaPressure>(cm->d_intvar.get());
 
   initializeLocalMPMLabels();
 }
@@ -157,10 +157,6 @@ CamClay::~CamClay()
   VarLabel::destroy(pStrainLabel_preReloc);
   VarLabel::destroy(pElasticStrainLabel_preReloc);
   VarLabel::destroy(pDeltaGammaLabel_preReloc);
-
-  delete d_eos;
-  delete d_shear;
-  delete d_yield;
 }
 
 void
@@ -181,7 +177,7 @@ CamClay::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 CamClay::clone()
 {
-  return std::make_unique<CamClay>(*this);
+  return std::make_unique<CamClay>(this);
 }
 
 void
@@ -1115,8 +1111,8 @@ CamClay::computeDeltaGammaIncrement(Vaango::ModelState_CamClay& state,
   double dr1_dx2 = 2.0 * delgamma_k * dpdepses;
   double dr1_dx3 = dfdp;
 
-  double d2fdqdepsv = d_yield->d2f_dq_depsVol(&state, d_eos, d_shear);
-  double d2fdqdepss = d_yield->d2f_dq_depsDev(&state, d_eos, d_shear);
+  double d2fdqdepsv = d_yield->d2f_dq_depsVol(&state, d_eos.get(), d_shear.get());
+  double d2fdqdepss = d_yield->d2f_dq_depsDev(&state, d_eos.get(), d_shear.get());
   double dr2_dx1    = delgamma_k * d2fdqdepsv;
   double dr2_dx2    = 1.0 + delgamma_k * d2fdqdepss;
   double dr2_dx3    = dfdq;

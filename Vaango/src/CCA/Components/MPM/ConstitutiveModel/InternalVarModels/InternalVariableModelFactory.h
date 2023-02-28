@@ -40,15 +40,18 @@ class InternalVariableModelFactory
 {
 public:
   // this function has a switch for all known mat_types
-  static InternalVariableModel*
+  static std::unique_ptr<InternalVariableModel>
   create(Uintah::ProblemSpecP& ps);
-  static InternalVariableModel*
+
+  static std::unique_ptr<InternalVariableModel>
   create(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
-  static InternalVariableModel*
+
+  static std::unique_ptr<InternalVariableModel>
   create(Uintah::ProblemSpecP& ps, ShearModulusModel* shear);
-  static InternalVariableModel*
+
+  static std::unique_ptr<InternalVariableModel>
   createCopy(const InternalVariableModel* pm);
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif /* _INTERNAL_VARIABLE_MODEL_FACTORY_H_ */

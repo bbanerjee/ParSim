@@ -152,8 +152,8 @@ public:
   const Uintah::VarLabel* pTGrowLabel_preReloc;
 
 private:
-  ElasticModuliModel* d_elastic;
-  YieldCondition* d_yield;
+  std::unique_ptr<ElasticModuliModel> d_elastic{nullptr};
+  std::unique_ptr<YieldCondition> d_yield{nullptr};
 
   /* Tangent bulk modulus models for air, water, granite */
   AirEOS d_air;

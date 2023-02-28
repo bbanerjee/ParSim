@@ -28,7 +28,8 @@
 #define _EQUATIONOFSTATEFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
+
+#include <memory>
 
 namespace Vaango {
 
@@ -40,6 +41,7 @@ public:
   // this function has a switch for all known mat_types
   static std::unique_ptr<MPMEquationOfState>
   create(Uintah::ProblemSpecP& ps);
+
   static std::unique_ptr<MPMEquationOfState>
   createCopy(const MPMEquationOfState* cm);
 };

@@ -29,6 +29,8 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
+
 namespace Uintah {
 
 // Forward declarations
@@ -39,15 +41,18 @@ class SpecificHeatModel;
  *  \author  Biswajit Banerjee,
  *  \author  C-SAFE and Department of Mechanical Engineering,
  *  \author  University of Utah.
-*/
+ */
 
 class SpecificHeatModelFactory
 {
 
 public:
   //! Create a shear modulus model from the input file problem specification.
-  static std::unique_ptr<SpecificHeatModel> create(ProblemSpecP& ps);
-  static std::unique_ptr<SpecificHeatModel> createCopy(const SpecificHeatModel* yc);
+  static std::unique_ptr<SpecificHeatModel>
+  create(ProblemSpecP& ps);
+
+  static std::unique_ptr<SpecificHeatModel>
+  createCopy(const SpecificHeatModel* yc);
 };
 } // End namespace Uintah
 

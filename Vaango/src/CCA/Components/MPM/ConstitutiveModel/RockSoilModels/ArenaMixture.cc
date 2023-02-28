@@ -122,7 +122,7 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
          << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
-  if (!(dynamic_cast<ElasticModuli_ArenaMixture*>(d_elastic))) {
+  if (!(dynamic_cast<ElasticModuli_ArenaMixture*>(d_elastic.get()))) {
     std::ostringstream out;
     out << "**ERROR** The correct ElasticModuli object has not been created."
         << " Need ElasticModuli_ArenaMixture.";
@@ -137,7 +137,7 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
          << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
-  if (!(dynamic_cast<YieldCond_ArenaMixture*>(d_yield))) {
+  if (!(dynamic_cast<YieldCond_ArenaMixture*>(d_yield.get()))) {
     std::ostringstream out;
     out << "**ERROR** The correct YieldCondition object has not been created."
         << " Need YieldCond_ArenaMixture.";
@@ -294,8 +294,8 @@ ArenaMixture::checkInputParameters()
 ArenaMixture::ArenaMixture(const ArenaMixture* cm)
   : ConstitutiveModel(cm)
 {
-  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
-  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic.get());
+  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
 
   // Density-based scaling
   d_modulus_scale_fac = cm->d_modulus_scale_fac;
@@ -452,9 +452,6 @@ ArenaMixture::~ArenaMixture()
   VarLabel::destroy(pCoherenceLabel_preReloc);
   VarLabel::destroy(pTGrowLabel);
   VarLabel::destroy(pTGrowLabel_preReloc);
-
-  delete d_yield;
-  delete d_elastic;
 }
 
 // adds problem specification values to checkpoint data for restart
@@ -525,7 +522,7 @@ ArenaMixture::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 ArenaMixture::clone()
 {
-  return std::make_unique<ArenaMixture>(*this);
+  return std::make_unique<ArenaMixture>(this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for

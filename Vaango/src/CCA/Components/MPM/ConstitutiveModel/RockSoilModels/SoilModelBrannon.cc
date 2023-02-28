@@ -102,9 +102,8 @@ SoilModelBrannon::SoilModelBrannon(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("B0", d_cm.B0);
   ps->require("G0", d_cm.G0);
 
-  auto intvar = Vaango::InternalVariableModelFactory::create(ps);
-  d_intvar = dynamic_cast<Vaango::IntVar_SoilBrannon*>(intvar);
-  if (!d_intvar) {
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
+  if (!dynamic_cast<Vaango::IntVar_SoilBrannon*>(d_intvar.get())) {
      std::ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "SoilModelBrannon->InternalVariableModelFactory."
@@ -135,8 +134,7 @@ SoilModelBrannon::SoilModelBrannon(const SoilModelBrannon* cm)
   d_cm.B0 = cm->d_cm.B0;
   d_cm.G0 = cm->d_cm.G0;
 
-  auto intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
-  d_intvar = static_cast<Vaango::IntVar_SoilBrannon*>(intvar);
+  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar.get());
 
   initializeLocalMPMLabels();
 }
@@ -157,8 +155,6 @@ SoilModelBrannon::~SoilModelBrannon()
   VarLabel::destroy(pKappaStateLabel_preReloc);
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pLocalizedLabel_preReloc);
-
-  delete d_intvar;
 }
 
 void
@@ -193,7 +189,7 @@ SoilModelBrannon::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 SoilModelBrannon::clone()
 {
-  return std::make_unique<SoilModelBrannon>(*this);
+  return std::make_unique<SoilModelBrannon>(this);
 }
 
 void
@@ -443,8 +439,9 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
     // Get and allocate the internal variables
     constParticleVariable<double> pKappa;
     ParticleVariable<double> pKappa_new;
-    d_intvar->getInternalVariable(pset, old_dw, pKappa);
-    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pKappa_new);
+    auto intvar = static_cast<Vaango::IntVar_SoilBrannon*>(d_intvar.get());
+    intvar->getInternalVariable(pset, old_dw, pKappa);
+    intvar->allocateAndPutInternalVariable(pset, new_dw, pKappa_new);
 
     // Compute bulk and Lame modulus
     double bulk = d_cm.B0;
@@ -2092,8 +2089,9 @@ SoilModelBrannon::carryForward(const PatchSubset* patches,
 
     // Get and copy the internal variables
     constParticleVariable<double> pKappa;
-    d_intvar->getInternalVariable(pset, old_dw, pKappa);
-    d_intvar->allocateAndPutRigid(pset, new_dw, pKappa);
+    auto intvar = static_cast<Vaango::IntVar_SoilBrannon*>(d_intvar.get());
+    intvar->getInternalVariable(pset, old_dw, pKappa);
+    intvar->allocateAndPutRigid(pset, new_dw, pKappa);
 
     // Carry forward the data local to this constitutive model
     new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());

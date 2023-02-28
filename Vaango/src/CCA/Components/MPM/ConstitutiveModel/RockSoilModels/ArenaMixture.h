@@ -155,8 +155,8 @@ public:
   const Uintah::VarLabel* pTGrowLabel_preReloc;
 
 private:
-  ElasticModuliModel* d_elastic;
-  YieldCondition* d_yield;
+  std::unique_ptr<ElasticModuliModel> d_elastic;
+  std::unique_ptr<YieldCondition> d_yield;
 
   /* Tangent bulk modulus models for air, water, granite */
   AirEOS d_air;
@@ -185,6 +185,7 @@ public:
   // constructor
   ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   ArenaMixture(const ArenaMixture* cm);
+  ArenaMixture(const ArenaMixture& cm) = delete;
   ArenaMixture& operator=(const ArenaMixture& cm) = delete;
 
   // destructor

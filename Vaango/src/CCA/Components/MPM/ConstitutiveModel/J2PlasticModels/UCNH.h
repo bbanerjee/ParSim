@@ -93,12 +93,13 @@ protected:
 
   // Model factories
   // bool d_useEOSFactory;
-  Vaango::MPMEquationOfState* d_eos;
+  std::unique_ptr<Vaango::MPMEquationOfState> d_eos;
 
 public:
   UCNH(ProblemSpecP& ps, MPMFlags* flag);
   UCNH(ProblemSpecP& ps, MPMFlags* flag, bool plas, bool dam);
   UCNH(const UCNH* cm);
+  UCNH(const UCNH& cm) = delete;
   UCNH& operator=(const UCNH& cm) = delete;
   ~UCNH() override;
 
