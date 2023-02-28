@@ -149,6 +149,7 @@ public:
   ////////////////////////////////////////////////////////////////////////
   explicit ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* flag);
   explicit ElasticPlasticHP(const ElasticPlasticHP* cm);
+  ElasticPlasticHP(const ElasticPlasticHP& cm) = delete;
   ElasticPlasticHP& operator=(const ElasticPlasticHP& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
@@ -496,15 +497,15 @@ protected:
   bool d_allowNoTension;
   bool d_allowNoShear;
 
-  Vaango::MPMEquationOfState* d_eos;
-  Vaango::ShearModulusModel* d_shear;
-  Vaango::YieldCondition* d_yield;
+  std::unique_ptr<Vaango::MPMEquationOfState> d_eos;
+  std::unique_ptr<Vaango::ShearModulusModel> d_shear;
+  std::unique_ptr<Vaango::YieldCondition> d_yield;
 
-  StabilityCheck* d_stable;
-  FlowStressModel* d_flow;
-  DamageModel* d_damage;
-  MeltingTempModel* d_melt;
-  SpecificHeatModel* d_Cp;
+  std::unique_ptr<StabilityCheck> d_stable;
+  std::unique_ptr<FlowStressModel> d_flow;
+  std::unique_ptr<DamageModel> d_damage;
+  std::unique_ptr<MeltingTempModel> d_melt;
+  std::unique_ptr<SpecificHeatModel> d_Cp;
   DevStressModel* d_devStress;
 
   std::shared_ptr<Vaango::IntVar_Metal> d_intvar;

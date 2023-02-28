@@ -40,65 +40,73 @@ using namespace Uintah;
 
 /// Create an instance of a stabilty check method
 /*! Available checks are : loss of ellipticity of the acoustic tensor */
-StabilityCheck*
+std::unique_ptr<StabilityCheck>
 StabilityCheckFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("stability_check");
   if (!child) {
     proc0cout << "**WARNING** Creating default action (no stability check)"
               << "\n";
-    return (scinew NoneCheck());
-    throw ProblemSetupException("Cannot find stability check criterion.",
-                                __FILE__, __LINE__);
+    return (std::make_unique<NoneCheck>());
+    throw ProblemSetupException(
+      "Cannot find stability check criterion.", __FILE__, __LINE__);
   }
 
   string mat_type;
-  if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for stability check criterion.",
-                                __FILE__, __LINE__);
+  if (!child->getAttribute("type", mat_type)) {
+    throw ProblemSetupException(
+      "No type for stability check criterion.", __FILE__, __LINE__);
+  }
 
-  if (mat_type == "drucker")
-    return (scinew DruckerCheck(child));
-  else if (mat_type == "acoustic")
-    return (scinew AcousticTensorCheck(child));
-  else if (mat_type == "becker")
-    return (scinew BeckerCheck(child));
-  else if (mat_type == "drucker_becker")
-    return (scinew DruckerBeckerCheck(child));
-  else if (mat_type == "none")
-    return (scinew NoneCheck(child));
-  else {
+  if (mat_type == "drucker") {
+    return (std::make_unique<DruckerCheck>(child));
+  } else if (mat_type == "acoustic") {
+    return (std::make_unique<AcousticTensorCheck>(child));
+  } else if (mat_type == "becker") {
+    return (std::make_unique<BeckerCheck>(child));
+  } else if (mat_type == "drucker_becker") {
+    return (std::make_unique<DruckerBeckerCheck>(child));
+  } else if (mat_type == "none") {
+    return (std::make_unique<NoneCheck>(child));
+  } else {
     proc0cout << "**WARNING** Creating default action (no stability check)"
               << "\n";
-    return (scinew NoneCheck(child));
+    return (std::make_unique<NoneCheck>(child));
     // throw ProblemSetupException("Unknown Stability Check ("+mat_type+")",
     // __FILE__, __LINE__);
   }
 }
 
-StabilityCheck*
+std::unique_ptr<StabilityCheck>
 StabilityCheckFactory::createCopy(const StabilityCheck* sc)
 {
-  if (dynamic_cast<const DruckerCheck*>(sc))
-    return (scinew DruckerCheck(dynamic_cast<const DruckerCheck*>(sc)));
-
-  else if (dynamic_cast<const AcousticTensorCheck*>(sc))
-    return (scinew AcousticTensorCheck(dynamic_cast<const AcousticTensorCheck*>(sc)));
-
-  else if (dynamic_cast<const BeckerCheck*>(sc))
-    return (scinew BeckerCheck(dynamic_cast<const BeckerCheck*>(sc)));
-
-  else if (dynamic_cast<const DruckerBeckerCheck*>(sc))
+  if (dynamic_cast<const DruckerCheck*>(sc)) {
     return (
-      scinew DruckerBeckerCheck(dynamic_cast<const DruckerBeckerCheck*>(sc)));
-  else if (dynamic_cast<const NoneCheck*>(sc))
-    return (scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
+      std::make_unique<DruckerCheck>(dynamic_cast<const DruckerCheck*>(sc)));
+  }
+
+  else if (dynamic_cast<const AcousticTensorCheck*>(sc)) {
+    return (std::make_unique<AcousticTensorCheck>(
+      dynamic_cast<const AcousticTensorCheck*>(sc)));
+  }
+
+  else if (dynamic_cast<const BeckerCheck*>(sc)) {
+    return (
+      std::make_unique<BeckerCheck>(dynamic_cast<const BeckerCheck*>(sc)));
+  }
+
+  else if (dynamic_cast<const DruckerBeckerCheck*>(sc)) {
+    return (std::make_unique<DruckerBeckerCheck>(
+      dynamic_cast<const DruckerBeckerCheck*>(sc)));
+  } else if (dynamic_cast<const NoneCheck*>(sc)) {
+    return (std::make_unique<NoneCheck>(dynamic_cast<const NoneCheck*>(sc)));
+  }
 
   else {
     proc0cout
       << "**WARNING** Creating copy of default action (no stability check)"
       << "\n";
-    return (scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
+    return (std::make_unique<NoneCheck>(dynamic_cast<const NoneCheck*>(sc)));
     //  return 0;
   }
 }

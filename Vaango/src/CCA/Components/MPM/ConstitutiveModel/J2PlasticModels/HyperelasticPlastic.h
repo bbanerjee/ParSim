@@ -183,7 +183,7 @@ protected:
 
   // Model factories
   // bool d_useEOSFactory;
-  Vaango::MPMEquationOfState* d_eos;
+  std::unique_ptr<Vaango::MPMEquationOfState> d_eos;
 
   ///////////////
   // Functions //
@@ -195,6 +195,7 @@ public:
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag);
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag, bool plas, bool dam);
   HyperelasticPlastic(const HyperelasticPlastic* cm);
+  HyperelasticPlastic(const HyperelasticPlastic& cm) = delete;
   HyperelasticPlastic& operator=(const HyperelasticPlastic& cm) = delete;
 
   ModelType modelType() const override

@@ -71,7 +71,7 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(MPMEquationOfState* eos, 
                                                ShearModulusModel* shear)
 {
-  d_eos = eos;
+  d_eos = MPMEquationOfStateFactory::createCopy(eos);
   d_shear = shear;
   if (d_eos == nullptr || d_shear == nullptr) {
     std::ostringstream err;

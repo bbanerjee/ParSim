@@ -43,6 +43,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/UCNH.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/IsoMetalPlasticityExplicit.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/SoilFoam.h>
@@ -266,7 +267,7 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return std::make_unique<ShellMaterial>(child, flags);
 
   else if (mat_type == "elastic_plastic")
-    return std::make_unique<ElasticPlasticHP>(child, flags);
+    return std::make_unique<IsoMetalPlasticityExplicit>(child, flags);
 
   else if (mat_type == "elastic_plastic_hp")
     return std::make_unique<ElasticPlasticHP>(child, flags);

@@ -32,7 +32,7 @@
 namespace Uintah {
 // Forward declarations
 class FlowStressModel;
-}
+} // namespace Uintah
 
 namespace Vaango {
 
@@ -49,25 +49,30 @@ class IntVar_TabularCap;
  *  \author  University of Utah.
  *  \warning Currently implemented yield conditions:
  *           von Mises, Gurson-Tvergaard-Needleman, Rousselier
-*/
+ */
 
 class YieldConditionFactory
 {
 
 public:
   //! Create a yield condition from the input file problem specification.
-  static YieldCondition*
+  static std::unique_ptr<YieldCondition>
   create(Uintah::ProblemSpecP& ps);
-  static YieldCondition* 
-  create(Uintah::ProblemSpecP& ps, IntVar_Metal* intvar, 
+
+  static std::unique_ptr<YieldCondition>
+  create(Uintah::ProblemSpecP& ps,
+         IntVar_Metal* intvar,
          const Uintah::FlowStressModel* flow);
-  static YieldCondition*
+
+  static std::unique_ptr<YieldCondition>
   create(Uintah::ProblemSpecP& ps, IntVar_BorjaPressure* intvar);
-  static YieldCondition*
+
+  static std::unique_ptr<YieldCondition>
   create(Uintah::ProblemSpecP& ps, IntVar_TabularCap* intvar);
-  static YieldCondition*
+
+  static std::unique_ptr<YieldCondition>
   createCopy(const YieldCondition* yc);
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif /* _MPM_CONSTITUTIVEMODELS_MODELS_YIELDCONDITIONFACTORY_H_ */

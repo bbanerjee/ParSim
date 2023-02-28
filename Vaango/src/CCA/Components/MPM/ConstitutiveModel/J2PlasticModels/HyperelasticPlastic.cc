@@ -285,7 +285,7 @@ HyperelasticPlastic::HyperelasticPlastic(const HyperelasticPlastic* cm)
   d_init_pressure    = cm->d_init_pressure;
 
   // EOS from factory
-  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   // Universal Labels
@@ -567,7 +567,7 @@ HyperelasticPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 HyperelasticPlastic::clone()
 {
-  return std::make_unique<HyperelasticPlastic>(*this);
+  return std::make_unique<HyperelasticPlastic>(this);
 }
 
 HyperelasticPlastic::~HyperelasticPlastic()
@@ -590,9 +590,6 @@ HyperelasticPlastic::~HyperelasticPlastic()
     VarLabel::destroy(pTimeOfLocLabel);
     VarLabel::destroy(pTimeOfLocLabel_preReloc);
   }
-
-  // Delete EOS from factory
-  delete d_eos;
 
   // Universal Deletes
   VarLabel::destroy(bElBarLabel);

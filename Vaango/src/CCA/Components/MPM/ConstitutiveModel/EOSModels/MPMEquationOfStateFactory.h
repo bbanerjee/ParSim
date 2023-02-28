@@ -38,9 +38,9 @@ class MPMEquationOfStateFactory
 {
 public:
   // this function has a switch for all known mat_types
-  static MPMEquationOfState*
+  static std::unique_ptr<MPMEquationOfState>
   create(Uintah::ProblemSpecP& ps);
-  static MPMEquationOfState*
+  static std::unique_ptr<MPMEquationOfState>
   createCopy(const MPMEquationOfState* cm);
 };
 } // End namespace Vaango

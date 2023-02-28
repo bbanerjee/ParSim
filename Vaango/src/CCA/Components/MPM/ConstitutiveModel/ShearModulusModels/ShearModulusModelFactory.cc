@@ -41,7 +41,7 @@
 using namespace Uintah;
 using namespace Vaango;
 
-ShearModulusModel*
+std::unique_ptr<ShearModulusModel>
 ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("shear_modulus_model");
@@ -50,34 +50,35 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
       << "**WARNING** Attempting to create default (constant shear modulus) "
          "model"
       << std::endl;
-    return (scinew ShearModulus_Constant(ps, nullptr));
+    return (std::make_unique<ShearModulus_Constant>(ps, nullptr));
   }
   string mat_type;
-  if (!child->getAttribute("type", mat_type))
+  if (!child->getAttribute("type", mat_type)) {
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:No type for shear modulus model.",
       __FILE__,
       __LINE__);
+  }
 
-  if (mat_type == "constant_shear")
-    return (scinew ShearModulus_Constant(child, nullptr));
-  else if (mat_type == "mts_shear")
-    return (scinew ShearModulus_MTS(child));
-  else if (mat_type == "np_shear")
-    return (scinew ShearModulus_Nadal(child, nullptr));
-  else if (mat_type == "ptw_shear")
-    return (scinew ShearModulus_PTW(child));
-  else if (mat_type == "scg_shear")
-    return (scinew ShearModulus_SCG(child));
-  else {
+  if (mat_type == "constant_shear") {
+    return (std::make_unique<ShearModulus_Constant>(child, nullptr));
+  } else if (mat_type == "mts_shear") {
+    return (std::make_unique<ShearModulus_MTS>(child));
+  } else if (mat_type == "np_shear") {
+    return (std::make_unique<ShearModulus_Nadal>(child, nullptr));
+  } else if (mat_type == "ptw_shear") {
+    return (std::make_unique<ShearModulus_PTW>(child));
+  } else if (mat_type == "scg_shear") {
+    return (std::make_unique<ShearModulus_SCG>(child));
+  } else {
     std::cerr << "**WARNING** Shear modulus model type [" << mat_type
               << "] not found.\n"
               << " Creating default (constant shear modulus) model."
               << " No EOS is required.\n";
-    return (scinew ShearModulus_Constant(child, nullptr));
+    return (std::make_unique<ShearModulus_Constant>(child, nullptr));
   }
 }
-ShearModulusModel*
+std::unique_ptr<ShearModulusModel>
 ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps,
                                  MPMEquationOfState* eos)
 {
@@ -87,62 +88,63 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps,
       << "**WARNING** Attempting to create default (constant shear modulus) "
          "model"
       << std::endl;
-    return (scinew ShearModulus_Constant(ps, eos));
+    return (std::make_unique<ShearModulus_Constant>(ps, eos));
   }
   string mat_type;
-  if (!child->getAttribute("type", mat_type))
+  if (!child->getAttribute("type", mat_type)) {
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:No type for shear modulus model.",
       __FILE__,
       __LINE__);
+  }
 
-  if (mat_type == "constant_shear")
-    return (scinew ShearModulus_Constant(child, eos));
-  else if (mat_type == "borja_shear")
-    return (scinew ShearModulus_Borja(child, eos));
-  else if (mat_type == "mts_shear")
-    return (scinew ShearModulus_MTS(child));
-  else if (mat_type == "np_shear")
-    return (scinew ShearModulus_Nadal(child, eos));
-  else if (mat_type == "ptw_shear")
-    return (scinew ShearModulus_PTW(child));
-  else if (mat_type == "scg_shear")
-    return (scinew ShearModulus_SCG(child));
-  else {
+  if (mat_type == "constant_shear") {
+    return (std::make_unique<ShearModulus_Constant>(child, eos));
+  } else if (mat_type == "borja_shear") {
+    return (std::make_unique<ShearModulus_Borja>(child, eos));
+  } else if (mat_type == "mts_shear") {
+    return (std::make_unique<ShearModulus_MTS>(child));
+  } else if (mat_type == "np_shear") {
+    return (std::make_unique<ShearModulus_Nadal>(child, eos));
+  } else if (mat_type == "ptw_shear") {
+    return (std::make_unique<ShearModulus_PTW>(child));
+  } else if (mat_type == "scg_shear") {
+    return (std::make_unique<ShearModulus_SCG>(child));
+  } else {
     std::cerr << "**WARNING** Shear modulus model type [" << mat_type
               << "] not found.\n"
               << " Creating default (constant shear modulus) model."
               << " EOS is required.\n";
-    return (scinew ShearModulus_Constant(child, eos));
+    return (std::make_unique<ShearModulus_Constant>(child, eos));
   }
 }
 
-ShearModulusModel*
+std::unique_ptr<ShearModulusModel>
 ShearModulusModelFactory::createCopy(const ShearModulusModel* smm)
 {
-  if (dynamic_cast<const ShearModulus_Constant*>(smm))
-    return (scinew ShearModulus_Constant(
+  if (dynamic_cast<const ShearModulus_Constant*>(smm)) {
+    return (std::make_unique<ShearModulus_Constant>(
       dynamic_cast<const ShearModulus_Constant*>(smm)));
-  else if (dynamic_cast<const ShearModulus_Borja*>(smm))
-    return (
-      scinew ShearModulus_Borja(dynamic_cast<const ShearModulus_Borja*>(smm)));
-  else if (dynamic_cast<const ShearModulus_MTS*>(smm))
-    return (
-      scinew ShearModulus_MTS(dynamic_cast<const ShearModulus_MTS*>(smm)));
-  else if (dynamic_cast<const ShearModulus_Nadal*>(smm))
-    return (
-      scinew ShearModulus_Nadal(dynamic_cast<const ShearModulus_Nadal*>(smm)));
-  else if (dynamic_cast<const ShearModulus_PTW*>(smm))
-    return (
-      scinew ShearModulus_PTW(dynamic_cast<const ShearModulus_PTW*>(smm)));
-  else if (dynamic_cast<const ShearModulus_SCG*>(smm))
-    return (
-      scinew ShearModulus_SCG(dynamic_cast<const ShearModulus_SCG*>(smm)));
-  else {
+  } else if (dynamic_cast<const ShearModulus_Borja*>(smm)) {
+    return (std::make_unique<ShearModulus_Borja>(
+      dynamic_cast<const ShearModulus_Borja*>(smm)));
+  } else if (dynamic_cast<const ShearModulus_MTS*>(smm)) {
+    return (std::make_unique<ShearModulus_MTS>(
+      dynamic_cast<const ShearModulus_MTS*>(smm)));
+  } else if (dynamic_cast<const ShearModulus_Nadal*>(smm)) {
+    return (std::make_unique<ShearModulus_Nadal>(
+      dynamic_cast<const ShearModulus_Nadal*>(smm)));
+  } else if (dynamic_cast<const ShearModulus_PTW*>(smm)) {
+    return (std::make_unique<ShearModulus_PTW>(
+      dynamic_cast<const ShearModulus_PTW*>(smm)));
+  } else if (dynamic_cast<const ShearModulus_SCG*>(smm)) {
+    return (std::make_unique<ShearModulus_SCG>(
+      dynamic_cast<const ShearModulus_SCG*>(smm)));
+  } else {
     std::cerr
       << "**WARNING** Creating copy of default (constant shear modulus) model"
       << std::endl;
-    return (scinew ShearModulus_Constant(
+    return (std::make_unique<ShearModulus_Constant>(
       dynamic_cast<const ShearModulus_Constant*>(smm)));
   }
 }

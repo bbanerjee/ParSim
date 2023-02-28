@@ -29,6 +29,8 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <memory>
+
 namespace Vaango {
 
 // Forward declarations
@@ -40,20 +42,20 @@ class MPMEquationOfState;
  *  \author  Biswajit Banerjee,
  *  \author  C-SAFE and Department of Mechanical Engineering,
  *  \author  University of Utah.
-*/
+ */
 
 class ShearModulusModelFactory
 {
 
 public:
   //! Create a shear modulus model from the input file problem specification.
-  static ShearModulusModel*
+  static std::unique_ptr<ShearModulusModel>
   create(Uintah::ProblemSpecP& ps);
-  static ShearModulusModel*
+  static std::unique_ptr<ShearModulusModel>
   create(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos);
-  static ShearModulusModel*
+  static std::unique_ptr<ShearModulusModel>
   createCopy(const ShearModulusModel* yc);
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif /* _SHEARMODULUSMODELFACTORY_H_ */

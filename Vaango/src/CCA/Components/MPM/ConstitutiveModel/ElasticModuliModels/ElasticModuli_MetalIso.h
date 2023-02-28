@@ -70,7 +70,7 @@ public:
 private:
 
   /* For tangent bulk modulus parameters */
-  MPMEquationOfState* d_eos;
+  std::unique_ptr<MPMEquationOfState> d_eos;
 
   /* For tangent shear modulus parameters */
   ShearModulusModel* d_shear;

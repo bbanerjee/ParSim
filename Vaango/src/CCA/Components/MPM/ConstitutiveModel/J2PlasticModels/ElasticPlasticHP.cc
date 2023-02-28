@@ -157,7 +157,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
@@ -192,7 +192,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   }
 
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
-              const_cast<const FlowStressModel*>(d_flow));
+              const_cast<const FlowStressModel*>(d_flow.get()));
   if (!d_yield) {
      std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
@@ -258,18 +258,18 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_scalarDam.scalarDamageDist = cm->d_scalarDam.scalarDamageDist;
 
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
-  d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp);
-  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
-  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
-  d_damage = DamageModelFactory::createCopy(cm->d_damage);
-  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos);
-  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_melt   = MeltingTempModelFactory::createCopy(cm->d_melt);
+  d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp.get());
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
+  d_stable = StabilityCheckFactory::createCopy(cm->d_stable.get());
+  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow.get());
+  d_damage = DamageModelFactory::createCopy(cm->d_damage.get());
+  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
+  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear.get());
+  d_melt   = MeltingTempModelFactory::createCopy(cm->d_melt.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   d_intvar    = std::make_shared<Vaango::IntVar_Metal>(cm->d_intvar.get());
-  d_elastic   = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic   = std::make_shared<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
   d_devStress = nullptr;
 
   initializeLocalMPMLabels();
@@ -300,14 +300,6 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pEnergyLabel_preReloc);
   VarLabel::destroy(pIntVarLabel_preReloc);
 
-  delete d_flow;
-  delete d_yield;
-  delete d_stable;
-  delete d_damage;
-  delete d_eos;
-  delete d_shear;
-  delete d_melt;
-  delete d_Cp;
   delete d_devStress;
 }
 
@@ -368,7 +360,7 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 std::unique_ptr<ConstitutiveModel>
 ElasticPlasticHP::clone()
 {
-  return std::make_unique<ElasticPlasticHP>(*this);
+  return std::make_unique<ElasticPlasticHP>(this);
 }
 
 //______________________________________________________________________

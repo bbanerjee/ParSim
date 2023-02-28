@@ -302,7 +302,7 @@ SimulationCommon::problemSetup(const ProblemSpecP& prob_spec)
   }
 
   // Time step limit
-  if (!time_ps->get("max_Timesteps", d_timeStepsMax)) {
+  if (!time_ps->get("max_timesteps", d_timeStepsMax)) {
     d_timeStepsMax = 0;
   }
 

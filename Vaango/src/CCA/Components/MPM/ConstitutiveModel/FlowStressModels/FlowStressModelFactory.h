@@ -39,8 +39,10 @@ class FlowStressModelFactory
 {
 public:
   // this function has a switch for all known mat_types
-  static FlowStressModel* create(ProblemSpecP& ps);
-  static FlowStressModel* createCopy(const FlowStressModel* pm);
+  static std::unique_ptr<FlowStressModel>
+  create(ProblemSpecP& ps);
+  static std::unique_ptr<FlowStressModel>
+  createCopy(const FlowStressModel* pm);
 };
 } // End namespace Uintah
 

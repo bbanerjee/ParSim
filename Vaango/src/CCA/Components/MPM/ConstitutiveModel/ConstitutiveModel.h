@@ -173,12 +173,14 @@ public:
                          const bool recursion,
                          const bool SchedParent) const;
 
+  [[deprecated]]
   virtual void
   scheduleCheckNeedAddMPMMaterial(Task* task,
                                   const MPMMaterial* matl,
                                   const PatchSet* patches) const;
 
   // Determine if addition of an acceptor material is needed
+  [[deprecated]]
   virtual void
   checkNeedAddMPMMaterial(const PatchSubset* patches,
                           const MPMMaterial* matl,
@@ -188,6 +190,7 @@ public:
   /////////////////////////////////////////////////////////////////
   /*! Add particle conversion related requires to the task graph */
   /////////////////////////////////////////////////////////////////
+  [[deprecated]]
   virtual void
   allocateCMDataAddRequires(Task* task,
                             const MPMMaterial* matl,
@@ -198,6 +201,7 @@ public:
   /*! Copy the data from the particle to be deleted to the particle
       to be added */
   /////////////////////////////////////////////////////////////////
+  [[deprecated]]
   virtual void
   allocateCMDataAdd(DataWarehouse* new_dw,
                     ParticleSubset* addset,

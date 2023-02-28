@@ -39,14 +39,14 @@
 using namespace Uintah;
 
 /// Create an instance of a specific heat model
-SpecificHeatModel*
+std::unique_ptr<SpecificHeatModel>
 SpecificHeatModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("specific_heat_model");
   if (!child) {
     proc0cout << "** WARNING ** Creating default (constant specific heat) model"
               << "\n";
-    return (scinew ConstantCp());
+    return (std::make_unique<ConstantCp>());
     //  std::ostringstream desc;
     // desc << "**Error in Input UPS File: "
     // << "MPM:SpecificHeatModel:  "
@@ -58,21 +58,23 @@ SpecificHeatModelFactory::create(ProblemSpecP& ps)
     std::ostringstream desc;
     desc << "**Error in Input UPS File: "
          << "MPM:SpecificHeatModel:  "
-         << "No specific_heat_model type tag found in input file. " << "\n"
-         << "Types include constant_Cp, copper_Cp, and steel_Cp." << "\n";
+         << "No specific_heat_model type tag found in input file. "
+         << "\n"
+         << "Types include constant_Cp, copper_Cp, and steel_Cp."
+         << "\n";
     throw ProblemSetupException(desc.str(), __FILE__, __LINE__);
   }
 
-  if (mat_type == "constant_Cp")
-    return (scinew ConstantCp(child));
-  else if (mat_type == "copper_Cp")
-    return (scinew CopperCp(child));
-  else if (mat_type == "steel_Cp")
-    return (scinew SteelCp(child));
-  else {
+  if (mat_type == "constant_Cp") {
+    return (std::make_unique<ConstantCp>(child));
+  } else if (mat_type == "copper_Cp") {
+    return (std::make_unique<CopperCp>(child));
+  } else if (mat_type == "steel_Cp") {
+    return (std::make_unique<SteelCp>(child));
+  } else {
     proc0cout << "** WARNING ** Creating default (constant specific heat) model"
               << "\n";
-    return (scinew ConstantCp(child));
+    return (std::make_unique<ConstantCp>(child));
     // std::ostringstream desc;
     // desc << "**Error in Input UPS File: "
     //<< "MPM:SpecificHeatModel:  "
@@ -84,20 +86,20 @@ SpecificHeatModelFactory::create(ProblemSpecP& ps)
   }
 }
 
-SpecificHeatModel*
+std::unique_ptr<SpecificHeatModel>
 SpecificHeatModelFactory::createCopy(const SpecificHeatModel* smm)
 {
-  if (dynamic_cast<const ConstantCp*>(smm))
-    return (scinew ConstantCp(dynamic_cast<const ConstantCp*>(smm)));
-  else if (dynamic_cast<const CopperCp*>(smm))
-    return (scinew CopperCp(dynamic_cast<const CopperCp*>(smm)));
-  else if (dynamic_cast<const SteelCp*>(smm))
-    return (scinew SteelCp(dynamic_cast<const SteelCp*>(smm)));
-  else {
+  if (dynamic_cast<const ConstantCp*>(smm)) {
+    return (std::make_unique<ConstantCp>(dynamic_cast<const ConstantCp*>(smm)));
+  } else if (dynamic_cast<const CopperCp*>(smm)) {
+    return (std::make_unique<CopperCp>(dynamic_cast<const CopperCp*>(smm)));
+  } else if (dynamic_cast<const SteelCp*>(smm)) {
+    return (std::make_unique<SteelCp>(dynamic_cast<const SteelCp*>(smm)));
+  } else {
     proc0cout
       << "** WARNING ** Creating copy of default (constant specific heat) model"
       << "\n";
-    return (scinew ConstantCp(dynamic_cast<const ConstantCp*>(smm)));
+    return (std::make_unique<ConstantCp>(dynamic_cast<const ConstantCp*>(smm)));
     // std::ostringstream desc;
     // desc << "**Error in Material Copying: "
     // << "MPM:SpecificHeatModel:  "

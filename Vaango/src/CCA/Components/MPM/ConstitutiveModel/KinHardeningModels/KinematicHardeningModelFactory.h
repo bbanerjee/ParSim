@@ -39,11 +39,13 @@ class KinematicHardeningModelFactory
 {
 public:
   // this function has a switch for all known mat_types
-  static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps);
-  static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps,
-                                         InternalVariableModel* intvar);
-  static KinematicHardeningModel* createCopy(const KinematicHardeningModel* pm);
+  static std::unique_ptr<KinematicHardeningModel>
+  create(Uintah::ProblemSpecP& ps);
+  static std::unique_ptr<KinematicHardeningModel>
+  create(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  static std::unique_ptr<KinematicHardeningModel>
+  createCopy(const KinematicHardeningModel* pm);
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif /* _BB_KINEMATIC_HARDENING_MODELFACTORY_H_ */

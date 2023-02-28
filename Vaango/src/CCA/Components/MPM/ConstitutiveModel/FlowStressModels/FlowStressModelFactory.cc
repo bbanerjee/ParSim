@@ -25,8 +25,8 @@
  */
 
 #include "FlowStressModelFactory.h"
-#include "LinearHardeningFlow.h"
 #include "JohnsonCookFlow.h"
+#include "LinearHardeningFlow.h"
 #include "MTSFlow.h"
 #include "PTWFlow.h"
 #include "SCGFlow.h"
@@ -44,62 +44,74 @@ using std::ofstream;
 
 using namespace Uintah;
 
-FlowStressModel*
+std::unique_ptr<FlowStressModel>
 FlowStressModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("flow_model");
-  if (!child)
-    throw ProblemSetupException("Cannot find flow_model tag", __FILE__,
-                                __LINE__);
+  if (!child) {
+    throw ProblemSetupException(
+      "Cannot find flow_model tag", __FILE__, __LINE__);
+  }
   string mat_type;
-  if (!child->getAttribute("type", mat_type))
+  if (!child->getAttribute("type", mat_type)) {
     throw ProblemSetupException("No type for flow_model", __FILE__, __LINE__);
-  if (mat_type == "linear")
-    return (scinew LinearHardeningFlow(child));
-  else if (mat_type == "johnson_cook")
-    return (scinew JohnsonCookFlow(child));
-  else if (mat_type == "zerilli_armstrong")
-    return (scinew ZAFlow(child));
-  else if (mat_type == "zerilli_armstrong_polymer")
-    return (scinew ZAPolymerFlow(child));
-  else if (mat_type == "mechanical_threshold_stress")
-    return (scinew MTSFlow(child));
-  else if (mat_type == "steinberg_cochran_guinan")
-    return (scinew SCGFlow(child));
-  else if (mat_type == "preston_tonks_wallace")
-    return (scinew PTWFlow(child));
-  else {
-    throw ProblemSetupException("Unknown flow Model (" + mat_type + ")",
-                                __FILE__, __LINE__);
+  }
+  if (mat_type == "linear") {
+    return (std::make_unique<LinearHardeningFlow>(child));
+  } else if (mat_type == "johnson_cook") {
+    return (std::make_unique<JohnsonCookFlow>(child));
+  } else if (mat_type == "zerilli_armstrong") {
+    return (std::make_unique<ZAFlow>(child));
+  } else if (mat_type == "zerilli_armstrong_polymer") {
+    return (std::make_unique<ZAPolymerFlow>(child));
+  } else if (mat_type == "mechanical_threshold_stress") {
+    return (std::make_unique<MTSFlow>(child));
+  } else if (mat_type == "steinberg_cochran_guinan") {
+    return (std::make_unique<SCGFlow>(child));
+  } else if (mat_type == "preston_tonks_wallace") {
+    return (std::make_unique<PTWFlow>(child));
+  } else {
+    throw ProblemSetupException(
+      "Unknown flow Model (" + mat_type + ")", __FILE__, __LINE__);
   }
 }
 
-FlowStressModel*
+std::unique_ptr<FlowStressModel>
 FlowStressModelFactory::createCopy(const FlowStressModel* pm)
 {
-  if (dynamic_cast<const LinearHardeningFlow*>(pm))
-    return (scinew LinearHardeningFlow(dynamic_cast<const LinearHardeningFlow*>(pm)));
+  if (dynamic_cast<const LinearHardeningFlow*>(pm)) {
+    return (std::make_unique<LinearHardeningFlow>(
+      dynamic_cast<const LinearHardeningFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const JohnsonCookFlow*>(pm))
-    return (scinew JohnsonCookFlow(dynamic_cast<const JohnsonCookFlow*>(pm)));
+  else if (dynamic_cast<const JohnsonCookFlow*>(pm)) {
+    return (std::make_unique<JohnsonCookFlow>(
+      dynamic_cast<const JohnsonCookFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const ZAFlow*>(pm))
-    return (scinew ZAFlow(dynamic_cast<const ZAFlow*>(pm)));
+  else if (dynamic_cast<const ZAFlow*>(pm)) {
+    return (std::make_unique<ZAFlow>(dynamic_cast<const ZAFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const ZAPolymerFlow*>(pm))
-    return (scinew ZAPolymerFlow(dynamic_cast<const ZAPolymerFlow*>(pm)));
+  else if (dynamic_cast<const ZAPolymerFlow*>(pm)) {
+    return (
+      std::make_unique<ZAPolymerFlow>(dynamic_cast<const ZAPolymerFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const MTSFlow*>(pm))
-    return (scinew MTSFlow(dynamic_cast<const MTSFlow*>(pm)));
+  else if (dynamic_cast<const MTSFlow*>(pm)) {
+    return (std::make_unique<MTSFlow>(dynamic_cast<const MTSFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const SCGFlow*>(pm))
-    return (scinew SCGFlow(dynamic_cast<const SCGFlow*>(pm)));
+  else if (dynamic_cast<const SCGFlow*>(pm)) {
+    return (std::make_unique<SCGFlow>(dynamic_cast<const SCGFlow*>(pm)));
+  }
 
-  else if (dynamic_cast<const PTWFlow*>(pm))
-    return (scinew PTWFlow(dynamic_cast<const PTWFlow*>(pm)));
+  else if (dynamic_cast<const PTWFlow*>(pm)) {
+    return (std::make_unique<PTWFlow>(dynamic_cast<const PTWFlow*>(pm)));
+  }
 
   else {
-    throw ProblemSetupException("Cannot create copy of unknown flow model",
-                                __FILE__, __LINE__);
+    throw ProblemSetupException(
+      "Cannot create copy of unknown flow model", __FILE__, __LINE__);
   }
 }

@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/IsoMetalPlasticityExplicit.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/IsoMetalPlasticityImplicit.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
@@ -42,7 +42,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
@@ -53,6 +52,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Gaussian.h>
@@ -76,9 +76,10 @@ static DebugStream cout_EP1("SSEP1", false);
 static DebugStream CSTi("SSEPi", false);
 static DebugStream CSTir("SSEPir", false);
 
-IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
-                                                       MPMFlags* flags)
-  : ConstitutiveModel(flags)
+IsoMetalPlasticityImplicit::IsoMetalPlasticityImplicit(ProblemSpecP& ps,
+                                                       MPMFlags* Mflag)
+  : ConstitutiveModel(Mflag)
+  , ImplicitCM()
 {
   ps->require("bulk_modulus", d_initialData.Bulk);
   ps->require("shear_modulus", d_initialData.Shear);
@@ -93,9 +94,8 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_doIsothermal = false;
   d_isothermal   = 1.0;
   ps->get("isothermal", d_doIsothermal);
-  if (d_doIsothermal) {
+  if (d_doIsothermal)
     d_isothermal = 0.0;
-  }
 
   d_tol = 1.0e-10;
   ps->get("tolerance", d_tol);
@@ -118,7 +118,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    std::ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPMEOSFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -126,20 +126,20 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos.get());
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
-    std::ostringstream desc;
-    desc << "IsoMetalPlasticityExplicit::Error in shear modulus model factory"
+     std::ostringstream desc;
+    desc << "IsoMetalPlasticityImplicit::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    std::ostringstream desc;
-    desc << "IsoMetalPlasticityExplicit::Error in melting temp model factory"
+     std::ostringstream desc;
+    desc << "IsoMetalPlasticityImplicit::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
@@ -150,7 +150,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    std::ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the FlowStressModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -160,7 +160,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_kinematic = Vaango::KinematicHardeningModelFactory::create(ps);
   if (!d_kinematic) {
-    std::ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the KinematicHardeningModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -170,24 +170,24 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    std::ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
         << " default type is 'metal_internal_var'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
-    std::ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
         << " model. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
   }
 
   d_yield = Vaango::YieldConditionFactory::create(
-    ps, d_intvar.get(), const_cast<const FlowStressModel*>(d_flow.get()));
+    ps, d_intvar.get(), const_cast<const FlowStressModel*>(d_flow));
   if (!d_yield) {
-    std::ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.\n";
@@ -196,7 +196,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    std::ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -205,9 +205,8 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   }
 
   d_stable = StabilityCheckFactory::create(ps);
-  if (!d_stable) {
+  if (!d_stable)
     std::cerr << "Stability check disabled\n";
-  }
 
   setErosionAlgorithm();
   getInitialPorosityData(ps);
@@ -215,9 +214,10 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   initializeLocalMPMLabels();
 }
 
-IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(
-  const IsoMetalPlasticityExplicit* cm)
+IsoMetalPlasticityImplicit::IsoMetalPlasticityImplicit(
+  const IsoMetalPlasticityImplicit* cm)
   : ConstitutiveModel(cm)
+  , ImplicitCM(cm)
 {
   d_initialData.Bulk       = cm->d_initialData.Bulk;
   d_initialData.Shear      = cm->d_initialData.Shear;
@@ -252,28 +252,27 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(
   d_scalarDam.Dc               = cm->d_scalarDam.Dc;
   d_scalarDam.scalarDamageDist = cm->d_scalarDam.scalarDamageDist;
 
-  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
-  d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear.get());
-  d_elastic =
-    std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
+  d_shear   = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos, d_shear);
 
-  d_melt                = MeltingTempModelFactory::createCopy(cm->d_melt.get());
+  d_melt                = MeltingTempModelFactory::createCopy(cm->d_melt);
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
-  d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp.get());
+  d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp);
 
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
-  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
-  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow.get());
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(cm->d_intvar.get());
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
   d_kinematic =
-    Vaango::KinematicHardeningModelFactory::createCopy(cm->d_kinematic.get());
-  d_damage = DamageModelFactory::createCopy(cm->d_damage.get());
-  d_stable = StabilityCheckFactory::createCopy(cm->d_stable.get());
+    Vaango::KinematicHardeningModelFactory::createCopy(cm->d_kinematic);
+  d_damage = DamageModelFactory::createCopy(cm->d_damage);
+  d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
 
   initializeLocalMPMLabels();
 }
 
-IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
+IsoMetalPlasticityImplicit::~IsoMetalPlasticityImplicit()
 {
   // Destructor
   VarLabel::destroy(pStrainRateLabel);
@@ -293,10 +292,20 @@ IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
   VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pIntVarLabel_preReloc);
   VarLabel::destroy(pDStressDIntVarLabel_preReloc);
+
+  delete d_eos;
+  delete d_shear;
+  delete d_melt;
+  delete d_Cp;
+  delete d_yield;
+  delete d_flow;
+  delete d_kinematic;
+  delete d_damage;
+  delete d_stable;
 }
 
 void
-IsoMetalPlasticityExplicit::outputProblemSpec(ProblemSpecP& ps,
+IsoMetalPlasticityImplicit::outputProblemSpec(ProblemSpecP& ps,
                                               bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
@@ -349,13 +358,13 @@ IsoMetalPlasticityExplicit::outputProblemSpec(ProblemSpecP& ps,
 }
 
 std::unique_ptr<ConstitutiveModel>
-IsoMetalPlasticityExplicit::clone()
+IsoMetalPlasticityImplicit::clone()
 {
-  return std::make_unique<IsoMetalPlasticityExplicit>(this);
+  return std::make_unique<IsoMetalPlasticityImplicit>(*this);
 }
 
 void
-IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
+IsoMetalPlasticityImplicit::initializeLocalMPMLabels()
 {
   pStrainRateLabel = VarLabel::create(
     "p.strainRate", ParticleVariable<double>::getTypeDescription());
@@ -395,7 +404,7 @@ IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
 }
 
 void
-IsoMetalPlasticityExplicit::getInitialPorosityData(ProblemSpecP& ps)
+IsoMetalPlasticityImplicit::getInitialPorosityData(ProblemSpecP& ps)
 {
   d_evolvePorosity = true;
   ps->get("evolve_porosity", d_evolvePorosity);
@@ -416,7 +425,7 @@ IsoMetalPlasticityExplicit::getInitialPorosityData(ProblemSpecP& ps)
 }
 
 void
-IsoMetalPlasticityExplicit::getInitialDamageData(ProblemSpecP& ps)
+IsoMetalPlasticityImplicit::getInitialDamageData(ProblemSpecP& ps)
 {
   d_evolveDamage = true;
   ps->get("evolve_damage", d_evolveDamage);
@@ -431,21 +440,20 @@ IsoMetalPlasticityExplicit::getInitialDamageData(ProblemSpecP& ps)
 }
 
 void
-IsoMetalPlasticityExplicit::setErosionAlgorithm()
+IsoMetalPlasticityImplicit::setErosionAlgorithm()
 {
   d_setStressToZero = false;
   d_allowNoTension  = false;
   if (flag->d_doErosion) {
-    if (flag->d_erosionAlgorithm == "AllowNoTension") {
+    if (flag->d_erosionAlgorithm == "AllowNoTension")
       d_allowNoTension = true;
-    } else if (flag->d_erosionAlgorithm == "ZeroStress") {
+    else if (flag->d_erosionAlgorithm == "ZeroStress")
       d_setStressToZero = true;
-    }
   }
 }
 
 void
-IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
+IsoMetalPlasticityImplicit::addParticleState(std::vector<const VarLabel*>& from,
                                              std::vector<const VarLabel*>& to)
 {
   // Add the local particle state data for this constitutive model.
@@ -473,7 +481,7 @@ IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-IsoMetalPlasticityExplicit::addInitialComputesAndRequires(
+IsoMetalPlasticityImplicit::addInitialComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
   const PatchSet* patch) const
@@ -495,18 +503,25 @@ IsoMetalPlasticityExplicit::addInitialComputesAndRequires(
 }
 
 void
-IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
+IsoMetalPlasticityImplicit::initializeCMData(const Patch* patch,
                                              const MPMMaterial* matl,
                                              DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
-  initSharedDataForExplicit(patch, matl, new_dw);
-  computeStableTimestep(patch, matl, new_dw);
+  if (flag->d_integrator == MPMFlags::Implicit)
+    initSharedDataForImplicit(patch, matl, new_dw);
+  else {
+    initSharedDataForExplicit(patch, matl, new_dw);
+    computeStableTimestep(patch, matl, new_dw);
+  }
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
-  // std::cout << "Initialize CM Data in IsoMetalPlasticityExplicit" << "\n";
+  // std::cout << "Initialize CM Data in IsoMetalPlasticityImplicit" << "\n";
+  Matrix3 one, zero(0.);
+  one.Identity();
+
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   ParticleVariable<double> pPlasticStrain, pDamage, pPorosity,
@@ -567,7 +582,7 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
 }
 
 void
-IsoMetalPlasticityExplicit::computeStableTimestep(const Patch* patch,
+IsoMetalPlasticityImplicit::computeStableTimestep(const Patch* patch,
                                                   const MPMMaterial* matl,
                                                   DataWarehouse* new_dw)
 {
@@ -613,7 +628,7 @@ IsoMetalPlasticityExplicit::computeStableTimestep(const Patch* patch,
 }
 
 void
-IsoMetalPlasticityExplicit::addComputesAndRequires(
+IsoMetalPlasticityImplicit::addComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
   const PatchSet* patches) const
@@ -623,7 +638,11 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   // base class.
   Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForHypoExplicit(task, matlset, patches);
+  if (flag->d_integrator == MPMFlags::Implicit) {
+    addSharedCRForImplicit(task, matlset, patches);
+  } else {
+    addSharedCRForHypoExplicit(task, matlset, patches);
+  }
 
   // Other constitutive model and input dependent computes and requires
   task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
@@ -652,7 +671,7 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
 }
 
 void
-IsoMetalPlasticityExplicit::computeStressTensor(const PatchSubset* patches,
+IsoMetalPlasticityImplicit::computeStressTensor(const PatchSubset* patches,
                                                 const MPMMaterial* matl,
                                                 DataWarehouse* old_dw,
                                                 DataWarehouse* new_dw)
@@ -665,7 +684,7 @@ IsoMetalPlasticityExplicit::computeStressTensor(const PatchSubset* patches,
 }
 
 void
-IsoMetalPlasticityExplicit::computeStressTensorExplicit(
+IsoMetalPlasticityImplicit::computeStressTensorExplicit(
   const PatchSubset* patches,
   const MPMMaterial* matl,
   DataWarehouse* old_dw,
@@ -977,7 +996,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
                     << " ep = " << state.eqPlasticStrain
                     << " T = " << state.temperature << " p = " << state.pressure
                     << " sigy = " << state.yieldStress << "\n";
-          throw InvalidValue("**ERROR**:IsoMetalPlasticityExplicit: f_0 = nan.",
+          throw InvalidValue("**ERROR**:IsoMetalPlasticityImplicit: f_0 = nan.",
                              __FILE__,
                              __LINE__);
         }
@@ -1052,7 +1071,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
                         << " df_dphi = " << df_dphi_k << " denom = " << denom
                         << "\n";
               throw InvalidValue(
-                "**ERROR**:IsoMetalPlasticityExplicit: Found nan.",
+                "**ERROR**:IsoMetalPlasticityImplicit: Found nan.",
                 __FILE__,
                 __LINE__);
             }
@@ -1110,9 +1129,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
               d_intvar->computeInternalVariable("porosity", &state_old, &state);
             sigma_k = sigma_trial - term1_k * Delta_gamma;
 
-            if (fabs(Delta_gamma - Delta_gamma_old) < d_tol || count > 100) {
+            if (fabs(Delta_gamma - Delta_gamma_old) < d_tol || count > 100)
               break;
-            }
 
             // Update the flow stress
             state.yieldStress =
@@ -1176,14 +1194,12 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       if (flag->d_doErosion) {
         if (pLocalized_old[idx]) {
           if (d_allowNoTension) {
-            if (pressure_new > 0.0) {
+            if (pressure_new > 0.0)
               sigma_new = zero;
-            } else {
+            else
               sigma_new = one * pressure_new;
-            }
-          } else if (d_setStressToZero) {
+          } else if (d_setStressToZero)
             sigma_new = zero;
-          }
         }
       }
 
@@ -1237,9 +1253,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       if (flag->d_doErosion) {
 
         // Check 1: Look at the temperature
-        if (melted) {
+        if (melted)
           isLocalized = true;
-        }
 
         // Check 2 and 3: Look at TEPLA and stability
         else if (plastic) {
@@ -1248,9 +1263,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
           if (d_checkTeplaFailureCriterion) {
             tepla = pow(pPorosity_new[idx] / d_porosity.fc, 2.0) +
                     pow(pDamage_new[idx], 2.0);
-            if (tepla > 1.0) {
+            if (tepla > 1.0)
               isLocalized = true;
-            }
           }
 
           // Check 3: Stability criterion (only if material is plastic)
@@ -1265,9 +1279,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
             state.yieldStress =
               d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
-            if (!(state.yieldStress > 0.0)) {
+            if (!(state.yieldStress > 0.0))
               isLocalized = true;
-            } else {
+            else {
 
               // Create an updated state
               ModelStateBase state_new(state);
@@ -1367,14 +1381,12 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
             // Apply various erosion algorithms
             if (d_allowNoTension) {
-              if (pressure_new > 0.0) {
+              if (pressure_new > 0.0)
                 sigma_new = zero;
-              } else {
+              else
                 sigma_new = one * pressure_new;
-              }
-            } else if (d_setStressToZero) {
+            } else if (d_setStressToZero)
               sigma_new = zero;
-            }
           }
         }
       }
@@ -1448,17 +1460,16 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     // delete interpolator;
   }
 
-  if (cout_EP.active()) {
+  if (cout_EP.active())
     cout_EP << getpid() << "... End."
             << "\n";
-  }
 }
 
 std::tuple<Vaango::Tensor::Matrix6Mandel,
            Vaango::Tensor::Vector6Mandel,
            Vaango::Tensor::Vector6Mandel,
            double>
-IsoMetalPlasticityExplicit::computeElasPlasTangentModulus(
+IsoMetalPlasticityImplicit::computeElasPlasTangentModulus(
   Vaango::Tensor::Matrix6Mandel& C_e,
   std::vector<Matrix3>& sigma_eta,
   const ModelStateBase* state) const
@@ -1515,7 +1526,93 @@ IsoMetalPlasticityExplicit::computeElasPlasTangentModulus(
 }
 
 void
-IsoMetalPlasticityExplicit::carryForward(const PatchSubset* patches,
+IsoMetalPlasticityImplicit::computeStressTensorImplicit(
+  const PatchSubset* patches,
+  const MPMMaterial* matl,
+  DataWarehouse* old_dw,
+  DataWarehouse* new_dw)
+{
+  throw InvalidValue(
+    "**ERROR**:IsoMetalPlasticityImplicit: No implicit stress update available",
+    __FILE__,
+    __LINE__);
+}
+
+void
+IsoMetalPlasticityImplicit::addComputesAndRequires(Task* task,
+                                                   const MPMMaterial* matl,
+                                                   const PatchSet* patches,
+                                                   const bool recurse,
+                                                   const bool SchedParent) const
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForImplicit(task, matlset, patches, recurse, SchedParent);
+
+  // Local stuff
+  Ghost::GhostType gnone = Ghost::None;
+  if (SchedParent) {
+    task->requires(Task::ParentOldDW, lb->pTempPreviousLabel, matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pTemperatureLabel, matlset, gnone);
+    task->requires(Task::ParentOldDW, pPlasticStrainLabel, matlset, gnone);
+    task->requires(Task::ParentOldDW, pPlasticStrainRateLabel, matlset, gnone);
+    task->requires(Task::ParentOldDW, pPorosityLabel, matlset, gnone);
+  } else {
+    task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+    task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
+    task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
+    task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
+    task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
+  }
+
+  // Add internal evolution variables computed by plasticity model
+  d_flow->addComputesAndRequires(task, matl, patches, recurse, SchedParent);
+  d_kinematic->addComputesAndRequires(task, matl, patches, recurse);
+}
+
+void
+IsoMetalPlasticityImplicit::computeStressTensorImplicit(
+  const PatchSubset* patches,
+  const MPMMaterial* matl,
+  DataWarehouse* old_dw,
+  DataWarehouse* new_dw,
+  Solver* solver,
+  const bool)
+{
+  throw InvalidValue(
+    "**ERROR**:IsoMetalPlasticityImplicit: No implicit stress update available",
+    __FILE__,
+    __LINE__);
+}
+
+/*! Compute K matrix */
+void
+IsoMetalPlasticityImplicit::computeStiffnessMatrix(const double B[6][24],
+                                                   const double Bnl[3][24],
+                                                   const double D[6][6],
+                                                   const Matrix3& sig,
+                                                   const double& vol_old,
+                                                   const double& vol_new,
+                                                   double Kmatrix[24][24])
+{
+  throw InvalidValue(
+    "**ERROR**:IsoMetalPlasticityImplicit: No stiffness matrix available",
+    __FILE__,
+    __LINE__);
+}
+
+void
+IsoMetalPlasticityImplicit::BnlTSigBnl(const Matrix3& sig,
+                                       const double Bnl[3][24],
+                                       double Kgeo[24][24]) const
+{
+  throw InvalidValue("**ERROR**:IsoMetalPlasticityImplicit: No geometric "
+                     "stiffness matrix available",
+                     __FILE__,
+                     __LINE__);
+}
+
+void
+IsoMetalPlasticityImplicit::carryForward(const PatchSubset* patches,
                                          const MPMMaterial* matl,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
@@ -1582,7 +1679,93 @@ IsoMetalPlasticityExplicit::carryForward(const PatchSubset* patches,
 }
 
 void
-IsoMetalPlasticityExplicit::addRequiresDamageParameter(Task* task,
+IsoMetalPlasticityImplicit::allocateCMDataAddRequires(Task* task,
+                                                      const MPMMaterial* matl,
+                                                      const PatchSet* patch,
+                                                      MPMLabel* lb) const
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+
+  // Allocate the variables shared by all constitutive models
+  // for the particle convert operation
+  // This method is defined in the ConstitutiveModel base class.
+  addSharedRForConvertExplicit(task, matlset, patch);
+
+  // Add requires local to this model
+  Ghost::GhostType gnone = Ghost::None;
+  task->requires(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pPlasticStrainRateLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
+  d_flow->allocateCMDataAddRequires(task, matl, patch, lb);
+  d_kinematic->allocateCMDataAddRequires(task, matl, patch, lb);
+}
+
+void
+IsoMetalPlasticityImplicit::allocateCMDataAdd(
+  DataWarehouse* new_dw,
+  ParticleSubset* addset,
+  ParticleLabelVariableMap* newState,
+  ParticleSubset* delset,
+  DataWarehouse* old_dw)
+{
+  // Copy the data common to all constitutive models from the particle to be
+  // deleted to the particle to be added.
+  // This method is defined in the ConstitutiveModel base class.
+  copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
+
+  // Copy the data local to this constitutive model from the particles to
+  // be deleted to the particles to be added
+  ParticleSubset::iterator n, o;
+
+  ParticleVariable<double> pPlasticStrain, pDamage, pPorosity, pStrainRate,
+    pPlasticStrainRate;
+  ParticleVariable<int> pLocalized;
+
+  constParticleVariable<double> o_PlasticStrain, o_Damage, o_Porosity,
+    o_StrainRate, o_PlasticStrainRate;
+  constParticleVariable<int> o_Localized;
+
+  new_dw->allocateTemporary(pPlasticStrain, addset);
+  new_dw->allocateTemporary(pPlasticStrainRate, addset);
+  new_dw->allocateTemporary(pDamage, addset);
+  new_dw->allocateTemporary(pStrainRate, addset);
+  new_dw->allocateTemporary(pLocalized, addset);
+  new_dw->allocateTemporary(pPorosity, addset);
+
+  new_dw->get(o_StrainRate, pStrainRateLabel_preReloc, delset);
+  new_dw->get(o_PlasticStrain, pPlasticStrainLabel_preReloc, delset);
+  new_dw->get(o_PlasticStrainRate, pPlasticStrainRateLabel_preReloc, delset);
+  new_dw->get(o_Damage, pDamageLabel_preReloc, delset);
+  new_dw->get(o_Localized, pLocalizedLabel_preReloc, delset);
+  new_dw->get(o_Porosity, pPorosityLabel_preReloc, delset);
+
+  n = addset->begin();
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
+    pStrainRate[*n]        = o_StrainRate[*o];
+    pPlasticStrain[*n]     = o_PlasticStrain[*o];
+    pPlasticStrainRate[*n] = o_PlasticStrainRate[*o];
+    pDamage[*n]            = o_Damage[*o];
+    pLocalized[*n]         = o_Localized[*o];
+    pPorosity[*n]          = o_Porosity[*o];
+  }
+
+  (*newState)[pStrainRateLabel]        = pStrainRate.clone();
+  (*newState)[pPlasticStrainLabel]     = pPlasticStrain.clone();
+  (*newState)[pPlasticStrainRateLabel] = pPlasticStrainRate.clone();
+  (*newState)[pDamageLabel]            = pDamage.clone();
+  (*newState)[pLocalizedLabel]         = pLocalized.clone();
+  (*newState)[pPorosityLabel]          = pPorosity.clone();
+
+  // Initialize the data for the plasticity model
+  d_flow->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
+  d_kinematic->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
+}
+
+void
+IsoMetalPlasticityImplicit::addRequiresDamageParameter(Task* task,
                                                        const MPMMaterial* matl,
                                                        const PatchSet*) const
 {
@@ -1591,7 +1774,7 @@ IsoMetalPlasticityExplicit::addRequiresDamageParameter(Task* task,
 }
 
 void
-IsoMetalPlasticityExplicit::getDamageParameter(const Patch* patch,
+IsoMetalPlasticityImplicit::getDamageParameter(const Patch* patch,
                                                ParticleVariable<int>& damage,
                                                int dwi,
                                                DataWarehouse* old_dw,
@@ -1611,7 +1794,7 @@ IsoMetalPlasticityExplicit::getDamageParameter(const Patch* patch,
 }
 
 double
-IsoMetalPlasticityExplicit::computeRhoMicroCM(double pressure,
+IsoMetalPlasticityImplicit::computeRhoMicroCM(double pressure,
                                               const double p_ref,
                                               const MPMMaterial* matl,
                                               double temperature,
@@ -1636,7 +1819,7 @@ IsoMetalPlasticityExplicit::computeRhoMicroCM(double pressure,
 }
 
 void
-IsoMetalPlasticityExplicit::computePressEOSCM(double rho_cur,
+IsoMetalPlasticityImplicit::computePressEOSCM(double rho_cur,
                                               double& pressure,
                                               double p_ref,
                                               double& dp_drho,
@@ -1664,7 +1847,33 @@ IsoMetalPlasticityExplicit::computePressEOSCM(double rho_cur,
 }
 
 double
-IsoMetalPlasticityExplicit::getCompressibility()
+IsoMetalPlasticityImplicit::getCompressibility()
 {
   return 1.0 / d_initialData.Bulk;
+}
+
+void
+IsoMetalPlasticityImplicit::scheduleCheckNeedAddMPMMaterial(
+  Task* task,
+  const MPMMaterial*,
+  const PatchSet*) const
+{
+  task->computes(lb->NeedAddMPMMaterialLabel);
+}
+
+void
+IsoMetalPlasticityImplicit::checkNeedAddMPMMaterial(const PatchSubset* patches,
+                                                    const MPMMaterial* matl,
+                                                    DataWarehouse*,
+                                                    DataWarehouse* new_dw)
+{
+  if (cout_EP.active()) {
+    cout_EP << getpid() << "checkNeedAddMPMMaterial: In : Matl = " << matl
+            << " id = " << matl->getDWIndex()
+            << " patch = " << (patches->get(0))->getID();
+  }
+
+  double need_add = 0.;
+
+  new_dw->put(sum_vartype(need_add), lb->NeedAddMPMMaterialLabel);
 }

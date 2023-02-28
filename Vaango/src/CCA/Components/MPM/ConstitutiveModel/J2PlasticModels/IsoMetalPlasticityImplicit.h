@@ -55,7 +55,7 @@ class MPMFlags;
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
-  \class IsoMetalPlasticityExplicit
+  \class IsoMetalPlasticityImplicit
   \brief Small strain/Large rotation Hypo-Elastic Plastic Constitutive Model
   \author Biswajit Banerjee \n
   C-SAFE and Department of Mechanical Engineering \n
@@ -82,17 +82,12 @@ class MPMFlags;
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class IsoMetalPlasticityExplicit : public ConstitutiveModel
+class IsoMetalPlasticityImplicit
+  : public ConstitutiveModel
+  , public ImplicitCM
 {
 
 public:
-  inline static const Matrix3 zero{
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-  };
-  inline static const Matrix3 one{
-    1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0
-  };
-
   // Create datatype for storing model parameters
   struct CMData
   {
@@ -127,7 +122,6 @@ public:
   const VarLabel* pStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
   const VarLabel* pPlasticStrainRateLabel;
-  const VarLabel* pEquivalentPlasticStrainLabel;
   const VarLabel* pDamageLabel;
   const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
@@ -137,7 +131,6 @@ public:
   const VarLabel* pStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
   const VarLabel* pPlasticStrainRateLabel_preReloc;
-  const VarLabel* pEquivalentPlasticStrainLabel_preReloc;
   const VarLabel* pDamageLabel_preReloc;
   const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
@@ -149,47 +142,47 @@ protected:
   PorosityData d_porosity;
   ScalarDamageData d_scalarDam;
 
-  double d_tol{ 1.0e-8 };
-  double d_initialMaterialTemperature{ 294.0 };
-  double d_isothermal{ 0.0 };
-  bool d_doIsothermal{ false };
-  bool d_useModifiedEOS{ false };
-  bool d_evolvePorosity{ false };
-  bool d_evolveDamage{ false };
-  bool d_computeSpecificHeat{ false };
-  bool d_checkTeplaFailureCriterion{ false };
-  bool d_doMelting{ false };
-  bool d_checkStressTriax{ false };
+  double d_tol;
+  double d_initialMaterialTemperature;
+  double d_isothermal;
+  bool d_doIsothermal;
+  bool d_useModifiedEOS;
+  bool d_evolvePorosity;
+  bool d_evolveDamage;
+  bool d_computeSpecificHeat;
+  bool d_checkTeplaFailureCriterion;
+  bool d_doMelting;
+  bool d_checkStressTriax;
 
   // Erosion algorithms
-  bool d_setStressToZero{ false };
-  bool d_allowNoTension{ false };
+  bool d_setStressToZero;
+  bool d_allowNoTension;
 
-  std::unique_ptr<Vaango::MPMEquationOfState> d_eos;
-  std::unique_ptr<Vaango::ShearModulusModel> d_shear;
-  std::unique_ptr<Vaango::KinematicHardeningModel> d_kinematic;
-  std::unique_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
-  std::unique_ptr<Vaango::IntVar_Metal> d_intvar;
-  std::unique_ptr<Vaango::YieldCondition> d_yield;
-  std::unique_ptr<MeltingTempModel> d_melt;
-  std::unique_ptr<SpecificHeatModel> d_Cp;
-  std::unique_ptr<FlowStressModel> d_flow;
-  std::unique_ptr<DamageModel> d_damage;
-  std::unique_ptr<StabilityCheck> d_stable;
+  Vaango::MPMEquationOfState* d_eos;
+  Vaango::ShearModulusModel* d_shear;
+  Vaango::KinematicHardeningModel* d_kinematic;
+  std::shared_ptr<Vaango::ElasticModuli_MetalIso> d_elastic;
+  std::shared_ptr<Vaango::IntVar_Metal> d_intvar;
+  Vaango::YieldCondition* d_yield;
+  MeltingTempModel* d_melt;
+  SpecificHeatModel* d_Cp;
+  FlowStressModel* d_flow;
+  DamageModel* d_damage;
+  StabilityCheck* d_stable;
 
 public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
-  IsoMetalPlasticityExplicit(ProblemSpecP& ps, MPMFlags* flag);
-  IsoMetalPlasticityExplicit(const IsoMetalPlasticityExplicit* cm);
-  IsoMetalPlasticityExplicit&
-  operator=(const IsoMetalPlasticityExplicit& cm) = delete;
+  IsoMetalPlasticityImplicit(ProblemSpecP& ps, MPMFlags* flag);
+  IsoMetalPlasticityImplicit(const IsoMetalPlasticityImplicit* cm);
+  IsoMetalPlasticityImplicit&
+  operator=(const IsoMetalPlasticityImplicit& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
-  ~IsoMetalPlasticityExplicit() override;
+  ~IsoMetalPlasticityImplicit() override;
 
   ModelType
   modelType() const override
@@ -215,7 +208,7 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief initialize  each particle's constitutive model data */
   ////////////////////////////////////////////////////////////////////////
-  virtual void
+  void
   initializeCMData(const Patch* patch,
                    const MPMMaterial* matl,
                    DataWarehouse* new_dw) override;
@@ -231,7 +224,7 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  virtual void
+  void
   addComputesAndRequires(Task* task,
                          const MPMMaterial* matl,
                          const PatchSet* patches) const override;
@@ -247,11 +240,32 @@ public:
     \f]
   */
   ////////////////////////////////////////////////////////////////////////
-  virtual void
+  void
   computeStressTensor(const PatchSubset* patches,
                       const MPMMaterial* matl,
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw) override;
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! \brief Put documentation here. */
+  ////////////////////////////////////////////////////////////////////////
+  void
+  addComputesAndRequires(Task*,
+                         const MPMMaterial*,
+                         const PatchSet*,
+                         const bool,
+                         const bool) const override;
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! \brief Compute Stress Tensor Implicit */
+  ////////////////////////////////////////////////////////////////////////
+  void
+  computeStressTensorImplicit(const PatchSubset* patches,
+                              const MPMMaterial* matl,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw,
+                              Solver* solver,
+                              const bool recursion) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief carry forward CM data for RigidMPM */
@@ -287,9 +301,7 @@ public:
   allocateCMDataAddRequires(Task* task,
                             const MPMMaterial* matl,
                             const PatchSet* patch,
-                            MPMLabel* lb) const override
-  {
-  }
+                            MPMLabel* lb) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
@@ -299,9 +311,7 @@ public:
                     ParticleSubset* subset,
                     ParticleLabelVariableMap* newState,
                     ParticleSubset* delset,
-                    DataWarehouse* old_dw) override
-  {
-  }
+                    DataWarehouse* old_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
@@ -309,9 +319,7 @@ public:
   void
   scheduleCheckNeedAddMPMMaterial(Task* task,
                                   const MPMMaterial* matl,
-                                  const PatchSet* patches) const override
-  {
-  }
+                                  const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
@@ -320,9 +328,7 @@ public:
   checkNeedAddMPMMaterial(const PatchSubset* patches,
                           const MPMMaterial* matl,
                           DataWarehouse* old_dw,
-                          DataWarehouse* new_dw) override
-  {
-  }
+                          DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief initialize  each particle's constitutive model data */
@@ -376,6 +382,35 @@ protected:
                               const MPMMaterial* matl,
                               DataWarehouse* old_dw,
                               DataWarehouse* new_dw);
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! compute stress at each particle in the patch */
+  ////////////////////////////////////////////////////////////////////////
+  void
+  computeStressTensorImplicit(const PatchSubset* patches,
+                              const MPMMaterial* matl,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw) override;
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! Compute K matrix */
+  ////////////////////////////////////////////////////////////////////////
+  void
+  computeStiffnessMatrix(const double B[6][24],
+                         const double Bnl[3][24],
+                         const double D[6][6],
+                         const Matrix3& sig,
+                         const double& vol_old,
+                         const double& vol_new,
+                         double Kmatrix[24][24]);
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! Compute stiffness matrix for geomtric nonlinearity */
+  ////////////////////////////////////////////////////////////////////////
+  void
+  BnlTSigBnl(const Matrix3& sig,
+             const double Bnl[3][24],
+             double Kgeo[24][24]) const;
 
 protected:
   void
