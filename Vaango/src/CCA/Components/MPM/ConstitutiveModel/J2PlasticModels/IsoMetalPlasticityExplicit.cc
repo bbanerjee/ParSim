@@ -76,6 +76,9 @@ static DebugStream cout_EP1("SSEP1", false);
 static DebugStream CSTi("SSEPi", false);
 static DebugStream CSTir("SSEPir", false);
 
+const double IsoMetalPlasticityExplicit::sqrtThreeTwo = sqrt(1.5);
+const double IsoMetalPlasticityExplicit::sqrtTwoThird = 1.0 / sqrtThreeTwo;
+
 IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
                                                        MPMFlags* flags)
   : ConstitutiveModel(flags)
@@ -134,7 +137,8 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
+  d_elastic =
+    std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
@@ -279,6 +283,9 @@ IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
   VarLabel::destroy(pStrainRateLabel);
   VarLabel::destroy(pPlasticStrainLabel);
   VarLabel::destroy(pPlasticStrainRateLabel);
+  VarLabel::destroy(pEqStrainRateLabel);
+  VarLabel::destroy(pEqPlasticStrainLabel);
+  VarLabel::destroy(pEqPlasticStrainRateLabel);
   VarLabel::destroy(pDamageLabel);
   VarLabel::destroy(pPorosityLabel);
   VarLabel::destroy(pLocalizedLabel);
@@ -288,6 +295,9 @@ IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
   VarLabel::destroy(pStrainRateLabel_preReloc);
   VarLabel::destroy(pPlasticStrainLabel_preReloc);
   VarLabel::destroy(pPlasticStrainRateLabel_preReloc);
+  VarLabel::destroy(pEqStrainRateLabel_preReloc);
+  VarLabel::destroy(pEqPlasticStrainLabel_preReloc);
+  VarLabel::destroy(pEqPlasticStrainRateLabel_preReloc);
   VarLabel::destroy(pDamageLabel_preReloc);
   VarLabel::destroy(pPorosityLabel_preReloc);
   VarLabel::destroy(pLocalizedLabel_preReloc);
@@ -358,11 +368,17 @@ void
 IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
 {
   pStrainRateLabel = VarLabel::create(
-    "p.strainRate", ParticleVariable<double>::getTypeDescription());
+    "p.strainRate", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainLabel = VarLabel::create(
-    "p.plasticStrain", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrain", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainRateLabel = VarLabel::create(
-    "p.plasticStrainRate", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrainRate", ParticleVariable<Matrix3>::getTypeDescription());
+  pEqStrainRateLabel = VarLabel::create(
+    "p.eqStrainRate", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainLabel = VarLabel::create(
+    "p.eqPlasticStrain", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainRateLabel = VarLabel::create(
+    "p.eqPlasticStrainRate", ParticleVariable<double>::getTypeDescription());
   pDamageLabel = VarLabel::create(
     "p.damage", ParticleVariable<double>::getTypeDescription());
   pPorosityLabel = VarLabel::create(
@@ -376,11 +392,17 @@ IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
     ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 
   pStrainRateLabel_preReloc = VarLabel::create(
-    "p.strainRate+", ParticleVariable<double>::getTypeDescription());
+    "p.strainRate+", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainLabel_preReloc = VarLabel::create(
-    "p.plasticStrain+", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrain+", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainRateLabel_preReloc = VarLabel::create(
-    "p.plasticStrainRate+", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrainRate+", ParticleVariable<Matrix3>::getTypeDescription());
+  pEqStrainRateLabel_preReloc = VarLabel::create(
+    "p.eqStrainRate+", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainLabel_preReloc = VarLabel::create(
+    "p.eqPlasticStrain+", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainRateLabel_preReloc = VarLabel::create(
+    "p.eqPlasticStrainRate+", ParticleVariable<double>::getTypeDescription());
   pDamageLabel_preReloc = VarLabel::create(
     "p.damage+", ParticleVariable<double>::getTypeDescription());
   pPorosityLabel_preReloc = VarLabel::create(
@@ -452,6 +474,9 @@ IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pStrainRateLabel);
   from.push_back(pPlasticStrainLabel);
   from.push_back(pPlasticStrainRateLabel);
+  from.push_back(pEqStrainRateLabel);
+  from.push_back(pEqPlasticStrainLabel);
+  from.push_back(pEqPlasticStrainRateLabel);
   from.push_back(pDamageLabel);
   from.push_back(pPorosityLabel);
   from.push_back(pLocalizedLabel);
@@ -461,6 +486,9 @@ IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pStrainRateLabel_preReloc);
   to.push_back(pPlasticStrainLabel_preReloc);
   to.push_back(pPlasticStrainRateLabel_preReloc);
+  to.push_back(pEqStrainRateLabel_preReloc);
+  to.push_back(pEqPlasticStrainLabel_preReloc);
+  to.push_back(pEqPlasticStrainRateLabel_preReloc);
   to.push_back(pDamageLabel_preReloc);
   to.push_back(pPorosityLabel_preReloc);
   to.push_back(pLocalizedLabel_preReloc);
@@ -483,6 +511,9 @@ IsoMetalPlasticityExplicit::addInitialComputesAndRequires(
   task->computes(pStrainRateLabel, matlset);
   task->computes(pPlasticStrainLabel, matlset);
   task->computes(pPlasticStrainRateLabel, matlset);
+  task->computes(pEqStrainRateLabel, matlset);
+  task->computes(pEqPlasticStrainLabel, matlset);
+  task->computes(pEqPlasticStrainRateLabel, matlset);
   task->computes(pDamageLabel, matlset);
   task->computes(pPorosityLabel, matlset);
   task->computes(pLocalizedLabel, matlset);
@@ -509,8 +540,10 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
   // std::cout << "Initialize CM Data in IsoMetalPlasticityExplicit" << "\n";
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  ParticleVariable<double> pPlasticStrain, pDamage, pPorosity,
-    pPlasticStrainRate, pStrainRate;
+  ParticleVariable<Matrix3> pPlasticStrain, pPlasticStrainRate, pStrainRate;
+  ParticleVariable<double> pEqPlasticStrain, pEqPlasticStrainRate,
+    pEqStrainRate;
+  ParticleVariable<double> pDamage, pPorosity;
   ParticleVariable<int> pLocalized;
   ParticleVariable<MetalIntVar> pIntVar;
   ParticleVariable<DStressDMetalIntVar> pDStressDIntVar;
@@ -518,6 +551,9 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pStrainRate, pStrainRateLabel, pset);
   new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
   new_dw->allocateAndPut(pPlasticStrainRate, pPlasticStrainRateLabel, pset);
+  new_dw->allocateAndPut(pEqStrainRate, pEqStrainRateLabel, pset);
+  new_dw->allocateAndPut(pEqPlasticStrain, pEqPlasticStrainLabel, pset);
+  new_dw->allocateAndPut(pEqPlasticStrainRate, pEqPlasticStrainRateLabel, pset);
   new_dw->allocateAndPut(pDamage, pDamageLabel, pset);
   new_dw->allocateAndPut(pPorosity, pPorosityLabel, pset);
   new_dw->allocateAndPut(pLocalized, pLocalizedLabel, pset);
@@ -526,14 +562,17 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
 
   for (auto idx : *pset) {
 
-    pStrainRate[idx]        = 0.0;
-    pPlasticStrain[idx]     = 0.0;
-    pPlasticStrainRate[idx] = 0.0;
-    pDamage[idx]            = d_damage->initialize();
-    pPorosity[idx]          = d_porosity.f0;
-    pLocalized[idx]         = 0;
-    pIntVar[idx]            = { 0.0, 0.0 };
-    pDStressDIntVar[idx]    = { Matrix3(0.0), Matrix3(0.0) };
+    pStrainRate[idx]          = zero;
+    pPlasticStrain[idx]       = zero;
+    pPlasticStrainRate[idx]   = zero;
+    pEqStrainRate[idx]        = 0.0;
+    pEqPlasticStrain[idx]     = 0.0;
+    pEqPlasticStrainRate[idx] = 0.0;
+    pDamage[idx]              = d_damage->initialize();
+    pPorosity[idx]            = d_porosity.f0;
+    pLocalized[idx]           = 0;
+    pIntVar[idx]              = { 0.0, 0.0 };
+    pDStressDIntVar[idx]      = { Matrix3(0.0), Matrix3(0.0) };
   }
 
   // Do some extra things if the porosity or the damage distribution
@@ -631,6 +670,9 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   task->requires(Task::OldDW, pStrainRateLabel, matlset, gnone);
   task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
   task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
   task->requires(Task::OldDW, pDamageLabel, matlset, gnone);
   task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
   task->requires(Task::OldDW, pLocalizedLabel, matlset, gnone);
@@ -640,6 +682,9 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   task->computes(pStrainRateLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pPlasticStrainRateLabel_preReloc, matlset);
+  task->computes(pEqStrainRateLabel_preReloc, matlset);
+  task->computes(pEqPlasticStrainLabel_preReloc, matlset);
+  task->computes(pEqPlasticStrainRateLabel_preReloc, matlset);
   task->computes(pDamageLabel_preReloc, matlset);
   task->computes(pPorosityLabel_preReloc, matlset);
   task->computes(pLocalizedLabel_preReloc, matlset);
@@ -657,11 +702,7 @@ IsoMetalPlasticityExplicit::computeStressTensor(const PatchSubset* patches,
                                                 DataWarehouse* old_dw,
                                                 DataWarehouse* new_dw)
 {
-  if (flag->d_integrator == MPMFlags::Implicit) {
-    computeStressTensorImplicit(patches, matl, old_dw, new_dw);
-  } else {
-    computeStressTensorExplicit(patches, matl, old_dw, new_dw);
-  }
+  computeStressTensorExplicit(patches, matl, old_dw, new_dw);
 }
 
 void
@@ -672,22 +713,16 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
   DataWarehouse* new_dw)
 {
   // General stuff
-  Matrix3 one;
-  one.Identity();
-  Matrix3 zero(0.0);
-  Matrix3 defGrad_new;
-  defGrad_new.Identity();
-  Matrix3 rightStretch;
-  rightStretch.Identity();
-  Matrix3 rotation;
-  rotation.Identity();
+  Matrix3 defGrad_new{ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+  Matrix3 rightStretch{ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+  Matrix3 rotation{ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
   Matrix3 rateOfDef_new(0.0);
   Matrix3 rateOfDef_dev_new(0.0);
   Matrix3 sigma_old(0.0);
   Matrix3 sigma_new(0.0);
   Matrix3 backStress_old(0.0);
   Matrix3 backStress_new(0.0);
-  std::vector<Matrix3> sigma_eta_new;
+  std::vector<Matrix3> sigma_eta_new{0.0, 0.0};
 
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
@@ -761,12 +796,18 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     // GET LOCAL DATA
-    constParticleVariable<double> pPlasticStrain_old, pDamage_old,
-      pPorosity_old, pStrainRate_old, pPlasticStrainRate_old;
+    constParticleVariable<Matrix3> pPlasticStrain_old, pStrainRate_old,
+      pPlasticStrainRate_old;
+    constParticleVariable<double> pEqPlasticStrain_old, pEqStrainRate_old,
+      pEqPlasticStrainRate_old;
+    constParticleVariable<double> pDamage_old, pPorosity_old;
     old_dw->get(pPlasticStrain_old, pPlasticStrainLabel, pset);
-    old_dw->get(pDamage_old, pDamageLabel, pset);
     old_dw->get(pStrainRate_old, pStrainRateLabel, pset);
     old_dw->get(pPlasticStrainRate_old, pPlasticStrainRateLabel, pset);
+    old_dw->get(pEqPlasticStrain_old, pEqPlasticStrainLabel, pset);
+    old_dw->get(pEqStrainRate_old, pEqStrainRateLabel, pset);
+    old_dw->get(pEqPlasticStrainRate_old, pEqPlasticStrainRateLabel, pset);
+    old_dw->get(pDamage_old, pDamageLabel, pset);
     old_dw->get(pPorosity_old, pPorosityLabel, pset);
 
     constParticleVariable<int> pLocalized_old;
@@ -788,14 +829,23 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
     // LOCAL
-    ParticleVariable<double> pPlasticStrain_new, pDamage_new, pPorosity_new,
-      pStrainRate_new, pPlasticStrainRate_new;
+    ParticleVariable<Matrix3> pPlasticStrain_new, pStrainRate_new,
+      pPlasticStrainRate_new;
+    ParticleVariable<double> pEqPlasticStrain_new, pEqStrainRate_new,
+      pEqPlasticStrainRate_new;
+    ParticleVariable<double> pDamage_new, pPorosity_new;
     ParticleVariable<int> pLocalized_new;
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
     new_dw->allocateAndPut(
       pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(
       pPlasticStrainRate_new, pPlasticStrainRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqStrainRate_new, pEqStrainRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqPlasticStrain_new, pEqPlasticStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqPlasticStrainRate_new, pEqPlasticStrainRateLabel_preReloc, pset);
     new_dw->allocateAndPut(pDamage_new, pDamageLabel_preReloc, pset);
     new_dw->allocateAndPut(pPorosity_new, pPorosityLabel_preReloc, pset);
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
@@ -852,7 +902,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       // Rotate the total rate of deformation tensor back to the
       // material configuration
       rateOfDef_new = (rotation.Transpose()) * (rateOfDef_new * rotation);
-      pStrainRate_new[idx] = sqrtTwoThird * rateOfDef_new.Norm();
+      pStrainRate_new[idx] = rateOfDef_new;
+      pEqStrainRate_new[idx] = sqrtTwoThird * rateOfDef_new.Norm();
 
       // Calculate the deviatoric part of the non-thermal part
       // of the rate of deformation tensor
@@ -885,9 +936,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
       // Set up the ModelState (for t_n)
       Vaango::ModelStateBase state_old;
-      state_old.eqStrainRate        = pStrainRate_old[idx];
-      state_old.eqPlasticStrainRate = pPlasticStrainRate_old[idx];
-      state_old.eqPlasticStrain     = pPlasticStrain_old[idx];
+      state_old.eqStrainRate        = pEqStrainRate_old[idx];
+      state_old.eqPlasticStrainRate = pEqPlasticStrainRate_old[idx];
+      state_old.eqPlasticStrain     = pEqPlasticStrain_old[idx];
       state_old.pressure            = pressure_old;
       state_old.temperature         = pTemp_old[idx];
       state_old.initialTemperature  = d_initialMaterialTemperature;
@@ -906,7 +957,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       state_old.backStress          = backStress_old;
 
       Vaango::ModelStateBase state(state_old);
-      state.eqStrainRate = pStrainRate_old[idx];
+      state.eqStrainRate = pEqStrainRate_old[idx];
       state.volume       = pVol_new[idx];
 
       // Set up the nonlinear elastic model
@@ -947,6 +998,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       // Material has melted if flowStress <= 0.0
       bool melted  = false;
       bool plastic = false;
+      double Delta_gamma{ 0.0 };
       if (T_new > Tm_cur || flowStress <= 0.0) {
 
         melted = true;
@@ -1013,9 +1065,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
           Matrix3 term1_k      = r_k_dev * (2.0 * mu_cur) + h_beta_k_dev;
 
           // Iterate to find DeltaGamma
-          int count          = 0;
-          double Delta_gamma = 0.0;
-          double f_k         = f_0;
+          int count   = 0;
+          Delta_gamma = 0.0;
+          double f_k  = f_0;
 
           while (f_k > d_tol) {
 
@@ -1159,9 +1211,18 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
           // If isothermal conditions exist then d_isothermal = 0.
           T_new += (Tdot * delT * d_isothermal);
 
+          std::cout << "T_new = " << T_new << "(T_melt = " << Tm_cur << ")"
+            << " dT/dt = " << Tdot
+            << " sigma_y = " << state.yieldStress
+            << " epdot = " << state.eqPlasticStrainRate 
+            << " fac = " << fac << " d_isotheraml = " << d_isothermal << "\n";
+
         } // end of Phi if
 
       } // end of temperature if
+
+      // Compute the direction of the plastic strain rate
+      Matrix3 df_dxi = d_yield->df_dxi(sigma_new, &state);
 
       // Calculate the total stress
       double T_0       = state.initialTemperature;
@@ -1193,18 +1254,23 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       if (!plastic) {
 
         // Save the updated data
-        pIntVar_new[idx]            = pIntVar_old[idx];
-        pPlasticStrain_new[idx]     = pPlasticStrain_old[idx];
-        pPlasticStrainRate_new[idx] = 0.0;
-        pPorosity_new[idx]          = pPorosity_old[idx];
-        pDamage_new[idx]            = pDamage_old[idx];
+        pIntVar_new[idx]              = pIntVar_old[idx];
+        pPlasticStrain_new[idx]       = pPlasticStrain_old[idx];
+        pPlasticStrainRate_new[idx]   = zero;
+        pEqPlasticStrain_new[idx]     = pEqPlasticStrain_old[idx];
+        pEqPlasticStrainRate_new[idx] = 0.0;
+        pPorosity_new[idx]            = pPorosity_old[idx];
+        pDamage_new[idx]              = pDamage_old[idx];
 
       } else {
 
         // Update the plastic strain, plastic strain rate, porosity
-        pIntVar_new[idx]            = { state.eqPlasticStrain, state.porosity };
-        pPlasticStrain_new[idx]     = state.eqPlasticStrain;
-        pPlasticStrainRate_new[idx] = state.eqPlasticStrainRate;
+        pIntVar_new[idx] = { state.eqPlasticStrain, state.porosity };
+        pPlasticStrain_new[idx] =
+          pPlasticStrain_old[idx] + df_dxi * Delta_gamma;
+        pPlasticStrainRate_new[idx]   = df_dxi * state.eqPlasticStrainRate;
+        pEqPlasticStrain_new[idx]     = state.eqPlasticStrain;
+        pEqPlasticStrainRate_new[idx] = state.eqPlasticStrainRate;
         if (d_evolvePorosity) {
           pPorosity_new[idx] = state.porosity;
         } else {

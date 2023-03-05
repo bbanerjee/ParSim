@@ -28,6 +28,7 @@
 #define __SMALL_STRAIN_LARGE_ROTATION_PLASTIC_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
@@ -41,7 +42,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
+
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
@@ -92,6 +95,8 @@ public:
   inline static const Matrix3 one{
     1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0
   };
+  static const double sqrtThreeTwo;
+  static const double sqrtTwoThird;
 
   // Create datatype for storing model parameters
   struct CMData
@@ -127,7 +132,9 @@ public:
   const VarLabel* pStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
   const VarLabel* pPlasticStrainRateLabel;
-  const VarLabel* pEquivalentPlasticStrainLabel;
+  const VarLabel* pEqStrainRateLabel;
+  const VarLabel* pEqPlasticStrainLabel;
+  const VarLabel* pEqPlasticStrainRateLabel;
   const VarLabel* pDamageLabel;
   const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
@@ -137,7 +144,9 @@ public:
   const VarLabel* pStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
   const VarLabel* pPlasticStrainRateLabel_preReloc;
-  const VarLabel* pEquivalentPlasticStrainLabel_preReloc;
+  const VarLabel* pEqStrainRateLabel_preReloc;
+  const VarLabel* pEqPlasticStrainLabel_preReloc;
+  const VarLabel* pEqPlasticStrainRateLabel_preReloc;
   const VarLabel* pDamageLabel_preReloc;
   const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
