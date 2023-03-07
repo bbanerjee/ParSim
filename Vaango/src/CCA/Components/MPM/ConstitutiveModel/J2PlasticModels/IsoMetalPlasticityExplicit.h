@@ -37,11 +37,13 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <CCA/Ports/DataWarehouseP.h>
 
@@ -398,6 +400,86 @@ protected:
 
   void
   setErosionAlgorithm();
+
+protected:
+  enum class Status
+  {
+    INVALID_VALUE,
+    CONVERGED_IN_K,
+    CONVERGED_IN_F,
+    CONVERGED_IN_DELTA_GAMMA,
+    CONVERGENCE_FAILURE
+  };
+
+  void
+  updateAsElastic(particleIndex idx,
+                  const MPMMaterial* matl,
+                  const ModelStateBase& state_old,
+                  const DeformationState& defState_new,
+                  const Matrix3& sigma_trial,
+                  const Matrix3& backStress_old,
+                  Matrix3& pStress_new,
+                  Matrix3& pBackStress_new);
+
+  std::
+    tuple<IsoMetalPlasticityExplicit::Status, std::string, int, double, double>
+    updateAsPlastic(particleIndex idx,
+                    const MPMMaterial* matl,
+                    double delT,
+                    const std::vector<Matrix3>& sigma_eta_old,
+                    const ModelStateBase& state_old,
+                    const Matrix3& backStress_old,
+                    const DeformationState& defState_new,
+                    double f_0,
+                    const Matrix3& sigma_trial,
+                    double Tm_cur,
+                    double mu_cur,
+                    double rho_cur,
+                    std::vector<Matrix3>& sigma_eta_new,
+                    ModelStateBase& state_new,
+                    Matrix3& pStress_new,
+                    Matrix3& pBackStress_new,
+                    double& pdTdt_new,
+                    double& pT_new);
+
+  void
+  updateAsFluid(particleIndex idx,
+                const MPMMaterial* matl,
+                double delT,
+                const DeformationState& defState_new,
+                const ModelStateBase& state,
+                const Matrix3& sigma_old,
+                Matrix3& pStress_new,
+                Matrix3& pBackStress_new);
+
+  std::tuple<double,
+             Matrix3,
+             double,
+             IsoMetalPlasticityExplicit::Status,
+             std::string,
+             int>
+  doNewtonSolve(particleIndex idx,
+                const MPMMaterial* matl,
+                double delT,
+                double f_0,
+                const Matrix3& sigma_trial,
+                const DeformationState& defState_new,
+                const std::vector<Matrix3>& sigma_eta_old,
+                double mu_cur,
+                const ModelStateBase& state_old,
+                ModelStateBase& state) const;
+
+  std::tuple<double, Matrix3, IsoMetalPlasticityExplicit::Status, std::string>
+  computeDeltaGamma(particleIndex idx,
+                    int iter,
+                    double delT,
+                    const std::vector<Matrix3>& sigma_eta_old,
+                    const DeformationState& defState_new,
+                    const ModelStateBase& state,
+                    const Matrix3& sigma_k,
+                    double f_k,
+                    double Delta_gamma_old,
+                    double mu_cur) const;
 };
 
 } // End namespace Uintah

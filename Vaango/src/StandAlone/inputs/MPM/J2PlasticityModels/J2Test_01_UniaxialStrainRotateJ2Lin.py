@@ -32,8 +32,12 @@ def uniaxialStrainRotateJ2Lin(uda_path, save_path, **kwargs):
   ep_sim, epdot_sim, backstress_list, phi_list, D_list, T_sim, vol_sim, time_list = getInternalVariables(
       uda_path, analytical_times)
 
+  print(ep_sim)
+  print(epdot_sim)
+  print(T_sim)
+
   # Read the deformation data
-  times, defGrad_sim = get_pTensor(uda_path, "p.deformationGradinet", 0)
+  times, defGrad_sim = get_pTensor(uda_path, "p.deformationGradient", 0)
   J_sim = [tensor_det(F) for F in defGrad_sim]
 
   # Get the model parameters

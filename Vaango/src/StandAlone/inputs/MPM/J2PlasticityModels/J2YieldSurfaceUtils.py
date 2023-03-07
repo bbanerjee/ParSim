@@ -4,10 +4,9 @@ import json
 import matplotlib.cm as cm
 import numpy as np
 from scipy.spatial import ConvexHull
-from scipy.misc import comb
+from scipy.special import comb
 from shapely.geometry import LineString, Point
 
-from J2TestSuite_PostProc import *
 
 #-----------------------------------------------------------------------------
 # Read the input xml file and save relevant data to a dictionary
@@ -27,18 +26,16 @@ def get_yield_surface_data(uda_path, PRINTOUT=False):
   root = tree.getroot()
 
   for geom in root.iter("geom_object"):
-    for child in geom:
-      temperature = child.find('temperature').text
-      material_dict['temperature'] = float(temperature)
+    temperature = geom.find('temperature').text
+    material_dict['temperature'] = float(temperature)
 
   for material in root.iter("material"):
-    for child in material:
-      density = child.find('density').text
-      specific_heat = child.find('specific_heat').text
-      melt_temp = child.find('metl_temp').text
-      material_dict['density'] = float(density)
-      material_dict['specific_heat'] = float(specific_heat)
-      material_dict['melt_temp'] = float(melt_temp)
+    density = material.find('density').text
+    specific_heat = material.find('specific_heat').text
+    melt_temp = material.find('melt_temp').text
+    material_dict['density'] = float(density)
+    material_dict['specific_heat'] = float(specific_heat)
+    material_dict['melt_temp'] = float(melt_temp)
 
   for model in root.iter('constitutive_model'):
 
@@ -158,6 +155,19 @@ def convertToBoldFont(material_dict, PRINTOUT=False):
 
   return material_dict
 
+#-----------------------------------------------------------------------------
+# Make the text bold
+# Only works with single spaces no leading space
+#-----------------------------------------------------------------------------
+def str_to_mathbf(string):
+  string = string.split()
+  return_string = ''
+  for elem in string:
+    #elem = r'$\mathbf{'+elem+'}$'
+    elem = r'' + elem + ''
+    return_string += elem + '  '
+  return return_string[0:-1]
+
 
 #-----------------------------------------------------------------------------
 # Compute pressure
@@ -267,11 +277,12 @@ def computeShearModulus(material_dict, temperature, density, pressure):
 #-----------------------------------------------------------------------------
 def computeYieldFunction(stress, backStress, yieldStress):
 
-  xi    = sigma_dev(stress) - sigma_dev(backStress)
-  sigy   = yieldStress
+  xi = sigma_dev(stress) - sigma_dev(backStress)
+  sigy = yieldStress
   xiNorm = sigma_mag(xi)
-  f      = np.sqrt(3.0/2.0)_* xiNorm - sigy
+  f = np.sqrt(3.0 / 2.0) * xiNorm - sigy
   return f
+
 
 #-----------------------------------------------------------------------------
 # Compute flow stress
@@ -374,7 +385,8 @@ def computeFlowStress(material_dict, eqPlasticStrainRate, eqPlasticStrain,
 #-----------------------------------------------------------------------------
 # Compute points on the yield surface
 #-----------------------------------------------------------------------------
-def computeYieldSurfacePoints(material_dict, pbar_sim_list, epdot_sim, ep_sim, T_sim, rho_sim): 
+def computeYieldSurfacePoints(material_dict, pbar_sim_list, epdot_sim, ep_sim,
+                              T_sim, rho_sim):
 
   num_pts = 100
   pmin = min(pbar_sim_list)
@@ -384,8 +396,8 @@ def computeYieldSurfacePoints(material_dict, pbar_sim_list, epdot_sim, ep_sim, T
   pbar = computePressure(material_dict, rho_sim, T_sim)
   Tm = computeMeltTemp(material_dict, rho_sim)
   mu = computeShearModulus(material_dict, T_sim, rho_sim, pbar)
-  sigy = computeFlowStress(material_dict, epdot_sim, ep_sim,
-                           T_sim, mu, rho_sim, Tm)
+  sigy = computeFlowStress(material_dict, epdot_sim, ep_sim, T_sim, mu, rho_sim,
+                           Tm)
   q_yield = [sigy] * num_pts
 
   return pbar_yield, q_yield
@@ -405,7 +417,8 @@ def plotPQYieldSurfaceSim(plt,
                           plt_color='b'):
 
   # Compute the yield surface
-  pbar_yield, q_yield = computeYieldSurfacePoints(material_dict, pbar_sim_list, epdot, ep, T, rho) 
+  pbar_yield, q_yield = computeYieldSurfacePoints(material_dict, pbar_sim_list,
+                                                  epdot, ep, T, rho)
 
   # Plot
   #print('Compression = ', compression)

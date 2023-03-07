@@ -30,42 +30,46 @@ POST_PROCESS_LIST = [
     'J2Test_13_MultiaxialStrainLoadUnload.ups',
 ]
 
-#get uintah/src path as enviornmental variable
-#uintah_src_path = os.path.abspath(os.environ['UINTAH_SRC'])
-uintah_src_path = os.path.abspath(".")
+# get the current directory (will be working directory)
+cur_dir = os.getcwd()
 
-# The uintah executable, e.g., /home/banerjee/ParSim/Vaango/runs/vaango
+#get vaango/src path as enviornmental variable
+vaango_src_path = os.path.abspath(os.environ['VAANGO_SRC'])
+
+# The vaango executable, e.g., /home/banerjee/ParSim/Vaango/runs/vaango
 # Typically a link to the executable created in the build directory is placed
 # in the runs directory using, e.g.,
 # ln -s ~/ParSim/Vaango/dbg/StandAlone/vaango \
 #       ~/ParSim/Vaango/runs/vaango
 # A link to partextract is also kept at the same place
-#vaango_exe = os.path.abspath(os.environ['UINTAH_EXE'])
-#partextract_exe = os.path.abspath(os.environ['PARTEXTRACT_EXE'])
-vaango_exe = os.path.abspath("../../vaango_opt")
-partextract_exe = os.path.abspath("../../partextract")
+vaango_exe = os.path.abspath(os.environ['VAANGO_EXE'])
+partextract_exe = os.path.abspath(os.environ['PARTEXTRACT_EXE'])
+#vaango_exe = os.path.abspath("../../vaango_opt")
+#partextract_exe = os.path.abspath("../../partextract")
 
-#construct default paths based on location of uintah_src_path
-default_inputs_path = uintah_src_path
-default_working_dir = uintah_src_path + '/test_run'
+#construct default paths based on location of vaango_src_path
+default_inputs_path = os.path.join(
+    vaango_src_path, 'StandAlone/inputs/MPM/J2PlasticityModels')
+default_working_dir = os.path.join(cur_dir, 'J2_test_runs')
+
 #If the working directory does not exist then make it.
 if not os.path.exists(default_working_dir):
   os.makedirs(default_working_dir)
 
 #Make plots directory
-default_plot_dir = default_working_dir + '/Plots'
+default_plot_dir = os.path.join(default_working_dir, 'Plots')
 if not os.path.exists(default_plot_dir):
   os.makedirs(default_plot_dir)
 
 TEST_LIST = []
 for test in POST_PROCESS_LIST:
-  TEST_LIST.append(default_inputs_path + '/' + test)
+  TEST_LIST.append(os.path.join(default_inputs_path, test))
 
 #
 # Uncomment tests yo wish to run
 #
 TEST_LIST = [
-    #  TEST_LIST[0], #Test 01
+      TEST_LIST[0], #Test 01
     #  TEST_LIST[1], #Test 01a
     #  TEST_LIST[2], #Test 01b
     #  TEST_LIST[3], #Test 02

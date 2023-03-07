@@ -107,19 +107,6 @@ def savePDF(name, size='1920x1080'):
   #save at speciified resolution
   plt.savefig(name + '.pdf', bbox_inches=0, dpi=plt.rcParams['figure.dpi'])
 
-#-----------------------------------------------------------------------------
-# Make the text bold
-# Only works with single spaces no leading space
-#-----------------------------------------------------------------------------
-def str_to_mathbf(string):
-  string = string.split()
-  return_string = ''
-  for elem in string:
-    #elem = r'$\mathbf{'+elem+'}$'
-    elem = r'' + elem + ''
-    return_string += elem + '  '
-  return return_string[0:-1]
-
 
 def sign(x, y):
   if y >= 0:
@@ -680,10 +667,12 @@ def readSimStressData(uda_path, matID=0):
 def getDataTimeSnapshots(time_snapshots, times, data):
 
   # Create a clean list containing the data as functions of time
+  print(len(times))
   time_list = []
   val_list = []
   for ta in time_snapshots:
     idx, time = find_nearest(times, ta)
+    print(idx, time)
     time_list.append(time)
     val_list.append(data[idx])
 

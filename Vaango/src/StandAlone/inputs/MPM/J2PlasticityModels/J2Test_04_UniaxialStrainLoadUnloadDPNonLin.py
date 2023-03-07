@@ -1,5 +1,5 @@
-from TabularTestSuite_PostProcUtils import *
-from TabularYieldSurfaceUtils import *
+from J2TestSuite_PostProcUtils import *
+from J2YieldSurfaceUtils import *
 
 def uniaxialStrainLoadUnloadDPNonLin(uda_path, save_path,**kwargs):
   print("Post Processing Test: 04 - Uniaxial Compression DP With Loading and Unloading")
