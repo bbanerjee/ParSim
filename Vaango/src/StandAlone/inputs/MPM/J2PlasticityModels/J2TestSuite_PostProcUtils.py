@@ -232,12 +232,12 @@ def getInternalVariables(uda_path, analytical_times, matID=0):
   vol_list.append(vol[len(times) - 1])
 
   #print("time = ", time_list)
-  #print("eps_p_eq = ", eps_p_list)
-  #print("epsdot_p_eq = ", epsdot_p_list)
-  #print("backstress = ", backstress_list)
+  print("eps_p_eq = ", eps_p_list)
+  print("epsdot_p_eq = ", epsdot_p_list)
+  print("backstress = ", backstress_list)
   #print("porosity = ", porosity_list)
   #print("damage = ", damage_list)
-  #print("temperature = ", temp_list)
+  print("temperature = ", temp_list)
   #print("volume = ", vol_list)
 
   return eps_p_list, epsdot_p_list, backstress_list, porosity_list, damage_list, temp_list, vol_list, time_list

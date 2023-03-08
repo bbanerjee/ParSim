@@ -293,6 +293,9 @@ PTWFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
   // Check if temperature is correct
   double T = state->temperature;
   double Tm = state->meltingTemp;
+  if (T > Tm) {
+    T = Tm;
+  }
   ASSERT(T > 0.0);
   ASSERT(!(T > Tm));
 

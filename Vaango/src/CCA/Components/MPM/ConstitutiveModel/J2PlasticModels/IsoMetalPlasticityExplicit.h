@@ -412,6 +412,9 @@ protected:
   };
 
   void
+  computeSubstep();
+
+  void
   updateAsElastic(particleIndex idx,
                   const MPMMaterial* matl,
                   const ModelStateBase& state_old,
@@ -432,15 +435,12 @@ protected:
                     const DeformationState& defState_new,
                     double f_0,
                     const Matrix3& sigma_trial,
-                    double Tm_cur,
-                    double mu_cur,
                     double rho_cur,
                     std::vector<Matrix3>& sigma_eta_new,
                     ModelStateBase& state_new,
                     Matrix3& pStress_new,
                     Matrix3& pBackStress_new,
-                    double& pdTdt_new,
-                    double& pT_new);
+                    double& pdTdt_new);
 
   void
   updateAsFluid(particleIndex idx,
@@ -465,7 +465,6 @@ protected:
                 const Matrix3& sigma_trial,
                 const DeformationState& defState_new,
                 const std::vector<Matrix3>& sigma_eta_old,
-                double mu_cur,
                 const ModelStateBase& state_old,
                 ModelStateBase& state) const;
 
@@ -478,8 +477,7 @@ protected:
                     const ModelStateBase& state,
                     const Matrix3& sigma_k,
                     double f_k,
-                    double Delta_gamma_old,
-                    double mu_cur) const;
+                    double Delta_gamma_old) const;
 };
 
 } // End namespace Uintah

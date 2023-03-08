@@ -89,6 +89,9 @@ YieldCond_vonMises::computeYieldFunction(const Matrix3& stress,
   double sigy   = state->yieldStress;
   double xiNorm = xi.Norm();
   double f      = Vaango::Util::sqrt_three_half * xiNorm - sigy;
+  //std::cout << __FILE__ << "\n"
+  //          << "xi = " << xi << " ||xi|| = " << xiNorm << " sigy = " << sigy
+  //          << " f = " << f << "\n";
   return f;
 }
 

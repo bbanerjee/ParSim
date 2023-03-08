@@ -556,7 +556,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                                      state);
 
           if (status == SolveStatus::CONVERGENCE_FAILURE) {
-            step = 0;
+            step = -1;
             num_substeps *= 2;
             delT = delT_orig / num_substeps;
             std::cout << msg << std::endl;
