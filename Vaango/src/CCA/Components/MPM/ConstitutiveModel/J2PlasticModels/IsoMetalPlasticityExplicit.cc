@@ -1094,6 +1094,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
             phi_new_substep               = phi_old_substep;
             D_new_substep                 = D_old_substep;
             state_new_substep             = state_old_substep;
+            state_new_substep.pressure    = sigma_new_substep.Trace()/3.0;
             sigma_eta_new_substep         = sigma_eta_old_substep;
             dTdt_new_substep              = 0.0;
             T_new_substep                 = T_old_substep;
@@ -1139,6 +1140,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
                 continue;
               }
             }
+
+            state_new_substep.pressure = sigma_new_substep.Trace()/3.0;
 
             T_new_substep = state_new_substep.temperature;
             T_new         = T_new_substep;
@@ -1607,7 +1610,7 @@ IsoMetalPlasticityExplicit::doNewtonSolve(
   double Delta_gamma = 0.0;
   double f_k         = f_0;
 
-  while (f_k > d_tol) {
+  while (std::abs(f_k) > d_tol) {
 
     auto Delta_gamma_old = Delta_gamma;
     auto [Delta_gamma_new, sigma_corr, status, err_msg] =
@@ -1663,6 +1666,8 @@ IsoMetalPlasticityExplicit::doNewtonSolve(
     // ep_k, phi_k, beta_k
     sigma_k = sigma_trial - sigma_corr;
     f_k     = d_yield->evalYieldCondition(sigma_k, &state);
+
+    std::cout << "iter = " << count << " f_k = " << f_k << "\n";
 
     if (status == Status::CONVERGED_IN_DELTA_GAMMA) {
       return std::make_tuple(
@@ -1723,7 +1728,7 @@ IsoMetalPlasticityExplicit::computeDeltaGamma(
   double denom = df_dxi_k.Contract(denom_term1_k) - h_alpha_k * df_dep_k -
                  h_phi_k * df_dphi_k;
   double delta_gamma_k = f_k / denom;
-  if (std::isnan(f_k) || std::isnan(delta_gamma_k) || delta_gamma_k > 1.0) {
+  if (std::isnan(f_k) || std::isnan(delta_gamma_k)) {
     std::ostringstream msg;
     msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
         << " delta_gamma_k = " << delta_gamma_k
@@ -1745,11 +1750,24 @@ IsoMetalPlasticityExplicit::computeDeltaGamma(
 
   // Update Delta_gamma
   double Delta_gamma = Delta_gamma_old + delta_gamma_k;
+  auto sigma_corr = denom_term1_k * Delta_gamma;
 
-  if (Delta_gamma < 0.0 || Delta_gamma > 1.0 || iter > 100) {
+  if (Delta_gamma < 0.0 || Delta_gamma > 10.0 || delta_gamma_k > 1.0 || iter > 100) {
     std::ostringstream msg;
     msg << "Delta_gamma = " << Delta_gamma
-        << " Delta_gamma_old = " << Delta_gamma_old << "\n ";
+        << " Delta_gamma_old = " << Delta_gamma_old 
+        << " delta_gamma_k = " << delta_gamma_k << "\n ";
+    msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
+        << " delta_gamma_k = " << delta_gamma_k
+        << " sigy = " << state.yieldStress << " df_dep_k = " << df_dep_k
+        << " epdot = " << state.eqPlasticStrainRate
+        << " ep = " << state.eqPlasticStrain << "\n";
+    msg << "df_dxi = \n"
+        << df_dxi_k << "\n denom_term1 = " << denom_term1_k
+        << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
+        << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
+        << " denom = " << denom << "\n";
+    msg << " sigma_corr = " << sigma_corr << "\n ";
     msg << "h_alpha = " << h_alpha_k << " delta_gamma = " << delta_gamma_k
         << " ep = " << state.eqPlasticStrain << "\n";
     msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
@@ -1773,7 +1791,6 @@ IsoMetalPlasticityExplicit::computeDeltaGamma(
       Delta_gamma, sigma_k, Status::CONVERGENCE_FAILURE, msg.str());
   }
 
-  auto sigma_corr = denom_term1_k * Delta_gamma;
   if (std::abs(Delta_gamma - Delta_gamma_old) < d_tol) {
     return std::make_tuple(Delta_gamma,
                            sigma_corr,
