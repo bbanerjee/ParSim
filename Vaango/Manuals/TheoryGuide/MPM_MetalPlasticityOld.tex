@@ -563,95 +563,32 @@ The following coupled equations have to be solved for the unknowns at $t_{n+1}$:
   \Eal
 \Eeq
 Note that, for associated plasticity, the first two equations depend on $f_{n+1}$.  
-We can express these equations in terms of residuals as,
+Recognizing that the second equation is alreday incorporated into the first, and combining the
+stress and backstress equations, we can express the above equations in terms of residuals as,
 \Beq
   \Bal
-  \Br_\sigma & = (\Bsig^e_\Tdev)_{n+1} - \Bsig_\Tdev^{\Trial} + 2~\mu_n~\Delta\gamma_{n+1}~(\BM_\Tdev)_{n+1} 
-    = \Bzero\\
-  \Br_\Ve & = (\BVeps_\Tdis^p)_{n+1} - (\BVeps_\Tdis^p)_{n} - \Delta\gamma_{n+1} (\BM_\Tdev)_{n+1} 
-    = \Bzero\\
-  \Br_\beta & =  (\Bbeta_\Tdev)_{n+1} - (\Bbeta_\Tdev)_n -
-     \Delta\gamma_{n+1}~(\Bh_\Tdev^{\beta})_{n+1} = \Bzero \\
+  \Br_\xi  &= \Bxi_{n+1} - \Bxi^{\Trial} + \Delta\gamma_{n+1}[2\mu_n\,(\BM_\Tdev)_{n+1} +
+    (\Bh_\Tdev^{\beta})_{n+1}] = \Bzero \\
   r_{\Ve^p} & =  \Ve^p_{n+1}  - \Ve^p_{n} - \Delta\gamma_{n+1}~h^{\alpha}_{n+1} = 0 \\
   r_{\phi} & =  \phi_{n+1}  - \phi_n - \Delta\gamma_{n+1}~h^{\phi}_{n+1} = 0  \\
   r_T & =  T_{n+1}  - T_n - \Delta\gamma_{n+1}~h^{T}_{n+1} = 0  \\
   r_f & = f_{n+1}(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots)  = 0 ~.
   \Eal
 \Eeq
-or, if $\Bx = ((\Bsig^e_\Tdev)_{n+1}, 
-(\Bbeta_\Tdev)_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \Delta\gamma_{n+1})$ is 
-the vector of unknowns in the above equations, 
+or, if $\Bx = (\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \Delta\gamma_{n+1})$ is 
+the vector of \textit{independent} unknowns in the above equations, 
 \Beq
   \Br(\Bx) = \Bzero \,.
 \Eeq
 An iterative Newton method can be used to find the solution:
 \Beq
-  \Bx^{(k+1)} = \Bx^{(k)} - \left[\Partial{\Br}{\Bx}\right]^{-1}_{(k)}~\Br^{(k)} ~.
+  \Bx^{(k+1)} = \Bx^{(k)} - \left[\Partial{\Br}{\Bx}\right]^{-1}_{(k)}~\Br^{(k)} 
+  \quad \Tor \quad
+  -\BJv^{k)} \, \delta\Bx^{(k)} = \Br^{(k)} \,.
 \Eeq
-To simplify the notation, we drop the subscripts $(n+1)$ and $\Tdev$, and 
-set $\Bx \equiv (\BsT, \BbT, \Ve^p, \phi, T, \Delta\gamma)$. Let us 
-now compute the derivatives.
-\[
-  \Bal
-  \Partial{\Br_\sigma}{\BsT} &= \SfI^{4s} + 2\mu_n\,\Delta\gamma\,\Partial{\BM}{\BsT} \,,
-  \Partial{\Br_\sigma}{\BbT} = 2\mu_n\,\Delta\gamma\,\Partial{\BM}{\BbT} \,,
-  \Partial{\Br_\sigma}{\Ve^p} = 2\mu_n\,\Delta\gamma\,\Partial{\BM}{\Ve^p} \,,
-  \Partial{\Br_\sigma}{\phi} = 2\mu_n\,\Delta\gamma\,\Partial{\BM}{\phi} \,, \\
-  \Partial{\Br_\sigma}{T} &= 2\mu_n\,\Delta\gamma\,\Partial{\BM}{T} \,,
-  \Partial{\Br_\sigma}{\Delta\gamma} = 2\mu_n\,\BM
-  \Eal
-\]
-\[
-  \Bal
-  \Partial{\Br_\beta}{\BsT} &=  -\Delta\gamma\,\Partial{\Bh^\beta}{\BsT} \,,
-  \Partial{\Br_\beta}{\BbT} = \SfI^{4s} - \Delta\gamma\,\Partial{\Bh^\beta}{\BbT} \,,
-  \Partial{\Br_\beta}{\Ve^p} = -\Delta\gamma\,\Partial{\Bh^\beta}{\Ve^p} \,,
-  \Partial{\Br_\beta}{\phi} = -\Delta\gamma\,\Partial{\Bh^\beta}{\phi} \,, \\
-  \Partial{\Br_\beta}{T} &= -\Delta\gamma\,\Partial{\Bh^\beta}{T} \,,
-  \Partial{\Br_\beta}{\Delta\gamma} = -\Bh^\beta
-  \Eal
-\]
-\[
-  \Bal
-  \Partial{r_{\Ve^p}}{\BsT} &=  -\Delta\gamma\,\Partial{h^\alpha}{\BsT} \,,
-  \Partial{r_{\Ve^p}}{\BbT} = -\Delta\gamma\,\Partial{h^\alpha}{\BbT} \,,
-  \Partial{r_{\Ve^p}}{\Ve^p} = 1 -\Delta\gamma\,\Partial{h^\alpha}{\Ve^p} \,,
-  \Partial{r_{\Ve^p}}{\phi} = -\Delta\gamma\,\Partial{h^\alpha}{\phi} \,, \\
-  \Partial{r_{\Ve^p}}{T} &= -\Delta\gamma\,\Partial{h^\alpha}{T} \,,
-  \Partial{r_{\Ve^p}}{\Delta\gamma} = -h^\alpha
-  \Eal
-\]
-\[
-  \Bal
-  \Partial{r_{\phi}}{\BsT} &=  -\Delta\gamma\,\Partial{h^\phi}{\BsT} \,,
-  \Partial{r_{\phi}}{\BbT} = -\Delta\gamma\,\Partial{h^\phi}{\BbT} \,,
-  \Partial{r_{\phi}}{\Ve^p} = -\Delta\gamma\,\Partial{h^\phi}{\Ve^p} \,,
-  \Partial{r_{\phi}}{\phi} = 1 -\Delta\gamma\,\Partial{h^\phi}{\phi} \,, \\
-  \Partial{r_{\phi}}{T} &= -\Delta\gamma\,\Partial{h^\phi}{T} \,,
-  \Partial{r_{\phi}}{\Delta\gamma} = -h^\phi
-  \Eal
-\]
-\[
-  \Bal
-  \Partial{r_{T}}{\BsT} &=  -\Delta\gamma\,\Partial{h^T}{\BsT} \,,
-  \Partial{r_{T}}{\BbT} = -\Delta\gamma\,\Partial{h^T}{\BbT} \,,
-  \Partial{r_{T}}{\Ve^p} = -\Delta\gamma\,\Partial{h^T}{\Ve^p} \,,
-  \Partial{r_{T}}{\phi} = -\Delta\gamma\,\Partial{h^T}{\phi} \,, \\
-  \Partial{r_{T}}{T} &= 1 -\Delta\gamma\,\Partial{h^T}{T} \,,
-  \Partial{r_{T}}{\Delta\gamma} = -h^T
-  \Eal
-\]
-\[
-  \Bal
-  \Partial{r_{f}}{\BsT} &=  \Partial{f}{\BsT} =: f_{\BsT} \,,
-  \Partial{r_{f}}{\BbT} = \Partial{f}{\BbT} =: f_{\BbT} \,,
-  \Partial{r_{f}}{\Ve^p} = \Partial{f}{\Ve^p} =: f_{\Ve} \,,
-  \Partial{r_{f}}{\phi} = \Partial{f}{\phi} =: f_{\phi} \,, \\
-  \Partial{r_{f}}{T} &= \Partial{f}{T} =: f_{T} \,,
-  \Partial{r_{f}}{\Delta\gamma} = 0
-  \Eal
-\]
-For metal plasticity, we assume that $\hat{\BM} = f_{\Bsig}/\Norm{f_{\Bsig}}{}$ where
+To simplify the notation, we drop the subscripts $(n+1)$ and ``$\Tdev$'', and 
+set $\Bx \equiv (\BsT, \BbT, \Ve^p, \phi, T, \Delta\gamma)$. 
+Also, for metal plasticity, we assume that $\hat{\BM} = f_{\Bsig}/\Norm{f_{\Bsig}}{}$ where
 $f_{\Bsig} := \Partial{f}{\Bsig}$.  Now, with the isotropic-deviatoric split, and since
 $f$ does not depend on the isotropic component of stress, 
 \[
@@ -662,6 +599,78 @@ $f$ does not depend on the isotropic component of stress,
 Therefore, 
 \[
   \BM := \BM_\Tdev = \hat{\BM} \,.
+\]
+
+Let us now compute the derivatives.
+\[
+  \Bal
+  \Partial{\Br_\xi}{\Bxi} &= \SfI^{4s} +
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\Bxi} + \Partial{\Bh^\beta}{\Bxi}\right] \,,
+  \Partial{\Br_\xi}{\Ve^p} = 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\Ve^p} + \Partial{\Bh^\beta}{\Ve^p}\right] \,,
+  \Partial{\Br_\xi}{\phi} = 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\phi} + \Partial{\Bh^\beta}{\phi}\right] \\
+  \Partial{\Br_\xi}{T} &= 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{T} + \Partial{\Bh^\beta}{T}\right] \,,
+  \Partial{\Br_\xi}{\Delta\gamma} = 2\mu_n\,\BM + \Bh^{\beta}
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{\Ve^p}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^\alpha}{\Bxi} \,,
+  \Partial{r_{\Ve^p}}{\Ve^p} = 1 -\Delta\gamma\,\Partial{h^\alpha}{\Ve^p} \,,
+  \Partial{r_{\Ve^p}}{\phi} = -\Delta\gamma\,\Partial{h^\alpha}{\phi} \,, 
+  \Partial{r_{\Ve^p}}{T} = -\Delta\gamma\,\Partial{h^\alpha}{T} \,,
+  \Partial{r_{\Ve^p}}{\Delta\gamma} = -h^\alpha
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{\phi}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^\phi}{\Bxi} \,,
+  \Partial{r_{\phi}}{\Ve^p} = -\Delta\gamma\,\Partial{h^\phi}{\Ve^p} \,,
+  \Partial{r_{\phi}}{\phi} = 1 -\Delta\gamma\,\Partial{h^\phi}{\phi} \,, 
+  \Partial{r_{\phi}}{T} = -\Delta\gamma\,\Partial{h^\phi}{T} \,,
+  \Partial{r_{\phi}}{\Delta\gamma} = -h^\phi
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{T}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^T}{\Bxi} \,,
+  \Partial{r_{T}}{\Ve^p} = -\Delta\gamma\,\Partial{h^T}{\Ve^p} \,,
+  \Partial{r_{T}}{\phi} = -\Delta\gamma\,\Partial{h^T}{\phi} \,, 
+  \Partial{r_{T}}{T} = 1 -\Delta\gamma\,\Partial{h^T}{T} \,,
+  \Partial{r_{T}}{\Delta\gamma} = -h^T
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{f}}{\Bxi} &=  \Partial{f}{\Bxi} =: f_{\Bxi} \,,
+  \Partial{r_{f}}{\Ve^p} = \Partial{f}{\Ve^p} =: f_{\Ve} \,,
+  \Partial{r_{f}}{\phi} = \Partial{f}{\phi} =: f_{\phi} \,, 
+  \Partial{r_{f}}{T} = \Partial{f}{T} =: f_{T} \,,
+  \Partial{r_{f}}{\Delta\gamma} = 0
+  \Eal
+\]
+
+The system of equations can be expressed as
+\[
+  -\begin{bmatrix}
+    \Partial{\Br_\xi}{\Bxi} & \Partial{\Br_\xi}{\Ve^p} & 
+      \Partial{\Br_\xi}{\phi} & \Partial{\Br_\xi}{T} & \Partial{\Br_\xi}{\Delta\gamma} \\
+    \Partial{r_{\Ve^p}}{\Bxi} & \Partial{r_{\Ve^p}}{\Ve^p} & 
+      \Partial{r_{\Ve^p}}{\phi} & \Partial{r_{\Ve^p}}{T} & \Partial{r_{\Ve^p}}{\Delta\gamma} \\
+    \Partial{r_{\phi}}{\Bxi} & \Partial{r_{\phi}}{\Ve^p} & 
+      \Partial{r_{\phi}}{\phi} & \Partial{r_{\phi}}{T} & \Partial{r_\phi}{\Delta\gamma} \\
+    \Partial{r_{T}}{\Bxi} & \Partial{r_{T}}{\Ve^p} & 
+      \Partial{r_{T}}{\phi} & \Partial{r_{T}}{T} & \Partial{r_T}{\Delta\gamma} \\
+    f_{\Bxi} & f_{\Ve} & f_\phi & f_T & 0 
+  \end{bmatrix}^{(k)}
+  \begin{bmatrix}
+    \delta\Bxi \\ \delta\Ve^p \\ \delta\phi \\ \delta T \\ \delta\Delta\gamma  
+  \end{bmatrix}^{(k)} = 
+  \begin{bmatrix}
+    \Br_\xi \\ r_{\Ve^p} \\ r_\phi \\ r_T \\ r_f  
+  \end{bmatrix}^{(k)}  
 \]
 
 Define 
