@@ -672,124 +672,54 @@ The system of equations can be expressed as
     \Br_\xi \\ r_{\Ve^p} \\ r_\phi \\ r_T \\ r_f  
   \end{bmatrix}^{(k)}  
 \]
-
-Define 
-\Beq
-  \delta\Bx := \Bx^{(k+1)} - \Bx^{(k)} ~.
-\Eeq
-Therefore,
-\Beq
-  \Bal
-  \Deriv{\Ba}{\Delta\gamma} & = 
-   -\Partial{\Bxi}{\Delta\gamma}  - (2~\mu~\BM_\Tdev + \Bh_\Tdev^{\beta})
-   - \Delta\gamma~\left(2~\mu~\Partial{\BM_\Tdev}{\Delta\gamma} + 
-        \Partial{\Bh_\Tdev^{\beta}}{\Delta\gamma}\right) \\
-   & =
-   -\Partial{\Bxi}{\Delta\gamma}  - (2~\mu~\BM_\Tdev + \Bh_\Tdev^{\beta})
-   - \Delta\gamma~\left(
-      2~\mu~\Partial{\BM_\Tdev}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-      2~\mu~\Partial{\BM_\Tdev}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-      2~\mu~\Partial{\BM_\Tdev}{\phi}~\Partial{\phi}{\Delta\gamma} + 
-      \right. \\
-   & \qquad \qquad
-      \left.
-      \Partial{\Bh_\Tdev^{\beta}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-      \Partial{\Bh_\Tdev^{\beta}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} +
-      \Partial{\Bh_\Tdev^{\beta}}{\phi}~\Partial{\phi}{\Delta\gamma} 
-      \right) \\
-  \Deriv{b}{\Delta\gamma} & = -\Partial{\Ve^p}{\Delta\gamma} +  h^{\alpha} 
-    + \Delta\gamma~\left(\Partial{h^{\alpha}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-                        \Partial{h^{\alpha}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-                        \Partial{h^{\alpha}}{\phi}~\Partial{\phi}{\Delta\gamma}\right) \\
-  \Deriv{c}{\Delta\gamma} & = -\Partial{\phi}{\Delta\gamma} +  h^{\phi} 
-    + \Delta\gamma~\left(\Partial{h^{\phi}}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-                        \Partial{h^{\phi}}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} + 
-                        \Partial{h^{\phi}}{\phi}~\Partial{\phi}{\Delta\gamma}\right) \\
-  \Deriv{f}{\Delta\gamma} & 
-     = \Partial{f}{\Bxi}:\Partial{\Bxi}{\Delta\gamma} + 
-          \Partial{f}{\Ve^p}~\Partial{\Ve^p}{\Delta\gamma} +
-          \Partial{f}{\phi}~\Partial{\phi}{\Delta\gamma} ~.
-  \Eal
-\Eeq
-Now, define
-\Beq
-   \Delta\Bxi := \Partial{\Bxi}{\Delta\gamma}~\delta\gamma ~;~~
-   \Delta\Ve^p := \Partial{\Ve^p}{\Delta\gamma}~\delta\gamma ~;~~
-   \Delta\phi := \Partial{\phi}{\Delta\gamma}~\delta\gamma ~.
-\Eeq
-Then
-\Beq
-  \Bal
-  \Ba^{(k)} & - \Delta\Bxi - [2~\mu~\Dev(\Br^{(k)}) + \Bh_\Tdev^{\beta (k)}]~\delta\gamma \\
-   & \qquad \qquad
-    - 2~\mu~\Delta\gamma~\left(
-      \Partial{\Dev(\Br^{(k)})}{\Bxi}:\Delta\Bxi + 
-      \Partial{\Dev(\Br^{(k)})}{\Ve^p}~\Delta\Ve^p + 
-      \Partial{\Dev(\Br^{(k)})}{\phi}~\Delta\phi 
-      \right) \\
-   & \qquad \qquad
-    - \Delta\gamma~\left(
-      \Partial{\Bh_\Tdev^{\beta (k)}}{\Bxi}:\Delta\Bxi + 
-      \Partial{\Bh_\Tdev^{\beta (k)}}{\Ve^p}~\Delta\Ve^p +
-      \Partial{\Bh_\Tdev^{\beta (k)}}{\phi}~\Delta\phi
-      \right)  = 0\\
-  b^{(k)} & - \Delta\Ve^p + h^{\alpha}~\delta\gamma 
-    + \Delta\gamma~\left(\Partial{h^{\alpha (k)}}{\Bxi}:\Delta\Bxi + 
-                        \Partial{h^{\alpha (k)}}{\Ve^p}~\Delta\Ve^p +
-                        \Partial{h^{\alpha (k)}}{\phi}~\Delta\phi\right)
-     = 0 \\
-  c^{(k)} & - \Delta\phi + h^{\phi}~\delta\gamma 
-    + \Delta\gamma~\left(\Partial{h^{\phi (k)}}{\Bxi}:\Delta\Bxi + 
-                        \Partial{h^{\phi (k)}}{\Ve^p}~\Delta\Ve^p +
-                        \Partial{h^{\phi (k)}}{\phi}~\Delta\phi\right)
-     = 0 \\
-  f^{(k)} & + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi 
-      = 0
-  \Eal
-\Eeq
-Because the derivatives of $\Br^{(k)}, \Bh^{\alpha (k)}, \Bh^{\beta (k)}, \Bh^{\phi (k)}$ with respect 
-to $\Bxi, \Ve^p, \phi$ may be difficult to calculate, we instead use a semi-implicit scheme in our 
-implementation where the quantities $\Br$, $h^{\alpha}$, $\Bh^{\beta}$, and $h^{\phi}$ are evaluated 
-at $t_n$.  Then the problematic derivatives disappear and we are left with
-\Beq
-  \Bal
-  \Ba^{(k)} - \Delta\Bxi - [2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n]~\delta\gamma & = 0\\
-  b^{(k)} - \Delta\Ve^p + h^{\alpha}_n~\delta\gamma & = 0 \\
-  c^{(k)} - \Delta\phi + h^{\phi}_n~\delta\gamma & = 0 \\
-  f^{(k)} + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi & = 0
-  \Eal
-\Eeq
-We now force $\Ba^{(k)}$, $b^{(k)}$, and $c^{(k)}$ to be zero at all times, leading
-to the expressions
-\Beq
-  \Bal
-  \Delta\Bxi & = - [2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n]~\delta\gamma \\
-  \Delta\Ve^p & =  h^{\alpha}_n~\delta\gamma \\
-  \Delta\phi & =  h^{\phi}_n~\delta\gamma \\
-  f^{(k)} + \Partial{f^{(k)}}{\Bxi}:\Delta\Bxi + 
-          \Partial{f^{(k)}}{\Ve^p}~\Delta\Ve^p +
-          \Partial{f^{(k)}}{\phi}~\Delta\phi & = 0
-  \Eal
-\Eeq
-Plugging the expressions for $\Delta\Bxi$, $\Delta\Ve^p$, $\Delta\phi$ from the 
-first three equations into the fourth gives us
-\Beq
-  f^{(k)} -\Partial{f^{(k)}}{\Bxi}:[2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n]~\delta\gamma +
-          h^{\alpha}_n~\Partial{f^{(k)}}{\Ve^p}~\delta\gamma  + 
-          h^{\phi}_n~\Partial{f^{(k)}}{\phi}~\delta\gamma  = 0 
-\Eeq
-or
-\Beq
-  \Delta\gamma^{(k+1)} - \Delta\gamma^{(k)} = \delta\gamma = 
-   \cfrac{f^{(k)}}
-   {\Partial{f^{(k)}}{\Bxi}:[2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n] - 
-   h^{\alpha}_n~\Partial{f^{(k)}}{\Ve^p} -
-   h^{\phi}_n~\Partial{f^{(k)}}{\phi} } ~.
-\Eeq
+We can statically condense the system by defining
+\[
+  \MA = \begin{bmatrix}
+    \Partial{\Br_\xi}{\Bxi} & \Partial{\Br_\xi}{\Ve^p} & 
+      \Partial{\Br_\xi}{\phi} & \Partial{\Br_\xi}{T} \\
+    \Partial{r_{\Ve^p}}{\Bxi} & \Partial{r_{\Ve^p}}{\Ve^p} & 
+      \Partial{r_{\Ve^p}}{\phi} & \Partial{r_{\Ve^p}}{T} \\
+    \Partial{r_{\phi}}{\Bxi} & \Partial{r_{\phi}}{\Ve^p} & 
+      \Partial{r_{\phi}}{\phi} & \Partial{r_{\phi}}{T} \\
+    \Partial{r_{T}}{\Bxi} & \Partial{r_{T}}{\Ve^p} & 
+      \Partial{r_{T}}{\phi} & \Partial{r_{T}}{T} 
+  \end{bmatrix} ~,~~
+  \MB = \begin{bmatrix}
+    \Partial{\Br_\xi}{\Delta\gamma} \\
+    \Partial{r_{\Ve^p}}{\Delta\gamma} \\
+    \Partial{r_\phi}{\Delta\gamma} \\
+    \Partial{r_T}{\Delta\gamma} 
+  \end{bmatrix} ~,~~
+  \MC = \begin{bmatrix}  f_{\Bxi} & f_{\Ve} & f_\phi & f_T \end{bmatrix}
+\]
+and
+\[
+  \MX = \begin{bmatrix}
+    \delta\Bxi \\ \delta\Ve^p \\ \delta\phi \\ \delta T 
+    \end{bmatrix} ~,~~
+  \MR = \begin{bmatrix}
+    \Br_\xi \\ r_{\Ve^p} \\ r_\phi \\ r_T 
+  \end{bmatrix}
+\]
+to get
+\[
+  \begin{bmatrix}
+    \MA & \MB \\ \MC & 0 
+  \end{bmatrix}^{(k)}
+  \begin{bmatrix}
+    \MX \\ \delta\Delta\gamma
+  \end{bmatrix}^{(k)} = 
+  \begin{bmatrix}
+    \MR \\ r_f
+  \end{bmatrix}^{(k)}
+\]
+We can eliminate $\delta\Delta\gamma$, to get the new system of equations
+\[
+  \MA^{(k)} \MX^{(k)} = \MR^{(k)} - \left[\frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}}\right] \MB^{(k)}
+  ~,~~
+  \delta\Delta\gamma^{(k)} = \frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}} \,.
+\]
+The matrix $\MA$ may be difficult to invert because of its conditioning.  
 
 \subsection{Algorithm}
 The following stress update algorithm is used for each (plastic) time step:
