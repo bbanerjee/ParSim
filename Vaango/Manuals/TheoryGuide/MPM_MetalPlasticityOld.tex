@@ -726,64 +726,49 @@ The following stress update algorithm is used for each (plastic) time step:
 \begin{enumerate}
   \item Initialize:
   \Beq
-    k = 0 ~;~~ (\Ve^p)^{(k)} = \Ve^p_n ~;~~ \phi^{(k)} = \phi_n ~;~~
+    k = 0 ~;~~ (\Ve^p)^{(k)} = \Ve^p_n ~;~~ \phi^{(k)} = \phi_n ~;~~ T^{(k)} = T_n ~;~~
     \Bbeta^{(k)} = \Bbeta_n ~;~~ \Delta\gamma^{(k)} = 0 ~;~~
     \Bxi^{(k)} = \Bxi^{\Trial}~.
   \Eeq
   \item Check yield condition:
   \Beq
-    f^{(k)} := f(\Bxi^{(k)}, (\Ve^p)^{(k)}, \phi^{(k)}, \dot{\Ve}_n, T_n, \dots)
+    r_f^{(k)} := f(\Bxi^{(k)}, (\Ve^p)^{(k)}, \phi^{(k)}, \dot{\Ve}_n, T^{(k)}, \dots)
   \Eeq
-  If $f^{(k)} < \text{tolerance}$ then 
+  If $r_f^{(k)} < \text{tolerance}$ then 
   go to step 5 else go to step 3.
-  \item Compute updated $\delta\gamma^{(k)}$ using
+  \item Compute updated $\Delta\gamma^{(k+1)}$ using
   \Beq
-    \delta\gamma^{(k)} = 
-     \cfrac{f^{(k)}}
-     {\Partial{f^{(k)}}{\Bxi}:[2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n] - 
-     h^{\alpha}_n~\Partial{f^{(k)}}{\Ve^p} - 
-     h^{\phi}_n~\Partial{f^{(k)}}{\phi}} ~.
-  \Eeq
-  Compute
-  \Beq
-  \Bal
-    \Delta\Bxi^{(k)} & = -[2~\mu~(\BM_\Tdev)_n + (\Bh_\Tdev^\beta)_n]~\delta\gamma^{(k)} \\
-    (\Delta\Ve^p)^{(k)} & =  h^{\alpha}_n~\delta\gamma^{(k)}   \\
-    \Delta\phi^{(k)} & =  h^{\phi}_n~\delta\gamma^{(k)}   
-  \Eal
+    \Delta\gamma^{(k+1)} = \Delta\gamma^{(k)} + 
+      \frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}} \,.
   \Eeq
   \item Update variables:
   \Beq
     \Bal
-    (\Ve^p)^{(k+1)} & = (\Ve^p)^{(k)} + (\Delta\Ve^p)^{(k)} \\
-    \phi^{(k+1)} & = \phi^{(k)} + \Delta\phi^{(k)} \\
-    \Bxi^{(k+1)} & = \Bxi^{(k)} + \Delta\Bxi^{(k)} \\
-    \Delta\gamma^{(k+1)} & = \Delta\gamma^{(k)} + \delta\gamma^{(k)}
+      \Bxi^{(k+1)} &= \Bxi^{\Trial} - \Delta\gamma^{k+1}[2\mu_n\,(\BM_\Tdev)^{(k+1)} +
+         (\Bh_\Tdev^{\beta})^{(k+1)}] \\
+      \Bbeta^{(k+1)} &= \Bbeta_n + (\Bh_\Tdev^{\beta})^{(k+1)}] \\
+      (\Ve^p)^{(k+1)}  & = \Ve^p_{n} + \Delta\gamma^{(k+1)}~(h^{\alpha})^{(k+1)} \\
+      \phi^{(k+1)}  & = \phi_n + \Delta\gamma^{(k+1)}~(h^{\phi})^{(k+1)} \\
+      T^{(k+1)}  & = T_n + \Delta\gamma^{(k+1)}~(h^{T})^{(k+1)} \\
     \Eal
   \Eeq
   Set $k \leftarrow k+1$ and go to step 2.
   \item Update and calculate back stress and the deviatoric part of Cauchy stress:
   \Beq
+    \Bbeta_{n+1} = \Bbeta^{(k)} ~;~~
     \Ve^p_{n+1} = (\Ve^p)^{(k)} ~;~~
     \phi_{n+1} = \phi^{(k)} ~;~~
     \Bxi_{n+1} = \Bxi^{(k)} ~;~~
+    T_{n+1} = T^{(k)} ~;~~
     \Delta\gamma_{n+1} = \Delta\gamma^{(k)}
   \Eeq
   and
   \Beq
-    \Bal
-    \widehat{\Bbeta}_{n+1} & = \widehat{\Bbeta}_n + \Delta\gamma_{n+1}~\Bh^{\beta}(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}) \\
-    \Bbeta_{n+1} & = \widehat{\Bbeta}_{n+1} - \Third~\Tr(\widehat{\Bbeta}_{n+1})~\Bone \\
-    (\Bsig_\Tdev)_{n+1} & = \Bxi_{n+1} + \Bbeta_{n+1}
-    \Eal
+    (\Bsig_\Tdev)_{n+1} = \Bxi_{n+1} + \Bbeta_{n+1} \,.
   \Eeq
-  \item Update the temperature and the Cauchy stress
+  \item Update the Cauchy stress
   \Beq
     \Bal
-    T_{n+1} & = T_n + 
-     \cfrac{\chi_{n+1}~\Delta t}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~\dot{\Ve^p}_{n+1} 
-     = T_n + 
-     \cfrac{\chi_{n+1}~\Delta\gamma_{n+1}}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~h^{\alpha}_{n+1} \\
     p_{n+1} & = p(J_{n+1}) \\ 
     \kappa_{n+1} & = J_{n+1}~\left[\Deriv{p(J)}{J}\right]_{n+1} \\
     \Bsig_{n+1} & = \left[p_{n+1} -
@@ -1006,7 +991,6 @@ The other derivatives of the yield function that we need are
 
 
 
-\end{document}
 
 
 
