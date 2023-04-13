@@ -721,7 +721,7 @@ We can eliminate $\delta\Delta\gamma$, to get the new system of equations
 \]
 The matrix $\MA$ may be difficult to invert because of its conditioning.  
 
-\subsection{Algorithm}
+\subsection{Algorithm - J2 plasticity}
 The following stress update algorithm is used for each (plastic) time step:
 \begin{enumerate}
   \item Initialize:
@@ -746,7 +746,7 @@ The following stress update algorithm is used for each (plastic) time step:
     \Bal
       \Bxi^{(k+1)} &= \Bxi^{\Trial} - \Delta\gamma^{k+1}[2\mu_n\,(\BM_\Tdev)^{(k+1)} +
          (\Bh_\Tdev^{\beta})^{(k+1)}] \\
-      \Bbeta^{(k+1)} &= \Bbeta_n + (\Bh_\Tdev^{\beta})^{(k+1)}] \\
+      \Bbeta^{(k+1)} &= \Bbeta_n + (\Bh_\Tdev^{\beta})^{(k+1)} \\
       (\Ve^p)^{(k+1)}  & = \Ve^p_{n} + \Delta\gamma^{(k+1)}~(h^{\alpha})^{(k+1)} \\
       \phi^{(k+1)}  & = \phi_n + \Delta\gamma^{(k+1)}~(h^{\phi})^{(k+1)} \\
       T^{(k+1)}  & = T_n + \Delta\gamma^{(k+1)}~(h^{T})^{(k+1)} \\

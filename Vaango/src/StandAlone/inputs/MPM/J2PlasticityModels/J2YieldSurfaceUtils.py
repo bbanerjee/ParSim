@@ -1,4 +1,5 @@
 import os
+import math
 import xml.etree.ElementTree as ET
 import json
 import matplotlib.cm as cm
@@ -187,7 +188,7 @@ def computePressure(material_dict, density, temperature):
   rho_0 = material_dict['density']
 
   # Get specific heat
-  C_p = material_dict['specificHeat']
+  C_p = material_dict['specific_heat']
 
   # Calc. zeta
   zeta = (rho / rho_0 - 1.0)
@@ -220,7 +221,7 @@ def computeMeltTemp(material_dict, density):
 
   eta = density / rho_0
   power = 2.0 * (Gamma0 - a - 1.0 / 3.0)
-  Tm = Tm0 * np.exp(2.0 * a * (1.0 - 1.0 / eta)) * np.pow(eta, power)
+  Tm = Tm0 * np.exp(2.0 * a * (1.0 - 1.0 / eta)) * np.power(eta, power)
 
   #print(" SCG Melting Temp : ", Tm, " eta = ", eta)
   return Tm
@@ -253,7 +254,7 @@ def computeShearModulus(material_dict, temperature, density, pressure):
     return mu
 
   eta = density / rho_0
-  eta = np.pow(eta, 1.0 / 3.0)
+  eta = np.power(eta, 1.0 / 3.0)
 
   # Pressure is +ve in this calculation
   P = -pressure
@@ -329,7 +330,7 @@ def computeFlowStress(material_dict, eqPlasticStrainRate, eqPlasticStrain,
     print("**ERROR** PTWFlow::computeFlowStress: mu = ", mu, " rho = ",
           rho << " T = ", T, " Tm = ", Tm)
 
-  xidot = 0.5 * np.pow(4.0 * np.pi * rho / (3.0 * Mkg),
+  xidot = 0.5 * np.power(4.0 * np.pi * rho / (3.0 * Mkg),
                        (1.0 / 3.0)) * np.sqrt(mu / rho)
 
   # Compute the dimensionless plastic strain rate
@@ -346,20 +347,20 @@ def computeFlowStress(material_dict, eqPlasticStrainRate, eqPlasticStrain,
 
   # Calculate the saturation hardening flow stress in the thermally
   # activated glide regime
-  tauhat_s = s0 - (s0 - sinf) * np.erf(arrhen)
+  tauhat_s = s0 - (s0 - sinf) * math.erf(arrhen)
 
   # Calculate the yield stress in the thermally activated glide regime
-  tauhat_y = y0 - (y0 - yinf) * np.erf(arrhen)
+  tauhat_y = y0 - (y0 - yinf) * math.erf(arrhen)
 
   # The overdriven shock regime
   if (epdot > 1.0e3):
 
     # Calculate the saturation hardening flow stress in the overdriven
     # shock regime
-    shock_tauhat_s = s0 * np.pow(edot / gamma, beta)
+    shock_tauhat_s = s0 * np.power(edot / gamma, beta)
 
     # Calculate the yield stress in the overdriven shock regime
-    shock_tauhat_y_jump = y1 * np.pow(edot / gamma, y2)
+    shock_tauhat_y_jump = y1 * np.power(edot / gamma, y2)
     shock_tauhat_y = np.min(shock_tauhat_y_jump, shock_tauhat_s)
 
     # Calculate the saturation stress and yield stress
