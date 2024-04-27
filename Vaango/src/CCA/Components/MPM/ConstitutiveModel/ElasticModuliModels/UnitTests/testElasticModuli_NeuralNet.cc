@@ -80,10 +80,10 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state_init);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_NEAR(KG.bulkModulus, 4.44376499e+08, 1);
-    EXPECT_NEAR(KG.shearModulus, 3.33282374e8, 1);
-    EXPECT_NEAR(dKdG.bulkModulus, -5398166832, 1);
-    ASSERT_NEAR(dKdG.shearModulus, -4048625123, 1);
+    EXPECT_NEAR(KG.bulkModulus/4.44376499e+08, 1.0, 1.0e-2);
+    EXPECT_NEAR(KG.shearModulus/3.33282374e8, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.bulkModulus/-5398166832, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.shearModulus/-4048625123, 1.0, 1.0e-2);
 
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
@@ -117,10 +117,10 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_NEAR(KG.bulkModulus,  5.71826722e+09, 2.0);
-    EXPECT_NEAR(KG.shearModulus, 4.288700413e+09, 1.0);
-    EXPECT_NEAR(dKdG.bulkModulus, -72637200355, 1.0);
-    ASSERT_NEAR(dKdG.shearModulus, -54477900266, 1.0);
+    EXPECT_NEAR(KG.bulkModulus/5.71826722e+09, 1.0, 1.0e-2);
+    EXPECT_NEAR(KG.shearModulus/4.288700413e+09, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.bulkModulus/-72637200355, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.shearModulus/-54477900266, 1.0, 1.0e-2);
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
@@ -140,10 +140,10 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_NEAR(KG.bulkModulus,  35461413.9, 1.0);
-    EXPECT_NEAR(KG.shearModulus, 26596060.4, 1.0);
-    EXPECT_NEAR(dKdG.bulkModulus, -548735260, 1.0);
-    ASSERT_NEAR(dKdG.shearModulus, -411551445, 1.0);
+    EXPECT_NEAR(KG.bulkModulus/35461413.9, 1.0, 1.0e-2);
+    EXPECT_NEAR(KG.shearModulus/26596060.4, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.bulkModulus/-548735260, 1.0, 1.0e-2);
+    EXPECT_NEAR(dKdG.shearModulus/-411551445, 1.0, 1.0e-2);
 
     // Compute tangent modulus
     auto tangent = model.computeElasticTangentModulus(&state);

@@ -253,7 +253,6 @@ C     symmetric basis tensors
       DATA RIDENT/PONE,PONE,PONE,PZERO,PZERO,PZERO/
 C     Needed for induced anisotropy
       DIMENSION E(6),EDEV(6)
-      DIMENSION U(1), R(1), T(1)
 C...................................................................data
       LOGICAL INELASTIC
       DATA INELASTIC/.FALSE./
@@ -292,11 +291,10 @@ C     Set default values for all output-only state variables
       SV(KROOTJ2)= PZERO
 
 C     Initialize variables that change with deformation
-      T(1)= SV(KT)
-      U(1)= SV(KEU)
-      R(1)= SV(KR)                 ! Density
-      TEMP = T(1)
-      TMLT= DMMTMULT(TEMP,T0,TM,XP) ! J-C homologous temperature
+      T= SV(KT)
+      U= SV(KEU)
+      R= SV(KR)                 ! Density
+      TMLT= DMMTMULT(T,T0,TM,XP) ! J-C homologous temperature
       EQPS= SV(KEQPS)           ! Equivalent plastic strain
       EQPV= SV(KEQPV)           ! Equivalent plastic strain
 
@@ -472,7 +470,7 @@ C     Update temperature
       SV(KF4)= DMMENINC(QSTAUP,DEP,R0)
 
 C     Update quasistatic ISVs
-      SV(KR)= R(1)*EXP(-TRDE)
+      SV(KR)= R*EXP(-TRDE)
       SV(KRJ)= R0/SV(KR)
       SV(KEU)= SV(KEU) + DMMENINC(QSTAUP,DE,R0)
       SV(KCS)= SQRT(BM/R0)
@@ -1989,14 +1987,14 @@ C     REFZ: a characteristic scale for the Lode z coordinate
       COMMON /DMMPROPR/B0,B1,B2,G0,G1,G2,G3,TWOG1,A1,A2,A4G,A3,A4,PR,
      $T1,T2,T3,T4,R0,T0,TM,C0,S1,GP,CV,XP,A5,A6
 C.................................................................passed
-      DIMENSION UI(*), U(*), R(*), T(*)
+      DIMENSION UI(*)
 C    U:  Internal energy
 C    R:  Density
 C    T:  Temperature
 C    EV: Elastic volume strain
 C..................................................................local
       DIMENSION S(9),UIMG(22),RHO(1),ENRG(1),ALPH(1),PRES(1),TTEMP(1)
-      DIMENSION CCS(1), ALPHA(1), PRES(1), CS(1)
+      DIMENSION CCS(1)
 C...................................................................data
 C...............................................................external
 C....................................................statement functions
@@ -2008,8 +2006,6 @@ C     Compute bulk modulus
       IF(IDK.EQ.0)THEN
 C     Kerley EOS to compute sound speed
          P= -PTHIRD*RI1
-         PRES(1) = P
-         ALPHA(1) = 0
          CALL EOSARRAYREORDER(UI,UIMG)
          RHO(1) = R
          ENRG(1) = U
@@ -2022,30 +2018,30 @@ C     Kerley EOS to compute sound speed
      $                  PRES,TTEMP,CCS,S)
 
       ELSEIF(IDK.EQ.1)THEN
-         CS(1) = SQRT((B0 + B1*EXP(-B2/MAX(-RI1,1.D-40)))/R0)
+         CS = SQRT((B0 + B1*EXP(-B2/MAX(-RI1,1.D-40)))/R0)
 
       ELSEIF(IDK.EQ.2)THEN
          IF(EV.LT.PZERO)THEN
-            CS(1)= SQRT((B0 + B1*EV + PHALF*B2*EV**2)/R0)
+            CS= SQRT((B0 + B1*EV + PHALF*B2*EV**2)/R0)
          ELSE
-            CS(1)= SQRT(B0/R0)
+            CS= SQRT(B0/R0)
          ENDIF
 
       ENDIF
-      BM= R0*CS(1)**2
+      BM= R0*CS**2
 
 C     Compute shear modulus
       IF(IDG.EQ.0)THEN
 C     Shear modulus from SGC formula with elastic-plastic coupling
-         RJFAC= (R0/R(1))**PTHIRD
+         RJFAC= (R0/R)**PTHIRD
          C= -0.D0
-         SM= MAX(G0,G0 + G1*(EV*RJFAC+C*EQPS) + G2*(T(1)-300.D0))
+         SM= MAX(G0,G0 + G1*(EV*RJFAC+C*EQPS) + G2*(T-300.D0))
 
       ELSEIF(IDG.EQ.1)THEN
          SM= G0*(PONE-G1*EXP(-G2*RTJ2))/(PONE-G1)
 
       ELSEIF(IDG.EQ.2)THEN
-         SM= MAX(G0,G0 + G1*EV + G2*(T(1)-300.D0))
+         SM= MAX(G0,G0 + G1*EV + G2*(T-300.D0))
 
       ELSEIF(IDG.EQ.3)THEN
 C     Shear modulus from elasticity relations
@@ -2053,7 +2049,7 @@ C     Shear modulus from elasticity relations
       ENDIF
 
 C     Set shear modulus to zero if melt temp is exceeded
-      IF(T(1).GE.TM)THEN
+      IF(T.GE.TM)THEN
          CALL LOGMES('Melt temp reached, setting G=0')
          SM= G0
       ENDIF

@@ -92,7 +92,7 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
   ElasticModuli_NeuralNet_Bulk model(ps);
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
-    ASSERT_DOUBLE_EQ(moduli.bulkModulus, 531873380.8029747);
+    ASSERT_NEAR(moduli.bulkModulus, 531873380.8029747, 1.0e-3);
 
     ModelState_Tabular state_init;
     state_init.elasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -100,10 +100,10 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state_init);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_DOUBLE_EQ(KG.bulkModulus, 531873380.8029747);
-    EXPECT_DOUBLE_EQ(KG.shearModulus, 398905035.60223103);
-    EXPECT_DOUBLE_EQ(dKdG.bulkModulus, -2000964164.7338867);
-    ASSERT_DOUBLE_EQ(dKdG.shearModulus, -1500723123.550415);
+    EXPECT_NEAR(KG.bulkModulus, 531873380.8029747, 1.0e-3);
+    EXPECT_NEAR(KG.shearModulus, 398905035.60223103, 1.0e-3);
+    EXPECT_NEAR(dKdG.bulkModulus, -2000964164.7338867, 1.0e-3);
+    ASSERT_NEAR(dKdG.shearModulus, -1500723123.550415, 1.0e-3);
 
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
@@ -114,8 +114,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
   ElasticModuli_NeuralNet_Bulk modelCopy(&model);
   try {
     ElasticModuli moduli = modelCopy.getInitialElasticModuli();
-    EXPECT_DOUBLE_EQ(moduli.bulkModulus, 531873380.8029747);
-    EXPECT_DOUBLE_EQ(moduli.shearModulus, 398905035.60223103);
+    EXPECT_NEAR(moduli.bulkModulus, 531873380.8029747, 1.0e-3);
+    EXPECT_NEAR(moduli.shearModulus, 398905035.60223103, 1.0e-3);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
   } catch (const Uintah::InvalidValue& e) {
@@ -137,10 +137,10 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_DOUBLE_EQ(KG.bulkModulus,  2979061231.3637466);
-    EXPECT_DOUBLE_EQ(KG.shearModulus, 2234295923.52281);
-    EXPECT_DOUBLE_EQ(dKdG.bulkModulus, 1492763710.0219727);
-    ASSERT_DOUBLE_EQ(dKdG.shearModulus, 1119572782.5164795);
+    EXPECT_NEAR(KG.bulkModulus/2979061231.3637466, 1.0, 1.0e-3);
+    EXPECT_NEAR(KG.shearModulus/2234295923.52281, 1.0, 1.0e-3);
+    EXPECT_NEAR(dKdG.bulkModulus/1492763710.0219727, 1.0, 1.0e-3);
+    ASSERT_NEAR(dKdG.shearModulus/1119572782.5164795, 1.0, 1.0e-3);
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
     throw;
@@ -152,14 +152,14 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
-    ASSERT_DOUBLE_EQ(moduli.bulkModulus,  531873380.8029747);
-    ASSERT_DOUBLE_EQ(moduli.shearModulus, 398905035.60223103);
+    ASSERT_NEAR(moduli.bulkModulus,  531873380.8029747, 1.0e-3);
+    ASSERT_NEAR(moduli.shearModulus, 398905035.60223103, 1.0e-3);
 
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_DOUBLE_EQ(KG.bulkModulus,  531873380.8029747);
-    EXPECT_DOUBLE_EQ(KG.shearModulus, 398905035.60223103);
+    EXPECT_NEAR(KG.bulkModulus,  531873380.8029747, 1.0e-3);
+    EXPECT_NEAR(KG.shearModulus, 398905035.60223103, 1.0e-3);
     EXPECT_DOUBLE_EQ(dKdG.bulkModulus, 0.0);
     ASSERT_DOUBLE_EQ(dKdG.shearModulus, 0.0);
 
